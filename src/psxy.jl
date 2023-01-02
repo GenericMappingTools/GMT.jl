@@ -846,8 +846,8 @@ function make_color_column_(d::Dict, cmd::String, opt_i::String, len::Int, N_arg
 	# Broke this out of make_color_column() to try to limit effect of invalidations but with questionable results.
 	if (n_col <= 2+is3D)
 		if (mz !== nothing)
-			if (isa(arg1,GMTdataset) || isa(arg1, Array))  arg1    = hcat(arg1, mz[:])
-			elseif (isa(arg1, Vector{<:GMTdataset}))       arg1[1] = hcat(arg1[1], mz[:]) 
+			if (isa(arg1,GMTdataset) || isa(arg1, Matrix{Real}))  arg1    = hcat(arg1, mz[:])
+			elseif (isa(arg1, Vector{<:GMTdataset}))              arg1[1] = hcat(arg1[1], mz[:]) 
 			end
 		else
 			cmd *= " -i0-$(1+is3D),$(1+is3D)"
@@ -857,8 +857,8 @@ function make_color_column_(d::Dict, cmd::String, opt_i::String, len::Int, N_arg
 		end
 	else
 		if (mz !== nothing)				# Here we must insert the color col right after the coords
-			if (isa(arg1,GMTdataset) || isa(arg1, Array))  arg1    = hcat(arg1[:,1:2+is3D],    mz[:], arg1[:,3+is3D:end])
-			elseif (isa(arg1, Vector{<:GMTdataset}))       arg1[1] = hcat(arg1[1][:,1:2+is3D], mz[:], arg1[1][:,3+is3D:end])
+			if (isa(arg1,GMTdataset) || isa(arg1, Matrix{Real}))  arg1    = hcat(arg1[:,1:2+is3D],    mz[:], arg1[:,3+is3D:end])
+			elseif (isa(arg1, Vector{<:GMTdataset}))              arg1[1] = hcat(arg1[1][:,1:2+is3D], mz[:], arg1[1][:,3+is3D:end])
 			end
 		elseif (got_Ebars)				# The Error bars case is very multi. Don't try to guess then.
 			cmd *= " -i0-$(1+is3D),$(1+is3D),$(2+is3D)-$(n_col-1)"
@@ -870,8 +870,8 @@ function make_color_column_(d::Dict, cmd::String, opt_i::String, len::Int, N_arg
 		else
 			the_col = min(n_col,3)+is3D
 			got_Ebars && (the_col -= 1)			# Bars => 2 cols
-			if     (isa(arg1, Vector{<:GMTdataset}))           mi, ma = extrema(view(arg1[1], :, the_col))
-			elseif (isa(arg1,GMTdataset) || isa(arg1, Array))  mi, ma = extrema(view(arg1,    :, the_col))
+			if     (isa(arg1, Vector{<:GMTdataset}))                  mi, ma = extrema(view(arg1[1], :, the_col))
+			elseif (isa(arg1,GMTdataset) || isa(arg1, Matrix{Real}))  mi, ma = extrema(view(arg1,    :, the_col))
 			end
 		end
 		just_C = cmd[len+2:end];	reset_i = ""
