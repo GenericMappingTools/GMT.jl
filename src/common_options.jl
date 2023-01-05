@@ -111,11 +111,11 @@ function parse_paper(d::Dict)
 	# If both inches and grid is intended use 'paper=(:inch,:grid)'
 	((val = find_in_dict(d, [:paper])[1]) === nothing) && return nothing
 
-	opt_J, opt_B, opt_R = " -Jx1c", "", " -R0/200/0/200"
+	opt_J::String, opt_B::String, opt_R::String = " -Jx1c", "", " -R0/200/0/200"
 	if (isa(val, Tuple) && string(val[1])[1] == 'i' && string(val[2])[1] == 'g')
 		opt_J, opt_B, opt_R = " -Jx1i", " -Ba1f1g1", " -R0/12/0/12"
 	elseif (isa(val, String) || isa(val, Symbol))
-		c = string(val)[1]
+		c::Char = string(val)[1]
 		(c == 'i') && (opt_J = " -Jx1i")
 		(c == 'g') && (opt_B = " -Ba1f1g1"; opt_R = " -R0/30/0/30")
 	end
@@ -123,7 +123,7 @@ function parse_paper(d::Dict)
 	(o != "") && (CTRL.IamInPaperMode[2] = false)
 
 	proggy = (IamModern[1]) ? "plot -T" : "psxy -T"
-	t = IamModern[1] ? "" : o * " -O -K >> " * PSname[1]
+	t::String = IamModern[1] ? "" : o * " -O -K >> " * PSname[1]::String
 	gmt(proggy * opt_R * opt_J * opt_B * t)
 	CTRL.IamInPaperMode[1] = true
 	return nothing
@@ -131,7 +131,7 @@ end
 function leave_paper_mode()
 	# Reset the -R -J previous to the paper mode setting
 	!CTRL.IamInPaperMode[1] && return nothing
-	t = IamModern[1] ? "" : " -O -K >> " * PSname[1]
+	t::String = IamModern[1] ? "" : " -O -K >> " * PSname[1]::String
 	CTRL.IamInPaperMode[1] && gmt("psxy -T " * CTRL.pocket_R[1] * CTRL.pocket_J[1] * CTRL.pocket_J[3] * t)
 	CTRL.IamInPaperMode[1] = false
 	return nothing
@@ -159,7 +159,7 @@ function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=true, RIr::Bool=
 	if (RIr)
 		if (isa(val, GItype))
 			opt_I = parse_I(d, "", [:I :inc :increment :spacing], "I")
-			(opt_I == "") && (cmd *= " -I" * arg2str(val.inc))
+			(opt_I == "") && (cmd *= " -I" * arg2str(val.inc))::String
 			opt_r = parse_r(d, "")[2]
 			(opt_r == "") && (cmd *= " -r" * ((val.registration == 0) ? "g" : "p"))
 		else				# Here we must parse the -I and -r separately.
@@ -607,7 +607,7 @@ function build_opt_J(Val)::Tuple{String, Bool}
 		if (string(Val) == "guess")
 			out, mnemo = guess_proj(CTRL.limits[7:8], CTRL.limits[9:10]), true
 		else
-			prj, mnemo = parse_proj(string(Val))
+			prj::String, mnemo = parse_proj(string(Val))
 			out = " -J" * prj
 		end
 	elseif (isa(Val, NamedTuple))
@@ -615,9 +615,9 @@ function build_opt_J(Val)::Tuple{String, Bool}
 		out = " -J" * prj
 	elseif (isa(Val, Real))
 		if (!(typeof(Val) <: Int) || Val < 2000)
-			error("The only valid case to provide a number to the 'proj' option is when that number is an EPSG code, but this (" * string(Val) * ") is clearly an invalid EPSG")
+			error("The only valid case to provide a number to the 'proj' option is when that number is an EPSG code, but this (" * string(Val)::String * ") is clearly an invalid EPSG")
 		end
-		out = string(" -J", string(Val))
+		out = string(" -J", string(Val)::String)
 	elseif (isempty(Val))
 		out = " -J"
 	end
@@ -679,13 +679,13 @@ function parse_proj(p::String)::Tuple{String, Bool}
 	return out, mnemo
 end
 
-function parse_proj(p::NamedTuple)
+function parse_proj(p::NamedTuple)::Tuple{String, Bool}
 	# Take a proj=(name=xxxx, center=[lon lat], parallels=[p1 p2]), where either center or parallels
 	# may be absent, but not BOTH, an create a GMT -J syntax string (note: for some projections 'center'
 	# maybe a scalar but the validity of that is not checked here).
 	d = nt2dict(p)					# Convert to Dict
 	if ((val = find_in_dict(d, [:name])[1]) !== nothing)
-		prj::String, mnemo = parse_proj(string(val))
+		prj::String, mnemo = parse_proj(string(val)::String)
 		if (prj != "Cyl_stere" && prj == string(val)::String)
 			@warn("Very likely the projection name ($prj) is unknown to me. Expect troubles")
 		end
@@ -770,7 +770,7 @@ function parse_grid(d::Dict, args, opt_B::String="", stalone::Bool=true)
 	# which the parsed result will be appended to def_fig_axes, or as a member of the "frame" option.
 	# In this case def_fig_axes is dropped and only the contents of "frame" will be used. The argument can
 	# be a NamedTuple, which allows setting grid pen and individual axes, or as a string (see ex bellow).
-	pre = (stalone) ? " -B" : ""
+	pre::String = (stalone) ? " -B" : ""
 	get_int(oo) = return (tryparse(Float64, oo) !== nothing) ? oo : ""	# Micro nested-function
 	if (isa(args, NamedTuple))	# grid=(pen=?, x=?, y=?, xyz=?)
 		dd = nt2dict(args)
@@ -1120,7 +1120,7 @@ xlabel(; str::AbstractString="", font=nothing, offset=0) = titles_e_comp(str, fo
 ylabel(; str::AbstractString="", font=nothing, offset=0) = titles_e_comp(str, font, offset, "y")
 zlabel(; str::AbstractString="", font=nothing, offset=0) = titles_e_comp(str, font, offset, "z")
 function titles_e_comp(str::AbstractString, fnt, offset, tipo::String="")
-	f = (fnt !== nothing) ? font(fnt) : ""
+	f::String = (fnt !== nothing) ? font(fnt) : ""
 	o::String = (offset != 0) ? string(offset) : ""
 	if (tipo == "")
 		r2 = (f != "") ? " --FONT_TITLE=" * f : ""
@@ -1251,7 +1251,7 @@ function parse_V(d::Dict, cmd::String)::String
 	# Parse the global -V option. Return CMD same as input if no -V option in args
 	if ((val = find_in_dict(d, [:V :verbose], true)[1]) !== nothing)
 		if (isa(val, Bool) && val) cmd *= " -V"
-		else                       cmd *= " -V" * arg2str(val)
+		else                       cmd *= " -V" * arg2str(val)::String
 		end
 	end
 	return cmd
@@ -1282,7 +1282,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_b(d::Dict, cmd::String, symbs::Array{Symbol}=[:b :binary], io::String="")
 	# Parse the global -b option. Return CMD same as input if no -b option in args
-	cmd_ = add_opt(d, "", string(symbs[1])*io, symbs, 
+	cmd_::String = add_opt(d, "", string(symbs[1])*io, symbs, 
 	               (ncols=("", arg2str, 1), type=("", data_type, 2), swapp_bytes="_w", little_endian="_+l", big_endian="+b"))
 	return cmd * cmd_, cmd_
 end
@@ -1343,7 +1343,7 @@ end
 
 # ---------------------------------------------------------------------------------
 function parse_l(d::Dict, cmd::String)
-	cmd_ = add_opt(d, "", "l", [:l :legend],
+	cmd_::String = add_opt(d, "", "l", [:l :legend],
 		(text=("", arg2str, 1), hline=("+D", add_opt_pen), vspace="+G", header="+H", image="+I", line_text="+L", n_cols="+N", ncols="+N", ssize="+S", start_vline=("+V", add_opt_pen), end_vline=("+v", add_opt_pen), font=("+f", font), fill="+g", justify="+j", offset="+o", frame_pen=("+p", add_opt_pen), width="+w", scale="+x"), false)
 	# Now make sure blanks in legend text are wrapped in ""
 	if ((ind = findfirst("+", cmd_)) !== nothing)
@@ -1360,7 +1360,7 @@ function parse_n(d::Dict, cmd::String, gmtcompat::Bool=false)
 	# Parse the global -n option. Return CMD same as input if no -n option in args
 	# The GMTCOMPAT arg is used to reverse the default aliasing in GMT, which is ON by default
 	# However, practise has shown that this makes projecting images significantly slower with not clear benefits
-	cmd_ = add_opt(d, "", "n", [:n :interp :interpolation], 
+	cmd_::String = add_opt(d, "", "n", [:n :interp :interpolation], 
 				   (B_spline=("b", nothing, 1), bicubic=("c", nothing, 1), bilinear=("l", nothing, 1), near_neighbor=("n", nothing, 1), aliasing="_+a", antialiasing="_-a", bc="+b", clipz="_+c", threshold="+t"))
 	# Some gymnics to make aliasing de default (contrary to GMT default). Use antialiasing=Any to revert this.
 	if (!gmtcompat)
@@ -1495,18 +1495,18 @@ function parse_common_opts(d::Dict, cmd::String, opts::VMs, first::Bool=true)
 			if (opt_p == " -pnone")  current_view[1] = "";	cmd = cmd[1:end-7];	opt_p = ""
 			elseif (startswith(opt_p, " -pa") || startswith(opt_p, " -pd"))
 				current_view[1] = " -p210/30";
-				cmd = replace(cmd, opt_p => "") * current_view[1]		# auto, def, 3d
+				cmd = replace(cmd, opt_p => "") * current_view[1]::String		# auto, def, 3d
 			else
 				current_view[1] = opt_p
 			end
 		elseif (!first && current_view[1] != "")
-			cmd *= current_view[1]
+			cmd *= current_view[1]::String
 		elseif (first)
 			current_view[1] = ""		# Ensure we start empty
 		end
 	end
 	#cmd   = GMTsyntax_opt(d, cmd)		# See if an hardcore GMT syntax string has been passed
-	((val = find_in_dict(d, [:pagecolor])[1]) !== nothing) && (cmd *= string(" --PS_PAGE_COLOR=", val))
+	((val = find_in_dict(d, [:pagecolor])[1]) !== nothing) && (cmd *= string(" --PS_PAGE_COLOR=", val)::String)
 	return cmd, o
 end
 
@@ -1564,7 +1564,7 @@ function parse_I(d::Dict, cmd::String, symbs, opt::String, del::Bool=true)::Stri
 			end
 		else
 			if (opt != "")  cmd  = string(cmd, " -", opt, arg2str(val))
-			else            cmd *= arg2str(val)
+			else            cmd *= arg2str(val)::String
 			end
 		end
 	end
@@ -1583,10 +1583,10 @@ function parse_params(d::Dict, cmd::String)::String
 	if (isa(val, NamedTuple))
 		fn = fieldnames(typeof(val))
 		for k = 1:numel(fn)		# Suspect that this is higly inefficient but N is small
-			_cmd *= " --" * string(fn[k]) * "=" * string(val[k])
+			_cmd *= " --" * string(fn[k])::String * "=" * string(val[k])::String
 		end
 	elseif (isa(val, Tuple))
-		_cmd *= " --" * string(val[1]) * "=" * string(val[2])
+		_cmd *= " --" * string(val[1])::String * "=" * string(val[2])::String
 	end
 	usedConfPar[1] = true
 	return _cmd
@@ -1636,7 +1636,7 @@ function add_opt_pen(d::Dict, symbs::VMs, opt::String="", del::Bool=true)::Strin
 					end
 				end
 			else
-				(val != :none && val != "none") && (out = opt * arg2str(val))
+				(val != :none && val != "none") && (out = opt * arg2str(val)::String)
 			end
 		end
 	end
@@ -1657,7 +1657,7 @@ function add_opt_pen(d::Dict, symbs::VMs, opt::String="", del::Bool=true)::Strin
 		((val = find_in_dict(d, [:ctext :color_text :csymbol :color_symbols :color_symbol])[1]) !== nothing) && (out *= "+cf")
 	end
 	if (haskey(d, :bezier))  out *= "+s";  del_from_dict(d, [:bezier])  end
-	if (haskey(d, :offset))  out *= "+o" * arg2str(d[:offset])   end
+	if (haskey(d, :offset))  out *= "+o" * arg2str(d[:offset])::String   end
 
 	if (out != "")		# Search for eventual vec specs, but only if something above has activated -W
 		v = false
@@ -1701,11 +1701,11 @@ parse_pen(pen::Symbol)::String = string(pen)
 parse_pen(pen::String)::String = pen
 function parse_pen(pen::Tuple)::String
 	# Convert an empty to 3 args tuple containing (width[c|i|p]], [color], [style[c|i|p|])
-	s = arg2str(pen[1])					# First arg is different because there is no leading ','
+	s::String = arg2str(pen[1])					# First arg is different because there is no leading ','
 	if (length(pen) > 1)
 		s *= ',' * get_color(pen[2])
 		if (length(pen) > 2)
-			ls = arg2str(pen[3])
+			ls::String = arg2str(pen[3])
 			_ls = lowercase(ls)
 			if     (startswith(_ls, "dashdot"))     ls = "-."
 			elseif (startswith(_ls, "dashdashdot")) ls = "--."
@@ -2060,7 +2060,7 @@ function add_opt_1char(cmd::String, d::Dict, symbs::Vector{Matrix{Symbol}}, del:
 			((args = arg2str(val)) != "") && (args = string(args[1]))
 		elseif (isa(val, Tuple))
 			for k = 1:numel(val)
-				args *= arg2str(val[k])[1]
+				args *= arg2str(val[k])[1]::Char
 			end
 		end
 		cmd = string(cmd, " -", opt[1], args)
@@ -2084,10 +2084,10 @@ function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, mapa=nothing, de
 			local cmd_::String = ""
 			for k in keys(mapa)
 				((val_ = find_in_dict(d, [k], false)[1]) === nothing) && continue	# This mapa key was not used
-				if (isa(mapa[k], Tuple))    cmd_ *= mapa[k][1] * mapa[k][2](d, [k])	# mapa[k][2] is a function
+				if (isa(mapa[k], Tuple))    cmd_ *= mapa[k][1]::String * mapa[k][2](d, [k])::String	# mapa[k][2] is a function
 				else
-					if (mapa[k][1] == '_')  cmd_ *= mapa[k][2:end]		# Keep only the flag
-					else                    cmd_ *= mapa[k] * arg2str(val_)
+					if (mapa[k][1] == '_')  cmd_ *= mapa[k][2:end]::String		# Keep only the flag
+					else                    cmd_ *= mapa[k] * arg2str(val_)::String
 					end
 				end
 				del_from_dict(d, [k])		# Now we can delete the key
@@ -2102,7 +2102,7 @@ function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, mapa=nothing, de
 				cmd_ = " -" * opt
 				#(length(mapa[k][1]) == 0) && error("Need alias value. Cannot be empty")
 				first_ind = (mapa[k][1] == '_') ? 2 : 1
-				cmd_ *= mapa[k][first_ind:end]
+				cmd_ *= mapa[k][first_ind:end]::String
 				break
 			end
 		end
@@ -2117,7 +2117,7 @@ function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, mapa=nothing, de
 		# Used in recursive calls for options like -I, -N , -W of pscoast. Here we assume that opt != ""
 		_args::String = ""
 		for k = 1:numel(val)
-			_args *= " -" * opt * add_opt(val[k], mapa, arg)
+			_args *= " -" * opt * add_opt(val[k], mapa, arg)::String
 		end
 		return cmd * _args
 	elseif (isa(mapa, Tuple) && length(mapa) > 1 && isa(mapa[2], Function))	# grdcontour -G
@@ -2304,7 +2304,7 @@ function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, need_symb::Symbo
 			val = replace(val, missing => NaN)		# Even if there are no missings it will be converted do Float64
 			cmd = string(cmd, " -", opt)
 		elseif (isa(val, String) || isa(val, Symbol) || isa(val, Real))
-			cmd = string(cmd, " -", opt * arg2str(val))
+			cmd = string(cmd, " -", opt * arg2str(val)::String)
 			to_slot = false
 		else
 			error("Bad argument type ($(typeof(val))) to option $opt")
@@ -2357,7 +2357,7 @@ function add_opt_cpt(d::Dict, cmd::String, symbs::VMs, opt::Char, N_args::Int=0,
 			cmd, arg1, arg2, N_args = helper_add_cpt(cmd, opt, N_args, arg1, arg2, val, store)
 		else
 			if (opt_T != "")
-				cpt::GMTcpt = makecpt(opt_T * " -C" * get_color(val))
+				cpt::GMTcpt = makecpt(opt_T * " -C" * get_color(val)::String)
 				cmd, arg1, arg2, N_args = helper_add_cpt(cmd, opt, N_args, arg1, arg2, cpt, store)
 			else
 				c = get_color(val)
@@ -2377,7 +2377,8 @@ function add_opt_cpt(d::Dict, cmd::String, symbs::VMs, opt::Char, N_args::Int=0,
 	elseif (def && opt_T != "")						# Requested use of the default color map
 		if (IamModern[1])  opt_T *= " -H"  end		# Piggy back this otherwise we get no CPT back in Modern
 		if (haskey(d, :this_cpt) && d[:this_cpt] != "")		# A specific CPT name was requested
-			cpt = equalize(d, arg1, d[:this_cpt], opt_T);	delete!(d, :this_cpt)
+			cpt_name::String = d[:this_cpt]			# Because of the terrible invalidations
+			cpt = equalize(d, arg1, cpt_name, opt_T);	delete!(d, :this_cpt)
 		else
 			cpt = equalize(d, arg1, "turbo", opt_T)
 			cpt.bfn[3, :] = [1.0 1.0 1.0]	# Some deep bug, in occasions, returns grays on 2nd and on calls
@@ -2387,9 +2388,9 @@ function add_opt_cpt(d::Dict, cmd::String, symbs::VMs, opt::Char, N_args::Int=0,
 		cmd, arg1, arg2, N_args = helper_add_cpt(cmd, opt, N_args, arg1, arg2, current_cpt[1], false)
 	end
 	if (occursin(" -C", cmd))
-		if ((val = find_in_dict(d, [:hinge])[1]) !== nothing)       cmd *= string("+h", val)  end
-		if ((val = find_in_dict(d, [:meter2unit])[1]) !== nothing)  cmd *= "+U" * parse_unit_unit(val)  end
-		if ((val = find_in_dict(d, [:unit2meter])[1]) !== nothing)  cmd *= "+u" * parse_unit_unit(val)  end
+		if ((val = find_in_dict(d, [:hinge])[1]) !== nothing)       cmd *= string("+h", val)::String  end
+		if ((val = find_in_dict(d, [:meter2unit])[1]) !== nothing)  cmd *= "+U" * parse_unit_unit(val)::String  end
+		if ((val = find_in_dict(d, [:unit2meter])[1]) !== nothing)  cmd *= "+u" * parse_unit_unit(val)::String  end
 	end
 	return cmd, arg1, arg2, N_args
 end
@@ -2423,27 +2424,27 @@ function add_opt_fill(val, cmd::String="",  opt="")::String
 	# This method can be called directy with VAL as a NT or a string
 	if (isa(val, Tuple) && length(val) == 2 && (isa(val[1], Tuple) || isa(val[1], NamedTuple)))
 		# wiggle, for example, may want to repeat the call to fill (-G). Then we expect a Tuple of -G's
-		cmd = add_opt_fill(val[1], cmd,  opt)
+		cmd::String = add_opt_fill(val[1], cmd,  opt)
 		cmd = add_opt_fill(val[2], cmd,  opt)
 	elseif (isvector(val) && length(val) == 2 && isa(val[1], String))
 		# The above case works but may be uggly sometimes; e.g. fill=(("red+p",), ("blue+n",))
 		# So accept also a vector of strings and do not try to interpret its contents. Ex: fill(["red+p", "blue+n"]
 		(opt != "" && !startswith(opt, " -")) && (opt = string(" -", opt))
-		cmd = cmd * opt * val[1] * opt * val[2]
+		cmd = cmd * opt * val[1]::String * opt * val[2]::String
 	elseif (isa(val, NamedTuple))
 		d2::Dict = nt2dict(val)
 		cmd *= opt
-		if     (haskey(d2, :pattern))     cmd *= 'p' * add_opt(d2, "", "", [:pattern])
-		elseif (haskey(d2, :inv_pattern)) cmd *= 'P' * add_opt(d2, "", "", [:inv_pattern])
+		if     (haskey(d2, :pattern))     cmd *= 'p' * add_opt(d2, "", "", [:pattern])::String
+		elseif (haskey(d2, :inv_pattern)) cmd *= 'P' * add_opt(d2, "", "", [:inv_pattern])::String
 		else   error("For 'fill' option as a NamedTuple, you MUST provide a 'patern' member")
 		end
 
-		((val2 = find_in_dict(d2, [:bg :bgcolor :background], false)[1]) !== nothing) && (cmd *= "+b" * get_color(val2))
-		((val2 = find_in_dict(d2, [:fg :fgcolor :foreground], false)[1]) !== nothing) && (cmd *= "+f" * get_color(val2))
+		((val2 = find_in_dict(d2, [:bg :bgcolor :background], false)[1]) !== nothing) && (cmd *= "+b" * get_color(val2)::String)
+		((val2 = find_in_dict(d2, [:fg :fgcolor :foreground], false)[1]) !== nothing) && (cmd *= "+f" * get_color(val2)::String)
 		(haskey(d2, :dpi)) && (cmd = string(cmd, "+r", d2[:dpi]))
 	else
 		t = get_color(val)
-		(t != "none") ? (cmd *= string(opt, t)) : (cmd *= opt)
+		(t != "none") ? (cmd *= string(opt, t)::String) : (cmd *= opt)
 	end
 	return cmd
 end
@@ -2467,7 +2468,7 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 				lh = quantile(any(!isfinite, arg1) ? skipnan(vec(arg1)) : vec(arg1), [(100 - val)/200, (1 - (100 - val)/200)])
 				cpt_opt_T = @sprintf(" -T%.12g/%.12g/256+n -D", lh[1], lh[2])	# Piggyback -D
 			elseif ((val = find_in_dict(d, [:percent])[1]) !== nothing)			# Case of a grid file
-				range = vec(grdinfo(cmd0 * " -C -T+a$(100-val)").data);
+				range = vec(grdinfo(cmd0 * " -C -T+a$(100-val)"::String).data);
 				cpt_opt_T = @sprintf(" -T%.12g/%.12g/256+n -D", range[5], range[6])
 			elseif ((val = find_in_dict(d, [:clim])[1]) !== nothing)
 				(length(val) != 2) && error("The clim option must have two elements and not $(length(val))")
@@ -2485,7 +2486,7 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 			(length(val) != 2) && error("The clim option must have two elements and not $(length(val))")
 			cpt_opt_T = @sprintf(" -T%.12g/%.12g/256+n -D", val[1], val[2])
 		elseif (any(contains.(cmd0, ["_01d", "_30m", "_20m", "_15m", "_10m", "_06m"])) && (val = find_in_dict(d, [:percent])[1]) !== nothing)
-			infa = grdinfo(cmd0 * " -T+a$(100-val)").text[1]	# Bloody complicated output
+			infa = grdinfo(cmd0 * " -T+a$(100-val)"::String).text[1]	# Bloody complicated output
 			mima = split(infa[3:end], "/")		# Because the output is like "-T-5384/2729"
 			cpt_opt_T = " -T" * mima[1] * "/" * mima[2] * "/256+n -D"
 		elseif (haskey(d, :equalize))
@@ -2600,7 +2601,7 @@ function get_color(val::Tuple)::String
 			if (val[k][1] <= 1 && val[k][2] <= 1 && val[k][3] <= 1)  s = 255  end	# colors in [0 1]
 			out *= @sprintf("%.0f/%.0f/%.0f,", val[k][1]*s, val[k][2]*s, val[k][3]*s)
 		elseif (isa(val[k], Symbol) || isa(val[k], String) || isa(val[k], Real))
-			out *= string(val[k],",")
+			out *= string(val[k],",")::String
 		else
 			error("Color tuples must have only one or three elements")
 		end
@@ -2938,7 +2939,7 @@ function helper3_axes(arg, primo::String, axe::String)::String
 		@warn("Argument of the custom annotations must be an N-array or a NamedTuple");		return ""
 	end
 
-	temp = "GMTjl_custom_" * primo
+	temp::String = "GMTjl_custom_" * primo
 	(axe != "") && (temp *= axe)
 	fname = joinpath(tempdir(), temp * ".txt")
 	fid = open(fname, "w")
@@ -3027,7 +3028,7 @@ function vector_attrib(; kwargs...)::String
 	end
 
 	(haskey(d, :norm)) && (cmd = string(cmd, "+n", arg2str(d[:norm])))
-	(haskey(d, :pole)) && (cmd *= "+o" * arg2str(d[:pole]))
+	(haskey(d, :pole)) && (cmd *= "+o" * arg2str(d[:pole])::String)
 	if (haskey(d, :pen))
 		((p = add_opt_pen(d, [:pen], "")) != "") && (cmd *= "+p" * p)
 	end
@@ -3182,7 +3183,7 @@ function helper_decorated(d::Dict, compose=false)
 		if (isa(val, String) || isa(val, Real) || isa(val, Symbol))
 			cmd = string(val)
 		elseif (isa(val, Array) || isa(val, Tuple))
-			if (symb == :number)  cmd = "-" * string(val[1], '/', val[2])
+			if (symb == :number)  cmd = "-" * string(val[1], '/', val[2])::String
 			else                  cmd = string(val[1], '/', val[2])
 			end
 		else
@@ -3332,11 +3333,11 @@ end
 # ---------------------------------------------------------------------------------------------------
 function read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", is3D::Bool=false, get_info::Bool=false)
 	# Use 'get_info=true' to force reading the file when fname != ""
-	cmd, opt_i  = parse_i(d, cmd)		# If data is to be read with some column order
-	cmd, opt_bi = parse_bi(d, cmd)		# If data is to be read as binary
-	cmd, opt_di = parse_di(d, cmd)		# If data missing data other than NaN
-	cmd, opt_h  = parse_h(d, cmd)
-	cmd, opt_yx = parse_swap_xy(d, cmd)
+	cmd::String, opt_i::String  = parse_i(d, cmd)		# If data is to be read with some column order
+	cmd, opt_bi::String = parse_bi(d, cmd)		# If data is to be read as binary
+	cmd, opt_di::String = parse_di(d, cmd)		# If data missing data other than NaN
+	cmd, opt_h::String  = parse_h(d, cmd)
+	cmd, opt_yx::String = parse_swap_xy(d, cmd)
 	#(CTRL.proj_linear[1]) && (opt_yx *= " -fc")	# To avoid the lib remembering last eventual geog case, but it f time
 	endswith(opt_yx, "-:") && (opt_yx *= "i")		# Need to be -:i not -: to not swap output too
 
@@ -3359,7 +3360,7 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", i
 	no_R = (opt_R == "" || opt_R[1] == '/' || opt_R == " -Rtight")
 	if (!convert_syntax[1] && !IamModern[1] && no_R)
 		wesn_f64::Matrix{Float64} = gmt("gmtinfo -C" * opt_bi * opt_i * opt_di * opt_h * opt_yx * " " * fname).data	#
-		opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g", wesn_f64[1], wesn_f64[2], wesn_f64[3], wesn_f64[4])
+		opt_R::String = @sprintf(" -R%.12g/%.12g/%.12g/%.12g", wesn_f64[1], wesn_f64[2], wesn_f64[3], wesn_f64[4])
 		(is3D) && (opt_R = @sprintf("%s/%.12g/%.12g", opt_R, wesn_f64[5], wesn_f64[6]))
 		cmd *= opt_R
 	end
@@ -3461,7 +3462,7 @@ function _read_data(d::Dict, cmd::String, arg, opt_R::String="", is3D::Bool=fals
 		if (got_datetime)
 			opt_R = " -R" * Dates.format(min_max[1], "yyyy-mm-ddTHH:MM:SS.s") * "/" *
 			        Dates.format(min_max[2], "yyyy-mm-ddTHH:MM:SS.s")
-			(!is_onecol) && (opt_R *= @sprintf("/%.12g/%.12g", wesn_f64[3], wesn_f64[4]))
+			(!is_onecol) && (opt_R *= @sprintf("/%.12g/%.12g", wesn_f64[3], wesn_f64[4])::String)
 		elseif (is3D)
 			opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g/%.12g/%.12g", wesn_f64[1], wesn_f64[2],
 			                 wesn_f64[3], wesn_f64[4], wesn_f64[5], wesn_f64[6])
@@ -3615,7 +3616,7 @@ function find_data(d::Dict, cmd0::String, cmd::String, args...)
 			return cmd, got_fname, args[1]		# got_fname = 1 => data is in cmd;	got_fname = 0 => data is in arg1
 		elseif (data_kw !== nothing)
 			if (isa(data_kw, String))
-				cmd = data_kw * " " * cmd
+				cmd = data_kw::String * " " * cmd
 				return cmd, 1, args[1]			# got_fname = 1 => data is in cmd
 			else
 				return cmd, 0, data_kw 			# got_fname = 0 => data is in arg1
@@ -3903,7 +3904,7 @@ function arg_in_slot(d::Dict, cmd::String, symbs::VMs, objtype, arg1, arg2)
 			_, n = put_in_slot("", ' ', arg1, arg2)
 			(n == 1) ? arg1 = val : arg2 = val
 		elseif (isa(val, String) || isa(val, Real) || isa(val, Symbol))
-			cmd *= string(val)
+			cmd *= string(val)::String
 		else  error("Wrong data type ($(typeof(val))) for option $(symbs[1])")
 		end
 	end
@@ -3917,7 +3918,7 @@ function arg_in_slot(d::Dict, cmd::String, symbs::VMs, objtype, arg1, arg2, arg3
 			_, n = put_in_slot("", ' ', arg1, arg2, arg3)
 			(n == 1) ? arg1 = val : (n == 2 ? arg2 = val : arg3 = val)
 		elseif (isa(val, String) || isa(val, Real) || isa(val, Symbol))
-			cmd *= string(" -", symbs[1], val)
+			cmd *= string(" -", symbs[1], val)::String
 		else  error("Wrong data type ($(typeof(val))) for option $(symbs[1])")
 		end
 	end
@@ -3926,12 +3927,12 @@ end
 
 function arg_in_slot(d::Dict, cmd::String, symbs::VMs, objtype, arg1, arg2, arg3, arg4)
 	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
-		cmd *= string(" -", symbs[1])
+		cmd *= string(" -", symbs[1])::String
 		if (isa(val, objtype))
 			_, n = put_in_slot("", ' ', arg1, arg2, arg3, arg4)
 			(n == 1) ? arg1 = val : (n == 2 ? arg2 = val : (n == 3 ? arg3 = val : arg4 = val))
 		elseif (isa(val, String) || isa(val, Real) || isa(val, Symbol))
-			cmd *= string(" -", symbs[1], val)
+			cmd *= string(" -", symbs[1], val)::String
 		else  error("Wrong data type ($(typeof(val))) for option $(symbs[1])")
 		end
 	end
@@ -3966,7 +3967,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 	
 	reverse_plot_axes!(cmd)		# If CTRL.pocket_J[4] != "   " there is some work to do. Otherwise return unchanged
 
-	output, opt_T, fname_ext, fname, ret_ps = fname_out(d, true)
+	output::String, opt_T::String, fname_ext::String, fname, ret_ps = fname_out(d, true)
 	(ret_ps) && (output = "") 	 						# Here we don't want to save to file
 	cmd, opt_T = prepare2geotif(d, cmd, opt_T, O)		# Settings for the GeoTIFF and KML cases
 	(finish) && (cmd = finish_PS(d, cmd, output, K, O))
@@ -4015,7 +4016,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 				cmd[k] = replace(cmd[k], " -J" => " -J" * opt_J * size_)
 				cmd[k] = replace(cmd[k], " -R" => opt_R)
 				have_Vd && println("\t",cmd[k])		# Useful to know what command was actually executed.
-				orig_J, orig_R = o, scan_opt(cmd[1], "-R")
+				orig_J, orig_R::String = o, scan_opt(cmd[1], "-R")
 			end
 		elseif (k >= 1+fi && !is_psscale && !is_pscoast && !is_basemap && CTRL.pocket_call[1] !== nothing)
 			# For nested calls that need to pass data
@@ -4266,7 +4267,7 @@ function digests_legend_bag(d::Dict, del::Bool=true)
 	     (haskey(legend_type[1].optsDict, :pos) || haskey(legend_type[1].optsDict, :position)) ?
 		 legend_type[1].optsDict : Dict()
 
-	if ((opt_D = add_opt(_d, "", "", [:pos :position],
+	if ((opt_D::String = add_opt(_d, "", "", [:pos :position],
 		(map_coord="g",plot_coord="x",norm="n",pos="j",width="+w",justify="+j",spacing="+l",offset="+o"))) == "")
 		#just = (isa(val, String) || isa(val, Symbol)) ? justify(val, true) : "TR"		# "TR" is the default
 		#just = (just == string(val) && length(just) == 2) ? just : "TR"	# WHAT WAS THIS ALL ABOUT?
@@ -4284,7 +4285,7 @@ function digests_legend_bag(d::Dict, del::Bool=true)
 	end
 
 	_d = (haskey(dd, :box) && dd[:box] !== nothing) ? dd : haskey(legend_type[1].optsDict, :box) ? legend_type[1].optsDict : Dict()
-	if ((opt_F = add_opt(_d, "", "", [:box],
+	if ((opt_F::String = add_opt(_d, "", "", [:box],
 		(clearance="+c", fill=("+g", add_opt_fill), inner="+i", pen=("+p", add_opt_pen), rounded="+r", shade="+s"), false)) == "")
 		opt_F = "+p0.5+gwhite"
 	else

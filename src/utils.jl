@@ -471,3 +471,15 @@ fields(arg) = fieldnames(typeof(arg))
 fields(arg::Array) = fieldnames(typeof(arg[1]))
 #feval(fn_str, args...) = eval(Symbol(fn_str))(args...)
 const numel = length
+
+#=
+function range(x)
+    min = typemax(eltype(x))
+    max = typemin(eltype(x))
+    for xi in x
+        min = ifelse(min > xi, xi, min)
+        max = ifelse(max < xi, xi, max)
+    end
+    return max - min
+end
+=#

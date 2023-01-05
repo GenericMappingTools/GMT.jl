@@ -160,7 +160,7 @@ function parse_INW_coast(d::Dict, symbs::Vector{Matrix{Symbol}}, cmd::String, fl
 				if (flags[k] == 'W')	# The shore case is ambiguous, this shore=(1,:red) could mean -W1/red or -W1,red 
 					cmd *= " -W" * parse_pen(val)	# We take it to mean pen only. Levels must use the NT form
 				else
-					cmd *= " -" * flags[k] * string(val[1])::String * "/" * parse_pen(val[2])
+					cmd *= " -" * flags[k] * string(val[1])::String * "/" * parse_pen(val[2])::String
 				end
 			else    cmd *= " -" * flags[k] * arg2str(val)	# Includes Str, Number or Symb
 			end
