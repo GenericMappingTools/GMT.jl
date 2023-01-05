@@ -132,10 +132,10 @@ function gd2gmt_helper(input, sds)
 				break
 			end
 		end
-		(nn == 0) && error("SUBDATASET $(sds) not found in " * input)
+		(nn == 0) && error("SUBDATASET $(sds) not found in " * string(input)::String)
 	end
 	if (isa(input, AbstractString))
-		sds_name = trim_SUBDATASET_str(input)
+		sds_name::String = trim_SUBDATASET_str(input)
 		((dataset = Gdal.unsafe_read(sds_name)) == C_NULL) && error("\tGDAL failed to read " * sds_name * "\n")
 	else
 		dataset = input

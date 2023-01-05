@@ -684,16 +684,16 @@ function colorize_candles_violins(D::Vector{<:GMTdataset}, ng::Int, be::Abstract
 	kk = 0
 	if (!isempty(colors))		# If we have a set of user colors
 		nc = length(colors)
-		for k in be  kk+=1; D[k].header *= " -G" * (vc > 0 ? colors[((vc % nc) != 0) ? vc % nc : nc] :
+		for k in be  kk+=1; D[k].header::String *= " -G" * (vc > 0 ? colors[((vc % nc) != 0) ? vc % nc : nc] :
 			                                                 colors[((kk % nc) != 0) ? kk % nc : nc])
 		end
 		return D
 	end
 
 	if (ng <= 8)
-		for k in be  D[k].header *= " -G" * (vc > 0 ? matlab_cycle_colors[vc] : matlab_cycle_colors[kk+=1])  end
+		for k in be  D[k].header::String *= " -G" * (vc > 0 ? matlab_cycle_colors[vc] : matlab_cycle_colors[kk+=1])  end
 	else	# Use the simple_distinct and cycle arround if needed (except in the vc (VariableColor per group case))
-		for k in be  kk+=1; D[k].header *= " -G" * (vc > 0 ? simple_distinct[vc] :
+		for k in be  kk+=1; D[k].header::String *= " -G" * (vc > 0 ? simple_distinct[vc] :
 		                                                     simple_distinct[((kk % 20) != 0) ? kk % 20 : 20])  end
 	end
 	return D
@@ -1374,7 +1374,7 @@ function marginalhist(arg1::Union{GDtype, Matrix{<:Real}}; first=true, kwargs...
 	end
 	(do_hexbin) && (d[:hexbin] = true;	d2[:C] = "number";	d2[:tiling] = "hex")
 
-	opt_J = parse_J(d, "")[2][5:end]	# Drop the initial " -JX"
+	opt_J::String = parse_J(d, "")[2][5:end]	# Drop the initial " -JX"
 	s = split(opt_J, "/")
 	W = size_unit(s[1])
 	if (length(s) > 1 && s[2] == "0" || s[2] == "?")	# In this case, recompute fig size to e isometric
@@ -1396,7 +1396,7 @@ function marginalhist(arg1::Union{GDtype, Matrix{<:Real}}; first=true, kwargs...
 		(Vd >= 0) && (d[:Vd] = Vd)		# Restore this in case
 		(Vd == 2) && return r			# Almost useless but at least wont error
 
-		cmd_hist, annotHst, doBH = "", "", true
+		cmd_hist::String, annotHst::String, doBH = "", "", true
 		if ((val = find_in_dict(d, [:histkw :hist_kw :histkwargs :hist_kwargs])[1]) !== nothing && isa(val, NamedTuple))
 			dh::Dict{Symbol, Any} = nt2dict(val);	dh[:Vd] = 2;
 			annotHst = ((val = find_in_dict(dh, [:annot])[1]) !== nothing) ? (val == true ? " -Ba" : arg2str(val)) : ""
@@ -1404,7 +1404,7 @@ function marginalhist(arg1::Union{GDtype, Matrix{<:Real}}; first=true, kwargs...
 			(((symb = is_in_dict(dh, [:frame :axes])) !== nothing) && (dh[symb] == :none || dh[symb] == "none")) && (doBH = false)
 		end
 		!contains(cmd_hist, "-W") && (cmd_hist *= (doDensity ? " -W0.5" : " -W0.1"))
-		!contains(cmd_hist, "-G") && (cmd_hist *= " -G" * (((val = find_in_dict(d, [:histcolor, :histfill])[1]) !== nothing) ? string(val) : "#0072BD"))
+		!contains(cmd_hist, "-G") && (cmd_hist *= " -G" * (((val = find_in_dict(d, [:histcolor, :histfill])[1]) !== nothing) ? string(val)::String : "#0072BD"))
 		contains(cmd_hist, " -R") && @warn("SHOULD NOT have tried to set histogram limits.")
 
 		# Top Histogram

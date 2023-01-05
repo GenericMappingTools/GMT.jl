@@ -110,7 +110,7 @@ function helper_cpt(d::Dict, cmd::String)
 	cmd, Tvec = parse_opt_range(d, cmd, "T")
 	if ((val = find_in_dict(d, [:name :save])[1]) !== nothing)
 		(IamModern[1]) && (cmd *= " -H")
-		cmd *=  " > " * string(val)
+		cmd *=  " > " * string(val)::String
 	elseif (IamModern[1])  cmd *= " -H"
 	end
 	return cmd, Tvec
