@@ -111,14 +111,14 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		arg1 = gmtread(cmd0);		cmd0 = ""
 	end
 
-	cmd = ""
+	cmd::String = ""
 	opt_Z = add_opt(d, "", "Z", [:Z :kind], (counts = "_0", count = "_0", freq = "_1", frequency = "_1",
-	                                         log_count = "_2", log_freq = "_3", log10_count = "_4", log10_freq = "_5", weights = "+w"), true, "")
+	                                         log_count = "_2", log_freq = "_3", log10_count = "_4", log10_freq = "_5", weights = "+w"), true, "")::String
 	opt_T = parse_opt_range(d, "", "")[1]		# [:T :range :inc :bin]
 	(isa(arg1, GItype)) && occursin("/", opt_T) && error("here 'bin' must be a scalar")
 
 	# If inquire, no plotting so do it and return
-	opt_I = add_opt(d, "", "I", [:I :inquire :bins], (all = "_O", no_zero = "_o"))
+	opt_I::String = add_opt(d, "", "I", [:I :inquire :bins], (all = "_O", no_zero = "_o"))
 	if (opt_I != "")
 		cmd *= opt_I
 		((r = dbg_print_cmd(d, cmd)) !== nothing) && return (!isa(arg1, GMTimage) && opt_T != "") ? r * " -T" * opt_T : r
@@ -135,7 +135,7 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		return gmt(gmt_proggy * cmd, arg1)
 	end
 
-	cmd, _, _, opt_R = parse_BJR(d, cmd, "histogram", O, " -JX14c/14c")
+	cmd, _, _, opt_R ::String= parse_BJR(d, cmd, "histogram", O, " -JX14c/14c")
 	cmd = parse_JZ(d, cmd)[1]
 	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :c :e :f :p :t :w :params], first)[1]
 	cmd = parse_these_opts(cmd, d, [[:A :horizontal], [:F :center], [:Q :cumulative], [:S :stairs]])

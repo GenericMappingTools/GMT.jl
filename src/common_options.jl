@@ -221,9 +221,9 @@ function build_opt_R(Val, symb::Symbol=Symbol())::String		# Generic function tha
 	elseif ((isvector(Val) || isa(Val, Tuple)) && (length(Val) == 4 || length(Val) == 6))
 		if (symb ∈ (:region_llur, :limits_llur, :limits_diag, :region_diag))
 			_val::Vector{<:Float64} = vec(Float64.(collect(Val)))
-			R = " -R" * @sprintf("%.15g/%.15g/%.15g/%.15g+r", _val[1], _val[3], _val[2], _val[4])
+			R = " -R" * @sprintf("%.15g/%.15g/%.15g/%.15g+r", _val[1], _val[3], _val[2], _val[4])::String
 		else
-			R = " -R" * rstrip(arg2str(Val), '/')		# Remove last '/'
+			R = " -R" * rstrip(arg2str(Val)::String, '/')		# Remove last '/'
 		end
 	elseif (isa(Val, GItype))
 		R = @sprintf(" -R%.15g/%.15g/%.15g/%.15g", Val.range[1], Val.range[2], Val.range[3], Val.range[4])
@@ -284,7 +284,7 @@ function build_opt_R(arg::NamedTuple, symb::Symbol=Symbol())::String
 		BB = (haskey(d, :adjust)) ? BB * "+r" * t : BB * "+R" * t
 	end
 
-	(haskey(d, :unit)) && (BB *= "+u" * string(d[:unit])[1])		# (e.g., -R-200/200/-300/300+uk)
+	(haskey(d, :unit)) && (BB *= "+u" * string(string(d[:unit])[1])::String)	# (e.g., -R-200/200/-300/300+uk)
 
 	(BB == "") && error("No, no, no. Nothing useful in the region named tuple arguments")
 	return " -R" * BB
@@ -363,7 +363,7 @@ function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bo
 		opt_J, mnemo = build_opt_J(val)		# mnemo = true when the projection name used a mnemonic for the projection
 	elseif (IamModern[1] && ((val = is_in_dict(d, [:figscale :fig_scale :scale :figsize :fig_size])) === nothing))
 		# Subplots do not rely in the classic default mechanism
-		(IamInset[1] && !contains(cmd, " -J")) && (cmd *= CTRL.pocket_J[1]) 	# Workaround GMT bug (#7005)
+		(IamInset[1] && !contains(cmd, " -J")) && (cmd *= CTRL.pocket_J[1]::String) 	# Workaround GMT bug (#7005)
 		return cmd, ""
 	end
 	CTRL.proj_linear[1] = (length(opt_J) >= 4 && opt_J[4] != 'X' && opt_J[4] != 'x' && opt_J[4] != 'Q' && opt_J[4] != 'q') ? false : true
@@ -383,16 +383,16 @@ function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bo
 			opt_J = IamSubplot[1] ? " -JX?" : (default != "guess" ? default : opt_J) 	# -JX was a working default
 		elseif (occursin("+width=", opt_J))		# OK, a proj4 string, don't touch it. Size already in.
 		elseif (occursin("+proj", opt_J))		# A proj4 string but no size info. Use default size
-			opt_J *= "+width=" * split(def_fig_size, '/')[1]
+			opt_J *= "+width=" * string(split(def_fig_size, '/')[1])::String
 		elseif (mnemo)							# Proj name was obtained from a name mnemonic and no size. So use default
 			opt_J = append_figsize(d, opt_J)
 		elseif (!isdigit(opt_J[end]) && (length(opt_J) < 6 || (isletter(opt_J[5]) && !isdigit(opt_J[6]))) )
 			if (!IamSubplot[1])
 				if (((val = find_in_dict(d, [:aspect], del)[1]) !== nothing) || haskey(d, :aspect3))
-					opt_J *= set_aspect_ratio(val, "", true, haskey(d, :aspect3))
+					opt_J *= set_aspect_ratio(val, "", true, haskey(d, :aspect3))::String
 				else
 					opt_J = (!startswith(opt_J, " -JX")) ? append_figsize(d, opt_J) :
-					         opt_J * def_fig_size; CTRL.pocket_J[2] = def_fig_size
+					         opt_J * def_fig_size::String; CTRL.pocket_J[2] = def_fig_size
 				end
 				#CTRL.pocket_J[1] = opt_J
 			elseif (!occursin("?", opt_J))		# If we dont have one ? for size/scale already
@@ -404,7 +404,7 @@ function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bo
 			if (opt_J == " -J")
 				(CTRL.pocket_J[1] != s) &&		# Composed funs (ex: fill_between) would trigger this warning
 					println("SEVERE WARNING: When appending a new fig with a different size you SHOULD set the `projection`. \n\tAdding `projection=:linear` at your own risk.");
-				opt_J *= "X" * s[4:end]
+				opt_J *= "X" * s[4:end]::String
 			else
 				opt_J = s
 			end
@@ -474,11 +474,11 @@ function helper_append_figsize(d::Dict, opt_J::String, O::Bool, del::Bool=true):
 		end
 		if (opt_J == " -JX")
 			val = check_flipaxes(d, val)
-			opt_J = isletter(val[1]) ? " -J" * val : " -Jx" * val		# FRAGILE
+			opt_J::String = isletter(val[1]) ? " -J" * val : " -Jx" * val		# FRAGILE
 		else                          opt_J = append_figsize(d, opt_J, val, true)
 		end
 	else										# A fig SIZE request
-		(haskey(d, :units)) && (val *= d[:units][1])
+		(haskey(d, :units)) && (val *= d[:units][1]::String)
 		if (occursin("+proj", opt_J)) opt_J *= "+width=" * val
 		else                          opt_J = append_figsize(d, opt_J, val)
 		end
@@ -492,7 +492,7 @@ function append_figsize(d::Dict, opt_J::String, width::String="", scale::Bool=fa
 	# use the DEF_FIG_SIZE, otherwise use WIDTH that can be a size or a scale.
 
 	if (width == "")
-		width = (IamSubplot[1]) ? "?" : split(def_fig_size, '/')[1]		# In subplot "?" is auto width
+		width::String = (IamSubplot[1]) ? "?" : split(def_fig_size, '/')[1]		# In subplot "?" is auto width
 	elseif (IamSubplot[1] && (width == "auto" || width == "auto,auto"))	# In subplot one can say figsize="auto" or figsize="auto,auto"
 		width = (width == "auto") ? "?" : "?/?"
 	elseif (((val = find_in_dict(d, [:aspect])[1]) !== nothing) || haskey(d, :aspect3))
@@ -502,7 +502,7 @@ function append_figsize(d::Dict, opt_J::String, width::String="", scale::Bool=fa
 		end
 	end
 
-	slash = "";		de = ""
+	slash::String = "";		de::String = ""
 	if (opt_J[end] == 'd')  opt_J = opt_J[1:end-1];		de = "d"  end
 	if (isdigit(opt_J[end]) && ~startswith(opt_J, " -JXp"))    slash = "/";#opt_J *= "/" * width
 	else
@@ -517,7 +517,7 @@ function append_figsize(d::Dict, opt_J::String, width::String="", scale::Bool=fa
 				w_h = split(width,"/")
 				if (length(w_h) == 2)		# Must find which (or both) axis is scaling be applyied
 					(ax == 'x') ? w_h[1] *= flag : ((ax == 'y') ? w_h[2] *= flag : w_h .*= flag)
-					width = w_h[1] * '/' * w_h[2]
+					width = w_h[1] * "/" * w_h[2]
 				elseif (ax == 'y')  error("Can't select Y scaling and provide X dimension only")
 				else
 					width *= flag
@@ -624,7 +624,7 @@ function build_opt_J(Val)::Tuple{String, Bool}
 	return out, mnemo
 end
 
-function parse_proj(p::String)
+function parse_proj(p::String)::Tuple{String, Bool}
 	# See "p" if is a string with a projection name. If yes, convert it into the corresponding -J syntax
 	(p == "") && return p, false
 
@@ -685,8 +685,8 @@ function parse_proj(p::NamedTuple)
 	# maybe a scalar but the validity of that is not checked here).
 	d = nt2dict(p)					# Convert to Dict
 	if ((val = find_in_dict(d, [:name])[1]) !== nothing)
-		prj, mnemo = parse_proj(string(val))
-		if (prj != "Cyl_stere" && prj == string(val))
+		prj::String, mnemo = parse_proj(string(val))
+		if (prj != "Cyl_stere" && prj == string(val)::String)
 			@warn("Very likely the projection name ($prj) is unknown to me. Expect troubles")
 		end
 	else
@@ -700,8 +700,8 @@ function parse_proj(p::NamedTuple)
 		elseif (isa(val, Array) || isa(val, Tuple) && length(val) == 2)
 			if (isa(val, Array))   center = @sprintf("%.12g/%.12g", val[1], val[2])
 			else		# Accept also strings in tuple (Needed for movie)
-				center  = (isa(val[1], String)) ? val[1] * "/" : @sprintf("%.12g/", val[1])
-				center *= (isa(val[2], String)) ? val[2] : @sprintf("%.12g", val[2])
+				center  = (isa(val[1], String)) ? val[1]::String * "/" : @sprintf("%.12g/", val[1])
+				center *= (isa(val[2], String)) ? val[2]::String : @sprintf("%.12g", val[2])::String
 			end
 		end
 	end
@@ -713,7 +713,7 @@ function parse_proj(p::NamedTuple)
 		if     (isa(val, String))  parallels = "/" * val
 		elseif (isa(val, Real))    parallels = @sprintf("/%.12g", val)
 		elseif (isa(val, Array) || isa(val, Tuple) && (length(val) <= 3 || length(val) == 6))
-			parallels = join([@sprintf("/%.12g",x) for x in val])
+			parallels = join([@sprintf("/%.12g",x)::String for x in val])
 		end
 	end
 
@@ -813,7 +813,7 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 	def_fig_axes_::String  = (IamModern[1]) ? "" : def_fig_axes[1]		# def_fig_axes is a global const
 	def_fig_axes3_::String = (IamModern[1]) ? "" : def_fig_axes3[1]		# def_fig_axes is a global const
 
-	have_Bframe, got_Bstring, have_axes = false, false, false	# To know if the axis() function returns a -B<frame> setting
+	have_Bframe, got_Bstring, have_axes::Bool = false, false, false	# To know if the axis() function returns a -B<frame> setting
 
 	extra_parse = true;		have_a_none = false
 	if ((val = find_in_dict(d, [:B :frame :axes :axis], del)[1]) !== nothing)		# These four are aliases
@@ -871,7 +871,7 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 			end
 			if (!what_B[1] && opt_B != "")		# If user didn't touch the axes part, so we'll keep the default.
 				if (get(val, :axes, nothing) != :none)	# axes=:none is to be respected.
-					def_Baxes = join(def_opt_B_split[1:end-1], " ")	# => "-Baf" when opt_B holds the default " -Baf -BWSen"
+					def_Baxes::String = join(def_opt_B_split[1:end-1], " ")	# => "-Baf" when opt_B holds the default " -Baf -BWSen"
 					opt_B = " " * def_Baxes * opt_B
 				end
 			end
@@ -906,7 +906,7 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 
 	# Let the :title and x|y_label be given on main kwarg list. Risky if used with NamedTuples way.
 	t::String = ""		# Use the trick to replace blanks by Char(127) (invisible) and undo it in extra_parse
-	extra_par = ""
+	extra_par::String, tt::String, ep::String = "", "", ""
 	if (haskey(d, :title))    tt, extra_par = titlices(d, d[:title], title); t *= "+t" * tt  end
 	if (haskey(d, :subtitle)) tt, ep = titlices(d, d[:subtitle], subtitle);	 t *= "+s" * tt;   extra_par *= ep  end
 	if (haskey(d, :xlabel))   tt, ep = titlices(d, d[:xlabel], xlabel);      t *= " x+l" * tt; extra_par *= ep  end
@@ -932,10 +932,10 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 	is_still_Bdef = (opt_B == def_fig_axes_ || opt_B == def_fig_axes3_)
 	for symb in [:xaxis :yaxis :zaxis :axis2 :xaxis2 :yaxis2]
 		if (haskey(d, symb) && !isa(d[symb], NamedTuple) && !isa(d[symb], Dict))
-			_ax = string(symb);
-			_arg = string(d[symb])
-			a = (_arg[1] != _ax[1]) ? _ax[1] : ""	# This test avoids that :xaxis = "xg10" becomes xxg10
-			_ps = (_ax[end] == '2') ? "s" : "p"
+			_ax::String = string(symb);
+			_arg::String = string(d[symb])
+			a::String = (_arg[1] != _ax[1]) ? string(_ax[1]) : ""	# This test avoids that :xaxis = "xg10" becomes xxg10
+			_ps::String = (_ax[end] == '2') ? "s" : "p"
 			opt_B = (is_still_Bdef) ? string(" -B", _ps, a, d[symb]) : string(opt_B, " -B", _ps, a, d[symb])
 			is_still_Bdef, extra_parse = false, false
 			delete!(d, symb)
@@ -1121,7 +1121,7 @@ ylabel(; str::AbstractString="", font=nothing, offset=0) = titles_e_comp(str, fo
 zlabel(; str::AbstractString="", font=nothing, offset=0) = titles_e_comp(str, font, offset, "z")
 function titles_e_comp(str::AbstractString, fnt, offset, tipo::String="")
 	f = (fnt !== nothing) ? font(fnt) : ""
-	o = (offset != 0) ? string(offset)  : ""
+	o::String = (offset != 0) ? string(offset) : ""
 	if (tipo == "")
 		r2 = (f != "") ? " --FONT_TITLE=" * f : ""
 		(o != "") && (r2 *= " --MAP_TITLE_OFFSET=" * o)
@@ -1423,7 +1423,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_write(d::Dict, cmd::String)::String
 	if ((val = find_in_dict(d, [:write :savefile :|>], true)[1]) !== nothing)
-		cmd *=  " > " * val
+		cmd *=  " > " * val::String
 	end
 	return cmd
 end
@@ -1431,7 +1431,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_append(d::Dict, cmd::String)::String
 	if ((val = find_in_dict(d, [:append], true)[1]) !== nothing)
-		cmd *=  " >> " * val
+		cmd *=  " >> " * val::String
 	end
 	return cmd
 end
@@ -1442,7 +1442,7 @@ function parse_helper(cmd::String, d::Dict, symbs::VMs, opt::String, sep='/')
 	(show_kwargs[1]) && return (print_kwarg_opts(symbs, "(Common option not yet expanded)"),"")
 	opt_val::String = ""
 	if ((val = find_in_dict(d, symbs, true)[1]) !== nothing)
-		opt_val = opt * arg2str(val, sep)
+		opt_val = opt * arg2str(val, sep)::String
 		cmd *= opt_val
 	end
 	return cmd, opt_val
@@ -1758,11 +1758,11 @@ function build_pen(d::Dict, del::Bool=false)::String
 end
 
 # ----------------------------------------------------------------------------------------------------------
-function break_pen(pen::AbstractString)
+function break_pen(pen::AbstractString)::Tuple{String, String, String}
 	# Break up a pen string in its three tokens. PEN can be "lw,lc,ls", or "lw,ls", or ",,ls" etc.
 	(pen == "") && return "", "", ""
 	sp = split(pen, ',')
-	lw, lc, ls = sp[1], "", ""
+	lw::String, lc::String, ls::String = string(sp[1]), "", ""
 	(length(sp) == 3) && (ls = string(sp[3]))
 	if (length(sp) > 1)
 		t2 = lowercase(sp[2])
@@ -1781,15 +1781,15 @@ function parse_arg_and_pen(arg::Tuple, sep="/", pen::Bool=true, opt="")::String
 	# the ARG tuple has 4, 6, etc elements (arg1,(pen), arg2,(pen), arg3,(pen), ...)
 	# When pen=false we call the get_color function instead
 	# SEP is normally "+g" when this function is used in the "parse_arg_and_color" mode
-	if (isa(arg[1], String) || isa(arg[1], Symbol) || isa(arg[1], Real))  s = string(arg[1])
+	if (isa(arg[1], String) || isa(arg[1], Symbol) || isa(arg[1], Real))  s::String = string(arg[1])
 	else	error("parse_arg_and_pen: Nonsense first argument")
 	end
 	if (length(arg) > 1)
-		if (isa(arg[2], Tuple))  s *= sep * (pen ? parse_pen(arg[2]) : get_color(arg[2]))
-		else                     s *= sep * string(arg[2])		# Whatever that is
+		if (isa(arg[2], Tuple))  s *= sep::String * (pen ? parse_pen(arg[2]) : get_color(arg[2]))::String
+		else                     s *= sep::String * string(arg[2])::String		# Whatever that is
 		end
 	end
-	if (length(arg) >= 4) s *= " " * opt * parse_arg_and_pen((arg[3:end]))  end		# Recursive call
+	if (length(arg) >= 4) s *= " " * opt::String * parse_arg_and_pen((arg[3:end]))::String end		# Recursive call
 	return s
 end
 
@@ -2153,14 +2153,14 @@ function genFun(this_key::Symbol, user_input::NamedTuple, mapa::NamedTuple)::Str
 	(!haskey(mapa, this_key)) && return		# Should it be a error?
 	out::String = ""
 	key = keys(user_input)					# user_input = (rows=1, fill=:red)
-	val_namedTup = mapa[this_key]				# water=(rows="my", cols="mx", fill=add_opt_fill)
+	val_namedTup = mapa[this_key]			# water=(rows="my", cols="mx", fill=add_opt_fill)
 	for k = 1:length(user_input)
 		if (haskey(val_namedTup, key[k]))
 			val = val_namedTup[key[k]]
 			if (isa(val, Function))
-				if (val == add_opt_fill) out *= val(Dict(key[k] => user_input[key[k]]))  end
+				if (val == add_opt_fill) out *= val(Dict(key[k] => user_input[key[k]]))::String end
 			else
-				out *= string(val_namedTup[key[k]])
+				out *= string(val_namedTup[key[k]])::String
 			end
 		end
 	end
@@ -2177,46 +2177,46 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)::String
 	# translates to:	"+a1/0.5-b2"
 	key = keys(nt);						# The keys actually used in this call
 	d = nt2dict(mapa)					# The flags mapping as a Dict (all possible flags of the specific option)
-	cmd::String = "";		cmd_hold = Array{String,1}(undef, 2);	order = zeros(Int,2,1);  ind_o = 0
-	for k = 1:numel(key)				# Loop over the keys of option's tuple
+	cmd::String = "";		cmd_hold = Vector{String}(undef, 2);	order = zeros(Int,2,1);  ind_o = 0
+	for k = 1:numel(key)::Int			# Loop over the keys of option's tuple
 		!haskey(d, key[k]) && continue
 		(isa(nt[k], Dict)) && (nt[k] = dict2nt(nt[k]))
 		if (isa(d[key[k]], Tuple))		# Complexify it. Here, d[key[k]][2] must be a function name.
 			if (isa(nt[k], NamedTuple))
 				if (d[key[k]][2] == add_opt_fill)
-					cmd *= d[key[k]][1] * d[key[k]][2]("", Dict(key[k] => nt[k]), [key[k]])
+					cmd *= string(d[key[k]][1])::String * d[key[k]][2]("", Dict(key[k] => nt[k]), [key[k]])::String
 				else
 					local_opt = (d[key[k]][2] == helper_decorated) ? true : nothing		# 'true' means single argout
-					cmd *= d[key[k]][1] * d[key[k]][2](nt2dict(nt[k]), local_opt)
+					cmd *= string(d[key[k]][1])::String * d[key[k]][2](nt2dict(nt[k]), local_opt)::String
 				end
 			else						#
 				if (length(d[key[k]]) == 2)		# Run the function
-					cmd *= d[key[k]][1] * d[key[k]][2](Dict(key[k] => nt[k]), [key[k]])
+					cmd *= string(d[key[k]][1])::String * d[key[k]][2](Dict(key[k] => nt[k]), [key[k]])::String
 				else					# This branch is to deal with options -Td, -Tm, -L and -D of basemap & psscale
 					ind_o += 1
 					if (d[key[k]][2] === nothing)  cmd_hold[ind_o] = d[key[k]][1]	# Only flag char and order matters
 					elseif (length(d[key[k]][1]) == 2 && d[key[k]][1][1] == '-' && !isa(nt[k], Tuple))	# e.g. -L (&g, arg2str, 1)
 						cmd_hold[ind_o] = string(d[key[k]][1][2])	# where g<scalar>
 					else		# Run the fun
-						cmd_hold[ind_o] = (d[key[k]][1] == "") ? d[key[k]][2](nt[k]) : d[key[k]][1][end] * d[key[k]][2](nt[k])
+						cmd_hold[ind_o] = (d[key[k]][1] == "") ? d[key[k]][2](nt[k]) : string(d[key[k]][1][end])::String * d[key[k]][2](nt[k])::String
 					end
 					order[ind_o]    = d[key[k]][3];				# Store the order of this sub-option
 				end
 			end
 		elseif (isa(d[key[k]], NamedTuple))		#
 			if (isa(nt[k], NamedTuple))
-				cmd *= genFun(key[k], nt[k], mapa)
+				cmd *= genFun(key[k], nt[k], mapa)::String
 			else						# Create a NT where value = key. For example for: surf=(waterfall=:rows,)
 				if (!isa(nt[1], Tuple))			# nt[1] may be a symbol, or string. E.g.  surf=(water=:cols,)
-					cmd *= genFun(key[k], (; Symbol(nt[1]) => nt[1]), mapa)
+					cmd *= genFun(key[k], (; Symbol(nt[1]) => nt[1]), mapa)::String
 				else
 					if ((val = find_in_dict(d, [key[1]])[1]) !== nothing)		# surf=(waterfall=(:cols,:red),)
-						cmd *= genFun(key[k], (; Symbol(nt[1][1]) => nt[1][1], keys(val)[end] => nt[1][end]), mapa)
+						cmd *= genFun(key[k], (; Symbol(nt[1][1]) => nt[1][1], keys(val)[end] => nt[1][end]), mapa)::String
 					end
 				end
 			end
 		elseif (d[key[k]] == "1")		# Means that only first char in value is retained. Used with units
-			t = arg2str(nt[k])
+			t::String = arg2str(nt[k])
 			if (t != "")  cmd *= t[1]
 			else          cmd *= "1"	# "1" is itself the flag
 			end
@@ -2226,15 +2226,15 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)::String
 				else                            append!(arg, reshape(collect(nt[k]), :))
 				end
 			end
-			cmd *= d[key[k]][2:end]		# And now append the flag
+			cmd *= string(d[key[k]][2:end])::String		# And now append the flag
 		elseif (d[key[k]] != "" && d[key[k]][1] == '_')		# Means ignore the content, only keep the flag
-			cmd *= d[key[k]][2:end]		# Just append the flag
+			cmd *= string(d[key[k]][2:end])::String		# Just append the flag
 		elseif (d[key[k]] != "" && d[key[k]][end] == '1')	# Means keep the flag and only first char of arg
-			cmd *= d[key[k]][1:end-1] * string(nt[k])[1]
+			cmd *= string(d[key[k]][1:end-1])::String * string(string(nt[k])[1])::String
 		elseif (d[key[k]] != "" && d[key[k]][end] == '#')	# Means put flag at the end and make this arg first in cmd (coast -W)
-			cmd = arg2str(nt[k]) * d[key[k]][1:end-1] * cmd
+			cmd = arg2str(nt[k])::String * string(d[key[k]][1:end-1])::String * cmd
 		else
-			cmd *= d[key[k]] * arg2str(nt[k])
+			cmd *= d[key[k]]::String * arg2str(nt[k])::String
 		end
 	end
 
@@ -2338,7 +2338,7 @@ function add_opt_cpt(d::Dict, cmd::String, symbs::VMs, opt::Char, N_args::Int=0,
 
 	(show_kwargs[1]) && return print_kwarg_opts(symbs, "GMTcpt | Tuple | Array | String | Number"), arg1, arg2, N_args
 
-	function equalize(d, arg1, cptname, opt_T)::GMTcpt
+	function equalize(d, arg1, cptname::String, opt_T::String)::GMTcpt
 		if ((isa(arg1, GMTgrid) || isa(arg1, String)) && (val_eq = find_in_dict(d, [:equalize])[1]) !== nothing)
 			n::Int = convert(Int, val_eq)				# If val is other than Bool or number it will error
 			if (isa(arg1, String))
@@ -2682,11 +2682,11 @@ function axis(D::Dict=Dict(); x::Bool=false, y::Bool=false, z::Bool=false, secon
 
 	primo = secondary ? "s" : "p"					# Primary or secondary axis
 	(z) && (primo = "")								# Z axis have no primary/secondary
-	axe = x ? "x" : (y ? "y" : (z ? "z" : ""))		# Are we dealing with a specific axis?
+	axe::String = x ? "x" : (y ? "y" : (z ? "z" : ""))		# Are we dealing with a specific axis?
 
 	# See if we have a request for axis direction flipping. If yes, just store that info to be used elsewhere.
 	# But it's so fck irritating that we can't change a string. Have to do this stupid gymnastic.
-	_jx, _jy, _jz = CTRL.pocket_J[4][1], CTRL.pocket_J[4][2], CTRL.pocket_J[4][3]
+	_jx, _jy, _jz = CTRL.pocket_J[4][1]::Char, CTRL.pocket_J[4][2]::Char, CTRL.pocket_J[4][3]::Char
 	if (axe == "")
 		(is_in_dict(d, [:xflip, :flipx], del=true) !== nothing) && (_jx = 'Y')
 		(is_in_dict(d, [:yflip, :flipy], del=true) !== nothing) && (_jy = 'Y')
@@ -2701,14 +2701,14 @@ function axis(D::Dict=Dict(); x::Bool=false, y::Bool=false, z::Bool=false, secon
 	opt::String = " -B"
 	if ((val = find_in_dict(d, [:axes :frame])[1]) !== nothing)		# The :frame here makes no sense, I think.
 		isa(val, Dict) && (val = dict2nt(val))
-		o = helper0_axes(val)
+		o::String = helper0_axes(val)
 		opt = (o == "full") ? opt * "WSEN" : (o == "none") ? opt : opt * o
 	end
 
-	haskey(d, :corners) && (opt *= string(d[:corners]))		# 1234
+	haskey(d, :corners) && (opt *= string(d[:corners])::String)		# 1234
 	val, symb = find_in_dict(d, [:fill :bg :bgcolor :background], false)
 	if (val !== nothing)
-		tB = "+g" * add_opt_fill(d, [symb])
+		tB::String = "+g" * add_opt_fill(d, [symb])::String
 		opt *= tB					# Works, but patterns can screw
 		CTRL.pocket_B[2] = tB		# Save this one because we may need to revert it during psclip parsing
 	end
@@ -2716,36 +2716,36 @@ function axis(D::Dict=Dict(); x::Bool=false, y::Bool=false, z::Bool=false, secon
 	((val = find_in_dict(d, [:Yfill :Ybg :Ywall])[1]) !== nothing) && (opt = add_opt_fill(val, opt, "+y"))
 	((val = find_in_dict(d, [:Zfill :Zbg :Zwall])[1]) !== nothing) && (opt = add_opt_fill(val, opt, "+z"))
 	((p = add_opt_pen(d, [:wall_outline], "+w")) != "") && (opt *= p)
-	(haskey(d, :internal)) && (opt *= "+i" * arg2str(d[:internal]))
+	(haskey(d, :internal)) && (opt *= "+i" * arg2str(d[:internal])::String)
 	(haskey(d, :cube))    && (opt *= "+b")
 	(haskey(d, :noframe)) && (opt *= "+n")
-	(haskey(d, :pole))    && (opt *= "+o" * arg2str(d[:pole]))
+	(haskey(d, :pole))    && (opt *= "+o" * arg2str(d[:pole])::String)
 	if (haskey(d, :title))
-		opt *= "+t" * str_with_blancs(arg2str(d[:title]))
-		(haskey(d, :subtitle)) && (opt *= "+s" * str_with_blancs(arg2str(d[:subtitle])))
+		opt *= "+t" * str_with_blancs(arg2str(d[:title]))::String
+		(haskey(d, :subtitle)) && (opt *= "+s" * str_with_blancs(arg2str(d[:subtitle])::String))
 	end
 
-	opt_Bframe = (opt != " -B") ? opt : ""		# Make a copy to append only at the end
+	opt_Bframe::String = (opt != " -B") ? opt : ""		# Make a copy to append only at the end
 	opt = ""
 
 	# axes supps
 	ax_sup::String = ""
-	(haskey(d, :seclabel)) && (ax_sup *= "+s" * str_with_blancs(arg2str(d[:seclabel])) )
+	(haskey(d, :seclabel)) && (ax_sup *= "+s" * str_with_blancs(arg2str(d[:seclabel])::String) )
 
 	if (haskey(d, :label))
-		opt *= " -B" * primo * axe * "+l"  * str_with_blancs(arg2str(d[:label])) * ax_sup
+		opt *= " -B" * primo * axe * "+l"  * str_with_blancs(arg2str(d[:label])::String) * ax_sup
 	else
-		if (haskey(d, :xlabel))  opt *= " -B" * primo * "x+l" * str_with_blancs(arg2str(d[:xlabel])) * ax_sup  end
-		if (haskey(d, :zlabel))  opt *= " -B" * primo * "z+l" * str_with_blancs(arg2str(d[:zlabel])) * ax_sup  end
+		if (haskey(d, :xlabel))  opt *= " -B" * primo * "x+l" * str_with_blancs(arg2str(d[:xlabel])::String) * ax_sup  end
+		if (haskey(d, :zlabel))  opt *= " -B" * primo * "z+l" * str_with_blancs(arg2str(d[:zlabel])::String) * ax_sup  end
 		if (haskey(d, :ylabel))
-			opt *= " -B" * primo * "y+l" * str_with_blancs(arg2str(d[:ylabel])) * ax_sup
+			opt *= " -B" * primo * "y+l" * str_with_blancs(arg2str(d[:ylabel])::String) * ax_sup
 		elseif (haskey(d, :Yhlabel))
 			opt_L = (axe != "y") ? "y+L" : "+L"
-			opt *= " -B" * primo * axe * opt_L * str_with_blancs(arg2str(d[:Yhlabel])) * ax_sup
+			opt *= " -B" * primo * axe * opt_L * str_with_blancs(arg2str(d[:Yhlabel])::String) * ax_sup
 		end
-		haskey(d, :alabel) && (opt *= " -Ba+l" * str_with_blancs(arg2str(d[:alabel])))	# For Ternary
-		haskey(d, :blabel) && (opt *= " -Bb+l" * str_with_blancs(arg2str(d[:blabel])))
-		haskey(d, :clabel) && (opt *= " -Bc+l" * str_with_blancs(arg2str(d[:clabel])))
+		haskey(d, :alabel) && (opt *= " -Ba+l" * str_with_blancs(arg2str(d[:alabel])::String))	# For Ternary
+		haskey(d, :blabel) && (opt *= " -Bb+l" * str_with_blancs(arg2str(d[:blabel])::String))
+		haskey(d, :clabel) && (opt *= " -Bc+l" * str_with_blancs(arg2str(d[:clabel])::String))
 	end
 
 	# intervals
@@ -2760,25 +2760,25 @@ function axis(D::Dict=Dict(); x::Bool=false, y::Bool=false, z::Bool=false, secon
 		end
 		ints *= tB;	CTRL.pocket_B[1] = tB
 	end
-	if (haskey(d, :prefix))     ints *= "+p" * str_with_blancs(arg2str(d[:prefix]))  end
-	if (haskey(d, :suffix))     ints *= "+u" * str_with_blancs(arg2str(d[:suffix]))  end
+	if (haskey(d, :prefix))     ints *= "+p" * str_with_blancs(arg2str(d[:prefix])::String)  end
+	if (haskey(d, :suffix))     ints *= "+u" * str_with_blancs(arg2str(d[:suffix])::String)  end
 	if (haskey(d, :slanted))
-		s = arg2str(d[:slanted])
+		s::String = arg2str(d[:slanted])
 		if (s != "")
 			if (!isdigit(s[1]) && s[1] != '-' && s[1] != '+')
-				s = s[1]
+				s = string(s[1])
 				(axe == "y" && s != 'p') && error("slanted option: Only 'parallel' is allowed for the y-axis")
 			end
 			ints *= "+a" * s
 		end
 	end
 	if (haskey(d, :custom))
-		if (isa(d[:custom], String))  ints *= 'c' * d[:custom]
+		if (isa(d[:custom], String))  ints *= "c" * d[:custom]::String
 		else
-			if ((r = helper3_axes(d[:custom], primo, axe)) != "")  ints *= 'c' * r  end
+			if ((r = helper3_axes(d[:custom], primo, axe)) != "")  ints *= "c" * r  end
 		end
 	elseif (haskey(d, :customticks))			# These ticks are custom axis
-		((r = ticks(d[:customticks]; axis=axe, primary=primo)) != "") && (ints *= 'c' * r)
+		((r = ticks(d[:customticks]; axis=axe, primary=primo)) != "") && (ints *= "c" * r)
 	elseif (haskey(d, :pi))
 		if (isa(d[:pi], Real))
 			ints = string(ints, d[:pi], "pi")				# (n)pi
@@ -2792,8 +2792,8 @@ function axis(D::Dict=Dict(); x::Bool=false, y::Bool=false, z::Bool=false, secon
 		elseif (s == "exp")                  ints *= 'p'
 		end
 	end
-	if     (haskey(d, :phase_add))  ints *= "+" * arg2str(d[:phase_add])
-	elseif (haskey(d, :phase_sub))  ints *= "-" * arg2str(d[:phase_sub])
+	if     (haskey(d, :phase_add))  ints *= "+" * arg2str(d[:phase_add])::String
+	elseif (haskey(d, :phase_sub))  ints *= "-" * arg2str(d[:phase_sub])::String
 	end
 	(ints != "") && (opt = " -B" * primo * axe * ints * opt)
 
@@ -3131,9 +3131,9 @@ function decorated(;kwargs...)::String
 		end
 		if (haskey(d, :angle))   cmd = string(cmd, "+a", d[:angle]) end
 		if (haskey(d, :debug))   cmd *= "+d"  end
-		if (haskey(d, :fill))    cmd *= "+g" * get_color(d[:fill])  end
-		if (haskey(d, :nudge))   cmd *= "+n" * arg2str(d[:nudge])   end
-		if (haskey(d, :n_data))  cmd *= "+w" * arg2str(d[:n_data])  end
+		if (haskey(d, :fill))    cmd *= "+g" * get_color(d[:fill])::String  end
+		if (haskey(d, :nudge))   cmd *= "+n" * arg2str(d[:nudge])::String   end
+		if (haskey(d, :n_data))  cmd *= "+w" * arg2str(d[:n_data])::String  end
 		(optD == "") && (optD = "d")		# Really need to improve the algo of this
 		opt_S = " -S~"
 	elseif (haskey(d, :quoted))				# -Sq mode (quoted lines).
@@ -3142,7 +3142,7 @@ function decorated(;kwargs...)::String
 		(optD == "") && (optD = "d")		# Really need to improve the algo of this
 		opt_S = " -Sq"
 	else									# -Sf mode (front lines).
-		((val = find_in_dict(d, [:size])[1]) !== nothing) && (cmd *= "/" * arg2str(val))
+		((val = find_in_dict(d, [:size])[1]) !== nothing) && (cmd *= "/" * arg2str(val)::String)
 		if     (haskey(d, :left))  cmd *= "+l"
 		elseif (haskey(d, :right)) cmd *= "+r"
 		elseif (haskey(d, :side))
@@ -3150,14 +3150,14 @@ function decorated(;kwargs...)::String
 			(c == 'l' || c == 'r') && (cmd *= "+" * c)	# Otherwise user screwed and we ignore the 'side'
 		end
 		if (haskey(d, :symbol))
-			symb = string(d[:symbol])[1]
+			symb::Char = string(d[:symbol])[1]
 			if (symb == 'b' || symb == 'c' || symb == 'f' || symb == 't' || symb == 's')
 				cmd *= "+" * symb
 			elseif (symb == 'a')  cmd *= "+S"
 			else                  @warn(string("DECORATED: unknown symbol: ", d[:symbol]))
 			end
 		end
-		if (haskey(d, :offset))  cmd *= "+o" * arg2str(d[:offset]);	delete!(d, :offset)  end
+		if (haskey(d, :offset))  cmd *= "+o" * arg2str(d[:offset])::String;	delete!(d, :offset)  end
 		opt_S = " -Sf"
 	end
 
@@ -3248,30 +3248,30 @@ function parse_quoted(d::Dict, opt)::String
 	cmd::String = (isa(opt, String)) ? opt : ""			# Need to do this to prevent from calls that don't set OPT
 	if (haskey(d, :angle))   cmd  = string(cmd, "+a", d[:angle])  end
 	if (haskey(d, :debug))   cmd *= "+d"  end
-	if (haskey(d, :clearance ))  cmd *= "+c" * arg2str(d[:clearance]) end
+	if (haskey(d, :clearance ))  cmd *= "+c" * arg2str(d[:clearance])::String end
 	if (haskey(d, :delay))   cmd *= "+e"  end
-	if (haskey(d, :font))    cmd *= "+f" * font(d[:font])    end
-	if (haskey(d, :color))   cmd *= "+g" * arg2str(d[:color])   end
+	if (haskey(d, :font))    cmd *= "+f" * font(d[:font])::String    end
+	if (haskey(d, :color))   cmd *= "+g" * arg2str(d[:color])::String   end
 	if (haskey(d, :justify)) cmd = string(cmd, "+j", d[:justify]) end
 	if (haskey(d, :const_label)) cmd = string(cmd, "+l", str_with_blancs(d[:const_label]))  end
-	if (haskey(d, :nudge))   cmd *= "+n" * arg2str(d[:nudge])   end
+	if (haskey(d, :nudge))   cmd *= "+n" * arg2str(d[:nudge])::String   end
 	if (haskey(d, :rounded)) cmd *= "+o"  end
-	if (haskey(d, :min_rad)) cmd *= "+r" * arg2str(d[:min_rad]) end
-	if (haskey(d, :unit))    cmd *= "+u" * arg2str(d[:unit])    end
+	if (haskey(d, :min_rad)) cmd *= "+r" * arg2str(d[:min_rad])::String end
+	if (haskey(d, :unit))    cmd *= "+u" * arg2str(d[:unit])::String    end
 	if (haskey(d, :curved))  cmd *= "+v"  end
-	if (haskey(d, :n_data))  cmd *= "+w" * arg2str(d[:n_data])  end
-	if (haskey(d, :prefix))  cmd *= "+=" * arg2str(d[:prefix])  end
-	if (haskey(d, :suffices)) cmd *= "+x" * arg2str(d[:suffices])  end		# Only when -SqN2
+	if (haskey(d, :n_data))  cmd *= "+w" * arg2str(d[:n_data])::String  end
+	if (haskey(d, :prefix))  cmd *= "+=" * arg2str(d[:prefix])::String  end
+	if (haskey(d, :suffices)) cmd *= "+x" * arg2str(d[:suffices])::String  end		# Only when -SqN2
 	if (haskey(d, :label))
 		if (isa(d[:label], String))
-			cmd *= "+L" * d[:label]
+			cmd *= "+L" * d[:label]::String
 		elseif (isa(d[:label], Symbol))
 			if     (d[:label] == :header)  cmd *= "+Lh"
 			elseif (d[:label] == :input)   cmd *= "+Lf"
 			else   error("Wrong content for the :label option. Must be only :header or :input")
 			end
 		elseif (isa(d[:label], Tuple))
-			if     (d[:label][1] == :plot_dist)  cmd *= "+Ld" * string(d[:label][2])
+			if     (d[:label][1] == :plot_dist)  cmd *= "+Ld" * string(d[:label][2])::String
 			elseif (d[:label][1] == :map_dist)   cmd *= "+LD" * parse_units(d[:label][2])
 			else   error("Wrong content for the :label option. Must be only :plot_dist or :map_dist")
 			end
@@ -3287,9 +3287,9 @@ end
 function fname_out(d::Dict, del::Bool=false)
 	# Create a file name in the TMP dir when OUT holds only a known extension. The name is: GMTjl_tmp.ext
 
-	EXT = FMT[1];	fname::AbstractString = ""
+	EXT::String = FMT[1];	fname::AbstractString = ""
 	if ((val = find_in_dict(d, [:savefig :figname :name], del)[1]) !== nothing)
-		fname, EXT = splitext(string(val))
+		fname, EXT = splitext(string(val)::String)
 		EXT = (EXT == "") ? FMT[1] : EXT[2:end]
 	end
 	if (EXT == FMT[1] && haskey(d, :fmt))
@@ -3306,7 +3306,7 @@ function fname_out(d::Dict, del::Bool=false)
 		ret_ps = false			# To know if we want to return or save PS in mem
 	end
 
-	opt_T = "";
+	opt_T::String = "";
 	if (fname != "" || haskey(d, :show) && d[:show] != 0)	# Only last command (either show or save) may set -T
 		(EXT == "pdfg" || EXT == "gpdf") && (EXT = "pdg")	# Trick to keep the ext with only 3 chars (for GeoPDFs)
 		ext = lowercase(EXT)
@@ -3325,7 +3325,7 @@ function fname_out(d::Dict, del::Bool=false)
 	end
 
 	(fname != "") && (fname *= "." * EXT)
-	def_name = PSname[1]		# "GMTjl_tmp.ps" in TMP dir
+	def_name::String = PSname[1]		# "GMTjl_tmp.ps" in TMP dir
 	return def_name, opt_T, EXT, fname, ret_ps
 end
 
@@ -3983,7 +3983,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 		cmd[1] *= " --PS_MEDIA=1194x1441"				# add 600 pt to A4 to account for the 20 cm
 	end
 
-	orig_J = ""		# To use in the case of a double Cartesian/Geog frame.
+	orig_J::String = ""		# To use in the case of a double Cartesian/Geog frame.
 	fi = 1
 	if (CTRL.pocket_call[3] !== nothing)	# Case where we want to run a "pre command" whose data is in pocket_call[3]
 		P = (isa(CTRL.pocket_call[3], String)) ? gmt(cmd[1]) : gmt(cmd[1], CTRL.pocket_call[3]) 
@@ -3996,12 +3996,12 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 		is_basemap = (startswith(cmd[k], "psbasemap") || startswith(cmd[k], "basemap"))
 		if (k >= 1+fi && is_psscale && !isa(args[1], GMTcpt))	# Ex: imshow(I, cmap=C, colorbar=true)
 			_, arg1, = add_opt_cpt(d, cmd[k], CPTaliases, 'C', 0, nothing, nothing, false, false, "", true)
-			(arg1 === nothing && haskey(d, :this_cpt)) && (arg1 = gmt("makecpt -C" * d[:this_cpt]))	# May bite back.
+			(arg1 === nothing && haskey(d, :this_cpt)) && (arg1 = gmt("makecpt -C" * d[:this_cpt]::String))	# May bite back.
 			(arg1 === nothing) && (@warn("No cmap found to use in colorbar. Ignoring this command."); continue)
 			P = gmt(cmd[k], arg1)
 			continue
 		elseif (k >= 1+fi && (is_pscoast || is_basemap) && (isa(args[1], GMTimage) || isa(args[1], GMTgrid)))
-			proj4 = args[1].proj4
+			proj4::String = args[1].proj4
 			(proj4 == "" && args[1].wkt != "") && (proj4 = toPROJ4(importWKT(args[1].wkt)))
 			if ((proj4 != "") && !startswith(proj4, "+proj=lat") && !startswith(proj4, "+proj=lon"))
 				opt_J = replace(proj4, " " => "")
@@ -4010,11 +4010,11 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 				xmi::Float64, ymi::Float64, xma::Float64, yma::Float64 = D.data[1],D.data[3],D.data[2],D.data[4]
 				opt_R::String = @sprintf(" -R%f/%f/%f/%f+r ", xmi,ymi,xma,yma)
 				o = scan_opt(cmd[1], "-J")
-				size_ = (o[1] == 'x') ? "+scale=" * o[2:end] : (o[1] == 'X') ? "+width=" * o[2:end] : ""
+				size_::String = (o[1] == 'x') ? "+scale=" * o[2:end] : (o[1] == 'X') ? "+width=" * o[2:end] : ""
 				(size_ == "") && @warn("Could not find the right fig size used. Result will be wrong")  
 				cmd[k] = replace(cmd[k], " -J" => " -J" * opt_J * size_)
 				cmd[k] = replace(cmd[k], " -R" => opt_R)
-				have_Vd && println("\t",cmd[k])		# Useful to know what command was actaully executed.
+				have_Vd && println("\t",cmd[k])		# Useful to know what command was actually executed.
 				orig_J, orig_R = o, scan_opt(cmd[1], "-R")
 			end
 		elseif (k >= 1+fi && !is_psscale && !is_pscoast && !is_basemap && CTRL.pocket_call[1] !== nothing)
@@ -4352,19 +4352,19 @@ end
 # --------------------------------------------------------------------------------------------------
 function print_kwarg_opts(symbs::VMs, mapa=nothing)::String
 	# Print the kwargs options
-	opt::String = "Option: " * join([@sprintf("%s, or ",x) for x in symbs])[1:end-5]
+	opt::String = "Option: " * join([@sprintf("%s, or ",x) for x in symbs])[1:end-5]::String
 	if (isa(mapa, NamedTuple))
 		keys_ = keys(mapa)
 		vals = Vector{String}(undef, length(keys_))
 		for k = 1:numel(keys_)
 			t = mapa[keys_[k]]
-			vals[k] = (isa(t, Tuple)) ? "?(" * t[1] : "?(" * t
+			vals[k] = (isa(t, Tuple)) ? "?(" * t[1]::String : "?(" * t::String
 			if (length(vals[k]) > 2 && vals[k][3] == '_')  vals[k] = "Any(" * vals[k][4:end]  end
 		end
-		sub_opt = join([@sprintf("%s=%s), ",keys_[k], vals[k]) for k = 1:length(keys_)])
+		sub_opt::String = join([@sprintf("%s=%s), ",keys_[k], vals[k]) for k = 1:numel(keys_)])
 		opt *= " => (" * sub_opt * ")"
 	elseif (isa(mapa, String))
-		opt *= " => " * mapa
+		opt *= " => " * mapa::String
 	else
 		opt *= " => Tuple | String | Number | Bool [Possibly not yet expanded]"
 	end

@@ -143,7 +143,7 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 		R = [R[ind]]		# Keep it a vector to be consistent with the other Dump cases
 		R[1].proj4, R[1].geom = prj4WGS84, wkbPolygon
 	end
-	isa(R, Vector{GMTdataset}) && (for k = 1:length(R)  R[k].colnames = ["Lon", "Lat"]  end)
+	isa(R, Vector{GMTdataset}) && (for k = 1:numel(R)  R[k].colnames = ["Lon", "Lat"]  end)
 	isa(R, GMTdataset) && (R.colnames = ["Lon", "Lat"])
 	R
 end
@@ -155,14 +155,14 @@ function parse_INW_coast(d::Dict, symbs::Vector{Matrix{Symbol}}, cmd::String, fl
 	for k = 1:length(symbs)
 		if ((val = find_in_dict(d, symbs[k], false)[1]) !== nothing)
 			if (isa(val, NamedTuple) || isa(val, Dict) || (isa(val, Tuple) && isa(val[1], NamedTuple)))  
-				cmd = add_opt(d, cmd, string(flags[k]), symbs[k], (type="/#", level="/#", mode="+p#", pen=("", add_opt_pen)))
+				cmd::String = add_opt(d, cmd, string(flags[k]), symbs[k], (type="/#", level="/#", mode="+p#", pen=("", add_opt_pen)))
 			elseif (isa(val, Tuple))
 				if (flags[k] == 'W')	# The shore case is ambiguous, this shore=(1,:red) could mean -W1/red or -W1,red 
 					cmd *= " -W" * parse_pen(val)	# We take it to mean pen only. Levels must use the NT form
 				else
-					cmd *= " -" * flags[k] * string(val[1]) * "/" * parse_pen(val[2])
+					cmd *= " -" * flags[k] * string(val[1])::String * "/" * parse_pen(val[2])
 				end
-			else                      cmd *= " -" * flags[k] * arg2str(val)	# Includes Str, Number or Symb
+			else    cmd *= " -" * flags[k] * arg2str(val)	# Includes Str, Number or Symb
 			end
 			del_from_dict(d, vec(symbs[k]))			# Now we can delete the kwarg
 		end
@@ -202,7 +202,7 @@ function parse_dcw(cmd::String, val::Tuple)::String
 		if (isa(val[k], NamedTuple) || isa(val[k], Dict))
 			if (isa(val[k], Dict))  val[k] = dict2nt(val[k])  end
 			cmd *= add_opt(Dict(:DCW => val[k]), "", "E", [:DCW],
-			               (country="", name="", continent="=", pen=("+p", add_opt_pen), fill=("+g", add_opt_fill)))
+			               (country="", name="", continent="=", pen=("+p", add_opt_pen), fill=("+g", add_opt_fill)))::String
 		elseif (isa(val[k], Tuple))
 			cmd *= parse_dcw(val[k])
 		else
@@ -213,15 +213,15 @@ function parse_dcw(cmd::String, val::Tuple)::String
 	return cmd
 end
 
-function parse_dcw(val::Tuple)
-    t = string("", " -E", val[1])
+function parse_dcw(val::Tuple)::String
+    t::String = string("", " -E", val[1])
 	if (length(val) > 1)
-		if (isa(val[2], Tuple))  t *= "+p" * parse_pen(val[2])
-		else                     t *= string(val[2])
+		if (isa(val[2], Tuple))  t *= "+p" * parse_pen(val[2])::String
+		else                     t *= string(val[2])::String
 		end
 		if (length(val) > 2)
-			if (isa(val[3], Tuple))  t *= add_opt_fill("+g", Dict(fill => val[3]), [:fill])
-			else                     t *= string(val[3])
+			if (isa(val[3], Tuple))  t *= add_opt_fill("+g", Dict(fill => val[3]), [:fill])::String
+			else                     t *= string(val[3])::String
 			end
 		end
 	end

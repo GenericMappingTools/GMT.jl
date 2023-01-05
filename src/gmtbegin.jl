@@ -92,17 +92,17 @@ end
 function get_format(name, fmt=nothing, d=nothing)
 	# Get the fig name and format. If format not specified, default to FMT (ps)
 	# NAME is supposed to always exist (otherwise, errors)
-	fname, ext = splitext(string(name))
+	fname::String, ext::String = splitext(string(name)::String)
 	if (ext != "")
 		fname *= " " * ext[2:end]
 	elseif (fmt !== nothing)
-		fname *= " " * string(fmt)      # No checking
+		fname *= " " * string(fmt)::String      # No checking
 	elseif (d !== nothing)
-		if (haskey(d, :fmt))  fname *= " " * string(d[:fmt])
-		else                  fname *= " " * FMT[1]		# Then use default format
+		if (haskey(d, :fmt))  fname *= " " * string(d[:fmt])::String
+		else                  fname *= " " * FMT[1]::String		# Then use default format
 		end
 	else
-		fname *= " " * FMT[1]
+		fname *= " " * FMT[1]::String
 	end
 	return fname
 end

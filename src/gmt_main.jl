@@ -168,12 +168,12 @@ function gmt(cmd::String, args...)
 	ressurectGDAL()			# Some GMT modules may have called GDALDestroyDriverManager() 
 
 	# ----------- Minimal error checking ------------------------
-	n_argin = length(args)
+	n_argin::Int = length(args)
 	if (n_argin > 0)
 		if (isa(args[1], String))
 			tok::String, r::String = strtok(cmd)
 			if (r == "")				# User gave 'module' separately from 'options'
-				cmd *= " " * args[1]	# Cat with the progname and so pretend input followed the classic construct
+				cmd::String *= " " * args[1]::String	# Cat with the progname and so pretend input followed the classic construct
 				args = args[2:end]
 				n_argin -= 1
 			end
@@ -188,7 +188,7 @@ function gmt(cmd::String, args...)
 	g_module::String, r = strtok(cmd)
 
 	if (g_module == "begin")			# Use this default fig name instead of "gmtsession"
-		(r == "") && (r = isFranklin[1] ? (joinpath(tempdir(), "GMTjl_tmp png")) : "GMTplot " * FMT[1])
+		(r == "") && (r = isFranklin[1] ? (joinpath(tempdir(), "GMTjl_tmp png")) : "GMTplot " * FMT[1]::String)
 		IamModern[1] = true
 	elseif (g_module == "end")			# Last command of a MODERN session
 		isempty(r) && (r = "-Vq")		# Cannot have a no-args for this case otherwise it prints help
@@ -232,7 +232,7 @@ function gmt(cmd::String, args...)
 	end
 	if (occursin("-%", r) || occursin("-&", r))			# It has also a mem layout request
 		r, img_mem_layout[1], grd_mem_layout[1] = parse_mem_layouts(r)
-		(img_mem_layout[1] != "") && (mem_layout = img_mem_layout[1];	mem_kw = "API_IMAGE_LAYOUT")
+		(img_mem_layout[1] != "") && (mem_layout::String = img_mem_layout[1];	mem_kw = "API_IMAGE_LAYOUT")
 		(grd_mem_layout[1] != "") && (mem_layout = grd_mem_layout[1];	mem_kw = "API_GRID_LAYOUT")
 		(img_mem_layout[1] != "" && mem_layout[end] != 'a')  && (mem_layout *= "a")
 		GMT_Set_Default(G_API[1], mem_kw, mem_layout);	# Tell module to give us the image/grid with this mem layout

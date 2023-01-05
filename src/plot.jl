@@ -1011,11 +1011,11 @@ function helper_arrows(d::Dict, del::Bool=true)::String
 	val, symb = find_in_dict(d, [:arrow :vector :arrow4 :vector4 :vecmap :geovec :geovector], del)
 	(val === nothing) && return ""
 
-	code = (symb == :geovec || symb == :geovector) ? "=" : (symb == :vecmap ? "V" : "v")
+	code::String = (symb == :geovec || symb == :geovector) ? "=" : (symb == :vecmap ? "V" : "v")
 
 	if (isa(val, String))		# An hard core GMT string directly with options
 		cmd = (val[1] != code) ? code * val : val	# In last case the GMT string already has vector flag char
-	elseif (isa(val, Real))                       cmd = code * "$val"
+	elseif (isa(val, Real))                       cmd = code * "$val"::String
 	elseif (symb == :arrow4 || symb == :vector4)  cmd = code * vector4_attrib(val)
 	else                                          cmd = code * vector_attrib(val)
 	end
@@ -1109,7 +1109,7 @@ function helper_vecBug(d, arg1, first::Bool, haveR::Bool, haveVarFill::Bool, typ
 
 	function expandDS!(D::GMTdataset)
 		# Expand a GMTdatset if its number of columns is 2 or 3. Also update the colnames.
-		((_n_cols = size(D, 2)) >= 4) && return D		# Nothing to do
+		((_n_cols::Int = size(D, 2)) >= 4) && return D		# Nothing to do
 		(_n_cols < 2) && error("This does not have at least 2 columns as required (it has $_n_cols).")
 		if (_n_cols == 2)
 			D.data = hcat(1:size(D,1), zeros(size(D,1),1), D.data)		# Add x & y
@@ -1151,11 +1151,11 @@ function helper_vecBug(d, arg1, first::Bool, haveR::Bool, haveVarFill::Bool, typ
 					a.bbox[5:8] = [extrema(view(a,:,3))... extrema(view(a,:,4))...]
 				end
 				(!haveR) && (mm = get_minmaxs(a); mimas = [min(mimas[1],mm[1]), max(mimas[2],mm[2]), min(mimas[3],mm[3]), max(mimas[4],mm[4])])
-				(haveVarFill && (ind = findfirst(" -W,", a.header)) !== nothing) && (a.header *= " -G" * a.header[ind[end]+1:end])
+				(haveVarFill && (ind = findfirst(" -W,", a.header)) !== nothing) && (a.header::String *= " -G" * a.header[ind[end]+1:end]::String)
 			end
 		end
 	else						# A plain mtrix
-		n_cols = size(arg1, 2)
+		n_cols::Int = size(arg1, 2)
 		(!isfeather && n_cols < 4) && error("Column data must have at least 4 columns and not $n_cols")
 		if (isfeather)
 			(2 > n_cols < 4) && error("Neead at least 4 columns but got $n_cols")
@@ -1171,7 +1171,7 @@ function helper_vecBug(d, arg1, first::Bool, haveR::Bool, haveVarFill::Bool, typ
 		end
 	end
 
-	opt_R = ""
+	opt_R::String = ""
 	if (first && !haveR)					# Build a -R from data limits
 		dx, dy = (mimas[2] - mimas[1]) * 0.01, (mimas[4] - mimas[3]) * 0.01
 		t = round_wesn(mimas + [-dx, dx, -dy, dy])		# Add a pad. Also sets the CTRL.limits plot values

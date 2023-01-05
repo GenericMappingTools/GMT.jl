@@ -106,27 +106,27 @@ function mk_legend(; kwargs...)
 		(length(d) > 0) && println("\tThe following options were not consumed in the legend's '$(opt)' option => ", keys(d))
 	end
 
-	for n = 1:length(ky)
+	for n = 1:numel(ky)
 		code = isa(kwargs[n], NamedTuple) ? kwargs[n] : NamedTuple([ky[n]] .=> [kwargs[n]])
 		kw_str = lowercase(string(ky[n]))
 		k = keys(code)
 		if (kw_str == "H" || startswith(kw_str, "header"))		# code = (header=txt, font=?)	H 24p,Times-Roman My Map Legend
 			d = nt2dict(code)
 			f::String = ((val = find_in_dict(d, [:font])[1]) === nothing) ? "-" : font(val)
-			leg[n] = "H " * f * " " * string(d[Symbol.(keys(d))[1]])
+			leg[n] = "H " * f * " " * string(d[Symbol.(keys(d))[1]])::String
 			check_unused(d, kw_str, Symbol.(keys(d))[1])
 
 		elseif (kw_str == "A" || startswith(kw_str, "cpt") || startswith(kw_str, "cmap"))
-			leg[n] = "A " * string(code[1])
+			leg[n] = "A " * string(code[1])::String
 
 		elseif (kw_str == "B" || startswith(kw_str, "colorbar"))	# code = (name="tt.cpt", offset=0.5, height=0.5)
 			d = nt2dict(code)
 			((val = find_in_dict(d, [:offset])[1]) === nothing) && error("Must specify the 'offset' in 'colorbar'")
 			f = string(val)
 			((val = find_in_dict(d, [:height])[1]) === nothing) && error("Must specify the 'height' in 'colorbar'")
-			f *= " " * string(val)
-			((val = find_in_dict(d, [:extra :options])[1]) !== nothing) && (f *= " " * string(val))
-			leg[n] = "B " * string(d[Symbol.(keys(d))[1]]) * " " * f
+			f *= " " * string(val)::String
+			((val = find_in_dict(d, [:extra :options])[1]) !== nothing) && (f *= " " * string(val)::String)
+			leg[n] = "B " * string(d[Symbol.(keys(d))[1]])::String * " " * f
 			check_unused(d, kw_str, Symbol.(keys(d))[1])
 
 		elseif (kw_str == "C" || startswith(kw_str, "textcolor"))
@@ -142,15 +142,15 @@ function mk_legend(; kwargs...)
 			leg[n] = "F " *  join([@sprintf("%s ", get_color(x)) for x in code])
 
 		elseif (kw_str == "G" || startswith(kw_str, "vspace") || startswith(kw_str, "gap"))	# code = (vspace=val)	G -0.1i
-			leg[n] = "G " * string(code[1])
+			leg[n] = "G " * string(code[1])::String
 
 		elseif (kw_str == "I" || startswith(kw_str, "image"))	# code = (image=fname)	I @SOEST_block4.png 3i CT
 			d = nt2dict(code)
 			((val = find_in_dict(d, [:width])[1]) === nothing) && error("Must specify the 'width' in 'image'")
 			f = string(val)
 			((val = find_in_dict(d, [:justify :justification])[1]) === nothing) && error("Must specify the 'justify' in 'image'")
-			f *= " " *string(val)
-			leg[n] = "I " * string(d[Symbol.(keys(d))[1]]) * " " * f
+			f *= " " * string(val)::String
+			leg[n] = "I " * string(d[Symbol.(keys(d))[1]])::String * " " * f
 			check_unused(d, kw_str, Symbol.(keys(d))[1])
 
 		elseif (kw_str == "L" || startswith(kw_str, "label"))	# code = L 9p,Times-Roman R Smith et al., @%5%J. Geophys. Res., 99@%%, 2000
@@ -158,28 +158,28 @@ function mk_legend(; kwargs...)
 			((val = find_in_dict(d, [:justify :justification])[1]) === nothing) && error("Must specify the 'justify' in 'label'")
 			f = string(val)
 			f = (((val = find_in_dict(d, [:font])[1]) === nothing) ? "-" : font(val)) * " " * uppercase(f[1])
-			leg[n] = "L " * f * " " * string(d[Symbol.(keys(d))[1]])
+			leg[n] = "L " * f * " " * string(d[Symbol.(keys(d))[1]])::String
 			check_unused(d, kw_str, Symbol.(keys(d))[1])
 
 		elseif (kw_str == "M" || occursin("scale", kw_str))		# code = (map_scale=)	M 5 5 600+u+f
 			d = nt2dict(code)
 			f = ((val = find_in_dict(d, [:lon :x])[1]) === nothing) ? "-" : string(val)
 			((val = find_in_dict(d, [:lat :y])[1]) === nothing) && error("Must specify the 'lat or y' in map_scale")
-			leg[n] = "M " * f * " " * string(val)
+			leg[n] = "M " * f * " " * string(val)::String
 			((val = find_in_dict(d, [:length])[1]) === nothing) && error("Must specify the 'length' in map_scale")
-			leg[n] *= " " * string(val)
-			opt_R = parse_R(d, "", false, false)[1]
-			opt_J = parse_J(d, "", " ", true, false, false)[1]
-			opt_F = parse_F(d, "")
+			leg[n] *= " " * string(val)::String
+			opt_R::String = parse_R(d, "", false, false)[1]
+			opt_J::String = parse_J(d, "", " ", true, false, false)[1]
+			opt_F::String = parse_F(d, "")
 			leg[n] *= opt_F * opt_R * opt_J
 			check_unused(d, kw_str)
 
 		elseif (kw_str == "N" || startswith(kw_str, "ncol"))		# code = (ncolumns=?)	N 2
-			leg[n] = "N " * string(code[1])
+			leg[n] = "N " * string(code[1])::String
 
 		elseif (kw_str == "P" || startswith(kw_str, "parag"))
 			# NOTE: Pargraph also accepts options like pstext -M but that's too complicated to parse
-			t = (isa(code[1], Bool) && code[1]) ? "" : string(code[1])
+			t::String = (isa(code[1], Bool) && code[1]) ? "" : string(code[1])
 			leg[n] = "P " * t
 
 		elseif (kw_str == "S" || startswith(kw_str, "symb"))
@@ -191,7 +191,7 @@ function mk_legend(; kwargs...)
 			f = ((val = find_in_dict(d, [:fill])[1]) === nothing) ? "- " : get_color(val);			fill = f
 			f = add_opt_pen(d, [:pen], "");	pen = (f == "") ? " -" : " " * f		# TRUE to also seek (lw,lc,ls)
 			((val = find_in_dict(d, [:size])[1]) === nothing) && error("Must specify the 'size' in 'symbol'")
-			_size = arg2str(val)
+			_size::String = arg2str(val)
 			f = ((val = find_in_dict(d, [:label :text])[1]) === nothing) ? "" : string(val);	label = f
 			if (label != "")
 				f = ((val = find_in_dict(d, [:dx_right])[1]) === nothing) ? "- " : string(val, " ");	dx2 = f
@@ -201,7 +201,7 @@ function mk_legend(; kwargs...)
 			check_unused(d, kw_str)
 
 		elseif (kw_str == "T" || startswith(kw_str, "text"))
-			leg[n] = "T " * string(code[1])
+			leg[n] = "T " * string(code[1])::String
 
 		elseif (kw_str == "V" || startswith(kw_str, "vline"))		# code = (vline=pen, offset=?)	V 0 1p
 			d = nt2dict(code)

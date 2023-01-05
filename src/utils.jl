@@ -8,7 +8,7 @@ skipnan(itr) = Iterators.filter(el->isfinite(el), itr)
 
 square(x) = x^2
 
-function funcurve(f::Function, lims::VMr, n=100)
+function funcurve(f::Function, lims::VMr, n=100)::Vector{Float64}
 	# Geneate a curve between lims[1] and lims[2] having the form of function 'f'
 	if     (f == exp)    x = log.(lims)
 	elseif (f == log)    x = exp.(lims)

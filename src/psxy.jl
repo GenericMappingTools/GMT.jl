@@ -450,7 +450,7 @@ function parse_opt_S(d::Dict, arg1, is3D::Bool)
 	# First see if the requested symbol is a custom one from GMT.jl share/custom
 	if ((symb = is_in_dict(d, [:csymbol :cmarker :custom_symbol :custom_marker])) !== nothing)
 		marca::String = add_opt(d, "", "", [symb], (name="", size="/", unit="1"))
-		marca_fullname, marca_name = seek_custom_symb(marca)
+		marca_fullname::String, marca_name::String = seek_custom_symb(marca)
 		(marca_name != "") && (opt_S = " -Sk" * marca_fullname)
 	else
 		opt_S = add_opt(d, "", "S", [:S :symbol], (symb="1", size="", unit="1"))
@@ -460,8 +460,6 @@ function parse_opt_S(d::Dict, arg1, is3D::Bool)
 		marca, arg1, more_cols = get_marker_name(d, arg1, [:marker, :Marker, :shape], is3D, true)
 		if ((val = find_in_dict(d, [:ms :markersize :MarkerSize :size])[1]) !== nothing)
 			(marca == "") && (marca = "c")		# If a marker name was not selected, defaults to circle
-			#val_::VecOrMat{<:Real} = is_this_type(VecOrMat{<:Real}, val) ? val : VecOrMat{<:Real}[]
-			#val_ = isa(val, VMr) ? val : VMr[]
 			if (isa(val, VMr))
 				val_::VMr = val
 				if (length(val_) == 2)			# A two elements array is interpreted as [min max]
@@ -474,32 +472,32 @@ function parse_opt_S(d::Dict, arg1, is3D::Bool)
 				end
 			elseif (isa(val, Tuple) && isa(val[1], Function) && isa(val[2], VMr))
 				val2::Tuple = val
-				scale = (eltype(val2[2]) <: Integer) ? 2.54/72 : 1.0
+				scale::Float64 = (eltype(val2[2]) <: Integer) ? 2.54/72 : 1.0
 				ind = sortperm(funcurve(val2[1], val2[2].*scale, size(arg1,1)))	# Get the sorting indices
 				arg1 = hcat(arg1, is3D ? view(arg1,:,3)[ind] : view(arg1,:,2)[ind])
-			elseif (string(val) != "indata")	# WTF is "indata"?
-				marca *= arg2str(val)
+			elseif (string(val)::String != "indata")	# WTF is "indata"?
+				marca *= arg2str(val)::String
 			end
 			opt_S = " -S" * marca
 		elseif (marca != "")					# User only selected a marker name but no size.
 			opt_S = " -S" * marca
 			# If data comes from a file, then no automatic symbol size is added
 			op = lowercase(marca[1])
-			def_size = (op == 'p') ? "2p" : "7p"	# 'p' here stands for symbol points, not units
+			def_size::String = (op == 'p') ? "2p" : "7p"	# 'p' here stands for symbol points, not units
 			(!more_cols && arg1 !== nothing && !isa(arg1, GMTcpt) && !occursin(op, "bekmrvw")) && (opt_S *= def_size)
 		elseif (haskey(d, :hexbin))
 			inc::Float64 = parse(Float64, arg1.attrib["hexbin"])
-			r = (CTRL.limits[8] - CTRL.limits[7]) / sqrt(3) / inc
+			r::Float64   = (CTRL.limits[8] - CTRL.limits[7]) / sqrt(3) / inc
 			(CTRL.figsize[1] == 0) && @warn("Failed to automatically fetch the fig width. Using 14 cm to show something.")
-			w = (CTRL.figsize[1] != 0) ? CTRL.figsize[1] : 14
+			w::Float64 = (CTRL.figsize[1] != 0) ? CTRL.figsize[1] : 14.0
 			opt_S = " -Sh$(w / (r * 1.5))"		# Is it always 1.5?
 			delete!(d, :hexbin)
 		end
 	else
 		val, symb = find_in_dict(d, [:ms :markersize :MarkerSize :size])
-		(val !== nothing) && @warn("option *$(symb)* is ignored when either *S* or *symbol* options are used")
+		(val !== nothing) && @warn("option *$(symb)* is ignored when either 'S' or 'symbol' options are used")
 		val, symb = find_in_dict(d, [:marker :Marker :shape])
-		(val !== nothing) && @warn("option *$(symb)* is ignored when either *S* or *symbol* options are used")
+		(val !== nothing) && @warn("option *$(symb)* is ignored when either *S* or 'symbol' options are used")
 	end
 	return arg1, opt_S
 end
@@ -554,10 +552,10 @@ function helper_multi_cols(d::Dict, arg1, mcc, opt_R, opt_S, opt_W, caller, is3D
 	# Let matrices with more data columns, and for which Color info was NOT set, plot multiple lines at once
 	if (!mcc && opt_S == "" && (caller == "lines" || caller == "plot") && isa(arg1, Matrix{<:Real}) &&
 		                        size(arg1,2) > 2+is3D && size(arg1,1) > 1 && (multi_col[1] || haskey(d, :multicol)))
-		penC, penS = "", "";	multi_col[1] = false	# Reset because this is a use-only-once option
+		penC::String, penS::String = "", "";	multi_col[1] = false	# Reset because this is a use-only-once option
 		(haskey(d, :multicol)) && delete!(d, :multicol)
 		# But if we have a color in opt_W (idiotic) let it overrule the automatic color cycle in mat2ds()
-		penT = ""
+		penT::String = ""
 		if     (opt_W != "")                penT, penC, penS = break_pen(scan_opt(opt_W, "-W"))
 		elseif (!occursin(" -W", _cmd[1]))  _cmd[1] *= " -W0.5"
 		end
@@ -795,7 +793,7 @@ function recompute_R_4bars!(cmd::String, opt_R::String, arg1)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function get_sizes(arg)
+function get_sizes(arg)::Tuple{Int,Int}
 	(!isGMTdataset(arg) && !isa(arg, Matrix{<:Real})) && error("Input can only be a GMTdataset(s) or a Matrix, not $(typeof(arg))")
 	if     (isa(arg, Vector{<:GMTdataset}))  n_rows, n_col = size(arg[1])
 	else                                     n_rows, n_col = size(arg)
@@ -819,7 +817,7 @@ function make_color_column(d::Dict, cmd::String, opt_i::String, len::Int, N_args
 	n_rows, n_col = get_sizes(arg1)
 	(isa(mz, Bool) && mz) && (mz = 1:n_rows)
 
-	if ((mz !== nothing && length(mz) != n_rows) || (mz === nothing && opt_i != ""))
+	if ((mz !== nothing && length(mz)::Int != n_rows) || (mz === nothing && opt_i != ""))
 		warn1 = string("Probably color column in '", the_kw, "' has incorrect dims. Ignoring it.")
 		warn2 = "Plotting with color table requires adding one more column to the dataset but your -i
 		option didn't do it, so you won't get what you expect. Try -i0-1,1 for 2D or -i0-2,2 for 3D plots"
@@ -838,11 +836,11 @@ function make_color_column(d::Dict, cmd::String, opt_i::String, len::Int, N_args
 		return cmd, arg1, arg2, 2, true
 	end
 
-	make_color_column_(d, cmd, opt_i, len, N_args, n_prev, is3D, got_Ebars, bar_ok, bar_fill, arg1, arg2, mz, n_rows, n_col)
+	make_color_column_(d, cmd, len, N_args, n_prev, is3D, got_Ebars, arg1, arg2, mz, n_col)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function make_color_column_(d::Dict, cmd::String, opt_i::String, len::Int, N_args::Int, n_prev::Int, is3D::Bool, got_Ebars::Bool, bar_ok::Bool, bar_fill, arg1, arg2, mz, n_rows, n_col)
+function make_color_column_(d::Dict, cmd::String, len::Int, N_args::Int, n_prev::Int, is3D::Bool, got_Ebars::Bool, arg1, arg2, mz, n_col::Int)
 	# Broke this out of make_color_column() to try to limit effect of invalidations but with questionable results.
 	if (n_col <= 2+is3D)
 		if (mz !== nothing)
@@ -870,8 +868,9 @@ function make_color_column_(d::Dict, cmd::String, opt_i::String, len::Int, N_arg
 		else
 			the_col = min(n_col,3)+is3D
 			got_Ebars && (the_col -= 1)			# Bars => 2 cols
-			if     (isa(arg1, Vector{<:GMTdataset}))                    mi, ma = extrema(view(arg1[1], :, the_col))
-			elseif (isa(arg1,GMTdataset) || isa(arg1, Matrix{<:Real}))  mi, ma = extrema(view(arg1,    :, the_col))
+			if     (isa(arg1, Vector{<:GMTdataset}))                    mi, ma = arg1[1].ds_bbox[2the_col-1:2the_col]
+			elseif (isa(arg1,GMTdataset))                               mi, ma = arg1.ds_bbox[2the_col-1:2the_col]
+			else                                                        mi, ma = extrema(view(arg1, :, the_col))
 			end
 		end
 		just_C = cmd[len+2:end];	reset_i = ""
@@ -899,6 +898,7 @@ function get_marker_name(d::Dict, arg1, symbs::Vector{Symbol}, is3D::Bool, del::
 			t = d[symb]
 			if (isa(t, Tuple))				# e.g. marker=(:r, [2 3])
 				msg = "";	cst = false
+				opt = ""	# Probably this defaut value is never used but avoids compiling helper_markers(opt,) with a non def var
 				o::String = string(t[1])
 				if     (startswith(o, "E"))  opt = "E";  N = 3; cst = true
 				elseif (startswith(o, "e"))  opt = "e";  N = 3
@@ -995,12 +995,12 @@ function helper_markers(opt::String, ext, arg1, N::Int, cst::Bool)
 	# Helper function to deal with the cases where one sends marker's extra columns via command
 	# Example that will land and be processed here:  marker=(:Ellipse, [30 10 15])
 	# N is the number of extra columns
-	marca = "";	 msg = ""
+	marca::String = "";	 msg = ""
 	if (size(ext,2) == N && arg1 !== nothing)	# Here ARG1 is supposed to be a matrix that will be extended.
 		S = Symbol(opt)
 		marca, arg1 = add_opt(add_opt, (Dict(S => (par=ext,)), opt, "", [S]), (par="|",), true, arg1)
 	elseif (cst && length(ext) == 1)
-		marca = opt * "-" * string(ext)
+		marca = opt * "-" * string(ext)::String
 	else
 		msg = string("Wrong number of extra columns for marker (", opt, "). Got ", size(ext,2), " but expected ", N)
 	end
