@@ -378,7 +378,7 @@ function fish_bg(d::Dict, cmd::Vector{String})
 		opt_H = (IamModern[1]) ? " -H" : ""
 		C::GMTcpt = (arg2 === nothing) ? gmt("makecpt -T0/256/1 -G0.25/0.94 -Cgray"*opt_I*opt_H) :	# The default gray scale
 		                                 isa(arg2, GMTcpt) ? gmt("makecpt -T0/256/1 -C" * opt_H, arg2) :
-							        	 gmt("makecpt -T0/256/1 -C" * string(arg2) * opt_I * opt_H)
+							        	 gmt("makecpt -T0/256/1 -C" * string(arg2)::String * opt_I * opt_H)
 		image_cpt!(I, C)
 		CTRL.pocket_call[3] = I					# This signals finish_PS_module() to run _cmd first
 	end

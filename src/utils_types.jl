@@ -250,8 +250,8 @@ function mat2ds(D::GMTdataset, inds)::GMTdataset
 	end
 	i = findall(startswith.(_D.colnames, "Time"))
 	isempty(i) && return _D						# No TIME columns. We are done
-	(length(i) == 1) ? (Tc = "$(i[1])") : _i = i[2:end]
-	D.attrib["Timecol"] = (length(i) == 1) ? Tc : [Tc *= ",$k" for k in _i]
+	(length(i) == 1) ? (Tc::String = "$(i[1])") : _i = i[2:end]
+	_D.attrib["Timecol"] = (length(i) == 1) ? Tc : [Tc *= ",$k" for k in _i]
 	return _D
 end
 
