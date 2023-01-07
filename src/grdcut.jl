@@ -46,8 +46,7 @@ function grdcut(cmd0::String="", arg1=nothing; kwargs...)
 
 	arg2 = nothing
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
-	cmd, opt_R = parse_R(d, "")
-	(opt_R == "") && error("Must provide the cutting limits (GMT option R)")
+	cmd::String, opt_R::String = parse_R(d, "")
     cmd, = parse_common_opts(d, cmd, [:V_params :f])
     opt_J, = parse_J(d, "")
     (!startswith(opt_J, " -JX")) && (cmd *= opt_J)
@@ -57,6 +56,7 @@ function grdcut(cmd0::String="", arg1=nothing; kwargs...)
 	cmd *= opt_G
 	cmd, args, n, = add_opt(d, cmd, "F", [:F :clip :cutline], :polygon, Array{Any,1}([arg1, arg2]),
 	                        (crop2cutline="_+c", invert="_+i"))
+	(!contains(cmd, "-F") && opt_R == "") && error("Must provide the cutting limits. Either 'region' or 'clip'")
 	if (n > 0)  arg1, arg2 = args[:]  end
 	(show_kwargs[1]) && return print_kwarg_opts([:img :usegdal :gdal], "Any")		# Just print the options
 
