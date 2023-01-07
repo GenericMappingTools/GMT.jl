@@ -1815,7 +1815,7 @@ function mk_styled_line!(d::Dict, code)
 	# The second form (annotated line) requires separating the style and marker name by a '&', '_' or '!'. The last
 	# two ways allow sending CODE as a Symbol (e.g. :line!circ). Enclose the "Symbol" in a pair of those markersize
 	# to create an annotated line instead. E.g. ls="Line&Bla Bla Bla&"
-	isa(code, Symbol) && (code = string(code))
+	isa(code, Symbol) && (code = string(code)::String)
 	_code::String = lowercase(code)
 	inv = !isletter(code[end])					# To know if we want to make white outline and fill = lc
 	is1line = (occursin("&", _code) || occursin("_", _code) || occursin("!", _code))	# e.g. line&Circ
@@ -2471,7 +2471,7 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 				range = vec(grdinfo(cmd0 * " -C -T+a$(100-val)"::String).data);
 				cpt_opt_T = @sprintf(" -T%.12g/%.12g/256+n -D", range[5], range[6])
 			elseif ((val = find_in_dict(d, [:clim])[1]) !== nothing)
-				(length(val) != 2) && error("The clim option must have two elements and not $(length(val))")
+				(length(val) != 2) && error("The clim option must have two elements and not $(length(val)::Int)")
 				cpt_opt_T = @sprintf(" -T%.12g/%.12g/256+n -D", val[1], val[2])	# Piggyback -D
 			else
 				cpt_opt_T = @sprintf(" -T%.12g/%.12g/256+n", range[5] - 1e-6, range[6] + 1e-6)
@@ -2483,7 +2483,7 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 		end
 	elseif (cmd0 != "" && cmd0[1] == '@')		# No reason not to let @grids use clim=[...]
 		if ((val = find_in_dict(d, [:clim])[1]) !== nothing)
-			(length(val) != 2) && error("The clim option must have two elements and not $(length(val))")
+			(length(val) != 2) && error("The clim option must have two elements and not $(length(val)::Int)")
 			cpt_opt_T = @sprintf(" -T%.12g/%.12g/256+n -D", val[1], val[2])
 		elseif (any(contains.(cmd0, ["_01d", "_30m", "_20m", "_15m", "_10m", "_06m"])) && (val = find_in_dict(d, [:percent])[1]) !== nothing)
 			infa = grdinfo(cmd0 * " -T+a$(100-val)"::String).text[1]	# Bloody complicated output

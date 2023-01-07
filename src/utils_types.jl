@@ -273,8 +273,7 @@ function set_dsBB!(D, all_bbs::Bool=true)
 				if (any(isnan.(_bb)))				# Shit, we don't have a minimum_nan(A, dims)
 					n = 1
 					for kk = 1:size(D[k].data, 2)
-						t = view(D[k].data, :, kk)
-						isnan(_bb[n]) && (_bb[n] = minimum_nan(t); _bb[n+1] = maximum_nan(t))
+						isnan(_bb[n]) && (_bb[n:n+1] .= extrema_cols(D[k], col=kk))
 						n += 2
 					end
 					all(isnan.(_bb)) && continue	# Shit, they are all still NaNs
@@ -461,7 +460,7 @@ function line2multiseg(M::Matrix{<:Real}; is3D::Bool=false, color::GMTcpt=GMTcpt
 	(color_col == 0) && (color_col = 3)		# Set the color column to default if it wasn't sent in.
 
 	if (isempty(color) && auto_color)
-		mima = (size(M,2) <= 3) ? (1., Float64(size(M,1))) : extrema(view(M, :, color_col))
+		mima = (size(M,2) <= 3) ? (1., Float64(size(M,1))) : Float64.(extrema_cols(M, col=color_col))
 		(size(M,2) <= 3) && (use_row_number = true; z4color = 1.:n_ds)
 		color::GMTcpt = gmt("makecpt " * @sprintf("-T%f/%f/65+n -Cturbo -Vq", mima[1]-eps(1e10), mima[2]+eps(1e10)))
 	end

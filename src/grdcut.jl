@@ -51,7 +51,7 @@ function grdcut(cmd0::String="", arg1=nothing; kwargs...)
     cmd, = parse_common_opts(d, cmd, [:V_params :f])
     opt_J, = parse_J(d, "")
     (!startswith(opt_J, " -JX")) && (cmd *= opt_J)
-	cmd = parse_these_opts(cmd, d, [[:D], [:N :extend], [:S :circ_subregion], [:Z :z_subregion]])
+	cmd = parse_these_opts(cmd, d, [[:D :dryrun], [:N :extend], [:S :circ_subregion], [:Z :z_subregion]])
 	opt_G = parse_G(d, "")[1]
 	outname = (opt_G != "") ? opt_G[4:end] : ""
 	cmd *= opt_G

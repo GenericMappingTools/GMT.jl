@@ -144,13 +144,13 @@ plotyy([1 1; 2 2], [1.5 1.5; 3 3], R="0.8/3/0/5", title="Ai", ylabel=:Bla, xlabe
 """
 function plotyy(arg1, arg2; first=true, kw...)
 	d = KW(kw)
-	(haskey(d, :xlabel)) ? (xlabel = string(d[:xlabel]);	delete!(d, :xlabel)) : xlabel = ""	# Only to used at the end
-	(haskey(d, :seclabel)) ? (seclabel = string(d[:seclabel]);	delete!(d, :seclabel)) : seclabel = ""
-	((val = find_in_dict(d, [:fmt])[1]) !== nothing) ? (fmt = arg2str(val)) : fmt = FMT[1]
-	((val = find_in_dict(d, [:savefig :figname :name])[1]) !== nothing) ? (savefig = arg2str(val)) : savefig = nothing
+	(haskey(d, :xlabel)) ? (xlabel = string(d[:xlabel])::String;	delete!(d, :xlabel)) : xlabel = ""	# Only to used at the end
+	(haskey(d, :seclabel)) ? (seclabel = string(d[:seclabel])::String;	delete!(d, :seclabel)) : seclabel = ""
+	((val = find_in_dict(d, [:fmt])[1]) !== nothing) ? (fmt = arg2str(val)::String) : fmt = FMT[1]::String
+	((val = find_in_dict(d, [:savefig :figname :name])[1]) !== nothing) ? (savefig = arg2str(val)::String) : savefig = nothing
 	Vd = ((val = find_in_dict(d, [:Vd])[1]) !== nothing) ? val : 0
 
-	cmd, opt_B = parse_B(d, "", " -Baf -BW")
+	cmd::String, opt_B::String = parse_B(d, "", " -Baf -BW")
 	if (opt_B != " -Baf -BW")
 		if (occursin(" -Bx", opt_B) || occursin(" -By", opt_B) || occursin("+t", opt_B))
 			# OK, so here's the problem. Both title and label maybe multi-words, case in which they will have the
@@ -515,7 +515,7 @@ Example:
 function bar3(cmd0::String="", arg=nothing; first=true, kwargs...)
 	# Contrary to "bar" this one has specific work to do here.
 	d = KW(kwargs)
-	opt_z = ""
+	opt_z::String = ""
 
 	if (isa(arg, Array{<:GMTdataset,1}))  arg1 = arg[1]	# It makes no sense accepting > 1 datasets
 	else                                  arg1 = arg	# Make a copy that may or not become a new thing
@@ -538,7 +538,7 @@ function bar3(cmd0::String="", arg=nothing; first=true, kwargs...)
 
 	if (isa(arg1, GMTgrid))
 		if (haskey(d, :bar))
-			opt_S = parse_bar_cmd(d, :bar, "", "So")[1]
+			opt_S::String = parse_bar_cmd(d, :bar, "", "So")[1]
 		else
 			# 0.85 is the % of inc width of bars
 			w1::Float64, w2::Float64 = arg1.inc[1]*0.85, arg1.inc[2]*0.85
@@ -580,7 +580,7 @@ function bar3(cmd0::String="", arg=nothing; first=true, kwargs...)
 		end
 	end
 
-	opt_base = add_opt(d, "", "", [:base])		# Do this again because :base may have been added above
+	opt_base::String = add_opt(d, "", "", [:base])		# Do this again because :base may have been added above
 	if (opt_base == "")
 		_z_min::Float32 = (isa(arg1, Array)) ? minimum(view(arg1, :, 3)) : minimum(view(arg1.data, :, 3))
 		opt_S *= "+b$_z_min" 
@@ -924,8 +924,8 @@ function stem(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	if (!haveR)
 		t = round_wesn(mimas)		# Add a pad. Also sets the CTRL.limits plot values
 		CTRL.limits[1:4] = mimas				# These are the data limits
-		opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g", t[1], t[2], t[3], t[4])
-		_opt_R = merge_R_and_xyzlims(d, opt_R)	# See if a x or ylim is used
+		opt_R::String = @sprintf(" -R%.12g/%.12g/%.12g/%.12g", t[1], t[2], t[3], t[4])
+		_opt_R::String = merge_R_and_xyzlims(d, opt_R)	# See if a x or ylim is used
 		if (_opt_R != opt_R)					# Yes, it was so need to update the plot limits in CTRL.limits
 			CTRL.limits[7:10], opt_R = opt_R2num(_opt_R), _opt_R
 		end
@@ -1035,15 +1035,15 @@ function helper_vecZscale!(d::Dict, arg1, first::Bool, typevec::Int, opt_R::Stri
 	Tc = (isGMTdataset(arg1) && (isone ? get(arg1.attrib, "Timecol", "") == "1" :
 	                                     get(arg1[1].attrib, "Timecol", "") == "1")) ? true : false
 	if (typevec < 2 || Tc)		# typevec = 2 means u,v are in fact the end points and that doesn't need scaling.
-		opt_R = (first) ? ((opt_R == "") ? parse_R(d, "", false, false)[2] : opt_R) : CTRL.pocket_R[1]
-		opt_J = (first) ? parse_J(d, "", "", true, false, false)[2] : CTRL.pocket_J[1]
+		opt_R::String = (first) ? ((opt_R == "") ? parse_R(d, "", false, false)[2] : opt_R) : CTRL.pocket_R[1]
+		opt_J::String = (first) ? parse_J(d, "", "", true, false, false)[2] : CTRL.pocket_J[1]
 		aspect_limits = (CTRL.limits[10] - CTRL.limits[9]) / (CTRL.limits[8] - CTRL.limits[7])	# Plot, not data, limits
 		Dwh::Matrix{<:Float64} = gmt("mapproject -W " * opt_R * opt_J).data		# Fig dimensions in paper coords.
 		aspect_sizes  = Dwh[2] / Dwh[1]
 		scale_fig     = round(aspect_sizes / aspect_limits, digits=8)	# This compensates for the non-isometry
 		
 		unit = isa(arg1, Vector{<:GMTdataset}) ? "q" : "iq"	# The BUG only strikes on matrices, not GMTdatsets
-		def_z = @sprintf("+z%.8g%s", (Dwh[1] / (CTRL.limits[8] - CTRL.limits[7])), unit)
+		def_z::String = @sprintf("+z%.8g%s", (Dwh[1] / (CTRL.limits[8] - CTRL.limits[7])), unit)
 	end
 	if (Tc)				# Have a time column
 		bb = (isone) ? arg1.bbox : arg1[1].ds_bbox
@@ -1057,7 +1057,7 @@ function helper_vecZscale!(d::Dict, arg1, first::Bool, typevec::Int, opt_R::Stri
 	isArrowGMT4 = haskey(d, :arrow4) || haskey(d, :vector4)
 	isArrowGMT4 && (unit = replace(unit, "q" => ""); def_z = def_h = def_e = "")	# GMT4 arrows stuff only
 
-	if ((ahdr = helper_arrows(d, true)) != "")			# Have to use delete to avoid double parsing in -W
+	if ((ahdr::String = helper_arrows(d, true)) != "")			# Have to use delete to avoid double parsing in -W
 		contains(ahdr, "+e") && (def_e = "")
 		contains(ahdr, "+h") && (def_h = "")
 		if (typevec < 2 && contains(ahdr, "+z"))
@@ -1077,7 +1077,7 @@ function helper_vecZscale!(d::Dict, arg1, first::Bool, typevec::Int, opt_R::Stri
 		ahdr = ahdr[2:end]								# Need to drop the code because that is set elsewhere.
 	end
 
-	len = ((val = find_in_dict(d, [:ms :markersize :MarkerSize :size])[1]) !== nothing) ? arg2str(val) : "8p"
+	len = ((val = find_in_dict(d, [:ms :markersize :MarkerSize :size])[1]) !== nothing) ? arg2str(val)::String : "8p"
 	(ahdr != "" && ahdr[1] != '+') && (len = "")		# Because a length was set in the arrow(len=?,...) and it takes precedence(?)
 	d[:S] = "v$(len)" * ahdr * def_e * def_h * ((typevec < 2) ? def_z : "+s")
 
@@ -1129,7 +1129,7 @@ function helper_vecBug(d, arg1, first::Bool, haveR::Bool, haveVarFill::Bool, typ
 			arg1[k,3] = arg1[k,4] * c
 			arg1[k,4] = arg1[k,4] * s
 		end
-		return arg1		
+		return arg1
 	end
 
 	isArrowGMT4 = haskey(d, :arrow4) || haskey(d, :vector4)
@@ -1661,8 +1661,8 @@ function ternary(cmd0::String="", arg1=nothing; first::Bool=true, image::Bool=fa
 	(cmd0 == "" && arg1 === nothing) && (arg1 = [0.0 0.0 0.0])	# No data in, just a kind of ternary basemap
 	(cmd0 != "") && (arg1 = gmtread(cmd0))
 	d = init_module(first, kwargs...)[1]
-	opt_J = parse_J(d, "", " -JX" * split(def_fig_size, '/')[1] * "/0", true, false, false)[2]
-	opt_R = parse_R(d, "")[1]
+	opt_J::String = parse_J(d, "", " -JX" * split(def_fig_size, '/')[1] * "/0", true, false, false)[2]
+	opt_R::String = parse_R(d, "")[1]
 	d[:R] = (opt_R ==  "") ? "0/100/0/100/0/100" : opt_R[4:end]
 	parse_B4ternary!(d, first)
 	clockwise = haskey(d, :clockwise)
@@ -1717,9 +1717,9 @@ function parse_B4ternary!(d::Dict, first::Bool=true)
 	if ((val = find_in_dict(d, [:labels])[1]) !== nothing)		# This should be the easier way
 		!(isa(val,Tuple) && length(val) == 3) && error("The `labels` option must be Tuple with 3 elements.")
 		opt_Bs = split(opt_B)							# This drops the leading ' '
-		x = (opt_Bs[1][3] == 'p') ? opt_Bs[1][4:end] : opt_Bs[1][3:end]
-		d[:B] = " -Ba$(x)+l" * string(val[1]) * " -Bb$(x)+l" * string(val[2]) * " -Bc$(x)+l" * string(val[3])
-		[d[:B] *= " " * opt_Bs[k] for k = 2:length(opt_Bs)]		# Append the remains, if any.
+		x::String = (opt_Bs[1][3] == 'p') ? opt_Bs[1][4:end] : opt_Bs[1][3:end]
+		d[:B] = " -Ba$(x)+l" * string(val[1])::String * " -Bb$(x)+l" * string(val[2])::String * " -Bc$(x)+l" * string(val[3])::String
+		[d[:B] *= " " * opt_Bs[k] for k = 2:numel(opt_Bs)]		# Append the remains, if any.
 	else		# Ui, try to parse a string like this: " -Bpag8+u\" %\" -Ba+la -Bb+lb -Bc+lc"
 		(!first && opt_B == " -Bafg") && return			# Do not use the default -B on overlays.
 		opt_Bs = split(opt_B, " -B")[2:end]				# 2:end because surprisingly the first is = ""
@@ -1729,7 +1729,7 @@ function parse_B4ternary!(d::Dict, first::Bool=true)
 			else
 				x = opt_Bs[1][2:end]
 				d[:B] = " -Ba$(x)" * opt_Bs[2][2:end] * " -Bb$(x)" * opt_Bs[3][2:end] * " -Bc$(x)" * opt_Bs[4][2:end]
-				[d[:B] *= " -B" * opt_Bs[k] for k = 5:length(opt_Bs)]		# Append the remains, if any.
+				[d[:B] *= " -B" * opt_Bs[k] for k = 5:numel(opt_Bs)]		# Append the remains, if any.
 			end
 		end
 	end
@@ -1756,7 +1756,7 @@ function dict_auto_add!(d::Dict)
 	# If the Dict 'd' has a 'backdoor' member that is a NamedTuple, add its contents to the Dict
 	if ((val = find_in_dict(d, [:backdoor])[1]) !== nothing && isa(val, NamedTuple))
 		key = keys(val)
-		for n = 1:length(val)  d[key[n]] = val[n]  end
+		for n = 1:numel(val)  d[key[n]] = val[n]  end
 		delete!(d, :backdoor)
 	end
 end
@@ -1833,7 +1833,7 @@ Parameters
 function events(cmd0::String="", arg1=nothing; kwargs...)
 	# events share a lot of options with plot
 	d = KW(kwargs)
-	cmd = add_opt(d, "", "T", [:T :now])
+	cmd::String = add_opt(d, "", "T", [:T :now])
 	if (!occursin("-T", cmd))  error("The 'now' (T) option is mandatory")  end
 	cmd = add_opt(d, cmd, "E", [:E :knots],
 		(symbol=("s", nothing, 1), text=("t", nothing, 1), shift_startEnd = "+o", shift_start="+O", raise="+r", plateau="+p", decay="+d", fade="+f", text_duration="+l"))
