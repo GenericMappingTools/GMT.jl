@@ -461,7 +461,7 @@ function parse_opt_S(d::Dict, arg1, is3D::Bool)
 		if ((val = find_in_dict(d, [:ms :markersize :MarkerSize :size])[1]) !== nothing)
 			(marca == "") && (marca = "c")		# If a marker name was not selected, defaults to circle
 			if (isa(val, VMr))
-				val_::VMr = val
+				val_::Vector{<:Real} = vec(val)
 				if (length(val_) == 2)			# A two elements array is interpreted as [min max]
 					scale = (eltype(val_) <: Integer) ? 2.54/72 : 1.0	# In integers, assumes they are points
 					arg1 = hcat(arg1, linspace(val[1], val_[2], size(arg1,1)).*scale)
@@ -473,7 +473,7 @@ function parse_opt_S(d::Dict, arg1, is3D::Bool)
 			elseif (isa(val, Tuple) && isa(val[1], Function) && isa(val[2], VMr))
 				val2::Tuple = val
 				scale::Float64 = (eltype(val2[2]) <: Integer) ? 2.54/72 : 1.0
-				ind = sortperm(funcurve(val2[1], val2[2].*scale, size(arg1,1)))	# Get the sorting indices
+				ind = sortperm(funcurve(val2[1], vec(Float64.(val2[2].*scale)), size(arg1,1)))	# Get the sorting indices
 				arg1 = hcat(arg1, is3D ? view(arg1,:,3)[ind] : view(arg1,:,2)[ind])
 			elseif (string(val)::String != "indata")	# WTF is "indata"?
 				marca *= arg2str(val)::String

@@ -336,7 +336,7 @@ end
 # ----------------------------------------------------------------------------------------------------------
 function helper1_boxplot(kwargs)
 	d = KW(kwargs)
-	str = "Y"
+	str::String = "Y"
 	str = (find_in_dict(d, [:horizontal :hbar])[1] !== nothing) ? "X" : "Y"
 	isVert = (str == "Y")
 	(isVert && (val = find_in_dict(d, [:hor])[1] == true)) && (isVert=false; str="X")	# A private violins opt
@@ -1143,7 +1143,7 @@ parallelplot!(arg1; axeslabels::Vector{String}=String[], labels::Vector{String}=
 function plot_bands_from_vecDS(D::Vector{GMTdataset}, d, do_show, pen, gnames)
 	# This function is needed because of a GMT bug that screws the polygons when headers have -G
 	d[:show], isname = false, false
-	lw, lc, ls = break_pen(pen)
+	lw::String, lc::String, ls::String = break_pen(pen)
 	for k = 1:numel(D)
 		s = split(D[k].header)
 		d[:G] = string(s[2][3:end])

@@ -147,6 +147,21 @@ function extrema_nan(A)
 	end
 end
 
+"""
+    extrema_cols(A; col=1)
+
+Compute the minimum and maximum of a column of a matrix/vector `A` ignoring NaNs
+"""
+function extrema_cols(A; col=1)
+	(col > size(A,2)) && error("'col' ($col) larger than number of coluns in array ($(size(A,2)))")
+	mi, ma = typemax(eltype(A)), typemin(eltype(A))
+	@inbounds for n = 1:size(A,1)
+		mi = ifelse(mi > A[n,col], A[n,col], mi)
+		ma = ifelse(ma < A[n,col], A[n,col], ma)
+	end
+	return mi, ma
+end
+
 function minimum_nan(A)
 	#return (eltype(A) <: AbstractFloat) ? minimum(x->isnan(x) ?  Inf : x,A) : minimum(A)
 	if (eltype(A) <: AbstractFloat)
