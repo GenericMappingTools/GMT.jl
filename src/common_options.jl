@@ -359,7 +359,7 @@ function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bo
 
 	opt_J::String = "";		mnemo::Bool = false
 	if ((val = find_in_dict(d, [:J :proj :projection], del)[1]) !== nothing)
-		isa(val, Dict) && (val = dict2nt(val))
+		isa(val, Dict) && (val = Base.invokelatest(dict2nt,val))
 		opt_J, mnemo = build_opt_J(val)		# mnemo = true when the projection name used a mnemonic for the projection
 	elseif (IamModern[1] && ((val = is_in_dict(d, [:figscale :fig_scale :scale :figsize :fig_size])) === nothing))
 		# Subplots do not rely in the classic default mechanism
@@ -565,7 +565,7 @@ function check_flipaxes(d::Dict, width::AbstractString)
 	(width == "" || (val = find_in_dict(d, [:flipaxes :flip_axes])[1]) === nothing) && return width
 
 	swap_x = false;		swap_y = false;
-	isa(val, Dict) && (val = dict2nt(val))
+	isa(val, Dict) && (val = Base.invokelatest(dict2nt,val))
 	if (isa(val, NamedTuple))
 		for k in keys(val)
 			if     (k == :x)  swap_x = true
@@ -850,7 +850,7 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 		elseif (isa(val, Real))		# for example, B=0
 			_val = string(val)
 		end
-		isa(val, Dict) && (val = dict2nt(val))
+		isa(val, Dict) && (val = Base.invokelatest(dict2nt,val))
 		if (isa(val, NamedTuple))
 			_opt_B::String, what_B::Vector{Bool} = axis(val, d);	extra_parse = false
 			have_Bframe = what_B[2]
@@ -963,7 +963,7 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 	for symb in [:yaxis2 :xaxis2 :axis2 :zaxis :yaxis :xaxis]
 		add_this, what_B = false, [false, false]
 		if (haskey(d, symb) && (isa(d[symb], NamedTuple) || isa(d[symb], Dict) || isa(d[symb], String)))
-			(isa(d[symb], Dict)) && (d[symb] = dict2nt(d[symb]))
+			isa(d[symb], Dict) && (d[symb] = Base.invokelatest(dict2nt, d[symb]))
 			#(!have_axes) && (have_axes = isa(d[symb], NamedTuple) && any(keys(d[symb]) .== :axes))
 			if     (symb == :axis2)   this_B, what_B = axis(d[symb], d, secondary=true); add_this = true
 			elseif (symb == :xaxis)   this_B, what_B = axis(d[symb], d, x=true); add_this, xax = true, true
@@ -1540,7 +1540,7 @@ function parse_I(d::Dict, cmd::String, symbs, opt::String, del::Bool=true)::Stri
 	get_that_string(arg)::String = string(arg)		# Function barrier. Shuting up JET, etc.
 
 	if ((val = find_in_dict(d, symbs, del)[1]) !== nothing)
-		if isa(val, Dict)  val = dict2nt(val)  end
+		isa(val, Dict) && (val = Base.invokelatest(dict2nt,val))
 		if (isa(val, NamedTuple))
 			x::String = "";	y::String = "";	u::String = "";	e = false
 			fn = fieldnames(typeof(val))
@@ -1578,7 +1578,7 @@ function parse_params(d::Dict, cmd::String)::String
 
 	((val = find_in_dict(d, [:conf :par :params], true)[1]) === nothing) && return cmd
 	_cmd::String = deepcopy(cmd)
-	if isa(val, Dict)  val = dict2nt(val)  end
+	isa(val, Dict) && (val = Base.invokelatest(dict2nt,val))
 	(!isa(val, NamedTuple) && !isa(val, Tuple)) && @warn("BAD usage: Parameter is neither a Tuple or a NamedTuple")
 	if (isa(val, NamedTuple))
 		fn = fieldnames(typeof(val))
@@ -1605,7 +1605,7 @@ function add_opt_pen(d::Dict, symbs::VMs, opt::String="", del::Bool=true)::Strin
 		out = opt * pen
 	else
 		if ((val = find_in_dict(d, symbs, del)[1]) !== nothing)
-			if isa(val, Dict)  val = dict2nt(val)  end
+			isa(val, Dict) && (val = Base.invokelatest(dict2nt, val))
 			if (isa(val, Tuple))				# Like this it can hold the pen, not extended atts
 				if (isa(val[1], NamedTuple))	# Then assume they are all NTs
 					for v in val
@@ -2025,7 +2025,7 @@ function prepare2geotif(d::Dict, cmd::Vector{String}, opt_T::String, O::Bool)::T
 
 	if (!O && ((val = find_in_dict(d, [:geotif])[1]) !== nothing))		# Only first layer
 		cmd[1] = helper2geotif(cmd[1])
-		if (startswith(string(val), "trans"))  opt_T = " -TG -W+g"  end	# A transparent GeoTIFF
+		if (startswith(string(val)::String, "trans"))  opt_T = " -TG -W+g"  end	# A transparent GeoTIFF
 	elseif (!O && ((val = find_in_dict(d, [:kml])[1]) !== nothing))		# Only first layer
 		if (!occursin("-JX", cmd[1]) && !occursin("-Jx", cmd[1]))
 			@warn("Creating KML requires the use of a cartesian projection of geographical coordinates. Not your case")
@@ -2038,7 +2038,7 @@ function prepare2geotif(d::Dict, cmd::Vector{String}, opt_T::String, O::Bool)::T
 			end
 		elseif (isa(val, NamedTuple) || isa(val, Dict))
 			# [+tdocname][+nlayername][+ofoldername][+aaltmode[alt]][+lminLOD/maxLOD][+fminfade/maxfade][+uURL]
-			if isa(val, Dict)  val = dict2nt(val)  end
+			isa(val, Dict) && (val = Base.invokelatest(dict2nt, val))
 			opt_T = add_opt(Dict(:kml => val), " -TG -W+k", "", [:kml],
 							(title="+t", layer="+n", layername="+n", folder="+o", foldername="+o", altmode="+a", LOD=("+l", arg2str), fade=("+f", arg2str), URL="+u"))
 		end
@@ -2110,7 +2110,7 @@ function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, mapa=nothing, de
 	end
 
 	args::Vector{String} = Vector{String}(undef,1)
-	if isa(val, Dict)  val = dict2nt(val)  end	# For Py usage
+	isa(val, Dict) && (val = Base.invokelatest(dict2nt, val))
 	if (isa(val, NamedTuple) && isa(mapa, NamedTuple))
 		args[1] = add_opt(val, mapa, arg)
 	elseif (isa(val, Tuple) && length(val) > 1 && isa(val[1], NamedTuple))	# In fact, all val[i] -> NT
@@ -2180,7 +2180,7 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)::String
 	cmd::String = "";		cmd_hold = Vector{String}(undef, 2);	order = zeros(Int,2,1);  ind_o = 0
 	for k = 1:numel(key)::Int			# Loop over the keys of option's tuple
 		!haskey(d, key[k]) && continue
-		(isa(nt[k], Dict)) && (nt[k] = dict2nt(nt[k]))
+		isa(nt[k], Dict) && (nt[k] = Base.invokelatest(dict2nt, nt[k]))
 		if (isa(d[key[k]], Tuple))		# Complexify it. Here, d[key[k]][2] must be a function name.
 			if (isa(nt[k], NamedTuple))
 				if (d[key[k]][2] == add_opt_fill)
@@ -2284,10 +2284,10 @@ function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, need_symb::Symbo
 	val, symb = find_in_dict(d, symbs, false)
 	if (val !== nothing)
 		to_slot = true
-		if isa(val, Dict)  val = dict2nt(val)  end
+		isa(val, Dict) && (val = Base.invokelatest(dict2nt, val))
 		if (isa(val, Tuple) && length(val) == 2)
 			# This is crazzy trickery to accept also (e.g) C=(pratt,"200k") instead of C=(pts=pratt,dist="200k")
-			d[symb] = dict2nt(Dict(need_symb => val[1], keys(nt_opts)[1] => val[2]))	# Need to patch also the input option
+			d[symb] = Base.invokelatest(dict2nt, Dict(need_symb => val[1], keys(nt_opts)[1] => val[2]))	# Need to patch also the input option
 		end
 		if (isa(val, NamedTuple))
 			di::Dict = nt2dict(val)
@@ -2360,7 +2360,7 @@ function add_opt_cpt(d::Dict, cmd::String, symbs::VMs, opt::Char, N_args::Int=0,
 				cpt::GMTcpt = makecpt(opt_T * " -C" * get_color(val)::String)
 				cmd, arg1, arg2, N_args = helper_add_cpt(cmd, opt, N_args, arg1, arg2, cpt, store)
 			else
-				c = get_color(val)
+				c = get_color(val)::String
 				opt_C = " -" * opt * c		# This is pre-made GMT cpt
 				cmd *= opt_C
 				if (store && c != "" && tryparse(Float32, c) === nothing)	# Because if !== nothing then it's a number and -Cn is not valid
@@ -2413,7 +2413,7 @@ function add_opt_fill(cmd::String, d::Dict, symbs::VMs, opt="", del::Bool=true):
 	# Deal with the area fill attributes option. Normally, -G
 	(show_kwargs[1]) && return print_kwarg_opts(symbs, "NamedTuple | Tuple | Array | String | Number")
 	((val = find_in_dict(d, symbs, del)[1]) === nothing) && return cmd
-	isa(val, Dict) && (val = dict2nt(val))
+	isa(val, Dict) && (val = Base.invokelatest(dict2nt, val))
 	(val == true && symbs == [:G :fill]) && (val="#0072BD")		# Let fill=true mean a default color
 	(val == "" && symbs == [:G :fill]) && return cmd			# Let fill="" mean no fill (handy for proggy reasons)
 	(opt != "") && (opt = string(" -", opt))
@@ -2538,7 +2538,7 @@ function add_opt_module(d::Dict)::Vector{String}
 		r::String = ""
 		if (haskey(d, symb))
 			val = d[symb]
-			if isa(val, Dict)  val = dict2nt(val)  end
+			isa(val, Dict) && (val = Base.invokelatest(dict2nt, val))
 			if (isa(val, NamedTuple))
 				nt::NamedTuple = val
 				if     (symb == :coast)     r = coast!(; Vd=2, nt...)
@@ -2701,7 +2701,7 @@ function axis(D::Dict=Dict(); x::Bool=false, y::Bool=false, z::Bool=false, secon
 
 	opt::String = " -B"
 	if ((val = find_in_dict(d, [:axes :frame])[1]) !== nothing)		# The :frame here makes no sense, I think.
-		isa(val, Dict) && (val = dict2nt(val))
+		isa(val, Dict) && (val = Base.invokelatest(dict2nt, val))
 		o::String = helper0_axes(val)
 		opt = (o == "full") ? opt * "WSEN" : (o == "none") ? opt : opt * o
 	end

@@ -10,12 +10,12 @@ square(x) = x^2
 
 function funcurve(f::Function, lims::VMr, n=100)::Vector{Float64}
 	# Geneate a curve between lims[1] and lims[2] having the form of function 'f'
-	if     (f == exp)    x = log.(lims)
-	elseif (f == log)    x = exp.(lims)
-	elseif (f == log10)  x = exp10.(lims)
-	elseif (f == exp10)  x = log10.(lims)
-	elseif (f == sqrt)   x = square.(lims)
-	elseif (f == square) x = sqrt.(lims)
+	if     (f == exp)    x::Vector{Float64} = vec(log.(Float64.(lims)))
+	elseif (f == log)    x = vec(exp.(Float64.(lims)))
+	elseif (f == log10)  x = vec(exp10.(Float64.(lims)))
+	elseif (f == exp10)  x = vec(log10.(Float64.(lims)))
+	elseif (f == sqrt)   x = vec(square.(Float64.(lims)))
+	elseif (f == square) x = vec(sqrt.(Float64.(lims)))
 	else   error("Function $f not implemented in funcurve().")
 	end
 	f.(linspace(x[1], x[2], n))

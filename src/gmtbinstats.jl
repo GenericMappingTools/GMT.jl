@@ -118,7 +118,8 @@ function binstats(cmd0::String="", arg1=nothing; nbins=0, kwargs...)
 	R = common_grd(d, cmd0, cmd, "gmtbinstats ", data)		# Finish build cmd and run it
 	if (isa(R, GMTdataset) && (val !== nothing))
 		th::Float64 = val		# Don't use the bloody Anys in next comparison.
-		R.data = R[(view(R.data,:,3) .>= th), :]
+		#R.data = R[(view(R.data,:,3) .>= th), :]
+		R.data = R[(Base.invokelatest(view,R.data,:,3) .>= th), :]
 		set_dsBB!(R)		# Need to update BBs
 	end
 	if (!isempty(R) && !isa(R, String) && occursin(" -Th", cmd))
