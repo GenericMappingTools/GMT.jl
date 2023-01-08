@@ -461,7 +461,7 @@ function parse_opt_S(d::Dict, arg1, is3D::Bool)
 		if ((val = find_in_dict(d, [:ms :markersize :MarkerSize :size])[1]) !== nothing)
 			(marca == "") && (marca = "c")		# If a marker name was not selected, defaults to circle
 			if (isa(val, VMr))
-				val_::Vector{<:Real} = vec(val)
+				val_::AbstractVector{<:Real} = vec(val)
 				if (length(val_) == 2)			# A two elements array is interpreted as [min max]
 					scale = (eltype(val_) <: Integer) ? 2.54/72 : 1.0	# In integers, assumes they are points
 					arg1 = hcat(arg1, linspace(val[1], val_[2], size(arg1,1)).*scale)
