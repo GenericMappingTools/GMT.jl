@@ -200,7 +200,7 @@ function parse_dcw(cmd::String, val::Tuple)::String
 
 	for k = 1:numel(val)
 		if (isa(val[k], NamedTuple) || isa(val[k], Dict))
-			if (isa(val[k], Dict))  val[k] = dict2nt(val[k])  end
+			isa(val[k], Dict) && (val[k] = Base.invokelatest(dict2nt, val[k]))
 			cmd *= add_opt(Dict(:DCW => val[k]), "", "E", [:DCW],
 			               (country="", name="", continent="=", pen=("+p", add_opt_pen), fill=("+g", add_opt_fill)))::String
 		elseif (isa(val[k], Tuple))

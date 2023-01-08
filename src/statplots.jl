@@ -59,7 +59,7 @@ function kernelDensity(mat::AbstractMatrix{<:Real}; nbins::Integer=200, bins::Ve
                        bandwidth=nothing, kernel::StrSymb="normal")
 	D::Vector{GMTdataset} = Vector{GMTdataset}(undef, size(mat,2))
 	for k = 1:size(mat,2)
-		D[k] = kernelDensity(view(mat,:,k); nbins=nbins, bins=bins, bandwidth=bandwidth, kernel=kernel)
+		D[k] = kernelDensity(Base.invokelatest(view, mat,:,k); nbins=nbins, bins=bins, bandwidth=bandwidth, kernel=kernel)
 	end
 	return D
 end
@@ -208,7 +208,7 @@ function boxplot(data::Array{T,3}; pos::Vector{<:Real}=Vector{Real}(), first::Bo
 	Dol::Vector{GMTdataset} = Vector{GMTdataset}(undef, N_grp)
 	mi, ma, nol = 1e100, -1e100, 0
 	for nig = 1:N_grp								# Loop over each element in the group
-		D3[nig], Dt = helper2_boxplot(view(data,:,:,nig), pos, w, offs[nig]*boxspacing, _fill, showOL, isVert)
+		D3[nig], Dt = helper2_boxplot(Base.invokelatest(view, data,:,:,nig), pos, w, offs[nig]*boxspacing, _fill, showOL, isVert)
 		!isempty(Dt) && (Dol[nol+=1] = Dt)			# Retain only the non-empties
 		mi, ma = min(mi, D3[nig].ds_bbox[5]), max(ma, D3[nig].ds_bbox[12])
 	end
@@ -376,7 +376,7 @@ function helper2_boxplot(data::Union{Vector{Vector{T}}, AbstractMatrix{T}}, x::V
 	first = true
 	mi, ma = 1e100, -1e100
 	for k = 1:n_boxs			# Loop over number of groups (or number of candle sticks if each group has only 1)
-		t = isa(data, AbstractMatrix) ? view(data,:,k) : data[k]
+		t = isa(data, AbstractMatrix) ? Base.invokelatest(view, data,:,k) : data[k]
 		q0, q25, q50, q75, q100 = _quantile(t, w, [0.0, 0.25, 0.5, 0.75, 1.0])
 		if (outliers)
 			mi, ma = min(mi, q0), max(ma, q100)		# For keeping a global min/max that includes the outliers too
@@ -525,8 +525,8 @@ function violin(data::Array{<:Real,3}; pos::Vector{<:Real}=Vector{Real}(), nbins
 	xc = Float64[]				# Because of the stupid locality of vars inside the for block
 	for nig = 1:N_grp								# Loop over each element in the group
 		_split = (split) ? nig : 0
-		Dv, _D, xc = helper1_violin(view(data,:,:,nig), pos, offs[nig]*boxspacing, N_grp; groupwidth=groupwidth, nbins=nbins,
-		                            bins=bins, bandwidth=bandwidth, kernel=kernel, scatter=scatter, split=_split, isVert=isVert)
+		Dv, _D, xc = helper1_violin(Base.invokelatest(view, data,:,:,nig), pos, offs[nig]*boxspacing, N_grp;
+		                            groupwidth=groupwidth, nbins=nbins, bins=bins, bandwidth=bandwidth, kernel=kernel, scatter=scatter, split=_split, isVert=isVert)
 		for k = 1:size(data,2)  D3[n+=1] = Dv[k]  end	# Loop over number of groups
 		(scatter) && for k = 1:size(data,2)  Ds[m+=1] = _D[k]  end		# Store the scatter pts
 	end
@@ -578,7 +578,7 @@ function helper1_violin(data::Union{Vector{Vector{T}}, AbstractMatrix{T}}, x::Ve
 	Dv = kernelDensity(data; nbins=nbins, bins=bins, bandwidth=bandwidth, kernel=kernel)
 	Ds = (scatter) ? Vector{GMTdataset}(undef, length(Dv)) : Vector{GMTdataset}()
 	for k = 1:numel(Dv)
-		xd, d = view(Dv[k].data,:,1), view(Dv[k].data,:,2)
+		xd, d = Base.invokelatest(view,Dv[k].data,:,1), Base.invokelatest(view,Dv[k].data,:,2)
 		d = 1/2N_grp * 0.75 * groupwidth .* d ./ maximum(d)
 		(k == 2 && split != 0 && swing) && (split = (split == 1) ? 2 : 1)	# Not realy sure why we have to do this.
 		if (split == 0)					# Both sides
@@ -762,7 +762,7 @@ function quantile_weights(v::AbstractVector{V}, w::AbstractVector{W}, p::Abstrac
 
 	# remove zeros weights and sort
 	nz = .!iszero.(w)
-	vw = sort!(collect(zip(view(v, nz), view(w, nz))))
+	vw = sort!(collect(zip(Base.invokelatest(view, v, nz), Base.invokelatest(view, w, nz))))
 	N = length(vw)
 
 	# prepare percentiles
@@ -1075,8 +1075,8 @@ function parallelplot(cmd0::String="", arg1=nothing; first::Bool=true, axeslabel
 	function check_bbox!(_data, _bbox)		# Check that bbox has no NaNs
 		if (any(isnan.(_bbox)))
 			for k = 1:size(_data,2)
-				isnan(_bbox[2k-1]) && (_bbox[2k-1] = minimum_nan(view(_data, :,k))) 
-				isnan(_bbox[2k]) && (_bbox[2k] = maximum_nan(view(_data, :,k))) 
+				isnan(_bbox[2k-1]) && (_bbox[2k-1] = minimum_nan(Base.invokelatest(view, _data, :,k))) 
+				isnan(_bbox[2k]) && (_bbox[2k] = maximum_nan(Base.invokelatest(view, _data, :,k))) 
 			end
 		end
 	end
@@ -1178,13 +1178,13 @@ function normalizeArray(method, A, bbox=Float64[])
 	n_cols = size(A,2)
 	if (method == "range")		# rulers (columns) have independent minimum and maximum limits
 		for n = 1:n_cols
-			A[:,n] = ((view(A, :,n) .- bbox[2*(n-1)+1])) ./ (bbox[2n] - bbox[2*(n-1)+1])
+			A[:,n] = ((Base.invokelatest(view, A, :,n) .- bbox[2*(n-1)+1])) ./ (bbox[2n] - bbox[2*(n-1)+1])
 		end
 	elseif (method == "zscore")	# z-scores (mean of 0 and a standard deviation of 1) along each coordinate ruler
 		if (any(isnan.(A)))
 			S, C = zeros(1, n_cols), zeros(1, n_cols)
 			for k = 1:n_cols
-				t = skipnan(view(A, :,k))
+				t = skipnan(Base.invokelatest(view, A, :,k))
 				S[k] = std(t)
 				C[k] = mean(t)
 			end
@@ -1252,7 +1252,7 @@ function cornerplot(arg1; first::Bool=true, kwargs...)
 		(Vd == 2) && return r		# Almost useless but at least wont error
 		truths::Vector{Float64} = ((val = find_in_dict(d, [:truths])[1]) !== nothing) ? val : Float64[]
 		(!isempty(truths) && length(truths) != size(D,2)) && (@warn("The `truths` vector must have same length as n dimensions. Ignoring it."); truths = Float64[])
-		quantiles::Vector{Float64} = ((val = find_in_dict(d, [:quantiles])[1]) !== nothing) ? val : Float64[]
+		quantiles::Vector{Float64} = ((val = find_in_dict(d, [:quantiles])[1]) !== nothing) ? vec(val) : Float64[]
 
 		# Plot the diagonal histograms. Compute a nice xmin/xmax and create a -Rxmin/xmax/0/0
 		# This has the further beautifull side effect of aligning exactly the x annotations of the other
@@ -1270,7 +1270,7 @@ function cornerplot(arg1; first::Bool=true, kwargs...)
 				histogram(t, B="lSrt a", R=opt_R, panel=(k,k), fill="", W="0,white", Vd=Vd)	# Used only to plot the bott axis
 				histogram(t, conf=(MAP_FRAME_TYPE="inside",), B="Wbrt a", R=opt_R, G=hstColor, W=0.1, Vd=Vd)
 			end
-			(!isempty(quantiles)) && vlines!(quantile(view(D,:,k), quantiles); ls=:dash)
+			(!isempty(quantiles)) && vlines!(quantile(Base.invokelatest(view,D,:,k), quantiles); ls=:dash)
 			(!isempty(truths))    && vlines!(truths[k]; lw=0.75)
 		end
 		ndims == 1 && return subplot(endwith)

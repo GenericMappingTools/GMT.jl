@@ -106,7 +106,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	end
 
 	cmd, arg1, opt_R, _, opt_i = read_data(d, cmd0, cmd, arg1, opt_R, is3D)
-	(cmd0 != "" && isa(arg1, GMTdataset)) && (arg1 = with_xyvar(d::Dict, arg1))	# If we read a file, see if requested cols
+	(cmd0 != "" && isa(arg1, GMTdataset)) && (Base.invokelatest(with_xyvar, d, arg1)) #(arg1 = with_xyvar(d::Dict, arg1))	# If we read a file, see if requested cols
 	(!got_usr_R && opt_R != "") && (CTRL.pocket_R[1] = opt_R)	# Still on time to store it.
 	(N_args == 0 && arg1 !== nothing) && (N_args = 1)	# arg1 might have started as nothing and got values above
 	(!O && caller == "plotyy") && (box_str[1] = opt_R)	# This needs modifications (in plotyy) by second call
@@ -473,7 +473,7 @@ function parse_opt_S(d::Dict, arg1, is3D::Bool)
 			elseif (isa(val, Tuple) && isa(val[1], Function) && isa(val[2], VMr))
 				val2::Tuple = val
 				scale::Float64 = (eltype(val2[2]) <: Integer) ? 2.54/72 : 1.0
-				ind = sortperm(funcurve(val2[1], vec(Float64.(val2[2].*scale)), size(arg1,1)))	# Get the sorting indices
+				ind = sortperm(Base.invokelatest(funcurve, val2[1], vec(Float64.(val2[2].*scale)), size(arg1,1)))	# Get the sorting indices
 				arg1 = hcat(arg1, is3D ? view(arg1,:,3)[ind] : view(arg1,:,2)[ind])
 			elseif (string(val)::String != "indata")	# WTF is "indata"?
 				marca *= arg2str(val)::String
@@ -559,8 +559,8 @@ function helper_multi_cols(d::Dict, arg1, mcc, opt_R, opt_S, opt_W, caller, is3D
 		if     (opt_W != "")                penT, penC, penS = break_pen(scan_opt(opt_W, "-W"))
 		elseif (!occursin(" -W", _cmd[1]))  _cmd[1] *= " -W0.5"
 		end
-		arg1 = (penT != "") ? mat2ds(arg1, color = (penC != "") ? [penC] : :cycle, lt=penT, ls=penS, multi=true) :
-		                             mat2ds(arg1, color = (penC != "") ? [penC] : :cycle, ls=penS, multi=true)
+		arg1 = (penT != "") ? Base.invokelatest(mat2ds,arg1, color = (penC != "") ? [penC] : :cycle, lt=penT, ls=penS, multi=true) :
+		                      Base.invokelatest(mat2ds,arg1, color = (penC != "") ? [penC] : :cycle, ls=penS, multi=true)
 		mat::Matrix{<:Float64} = gmt("gmtinfo -C", arg1).data		# But now also need to update the -R string
 		_cmd[1] = replace(_cmd[1], opt_R => " -R" * arg2str(round_wesn(mat)))
 	elseif (!mcc && sub_module == "bar" && check_bar_group(arg1))	# !mcc because the bar-groups all have mcc = false
@@ -575,15 +575,15 @@ function helper_gbar_fill(d::Dict)::Vector{String}
 	# This is a function that tryies to hammer the insistence that g_bar_fill is a Any
 	# g_bar_fill may hold a sequence of colors for group Bar plots
 	gval = find_in_dict(d, [:fill :fillcolor], false)[1]	# Used for group colors
-	if (isa(gval, Array{String}) && length(gval) > 1)
+	if (isa(gval, Array{String}) && length(gval)::Int > 1)
 		g_bar_fill::Vector{String} = String[]
 		append!(g_bar_fill, gval)
-	elseif ((isa(gval, Array{Int}) || isa(gval, Tuple) && eltype(gval) == Int) && length(gval) > 1)
-		g_bar_fill = Vector{String}(undef, length(gval))			# Patterns
+	elseif ((isa(gval, Array{Int}) || isa(gval, Tuple) && eltype(gval) == Int) && length(gval)::Int > 1)
+		g_bar_fill = Vector{String}(undef, length(gval)::Int)			# Patterns
 		for k in eachindex(gval)  g_bar_fill[k] = string('p', gval[k])  end
 	elseif (isa(gval, Tuple) && (eltype(gval) == String || eltype(gval) == Symbol) && length(gval) > 1)
-		g_bar_fill = Vector{String}(undef, length(gval))			# Patterns
-		for k in eachindex(gval)  g_bar_fill[k] = string(gval[k])  end
+		g_bar_fill = Vector{String}(undef, length(gval)::Int)			# Patterns
+		for k in eachindex(gval)  g_bar_fill[k] = string(gval[k])::String  end
 	else
 		g_bar_fill = String[]		# To have somthing to return
 	end
@@ -611,7 +611,7 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill::Vector{Strin
 		(iseven(n_cols)) && error("Wrong number of columns in error bars array (or prog error)")
 		n = Int((n_cols - 1) / 2)
 		_arg = Float64.(arg1[:, 1:(n+1)])	# No need to care with GMTdatasets because case was dealt in 'got_Ebars'
-		bars_cols = arg1[:,(n + 2):end]		# We'll use this to appent to the multi-segments
+		bars_cols = arg1[:,(n + 2):end]		# We'll use this to append to the multi-segments
 	else
 		_arg = isa(arg1, GMTdataset) ? Float64.(copy(arg1.data)) : (isa(arg1, Vector{<:GMTdataset}) ? Float64.(copy(arg1[1].data)) : Float64.(copy(arg1)))
 		bars_cols = missing
@@ -686,7 +686,8 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill::Vector{Strin
 	# Convert to a multi-segment GMTdataset. There will be as many segments as elements in a group
 	# and as many rows in a segment as the number of groups (number of bars if groups had only one bar)
 	alpha = find_in_dict(d, [:alpha :fillalpha :transparency])[1]
-	_argD::Vector{GMTdataset{eltype(_arg), 2}} = mat2ds(_arg; fill=g_bar_fill, multi=do_multi, fillalpha=alpha, letsingleton=true)
+	_argD::Vector{GMTdataset{eltype(_arg), 2}} =
+		Base.invokelatest(mat2ds, _arg; fill=g_bar_fill, multi=do_multi, fillalpha=alpha, letsingleton=true)
 	(is_stack) && (_argD = ds2ds(_argD[1], fill=g_bar_fill, color_wrap=nl, fillalpha=alpha))
 	if (is_hbar && !is_stack)					# Must swap first & second col
 		for k = 1:lastindex(_argD)  _argD[k].data = [_argD[k].data[:,2] _argD[k].data[:,1]]  end
@@ -695,7 +696,7 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill::Vector{Strin
 
 	if (bars_cols !== missing)		# Loop over number of bars in each group and append the error bar
 		for k = 1:lastindex(_argD)
-			_argD[k].data = reshape(append!(_argD[k].data[:], bars_cols[:,k]), size(_argD[k].data,1), :)
+			_argD[k].data = reshape(append!(_argD[k].data[:], bars_cols[:,k]), size(_argD[k].data,1)::Int, :)
 		end
 	end
 
