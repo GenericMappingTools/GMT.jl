@@ -95,14 +95,14 @@ function gadm(country, subregions...; children::Bool=false, names::Bool=false, c
 		D = gd2gmt(getgeom(gdfeature[1], 0),"")
 		isa(D, GMTdataset) && (D = [D])		# Hopefully not too wasteful but it simplifies a lot the whole algo
 		att = _get_attrib(gdfeature[1])
-		for k = 1:length(D)  D[k].attrib = att;  D[k].colnames = ["Lon", "Lat"]  end
+		for k = 1:numel(D)  D[k].attrib = att;  D[k].colnames = ["Lon", "Lat"]  end
 		D[1].attrib = _get_attrib(gdfeature[1])
 		((prj = getproj(Gdal.getlayer(data, 0))) != C_NULL) && (D[1].proj4 = toPROJ4(prj))
-		for n = 2:length(gdfeature)
+		for n = 2:numel(gdfeature)
 			_D = gd2gmt(getgeom(gdfeature[n], 0),"")
 			isa(_D, GMTdataset) && (_D = [_D])
 			att = _get_attrib(gdfeature[n])
-			for k = 1:length(_D)  _D[k].attrib = att;  _D[k].colnames = ["Lon", "Lat"]  end
+			for k = 1:numel(_D)  _D[k].attrib = att;  _D[k].colnames = ["Lon", "Lat"]  end
 			append!(D, _D)
 		end
 		set_dsBB!(D, false)		# Compute only the global BB. The other were computed aready
@@ -144,7 +144,7 @@ isvalidcode(str) = match(r"\b[A-Z]{3}\b", str) !== nothing
 function _download(country)
 	# Downloads data (for the first call) for `country` and returns its full name.
 	ID, name_zip = "gadm36_$(country).gpkg", "gadm36_$(country)_gpkg.zip"
-	cache = joinpath(readlines(`gmt --show-userdir`)[1], "cache")
+	cache = joinpath(GMTuserdir[1], "cache")
 	if !isdir(cache)
 		((pato = mkdir(cache)) == "") && error("Failed to create the 'cache' dir where download file would be stored")
 	end
