@@ -11,11 +11,11 @@ Full option list at [`grdedit`]($(GMTdoc)grdedit.html)
 Parameters
 ----------
 
-- **A** | **adjust** :: [Type => Bool]
+- **A** | **adjust_inc** :: [Type => Bool]
 
     If necessary, adjust the file’s x_inc, y_inc to be compatible with its domain.
     ($(GMTdoc)grdedit.html#a)
-- **C** | **adjust** :: [Type => Bool]
+- **C** | **adjust_inc** :: [Type => Bool]
 
     Clear the command history from the grid header.
     ($(GMTdoc)grdedit.html#c)
@@ -44,7 +44,7 @@ Parameters
     For global, geographical grids only. Grid values will be shifted longitudinally according to
     the new borders given in ``limits`` (R option).
     ($(GMTdoc)grdedit.html#s)
-- **T** | **toggle** :: [Type => Bool]
+- **T** | **toggle_reg** | **toggle** :: [Type => Bool]
 
     Make necessary changes in the header to convert a gridline-registered grid to a pixel-registered
     grid, or vice-versa.
@@ -54,7 +54,6 @@ Parameters
 - $(GMT._opt_di)
 - $(GMT.opt_e)
 - $(GMT._opt_f)
-- $(GMT.opt_w)
 - $(GMT.opt_swap_xy)
 """
 function grdedit(cmd0::String="", arg1=nothing; kwargs...)
@@ -63,8 +62,10 @@ function grdedit(cmd0::String="", arg1=nothing; kwargs...)
 	arg2 = nothing
 	(isa(arg1, GMTgrid) && length(kwargs) == 0) && (arg1.range[5:6] .= extrema(arg1); return arg1)  # Update the z_min|max
 
-	cmd, = parse_common_opts(d, "", [:G :R :J :V_params :bi :di :e :f :w :yx])
-	cmd  = parse_these_opts(cmd, d, [[:A :adjust], [:C :clear_history], [:D :header], [:E :flip], [:S :wrap], [:T :toggle]])
+	cmd, = parse_common_opts(d, "", [:G :R :V_params :bi :di :e :f :w :yx])
+	cmd = parse_J(d, cmd, " ")[1]       # No default J here.
+	cmd  = parse_these_opts(cmd, d, [[:A :adjust_inc], [:C :clear_history], [:D :header], [:E :flip],
+                                     [:L :adust_lon], [:S :wrap], [:T :toggle :toggle_reg]])
 	cmd, args, n, = add_opt(d, cmd, "N", [:N :replace], :data, Array{Any,1}([arg1, arg2]), (x="",))
     if (n > 0)  arg1, arg2 = args[:]  end
 

@@ -2558,7 +2558,7 @@ function add_opt_module(d::Dict)::Vector{String}
 					_d = nt2dict(nt)
 					(haskey(_d, :data)) && (CTRL.pocket_call[1] = _d[:data]; del_from_dict(d, [:data]))
 					this_symb = CTRL.callable[findfirst(symb .== CTRL.callable)]
-					fn = getfield(Main, Symbol(string(this_symb, "!")))
+					fn = getfield(GMT, Symbol(string(this_symb, "!")))
 					if (this_symb in [:vband, :hband, :vspan, :hspan])
 						r = fn(CTRL.pocket_call[1]; nested=true, Vd=2, nt...)
 					else
