@@ -1537,7 +1537,7 @@ parse_G(d::Dict, cmd::String) = parse_helper(cmd, d, [:G :save :write :outgrid :
 function parse_I(d::Dict, cmd::String, symbs, opt::String, del::Bool=true)::String
 	# Parse the quasi-global -I option. But arguments can be strings, arrays, tuples or NamedTuples
 	# At the end we must recreate this syntax: xinc[unit][+e|n][/yinc[unit][+e|n]] or
-	get_that_string(arg)::String = string(arg)		# Function barrier. Shuting up JET, etc.
+	get_that_string(arg)::String = string(arg)::String		# Function barrier. Shuting up JET, etc.
 
 	if ((val = find_in_dict(d, symbs, del)[1]) !== nothing)
 		isa(val, Dict) && (val = Base.invokelatest(dict2nt,val))
@@ -1920,16 +1920,16 @@ function arg2str(arg, sep='/')::String
 	# ARG can also be a Bool, in which case the TRUE value is converted to "" (empty string)
 	# SEP is the char separator used when ARG is a tuple or array of numbers
 	if (isa(arg, AbstractString) || isa(arg, Symbol))
-		out::String = string(arg)
+		out::String = string(arg)::String
 		if (occursin(" ", out) && !startswith(out, "\""))	# Wrap it in quotes
 			out = "\"" * out * "\""
 		end
 	elseif ((isa(arg, Bool) && arg) || isempty_(arg))
 		out = ""
 	elseif (isa(arg, Real))		# Have to do it after the Bool test above because Bool is a Number too
-		out = @sprintf("%.12g", arg)
+		out = @sprintf("%.12g", arg)::String
 	elseif (isa(arg, Array{<:Real}) || (isa(arg, Tuple) && !isa(arg[1], String)) )
-		out = join([string(x, sep) for x in arg])
+		out = join([string(x, sep)::String for x in arg])
 		out = rstrip(out, sep)		# Remove last '/'
 	elseif (isa(arg, Tuple) && isa(arg[1], String))		# Maybe better than above but misses nice %.xxg
 		out = join(arg, sep)
@@ -2025,7 +2025,7 @@ function prepare2geotif(d::Dict, cmd::Vector{String}, opt_T::String, O::Bool)::T
 
 	if (!O && ((val = find_in_dict(d, [:geotif])[1]) !== nothing))		# Only first layer
 		cmd[1] = helper2geotif(cmd[1])
-		if (startswith(string(val)::String, "trans"))  opt_T = " -TG -W+g"  end	# A transparent GeoTIFF
+		if (startswith(string(val)::String, "trans"))  opt_T::String = " -TG -W+g"  end	# A transparent GeoTIFF
 	elseif (!O && ((val = find_in_dict(d, [:kml])[1]) !== nothing))		# Only first layer
 		if (!occursin("-JX", cmd[1]) && !occursin("-Jx", cmd[1]))
 			@warn("Creating KML requires the use of a cartesian projection of geographical coordinates. Not your case")
@@ -2033,13 +2033,13 @@ function prepare2geotif(d::Dict, cmd::Vector{String}, opt_T::String, O::Bool)::T
 		end
 		cmd[1] = helper2geotif(cmd[1])
 		if (isa(val, String) || isa(val, Symbol))	# A transparent KML
-			if (startswith(string(val), "trans"))  opt_T = " -TG -W+k"
-			else                                   opt_T = string(" -TG -W+k", val)		# Whatever 'val' is
+			if (startswith(string(val)::String, "trans"))  opt_T = " -TG -W+k"
+			else                                           opt_T = string(" -TG -W+k", val)		# Whatever 'val' is
 			end
 		elseif (isa(val, NamedTuple) || isa(val, Dict))
 			# [+tdocname][+nlayername][+ofoldername][+aaltmode[alt]][+lminLOD/maxLOD][+fminfade/maxfade][+uURL]
 			isa(val, Dict) && (val = Base.invokelatest(dict2nt, val))
-			opt_T = add_opt(Dict(:kml => val), " -TG -W+k", "", [:kml],
+			opt_T = add_opt(Base.invokelatest(Dict,:kml => val), " -TG -W+k", "", [:kml],
 							(title="+t", layer="+n", layername="+n", folder="+o", foldername="+o", altmode="+a", LOD=("+l", arg2str), fade=("+f", arg2str), URL="+u"))
 		end
 	end
@@ -2112,12 +2112,12 @@ function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, mapa=nothing, de
 	args::Vector{String} = Vector{String}(undef,1)
 	isa(val, Dict) && (val = Base.invokelatest(dict2nt, val))
 	if (isa(val, NamedTuple) && isa(mapa, NamedTuple))
-		args[1] = add_opt(val, mapa, arg)
+		args[1] = Base.invokelatest(add_opt, val, mapa, arg)
 	elseif (isa(val, Tuple) && length(val) > 1 && isa(val[1], NamedTuple))	# In fact, all val[i] -> NT
 		# Used in recursive calls for options like -I, -N , -W of pscoast. Here we assume that opt != ""
 		_args::String = ""
 		for k = 1:numel(val)
-			_args *= " -" * opt * add_opt(val[k], mapa, arg)::String
+			_args *= " -" * opt * Base.invokelatest(add_opt, val[k], mapa, arg)::String
 		end
 		return cmd * _args
 	elseif (isa(mapa, Tuple) && length(mapa) > 1 && isa(mapa[2], Function))	# grdcontour -G
@@ -2216,7 +2216,7 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)::String
 				end
 			end
 		elseif (d[key[k]] == "1")		# Means that only first char in value is retained. Used with units
-			t::String = arg2str(nt[k])
+			t::String = arg2str(nt[k])::String
 			if (t != "")  cmd *= t[1]
 			else          cmd *= "1"	# "1" is itself the flag
 			end
@@ -3294,7 +3294,7 @@ function fname_out(d::Dict, del::Bool=false)
 		EXT = (EXT == "") ? FMT[1] : EXT[2:end]
 	end
 	if (EXT == FMT[1] && haskey(d, :fmt))
-		EXT = string(d[:fmt])
+		EXT = string(d[:fmt])::String
 		(del) && delete!(d, :fmt)
 	end
 	(EXT == "" && !Sys.iswindows()) && error("Return an image is only for Windows")
@@ -3575,7 +3575,7 @@ function round_datetime(val::AbstractVector{DateTime})::Vector{DateTime}
 	elseif (r > 1000)           rfac = Dates.Second;	add = Dates.Second(1)
 	else                        rfac = Dates.Millisecond;	add = Dates.Millisecond(1)
 	end
-	out = [floor(val[1], rfac)-add, ceil(val[end], rfac)+add]
+	return [floor(val[1], rfac)-add, ceil(val[end], rfac)+add]
 end
 
 #= ---------------------------------------------------------------------------------------------------
@@ -3772,7 +3772,7 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K:
 		((val = find_in_dict(d, [:dpi :DPI])[1]) !== nothing) && (opt_T *= string(" -E", val))
 		gmt("psconvert -A2p -Qg4 -Qt4 " * fname_ps * opt_T * " *")
 		reset_theme()
-		out = fname_ps[1:end-2] * fname_ext
+		out::AbstractString = fname_ps[1:end-2] * fname_ext
 		(fname != "") && (out = mv(out, fname, force=true))
 	elseif (fname_ps != "")
 		(K) && close_PS_file(fname_ps)			# Close the PS file first

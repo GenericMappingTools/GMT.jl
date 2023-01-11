@@ -268,7 +268,7 @@ function set_dsBB!(D, all_bbs::Bool=true)
 			return nothing
 		else
 			for k = 1:lastindex(D)
-				bb = extrema(D[k].data, dims=1)		# A N Tuple.
+				bb = Base.invokelatest(extrema, D[k].data, dims=1)		# A N Tuple.
 				_bb = collect(Float64, Iterators.flatten(bb))
 				if (any(isnan.(_bb)))				# Shit, we don't have a minimum_nan(A, dims)
 					n = 1
