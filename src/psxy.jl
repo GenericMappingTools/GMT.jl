@@ -252,7 +252,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	# See if any of the scatter, bar, lines, etc... was the caller and if yes, set sensible defaults.
 	cmd  = check_caller(d, cmd, opt_S, opt_W, sub_module, g_bar_fill, O)
 	(mcc && caller == "bar" && !got_usr_R && opt_R != " -R") && (cmd = recompute_R_4bars!(cmd, opt_R, arg1))	# Often needed
-	_cmd = build_run_cmd(cmd, opt_B, opt_Gsymb, opt_ML, opt_S, opt_W, opt_Wmarker, opt_UVXY, opt_c)
+	_cmd::Vector{String} = build_run_cmd(cmd, opt_B, opt_Gsymb, opt_ML, opt_S, opt_W, opt_Wmarker, opt_UVXY, opt_c)
 
 	(got_Zvars && opt_S == "" && opt_W == "" && !occursin(" -G", _cmd[1])) && (_cmd[1] *= " -W0.5")
 	(opt_W == "" && caller == "feather") && (_cmd[1] *= " -W0.1")		# feathers are normally many so better they are thin
@@ -461,10 +461,10 @@ function parse_opt_S(d::Dict, arg1, is3D::Bool)
 		if ((val = find_in_dict(d, [:ms :markersize :MarkerSize :size])[1]) !== nothing)
 			(marca == "") && (marca = "c")		# If a marker name was not selected, defaults to circle
 			if (isa(val, VMr))
-				val_::AbstractVector{<:Real} = vec(val)
+				val_::Vector{Float64} = vec(Float64.(val))
 				if (length(val_) == 2)			# A two elements array is interpreted as [min max]
-					scale = (eltype(val_) <: Integer) ? 2.54/72 : 1.0	# In integers, assumes they are points
-					arg1 = hcat(arg1, linspace(val[1], val_[2], size(arg1,1)).*scale)
+					scale = (Base.invokelatest(eltype, val) <: Integer) ? 2.54/72 : 1.0	# In integers, assumes they are points
+					arg1 = hcat(arg1, linspace(val_[1], val_[2], size(arg1,1)).*scale)
 				else
 					(length(val_) != size(arg1,1)) &&
 						error("The size array must have the same number of elements as rows in data")
@@ -474,7 +474,7 @@ function parse_opt_S(d::Dict, arg1, is3D::Bool)
 				val2::Tuple = val
 				scale::Float64 = (eltype(val2[2]) <: Integer) ? 2.54/72 : 1.0
 				ind = sortperm(Base.invokelatest(funcurve, val2[1], vec(Float64.(val2[2].*scale)), size(arg1,1)))	# Get the sorting indices
-				arg1 = hcat(arg1, is3D ? view(arg1,:,3)[ind] : view(arg1,:,2)[ind])
+				arg1 = hcat(arg1, is3D ? Base.invokelatest(view, arg1,:,3)[ind] : Base.invokelatest(view, arg1,:,2)[ind])
 			elseif (string(val)::String != "indata")	# WTF is "indata"?
 				marca *= arg2str(val)::String
 			end
@@ -564,7 +564,7 @@ function helper_multi_cols(d::Dict, arg1, mcc, opt_R, opt_S, opt_W, caller, is3D
 		mat::Matrix{<:Float64} = gmt("gmtinfo -C", arg1).data		# But now also need to update the -R string
 		_cmd[1] = replace(_cmd[1], opt_R => " -R" * arg2str(round_wesn(mat)))
 	elseif (!mcc && sub_module == "bar" && check_bar_group(arg1))	# !mcc because the bar-groups all have mcc = false
-		_cmd[1], arg1, cmd2 = bar_group(d, _cmd[1], opt_R, g_bar_fill, got_Ebars, got_usr_R, arg1)
+		_cmd[1], arg1, cmd2::String = bar_group(d, _cmd[1], opt_R, g_bar_fill, got_Ebars, got_usr_R, arg1)
 		(cmd2 != "") && (length(_cmd) == 1 ? (_cmd = [cmd2; _cmd[1]]) : (@warn("Can't plot the connector when 'bar' is already a nested call."); CTRL.pocket_call[3] = nothing))
 	end
 	return arg1, _cmd
@@ -865,13 +865,13 @@ function make_color_column_(d::Dict, cmd::String, len::Int, N_args::Int, n_prev:
 	end
 
 	if (N_args == n_prev)				# No cpt transmitted, so need to compute one
-		if (mz !== nothing)   mi, ma = extrema(mz)
+		if (mz !== nothing)   mi::Float64, ma::Float64 = extrema(mz)
 		else
 			the_col = min(n_col,3)+is3D
 			got_Ebars && (the_col -= 1)			# Bars => 2 cols
-			if     (isa(arg1, Vector{<:GMTdataset}))                    mi, ma = arg1[1].ds_bbox[2the_col-1:2the_col]
-			elseif (isa(arg1,GMTdataset))                               mi, ma = arg1.ds_bbox[2the_col-1:2the_col]
-			else                                                        mi, ma = extrema(view(arg1, :, the_col))
+			if     (isa(arg1, Vector{<:GMTdataset}))  mi, ma = arg1[1].ds_bbox[2the_col-1:2the_col]
+			elseif (isa(arg1,GMTdataset))             mi, ma = arg1.ds_bbox[2the_col-1:2the_col]
+			else                                      mi, ma = extrema_cols(arg1, col=the_col)
 			end
 		end
 		just_C = cmd[len+2:end];	reset_i = ""

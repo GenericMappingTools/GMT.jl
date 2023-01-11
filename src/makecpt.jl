@@ -136,7 +136,7 @@ function parse_opt_range(d::Dict, cmd::String, opt::String="")::Tuple{String, Ve
 				end
 			end
 		elseif (isa(val, VMr))
-			Tvec, out = vec(val), ""
+			Tvec, out = vec(Float64.(val)), ""
 		else
 			out = arg2str(val)		# Everything fits here if given as a string
 		end
