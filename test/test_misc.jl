@@ -114,6 +114,7 @@
 	text_record(["> 3 5 18p 5i j", "aa", "bb"]);
 	text_record(Array[["aa", "bb"],["cc", "dd", "ee"]]);
 	text_record([["aa", "bb"],["cc", "dd", "ee"]]);
+	GMT.resetGMT()
 
 	# TEST THE API DIRECTLY (basically to improve coverage under GMT6)
 	PS = plot(rand(3,2), ps=1);
@@ -137,16 +138,21 @@
 
 	check = UInt8[zeros(9,9) ones(9,9) ones(9,9).*2; ones(9,9).*3 ones(9,9).*4 ones(9,9).*5; ones(9,9).*6 ones(9,9).*7 ones(9,9).*8];
 	@info "before one makecpt"
+	GMT.resetGMT()
 	C = makecpt(range=(0,9,1));
+	GMT.resetGMT()
 	I = mat2img(check);
 	I.n_colors = 0
 	rgb = GMT.ind2rgb(I);
+	GMT.resetGMT()
 	I = mat2img(check, cmap=C);
 	rgb = GMT.ind2rgb(I);
+	GMT.resetGMT()
 	@info "before image_alpha!"
 	image_alpha!(I, alpha_ind=5);
 	image_alpha!(I, alpha_vec=round.(UInt32,rand(6).*255));
 	image_alpha!(I, alpha_band=round.(UInt8,rand(27,27).*255))
+	GMT.resetGMT()
 	image_cpt!(I, C)
 	GMT.transpcmap!(I, true)
 	GMT.transpcmap!(I, false)
