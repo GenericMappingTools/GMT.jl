@@ -106,10 +106,12 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	end
 
 	cmd, arg1, opt_R, _, opt_i = read_data(d, cmd0, cmd, arg1, opt_R, is3D)
-	(cmd0 != "" && isa(arg1, GMTdataset)) && (Base.invokelatest(with_xyvar, d, arg1)) #(arg1 = with_xyvar(d::Dict, arg1))	# If we read a file, see if requested cols
+	(cmd0 != "" && isa(arg1, GMTdataset)) && (Base.invokelatest(with_xyvar, d, arg1)) # If we read a file, see if requested cols
 	(!got_usr_R && opt_R != "") && (CTRL.pocket_R[1] = opt_R)	# Still on time to store it.
 	(N_args == 0 && arg1 !== nothing) && (N_args = 1)	# arg1 might have started as nothing and got values above
 	(!O && caller == "plotyy") && (box_str[1] = opt_R)	# This needs modifications (in plotyy) by second call
+
+	gnames = check_grouping!(d, arg1)	# See about request to do row groupings
 
 	if (isGMTdataset(arg1) && !isTimecol_in_pltcols(arg1) && getproj(arg1, proj4=true) != "" && opt_J == " -JX" * def_fig_size)
 		cmd = replace(cmd, opt_J => " -JX" * split(def_fig_size, '/')[1] * "/0")	# If projected, it's a axis equal for sure
@@ -147,7 +149,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	end
 
 	# Look for color request. Do it after error bars because they may add a column
-	len = length(cmd);	n_prev = N_args;
+	len_cmd = length(cmd);	n_prev = N_args;
 	opt_Z, args, n, got_Zvars = add_opt(d, "", "Z", [:Z :level :levels], :data, Any[arg1, arg2], (outline="_o", nofill="_f"))
 	if (contains(opt_Z, "f") && !contains(opt_Z, "o"))	# Short version. If no fill it must outline otherwise nothing
 		do_Z_fill, do_Z_outline = false, true;		opt_Z = replace(opt_Z, "f" => "")
@@ -158,16 +160,14 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	(opt_Z != "") && (cmd *= opt_Z)
 	(!got_Zvars) && (do_Z_fill = do_Z_outline = false)	# Because the may have wrongly been set above
 
-	if (n > 0)
-		if (GMTver <= v"6.3")					# -Z is f again. Must save data into file to make it work.
-			fname = joinpath(tempdir(), "GMTjl_temp_Z.txt")
-			fid = open(fname, "w")
-			for k = 1:length(args[n])  println(fid, args[n][k])  end;	close(fid)
-			cmd *= fname
-		else
-			arg1, arg2 = args[:]
-			N_args = n
-		end
+	if (n > 0 && GMTver <= v"6.3")						# -Z is f again. Must save data into file to make it work.
+		fname = joinpath(tempdir(), "GMTjl_temp_Z.txt")
+		fid = open(fname, "w")
+		for k = 1:length(args[n])  println(fid, args[n][k])  end;	close(fid)
+		cmd *= fname
+	elseif (n > 0)
+		arg1, arg2 = args[:]
+		N_args = n
 	end
 	in_bag = (got_Zvars || haskey(d, :hexbin)) ? true : false		# Other cases should add to this list
 	opt_T::String = (haskey(d, :hexbin)) ? @sprintf(" -T%s/%s/%d+n",arg1.bbox[5], arg1.bbox[6], 65) : ""
@@ -186,7 +186,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	if (!got_color_line_grad && (arg1 !== nothing && !isa(arg1, GMTcpt)) && ((!got_Zvars && !is_ternary) || bar_ok))
 		# If "bar" ONLY if not bar-group
 		# See if we got a CPT. If yes there may be some work to do if no color column provided in input data.
-		cmd, arg1, arg2, N_args, mcc = make_color_column(d, cmd, opt_i, len, N_args, n_prev, is3D, got_Ebars, bar_ok, g_bar_fill, arg1, arg2)
+		cmd, arg1, arg2, N_args, mcc = make_color_column(d, cmd, opt_i, len_cmd, N_args, n_prev, is3D, got_Ebars, bar_ok, g_bar_fill, arg1, arg2)
 	end
 
 	opt_G::String = ""
@@ -216,7 +216,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	opt_Wmarker::String = ""
 	if ((val = find_in_dict(d, [:mec :markeredgecolor :MarkerEdgeColor])[1]) !== nothing)
 		tmec::String = arg2str(val)
-		!contains(tmec, "p,") && (tmec = "0.5p," * tmec)	# If not provided, default to a line thickness of 0.5p
+		!contains(tmec, "p,") && (tmec = "0.25p," * tmec)	# If not provided, default to a line thickness of 0.25p
 		opt_Wmarker = tmec
 	end
 
@@ -283,11 +283,39 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 end
 
 # ---------------------------------------------------------------------------------------------------
+function check_grouping!(d, arg1)
+	# See about request to do row groupings. If yes, also set sensible defaults for a scatter plot
+	# WARNING. If 'arg1' is a Vector{GMTdataset} then all elements are expected to the same number of rows
+	# but no testing of that is done.
+	gnames = Vector[]
+	if (isa(arg1, GDtype) || isa(arg1, Matrix{<:Real}))
+		gidx, gnames = get_group_indices(d, arg1)
+		if (!isempty(gidx))
+			zcolor::Vector{Float64} = isa(arg1, Vector{<:GMTdataset}) ? zeros(size(arg1[1],1)::Int) : zeros(size(arg1,1)::Int)
+			# Uggly because everything invalidates in this f language, dassss
+			for k = 1:numel(gidx), n = 1:length(gidx[k])::Int  zcolor[gidx[k][n]] = k  end
+			d[:zcolor] = zcolor
+			if (is_in_dict(d, CPTaliases) === nothing)
+				N = length(gidx)
+				d[:C] = (N <= 7) ? join(matlab_cycle_colors[1:N], ",") : join(simple_distinct[1:N], ",")
+			end
+			(is_in_dict(d, [:marker, :Marker, :shape]) === nothing) && (d[:marker] = "circ")
+			(is_in_dict(d, [:mec :markeredgecolor :MarkerEdgeColor]) === nothing) && (d[:mec] = "0.25p,black")
+			(is_in_dict(d, [:ms :markersize :MarkerSize :size]) === nothing) && (d[:ms] = "5p")
+		end
+	end
+	return gnames
+end
+
+# ---------------------------------------------------------------------------------------------------
 function with_xyvar(d::Dict, arg1::GMTdataset, no_x::Bool=false)
 	# Make a subset of a GMTdataset by selecting which coluns to extract. The selection can be done by
 	# column numbers or column names. 'xvar' selects only the xx col, but 'yvar' can select more than one.
 	# 'no_x' is for croping some columns and not add a x column and not split in many D's (one per column).
-	# By default when yvar is a vec we split the columns by default (WHY??). Pass nomulticol=1 in `d` to prevent this.
+	# By default when yvar is a Vec we split the columns by default (for ploting reasons since we want a
+	# line per column). Pass nomulticol=1 in 'd' to prevent this.
+	# The zvar, [:svar :sizevar] and [:cvar :colorvar] are used to pull out the respective columns.
+
 	((val_y = find_in_dict(d, [:yvar])[1]) === nothing) && return arg1	# No y colname, no business
 	ycv::Vector{Int}, ismulticol = Int[], false
 	if (isa(val_y, Integer) || isa(val_y, String) || isa(val_y, Symbol))
@@ -311,31 +339,32 @@ function with_xyvar(d::Dict, arg1::GMTdataset, no_x::Bool=false)
 		(domulticol) && (ismulticol = true)
 	end
 
-	function getcolvar(d::Dict, var::VMs)
-		((_val = find_in_dict(d::Dict, var)[1]) === nothing) && return nothing
+	function getcolvar(d::Dict, var::VMs)::Int
+		((_val = find_in_dict(d::Dict, var)[1]) === nothing) && return 0
 		!(isa(_val, Integer) || isa(_val, String) || isa(_val, Symbol)) && error("$(var) can only be an Int, a String or a Symbol but was a $(typeof(_val))")
-		c = isa(_val, Integer) ? _val : ((_ind = findfirst(string(_val) .== arg1.colnames)) !== nothing ? _ind : 0)
+		c = isa(_val, Integer) ? _val : ((_ind = findfirst(string(_val)::String .== arg1.colnames)) !== nothing ? _ind : 0)
 		(c < 1 || c > size(arg1,2)) && error("$(var) Col name not found in GMTdataset col names or exceed col count.")
-		c
+		return c
 	end
 
 	xc = getcolvar(d, [:xvar])
-	((zc = getcolvar(d, [:zvar])) !== nothing) && (ycv = [ycv..., zc])
-	((sc = getcolvar(d, [:svar :szvar :sizevar])) !== nothing) && (ycv = [ycv..., sc])
-	((cc = getcolvar(d, [:cvar :colorvar])) !== nothing) && (ycv = [ycv..., cc])
+	zc = getcolvar(d, [:zvar]);				(zc != 0) && (ycv = [ycv..., zc])
+	sc = getcolvar(d, [:svar :sizevar]);	(sc != 0) && (ycv = [ycv..., sc])
+	cc = getcolvar(d, [:cvar :colorvar]);	(cc != 0) && (ycv = [ycv..., cc])
 	if (!no_x)
-		if (xc === nothing)
-			out = mat2ds(hcat(collect(1:size(arg1,1)), arg1.data[:, ycv]))
-			out.colnames = append!(["X"], arg1.colnames[ycv])
+		if (xc == 0)
+			colnames = ["X", arg1.colnames[ycv]...]
+			!isempty(arg1.text) && (colnames = append!(colnames, [arg1.colnames[end]]))	# Add the text col name
+			out = mat2ds(hcat(collect(1:size(arg1,1)), arg1.data[:, ycv]), txtcol=arg1.text, colnames=colnames)
 			if ((Tc = get(arg1.attrib, "Timecol", "")) != "")	# Try to keep also an eventual Timecol
 				((ind = findfirst(parse(Int, Tc) .== ycv)) !== nothing) && (D.attrib[:Timecol] = (xc !== nothing) ? ind+1 : ind)
 			end
 		else
 			out = mat2ds(arg1, (:, [xc, ycv...]))
 		end
-		#D = (ismulticol) ? mat2ds(out, multi=true, color=:cycle) : mat2ds(out)		# Return a GMTdataset
 		if (ismulticol)
-			D = mat2ds(out.data, multi=true, color=:cycle)
+			cycle_color = (haskey(d, :group) || haskey(d, :groupvar)) ? false : true	# In groups, outlines are black
+			D = mat2ds(out.data, multi=true, color=cycle_color, txtcol=out.text, colnames=out.colnames)
 			if ((Tc = get(arg1.attrib, "Timecol", "")) == "1")	# Try to keep an eventual Timecol
 				for k = 1:numel(D)  D[k].attrib["Timecol"] = "1";	D[k].colnames[1] = "Time";  end
 			end
@@ -803,12 +832,12 @@ function get_sizes(arg)::Tuple{Int,Int}
 end
 
 # ---------------------------------------------------------------------------------------------------
-function make_color_column(d::Dict, cmd::String, opt_i::String, len::Int, N_args::Int, n_prev::Int, is3D::Bool, got_Ebars::Bool, bar_ok::Bool, bar_fill, arg1, arg2)
+function make_color_column(d::Dict, cmd::String, opt_i::String, len_cmd::Int, N_args::Int, n_prev::Int, is3D::Bool, got_Ebars::Bool, bar_ok::Bool, bar_fill, arg1, arg2)
 	# See if we got a CPT. If yes, there is quite some work to do if no color column provided in input data.
 	# N_ARGS will be == n_prev+1 when a -Ccpt was used. Otherwise they are equal.
 
 	mz, the_kw = find_in_dict(d, [:zcolor :markerz :mz])
-	if ((!(N_args > n_prev || len < length(cmd)) && mz === nothing) && !bar_ok)		# No color request, so return right away
+	if ((!(N_args > n_prev || len_cmd < length(cmd)) && mz === nothing) && !bar_ok)		# No color request, so return right away
 		return cmd, arg1, arg2, N_args, false
 	end
 
@@ -837,16 +866,17 @@ function make_color_column(d::Dict, cmd::String, opt_i::String, len::Int, N_args
 		return cmd, arg1, arg2, 2, true
 	end
 
-	make_color_column_(d, cmd, len, N_args, n_prev, is3D, got_Ebars, arg1, arg2, mz, n_col)
+	make_color_column_(d, cmd, len_cmd, N_args, n_prev, is3D, got_Ebars, arg1, arg2, mz, n_col)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function make_color_column_(d::Dict, cmd::String, len::Int, N_args::Int, n_prev::Int, is3D::Bool, got_Ebars::Bool, arg1, arg2, mz, n_col::Int)
+function make_color_column_(d::Dict, cmd::String, len_cmd::Int, N_args::Int, n_prev::Int, is3D::Bool, got_Ebars::Bool, arg1, arg2, mz, n_col::Int)
 	# Broke this out of make_color_column() to try to limit effect of invalidations but with questionable results.
 	if (n_col <= 2+is3D)
 		if (mz !== nothing)
-			if (isa(arg1,GMTdataset) || isa(arg1, Matrix{<:Real}))  arg1    = hcat(arg1, mz[:])
-			elseif (isa(arg1, Vector{<:GMTdataset}))                arg1[1] = hcat(arg1[1], mz[:]) 
+			if (isa(arg1,GMTdataset) || isa(arg1, Matrix{<:Real}))  arg1 = hcat(arg1, mz[:])
+			elseif (isa(arg1, Vector{<:GMTdataset}))
+				for k = 1:numel(arg1)  arg1[k].data = hcat(arg1[k].data, mz[:])  end	# Will error if they n_rows varies
 			end
 		else
 			cmd *= " -i0-$(1+is3D),$(1+is3D)"
@@ -856,8 +886,9 @@ function make_color_column_(d::Dict, cmd::String, len::Int, N_args::Int, n_prev:
 		end
 	else
 		if (mz !== nothing)				# Here we must insert the color col right after the coords
-			if (isa(arg1,GMTdataset) || isa(arg1, Matrix{<:Real}))  arg1    = hcat(arg1[:,1:2+is3D],    mz[:], arg1[:,3+is3D:end])
-			elseif (isa(arg1, Vector{<:GMTdataset}))                arg1[1] = hcat(arg1[1][:,1:2+is3D], mz[:], arg1[1][:,3+is3D:end])
+			if (isa(arg1,GMTdataset) || isa(arg1, Matrix{<:Real}))  arg1 = hcat(arg1[:,1:2+is3D], mz[:], arg1[:,3+is3D:end])
+			elseif (isa(arg1, Vector{<:GMTdataset}))
+				for k = 1:numel(arg1)  arg1[k] = hcat(arg1[k][:,1:2+is3D], mz[:], arg1[k][:,3+is3D:end])  end
 			end
 		elseif (got_Ebars)				# The Error bars case is very multi. Don't try to guess then.
 			cmd *= " -i0-$(1+is3D),$(1+is3D),$(2+is3D)-$(n_col-1)"
@@ -874,14 +905,14 @@ function make_color_column_(d::Dict, cmd::String, len::Int, N_args::Int, n_prev:
 			else                                      mi, ma = extrema_cols(arg1, col=the_col)
 			end
 		end
-		just_C = cmd[len+2:end];	reset_i = ""
+		just_C = cmd[len_cmd+2:end];	reset_i = ""
 		if ((ind = findfirst(" -i", just_C)) !== nothing)
 			reset_i = just_C[ind[1]:end]
 			just_C  = just_C[1:ind[1]-1]
 		end
 		arg2 = gmt(string("makecpt -T", mi-0.001*abs(mi), '/', ma+0.001*abs(ma), " ", just_C) * (IamModern[1] ? " -H" : ""))
 		current_cpt[1] = arg2
-		if (occursin(" -C", cmd))  cmd = cmd[1:len+3]  end		# Strip the cpt name
+		if (occursin(" -C", cmd))  cmd = cmd[1:len_cmd+3]  end		# Strip the cpt name
 		if (reset_i != "")  cmd *= reset_i  end		# Reset -i, in case it existed
 
 		(!occursin(" -C", cmd)) && (cmd *= " -C")	# Need to inform that there is a cpt to use
