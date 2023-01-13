@@ -478,6 +478,48 @@ function setfld!(D::Vector{<:GMTdataset}; kwargs...)
 	end
 end
 
+# ---------------------------------------------------------------------------------------------------
+function get_group_indices(d::Dict, data)::Tuple{Vector{AbstractVector{Union{Int,String}}}, Vector{Any}}
+	# If 'data' is a Vector{GMTdataset} return results respecting only the first GMTdataset of the array.
+	group::AbstractVector{Union{Int,String}} = ((val = find_in_dict(d, [:group])[1]) === nothing) ? AbstractVector[] : val
+	groupvar::StrSymb = ((val = find_in_dict(d, [:groupvar :hue])[1]) === nothing) ? "" : val
+	((groupvar != "") && !isa(data, GDtype)) && error("'groupvar' can only be used when input is a GMTdataset")
+	(isempty(group) && groupvar == "") && return AbstractVector[], []
+	get_group_indices(isa(data, Vector{<:GMTdataset}) ? data[1] : data, group, groupvar)
+end
+
+function get_group_indices(data, group, groupvar::StrSymb)::Tuple{Vector{AbstractVector{Union{Int,String}}}, Vector{Any}}
+	# This function is not meant for public consuption. In fact it's only called directly by the parallelplot() fun
+	# or indirectly, via the other method, by plot().
+	# Returns a Vector of AbstractVectors with the indices of each group and a Vector of names or numbers
+	(isempty(group) && isa(data, GMTdataset) && groupvar == "text") && (group = data.text)
+	(!isempty(group) && length(group) != size(data,1)) && error("Length of `group` and number of rows in input don't match.")
+	if (isempty(group) && isa(data, GMTdataset))
+		isa(groupvar, Integer) && (group = Base.invokelatest(view, data.data, :, groupvar))
+		if (isempty(group))
+			gvar = string(groupvar)
+			x = (gvar .== data.colnames)	# Try also to fish the name of the text column
+			any(x) && (group = x[end] ? data.text : Base.invokelatest(view, data, :, findfirst(x)))
+		end
+	end
+	gidx, gnames = !isempty(group) ? grp2idx(group) : ([1:size(data,1)], [0])
+end
+
+# ----------------------------------------------------------------------------------------------------------
+"""
+    gidx, gnames = grp2idx(s::AbstracVector)
+
+Creates an index Vector{Vector} from the grouping variable S. S can be an AbstracVector of elements
+for which the `==` method is defined. It returns a Vector of Vectors with the indices of the elements
+of each group. There will be as many groups as `length(gidx)`. `gnames` is a string vector holding
+the group names.
+"""
+function grp2idx(s)
+	gnames = unique(s)
+	gidx = [findall(s .== gnames[k]) for k = 1:numel(gnames)]
+	gidx, gnames
+end
+
 # EDIPO SECTION
 # ---------------------------------------------------------------------------------------------------
 linspace(start, stop, length=100) = range(start, stop=stop, length=length)
