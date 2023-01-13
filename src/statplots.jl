@@ -1015,8 +1015,7 @@ function parallelplot(cmd0::String="", arg1=nothing; first::Bool=true, axeslabel
 	elseif (isa(arg1, Vector{<:GMTdataset}))  data = ds2ds(arg1)
 	else                                      data = mat2ds(arg1)
 	end
-	(isempty(group) && groupvar == "text") && (group = data.text)
-	(!isempty(group) && length(group) != size(data,1)) && error("Length of `group` and number of rows in input don't match.")
+	gidx, gnames = get_group_indices(data, group, groupvar)
 	set_dsBB!(data)		# Update the min/maxs
 
 	data = with_xyvar(d, data, true)			# See if we have a column request based on column names
@@ -1034,7 +1033,7 @@ function parallelplot(cmd0::String="", arg1=nothing; first::Bool=true, axeslabel
 	(haveband && _quantile == 0) && (_quantile = 0.25)	# Default to quantile = 0.25 when not given and ask for band
 	_std::Float64 = ((val = find_in_dict(d, [:std])[1]) === nothing) ? 0.0 : (isa(val, Bool) ? 1.0 : val)
 
-	function helper_D(D, _data, gidx, normtype, _bbox, gc)
+	function helper_D(D, _data, gidx, normtype, _bbox, gc, _quantile)
 		# Common to two IF branches
 		b, n = 1, 0
 		for k = 1:numel(gidx)					# Loop over number of groups
@@ -1081,16 +1080,11 @@ function parallelplot(cmd0::String="", arg1=nothing; first::Bool=true, axeslabel
 		end
 	end
 
-	(isempty(group) && isa(groupvar, Integer)) && (group = data.data[:, groupvar])
-	(isempty(group) && isa(groupvar, Symbol))  && (group = data.data[groupvar, groupvar][:,2])	# With some risky trickery
-	(isempty(group)) && (group = fill(0, size(data,1)))		# Make it a single group to reuse the same code
-	gidx, gnames = grp2idx(group)
-
-	D = Vector{GMTdataset}(undef, length(group))
+	D = Vector{GMTdataset}(undef, size(data,1))
 	gc = helper_ds_fill(d; nc=numel(gidx))
 	isempty(gc) && (gc = (numel(gidx) < 8) ? matlab_cycle_colors : simple_distinct)		# Group colors
 	if (normalize == "range" || normalize == "" || normalize == "none")
-		helper_D(D, data.data, gidx, normalize, _bbox, gc)	# Splits D in many D's (one per line)
+		helper_D(D, data.data, gidx, normalize, _bbox, gc, _quantile)	# Splits D in many D's (one per line)
 	else
 		_data = copy(data.data)
 		for k = 1:numel(gidx)
@@ -1098,7 +1092,7 @@ function parallelplot(cmd0::String="", arg1=nothing; first::Bool=true, axeslabel
 		end
 		_bbox = collect(Iterators.flatten(extrema(_data, dims=1)))
 		check_bbox!(_data, _bbox)		# Ensure _bbox has no NaNs
-		helper_D(D, _data, gidx, "range", _bbox, gc)
+		helper_D(D, _data, gidx, "range", _bbox, gc, _quantile)
 	end
 
 	(is_in_dict(d, [:figsize :fig_size]) === nothing) && (d[:figsize] = def_fig_size)
@@ -1155,21 +1149,6 @@ function plot_bands_from_vecDS(D::Vector{GMTdataset}, d, do_show, pen, gnames)
 		(k == numel(D)) && (d[:show] = do_show)		# Last one. Show it if has to.
 		band!(D[k]; d...)
 	end
-end
-
-# ----------------------------------------------------------------------------------------------------------
-"""
-    gidx, gnames = grp2idx(s::AbstracVector)
-
-Creates an index Vector{Vector} from the grouping variable S. S can be an AbstracVector of elements
-for which the `==` method is defined. It returns a Vector of Vectors with the indices of the elements
-of each group. There will be as many groups as `length(gidx)`. `gnames` is a string vector holding
-the group names.
-"""
-function grp2idx(s)
-	gnames = unique(s)
-	gidx = [findall(s .== gnames[k]) for k = 1:numel(gnames)]
-	gidx, gnames
 end
 
 # ----------------------------------------------------------------------------------------------------------
@@ -1381,7 +1360,7 @@ function marginalhist(arg1::Union{GDtype, Matrix{<:Real}}; first=true, kwargs...
 		H = W * (D.ds_bbox[4] - D.ds_bbox[3]) / (D.ds_bbox[2] - D.ds_bbox[1])
 		opt_J = "$(W)/$(H)"
 	elseif (opt_J == def_fig_size)		# Here switch of Hexbins. The ELSE case is not taken care (no hexbins if not iso)
-		do_hexbin && @warn("The hexagon bins can only be used with figure sizes with an aspect ration of 1.\n For that use the option 'aspect=:equal'")
+		do_hexbin && @warn("The hexagon bins can only be used with figure sizes with an aspect ratio of 1.\n For that use the option 'aspect=:equal'")
 		do_hexbin, do_scatter = false, true
 		delete!(d, :hexbin)
 	end

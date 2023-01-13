@@ -69,6 +69,8 @@ does not need explicit coordinates to place the text.
   - `wkt`:  A WKT SRS.
   - `colnames`: Optional string vector with names for each column of `mat`.
   - `attrib`: Optional dictionary{String, String} with attributes of this dataset.
+  - `txtcol` or `textcol`: Vector{String} with text to add into the .text field. Warning: no testing is done
+     to check if ``length(txtcol) == size(mat,1)`` as it must.
 """
 mat2ds(mat::GDtype) = mat		# Method to simplify life and let call mat2ds on a already GMTdataset
 mat2ds(text::Union{AbstractString, Vector{<:AbstractString}}) = text_record(text)	# Now we can hide text_record
@@ -98,9 +100,10 @@ function mat2ds(mat::Array{T,N}, txt::Vector{String}=String[]; hdr=String[], geo
 		_hdr = vec(hdr)
 	end
 
-	if ((color = find_in_dict(d, [:color])[1]) !== nothing)
-		#_color::Vector{String} = isa(color, Array{String}) ? vec(color) : ["#0072BD", "#D95319", "#EDB120", "#7E2F8E", "#77AC30", "#4DBEEE", "#A2142F"]
+	color_cycle = false
+	if ((color = find_in_dict(d, [:color])[1]) !== nothing && color != false)
 		_color::Vector{String} = isa(color, Array{String}) ? vec(color) : matlab_cycle_colors
+		color_cycle = true
 	end
 	_fill::Vector{String} = helper_ds_fill(d)
 
@@ -116,11 +119,11 @@ function mat2ds(mat::Array{T,N}, txt::Vector{String}=String[]; hdr=String[], geo
 			_lts[k] = " -W" * string(_lt[((k % n_thick) != 0) ? k % n_thick : n_thick])
 		end
 	else
-		theW = (color !== nothing || haskey(d, :ls) || haskey(d, :linestyle) || haskey(d, :pen)) ? " -W" : ""
+		theW = (color_cycle || haskey(d, :ls) || haskey(d, :linestyle) || haskey(d, :pen)) ? " -W" : ""
 		_lts = fill(theW, n_ds)		# If no pen setting no need to set -W
 	end
 
-	if (color !== nothing)
+	if (color_cycle)
 		n_colors::Int = length(_color)
 		if (isempty(_hdr))
 			_hdr = Vector{String}(undef, n_ds)
@@ -196,6 +199,7 @@ function mat2ds(mat::Array{T,N}, txt::Vector{String}=String[]; hdr=String[], geo
 	end
 
 	att = ((v = find_in_dict(d, [:attrib])[1]) !== nothing && isa(v, Dict{String, String})) ? v : Dict{String, String}()
+	txtcol::Vector{String} = ((val = find_in_dict(d, [:txtcol :textcol])[1]) !== nothing) ? val : String[]
 
 	D::Vector{GMTdataset} = Vector{GMTdataset}(undef, n_ds)
 
@@ -207,16 +211,18 @@ function mat2ds(mat::Array{T,N}, txt::Vector{String}=String[]; hdr=String[], geo
 		if (ndims(mat) == 3)
 			coln = fill_colnames(coln, size(mat,2)-2, is_geog)
 			for k = 1:n_ds
-				D[k] = GMTdataset(mat[:,:,k], Float64[], Float64[], att, coln, String[], (isempty(_hdr) ? "" : _hdr[k]), String[], prj, wkt, epsg, _geom)
+				D[k] = GMTdataset(mat[:,:,k], Float64[], Float64[], att, coln, txtcol, (isempty(_hdr) ? "" : _hdr[k]), String[], prj, wkt, epsg, _geom)
 			end
 		elseif (!multi)
 			coln = fill_colnames(coln, size(mat,2)-2, is_geog)
 			(size(mat,2) == 1) && (coln = coln[1:1])		# Because it defaulted to two.
-			D[1] = GMTdataset(mat, Float64[], Float64[], att, coln, String[], (isempty(_hdr) ? "" : _hdr[1]), String[], prj, wkt, epsg, _geom)
+			D[1] = GMTdataset(mat, Float64[], Float64[], att, coln, txtcol, (isempty(_hdr) ? "" : _hdr[1]), String[], prj, wkt, epsg, _geom)
 		else
 			isempty(coln) && (coln = (is_geog) ? ["Lon", "Lat"] : ["X", "Y"])
 			for k = 1:n_ds
-				D[k] = GMTdataset(mat[:,[1,k+1]], Float64[], Float64[], att, coln, String[], (isempty(_hdr) ? "" : _hdr[k]), String[], prj, wkt, epsg, _geom)
+				# If colnames was transmitted try to assign the right names to each column
+				_coln = length(coln) > size(mat, 2) ? [coln[1], coln[k+1], coln[end]] : length(coln) == size(mat, 2) ? [coln[1], coln[k+1]] : coln
+				D[k] = GMTdataset(mat[:,[1,k+1]], Float64[], Float64[], att, _coln, txtcol, (isempty(_hdr) ? "" : _hdr[k]), String[], prj, wkt, epsg, _geom)
 			end
 		end
 	else
@@ -226,7 +232,9 @@ function mat2ds(mat::Array{T,N}, txt::Vector{String}=String[]; hdr=String[], geo
 		else
 			isempty(coln) && (coln = (is_geog) ? ["Lon", "Lat"] : ["X", "Y"])
 			for k = 1:n_ds
-				D[k] = GMTdataset(hcat(xx,mat[:,k]), Float64[], Float64[], att, coln, String[], (isempty(_hdr) ? "" : _hdr[k]), String[], prj, wkt, epsg, _geom)
+				# If colnames was transmitted try to assign the right names to each column
+				_coln = length(coln) > size(mat, 2) ? [coln[1], coln[k], coln[end]] : length(coln) == size(mat, 2) ? [coln[1], coln[k]] : coln
+				D[k] = GMTdataset(hcat(xx,mat[:,k]), Float64[], Float64[], att, _coln, String[], (isempty(_hdr) ? "" : _hdr[k]), String[], prj, wkt, epsg, _geom)
 			end
 		end
 	end
@@ -240,11 +248,11 @@ function mat2ds(D::GMTdataset, inds)::GMTdataset
 	# INDS is a Tuple of 2 with ranges in rows and columns. Ex: (:, 1:3) or (:, [1,4,7]), etc...
 	# Attention, if original had attributes other than 'Timeinfo' there is no guarentie that they remain correct. 
 	(length(inds) != ndims(D)) && error("\tNumber of GMTdataset dimensions and indices components must be the same.\n")
-	_D = mat2ds(D.data[inds...], proj4=D.proj4, wkt=D.wkt, epsg=D.epsg, geom=D.geom, colnames=D.colnames, attrib=D.attrib)
+	_coln = [D.colnames[inds[2]]..., D.colnames[end]]
+	_D = mat2ds(D.data[inds...], proj4=D.proj4, wkt=D.wkt, epsg=D.epsg, geom=D.geom, colnames=_coln, attrib=D.attrib)
 	(!isempty(D.text)) && (_D.text = D.text[inds[1]])
 	(typeof(inds[2]) == Colon) && return _D		# We are done here
 
-	_D.colnames = D.colnames[inds[2]]
 	if (inds[2][1] != 1 || inds[2][2] != 2)		# If any of the first or second columns has gone we know no more about CRS
 		_D.proj4 = "";	_D.wkt = "";	_D.epsg = 0
 	end

@@ -1197,6 +1197,7 @@ function feather(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	d = KW(kwargs)
 	d[:nomulticol] = true		# Prevent that with_xyvar() (called by helper_input_ds()) splits by columns
 	arg1, haveR, haveVarFill = helper_input_ds(d, cmd0, arg1)		# Read file or read "by-columns"
+	delete!(d, :nomulticol)
 
 	# TYPEVEC = 0, ==> u,v = theta,rho. TYPEVEC = 1, ==> u,v = u,v. TYPEVEC = 2, ==> u,v = x2,y2 
 	typevec = (find_in_dict(d, [:rtheta])[1] !== nothing) ? 0 : (find_in_dict(d, [:endpt :endpoint])[1] !== nothing) ? 2 : 1
