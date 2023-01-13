@@ -87,9 +87,9 @@ function makecpt(cmd0::String="", arg1=nothing; kwargs...)
 	(dbg_print_cmd(d, cmd) !== nothing) && return cmd
 	(arg1 === nothing && !isempty(Tvec)) && (arg1 = Tvec; Tvec = Float64[])
 	r = gmt(cmd, arg1, !isempty(Tvec) ? Tvec : nothing)
-	got_N && (r.bfn = ones(3,3))	# Cannot remove the bfn like in plain GMT so make it all whites
-	current_cpt[1] = (r !== nothing) ? r : GMTcpt()
-    return r
+	(got_N && r !== nothing) && (r.bfn = ones(3,3))	# Cannot remove the bfn like in plain GMT so make it all whites
+	current_cpt[1] = (r !== nothing) ? r : GMTcpt()	# r === nothing when we save CPT on disk.
+	return r
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -97,7 +97,7 @@ function parse_E_mkcpt(d::Dict, symbs::Array{<:Symbol}, cmd::String, arg1)
 	(show_kwargs[1]) && return print_kwarg_opts(symbs, "Number")
 	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
 		(arg1 === nothing && cmd[1] == ' ') && error("E option requires that a data table is provided as well")
-		cmd *= " -E" * arg2str(val)
+		cmd *= " -E" * arg2str(val)::String
 	end
 	return cmd
 end
