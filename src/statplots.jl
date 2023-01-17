@@ -1123,7 +1123,7 @@ function parallelplot(cmd0::String="", arg1=nothing; first::Bool=true, axeslabel
 	d[:show] = do_show
 	!haveband && (d[:gindex] = [gidx[k][1] for k=1:numel(gidx)])	# The `band` case is handled in put_in_legend_bag
 	(_quantile != 0 || _std != 0) && (d[:gindex] = 1:3:length(D))	# But the envelope is a different case
-	(!haveband && haskey(d, :legend) && isa(d[:legend], Bool) && d[:legend] && gnames != 0) && (d[:label] = gnames)
+	(!haveband && haskey(d, :legend) && isa(d[:legend], Bool) && d[:legend] && !isempty(gnames)) && (d[:label] = gnames)
 	!haveband ? common_plot_xyz("", D, "line", false, false, d...) : plot_bands_from_vecDS(D, d, do_show, d[:W], gnames)
 end
 
@@ -1143,7 +1143,7 @@ function plot_bands_from_vecDS(D::Vector{GMTdataset}, d, do_show, pen, gnames)
 		d[:G] = string(s[2][3:end])
 		d[:W] = lw * (lc == "" ? s[1][3:end] : ","*lc) * "," * ls
 		if (haskey(d, :legend))
-			(isname || (isa(d[:legend], Bool) && d[:legend])) && (d[:legend] = gnames[k]; isname = true)
+			(isname || (isa(d[:legend], Bool) && d[:legend]) && !isempty(gnames)) && (d[:legend] = gnames[k]; isname = true)
 		end
 		D[k].header = string(s[1])
 		(k == numel(D)) && (d[:show] = do_show)		# Last one. Show it if has to.
