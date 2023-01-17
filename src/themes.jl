@@ -44,7 +44,7 @@ function theme(name="modern"; kwargs...)
 	def_fig_axes[1]  = def_fig_axes_bak		# So that we always start with the defaults
 	def_fig_axes3[1] = def_fig_axes3_bak
 
-	_name = string(name)
+	_name::String = string(name)
 	if (_name == "classic")
 		theme_classic()
 	else
@@ -66,7 +66,7 @@ function theme(name="modern"; kwargs...)
 
 	isOn = true				# Means this theme will be reset to the default (modern) in showfig()
 	if (haskey(d, :save))
-		f = joinpath(readlines(`$(joinpath("$(GMT_bindir)", "gmt")) --show-userdir`)[1], "theme_jl.txt")
+		f = joinpath(GMTuserdir[1], "theme_jl.txt")
 		(isfile(f)) && rm(f)
 		(_name == "reset") ? theme_modern() : write(f, _name)
 		isOn = false		# So we wont reset defaults in showfig()
