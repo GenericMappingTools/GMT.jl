@@ -43,7 +43,7 @@ function rasterzones!(GI::GItype, shapes::GDtype, fun::Function)
 	row_dim, col_dim = (GI.layout == "" || GI.layout[2] == 'C') ? (1,2) : (2,1)	# If RowMajor the array is transposed 
 
 	isa(shapes, GMTdataset) && (shapes = [shapes])
-	for k = 1:length(shapes)
+	for k = 1:numel(shapes)
 		!within(shapes[k].bbox, GI.range) && continue		# Catch any exterior polygon before it errors
 		_GI, pix_x, pix_y = GMT.crop(GI, region=shapes[k])
 
@@ -132,7 +132,7 @@ function colorzones!(shapes::GDtype, fun::Function; img::GMTimage=nothing, url::
 	row_dim, col_dim = (img.layout == "" || img.layout[2] == 'C') ? (1,2) : (2,1)	# If RowMajor the array is transposed 
 
 	isa(shapes, GMTdataset) && (shapes = [shapes])
-	for k = 1:length(shapes)
+	for k = 1:numel(shapes)
 		!within(k) && continue				# Catch any exterior polygon before it errors
 		_img = (url != "") ? wmsread(wms, layer=layer_n, region=shapes[k], pixelsize=pixelsize) : GMT.crop(img, region=shapes[k])[1]
 
@@ -151,7 +151,7 @@ end
 
 function meansqrt(x)
 	sum = 0.0
-	@inbounds for k = 1:length(x)
+	@inbounds for k = 1:numel(x)
 		sum += Float64(x[k]) * x[k]
 	end
 	sqrt(sum/length(x))
