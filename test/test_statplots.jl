@@ -69,6 +69,7 @@
 	parallelplot!(D, normalize="scale")
 	parallelplot(D, normalize="zscore")
 	parallelplot(D, normalize="")
+	plot(D, xvar=1, yvar=2, groupvar="text", legend=true)
 
 	A = rand(10,2);		A[1] = NaN
 	GMT.normalizeArray("zscore", A);
