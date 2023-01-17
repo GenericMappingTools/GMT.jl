@@ -4045,16 +4045,19 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 		if (fname_ext == "" && opt_extra == "")		# Return result as an GMTimage
 			P = showfig(d, output, fname_ext, "", K)
 			CTRL.limits .= 0.0
+			legend_type[1] = legend_bag()
 			gmt_restart()							# Returning a PS screws the session
 		elseif ((haskey(d, :show) && d[:show] != 0) || fname != "" || opt_T != "")
 			P = showfig(d, output, fname_ext, opt_T, K, fname)	# Return something here for the case we are in Pluto
 			(typeof(P) == Base.Process) && (P = nothing)		# Don't want spurious message on REPL when plotting
 			CTRL.IamInPaperMode[2] = true			# Means, next time a paper mode is used offset XY only on first call 
 			CTRL.limits .= 0.0
+			legend_type[1] = legend_bag()
 		end
 	elseif ((haskey(d, :show) && d[:show] != 0))	# Let modern mode also call show=true
 		helper_showfig4modern()
 		CTRL.limits .= 0.0
+		legend_type[1] = legend_bag()
 	end
 	show_non_consumed(d, cmd)
 	return P
@@ -4159,31 +4162,51 @@ function put_in_legend_bag(d::Dict, cmd, arg=nothing, O::Bool=false, opt_l::Stri
 	end
 
 	cmd_ = cmd									# Starts to be just a shallow copy
-	if (isa(arg, Vector{<:GMTdataset}))			# Multi-segments can have different settings per line
-		cmd_ = copy(cmd)
-		_, penC, penS = break_pen(scan_opt(arg[1].header, "-W"))
+	if (isa(arg, GDtype))						# GMTdadaset's can have different settings per segment
+		cmd_ = copy(cmd)						# TODO: pick only the -G, -S, -W opts instead of brute copying.
+		_, penC, penS = isa(arg, GMTdataset) ? break_pen(scan_opt(arg.header, "-W")) : break_pen(scan_opt(arg[1].header, "-W"))
 		penT, penC_, penS_ = break_pen(scan_opt(cmd_[end], "-W"))
 		(penC == "") && (penC = penC_)
 		(penS == "") && (penS = penS_)
 		cmd_[end] = "-W" * penT * ',' * penC * ',' * penS * " " * cmd_[end]	# Trick to make the parser find this pen
 
-		gindex  = find_in_dict(d, [:gindex])[1]	# For groups, this holds the indices of the group's start
-		nDs::Int = (gindex === nothing) ? length(arg) : length(gindex)	# Number of datasets to sneak in
-		pens = Vector{String}(undef, nDs-1)
-		k_vec = (gindex === nothing) ? (2:nDs) : gindex[2:end]
-		for k = 1:nDs-1
-			t = scan_opt(arg[k_vec[k]].header, "-W")
+		# For groups, this holds the indices of the group's start
+		gindex::Vector{Int} = ((val = find_in_dict(d, [:gindex])[1]) === nothing) ? Int[] : val
+
+		nDs::Int = isa(arg, GMTdataset) ? 1 : length(arg)
+		!isempty(gindex) && (nDs = length(gindex))
+		pens = Vector{String}(undef, max(1,nDs-1));
+		k_vec = isempty(gindex) ? collect(2:nDs) : gindex[2:end]
+		isempty(k_vec) && (k_vec = [1])		# Don't let it be empty
+		for k = 1:max(1,nDs-1)
+			t::String = isa(arg, GMTdataset) ? scan_opt(arg.header, "-W") : scan_opt(arg[k_vec[k]].header, "-W")
 			if     (t == "")          pens[k] = " -W0."
 			elseif (t[1] == ',')      pens[k] = " -W" * penT * t		# Can't have, e.g., ",,230/159/0" => Crash
 			elseif (occursin(",",t))  pens[k] = " -W" * t  
 			else                      pens[k] = " -W" * penT * ',' * t	# Not sure what this case covers now
 			end
 		end
+
+		if (isa(arg, GMTdataset) && nDs > 1)	# Piggy back the pens with the eventuals -S, -G options
+			extra_opt  = ((t = scan_opt(cmd_[1], "-S", true)) != "") ? t : ""
+			extra_opt *= ((t = scan_opt(cmd_[1], "-G", true)) != "") ? t : ""
+			for k = 1:numel(pens)  pens[k] *= extra_opt  end
+			if ((ind = findfirst(arg.colnames .== "Zcolor")) !== nothing)
+				rgb = [0.0, 0.0, 0.0]
+				P::Ptr{GMT.GMT_PALETTE} = palette_init(G_API[1], current_cpt[1])	# A pointer to a GMT CPT
+				gmt_get_rgb_from_z(G_API[1], P, arg[gindex[1],ind], rgb)
+				cmd_[1] *= " -G" * arg2str(rgb.*255)
+				for k = 1:numel(pens)
+					gmt_get_rgb_from_z(G_API[1], P, arg[gindex[k+1],ind]+10eps(), rgb)
+					pens[k] *= " -G" * arg2str(rgb.*255)
+				end
+			end
+		end
 		append!(cmd_, pens)			# Append the 'pens' var to the input arg CMD
 
 		lab = Vector{String}(undef, nDs)
 		if (valLabel !== nothing)
-			if (!isa(valLabel, Array))				# One single label, take it as a label prefix
+			if (isa(valLabel, String) || isa(valLabel, Symbol))		# One single label, take it as a label prefix
 				for k = 1:nDs  lab[k] = string(valLabel,k)  end
 			else
 				for k = 1:min(nDs, length(valLabel))  lab[k] = string(valLabel[k])  end
@@ -4259,7 +4282,7 @@ function digests_legend_bag(d::Dict, del::Bool=true)
 		end
 	end
 
-	lab_width = maximum(length.(legend_type[1].label[:])) * fs / 72 * 2.54 * 0.55 + 0.25	# Guess label width in cm
+	lab_width = maximum(length.(legend_type[1].label[:])) * fs / 72 * 2.54 * 0.50 + 0.25	# Guess label width in cm
 
 	# Because we accept extended settings either from first or last legend() commands we must seek which
 	# one may have the desired keyword. First command is stored in 'legend_type[1].optsDict' and last in 'dd'
@@ -4305,10 +4328,12 @@ function digests_legend_bag(d::Dict, del::Bool=true)
 end
 
 # --------------------------------------------------------------------------------------------------
-function scan_opt(cmd::AbstractString, opt::String)::String
-	# Scan the CMD string for the OPT option. Note OPT must be a 2 chars -X GMT option.
+function scan_opt(cmd::AbstractString, opt::String, keepX::Bool=false)::String
+	# Scan the CMD string for the OPT option. Note, OPT must be a 2 chars -X GMT option.
+	# 'keepX' retains the OPT 2 chars -X GMT option in output.
 	out = ((ind = findfirst(opt, cmd)) !== nothing) ? strtok(cmd[ind[1]+2:end])[1] : ""
-	(out != "" && cmd[ind[1]+2] == ' ') && (out = "")	# Because seeking -R in a " -R -JX" would ret "-JX"
+	(out != "" && cmd[ind[1]+2] == ' ') && (out = "")		# Because seeking -R in a " -R -JX" would ret "-JX"
+	(keepX && out != "") && (out = string(' ', opt, out))	# Keep the option flag in output
 	return out
 end
 
