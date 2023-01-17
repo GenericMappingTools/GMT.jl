@@ -23,6 +23,9 @@ function _precompile_()
 	@assert Base.precompile(Tuple{typeof(with_xyvar), Dict{Symbol, Any},GMTdataset{Float64, 2}, Bool})
 	@assert Base.precompile(Tuple{typeof(helper_arrows), Dict{Symbol, Any}, Bool})
 	@assert Base.precompile(Tuple{typeof(append_figsize), Dict{Symbol, Any}, String, String, Bool})
+	@assert Base.precompile(Tuple{typeof(theme), String})
+	@assert Base.precompile(Tuple{typeof(theme), String, Vararg{Any, N} where N})
+	@assert Base.precompile(Tuple{typeof(theme_modern),})
 
 	@assert Base.precompile(Tuple{typeof(get_marker_name),Dict{Symbol, Any}, GMTdataset{Float64, 2}, Vector{Symbol}, Bool, Bool})
 	@assert Base.precompile(Tuple{typeof(get_marker_name),Dict{Symbol, Any},Matrix{Float64},Vector{Symbol},Bool,Bool}) 
@@ -32,6 +35,8 @@ function _precompile_()
 	@assert Base.precompile(Tuple{typeof(read_data), Dict{Symbol, Any}, String, String, Nothing, String, Bool, Bool})
 	@assert Base.precompile(Tuple{typeof(read_data), Dict{Symbol, Any}, String, String, Matrix{Float64}, String, Bool, Bool})
 	@assert Base.precompile(Tuple{typeof(read_data), Dict{Symbol, Any}, String, String, GMTdataset{Float64,2}, String, Bool, Bool})
+	@assert Base.precompile(Tuple{typeof(get_group_indices), Dict{Symbol, Any}, GMTdataset{Float64, 2}})
+	#@assert Base.precompile(Tuple{typeof(get_group_indices), GMTdataset{Float64, 2}, AbstractVector{Int}, AbstractString, Int})
 
 	@assert Base.precompile(Tuple{typeof(imshow),GMTgrid{Float32, 2}})   # time: 12.84012
 	@assert Base.precompile(Tuple{typeof(finish_PS_module),Dict{Symbol, Any},Vector{String},String,Bool,Bool,Bool,GMTgrid{Float32, 2},Vararg{Any, N} where N})   # time: 0.1452611
