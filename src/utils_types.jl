@@ -264,6 +264,32 @@ function mat2ds(D::GMTdataset, inds)::GMTdataset
 end
 
 # ---------------------------------------------------------------------------------------------------
+function add2ds!(D::GMTdataset, mat, ind::Int=0; name::AbstractString="", names::Vector{<:AbstractString}=AbstractString[])
+	# Add the Vector ot Matrix 'mat' to D where 'ind' is the column index of the insertion point.
+	# Takes care also of updating the column names.
+	# If 'mat' is a vector optionally use the 'name' for the new inserted column
+	# If 'mat' is a matrix optionally use a 'names' vector (must have size(mat,2) elements) of new column names.
+	(isvector(mat) && size(D,1) != length(mat)) && error("Number of rows in GMTdataset and adding vector elements do not match.")
+	(isa(mat, Matrix) && size(mat,1) > 1 && size(D,1) != size(mat,1)) && error("Number of rows in GMTdataset and adding matrix do not match.")
+	n_newCols = isvector(mat) ? 1 : size(mat,2)
+	_names = (n_newCols == 1 && name == "") ? ["Zadd"] :
+	         (n_newCols == 1 ? [name] : !isempty(names) ? names : [string("Zadd_",k) for k=1:n_newCols])
+
+	if (ind == 0 || ind == size(D,1))
+		D.data = hcat(D.data, isvector(mat) ? mat[:] : mat)
+		D.colnames = [D.colnames[1:end-1]..., _names..., D.colnames[end]]
+	elseif (ind == 1)
+		D.data = hcat(isvector(mat) ? mat[:] : mat, D.data)
+		D.colnames = [_names..., D.colnames...]
+	else
+		D.data = isvector(mat) ? hcat(D.data[:,1:ind-1], mat[:], D.data[:,ind+1:end]) : hcat(D.data[:,1:ind-1], mat, D.data[:,ind+1:end])
+		D.colnames = [D.colnames[1:ind-1]..., _names..., D.colnames[ind+1:end]...]
+	end
+	set_dsBB!(D)
+	return nothing
+end
+
+# ---------------------------------------------------------------------------------------------------
 function set_dsBB!(D, all_bbs::Bool=true)
 	# Compute and set the global and individual BoundingBox for a Vector{GMTdataset} + the trivial cases.
 	# If ALL_BBS is false then assume individual BBs are already knwon.
