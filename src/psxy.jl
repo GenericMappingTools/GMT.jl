@@ -111,7 +111,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	(N_args == 0 && arg1 !== nothing) && (N_args = 1)	# arg1 might have started as nothing and got values above
 	(!O && caller == "plotyy") && (box_str[1] = opt_R)	# This needs modifications (in plotyy) by second call
 
-	gnames = check_grouping!(d, arg1)	# See about request to do row groupings
+	check_grouping!(d, arg1)			# See about request to do row groupings (and legends for that case)
 
 	if (isGMTdataset(arg1) && !isTimecol_in_pltcols(arg1) && getproj(arg1, proj4=true) != "" && opt_J == " -JX" * def_fig_size)
 		cmd = replace(cmd, opt_J => " -JX" * split(def_fig_size, '/')[1] * "/0")	# If projected, it's a axis equal for sure
@@ -287,7 +287,7 @@ function check_grouping!(d, arg1)
 	# See about request to do row groupings. If yes, also set sensible defaults for a scatter plot
 	# WARNING. If 'arg1' is a Vector{GMTdataset} then all elements are expected to the same number of rows
 	# but no testing of that is done.
-	gnames = Vector[]
+
 	if (isa(arg1, GDtype) || isa(arg1, Matrix{<:Real}))
 		gidx, gnames = get_group_indices(d, arg1)
 		if (!isempty(gidx))
@@ -295,16 +295,21 @@ function check_grouping!(d, arg1)
 			# Uggly because everything invalidates in this f language, dassss
 			for k = 1:numel(gidx), n = 1:length(gidx[k])::Int  zcolor[gidx[k][n]] = k  end
 			d[:zcolor] = zcolor
-			if (is_in_dict(d, CPTaliases) === nothing)
-				N = length(gidx)
-				d[:C] = (N <= 7) ? join(matlab_cycle_colors[1:N], ",") : join(simple_distinct[1:N], ",")
+			if (is_in_dict(d, CPTaliases) === nothing)		# No -C provided, use defaults
+				N::Int = length(gidx)
+				d[:C] = (N <= 7) ? gmt("makecpt -D -T1/$N -C" * join(matlab_cycle_colors[1:N], ",")) :
+				                   gmt("makecpt -D -T1/$N -C" * join(simple_distinct[1:N], ","))
 			end
 			(is_in_dict(d, [:marker, :Marker, :shape]) === nothing) && (d[:marker] = "circ")
 			(is_in_dict(d, [:mec :markeredgecolor :MarkerEdgeColor]) === nothing) && (d[:mec] = "0.25p,black")
 			(is_in_dict(d, [:ms :markersize :MarkerSize :size]) === nothing) && (d[:ms] = "5p")
+			if (haskey(d, :legend))
+				d[:label] = gnames
+				d[:gindex] = [gidx[k][1] for k=1:numel(gidx)]	# For the legend
+			end
 		end
 	end
-	return gnames
+	return nothing
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -844,7 +849,7 @@ function make_color_column(d::Dict, cmd::String, opt_i::String, len_cmd::Int, N_
 	# Filled polygons with -Z don't need extra col
 	((val = find_in_dict(d, [:G :fill], false)[1]) == "+z") && return cmd, arg1, nothing, N_args, false
 
-	n_rows, n_col = get_sizes(arg1)
+	n_rows, n_col = get_sizes(arg1)		# Deal with the matrix, DS & Vec{DS} cases
 	(isa(mz, Bool) && mz) && (mz = 1:n_rows)
 
 	if ((mz !== nothing && length(mz)::Int != n_rows) || (mz === nothing && opt_i != ""))
@@ -856,13 +861,15 @@ function make_color_column(d::Dict, cmd::String, opt_i::String, len_cmd::Int, N_
 	end
 
 	if (!isempty(bar_fill))
-		if (isa(arg1,GMTdataset) || isa(arg1, Matrix{<:Real}))  arg1         = hcat(arg1, 1:n_rows)
-		elseif (isa(arg1, Vector{<:GMTdataset}))                arg1[1].data = hcat(arg1[1].data, 1:n_rows)
+		if (isa(arg1,GMTdataset) || isa(arg1, Matrix{<:Real}))
+			isa(arg1,GMTdataset) ? add2ds!(arg1, 1:n_rows; name="Zcolor") : (arg1 = hcat(arg1, 1:n_rows))
+		else	# Must be a Vector{<:GMTdataset}, otherwise errors
+			for k = 1:numel(arg1)  add2ds!(arg1[k], 1:n_rows; name="Zcolor")  end		# Will error if the n_rows varies
 		end
 		arg2::GMTcpt = gmt(string("makecpt -T1/$(n_rows+1)/1 -C" * join(bar_fill, ",")))
 		current_cpt[1] = arg2
 		(!occursin(" -C", cmd)) && (cmd *= " -C")	# Need to inform that there is a cpt to use
-		find_in_dict(d, [:G :fill])					# Must delete the :fill. Not used anymore
+		find_in_dict(d, [:G :fill])					# Deletes the :fill. Not used anymore
 		return cmd, arg1, arg2, 2, true
 	end
 
@@ -874,9 +881,10 @@ function make_color_column_(d::Dict, cmd::String, len_cmd::Int, N_args::Int, n_p
 	# Broke this out of make_color_column() to try to limit effect of invalidations but with questionable results.
 	if (n_col <= 2+is3D)
 		if (mz !== nothing)
-			if (isa(arg1,GMTdataset) || isa(arg1, Matrix{<:Real}))  arg1 = hcat(arg1, mz[:])
+			if (isa(arg1,GMTdataset) || isa(arg1, Matrix{<:Real}))
+				isa(arg1,GMTdataset) ? add2ds!(arg1, mz; name="Zcolor") : (arg1 = hcat(arg1, mz[:]))
 			elseif (isa(arg1, Vector{<:GMTdataset}))
-				for k = 1:numel(arg1)  arg1[k].data = hcat(arg1[k].data, mz[:])  end	# Will error if they n_rows varies
+				for k = 1:numel(arg1)  add2ds!(arg1[k], mz; name="Zcolor")  end		# Will error if the n_rows varies
 			end
 		else
 			cmd *= " -i0-$(1+is3D),$(1+is3D)"
@@ -886,9 +894,10 @@ function make_color_column_(d::Dict, cmd::String, len_cmd::Int, N_args::Int, n_p
 		end
 	else
 		if (mz !== nothing)				# Here we must insert the color col right after the coords
-			if (isa(arg1,GMTdataset) || isa(arg1, Matrix{<:Real}))  arg1 = hcat(arg1[:,1:2+is3D], mz[:], arg1[:,3+is3D:end])
+			if (isa(arg1,GMTdataset) || isa(arg1, Matrix{<:Real}))
+				isa(arg1,GMTdataset) ? add2ds!(arg1, mz, 3+is3D; name="Zcolor") : (arg1 = hcat(arg1[:,1:2+is3D], mz[:], arg1[:,3+is3D:end]))
 			elseif (isa(arg1, Vector{<:GMTdataset}))
-				for k = 1:numel(arg1)  arg1[k] = hcat(arg1[k][:,1:2+is3D], mz[:], arg1[k][:,3+is3D:end])  end
+				for k = 1:numel(arg1)  add2ds!(arg1[k], mz, 3+is3D; name="Zcolor")  end		# Will error if the n_rows varies
 			end
 		elseif (got_Ebars)				# The Error bars case is very multi. Don't try to guess then.
 			cmd *= " -i0-$(1+is3D),$(1+is3D),$(2+is3D)-$(n_col-1)"
