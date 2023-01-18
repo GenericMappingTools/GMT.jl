@@ -71,7 +71,7 @@ Full option list at [`makecpt`]($(GMTdoc)makecpt.html)
 - $(GMT._opt_i)
 """
 makecpt(cmd0::Symbol; kwargs...) = makecpt(""; C=string(cmd0), kwargs...)	# Ex: makecpt(:gray)
-function makecpt(cmd0::String="", arg1=nothing; kwargs...)
+function makecpt(cmd0::String="", arg1=nothing; kwargs...)::Union{Nothing, String, GMTcpt}
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:V_params])
