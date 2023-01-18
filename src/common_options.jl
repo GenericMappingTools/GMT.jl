@@ -896,8 +896,15 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 	function titlices(d::Dict, arg, fun::Function)
 		# Helper function to deal with setting title & cousins while controling also Font & Offset 
 		if (haskey(d, Symbol(fun)))
-			if isa(arg, StrSymb)  _tt, a_par = replace(str_with_blancs(arg), ' '=>'\x7f'), ""
-			else                  _tt, a_par = fun(;arg...)
+			if isa(arg, StrSymb)	
+				farg = arg
+				if (string(arg) == "auto")
+					farg = (fun == xlabel) ? CTRL.XYlabels[1] : (fun == ylabel) ? CTRL.XYlabels[2] : "auto"
+					(farg == "") && (farg = "auto")		# Can't take the risk of letting go a "". GMT would (Ghrr) error
+				end
+				_tt, a_par = replace(str_with_blancs(farg), ' '=>'\x7f'), ""
+			else
+				_tt, a_par = fun(;arg...)
 			end
 			delete!(d, Symbol(fun));
 			_tt, a_par
@@ -4059,6 +4066,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 		CTRL.limits .= 0.0
 		legend_type[1] = legend_bag()
 	end
+	CTRL.XYlabels[1] = "";	CTRL.XYlabels[2] = "";	# Reset these in case they weren't empty
 	show_non_consumed(d, cmd)
 	return P
 end
