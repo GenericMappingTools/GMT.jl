@@ -4257,12 +4257,14 @@ function digests_legend_bag(d::Dict, del::Bool=true)
 	dd::Dict = ((val = find_in_dict(d, [:leg :legend], false)[1]) !== nothing && isa(val, NamedTuple)) ? nt2dict(val) : Dict()
 
 	kk, fs = 0, 10				# Font size in points
-	symbW = 0.75				# Symbol width. Default to 0.75 cm (good for lines)
+	symbW = 0.75				# Symbol width. Default to 0.75 cm (good for lines but bad for symbols)
 	nl  = length(legend_type[1].label)
 	leg::Vector{String} = Vector{String}(undef, 3nl)
+	all(contains.(legend_type[1].cmd, "-S")) && (symbW = 0.25)	# When all entries are symbols shrink the 'symbW'
+
 	for k = 1:nl						# Loop over number of entries
 		if ((symb = scan_opt(legend_type[1].cmd[k], "-S")) == "")  symb = "-"
-		else                                                       symbW_ = symb[2:end];#	symb = symb[1]
+		else                                                       symbW_ = symb[2:end];
 		end
 		((fill = scan_opt(legend_type[1].cmd[k], "-G")) == "") && (fill = "-")
 		pen  = scan_opt(legend_type[1].cmd[k], "-W");
@@ -4290,6 +4292,15 @@ function digests_legend_bag(d::Dict, del::Bool=true)
 		end
 	end
 
+	(haskey(dd, :fontsize)) && (fs = dd[:fontsize])
+	
+	fnt::String = (haskey(dd, :font)) ? font(dd[:font]) : string(fs)
+	if (fnt != string(fs))
+		s = split(fnt, ',')
+		(length(s) == 1) &&  (fnt = string(fs, ',', s[1]))				# s[1] must be font name
+		(length(s) == 2) &&  (fnt = string(fs, ',', s[1], ',', s[2]))	# s[1] font name, s[2] font color
+	end
+
 	lab_width = maximum(length.(legend_type[1].label[:])) * fs / 72 * 2.54 * 0.50 + 0.25	# Guess label width in cm
 
 	# Because we accept extended settings either from first or last legend() commands we must seek which
@@ -4300,9 +4311,6 @@ function digests_legend_bag(d::Dict, del::Bool=true)
 
 	if ((opt_D::String = add_opt(_d, "", "", [:pos :position],
 		(map_coord="g",plot_coord="x",norm="n",pos="j",width="+w",justify="+j",spacing="+l",offset="+o"))) == "")
-		#just = (isa(val, String) || isa(val, Symbol)) ? justify(val, true) : "TR"		# "TR" is the default
-		#just = (just == string(val) && length(just) == 2) ? just : "TR"	# WHAT WAS THIS ALL ABOUT?
-		#opt_D = @sprintf("j%s+w%.3f+o0.1", just, symbW*1.2 + lab_width)
 		opt_D = @sprintf("jTR+w%.3f+o0.1", symbW*1.2 + lab_width)
 	else
 		t = justify(opt_D, true)
@@ -4327,9 +4335,10 @@ function digests_legend_bag(d::Dict, del::Bool=true)
 			(!occursin("+g", opt_F)) && (opt_F *= "+gwhite")
 		end
 	end
+	
 	if (legend_type[1].Vd > 0)  d[:Vd] = legend_type[1].Vd;  dbg_print_cmd(d, leg[1:kk])  end	# Vd=2 wont work
 	gmt_restart()		# Some things with the themes may screw
-	legend!(text_record(leg[1:kk]), F=opt_F, D=opt_D, par=(:FONT_ANNOT_PRIMARY, fs))
+	legend!(text_record(leg[1:kk]), F=opt_F, D=opt_D, par=(:FONT_ANNOT_PRIMARY, fnt))
 	legend_type[1] = legend_bag()			# Job done, now empty the bag
 
 	return nothing
