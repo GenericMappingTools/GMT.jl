@@ -412,7 +412,6 @@ function GMT_Put_Strings(API::Ptr{Cvoid}, family::Integer, object::Ptr{Cvoid}, t
 end
 
 function gmt_get_rgb_from_z(API::Ptr{Cvoid}, P::Ptr{GMT.GMT_PALETTE}, value::Cdouble, rgb::Vector{Float64})
-	@GC.preserve P
 	ccall((:gmt_get_rgb_from_z, libgmt), Cint, (Cstring, Ptr{Cvoid}, Cdouble, Ptr{Cdouble}), GMT_Get_Ctrl(API), P, value, rgb)
 end
 
