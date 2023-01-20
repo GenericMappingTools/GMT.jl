@@ -69,7 +69,8 @@ function gmtread(fname::String; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd::String, opt_R::String = parse_R(d, "")
-	cmd = parse_common_opts(d, cmd, [:V_params :f :i :h])[1]
+	cmd, opt_i = parse_i(d, cmd)
+	cmd = parse_common_opts(d, cmd, [:V_params :f :h])[1]
 	cmd, opt_bi = parse_bi(d, cmd)
 
 	# Process these first so they may take precedence over defaults set below
@@ -154,7 +155,7 @@ function gmtread(fname::String; kwargs...)
 		end
 
 		# Try guess if ascii file has time columns and if yes leave trace of it in GMTdadaset metadata.
-		(opt_bi == "" && isa(o, GDtype)) && file_has_time!(fname, o)
+		(opt_bi == "" && opt_i != "" && isa(o, GDtype)) && file_has_time!(fname, o)
 
 		if (isa(o, GMTgrid))
 			o.hasnans = any(!isfinite, o) ? 2 : 1
