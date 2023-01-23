@@ -110,27 +110,27 @@ Parameters
 - $(GMT.opt_savefig)
 """
 function plot(arg1; first=true, kw...)
-	common_plot_xyz("", cat_1_arg(arg1), "plot", first, false, kw...)
+	common_plot_xyz("", cat_1_arg(arg1, true), "plot", first, false, kw...)
 end
 plot!(arg1; kw...) = plot(arg1; first=false, kw...)
 
 function plot(f::Function, range_x=nothing; first=true, kw...)
 	rang = gen_coords4funs(range_x, "x"; kw...)
-	common_plot_xyz("", cat_2_arg2(rang, [f(x) for x in rang]), "plot", first, false, kw...)
+	common_plot_xyz("", cat_2_arg2(rang, [f(x) for x in rang], true), "plot", first, false, kw...)
 end
 plot!(f::Function, rang=nothing; kw...) = plot(f, rang; first=false, kw...)
 
 function plot(f1::Function, f2::Function, range_t=nothing; first=true, kw...)	# Parametric version
-	common_plot_xyz("", help_parametric_2f(f1, f2, range_t; is3D=false, kw...), "plot", first, false, kw...)
+	common_plot_xyz("", mat2ds(help_parametric_2f(f1, f2, range_t; is3D=false, kw...)), "plot", first, false, kw...)
 end
 plot!(f1::Function, f2::Function, range_t=nothing; kw...) = plot(f1, f2, range_t; first=false, kw...)
 
-plot(cmd0::String="", arg1=nothing; kw...)  = common_plot_xyz(cmd0, arg1, "plot", true, false, kw...)
-plot!(cmd0::String="", arg1=nothing; kw...) = common_plot_xyz(cmd0, arg1, "plot", false, false, kw...)
-plot(arg1, arg2; kw...)  = common_plot_xyz("", cat_2_arg2(arg1, arg2), "plot", true, false, kw...)
-plot!(arg1, arg2; kw...) = common_plot_xyz("", cat_2_arg2(arg1, arg2), "plot", false, false, kw...)
-plot(arg1::Number, arg2::Number; kw...)  = common_plot_xyz("", cat_2_arg2([arg1], [arg2]), "plot", true, false, kw...)
-plot!(arg1::Number, arg2::Number; kw...) = common_plot_xyz("", cat_2_arg2([arg1], [arg2]), "plot", false, false, kw...)
+plot(cmd0::String="", arg1=nothing; kw...)  = common_plot_xyz(cmd0, mat2ds(arg1), "plot", true, false, kw...)
+plot!(cmd0::String="", arg1=nothing; kw...) = common_plot_xyz(cmd0, mat2ds(arg1), "plot", false, false, kw...)
+plot(arg1, arg2; kw...)  = common_plot_xyz("", cat_2_arg2(arg1, arg2, true), "plot", true, false, kw...)
+plot!(arg1, arg2; kw...) = common_plot_xyz("", cat_2_arg2(arg1, arg2, true), "plot", false, false, kw...)
+plot(arg1::Number, arg2::Number; kw...)  = common_plot_xyz("", cat_2_arg2([arg1], [arg2], true), "plot", true, false, kw...)
+plot!(arg1::Number, arg2::Number; kw...) = common_plot_xyz("", cat_2_arg2([arg1], [arg2], true), "plot", false, false, kw...)
 # ------------------------------------------------------------------------------------------------------
 
 
@@ -175,7 +175,7 @@ function plotyy(arg1, arg2; first=true, kw...)
 	d[:lc] = "#0072BD"
 	(haskey(d, :show)) ? (delete!(d, :show);  do_show = true) : do_show = false
 	d[:par] = (MAP_FRAME_PEN="#0072BD", MAP_TICK_PEN="#0072BD", FONT_ANNOT_PRIMARY="#0072BD", FONT_LABEL="#0072BD")
-	r1 = common_plot_xyz("", cat_1_arg(arg1), "plotyy", first, false, d...)
+	r1 = common_plot_xyz("", cat_1_arg(arg1, true), "plotyy", first, false, d...)
 
 	(Vd != 0) && (d[:Vd] = Vd)
 	(seclabel != "" && occursin(" ", seclabel)) && (seclabel = "\"" * seclabel * "\"")
@@ -183,7 +183,7 @@ function plotyy(arg1, arg2; first=true, kw...)
 	d[:B] = " af E"	* seclabel		# Also remember that previous -B was consumed in first call
 	d[:lc]  = "#D95319"
 	d[:par] = (MAP_FRAME_PEN="#D95319", MAP_TICK_PEN="#D95319", FONT_ANNOT_PRIMARY="#D95319", FONT_LABEL="#D95319")
-	r2 = common_plot_xyz("", cat_1_arg(arg2), "plotyy", false, false, d...)
+	r2 = common_plot_xyz("", cat_1_arg(arg2, true), "plotyy", false, false, d...)
 
 	(xlabel != "" && occursin(" ", xlabel)) && (xlabel = "\"" * xlabel * "\"")
 	opt_B = (xlabel != "") ? "af Sn x+l" * xlabel : "af Sn"
@@ -298,25 +298,25 @@ Parameters
 
     plot3d(x -> sin(x)*cos(10x), y -> sin(y)*sin(10y), z -> cos(z), 0:pi/100:pi, show=true, aspect3=:equal)
 """
-plot3d(arg1; kw...)  = common_plot_xyz("", cat_1_arg(arg1), "plot3d", true, true, kw...)
-plot3d!(arg1; kw...) = common_plot_xyz("", cat_1_arg(arg1), "plot3d", false, true, kw...)
+plot3d(arg1; kw...)  = common_plot_xyz("", cat_1_arg(arg1, true), "plot3d", true, true, kw...)
+plot3d!(arg1; kw...) = common_plot_xyz("", cat_1_arg(arg1, true), "plot3d", false, true, kw...)
 
-plot3d(cmd0::String="", arg1=nothing; kw...)  = common_plot_xyz(cmd0, arg1, "plot3d", true, true, kw...)
-plot3d!(cmd0::String="", arg1=nothing; kw...) = common_plot_xyz(cmd0, arg1, "plot3d", false, true, kw...)
+plot3d(cmd0::String="", arg1=nothing; kw...)  = common_plot_xyz(cmd0, mat2ds(arg1), "plot3d", true, true, kw...)
+plot3d!(cmd0::String="", arg1=nothing; kw...) = common_plot_xyz(cmd0, mat2ds(arg1), "plot3d", false, true, kw...)
 
 # ------------------------------------------------------------------------------------------------------
 function plot3d(arg1::AbstractArray, arg2::AbstractArray, arg3::AbstractArray; first=true, kw...)
-	common_plot_xyz("", hcat(arg1[:], arg2[:], arg3[:]), "plot3d", first, true, kw...)
+	common_plot_xyz("", mat2ds(hcat(arg1[:], arg2[:], arg3[:])), "plot3d", first, true, kw...)
 end
 plot3d!(arg1::AbstractArray, arg2::AbstractArray, arg3::AbstractArray; kw...) = plot3d(arg1, arg2, arg3; first=false, kw...)
 
 function plot3d(f1::Function, f2::Function, range_t=nothing; first=true, kw...)
-	common_plot_xyz("", help_parametric_2f(f1, f2, range_t; kw...), "plot3d", first, true, kw...)
+	common_plot_xyz("", mat2ds(help_parametric_2f(f1, f2, range_t; kw...)), "plot3d", first, true, kw...)
 end
 plot3d!(f1::Function, f2::Function, range_t=nothing; kw...) = plot3d(f1, f2, range_t; first=false, kw...)
 
 function plot3d(f1::Function, f2::Function, f3::Function, range_t=nothing; first=true, kw...)
-	common_plot_xyz("", help_parametric_3f(f1, f2, f3, range_t; kw...), "plot3d", first, true, kw...)
+	common_plot_xyz("", mat2ds(help_parametric_3f(f1, f2, f3, range_t; kw...)), "plot3d", first, true, kw...)
 end
 plot3d!(f1::Function, f2::Function, f3::Function, range_t=nothing; kw...) = plot3d(f1, f2, f3, range_t; first=false, kw...)
 
@@ -380,48 +380,48 @@ Parameters
 """
 function scatter(f::Function, range_x=nothing; first=true, kw...)
 	rang = gen_coords4funs(range_x, "x"; kw...)
-	common_plot_xyz("", cat_2_arg2(rang, [f(x) for x in rang]), "scatter",  first, false, kw...)
+	common_plot_xyz("", cat_2_arg2(rang, [f(x) for x in rang], true), "scatter",  first, false, kw...)
 end
 scatter!(f::Function, rang=nothing; kw...) = scatter(f, rang; first=false, kw...)
 
 function scatter(f1::Function, f2::Function, range_t=nothing; first=true, kw...)	# Parametric version
-	common_plot_xyz("", help_parametric_2f(f1, f2, range_t; is3D=false, kw...), "scatter",  first, false, kw...)
+	common_plot_xyz("", mat2ds(help_parametric_2f(f1, f2, range_t; is3D=false, kw...)), "scatter",  first, false, kw...)
 end
 scatter!(f1::Function, f2::Function, range_t=nothing; kw...) = scatter(f1, f2, range_t; first=false, kw...)
 
-scatter(cmd0::String="",  arg1=nothing; kw...) = common_plot_xyz(cmd0, arg1, "scatter",  true, false, kw...)
-scatter!(cmd0::String="", arg1=nothing; kw...) = common_plot_xyz(cmd0, arg1, "scatter",  false, false, kw...)
+scatter(cmd0::String="",  arg1=nothing; kw...) = common_plot_xyz(cmd0, mat2ds(arg1), "scatter",  true, false, kw...)
+scatter!(cmd0::String="", arg1=nothing; kw...) = common_plot_xyz(cmd0, mat2ds(arg1), "scatter",  false, false, kw...)
 
-scatter(arg; kw...)  = common_plot_xyz("", cat_1_arg(arg), "scatter", true, false, kw...)
-scatter!(arg; kw...) = common_plot_xyz("", cat_1_arg(arg), "scatter", false, false, kw...)
+scatter(arg; kw...)  = common_plot_xyz("", cat_1_arg(arg, true), "scatter", true, false, kw...)
+scatter!(arg; kw...) = common_plot_xyz("", cat_1_arg(arg, true), "scatter", false, false, kw...)
 
-scatter(arg1, arg2; kw...)  = common_plot_xyz("", cat_2_arg2(arg1, arg2), "scatter", true, false, kw...)
-scatter!(arg1, arg2; kw...) = common_plot_xyz("", cat_2_arg2(arg1, arg2), "scatter", false, false, kw...)
+scatter(arg1, arg2; kw...)  = common_plot_xyz("", cat_2_arg2(arg1, arg2, true), "scatter", true, false, kw...)
+scatter!(arg1, arg2; kw...) = common_plot_xyz("", cat_2_arg2(arg1, arg2, true), "scatter", false, false, kw...)
 
 bubblechart  = scatter		# Alias that supposedly only plots circles
 bubblechart! = scatter!
 
 # ------------------------------------------------------------------------------------------------------
-scatter3(cmd0::String="", arg1=nothing; kw...)  = common_plot_xyz(cmd0, arg1, "scatter3",  true, true, kw...)
-scatter3!(cmd0::String="", arg1=nothing; kw...) = common_plot_xyz(cmd0, arg1, "scatter3",  false, true, kw...)
+scatter3(cmd0::String="", arg1=nothing; kw...)  = common_plot_xyz(cmd0, mat2ds(arg1), "scatter3",  true, true, kw...)
+scatter3!(cmd0::String="", arg1=nothing; kw...) = common_plot_xyz(cmd0, mat2ds(arg1), "scatter3",  false, true, kw...)
 
-scatter3(arg; kw...)  = common_plot_xyz("", cat_1_arg(arg), "scatter3", true, true, kw...)
-scatter3!(arg; kw...) = common_plot_xyz("", cat_1_arg(arg), "scatter3", false, true, kw...)
+scatter3(arg; kw...)  = common_plot_xyz("", cat_1_arg(arg, true), "scatter3", true, true, kw...)
+scatter3!(arg; kw...) = common_plot_xyz("", cat_1_arg(arg, true), "scatter3", false, true, kw...)
 
 function scatter3(arg1::AbstractArray, arg2::AbstractArray, arg3::AbstractArray; kw...)
-	common_plot_xyz("", hcat(arg1, arg2, arg3), "scatter3", true, true, kw...)
+	common_plot_xyz("", mat2ds(hcat(arg1, arg2, arg3)), "scatter3", true, true, kw...)
 end
 function scatter3!(arg1::AbstractArray, arg2::AbstractArray, arg3::AbstractArray; kw...)
-	common_plot_xyz("", hcat(arg1, arg2, arg3), "scatter3", false, true, kw...)
+	common_plot_xyz("", mat2ds(hcat(arg1, arg2, arg3)), "scatter3", false, true, kw...)
 end
 
 function scatter3(f1::Function, f2::Function, range_t=nothing; first=true, kw...)
-	common_plot_xyz("", help_parametric_2f(f1, f2, range_t; kw...), "scatter3", first, true, kw...)
+	common_plot_xyz("", mat2ds(help_parametric_2f(f1, f2, range_t; kw...)), "scatter3", first, true, kw...)
 end
 scatter3!(f1::Function, f2::Function, range_t=nothing; kw...) = scatter3(f1, f2, range_t; first=false, kw...)
 
 function scatter3(f1::Function, f2::Function, f3::Function, range_t=nothing; first=true, kw...)
-	common_plot_xyz("", help_parametric_3f(f1, f2, f3, range_t; kw...), "scatter3", first, true, kw...)
+	common_plot_xyz("", mat2ds(help_parametric_3f(f1, f2, f3, range_t; kw...)), "scatter3", first, true, kw...)
 end
 scatter3!(f1::Function, f2::Function, f3::Function, range_t=nothing; kw...) = scatter3(f1, f2, f3, range_t; first=false, kw...)
 
@@ -473,7 +473,7 @@ function bar(cmd0::String="", arg=nothing; first=true, kw...)
 	end
 
 	if (do_cat) arg = Float64.(cat_1_arg(arg))  end		# If ARG is a vector, prepend it with a 1:N x column
-	GMT.common_plot_xyz("", arg, "bar", first, false, kw...)
+	GMT.common_plot_xyz("", mat2ds(arg), "bar", first, false, kw...)
 end
 bar!(cmd0::String="", arg=nothing; kw...) = bar(cmd0, arg; first=false, kw...)
 
@@ -483,10 +483,10 @@ function bar(f::Function, range_x=nothing; first=true, kw...)
 end
 bar!(f::Function, rang=nothing; kw...) = bar(f, rang; first=false, kw...)
 
-bar(arg1, arg2; first=true, kw...)  = common_plot_xyz("", cat_2_arg2(arg1, arg2), "bar", first, false, kw...)
-bar!(arg1, arg2; kw...) = common_plot_xyz("", cat_2_arg2(arg1, arg2), "bar", false, false, kw...)
+bar(arg1, arg2; first=true, kw...)  = common_plot_xyz("", cat_2_arg2(arg1, arg2, true), "bar", first, false, kw...)
+bar!(arg1, arg2; kw...) = common_plot_xyz("", cat_2_arg2(arg1, arg2, true), "bar", false, false, kw...)
 bar(arg; kw...)  = bar("", arg; kw...)
-bar!(arg; kw...) = common_plot_xyz("", cat_1_arg(arg), "bar", false, false, kw...)
+bar!(arg; kw...) = common_plot_xyz("", cat_1_arg(arg, true), "bar", false, false, kw...)
 # ------------------------------------------------------------------------------------------------------
 
 """
@@ -588,7 +588,7 @@ function bar3(cmd0::String="", arg=nothing; first=true, kwargs...)
 		opt_S *= "+b" * opt_base
 	end
 
-	common_plot_xyz("", arg1, "bar3|" * opt_S * opt_z, first, true, d...)
+	common_plot_xyz("", mat2ds(arg1), "bar3|" * opt_S * opt_z, first, true, d...)
 end
 
 bar3(arg1; kw...) = bar3("", arg1; first=true, kw...)
@@ -619,8 +619,8 @@ Examples:
           decorated=(quoted=true, const_label=" In Vino Veritas  - In Aqua, Rãs & Toads", font=(25,"Times-Italic"),
                      curved=true, pen=(0.5,:red)), aspect=:equal, fmt=:png, show=true)
 """
-lines(cmd0::String="", arg1=nothing; first=true, kwargs...) = common_plot_xyz(cmd0, arg1, "lines", first, false, kwargs...)
-lines!(cmd0::String="", arg=nothing; kw...) = lines(cmd0, arg; first=false, kw...)
+lines(cmd0::String="", arg1=nothing; first=true, kwargs...) = common_plot_xyz(cmd0, mat2ds(arg1), "lines", first, false, kwargs...)
+lines!(cmd0::String="", arg1=nothing; kw...) = lines(cmd0, arg1; first=false, kw...)
 
 function lines(f::Function, rang=nothing; first=true, kw...)
 	rang = gen_coords4funs(rang, "x"; kw...)
@@ -635,8 +635,8 @@ lines!(f1::Function, f2::Function, rang=nothing; kw...) = lines(f1, f2, rang; fi
 
 lines(arg1, arg2; kw...)  = lines("", cat_2_arg2(arg1, arg2); first=true, kw...)
 lines!(arg1, arg2; kw...) = lines("", cat_2_arg2(arg1, arg2); first=false, kw...)
-lines(arg; kw...)  = lines("", cat_1_arg(arg); first=true, kw...)
-lines!(arg; kw...) = lines("", cat_1_arg(arg); first=false, kw...)
+lines(arg; kw...)  = lines("", cat_1_arg(arg, true); first=true, kw...)
+lines!(arg; kw...) = lines("", cat_1_arg(arg, true); first=false, kw...)
 
 # ------------------------------------------------------------------------------------------------------
 # fill_between(D, fill="blue@70,brown@80", lt=1, ls=:dot, show=1)
@@ -867,11 +867,11 @@ function stairs(cmd0::String="", arg1=nothing; first=true, step=:post, kwargs...
 	d[:stairs_step] = step
 	lines(cmd0, arg1; first=first, d...)
 end
-stairs!(cmd0::String="", arg1=nothing; step=:post, kw...) = stairs(cmd0, arg1; first=false, step=step, kw...)
-stairs(arg; step=:post, kw...) = stairs("", cat_1_arg(arg); step=step, kw...)
-stairs!(arg; step=:post, kw...) = stairs("", cat_1_arg(arg); first=false, step=step, kw...)
-stairs(arg1, arg2; step=:post, kw...)  = stairs("", cat_2_arg2(arg1, arg2); step=step, kw...)
-stairs!(arg1, arg2; step=:post, kw...)  = stairs("", cat_2_arg2(arg1, arg2); first=false, step=step, kw...)
+stairs!(cmd0::String="", arg1=nothing; step=:post, kw...) = stairs(cmd0, mat2ds(arg1); first=false, step=step, kw...)
+stairs(arg; step=:post, kw...)  = stairs("", cat_1_arg(arg, true); step=step, kw...)
+stairs!(arg; step=:post, kw...) = stairs("", cat_1_arg(arg, true); first=false, step=step, kw...)
+stairs(arg1, arg2; step=:post, kw...)  = stairs("", cat_2_arg2(arg1, arg2, true); step=step, kw...)
+stairs!(arg1, arg2; step=:post, kw...) = stairs("", cat_2_arg2(arg1, arg2, true); first=false, step=step, kw...)
 
 # ------------------------------------------------------------------------------------------------------
 function helper_input_ds(d::Dict, cmd0::String="", arg1=nothing)
@@ -942,16 +942,16 @@ function stem(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	multi_col[1] = false		# Some cat_2_arg2 paths set it to true, wich cannot happen in this function
 	have_baseline = ((find_in_dict(d, [:nobaseline])[1]) === nothing)
-	out1, out2 = common_plot_xyz("", arg1, "stem", first, false, d...), nothing
+	out1, out2 = common_plot_xyz("", mat2ds(arg1), "stem", first, false, d...), nothing
 	(have_baseline) && (out2 = hlines!(0.0, show=_show))	# See if we have a no-baseline request
 	(out1 !== nothing && out2 !== nothing) ? [out1;out2] : ((out1 !== nothing) ? out1 : out2)
 end
 
 stem!(cmd0::String="", arg1=nothing; kw...) = stem(cmd0, arg1; first=false, kw...)
-stem(arg; kw...) = stem("", cat_1_arg(arg); kw...)
-stem!(arg; kw...) = stem("", cat_1_arg(arg); first=false, kw...)
-stem(arg1, arg2; kw...)  = stem("", cat_2_arg2(arg1, arg2); kw...)
-stem!(arg1, arg2; kw...) = stem("", cat_2_arg2(arg1, arg2); first=false, kw...)
+stem(arg; kw...) = stem("", cat_1_arg(arg, true); kw...)
+stem!(arg; kw...) = stem("", cat_1_arg(arg, true); first=false, kw...)
+stem(arg1, arg2; kw...)  = stem("", cat_2_arg2(arg1, arg2, true); kw...)
+stem!(arg1, arg2; kw...) = stem("", cat_2_arg2(arg1, arg2, true); first=false, kw...)
 
 # ------------------------------------------------------------------------------------------------------
 """
@@ -996,7 +996,7 @@ function arrows(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	# TYPEVEC = 0, ==> u,v = theta,rho. TYPEVEC = 1, ==> u,v = u,v. TYPEVEC = 2, ==> u,v = x2,y2 
 	typevec = (find_in_dict(d, [:uv])[1] !== nothing) ? 1 : (find_in_dict(d, [:endpt :endpoint])[1] !== nothing) ? 2 : 0
 	d, arg1 = helper_vecBug(d, arg1, first, haveR, haveVarFill, typevec, false)		# Deal with GMT nasty bug
-	common_plot_xyz(cmd0, arg1, "", first, false, d...)
+	common_plot_xyz(cmd0, mat2ds(arg1), "", first, false, d...)
 end
 
 arrows!(cmd0::String="", arg1=nothing; kw...) = arrows(cmd0, arg1; first=false, kw...)
@@ -1202,7 +1202,7 @@ function feather(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	# TYPEVEC = 0, ==> u,v = theta,rho. TYPEVEC = 1, ==> u,v = u,v. TYPEVEC = 2, ==> u,v = x2,y2 
 	typevec = (find_in_dict(d, [:rtheta])[1] !== nothing) ? 0 : (find_in_dict(d, [:endpt :endpoint])[1] !== nothing) ? 2 : 1
 	d, arg1 = helper_vecBug(d, arg1, first, haveR, haveVarFill, typevec, true)		# Deal with the GMT annoying bug
-	common_plot_xyz("", arg1, "feather", first, false, d...)
+	common_plot_xyz("", mat2ds(arg1), "feather", first, false, d...)
 end
 
 feather!(cmd0::String="", arg1=nothing; kw...) = feather!(cmd0, arg1; first=false, kw...)
@@ -1250,7 +1250,7 @@ function quiver(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	d[:S] = "v$(len)+e+s"
 
 	multi_col[1] = false		# Some cat_2_arg2 paths set it to true, wich cannot happen in this function 
-	common_plot_xyz("", arg1, "quiver", first, false, d...)
+	common_plot_xyz("", mat2ds(arg1), "quiver", first, false, d...)
 end
 function quiver(arg1, arg2, arg3, arg4; first=true, kw...)
 	@assert(length(arg1) == length(arg2) && length(arg2) == length(arg3) && length(arg3) == length(arg4))
@@ -1404,17 +1404,17 @@ function band(cmd0::String="", arg1=nothing; first=true, width=0.0, envelope=fal
 	d[:L] = (_L != "") ? _L : opt_L
 	multi_col[1] = false		# Some cat_2_arg2 paths set it to true, wich cannot happen in this function 
 
-	common_plot_xyz("", arg1, "lines", first, false, d...)
+	common_plot_xyz("", mat2ds(arg1), "lines", first, false, d...)
 end
 band!(cmd0::String="", arg1=nothing; width=0.0, envelope=false, kw...) =
 	band(cmd0, arg1; first=false, width=width, envelope=envelope, kw...)
-band(arg; width=0.0, envelope=false, kw...)  = band("", cat_1_arg(arg); width=width, envelope=envelope, kw...)
-band!(arg; width=0.0, envelope=false, kw...) = band("", cat_1_arg(arg); first=false, width=width, envelope=envelope, kw...)
+band(arg; width=0.0, envelope=false, kw...)  = band("", cat_1_arg(arg, true); width=width, envelope=envelope, kw...)
+band!(arg; width=0.0, envelope=false, kw...) = band("", cat_1_arg(arg, true); first=false, width=width, envelope=envelope, kw...)
 
 band(arg1, arg2; width=0.0, envelope=false, kw...) =
-	band("", cat_2_arg2(arg1, arg2); width=width, envelope=envelope, kw...)
+	band("", cat_2_arg2(arg1, arg2, true); width=width, envelope=envelope, kw...)
 band!(arg1, arg2; width=0.0, envelope=false, kw...) =
-	band("", cat_2_arg2(arg1, arg2); first=false, width=width, envelope=envelope, kw...)
+	band("", cat_2_arg2(arg1, arg2, true); first=false, width=width, envelope=envelope, kw...)
 band(arg1, arg2, arg3; kw...) = band("", cat_3_arg2(arg1, arg2, arg3); envelope=true, kw...)
 band!(arg1, arg2, arg3; kw...) = band("", cat_3_arg2(arg1, arg2, arg3); first=false, envelope=true, kw...)
 
@@ -1705,7 +1705,7 @@ function ternary(cmd0::String="", arg1=nothing; first::Bool=true, image::Bool=fa
 	end
 	(G_API[1] == C_NULL) && gmt_restart()	# Force having a valid API. We can't afford otherwise here.
 	(GMTver <= v"6.2.0") && gmtlib_setparameter(G_API[1], "MAP_FRAME_AXES", "WESNZ")	# Because of a bug in 6.2.0 modern theme
-	r = common_plot_xyz("", arg1, "ternary", first, false, d...)
+	r = common_plot_xyz("", mat2ds(arg1), "ternary", first, false, d...)
 	(GMTver <= v"6.2.0") && gmtlib_setparameter(G_API[1], "MAP_FRAME_AXES", "auto")
 	# With the following trick we leave the -R history in 0/1/0/1 and so we can append with plot, text, etc
 	gmt("psxy -Scp -R0/1/0/1 -JX -O -Vq > " * joinpath(tempdir(), "lixo.ps"), [0. 0.])
@@ -1846,14 +1846,14 @@ function events(cmd0::String="", arg1=nothing; kwargs...)
 		(away=("j", nothing, 1), corners=("J", nothing, 1), shift="", line=("+v",add_opt_pen)))
 	cmd = add_opt(d, cmd, "F", [:F :attrib],
 		(angle="+a", Angle="+A", font=("+f", font), justify="+j", region_justify="+c", header="_+h", label="_+l", rec_number="+r", text="+t", zvalues="+z"), false)
-	common_plot_xyz(cmd0, arg1, "events|" * cmd, true, false, d...)
+	common_plot_xyz(cmd0, mat2ds(arg1), "events|" * cmd, true, false, d...)
 end
 const psevents = events            # Alias
 
 # ------------------------------------------------------------------------------------------------------
-cat_1_arg(arg::GMTdataset) = return arg				# Miserable attempts to force type stability
-cat_1_arg(arg::Vector{<:GMTdataset}) = return arg
-function cat_1_arg(arg)
+cat_1_arg(arg::GMTdataset, toDS::Bool=false) = return arg				# Miserable attempts to force type stability
+cat_1_arg(arg::Vector{<:GMTdataset}, toDS::Bool=false) = return arg
+function cat_1_arg(arg, toDS::Bool=false)
 	# Add a first column with 1:n to all args that are not GMTdatasets
 	if (isa(arg, Vector) || typeof(arg) <: AbstractRange)
 		arg = hcat(collect(eltype(arg), 1:size(arg,1)), arg)
@@ -1862,11 +1862,11 @@ function cat_1_arg(arg)
 	elseif (isa(arg, NTuple))
 		arg = hcat(collect(eltype(arg), 1:length(arg)), collect(arg))
 	end
-	return arg
+	return toDS ? mat2ds(arg) : arg
 end
 
 # ------------------------------------------------------------------------------------------------------
-function cat_2_arg2(arg1, arg2)
+function cat_2_arg2(arg1, arg2, toDS::Bool=false)::Union{Matrix{<:Real}, GMTdataset}
 	# Cat two vectors (or tuples) or a vector (or tuple) and a matrix in a Mx2 matrix
 
 	arg2 === nothing && return arg1
@@ -1878,23 +1878,23 @@ function cat_2_arg2(arg1, arg2)
 	if (isa(arg2, NTuple))  arg2 = collect(arg2)  end
 	if (size(arg1,1) == 1 && size(arg1,2) != 1)  arg1 = arg1[:]  end
 	if (size(arg2,1) == 1 && size(arg2,2) != 1)  arg2 = arg2[:]  end
-	arg = hcat(arg1, arg2)
+	arg = toDS ? mat2ds(hcat(arg1, arg2)) : hcat(arg1, arg2)
 	if (size(arg,2) > 2)  global multi_col[1] = true  end
 	return arg
 end
-function cat_2_arg2(arg1::GMTdataset, arg2::VMr)::GMTdataset
+function cat_2_arg2(arg1::GMTdataset, arg2::VMr, toDS::Bool=false)::GMTdataset
 	_arg = (isvector(arg2) && isa(arg2, Matrix)) ? vec(arg2) : arg2		# Converts a one line matrix into a vec
 	arg1.data = hcat(arg1.data, _arg)		# Will error if sizes not compatible
 	append!(arg1.colnames, ["Z$i" for i=length(arg1.colnames)+1:size(arg1,2)])
 	set_dsBB!(arg1)							# Update BB
 	return arg1
 end
-function cat_2_arg2(arg1::VMr, arg2::GMTdataset)::Matrix{<:Real}
+function cat_2_arg2(arg1::VMr, arg2::GMTdataset, toDS::Bool=false)::Union{Matrix{<:Real}, GMTdataset}
 	_arg = (isvector(arg1) && isa(arg1, Matrix)) ? vec(arg1) : arg1		# Converts a one line matrix into a vec
 	_arg = hcat(_arg, arg2.data)			# Will error if sizes not compatible
-	return _arg
+	return toDS ? mat2ds(_arg) : _arg
 end
-function cat_2_arg2(arg1::GMTdataset, arg2::GMTdataset)::GMTdataset
+function cat_2_arg2(arg1::GMTdataset, arg2::GMTdataset, toDS::Bool=false)::GMTdataset
 	arg1.data = hcat(arg1.data, arg2.data)	# Will error if sizes not compatible
 	append!(arg1.colnames, ["Z$i" for i=length(arg1.colnames)+1:size(arg1,2)])
 	set_dsBB!(arg1)							# Update BB
