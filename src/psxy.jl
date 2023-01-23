@@ -660,8 +660,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 # Check if a group bar request or just bars. Returns TRUE in first case and FALSE in second
-check_bar_group(arg1) = ( (isa(arg1, Matrix{<:Real}) || eltype(arg1) <: GMTdataset) &&
-                          (isa(arg1, Vector{<:GMTdataset}) ? size(arg1[1],2) > 2 : size(arg1,2) > 2) )::Bool
+check_bar_group(arg1) = ( (isa(arg1, Vector{<:GMTdataset}) ? size(arg1[1],2) > 2 : size(arg1,2) > 2) )::Bool
 
 # ---------------------------------------------------------------------------------------------------
 function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill::Vector{String}, got_Ebars::Bool, got_usr_R::Bool, arg1)
