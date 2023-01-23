@@ -72,6 +72,7 @@ does not need explicit coordinates to place the text.
   - `txtcol` or `textcol`: Vector{String} with text to add into the .text field. Warning: no testing is done
      to check if ``length(txtcol) == size(mat,1)`` as it must.
 """
+mat2ds(mat::Nothing) = mat		# Method to simplify life and let call mat2ds on a nothing
 mat2ds(mat::GDtype) = mat		# Method to simplify life and let call mat2ds on a already GMTdataset
 mat2ds(text::Union{AbstractString, Vector{<:AbstractString}}) = text_record(text)	# Now we can hide text_record
 function mat2ds(mat::Array{T,N}, txt::Vector{String}=String[]; hdr=String[], geom=0, kwargs...) where {T,N}
@@ -248,7 +249,7 @@ function mat2ds(D::GMTdataset, inds)::GMTdataset
 	# INDS is a Tuple of 2 with ranges in rows and columns. Ex: (:, 1:3) or (:, [1,4,7]), etc...
 	# Attention, if original had attributes other than 'Timeinfo' there is no guarentie that they remain correct. 
 	(length(inds) != ndims(D)) && error("\tNumber of GMTdataset dimensions and indices components must be the same.\n")
-	_coln = [D.colnames[inds[2]]..., D.colnames[end]]
+	_coln = !isempty(D.colnames) ? [D.colnames[inds[2]]..., D.colnames[end]] : String[]
 	_D = mat2ds(D.data[inds...], proj4=D.proj4, wkt=D.wkt, epsg=D.epsg, geom=D.geom, colnames=_coln, attrib=D.attrib)
 	(!isempty(D.text)) && (_D.text = D.text[inds[1]])
 	(typeof(inds[2]) == Colon) && return _D		# We are done here
@@ -265,8 +266,9 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function add2ds!(D::GMTdataset, mat, ind::Int=0; name::AbstractString="", names::Vector{<:AbstractString}=AbstractString[])
-	# Add the Vector ot Matrix 'mat' to D where 'ind' is the column index of the insertion point.
+	# Add the Vector or Matrix 'mat' to D where 'ind' is the column index of the insertion point.
 	# Takes care also of updating the column names.
+	# If 'ind=0' append 'mat' at the end of 'D'
 	# If 'mat' is a vector optionally use the 'name' for the new inserted column
 	# If 'mat' is a matrix optionally use a 'names' vector (must have size(mat,2) elements) of new column names.
 	(isvector(mat) && size(D,1) != length(mat)) && error("Number of rows in GMTdataset and adding vector elements do not match.")
@@ -275,18 +277,37 @@ function add2ds!(D::GMTdataset, mat, ind::Int=0; name::AbstractString="", names:
 	_names = (n_newCols == 1 && name == "") ? ["Zadd"] :
 	         (n_newCols == 1 ? [name] : !isempty(names) ? names : [string("Zadd_",k) for k=1:n_newCols])
 
-	if (ind == 0 || ind == size(D,1))
+	if (ind == 0 || ind == size(D,2))
 		D.data = hcat(D.data, isvector(mat) ? mat[:] : mat)
-		D.colnames = [D.colnames[1:end-1]..., _names..., D.colnames[end]]
+		!isempty(D.colnames) && (D.colnames = [D.colnames[1:end-1]..., _names..., D.colnames[end]])
 	elseif (ind == 1)
 		D.data = hcat(isvector(mat) ? mat[:] : mat, D.data)
-		D.colnames = [_names..., D.colnames...]
+		!isempty(D.colnames) && (D.colnames = [_names..., D.colnames...])
 	else
 		D.data = isvector(mat) ? hcat(D.data[:,1:ind-1], mat[:], D.data[:,ind+1:end]) : hcat(D.data[:,1:ind-1], mat, D.data[:,ind+1:end])
-		D.colnames = [D.colnames[1:ind-1]..., _names..., D.colnames[ind+1:end]...]
+		!isempty(D.colnames) && (D.colnames = [D.colnames[1:ind-1]..., _names..., D.colnames[ind+1:end]...])
 	end
 	set_dsBB!(D)
 	return nothing
+end
+
+# ---------------------------------------------------------------------------------------------------
+function add2ds!(D::Vector{<:GMTdataset}, mat, ind::Int=0; name::AbstractString="", names::Vector{<:AbstractString}=AbstractString[])::Union{Nothing,Matrix{<:Real}}
+	for k = 1:numel(D)  add2ds!(D[k], mat, ind; name=name, names=names)  end
+	return nothing
+end
+
+# ---------------------------------------------------------------------------------------------------
+function add2ds!(D::GMTdataset; name::AbstractString="", names::Vector{<:AbstractString}=AbstractString[])
+	# Method for fixing the colnames and/or the bbox in DS that had their matrix extended.
+	# 'name' and 'names' are only usable if 'D' already has 'colnames'
+	isempty(D.colnames) && (D.colnames = [string("Col.",k) for k=1:size(D,2)])
+	if ((n_newCols = size(D,2) - length(D.colnames)) > 0)
+		_names = (n_newCols == 1 && name == "") ? ["Zadd"] :
+		         (n_newCols == 1 ? [name] : !isempty(names) ? names : [string("Zadd_",k) for k=1:n_newCols])
+		D.colnames = [D.colnames..., _names...]
+	end
+	(length(D.bbox) != 2 * size(D,2)) && set_dsBB!(D)
 end
 
 # ---------------------------------------------------------------------------------------------------
