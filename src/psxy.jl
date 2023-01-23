@@ -4,7 +4,7 @@ const psxyz  = plot3d
 const psxyz! = plot3d!
 
 # ---------------------------------------------------------------------------------------------------
-function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::Bool, kwargs...)
+function common_plot_xyz(cmd0::String, arg1::Union{Nothing,GDtype}, caller::String, first::Bool, is3D::Bool, kwargs...)
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 	(cmd0 != "" && arg1 === nothing && is_in_dict(d, [:groupvar :hue]) !== nothing) && (arg1 = gmtread(cmd0); cmd0 = "")
 
@@ -35,7 +35,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 			end
 		else
 			sub_module = caller
-			# Needs to be processed here to destinguish from the more general 'fill'
+			# Needs to be processed here to distinguish from the more general 'fill'
 			(caller == "bar") && (g_bar_fill = helper_gbar_fill(d))
 			opt_A = (caller == "lines" && ((val = find_in_dict(d, [:stairs_step])[1]) !== nothing)) ? string(val) : ""
 		end
@@ -67,7 +67,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		(!is_ternary && isa(arg1, Vector{<:GMTdataset}) && length(arg1[1].ds_bbox) >= 4) && (CTRL.limits[1:4] = arg1[1].ds_bbox[1:4])
 		(!is_ternary && isa(arg1, GDtype)) && (CTRL.limits[7:10] = CTRL.limits[1:4])	# Start with plot=data limits
 		(!IamModern[1] && haskey(d, :hexbin) && !haskey(d, :aspect)) && (d[:aspect] = :equal)	# Otherwise ... gaps between hexagons
-		isa(arg1, GMTdataset) && !isempty(arg1.colnames) && (CTRL.XYlabels[1] = arg1.colnames[1]; CTRL.XYlabels[2] = arg1.colnames[2])
+		(isa(arg1, GMTdataset) && size(arg1,2) > 1 && !isempty(arg1.colnames)) && (CTRL.XYlabels[1] = arg1.colnames[1]; CTRL.XYlabels[2] = arg1.colnames[2])
 		isa(arg1, Vector{<:GMTdataset}) && !isempty(arg1[1].colnames) && (CTRL.XYlabels[1] = arg1[1].colnames[1]; CTRL.XYlabels[2] = arg1[1].colnames[2])
 		if (is_ternary)  cmd, opt_J = parse_J(d, cmd, def_J)
 		else             cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd, caller, O, def_J)
@@ -192,6 +192,8 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		cmd, arg1, arg2, N_args, mcc = make_color_column(d, cmd, opt_i, len_cmd, N_args, n_prev, is3D, got_Ebars, bar_ok, g_bar_fill, arg1, arg2)
 	end
 
+	arg1, cmd = check_ribbon(d, arg1, cmd, opt_W)	# Do this check here, after -W is known and before parsing -G & -L
+
 	opt_G::String = ""
 	if (isempty(g_bar_fill))					# Otherwise bar fill colors are dealt with somewhere else
 		((opt_G = add_opt_fill("", d, [:G :fill], 'G')) != "") && (cmd *= opt_G)	# Also keep track if -G was set
@@ -288,8 +290,8 @@ end
 # ---------------------------------------------------------------------------------------------------
 function check_grouping!(d, arg1)
 	# See about request to do row groupings. If yes, also set sensible defaults for a scatter plot
-	# WARNING. If 'arg1' is a Vector{GMTdataset} then all elements are expected to the same number of rows
-	# but no testing of that is done.
+	# WARNING. If 'arg1' is a Vector{GMTdataset} then all elements are expected to have the same
+	# number of rows but no testing of that is done.
 
 	if (isa(arg1, GDtype) || isa(arg1, Matrix{<:Real}))
 		gidx, gnames = get_group_indices(d, arg1)
@@ -313,6 +315,35 @@ function check_grouping!(d, arg1)
 		end
 	end
 	return nothing
+end
+
+# ---------------------------------------------------------------------------------------------------
+function check_ribbon(d, arg1, cmd::String, opt_W::String)
+	((val = find_in_dict(d, [:ribbon :band])[1]) === nothing) && return arg1, cmd
+	add_2 = true
+	if isa(val, Real)
+		ec1 = repeat([float(val)::Float64], size(arg1,1)::Int)
+		add_2 = false
+	elseif (isa(val, VecOrMat{<:Real}))
+		(length(val)::Int == 2) ? (ec2 = repeat([float(val[1])::Float64 float(val[2])::Float64], size(arg1,1)::Int)) :
+		                           ec2 = [Float64.(vec(val)) Float64.(vec(val))]
+	elseif isa(val, Tuple{Vector{<:Real}, Vector{<:Real}})
+		ec2 = [Float64.(val[1]) Float64.(val[2])]
+	end
+	if (isa(arg1, Vector{<:GMTdataset}))
+		if (add_2)
+			for k = 1:numel(arg1)  add2ds!(arg1[k], ec2; names=["Zbnd1","Zbnd2"])  end
+		else
+			for k = 1:numel(arg1)  add2ds!(arg1[k], ec1; name="Zbnd")  end
+		end
+	elseif (isa(arg1, GMTdataset))
+		(add_2) ? add2ds!(arg1, ec2; names=["Zbnd1","Zbnd2"]) : add2ds!(arg1, ec1; name="Zbnd")
+	else
+		(add_2) ? (arg1 = hcat(arg1, ec2)) : (arg1 = hcat(arg1, ec1))
+	end
+	d[:L] = (add_2) ? "+D" : "+d"
+	(!occursin(cmd, "-W") && opt_W == "") && (cmd *= " -W0.5p")		# Do not leave without a line specification
+	return arg1, cmd
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -357,8 +388,8 @@ function with_xyvar(d::Dict, arg1::GMTdataset, no_x::Bool=false)
 
 	xc = getcolvar(d, [:xvar])
 	zc = getcolvar(d, [:zvar]);				(zc != 0) && (ycv = [ycv..., zc])
-	sc = getcolvar(d, [:svar :sizevar]);	(sc != 0) && (ycv = [ycv..., sc])
 	cc = getcolvar(d, [:cvar :colorvar]);	(cc != 0) && (ycv = [ycv..., cc])
+	sc = getcolvar(d, [:svar :sizevar]);	(sc != 0) && (ycv = [ycv..., sc])
 	if (!no_x)
 		if (xc == 0)
 			colnames = ["X", arg1.colnames[ycv]...]
@@ -453,7 +484,7 @@ function _helper_psxy_line(d::Dict, cmd::String, opt_W::String, is3D::Bool, args
 			cpt = current_cpt[1]
 		else
 			mima = (size(args[1],2) == 2) ? (1,size(args[1],1)) : (args[1].ds_bbox[5+0*is3D], args[1].ds_bbox[6+0*is3D])
-			cpt = makecpt(@sprintf("-T%f/%f/65+n -Cturbo -Vq", mima[1]-eps(1e10), mima[2]+eps(1e10)))
+			cpt::GMTcpt = gmt(@sprintf("makecpt -T%f/%f/65+n -Cturbo -Vq", mima[1]-eps(1e10), mima[2]+eps(1e10)))
 		end
 	end
 
@@ -510,7 +541,7 @@ function parse_opt_S(d::Dict, arg1, is3D::Bool)
 			elseif (isa(val, Tuple) && isa(val[1], Function) && isa(val[2], VMr))
 				val2::Tuple = val
 				scale::Float64 = (eltype(val2[2]) <: Integer) ? 2.54/72 : 1.0
-				ind = sortperm(Base.invokelatest(funcurve, val2[1], vec(Float64.(val2[2].*scale)), size(arg1,1)))	# Get the sorting indices
+				ind = sortperm(Base.invokelatest(funcurve, val2[1], vec(Float64.(val2[2].*scale)), size(arg1,1)))
 				arg1 = hcat(arg1, is3D ? Base.invokelatest(view, arg1,:,3)[ind] : Base.invokelatest(view, arg1,:,2)[ind])
 			elseif (string(val)::String != "indata")	# WTF is "indata"?
 				marca *= arg2str(val)::String
@@ -744,7 +775,7 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill::Vector{Strin
 	bw::Float64 = (isletter(opt_S[end])) ? parse(Float64, opt_S[3:end-1]) : parse(Float64, opt_S[2:end])	# Bar width
 	n_in_group = length(_argD)						# Number of bars in the group
 	new_bw::Float64 = (is_stack) ? bw : bw / n_in_group	# 'width' does not change in bar-stack
-	new_opt_S = "-S" * opt_S[1] * "$(new_bw)u"
+	new_opt_S::String = "-S" * opt_S[1] * "$(new_bw)u"
 	cmd = (is_stack) ? replace(cmd, "-S"*opt_S*sub_b => new_opt_S*"+b") : replace(cmd, "-S"*opt_S => new_opt_S)
 
 	if (!is_stack)									# 'Horizontal stack'
@@ -826,7 +857,7 @@ function recompute_R_4bars!(cmd::String, opt_R::String, arg1)
 	dy::Float64 = (info.data[4] - info.data[3]) * 0.005;
 	info.data[1] -= dx;	info.data[2] += dx;	info.data[4] += dy;
 	info.data = round_wesn(info.data)		# Add a pad if not-tight
-	new_opt_R = @sprintf(" -R%.15g/%.15g/%.15g/%.15g", info.data[1], info.data[2], 0, info.data[4])
+	new_opt_R::String = @sprintf(" -R%.15g/%.15g/%.15g/%.15g", info.data[1], info.data[2], 0, info.data[4])
 	cmd = replace(cmd, opt_R => new_opt_R)
 end
 
@@ -853,12 +884,13 @@ function make_color_column(d::Dict, cmd::String, opt_i::String, len_cmd::Int, N_
 	((val = find_in_dict(d, [:G :fill], false)[1]) == "+z") && return cmd, arg1, nothing, N_args, false
 
 	n_rows, n_col = get_sizes(arg1)		# Deal with the matrix, DS & Vec{DS} cases
+	#(isa(mz, Int) && mz <= n_col && mz == 3+is3D) && return cmd, arg1, nothing, N_args, false	# zcolor column is already in place
 	(isa(mz, Bool) && mz) && (mz = 1:n_rows)
 
 	if ((mz !== nothing && length(mz)::Int != n_rows) || (mz === nothing && opt_i != ""))
 		warn1 = string("Probably color column in '", the_kw, "' has incorrect dims. Ignoring it.")
-		warn2 = "Plotting with color table requires adding one more column to the dataset but your -i
-		option didn't do it, so you won't get what you expect. Try -i0-1,1 for 2D or -i0-2,2 for 3D plots"
+		warn2 = "Plotting with color table requires adding one more column to the dataset but your 'incols'
+		option didn't do it, so you won't get what you expect. Try incols=\"0-1,1\" for 2D or \"=0-2,2\" for 3D plots"
 		(mz !== nothing) ? @warn(warn1) : @warn(warn2)
 		return cmd, arg1, arg2, N_args, true
 	end
@@ -1042,7 +1074,9 @@ function helper_markers(opt::String, ext, arg1, N::Int, cst::Bool)
 	marca::String = "";	 msg = ""
 	if (size(ext,2) == N && arg1 !== nothing)	# Here ARG1 is supposed to be a matrix that will be extended.
 		S = Symbol(opt)
-		marca, arg1 = add_opt(add_opt, (Dict(S => (par=ext,)), opt, "", [S]), (par="|",), true, arg1)
+		t = isa(arg1, GMTdataset) ? arg1.data : arg1	# Because we need to passa matrix to this method of add_opt()
+		marca, t = add_opt(add_opt, (Dict(S => (par=ext,)), opt, "", [S]), (par="|",), true, t)
+		isa(arg1, GMTdataset) ? (arg1.data = t; add2ds!(arg1)) : (arg1 = t)
 	elseif (cst && length(ext) == 1)
 		marca = opt * "-" * string(ext)::String
 	else
