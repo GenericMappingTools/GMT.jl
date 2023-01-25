@@ -7,6 +7,7 @@ const psxyz! = plot3d!
 function common_plot_xyz(cmd0::String, arg1::Union{Nothing,GDtype}, caller::String, first::Bool, is3D::Bool, kwargs...)
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 	(cmd0 != "" && arg1 === nothing && is_in_dict(d, [:groupvar :hue]) !== nothing) && (arg1 = gmtread(cmd0); cmd0 = "")
+	arg1 = if_multicols(d, arg1, is3D)			# Check if it was asked to split a GMTdataset in its columns 
 
 	arg2, arg3, arg4 = nothing, nothing, nothing
 	N_args = (arg1 === nothing) ? 0 : 1
@@ -285,6 +286,18 @@ function common_plot_xyz(cmd0::String, arg1::Union{Nothing,GDtype}, caller::Stri
 	r = finish_PS_module(d, _cmd, "", K, O, finish, arg1, arg2, arg3, arg4)
 	(occursin("-Sk", opt_S)) && gmt_restart()  # Apparently patterns & custom symbols are screwing the session
 	return r
+end
+
+# ---------------------------------------------------------------------------------------------------
+function if_multicols(d, arg1, is3D::Bool)
+	# ...
+	(find_in_dict(d, [:multi :multicol], false)[1] === nothing)  && return arg1
+	(isa(arg1, Vector{<:GMTdataset}) && (size(arg1,2) > 2+is3D)) && return arg1		# Play safe
+	d2 = copy(d)
+	!haskey(d, :color) && (d2[:color] = true)	# Default to lines color cycling
+	arg1 = ds2ds(arg1; is3D=is3D, d2...)		# Pass a 'd' copy and remove possible kw that are also parse in psxy
+	del_from_dict(d, [[:multi, :multicol], [:lt, :linethick], [:ls, :linestyle], [:fill], [:fillalpha], [:color]])
+	return arg1
 end
 
 # ---------------------------------------------------------------------------------------------------
