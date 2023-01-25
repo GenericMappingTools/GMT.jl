@@ -39,7 +39,7 @@ function cpt4dcw(codes::Vector{<:AbstractString}, vals::Vector{<:Real}; kwargs..
 
 	inc = (C.minmax[2] - C.minmax[1]) / size(Ccat.cpt, 1)
 	for k = 1:size(Ccat.cpt, 1)
-		@GC.preserve P gmt_get_rgb_from_z(G_API[1], P, _vals[k], rgb)
+		@GC.preserve C gmt_get_rgb_from_z(G_API[1], P, _vals[k], rgb)
 		[Ccat.colormap[k, n] = copy(rgb[n]) for n = 1:3]
 		[Ccat.cpt[k, n+1] = copy(rgb[(n % 3) + 1]) for n = 0:5]		# cpt = [rgb rgb]
 		Ccat.range[k,1] = C.minmax[1] + (k-1) * inc
