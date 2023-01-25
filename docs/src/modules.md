@@ -31,7 +31,8 @@ output image format which is PNG (actually, except for *grdimage -A*, the only f
 it installed) will take care of converting the *ps* file into the selected format.
 
 When runing from Jupyter notebooks one does not need to worry about the image format. In fact the only
-allowed is *png* but that is taken care automatically, meaning that any *fmt=xxx* will be ignored.
+allowed is *png* but that is taken care automatically, meaning that any *fmt=xxx* will be ignored. The 
+`show=true` is needed to show the image in the notebook.
 
 Note that we used either strings ("") or symbols (:) to represent the format. Here the rule is we can use
 symbols for any string argument that can be safely written as a symbol. Example, this is valid =:abc,
