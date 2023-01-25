@@ -48,7 +48,7 @@ does not need explicit coordinates to place the text.
   - `color`: optional array of strings with color names/values. Its length can be smaller than n_rows, case in
      which colors will be cycled. If `color` is not an array of strings, e.g. `color="yes"`, the colors
      cycle trough a pre-defined set of colors (same colors as in Matlab). If you want the same color repeated
-     for many lines use pass color as a vector. *e.g,* `color=[color]`
+     for many lines pass color as a vector. *e.g,* `color=[color]`
   - `linethick` or `lt`: for selecting different line thicknesses. Works like `color`, but should be 
      a vector of numbers, or just a single number that is then applied to all lines.
   - `fill`:  Optional string array (or a String of comma separated color names, or a Tuple of color names)
@@ -56,10 +56,9 @@ does not need explicit coordinates to place the text.
   - `fillalpha` : When `fill` option is used, we can set the transparency of filled polygons with this
      option that takes in an array (vec or 1-row matrix) with numeric values between [0-1] or ]1-100],
 	 where 100 (or 1) means full transparency.
-  - `ls` or `linestyle`:  Line style. A string or an array of strings with `length = size(mat,1)` with line styles.
-  - `front`:  Front Line style. A string or an array of strings with `length = size(mat,1)` with front line styles.
-  - `lt` or `linethick`:  Line thickness.
-  - `pen`:  A full pen setting. A string or an array of strings with `length = size(mat,1)` with pen settings.
+  - `ls` or `linestyle`:  Line style. A string or an array of strings with `length = size(mat,2)` with line styles.
+  - `front`:  Front Line style. A string or an array of strings with `length = size(mat,2)` with front line styles.
+  - `pen`:  A full pen setting. A string or an array of strings with `length = size(mat,2)` with pen settings.
      This differes from `lt` in the sense that `lt` does not directly set the line thickness.
   - `multi` or `multicol`: When number of columns in `mat` > 2, or == 2 and x != nothing, make an multisegment Dataset
      with first column and 2, first and 3, etc. Convenient when want to plot a matrix where each column is a line. 
@@ -73,13 +72,14 @@ does not need explicit coordinates to place the text.
      to check if ``length(txtcol) == size(mat,1)`` as it must.
 """
 mat2ds(mat::Nothing) = mat		# Method to simplify life and let call mat2ds on a nothing
-mat2ds(mat::GDtype) = mat		# Method to simplify life and let call mat2ds on a already GMTdataset
+mat2ds(mat::GDtype)  = mat		# Method to simplify life and let call mat2ds on a already GMTdataset
 mat2ds(text::Union{AbstractString, Vector{<:AbstractString}}) = text_record(text)	# Now we can hide text_record
 function mat2ds(mat::Array{T,N}, txt::Vector{String}=String[]; hdr=String[], geom=0, kwargs...) where {T,N}
 	d = KW(kwargs)
 
 	(!isempty(txt)) && return text_record(mat, txt,  hdr)
 	((text = find_in_dict(d, [:text])[1]) !== nothing) && return text_record(mat, text, hdr)
+	is3D = (find_in_dict(d, [:is3D])[1] === nothing) ? false : true		# Should account for is3D == false?
 
 	val = find_in_dict(d, [:multi :multicol])[1]
 	multi = (val === nothing) ? false : ((val) ? true : false)	# Like this it will error if val is not Bool
@@ -89,7 +89,7 @@ function mat2ds(mat::Array{T,N}, txt::Vector{String}=String[]; hdr=String[], geo
 		xx::Vector{Float64} = (x == :ny || x == "ny") ? collect(1.0:size(mat, 1)) : vec(x)
 		(length(xx) != size(mat, 1)) && error("Number of X coordinates and MAT number of rows are not equal")
 	else
-		n_ds = (ndims(mat) == 3) ? size(mat,3) : ((multi) ? size(mat, 2) - 1 : 1)
+		n_ds = (ndims(mat) == 3) ? size(mat,3) : ((multi) ? size(mat, 2) - (1+is3D) : 1)
 		xx = Vector{Float64}()
 	end
 
@@ -218,7 +218,7 @@ function mat2ds(mat::Array{T,N}, txt::Vector{String}=String[]; hdr=String[], geo
 			coln = fill_colnames(coln, size(mat,2)-2, is_geog)
 			(size(mat,2) == 1) && (coln = coln[1:1])		# Because it defaulted to two.
 			D[1] = GMTdataset(mat, Float64[], Float64[], att, coln, txtcol, (isempty(_hdr) ? "" : _hdr[1]), String[], prj, wkt, epsg, _geom)
-		else
+		else						# 2D MULTICOL case(s)
 			isempty(coln) && (coln = (is_geog) ? ["Lon", "Lat"] : ["X", "Y"])
 			for k = 1:n_ds
 				# If colnames was transmitted try to assign the right names to each column
@@ -371,20 +371,23 @@ function ds2ds(D::Vector{<:GMTdataset})::GMTdataset
 end
 
 # ---------------------------------------------------------------------------------------------------
-function ds2ds(D::GMTdataset; kwargs...)::Vector{<:GMTdataset}
+function ds2ds(D::GMTdataset; is3D::Bool=false, kwargs...)::Vector{<:GMTdataset}
 	# Take one DS and split it into an array of DS's, one for each row and optionally add -G<fill>
+	# Alternativelly, if [:multi :multicol] options lieve in 'd', split 'D' by columns: [1,2], [1,3], [1,4], ...
 	# So far only for internal use but may grow in function of needs
 	d = KW(kwargs)
 
-	#multi = "r"		# Default split by rows
-	#if ((val = find_in_dict(d, [:multi])[1]) !== nothing)  multi = "c"  end		# Then by columns
-	_fill = helper_ds_fill(d)
+	multi = 'r'		# Default split by rows
+	if ((val = find_in_dict(d, [:multi :multicol], false)[1]) !== nothing)  multi = 'c'  end		# Then by columns
+	_fill = (multi == 'r') ? helper_ds_fill(d) : String[]	# In the columns case all is dealt in mat2ds.
 
+	n_colors = length(_fill)
 	if ((val = find_in_dict(d, [:color_wrap])[1]) !== nothing)	# color_wrap is a kind of private option for bar-stack
 		n_colors::Int = Int(val)
 	end
 
-	n_ds = size(D.data, 1)
+	n_ds = size(D.data, multi == 'r' ? 1 : 2)
+	(multi == 'c') && (n_ds -= 1+is3D)
 	if (!isempty(_fill))				# Paint the polygons (in case of)
 		_hdr::Vector{String} = Vector{String}(undef, n_ds)
 		for k = 1:n_ds
@@ -394,11 +397,16 @@ function ds2ds(D::GMTdataset; kwargs...)::Vector{<:GMTdataset}
 	end
 
 	Dm = Vector{GMTdataset}(undef, n_ds)
-	for k = 1:n_ds
-		Dm[k] = GMTdataset(D.data[k:k, :], Float64[], Float64[], Dict{String, String}(), String[], String[], (isempty(_fill) ? "" : _hdr[k]), String[], "", "", 0, 0)
+	if (multi == 'r')
+		for k = 1:n_ds
+			Dm[k] = GMTdataset(D.data[k:k, :], Float64[], Float64[], Dict{String, String}(), String[], String[], (isempty(_fill) ? "" : _hdr[k]), String[], "", "", 0, wkbPoint)
+		end
+		Dm[1].colnames = D.colnames
+		(size(D.text) == n_ds) && (for k = 1:n_ds  Dm[k].text = D.text[k]  end)
+	else
+		Dm = mat2ds(D.data; colnames=D.colnames, d...)
 	end
-	Dm[1].comment = D.comment;	Dm[1].proj4 = D.proj4;	Dm[1].wkt = D.wkt;	Dm[1].colnames = D.colnames
-	(size(D.text) == n_ds) && [Dm.text[k] = D.text[k] for k = 1:n_ds]
+	Dm[1].comment = D.comment;	Dm[1].proj4 = D.proj4;	Dm[1].wkt = D.wkt;	Dm[1].epsg = D.epsg;
 	Dm
 end
 
@@ -408,11 +416,13 @@ function helper_ds_fill(d::Dict, del::Bool=true; symbs=[:fill :fillcolor], nc=0)
 	# The NC parameter is used to select the color schema: <= 8 ==> 'matlab_cycle_colors'; otherwise 'simple_distinct'
 	# By using a non-default SYMBS we can use this function for other than selecting fill colors.
 	if ((fill_val = find_in_dict(d, symbs, del)[1]) !== nothing)
-		#if (isa(fill_val, String) && contains(fill_val, ","))
-			#_fill::Vector{String} = collect(split(fill_val, ","))
-		if (isa(fill_val, String))
+		if (isa(fill_val, StrSymb))
+			isa(fill_val, Symbol) && (fill_val = string(fill_val)::String)
 			if contains(fill_val, ",")  _fill::Vector{String} = collect(split(fill_val, ","))
-			else                        _fill = [fill_val]
+			elseif (fill_val == "yes" || fill_val == "cycle")
+					                     _fill = (nc <= 8) ? copy(matlab_cycle_colors) : copy(simple_distinct)
+			elseif (fill_val == "none")  _fill = [" "]
+			else	                     _fill = [fill_val]
 			end
 		elseif (isa(fill_val, Tuple) && eltype(fill_val) == Symbol)
 			_fill = [string.(fill_val)...]
@@ -517,7 +527,7 @@ function line2multiseg(M::Matrix{<:Real}; is3D::Bool=false, color::GMTcpt=GMTcpt
 	if (isempty(color) && auto_color)
 		mima = (size(M,2) <= 3) ? (1., Float64(size(M,1))) : Float64.(extrema_cols(M, col=color_col))
 		(size(M,2) <= 3) && (use_row_number = true; z4color = 1.:n_ds)
-		color::GMTcpt = gmt("makecpt " * @sprintf("-T%f/%f/65+n -Cturbo -Vq", mima[1]-eps(1e10), mima[2]+eps(1e10)))
+		color::GMTcpt = gmt(@sprintf("makecpt -T%f/%f/65+n -Cturbo -Vq", mima[1]-eps(1e10), mima[2]+eps(1e10)))
 	end
 
 	if (!isempty(color))
@@ -526,7 +536,7 @@ function line2multiseg(M::Matrix{<:Real}; is3D::Bool=false, color::GMTcpt=GMTcpt
 		P::Ptr{GMT.GMT_PALETTE} = palette_init(G_API[1], color);		# A pointer to a GMT CPT
 		for k = 1:n_ds
 			z = (use_row_number) ? z4color[k] : M[k, z_col]
-			@GC.preserve P gmt_get_rgb_from_z(G_API[1], P, z, rgb)
+			@GC.preserve color gmt_get_rgb_from_z(G_API[1], P, z, rgb)
 			t = @sprintf(",%.0f/%.0f/%.0f", rgb[1]*255, rgb[2]*255, rgb[3]*255)
 			_hdr[k] = (first) ? " -W"*t : _hdr[k] * t
 		end
