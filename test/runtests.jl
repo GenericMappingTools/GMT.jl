@@ -42,14 +42,17 @@ if (got_it)					# Otherwise go straight to end
 	include("test_cube.jl")
 
 	println("	WMS")
-	wms = GMT.wmsinfo("http://tiles.maps.eox.at/wms?")
-	show(wms)
-	show(wms.layer[1])
-	GMT.wmsinfo(wms, layer="coastline", stronly=true);
-	GMT.wmstest(wms, layer=33, region=(-8,39, 100000), res=100);
-	GMT.wmstest(wms, layer=33, region=(iso="PT"), res=100);
-	GMT.wmstest(wms, layer=37, region=(-8,-7,38,39), res="0.001d")
-	GMT.wmstest(wms, layer=37, region=(-8,-7,38,39), res=100)
+	try
+		wms = GMT.wmsinfo("http://tiles.maps.eox.at/wms?")
+		show(wms)
+		show(wms.layer[1])
+		GMT.wmsinfo(wms, layer="coastline", stronly=true);
+		GMT.wmstest(wms, layer=33, region=(-8,39, 100000), res=100);
+		GMT.wmstest(wms, layer=33, region=(iso="PT"), res=100);
+		GMT.wmstest(wms, layer=37, region=(-8,-7,38,39), res="0.001d")
+		GMT.wmstest(wms, layer=37, region=(-8,-7,38,39), res=100)
+	catch
+	end
 
 	println("		Entering: test_tables.jl")
 	include("test_tables.jl")

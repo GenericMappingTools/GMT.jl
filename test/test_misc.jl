@@ -62,6 +62,7 @@
 	setindex!(I, [101 1],1:2)
 	I .+ UInt8(0);
 
+	@info "1..."
 	GMT.GMTdataset();
 	isempty(GMT.GMTcpt())
 	size(GMT.GMTcpt())
