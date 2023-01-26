@@ -74,7 +74,7 @@ function gmtinfo(cmd0::String="", arg1=nothing; kwargs...)::GMTdataset
 	cmd = add_opt(d, cmd, "T", [:T :nearest_multiple], (dz="", col="+c", column="+c"))
 
 	# If file name sent in, read it.
-	cmd, arg1, = read_data(d, cmd0, cmd, arg1, " ")
+	if (cmd0 != "")  cmd, arg1, = read_data(d, cmd0, cmd, arg1, " ")  end
 	if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end
 	isa(arg1, Tuple) ? gmt("gmtinfo " * cmd, arg1...) : gmt("gmtinfo " * cmd, arg1)
 end
