@@ -86,7 +86,9 @@ function makecpt(cmd0::String="", arg1=nothing; kwargs...)::Union{Nothing, Strin
 	cmd = "makecpt " * cmd
 	(dbg_print_cmd(d, cmd) !== nothing) && return cmd
 	(arg1 === nothing && !isempty(Tvec)) && (arg1 = Tvec; Tvec = Float64[])
+	Base.GC.enable(false)
 	r = gmt(cmd, arg1, !isempty(Tvec) ? Tvec : nothing)
+	Base.GC.enable(true)
 	(got_N && r !== nothing) && (r.bfn = ones(3,3))	# Cannot remove the bfn like in plain GMT so make it all whites
 	current_cpt[1] = (r !== nothing) ? r : GMTcpt()	# r === nothing when we save CPT on disk.
 	return r

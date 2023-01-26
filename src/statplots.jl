@@ -863,7 +863,7 @@ function qqplot(x, y; qqline=:identity, first=true, kwargs...)
 		(find_in_dict(d, [:mec :markeredgecolor :MarkerEdgeColor], false)[1] === nothing) && (d[:mec] = "0.25p,black")
 	end
 	d[:show] = do_show
-	common_plot_xyz("", [qx qy], "scatter", first, false, d...)		# The scatter plot
+	common_plot_xyz("", mat2ds([qx qy]), "scatter", first, false, d...)		# The scatter plot
 end
 
 function qqplot(x; qqline=:identity, first=true, kwargs...)
@@ -1276,7 +1276,7 @@ function cornerplot(arg1; first::Bool=true, kwargs...)
 				d[:xlabel], d[:ylabel] = varnames[c1], varnames[c2]
 				if (do_scatter)
 					d[:marker] = ((val = find_in_dict(d, [:marker :Marker :shape])[1]) !== nothing) ? val : "p"
-					common_plot_xyz("", D[:,[c1,c2]], "scatter", first, false, d...)
+					common_plot_xyz("", mat2ds(D[:,[c1,c2]]), "scatter", first, false, d...)
 				else		#if (do_hexbin)
 					d[:ml] = 0.1;
 					common_plot_xyz("", gmtbinstats(D[:,[c1,c2]]; d2...), "scatter", first, false, d...)

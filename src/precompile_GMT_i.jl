@@ -1,7 +1,6 @@
 function _precompile_()
 	#ccall(:jl_generating_output, Cint, ()) == 1 || return nothing
-	@assert Base.precompile(Tuple{typeof(plot),Matrix{Float64}})   # time: 11.283913
-	@assert Base.precompile(Tuple{typeof(helper_multi_cols),Dict{Symbol, Any},Matrix{Float64},Bool,String,String,String,String,Bool,Vector{Bool},Vector{String},String,Vector{String},Bool,Bool})   # time: 0.2952042
+	@assert Base.precompile(Tuple{typeof(plot),GMTdataset{Float64, 2}})   # time: 11.283913
 	@assert Base.precompile(Tuple{typeof(finish_PS_module),Dict{Symbol, Any},Vector{String},String,Bool,Bool,Bool,Matrix{Float64},Vararg{Any, N} where N})   # time: 0.1380821
 	@assert Base.precompile(Tuple{typeof(make_color_column),Dict{Symbol, Any},String,String,Int64,Int64,Int64,Bool,Bool,Bool,Vector{String},Matrix{Float64}, Nothing})   # time: 0.1258531
 	@assert Base.precompile(Tuple{typeof(make_color_column),Dict{Symbol, Any},String,String,Int64,Int64,Int64,Bool,Bool,Bool,Vector{String},Matrix{Float64}, GMT.GMTcpt})

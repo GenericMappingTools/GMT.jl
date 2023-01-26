@@ -3372,26 +3372,28 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", i
 		cmd *= opt_R
 	end
 
+	(show_kwargs[1]) && return cmd, arg, opt_R, [NaN NaN NaN NaN], ""		# In HELP mode we do nothing here
+
 	_read_data(d, cmd, arg, opt_R, is3D, get_info, opt_i, opt_di, opt_yx)
 end
 
 function _read_data(d::Dict, cmd::String, arg, opt_R::String="", is3D::Bool=false, get_info::Bool=false,
-	opt_i::String="", opt_di::String="", opt_yx::String="")#::Tuple{String, Union{Nothing, Array{<:Real}, GDtype, NamedTuple}, String, Matrix{Float64}, String}
+	opt_i::String="", opt_di::String="", opt_yx::String="")#::Tuple{String, Union{Nothing, GDtype}, String, Matrix{Float64}, String}
 	# In case DATA holds a file name, read that data and put it in ARG
 	# Also compute a tight -R if this was not provided. This forces reading a the `fname` file if provided.
 
-	(show_kwargs[1]) && return cmd, arg, opt_R, [NaN NaN NaN NaN], ""		# In HELP mode we do nothing here
 	(IamModern[1] && FirstModern[1]) && (FirstModern[1] = false)
 
 	if (haskey(d, :data))
-		arg = d[:data];		del_from_dict(d, [:data])
+		arg = mat2ds(d[:data]);		del_from_dict(d, [:data])
 	elseif (arg === nothing)	# OK, last chance of findig the data is in the x=..., y=... kwargs
 		if (haskey(d, :x) && haskey(d, :y))
-			arg = cat_2_arg2(d[:x], d[:y])
-			(haskey(d, :z)) && (arg = hcat(arg, d[:z][:]);	del_from_dict(d, [:z]))
+			_arg = cat_2_arg2(d[:x], d[:y])
+			(haskey(d, :z)) && (_arg = hcat(_arg, d[:z][:]);	del_from_dict(d, [:z]))
 			del_from_dict(d, [[:x, :x], [:y]])		# [:x :x] to satisfy signature ::Vector{Vector{Symbol}} != ::Array{Array{Symbol}}
+			arg = mat2ds(_arg)
 		elseif (haskey(d, :x) && length(d[:x]) > 1)	# Only this guy. I guess that histogram may use this
-			arg = d[:x];		del_from_dict(d, [:x])
+			arg = mat2ds(d[:x]);		del_from_dict(d, [:x])
 		end
 	end
 
@@ -3399,26 +3401,21 @@ function _read_data(d::Dict, cmd::String, arg, opt_R::String="", is3D::Bool=fals
 	got_datetime, is_onecol = false, false
 	if (isa(arg, Vector{DateTime}))					# Must convert to numeric
 		min_max::Vector{DateTime} = round_datetime(extrema(arg))		# Good numbers for limits
-		arg = Dates.value.(arg) ./ 1000;			cmd *= " --TIME_EPOCH=0000-12-31T00:00:00 --TIME_UNIT=s"
+		arg = mat2ds(Dates.value.(arg) ./ 1000);		cmd *= " --TIME_EPOCH=0000-12-31T00:00:00 --TIME_UNIT=s"
 		got_datetime, is_onecol = true, true
 	elseif (isa(arg, Matrix{Any}) && typeof(arg[1]) == DateTime)	# Matrix with DateTime in first col
 		min_max = round_datetime(extrema(view(arg, :, 1)))
-		arg[:,1] = Dates.value.(arg[:,1]) ./ 1000;	cmd *= " --TIME_EPOCH=0000-12-31T00:00:00 --TIME_UNIT=s"
-		tt = Array{Float64, 2}(undef, size(arg))
-		for k in eachindex(arg)  tt[k] = arg[k]  end
-		arg, got_datetime = tt, true
+		arg[:,1] = Dates.value.(arg[:,1]) ./ 1000;		cmd *= " --TIME_EPOCH=0000-12-31T00:00:00 --TIME_UNIT=s"
+		arg, got_datetime = mat2ds(convert(Matrix{Float64}, arg)), true
 	end
 
 	have_info = false
 	no_R = (opt_R == "" || opt_R[1] == '/' || opt_R == " -Rtight")
 	if (!convert_syntax[1] && !IamModern[1] && no_R)	# Here 'arg' can no longer be a file name (string)
-		# Only way I found to stop Julia to fck insist that the data matrix is a Any
-		ttt = gmt("gmtinfo -C" * opt_i * opt_di * opt_yx, arg)
-		wesn_f64::Matrix{<:Float64} = ttt.data
+		wesn_f64::Matrix{<:Float64} = gmt("gmtinfo -C" * opt_i * opt_di * opt_yx, arg).data		# Avoid bloody Any's
 		have_info = true
-		if (wesn_f64[1] > wesn_f64[2])				# Workaround a bug/feature in GMT when -: is arround
-			wesn_f64[2], wesn_f64[1] = wesn_f64[1], wesn_f64[2]
-		end
+		# Workaround a bug/feature in GMT when -: is arround
+		if (wesn_f64[1] > wesn_f64[2])  wesn_f64[2], wesn_f64[1] = wesn_f64[1], wesn_f64[2]  end
 		if (opt_R != "" && opt_R[1] == '/')			# Modify what will be reported as a -R string
 			rs = split(opt_R, '/')
 			if (!occursin("?", opt_R))
@@ -4202,10 +4199,10 @@ function put_in_legend_bag(d::Dict, cmd, arg=nothing, O::Bool=false, opt_l::Stri
 			if ((ind = findfirst(arg.colnames .== "Zcolor")) !== nothing)
 				rgb = [0.0, 0.0, 0.0]
 				P::Ptr{GMT.GMT_PALETTE} = palette_init(G_API[1], current_cpt[1])	# A pointer to a GMT CPT
-				@GC.preserve P gmt_get_rgb_from_z(G_API[1], P, arg[gindex[1],ind], rgb)
+				gmt_get_rgb_from_z(G_API[1], P, arg[gindex[1],ind], rgb)
 				cmd_[1] *= " -G" * arg2str(rgb.*255)
 				for k = 1:numel(pens)
-					@GC.preserve P gmt_get_rgb_from_z(G_API[1], P, arg[gindex[k+1],ind]+10eps(), rgb)
+					gmt_get_rgb_from_z(G_API[1], P, arg[gindex[k+1],ind]+10eps(), rgb)
 					pens[k] *= " -G" * arg2str(rgb.*255)
 				end
 			end
