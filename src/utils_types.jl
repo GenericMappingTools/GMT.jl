@@ -74,6 +74,30 @@ does not need explicit coordinates to place the text.
 mat2ds(mat::Nothing) = mat		# Method to simplify life and let call mat2ds on a nothing
 mat2ds(mat::GDtype)  = mat		# Method to simplify life and let call mat2ds on a already GMTdataset
 mat2ds(text::Union{AbstractString, Vector{<:AbstractString}}) = text_record(text)	# Now we can hide text_record
+function mat2ds(mat::Matrix{Any}; hdr=String[], geom=0, kwargs...)
+	# Here we are expecting that Any-ness results from columns with DateTime. If not returm 'mat' as is
+	# DateTime columns are converted to seconds and a regular GMTdatset with appropriate column names and attribs is return 
+	c = zeros(Bool, size(mat, 2))
+	for k = 1:size(mat,2)
+		if (typeof(mat[1,k]) == DateTime)
+			mat[:,k] = Dates.value.(mat[:,k]) ./ 1000;
+			c[k] = true
+		end
+	end
+	!any(c) && return mat		# Oops, no DateTime? Ok, go to your life and probably blow somewhere.
+
+	D = mat2ds(convert(Matrix{Float64}, mat); hdr=hdr, geom=geom, kwargs...)
+	ind = findall(c)
+	if (!isempty(ind))
+		Tc = ""
+		for k = 1:numel(ind)
+			D.colnames[ind[k]] = "Time";		(k > 1) && (D.colnames[ind[k]] *= "$k")
+			Tc = (Tc == "") ? "$k" : Tc * ",$k"			# Accept more than one time columns
+		end
+		(Tc != "") && (D.attrib["Timecol"] = Tc;	D.attrib["Time_epoch"] = " --TIME_EPOCH=0000-12-31T00:00:00 --TIME_UNIT=s")
+	end
+	D
+end
 function mat2ds(mat::Array{T,N}, txt::Vector{String}=String[]; hdr=String[], geom=0, kwargs...) where {T,N}
 	d = KW(kwargs)
 
@@ -249,7 +273,9 @@ function mat2ds(D::GMTdataset, inds)::GMTdataset
 	# INDS is a Tuple of 2 with ranges in rows and columns. Ex: (:, 1:3) or (:, [1,4,7]), etc...
 	# Attention, if original had attributes other than 'Timeinfo' there is no guarentie that they remain correct. 
 	(length(inds) != ndims(D)) && error("\tNumber of GMTdataset dimensions and indices components must be the same.\n")
-	_coln = !isempty(D.colnames) ? [D.colnames[inds[2]]..., D.colnames[end]] : String[]
+	#_coln = !isempty(D.colnames) ? [D.colnames[inds[2]]..., D.colnames[end]] : String[]
+	_coln = !isempty(D.colnames) ? D.colnames[inds[2]] : String[]
+	(!isempty(_coln) && length(D.colnames) > size(D,2)) && append!(_coln, [D.colnames[end]])	# Append text colname if exists
 	_D = mat2ds(D.data[inds...], proj4=D.proj4, wkt=D.wkt, epsg=D.epsg, geom=D.geom, colnames=_coln, attrib=D.attrib)
 	(!isempty(D.text)) && (_D.text = D.text[inds[1]])
 	(typeof(inds[2]) == Colon) && return _D		# We are done here
