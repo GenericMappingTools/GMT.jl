@@ -80,7 +80,7 @@ Example: Plot a focal mechanism using the Aki & Richards convention
 ```
 The same but add a Label
 ```julia
-    psmeca(mat2ds([0.0 3.0 0.0 0 45 90 5 0 0], "Thrust"), aki=true, fill=:black, region=(-1,4,0,6), proj=:Merc, show=1)
+    psmeca(mat2ds([0.0 3.0 0.0 0 45 90 5 0 0], ["Thrust"]), aki=true, fill=:black, region=(-1,4,0,6), proj=:Merc, show=1)
 ```
 """
 function meca(cmd0::String="", arg1=nothing; first=true, kwargs...)
