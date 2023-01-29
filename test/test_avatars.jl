@@ -106,6 +106,8 @@
 	lines(x, sin.(x), ls="FrontSlip", legend=true, figname="lixo", theme=("A2"))
 	lines(x, sin.(x), ls="lineCirc", legend=(label="sin(x)", box=:none), lc=:red, figname="lixo")
 	lines(x, sin.(x), ls="FrontCircLeft", legend=(label="sin(x)"), mc=:red, figname="lixo")
+	lines(x, sin.(x), ls="FrontCircLeft", legend=:colnames, mc=:red, Vd=dbg2)
+	lines(x, sin.(x), ls="FrontCircLeft", legend=(pos=:TL,), mc=:red, Vd=dbg2)
 	lines(x, sin.(x), ls="linediamond", theme=(:A0atg), Vd=dbg2) 
 	lines(x, sin.(x), ls="linediamond", theme=(:A2atg), Vd=dbg2) 
 	lines(x, sin.(x), ls="linediamond", theme=(:A2agITGraph), Vd=dbg2)
