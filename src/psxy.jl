@@ -188,14 +188,14 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	opt_W::String = add_opt_pen(d, [:W :pen], "W")
 	arg1, opt_W, got_color_line_grad, made_it_vector = _helper_psxy_line(d, cmd, opt_W, is3D, arg1, arg2, arg3)
 
+	arg1, cmd = check_ribbon(d, arg1, cmd, opt_W)	# Do this check here, after -W is known and before parsing -G & -L
+
 	mcc, bar_ok = false, (sub_module == "bar" && !check_bar_group(arg1))
 	if (!got_color_line_grad && (arg1 !== nothing && !isa(arg1, GMTcpt)) && ((!got_Zvars && !is_ternary) || bar_ok))
 		# If "bar" ONLY if not bar-group
 		# See if we got a CPT. If yes there may be some work to do if no color column provided in input data.
 		cmd, arg1, arg2, N_args, mcc = make_color_column(d, cmd, opt_i, len_cmd, N_args, n_prev, is3D, got_Ebars, bar_ok, g_bar_fill, arg1, arg2)
 	end
-
-	arg1, cmd = check_ribbon(d, arg1, cmd, opt_W)	# Do this check here, after -W is known and before parsing -G & -L
 
 	opt_G::String = ""
 	if (isempty(g_bar_fill))					# Otherwise bar fill colors are dealt with somewhere else
@@ -340,13 +340,17 @@ function check_ribbon(d, arg1, cmd::String, opt_W::String)
 	((val = find_in_dict(d, [:ribbon :band])[1]) === nothing) && return arg1, cmd
 	add_2 = true
 	if isa(val, Real)
-		ec1 = repeat([float(val)::Float64], size(arg1,1)::Int)
+		ec1::Vector{Float64} = repeat([float(val)::Float64], size(arg1,1)::Int)
 		add_2 = false
-	elseif (isa(val, VecOrMat{<:Real}))
-		(length(val)::Int == 2) ? (ec2 = repeat([float(val[1])::Float64 float(val[2])::Float64], size(arg1,1)::Int)) :
+	elseif (isa(val, VecOrMat{<:Real}) || isa(val, Tuple{<:Real, <:Real}))
+		(length(val)::Int == 2) ? (ec2::Matrix{Float64} = repeat([float(val[1])::Float64 float(val[2])::Float64], size(arg1,1)::Int)) :
 		                           ec2 = [Float64.(vec(val)) Float64.(vec(val))]
 	elseif isa(val, Tuple{Vector{<:Real}, Vector{<:Real}})
 		ec2 = [Float64.(val[1]) Float64.(val[2])]
+	elseif (isa(val, Matrix{<:Real}) && size(val,2) == 2)
+		ec2 = val
+	else
+		error("Wrong data type for ribbon/band $(typeof(val))")
 	end
 	if (isa(arg1, Vector{<:GMTdataset}))
 		if (add_2)
