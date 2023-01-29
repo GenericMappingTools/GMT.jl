@@ -3340,9 +3340,9 @@ end
 # ---------------------------------------------------------------------------------------------------
 function read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", is3D::Bool=false, get_info::Bool=false)
 	# Use 'get_info=true' to force reading the file when fname != ""
-	cmd::String, opt_i::String  = parse_i(d, cmd)		# If data is to be read with some column order
-	cmd, opt_bi::String = parse_bi(d, cmd)		# If data is to be read as binary
-	cmd, opt_di::String = parse_di(d, cmd)		# If data missing data other than NaN
+	cmd::String, opt_i::String  = parse_i(d, cmd)	# If data is to be read with some column order
+	cmd, opt_bi::String = parse_bi(d, cmd)			# If data is to be read as binary
+	cmd, opt_di::String = parse_di(d, cmd)			# If data missing data other than NaN
 	cmd, opt_h::String  = parse_h(d, cmd)
 	cmd, opt_yx::String = parse_swap_xy(d, cmd)
 	#(CTRL.proj_linear[1]) && (opt_yx *= " -fc")	# To avoid the lib remembering last eventual geog case, but it f time
@@ -4153,16 +4153,32 @@ function put_in_legend_bag(d::Dict, cmd, arg=nothing, O::Bool=false, opt_l::Stri
 
 	valLegend = find_in_dict(d, [:legend], false)[1]	# false because we must keep it alive till digests_legend_bag()
 	valLabel  = find_in_dict(d, [:label])[1]
-	(valLegend === nothing && valLabel === nothing && size(legend_type[1].label, 1) == 0) && return # Nothing to do here
+	#(valLegend === nothing && valLabel === nothing && size(legend_type[1].label, 1) == 0) && return # Nothing to do here
+	(valLegend === nothing && valLabel === nothing) && return # Nothing to do here
+
+	function assign_colnames(arg)
+		# Return the columname(s) to be used a entries in a legend
+		(isa(arg, GMTdataset)) && return arg.colnames[2]
+		valLabel = Vector{String}(undef, size(arg))
+		for k = 1:numel(arg) valLabel[k] = arg[k].colnames[2]  end
+		return valLabel
+	end
 
 	dd = Dict()
 	if (valLabel === nothing)					# See if it has a legend=(label="blabla",) or legend="label"
 		if (isa(valLegend, NamedTuple))
 			dd = nt2dict(valLegend)
 			valLabel = find_in_dict(dd, [:label], false)[1]
+			if ((isa(valLabel, String) || isa(valLabel, Symbol)) && isa(arg, GDtype))
+				_valLab = lowercase(string(valLabel)::String)
+				valLabel = (_valLab == "colnames") ? assign_colnames(arg) : _valLab
+			end
 		elseif (isa(valLegend, String) || isa(valLegend, Symbol))
-			valLabel = valLegend
-			(valLabel == "") && return			# If Label == "" we forget this one
+			(valLegend == "") && return			# If Label == "" we forget this one
+			_valLab = string(valLegend)::String
+			valLabel = (isa(arg, GDtype) && "colnames" == lowercase(_valLab)) ? assign_colnames(arg) : _valLab
+		elseif (isa(valLegend, Tuple))
+			valLabel = [string.(valLegend)...]
 		end
 	end
 
@@ -4212,7 +4228,9 @@ function put_in_legend_bag(d::Dict, cmd, arg=nothing, O::Bool=false, opt_l::Stri
 		lab = Vector{String}(undef, nDs)
 		if (valLabel !== nothing)
 			if (isa(valLabel, String) || isa(valLabel, Symbol))		# One single label, take it as a label prefix
-				for k = 1:nDs  lab[k] = string(valLabel,k)  end
+				if (nDs == 1)  lab[1] = string(valLabel)			# But not if a single guy.
+				else           for k = 1:nDs  lab[k] = string(valLabel,k)  end
+				end
 			else
 				for k = 1:min(nDs, length(valLabel))  lab[k] = string(valLabel[k])  end
 				if (length(valLabel) < nDs)	# Probably shit, but don't error because of it

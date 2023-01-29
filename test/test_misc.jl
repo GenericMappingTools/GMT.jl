@@ -91,33 +91,28 @@
 	@test_throws ErrorException("The header vector can only have length = 1 or same number of MAT Y columns") mat2ds(rand(2,3), hdr=["a" "b"]);
 	@info "color_gradient"
 	GMT.color_gradient_line(rand(3,2));
-	GMT.resetGMT()
 	GMT.color_gradient_line(mat2ds(rand(3,2)));
-	GMT.resetGMT()
 	GMT.color_gradient_line([mat2ds(rand(3,2)), mat2ds(rand(4,2))]);
-	GMT.resetGMT()
 	@info "line2multiseg"
 	GMT.line2multiseg(mat2ds(rand(5,2)), lt=[1,2], auto_color=true);
-	GMT.resetGMT()
 	GMT.line2multiseg(mat2ds(rand(5,2)), lt=[1,2,4], auto_color=true);
-	GMT.resetGMT()
 	GMT.line2multiseg(mat2ds(rand(3,2)), lt=[1,2,4]);
-	GMT.resetGMT()
 	GMT.line2multiseg([mat2ds(rand(3,2)), mat2ds(rand(4,2))], lt=[1,2], auto_color=true);
-	GMT.resetGMT()
 
 	@info "mat2grid"
 	GMT.mat2grid(rand(Float32, 10,10), reg=1);
+	@info "2"
 	GMT.mat2grid(1, hdr=[0. 5 0 5 1 1])
+	@info "text_record"
 	GMT.num2str(rand(2,3));
 	text_record([-0.4 7.5; -0.4 3.0], ["a)", "b)"]);
 	text_record(["aa", "bb"], "> 3 5 18p 5i j");
 	text_record(["> 3 5 18p 5i j", "aa", "bb"]);
 	text_record(Array[["aa", "bb"],["cc", "dd", "ee"]]);
 	text_record([["aa", "bb"],["cc", "dd", "ee"]]);
-	GMT.resetGMT()
 
 	# TEST THE API DIRECTLY (basically to improve coverage under GMT6)
+	@info "test API"
 	PS = plot(rand(3,2), ps=1);
 	API = GMT.GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL + GMT.GMT_SESSION_COLMAJOR);
 	GMT.ps_init(API, PS, 0);
@@ -125,6 +120,7 @@
 	gmt("destroy")
 
 	# Test ogr2GMTdataset
+	@info "test ogr2GMTdataset"
 	API = GMT.GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL + GMT.GMT_SESSION_COLMAJOR);
 	gmtread("lixo.gmt");		# This "lixo.gmt" was created in test_avatars.jl
 	if (GMTver > v"6.1.1")
@@ -133,22 +129,19 @@
 	GMT.GMT_Get_Default(API, "API_VERSION", "        ");
 	D = gmtconvert([1.0 2 3; 2 3 4], a="2=lolo+gPOINT");	# There's a bug in GMT for this. No data points are printed
 	gmtwrite("lixo.gmt", D)
+	@info "test outro1"
 	@test gmtconvert([1.0 2 3; 2 3 4], binary_out="3f", write="a.bin", Vd=2) == "gmtconvert  > a.bin -bo3f"
 	@test gmtconvert([1.0 2 3; 2 3 4], binary_out="3f", append="a.bin", Vd=2) == "gmtconvert  >> a.bin -bo3f"
 	rm("lixo.gmt")
 
 	check = UInt8[zeros(9,9) ones(9,9) ones(9,9).*2; ones(9,9).*3 ones(9,9).*4 ones(9,9).*5; ones(9,9).*6 ones(9,9).*7 ones(9,9).*8];
 	@info "before one makecpt"
-	GMT.resetGMT()
 	C = makecpt(range=(0,9,1));
-	GMT.resetGMT()
 	I = mat2img(check);
 	I.n_colors = 0
 	rgb = GMT.ind2rgb(I);
-	GMT.resetGMT()
 	I = mat2img(check, cmap=C);
 	rgb = GMT.ind2rgb(I);
-	GMT.resetGMT()
 	@info "before image_alpha!"
 	image_alpha!(I, alpha_ind=5);
 	image_alpha!(I, alpha_vec=round.(UInt32,rand(6).*255));

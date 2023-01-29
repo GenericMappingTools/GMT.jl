@@ -23,7 +23,7 @@ function velo(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	end
 
 	cmd = add_opt_fill(cmd, d, [:E :fill_wedges], 'E')
-	cmd = add_opt_fill(cmd, d, [:G :fill_symbols], 'G')
+	cmd = add_opt_fill(cmd, d, [:G :fill :fill_symbols], 'G')
 	cmd = parse_these_opts(cmd, d, [[:D :sigma_scale], [:L :outlines], [:N :no_clip :noclip]])
 
 	if     (haskey(d, :Se) || haskey(d, :vel_NE))       symbs = [:Se :vel_NE]
