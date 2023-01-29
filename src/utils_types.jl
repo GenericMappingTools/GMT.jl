@@ -303,9 +303,14 @@ function add2ds!(D::GMTdataset, mat, ind::Int=0; name::AbstractString="", names:
 	_names = (n_newCols == 1 && name == "") ? ["Zadd"] :
 	         (n_newCols == 1 ? [name] : !isempty(names) ? names : [string("Zadd_",k) for k=1:n_newCols])
 
+	if (!isempty(D.colnames))
+		t_col = (!isempty(D.text) && length(D.colnames) > size(D,2)) ? D.colnames[end] : ""
+	end
 	if (ind == 0 || ind == size(D,2))
+		if (!isempty(D.colnames))
+			D.colnames = !isempty(t_col) ? [D.colnames[1:size(D,2)]..., _names..., t_col] :	[D.colnames[1:size(D,2)]..., _names...]
+		end
 		D.data = hcat(D.data, isvector(mat) ? mat[:] : mat)
-		!isempty(D.colnames) && (D.colnames = [D.colnames[1:end-1]..., _names..., D.colnames[end]])
 	elseif (ind == 1)
 		D.data = hcat(isvector(mat) ? mat[:] : mat, D.data)
 		!isempty(D.colnames) && (D.colnames = [_names..., D.colnames...])
