@@ -273,7 +273,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	end
 
 	# Try to limit the damage of this Fker bug in 6.2.0
-	if ((mcc || got_Ebars) && (GMTver == v"6.2.0" && isGMTdataset(arg1) && occursin(" -i", cmd)) )
+	if ((mcc || got_Ebars) && (GMTver == v"6.2.0" && occursin(" -i", cmd)) )
 		if (isa(arg1, GMTdataset))	arg1 = arg1.data
 		elseif (isa(arg1, Vector{<:GMTdataset}))
 			(length(arg1) > 1) && @warn("Due to a bug in GMT6.2.0 I'm forced to use only the first segment")
