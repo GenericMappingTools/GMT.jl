@@ -4148,104 +4148,102 @@ end
 legend_bag() = legend_bag(Vector{String}(), Vector{String}(), Vector{String}(), "", Dict(), 0)
 
 # --------------------------------------------------------------------------------------------------
-function put_in_legend_bag(d::Dict, cmd, arg=nothing, O::Bool=false, opt_l::String="")
+function put_in_legend_bag(d::Dict, cmd, arg, O::Bool=false, opt_l::String="")
 	# So far this fun is only called from plot() and stores line/symbol info in a const global var LEGEND_TYPE
 
-	valLegend = find_in_dict(d, [:legend], false)[1]	# false because we must keep it alive till digests_legend_bag()
-	valLabel  = find_in_dict(d, [:label])[1]
-	#(valLegend === nothing && valLabel === nothing && size(legend_type[1].label, 1) == 0) && return # Nothing to do here
-	(valLegend === nothing && valLabel === nothing) && return # Nothing to do here
+	_valLegend = find_in_dict(d, [:legend], false)[1]	# false because we must keep it alive till digests_legend_bag()
+	_valLabel  = find_in_dict(d, [:label])[1]			# These guys are always Any
+	(_valLegend === nothing && _valLabel === nothing) && return # Nothing to do here
 
 	function assign_colnames(arg)
 		# Return the columname(s) to be used a entries in a legend
-		(isa(arg, GMTdataset)) && return arg.colnames[2]
-		valLabel = Vector{String}(undef, size(arg))
-		for k = 1:numel(arg) valLabel[k] = arg[k].colnames[2]  end
-		return valLabel
+		(isa(arg, GMTdataset)) && return [arg.colnames[2]]
+		valLabel_loc = Vector{String}(undef, size(arg))
+		for k = 1:numel(arg) valLabel_loc[k] = arg[k].colnames[2]  end
+		return valLabel_loc
 	end
 
 	dd = Dict()
-	if (valLabel === nothing)					# See if it has a legend=(label="blabla",) or legend="label"
-		if (isa(valLegend, NamedTuple))
-			dd = nt2dict(valLegend)
-			valLabel = find_in_dict(dd, [:label], false)[1]
-			if ((isa(valLabel, String) || isa(valLabel, Symbol)) && isa(arg, GDtype))
-				_valLab = lowercase(string(valLabel)::String)
-				valLabel = (_valLab == "colnames") ? assign_colnames(arg) : _valLab
+	valLabel_vec::Vector{String} = String[]		# Use different containers to try to control the f Anys.
+	valLabel::String = ""
+	if (_valLabel === nothing)					# See if it has a legend=(label="blabla",) or legend="label"
+		if (isa(_valLegend, NamedTuple))
+			dd = nt2dict(_valLegend)
+			_valLabel = find_in_dict(dd, [:label], false)[1]
+			if ((isa(_valLabel, String) || isa(_valLabel, Symbol)))
+				_valLab = string(_valLabel)::String
+				(lowercase(_valLab) == "colnames") ? (valLabel_vec = assign_colnames(arg)) : valLabel = _valLab
+			elseif (_valLabel !== nothing)
+				valLabel_vec = [string.(_valLabel)...]		# We may have shits here
 			end
-		elseif (isa(valLegend, String) || isa(valLegend, Symbol))
-			(valLegend == "") && return			# If Label == "" we forget this one
-			_valLab = string(valLegend)::String
-			valLabel = (isa(arg, GDtype) && "colnames" == lowercase(_valLab)) ? assign_colnames(arg) : _valLab
-		elseif (isa(valLegend, Tuple))
-			valLabel = [string.(valLegend)...]
+		elseif (isa(_valLegend, String) || isa(_valLegend, Symbol))
+			_valLab = string(_valLegend)::String
+			(_valLab == "") && return			# If Label == "" we forget this one
+			(lowercase(_valLab) == "colnames") ? (valLabel_vec = assign_colnames(arg)) : valLabel = _valLab
+		elseif (isa(_valLegend, Tuple))
+			valLabel_vec = [string.(_valLegend)...]
+		end
+	else
+		(isa(_valLabel, String) || isa(_valLabel, Symbol)) ? (valLabel = string(_valLabel)) : (valLabel_vec = [string.(_valLabel)...])				# Risky too
+	end
+	have_valLabel::Bool = (valLabel != "" || !isempty(valLabel_vec))
+
+	cmd_ = cmd								# Starts to be just a shallow copy
+	cmd_ = copy(cmd)						# TODO: pick only the -G, -S, -W opts instead of brute copying.
+	_, penC, penS = isa(arg, GMTdataset) ? break_pen(scan_opt(arg.header, "-W")) : break_pen(scan_opt(arg[1].header, "-W"))
+	penT, penC_, penS_ = break_pen(scan_opt(cmd_[end], "-W"))
+	(penC == "") && (penC = penC_)
+	(penS == "") && (penS = penS_)
+	cmd_[end] = "-W" * penT * ',' * penC * ',' * penS * " " * cmd_[end]	# Trick to make the parser find this pen
+
+	# For groups, this holds the indices of the group's start
+	gindex::Vector{Int} = ((val = find_in_dict(d, [:gindex])[1]) === nothing) ? Int[] : val
+
+	nDs::Int = isa(arg, GMTdataset) ? 1 : length(arg)
+	!isempty(gindex) && (nDs = length(gindex))
+	pens = Vector{String}(undef, max(1,nDs-1));
+	k_vec = isempty(gindex) ? collect(2:nDs) : gindex[2:end]
+	isempty(k_vec) && (k_vec = [1])		# Don't let it be empty
+	for k = 1:max(1,nDs-1)
+		t::String = isa(arg, GMTdataset) ? scan_opt(arg.header, "-W") : scan_opt(arg[k_vec[k]].header, "-W")
+		if     (t == "")          pens[k] = " -W0."
+		elseif (t[1] == ',')      pens[k] = " -W" * penT * t		# Can't have, e.g., ",,230/159/0" => Crash
+		elseif (occursin(",",t))  pens[k] = " -W" * t  
+		else                      pens[k] = " -W" * penT * ',' * t	# Not sure what this case covers now
 		end
 	end
 
-	cmd_ = cmd									# Starts to be just a shallow copy
-	if (isa(arg, GDtype))						# GMTdadaset's can have different settings per segment
-		cmd_ = copy(cmd)						# TODO: pick only the -G, -S, -W opts instead of brute copying.
-		_, penC, penS = isa(arg, GMTdataset) ? break_pen(scan_opt(arg.header, "-W")) : break_pen(scan_opt(arg[1].header, "-W"))
-		penT, penC_, penS_ = break_pen(scan_opt(cmd_[end], "-W"))
-		(penC == "") && (penC = penC_)
-		(penS == "") && (penS = penS_)
-		cmd_[end] = "-W" * penT * ',' * penC * ',' * penS * " " * cmd_[end]	# Trick to make the parser find this pen
-
-		# For groups, this holds the indices of the group's start
-		gindex::Vector{Int} = ((val = find_in_dict(d, [:gindex])[1]) === nothing) ? Int[] : val
-
-		nDs::Int = isa(arg, GMTdataset) ? 1 : length(arg)
-		!isempty(gindex) && (nDs = length(gindex))
-		pens = Vector{String}(undef, max(1,nDs-1));
-		k_vec = isempty(gindex) ? collect(2:nDs) : gindex[2:end]
-		isempty(k_vec) && (k_vec = [1])		# Don't let it be empty
-		for k = 1:max(1,nDs-1)
-			t::String = isa(arg, GMTdataset) ? scan_opt(arg.header, "-W") : scan_opt(arg[k_vec[k]].header, "-W")
-			if     (t == "")          pens[k] = " -W0."
-			elseif (t[1] == ',')      pens[k] = " -W" * penT * t		# Can't have, e.g., ",,230/159/0" => Crash
-			elseif (occursin(",",t))  pens[k] = " -W" * t  
-			else                      pens[k] = " -W" * penT * ',' * t	# Not sure what this case covers now
+	if (isa(arg, GMTdataset) && nDs > 1)	# Piggy back the pens with the eventuals -S, -G options
+		extra_opt  = ((t = scan_opt(cmd_[1], "-S", true)) != "") ? t : ""
+		extra_opt *= ((t = scan_opt(cmd_[1], "-G", true)) != "") ? t : ""
+		for k = 1:numel(pens)  pens[k] *= extra_opt  end
+		if ((ind = findfirst(arg.colnames .== "Zcolor")) !== nothing)
+			rgb = [0.0, 0.0, 0.0]
+			P::Ptr{GMT.GMT_PALETTE} = palette_init(G_API[1], current_cpt[1])	# A pointer to a GMT CPT
+			gmt_get_rgb_from_z(G_API[1], P, arg[gindex[1],ind], rgb)
+			cmd_[1] *= " -G" * arg2str(rgb.*255)
+			for k = 1:numel(pens)
+				gmt_get_rgb_from_z(G_API[1], P, arg[gindex[k+1],ind]+10eps(), rgb)
+				pens[k] *= " -G" * arg2str(rgb.*255)
 			end
 		end
+	end
+	append!(cmd_, pens)			# Append the 'pens' var to the input arg CMD
 
-		if (isa(arg, GMTdataset) && nDs > 1)	# Piggy back the pens with the eventuals -S, -G options
-			extra_opt  = ((t = scan_opt(cmd_[1], "-S", true)) != "") ? t : ""
-			extra_opt *= ((t = scan_opt(cmd_[1], "-G", true)) != "") ? t : ""
-			for k = 1:numel(pens)  pens[k] *= extra_opt  end
-			if ((ind = findfirst(arg.colnames .== "Zcolor")) !== nothing)
-				rgb = [0.0, 0.0, 0.0]
-				P::Ptr{GMT.GMT_PALETTE} = palette_init(G_API[1], current_cpt[1])	# A pointer to a GMT CPT
-				gmt_get_rgb_from_z(G_API[1], P, arg[gindex[1],ind], rgb)
-				cmd_[1] *= " -G" * arg2str(rgb.*255)
-				for k = 1:numel(pens)
-					gmt_get_rgb_from_z(G_API[1], P, arg[gindex[k+1],ind]+10eps(), rgb)
-					pens[k] *= " -G" * arg2str(rgb.*255)
-				end
-			end
-		end
-		append!(cmd_, pens)			# Append the 'pens' var to the input arg CMD
-
-		lab = Vector{String}(undef, nDs)
-		if (valLabel !== nothing)
-			if (isa(valLabel, String) || isa(valLabel, Symbol))		# One single label, take it as a label prefix
-				if (nDs == 1)  lab[1] = string(valLabel)			# But not if a single guy.
-				else           for k = 1:nDs  lab[k] = string(valLabel,k)  end
-				end
-			else
-				for k = 1:min(nDs, length(valLabel))  lab[k] = string(valLabel[k])  end
-				if (length(valLabel) < nDs)	# Probably shit, but don't error because of it
-					for k = length(valLabel)+1:nDs  lab[k] = string(valLabel[end],k)  end
-				end
+	lab = Vector{String}(undef, nDs)
+	if (have_valLabel)
+		if (valLabel != "")		# One single label, take it as a label prefix
+			if (nDs == 1)  lab[1] = string(valLabel)			# But not if a single guy.
+			else           for k = 1:nDs  lab[k] = string(valLabel,k)  end
 			end
 		else
-			for k = 1:nDs  lab[k] = string('y',k)  end
+			for k = 1:min(nDs, length(valLabel_vec))  lab[k] = string(valLabel_vec[k])  end
+			if (length(valLabel_vec) < nDs)	# Probably shit, but don't error because of it
+				for k = length(valLabel_vec)+1:nDs  lab[k] = string(valLabel_vec[end],k)  end
+			end
 		end
-	elseif (valLabel !== nothing)
-		lab = [string(valLabel)]
-	elseif (size(legend_type[1].label, 1) == 0)
-		lab = ["y1"]
 	else
-		lab = ["y$(size(legend_type[1].label, 1))"]
+		for k = 1:nDs  lab[k] = string('y',k)  end
 	end
 
 	(!O) && (legend_type[1] = legend_bag())		# Make sure that we always start with an empty one
