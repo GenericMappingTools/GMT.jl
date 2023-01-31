@@ -676,7 +676,8 @@ function helper2_violin(D, Ds, data, xc, N_grp, ccolor, first, isVert, N_in_each
 end
 
 # ----------------------------------------------------------------------------------------------------------
-function colorize_candles_violins(D::Vector{<:GMTdataset}, ng::Int, be::AbstractVector{Int}, vc::Int=0, colors::Vector{String}=String[])
+function colorize_candles_violins(D::Vector{<:GMTdataset}, ng::Int, be::AbstractVector{Int},
+                                  vc::Int=0, colors::Vector{String}=String[])
 	# Assign default colors in D.header field to get an automatic coloring
 	# NG: number of groups that may, or not, be equal to length(D)
 	# VC: = 0 means all in each group have the same color, otherwise they varie within the group

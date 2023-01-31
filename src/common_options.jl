@@ -4153,7 +4153,7 @@ function put_in_legend_bag(d::Dict, cmd, arg, O::Bool=false, opt_l::String="")
 
 	_valLegend = find_in_dict(d, [:legend], false)[1]	# false because we must keep it alive till digests_legend_bag()
 	_valLabel  = find_in_dict(d, [:label])[1]			# These guys are always Any
-	(_valLegend === nothing && _valLabel === nothing) && return # Nothing to do here
+	((_valLegend === nothing || _valLegend == "") && _valLabel === nothing) && return # Nothing to do here
 
 	function assign_colnames(arg)
 		# Return the columname(s) to be used a entries in a legend
@@ -4166,8 +4166,9 @@ function put_in_legend_bag(d::Dict, cmd, arg, O::Bool=false, opt_l::String="")
 	dd = Dict()
 	valLabel_vec::Vector{String} = String[]		# Use different containers to try to control the f Anys.
 	valLabel::String = ""
+	have_ribbon = false
 	if (_valLabel === nothing)					# See if it has a legend=(label="blabla",) or legend="label"
-		if (isa(_valLegend, NamedTuple))
+		if (isa(_valLegend, NamedTuple))		# legend=(label=..., ...)
 			dd = nt2dict(_valLegend)
 			_valLabel = find_in_dict(dd, [:label], false)[1]
 			if ((isa(_valLabel, String) || isa(_valLabel, Symbol)))
@@ -4176,10 +4177,16 @@ function put_in_legend_bag(d::Dict, cmd, arg, O::Bool=false, opt_l::String="")
 			elseif (_valLabel !== nothing)
 				valLabel_vec = [string.(_valLabel)...]		# We may have shits here
 			end
+			if ((ribs = find_in_dict(dd, [:ribbon :band], false)[1]) !== nothing)
+				(valLabel != "") && (valLabel_vec = [valLabel, string(ribs)::String]; valLabel="")	# *promote* valLabel
+				have_ribbon = true
+			end
+
 		elseif (isa(_valLegend, String) || isa(_valLegend, Symbol))
 			_valLab = string(_valLegend)::String
 			(_valLab == "") && return			# If Label == "" we forget this one
 			(lowercase(_valLab) == "colnames") ? (valLabel_vec = assign_colnames(arg)) : valLabel = _valLab
+
 		elseif (isa(_valLegend, Tuple))
 			valLabel_vec = [string.(_valLegend)...]
 		end
@@ -4230,6 +4237,11 @@ function put_in_legend_bag(d::Dict, cmd, arg, O::Bool=false, opt_l::String="")
 	end
 	append!(cmd_, pens)			# Append the 'pens' var to the input arg CMD
 
+	if (have_ribbon)			# Add a square marker to represent the ribbon
+		t  = ((t = scan_opt(cmd_[1], "-G", true)) != "") ? t : ""
+		nDs += 1;	cmd_[end] *= " -Ss0.4" * t	# Cheat cmd_[end] to add the square marker
+	end
+
 	lab = Vector{String}(undef, nDs)
 	if (have_valLabel)
 		if (valLabel != "")		# One single label, take it as a label prefix
@@ -4269,13 +4281,24 @@ function digests_legend_bag(d::Dict, del::Bool=true)
 
 	dd::Dict = ((val = find_in_dict(d, [:leg :legend], false)[1]) !== nothing && isa(val, NamedTuple)) ? nt2dict(val) : Dict()
 
-	kk, fs = 0, 10				# Font size in points
-	symbW = 0.75				# Symbol width. Default to 0.75 cm (good for lines but bad for symbols)
-	nl  = length(legend_type[1].label)
+	kk, fs = 0, 8				# Font size in points
+	symbW = 0.65				# Symbol width. Default to 0.75 cm (good for lines but bad for symbols)
+	nl, count_no = length(legend_type[1].label), 0
 	leg::Vector{String} = Vector{String}(undef, 3nl)
 	all(contains.(legend_type[1].cmd, "-S")) && (symbW = 0.25)	# When all entries are symbols shrink the 'symbW'
 
+	#lab_width = maximum(length.(legend_type[1].label[:])) * fs / 72 * 2.54 * 0.50 + 0.25	# Guess label width in cm
+	# Problem is that we may have a lot more chars in label than those effectively printed (PS octal chars etc)
+	n_max_chars = 0
+	for k = 1:numel(legend_type[1].label)
+		s = split(legend_type[1].label[k], "`")		# Means that after the '`' comes the this string char counting
+		n_chars = (length(s) == 2) ? (legend_type[1].label[k] = s[1]; parse(Int,s[2])) : length(legend_type[1].label[k])
+		n_max_chars = max(n_chars, n_max_chars)
+	end
+	lab_width = n_max_chars * fs / 72 * 2.54 * 0.50 + 0.25	# Guess label width in cm
+
 	for k = 1:nl						# Loop over number of entries
+		(legend_type[1].label[k] == " ") && (count_no += 1;	continue)	# Sometimes we may want to open a leg entry but not plot it
 		if ((symb = scan_opt(legend_type[1].cmd[k], "-S")) == "")  symb = "-"
 		else                                                       symbW_ = symb[2:end];
 		end
@@ -4304,6 +4327,7 @@ function digests_legend_bag(d::Dict, del::Bool=true)
 			leg[kk += 1] = @sprintf("S - %s %s %s %s - %s", symb[1], symbW_, fill, pen, legend_type[1].label[k])	# Who is this?
 		end
 	end
+	(count_no > 0) && (resize!(leg, nl-count_no))
 
 	(haskey(dd, :fontsize)) && (fs = dd[:fontsize])
 	
@@ -4313,8 +4337,6 @@ function digests_legend_bag(d::Dict, del::Bool=true)
 		(length(s) == 1) &&  (fnt = string(fs, ',', s[1]))				# s[1] must be font name
 		(length(s) == 2) &&  (fnt = string(fs, ',', s[1], ',', s[2]))	# s[1] font name, s[2] font color
 	end
-
-	lab_width = maximum(length.(legend_type[1].label[:])) * fs / 72 * 2.54 * 0.50 + 0.25	# Guess label width in cm
 
 	# Because we accept extended settings either from first or last legend() commands we must seek which
 	# one may have the desired keyword. First command is stored in 'legend_type[1].optsDict' and last in 'dd'
