@@ -65,6 +65,7 @@ function basemap(; first=true, kwargs...)
     (!IamModern[1] && opt_D != "") && (cmd *= opt_D)
     (IamModern[1] && opt_D != "") && @warn("The `inset` option is not available in modern mode. Please use the `inset()` function.")
 	_cmd = finish_PS_nested(d, [gmt_proggy * cmd])
+	CTRL.pocket_d[1] = d		# Store d that may be not empty with members to use in other modules
 	finish_PS_module(d, _cmd, "", K, O, true)
 end
 
