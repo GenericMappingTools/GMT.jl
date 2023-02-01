@@ -45,10 +45,10 @@ does not need explicit coordinates to place the text.
      can be an array with same size as `mat` rows or a string (will be reapeated n_rows times.) 
   - `x`:   An optional vector with the _xx_ coordinates
   - `hdr`: optional String vector with either one or n_rows multisegment headers.
-  - `color`: optional array of strings with color names/values. Its length can be smaller than n_rows, case in
-     which colors will be cycled. If `color` is not an array of strings, e.g. `color="yes"`, the colors
-     cycle trough a pre-defined set of colors (same colors as in Matlab). If you want the same color repeated
-     for many lines pass color as a vector. *e.g,* `color=[color]`
+  - `lc` or `linecolor` or `color`: optional array of strings/symbols with color names/values. Its length can be
+     smaller than n_cols, case in which colors will be cycled. If `color` is not an array of strings, e.g.
+	 `color="yes"`, the colors cycle trough a pre-defined set of colors (same colors as in Matlab). If you
+	 want the same color repeated for many lines pass color as a vector. *e.g,* `color=[color]`
   - `linethick` or `lt`: for selecting different line thicknesses. Works like `color`, but should be 
      a vector of numbers, or just a single number that is then applied to all lines.
   - `fill`:  Optional string array (or a String of comma separated color names, or a Tuple of color names)
@@ -126,7 +126,7 @@ function mat2ds(mat::Array{T,N}, txt::Vector{String}=String[]; hdr=String[], geo
 	end
 
 	color_cycle = false
-	if ((color = find_in_dict(d, [:color])[1]) !== nothing && color != false)
+	if ((color = find_in_dict(d, [:lc :linecolor :color])[1]) !== nothing && color != false)
 		_color::Vector{String} = isa(color, Array{String}) ? vec(color) : matlab_cycle_colors
 		color_cycle = true
 	end
@@ -263,6 +263,7 @@ function mat2ds(mat::Array{T,N}, txt::Vector{String}=String[]; hdr=String[], geo
 			end
 		end
 	end
+	CTRL.pocket_d[1] = d		# Store d that may be not empty with members to use in other functions
 	set_dsBB!(D)				# Compute and set the global BoundingBox for this dataset
 	return (find_in_kwargs(kwargs, [:letsingleton])[1] !== nothing) ? D : (length(D) == 1 && !multi) ? D[1] : D
 end
