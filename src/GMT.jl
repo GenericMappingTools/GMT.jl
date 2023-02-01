@@ -123,10 +123,11 @@ export
 	colorzones!, rasterzones!, crop, doy2date, date2doy, yeardecimal, median, mean, quantile, std, nanmean,
 	nanstd, skipnan,
 
-	add2PSfile, append2fig, regiongeog, streamlines, wmsinfo, wmstest, wmsread, polygonlevels,
+	add2PSfile, append2fig, linearfitxy, regiongeog, streamlines, wmsinfo, wmstest, wmsread, polygonlevels,
 
-	density, density!, boxplot, boxplot!, cornerplot, cornerplot!, ecdfplot, ecdfplot!, fill_between, fill_between!,
-	marginalhist, marginalhist!, parallelplot, parallelplot!, qqplot, qqplot!, qqnorm, qqnorm!, violin, violin!,
+	ablines, ablines!, density, density!, boxplot, boxplot!, cornerplot, cornerplot!, ecdfplot, ecdfplot!,
+	fill_between, fill_between!, marginalhist, marginalhist!, parallelplot, parallelplot!, plotlinefit, plotlinefit!,
+	qqplot, qqplot!, qqnorm, qqnorm!, violin, violin!,
 	@?
 
 include("common_docs.jl")
@@ -187,6 +188,7 @@ include("grdview.jl")
 include("grdvolume.jl")
 include("greenspline.jl")
 include("kml2gmt.jl")
+include("linefit.jl")
 include("loxodromics.jl")
 include("makecpt.jl")
 include("mapproject.jl")
@@ -265,10 +267,16 @@ import SnoopPrecompile
 	G_API[1] = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS)
 	GMT.parse_B(Dict(:frame => (annot=10, title="Ai Ai"), :grid => (pen=2, x=10, y=20)), "", " -Baf -BWSen")
 	GMT.parse_R(Dict(:xlim => (1,2), :ylim => (3,4), :zlim => (5,6)), "")
+	GMT.parse_J(Dict(:J => "X", :scale => "1:10"), "")
 	GMT.build_opt_J(:X5)
 	GMT.theme("dark")
 	GMT.theme_modern()
-	plot(rand(5,2), marker=:point, lc=:red, ls=:dot, lw=1, colorscale=:jet)
+	mat2ds([9 8; 9 8], x=[0 7], pen=["5p,black", "4p,white,20p_20p"], multi=true);
+	GMT.cat_2_arg2(rand(3), mat2ds(rand(3,2)));
+	GMT.cat_2_arg2(mat2ds(rand(3,2)), mat2ds(rand(3,2)));
+	GMT.cat_3_arg2(rand(3),rand(3),rand(3));
+	plot(rand(5,2), marker=:point, lc=:red, ls=:dot, lw=1, C=:jet, colorbar=true)
+	#plot(rand(5,2))
 	violin(rand(50))
 	boxplot(rand(50))
 	qqplot(randn(500), randn(50))

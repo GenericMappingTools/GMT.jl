@@ -1,6 +1,6 @@
 using GMT, GMT.Drawing, GMT.Gdal
 using Test
-using Dates, Printf
+using Dates, Printf#, Logging
 
 @testset "GMT" begin
 
@@ -13,6 +13,8 @@ catch
 end
 
 if (got_it)					# Otherwise go straight to end
+
+	#Logging.disable_logging(Logging.Warn)
 
 	global dbg2 = 2			# Either 2 or 3. 3 to test the used kwargs
 	global dbg0 = 0			# With 0 prints only the non-consumed options. Set to -1 to ignore this Vd
