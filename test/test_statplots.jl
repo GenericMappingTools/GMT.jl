@@ -9,6 +9,7 @@
 	GMT._quantile(randn(30), rand(30), [0.25, 0.75])
 	GMT.parse_candle_outliers_par("")
 
+	@info "1..."
 	violin(v, Vd=dbg2)
 	violin!(v, Vd=dbg2)
 	y = randn(100,3);
@@ -21,6 +22,7 @@
 	boxplot!(randn(100,3,2), separator=true, cap="5p", Vd=dbg2)
 	boxplot!(y, Vd=dbg2)
 
+	@info "2..."
 	y = randn(100,3,2);
 	violin(y, G=true, split=true)
 	violin!(y, Vd=dbg2)
@@ -30,6 +32,7 @@
 	vv = [round.(randn(50),digits=1), round.(randn(40),digits=3)]
 	GMT.kernelDensity(vv)
 
+	@info "3..."
 	vvv = [[randn(50), randn(30)], [randn(40), randn(48), randn(45)], [randn(35), randn(43)]];
 	GMT.kernelDensity(vvv)
 	boxplot!(vvv, Vd=dbg2)
@@ -45,6 +48,7 @@
 	violin!(randn(20), rand(1:3,20), Vd=dbg2)
 	boxplot(randn(50), rand(1:3,50), Vd=dbg2)
 
+	@info "4..."
 	qqplot(randn(500), randn(50))
 	qqplot(randn(100), randn(50), qqline=:fit)
 	qqplot!(randn(200), qqline=:none, Vd=dbg2)
@@ -58,6 +62,7 @@
 
 	GMT.erfinv(-1.0)
 
+	@info "5..."
 	parallelplot("iris.dat",  groupvar="text", normalize="")
 	parallelplot("iris.dat",  groupvar="text", normalize="zscore")
 	parallelplot("iris.dat",  groupvar="text", normalize="scale", quantile=0.25)
@@ -71,6 +76,7 @@
 	parallelplot(D, normalize="")
 	plot(D, xvar=1, yvar=2, groupvar="text", legend=true)
 
+	@info "6..."
 	A = rand(10,2);		A[1] = NaN
 	GMT.normalizeArray("zscore", A);
 	try cornerplot("lixo"); catch end
@@ -80,6 +86,7 @@
 	cornerplot(randn(500,3), hexbin=(inc=0.2, threshold=1.0))
 	cornerplot!(randn(500,3), hexbin=true)
 
+	@info "7..."
 	marginalhist(randn(1000,2), scatter=true, histkw=(annot=true,))
 	marginalhist(randn(1000,2), hexbin=true)
 	marginalhist!(randn(2001,2), aspect=:equal)
