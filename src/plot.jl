@@ -110,6 +110,10 @@ Parameters
 - $(GMT.opt_savefig)
 """
 function plot(arg1; first=true, kw...)
+	if (isa(arg1, GDtype) && find_in_kwargs(kw, [:linefit :linearfit])[1] !== nothing)
+		att = isa(arg1, GMTdataset) ? arg1.attrib : arg1[1].attrib
+		(get(att, "linearfit", "") != "") && return plotlinefit(arg1; first=first, kw...)
+	end
 	common_plot_xyz("", cat_1_arg(arg1, true), "plot", first, false, kw...)
 end
 plot!(arg1; kw...) = plot(arg1; first=false, kw...)
