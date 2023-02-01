@@ -1579,11 +1579,11 @@ function parse_I(d::Dict, cmd::String, symbs, opt::String, del::Bool=true)::Stri
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_params(d::Dict, cmd::String)::String
+function parse_params(d::Dict, cmd::String, del::Bool=true)::String
 	# Parse the gmt.conf parameters when used from within the modules. Return a --PAR=val string
 	# The input to this kwarg can be a tuple (e.g. (PAR,val)) or a NamedTuple (P1=V1, P2=V2,...)
 
-	((val = find_in_dict(d, [:conf :par :params], true)[1]) === nothing) && return cmd
+	((val = find_in_dict(d, [:conf :par :params], del)[1]) === nothing) && return cmd
 	_cmd::String = deepcopy(cmd)
 	isa(val, Dict) && (val = Base.invokelatest(dict2nt,val))
 	(!isa(val, NamedTuple) && !isa(val, Tuple)) && @warn("BAD usage: Parameter is neither a Tuple or a NamedTuple")
@@ -3722,7 +3722,7 @@ function dbg_print_cmd(d::Dict, cmd::Vector{String})
 		end
 		if (length(d) > 0)
 			dd = deepcopy(d)		# Make copy so that we can harmlessly delete those below
-			del_from_dict(dd, [[:show], [:leg, :legend], [:box_pos], [:leg_pos], [:fmt, :savefig, :figname, :name]])
+			del_from_dict(dd, [[:show], [:leg, :legend], [:box_pos], [:leg_pos], [:fmt, :savefig, :figname, :name], [:linefit, :linearfit]])
 			prog = isa(cmd, String) ? split(cmd)[1] : split(cmd[1])[1]
 			(length(dd) > 0) && println("Warning: the following options were not consumed in $prog => ", keys(dd))
 		end
@@ -4127,7 +4127,7 @@ end
 # --------------------------------------------------------------------------------------------------
 function show_non_consumed(d::Dict, cmd)
 	# First delete some that could not have been delete earlier (from legend for example)
-	del_from_dict(d, [[:fmt], [:show], [:leg, :legend], [:box_pos], [:leg_pos], [:P, :portrait], [:this_cpt]])
+	del_from_dict(d, [[:fmt], [:show], [:leg, :legend], [:box_pos], [:leg_pos], [:P, :portrait], [:this_cpt], [:linefit, :linearfit]])
 	!isempty(current_cpt[1]) && del_from_dict(d, [[:percent], [:clim]])	# To not (wrongly) complain about these
 	if (!haskey(d, :Vd) && length(d) > 0)		# Vd, if exists, must be a Vd=0 to signal no warnings.
 		prog = isa(cmd, String) ? split(cmd)[1] : split(cmd[1])[1]
