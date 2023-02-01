@@ -56,14 +56,14 @@ function basemap(; first=true, kwargs...)
 
 	cmd, = parse_BJR(d, "", "", O, " -JX" * split(def_fig_size, '/')[1] * "/0")
 	cmd, = parse_common_opts(d, cmd, [:F :UVXY :JZ :bo :c :f :p :t :params], first)
-    cmd  = parse_these_opts(cmd, d, [[:A :polygon]])
+	cmd  = parse_these_opts(cmd, d, [[:A :polygon]])
 	cmd  = parse_Td(d, cmd)
 	cmd  = parse_Tm(d, cmd)
 	cmd  = parse_L(d, cmd)
 	opt_D = parse_type_anchor(d, "", [:D :inset :inset_box],
-	                        (map=("g", arg2str, 1), outside=("J", nothing, 1), inside=("j", nothing, 1), norm=("n", arg2str, 1), paper=("x", arg2str, 1), anchor=("", arg2str, 2), width="+w", size="+w", justify="+j", offset=("+o", arg2str), save="+s", translate="_+t", units="_+u"), 'j')
-    (!IamModern[1] && opt_D != "") && (cmd *= opt_D)
-    (IamModern[1] && opt_D != "") && @warn("The `inset` option is not available in modern mode. Please use the `inset()` function.")
+	                          (map=("g", arg2str, 1), outside=("J", nothing, 1), inside=("j", nothing, 1), norm=("n", arg2str, 1), paper=("x", arg2str, 1), anchor=("", arg2str, 2), width="+w", size="+w", justify="+j", offset=("+o", arg2str), save="+s", translate="_+t", units="_+u"), 'j')
+	(!IamModern[1] && opt_D != "") && (cmd *= opt_D)
+	(IamModern[1] && opt_D != "") && @warn("The `inset` option is not available in modern mode. Please use the `inset()` function.")
 	_cmd = finish_PS_nested(d, [gmt_proggy * cmd])
 	CTRL.pocket_d[1] = d		# Store d that may be not empty with members to use in other modules
 	finish_PS_module(d, _cmd, "", K, O, true)
