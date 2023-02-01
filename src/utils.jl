@@ -163,10 +163,10 @@ function extrema_cols(A; col=1)
 end
 
 function minimum_nan(A)
-	#return (eltype(A) <: AbstractFloat) ? minimum(x->isnan(x) ?  Inf : x,A) : minimum(A)
 	if (eltype(A) <: AbstractFloat)
+		mi = minimum(A);	!isnan(mi) && return mi		# The noNaNs version is a order of magnitude faster
 		mi = typemax(eltype(A))
-		@inbounds for k in eachindex(A) !isnan(A[k]) && (mi = min(mi, A[k])) end
+		@inbounds for k in eachindex(A) mi = ifelse(!isnan(A[k]), min(mi, A[k]), mi)  end
 		mi == typemax(eltype(A)) && (mi = convert(eltype(A), NaN))	# Better to return NaN than +Inf
 		mi
 	else
@@ -175,16 +175,17 @@ function minimum_nan(A)
 end
 
 function maximum_nan(A)
-	#return (eltype(A) <: AbstractFloat) ? maximum(x->isnan(x) ? -Inf : x,A) : maximum(A)
 	if (eltype(A) <: AbstractFloat)
+		ma = maximum(A);	!isnan(ma) && return ma		# The noNaNs version is a order of magnitude faster
 		ma = typemin(eltype(A))
-		@inbounds for k in eachindex(A) !isnan(A[k]) && (ma = max(ma, A[k])) end
+		@inbounds for k in eachindex(A) ma = ifelse(!isnan(A[k]), max(ma, A[k]), ma)  end
 		ma == typemin(eltype(A)) && (ma = convert(eltype(A), NaN))	# Better to return NaN than -Inf
 		ma
 	else
 		maximum(A)
 	end
 end
+
 function findmax_nan(x::AbstractVector{T}) where T
 	# Since Julia doesn't ignore NaNs and prefer to return wrong results findmax is useless when data
 	# has NaNs. We start by runing findmax() and only if max is NaN we fallback to a slower algorithm.
