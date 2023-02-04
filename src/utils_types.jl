@@ -274,9 +274,8 @@ function mat2ds(D::GMTdataset, inds)::GMTdataset
 	# INDS is a Tuple of 2 with ranges in rows and columns. Ex: (:, 1:3) or (:, [1,4,7]), etc...
 	# Attention, if original had attributes other than 'Timeinfo' there is no guarentie that they remain correct. 
 	(length(inds) != ndims(D)) && error("\tNumber of GMTdataset dimensions and indices components must be the same.\n")
-	#_coln = !isempty(D.colnames) ? [D.colnames[inds[2]]..., D.colnames[end]] : String[]
 	_coln = !isempty(D.colnames) ? D.colnames[inds[2]] : String[]
-	(!isempty(_coln) && length(D.colnames) > size(D,2)) && append!(_coln, [D.colnames[end]])	# Append text colname if exists
+	(!isempty(_coln) && (typeof(inds[1]) == Colon) && length(D.colnames) > size(D,2)) && append!(_coln, [D.colnames[end]])	# Append text colname if exists
 	_D = mat2ds(D.data[inds...], proj4=D.proj4, wkt=D.wkt, epsg=D.epsg, geom=D.geom, colnames=_coln, attrib=D.attrib)
 	(!isempty(D.text)) && (_D.text = D.text[inds[1]])
 	(typeof(inds[2]) == Colon) && return _D		# We are done here
@@ -1584,14 +1583,25 @@ function edit_segment_headers!(D, vals::Array, opt::String)
 	if (isa(D, Array))
 		[D[ind[k]].header *= string(opt, vals[k])  for k = 1:lastindex(ind)]
 	else
-		D.header *= string(opt, vals[1])
+		D.header *= string(opt, vals[1])::String
 	end
 	return nothing
+end
+function edit_segment_headers!(D::GMTdataset, opt::Char, op::Symbol=:get, txt::String="")::String
+	# This method either apply changes to header or get the ccontents of the specifyied option passed in 'opt'
+	# Used only for gettting/setting GMT options, not general text.
+	(op == :get) && return scan_opt(D.header, "-"*opt)
+	if (op == :set || op == :add)
+		if ((t = scan_opt(D.header, "-"*opt)) == "")  D.header *= string(" -", opt, txt)
+		else                                          D.header = replace(D.header, "-"*opt*t => "-"*opt*txt)
+		end
+		return D.header
+	end
 end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    ids, ind = dsget_segment_ids(D, case=0)::Tuple{Vector{String}, Vector{Int}}
+    ids, ind = dsget_segment_ids(D)::Tuple{Vector{String}, Vector{Int}}
 
 Where D is a GMTdataset or a vector of them, returns the segment ids (first text after the '>') and
 the indices of those segments.
@@ -1606,7 +1616,7 @@ function dsget_segment_ids(D)::Tuple{Vector{AbstractString}, Vector{Int}}
 	ind::Vector{Int} = 1:n
 	ind = ind[tf]			# OK, now we have the indices of the segments with headers != ""
 	ids = Vector{AbstractString}(undef,length(ind))		# pre-allocate
-	[ids[k] = d[ind[k]] for k = 1:lastindex(ind)]
+	for k = 1:numel(ind)  ids[k] = d[ind[k]]  end
 	return ids, ind
 end
 

@@ -75,15 +75,22 @@
 	parallelplot(D, normalize="zscore")
 	parallelplot(D, normalize="")
 	plot(D, xvar=1, yvar=2, groupvar="text", legend=true)
+	plot(D, xvar=1, yvar=2, hue="Species", xlabel=:auto, ylabel=:auto, linefit=true, band_CI=true, legend=true)
 
-	@info "6..."
 	A = rand(10,2);		A[1] = NaN
+	@info "6..."
 	GMT.normalizeArray("zscore", A);
+	@info "61..."
 	try cornerplot("lixo"); catch end
+	@info "62..."
 	try cornerplot!("lixo"); catch end
+	@info "63..."
 	cornerplot(randn(50,3), scatter=true)
+	@info "64..."
 	cornerplot(randn(500,3), truths=[0.25, 0.5, 0.75])
+	@info "65..."
 	cornerplot(randn(500,3), hexbin=(inc=0.2, threshold=1.0))
+	@info "66..."
 	cornerplot!(randn(500,3), hexbin=true)
 
 	@info "7..."

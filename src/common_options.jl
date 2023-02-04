@@ -2012,6 +2012,7 @@ function finish_PS(d::Dict, cmd::String, output::String, K::Bool, O::Bool)::Stri
 	else
 		if ((K && !O) || (!K && !O) || O)  cmd *= opt  end
 	end
+	!O && !startswith(cmd, "psxy") && (legend_type[1] = legend_bag())	# Make sure that we always start with an empty one
 	return cmd
 end
 
@@ -3305,7 +3306,6 @@ function fname_out(d::Dict, del::Bool=false)
 		(del) && delete!(d, :fmt)
 	end
 	(EXT == "" && !Sys.iswindows()) && error("Return an image is only for Windows")
-	(1 == length(EXT) > 3) && error("Bad graphics file extension")
 
 	if (haskey(d, :ps))			# In any case this means we want the PS sent back to Julia
 		fname, EXT, ret_ps = "", "ps", true
@@ -3820,6 +3820,7 @@ function showfig(; kwargs...)
 	d = KW(kwargs)
 	(!haskey(d, :show)) && (d[:show] = true)		# The default is to show
 	CTRL.limits .= 0.0;		CTRL.proj_linear[1] = true;		# Reset these for safety
+	digests_legend_bag(d)							# Plot the legend if requested
 	finish_PS_module(d, "psxy -R0/1/0/1 -JX0.001c -T -O", "", false, true, true)
 end
 function helper_showfig4modern(show::String="show")::Bool
@@ -4163,7 +4164,7 @@ function put_in_legend_bag(d::Dict, cmd, arg, O::Bool=false, opt_l::String="")
 		return valLabel_loc
 	end
 
-	dd = Dict()
+	dd = Dict{Symbol, Any}()
 	valLabel_vec::Vector{String} = String[]		# Use different containers to try to control the f Anys.
 	valLabel::String = ""
 	have_ribbon = false
@@ -4279,7 +4280,7 @@ function digests_legend_bag(d::Dict, del::Bool=true)
 	# Plot a legend if the leg or legend keywords were used. Legend info is stored in LEGEND_TYPE global variable
 	(size(legend_type[1].label, 1) == 0) && return
 
-	dd::Dict = ((val = find_in_dict(d, [:leg :legend], false)[1]) !== nothing && isa(val, NamedTuple)) ? nt2dict(val) : Dict()
+	dd::Dict = ((val = find_in_dict(d, [:leg :legend], false)[1]) !== nothing && isa(val, NamedTuple)) ? nt2dict(val) : Dict{Symbol, Any}()
 
 	kk, fs = 0, 8				# Font size in points
 	symbW = 0.65				# Symbol width. Default to 0.75 cm (good for lines but bad for symbols)

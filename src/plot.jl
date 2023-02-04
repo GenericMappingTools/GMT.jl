@@ -110,9 +110,25 @@ Parameters
 - $(GMT.opt_savefig)
 """
 function plot(arg1; first=true, kw...)
-	if (isa(arg1, GDtype) && find_in_kwargs(kw, [:linefit :linearfit])[1] !== nothing)
+	# First check if arg1 is a GMTds of a linear fit and if yes, call the plotlinefit() fun
+	if (isa(arg1, GDtype) && find_in_kwargs(kw, [:linefit :regress])[1] !== nothing)
 		att = isa(arg1, GMTdataset) ? arg1.attrib : arg1[1].attrib
 		(get(att, "linearfit", "") != "") && return plotlinefit(arg1; first=first, kw...)
+		# If it didn't return above, see if we have a 'groupvar' request and if yest perform regression on grouos
+		d = KW(kw)
+		arg1 = with_xyvar(d, arg1)		# But first check if we have a column selection
+		gidx, gnames = get_group_indices(d, arg1)
+		cycle_colors = (numel(gidx) <= 7) ? matlab_cycle_colors : simple_distinct	# Will blow if > 20
+		if (!isempty(gidx))
+			Dv = Vector{GMTdataset}(undef, length(gidx))
+			for k = 1:numel(gidx)
+				Dv[k] = linearfitxy(mat2ds(arg1, (gidx[k], :)))
+				Dv[k].header = "-G"*cycle_colors[k] * " -W"*cycle_colors[k]
+				Dv[k].attrib["group_name"] = string(gnames[k])::String
+			end
+			Dv[1].ds_bbox = arg1.ds_bbox
+			return plotlinefit(Dv; first=first, d...)
+		end
 	end
 	common_plot_xyz("", cat_1_arg(arg1, true), "plot", first, false, kw...)
 end
