@@ -12,7 +12,7 @@ Parameters
 
     Instead of determining a best-fit regression we explore the full range of regressions.
     ($(GMTdoc)gmtregress.html#a)
-- **C** | **confidence_level** :: [Type => Int]      ``Arg = level``
+- **C** | **ci** | **cl** | **confidence_level** :: [Type => Int]      ``Arg = level``
 
     Set the confidence level (in %) to use for the optional calculation of confidence
     bands on the regression [95].
@@ -59,8 +59,8 @@ function regress(cmd0::String="", arg1=nothing; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:V_params :b :d :e :g :h :i :o :w :yx])
-    cmd  = parse_these_opts(cmd, d, [[:A :all_slopes], [:C :confidence_level], [:E :regression_type], [:N :norm],
-                                     [:F :column_combination], [:S :restrict], [:T :equi_space], [:W :weighted]])
+    cmd  = parse_these_opts(cmd, d, [[:A :all_slopes], [:C :ci :cl :confidence_level], [:E :regression_type], [:N :norm],
+                                     [:F :column_combination], [:S :restrict], [:T :equi_space], [:W :weights :weighted]])
 
 	common_grd(d, cmd0, cmd, "gmtregress ", arg1)		# Finish build cmd and run it
 end
