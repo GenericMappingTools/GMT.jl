@@ -55,7 +55,10 @@ function linearfitxy(XY::Matrix{<:Real}; sx=0, sy=0, r=0, ci::Int=95)
 end
 function linearfitxy(D::GMTdataset; sx=0, sy=0, r=0, ci::Int=95)
 	x = view(D, :, 1);	y = view(D, :, 2);
-	linearfitxy(x, y; sx=sx, sy=sy, r=r, ci=ci)
+	Df = linearfitxy(x, y; sx=sx, sy=sy, r=r, ci=ci)
+	Df.colnames[1:2], Df.text, Df.header, Df.proj4, Df.wkt, Df.epsg = D.colnames[1:2], D.text, D.header, D.proj4, D.wkt, D.epsg
+	!isempty(D.text) && append!(Df.colnames, [D.colnames[3]])
+	return Df
 end
 function linearfitxy(X, Y; sx=0, sy=0, r=0, ci::Int=95)
 	
@@ -148,7 +151,7 @@ end
 
 # --------------------------------------------------------------------------------------------------
 """
-    plotlinefit(D, kwargs...)
+    plotlinefit(D::GMTdataset, kwargs...)
 
 Plot the line fit of the points in the `D` GMTdataset type incliding confidence intervals ann error ellipses.
 The `D` input is the result of having run your data through the `linearfitxy` function. See its docs for the
@@ -156,20 +159,54 @@ meaning of the parameters mentioned below.
 
 - `band_ab` or `ribbon_ab`: Plot a band, `(a±σa) + (b±σb)`, around the fitted line. `band_ab=true` uses the default
    `lightblue` color. Use `band_ab=*color*` to paint it with a color of your choice (this color may include transparency)
-- `band_CI` or `ribbon_CI`: Plot a band, `(a±σa95) + (b±σb95)`, with the 95% (or other Confidence Interval). `band_CI=true`
-   uses the default `tomato` color. Use `band_CI=*color*` to paint it with a color of your choice (transparency included).
+- `band_ci` or `ribbon_ci`: Plot a band, `(a±σa95) + (b±σb95)`, with the 95% (or other Confidence Interval). `band_ci=true`
+   uses the default `tomato` color. Use `band_ci=*color*` to paint it with a color of your choice (transparency included).
 - `ellipses`: optionaly plot error ellipses when the `σX, `σY` errors are known.
-- `legend`: By default we plot two legend boxes with line fit info. Set `legend=false` to not plot them. For the time
+- `legend`: By default we do not plot the legend boxes with line fit info. Set `legend=rue` to plot them. For the time
    being the legend locations are determine automaticaly and can't be manually controlled.``
 
 Other than the above options you can use most of the `plot` options that control line and marker symbol.
 
 # Examples:
 ```julia-repl
-plotlinefit(...)
+plotlinefit(D, band_ab=true, band_ci=true, legend=true, show=1)
 ```
 """
-function plotlinefit(D; first::Bool=true, kw...)
+function plotlinefit(D::Vector{<:GMTdataset}; first::Bool=true, kw...)
+	d = KW(kw)
+	N_clusters = numel(D) 
+	cycle_colors = (N_clusters <= 7) ? matlab_cycle_colors : simple_distinct	# Will blow if > 20
+
+	do_show = ((val = find_in_dict(d, [:show])[1]) !== nothing && val != 0)
+	figname::String = ((val = find_in_dict(d, [:savefig :figname :name])[1]) !== nothing) ? val : ""
+
+	band_CI = ((val = find_in_dict(d, [:ribbon_CI :band_CI :ribbon_ci :band_ci], false)[1]) !== nothing) ? val : ""
+	do_band_CI = (band_CI != 0 && band_CI != "")
+	do_band_CI && (d[:band_CI] = (bc = edit_segment_headers!(D[1], 'G', :get)) != "" ? bc*"@85" : cycle_colors[1]*"@85")
+
+	band_ab = ((val = find_in_dict(d, [:ribbon_ab :band_ab], false)[1]) !== nothing) ? val : ""
+	do_band_ab = (band_ab != 0 && band_ab != "")
+	do_band_ab && (d[:band_ab] = (bc = edit_segment_headers!(D[1], 'G', :get)) != "" ? bc*"@85" : cycle_colors[1]*"@85")
+
+	legend = ((val = find_in_dict(d, [:legend :label], false)[1]) !== nothing) ? val : ""
+	d[:legend] = legend
+
+	plotlinefit(D[1]; first=first, grp=true, d...)
+	d = CTRL.pocket_d[1]
+	d[:band_ab], d[:band_CI], d[:legend] = band_ab, band_CI, legend
+	for k = 2:N_clusters
+		(k == N_clusters) && (d[:show] = do_show; d[:savefig] = figname)
+		do_band_CI && (d[:band_CI] = (bc = edit_segment_headers!(D[k], 'G', :get)) != "" ? bc*"@85" : cycle_colors[k]*"@85")
+		do_band_ab && (d[:band_ab] = (bc = edit_segment_headers!(D[k], 'G', :get)) != "" ? bc*"@85" : cycle_colors[k]*"@85")
+		plotlinefit(D[k]; first=false, grp=true, d...)
+		if (k < N_clusters)
+			d = CTRL.pocket_d[1];
+			d[:band_ab], d[:band_CI], d[:legend] = band_ab, band_CI, legend
+		end
+	end
+end
+
+function plotlinefit(D::GMTdataset; first::Bool=true, grp::Bool=false, kw...)
 	# Plot fit line, data points and confidence intervals (some optional) from GMTds created by linearfitxy.
 	
 	d = KW(kw)
@@ -178,17 +215,18 @@ function plotlinefit(D; first::Bool=true, kw...)
 		do_rib, rib_cor = false, ""
 		if ((val = find_in_dict(d, symbs)[1]) !== nothing)	# Either 'true' or ribbon color
 			rib_cor = (val == 1) ? def_color : string(val)::String 
-			do_rib = true
+			do_rib = (rib_cor != "")
 		end
 		return do_rib, rib_cor
 	end
 
 	do_rib_ab, rib_ab_cor = do_ribs(d, [:ribbon_ab :band_ab], "lightblue")	
-	do_rib_CI, rib_CI_cor = do_ribs(d, [:ribbon_CI :band_CI], "pink")	
+	do_rib_CI, rib_CI_cor = do_ribs(d, [:ribbon_CI :band_CI :ribbon_ci :band_ci], "pink")	
 	do_ellipses = (find_in_dict(d, [:ellipses :ellipse])[1] !== nothing)
 	(do_ellipses && size(D,2) < 5) && (@warn("Can't plot ellipses when σX and σY are not known");	do_ellipses = false)
-	do_legends = !(haskey(d, :legend) && (d[:legend] == "" || d[:legend] == false))		# see if user DOESN'T want legends
+	do_legends = (haskey(d, :legend) && (d[:legend] != "" || d[:legend] == true))		# see if user wants legends
 	do_show = (haskey(d, :show) && d[:show] == 1);	delete!(d, :show)
+	(grp) && (figname::String = ((val = find_in_dict(d, [:savefig])[1]) !== nothing) ? val : "")	# Only last call may have it != ""
 
 	X = view(D, :, 1);	Y = view(D, :, 2);
 	a, b   = parse(Float64, D.attrib["a"]), parse(Float64, D.attrib["b"])
@@ -201,7 +239,7 @@ function plotlinefit(D; first::Bool=true, kw...)
 	if (do_rib_ab)
 		σp, σm = vec(maximum([tl bl], dims=2)) .- recta, recta .- vec(minimum([tl bl], dims=2))
 	end
-	
+
 	if (do_rib_CI)
 		N = length(X)
 		_ci = (ci + (100 - ci) / 2) / 100
@@ -211,24 +249,27 @@ function plotlinefit(D; first::Bool=true, kw...)
 	elseif (do_rib_ab)
 		mi, ma = min(D.bbox[3], min(recta[1]-σm[1], recta[end]-σm[end])), max(D.bbox[4], max(recta[1]+σp[1], recta[end]+σp[end]))
 	else
-		mi, ma = min(recta[1], D.bbox[3]), max(recta[end], D.bbox[4])
+		mi, ma = min(recta[1], D.ds_bbox[3]), max(recta[end], D.ds_bbox[4])
 	end
 
 	leg_off = "0.15"		# Default legend offset
 	if (first)
-		wesn::Vector{Float64} = round_wesn([D.bbox[1], D.bbox[2], mi, ma], false, [0.01, 0.01])
+		mi, ma = min(mi, D.ds_bbox[3]), max(ma, D.ds_bbox[4])
+		wesn::Vector{Float64} = round_wesn([D.ds_bbox[1], D.ds_bbox[2], mi, ma], false, [0.01, 0.01])
 		opt_R = @sprintf("%.12g/%.12g/%.12g/%.12g", wesn[1], wesn[2], wesn[3], wesn[4])
 
 		if (do_legends && (_cmd = parse_params(d, "", false)) != "")
 			contains(_cmd, "inside") && (leg_off = "0.6")	# For inside annotations, offset must be larger
 		end
 
+		(haskey(d, :xlabel) && string(d[:xlabel]) == "auto") && (d[:xlabel] = D.colnames[1])	# Because basemap knows nikles on D
+		(haskey(d, :ylabel) && string(d[:ylabel]) == "auto") && (d[:ylabel] = D.colnames[2])
 		basemap(; R=opt_R, Vd=-1, d...)		# START THE PLOT
-		d = CTRL.pocket_d[1]			# Get back what was not consumemd in basemap
+		d = CTRL.pocket_d[1]				# Get back what was not consumemd in basemap
 	end
 
-	if (do_rib_CI)						# Plot a Ribbon with the % Cofidence limit
-		leg = do_legends ? (ribbon="$(ci)% confidence", label=" ") : ""
+	if (do_rib_CI)							# Plot a Ribbon with the % Cofidence limit
+		leg = (do_legends && !grp) ? (ribbon="$(ci)% confidence", label=" ") : ""
 		plot!([X recta]; fill=rib_CI_cor, ribbon=(σx95,σx95), legend=leg)
 	end
 
@@ -237,29 +278,34 @@ function plotlinefit(D; first::Bool=true, kw...)
 	# in fact meant to be used in a latter one (e.g. scatter) so we must make copies before theyare prematutrely
 	# consumed, but this process is not complete enough and there will always be some that is not backed up.
 	ms = ((val = find_in_dict(d, [:ms :markersize :MarkerSize])[1]) !== nothing) ? string(val)::String : "0.1"
-	mc = ((val = find_in_dict(d, [:mc :markercolor :markerfacecolor :MarkerFaceColor])[1]) !== nothing) ? string(val)::String : "blue"
+	mc = ((val = find_in_dict(d, [:mc :markercolor :markerfacecolor :MarkerFaceColor])[1]) !== nothing) ? string(val)::String : "#0072BD"
+	(grp) && (mc = ((mc = edit_segment_headers!(D, 'G', :get)) != "" ? mc : "#0072BD"))
 	mk = ((val = find_in_dict(d, [:marker])[1]) !== nothing) ? arg2str(val)::String : "circ"
 
 	pos = (b > 0) ? "TL" : "TR"
-	(is_in_dict(d, [:lc :linecolor]) === nothing) && (d[:lc] = :blue)	# Default line color
+	(is_in_dict(d, [:lc :linecolor]) === nothing) &&
+		(d[:lc] = ((lc = edit_segment_headers!(D, 'W', :get)) != "" ? lc : "#0072BD"))		# Set line color
 	if (do_rib_ab)						# Plot a Ribbon with the errors in a & b parameters
-		leg = do_legends ? (label=@sprintf("r = %.2f",ρ), ribbon="(a\\261@~s@~a)+(b\\261@~s@~b)X`14", pos=pos) : ""
-		plot!([X recta]; fill=rib_ab_cor, ribbon=(σp,σm), legend=leg, d...)
+		d[:legend] = (do_legends && !grp) ? (label=@sprintf("r = %.2f",ρ), ribbon="(a\\261@~s@~a)+(b\\261@~s@~b)X`14", pos=pos) : ""
+		plot!([X recta]; fill=rib_ab_cor, ribbon=(σp,σm), d...)
 	else
-		leg = do_legends ? (label=@sprintf("r = %.2f",ρ), pos=pos) : ""
-		plot!([X recta]; legend=leg, d...)
+		d[:legend] = (do_legends && !grp) ? (label=@sprintf("r = %.2f",ρ), pos=pos) : ""
+		plot!([X recta]; d...)
 	end
-	d = CTRL.pocket_d[1]			# Get back what was not consumemd in basemap
+	d = CTRL.pocket_d[1]				# Get back what was not consumemd in basemap
 
 	if (do_ellipses)					# Plot ellipses?
 		covXY = view(D, :, 3) .* view(D, :, 4) .* view(D, :, 5)		# covXY = σX .* σY .* r
 		plot_covariance_ellipses!(X, Y, view(D, :, 3).^2,  covXY, view(D, :, 4).^2, lc=:darkgray)
 	end
 
-	# Plot the data points by default as small filled blue circles.
+	# Plot the data points by default as small filled blue [if default] circles.
+	(do_legends && grp) && (d[:legend] = D.attrib["group_name"])
+	grp && (d[:show] = do_show)
+	(grp && figname != "") && (d[:savefig] = figname)
 	scatter!(D; marker=mk, ms=ms, mc=mc, show=(do_show && !do_legends), d...)
 
-	if (do_legends)
+	if (!grp && do_legends)
 		fs = 7		# Font size
 		lab_width = 48 * fs / 72 * 2.54 * 0.50 - 0.35	# Guess label width in cm
 		pos = (b > 0) ? "BR" : "BL"
