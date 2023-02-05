@@ -1213,7 +1213,7 @@ function palette_init(API::Ptr{Nothing}, cpt::GMTcpt)::Ptr{GMT.GMT_PALETTE}
 		n_colors = n_colors - 1;	# Number of CPT slices
 	end
 
-	P = convert(Ptr{GMT.GMT_PALETTE}, GMT_Create_Data(API, GMT_IS_PALETTE, GMT_IS_NONE, 0, pointer([n_colors]), NULL, NULL, 0, 0, NULL))
+	@GC.preserve n_colors P = convert(Ptr{GMT.GMT_PALETTE}, GMT_Create_Data(API, GMT_IS_PALETTE, GMT_IS_NONE, 0, pointer([n_colors]), NULL, NULL, 0, 0, NULL))
 
 	Pb::GMT_PALETTE = unsafe_load(P)				# We now have a GMT.GMT_PALETTE
 
