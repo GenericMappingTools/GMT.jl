@@ -1472,7 +1472,7 @@ function hlines(arg1=nothing; first=true, kwargs...)
 	len::Int = (arg1 !== nothing) ? length(arg1) : length(arg1_)
 	mat::Matrix{Float64} = ones(2, len)
 	mat[1,:] = mat[2,:] .= (arg1 !== nothing) ? arg1 : arg1_
-	x::Vector{Float64} = ((opt_R = parse_R(d, "")[2]) != "") ? vec(opt_R2num(opt_R)[1:2]) : [-1e50, 1e50]
+	x::Vector{Float64} = ((opt_R = parse_R(d, "", first, false)[2]) != "") ? vec(opt_R2num(opt_R)[1:2]) : [-1e50, 1e50]
 	D::Vector{GMTdataset} = mat2ds(mat, x=x, multi=true)
 
 	common_plot_xyz("", D, "lines", first, false, d...)
@@ -1508,7 +1508,7 @@ function vlines(arg1=nothing; first=true, kwargs...)
 
 	mat::Matrix{Float64} = ones(2, len)
 	mat[1,:] = mat[2,:] .= (arg1 !== nothing) ? arg1 : arg1_
-	x::Vector{Float64} = ((opt_R = parse_R(d, "")[2]) != "") ? vec(opt_R2num(opt_R)[3:4]) : [-1e50, 1e50]
+	x::Vector{Float64} = ((opt_R = parse_R(d, "", first, false)[2]) != "") ? vec(opt_R2num(opt_R)[3:4]) : [-1e50, 1e50]
 	D::Vector{GMTdataset} = mat2ds(mat, x=x, multi=true)
 	# Now we need tp swapp x / y columns because the vlines case is more complicated to implement.
 	for k = 1:len
