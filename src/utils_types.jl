@@ -70,6 +70,7 @@ does not need explicit coordinates to place the text.
   - `wkt`:  A WKT SRS.
   - `colnames`: Optional string vector with names for each column of `mat`.
   - `attrib`: Optional dictionary{String, String} with attributes of this dataset.
+  - `ref:` Pass in a reference GMTdataset from which we'' take the georeference info as well as `attrib` and `colnames`
   - `txtcol` or `textcol`: Vector{String} with text to add into the .text field. Warning: no testing is done
      to check if ``length(txtcol) == size(mat,1)`` as it must.
 """
@@ -204,6 +205,13 @@ function mat2ds(mat::Array{T,N}, txt::Vector{String}=String[]; hdr=String[], geo
 		end
 	end
 
+	ref_attrib, ref_coln = Dict(), String[]
+	if ((val = find_in_dict(d, [:ref])[1]) !== nothing)		# ref has to be a D but we'll not test it
+		Dt::GMTdataset = val		# To try to escape the f... Any's
+		prj, wkt, epsg = Dt.proj4, Dt.wkt, Dt.epsg
+		ref_attrib, ref_coln = Dt.attrib, Dt.colnames
+	end
+
 	prj::String = ((proj = find_in_dict(d, [:proj :proj4])[1]) !== nothing) ? proj : ""
 	(prj == "geo" || prj == "geog") && (prj = prj4WGS84)
 	(prj != "" && !startswith(prj, "+proj=")) && (prj = "+proj=" * prj)
@@ -290,6 +298,8 @@ function mat2ds(mat::Array{T,N}, txt::Vector{String}=String[]; hdr=String[], geo
 			end
 		end
 	end
+	!isempty(ref_attrib) && (D[1].attrib = ref_attrib)		# When a reference Ds was used
+	(length(ref_coln) >= size(D[1],2)) && (D[1].colnames = ref_coln[1:size(D[1],2)])	# This still loses Text colname
 	CTRL.pocket_d[1] = d		# Store d that may be not empty with members to use in other functions
 	set_dsBB!(D)				# Compute and set the global BoundingBox for this dataset
 	return (find_in_kwargs(kwargs, [:letsingleton])[1] !== nothing) ? D : (length(D) == 1 && !multi) ? D[1] : D
