@@ -56,12 +56,14 @@ does not need explicit coordinates to place the text.
   - `fillalpha` : When `fill` option is used, we can set the transparency of filled polygons with this
      option that takes in an array (vec or 1-row matrix) with numeric values between [0-1] or ]1-100],
 	 where 100 (or 1) means full transparency.
+  - `is3D`:  If input 'mat' contains at least x,y,z (?).
   - `ls` or `linestyle`:  Line style. A string or an array of strings with `length = size(mat,2)` with line styles.
   - `front`:  Front Line style. A string or an array of strings with `length = size(mat,2)` with front line styles.
   - `pen`:  A full pen setting. A string or an array of strings with `length = size(mat,2)` with pen settings.
      This differes from `lt` in the sense that `lt` does not directly set the line thickness.
   - `multi` or `multicol`: When number of columns in `mat` > 2, or == 2 and x != nothing, make an multisegment Dataset
      with first column and 2, first and 3, etc. Convenient when want to plot a matrix where each column is a line. 
+  - `segnan` or `nanseg`: Boolean. If true make a multisegment made out of segments separated by NaNs.
   - `datatype`: Keep the original data type of `mat`. Default, converts to Float64.
   - `geom`: The data geometry. By default we set `wkbUnknown` but try to do some basic guess.
   - `proj` or `proj4`:  A proj4 string for dataset SRS.
@@ -107,13 +109,15 @@ function mat2ds(mat::Array{T,N}, txt::Vector{String}=String[]; hdr=String[], geo
 
 	val = find_in_dict(d, [:multi :multicol])[1]
 	multi = (val === nothing) ? false : ((val) ? true : false)	# Like this it will error if val is not Bool
+	segnan = (find_in_dict(d, [:segnan :nanseg])[1] !== nothing) ? true : false		# A classic GMT multi-segment sep with NaNs
+	segnan && (multi = true)
 
 	if ((x = find_in_dict(d, [:x])[1]) !== nothing)
-		n_ds::Int = (multi) ? size(mat, 2) : 1
+		n_ds::Int = segnan ? 1 : ((multi) ? size(mat, 2) : 1)
 		xx::Vector{Float64} = (x == :ny || x == "ny") ? collect(1.0:size(mat, 1)) : vec(x)
 		(length(xx) != size(mat, 1)) && error("Number of X coordinates and MAT number of rows are not equal")
 	else
-		n_ds = (ndims(mat) == 3) ? size(mat,3) : ((multi) ? size(mat, 2) - (1+is3D) : 1)
+		n_ds = (ndims(mat) == 3) ? size(mat,3) : ((multi) ? size(mat, 2) - segnan - (1+is3D) : 1)
 		xx = Vector{Float64}()
 	end
 
@@ -228,6 +232,25 @@ function mat2ds(mat::Array{T,N}, txt::Vector{String}=String[]; hdr=String[], geo
 
 	D::Vector{GMTdataset} = Vector{GMTdataset}(undef, n_ds)
 
+	function segnan_mat(mat, coln, _hdr, is_geog, prj, _geom, xx=Float64[])
+		# Create a multi-segment where segments are separated by NaNs.
+		isempty(coln) && (coln = (is_geog) ? ["Lon", "Lat"] : ["X", "Y"])
+		off = isempty(xx) ? 1 : 0
+		n_rows, n_cols = size(mat)
+		segN = Matrix{Float64}(undef, n_rows * (n_cols-off) + (n_cols-off-1), 2)
+		_xx = isempty(xx) ? view(mat, :, 1) : xx
+		s = 1
+		for k = 1+off:n_cols
+			e = s + n_rows - 1
+			segN[s:e, :] = [_xx mat[:,k]]
+			if (k < n_cols)
+				segN[e+1, :] = [NaN NaN]
+				s += n_rows+1
+			end
+		end
+		GMTdataset(segN, Float64[], Float64[], att, coln, String[], (isempty(_hdr) ? "" : _hdr[1]), String[], prj, wkt, epsg, _geom)
+	end
+
 	# By default convert to Doubles, except if instructed to NOT to do it.
 	#(find_in_dict(d, [:datatype])[1] === nothing) && (eltype(mat) != Float64) && (mat = Float64.(mat))
 	_geom::Int = Int((geom == 0 && (2 <= length(mat) <= 3)) ? Gdal.wkbPoint : (geom == 0 ? Gdal.wkbUnknown : geom))	# Guess geom
@@ -242,6 +265,8 @@ function mat2ds(mat::Array{T,N}, txt::Vector{String}=String[]; hdr=String[], geo
 			coln = fill_colnames(coln, size(mat,2)-2, is_geog)
 			(size(mat,2) == 1) && (coln = coln[1:1])		# Because it defaulted to two.
 			D[1] = GMTdataset(mat, Float64[], Float64[], att, coln, txtcol, (isempty(_hdr) ? "" : _hdr[1]), String[], prj, wkt, epsg, _geom)
+		elseif (segnan)
+			D[1] = segnan_mat(mat, coln, _hdr, is_geog, prj, _geom)
 		else						# 2D MULTICOL case(s)
 			isempty(coln) && (coln = (is_geog) ? ["Lon", "Lat"] : ["X", "Y"])
 			for k = 1:n_ds
@@ -250,10 +275,12 @@ function mat2ds(mat::Array{T,N}, txt::Vector{String}=String[]; hdr=String[], geo
 				D[k] = GMTdataset(mat[:,[1,k+1]], Float64[], Float64[], att, _coln, txtcol, (isempty(_hdr) ? "" : _hdr[k]), String[], prj, wkt, epsg, _geom)
 			end
 		end
-	else
+	else							# With xx coords transmitted.
 		if (!multi)
 			coln = fill_colnames(coln, size(mat,2)-1, is_geog)
 			D[1] = GMTdataset(hcat(xx,mat), Float64[], Float64[], att, coln, String[], (isempty(_hdr) ? "" : _hdr[1]), String[], prj, wkt, epsg, _geom)
+		elseif (segnan)
+			D[1] = segnan_mat(mat, coln, _hdr, is_geog, prj, _geom, xx)
 		else
 			isempty(coln) && (coln = (is_geog) ? ["Lon", "Lat"] : ["X", "Y"])
 			for k = 1:n_ds
@@ -649,7 +676,7 @@ function mat2img(mat::AbstractArray{<:Unsigned}, dumb::Int=0; x=Vector{Float64}(
 
 	mem_layout = (size(mat,3) == 1) ? "TCBa" : "TCBa"		# Just to have something. Likely wrong for 3D
 	d = KW(kw)
-	((val = find_in_dict(d, [:layout :mem_layout])[1]) !== nothing) && (mem_layout = string(val))
+	((val = find_in_dict(d, [:layout :mem_layout])[1]) !== nothing) && (mem_layout = string(val)::String)
 	_names = ((val = find_in_dict(d, [:names])[1]) !== nothing) ? val : String[]
 	_meta  = ((val = find_in_dict(d, [:metadata])[1]) !== nothing) ? val : String[]
 

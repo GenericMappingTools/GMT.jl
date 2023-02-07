@@ -28,12 +28,14 @@
 	@test_throws ErrorException("Grids have different sizes, so they cannot be divided.") G1 / G2;
 	G1 = GMT.mat2grid(rand(4,4));
 	G2 = GMT.mat2grid(rand(Float32,4,4), G1);
+	@info "1..."
 	GMT.mat2img(rand(UInt8,8,8), G1);
 	G2 = mat2grid(rand(Float32,4,4), mat2img(rand(UInt16,32,32),x=[220800 453600], y=[3.5535e6 3.7902e6]));
 	G2 = GMT.mat2grid(rand(Int32,4,4));
 	G2 = GMT.mat2grid(rand(4,4));
 	G1 .* G2;
 	G = mat2grid(ones(Float32, 4,4))
+	@info "2..."
 	sqrt(G);
 	log(G);
 	log10(G);
@@ -54,6 +56,7 @@
 	GMT.find4similar(())
 	GMT.find4similar((0,1))
 	GMT.find4similar([],0)
+	@info "3..."
 	I = mat2img(rand(UInt8,4,4,3))
 	GMT.find4similar(I,0)
 	size(I)
