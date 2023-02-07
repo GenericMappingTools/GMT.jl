@@ -24,6 +24,8 @@
 	xy = [0. 0.; 1 1; 2 1; 0 0];
 	plot(xy, region=(-1,3,-1,2), clip=(xy, N=true), frame=(axes=:WEsn, grid=0.2, fill=:darkgray), Vd=dbg2);
 	plot(x=[-1.0, -1.0], y=[-1.0, 1.0], pen="1p,black+ve0.2c")
+	plot(mat2ds([1:200 rand(200)]), decimate=true, Vd=dbg2)
+
 	@test occursin(" -Sr", plot!([1 1], marker=(:r, [2 3]), Vd=dbg2))
 	@test_throws ErrorException("Wrong number of extra columns for marker (r). Got 3 but expected 2") plot!([1 1], marker=(:r, [2 3 4]), Vd=dbg2)
 	@test_throws ErrorException("Unknown graphics file extension (.ppf)") plot(rand(5,2), savefig="la.ppf")

@@ -687,7 +687,7 @@ function get_palette(API::Ptr{Nothing}, object::Ptr{Nothing})::GMTcpt
 	             zeros(C.n_colors,6), Vector{String}(undef,C.n_colors), Vector{String}(undef,C.n_colors), model, String[])
 
 	for j = 1:C.n_colors       # Copy r/g/b from palette to Julia array
-		@GC.preserve C gmt_lut = unsafe_load(C.data, j)
+		gmt_lut = unsafe_load(C.data, j)
 		for k = 1:3 	out.colormap[j, k] = gmt_lut.rgb_low[k]		end
 		for k = 1:3
 			out.cpt[j, k]   = gmt_lut.rgb_low[k]
@@ -708,7 +708,7 @@ function get_palette(API::Ptr{Nothing}, object::Ptr{Nothing})::GMTcpt
 			out.bfn[j,k] = C.bfn[j].rgb[k]
 		end
 	end
-	@GC.preserve C gmt_lut = unsafe_load(C.data, 1)
+	gmt_lut = unsafe_load(C.data, 1)
 	out.minmax[1] = gmt_lut.z_low
 	gmt_lut = unsafe_load(C.data, C.n_colors)
 	out.minmax[2] = gmt_lut.z_high
