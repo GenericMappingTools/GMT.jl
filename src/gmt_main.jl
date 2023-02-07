@@ -687,7 +687,7 @@ function get_palette(API::Ptr{Nothing}, object::Ptr{Nothing})::GMTcpt
 	             zeros(C.n_colors,6), Vector{String}(undef,C.n_colors), Vector{String}(undef,C.n_colors), model, String[])
 
 	for j = 1:C.n_colors       # Copy r/g/b from palette to Julia array
-		gmt_lut = unsafe_load(C.data, j)
+		@GC.preserve C.data gmt_lut = unsafe_load(C.data, j)
 		for k = 1:3 	out.colormap[j, k] = gmt_lut.rgb_low[k]		end
 		for k = 1:3
 			out.cpt[j, k]   = gmt_lut.rgb_low[k]
@@ -859,7 +859,7 @@ function GMTJL_Set_Object(API::Ptr{Nothing}, X::GMT_RESOURCE, ptr, pad)::GMT_RES
 	(GMT_Open_VirtualFile(API, X.family, X.geometry, X.direction, X.object, name) != 0) && error("GMT: Failure to open virtual file") 
 	# Replace ? in argument with name
 	(GMT_Expand_Option(API, X.option, name) != 0) && error("GMT: Failure to expand filename marker (?)") 
-	X.name = map(UInt8, (name...,))
+	X.name::NTuple{32, UInt8} = map(UInt8, (name...,))
 
 	return X
 end

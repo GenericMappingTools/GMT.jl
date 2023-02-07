@@ -71,9 +71,11 @@
 	parallelplot("iris.dat", groupvar="text", band=true, quantile=0.25, legend=true)
 	parallelplot("iris.dat", groupvar="text", std=1.0, legend=true)
 	D = gmtread("iris.dat");
+	@info "51..."
 	parallelplot!(D, normalize="scale")
 	parallelplot(D, normalize="zscore")
 	parallelplot(D, normalize="")
+	@info "52..."
 	plot(D, xvar=1, yvar=2, groupvar="text", legend=true)
 	plot(D, xvar=1, yvar=2, hue="Species", xlabel=:auto, ylabel=:auto, linefit=true, band_CI=true, legend=true)
 
