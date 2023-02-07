@@ -1447,9 +1447,12 @@ band!(f::Function, rang=nothing; width=0.0, envelope=false, kw...) = band(f, ran
 
 # ------------------------------------------------------------------------------------------------------
 """
-    hlines(arg; decorated=(...), kwargs...)
+    hlines(arg; decorated=(...), xmin=NaN, xmax=NaN, percent=false, kwargs...)
 
 Plots one or a collection of horizontal lines with eventual decorations
+
+- `xmin` & `xmax`: Limit the horizontal lines to start a `xmin` and/or end at `xmax`
+- `percent`: If true the `xmin` & `xmax` are interpreted as fractions of the figure height.
 
 - $(GMT._opt_B)
 - $(GMT._opt_J)
@@ -1464,27 +1467,21 @@ Example:
     plot(rand(5,3))
     hlines!([0.2, 0.6], pen=(1, :red), show=true)
 """
-function hlines(arg1=nothing; first=true, kwargs...)
+function hlines(arg1=nothing; first=true, xmin=NaN, xmax=NaN, percent=false, kwargs...)
 	# A lines plotting method of plot
-	d = KW(kwargs)
-	(arg1 === nothing && ((arg1_ = find_in_dict(d, [:data])[1]) === nothing)) && error("No input data")
-	# If I don't do this stupid gymn with arg1 vs arg1_ then arg1 is Core.Boxed F..
-	len::Int = (arg1 !== nothing) ? length(arg1) : length(arg1_)
-	mat::Matrix{Float64} = ones(2, len)
-	mat[1,:] = mat[2,:] .= (arg1 !== nothing) ? arg1 : arg1_
-	x::Vector{Float64} = ((opt_R = parse_R(d, "", first, false)[2]) != "") ? vec(opt_R2num(opt_R)[1:2]) : [-1e50, 1e50]
-	D::Vector{GMTdataset} = mat2ds(mat, x=x, multi=true)
-
-	common_plot_xyz("", D, "lines", first, false, d...)
+	helper_vhlines(arg1, false, first, xmin, xmax, percent, kwargs...)
 end
-hlines!(arg=nothing; kw...) = hlines(arg; first=false, kw...)
+hlines!(arg=nothing; ymin=NaN, ymax=NaN, percent=false, kw...) = hlines(arg; first=false, ymin=ymin, ymax=ymax, percent=percent, kw...)
 # ------------------------------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------------------------------
 """
-    vlines(arg; decorated=(...), kwargs...)
+    vlines(arg; decorated=(...), ymin=NaN, ymax=NaN, percent=false, kwargs...)
 
 Plots one or a collection of vertical lines with eventual decorations
+
+- `ymin` & `ymax`: Limit the vertical lines to start a `ymin` and/or end at `ymax`
+- `percent`: If true the `xmin` & `xmax` are interpreted as fractions of the figure width.
 
 - $(GMT._opt_B)
 - $(GMT._opt_J)
@@ -1499,8 +1496,14 @@ Example:
     plot(rand(5,3), region=[0,1,0,1])
     vlines!([0.2, 0.6], pen=(1, :red), show=true)
 """
-function vlines(arg1=nothing; first=true, kwargs...)
+function vlines(arg1=nothing; first=true, ymin=NaN, ymax=NaN, percent=false, kwargs...)
 	# A lines plotting method of plot
+	helper_vhlines(arg1, true, first, ymin, ymax, percent, kwargs...)
+end
+vlines!(arg=nothing; ymin=NaN, ymax=NaN, percent=false, kw...) = vlines(arg; first=false, ymin=ymin, ymax=ymax, percent=percent, kw...)
+
+# ------------------------------------------------------------------------------------------------------
+function helper_vhlines(arg1, vert::Bool, first::Bool, xymin, xymax, percent, kwargs...)
 	d = KW(kwargs)
 	(arg1 === nothing && ((arg1_ = find_in_dict(d, [:data])[1]) === nothing)) && error("No input data")
 	# If I don't do this stupid gymn with arg1 vs arg1_ then arg1 is Core.Boxed F..
@@ -1508,17 +1511,16 @@ function vlines(arg1=nothing; first=true, kwargs...)
 
 	mat::Matrix{Float64} = ones(2, len)
 	mat[1,:] = mat[2,:] .= (arg1 !== nothing) ? arg1 : arg1_
-	x::Vector{Float64} = ((opt_R = parse_R(d, "", first, false)[2]) != "") ? vec(opt_R2num(opt_R)[3:4]) : [-1e50, 1e50]
-	D::Vector{GMTdataset} = mat2ds(mat, x=x, multi=true)
-	# Now we need tp swapp x / y columns because the vlines case is more complicated to implement.
-	for k = 1:len
-		D[k].data[:,1], D[k].data[:,2] = D[k].data[:,2], D[k].data[:,1]
-	end
+
+	parse_R(d, "", first, false)[2]		# Just to make the limits land in CTRL.limits (if they aren't there already)
+	xy = vert ? [CTRL.limits[9], CTRL.limits[10]] : [CTRL.limits[7], CTRL.limits[8]]
+	!isnan(xymin) && (xy[1] = !percent ? xymin : xy[1] + (xy[2]-xy[1]) * xymin)
+	!isnan(xymax) && (xy[2] = !percent ? xymax : xy[1] + (xy[2]-xy[1]) * xymax)
+	D::GMTdataset = mat2ds(mat, x=xy, multi=true, nanseg=true)[1]
+	vert && (d[:yx] = true)		# Because we need to swapp x / y columns in the vlines case
 
 	common_plot_xyz("", D, "lines", first, false, d...)
 end
-vlines!(arg=nothing; kw...) = vlines(arg; first=false, kw...)
-# ------------------------------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------------------------------
 hband(mat::Matrix{<:Real}; height=false, percent=false, first=true, kw...) =
