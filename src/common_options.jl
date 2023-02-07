@@ -1247,9 +1247,13 @@ end
 function parse_UXY(cmd::String, d::Dict, aliases, opt::Char)::String
 	# Parse the global -U, -X, -Y options. Return CMD same as input if no option OPT in args
 	# ALIASES: [:X :xshift :x_offset] (same for Y) or [:U :time_stamp :timestamp]
-	if ((val = find_in_dict(d, aliases, true)[1]) !== nothing)
+	val, symb = find_in_dict(d, aliases, true)
+	if (val !== nothing)
 		cmd::String = string(cmd, " -", opt, val)
 	end
+	# If -X|Y assume it's a new fig so plot any legend that may be trailing around.
+	# This may screw but also screws if we don't do it. 
+	(symb in [:X :xshift :x_offset :Y :yshift :y_offset]) && digests_legend_bag(d)
 	return cmd
 end
 
