@@ -46,13 +46,17 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		d[:p] = "200/30"		# Need this before parse_BJR() so MAP_FRAME_AXES can be guessed.
 	end
 	
-	isa(arg1, GMTdataset) && (arg1 = with_xyvar(d, arg1))	# See if we have a column request based on column names
+	isa(arg1, GMTdataset) && (arg1 = with_xyvar(d, arg1))		# See if we have a column request based on column names
+	if ((val = find_in_dict(d, [:decimate])[1]) !== nothing)	# Asked for a clever data decimation?
+		dec_factor::Int = (val == 1) ? 10 : val
+		arg1 = lttb(arg1, dec_factor)
+	end
 
 	parse_paper(d)				# See if user asked to temporarily pass into paper mode coordinates
 
 	if (is_ternary)
 		opt_B::String = ""
-		if (haskey(d, :B))		# Not necessarely the case when ternary!
+		if (haskey(d, :B))						# Not necessarely the case when ternary!
 			cmd, opt_B = cmd * d[:B], d[:B]		# B option was parsed in plot/ternary
 			delete!(d, :B)
 		end
