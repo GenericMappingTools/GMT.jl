@@ -844,7 +844,7 @@ function qqplot(x, y; qqline=:identity, first=true, kwargs...)
 	# Because the plot with the points and the line are actually two plots and we have only one "kwargs"
 	# we must do some fishing and conditionaly set some defaults.
 	d = KW(kwargs)
-	(is_in_dict(d, [:aspect]) === nothing) && (d[:aspect] = :equal)
+	(first && is_in_dict(d, [:aspect]) === nothing) && (d[:aspect] = :equal)
 	do_show = ((val = find_in_dict(d, [:show])[1]) !== nothing && val != 0)
 
 	if (plotline)						# Normally, we want the line but a 'qqline=:none' avoids it.
