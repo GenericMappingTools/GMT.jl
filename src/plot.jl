@@ -1514,10 +1514,12 @@ function helper_vhlines(arg1, vert::Bool, first::Bool, xymin, xymax, percent, kw
 
 	parse_R(d, "", first, false)[2]		# Just to make the limits land in CTRL.limits (if they aren't there already)
 	xy = vert ? [CTRL.limits[9], CTRL.limits[10]] : [CTRL.limits[7], CTRL.limits[8]]
+	xy == [0, 0] && (xy = [-1e150, 1e150])	# Because -R for histograms may have it [0 0] to let GMT C set the true limits.
 	!isnan(xymin) && (xy[1] = !percent ? xymin : xy[1] + (xy[2]-xy[1]) * xymin)
 	!isnan(xymax) && (xy[2] = !percent ? xymax : xy[1] + (xy[2]-xy[1]) * xymax)
 	D::GMTdataset = mat2ds(mat, x=xy, multi=true, nanseg=true)[1]
 	vert && (d[:yx] = true)		# Because we need to swapp x / y columns in the vlines case
+	del_from_dict(d, [[:xmin], [:xmax], [:ymin], [:ymax]])
 
 	common_plot_xyz("", D, "lines", first, false, d...)
 end
