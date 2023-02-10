@@ -3417,6 +3417,7 @@ function _read_data(d::Dict, cmd::String, arg, opt_R::String="", is3D::Bool=fals
 	no_R = (opt_R == "" || opt_R[1] == '/' || opt_R == " -Rtight")
 	if (!convert_syntax[1] && !IamModern[1] && no_R)	# Here 'arg' can no longer be a file name (string)
 		wesn_f64::Matrix{<:Float64} = gmt("gmtinfo -C" * opt_i * opt_di * opt_yx, arg).data		# Avoid bloody Any's
+		(length(wesn_f64) == 2) && (is_onecol = true)
 		have_info = true
 		# Workaround a bug/feature in GMT when -: is arround
 		if (wesn_f64[1] > wesn_f64[2])  wesn_f64[2], wesn_f64[1] = wesn_f64[1], wesn_f64[2]  end
@@ -3439,7 +3440,7 @@ function _read_data(d::Dict, cmd::String, arg, opt_R::String="", is3D::Bool=fals
 			end
 		end
 		if (opt_R != " -Rtight")
-			if (!occursin("?", opt_R) && !is_onecol)		# is_onecol is true only for DateTime data
+			if (!occursin("?", opt_R) && !is_onecol)		# is_onecol is true for DateTime data
 				dx::Float64 = (wesn_f64[2] - wesn_f64[1]) * 0.005;	dy::Float64 = (wesn_f64[4] - wesn_f64[3]) * 0.005;
 				wesn_f64[1] -= dx;	wesn_f64[2] += dx;	wesn_f64[3] -= dy;	wesn_f64[4] += dy;
 				wesn_f64 = round_wesn(wesn_f64)				# Add a pad if not-tight

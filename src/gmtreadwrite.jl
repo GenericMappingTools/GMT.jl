@@ -155,7 +155,7 @@ function gmtread(fname::String; kwargs...)
 		end
 
 		# Try guess if ascii file has time columns and if yes leave trace of it in GMTdadaset metadata.
-		(opt_bi == "" && opt_i != "" && isa(o, GDtype)) && file_has_time!(fname, o)
+		(opt_bi == "" && opt_i == "" && isa(o, GDtype)) && file_has_time!(fname, o)
 
 		if (isa(o, GMTgrid))
 			o.hasnans = any(!isfinite, o) ? 2 : 1
@@ -210,7 +210,6 @@ function file_has_time!(fname::String, D::GDtype)
 	# We do that by scanning the first valid line in file.
 
 	#line1 = split(collect(Iterators.take(eachline(fname), 1))[1])	# Read first line and cut it in tokens
-	(fname[1] == '@') && return nothing		# We still don't sneak in remote files.
 	isone = isa(D, GMTdataset) ? true : false
 	if (isone && isempty(D.colnames)) || (!isone && isempty(D[1].colnames))		# If no colnames set yet
 		names_str = (isone) ? ["col.$i" for i=1:size(D,2)] : ["col.$i" for i=1:size(D[1],2)]
@@ -218,6 +217,7 @@ function file_has_time!(fname::String, D::GDtype)
 	end
 	n_cols = (isone) ? size(D,2) : size(D[1],2)
 	Tc, f1, n_it = "", 1, 0
+	(fname[1] == '@') && (gmt("gmtwhich -Gc $fname"); fname = joinpath(GMT.GMTuserdir[1], "cache", fname[2:end]))
 	fid = open(fname)
 	iter = eachline(fid)
 	try
