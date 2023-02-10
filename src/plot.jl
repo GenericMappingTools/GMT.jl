@@ -1876,14 +1876,17 @@ end
 const psevents = events            # Alias
 
 # ------------------------------------------------------------------------------------------------------
-cat_1_arg(arg::GMTdataset, toDS::Bool=false) = return arg				# Miserable attempts to force type stability
+cat_1_arg(arg::GMTdataset, toDS::Bool=false) = return arg			# Miserable attempts to force type stability
 cat_1_arg(arg::Vector{<:GMTdataset}, toDS::Bool=false) = return arg
 function cat_1_arg(arg, toDS::Bool=false)
 	# Add a first column with 1:n to all args that are not GMTdatasets
 	if (isa(arg, Vector) || typeof(arg) <: AbstractRange)
-		arg = hcat(collect(eltype(arg), 1:size(arg,1)), arg)
-	#elseif (isa(arg, Array) && size(arg,1) == 1)		# Accept also row arrays. CAN'T IT BREAKS plot([1 1])
-		#arg = hcat(collect(eltype(arg), 1:length(arg)), arg')
+		if isa(arg, Vector{<:Vector{<:Real}})
+			(length(arg) == 1) && (arg = hcat(collect(eltype(arg[1]), 1:length(arg[1])), arg[1]))
+			(length(arg)  > 1) && (arg = reduce(hcat,arg))
+		else
+			arg = hcat(collect(eltype(arg), 1:size(arg,1)), arg)
+		end
 	elseif (isa(arg, NTuple))
 		arg = hcat(collect(eltype(arg), 1:length(arg)), collect(arg))
 	end
