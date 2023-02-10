@@ -1880,7 +1880,7 @@ cat_1_arg(arg::GMTdataset, toDS::Bool=false) = return arg			# Miserable attempts
 cat_1_arg(arg::Vector{<:GMTdataset}, toDS::Bool=false) = return arg
 function cat_1_arg(arg, toDS::Bool=false)
 	# Add a first column with 1:n to all args that are not GMTdatasets
-	if (isvector(arg) || typeof(arg) <: AbstractRange)
+	if (isa(arg, Vector) || typeof(arg) <: AbstractRange)
 		if isa(arg, Vector{<:Vector{<:Real}})
 			(length(arg) == 1) && (arg = hcat(collect(eltype(arg[1]), 1:length(arg[1])), arg[1]))
 			(length(arg)  > 1) && (arg = reduce(hcat,arg))
