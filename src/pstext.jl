@@ -123,6 +123,7 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	# If file name sent in, read it and compute a tight -R if this was not provided
 	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R)
+	contains(opt_R, "NaN") && error("Text element has no coordinates. So you cannot show it in the first command.")
 	(isa(arg1, AbstractString) || isa(arg1, Vector{<:AbstractString})) && (arg1 = parse_xy(d, arg1))	# See if x=.., y=..
 	if (isa(arg1, Array{<:Real}))
 		arg1 = [GMTdataset(arg1, Float64[], Float64[], Dict{String, String}(), String[], String[], "", String[], "", "", 0, 0)]
@@ -152,9 +153,7 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	r = finish_PS_module(d, gmt_proggy * cmd, "", K, O, true, arg1, arg2)
 	if (isa(r, String) && startswith(r, gmt_proggy))	# It's a string when called with Vd = 2 and it may be a nested call
-		isa(arg1, GDtype) && (CTRL.pocket_call[1] = arg1)	# No need to call gmt_restart() because pstext wasn't executed yet
-	else
-		gmt_restart()
+		isa(arg1, GDtype) && (CTRL.pocket_call[1] = arg1)
 	end
 	return r
 end

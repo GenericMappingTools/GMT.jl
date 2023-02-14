@@ -294,7 +294,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	finish = (is_ternary && occursin(" -M",_cmd[1])) ? false : true		# But this case (-M) is bugged still in 6.2.0
 	r = finish_PS_module(d, _cmd, "", K, O, finish, arg1, arg2, arg3, arg4)
 	CTRL.pocket_d[1] = d					# Store d that may be not empty with members to use in other modules
-	(occursin("-Sk", opt_S)) && gmt_restart()  # Apparently patterns & custom symbols are screwing the session
+	#(occursin("-Sk", opt_S)) && gmt_restart()  # Apparently patterns & custom symbols are screwing the session
 	return r
 end
 
