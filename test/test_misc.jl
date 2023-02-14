@@ -67,7 +67,9 @@
 
 	@info "linearfitxy"
 	D = linearfitxy([0.0, 0.9, 1.8, 2.6, 3.3, 4.4, 5.2, 6.1, 6.5, 7.4], [5.9, 5.4, 4.4, 4.6, 3.5, 3.7, 2.8, 2.8, 2.4, 1.5], sx=1 ./ sqrt.([1000., 1000, 500, 800, 200, 80,  60, 20, 1.8, 1]), sy=1 ./ sqrt.([1., 1.8, 4, 8, 20, 20, 70, 70, 100, 500]));
+	@info "1..."
 	plot(D, linefit=true, band_ab=true, band_CI=true, ellipses=true, Vd=dbg2)
+	@info "2..."
 	plot!(D, linefit=true, Vd=dbg2)
 	@info "ablines"
 	ablines!(D, Vd=dbg2)
