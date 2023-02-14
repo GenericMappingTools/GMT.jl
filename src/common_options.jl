@@ -4048,7 +4048,8 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 
 	leave_paper_mode()				# See if we were in an intermediate state of paper coordinates
 	if (usedConfPar[1])				# Hacky shit to force start over when --PAR options were use
-		usedConfPar[1] = false;		gmt_restart()
+		usedConfPar[1] = false;		#gmt_restart()
+		theme_modern()
 	end
 
 	if (!IamModern[1])
@@ -4071,6 +4072,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 	end
 	CTRL.XYlabels[1] = "";	CTRL.XYlabels[2] = "";	# Reset these in case they weren't empty
 	show_non_consumed(d, cmd)
+	(GMTver < v"6.5" && isa(P, GMTps)) && gmt_restart()
 	return P
 end
 
