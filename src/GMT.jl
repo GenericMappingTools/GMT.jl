@@ -9,6 +9,7 @@ struct CTRLstruct
 	limits::Vector{Float64}			# To store the data limits. First 6 store: data limits. Second 6: plot limits
 	figsize::Vector{Float64}		# To store the current fig size (xsize,ysize[,zsize]). Needed, for example, in hexbin
 	proj_linear::Vector{Bool}		# To know if images sent to GMT need Pad
+	returnPS::Vector{Bool}			# To know if returning the PS to Julia
 	callable::Array{Symbol}			# Modules that can be called inside other modules
 	pocket_call::Vector{Any}		# To temporarily store data needed by modules sub-calls. Put in [3] for pre-calls
 	pocket_B::Vector{String}		# To temporarily store opt_B grid and fill color to be reworked in psclip
@@ -60,7 +61,7 @@ const def_fig_axes_bak     = " -Baf -BWSen"        # Default fig axes for plot l
 const def_fig_axes3_bak    = " -Baf -Bza"          # 		"" but for 3D views
 const global def_fig_axes  = [def_fig_axes_bak]    # This one may be be changed by theme()
 const global def_fig_axes3 = [def_fig_axes3_bak]   #		""
-const global CTRL = CTRLstruct(zeros(12), zeros(3), [true],
+const global CTRL = CTRLstruct(zeros(12), zeros(3), [true], [false],
                                [:arrows, :bublechart, :basemap, :band, :clip, :coast, :colorbar, :hband, :hlines, :logo, :lines, :grdvector, :plot, :plot3, :quiver, :scatter, :scatter3, :stairs, :text, :vlines, :vband],
 							   [nothing, nothing, nothing], ["",""], ["","", "", "   "], [""], ["",""], [false,true], [C_NULL], [Dict()])
 const global CTRLshapes = CTRLstruct2([true], [true], [""])			# Used in sub-module Drawing

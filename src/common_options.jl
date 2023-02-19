@@ -1404,7 +1404,30 @@ parse_swap_xy(d::Dict, cmd::String) = parse_helper(cmd, d, [:yx :swap_xy], " -:"
 # Parse the global -? option. Return CMD same as input if no -? option in args
 parse_s(d::Dict, cmd::String) = parse_helper(cmd, d, [:s :skiprows :skip_NaN], " -s")
 parse_x(d::Dict, cmd::String) = parse_helper(cmd, d, [:x :cores :n_threads], " -x")
-parse_w(d::Dict, cmd::String) = parse_helper(cmd, d, [:w :wrap :cyclic], " -w")
+
+# ---------------------------------------------------------------------------------------------------
+function parse_w(d::Dict, cmd::String)
+	# -wy|a|w|d|h|m|s|cperiod[/phase][+ccol]
+	val, symb = find_in_dict(d, [:w :wrap :cyclic], false)
+	(val === nothing) && return cmd
+	if isa(val, StrSymb)
+		t = string(val)::String
+		if (contains(t, "+c") || contains(t, '/'))	# Contains a period/phase or column form, assume a plain GMT opt
+			delete!(d, symb)
+			t = " -w" * t
+			return cmd * t, t
+		end
+		opt_w::String = (t[1] == 'y' || t[1] == 'a' || t[1] == 'w' || t[1] == 'd' || t[1] == 'h' || t[1] == 'm' || t[1] == 's') ? string(" -w", t[1]) : error("Bad coordinate name ($t) for option 'cyclic'")
+	elseif (isa(val, Real))
+		opt_w = string(" -wc", val)::String
+	elseif (isa(val, Tuple) && eltype(val) <: Real)		# custom passed in as w=(period, phase)
+		opt_w = " -wc" * arg2str(val)
+	else
+		opt_w = add_opt(d, "", "w", [:w :wrap :cyclic],
+		                (year=("y", nothing, 1), annual=("a", nothing, 1), week=("w", nothing, 1), day=("d", nothing, 1),  hour=("h", nothing, 1), minute=("m", nothing, 1), second=("s", nothing, 1), period=("c", arg2str, 1), col=("+c", arg2str)))
+	end
+	return cmd * opt_w, opt_w
+end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_r(d::Dict, cmd::String)
@@ -3311,11 +3334,12 @@ function fname_out(d::Dict, del::Bool=false)
 	end
 	(EXT == "" && !Sys.iswindows()) && error("Return an image is only for Windows")
 
-	if (haskey(d, :ps))			# In any case this means we want the PS sent back to Julia
+	if (haskey(d, :ps))				# In any case this means we want the PS sent back to Julia
 		fname, EXT, ret_ps = "", "ps", true
 		(del) && delete!(d, :ps)
+		CTRL.returnPS[1] = true		# Reset to false only when showfig or save file
 	else
-		ret_ps = false			# To know if we want to return or save PS in mem
+		ret_ps = CTRL.returnPS[1] ? (!IamModern[1] ? true : false) : false	# To know if we want to save PS in mem
 	end
 
 	opt_T::String = "";
@@ -3977,6 +4001,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 	
 	reverse_plot_axes!(cmd)		# If CTRL.pocket_J[4] != "   " there is some work to do. Otherwise return unchanged
 
+	(!O && CTRL.returnPS[1]) && (CTRL.returnPS[1] = false)	# Ensure that a first call starts in the write to file mode
 	output::String, opt_T::String, fname_ext::String, fname, ret_ps = fname_out(d, true)
 	(ret_ps) && (output = "") 	 						# Here we don't want to save to file
 	cmd, opt_T = prepare2geotif(d, cmd, opt_T, O)		# Settings for the GeoTIFF and KML cases
@@ -3990,7 +4015,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 
 	if (fname_ext != "ps" && !IamModern[1] && !O)		# Exptend to a larger paper size
 		cmd[1] *= " --PS_MEDIA=32767x32767"				# In Modern mode GMT takes care of this.
-	elseif (fname_ext == "ps" && !IamModern[1] && !O)
+	elseif (fname_ext == "ps" && !IamModern[1] && !O)	# First time that a return PS is asked
 		cmd[1] *= " --PS_MEDIA=1194x1441"				# add 600 pt to A4 to account for the 20 cm
 	end
 
@@ -4043,7 +4068,8 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 
 		# If we had a double frame to plot Geog on a Cartesian plot we must reset memory to original -J & -R so
 		# that appending other plots to same fig can continue to work and not fail because proj had become Geog.
-		(orig_J != "") && (gmt("psxy -T -J" * orig_J * " -R" * orig_R * " -O -K >> " * output);  orig_J = "")
+		apenda = ((orig_J != "") && !CTRL.returnPS[1]) ? " >> " : ""
+		(orig_J != "") && (gmt("psxy -T -J" * orig_J * " -R" * orig_R * " -O -K" * apenda * output);  orig_J = "")
 	end
 
 	leave_paper_mode()				# See if we were in an intermediate state of paper coordinates
@@ -4072,7 +4098,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 	end
 	CTRL.XYlabels[1] = "";	CTRL.XYlabels[2] = "";	# Reset these in case they weren't empty
 	show_non_consumed(d, cmd)
-	(GMTver < v"6.5" && isa(P, GMTps)) && gmt_restart()
+	#(GMTver < v"6.5" && isa(P, GMTps)) && gmt_restart()
 	return P
 end
 
