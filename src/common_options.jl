@@ -1409,7 +1409,7 @@ parse_x(d::Dict, cmd::String) = parse_helper(cmd, d, [:x :cores :n_threads], " -
 function parse_w(d::Dict, cmd::String)
 	# -wy|a|w|d|h|m|s|cperiod[/phase][+ccol]
 	val, symb = find_in_dict(d, [:w :wrap :cyclic], false)
-	(val === nothing) && return cmd
+	(val === nothing) && return cmd, ""
 	if isa(val, StrSymb)
 		t = string(val)::String
 		if (contains(t, "+c") || contains(t, '/'))	# Contains a period/phase or column form, assume a plain GMT opt
@@ -1518,6 +1518,7 @@ function parse_common_opts(d::Dict, cmd::String, opts::VMs, first::Bool=true)
 		elseif (opt == :s)  cmd, o = parse_s(d, cmd)
 		elseif (opt == :x)  cmd, o = parse_x(d, cmd)
 		elseif (opt == :t)  cmd, o = parse_t(d, cmd)
+		elseif (opt == :w)  cmd, o = parse_w(d, cmd)
 		elseif (opt == :yx) cmd, o = parse_swap_xy(d, cmd)
 		elseif (opt == :params)   cmd = parse_params(d, cmd)
 		elseif (opt == :write)    cmd = parse_write(d, cmd)
