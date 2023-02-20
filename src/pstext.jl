@@ -84,6 +84,8 @@ Parameters
 """
 function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
+	(find_in_kwargs(kwargs, [:L :list])[1] !== nothing) && return gmt("pstext -L")
+
     gmt_proggy = (IamModern[1]) ? "text " : "pstext "
 
 	N_args = (arg1 === nothing) ? 0 : 1
@@ -113,12 +115,15 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 			arg1 = (!haskey(d, :x) && isa(arg1, Matrix) || isvector(arg1)) ? mat2ds(arg1, [string(val)]) : parse_xy(d, val)
 			del_from_dict(d, [[:text, :txt], [:region_justify]])
 		end
+	elseif (cmd0 != "" && !isfile(cmd0))	# To accept text("BlaBla", x=?, y=?, ...)
+		arg1 = parse_xy(d, cmd0)
+		cmd0 = ""
 	end
 
 	cmd, _, _, opt_R = parse_BJR(d, "", "", O, " -JX" * split(def_fig_size, '/')[1] * "/0")
 	cmd, = parse_common_opts(d, cmd, [:a :e :f :p :t :w :JZ :UVXY :params], first)
-	cmd  = parse_these_opts(cmd, d, [[:A :azimuths :azimuth :azim], [:L :list], [:M :paragraph],
-	                                 [:N :no_clip :noclip], [:Q :change_case], [:S :shade], [:T :text_box], [:Z :threeD]])
+	cmd  = parse_these_opts(cmd, d, [[:A :azimuths :azimuth :azim], [:M :paragraph], [:N :no_clip :noclip],
+	                                 [:Q :change_case], [:S :shade], [:T :text_box], [:Z :threeD]])
 	cmd  = add_opt(d, cmd, "C", [:C :clearance], (margin="#", round="_+tO", concave="_+tc", convex="_+tC"))
 
 	# If file name sent in, read it and compute a tight -R if this was not provided
@@ -182,6 +187,31 @@ end
 text!(; text::Union{AbstractString, Vector{AbstractString}}="", x=nothing, y=nothing, kw...) =
 	text(; text=text, x=x, y=y, first=false, kw...)
 =#
+
+## ---------------------------------------------------------------------------------------------------
+export rich, subscript, superscript, underline, smallcaps, fontgreek, mathtex
+subscript(arg)   = string("@-", arg, "@-")
+superscript(arg) = string("@+", arg, "@+")
+underline(arg)   = string("@_", arg, "@_")
+smallcaps(arg)   = string("@#", arg, "@#")
+fontgreek(arg)   = string("@~", arg, "@~")
+mathtex(arg)     = string("@[", arg, "@[")
+function rich(args...; kwargs...)
+	# rich("H", subscript("2"), fontgreek("O")," is the ", smallcaps("formula")," for ", rich(underline("water"), color=:red, font=4, size=18))
+	tx, close = "", String[]
+	for arg in args
+		tx *= arg
+	end
+	for kw in kwargs
+		if     (kw[1] == :color)  tx = string("@;", kw[2], ";", tx);	append!(close, ["@;;"])
+		elseif (kw[1] == :size)   tx = string("@:", kw[2], ":", tx);	append!(close, ["@::"])
+		elseif (kw[1] == :font)   tx = string("@%", kw[2], "%", tx);	append!(close, ["@%%"])
+		end
+	end
+	!isempty(close) && (for k = 1:numel(close)  tx *= close[k]  end)
+	tx
+end
+##
 
 const pstext  = text			# Alias
 const pstext! = text!			# Alias
