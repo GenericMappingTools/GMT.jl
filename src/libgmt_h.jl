@@ -391,21 +391,21 @@ struct GMT_INTERNAL
 	mem_coord::Ptr{Ptr{Cdouble}}	# Columns of temp memory */
 	mem_txt::Ptr{Ptr{UInt8}}		# For temp text */
 end
-
-struct GMT_CTRL
-	# Master structure for a GMT invocation.  All internal settings for GMT is accessed here
-	session::Cvoid	# struct GMT_SESSION. Structure with all values that do not change throughout a session
-	init::Cvoid		# struct GMT_INIT. Structure with all values that do not change in a GMT_func call
-	common::Cvoid	# struct GMT_COMMON. Structure with all the common GMT command settings (-R -J ..)
-	current::Cvoid	# struct GMT_CURRENT. Structure with all the GMT items that can change during execution,
-	hidden::GMT_INTERNAL	# struct GMT_INTERNAL. Internal global variables that are not to be changed directly by users
-	PSL::Ptr{GMT_POSTSCRIPT}		# Pointer to the PSL structure [or NULL]
-	parent::Ptr{Cvoid}	# struct GMTAPI_CTRL.Owner of this structure [or NULL]; gives access to the API from functions being passed *GMT only
-end
 =#
 
 ## 
 if (GMTver >= v"6.5")
+
+	struct GMT_CTRL
+		# Master structure for a GMT invocation.  All internal settings for GMT is accessed here
+		PSL::Ptr{Cvoid}				# struct GMT_POSTSCRIPT Pointer to the PSL structure [or NULL]
+		parent::Ptr{Cvoid}			# struct GMTAPI_CTRL. Owner of this structure [or NULL];
+		session::GMT_SESSION		# Structure with all values that do not change throughout a session
+		init::GMT_INIT				# Structure with all values that do not change in a GMT_func call
+		common::GMT_COMMON			# Structure with all the common GMT command settings (-R -J ..)
+		current::GMT_CURRENT		# Structure with all the GMT items that can change during execution,
+		hidden::GMT_INTERNAL		# Internal global variables that are not to be changed directly by users
+	end
 
 	struct GMT_JULIA_POCKET
 		gwf_dir::Ptr{UInt8}				# In API->gwf_dir. GMT WorkFlow dir (NULL if not running in modern mode). 4GMT.jl */
