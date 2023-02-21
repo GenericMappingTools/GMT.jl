@@ -400,11 +400,11 @@ if (GMTver >= v"6.5")
 		# Master structure for a GMT invocation.  All internal settings for GMT is accessed here
 		PSL::Ptr{Cvoid}				# struct GMT_POSTSCRIPT Pointer to the PSL structure [or NULL]
 		parent::Ptr{Cvoid}			# struct GMTAPI_CTRL. Owner of this structure [or NULL];
-		session::GMT_SESSION		# Structure with all values that do not change throughout a session
-		init::GMT_INIT				# Structure with all values that do not change in a GMT_func call
-		common::GMT_COMMON			# Structure with all the common GMT command settings (-R -J ..)
-		current::GMT_CURRENT		# Structure with all the GMT items that can change during execution,
-		hidden::GMT_INTERNAL		# Internal global variables that are not to be changed directly by users
+		#session::GMT_SESSION		# Structure with all values that do not change throughout a session
+		#init::GMT_INIT				# Structure with all values that do not change in a GMT_func call
+		#common::GMT_COMMON			# Structure with all the common GMT command settings (-R -J ..)
+		#current::GMT_CURRENT		# Structure with all the GMT items that can change during execution,
+		#hidden::GMT_INTERNAL		# Internal global variables that are not to be changed directly by users
 	end
 
 	struct GMT_JULIA_POCKET
