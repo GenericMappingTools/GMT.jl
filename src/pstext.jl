@@ -188,16 +188,16 @@ text!(; text::Union{AbstractString, Vector{AbstractString}}="", x=nothing, y=not
 	text(; text=text, x=x, y=y, first=false, kw...)
 =#
 
-## ---------------------------------------------------------------------------------------------------
-export rich, subscript, superscript, underline, smallcaps, fontgreek, mathtex
+# ---------------------------------------------------------------------------------------------------
+export rich, subscript, superscript, underline, smallcaps, greek, mathtex
 subscript(arg)   = string("@-", arg, "@-")
 superscript(arg) = string("@+", arg, "@+")
 underline(arg)   = string("@_", arg, "@_")
 smallcaps(arg)   = string("@#", arg, "@#")
-fontgreek(arg)   = string("@~", arg, "@~")
+greek(arg)       = string("@~", arg, "@~")
 mathtex(arg)     = string("@[", arg, "@[")
 function rich(args...; kwargs...)
-	# rich("H", subscript("2"), fontgreek("O")," is the ", smallcaps("formula")," for ", rich(underline("water"), color=:red, font=4, size=18))
+	# rich("H", subscript("2"), greek("O")," is the ", smallcaps("formula")," for ", rich(underline("water"), color=:red, font="Helvetica", size=16))
 	tx, close = "", String[]
 	for arg in args
 		tx *= arg
@@ -211,7 +211,6 @@ function rich(args...; kwargs...)
 	!isempty(close) && (for k = 1:numel(close)  tx *= close[k]  end)
 	tx
 end
-##
 
 const pstext  = text			# Alias
 const pstext! = text!			# Alias

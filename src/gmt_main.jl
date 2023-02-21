@@ -708,9 +708,9 @@ function get_palette(API::Ptr{Nothing}, object::Ptr{Nothing})::GMTcpt
 			out.bfn[j,k] = C.bfn[j].rgb[k]
 		end
 	end
-	@GC.preserve C gmt_lut = unsafe_load(C.data, 1)
+	gmt_lut = unsafe_load(C.data, 1)
 	out.minmax[1] = gmt_lut.z_low
-	@GC.preserve C gmt_lut = unsafe_load(C.data, C.n_colors)
+	gmt_lut = unsafe_load(C.data, C.n_colors)
 	out.minmax[2] = gmt_lut.z_high
 	out.depth = (C.is_bw != 0) ? 1 : ((C.is_gray != 0) ? 8 : 24)
 	@GC.preserve C out.hinge = (C.has_hinge != 0) ? C.hinge : NaN;
