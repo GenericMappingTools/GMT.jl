@@ -678,7 +678,7 @@ function get_palette(API::Ptr{Nothing}, object::Ptr{Nothing})::GMTcpt
 
 	C::GMT_PALETTE = unsafe_load(convert(Ptr{GMT_PALETTE}, object))
 
-	(C.data == C_NULL) && error("get_palette: programming error, output CPT is empty")
+	@GC.preserve C (C.data == C_NULL) && error("get_palette: programming error, output CPT is empty")
 
 	model::String = (C.model & GMT_HSV != 0) ? "hsv" : ((C.model & GMT_CMYK != 0) ? "cmyk" : "rgb")
 	n_colors::UInt32 = (C.is_continuous != 0) ? C.n_colors + 1 : C.n_colors
@@ -687,7 +687,7 @@ function get_palette(API::Ptr{Nothing}, object::Ptr{Nothing})::GMTcpt
 	             zeros(C.n_colors,6), Vector{String}(undef,C.n_colors), Vector{String}(undef,C.n_colors), model, String[])
 
 	for j = 1:C.n_colors       # Copy r/g/b from palette to Julia array
-		gmt_lut = unsafe_load(C.data, j)
+		global gmt_lut = unsafe_load(C.data, j)
 		for k = 1:3 	out.colormap[j, k] = gmt_lut.rgb_low[k]		end
 		for k = 1:3
 			out.cpt[j, k]   = gmt_lut.rgb_low[k]
@@ -1213,7 +1213,7 @@ function palette_init(API::Ptr{Nothing}, cpt::GMTcpt)::Ptr{GMT.GMT_PALETTE}
 		n_colors = n_colors - 1;	# Number of CPT slices
 	end
 
-	@GC.preserve n_colors P = convert(Ptr{GMT.GMT_PALETTE}, GMT_Create_Data(API, GMT_IS_PALETTE, GMT_IS_NONE, 0, pointer([n_colors]), NULL, NULL, 0, 0, NULL))
+	P = convert(Ptr{GMT.GMT_PALETTE}, GMT_Create_Data(API, GMT_IS_PALETTE, GMT_IS_NONE, 0, pointer([n_colors]), NULL, NULL, 0, 0, NULL))
 
 	Pb::GMT_PALETTE = unsafe_load(P)				# We now have a GMT.GMT_PALETTE
 
