@@ -272,9 +272,6 @@ function gmt(cmd::String, args...)
 	# Here I have an issue that I can't resolve any better. For modules that can have no options (e.g. gmtinfo)
 	# the LinkedList (LL) is actually created in GMT_Encode_Options but I can't get it's contents back when pLL
 	# is a Ref, so I'm forced to use 'pointer', which goes against the documents recommendation.
-	#if (LL != NULL)  pLL = Ref([LL], 1)
-	#else             pLL = pointer([NULL])
-	#end
 	pLL = (LL != NULL) ? Ref([LL], 1) : pointer([NULL])
 
 	n_itemsP = pointer([0])
@@ -1215,6 +1212,7 @@ function palette_init(API::Ptr{Nothing}, cpt::GMTcpt)::Ptr{GMT.GMT_PALETTE}
 	end
 
 	P = convert(Ptr{GMT.GMT_PALETTE}, GMT_Create_Data(API, GMT_IS_PALETTE, GMT_IS_NONE, 0, pointer([n_colors]), NULL, NULL, 0, 0, NULL))
+	(n_colors > 100000) && @warn("Que exagero de cores")	# Just to protect n_colors to be GC'ed before here
 
 	Pb::GMT_PALETTE = unsafe_load(P)				# We now have a GMT.GMT_PALETTE
 
