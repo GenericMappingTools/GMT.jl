@@ -105,27 +105,46 @@ end
 function parse_G_grdview(d::Dict, symbs::Array{<:Symbol}, cmd0::String, cmd::String, arg1, arg2, arg3, arg4, arg5)
 	(show_kwargs[1]) && return print_kwarg_opts(symbs, "GMTgrid | Tuple | String"), arg1, arg2, arg3, arg4, arg5
 	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
-		if (isa(val, String) || isa(val, GMTimage))
-			if (isa(val, String) && guess_T_from_ext(val) != " -Ti")
-				cmd *= " -G" * val
-			else
-				if (cmd0 != "")
-					prj = (startswith(cmd0, "@earth_r")) ? prj4WGS84 : getproj(cmd0, proj4=true)
-				else
-					prj = (isa(arg1, GMTgrid)) ? getproj(arg1) : ""
-				end
-				t = split(scan_opt(cmd, "-R"), '/')
-				Iname = drape_prepare(d, val, ["-projwin", t[1], t[4], t[2], t[3]], prj)
-				cmd *= " -G" * Iname
-				(!contains(cmd, " -Qi")) && (cmd *= " -Qi300")	# Otherwise GMT crashes because grdview goes through the "MESH" branch
-			end
-		elseif (isa(val, GMTgrid))			# A single drape grid (arg1-3 may be used already)
-			cmd, N_used = put_in_slot(cmd, 'G', arg1, arg2, arg3, arg4)
+		function intern!(cmd, val, arg1, arg2, arg3, arg4)
+			opt = isa(val, GMTgrid) ? 'G' : 'z'		# 'z' is the fake option that works as a backdoor for images
+			cmd, N_used = put_in_slot(cmd, opt, arg1, arg2, arg3, arg4)
 			if     (N_used == 1)  arg1 = val
 			elseif (N_used == 2)  arg2 = val
 			elseif (N_used == 3)  arg3 = val
 			elseif (N_used == 4)  arg4 = val
 			end
+			return cmd, arg1, arg2, arg3, arg4
+		end
+		if (isa(val, String) || isa(val, GMTimage))
+			#if (isa(val, String) && (val[1] == '@' || guess_T_from_ext(val) != " -Ti"))
+			if (isa(val, String))
+				cmd *= " -G" * val
+			else
+				if (cmd0 != "")  prj = (startswith(cmd0, "@earth_r")) ? prj4WGS84 : getproj(cmd0, proj4=true)
+				else             prj = (isa(arg1, GItype)) ? getproj(arg1, proj4=true) : ""
+				end
+				#if ((prj_img = getproj(val, proj4=true)) == "" && GMTver > v"6.4")	# This only works in >= GMT6.5
+					#cmd, arg1, arg2, arg3, arg4 = intern!(cmd, val, arg1, arg2, arg3, arg4)
+				#elseif (GMTver > v"6.4")
+				if (GMTver > v"6.4")
+					cmd, arg1, arg2, arg3, arg4 = intern!(cmd, val, arg1, arg2, arg3, arg4)
+				else
+					if (prj_img == "")
+						val.x = arg1.x;		val.y = arg1.y;		val.inc = arg1.inc
+						val.registration = arg1.registration;	val.range = arg1.range
+						Iname = "/vsimem/GMTjl_2grdview.tiff"	# I'm amazed that this works
+						gdalwrite(Iname, val)
+						ressurectGDAL()
+					else
+						t = split(scan_opt(cmd, "-R"), '/')
+						Iname = drape_prepare(d, val, ["-projwin", t[1], t[4], t[2], t[3]], prj)
+					end
+					cmd *= " -G" * Iname
+				end
+				(!contains(cmd, " -Qi")) && (cmd *= " -Qi300")	# Otherwise grdview crashes because it goes through the "MESH" branch
+			end
+		elseif (isa(val, GMTgrid))			# A single drape grid (arg1-3 may be used already)
+			cmd, arg1, arg2, arg3, arg4 = intern!(cmd, val, arg1, arg2, arg3, arg4)
 		elseif (isa(val, Tuple) && length(val) == 3)
 			cmd, N_used = put_in_slot(cmd, 'G', arg1, arg2, arg3, arg4, arg5)
 			cmd *= " -G -G"					# Because the above only set one -G and we need 3
@@ -141,8 +160,8 @@ function parse_G_grdview(d::Dict, symbs::Array{<:Symbol}, cmd0::String, cmd::Str
 end
 
 # ---------------------------------------------------------------------------------------------------
-function drape_prepare(d::Dict, fname, opts::Vector{AbstractString}, prj::String)
-	# Deal with the option of drapping an image, which can be smaller, larger or with fifferent projection.
+function drape_prepare(d::Dict, fname, opts::Vector{<:AbstractString}, prj::String)
+	# Deal with the option of drapping an image, which can be smaller, larger or with different projection.
 	prj_img = getproj(fname, proj4=true)
 	(prj_img == "" && isa(fname, AbstractString)) && return fname	# If drape image has no RefSys just return its name and let it all be used
 
