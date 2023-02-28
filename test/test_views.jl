@@ -38,13 +38,19 @@ r = grdview(G, surf=(waterfall=(:rows,:red),surf=true, mesh=true, img=50), Vd=db
 @test startswith(grdview(G, surf=(waterfall=(rows=true, fill=:red),), Vd=dbg2), "grdview  -R0/360/-90/90 -JX" * split(GMT.def_fig_size, '/')[1] * "/0" * " -Baf -Bza -n+a -Qmyred")
 @test_throws ErrorException("Wrong way of setting the drape (G) option.")  grdview(rand(16,16), G=(1,2))
 I = mat2grid(rand(Float32,128,128));
+	@info "11..."
 grdview(rand(128,128), G=(Gr,Gg,Gb), I=I, J=:X12, JZ=5, Q=:i, view="145/30")
+	@info "12..."
 gmtwrite("lixo.grd", I)
-grdview(rand(128,128), G=I, I=I, J=:X12, JZ=5, Q=:i, view="145/30")
+	@info "13..."
+#grdview(rand(128,128), G=I, I=I, J=:X12, JZ=5, Q=:i, view="145/30")
+	@info "14..."
 grdview(rand(128,128), G="lixo.grd", I=I, J=:X12, JZ=5, Q=:i, view="145/30", Vd=dbg2)
 I = mat2img(rand(UInt8,89,120,3), proj4="+proj=longlat +datum=WGS84 +no_defs");	# 'proj' is ignored
 gmtwrite("lixo.tif", I)
+@info "17..."
 grdview(rand(90,120), G="lixo.tif", J=:X12, JZ=5, Q=:i, view="145/30", V=:q)
+@info "18..."
 grdview(rand(90,120), G=I, J=:X12, JZ=5, Q=:i, view="145/30", V=:q)
 # If I use proj4 something in the above fcks the memory state and one of next tests would crash. 
 
