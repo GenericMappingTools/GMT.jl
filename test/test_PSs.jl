@@ -194,7 +194,7 @@ text(text="aiai", x=1, y=2.6, Vd=dbg2)
 text(text=["aiai"], x=1, y=2.6, Vd=dbg2)
 @test startswith(GMT.text([1 2 3; 4 5 6], Vd=dbg2), "pstext  -JX" * split(GMT.def_fig_size, '/')[1] * "/0" * " -Baf -BWSen -R0.9/4.1/1.9/5.1")
 @test_throws ErrorException("TEXT: input file must have at least three columns") text([1 2; 4 5], Vd=dbg2)
-text(rich("H", subscript("2"), fontgreek("O")," is the ", smallcaps("formula")," for ", rich(underline("water"), color=:red, font=4, size=18)), x=1, y=1, Vd=dbg2)
+text(rich("H", subscript("2"), greek("O")," is the ", smallcaps("formula")," for ", rich(underline("water"), color=:red, font=4, size=18)), x=1, y=1, Vd=dbg2)
 @test superscript("4") == "@+4@+"
 @test mathtex("4") == "@[4@["
 

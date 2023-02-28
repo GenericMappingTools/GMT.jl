@@ -77,7 +77,8 @@ does not need explicit coordinates to place the text.
 mat2ds(mat::Nothing) = mat		# Method to simplify life and let call mat2ds on a nothing
 mat2ds(mat::GDtype)  = mat		# Method to simplify life and let call mat2ds on a already GMTdataset
 mat2ds(text::Union{AbstractString, Vector{<:AbstractString}}) = text_record(text)	# Now we can hide text_record
-function mat2ds(mat::Matrix{Any}; hdr=String[], geom=0, kwargs...)
+#function mat2ds(mat::Matrix{Any}; hdr=String[], geom=0, kwargs...)
+function mat2ds(mat::AbstractMatrix; hdr=String[], geom=0, kwargs...)
 	# Here we are expecting that Any-ness results from columns with DateTime. If not returm 'mat' as is
 	# DateTime columns are converted to seconds and a regular GMTdatset with appropriate column names and attribs is return 
 	c = zeros(Bool, size(mat, 2))
@@ -87,7 +88,7 @@ function mat2ds(mat::Matrix{Any}; hdr=String[], geom=0, kwargs...)
 			c[k] = true
 		end
 	end
-	!any(c) && return mat		# Oops, no DateTime? Ok, go to your life and probably blow somewhere.
+	#!any(c) && return mat		# Oops, no DateTime? Ok, go to your life and probably blow somewhere.
 
 	D = mat2ds(convert(Matrix{Float64}, mat); hdr=hdr, geom=geom, kwargs...)
 	ind = findall(c)
@@ -1237,31 +1238,45 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    I = ind2rgb(I::GMTimage, cmap::GMTcpt=GMTcpt())
+    I = ind2rgb(I::GMTimage, cmap::GMTcpt=GMTcpt(), layout="BRPa")
 
 Convert an indexed image I to RGB. If `cmap` is not provided, it uses the internal colormap to do the conversion.
 If neither them exists, the layer is replicated 3 times thus resulting in a gray scale image.
 """
-function ind2rgb(I::GMTimage, cmap::GMTcpt=GMTcpt())
+function ind2rgb(I::GMTimage, cmap::GMTcpt=GMTcpt(), layout="BRPa")
 	(size(I.image, 3) >= 3) && return I 	# Image is already RGB(A)
 
 	# If the CPT is shorter them maximum in I, reinterpolate the CPT
 	(!isempty(cmap) && (ma = maximum(I)) > size(cmap.colormap,1)) && (cmap = gmt("makecpt -T0/{$ma}/+n{$ma}", cmap))
 	_cmap = (!isempty(cmap)) ? cmap2colormap(cmap::GMTcpt)[1] : I.colormap
 
+	have_alpha = (length(I.colormap) / I.n_colors) == 4 && !all(I.colormap[end-Int(I.n_colors/4+1):end] .== 255)
 	if (I.n_colors == 0 && isempty(cmap))		# If no cmap just replicate the first layer.
 		imgRGB = repeat(I.image, 1, 1, 3)
+		layout = I.layout
 	else
-		imgRGB = zeros(UInt8,size(I,1), size(I,2), 3)
+		imgRGB = Array{UInt8,3}(undef, size(I,1), size(I,2), 3+have_alpha)
 		n = 0
-		for c = 1:3
-			start_c = (c - 1) * 256 + 1		# +1 because indices start a 1
+		if (startswith(I.layout, "BRP") && startswith(layout, "BRP"))
+			jp1, jp2, jp3, jp4 = 1, I.n_colors + 1, 2 * I.n_colors + 1, 3 * I.n_colors + 1
 			for k in eachindex(I.image)
-				imgRGB[n+=1] = _cmap[I.image[k] + start_c];
+				imgRGB[n+=1] = _cmap[I.image[k] + jp1]
+				imgRGB[n+=1] = _cmap[I.image[k] + jp2]
+				imgRGB[n+=1] = _cmap[I.image[k] + jp3]
+				have_alpha && (imgRGB[n+=1] = _cmap[I.image[k] + jp4])
+			end
+		else
+			layout = (I.layout[2] == 'R') ? "TCBa" : I.layout
+			img    = (I.layout[2] == 'R') ? I.image' : I.image
+			for c = 1:3+have_alpha
+				start_c = (c - 1) * I.n_colors + 1		# +1 because indices start a 1
+				for k in eachindex(I.image)
+					imgRGB[n+=1] = _cmap[img[k] + start_c];
+				end
 			end
 		end
 	end
-	mat2img(imgRGB, x=I.x, y=I.y, proj4=I.proj4, wkt=I.wkt, mem_layout=I.layout)
+	mat2img(imgRGB, x=I.x, y=I.y, proj4=I.proj4, wkt=I.wkt, mem_layout=layout)
 end
 
 # ---------------------------------------------------------------------------------------------------
