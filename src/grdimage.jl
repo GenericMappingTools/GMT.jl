@@ -170,7 +170,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function common_get_R_cpt(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fname::Int, arg1, arg2, arg3, prog::String)
 	# Used by several proggys
-	if (convert_syntax[1])		# Here we cannot rist to execute any code. Just parsing. Movie stuff
+	if (convert_syntax[1])		# Here we cannot risk to execute any code. Just parsing. Movie stuff
 		cmd, = add_opt_cpt(d, cmd, CPTaliases, 'C')
 		N_used = !isempty_(arg1) + !isempty_(arg2) + !isempty_(arg3)
 	else
