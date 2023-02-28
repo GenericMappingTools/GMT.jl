@@ -984,7 +984,7 @@ function image_init(API::Ptr{Nothing}, img_box)::Ptr{GMT_IMAGE}
 		return I
 	end
 
-	!isa(img_box, GMTimage) && error("image_init: input is not a IMAGE container type")
+	!isa(img_box, GMTimage) && error("image_init: input ($(typeof(img_box))) is not a IMAGE container type")
 	image_init(API, img_box)
 end
 
@@ -1043,7 +1043,8 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage)::Ptr{GMT_IMAGE}
 	GMT_Set_AllocMode(API, GMT_IS_IMAGE, I)		# Tell GMT that memory is external
 	h.z_min = Img.range[5]						# Set the z_min, z_max
 	h.z_max = Img.range[6]
-	h.mem_layout = map(UInt8, (Img.layout...,))
+	im_layout = (length(Img.layout) == 4) ? Img.layout : Img.layout * "a"
+	h.mem_layout = map(UInt8, (im_layout...,))
 	if (Img.proj4 != "")    h.ProjRefPROJ4 = pointer(Img.proj4)  end
 	if (Img.wkt != "")      h.ProjRefWKT   = pointer(Img.wkt)    end
 	if (Img.epsg != 0)      h.ProjRefEPSG  = Int32(Img.epsg)     end
@@ -1064,7 +1065,7 @@ function toRP_pad(img, o, n_rows, n_cols, pad)
 	# Convert to a B(?T)RP padded array. The shit is that TRB images were read by GDAL and are
 	# stored transposed so that we can pass them back to GDAL without any copy. But B(?)RP were
 	# read through GMT and are not transposed. This makes a hell to deal with and not messing. 
-	m, i = (n_cols * pad + pad) * 3, 0
+	m, i = (n_cols * pad + 5pad) * 3, 0	# 5pad!!!!!!! WTF is this coming from? But other numbers create a black stripe on E
 	if (img.layout[3] == 'B')			# TRB. Read directly by GDAL and sored transposed.
 		@inbounds for n = 1:n_rows
 			r, g, b = view(img.image, :,n,1), view(img.image, :,n,2), view(img.image, :,n,3)
