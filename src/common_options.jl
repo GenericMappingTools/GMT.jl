@@ -187,13 +187,21 @@ end
 # ---------------------------------------------------------------------------------------------------
 function merge_R_and_xyzlims(d::Dict, opt_R::String)::String
 	# Let a -R be partially changed by the use of optional xyzlim
-	xlim::String = ((val = find_in_dict(d, [:xlim :xlimits])[1]) !== nothing) ? @sprintf("%.15g/%.15g", val[1], val[2]) : ""
-	ylim::String = ((val = find_in_dict(d, [:ylim :ylimits])[1]) !== nothing) ? @sprintf("%.15g/%.15g", val[1], val[2]) : ""
-	zlim::String = ((val = find_in_dict(d, [:zlim :zlimits])[1]) !== nothing) ? @sprintf("%.15g/%.15g", val[1], val[2]) : ""
+	xlim::String = ((val = find_in_dict(d, [:xlim :xlimits], false)[1]) !== nothing) ? @sprintf("%.15g/%.15g", val[1], val[2]) : ""
+	ylim::String = ((val = find_in_dict(d, [:ylim :ylimits], false)[1]) !== nothing) ? @sprintf("%.15g/%.15g", val[1], val[2]) : ""
+	zlim::String = ((val = find_in_dict(d, [:zlim :zlimits], false)[1]) !== nothing) ? @sprintf("%.15g/%.15g", val[1], val[2]) : ""
 	(xlim == "" && ylim == "" && zlim == "") && return opt_R
+	function clear_xyzlims(d::Dict, xlim, ylim, zlim)
+		# When calling this fun, if they exist they were used too so must remove them
+		# In the other case - they exist but were not used - we keep them to be eventually used in read_data()
+		(xlim != "") && del_from_dict(d, [:xlim, :xlimits])
+		(ylim != "") && del_from_dict(d, [:ylim, :ylimits])
+		(zlim != "") && del_from_dict(d, [:zlim, :zlimits])
+	end
 	if (opt_R == "" && xlim != "" && ylim != "")	# Deal with this easy case
 		opt_R = " -R" * xlim * "/" * ylim
 		(zlim != "") && (opt_R *= "/" * zlim)
+		clear_xyzlims(d, xlim, ylim, zlim)
 		return opt_R
 	end
 	(opt_R == "") && return ""						# Clear this case too. If no -R there is nothing to replace
@@ -205,6 +213,7 @@ function merge_R_and_xyzlims(d::Dict, opt_R::String)::String
 	opt_R = join(s,"/")
 	opt_R = opt_R[1:end-1]							# Need to strip the last char that was a '/'
 	(zlim != "" && length(s) == 4) && (opt_R *= "/" * zlim)		# This case was still left to be handled
+	clear_xyzlims(d, xlim, ylim, zlim)
 	return opt_R
 end
 
@@ -3478,7 +3487,7 @@ function _read_data(d::Dict, cmd::String, arg, opt_R::String="", is3D::Bool=fals
 							(wesn_f64[4] >  90.) && (wesn_f64[4] =  90.)
 							if ((wesn_f64[2] - wesn_f64[1]) > 360)
 								if (wesn_f64[2] > 180)  wesn_f64[1] = 0.;		wesn_f64[2] = 360.
-								else                     wesn_f64[1] = -180.;	wesn_f64[2] = 180.
+								else                    wesn_f64[1] = -180.;	wesn_f64[2] = 180.
 								end
 							end
 						end
@@ -3503,6 +3512,7 @@ function _read_data(d::Dict, cmd::String, arg, opt_R::String="", is3D::Bool=fals
 		else
 			opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g", wesn_f64[1], wesn_f64[2], wesn_f64[3], wesn_f64[4])
 		end
+		(opt_R != " -Rtight" && !is_onecol) && (opt_R = merge_R_and_xyzlims(d, opt_R))	# We may have some hanging xyzlim requests
 		(!is_onecol) && (cmd *= opt_R)		# The onecol case (for histogram) has an imcomplete -R
 	end
 
