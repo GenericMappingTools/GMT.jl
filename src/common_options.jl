@@ -187,17 +187,37 @@ end
 # ---------------------------------------------------------------------------------------------------
 function merge_R_and_xyzlims(d::Dict, opt_R::String)::String
 	# Let a -R be partially changed by the use of optional xyzlim
-	xlim::String = ((val = find_in_dict(d, [:xlim :xlimits], false)[1]) !== nothing) ? @sprintf("%.15g/%.15g", val[1], val[2]) : ""
-	ylim::String = ((val = find_in_dict(d, [:ylim :ylimits], false)[1]) !== nothing) ? @sprintf("%.15g/%.15g", val[1], val[2]) : ""
-	zlim::String = ((val = find_in_dict(d, [:zlim :zlimits], false)[1]) !== nothing) ? @sprintf("%.15g/%.15g", val[1], val[2]) : ""
+
+#=
+	function parse_lims(d::Dict{Symbol, Any}, eixo::Char)::String
+		# Parse both the simple case where -R is passed in a xlim, ylim[,zlim] or the broken axes case.
+		ind = (eixo == 'x') ? 1 : (eixo == 'y') ? 2 : 3
+		symbs = (ind == 1) ? [:xlim :xlims :xlimits] : (ind == 2) ? [:ylim :ylims :ylimits] : [:zlim :zlims :zlimits]
+		((val = find_in_dict(d, symbs, false)[1]) === nothing) && return ""
+		((isa(val, Tuple) || isvector(val)) && eltype(val) <: Number) && return @sprintf("%.15g/%.15g", val[1], val[2])
+		!(eltype(val) <: Tuple{Number, Number}) && error("Wrong data type: $(typeof(val)). Should be ((x1,x2),(x3,x4))")
+		# Here we are dealing with a broken axes limits
+		lims::Vector{Float64} = [val[1][1] val[1][2] val[2][1] val[2][2]]		# To get rid of the Anys
+		frac = (lims[2] - lims[1]) / (lims[4] - lims[1])	# Fractional size of this axis
+		CTRL.figsize[ind+3] = CTRL.figsize[ind]				# Store the axis total length
+		CTRL.figsize[ind] *= frac							# Store this sub-axis size for later use in ...
+		@sprintf("%.15g/%.15g", val[1][1], val[1][2])
+	end
+	xlim, ylim, zlim = parse_lims(d, 'x'), parse_lims(d, 'y'), parse_lims(d, 'z')
+=#
+
+	xlim::String = ((val = find_in_dict(d, [:xlim :xlims :xlimits], false)[1]) !== nothing) ? @sprintf("%.15g/%.15g", val[1], val[2]) : ""
+	ylim::String = ((val = find_in_dict(d, [:ylim :ylims :ylimits], false)[1]) !== nothing) ? @sprintf("%.15g/%.15g", val[1], val[2]) : ""
+	zlim::String = ((val = find_in_dict(d, [:zlim :zlims :zlimits], false)[1]) !== nothing) ? @sprintf("%.15g/%.15g", val[1], val[2]) : ""
 	(xlim == "" && ylim == "" && zlim == "") && return opt_R
 	function clear_xyzlims(d::Dict, xlim, ylim, zlim)
 		# When calling this fun, if they exist they were used too so must remove them
 		# In the other case - they exist but were not used - we keep them to be eventually used in read_data()
-		(xlim != "") && del_from_dict(d, [:xlim, :xlimits])
-		(ylim != "") && del_from_dict(d, [:ylim, :ylimits])
-		(zlim != "") && del_from_dict(d, [:zlim, :zlimits])
+		(xlim != "") && del_from_dict(d, [:xlim, :xlims, :xlimits])
+		(ylim != "") && del_from_dict(d, [:ylim, :ylims, :ylimits])
+		(zlim != "") && del_from_dict(d, [:zlim, :zlims, :zlimits])
 	end
+
 	if (opt_R == "" && xlim != "" && ylim != "")	# Deal with this easy case
 		opt_R = " -R" * xlim * "/" * ylim
 		(zlim != "") && (opt_R *= "/" * zlim)
@@ -4112,6 +4132,15 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 	#(GMTver < v"6.5" && isa(P, GMTps)) && gmt_restart()
 	return P
 end
+
+#= --------------------------------------------------------------------------------------------------
+function do_the_plot(cmd::String, O::Bool, args...)
+	P = gmt(cmd, args...)
+	(CTRL.limits[4] == 0 && CTRL.limits[5] == 0 && CTRL.limits[6] == 0) && return P
+	if (CTRL.limits[4] != 0)
+	end
+end
+=#
 
 # --------------------------------------------------------------------------------------------------
 function reverse_plot_axes!(cmd::Vector{String})

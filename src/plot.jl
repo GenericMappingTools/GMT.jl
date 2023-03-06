@@ -902,7 +902,7 @@ function helper_input_ds(d::Dict, cmd0::String="", arg1=nothing)
 	#(isa(arg1, Matrix) && size(arg1,2) > 2 && find_in_dict(d, [:multicol])[1] !== nothing) && (arg1 = mat2ds(arg1, multi=true, color="yes"))
 	(isa(arg1, GMTdataset) && size(arg1,2) > 2 && find_in_dict(d, [:multi :multicol])[1] !== nothing) && (arg1 = ds2ds(arg1, multi=true, fill=(haskey(d, :fill) ? d[:fill] : true)))
 	haveVarFill = (haskey(d, :fill) && d[:fill] == true)		# Probably no longer true
-	haveR = (find_in_dict(d, [:R :region :limits :region_llur :limits_llur :limits_diag :region_diag :xlim :xlimits], false)[1] !== nothing)
+	haveR = (find_in_dict(d, [:R :region :limits :region_llur :limits_llur :limits_diag :region_diag :xlim :xlims :xlimits], false)[1] !== nothing)
 	return arg1, haveR, haveVarFill
 end
 

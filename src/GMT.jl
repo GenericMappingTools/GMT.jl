@@ -61,7 +61,7 @@ const def_fig_axes_bak     = " -Baf -BWSen"        # Default fig axes for plot l
 const def_fig_axes3_bak    = " -Baf -Bza"          # 		"" but for 3D views
 const global def_fig_axes  = [def_fig_axes_bak]    # This one may be be changed by theme()
 const global def_fig_axes3 = [def_fig_axes3_bak]   #		""
-const global CTRL = CTRLstruct(zeros(12), zeros(3), [true], [false],
+const global CTRL = CTRLstruct(zeros(12), zeros(6), [true], [false],
                                [:arrows, :bublechart, :basemap, :band, :clip, :coast, :colorbar, :hband, :hlines, :logo, :lines, :grdvector, :plot, :plot3, :quiver, :scatter, :scatter3, :stairs, :text, :vlines, :vband],
 							   [nothing, nothing, nothing], ["",""], ["","", "", "   "], [""], ["",""], [false,true], [C_NULL], [Dict()])
 const global CTRLshapes = CTRLstruct2([true], [true], [""])			# Used in sub-module Drawing
@@ -119,7 +119,7 @@ export
 	wkbGeometryCollection,
 
 	buffergeo, circgeo, epsg2proj, epsg2wkt, geod, invgeod, loxodrome, loxodrome_direct, loxodrome_inverse,
-	geodesic, orthodrome, proj2wkt, setfld!, wkt2proj,
+	geodesic, orthodrome, proj2wkt, setfld!, vecangles, wkt2proj,
 
 	colorzones!, rasterzones!, crop, doy2date, date2doy, yeardecimal, median, mean, quantile, std, nanmean,
 	nanstd, skipnan,

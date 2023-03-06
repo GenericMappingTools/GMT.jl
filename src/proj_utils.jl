@@ -113,21 +113,25 @@ end
 
 # -------------------------------------------------------------------------------------------------
 """
-    dist, az1, az2 = invgeod(lonlat1::Vector{<:Real}, lonlat2::Vector{<:Real}; proj::String="", s_srs::String="", epsg::Integer=0)
+    dist, az1, az2 = invgeod(lonlat1::Vector{<:Real}, lonlat2::Vector{<:Real}; proj::String="",
+                             s_srs::String="", epsg::Integer=0, backward=false)
 
 Solve the inverse geodesic problem.
 
 Args:
 
-- `lonlat1`:  - coordinates of point 1 in the given projection (or a matrix with several points)
-- `lonlat2`:  - coordinates of point 2 in the given projection (or a matrix with same size as `lonlat1``)
-- `proj` or `s_srs`:  - the given projection whose ellipsoid we move along. Can be a proj4 string or an WKT
-- `epsg`:     - Alternative way of specifying the projection [Default is WGS84]
+- `lonlat1`:  - coordinates of point 1 in the given projection (or a matrix with several points).
+- `lonlat2`:  - coordinates of point 2 in the given projection (or a matrix with same size as `lonlat1`).
+- `proj` or `s_srs`:  - the given projection whose ellipsoid we move along. Can be a proj4 string or an WKT.
+- `epsg`:     - Alternative way of specifying the projection [Default is WGS84].
+- `backward`: - If `true`, return backard azimuths.
 
 ### Returns
 dist - A scalar with the distance between point 1 and point 2 (meters). Or a vector when lonlat1|2
        have more than one pair of points. 
+
 az1 - azimuth at point 1 (degrees) ∈ [-180, 180)
+
 az2 - (forward) azimuth at point 2 (degrees) ∈ [-180, 180)
 
 Remarks:
@@ -143,12 +147,12 @@ function invgeod(lonlat1::Matrix{<:Real}, lonlat2::Matrix{<:Real}; proj::String=
 	@assert (size(lonlat1) == size(lonlat2) || size(lonlat2,1) == 1) "Both matrices must have same size or second have one row"
 	proj_string, projPJ_ptr, isgeog = helper_geod(proj, s_srs, epsg)
 	(!isgeog) && (lonlat1 = xy2lonlat(lonlat1, proj_string);	lonlat2 = xy2lonlat(lonlat2, proj_string))	# Convert to geog first
-	d   = Vector{Float64}(undef, size(lonlat1,1))
-	az1 = Vector{Float64}(undef, size(lonlat1,1))
-	az2 = Vector{Float64}(undef, size(lonlat1,1))
+	d::Vector{Float64}   = Vector{Float64}(undef, size(lonlat1,1)::Int)
+	az1::Vector{Float64} = Vector{Float64}(undef, size(lonlat1,1)::Int)
+	az2::Vector{Float64} = Vector{Float64}(undef, size(lonlat1,1)::Int)
 	dist, azi1, azi2 = Ref{Cdouble}(), Ref{Cdouble}(), Ref{Cdouble}()
-	for k = 1:size(lonlat1,1)
-		kk = (size(lonlat2,1) == 1) ? 1 : k			# To allow the "all against one" case
+	for k = 1:size(lonlat1,1)::Int
+		kk::Int = (size(lonlat2,1)::Int == 1) ? 1 : k			# To allow the "all against one" case
 		ccall((:geod_inverse, libproj), Cvoid, (Ptr{Cvoid},Cdouble,Cdouble,Cdouble, Cdouble,Ptr{Cdouble},Ptr{Cdouble},Ptr{Cdouble}),
 			  pointer_from_objref(get_ellipsoid(projPJ_ptr)), lonlat1[k,2], lonlat1[k,1], lonlat2[kk,2], lonlat2[kk,1], dist, azi1, azi2)
 		d[k], az1[k], az2[k] = dist[], azi1[], azi2[]
@@ -165,6 +169,44 @@ function invgeod(lonlat1::Matrix{<:Real}, lonlat2::Matrix{<:Real}; proj::String=
 		end
 	end
 	return size(d,1) == 1 ? (d[1], az1[1], az2[1]) : (d, az1, az2)
+end
+
+## -------------------------------------------------------------------------------------------------
+"""
+    angles, ind = vecangles(lonlat0::VecOrMat{Real}, lonlat1::Matrix{Real}; proj::String="",
+                            s_srs::String="", epsg::Integer=0, sorted=true)
+
+Computes the angles between lines taken from the central point `lonlat0` and those passed in the Mx2
+matrix `lonlat1`. 
+
+Args:
+
+- `lonlat1`:  - coordinates of point 1 in the given projection (or a matrix with several points).
+- `lonlat2`:  - coordinates of point 2 in the given projection (or a matrix with same size as `lonlat1`).
+- `proj` or `s_srs`:  - the given projection whose ellipsoid we move along. Can be a proj4 string or an WKT.
+- `epsg`:     - Alternative way of specifying the projection [Default is WGS84].
+- `sorted`:   - By default we sort the lines azimuth so that the angles refer to contiguous line.
+                If `sorted` is set to `false` we compute the angles in the order of points as given in `lonlat2`.
+
+### Returns
+- `angles` - A Float64 vector with angles between determined by the arguments plus the angle betwen the lines
+             from center to first and from center to last points.
+- `ind` - A vector of Int with the order obtained by sorting the lines azimuths (when `sorted=true`).
+          Apply it to ``lonlat2[ind,:]`` to get the point distribution order in the same way as `angles`.
+          Neddless, ofc, if `sorted=false`.
+"""
+function vecangles(lonlat0::VMr, lonlat1::Matrix{<:Real}; proj::String="",
+                   s_srs::String="", epsg::Integer=0, sorted=true)
+	az = invgeod(lonlat1, [lonlat0[1] lonlat0[2]]; proj=proj, s_srs=s_srs, backward=true)[3]
+	[(az[k] < 0) && (az[k] += 360) for k = 1:lastindex(az)]
+	if (sorted)
+		p = sortperm(az)
+		sort!(az)
+	else
+		p = collect(1:length(az))
+	end
+	difas = append!(diff(az), [az[1] - az[end]].+360)
+	return difas, p
 end
 
 # -------------------------------------------------------------------------------------------------
