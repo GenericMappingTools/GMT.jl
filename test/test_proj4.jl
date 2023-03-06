@@ -12,6 +12,8 @@
 	invgeod([0. 0; 0 0.5], [1. 0; 1 1], backward=true)
 	@test_throws ErrorException("'azimuth' MUST be either a scalar or a 1-dim array, and 'distance' may also be a Vector{Vector}") geod([0, 0], [30 8; 1 1], [50 111], unit=:k)
 	GMT.proj_info()
+	a,ind = GMT.vecangles([0,0], [5 5; 10 5])
+	a,ind = GMT.vecangles([0,0], [5 5; 10 5], sorted=false)
 
 	pj = GMT.proj_create_crs_to_crs("EPSG:4326", "+proj=utm +zone=32 +datum=WGS84", C_NULL)	# target, also EPSG:32632
 	#@test GMT.is_latlong(GMT.proj_create("+proj=longlat +datum=WGS84 +no_defs"))
