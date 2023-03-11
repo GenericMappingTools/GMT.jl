@@ -582,7 +582,7 @@ function bar3(cmd0::String="", arg=nothing; first=true, kwargs...)
 			t = split(opt, '/')
 			(length(t) == 6) ? z_min = t[5] : error("For 3D cases, region must have 6 selements")
 		end
-		if (opt_base == "")  push!(d, :base => z_min)  end	# Make base = z_min
+		(opt_base == "") ? push!(d, :base => 0)	: push!(d, :base => opt_base) 
 		arg1 = gmt("grd2xyz", arg1)				# Now arg1 is a GMTdataset
 	else
 		opt_S = parse_I(d, "", [:S :width], "So", true)
