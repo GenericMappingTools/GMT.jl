@@ -4,6 +4,7 @@ using Dates, Printf#, Logging
 
 @testset "GMT" begin
 
+#=
 try
 	run(`gmt --version`)	# Will fail if GMT is not installed.
 	global got_it = true
@@ -11,8 +12,9 @@ catch
 	@test 1 == 1			# Let tests pass for sake of not triggering a PkgEval failure
 	global got_it = false
 end
+=#
 
-if (got_it)					# Otherwise go straight to end
+#if (got_it)					# Otherwise go straight to end
 
 	#Logging.disable_logging(Logging.Warn)
 
@@ -161,6 +163,6 @@ if (got_it)					# Otherwise go straight to end
 	#rm("lixo_cube.nc")
 	#@static if (Sys.iswindows())  run(`rmdir /S /Q NUL`)  end
 
-end					# End valid testing zone
+#end					# End valid testing zone
 
 end
