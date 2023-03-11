@@ -65,7 +65,7 @@ function binstats(cmd0::String="", arg1=nothing; nbins=0, kwargs...)
 	data = mat2ds(arg1)
 	isa(data, Vector{<:GMTdataset}) && isempty(data[1].ds_bbox) && set_dsBB!(data)
 
-	cmd, = parse_common_opts(d, "", [:G :I :R :V_params :a :bi :di :e :f :g :h :i :q :w :yx])
+	cmd, = parse_common_opts(d, "", [:G :I :R :V_params :a :bi :di :e :f :g :h :i :q :r :w :yx])
 	cmd  = parse_these_opts(cmd, d, [[:E :empty], [:N :normalize], [:S :search_radius], [:W :weights]])
 	if ((val = find_in_dict(d, [:C :stats :statistic])[1]) !== nothing)
 		s::String = string(val)
