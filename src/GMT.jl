@@ -4,6 +4,7 @@ using Printf, Dates, Statistics, Pkg
 using Tables: Tables
 using PrettyTables
 #using SnoopPrecompile
+using GMT_jll, GDAL_jll, PROJ_jll
 
 struct CTRLstruct
 	limits::Vector{Float64}			# To store the data limits. First 6 store: data limits. Second 6: plot limits
@@ -32,11 +33,8 @@ force_precompile() = Sys.iswindows() ? run(`cmd /c copy /b "$(pathof(GMT))" +,, 
 
 depfile = joinpath(dirname(@__FILE__),"..","deps","deps.jl")	# File with shared lib names
 include(depfile)		# This loads the shared libs names
-if (Sys.iswindows() && !isfile(_GMT_bindir * "\\gmt.exe"))		# If GMT was removed but depfile still exists
-	Pkg.build("GMT");	include(depfile)
-end
 
-const GMTver, libgmt, libgdal, libproj, GMT_bindir, GMTuserdir = _GMTver, _libgmt, _libgdal, _libproj, _GMT_bindir, [userdir]
+const GMTver, GMTuserdir = _GMTver, [userdir]
 
 const global G_API = [C_NULL]
 const global PSname = [joinpath(tempdir(), "GMTjl_tmp.ps")]		# The PS file where, in classic mode, all lands.
@@ -133,7 +131,7 @@ export
 
 include("common_docs.jl")
 include("libgmt_h.jl")
-(GMTver >= v"6") && include("libgmt.jl")
+include("libgmt.jl")
 include("gmt_main.jl")
 include("utils_types.jl")
 include("grd_operations.jl")
@@ -242,21 +240,17 @@ include("MB/mbimport.jl")
 include("MB/mbgetdata.jl")
 include("MB/mbsvplist.jl")
 include("MB/mblevitus.jl")
-if (GMTver > v"6.1.1")
 	include("potential/gmtgravmag3d.jl")
 	include("potential/grdgravmag3d.jl")
 	include("potential/gravfft.jl")
-end
 include("spotter/grdrotater.jl")
 include("drawing.jl")
 
-if (GMTver >= v"6")			# Needed to cheat the autoregister autobot
 	include("get_enums.jl")
 	include("gdal.jl")
 	include("gdal_utils.jl")
 	include("proj_utils.jl")
 	using GMT.Gdal
-end
 include("imshow.jl")		# Include later because one method depends on knowing about GDAL
 
 const global current_cpt = [GMTcpt()]		# To store the current palette
