@@ -17,7 +17,6 @@ PROJ_jll = "58948b4f-47e0-5654-a9ad-f609743f8632"
 
 [compat]
 julia = "1.5"
-Conda = "1.0"
 Tables = "1"
 PrettyTables = "1, 2"
 
