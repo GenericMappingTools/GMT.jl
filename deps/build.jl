@@ -1,3 +1,4 @@
+#=
 import Conda
 
 function get_de_libnames()
@@ -85,3 +86,4 @@ if (!errou)
 		println(f, "userdir = \"", escape_string(userdir), '"')
 	end
 end
+#=
