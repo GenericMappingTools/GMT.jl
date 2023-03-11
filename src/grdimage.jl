@@ -80,6 +80,7 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 	cmd  = parse_these_opts(cmd, d, [[:A :img_out :image_out], [:D :img_in :image_in], [:E :dpi], [:G :bit_color],
 	                                 [:M :monochrome], [:N :noclip], [:Q :nan_alpha :alpha_color]])
 	cmd = add_opt(d, cmd, "%", [:layout :mem_layout], nothing)
+	cmd = add_opt(d, cmd, "T", [:T :no_interp :tiles], (skip="_+s", skip_nan="_+s", outlines=("+o", add_opt_pen)))
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)		# Find how data was transmitted
 	if (got_fname == 0 && isa(arg1, Tuple))			# Then it must be using the three r,g,b grids
