@@ -4,7 +4,7 @@ using Printf, Dates, Statistics, Pkg
 using Tables: Tables
 using PrettyTables
 #using SnoopPrecompile
-using GMT_jll, GDAL_jll, PROJ_jll
+using GMT_jll, GDAL_jll, PROJ_jll, Ghostscript_jll
 
 struct CTRLstruct
 	limits::Vector{Float64}			# To store the data limits. First 6 store: data limits. Second 6: plot limits
