@@ -51,7 +51,7 @@ function get_de_libnames()
 	return errou, ver, libgmt, libgdal, libproj, GMT_bindir
 end
 
-if @static Sys.iswindows()
+if Sys.iswindows()
 
 	errou, ver, libgmt, libgdal, libproj, GMT_bindir = get_de_libnames()
 
