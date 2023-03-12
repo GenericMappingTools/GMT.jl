@@ -232,6 +232,7 @@ function gmt(cmd::String, args...)
 				end
 			end
 		end
+		@show(r)
 	end
 	if (occursin("-%", r) || occursin("-&", r))			# It has also a mem layout request
 		r, img_mem_layout[1], grd_mem_layout[1] = parse_mem_layouts(r)
