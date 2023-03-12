@@ -37,6 +37,7 @@ force_precompile() = Sys.iswindows() ? run(`cmd /c copy /b "$(pathof(GMT))" +,, 
 #const GMTver, GMTuserdir = _GMTver, [userdir]
 const GMTver = v"6.5.0"
 const GMTuserdir = [readlines(`$(GMT_jll.gmt()) "--show-userdir"`)[1]]
+const GSbin = Ghostscript_jll.gs()[1]
 
 const global G_API = [C_NULL]
 const global PSname = [joinpath(tempdir(), "GMTjl_tmp.ps")]		# The PS file where, in classic mode, all lands.
