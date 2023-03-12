@@ -11,8 +11,8 @@ function get_de_libnames()
 		(ver < v"6.1") && error("Need at least GMT6.1. The one you have ($ver) is not supported.")	# GOTO DOWNLOAD
 
 		libgmt = haskey(ENV, "GMT_LIBRARY") ? ENV["GMT_LIBRARY"] : string(chop(read(`gmt --show-library`, String)))
-		@static Sys.iswindows() ? (Sys.WORD_SIZE == 64 ? (libgdal = "gdal_w64.dll") : (libgdal = "gdal_w32.dll"))
-		@static Sys.iswindows() ?  (Sys.WORD_SIZE == 64 ? (libproj = "proj_w64.dll") : (libproj = "proj_w32.dll"))
+		@static Sys.iswindows() && (Sys.WORD_SIZE == 64 ? (libgdal = "gdal_w64.dll") : (libgdal = "gdal_w32.dll"))
+		@static Sys.iswindows() && (Sys.WORD_SIZE == 64 ? (libproj = "proj_w64.dll") : (libproj = "proj_w32.dll"))
 		GMT_bindir = string(chop(read(`gmt --show-bindir`, String)))
 
 	catch err1;		println(err1)		# If not, install GMT
