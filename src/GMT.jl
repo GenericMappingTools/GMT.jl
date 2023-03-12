@@ -33,7 +33,7 @@ force_precompile() = Sys.iswindows() ? run(`cmd /c copy /b "$(pathof(GMT))" +,, 
 
 
 #const GMTver, GMTuserdir = _GMTver, [userdir]
-if !@static Sys.iswindows()
+if !Sys.iswindows()
 	const GMTver = v"6.5.0"
 	const GMTuserdir = [readlines(`$(GMT_jll.gmt()) "--show-userdir"`)[1]]
 	const GSbin = Ghostscript_jll.gs()[1]
