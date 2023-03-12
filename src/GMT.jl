@@ -31,13 +31,18 @@ end
 # Function to change data of GMT.jl and hence force a rebuild in next Julia session
 force_precompile() = Sys.iswindows() ? run(`cmd /c copy /b "$(pathof(GMT))" +,, "$(pathof(GMT))"`) : run(`touch '$(pathof(GMT))'`)
 
-#depfile = joinpath(dirname(@__FILE__),"..","deps","deps.jl")	# File with shared lib names
-#include(depfile)		# This loads the shared libs names
 
 #const GMTver, GMTuserdir = _GMTver, [userdir]
-const GMTver = v"6.5.0"
-const GMTuserdir = [readlines(`$(GMT_jll.gmt()) "--show-userdir"`)[1]]
-const GSbin = Ghostscript_jll.gs()[1]
+if !@static Sys.iswindows()
+	const GMTver = v"6.5.0"
+	const GMTuserdir = [readlines(`$(GMT_jll.gmt()) "--show-userdir"`)[1]]
+	const GSbin = Ghostscript_jll.gs()[1]
+	const isJLL = true
+else
+	depfile = joinpath(dirname(@__FILE__),"..","deps","deps.jl")	# File with shared lib names
+	include(depfile)		# This loads the shared libs names
+	const isJLL = false
+end
 
 const global G_API = [C_NULL]
 const global PSname = [joinpath(tempdir(), "GMTjl_tmp.ps")]		# The PS file where, in classic mode, all lands.
