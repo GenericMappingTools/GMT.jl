@@ -4,7 +4,7 @@ function get_de_libnames()
 	GMT_bindir, libgmt, libgdal, libproj, ver, userdir = "", "", "", "", "", ""
 
 	try						# First try to find an existing GMT installation (RECOMENDED WAY)
-		(get(ENV, "FORCE_INSTALL_GMT", "") != "") && error("Forcing an automatic GMT install")
+		(Sys.iswindows() && get(ENV, "FORCE_INSTALL_GMT", "") != "") && error("Forcing an automatic GMT install")
 		t = joinpath(GMT_bindir, "gmt")
 		out = readlines(`$t --version`)[1]
 		ver = ((ind = findfirst('_', out)) === nothing) ? VersionNumber(out) : VersionNumber(out[1:ind-1])
@@ -22,23 +22,29 @@ function get_de_libnames()
 				run(`cmd /k GMTinstaller.exe /S`)
 				rm(fn, force=true)
 				GMT_bindir = "C:\\programs\\gmt6\\bin"
+			else
+				try
+					@static Sys.iswindows() ? libgdal = "gdal_w64.dll" : (
+						Sys.isapple() ? (libgdal = joinpath(Conda.ROOTENV, "lib", string(split(readlines(pipeline(`otool -L $(libgmt)`, `grep libgdal`))[1])[1])[8:end]) )  : (
+								Sys.isunix() ? (libgdal = string(split(readlines(pipeline(`ldd $(libgmt)`, `grep libgdal`))[1])[3])) :
+								error("Don't know how to use GDAL this package in this OS.")
+							)
+						)
+
+					@static Sys.iswindows() ? libproj = "proj_w64.dll" : (
+						Sys.isapple() ? (libproj = joinpath(Conda.ROOTENV, "lib", string(split(readlines(pipeline(`otool -L $(libgdal)`, `grep libproj`))[1])[1])[8:end]) )  : (
+								Sys.isunix() ? (libproj = string(split(readlines(pipeline(`ldd $(libgdal)`, `grep libproj`))[1])[3])) :
+								error("Don't know how to use PROJ4 in this OS.")
+							)
+						)
+				catch err3
+					println("No GMT system wide installation found")
+					println(err3)
+					errou = true
+				end
 			end
 
 			libgmt = abspath(chop(read(`$(joinpath("$(GMT_bindir)", "gmt")) --show-library`, String)))
-
-			@static Sys.iswindows() ? libgdal = "gdal_w64.dll" : (
-				Sys.isapple() ? (libgdal = joinpath(Conda.ROOTENV, "lib", string(split(readlines(pipeline(`otool -L $(libgmt)`, `grep libgdal`))[1])[1])[8:end]) )  : (
-						Sys.isunix() ? (libgdal = string(split(readlines(pipeline(`ldd $(libgmt)`, `grep libgdal`))[1])[3])) :
-						error("Don't know how to install this package in this OS.")
-					)
-				)
-
-			@static Sys.iswindows() ? libproj = "proj_w64.dll" : (
-				Sys.isapple() ? (libproj = joinpath(Conda.ROOTENV, "lib", string(split(readlines(pipeline(`otool -L $(libgdal)`, `grep libproj`))[1])[1])[8:end]) )  : (
-						Sys.isunix() ? (libproj = string(split(readlines(pipeline(`ldd $(libgdal)`, `grep libproj`))[1])[3])) :
-						error("Don't know how to use PROJ4 in this OS.")
-					)
-				)
 
 			t = joinpath(GMT_bindir, "gmt")
 			out = readlines(`$t --version`)[1]
@@ -51,7 +57,7 @@ function get_de_libnames()
 	return errou, ver, libgmt, libgdal, libproj, GMT_bindir
 end
 
-if Sys.iswindows()
+if (Sys.iswindows() || get(ENV, "SYSTEMWIDE_GMT", "") != "")
 
 	errou, ver, libgmt, libgdal, libproj, GMT_bindir = get_de_libnames()
 

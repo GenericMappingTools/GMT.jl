@@ -32,9 +32,8 @@ end
 force_precompile() = Sys.iswindows() ? run(`cmd /c copy /b "$(pathof(GMT))" +,, "$(pathof(GMT))"`) : run(`touch '$(pathof(GMT))'`)
 
 
-#const GMTver, GMTuserdir = _GMTver, [userdir]
-if !Sys.iswindows()
-	const GMTver = v"6.5.0"
+if (!Sys.iswindows() && get(ENV, "SYSTEMWIDE_GMT", "") == "")
+	const GMTver = VersionNumber(split(readlines(`$(GMT.GMT_jll.gmt()) "--version"`)[1],'_')[1])
 	const GMTuserdir = [readlines(`$(GMT_jll.gmt()) "--show-userdir"`)[1]]
 	const GSbin = Ghostscript_jll.gs()[1]
 	const isJLL = true
