@@ -23,9 +23,6 @@ try		# It fails in Codespaces
 	subplot(:set, panel=(1,1));
 	plot([0 0; 1 1]);
 	subplot(:end)
-catch err
-	println(err)
-end
 
 # The subplot size guessing routine.
 GMT.guess_panels_size("", "3x3")
@@ -49,6 +46,10 @@ gmtbegin("lixo.ps")
 gmtend()
 
 gmtbegin(); gmtfig("lixo.ps -Vq");	gmtend()
+
+catch err
+	println(err)
+end
 
 println("    MOVIE")
 movie("main_sc.jl", pre="pre_sc.jl", C="7.2ix4.8ix100", N=:anim04, T="flight_path.txt", L="f+o0.1i", F=:mp4, A="+l+s10", Sf="", Vd=dbg2)
