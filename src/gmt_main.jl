@@ -218,7 +218,6 @@ function gmt(cmd::String, args...)
 	# The problem is that we can't use nargout to decide what to do, so we use -T to solve the ambiguity.
 	need2destroy = false
 	if (g_module == "psconvert")
-		isJLL && (r *= " -G" * GSbin)
 		if (!occursin("-F", r))
 			if (!occursin("-T", r))
 				r *= " -F";			need2destroy = true
@@ -232,6 +231,7 @@ function gmt(cmd::String, args...)
 				end
 			end
 		end
+		isJLL && (r *= " -G" * GSbin)
 	end
 	if (occursin("-%", r) || occursin("-&", r))			# It has also a mem layout request
 		r, img_mem_layout[1], grd_mem_layout[1] = parse_mem_layouts(r)
