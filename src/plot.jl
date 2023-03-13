@@ -555,6 +555,7 @@ function bar3(cmd0::String="", arg=nothing; first=true, kwargs...)
 	end
 
 	opt_base = add_opt(d, "", "", [:base])	# No need to purge because base is not a psxy option
+	opt_R = ""
 
 	if (isa(arg1, GMTgrid))
 		if (haskey(d, :bar))
@@ -567,8 +568,8 @@ function bar3(cmd0::String="", arg=nothing; first=true, kwargs...)
 			elseif (haskey(d, :Nbands))  opt_z = string("+Z", d[:Nbands]);	delete!(d, :Nbands)
 			end
 		end
-		opt, = parse_R(d, "", !first)
-		if (opt == "" || opt == " -R")			# OK, no R but we know it here so put it in 'd'
+		opt_R, = parse_R(d, "", !first)
+		if (opt_R == "" || opt_R == " -R")			# OK, no R but we know it here so put it in 'd'
 			if (arg1.registration == 1)			# Fine, grid is already pixel reg
 				push!(d, :R => arg1.range)
 			else								# Need to get a pix reg R
@@ -579,7 +580,7 @@ function bar3(cmd0::String="", arg=nothing; first=true, kwargs...)
 			end
 			z_min = arg1.range[5]
 		elseif (opt_base == "")					# Shit, need to get zmin out of the opt_R string
-			t = split(opt, '/')
+			t = split(opt_R, '/')
 			(length(t) == 6) ? z_min = t[5] : error("For 3D cases, region must have 6 selements")
 		end
 		(opt_base == "") ? push!(d, :base => 0)	: push!(d, :base => opt_base) 
@@ -608,6 +609,7 @@ function bar3(cmd0::String="", arg=nothing; first=true, kwargs...)
 		opt_S *= "+b" * opt_base
 	end
 
+	(opt_R != "") && (d[:R] = opt_R[4:end])
 	common_plot_xyz("", mat2ds(arg1), "bar3|" * opt_S * opt_z, first, true, d...)
 end
 
