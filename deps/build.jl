@@ -1,5 +1,3 @@
-#import GMT_jll
-
 function get_de_libnames()
 	# Use a function for this because I F. CAN'T MAKE ANY SENSE ABOUT GLOBAL-LOCAL SCOPES INSIDE TRY-CATCH
 	errou = false
@@ -55,11 +53,9 @@ function get_de_libnames()
 end
 
 
-if (!Sys.iswindows() && get(ENV, "SYSTEMWIDE_GMT", "") == "")
-	#import GMT_jll
-	#ver = VersionNumber(split(readlines(`$(GMT_jll.gmt()) "--version"`)[1],'_')[1])
-	#userdir = readlines(`$(GMT_jll.gmt()) "--show-userdir"`)[1]
-	libgmt, libgdal, libproj, ver, userdir = "nikles", "nikles", "nikles", "nikles", "nikles"		# Just to have something. They won't be used in main
+if (!Sys.iswindows() && get(ENV, "SYSTEMWIDE_GMT", "") == "")		# That is: the JLL case
+	# Just to have something. They won't be used in main. There, wee only need that a "deps.jl" exists
+	libgmt, libgdal, libproj, ver, userdir = "nikles", "nikles", "nikles", "nikles", "nikles"
 	GMT_bindir = ""
 	errou = false
 else
