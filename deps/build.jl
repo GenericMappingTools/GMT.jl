@@ -48,9 +48,9 @@ function get_de_libnames()
 		catch err2;		println(err2)
 			errou = true
 		end
-		userdir    = readlines(`gmt --show-userdir`)[1]
-		GMT_bindir = readlines(`gmt --show-bindir`)[1]
 	end
+	userdir    = readlines(`gmt --show-userdir`)[1]
+	Sys.iswindows() && (GMT_bindir = readlines(`gmt --show-bindir`)[1])		# Only on Win is that all dlls are in same bin dir
 	return errou, ver, libgmt, libgdal, libproj, GMT_bindir, userdir
 end
 
