@@ -58,6 +58,7 @@ end
 if (!Sys.iswindows() && get(ENV, "SYSTEMWIDE_GMT", "") == "")
 	ver = VersionNumber(split(readlines(`$(GMT_jll.gmt()) "--version"`)[1],'_')[1])
 	userdir = [readlines(`$(GMT_jll.gmt()) "--show-userdir"`)[1]]
+	libgmt, libgdal, libproj = "nikles", "nikles", "nikles"		# Just to have something. They won't be used in main
 	GMT_bindir = ""
 	errou = false
 else
