@@ -58,11 +58,8 @@ if (!Sys.iswindows() && get(ENV, "SYSTEMWIDE_GMT", "") == "")
 	userdir = [readlines(`$(GMT_jll.gmt()) "--show-userdir"`)[1]]
 	GMT_bindir = ""
 	errou = false
-	const GSbin = Ghostscript_jll.gs()[1]
-	const isJLL = true
 else
 	errou, ver, libgmt, libgdal, libproj, GMT_bindir, userdir = get_de_libnames()
-	const isJLL = false
 end
 
 

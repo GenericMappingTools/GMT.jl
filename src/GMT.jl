@@ -40,11 +40,15 @@ catch
 	Pkg.build("GMT");	include(depfile)
 end
 
-if (!isJLL)
+if (!Sys.iswindows() && get(ENV, "SYSTEMWIDE_GMT", "") == "")
+	const GSbin = Ghostscript_jll.gs()[1]
+	const GMTver, GMTuserdir = _GMTver, [userdir]	# Here, libgmt, libgdal, libproj are already exported
+	const isJLL = true
+else
+	const isJLL = false
 	const GMTver, libgmt, libgdal, libproj, GMTuserdir = _GMTver, _libgmt, _libgdal, _libproj, [userdir]
-else	# In the JLL case libgmt, libgdal, libproj are already exported
-	const GMTver, GMTuserdir = _GMTver, [userdir]
 end
+
 
 const global G_API = [C_NULL]
 const global PSname = [joinpath(tempdir(), "GMTjl_tmp.ps")]		# The PS file where, in classic mode, all lands.
