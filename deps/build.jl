@@ -55,7 +55,7 @@ end
 
 if (!Sys.iswindows() && get(ENV, "SYSTEMWIDE_GMT", "") == "")		# That is: the JLL case
 	# Just to have something. They won't be used in main. There, wee only need that a "deps.jl" exists
-	libgmt, libgdal, libproj, ver, userdir = "nikles", "nikles", "nikles", "nikles", "nikles"
+	libgmt, libgdal, libproj, ver, userdir = "nikles", "nikles", "nikles", "0.0", "nikles"
 	GMT_bindir = ""
 	errou = false
 else
