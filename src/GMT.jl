@@ -40,10 +40,10 @@ catch
 	Pkg.build("GMT");	include(depfile)
 end
 
-if (!Sys.iswindows() && get(ENV, "SYSTEMWIDE_GMT", "") == "")
+if (!Sys.iswindows() && get(ENV, "SYSTEMWIDE_GMT", "") == "")	# That is: the JLL case
+	# Here, libgmt, libgdal, libproj are already exported
 	const GMTver = VersionNumber(split(readlines(`$(GMT_jll.gmt()) "--version"`)[1],'_')[1])
 	const GMTuserdir = [readlines(`$(GMT_jll.gmt()) "--show-userdir"`)[1]]
-	#const GMTver, GMTuserdir = _GMTver, [userdir]	# Here, libgmt, libgdal, libproj are already exported
 	const GSbin = Ghostscript_jll.gs()[1]
 	const isJLL = true
 else
