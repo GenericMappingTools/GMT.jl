@@ -1,3 +1,5 @@
+import GMT_jll
+
 function get_de_libnames()
 	# Use a function for this because I F. CAN'T MAKE ANY SENSE ABOUT GLOBAL-LOCAL SCOPES INSIDE TRY-CATCH
 	errou = false
