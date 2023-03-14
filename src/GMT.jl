@@ -35,7 +35,7 @@ force_precompile() = Sys.iswindows() ? run(`cmd /c copy /b "$(pathof(GMT))" +,, 
 
 depfile = joinpath(dirname(@__FILE__),"..","deps","deps.jl")	# File with shared lib names
 try
-	include(depfile)		# This loads the shared libs names
+	include(depfile)		# This loads the shared libs names in the case of NON-JLL, otherwise just return
 catch
 	Pkg.build("GMT");	include(depfile)
 end
