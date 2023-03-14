@@ -4,7 +4,9 @@ using Printf, Dates, Statistics, Pkg
 using Tables: Tables
 using PrettyTables
 #using SnoopPrecompile
-using GMT_jll, GDAL_jll, PROJ_jll, Ghostscript_jll
+if (!Sys.iswindows() && get(ENV, "SYSTEMWIDE_GMT", "") == "")
+	using GMT_jll, GDAL_jll, PROJ_jll, Ghostscript_jll
+end
 
 struct CTRLstruct
 	limits::Vector{Float64}			# To store the data limits. First 6 store: data limits. Second 6: plot limits
@@ -31,16 +33,17 @@ end
 # Function to change data of GMT.jl and hence force a rebuild in next Julia session
 force_precompile() = Sys.iswindows() ? run(`cmd /c copy /b "$(pathof(GMT))" +,, "$(pathof(GMT))"`) : run(`touch '$(pathof(GMT))'`)
 
-
-if (!Sys.iswindows() && get(ENV, "SYSTEMWIDE_GMT", "") == "")
-	const GMTver = VersionNumber(split(readlines(`$(GMT.GMT_jll.gmt()) "--version"`)[1],'_')[1])
-	const GMTuserdir = [readlines(`$(GMT_jll.gmt()) "--show-userdir"`)[1]]
-	const GSbin = Ghostscript_jll.gs()[1]
-	const isJLL = true
-else
-	depfile = joinpath(dirname(@__FILE__),"..","deps","deps.jl")	# File with shared lib names
+depfile = joinpath(dirname(@__FILE__),"..","deps","deps.jl")	# File with shared lib names
+try
 	include(depfile)		# This loads the shared libs names
-	const isJLL = false
+catch
+	Pkg.build("GMT");	include(depfile)
+end
+
+if (!isJLL)
+	const GMTver, libgmt, libgdal, libproj, GMTuserdir = _GMTver, _libgmt, _libgdal, _libproj, [userdir]
+else	# In the JLL case libgmt, libgdal, libproj are already exported
+	const GMTver, GMTuserdir = _GMTver, [userdir]
 end
 
 const global G_API = [C_NULL]
