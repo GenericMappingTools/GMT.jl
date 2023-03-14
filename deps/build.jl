@@ -54,7 +54,7 @@ end
 
 
 if (!Sys.iswindows() && get(ENV, "SYSTEMWIDE_GMT", "") == "")
-	ver = VersionNumber(split(readlines(`$(GMT.GMT_jll.gmt()) "--version"`)[1],'_')[1])
+	ver = VersionNumber(split(readlines(`$(GMT_jll.gmt()) "--version"`)[1],'_')[1])
 	userdir = [readlines(`$(GMT_jll.gmt()) "--show-userdir"`)[1]]
 	GMT_bindir = ""
 	errou = false
