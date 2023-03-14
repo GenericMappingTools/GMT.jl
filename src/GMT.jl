@@ -41,8 +41,10 @@ catch
 end
 
 if (!Sys.iswindows() && get(ENV, "SYSTEMWIDE_GMT", "") == "")
+	const GMTver = VersionNumber(split(readlines(`$(GMT_jll.gmt()) "--version"`)[1],'_')[1])
+	const GMTuserdir = [readlines(`$(GMT_jll.gmt()) "--show-userdir"`)[1]]
+	#const GMTver, GMTuserdir = _GMTver, [userdir]	# Here, libgmt, libgdal, libproj are already exported
 	const GSbin = Ghostscript_jll.gs()[1]
-	const GMTver, GMTuserdir = _GMTver, [userdir]	# Here, libgmt, libgdal, libproj are already exported
 	const isJLL = true
 else
 	const isJLL = false
