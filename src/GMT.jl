@@ -46,7 +46,6 @@ end
 
 if (have_jll == 1 || (!Sys.iswindows() && get(ENV, "SYSTEMWIDE_GMT", "") == ""))	# That is: the JLL case
 	using GMT_jll, GDAL_jll, PROJ_jll, Ghostscript_jll
-	# Here, libgmt, libgdal, libproj are already exported
 	const GMTver = VersionNumber(split(readlines(`$(GMT_jll.gmt()) "--version"`)[1],'_')[1])
 	const GMTuserdir = [readlines(`$(GMT_jll.gmt()) "--show-userdir"`)[1]]
 	const GSbin = Ghostscript_jll.gs()[1]
