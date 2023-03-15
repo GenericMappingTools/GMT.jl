@@ -36,7 +36,7 @@ if (Sys.iswindows() && !isfile(_GMT_bindir * "\\gmt.exe"))		# If GMT was removed
 	Pkg.build("GMT");	include(depfile)
 end
 
-const GMTver, libgmt, libgdal, libproj, GMT_bindir, GMTuserdir = _GMTver, _libgmt, _libgdal, _libproj, _GMT_bindir, [userdir]
+const GMTver, libgmt, libgdal, libproj, GMTuserdir = _GMTver, _libgmt, _libgdal, _libproj, [userdir]
 
 const global G_API = [C_NULL]
 const global PSname = [joinpath(tempdir(), "GMTjl_tmp.ps")]		# The PS file where, in classic mode, all lands.
