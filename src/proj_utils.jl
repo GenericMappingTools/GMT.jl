@@ -189,10 +189,10 @@ Args:
                 If `sorted` is set to `false` we compute the angles in the order of points as given in `lonlat2`.
 
 ### Returns
-- `angles` - A Float64 vector with angles between determined by the arguments plus the angle betwen the lines
-             from center to first and from center to last points.
+- `angles` - A Float64 vector with the angles between center and points determined by the arguments plus the
+             angle betwen the lines from center to first and from center to last point.
 - `ind` - A vector of Int with the order obtained by sorting the lines azimuths (when `sorted=true`).
-          Apply it to ``lonlat2[ind,:]`` to get the point distribution order in the same way as `angles`.
+          Apply it to `lonlat2[ind,:]` to get the point distribution order in the same way as `angles`.
           Neddless, ofc, if `sorted=false`.
 """
 function vecangles(lonlat0::VMr, lonlat1::Matrix{<:Real}; proj::String="",
