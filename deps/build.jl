@@ -24,6 +24,8 @@ function get_de_libnames()
 				)
 			)
 
+		GMT_bindir = string(chop(read(`gmt --show-bindir`, String)))
+
 	catch err1;		println(err1)		# If not, install GMT if Windows. Otherwise just see if we have one at sight
 		try
 			if Sys.iswindows()
@@ -34,6 +36,7 @@ function get_de_libnames()
 				libgmt  = "gmt_w64.dll"
 				libgdal = "gdal_w64.dll"
 				libproj = "proj_w64.dll"
+				GMT_bindir = "C:\\programs\\gmt6\\bin"
 			else
 				println("\n\nNo GMT system wide installation found\n\n")
 				return true, ver, libgmt, libgdal, libproj, GMT_bindir, userdir
@@ -73,6 +76,7 @@ end
 if (!errou)		# Save shared names in file so that GMT.jl can read them at pre-compile time
 	depfile = joinpath(dirname(@__FILE__), "deps.jl")
 	open(depfile, "w") do f
+		println(f, "_GMT_bindir = \"", escape_string(GMT_bindir), '"')
 		println(f, "_libgmt  = \"", escape_string(joinpath(GMT_bindir, libgmt)), '"')
 		println(f, "_libgdal = \"", escape_string(joinpath(GMT_bindir, libgdal)), '"')
 		println(f, "_libproj = \"", escape_string(joinpath(GMT_bindir, libproj)), '"')
