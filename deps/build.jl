@@ -27,6 +27,7 @@ function get_de_libnames()
 	catch err1;		println(err1)		# If not, install GMT if Windows. Otherwise just see if we have one at sight
 		try
 			if Sys.iswindows()
+				println("\nDowloading and installing from the Windows installer\n")
 				fn = download("http://fct-gmt.ualg.pt/gmt/data/wininstallers/gmt-win64.exe", "GMTinstaller.exe")
 				run(`cmd /k GMTinstaller.exe /S`)
 				rm(fn, force=true)
@@ -34,17 +35,21 @@ function get_de_libnames()
 				libgdal = "gdal_w64.dll"
 				libproj = "proj_w64.dll"
 			else
-				println("No GMT system wide installation found")
-				println(err3)
-				errou = true
-				return errou, ver, libgmt, libgdal, libproj, GMT_bindir, userdir
+				println("\n\nNo GMT system wide installation found\n\n")
+				return true, ver, libgmt, libgdal, libproj, GMT_bindir, userdir
 			end
 
-			out = readlines(`gmt --version`)[1]
-			ver = ((ind = findfirst('_', out)) === nothing) ? VersionNumber(out) : VersionNumber(out[1:ind-1])
+			try
+				if Sys.iswindows()
+					out = readlines(`gmt --version`)[1]
+					ver = ((ind = findfirst('_', out)) === nothing) ? VersionNumber(out) : VersionNumber(out[1:ind-1])
+				end
+			catch
+				return false, v"6.5", libgmt, libgdal, libproj, GMT_bindir, "c:/j/.gmt"
+			end
 
 		catch err2;		println(err2)
-			errou = true
+			return true, ver, libgmt, libgdal, libproj, GMT_bindir, userdir
 		end
 	end
 	userdir    = readlines(`gmt --show-userdir`)[1]
@@ -52,14 +57,16 @@ function get_de_libnames()
 	return errou, ver, libgmt, libgdal, libproj, GMT_bindir, userdir
 end
 
-
-if (!Sys.iswindows() && get(ENV, "SYSTEMWIDE_GMT", "") == "")		# That is: the JLL case
+force_winjll = (get(ENV, "FORCE_WINJLL", "") == "1")		# Use this env var to also force use of the JLL on Windows
+if (force_winjll || (!Sys.iswindows() && get(ENV, "SYSTEMWIDE_GMT", "") == ""))		# That is: the JLL case
 	# Just to have something. They won't be used in main. There, wee only need that a "deps.jl" exists
 	libgmt, libgdal, libproj, ver, userdir = "nikles", "nikles", "nikles", "0.0", "nikles"
 	GMT_bindir = ""
+	is_jll = 1
 	errou = false
 else
 	errou, ver, libgmt, libgdal, libproj, GMT_bindir, userdir = get_de_libnames()
+	is_jll = 0
 end
 
 
@@ -71,5 +78,6 @@ if (!errou)		# Save shared names in file so that GMT.jl can read them at pre-com
 		println(f, "_libproj = \"", escape_string(joinpath(GMT_bindir, libproj)), '"')
 		println(f, "_GMTver = v\"" * string(ver) * "\"")
 		println(f, "userdir = \"", escape_string(userdir), '"')
+		println(f, "have_jll = ", is_jll)
 	end
 end

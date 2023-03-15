@@ -4,9 +4,9 @@ using Printf, Dates, Statistics, Pkg
 using Tables: Tables
 using PrettyTables
 #using SnoopPrecompile
-if (!Sys.iswindows() && get(ENV, "SYSTEMWIDE_GMT", "") == "")
-	using GMT_jll, GDAL_jll, PROJ_jll, Ghostscript_jll
-end
+#if ((!Sys.iswindows() && get(ENV, "SYSTEMWIDE_GMT", "") == "") || get(ENV, "FORCE_WINJLL", "") != "")
+	#using GMT_jll, GDAL_jll, PROJ_jll, Ghostscript_jll
+#end
 
 struct CTRLstruct
 	limits::Vector{Float64}			# To store the data limits. First 6 store: data limits. Second 6: plot limits
@@ -40,7 +40,12 @@ catch
 	Pkg.build("GMT");	include(depfile)
 end
 
-if (!Sys.iswindows() && get(ENV, "SYSTEMWIDE_GMT", "") == "")	# That is: the JLL case
+if (!(@isdefined have_jll) || get(ENV, "FORCE_WINJLL", "") != "")	# Force recompile if FORCE_WINJLL state changes
+	Pkg.build("GMT");	include(depfile)
+end
+
+if (have_jll == 1 || (!Sys.iswindows() && get(ENV, "SYSTEMWIDE_GMT", "") == ""))	# That is: the JLL case
+	using GMT_jll, GDAL_jll, PROJ_jll, Ghostscript_jll
 	# Here, libgmt, libgdal, libproj are already exported
 	const GMTver = VersionNumber(split(readlines(`$(GMT_jll.gmt()) "--version"`)[1],'_')[1])
 	const GMTuserdir = [readlines(`$(GMT_jll.gmt()) "--show-userdir"`)[1]]
