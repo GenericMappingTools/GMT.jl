@@ -1,6 +1,6 @@
 module GMT
 
-using Printf, Dates, Statistics, Pkg
+using Printf, Dates, Statistics
 using Tables: Tables
 using PrettyTables
 #using SnoopPrecompile
@@ -32,9 +32,6 @@ force_precompile() = Sys.iswindows() ? run(`cmd /c copy /b "$(pathof(GMT))" +,, 
 
 depfile = joinpath(dirname(@__FILE__),"..","deps","deps.jl")	# File with shared lib names
 include(depfile)		# This loads the shared libs names
-if (Sys.iswindows() && !isfile(_GMT_bindir * "\\gmt.exe"))		# If GMT was removed but depfile still exists
-	Pkg.build("GMT");	include(depfile)
-end
 
 const GMTver, libgmt, libgdal, libproj, GMTuserdir = _GMTver, _libgmt, _libgdal, _libproj, [userdir]
 
