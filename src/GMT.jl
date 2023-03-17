@@ -43,7 +43,8 @@ if (neeReBuild || !(@isdefined have_jll) || get(ENV, "FORCE_WINJLL", "") != "")	
 	Pkg.build("GMT");	include(depfile)
 end
 
-if (have_jll == 1 || (!Sys.iswindows() && get(ENV, "SYSTEMWIDE_GMT", "") == ""))	# That is: the JLL case
+#if (have_jll == 1 || (!Sys.iswindows() && get(ENV, "SYSTEMWIDE_GMT", "") == ""))	# That is: the JLL case
+if (have_jll == 1 && get(ENV, "SYSTEMWIDE_GMT", "") == "")			# That is, the JLL case AND no swapping mode
 	using GMT_jll, GDAL_jll, PROJ_jll, Ghostscript_jll
 	const GMTver = VersionNumber(split(readlines(`$(GMT_jll.gmt()) "--version"`)[1],'_')[1])
 	const GMTuserdir = [readlines(`$(GMT_jll.gmt()) "--show-userdir"`)[1]]
