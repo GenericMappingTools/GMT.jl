@@ -1,6 +1,6 @@
 module GMT
 
-using Printf, Dates, Statistics, Pkg
+using Printf, Dates, Statistics
 using Tables: Tables
 using PrettyTables
 #using SnoopPrecompile
@@ -31,13 +31,15 @@ end
 force_precompile() = Sys.iswindows() ? run(`cmd /c copy /b "$(pathof(GMT))" +,, "$(pathof(GMT))"`) : run(`touch '$(pathof(GMT))'`)
 
 depfile = joinpath(dirname(@__FILE__),"..","deps","deps.jl")	# File with shared lib names
+neeReBuild = false
 try
 	include(depfile)		# This loads the shared libs names in the case of NON-JLL, otherwise just return
 catch
-	Pkg.build("GMT");	include(depfile)
+	neeReBuild = true
 end
 
-if (!(@isdefined have_jll) || get(ENV, "FORCE_WINJLL", "") != "")	# Force recompile if FORCE_WINJLL state changes
+if (neeReBuild || !(@isdefined have_jll) || get(ENV, "FORCE_WINJLL", "") != "")	# Force recompile if FORCE_WINJLL state changes
+	import Pkg
 	Pkg.build("GMT");	include(depfile)
 end
 
