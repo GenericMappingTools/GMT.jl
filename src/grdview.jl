@@ -123,11 +123,11 @@ function parse_G_grdview(d::Dict, symbs::Array{<:Symbol}, cmd0::String, cmd::Str
 				if (cmd0 != "")  prj = (startswith(cmd0, "@earth_r")) ? prj4WGS84 : getproj(cmd0, proj4=true)
 				else             prj = (isa(arg1, GItype)) ? getproj(arg1, proj4=true) : ""
 				end
-				#if ((prj_img = getproj(val, proj4=true)) == "" && GMTver > v"6.4")	# This only works in >= GMT6.5
-					#cmd, arg1, arg2, arg3, arg4 = intern!(cmd, val, arg1, arg2, arg3, arg4)
-				#elseif (GMTver > v"6.4")
-				if (GMTver > v"6.4")
+				if ((prj_img = getproj(val, proj4=true)) == "" && GMTver > v"6.4")	# This only works in >= GMT6.5
 					cmd, arg1, arg2, arg3, arg4 = intern!(cmd, val, arg1, arg2, arg3, arg4)
+				#elseif (GMTver > v"6.4")
+				#if (GMTver > v"6.4")
+					#cmd, arg1, arg2, arg3, arg4 = intern!(cmd, val, arg1, arg2, arg3, arg4)
 				else
 					if (prj_img == "")
 						val.x = arg1.x;		val.y = arg1.y;		val.inc = arg1.inc
