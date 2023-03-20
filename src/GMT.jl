@@ -40,11 +40,13 @@ end
 
 if (neeReBuild || !(@isdefined have_jll) || get(ENV, "FORCE_WINJLL", "") != "" || get(ENV, "SYSTEMWIDE_GMT", "") != "")
 	# Force recompile if FORCE_WINJLL state changes
+	#=
 	if (!Sys.isapple())
 		import Pkg
 		Pkg.build("GMT");
 		include(depfile)
 	end
+	=#
 end
 
 if (have_jll == 1 && get(ENV, "SYSTEMWIDE_GMT", "") == "")			# That is, the JLL case AND no swapping mode
