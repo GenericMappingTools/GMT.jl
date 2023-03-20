@@ -1,9 +1,9 @@
 	println("	GMTINFO")
 	gmt("gmtset -");
 	r = gmt("gmtinfo -C", ones(Float32,9,3)*5);
-	@assert(r.data == [5.0 5 5 5 5 5])
+	@test r.data == [5.0 5 5 5 5 5]
 	r = gmtinfo(ones(Float32,9,3)*5, C=true, V=:q);
-	@assert(r.data == [5.0 5 5 5 5 5])
+	@test r.data == [5.0 5 5 5 5 5]
 	#gmtinfo(help=0)
 
 	println("	BLOCK*s")
@@ -115,7 +115,7 @@
 	# GMTSPATIAL
 	# Test  Cartesian centroid and area
 	result = gmt("gmtspatial -Q", [0 0; 1 0; 1 1; 0 1; 0 0]);
-	@assert(isapprox(result.data, [0.5 0.5 1]))
+	@test isapprox(result.data, [0.5 0.5 1])
 	# Test Geographic centroid and area
 	result = gmt("gmtspatial -Q -fg", [0 0; 1 0; 1 1; 0 1; 0 0]);
 	# Intersections
