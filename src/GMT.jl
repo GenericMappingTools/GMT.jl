@@ -27,29 +27,10 @@ struct CTRLstruct2
 	fname::Vector{String}			# Store the full name of PS being constructed
 end
 
-# Function to change data of GMT.jl and hence force a rebuild in next Julia session
-force_precompile() = Sys.iswindows() ? run(`cmd /c copy /b "$(pathof(GMT))" +,, "$(pathof(GMT))"`) : run(`touch '$(pathof(GMT))'`)
-
 depfile = joinpath(dirname(@__FILE__),"..","deps","deps.jl")	# File with shared lib names
-neeReBuild = false
-try
-	include(depfile)		# This loads the shared libs names in the case of NON-JLL, otherwise just return
-catch
-	neeReBuild = true
-end
+include(depfile)		# This loads the shared libs names in the case of NON-JLL, otherwise just return
 
-if (neeReBuild || !(@isdefined have_jll) || get(ENV, "FORCE_WINJLL", "") != "" || get(ENV, "SYSTEMWIDE_GMT", "") != "")
-	# Force recompile if FORCE_WINJLL state changes
-	#=
-	if (!Sys.isapple())
-		import Pkg
-		Pkg.build("GMT");
-		include(depfile)
-	end
-	=#
-end
-
-if (have_jll == 1 && get(ENV, "SYSTEMWIDE_GMT", "") == "")			# That is, the JLL case AND no swapping mode
+if ((!@isdefined have_jll || have_jll == 1) && get(ENV, "SYSTEMWIDE_GMT", "") == "")	# That is, the JLL case
 	using GMT_jll, GDAL_jll, PROJ_jll, Ghostscript_jll
 	const GMTver = VersionNumber(split(readlines(`$(GMT_jll.gmt()) "--version"`)[1],'_')[1])
 	const GMTuserdir = [readlines(`$(GMT_jll.gmt()) "--show-userdir"`)[1]]
@@ -312,9 +293,9 @@ end
 =#
 
 function __init__(test::Bool=false)
-	if !isfile(libgmt) || ( !Sys.iswindows() && (!isfile(libgdal) || !isfile(libproj)) )
+	if !isfile(libgmt) || (!Sys.iswindows() && (!isfile(libgdal) || !isfile(libproj)))
 		println("\nDetected a previously working GMT.jl version but something has broken meanwhile.\n" *
-		"(like updating your GMT instalation). Run this command in REPL and restart Julia.\n\n\t\tGMT.force_precompile()\n")
+		"(like updating your GMT instalation). Restart Julia and run `import Pkg; Pkg.precompile()`")
 		return
 	end
 
