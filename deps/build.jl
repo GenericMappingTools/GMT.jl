@@ -60,7 +60,7 @@ function get_de_libnames()
 	return errou, ver, libgmt, libgdal, libproj, GMT_bindir, userdir
 end
 
-force_winjll = (get(ENV, "FORCE_WINJLL", "") == "1")		# Use this env var to also force use of the JLL on Windows
+force_winjll = (get(ENV, "FORCE_WINJLL", "") != "")		# Use this env var to also force use of the JLL on Windows
 if (force_winjll || (!Sys.iswindows() && get(ENV, "SYSTEMWIDE_GMT", "") == ""))		# That is: the JLL case
 	# Just to have something. They won't be used in main. There, wee only need that a "deps.jl" exists
 	libgmt, libgdal, libproj, ver, userdir = "nikles", "nikles", "nikles", "0.0", "nikles"
