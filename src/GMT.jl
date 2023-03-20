@@ -30,7 +30,7 @@ end
 depfile = joinpath(dirname(@__FILE__),"..","deps","deps.jl")	# File with shared lib names
 include(depfile)		# This loads the shared libs names in the case of NON-JLL, otherwise just return
 
-if ((!@isdefined have_jll || have_jll == 1) && get(ENV, "SYSTEMWIDE_GMT", "") == "")	# That is, the JLL case
+if ((!(@isdefined have_jll) || have_jll == 1) && get(ENV, "SYSTEMWIDE_GMT", "") == "")	# That is, the JLL case
 	using GMT_jll, GDAL_jll, PROJ_jll, Ghostscript_jll
 	const GMTver = VersionNumber(split(readlines(`$(GMT_jll.gmt()) "--version"`)[1],'_')[1])
 	const GMTuserdir = [readlines(`$(GMT_jll.gmt()) "--show-userdir"`)[1]]
