@@ -3888,10 +3888,11 @@ function helper_showfig4modern(show::String="show")::Bool
 	# Use show="" in modern when only wanting to finish plot but NOT display it.
 	if (IamModern[1])
 		try
-			IamSubplot[1] && (gmt("subplot end");	IamSubplot[1] = false);		catch
+			gmt("subplot end");		IamSubplot[1] = false
+		catch erro;		println(erro)
 		end
 		IamModern[1] = false
-		isFranklin[1] ? gmt("end") : gmt("end " * show)	# isFranklin is true when building the docs
+		isFranklin[1] ? gmt("end") : (show == "") ? gmt("end") : gmt("end " * show)	# isFranklin = true when building the docs
 		return true
 	end
 	return false
