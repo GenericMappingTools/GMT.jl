@@ -48,8 +48,10 @@ if ((!(@isdefined have_jll) || have_jll == 1) && get(ENV, "SYSTEMWIDE_GMT", "") 
 	const GMTuserdir = [readlines(`$(GMT_jll.gmt()) "--show-userdir"`)[1]]
 	const GSbin = Ghostscript_jll.gs()[1]
 	const isJLL = true
-	f = joinpath(GMTuserdir[1], "ghost_jll_path.txt")
-	write(f, GSbin)							# Save this to be used by psconvert.c
+	fname = joinpath(GMTuserdir[1], "ghost_jll_path.txt")
+	open(fname,"w") do f
+		write(f, GSbin)							# Save this to be used by psconvert.c
+	end
 else
 	const isJLL = false
 	const GMTver, libgmt, libgdal, libproj, GMTuserdir = _GMTver, _libgmt, _libgdal, _libproj, [userdir]
