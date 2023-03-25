@@ -108,29 +108,29 @@ jobs:
         with:
           file: lcov.info
   
-  docs:
-    name: Documentation
-    #runs-on: ubuntu-latest
-    #runs-on: ubuntu-18.04
-    #runs-on: macos-latest
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: julia-actions/setup-julia@v1
-        with:
-          version: '1'
-      - run: |
-          julia --project=docs -e '
-            using Pkg
-            Pkg.add("Documenter")
-            Pkg.develop(PackageSpec(path=pwd()))
-            Pkg.instantiate()'
+  #docs:
+    #name: Documentation
+    ##runs-on: ubuntu-latest
+    ##runs-on: ubuntu-18.04
+    ##runs-on: macos-latest
+    #runs-on: windows-latest
+    #steps:
+      #- uses: actions/checkout@v2
+      #- uses: julia-actions/setup-julia@v1
+        #with:
+          #version: '1'
       #- run: |
           #julia --project=docs -e '
-            #using Documenter: doctest
-            #using GMT
-            #doctest(GMT)' # change MYPACKAGE to the name of your package
-      - run: julia --project=docs docs/make.jl
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
+            #using Pkg
+            #Pkg.add("Documenter")
+            #Pkg.develop(PackageSpec(path=pwd()))
+            #Pkg.instantiate()'
+      ##- run: |
+          ##julia --project=docs -e '
+            ##using Documenter: doctest
+            ##using GMT
+            ##doctest(GMT)' # change MYPACKAGE to the name of your package
+      #- run: julia --project=docs docs/make.jl
+        #env:
+          #GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          #DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
