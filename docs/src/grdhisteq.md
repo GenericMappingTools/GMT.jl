@@ -1,3 +1,0 @@
-# grdhisteq
-
-Not yet
