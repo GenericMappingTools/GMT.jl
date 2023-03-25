@@ -49,8 +49,13 @@ if ((!(@isdefined have_jll) || have_jll == 1) && get(ENV, "SYSTEMWIDE_GMT", "") 
 	const GSbin = Ghostscript_jll.gs()[1]
 	const isJLL = true
 	fname = joinpath(GMTuserdir[1], "ghost_jll_path.txt")
-	open(fname,"w") do f
-		write(f, GSbin)							# Save this to be used by psconvert.c
+	try			
+		# WTF Building docs remotely with Franklin error with?
+		# ERROR: LoadError: SystemError: opening file "/home/runner/.gmt/ghost_jll_path.txt": No such file or directory
+		open(fname,"w") do f
+			write(f, GSbin)							# Save this to be used by psconvert.c
+		end
+	catch
 	end
 else
 	const isJLL = false
