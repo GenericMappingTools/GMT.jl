@@ -98,7 +98,7 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 	cmd = add_opt(d, cmd, "M", [:M :dump])
 	if (!occursin("-E+l", cmd) && !occursin("-E+L", cmd))
 		cmd, = parse_R(d, cmd, O)
-		if (!occursin(cmd, " -M"))				# If Dump no -R & -B
+		if (!contains(cmd, " -M"))				# If Dump no -R & -B
 			cmd = parse_J(d, cmd, "guess", true, O)[1]
 			cmd = parse_B(d, cmd, (O ? "" : (IamModern[1]) ? "" : def_fig_axes[1]))[1]
 		end
