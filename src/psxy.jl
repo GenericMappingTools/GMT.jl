@@ -152,7 +152,8 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		else
 			cmd, mat_t::Matrix{Float64} = add_opt(add_opt, (d, cmd, "E", [symb]),
                                 (x="|x",y="|y",xy="|xy",X="|X",Y="|Y", asym="_+a", colored="_+c", cline="_+cl", csymbol="_+cf", notch="|+n", boxwidth="+w", cap="+w", pen=("+p",add_opt_pen)), false, isa(arg1, GMTdataset) ? arg1.data : arg1[1].data)
-			isa(arg1, GMTdataset) ? (arg1.data = mat_t) : (arg1[1].data = mat_t)
+			isa(arg1, GMTdataset) ? (arg1.data = mat_t; append!(arg1.colnames, ["Ebar"])) :
+			                        (arg1[1].data = mat_t; append!(arg1[1].colnames, ["Ebar"]))
 		end
 		got_Ebars = true
 		del_from_dict(d, [symb])
