@@ -97,7 +97,11 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 	cmd = parse_E_coast(d, [:E, :DCW], "")		# Process first to avoid warning about "guess"
 	cmd = add_opt(d, cmd, "M", [:M :dump])
 	if (!occursin("-E+l", cmd) && !occursin("-E+L", cmd))
-		cmd, = parse_BJR(d, cmd, "", O, "guess")
+		cmd, = parse_R(d, cmd, O)
+		if (!occursin(cmd, " -M"))				# If Dump no -R & -B
+			cmd = parse_J(d, cmd, "guess", true, O)[1]
+			cmd = parse_B(d, cmd, (O ? "" : (IamModern[1]) ? "" : def_fig_axes[1]))[1]
+		end
 	end
 	cmd, = parse_common_opts(d, cmd, [:F :JZ :UVXY :bo :c :p :t :params], first)
 	cmd  = parse_these_opts(cmd, d, [[:A :area], [:C :river_fill], [:D :res :resolution]])
