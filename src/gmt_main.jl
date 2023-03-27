@@ -308,6 +308,7 @@ function gmt(cmd::String, args...)
 	status = GMT_Call_Module(G_API[1], g_module, GMT_MODULE_OPT, LL)
 	if (status != 0)
 		((status < 0) || status == GMT_SYNOPSIS || status == Int('?')) && return
+		resetGMT()		# If it screwed, reset it to not let this error afect posterious calls.
 		error("Something went wrong when calling the module. GMT error number = $status")
 	end
 
