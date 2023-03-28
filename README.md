@@ -55,7 +55,7 @@ instead of
 
 to show
 
-<img src="docs/src/figures/mapproj/GMT_winkel.png" width="350" class="center"/>
+<img src="docs/src/figures/GMT_winkel.png" width="350" class="center"/>
 
 Install
 =======
