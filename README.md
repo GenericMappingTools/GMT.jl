@@ -8,7 +8,7 @@ Julia wrapper for the Generic Mapping Tools [GMT](https://github.com/GenericMapp
 | [![][docs-latest-img]][docs-latest-url] | [![][travis-img]][travis-url] [![][codecov-img]][codecov-url] | [![][forum-img]][forum-url] | [![][colprac-img]][colprac-url] |
 
 [docs-latest-img]: https://img.shields.io/badge/docs-latest-blue.svg
-[docs-latest-url]: https://GenericMappingTools.github.io/GMTjl_doc/
+[docs-latest-url]: https://joa-quim.github.io/GMTjl_doc/
 
 [travis-img]: https://travis-ci.com/GenericMappingTools/GMT.jl.svg?branch=master
 [travis-url]: https://travis-ci.com/GenericMappingTools/GMT.jl
@@ -70,7 +70,7 @@ takes place. One may also force the automatic installation by setting the enviro
 
 
   * Windows64
-      Install the [GMT6 version](http://fct-gmt.ualg.pt/gmt/data/wininstallers/gmt-6.3-dev-win64.exe)
+      Install the [GMT6 version](http://fct-gmt.ualg.pt/gmt/data/wininstallers/gmt-win64.exe)
 
   * Windows32
       [..._win32.exe](https://github.com/GenericMappingTools/gmt/releases/download/6.2.0/GMT-6.2.0-win32.exe)
