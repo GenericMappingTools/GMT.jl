@@ -180,7 +180,7 @@ function plotlinefit(D::Vector{<:GMTdataset}; first::Bool=true, kw...)
 	do_show = ((val = find_in_dict(d, [:show])[1]) !== nothing && val != 0)
 	figname::String = ((val = find_in_dict(d, [:savefig :figname :name])[1]) !== nothing) ? val : ""
 
-	band_CI = ((val = find_in_dict(d, [:ribbon_CI :band_CI :ribbon_ci :band_ci], false)[1]) !== nothing) ? val : ""
+	band_CI = ((val = find_in_dict(d, [:ribbon_CI :band_CI :ribbon_ci :band_ci])[1]) !== nothing) ? val : ""
 	do_band_CI = (band_CI != 0 && band_CI != "")
 	do_band_CI && (d[:band_CI] = (bc = edit_segment_headers!(D[1], 'G', :get)) != "" ? bc*"@85" : cycle_colors[1]*"@85")
 
@@ -220,7 +220,7 @@ function plotlinefit(D::GMTdataset; first::Bool=true, grp::Bool=false, kw...)
 		return do_rib, rib_cor
 	end
 
-	do_rib_ab, rib_ab_cor = do_ribs(d, [:ribbon_ab :band_ab], "lightblue")	
+	do_rib_ab, rib_ab_cor = do_ribs(d, [:ribbon_ab :band_ab], "lightblue")
 	do_rib_CI, rib_CI_cor = do_ribs(d, [:ribbon_CI :band_CI :ribbon_ci :band_ci], "pink")	
 	do_ellipses = (find_in_dict(d, [:ellipses :ellipse])[1] !== nothing)
 	(do_ellipses && size(D,2) < 5) && (@warn("Can't plot ellipses when σX and σY are not known");	do_ellipses = false)
