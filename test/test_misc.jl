@@ -42,6 +42,19 @@
 	getindex(G1,1:2);
 	setindex!(G1, [-1 -1],1:2)
 	size(G1)
+
+	D = mat2ds(ones(3,2));
+	D + 2;
+	2 + D;
+	D - 2;
+	2 - D;
+	D + [2 1];
+	[2 1] + D;
+	D - [2 1];
+	D2 = [2 1] - D;
+	cat(D, D2);
+	cat([D], D2);
+	cat([D], [D2]);
 	
 	permutedims(mat2grid(rand(Float32,3,10,20)), [3,1,2], nodata=1e30);
 	permutedims(mat2grid(rand(Float32,3,10,20)), [3,1,2], nodata=-1e30);
