@@ -134,6 +134,47 @@ function Base.:log10(G1::GMTgrid)
 end
 
 # ---------------------------------------------------------------------------------------------------
+Base.:+(add::T, D1::GMTdataset) where T<:AbstractArray = Base.:+(D1::GMTdataset, add)
+Base.:+(add::Real, D1::GMTdataset) = Base.:+(D1::GMTdataset, [add;;])
+Base.:+(D1::GMTdataset, add::Real) = Base.:+(D1::GMTdataset, [add;;])
+function Base.:+(D1::GMTdataset, add::T) where T<:AbstractArray
+	# Add constant(s) on a per column basis. If 'add' is a scalar add it to first column.
+	# Use a 1 row matrix to add different values to each column.
+	!isa(add, Matrix) && error("Add factors must be a scalar or a one row matrix.")
+	_data, _add = copy(D1.data), copy(add)
+	(length(_add) > size(_data,2)) && error("Number of adding factores greater than number of columns in dataset")
+	(length(_add) < size(_data,2)) && (_add = [_add fill(zero(eltype(add)), 1, size(_data,2)-length(add))])
+
+	_data .+= _add
+	D2 = GMTdataset(_data, D1.ds_bbox, D1.bbox, D1.attrib, D1.colnames, D1.text, D1.header, D1.comment, D1.proj4, D1.wkt, D1.epsg, D1.geom)
+	set_dsBB!(D2)
+
+	return D2
+end
+
+# ---------------------------------------------------------------------------------------------------
+Base.:-(add::T, D1::GMTdataset) where T<:AbstractArray = Base.:-(D1::GMTdataset, add)
+Base.:-(add::Real, D1::GMTdataset) = Base.:+(D1::GMTdataset, [-add;;])
+Base.:-(D1::GMTdataset, add::Real) = Base.:+(D1::GMTdataset, [-add;;])
+Base.:-(D1::GMTdataset, add::T) where T<:AbstractArray = D1 + -add
+
+# ---------------------------------------------------------------------------------------------------
+Base.:cat(D1::Vector{<:GMTdataset}, D2::GMTdataset) = Base.cat(D1, [D2])		# LINTER IS WRONG
+Base.:cat(D1::GMTdataset, D2::Vector{<:GMTdataset}) = Base.cat([D1], D2)
+Base.:cat(D1::GMTdataset, D2::GMTdataset) = Base.cat([D1], [D2])
+function Base.:cat(D1::Vector{<:GMTdataset}, D2::Vector{<:GMTdataset})
+	# Concat 2 Vector{GMTdataset}. The important point is that the finas 'ds_bbox' field gets set correctly
+	# because plot() uses it to set automatic limits. 
+	D = vcat(D1, D2)
+	for k = 1:2:length(D1[1].ds_bbox)		# Udate the cat'ed ds_bbox. This is crutial
+		D[1].ds_bbox[k]   = min(D1[1].ds_bbox[k], D2[1].ds_bbox[k])
+		D[1].ds_bbox[k+1] = max(D1[1].ds_bbox[k+1], D2[1].ds_bbox[k+1])
+	end
+	D[length(D1)+1].ds_bbox = D[length(D1)+1].bbox	# Not really important, but it was now wrong.
+	return D
+end
+
+# ---------------------------------------------------------------------------------------------------
 function setgrdminmax!(G::GMTgrid)
 	# The non-nan version is way faster so use it as a proxy of NaNs and recompute if needed.
 	min = minimum(G.z);
