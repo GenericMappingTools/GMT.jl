@@ -40,7 +40,7 @@ end
 # environment variable permanently in your .bashrc (or whatever).
 
 depfile = joinpath(dirname(@__FILE__),"..","deps","deps.jl")	# File with shared lib names
-include(depfile)		# This loads the shared libs names in the case of NON-JLL, otherwise just return
+isfile(depfile) && include(depfile)		# This loads the shared libs names in the case of NON-JLL, otherwise just return
 
 if ((!(@isdefined have_jll) || have_jll == 1) && get(ENV, "SYSTEMWIDE_GMT", "") == "")	# That is, the JLL case
 	using GMT_jll, GDAL_jll, PROJ_jll, Ghostscript_jll
@@ -55,7 +55,8 @@ if ((!(@isdefined have_jll) || have_jll == 1) && get(ENV, "SYSTEMWIDE_GMT", "") 
 		open(fname,"w") do f
 			write(f, GSbin)							# Save this to be used by psconvert.c
 		end
-	catch
+	catch erro
+		prinln(erro)
 	end
 else
 	const isJLL = false
