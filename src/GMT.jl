@@ -52,6 +52,7 @@ if ((!(@isdefined have_jll) || have_jll == 1) && get(ENV, "SYSTEMWIDE_GMT", "") 
 	try			
 		# WTF Building docs remotely with Franklin error with?
 		# ERROR: LoadError: SystemError: opening file "/home/runner/.gmt/ghost_jll_path.txt": No such file or directory
+		!isdir(GMTuserdir[1]) && mkdir(GMTuserdir[1])	# When installing on a clean no GMT sys, ~/.gmt doesn't exist
 		open(fname,"w") do f
 			write(f, GSbin)							# Save this to be used by psconvert.c
 		end
