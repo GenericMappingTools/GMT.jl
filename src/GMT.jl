@@ -56,7 +56,7 @@ if ((!(@isdefined have_jll) || have_jll == 1) && get(ENV, "SYSTEMWIDE_GMT", "") 
 			write(f, GSbin)							# Save this to be used by psconvert.c
 		end
 	catch erro
-		prinln(erro)
+		println(erro)
 	end
 else
 	const isJLL = false
