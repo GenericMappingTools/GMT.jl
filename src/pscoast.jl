@@ -135,7 +135,7 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 	finish = !occursin(" -M",cmd) && !occursin("-E+l", cmd) && !occursin("-E+L", cmd) ? true : false	# Otherwise the dump would be redirected to GMTjl_tmp.ps
 
 	# Just let D = coast(R=:PT, dump=true) work without any furthers shits (plain GMT doesn't let it)
-	(occursin(" -M",cmd) && !occursin("-E", cmd) && !occursin("-I", cmd) && !occursin("-N", cmd) && !occursin("-W", cmd)) &&
+	(occursin(" -M",cmd) && !occursin("-E", cmd) && !occursin("-I", cmd) && !occursin("-N", cmd) && !occursin("-W", cmd) && !occursin("-A", cmd)) &&
 		(cmd *= " -W -A0/1/1")
 
 	get_largest = (!finish && occursin(" -E", cmd) && (find_in_dict(d, [:biggest :largest])[1] !== nothing))
