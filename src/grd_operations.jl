@@ -163,7 +163,7 @@ Base.:cat(D1::Vector{<:GMTdataset}, D2::GMTdataset) = Base.cat(D1, [D2])		# LINT
 Base.:cat(D1::GMTdataset, D2::Vector{<:GMTdataset}) = Base.cat([D1], D2)
 Base.:cat(D1::GMTdataset, D2::GMTdataset) = Base.cat([D1], [D2])
 function Base.:cat(D1::Vector{<:GMTdataset}, D2::Vector{<:GMTdataset})
-	# Concat 2 Vector{GMTdataset}. The important point is that the finas 'ds_bbox' field gets set correctly
+	# Concat 2 Vector{GMTdataset}. The important point is that the final 'ds_bbox' field gets set correctly
 	# because plot() uses it to set automatic limits. 
 	D = vcat(D1, D2)
 	for k = 1:2:length(D1[1].ds_bbox)		# Udate the cat'ed ds_bbox. This is crutial
