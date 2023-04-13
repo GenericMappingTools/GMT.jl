@@ -3,7 +3,7 @@ module GMT
 using Printf, Dates, Statistics
 using Tables: Tables
 using PrettyTables
-#using SnoopPrecompile
+using SnoopPrecompile
 
 struct CTRLstruct
 	limits::Vector{Float64}			# To store the data limits. First 6 store: data limits. Second 6: plot limits
@@ -262,7 +262,7 @@ include("imshow.jl")		# Include later because one method depends on knowing abou
 const global current_cpt = [GMTcpt()]		# To store the current palette
 const global legend_type = [legend_bag()]	# To store Legends info
 
-#=
+##
 import SnoopPrecompile
 @SnoopPrecompile.precompile_all_calls begin
 	G_API[1] = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS)
@@ -290,7 +290,7 @@ import SnoopPrecompile
 	grdview(rand(Float32,32,32))
 	coast(R=:g, proj=:guess, W=(level=1,pen=(2,:green)))
 end
-=#
+##
 
 function __init__(test::Bool=false)
 	if !isfile(libgmt) || ( !Sys.iswindows() && (!isfile(libgdal) || !isfile(libproj)) )
@@ -308,8 +308,8 @@ function __init__(test::Bool=false)
 	(GMTver < v"6.2.0") && extra_sets()		# some calls to gmtlib_setparameter() (theme_modern already called this)
 end
 
-include("precompile_GMT_i.jl")
-_precompile_()
+#include("precompile_GMT_i.jl")
+#_precompile_()
 
 """
 GMT manipulating geographic and Cartesian data sets (including filtering, trend fitting, gridding, projecting, etc.)
