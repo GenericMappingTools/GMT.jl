@@ -1,7 +1,7 @@
 name = "GMT"
 uuid = "5752ebe1-31b9-557e-87aa-f909b540aa54"
 authors = ["Joaquim Luis <jluis@ualg.pt>"]
-version = "0.44.7"
+version = "0.44.8"
 
 [deps]
 Conda = "8f4d0f93-b110-5947-807f-2305c1781a2d"
