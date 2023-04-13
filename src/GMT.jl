@@ -44,24 +44,21 @@ isfile(depfile) && include(depfile)		# This loads the shared libs names in the c
 
 if ((!(@isdefined have_jll) || have_jll == 1) && get(ENV, "SYSTEMWIDE_GMT", "") == "")	# That is, the JLL case
 	using GMT_jll, GDAL_jll, PROJ_jll, Ghostscript_jll
-	const GMTver = VersionNumber(split(readlines(`$(GMT_jll.gmt()) "--version"`)[1],'_')[1])
+	t = split(readlines(`$(GMT_jll.gmt()) "--version"`)[1],'_')
+	const GMTver = VersionNumber(t[1])
+	const GMTdevdate = (length(t) > 1) ? Date(t[end], dateformat"y.m.d") : Date("0001-01-01")	# For DEV versions
 	const GMTuserdir = [readlines(`$(GMT_jll.gmt()) "--show-userdir"`)[1]]
 	const GSbin = Ghostscript_jll.gs()[1]
 	const isJLL = true
 	fname = joinpath(GMTuserdir[1], "ghost_jll_path.txt")
-	try			
-		# WTF Building docs remotely with Franklin error with?
-		# ERROR: LoadError: SystemError: opening file "/home/runner/.gmt/ghost_jll_path.txt": No such file or directory
-		!isdir(GMTuserdir[1]) && mkdir(GMTuserdir[1])	# When installing on a clean no GMT sys, ~/.gmt doesn't exist
-		open(fname,"w") do f
-			write(f, GSbin)							# Save this to be used by psconvert.c
-		end
-	catch erro
-		println(erro)
+	!isdir(GMTuserdir[1]) && mkdir(GMTuserdir[1])	# When installing on a clean no GMT sys, ~/.gmt doesn't exist
+	open(fname,"w") do f
+		write(f, GSbin)								# Save this to be used by psconvert.c
 	end
 else
 	const isJLL = false
 	const GMTver, libgmt, libgdal, libproj, GMTuserdir = _GMTver, _libgmt, _libgdal, _libproj, [userdir]
+	const GMTdevdate = Date(devdate, dateformat"y.m.d")
 end
 
 
@@ -81,6 +78,7 @@ const global ThemeIsOn   = Vector{Bool}(undef, 1);ThemeIsOn[1] = false		# To kno
 const global convert_syntax = Vector{Bool}(undef, 1);convert_syntax[1] = false	# To only convert to hard core GMT syntax (like Vd=2)
 const global show_kwargs = Vector{Bool}(undef, 1);show_kwargs[1] = false	# To just print the kwargs of a option call)
 const global isFranklin  = Vector{Bool}(undef, 1);isFranklin[1] = false		# Only set/unset by the Docs building scripts.
+const global noGrdCopy   = Vector{Bool}(undef, 1);noGrdCopy[1] = false		# If true grids are sent without transpose/copy
 const global FMT = ["png"]                         # The default plot format
 const global box_str = [""]                        # Used in plotyy to know -R of first call
 const def_fig_size  = "14c/9.5c"                   # Default fig size for plot like programs. Approx 16/11

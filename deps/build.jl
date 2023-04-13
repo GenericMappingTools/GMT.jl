@@ -1,7 +1,7 @@
 function get_de_libnames()
 	# Use a function for this because I F. CAN'T MAKE ANY SENSE ABOUT GLOBAL-LOCAL SCOPES INSIDE TRY-CATCH
 	errou = false
-	GMT_bindir, libgmt, libgdal, libproj, ver, userdir = "", "", "", "", "", ""
+	GMT_bindir, libgmt, libgdal, libproj, ver, userdir, devdate = "", "", "", "", "", "", "0001-01-01"
 
 	try						# First try to find an existing GMT installation (RECOMENDED WAY)
 		(Sys.iswindows() && get(ENV, "FORCE_INSTALL_GMT", "") != "") && error("Forcing an automatic GMT install")
@@ -39,7 +39,7 @@ function get_de_libnames()
 				GMT_bindir = "C:\\programs\\gmt6\\bin"
 			else
 				println("\n\nNo GMT system wide installation found\n\n")
-				return true, ver, libgmt, libgdal, libproj, GMT_bindir, userdir
+				return true, ver, libgmt, libgdal, libproj, GMT_bindir, userdir, devdate
 			end
 
 			try
@@ -48,16 +48,18 @@ function get_de_libnames()
 					ver = ((ind = findfirst('_', out)) === nothing) ? VersionNumber(out) : VersionNumber(out[1:ind-1])
 				end
 			catch
-				return false, v"6.5", libgmt, libgdal, libproj, GMT_bindir, "c:/j/.gmt"
+				return false, v"6.5", libgmt, libgdal, libproj, GMT_bindir, "c:/j/.gmt", devdate
 			end
 
 		catch err2;		println(err2)
-			return true, ver, libgmt, libgdal, libproj, GMT_bindir, userdir
+			return true, ver, libgmt, libgdal, libproj, GMT_bindir, userdir, devdate
 		end
 	end
 	userdir    = readlines(`gmt --show-userdir`)[1]
+	out = readlines(`gmt --version`)[1]
+	devdate = ((ind = findlast('_', out)) !== nothing) && out[ind+1:end]
 	Sys.iswindows() && (GMT_bindir = readlines(`gmt --show-bindir`)[1])		# Only on Win is that all dlls are in same bin dir
-	return errou, ver, libgmt, libgdal, libproj, GMT_bindir, userdir
+	return errou, ver, libgmt, libgdal, libproj, GMT_bindir, userdir, devdate
 end
 
 force_winjll = (get(ENV, "FORCE_WINJLL", "") != "")		# Use this env var to also force use of the JLL on Windows
@@ -68,7 +70,7 @@ if (force_winjll || (!Sys.iswindows() && get(ENV, "SYSTEMWIDE_GMT", "") == ""))	
 	is_jll = 1
 	errou = false
 else
-	errou, ver, libgmt, libgdal, libproj, GMT_bindir, userdir = get_de_libnames()
+	errou, ver, libgmt, libgdal, libproj, GMT_bindir, userdir, devdate = get_de_libnames()
 	is_jll = 0
 end
 
@@ -80,6 +82,7 @@ if (!errou)		# Save shared names in file so that GMT.jl can read them at pre-com
 		println(f, "_libgdal = \"", escape_string(joinpath(GMT_bindir, libgdal)), '"')
 		println(f, "_libproj = \"", escape_string(joinpath(GMT_bindir, libproj)), '"')
 		println(f, "_GMTver = v\"" * string(ver) * "\"")
+		println(f, "devdate = ", '"', devdate, '"')
 		println(f, "userdir = \"", escape_string(userdir), '"')
 		println(f, "have_jll = ", is_jll)
 	end

@@ -346,6 +346,7 @@ function add2ds!(D::GMTdataset, mat, ind::Int=0; name::AbstractString="", names:
 	end
 	if (ind == 0 || ind == size(D,2))
 		if (!isempty(D.colnames))
+			(size(D,2) > length(D.colnames)) && (append!(D.colnames, ["Bug"]))		# I fck cant get rid of this
 			D.colnames = !isempty(t_col) ? [D.colnames[1:size(D,2)]..., _names..., t_col] :	[D.colnames[1:size(D,2)]..., _names...]
 		end
 		D.data = hcat(D.data, isvector(mat) ? mat[:] : mat)

@@ -298,11 +298,13 @@ function gmt(cmd::String, args...)
 	#println(g_module * " " * unsafe_string(GMT_Create_Cmd(G_API[1], LL)))	# Uncomment when need to confirm argins
 
 	# 5. Assign input sources (from Julia to GMT) and output destinations (from GMT to Julia)
+	(g_module == "grdpaste") && (noGrdCopy[1] = true)	# Signal grid_init() that it should not make a grid copy
 	for k = 1:n_items					# Number of GMT containers involved in this module call */
 		if (X[k].direction == GMT_IN && n_argin == 0) error("GMT: Expects a Matrix for input") end
 		ptr = (X[k].direction == GMT_IN) ? args[X[k].pos+1] : nothing
 		GMTJL_Set_Object(G_API[1], X[k], ptr, pad)	# Set object pointer
 	end
+	(g_module == "grdpaste") && (noGrdCopy[1] = false)
 
 	# 6. Run GMT module; give usage message if errors arise during parsing
 	status = GMT_Call_Module(G_API[1], g_module, GMT_MODULE_OPT, LL)
@@ -911,6 +913,7 @@ function grid_init(API::Ptr{Nothing}, X::GMT_RESOURCE, Grid::GMTgrid, pad::Int=2
 # We are given a Julia grid and use it to fill the GMT_GRID structure
 
 	mode = (Grid.layout != "" && Grid.layout[2] == 'R') ? GMT_CONTAINER_ONLY : GMT_CONTAINER_AND_DATA
+	noGrdCopy[1] && (mode = GMT_CONTAINER_ONLY)
 	(mode == GMT_CONTAINER_ONLY) && (pad = Grid.pad)		# Here we must follow what the Grid says it has
 	n_bds = size(Grid.z, 3);
 	_cube = (cube || n_bds > 1) ? true : false

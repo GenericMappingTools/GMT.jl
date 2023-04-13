@@ -1,5 +1,5 @@
 """
-	grdpaste(cmd0::String="", arg1=nothing, arg2=nothing, kwargs...)
+	grdpaste(cmd0::String="", G1=nothing, G2=nothing, kwargs...)
 
 Combine grids ``grid1`` and ``grid2`` into ``grid3`` by pasting them together along their common edge.
 Both grids must have the same dx, dy and have one edge in common.
@@ -17,13 +17,40 @@ Parameters
 - $(GMT.opt_V)
 - $(GMT._opt_f)
 """
-function grdpaste(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
+function grdpaste(G1::GItype, G2::GItype; kwargs...)
 
+	(GMTver < v"6.5.0" || GMTdevdate < Date("2023-04-12")) && error("This module doesn't work for the installed GMT version.")
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:G :V_params :f])
-	cmd, _, arg1, arg2 = find_data(d, cmd0, cmd, arg1, arg2)
-	return common_grd(d, "grdpaste " * cmd, arg1, arg2)		# Finish build cmd and run it
+	cmd *= " -S"
+	side::GMTdataset = common_grd(d, "grdpaste " * cmd, G1, G2)		# Finish build cmd and run it
+	_side = side.data[1]
+	(_side == 11 || _side == 22 || _side == 33 || side == 44) && (@warn("Method ($_side) not yet implemented. Please open an issue."); return nothing)
+	if (_side == 1 || _side == 10)				# 1- "B is on top of A"
+		_z2 = (G1.registration == 0) ? ((_side == 10) ? G2.z : G2.z[2:end, :]) : G2.z
+		G3 = mat2grid([G1.z; _z2], G2); G3.range[3] = G1.range[3]
+	elseif (_side == 2 || _side == 21)			# 2- "A is on top of B"
+		_z2 = (G1.registration == 0) ? ((_side == 21) ? G1.z : G1.z[2:end, :]) : G1.z
+		G3 = mat2grid([G2.z; _z2], G1); G3.range[3] = G2.range[3]
+	elseif (_side == 3 || _side == 32)			# 3- "A is on the right of B"
+		_z2 = (G1.registration == 0) ? ((_side == 32) ? G1.z : view(G1.z, :, 2:size(G2.z,2))) : G2.z
+		G3 = mat2grid([G2.z _z2], G1); G3.range[1] = G2.range[1]
+	elseif (_side == 4 || _side == 43)			# 4- "A is on the left of B"
+		_z2 = (G1.registration == 0) ? ((_side == 43) ? G2.z : view(G2.z, :, 2:size(G2.z,2))) : G2.z
+		G3 = mat2grid([G1.z _z2], G1); G3.range[2] = G2.range[2]
+	end
+	G3
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdpaste(arg1, arg2=nothing; kw...) = grdpaste("", arg1, arg2; kw...)
+grdpaste(G1::String, G2::GItype; kwargs...) = grdpaste(gmtread(G1), G2; kwargs...)
+grdpaste(G1::GItype, G2::String; kwargs...) = grdpaste(G1, gmtread(G2); kwargs...)
+
+# ---------------------------------------------------------------------------------------------------
+function grdpaste(G1::String, G2::String; kwargs...)
+	# This method lets pass two file names and either return the pasted grid or save in on disk.
+	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+	cmd, = parse_common_opts(d, "", [:G :V_params :f])
+	cmd != "" && (cmd = " " * cmd)
+	gmt("grdpaste " * G1 * " " * G2 * cmd)
+end

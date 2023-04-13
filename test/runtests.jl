@@ -4,28 +4,16 @@ using Dates, Printf#, Logging
 
 @testset "GMT" begin
 
-#=
-try
-	run(`gmt --version`)	# Will fail if GMT is not installed.
-	global got_it = true
-catch
-	@test 1 == 1			# Let tests pass for sake of not triggering a PkgEval failure
-	global got_it = false
-end
-=#
-
-#if (got_it)					# Otherwise go straight to end
-
 	#Logging.disable_logging(Logging.Warn)
 
 	global dbg2 = 2			# Either 2 or 3. 3 to test the used kwargs
 	global dbg0 = 0			# With 0 prints only the non-consumed options. Set to -1 to ignore this Vd
 
 	GMT.GMT_Get_Version();
-	try
-		GMT._precompile_()
-	catch
-	end
+	#try
+		#GMT._precompile_()
+	#catch
+	#end
 	ma=[0];mi=[0];pa=[0];
 	GMT.GMT_Get_Version(ma,mi,pa);
 	API = GMT.GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL);
@@ -162,7 +150,5 @@ end
 	rm("lixo.pdf")
 	#rm("lixo_cube.nc")
 	#@static if (Sys.iswindows())  run(`rmdir /S /Q NUL`)  end
-
-#end					# End valid testing zone
 
 end
