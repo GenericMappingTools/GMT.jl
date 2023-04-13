@@ -32,6 +32,8 @@ force_precompile() = Sys.iswindows() ? run(`cmd /c copy /b "$(pathof(GMT))" +,, 
 
 depfile = joinpath(dirname(@__FILE__),"..","deps","deps.jl")	# File with shared lib names
 include(depfile)		# This loads the shared libs names
+out = readlines(`gmt --version`)[1]
+const GMTdevdate = ((ind = findlast('_', out)) === nothing) ? Date("0001-01-01") : Date(out[ind+1:end], dateformat"y.m.d")
 
 const GMTver, libgmt, libgdal, libproj, GMTuserdir = _GMTver, _libgmt, _libgdal, _libproj, [userdir]
 
@@ -51,6 +53,7 @@ const global ThemeIsOn   = Vector{Bool}(undef, 1);ThemeIsOn[1] = false		# To kno
 const global convert_syntax = Vector{Bool}(undef, 1);convert_syntax[1] = false	# To only convert to hard core GMT syntax (like Vd=2)
 const global show_kwargs = Vector{Bool}(undef, 1);show_kwargs[1] = false	# To just print the kwargs of a option call)
 const global isFranklin  = Vector{Bool}(undef, 1);isFranklin[1] = false		# Only set/unset by the Docs building scripts.
+const global noGrdCopy   = Vector{Bool}(undef, 1);noGrdCopy[1] = false		# If true grids are sent without transpose/copy
 const global FMT = ["png"]                         # The default plot format
 const global box_str = [""]                        # Used in plotyy to know -R of first call
 const def_fig_size  = "14c/9.5c"                   # Default fig size for plot like programs. Approx 16/11
