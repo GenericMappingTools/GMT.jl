@@ -65,7 +65,7 @@ end
 force_winjll = (get(ENV, "FORCE_WINJLL", "") != "")		# Use this env var to also force use of the JLL on Windows
 if (force_winjll || (!Sys.iswindows() && get(ENV, "SYSTEMWIDE_GMT", "") == ""))		# That is: the JLL case
 	# Just to have something. They won't be used in main. There, wee only need that a "deps.jl" exists
-	libgmt, libgdal, libproj, ver, userdir = "nikles", "nikles", "nikles", "0.0", "nikles"
+	libgmt, libgdal, libproj, ver, userdir, devdate = "nikles", "nikles", "nikles", "0.0", "nikles", "0001-01-01"
 	GMT_bindir = ""
 	is_jll = 1
 	errou = false
