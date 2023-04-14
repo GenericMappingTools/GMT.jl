@@ -33,7 +33,7 @@ function grdpaste(G1::GItype, G2::GItype; kwargs...)
 		_z2 = (G1.registration == 0) ? ((_side == 21) ? G1.z : G1.z[2:end, :]) : G1.z
 		G3 = mat2grid([G2.z; _z2], G1); G3.range[3] = G2.range[3]
 	elseif (_side == 3 || _side == 32)			# 3- "A is on the right of B"
-		_z2 = (G1.registration == 0) ? ((_side == 32) ? G1.z : view(G1.z, :, 2:size(G2.z,2))) : G2.z
+		_z2 = (G1.registration == 0) ? ((_side == 32) ? G1.z : view(G1.z, :, 2:size(G2.z,2))) : G1.z
 		G3 = mat2grid([G2.z _z2], G1); G3.range[1] = G2.range[1]
 	elseif (_side == 4 || _side == 43)			# 4- "A is on the left of B"
 		_z2 = (G1.registration == 0) ? ((_side == 43) ? G2.z : view(G2.z, :, 2:size(G2.z,2))) : G2.z
