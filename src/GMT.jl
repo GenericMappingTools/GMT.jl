@@ -32,10 +32,11 @@ force_precompile() = Sys.iswindows() ? run(`cmd /c copy /b "$(pathof(GMT))" +,, 
 
 depfile = joinpath(dirname(@__FILE__),"..","deps","deps.jl")	# File with shared lib names
 include(depfile)		# This loads the shared libs names
-out = ""
 try
-	out = readlines(`gmt --version`)[1]
-catch
+	t = joinpath(dirname(_libgmt), "gmt")
+	global out = readlines(`$t --version`)[1]
+catch erro
+	global out = ""
 end
 const GMTdevdate = ((ind = findlast('_', out)) === nothing) ? Date("0001-01-01") : Date(out[ind+1:end], dateformat"y.m.d")
 
