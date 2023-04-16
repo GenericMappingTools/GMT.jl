@@ -61,7 +61,6 @@ else
 	const GMTdevdate = Date(devdate, dateformat"y.m.d")
 end
 
-
 const global G_API = [C_NULL]
 const global PSname = [joinpath(tempdir(), "GMTjl_tmp.ps")]		# The PS file where, in classic mode, all lands.
 const global img_mem_layout = [""]			# "TCP"	 For Images.jl. The default is "TRBa"
