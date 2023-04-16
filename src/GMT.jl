@@ -297,7 +297,7 @@ import SnoopPrecompile
 	GMT.cat_2_arg2(mat2ds(rand(3,2)), mat2ds(rand(3,2)));
 	GMT.cat_3_arg2(rand(3),rand(3),rand(3));
 	plot(rand(5,2), marker=:point, lc=:red, ls=:dot, lw=1, C=:jet, colorbar=true)
-	#plot(rand(5,2))
+	plot(rand(5,2))
 	violin(rand(50))
 	boxplot(rand(50))
 	qqplot(randn(500), randn(50))
