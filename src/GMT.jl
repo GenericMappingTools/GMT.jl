@@ -287,7 +287,7 @@ import SnoopPrecompile
 	boxplot(rand(50))
 	qqplot(randn(500), randn(50))
 	ecdfplot!(randn(50), Vd=2);
-	cornerplot(randn(50,3), scatter=true)
+	#cornerplot(randn(50,3), scatter=true)
 	marginalhist(randn(1000,2))
 	feather([0.0 0 2.0; 0.0 30 2; 0.0 60 2], rtheta=true, aspect="1:1", arrow=(len=0.5, shape=0.5,))
 	makecpt(T=(0,10))
