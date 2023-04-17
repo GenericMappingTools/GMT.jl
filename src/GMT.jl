@@ -282,14 +282,14 @@ import SnoopPrecompile
 	GMT.cat_2_arg2(mat2ds(rand(3,2)), mat2ds(rand(3,2)));
 	GMT.cat_3_arg2(rand(3),rand(3),rand(3));
 	plot(rand(5,2), marker=:point, lc=:red, ls=:dot, lw=1, C=:jet, colorbar=true)
-	#plot(rand(5,2))
+	plot(rand(5,2))
 	violin(rand(50))
 	boxplot(rand(50))
 	qqplot(randn(500), randn(50))
 	ecdfplot!(randn(50), Vd=2);
-	#cornerplot(randn(50,3), scatter=true)
-	#marginalhist(randn(1000,2))
-	#feather([0.0 0 2.0; 0.0 30 2; 0.0 60 2], rtheta=true, aspect="1:1", arrow=(len=0.5, shape=0.5,))
+	cornerplot(randn(50,3), scatter=true)
+	marginalhist(randn(1000,2))
+	feather([0.0 0 2.0; 0.0 30 2; 0.0 60 2], rtheta=true, aspect="1:1", arrow=(len=0.5, shape=0.5,))
 	makecpt(T=(0,10))
 	grdimage(rand(Float32,32,32))
 	grdview(rand(Float32,32,32))
