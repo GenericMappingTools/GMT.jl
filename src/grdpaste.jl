@@ -19,7 +19,7 @@ Parameters
 """
 function grdpaste(G1::GItype, G2::GItype; kwargs...)
 
-	(GMTver < v"6.5.0" || GMTdevdate < Date("2023-04-12")) && error("This module doesn't work for the installed GMT version.")
+	(GMTver < v"6.5.0" || GMTdevdate < Date("2023-04-12")) && (@warn("This module doesn't work for the installed GMT version."); return nothing)
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:G :V_params :f])
 	cmd *= " -S"

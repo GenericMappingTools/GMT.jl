@@ -117,29 +117,31 @@
 	Gur = grdmath("-R0/15/0/15 -I0.5 X Y MUL -r");  Gur = grdedit(Gur, T=true);
 	G34 = grdpaste(Gll, Glr);
 	G12 = grdpaste(Gul, Gur);
-	G14 = grdpaste(G12, G34);
-	dG = G - G14;
-	@test dG.range[1:4] == G.range[1:4]
-	@test dG.range[5:6] == [0.0, 0.0]
-	# Test 43  A is on left of B but their grid reg limits underlap by one cell 
-	Gl = grdmath("-R-5/0/-5/0 -I1 1");
-	Gr = grdmath("-R1/5/-5/0 -I1 2");
-	Glr = grdpaste(Gl, Gr);
-	# Test 32  A is on right of B but their grid reg limits underlap by one cell 
-	Gr = grdmath("-R1/5/-5/0 -I1 2");
-	Gl = grdmath("-R-5/0/-5/0 -I1 1");
-	Glr = grdpaste(Gr, Gl);
-	# Test 21  A is on top of B but their grid reg limits underlap by one cell 
-	Gt = grdmath("-R1/5/0/5 -I1 1");
-	Gb = grdmath("-R1/5/-5/-1 -I1 2");
-	Gtb = grdpaste(Gt, Gb);
-	gmtwrite("Gb.grd", Gb)
-	gmtwrite("Gt.grd", Gt)
-	grdpaste("Gt.grd", "Gb.grd")
-	grdpaste("Gt.grd", Gb)
-	grdpaste(Gt, "Gb.grd")
-	rm("Gt.grd")
-	rm("Gb.grd")
+	if (G12 !== nothing)
+		G14 = grdpaste(G12, G34);
+		dG = G - G14;
+		@test dG.range[1:4] == G.range[1:4]
+		@test dG.range[5:6] == [0.0, 0.0]
+		# Test 43  A is on left of B but their grid reg limits underlap by one cell 
+		Gl = grdmath("-R-5/0/-5/0 -I1 1");
+		Gr = grdmath("-R1/5/-5/0 -I1 2");
+		Glr = grdpaste(Gl, Gr);
+		# Test 32  A is on right of B but their grid reg limits underlap by one cell 
+		Gr = grdmath("-R1/5/-5/0 -I1 2");
+		Gl = grdmath("-R-5/0/-5/0 -I1 1");
+		Glr = grdpaste(Gr, Gl);
+		# Test 21  A is on top of B but their grid reg limits underlap by one cell 
+		Gt = grdmath("-R1/5/0/5 -I1 1");
+		Gb = grdmath("-R1/5/-5/-1 -I1 2");
+		Gtb = grdpaste(Gt, Gb);
+		gmtwrite("Gb.grd", Gb)
+		gmtwrite("Gt.grd", Gt)
+		grdpaste("Gt.grd", "Gb.grd")
+		grdpaste("Gt.grd", Gb)
+		grdpaste(Gt, "Gb.grd")
+		rm("Gt.grd")
+		rm("Gb.grd")
+	end
 
 	println("	GRDPROJECT")
 	# GRDPROJECT	-- Works but does not save projection info in header
