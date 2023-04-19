@@ -66,7 +66,9 @@ function grdcut(cmd0::String="", arg1=nothing; kwargs...)
 		opts = ["-projwin", t[1], t[4], t[2], t[3]]		# -projwin <ulx> <uly> <lrx> <lry>
 		cut_with_gdal(cmd0, opts, outname)
 	else
-		common_grd(d, cmd0, cmd, "grdcut ", arg1, arg2)	# Finish build cmd and run it
+		# If only cut, call crop directly
+		(cmd == opt_R && arg1 !== nothing && arg2 === nothing) ? crop(arg1; R=opt_R2num(opt_R))[1] :
+			common_grd(d, cmd0, cmd, "grdcut ", arg1, arg2)	# Finish build cmd and run it
 	end
 end
 
@@ -107,10 +109,11 @@ function crop(arg::GItype; kw...)
 	lims[1], lims[2] = max(lims[1], arg.range[1]), min(lims[2], arg.range[2])	# Avoid overflows in Region
 	lims[3], lims[4] = max(lims[3], arg.range[3]), min(lims[4], arg.range[4])
 	row_dim, col_dim = (arg.layout == "" || arg.layout[2] == 'C') ? (1,2) : (2,1)	# If RowMajor the array is transposed 
-	slope = (size(arg, col_dim) - 1) / (arg.x[end] - arg.x[1])
-	pix_x = round.(Int, slope .* (lims[1:2] .- arg.x[1]) .+ 1)
-	slope = (size(arg, row_dim) - 1) / (arg.y[end] - arg.y[1])
-	pix_y = round.(Int, slope .* (lims[3:4] .- arg.y[1]) .+ 1)
+	one_or_zero = (arg.registration == 0) ? 1.0 : 0.0
+	slope = (size(arg, col_dim) - one_or_zero) / (arg.x[end] - arg.x[1])
+	pix_x = round.(Int, slope .* (lims[1:2] .- arg.x[1]) .+ [1.0, one_or_zero])
+	slope = (size(arg, row_dim) - one_or_zero) / (arg.y[end] - arg.y[1])
+	pix_y = round.(Int, slope .* (lims[3:4] .- arg.y[1]) .+ [1.0, one_or_zero])
 
 	function rearrange_ranges(pix_x, pix_y)
 		# Rearrange the cropping limits if the layout is Rowmajor and/or Topdown
@@ -119,7 +122,7 @@ function crop(arg::GItype; kw...)
 		pix_x, pix_y
 	end
 
-	x, y = arg.x[pix_x[1]:pix_x[2]+1], arg.y[pix_y[1]:pix_y[2]+1]
+	x, y = arg.x[pix_x[1]:pix_x[2]+arg.registration], arg.y[pix_y[1]:pix_y[2]+arg.registration]
 	if (arg.layout != "")  pix_x, pix_y = rearrange_ranges(pix_x, pix_y)  end
 	cropped = (ndims(arg) == 2) ? arg[pix_y[1]:pix_y[2], pix_x[1]:pix_x[2]] : arg[pix_y[1]:pix_y[2], pix_x[1]:pix_x[2], :]
 	range = copy(arg.range)
