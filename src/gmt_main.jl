@@ -952,8 +952,11 @@ function grid_init(API::Ptr{Nothing}, X::GMT_RESOURCE, Grid::GMTgrid, pad::Int=2
 	h.z_min, h.z_max = Grid.range[5], Grid.range[6]		# Set the z_min, z_max
 	(_cube) && (h.n_bands = n_bds)
 
+	# Previous to ~14 April 2023 GMT did not accept grids claiming to be geogs and with lon ranges > 360
+	no_xUnit = (Grid.range[2] - Grid.range[1]) > 360 && (startswith(Grid.x_unit, "longitude") || contains(Grid.x_unit, "degrees_e"))
 	try
-		h.x_unit::NTuple{80,UInt8} = map(UInt8, (string(Grid.x_unit, repeat("\0",80-length(Grid.x_unit)))...,))
+		h.x_unit::NTuple{80,UInt8} = !no_xUnit ? map(UInt8, (string(Grid.x_unit, repeat("\0",80-length(Grid.x_unit)))...,)) :
+		                                         map(UInt8, (string("x", repeat("\0",79))...,))
 		h.y_unit::NTuple{80,UInt8} = map(UInt8, (string(Grid.y_unit, repeat("\0",80-length(Grid.y_unit)))...,))
 		h.z_unit::NTuple{80,UInt8} = map(UInt8, (string(Grid.z_unit, repeat("\0",80-length(Grid.z_unit)))...,))
 	catch
