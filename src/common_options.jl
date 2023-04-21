@@ -88,7 +88,7 @@ end
 function init_module(first::Bool, kwargs...)
 	# All ps modules need these 3 lines
 	d = KW(kwargs)
-	help_show_options(d)		# Check if user wants ONLY the HELP mode
+	!isempty(d) && help_show_options(d)		# Check if user wants ONLY the HELP mode
 	K = true; O = !first
 	return d, K, O
 end
