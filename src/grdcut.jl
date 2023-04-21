@@ -109,11 +109,14 @@ function crop(arg::GItype; kw...)
 	lims[1], lims[2] = max(lims[1], arg.range[1]), min(lims[2], arg.range[2])	# Avoid overflows in Region
 	lims[3], lims[4] = max(lims[3], arg.range[3]), min(lims[4], arg.range[4])
 	row_dim, col_dim = (arg.layout == "" || arg.layout[2] == 'C') ? (1,2) : (2,1)	# If RowMajor the array is transposed 
+	#=
 	one_or_zero = (arg.registration == 0) ? 1.0 : 0.0
 	slope = (size(arg, col_dim) - one_or_zero) / (arg.x[end] - arg.x[1])
 	pix_x = round.(Int, slope .* (lims[1:2] .- arg.x[1]) .+ [1.0, one_or_zero])
 	slope = (size(arg, row_dim) - one_or_zero) / (arg.y[end] - arg.y[1])
 	pix_y = round.(Int, slope .* (lims[3:4] .- arg.y[1]) .+ [1.0, one_or_zero])
+	=#
+	pix_x, pix_y = axes2pix([lims[1] lims[3]; lims[2] lims[4]], size(arg), [arg.x[1], arg.x[end]], [arg.y[1], arg.y[end]], arg.registration, arg.layout)
 
 	function rearrange_ranges(pix_x, pix_y)
 		# Rearrange the cropping limits if the layout is Rowmajor and/or Topdown
@@ -134,4 +137,44 @@ function crop(arg::GItype; kw...)
 	out = isa(arg, GMTgrid) ?  mat2grid(cropped, arg) : mat2img(cropped, arg)
 	out.x, out.y, out.range = x, y, range
 	out, pix_x, pix_y
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    pix_x, pix_y = axes2pix(xy, dims, x, y, reg=0, layout::String="TC")
+
+Convert axes coordinates to pixel/cell coordinates.
+
+- `xy`: A Mx2 matrix with x & y coordinates in same units as those in the `x,y` vectors
+- `x,y: should be the coordinate vectors of a GMTgrid or GMTimage types`
+- `dims`: Tuple with the number of rows,columns as returned by size(GI)
+
+Return two vectors of Int with the indices that map `xy` to `x` and `y`
+"""
+function axes2pix(xy, dims, x, y, reg=0, layout::String="TC")
+	(numel(x) != 2 || numel(y) != 2) && error("x and y must be a two elements array or tuple.")
+	row_dim, col_dim = (layout == "" || layout[2] == 'C') ? (1,2) : (2,1)	# If RowMajor the array is transposed 
+	one_or_zero = (reg == 0) ? 1.0 : 0.0
+	slope = (dims[col_dim] - one_or_zero) / (x[end] - x[1])
+	pix_x = round.(Int, slope .* (xy[:,1] .- x[1]) .+ [1.0, one_or_zero])
+	slope = (dims[row_dim] - one_or_zero) / (y[end] - y[1])
+	pix_y = round.(Int, slope .* (xy[:,2] .- y[1]) .+ [1.0, one_or_zero])
+	pix_x, pix_y
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    xc, yc = pix2axes(xy::Matrix{<:Int}, x, y)
+
+Convert pixel/cell to axes coordinates
+
+- `xy`: A Mx2 matrix with indices referring to the `x` and `y` vectors
+- `x`, `y`: Vectors of monotonically and regular growing coordinates
+
+Return two vectors of same type as that of x,y
+"""
+function pix2axes(xy::Matrix{<:Int}, x, y)
+	xc = x[1] .+ (xy[:,1] .- 1) .* (x[2] - x[1])
+	yc = y[1] .+ (xy[:,2] .- 1) .* (y[2] - y[1])
+	xc, yc
 end
