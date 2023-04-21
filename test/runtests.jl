@@ -67,6 +67,8 @@ if (got_it)					# Otherwise go straight to end
 	include("test_B-GMTs.jl")
 	println("		Entering: test_avatars.jl")
 	include("test_avatars.jl")
+	println("		Entering: test_new_projs.jl")
+	include("test_new_projs.jl")
 	println("		Entering: test_GRDs.jl")
 	include("test_GRDs.jl")
 	println("		Entering: test_views.jl")
