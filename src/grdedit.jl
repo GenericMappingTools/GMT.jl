@@ -69,7 +69,10 @@ function grdedit(cmd0::String="", arg1=nothing; kwargs...)
 	cmd, args, n, = add_opt(d, cmd, "N", [:N :replace], :data, Array{Any,1}([arg1, arg2]), (x="",))
 	if (n > 0)  arg1, arg2 = args[:]  end
 
-	common_grd(d, cmd0, cmd, "grdedit ", arg1, arg2)		# Finish build cmd and run it
+    (arg1 !== nothing) && (wkt = arg1.wkt; arg1.wkt = ""; proj4 = arg1.proj4; arg1.proj4 = "")  # GMT bug fixed 18-4-2023
+	G = common_grd(d, cmd0, cmd, "grdedit ", arg1, arg2)		# Finish build cmd and run it
+    (arg1 !== nothing) && (G.wkt = wkt; G.proj4 = proj4)
+    G
 end
 
 # ---------------------------------------------------------------------------------------------------

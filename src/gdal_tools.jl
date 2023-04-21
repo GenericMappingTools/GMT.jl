@@ -130,7 +130,7 @@ function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::St
 
 	dataset, needclose = get_gdaldataset(indata, opts, f == gdalvectortranslate)
 	((outname = GMT.add_opt(d, "", "", [:outgrid :outfile :save])) != "") && (dest = outname)
-	default_gdopts!(dataset, opts, dest)	# Assign some default options in function of the driver and data type
+	default_gdopts!(f, dataset, opts, dest)	# Assign some default options in function of the driver and data type
 	((val = GMT.find_in_dict(d, [:meta])[1]) !== nothing && isa(val,Vector{String})) &&
 		Gdal.GDALSetMetadata(dataset.ptr, val, C_NULL)		# Metadata must be in the form NAME=.....
 
@@ -223,14 +223,17 @@ function helper_opts2vec(opts::String)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function default_gdopts!(ds, opts::Vector{String}, dest::String)
+function default_gdopts!(f::Function, ds, opts::Vector{String}, dest::String)
 	# Assign some default options in function of the driver and data type
-	startswith(dest, "/vsimem") && return nothing	# In this case we won't set any defaults
 
 	driver = shortname(getdriver(ds))
 	dt = GDALGetRasterDataType(ds.ptr)
 	# For some reason when MEM driver (only it?) dt comes == 1, even when data is float. So check again.
 	(startswith(lowercase(driver), "mem") && dt == 1 && isa(ds, Gdal.IDataset)) && (dt = GDALGetRasterDataType(getband(ds,1).ptr))
+	(dt >= 6 && f == gdalwarp && !any(startswith.(opts, "-dstnodata"))) && append!(opts, ["-dstnodata","NaN"])
+	(dt >= 6 && f == gdaltranslate && !any(startswith.(opts, "-a_nodata"))) && append!(opts, ["-a_nodata","NaN"])
+
+	startswith(dest, "/vsimem") && return nothing	# In this case we won't set any more defaults
 
 	ext = lowercase(splitext(dest)[2])
 	isTiff = (ext == ".tif" || ext == ".tiff")
@@ -238,7 +241,6 @@ function default_gdopts!(ds, opts::Vector{String}, dest::String)
 	(ext == ".grd") && append!(opts, ["-of", "netCDF"])		# Accept .grd as meaning netcdf and not Surfer ascii (GDAL default)
 	((dt == 1 || isTiff) && !any(startswith.(opts, "COMPRESS"))) && append!(opts, ["-co", "COMPRESS=DEFLATE", "-co", "PREDICTOR=2"])
 	((dt == 1 || isTiff) && !any(startswith.(opts, "TILED"))) && append!(opts, ["-co", "TILED=YES"])
-	(dt >= 6 && !any(startswith.(opts, "a_nodata"))) && append!(opts, ["-a_nodata","NaN"])
 	(isNC) && append!(opts,["-co", "FORMAT=NC4", "-co", "COMPRESS=DEFLATE", "-co", "ZLEVEL=4"]) 
 end
 

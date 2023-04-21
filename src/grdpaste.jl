@@ -20,6 +20,7 @@ Parameters
 function grdpaste(G1::GItype, G2::GItype; kwargs...)
 
 	(GMTver < v"6.5.0" || GMTdevdate < Date("2023-04-12")) && (@warn("This module doesn't work for the installed GMT version."); return nothing)
+	(G1.layout != "" && G1.layout[2] == 'R') && error("Pasting row oriented grids (such those produced by GDAL) is not implemented.")
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:G :V_params :f])
 	cmd *= " -S"
@@ -39,6 +40,8 @@ function grdpaste(G1::GItype, G2::GItype; kwargs...)
 		_z2 = (G1.registration == 0) ? ((_side == 43) ? G2.z : view(G2.z, :, 2:size(G2.z,2))) : G2.z
 		G3 = mat2grid([G1.z _z2], G1); G3.range[2] = G2.range[2]
 	end
+	(_side != 3 && _side != 4 && _side < 25) && (G3.y = collect(linspace(G3.range[3], G3.range[4], size(G3,1)+G3.registration)))
+	(_side == 3 || _side == 4 || _side > 30) && (G3.x = collect(linspace(G3.range[1], G3.range[2], size(G3,2)+G3.registration)))
 	G3
 end
 
