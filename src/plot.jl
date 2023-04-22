@@ -1727,7 +1727,7 @@ function ternary(cmd0::String="", arg1=nothing; first::Bool=true, image::Bool=fa
 		d[:par] = (MAP_GRID_PEN_PRIMARY="thinnest,gray",)
 	end
 	if (GMTver <= v"6.2.0" && (val = find_in_dict(d, CPTaliases, false)[1]) !== nothing && isa(val, GMTcpt))
-		_name = joinpath(tempdir(), "GMTjl_tmp.cpt");
+		_name = tmpdir_usr[1] * "/" * "GMTtmp_" * tmpdir_usr[2] * ".cpt"
 		gmtwrite(_name, val);	d[:C] = _name	# Workaround a bug in 6.2.0
 	end
 	(G_API[1] == C_NULL) && gmt_restart()	# Force having a valid API. We can't afford otherwise here.

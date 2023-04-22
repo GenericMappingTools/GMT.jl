@@ -467,7 +467,7 @@ function geodesic_long(lonlat1::VMr, lonlat2::VMr; step=0.0, np=180, proj::Strin
 	# Compute the long way round, complementary of the shortest path between A & B. See GMT forum discussion
 	# https://forum.generic-mapping-tools.org/t/oblique-mercator-for-straight-line-between-points-as-maps-equator
 
-	_name = joinpath(tempdir(), "GMTjl_tmp.dat");	# Because of a bug in mapproject we need to save in a tmp file
+	_name = tmpdir_usr[1] * "/" * "GMTtmp_" * tmpdir_usr[2] * ".dat" 	# Due to bug in mapproject need to save in tmp file
 	
 	distAB, azA, = invgeod(lonlat1, lonlat2, proj=proj, epsg=epsg)		# Distance and azim between the end points 
 	dest1, = geod(lonlat1, azA, 39950, unit=:km, proj=proj, epsg=epsg)	# Destination of a point before the perimeter
