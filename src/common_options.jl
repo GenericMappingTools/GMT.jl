@@ -3880,6 +3880,7 @@ function showfig(; kwargs...)
 	d = KW(kwargs)
 	(!haskey(d, :show)) && (d[:show] = true)		# The default is to show
 	CTRL.limits .= 0.0;		CTRL.proj_linear[1] = true;		# Reset these for safety
+	!isempty(legend_type[1].optsDict) && (d[:legend] = dict2nt(legend_type[1].optsDict))	# Recover opt settings
 	digests_legend_bag(d)							# Plot the legend if requested
 	finish_PS_module(d, "psxy -R0/1/0/1 -JX0.001c -T -O", "", false, true, true)
 end
