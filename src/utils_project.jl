@@ -46,7 +46,7 @@ function worldrectangular(GI; proj::String="+proj=vandg +over", pm=0, latlim=:au
 	(latlim === nothing && latlims !== nothing) && (latlim = latlims)	# To accept both latlim & latlims
 	autolat = false
 	isa(latlim, StrSymb) && (autolat = true; latlim = nothing)
-	_latlim = (latlim === nothing) ? (-90,90) : (isa(latlim, Real) ? (-latlim, latlim) : latlim)
+	_latlim = (latlim === nothing) ? (-90,90) : (isa(latlim, Real) ? (-latlim, latlim) : extrema(latlim))
 	(_latlim[1] < -90 || _latlim[2] > 90) && error("Don't kidd, latlim does not have real latitude limits.")
 	!startswith(proj, "+proj=") && (proj = "+proj=" * proj)
 	!contains(proj, " +over") && (proj *= " +over")

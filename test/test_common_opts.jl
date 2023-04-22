@@ -412,7 +412,8 @@
 	GMT.delrows!(A, [1,3]);
 
 	gmtbegin()
-	GMT.gmt_restart(false)
+		GMT.gmt_restart(false)
+	gmtend()
 	resetGMT()
 
 	skipnan([1 NaN 5])
