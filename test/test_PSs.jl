@@ -158,8 +158,8 @@ println("	PSSOLAR")
 #@assert(D[1].text[end] == "\tDuration = 10:27")
 solar(R="d", W=1, J="Q0/14c", B="a", T="dc")
 solar!(R="d", W=1, J="Q0/14c", T="dc", Vd=dbg2)
-solar(sun=(date="2016-02-09T16:00:00",), formated=true);
-t = pssolar(sun=(date="2016-02-09T16:00:00",), formated=true);
+solar(sun=(date="2016-02-09T16:00:00",), format=true);
+t = pssolar(sun=(date="2016-02-09T16:00:00",), format=true);
 
 println("	PSTERNARY")
 ternary([0.16 0.331 0.509 9.344], R="0/100/0/100/0/100", J="X6i", X=:c, B=:a, S="c0.1c");
