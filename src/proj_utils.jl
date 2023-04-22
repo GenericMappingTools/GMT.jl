@@ -510,6 +510,7 @@ function geodesic_long(lonlat1::VMr, lonlat2::VMr; step=0.0, np=180, proj::Strin
 	e = (epsg != 0)  ? ", epsg=$epsg" : ""
 	D.comment = ["geodesic($(lonlat1), $(lonlat2), longest=true" * p * n * e]	# Store the command that was run
 	set_dsBB!(D)										# Update BB
+	try rm(_name); catch; end
 
 	return D
 end
