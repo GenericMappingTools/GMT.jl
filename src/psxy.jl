@@ -172,7 +172,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	(!got_Zvars) && (do_Z_fill = do_Z_outline = false)	# Because they may have wrongly been set above
 
 	if (n > 0 && GMTver <= v"6.3")						# -Z is f again. Must save data into file to make it work.
-		fname = joinpath(tempdir(), "GMTjl_temp_Z.txt")
+		fname = joinpath(tmpdir_usr[1], "GMTjl_temp_Z_" * tmpdir_usr[2] * ".txt")
 		fid = open(fname, "w")
 		for k = 1:length(args[n])  println(fid, args[n][k])  end;	close(fid)
 		cmd *= fname

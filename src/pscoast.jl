@@ -132,7 +132,7 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 		cmd *= " -W0.5p"
 	end
 	(!occursin("-D",cmd)) && (cmd *= " -Da")			# Then pick automatic
-	finish = !occursin(" -M",cmd) && !occursin("-E+l", cmd) && !occursin("-E+L", cmd) ? true : false	# Otherwise the dump would be redirected to GMTjl_tmp.ps
+	finish = !occursin(" -M",cmd) && !occursin("-E+l", cmd) && !occursin("-E+L", cmd) ? true : false	# Otherwise the dump would be redirected to GMT_user.ps
 
 	# Just let D = coast(R=:PT, dump=true) work without any furthers shits (plain GMT doesn't let it)
 	(occursin(" -M",cmd) && !occursin("-E", cmd) && !occursin("-I", cmd) && !occursin("-N", cmd) && !occursin("-W", cmd) && !occursin("-A", cmd)) &&

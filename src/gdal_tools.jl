@@ -120,7 +120,7 @@ function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::St
 	# For gdaldem color-relief we need a further arg that is the name of a cpt. So save one on disk
 	_cmap = C_NULL
 	if (f == gdaldem && ((cmap = GMT.find_in_dict(d, GMT.CPTaliases)[1])) !== nothing)
-		_cmap = tempdir() * "/GMTtmp_cpt.cpt"
+		_cmap = GMT.tmpdir_usr[1] * "/GMTjl_cpt_" * GMT.tmpdir_usr[2] * ".cpt"
 		if ( (isa(cmap, String) && (lowercase(splitext(cmap)[2][2:end]) == "cpt")) || isa(cmap, GMT.GMTcpt) )
 			save_cpt4gdal(cmap, _cmap)	# GDAL pretend to recognise CPTs but it almost doesn't
 		else
@@ -229,7 +229,7 @@ function default_gdopts!(f::Function, ds, opts::Vector{String}, dest::String)
 	driver = shortname(getdriver(ds))
 	dt = GDALGetRasterDataType(ds.ptr)
 	# For some reason when MEM driver (only it?) dt comes == 1, even when data is float. So check again.
-	(startswith(lowercase(driver), "mem") && dt == 1 && isa(ds, Gdal.IDataset)) && (dt = GDALGetRasterDataType(getband(ds,1).ptr))
+	(f != ogr2ogr && startswith(lowercase(driver), "mem") && dt == 1 && isa(ds, Gdal.IDataset)) && (dt = GDALGetRasterDataType(getband(ds,1).ptr))
 	(dt >= 6 && f == gdalwarp && !any(startswith.(opts, "-dstnodata"))) && append!(opts, ["-dstnodata","NaN"])
 	(dt >= 6 && f == gdaltranslate && !any(startswith.(opts, "-a_nodata"))) && append!(opts, ["-a_nodata","NaN"])
 

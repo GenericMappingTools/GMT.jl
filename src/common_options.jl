@@ -3004,9 +3004,9 @@ function helper3_axes(arg, primo::String, axe::String)::String
 		@warn("Argument of the custom annotations must be an N-array or a NamedTuple");		return ""
 	end
 
-	temp::String = "GMTjl_custom_" * primo
+	temp::String = "GMTjl_custom_" * primo * "_" * tmpdir_usr[2]
 	(axe != "") && (temp *= axe)
-	fname = joinpath(tempdir(), temp * ".txt")
+	fname = joinpath(tmpdir_usr[1], temp * ".txt")
 	fid = open(fname, "w")
 	if (label != [""])
 		for k = 1:n_annot
@@ -3260,7 +3260,7 @@ function helper_decorated(d::Dict, compose=false)
 	elseif ((val = find_in_dict(d, [:locations])[1]) !== nothing)
 		if (isa(val, AbstractString))  cmd = val
 		elseif (GMTver < v"6.4.0" && (isa(val, Matrix) || isa(val, GDtype)))
-			cmd = joinpath(tempdir(), "GMTjl_decorated_loc.dat")
+			cmd = joinpath(tmpdir_usr[1], "GMTjl_decorated_loc_" * tmpdir_usr[2] * ".dat")
 			gmtwrite(cmd, val)
 		end
 		optD = "f"
@@ -3351,7 +3351,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function fname_out(d::Dict, del::Bool=false)
-	# Create a file name in the TMP dir when OUT holds only a known extension. The name is: GMTjl_tmp.ext
+	# Create a file name in the TMP dir when OUT holds only a known extension. The name is: GMT_user.ext
 
 	EXT::String = FMT[1];	fname::AbstractString = ""
 	if ((val = find_in_dict(d, [:savefig :figname :name], del)[1]) !== nothing)
@@ -3391,7 +3391,7 @@ function fname_out(d::Dict, del::Bool=false)
 	end
 
 	(fname != "") && (fname *= "." * EXT)
-	def_name::String = PSname[1]		# "GMTjl_tmp.ps" in TMP dir
+	def_name::String = PSname[1]		# "GMT_user.ps" in TMP dir
 	return def_name, opt_T, EXT, fname, ret_ps
 end
 
@@ -3880,6 +3880,7 @@ function showfig(; kwargs...)
 	d = KW(kwargs)
 	(!haskey(d, :show)) && (d[:show] = true)		# The default is to show
 	CTRL.limits .= 0.0;		CTRL.proj_linear[1] = true;		# Reset these for safety
+	!isempty(legend_type[1].optsDict) && (d[:legend] = dict2nt(legend_type[1].optsDict))	# Recover opt settings
 	digests_legend_bag(d)							# Plot the legend if requested
 	finish_PS_module(d, "psxy -R0/1/0/1 -JX0.001c -T -O", "", false, true, true)
 end
@@ -4191,7 +4192,7 @@ end
 """
     append2fig(fname::String)
 
-Move the file `fname` to the default name and location (GMTjl_tmp.ps in tmp). The `fname` should be
+Move the file `fname` to the default name and location (GMT_user.ps in tmp). The `fname` should be
 a PS file that has NOT been closed. Posterior calls to plotting methods will append to this file.
 Useful when creating figures that use a common base map that may be heavy (slow) to compute.
 """

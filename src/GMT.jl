@@ -62,7 +62,8 @@ else
 end
 
 const global G_API = [C_NULL]
-const global PSname = [joinpath(tempdir(), "GMTjl_tmp.ps")]		# The PS file where, in classic mode, all lands.
+const global PSname = [""]					# The PS file (filled in __init__) where, in classic mode, all lands.
+const global tmpdir_usr = [tempdir(), ""]	# Save the tmp dir and user name (also filled in __init__)
 const global img_mem_layout = [""]			# "TCP"	 For Images.jl. The default is "TRBa"
 const global grd_mem_layout = [""]			# "BRP" is the default for GMT PS images.
 const global current_view   = [""]			# To store the current viewpoint (-p)
@@ -283,7 +284,6 @@ include("imshow.jl")		# Include later because one method depends on knowing abou
 const global current_cpt = [GMTcpt()]		# To store the current palette
 const global legend_type = [legend_bag()]	# To store Legends info
 
-##
 import SnoopPrecompile
 @SnoopPrecompile.precompile_all_calls begin
 	G_API[1] = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS)
@@ -297,7 +297,7 @@ import SnoopPrecompile
 	GMT.cat_2_arg2(rand(3), mat2ds(rand(3,2)));
 	GMT.cat_2_arg2(mat2ds(rand(3,2)), mat2ds(rand(3,2)));
 	GMT.cat_3_arg2(rand(3),rand(3),rand(3));
-	plot(rand(5,2), marker=:point, lc=:red, ls=:dot, lw=1, C=:jet, colorbar=true)
+	plot(rand(5,2), marker=:point, lc=:red, ls=:dot, lw=1, C=:jet, colorbar=true, Vd=2)
 	plot(rand(5,2))
 	violin(rand(50))
 	boxplot(rand(50))
@@ -310,8 +310,8 @@ import SnoopPrecompile
 	grdimage(rand(Float32,32,32))
 	grdview(rand(Float32,32,32))
 	coast(R=:g, proj=:guess, W=(level=1,pen=(2,:green)))
+	rm(joinpath(tempdir(), "GMTjl_custom_p_x.txt"))		# This one gets created before username is set.
 end
-##
 
 function __init__(test::Bool=false)
 	if !isfile(libgmt) || (!Sys.iswindows() && (!isfile(libgdal) || !isfile(libproj)))
@@ -327,6 +327,9 @@ function __init__(test::Bool=false)
 	f = joinpath(GMTuserdir[1], "theme_jl.txt")
 	(isfile(f)) && (theme(readline(f));	ThemeIsOn[1] = false)	# False because we don't want it reset in showfig()
 	(GMTver < v"6.2.0") && extra_sets()		# some calls to gmtlib_setparameter() (theme_modern already called this)
+	user = (Sys.isunix() || Sys.isapple()) ? Libc.getpwuid(Libc.getuid(), true).username : Sys.iswindows() ? ENV["USERNAME"] : ""
+	tmpdir_usr[2] = replace(user, " " => "_")
+	PSname[1] = tmpdir_usr[1] * "/" * "GMTjl_" * tmpdir_usr[2] * ".ps"
 end
 
 #include("precompile_GMT_i.jl")
