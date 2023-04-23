@@ -27,20 +27,39 @@ struct CTRLstruct2
 	fname::Vector{String}			# Store the full name of PS being constructed
 end
 
-# Function to change data of GMT.jl and hence force a rebuild in next Julia session
-force_precompile() = Sys.iswindows() ? run(`cmd /c copy /b "$(pathof(GMT))" +,, "$(pathof(GMT))"`) : run(`touch '$(pathof(GMT))'`)
+# The file deps/deps.jl is created by compile from the deps/build.jl
+# On Windows we use a system wide GMT if it is found from path or install it from a GMT installer. It is a MSVC binary.
+# On Unix the default is to use the GMT_jll artifact. However this can be changed to use a system wide GMT installation.
+# To swap to a system wide GMT installation, do (in REPL):
+# 1- ENV["SYSTEMWIDE_GMT"] = 1;
+# 2- import Pkg; Pkg.build("GMT")
+# 3- restart Julia
+#
+# Note the above will work up until some other reason triggers a Julia recompile, where the JLL artifacts 
+# will be used again. To make the ENV["SYSTEMWIDE_GMT"] = 1 solution permanent, declare a "SYSTEMWIDE_GMT"
+# environment variable permanently in your .bashrc (or whatever).
 
 depfile = joinpath(dirname(@__FILE__),"..","deps","deps.jl")	# File with shared lib names
-include(depfile)		# This loads the shared libs names
-try
-	t = joinpath(dirname(_libgmt), "gmt")
-	global out = readlines(`$t --version`)[1]
-catch erro
-	global out = ""
-end
-const GMTdevdate = ((ind = findlast('_', out)) === nothing) ? Date("0001-01-01") : Date(out[ind+1:end], dateformat"y.m.d")
+isfile(depfile) && include(depfile)		# This loads the shared libs names in the case of NON-JLL, otherwise just return
 
-const GMTver, libgmt, libgdal, libproj, GMTuserdir = _GMTver, _libgmt, _libgdal, _libproj, [userdir]
+if ((!(@isdefined have_jll) || have_jll == 1) && get(ENV, "SYSTEMWIDE_GMT", "") == "")	# That is, the JLL case
+	using GMT_jll, GDAL_jll, PROJ_jll, Ghostscript_jll
+	t = split(readlines(`$(GMT_jll.gmt()) "--version"`)[1],'_')
+	const GMTver = VersionNumber(t[1])
+	const GMTdevdate = (length(t) > 1) ? Date(t[end], dateformat"y.m.d") : Date("0001-01-01")	# For DEV versions
+	const GMTuserdir = [readlines(`$(GMT_jll.gmt()) "--show-userdir"`)[1]]
+	const GSbin = Ghostscript_jll.gs()[1]
+	const isJLL = true
+	fname = joinpath(GMTuserdir[1], "ghost_jll_path.txt")
+	!isdir(GMTuserdir[1]) && mkdir(GMTuserdir[1])	# When installing on a clean no GMT sys, ~/.gmt doesn't exist
+	open(fname,"w") do f
+		write(f, GSbin)								# Save this to be used by psconvert.c
+	end
+else
+	const isJLL = false
+	const GMTver, libgmt, libgdal, libproj, GMTuserdir = _GMTver, _libgmt, _libgdal, _libproj, [userdir]
+	const GMTdevdate = Date(devdate, dateformat"y.m.d")
+end
 
 const global G_API = [C_NULL]
 const global PSname = [""]					# The PS file (filled in __init__) where, in classic mode, all lands.
@@ -140,7 +159,7 @@ export
 
 include("common_docs.jl")
 include("libgmt_h.jl")
-(GMTver >= v"6") && include("libgmt.jl")
+include("libgmt.jl")
 include("gmt_main.jl")
 include("utils_types.jl")
 include("grd_operations.jl")
@@ -249,21 +268,17 @@ include("MB/mbimport.jl")
 include("MB/mbgetdata.jl")
 include("MB/mbsvplist.jl")
 include("MB/mblevitus.jl")
-if (GMTver > v"6.1.1")
 	include("potential/gmtgravmag3d.jl")
 	include("potential/grdgravmag3d.jl")
 	include("potential/gravfft.jl")
-end
 include("spotter/grdrotater.jl")
 include("drawing.jl")
 
-if (GMTver >= v"6")			# Needed to cheat the autoregister autobot
 	include("get_enums.jl")
 	include("gdal.jl")
 	include("gdal_utils.jl")
 	include("proj_utils.jl")
 	using GMT.Gdal
-end
 include("imshow.jl")		# Include later because one method depends on knowing about GDAL
 
 const global current_cpt = [GMTcpt()]		# To store the current palette
@@ -299,9 +314,9 @@ import SnoopPrecompile
 end
 
 function __init__(test::Bool=false)
-	if !isfile(libgmt) || ( !Sys.iswindows() && (!isfile(libgdal) || !isfile(libproj)) )
+	if !isfile(libgmt) || (!Sys.iswindows() && (!isfile(libgdal) || !isfile(libproj)))
 		println("\nDetected a previously working GMT.jl version but something has broken meanwhile.\n" *
-		"(like updating your GMT instalation). Run this command in REPL and restart Julia.\n\n\t\tGMT.force_precompile()\n")
+		"(like updating your GMT instalation). Restart Julia and run `import Pkg; Pkg.precompile()`")
 		return
 	end
 

@@ -220,18 +220,21 @@ function gmt(cmd::String, args...)
 	# 2+ Add -F to psconvert if user requested a return image but did not give -F.
 	# The problem is that we can't use nargout to decide what to do, so we use -T to solve the ambiguity.
 	need2destroy = false
-	if (g_module == "psconvert" && !occursin("-F", r))
-		if (!occursin("-T", r))
-			r *= " -F";			need2destroy = true
-		else				# Hmm, have to find if any of 'e' or 'f' are used as -T flags
-			return_img = true
-			if (endswith(r, " *"))  r = r[1:end-2];	return_img = false;  end	# Trick to avoid reading back img
-			ind = findfirst("-T", r)
-			tok = lowercase(strtok(r[ind[2]:end])[1])
-			if (return_img && !occursin("e", tok) && !occursin("f", tok))	# No any -Tef combo so add -F
-				r *= " -F";		need2destroy = true
+	if (g_module == "psconvert")
+		if (!occursin("-F", r))
+			if (!occursin("-T", r))
+				r *= " -F";			need2destroy = true
+			else				# Hmm, have to find if any of 'e' or 'f' are used as -T flags
+				return_img = true
+				if (endswith(r, " *"))  r = r[1:end-2];	return_img = false;  end	# Trick to avoid reading back img
+				ind = findfirst("-T", r)
+				tok = lowercase(strtok(r[ind[2]:end])[1])
+				if (return_img && !occursin("e", tok) && !occursin("f", tok))	# No any -Tef combo so add -F
+					r *= " -F";		need2destroy = true
+				end
 			end
 		end
+		isJLL && (r *= " -G" * GSbin)
 	end
 	if (occursin("-%", r) || occursin("-&", r))			# It has also a mem layout request
 		r, img_mem_layout[1], grd_mem_layout[1] = parse_mem_layouts(r)
