@@ -269,7 +269,6 @@ include("imshow.jl")		# Include later because one method depends on knowing abou
 const global current_cpt = [GMTcpt()]		# To store the current palette
 const global legend_type = [legend_bag()]	# To store Legends info
 
-##
 import SnoopPrecompile
 @SnoopPrecompile.precompile_all_calls begin
 	G_API[1] = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS)
@@ -296,8 +295,8 @@ import SnoopPrecompile
 	grdimage(rand(Float32,32,32))
 	grdview(rand(Float32,32,32))
 	coast(R=:g, proj=:guess, W=(level=1,pen=(2,:green)))
+	rm(joinpath(tempdir(), "GMTjl_custom_p_x.txt"))		# This one gets created before username is set.
 end
-##
 
 function __init__(test::Bool=false)
 	if !isfile(libgmt) || ( !Sys.iswindows() && (!isfile(libgdal) || !isfile(libproj)) )
