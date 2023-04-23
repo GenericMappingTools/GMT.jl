@@ -91,17 +91,13 @@ function grdinterpolate(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothin
 	cmd = parse_opt_range(d, cmd, "T")[1]
 
 	out_two_cols = (occursin(" -S", cmd) && !occursin(" -o", cmd))
-	(out_two_cols && GMTver >= v"6.3") && (cmd *= " -o2,3")		# The default is NOT ouput the first two columns (redundant)
+	out_two_cols && (cmd *= " -o2,3")		# The default is NOT ouput the first two columns (redundant)
 
 	if (isa(arg1, Tuple))
 		for k = 1:length(arg1)  cmd *= " ?"  end		# Need as many ? as numel(arg1)
 		R = common_grd(d, "grdinterpolate " * cmd, arg1..., arg2, arg3)
 	else
 		R = common_grd(d, "grdinterpolate " * cmd, arg1, arg2, arg3)
-	end
-
-	if (!isa(R, String) && out_two_cols && GMTver < v"6.3")	# Here I don't want the default GMT output
-		[R[k].data = R[k].data[:, [4,3]] for k = 1:length(R)]
 	end
 	R
 end

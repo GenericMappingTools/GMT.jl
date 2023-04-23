@@ -95,12 +95,10 @@
 	println("	GRDHISTEQ")
 	grdhisteq(G, gaussian=[]);	# Use G of previous test
 
-	if (GMTver > v"6.1.1")
-		println("	GRDINTERPOLATE")
-		G = grdinterpolate("cube.nc", T=4)
-		C = grdinterpolate("cube.nc", T="3/4/0.25");
-		grdinfo(C)
-	end
+	println("	GRDINTERPOLATE")
+	G = grdinterpolate("cube.nc", T=4)
+	C = grdinterpolate("cube.nc", T="3/4/0.25");
+	grdinfo(C)
 
 	println("	GRDLANDMASK")
 	grdlandmask(R="-10/4/37/45", res=:c, inc=0.1);

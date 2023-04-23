@@ -55,13 +55,11 @@ Parameters
 """
 function gmtsplit(cmd0::String="", arg1=nothing; kwargs...)
 
-    proggy = (GMTver > v"6.1.1") ? "gmtsplit" : "splitxyz"
-
 	d = init_module(false, kwargs...)[1]		    # Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:V_params :bi :bo :di :do :e :f :g :h :i :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :azim_tol], [:C :course_change], [:D :min_dist :min_distance], [:F :filter],
 	                                 [:N :multi], [:Q :xyzdh], [:S :dh :dist_head]])
-	common_grd(d, cmd0, cmd, proggy * " ", arg1)	# Finish build cmd and run it
+	common_grd(d, cmd0, cmd, "gmtsplit" * " ", arg1)	# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------

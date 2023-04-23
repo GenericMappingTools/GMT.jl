@@ -862,7 +862,7 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 				return cmd * " -Baf -BWSEN", " -Baf -BWSEN"
 			elseif (startswith(_val, "auto"))
 				is3D = false
-				if     (occursin("XYZg", _val)) _val = " -Bafg -Bzafg -B+" * ((GMTver <= v"6.1") ? "b" : "w");  is3D = true
+				if     (occursin("XYZg", _val)) _val = " -Bafg -Bzafg -B+" * "w";  is3D = true
 				elseif (occursin("XYZ", _val))  _val = def_fig_axes3[1];		is3D = true
 				elseif (occursin("XYg", _val))  _val = " -Bafg -BWSen"
 				elseif (occursin("XY", _val))   _val = def_fig_axes[1]
@@ -1368,16 +1368,6 @@ function parse_f(d::Dict, cmd::String)
 	# For plotting time (-ft) in X one must add 'T' to -JX but that is boring and difficult to automatize
 	# GMT6.3 now has it internal but previous versions no. So do that job here.
 	cmd, opt_f = parse_helper(cmd, d, [:f :colinfo :coltypes :coltype], " -f")
-	if (GMTver < v"6.3" && (startswith(opt_f, " -ft") || startswith(opt_f, " -fT")))	# GMT6.3 does it internally.
-		opt_J = scan_opt(cmd, "-J")
-		(opt_J == "" || (opt_J[1] != 'X' && opt_J[1] != 'x')) && return cmd, opt_f
-		parts = split(opt_J, "/")
-		if (parts[1][end] != 'T')
-			parts[1] *= "T"
-			_opt_J = (length(parts) == 1) ? parts[1] : parts[1] * "/" * parts[2]
-			cmd = replace(cmd, opt_J => _opt_J)
-		end
-	end
 	return cmd, opt_f
 end
 
@@ -3189,9 +3179,6 @@ function decorated(;kwargs...)::String
 			cmd = "+sa0.5" * cmd
 		else
 			marca, marca_name = seek_custom_symb(marca, true)	# 'marca' may have been changed to a full name/size
-			if (!isempty(marca) && @static Sys.iswindows() && GMTver < v"6.4.0")
-				cp(marca, marca_name, force=true)		# On Windows a bug obliges to make a local copy.
-			end
 			cmd *= "+s" * marca
 			((val = find_in_dict(d, [:size :ms :markersize :symbolsize])[1]) !== nothing) && (cmd *= arg2str(val))
 		end
@@ -3901,7 +3888,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function close_PS_file(fname::AbstractString)
-	(GMTver > v"6.1.1") ? gmt("psxy -T -O >> " * fname) : gmt("psxy -T -R0/1/0/1 -JX0.001 -O >> " * fname)
+	gmt("psxy -T -O >> " * fname)
 	# Do the equivalent of "psxy -T -O"
 	#=
 	fid = open(fname, "a")

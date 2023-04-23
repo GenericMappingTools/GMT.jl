@@ -172,13 +172,9 @@ function gmtread(fname::String; kwargs...)
 
 	drop_islands = ((val = find_in_dict(d, [:no_islands :no_holes])[1]) !== nothing) ? true : false
 	x = (opt_R == "") ? [0.0, 0, 0, 0] : opt_R2num(opt_R)		# See if we have a limits request
-	if (GMTver > v"6.1.1")
-		lims = tuple(vcat(x,[0.0, 0.0])...)
-		ctrl = OGRREAD_CTRL(Int32(0), ogr_layer, pointer(fname), lims)
-		O = ogr2GMTdataset(gmt_ogrread(API2, pointer([ctrl])), drop_islands)
-	else
-		O = ogr2GMTdataset(gmt_ogrread(API2, fname, x), drop_islands)
-	end
+	lims = tuple(vcat(x,[0.0, 0.0])...)
+	ctrl = OGRREAD_CTRL(Int32(0), ogr_layer, pointer(fname), lims)
+	O = ogr2GMTdataset(gmt_ogrread(API2, pointer([ctrl])), drop_islands)
 
 	ressurectGDAL()				# Because GMT called GDALDestroyDriverManager()
 	GMT_Destroy_Session(API2)
@@ -441,12 +437,10 @@ function transpcmap!(I::GMTimage, toGMT::Bool=true)
 	(n_colors > 2000) && (n_colors = Int(floor(n_colors / 1000)))
 	if (toGMT)
 		n_cols = Int(length(I.colormap) / n_colors)
-		(GMTver <= v"6.2.0") && (I.colormap = vec(collect(reshape(reshape(I.colormap, n_cols, n_colors)', n_colors * n_cols, 1))) )
 		(I.n_colors < 2000 || n_cols == 4) && (I.n_colors *= 1000)	#  Because gmtwrite uses a trick to know if cmap is Mx2 or Mx4
 	else
 		#(I.n_colors > 2000) && (I.n_colors = div(I.n_colors, 1000))		# Revert the trick 
 		n_cols = Int(length(I.colormap) / n_colors)
-		(GMTver <= v"6.2.0") && (I.colormap = vec(collect(reshape(reshape(I.colormap, n_colors, n_cols)', n_colors * n_cols, 1))) )
 	end
 	return nothing
 end

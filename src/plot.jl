@@ -1726,14 +1726,8 @@ function ternary(cmd0::String="", arg1=nothing; first::Bool=true, image::Bool=fa
 	if ((val = find_in_dict(d, [:par :conf :params], false)[1]) === nothing)
 		d[:par] = (MAP_GRID_PEN_PRIMARY="thinnest,gray",)
 	end
-	if (GMTver <= v"6.2.0" && (val = find_in_dict(d, CPTaliases, false)[1]) !== nothing && isa(val, GMTcpt))
-		_name = tmpdir_usr[1] * "/" * "GMTtmp_" * tmpdir_usr[2] * ".cpt"
-		gmtwrite(_name, val);	d[:C] = _name	# Workaround a bug in 6.2.0
-	end
 	(G_API[1] == C_NULL) && gmt_restart()	# Force having a valid API. We can't afford otherwise here.
-	(GMTver <= v"6.2.0") && gmtlib_setparameter(G_API[1], "MAP_FRAME_AXES", "WESNZ")	# Because of a bug in 6.2.0 modern theme
 	r = common_plot_xyz("", mat2ds(arg1), "ternary", first, false, d...)
-	(GMTver <= v"6.2.0") && gmtlib_setparameter(G_API[1], "MAP_FRAME_AXES", "auto")
 	# With the following trick we leave the -R history in 0/1/0/1 and so we can append with plot, text, etc
 	gmt("psxy -Scp -R0/1/0/1 -JX -O -Vq > " * joinpath(tempdir(), "lixo.ps"), [0. 0.])
 	return r

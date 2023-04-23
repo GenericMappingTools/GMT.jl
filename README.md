@@ -3,7 +3,7 @@ GMT.jl
 
 Julia wrapper for the Generic Mapping Tools [GMT](https://github.com/GenericMappingTools/gmt)
 
-| **Documentation**                       | **Build Status (Julia 1.5)**              | **Discourse Forum**   | **Collaboration** |
+| **Documentation**                       | **Build Status (Julia 1.8)**              | **Discourse Forum**   | **Collaboration** |
 |:---------------------------------------:|:-----------------------------------------:|:---------------------:|:---------------------:|
 | [![][docs-latest-img]][docs-latest-url] | [![][travis-img]][travis-url] [![][codecov-img]][codecov-url] | [![][forum-img]][forum-url] | [![][colprac-img]][colprac-url] |
 
