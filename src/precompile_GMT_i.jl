@@ -1,4 +1,5 @@
 function _precompile_()
+	#=
 	#ccall(:jl_generating_output, Cint, ()) == 1 || return nothing
 	@assert Base.precompile(Tuple{typeof(plot),GMTdataset{Float64, 2}})   # time: 11.283913
 	@assert Base.precompile(Tuple{typeof(finish_PS_module),Dict{Symbol, Any},Vector{String},String,Bool,Bool,Bool,Matrix{Float64},Vararg{Any, N} where N})   # time: 0.1380821
@@ -60,5 +61,6 @@ function _precompile_()
 	@assert Base.precompile(Tuple{typeof(parallelplot), String, Matrix{Float64}})
 	@assert Base.precompile(Tuple{typeof(cornerplot),Matrix{Float64}})
 	@assert Base.precompile(Tuple{typeof(marginalhist), Matrix{Float64}})
+	=#
 
 end
