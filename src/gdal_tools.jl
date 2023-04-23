@@ -229,7 +229,7 @@ function default_gdopts!(f::Function, ds, opts::Vector{String}, dest::String)
 	driver = shortname(getdriver(ds))
 	dt = GDALGetRasterDataType(ds.ptr)
 	# For some reason when MEM driver (only it?) dt comes == 1, even when data is float. So check again.
-	(startswith(lowercase(driver), "mem") && dt == 1 && isa(ds, Gdal.IDataset)) && (dt = GDALGetRasterDataType(getband(ds,1).ptr))
+	(f != ogr2ogr && startswith(lowercase(driver), "mem") && dt == 1 && isa(ds, Gdal.IDataset)) && (dt = GDALGetRasterDataType(getband(ds,1).ptr))
 	(dt >= 6 && f == gdalwarp && !any(startswith.(opts, "-dstnodata"))) && append!(opts, ["-dstnodata","NaN"])
 	(dt >= 6 && f == gdaltranslate && !any(startswith.(opts, "-a_nodata"))) && append!(opts, ["-a_nodata","NaN"])
 
