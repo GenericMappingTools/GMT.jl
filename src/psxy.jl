@@ -171,12 +171,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	(opt_Z != "") && (cmd *= opt_Z)
 	(!got_Zvars) && (do_Z_fill = do_Z_outline = false)	# Because they may have wrongly been set above
 
-	if (n > 0 && GMTver <= v"6.3")						# -Z is f again. Must save data into file to make it work.
-		fname = joinpath(tmpdir_usr[1], "GMTjl_temp_Z_" * tmpdir_usr[2] * ".txt")
-		fid = open(fname, "w")
-		for k = 1:length(args[n])  println(fid, args[n][k])  end;	close(fid)
-		cmd *= fname
-	elseif (n > 0)
+	if (n > 0)
 		arg1, arg2 = args[:]
 		N_args = n
 	end
@@ -275,15 +270,6 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		_cmd[1], arg1, cmd2::String = bar_group(d, _cmd[1], opt_R, g_bar_fill, got_Ebars, got_usr_R, arg1)
 		(cmd2 != "") && (length(_cmd) == 1 ? (_cmd = [cmd2; _cmd[1]]) :
 			(@warn("Can't plot the connector when 'bar' is already a nested call."); CTRL.pocket_call[3] = nothing))
-	end
-
-	# Try to limit the damage of this Fker bug in 6.2.0
-	if ((mcc || got_Ebars) && (GMTver == v"6.2.0" && occursin(" -i", cmd)) )
-		if (isa(arg1, GMTdataset))	arg1 = arg1.data
-		elseif (isa(arg1, Vector{<:GMTdataset}))
-			(length(arg1) > 1) && @warn("Due to a bug in GMT6.2.0 I'm forced to use only the first segment")
-			arg1 = arg1[1].data
-		end
 	end
 
 	(!IamModern[1]) && put_in_legend_bag(d, _cmd, arg1, O, opt_l)

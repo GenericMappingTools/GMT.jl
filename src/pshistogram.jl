@@ -145,7 +145,7 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd = parse_INW_coast(d, [[:N :distribution :normal]], cmd, "N")
 	(show_kwargs[1]) && print_kwarg_opts(symbs, "NamedTuple | Tuple | Dict | String")
 
-	(GMTver > v"6.1.1") && (cmd = add_opt(d, cmd, "E", [:E :width], (width = "", off = "+o", offset = "+o")))
+	cmd = add_opt(d, cmd, "E", [:E :width], (width = "", off = "+o", offset = "+o"))
 	cmd = GMTsyntax_opt(d, cmd)		# See if an hardcore GMT syntax string has been passed
 	
 	# If file name sent in, read it and compute a tight -R if this was not provided

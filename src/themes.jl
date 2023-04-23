@@ -32,7 +32,6 @@ This function can be called alone, e.g. `theme("dark")` or as an option in the `
 function theme(name="modern"; kwargs...)
 	# Provide the support for themes
 
-	(GMTver < v"6.2.0") && return nothing
 	(!isa(G_API[1], Ptr{Nothing}) || G_API[1] == C_NULL) && (G_API[1] = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS))
 
 	d = KW(kwargs)
@@ -164,7 +163,6 @@ end
 # ---------------------------------------------------------------------------------------------------
 function theme_modern()
 	# Set the MODERN mode settings
-	(GMTver < v"6.2.0") && return nothing
 	swapmode(G_API[1], classic=false)			# Set GMT->current.setting.run_mode = GMT_MODERN
 	resetdefaults(G_API[1])
 	gmtlib_setparameter(G_API[1], "MAP_FRAME_PEN", "0.75")
@@ -174,7 +172,6 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function theme_classic()
-	(GMTver < v"6.2.0") && return nothing
 	swapmode(G_API[1], classic=true)			# Set GMT->current.setting.run_mode = GMT_CLASSIC
 	resetdefaults(G_API[1])
 end

@@ -403,7 +403,7 @@ function extra_sets()
 	gmtlib_setparameter(G_API[1], "COLOR_NAN", "255")	# Stop those ugly grays
 	gmtlib_setparameter(G_API[1], "MAP_ORIGIN_X", "20c")		# Change the origin offset
 	gmtlib_setparameter(G_API[1], "MAP_ORIGIN_Y", "20c")
-	(GMTver >= v"6.4") && gmtlib_setparameter(G_API[1], "MAP_EMBELLISHMENT_MODE", "auto")
+	gmtlib_setparameter(G_API[1], "MAP_EMBELLISHMENT_MODE", "auto")
 end
 
 # -----------------------------------------------------------------------------------------------
@@ -1257,7 +1257,7 @@ function palette_init(API::Ptr{Nothing}, cpt::GMTcpt)::Ptr{GMT.GMT_PALETTE}
 		z_low  = cpt.range[j,1]
 		z_high = cpt.range[j,2]
 		# GMT6.1 bug does not free "key" but frees "label" and does not see if memory is external. Hence crash or mem leaks
-		_key = (cpt.key[j] == "" || GMTver > v"6.1.1") ? glut.key : pointer(cpt.key[j])	# All it's possible in GMT < 6.2
+		_key = glut.key
 
 		annot = (j == Pb.n_colors) ? 3 : 1				# Annotations L for all but last which is B(oth)
 		lut = GMT_LUT(z_low, z_high, glut.i_dz, rgb_low, rgb_high, glut.rgb_diff, glut.hsv_low, glut.hsv_high,
@@ -1268,12 +1268,10 @@ function palette_init(API::Ptr{Nothing}, cpt::GMTcpt)::Ptr{GMT.GMT_PALETTE}
 	unsafe_store!(P, Pb)
 
 	# Categorical case was half broken till 6.2 so we must treat things differently
-	if (cpt.key[1] != "" && GMTver > v"6.1.1")
+	if (cpt.key[1] != "")
 		GMT_Put_Strings(API, GMT_IS_PALETTE | GMT_IS_PALETTE_KEY, convert(Ptr{Cvoid}, P), cpt.key);
 		(cpt.label[1] != "") &&
 			GMT_Put_Strings(API, GMT_IS_PALETTE | GMT_IS_PALETTE_LABEL, convert(Ptr{Cvoid}, P), cpt.label);
-		Pb.categorical = UInt32(2)
-	elseif (cpt.key[1] != "")
 		Pb.categorical = UInt32(2)
 	end
 

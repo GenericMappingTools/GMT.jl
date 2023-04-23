@@ -76,8 +76,10 @@ Gdal.GDALDestroyDriverManager()
 	gdaltranslate("utmsmall.tif", R="442000/445000/3747000/3750000");
 	gdaltranslate("utmsmall.tif+b0");
 	gdaltranslate("utmsmall.tif", ["-b","1"]);
+	@info "1..."
 	try		# Stupid Macports gdal does not have AAIGrid driver
 	ds_tiny = gdaltranslate(ds_small, ["-of","AAIGrid","-r","cubic","-tr","1200","1200"], gdataset=true) # resample to a 5×5 ascii grid
+	@info "2..."
 	@test Gdal.read(ds_tiny, 1) == [128  171  127   93   83; 126  164  148  114  101;
 									161  175  177  164  140; 185  206  205  172  128;
 									193  205  209  181  122]
@@ -209,7 +211,9 @@ Gdal.GDALDestroyDriverManager()
 	Gdal.IFieldDefnView(C_NULL);
 	Gdal.IGeomFieldDefnView(C_NULL);
 	Gdal.GeomFieldDefn(C_NULL);
+	@info "3..."
 	Gdal.RasterBand(C_NULL);
+	@info "4..."
 	Gdal.destroy(Gdal.Driver(C_NULL));
 	Gdal.destroy(Gdal.Feature(C_NULL));
 	Gdal.destroy(Gdal.CoordTransform(C_NULL));
@@ -230,9 +234,11 @@ Gdal.GDALDestroyDriverManager()
 	#Gdal.identifydriver("lixo.gmt")
 	D = mat2ds([-8. 37.0; -8.1 37.5; -8.5 38.0], proj="+proj=longlat");
 	ds = gmt2gd(D)
+	@info "5..."
 	ds = gmt2gd(D, geometry="Polygon")
 	gmt2gd(mat2ds([0 10; 1 11; 0 10], x=[0, 1, 2], multi=true), geometry="line")
 	gmt2gd(mat2ds([0 10; 1 11; 0 10; 0 10], x=[0, 1, 2, 0], multi=true), geometry="polyg")
+	@info "6..."
 	ogr2ogr(D, dest="lixo1.gmt")
 	gmt2gd(D, save="lixo2.gmt")
 	ds = gmt2gd(D)
@@ -242,16 +248,18 @@ Gdal.GDALDestroyDriverManager()
 	#ogr2ogr(D[1], "-t_srs '+proj=utm +zone=29' -overwrite")
 
 	D1 = mat2ds([0.0 0.0; 1.0 1.0; 1.0 0.0; 0.0 0.0]);
+	@info "7..."
 	gmt2gd(D1);		gmt2gd(D1, geometry="line");	gmt2gd(D1, geometry="point")
 	D2 = mat2ds([0.0 0.0 1.; 1.0 1.0 2.; 1.0 0.0 3.; 0.0 0.0 1.]);
 	gmt2gd(D2);		gmt2gd(D2, geometry="line");	gmt2gd(D2, geometry="point")
 
+	@info "8..."
 	wkt = "POLYGON ((1179091. 712782.,1161053. 667456.,1214705. 641092.,1228580. 682719.,1218405. 721108.,1179091. 712782.))"
 	@test Gdal.getgeomtype(Gdal.forceto(Gdal.fromWKT(wkt), Gdal.wkbMultiPolygon)) == Gdal.wkbMultiPolygon
 	wkt = "POINT (1198054.34 648493.09)";
 	bf = Gdal.buffer(Gdal.fromWKT(wkt), 500)
 	@test Gdal.getgeomtype(bf) == Gdal.wkbPolygon
-	show(bf)
+	show(bf);
 
 	@testset "Calculate the Area of a Geometry" begin
 		wkt = "POLYGON ((1162440. 672081., 1162440. 647105., 1195279. 647105., 1195279. 672081., 1162440. 672081.))"
@@ -265,15 +273,18 @@ Gdal.GDALDestroyDriverManager()
 		@test Gdal.geomlength(line) ≈ 76121.94397805972
 	end
 
+	@info "9..."
 	mp = Gdal.createmultipolygon_noholes(Vector{Tuple{Float64,Float64}}[
 		[(1204067., 634617.), (1204067., 620742.), (1215167., 620742.), (1215167., 634617.), (1204067., 634617.)],
 		[(1179553., 647105.), (1179553., 626292.), (1194354., 626292.), (1194354., 647105.), (1179553., 647105.)] ])
 	Gdal.wrapgeom(mp)
 
-	gdalinfo("poly_spatialite.sqlite")
-	Gdal.read("poly_spatialite.sqlite")
-	Gdal.inspect("SELECT HEX(GeomFromText('POINT(10 20)'))", "poly_spatialite.sqlite")
+	@info "10..."
+	gdalinfo("poly_spatialite.sqlite");
+	Gdal.read("poly_spatialite.sqlite");
+	Gdal.inspect("SELECT HEX(GeomFromText('POINT(10 20)'))", "poly_spatialite.sqlite");
 
+	@info "11..."
 	I1 = mat2img(reshape(collect(UInt8(1):UInt8(20)), 4, 5))	#  layout = TCBa
 	I2 = mat2img(reshape(collect(UInt8(11):UInt8(30)), 4, 5))
 	GMT.blendimg!(I1, I2)

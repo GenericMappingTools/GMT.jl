@@ -268,17 +268,16 @@ include("MB/mbimport.jl")
 include("MB/mbgetdata.jl")
 include("MB/mbsvplist.jl")
 include("MB/mblevitus.jl")
-	include("potential/gmtgravmag3d.jl")
-	include("potential/grdgravmag3d.jl")
-	include("potential/gravfft.jl")
+include("potential/gmtgravmag3d.jl")
+include("potential/grdgravmag3d.jl")
+include("potential/gravfft.jl")
 include("spotter/grdrotater.jl")
 include("drawing.jl")
-
-	include("get_enums.jl")
-	include("gdal.jl")
-	include("gdal_utils.jl")
-	include("proj_utils.jl")
-	using GMT.Gdal
+include("get_enums.jl")
+include("gdal.jl")
+include("gdal_utils.jl")
+include("proj_utils.jl")
+using GMT.Gdal
 include("imshow.jl")		# Include later because one method depends on knowing about GDAL
 
 const global current_cpt = [GMTcpt()]		# To store the current palette
@@ -319,14 +318,14 @@ function __init__(test::Bool=false)
 		"(like updating your GMT instalation). Restart Julia and run `import Pkg; Pkg.precompile()`")
 		return
 	end
+	(GMTver < v"6.4.0") && @warn("You should not be using a GMT version older than 6.4. Somethings will not work.")
 
 	clear_sessions(3600)		# Delete stray sessions dirs older than 1 hour
 	G_API[1] = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS)	# (0.010179 sec)
-	(GMTver >= v"6.2.0") && theme_modern()			# Set the MODERN theme and some more gmtlib_setparameter() calls
+	theme_modern()				# Set the MODERN theme and some more gmtlib_setparameter() calls
 	haskey(ENV, "JULIA_GMT_IMGFORMAT") && (FMT[1] = ENV["JULIA_GMT_IMGFORMAT"])
 	f = joinpath(GMTuserdir[1], "theme_jl.txt")
 	(isfile(f)) && (theme(readline(f));	ThemeIsOn[1] = false)	# False because we don't want it reset in showfig()
-	(GMTver < v"6.2.0") && extra_sets()		# some calls to gmtlib_setparameter() (theme_modern already called this)
 	user = (Sys.isunix() || Sys.isapple()) ? Libc.getpwuid(Libc.getuid(), true).username : Sys.iswindows() ? ENV["USERNAME"] : ""
 	tmpdir_usr[2] = replace(user, " " => "_")
 	PSname[1] = tmpdir_usr[1] * "/" * "GMTjl_" * tmpdir_usr[2] * ".ps"
