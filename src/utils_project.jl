@@ -94,7 +94,6 @@ function worldrectangular(GI; proj::String="+proj=vandg +over", pm=0, latlim=:au
 	end
 
 	G = grdcut(G, R=(G.x[pix_x[1]], G.x[pix_x[2]], yb, yt))
-	@show(res)
 	return coast != "none" ? (G, worldrectcoast(proj, res)) : G
 end
 
