@@ -19,7 +19,7 @@ function ecef2enuv(u, v, w, lon0, lat0)
 end
 
 """
-    GI = worldrectangular(GI; proj::String="+proj=vandg", pm=0, latlim=:auto)
+    GI[,coast] = worldrectangular(GI; proj::String="+proj=vandg", pm=0, latlim=:auto, coast=false)
 
 Try to createa rectangular map out miscellaneous and not cylindrical projections.
 
@@ -29,9 +29,12 @@ Try to createa rectangular map out miscellaneous and not cylindrical projections
 - `latlim or latlims`: Latitude(s) at which the rectangular map is trimmed. The default (:auto) means
    that we will try to trim such that we get a fully filled grid/image. Use `latlim=(lat_s,lat_n)` or
    `latlim=lat` to make it equivalent to `latlim=(-lat,lat)`.
+- `coast`: Return also the coastlines projected with `proj`. Pass `coast=res`, where `res` is one of
+   GMT coastline resolutions (*e.g.* :crude, :low, :intermediate). `coast=true` is <==> `coast=:crude`
 
 ### Returns
-A grid or an image ... or errors. Not many projections support the procedure implemented in this function.
+A grid or an image and optionaly the coastlines ... or errors. Not many projections support the procedure
+implemented in this function.
 The working or not is controlled by PROJ's `+over` option https://proj.org/usage/projections.html#longitude-wrapping
 
 ### Example:
@@ -39,9 +42,9 @@ The working or not is controlled by PROJ's `+over` option https://proj.org/usage
    imshow(G)
 """
 # -----------------------------------------------------------------------------------------------
-worldrectangular(fname::String; proj::String="+proj=vandg +over", pm=0, latlim=:auto, latlims=nothing, pad=90) =
-	worldrectangular(gmtread(fname); proj=proj, pm=pm, latlim=latlim, latlims=latlims, pad=pad)
-function worldrectangular(GI; proj::String="+proj=vandg +over", pm=0, latlim=:auto, latlims=nothing, pad=90)
+worldrectangular(fname::String; proj::String="+proj=vandg +over", pm=0, latlim=:auto, latlims=nothing, pad=90, coast=false) =
+	worldrectangular(gmtread(fname); proj=proj, pm=pm, latlim=latlim, latlims=latlims, pad=pad, coast=coast)
+function worldrectangular(GI; proj::String="+proj=vandg +over", pm=0, latlim=:auto, latlims=nothing, pad=90, coast=false)
 	# Here test if G is global
 	(latlim === nothing && latlims !== nothing) && (latlim = latlims)	# To accept both latlim & latlims
 	autolat = false
@@ -52,6 +55,7 @@ function worldrectangular(GI; proj::String="+proj=vandg +over", pm=0, latlim=:au
 	!contains(proj, " +over") && (proj *= " +over")
 	(pm > 180) && (pm -= 360);		(pm < -180) && (pm += 360)
 	sw = pad	# This is an attempt to let try minimize the empties that may occur in the corners for some projs
+	res = (isa(coast, Symbol) || isa(coast, String)) ? string(coast) : (coast == 1 ? "crude" : "none")
 
 	if (pm > -90)
 		Gr = grdcut(GI, R=(-180,-180+sw+pm,-90,90))			# Chop of 90 deg on the West
@@ -89,5 +93,21 @@ function worldrectangular(GI; proj::String="+proj=vandg +over", pm=0, latlim=:au
 		yb, yt = yc[1], yc[2]
 	end
 
-	grdcut(G, R=(G.x[pix_x[1]], G.x[pix_x[2]], yb, yt))
+	G = grdcut(G, R=(G.x[pix_x[1]], G.x[pix_x[2]], yb, yt))
+	return coast != "none" ? (G, worldrectcoast(proj, res)) : G
+end
+
+# -----------------------------------------------------------------------------------------------
+function worldrectcoast(proj::String, res)
+	# Project also the coastlines to go along with the grid created by worldrectangular
+	cl = coast(dump=:true, res=res, region=:global)
+	#cl_right = coast(dump=:true, res=res, region=(-180,0,-90,90)) .+ 360	# Good try but some points screw
+	#cl_left  = coast(dump=:true, res=res, region=(0,180,-90,90)) .- 360
+	cl_right = cl .+ 360
+	cl_left  = cl .- 360
+	cl_vdg   = lonlat2xy(cl, t_srs=proj)
+	cl_right_vdg = lonlat2xy(cl_right, t_srs=proj)
+	cl_left_vdg  = lonlat2xy(cl_left, t_srs=proj)
+	tmp = cat(cl_left_vdg, cl_vdg)
+	cat(tmp, cl_right_vdg)
 end
