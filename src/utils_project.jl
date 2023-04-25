@@ -44,7 +44,7 @@ The working or not is controlled by PROJ's `+over` option https://proj.org/usage
 # -----------------------------------------------------------------------------------------------
 worldrectangular(fname::String; proj::String="+proj=vandg +over", pm=0, latlim=:auto, latlims=nothing, pad=90, coast=false) =
 	worldrectangular(gmtread(fname); proj=proj, pm=pm, latlim=latlim, latlims=latlims, pad=pad, coast=coast)
-function worldrectangular(GI; proj::String="+proj=vandg +over", pm=0, latlim=:auto, latlims=nothing, pad=90, coast=false)
+function worldrectangular(GI::GItype; proj::String="+proj=vandg +over", pm=0, latlim=:auto, latlims=nothing, pad=90, coast=false)
 	# Here test if G is global
 	(latlim === nothing && latlims !== nothing) && (latlim = latlims)	# To accept both latlim & latlims
 	autolat = false
@@ -110,4 +110,73 @@ function worldrectcoast(proj::String, res)
 	cl_left_vdg  = lonlat2xy(cl_left, t_srs=proj)
 	tmp = cat(cl_left_vdg, cl_vdg)
 	cat(tmp, cl_right_vdg)
+end
+
+# -----------------------------------------------------------------------------------------------
+function worldrectgrid(proj::String, inc=(30,20), pm=0)
+	# Create a grid of lines in 'proj' coordinates. Input are meridians and parallels at steps
+	# determined by 'inc' and centered at 'pm'. 'pm' can be transmitted via argument or contained in 'proj'
+	(contains(proj, "+pm=")) && (pm = parse(Float64,string(split(split("+proj=vandg +pm=9 +over", "+pm=")[2])[1])))
+	(pm != 0 && !contains(proj, "+pm=")) && (proj *= " +pm=$pm")
+	(!contains(proj, "+over")) && (proj *= " +over")
+	inc_x, inc_y = (length(inc) == 2) ? (inc[1], inc[2]) : (inc, inc)
+
+	meridians = -180-60+pm:inc_x:180+60+pm
+	meridian  = [(-90:2:-70); (-75:5:65); (70:2:90)]
+	t = collect(0:-inc_y:-90)
+	parallels = [t[end]:inc_y:t[2]; 0:inc_y:90]		# To center it on 0
+	parallel  = -180-60+pm:10:180+60+pm
+
+	Dgrid = Vector{GMTdataset}(undef, length(meridians)+length(parallels))
+	n = 0
+	for m = meridians
+		Dgrid[n+=1] = mat2ds(lonlat2xy([fill(m,length(meridian)) meridian], t_srs=proj), attrib=Dict("merid_b" => "$m,-90", "merid_e" => "$m,90"))
+	end
+	for p = parallels
+		Dgrid[n+=1] = mat2ds(lonlat2xy([parallel fill(p, length(parallel))], t_srs=proj), attrib=Dict("para_b" => "$p,$(parallel[1])", "para_e" => "$p,$(parallel[end])"))
+	end
+	Dgrid[1].attrib["n_meridians"] = "$(length(meridians))"
+	Dgrid[1].attrib["n_parallels"] = "$(length(parallels))"
+	return Dgrid
+
+	#=
+	Dlons = Vector{GMTdataset}(undef,length(-270:inc_x:270))
+	n = 0
+	for k = -270:inc_x:270
+		Dlons[n+=1] = mat2ds([fill(k,19) -90:10:90'])
+	end
+	Dlats = Vector{GMTdataset}(undef,length(-90:inc_y:90))
+	n = 0
+	for k = -90:inc_y:90
+		Dlats[n+=1] = mat2ds([-270:10:270' fill(k,55)])
+	end
+	x = lonlat2xy(Dlons, t_srs=proj)
+	y = lonlat2xy(Dlats, t_srs=proj)
+	x, y
+	=#
+end
+
+# -----------------------------------------------------------------------------------------------
+function plotgrid!(GI::GItype, Dgrid::Vector{<:GMTdataset})
+	bot = [GI.range[1] GI.range[3]; GI.range[2] GI.range[3]]
+	top = [GI.range[1] GI.range[4]; GI.range[2] GI.range[4]]
+	n_meridians = parse(Int16, Dgrid[1].attrib["n_meridians"])
+	n_parallels = parse(Int16, Dgrid[1].attrib["n_parallels"])
+	lon_b, lon_t = Matrix{Float64}(undef, n_meridians,2), Matrix{Float64}(undef, n_meridians,2)
+	for k = 1:n_meridians
+		t = gmtspatial((Dgrid[k], bot), intersections=:e)[1,1:2]
+		lon_b[k,2], lon_b[k,1] = round(xy2lonlat(t, s_srs=GI.proj4)[1], digits=0), t[1]
+		t = gmtspatial((Dgrid[k], top), intersections=:e)[1,1:2]
+		lon_t[k,2], lon_t[k,1] = round(xy2lonlat(t, s_srs=GI.proj4)[1], digits=0), t[1]
+	end
+	left = [GI.range[1] GI.range[3]; GI.range[1] GI.range[4]]
+	lat = Matrix{Float64}(undef, n_parallels,2)
+	n = 0
+	for k = n_meridians+1:length(Dgrid)
+		t = gmtspatial((Dgrid[k], left), intersections=:e)
+		isempty(t) && continue
+		lat[n+=1,2], lat[n,1] = round(xy2lonlat(t[1,1:2], s_srs=GI.proj4)[2], digits=0), t[2]
+	end
+	(n != size(lat,1)) && (lat = lat[1:n, :])	# Remove those rows not filled because parallels did not cross E-W boundary
+	lon_b, lat
 end

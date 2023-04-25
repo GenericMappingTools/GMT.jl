@@ -446,7 +446,7 @@ function arrowheads_pos(D, x, y, n_cols_coarse, n_rows_coarse)
 	this_stream = Matrix{Float64}(undef, 50, 2)
 	count = 0
 
-	for k = 1:length(D)
+	for k = 1:numel(D)
 		jj = 0
 		for j = 1:size(D[k], 1)
 			xc, yc = D[k][j,1], D[k][j,2]
