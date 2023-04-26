@@ -77,15 +77,7 @@ function worldrectangular(GI::GItype; proj::String="+proj=vandg +over", pm=0, la
 		G = grdpaste(Gl,Gr)
 	end
 	(pm != 0) && (proj *= " +pm=$pm")
-	if Sys.iswindows()
-		G = gdalwarp(G, ["-t_srs", proj])
-	else
-		tmp = joinpath(tempdir(), "worldrect_" * tmpdir_usr[2] * ".tiff")
-		gdalwarp(G, ["-t_srs", proj], dest=tmp)
-		gdalwarp(G, ["-t_srs", proj], dest=tmp)
-		G = gmtread(tmp)
-		#rm(tmp)		# Can't, at least on Win, the file is locked to Julia. 
-	end
+	G = gdalwarp(G, ["-t_srs", proj])
 
 	xy = lonlat2xy([-180.0+pm 0; 180+pm 0], t_srs=proj)
 	pix_x = axes2pix(xy, size(G), [G.x[1], G.x[end]], [G.y[1], G.y[end]], G.registration, G.layout)[1]
