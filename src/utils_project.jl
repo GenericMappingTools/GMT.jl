@@ -77,7 +77,15 @@ function worldrectangular(GI::GItype; proj::String="+proj=vandg +over", pm=0, la
 		G = grdpaste(Gl,Gr)
 	end
 	(pm != 0) && (proj *= " +pm=$pm")
-	G = gdalwarp(G, ["-t_srs", proj])
+	if Sys.iswindows()
+		G = gdalwarp(G, ["-t_srs", proj])
+	else
+		tmp = joinpath(tempdir(), "worldrect_" * tmpdir_usr[2] * ".tiff")
+		gdalwarp(G, ["-t_srs", proj], dest=tmp)
+		gdalwarp(G, ["-t_srs", proj], dest=tmp)
+		G = gmtread(tmp)
+		#rm(tmp)		# Can't, at least on Win, the file is locked to Julia. 
+	end
 
 	xy = lonlat2xy([-180.0+pm 0; 180+pm 0], t_srs=proj)
 	pix_x = axes2pix(xy, size(G), [G.x[1], G.x[end]], [G.y[1], G.y[end]], G.registration, G.layout)[1]
@@ -163,12 +171,18 @@ function plotgrid!(GI::GItype, Dgrid::Vector{<:GMTdataset})
 	n_meridians = parse(Int16, Dgrid[1].attrib["n_meridians"])
 	n_parallels = parse(Int16, Dgrid[1].attrib["n_parallels"])
 	lon_b, lon_t = Matrix{Float64}(undef, n_meridians,2), Matrix{Float64}(undef, n_meridians,2)
+	k1, k2 = 0, 0
 	for k = 1:n_meridians
-		t = gmtspatial((Dgrid[k], bot), intersections=:e)[1,1:2]
-		lon_b[k,2], lon_b[k,1] = round(xy2lonlat(t, s_srs=GI.proj4)[1], digits=0), t[1]
-		t = gmtspatial((Dgrid[k], top), intersections=:e)[1,1:2]
-		lon_t[k,2], lon_t[k,1] = round(xy2lonlat(t, s_srs=GI.proj4)[1], digits=0), t[1]
+		t = gmtspatial((Dgrid[k], bot), intersections=:e)
+		isempty(t) && continue
+		lon_b[k1+=1,2], lon_b[k1,1] = round(xy2lonlat(t[1,1:2], s_srs=GI.proj4)[1], digits=0), t[1]
+		t = gmtspatial((Dgrid[k], top), intersections=:e)
+		isempty(t) && continue
+		lon_t[k2+=1,2], lon_t[k2,1] = round(xy2lonlat(t[1,1:2], s_srs=GI.proj4)[1], digits=0), t[1]
 	end
+	(k1 != size(lon_b,1)) && (lon_b = lon_b[1:k1, :])	# Remove rows not filled
+	(k2 != size(lon_t,1)) && (lon_t = lon_t[1:k2, :])	# Remove rows not filled
+
 	left = [GI.range[1] GI.range[3]; GI.range[1] GI.range[4]]
 	lat = Matrix{Float64}(undef, n_parallels,2)
 	n = 0
@@ -177,6 +191,12 @@ function plotgrid!(GI::GItype, Dgrid::Vector{<:GMTdataset})
 		isempty(t) && continue
 		lat[n+=1,2], lat[n,1] = round(xy2lonlat(t[1,1:2], s_srs=GI.proj4)[2], digits=0), t[2]
 	end
-	(n != size(lat,1)) && (lat = lat[1:n, :])	# Remove those rows not filled because parallels did not cross E-W boundary
-	lon_b, lat
+	(n != size(lat,1)) && (lat = lat[1:n, :])	# Remove rows not filled because parallels did not cross E-W boundary
+
+	plot!(Dgrid)
+	txt = [@sprintf("a %d", lat[k,2]) for k = 1:size(lat,1)]
+	basemap!(yaxis=(custom=(pos=lat[:,1], type=txt),), par=(FONT_ANNOT_PRIMARY="+7",))
+	txt = [@sprintf("a %d", lon_b[k,2]) for k = 1:size(lon_b,1)]
+	basemap!(xaxis=(custom=(pos=lon_b[:,1], type=txt),), par=(FONT_ANNOT_PRIMARY="+7",), show=1)
+	#lon_b, lat
 end
