@@ -94,49 +94,153 @@ function worldrectangular(GI::GItype; proj::String="+proj=vandg +over", pm=0, la
 	end
 
 	G = grdcut(G, R=(G.x[pix_x[1]], G.x[pix_x[2]], yb, yt))
-	return res != "none" ? (G, worldrectcoast(proj, res)) : G
+	return res != "none" ? (G, worldrectcoast(proj; res=res)) : G
 end
 
 # -----------------------------------------------------------------------------------------------
-function worldrectcoast(proj::String, res)
+"""
+    cl = coastlinesproj(proj::String, res="crude")
+
+Extract the coastlines from GMT's GSHHG database and project them using PROJ (NOT the GMT projection machinery).
+This allows the use of many of the PROJ proijections that are not available from pure GMT.
+
+- `proj`: A proj4 string describing the projection.
+- `res`: The coastline resolution. Available options are: `crude`, `low`, `intermediate`, `high` and `full`
+
+### Returns
+A Vector of GMTdataset containing the projected (or not) world GSHHG coastlines at resolution `res`.
+
+### Example
+    cl = coastlinesproj(proj="+proj=ob_tran +o_proj=moll +o_lon_p=40 +o_lat_p=50 +lon_0=60");
+"""
+function coastlinesproj(; proj::String="", res="crude")
+	# Project the GSHHG coastlines with PROJ. 'proj' msut be a valid proj4 string.
+	proj == "" && return coast(dump=:true, res=res, region=:global)
+	!startswith(proj, "+proj=") && (proj = "+proj=" * proj)
+	worldrectcoast(proj, res=res, round=true)
+end
+
+# -----------------------------------------------------------------------------------------------
+"""
+    cl = worldrectcoast(proj::String, res="crude")
+
+Return a project coastline, at `res` resolution, suitable to overlain in a grid created with the
+`worldrectangular` function. Note that this function, contrary to `coastlinesproj`, returns coastline
+data that spans > than 360 degrees.
+
+- `proj`: A proj4 string describing the projection.
+- `res`: The coastline resolution. Available options are: `crude`, `low`, `intermediate`, `high` and `full`
+
+### Returns
+A Vector of GMTdataset containing the projected world GSHHG coastlines at resolution `res`.
+"""
+function worldrectcoast(proj::String; res="crude", round=false)
 	# Project also the coastlines to go along with the grid created by worldrectangular
 	cl = coast(dump=:true, res=res, region=:global)
+	cl_prj   = lonlat2xy(cl, t_srs=proj)
+	round && return cl_prj
+
 	#cl_right = coast(dump=:true, res=res, region=(-180,0,-90,90)) .+ 360	# Good try but some points screw
 	#cl_left  = coast(dump=:true, res=res, region=(0,180,-90,90)) .- 360
 	cl_right = cl .+ 360
 	cl_left  = cl .- 360
-	cl_vdg   = lonlat2xy(cl, t_srs=proj)
-	cl_right_vdg = lonlat2xy(cl_right, t_srs=proj)
-	cl_left_vdg  = lonlat2xy(cl_left, t_srs=proj)
-	tmp = cat(cl_left_vdg, cl_vdg)
-	cat(tmp, cl_right_vdg)
+	cl_right_prj = lonlat2xy(cl_right, t_srs=proj)
+	cl_left_prj  = lonlat2xy(cl_left, t_srs=proj)
+	tmp = cat(cl_left_prj, cl_prj)
+	cat(tmp, cl_right_prj)
 end
 
 # -----------------------------------------------------------------------------------------------
-function worldrectgrid(proj::String, inc=(30,20), pm=0)
+"""
+    grat = graticules(proj::String, inc=(30,20), pm=0)
+or
+
+	grat = graticules(D::GDtype; inc=(30,20))
+
+Create a projected graticule GMTdataset with meridians and parallels at `inc` intervals.
+
+- `proj`: A proj4 string describing the projection
+- `D`: Alternatively pass a GMTdataset (or vector of them) holding the projection info in the `proj4` field.
+- `inc`: A scalar or two elements array/tuple with increments in longitude and latitude. If scalar, inc_x = inc_y.
+
+### Returns
+A Vector of GMTdataset containing the projected meridians and parallels. `grat[i]` attributes store
+information about that element lon,lat. 
+
+### Example
+    grat = graticules(proj="+proj=ob_tran +o_proj=moll +o_lon_p=40 +o_lat_p=50 +lon_0=60");
+"""
+function graticules(D::GDtype; inc=(30,20))
+	prj = (isa(D, Vector)) ? D[1].proj4 : D.proj4
+	prj == "" && error("Input dataset has no proj4 projection info")
+	graticules(proj=prj, inc=inc)
+end
+function graticules(; proj::String="", inc=(30,20), pm=0)
+	# This fun should probably be merged with worldrectgrid
+	(proj != "" && !startswith(proj, "+proj=")) && (proj = "+proj=" * proj)
+	worldrectgrid(proj, inc; pm=pm, worldrect=false)
+end
+
+# -----------------------------------------------------------------------------------------------
+function worldrectgrid(proj::String, inc=(30,20); pm=0, worldrect=true)
 	# Create a grid of lines in 'proj' coordinates. Input are meridians and parallels at steps
 	# determined by 'inc' and centered at 'pm'. 'pm' can be transmitted via argument or contained in 'proj'
+	# 'worldrect=false' means we don't extend beyound  the [-180 180]+pm as we do for worldrectangular.
 	(contains(proj, "+pm=")) && (pm = parse(Float64,string(split(split("+proj=vandg +pm=9 +over", "+pm=")[2])[1])))
 	(pm != 0 && !contains(proj, "+pm=")) && (proj *= " +pm=$pm")
-	(!contains(proj, "+over")) && (proj *= " +over")
+	(worldrect && !contains(proj, "+over")) && (proj *= " +over")
 	inc_x, inc_y = (length(inc) == 2) ? (inc[1], inc[2]) : (inc, inc)
+	pad = worldrect ? 60 : 0
 
-	meridians = -180-60+pm:inc_x:180+60+pm
-	meridian  = [(-90:2:-70); (-75:5:65); (70:2:90)]
-	t = collect(0:-inc_y:-90)
-	parallels = [t[end]:inc_y:t[2]; 0:inc_y:90]		# To center it on 0
-	parallel  = -180-60+pm:10:180+60+pm
+	meridians = -180.0-pad+pm:inc_x:180+pad+pm
+	meridian  = [(-90.0:1:-80); (-78.0:2:-72); (-70:5:70); (72:2:78); (80:1:90)]	# Attempt to have less points, but ...
+	t = collect(0.0:-inc_y:-90)
+	parallels = [t[end]:inc_y:t[2]; 0.0:inc_y:90]		# To center it on 0
+	parallel  = -180.0-pad+pm:5:180+pad+pm
+
+	function check_gaps(D, n1, n2, testone=true)
+		# Some projections have projected graticules that are broken and lines go left-right like crazy.
+		# This function tries to detect the breaking points based on cheap stats. When detected, insert NaN rows
+		if (testone)					# Test if we have broken parallels
+			d = diff(D[round(Int, (n1+n2)/2)], dims=1)
+			dists = hypot.(view(d,:,1), view(d, :, 2))
+			(median(dists) > 3 * maximum(dists)) && return nothing	# (3?) This projection has no broken parallels.
+		end
+		for n = n1:n2
+			d = diff(D[n], dims=1);		dists = hypot.(view(d,:,1), view(d, :, 2))
+			ind = findall(dists .> 5*median(dists))				# 5 is an heuristic
+			isempty(ind) && continue							# This parallel is not broken
+			if (length(ind) == 1)		# A single break
+				D[n].data = [D[n].data[1:ind[1],:]; NaN NaN; D[n].data[ind[1]+1:end,:]]
+			else						# Assume there are only two breaks. If not ...
+				D[n].data = [D[n].data[1:ind[1],:]; NaN NaN; D[n].data[ind[1]+1:ind[2],:]; NaN NaN; D[n].data[ind[2]+1:end,:]]
+			end
+		end
+		testone && check_gaps(D, 1, n1-1, false)		# If parallels were broken there good chances that meridians are too.
+		return nothing
+	end
 
 	Dgrid = Vector{GMTdataset}(undef, length(meridians)+length(parallels))
 	n = 0
-	for m = meridians
-		Dgrid[n+=1] = mat2ds(lonlat2xy([fill(m,length(meridian)) meridian], t_srs=proj), attrib=Dict("merid_b" => "$m,-90", "merid_e" => "$m,90"))
-	end
-	for p = parallels
-		Dgrid[n+=1] = mat2ds(lonlat2xy([parallel fill(p, length(parallel))], t_srs=proj), attrib=Dict("para_b" => "$p,$(parallel[1])", "para_e" => "$p,$(parallel[end])"))
+	if (proj != "")
+		for m = meridians
+			Dgrid[n+=1] = mat2ds(lonlat2xy([fill(m,length(meridian)) meridian], t_srs=proj), attrib=Dict("merid_b" => "$m,-90", "merid_e" => "$m,90"))
+		end
+		for p = parallels
+			Dgrid[n+=1] = mat2ds(lonlat2xy([parallel fill(p, length(parallel))], t_srs=proj), attrib=Dict("para_b" => "$p,$(parallel[1])", "para_e" => "$p,$(parallel[end])"))
+		end
+		check_gaps(Dgrid, length(meridians)+1, length(Dgrid))	
+	else					# Cartesian graticules
+		for m = meridians
+			Dgrid[n+=1] = mat2ds([fill(m,length(meridian)) meridian], attrib=Dict("merid_b" => "$m,-90", "merid_e" => "$m,90"))
+		end
+		for p = parallels
+			Dgrid[n+=1] = mat2ds([parallel fill(p, length(parallel))], attrib=Dict("para_b" => "$p,$(parallel[1])", "para_e" => "$p,$(parallel[end])"))
+		end
 	end
 	Dgrid[1].attrib["n_meridians"] = "$(length(meridians))"
 	Dgrid[1].attrib["n_parallels"] = "$(length(parallels))"
+	Dgrid[1].proj4 = proj	
 	return Dgrid
 
 	#=
@@ -190,5 +294,4 @@ function plotgrid!(GI::GItype, Dgrid::Vector{<:GMTdataset})
 	basemap!(yaxis=(custom=(pos=lat[:,1], type=txt),), par=(FONT_ANNOT_PRIMARY="+7",))
 	txt = [@sprintf("a %d", lon_b[k,2]) for k = 1:size(lon_b,1)]
 	basemap!(xaxis=(custom=(pos=lon_b[:,1], type=txt),), par=(FONT_ANNOT_PRIMARY="+7",), show=1)
-	#lon_b, lat
 end
