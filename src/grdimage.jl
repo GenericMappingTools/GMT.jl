@@ -103,7 +103,8 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 	cmd, arg1, arg2, arg3, arg4 = common_shade(d, cmd, arg1, arg2, arg3, arg4, "grdimage")
 
 	if (isa(arg1, GMTimage) && !occursin("-Q", cmd))
-		if (!occursin("-D", cmd))  cmd *= " -D"  end	# GMT bug. It says not need but it is.
+		if (!occursin("-D", cmd))  cmd *= " -D"  end	# Lost track why but need this so gmt_main knows it should init a img
+		(length(opt_J) > 3 && (opt_J[4] != 'X' && opt_J[4] != 'x')) && (cmd *= "r")	# GMT crashes when just -D and proj
 	end
 
 	do_finish = false
@@ -132,7 +133,12 @@ function common_insert_R!(d::Dict, O::Bool, cmd0, I_G)
 	elseif (val === nothing && (isa(cmd0, String) && cmd0 != "") && (CTRL.limits[1:4] != zeros(4) || snif_GI_set_CTRLlimits(cmd0)) )
 		d[:R] = @sprintf("%.15g/%.15g/%.15g/%.15g", CTRL.limits[1], CTRL.limits[2], CTRL.limits[3], CTRL.limits[4])
 	elseif (val !== nothing)
-		d[:R] = val
+		if (isa(val, StrSymb))
+			s = string(val)::String
+			d[:R] = (s == "global" || s == "d") ? (-180,180,-90,90) : (s == "global360" || s == "g") ? (0,360,-90,90) : val
+		else
+			d[:R] = val
+		end
 		del_from_dict(d, [:region, :limits])
 	end
 end
