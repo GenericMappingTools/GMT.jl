@@ -26,7 +26,7 @@ julia> imshow(G, shade="+a45", contour=true)
 julia> imshow(rand(128,128))
 
 # Display a web downloaded jpeg image wrapped into a sinusoidal projection
-julia> imshow("http://larryfire.files.wordpress.com/2009/07/untooned_jessicarabbit.jpg", region="d", frame="g", proj="I15", img_in="r", fmt=:jpg)
+julia> imshow(gmtread()"http://larryfire.files.wordpress.com/2009/07/untooned_jessicarabbit.jpg"), region=:global, frame="g", proj=:sinu)
 ```
 See also: [`grdimage`](@ref)
 """
@@ -114,9 +114,9 @@ function imshow(arg1::GMTimage; kw...)
 		I::GMTimage = mat2img(arg1; kw...)
 		d = KW(kw)			# Needed because we can't delete from kwargs
 		(haskey(kw, :stretch) || haskey(kw, :histo_bounds)) && del_from_dict(d, [:histo_bounds, :stretch])
-		grdimage("", I; D=true, show=see, d...)
+		grdimage("", I; show=see, d...)
 	else
-		grdimage("", arg1; D=true, show=see, kw...)
+		grdimage("", arg1; show=see, kw...)
 	end
 end
 
@@ -156,3 +156,5 @@ imshow(f::Function, x::AbstractVector{Float64}; kw...) = imshow(x, x, f::Functio
 imshow(f::Function, x::AbstractVector{Float64}, y::AbstractVector{Float64}; kw...) = imshow(x, y, f::Function; kw...) 
 imshow(x::AbstractVector{Float64}, y::AbstractVector{Float64}, f::String; kw...) = imshow(f::String, x, y; kw...) 
 imshow(x::AbstractVector{Float64}, f::String; kw...) = imshow(f::String, x, x; kw...) 
+
+const viz = imshow			# Alias

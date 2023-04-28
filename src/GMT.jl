@@ -154,7 +154,7 @@ export
 
 	ablines, ablines!, density, density!, boxplot, boxplot!, cornerplot, cornerplot!, ecdfplot, ecdfplot!,
 	fill_between, fill_between!, marginalhist, marginalhist!, parallelplot, parallelplot!, plotlinefit, plotlinefit!,
-	qqplot, qqplot!, qqnorm, qqnorm!, violin, violin!,
+	qqplot, qqplot!, qqnorm, qqnorm!, violin, violin!, viz,
 	@?
 
 include("common_docs.jl")
@@ -298,13 +298,13 @@ import SnoopPrecompile
 	GMT.cat_3_arg2(rand(3),rand(3),rand(3));
 	plot(rand(5,2), marker=:point, lc=:red, ls=:dot, lw=1, C=:jet, colorbar=true, Vd=2)
 	plot(rand(5,2))
-	violin(rand(50), Vd=2);
-	boxplot(rand(50), Vd=2);
-	qqplot(randn(500), randn(50), Vd=2);
-	ecdfplot!(randn(50), Vd=2);
-	cornerplot(randn(50,3), scatter=true);
-	marginalhist(randn(1000,2), Vd=2);
-	feather([0.0 0 2.0; 0.0 30 2; 0.0 60 2], rtheta=true, aspect="1:1", arrow=(len=0.5, shape=0.5,), Vd=2);
+	violin(rand(50), fmt=:ps);
+	boxplot(rand(50), fmt=:ps);
+	qqplot(randn(500), randn(50), fmt=:ps);
+	ecdfplot!(randn(50), fmt=:ps);
+	cornerplot(randn(50,3), scatter=true, fmt=:ps);
+	marginalhist(randn(1000,2), par=(PS_MEDIA="A2",), fmt=:ps);
+	feather([0.0 0 2.0; 0.0 30 2; 0.0 60 2], rtheta=true, aspect="1:1", arrow=(len=0.5, shape=0.5,), fmt=:ps);
 	makecpt(T=(0,10))
 	grdimage(rand(Float32,32,32), Vd=2);
 	grdview(rand(Float32,32,32), Vd=2);
