@@ -10,4 +10,7 @@
 	G = GMT.worldrectangular("@earth_relief_10m_g", pm=-100);
 	catch
 	end
+
+	cl = coastlinesproj(proj="fouc");
+	grid = graticules(cl);
 end
