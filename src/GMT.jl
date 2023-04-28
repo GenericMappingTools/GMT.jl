@@ -132,7 +132,7 @@ export
 
 	blendimg!, lonlat2xy, xy2lonlat, df2ds, mat2ds, mat2grid, mat2img, slicecube, cubeslice, linspace, logspace, fields,
 	tic, toc, theme, tern2cart, geodetic2enu, cpt4dcw, gd2gmt, gmt2gd, gdalread, gdalshade, gdalwrite, gadm, xyzw2cube,
-	coastlinesproj, graticules, worldrectangular,
+	coastlinesproj, graticules, worldrectangular, worldrectgrid,
 
 	magic, rescale, stackgrids, delrows!, setgrdminmax!, meshgrid, cart2pol, pol2cat, cart2sph, sph2cart,
 
@@ -298,17 +298,17 @@ import SnoopPrecompile
 	GMT.cat_3_arg2(rand(3),rand(3),rand(3));
 	plot(rand(5,2), marker=:point, lc=:red, ls=:dot, lw=1, C=:jet, colorbar=true, Vd=2)
 	plot(rand(5,2))
-	violin(rand(50))
-	boxplot(rand(50))
-	qqplot(randn(500), randn(50))
+	violin(rand(50), Vd=2);
+	boxplot(rand(50), Vd=2);
+	qqplot(randn(500), randn(50), Vd=2);
 	ecdfplot!(randn(50), Vd=2);
-	cornerplot(randn(50,3), scatter=true)
-	marginalhist(randn(1000,2))
-	feather([0.0 0 2.0; 0.0 30 2; 0.0 60 2], rtheta=true, aspect="1:1", arrow=(len=0.5, shape=0.5,))
+	cornerplot(randn(50,3), scatter=true);
+	marginalhist(randn(1000,2), Vd=2);
+	feather([0.0 0 2.0; 0.0 30 2; 0.0 60 2], rtheta=true, aspect="1:1", arrow=(len=0.5, shape=0.5,), Vd=2);
 	makecpt(T=(0,10))
-	grdimage(rand(Float32,32,32))
-	grdview(rand(Float32,32,32))
-	coast(R=:g, proj=:guess, W=(level=1,pen=(2,:green)))
+	grdimage(rand(Float32,32,32), Vd=2);
+	grdview(rand(Float32,32,32), Vd=2);
+	coast(R=:g, proj=:guess, W=(level=1,pen=(2,:green)), Vd=2);
 	rm(joinpath(tempdir(), "GMTjl_custom_p_x.txt"))		# This one gets created before username is set.
 end
 

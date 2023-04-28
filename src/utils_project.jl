@@ -99,13 +99,15 @@ end
 
 # -----------------------------------------------------------------------------------------------
 """
-    cl = coastlinesproj(proj::String, res="crude")
+    cl = coastlinesproj(proj::String, res="crude", coastlines=nothing)
 
 Extract the coastlines from GMT's GSHHG database and project them using PROJ (NOT the GMT projection machinery).
 This allows the use of many of the PROJ proijections that are not available from pure GMT.
 
 - `proj`: A proj4 string describing the projection.
-- `res`: The coastline resolution. Available options are: `crude`, `low`, `intermediate`, `high` and `full`
+- `res`: The GSHHG coastline resolution. Available options are: `crude`, `low`, `intermediate`, `high` and `full`
+- `coastlines`: In alternative to the `res` option, one may pass a GMTdataset with coastlines
+   previously loaded (with `gmtread`) from another source.
 
 ### Returns
 A Vector of GMTdataset containing the projected (or not) world GSHHG coastlines at resolution `res`.
@@ -113,30 +115,32 @@ A Vector of GMTdataset containing the projected (or not) world GSHHG coastlines 
 ### Example
     cl = coastlinesproj(proj="+proj=ob_tran +o_proj=moll +o_lon_p=40 +o_lat_p=50 +lon_0=60");
 """
-function coastlinesproj(; proj::String="", res="crude")
-	# Project the GSHHG coastlines with PROJ. 'proj' msut be a valid proj4 string.
+function coastlinesproj(; proj::String="", res="crude", coastlines::Vector{<:GMTdataset}=GMTdataset[])
+	# Project the GSHHG coastlines with PROJ. 'proj' must be a valid proj4 string.
 	proj == "" && return coast(dump=:true, res=res, region=:global)
 	!startswith(proj, "+proj=") && (proj = "+proj=" * proj)
-	worldrectcoast(proj, res=res, round=true)
+	worldrectcoast(proj, res=res, coastlines=coastlines, round=true)
 end
 
 # -----------------------------------------------------------------------------------------------
 """
-    cl = worldrectcoast(proj::String, res="crude")
+    cl = worldrectcoast(proj::String, res="crude", coastlines=nothing)
 
 Return a project coastline, at `res` resolution, suitable to overlain in a grid created with the
 `worldrectangular` function. Note that this function, contrary to `coastlinesproj`, returns coastline
-data that spans > than 360 degrees.
+data that spans > 360 degrees.
 
 - `proj`: A proj4 string describing the projection.
-- `res`: The coastline resolution. Available options are: `crude`, `low`, `intermediate`, `high` and `full`
+- `res`: The GSHHG coastline resolution. Available options are: `crude`, `low`, `intermediate`, `high` and `full`
+- `coastlines`: In alternative to the `res` option, one may pass a GMTdataset with coastlines
+   previously loaded (with `gmtread`) from another source.
 
 ### Returns
 A Vector of GMTdataset containing the projected world GSHHG coastlines at resolution `res`.
 """
-function worldrectcoast(proj::String; res="crude", round=false)
+function worldrectcoast(proj::String; res="crude", coastlines::Vector{<:GMTdataset}=GMTdataset[], round=false)
 	# Project also the coastlines to go along with the grid created by worldrectangular
-	cl = coast(dump=:true, res=res, region=:global)
+	cl = (isempty(coastlines)) ? coast(dump=:true, res=res, region=:global) : coastlines
 	cl_prj   = lonlat2xy(cl, t_srs=proj)
 	round && return cl_prj
 
