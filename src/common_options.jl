@@ -3456,8 +3456,16 @@ function _read_data(d::Dict, cmd::String, arg, opt_R::String="", is3D::Bool=fals
 
 	have_info = false
 	no_R = (opt_R == "" || opt_R[1] == '/' || opt_R == " -Rtight")
+	prj::String = (isGMTdataset(arg)) ? getproj(arg, proj4=true) : ""
+	is_geo = contains(prj, "longlat") || contains(prj, "latlong")
+	ds_bbox = isGMTdataset(arg) ? (isa(arg, GMTdataset) ? arg.ds_bbox : arg[1].ds_bbox) : Float64[]
+
 	if (!convert_syntax[1] && !IamModern[1] && no_R)	# Here 'arg' can no longer be a file name (string)
-		wesn_f64::Matrix{<:Float64} = gmt("gmtinfo -C" * opt_i * opt_di * opt_yx, arg).data		# Avoid bloody Any's
+		if (opt_i == "" && opt_di == "" && opt_yx == "" && !isempty(ds_bbox))
+			wesn_f64::Matrix{<:Float64} = reshape(copy(ds_bbox), 1, length(ds_bbox))
+		else
+			wesn_f64 = gmt("gmtinfo -C" * opt_i * opt_di * opt_yx, arg).data		# Avoid bloody Any's
+		end
 		(length(wesn_f64) == 2) && (is_onecol = true)
 		have_info = true
 		# Workaround a bug/feature in GMT when -: is arround
@@ -3480,21 +3488,20 @@ function _read_data(d::Dict, cmd::String, arg, opt_R::String="", is3D::Bool=fals
 				end
 			end
 		end
-		if (opt_R != " -Rtight")
+		if (opt_R != " -Rtight" && (!is_geo || (is_geo && (wesn_f64[2] - wesn_f64[1]) < 360.0)))
 			if (!occursin("?", opt_R) && !is_onecol)		# is_onecol is true for DateTime data
 				dx::Float64 = (wesn_f64[2] - wesn_f64[1]) * 0.005;	dy::Float64 = (wesn_f64[4] - wesn_f64[3]) * 0.005;
 				wesn_f64[1] -= dx;	wesn_f64[2] += dx;	wesn_f64[3] -= dy;	wesn_f64[4] += dy;
-				wesn_f64 = round_wesn(wesn_f64)				# Add a pad if not-tight
+				wesn_f64 = round_wesn(wesn_f64, is_geo)		# Add a pad if not-tight
 				if (isGMTdataset(arg))						# Needed for the guess_proj case
 					if ((wesn_f64[3] < -90 || wesn_f64[4] > 90) || ((wesn_f64[2] - wesn_f64[1]) > 360))
-						prj::String = isa(arg, GMTdataset) ? arg.proj4 : arg[1].proj4
 						guessed_J = (prj == "") && !contains(cmd, " -J ") && !contains(cmd, " -JX") && !contains(cmd, " -Jx")
-						if (guessed_J || contains(prj, "longlat") || contains(prj, "latlong"))
+						if (guessed_J || is_geo)
 							(wesn_f64[3] < -90.) && (wesn_f64[3] = -90.)
 							(wesn_f64[4] >  90.) && (wesn_f64[4] =  90.)
-							if ((wesn_f64[2] - wesn_f64[1]) > 360)
-								if (wesn_f64[2] > 180)  wesn_f64[1] = 0.;		wesn_f64[2] = 360.
-								else                    wesn_f64[1] = -180.;	wesn_f64[2] = 180.
+							if ((wesn_f64[2] - wesn_f64[1]) > 360)		# Here are normally fck because above we added a pad
+								if ((wesn_f64[1] + wesn_f64[2]) / 2 < 100)  wesn_f64[1] = -180.;	wesn_f64[2] = 180.
+								else                                        wesn_f64[1] = 0.;		wesn_f64[2] = 360.
 								end
 							end
 						end
