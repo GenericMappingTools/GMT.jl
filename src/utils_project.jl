@@ -192,6 +192,10 @@ function graticules(; proj::StrSymb="", width=(30,20), pm=0)
 end
 
 # -----------------------------------------------------------------------------------------------
+function worldrectgrid(G_I::GItype; width=(30,20))
+	((prj = G_I.proj4) == "") && error("Input Grid/Image has no proj4 projection info")
+	worldrectgrid(proj=prj, width=width)
+end
 function worldrectgrid(D::GDtype; width=(30,20))
 	prj = (isa(D, Vector)) ? D[1].proj4 : D.proj4
 	prj == "" && error("Input dataset has no proj4 projection info")
