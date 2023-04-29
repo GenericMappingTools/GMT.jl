@@ -4,7 +4,7 @@
 Reads a listing of grid files and blend parameters, or up to 2 GTMgrid types, and creates
 a grid by blending the other grids using cosine-taper weights.
 
-Full option list at [`grdblend`]($(GMTdoc)grdblend.html)
+See full GMT (not the `GMT.jl` one) docs at [`grdblend`]($(GMTdoc)grdblend.html)
 
 Parameters
 ----------
@@ -16,30 +16,24 @@ Parameters
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = grdblend(....) form.
-    ($(GMTdoc)grdblend.html#g)
 
 - **C** | **clobber** :: [Type => Str | []]      ``Arg = f|l|o|u[±]``
 
     Clobber mode: Instead of blending, simply pick the value of one of the grids that covers a node.
-    ($(GMTdoc)grdproject.html#c)
 - **N** | **nodata** :: [Type => Str | Number]
 
     No data. Set nodes with no input grid to this value [Default is NaN].
-    ($(GMTdoc)grdblend.html#n)
 - **Q** | **headless** :: [Type => Bool]
 
     Create plain header-less grid file (for use with external tools). Requires that the output
     grid file is a native format (i.e., not netCDF). DO NOT USE WITH **G**.
-    ($(GMTdoc)grdblend.html#q)
 - **W** | **no_blend** :: [Type => Str | []]
 
     Do not blend, just output the weights used for each node [Default makes the blend].
     Append ``z`` to write the weight*z sum instead.
-    ($(GMTdoc)grdblend.html#w)
 - **Z** | **scale** :: [Type => Number]
 
     Scale output values by scale before writing to file.
-    ($(GMTdoc)grdblend.html#z)
 - $(GMT.opt_V)
 - $(GMT._opt_f)
 - $(GMT.opt_n)

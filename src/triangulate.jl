@@ -5,7 +5,7 @@ Reads randomly-spaced x,y[,z] (or file) and performs Delaunay
 triangulation, i.e., it find how the points should be connected to give the most equilateral
 triangulation possible. 
 
-Full option list at [`triangulate`]($(GMTdoc)triangulate.html)
+See full GMT (not the `GMT.jl` one) docs at [`triangulate`]($(GMTdoc)triangulate.html)
 
 Parameters
 ----------
@@ -17,53 +17,41 @@ Parameters
 
     Read a slope grid (in degrees) and compute the propagated uncertainty in the
     bathymetry using the CURVE algorithm
-    ($(GMTdoc)triangulate.html#a)
 - **D** | **derivatives** :: [Type => Str]
 
     Take either the x- or y-derivatives of surface represented by the planar facets (only used when G is set).
-    ($(GMTdoc)triangulate.html#d)
 - **E** | **empty** :: [Type => Str | Number]
 
     Set the value assigned to empty nodes when G is set [NaN].
-    ($(GMTdoc)triangulate.html#e)
 - **G** | **save** | **outgrid** | **outfile** :: [Type => Str]
 
     Use triangulation to grid the data onto an even grid (specified with R I).
     Append the name of the output grid file.
-    ($(GMTdoc)triangulate.html#g)
 - $(GMT.opt_I)
-    ($(GMTdoc)triangulate.html#i)
 - $(GMT._opt_J)
 - **L** | **index** :: [Type => Bool]
 
     Give name of file with previously computed Delaunay information. If the indexfile is binary and can be read
     the same way as the binary input table then you can append +b to spead up the reading (GMT6.4).
-    ($(GMTdoc)triangulate.html#l)
 - **M** | **network** :: [Type => Bool]
 
     Output triangulation network as multiple line segments separated by a segment header record.
-    ($(GMTdoc)triangulate.html#m)
 - **N** | **ids** :: [Type => Bool]
 
     Used in conjunction with G to also write the triplets of the ids of all the Delaunay vertices
-    ($(GMTdoc)triangulate.html#n)
 - **Q** | **voronoi** :: [Type => Str | []]
 
     Output the edges of the Voronoi cells instead [Default is Delaunay triangle edges]
-    ($(GMTdoc)triangulate.html#q)
 - $(GMT._opt_R)
 - **S** | **triangles** :: [Type => Bool]  
 
     Output triangles as polygon segments separated by a segment header record. Requires Delaunay triangulation.
-    ($(GMTdoc)triangulate.html#s)
 - **T** | **edges** :: [Type => Bool]
 
     Output edges or polygons even if gridding has been selected with the G option
-    ($(GMTdoc)triangulate.html#t)
 - $(GMT.opt_V)
 - **Z** | **xyz** | **triplets** :: [Type => Bool]
 
-    ($(GMTdoc)triangulate.html#z)
 - $(GMT._opt_bi)
 - $(GMT.opt_bo)
 - $(GMT._opt_di)
@@ -74,6 +62,8 @@ Parameters
 - $(GMT.opt_r)
 - $(GMT.opt_w)
 - $(GMT.opt_swap_xy)
+
+To see the full documentation type: ``@? triangulate``
 """
 function triangulate(cmd0::String="", arg1=nothing; kwargs...)
 

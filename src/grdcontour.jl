@@ -4,7 +4,7 @@
 Reads a 2-D grid file or a GMTgrid type and produces a contour map by tracing each
 contour through the grid.
 
-Full option list at [`grdcontour`]($(GMTdoc)grdcontour.html)
+See full GMT (not the `GMT.jl` one) docs at [`grdcontour`]($(GMTdoc)grdcontour.html)
 
 Parameters
 ----------
@@ -13,59 +13,47 @@ Parameters
 - **A** | **annot** :: [Type => Str or Number]       ``Arg = [-|[+]annot_int][labelinfo]``
 
     *annot_int* is annotation interval in data units; it is ignored if contour levels are given in a file.
-    ($(GMTdoc)grdcontour.html#a)
 - $(GMT._opt_B)
 - **C** | **cont** | **contour** | **contours** | **levels** :: [Type => Str | Number | GMTcpt]  ``Arg = [+]cont_int``
 
     Contours to be drawn may be specified in one of three possible ways.
-    ($(GMTdoc)grdcontour.html#c)
 - **D** | **dump** :: [Type => Str]
 
     Dump contours as data line segments; no plotting takes place.
-    ($(GMTdoc)grdcontour.html#d)
 - **F** | **force** :: [Type => Str | []]
 
     Force dumped contours to be oriented so that higher z-values are to the left (-Fl [Default]) or right.
-    ($(GMTdoc)grdcontour.html#f)
 - **G** | **labels** :: [Type => Str]
 
     Controls the placement of labels along the quoted lines.
-    ($(GMTdoc)grdcontour.html#g)
 - $(GMT.opt_Jz)
 - **L** | **range** :: [Type => Str]
 
     Limit range: Do not draw contours for data values below low or above high.
-    ($(GMTdoc)grdcontour.html#l)
 - **N** | **fill** | **colorize** :: [Type => Bool]
 
     Fill the area between contours using the discrete color table given by cpt.
-    ($(GMTdoc)grdcontour.html#n)
 - $(GMT.opt_P)
 - **Q** | **cut** :: [Type => Str | Number]
 
     Do not draw contours with less than cut number of points.
-    ($(GMTdoc)grdcontour.html#q)
 - **S** | **smooth** :: [Type => Number]
 
     Used to resample the contour lines at roughly every (gridbox_size/smoothfactor) interval.
-    ($(GMTdoc)grdcontour.html#s)
 - **T** | **ticks** :: [Type => Str]
 
     Draw tick marks pointing in the downward direction every *gap* along the innermost closed contours.
-    ($(GMTdoc)grdcontour.html#t)
 - $(GMT._opt_R)
 - $(GMT.opt_U)
 - $(GMT.opt_V)
 - **W** | **pen** :: [Type => Str | Number]
 
     Sets the attributes for the particular line.
-    ($(GMTdoc)grdcontour.html#w)
 - $(GMT.opt_X)
 - $(GMT.opt_Y)
 - **Z** | **scale** :: [Type => Str]
 
     Use to subtract shift from the data and multiply the results by factor before contouring starts.
-    ($(GMTdoc)grdcontour.html#z)
 - $(GMT.opt_bo)
 - $(GMT.opt_do)
 - $(GMT.opt_e)
@@ -74,6 +62,8 @@ Parameters
 - $(GMT._opt_p)
 - $(GMT._opt_t)
 - $(GMT.opt_savefig)
+
+To see the full documentation type: ``@? grdcontour``
 """
 function grdcontour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 

@@ -3,7 +3,7 @@
 
 kml2gmt - Extract GMT table data from Google Earth KML files
 
-Full option list at [`kml2gmt`]($(GMTdoc)kml2gmt.html)
+See full GMT (not the `GMT.jl` one) docs at [`kml2gmt`]($(GMTdoc)kml2gmt.html)
 
 Parameters
 ----------
@@ -12,7 +12,6 @@ Parameters
 
     Specify a particular feature type to output. Choose from points (s), line (l), or polygon (p).
     By default we output all geometries.
-    ($(GMTdoc)kml2gmt.html#f)
 - **Z** | **altitudes** :: [Type => Bool]
 
     Output the altitude coordinates as GMT z coordinates [Default will output just longitude and latitude].
@@ -21,6 +20,8 @@ Parameters
 - $(GMT.opt_bo)
 - $(GMT.opt_do)
 - $(GMT.opt_swap_xy)
+
+To see the full documentation type: ``@? kml2gmt``
 """
 function kml2gmt(cmd0::String="", arg1=nothing; kwargs...)
 

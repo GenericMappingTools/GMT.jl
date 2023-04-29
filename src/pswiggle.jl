@@ -3,7 +3,7 @@
 
 Reads (length,azimuth) pairs from file and plot a windwiggle diagram.
 
-Full option list at [`pswiggle`]($(GMTdoc)wiggle.html)
+See full GMT (not the `GMT.jl` one) docs at [`pswiggle`]($(GMTdoc)wiggle.html)
 
 Parameters
 ----------
@@ -12,43 +12,34 @@ Parameters
 - **Z** | **ampscale** | **amp_scale** :: [Type => Number | Str]
 
     Gives anomaly scale in data-units/distance-unit.
-    ($(GMTdoc)wiggle.html#a)
 - **A** | **azimuth** :: [Type => Str | number]
 
     Sets the preferred positive azimuth. Positive wiggles will “gravitate” towards that direction.
-    ($(GMTdoc)wiggle.html#a)
 - $(GMT._opt_B)
 - **C** | **center** :: [Type => Number]
 
     Subtract center from the data set before plotting [0].
-    ($(GMTdoc)wiggle.html#c)
 - **D** | **scale_bar** :: [Type => Str]
 
     Defines the reference point on the map for the vertical scale bar using one of four coordinate systems.
-    ($(GMTdoc)wiggle.html#d)
 - **F** | **box** :: [Type => Str]
 
     Without further options, draws a rectangular border around the vertical scale bar.
-    ($(GMTdoc)wiggle.html#f)
 - **G** | **fill** :: [Type => Number | Str]
 
     Set fill shade, color or pattern for positive and/or negative wiggles [Default is no fill].
-    ($(GMTdoc)wiggle.html#g)
 - **I** | **fixed_azim** :: [Type => Number]
 
     Set a fixed azimuth projection for wiggles [Default uses track azimuth, but see -A].
-    ($(GMTdoc)wiggle.html#i)
 - $(GMT._opt_J)
 - $(GMT.opt_P)
 - **T** | **track** :: [Type => Number or Str | Tuple | []]
 
     Draw track [Default is no track]. Append pen attributes to use [Defaults: width = 0.25p, color =
     black, style = solid].
-    ($(GMTdoc)wiggle.html#t)
 - **W** | **pen** :: [Type => Number | Str | tuple | []]
 
     Specify outline pen attributes [Default is no outline].
-    ($(GMTdoc)wiggle.html#w)
 - $(GMT.opt_U)
 - $(GMT.opt_V)
 - $(GMT.opt_X)
@@ -63,6 +54,8 @@ Parameters
 - $(GMT.opt_w)
 - $(GMT.opt_swap_xy)
 - $(GMT.opt_savefig)
+
+To see the full documentation type: ``@? pswiggle``
 """
 function wiggle(cmd0::String="", arg1=nothing; first=true, kwargs...)
 

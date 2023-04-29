@@ -3,7 +3,7 @@
 
 Spectral calculations of gravity, isostasy, admittance, and coherence for grids.
 
-Full option list at [`gravfft`]($(GMTdoc)gravfft.html)
+See full GMT (not the `GMT.jl` one) docs at [`gravfft`]($(GMTdoc)gravfft.html)
 
 Parameters
 ----------

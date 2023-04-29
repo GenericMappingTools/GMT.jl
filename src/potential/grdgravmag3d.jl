@@ -4,7 +4,7 @@
 Compute the gravity/magnetic anomaly of the volume contained between a surface provided by one grid
 and a plane, or between a top and a bottom surface provided by two grids.
 
-Full option list at [`grdgravmag3d`]($(GMTdoc)grdgravmag3d.html)
+See full GMT (not the `GMT.jl` one) docs at [`grdgravmag3d`]($(GMTdoc)grdgravmag3d.html)
 
 Parameters
 ----------

@@ -3,7 +3,7 @@
 
 Find mean position and great [or small] circle fit to points on a sphere.
 
-Full option list at [`fitcircle`]($(GMTdoc)fitcircle.html)
+See full GMT (not the `GMT.jl` one) docs at [`fitcircle`]($(GMTdoc)fitcircle.html)
 
 Parameters
 ----------
@@ -11,15 +11,12 @@ Parameters
 - **L** | **norm** :: [Type => Int | []]
 
     Specify the desired norm as 1 or 2, or use [] or 3 to see both solutions.
-    ($(GMTdoc)fitcircle.html#l)
 - **F** | **coord** | **coordinates** :: [Type => Str]	`Arg = f|m|n|s|c`
 
     Only return data coordinates, and append Arg to specify which coordinates you would like.
-    ($(GMTdoc)fitcircle.html#f)
 - **S** | **small_circle** :: [Type => Number]    `Arg = symmetry_factor`
 
     Attempt to
-    ($(GMTdoc)fitcircle.html#s)
 - $(GMT.opt_V)
 - $(GMT.opt_write)
 - $(GMT.opt_append)

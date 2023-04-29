@@ -5,71 +5,57 @@ Reads randomly-spaced (x,y,z) triples and produces a binary grid file of gridded
 	
 		(1 - T) * L (L (z)) + T * L (z) = 0
 
-Full option list at [`surface`]($(GMTdoc)surface.html)
+See full GMT (not the `GMT.jl` one) docs at [`surface`]($(GMTdoc)surface.html)
 
 Parameters
 ----------
 
 - $(GMT._opt_R)
 - $(GMT.opt_I)
-    ($(GMTdoc)surface.html#i)
 - **A** | **aspect_ratio** :: [Type => Number]
 
     Aspect ratio. If desired, grid anisotropy can be added to the equations.
-    ($(GMTdoc)surface.html#a)
 - **C** | **convergence** :: [Type => Number]
 
     Convergence limit. Iteration is assumed to have converged when the maximum absolute change in any
     grid value is less than convergence_limit.
-    ($(GMTdoc)surface.html#c)
 - **D** | **breakline** :: [Type => String | NamedTuple]     `Arg = breakline[+z[level]] | (data=Array, [zlevel=x])`
 
     Use xyz data in the breakline file as a ‘soft breakline’, that is a line whose vertices will be used to
     constrain the nearest grid nodes without any further interpolation.
-    ($(GMTdoc)surface.html#d)
 - **G** | **save** | **outgrid** | **outfile** :: [Type => Str]
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = surface(....) form.
-    ($(GMTdoc)surface.html#g)
 - **Ll** | **lower** :: [Type => Str | Number]
 
     Impose limits on the output solution. lower sets the lower bound. lower can be the name of a grid
     file with lower bound values, a fixed value, d to set to minimum input value,
-    ($(GMTdoc)surface.html#l)
 - **Lu** | **upper** :: [Type => Str | Number]
 
-    ($(GMTdoc)surface.html#l)
 - **M** | **mask** :: [Type => Number]      `Arg = max_radius`
 
     After solving for the surface, apply a mask so that nodes farther than max_radius away from a data constraint is set to NaN.
-    ($(GMTdoc)surface.html#m)
 - **N** | **iterations** | **max_iterations** :: [Type => Number]
 
     Number of iterations. Iteration will cease when convergence_limit is reached or when number of
     iterations reaches max_iterations.
-    ($(GMTdoc)surface.html#n)
 - **Q** | **suggest** :: [Type => Bool]
 
     Suggest grid dimensions which have a highly composite greatest common factor.
-    ($(GMTdoc)surface.html#q)
 - **S** | **search_radius** :: [Type => Number | Str]  
 
     Sets the resolution of the projected grid that will be created.
-    ($(GMTdoc)surface.html#s)
 - **T** | **tension** :: [Type => Number | Str]
 
     Tension factor[s]. These must be between 0 and 1.
-    ($(GMTdoc)surface.html#t)
 - $(GMT.opt_V)
 - **W** | **log** :: [Type => Str]
 
     Write convergence information to a log file [surface_log.txt].
-    ($(GMTdoc)surface.html#w)
 - **Z** | **over_relaxation** :: [Type => Str | GMTgrid]
 
     Over-relaxation factor. This parameter is used to accelerate the convergence; it is a number between 1 and 2.
-    ($(GMTdoc)surface.html#z)
 - $(GMT.opt_a)
 - $(GMT._opt_bi)
 - $(GMT._opt_di)
@@ -80,6 +66,8 @@ Parameters
 - $(GMT.opt_r)
 - $(GMT.opt_w)
 - $(GMT.opt_swap_xy)
+
+To see the full documentation type: ``@? surface``
 """
 function surface(cmd0::String="", arg1=nothing; kwargs...)
 

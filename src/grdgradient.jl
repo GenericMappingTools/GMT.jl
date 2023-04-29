@@ -4,7 +4,7 @@
 Compute the directional derivative in a given direction, or to find the direction [and the magnitude]
 of the vector gradient of the data.
 
-Full option list at [`grdgradient`]($(GMTdoc)grdgradient.html)
+See full GMT (not the `GMT.jl` one) docs at [`grdgradient`]($(GMTdoc)grdgradient.html)
 
 Parameters
 ----------
@@ -12,36 +12,31 @@ Parameters
 - **A** | **azim** :: [Type => Str | Number]    ``Arg = azim[/azim2]``
 
     Azimuthal direction for a directional derivative. 
-    ($(GMTdoc)grdgradient.html#a)
 - **D** | **find_dir** :: [Type => Str]      ``Arg = [a][c][o][n]``
 
     Find the direction of the positive (up-slope) gradient of the data.
-    ($(GMTdoc)grdgradient.html#d)
 - **G** | **save** | **write** | **outgrid** | **outfile** :: [Type => Str]
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = grdgradient(....) form.
-    ($(GMTdoc)grdgradient.html#g)
 - **E** | **lambert** :: [Type => Str]    ``Arg = [m|s|p]azim/elev[+aambient][+ddiffuse][+pspecular][+sshine] ``
 
     Compute Lambertian radiance appropriate to use with grdimage and grdview.
-    ($(GMTdoc)grdgradient.html#e)
 - **N** | **norm** | **normalize** :: [Type => Str]     ``Arg = [e|t][amp][+ssigma][+ooffset]``
 
     Normalization. [Default is no normalization.] The actual gradients g are offset and scaled
     to produce normalized gradients.
-    ($(GMTdoc)grdgradient.html#n)
 - **Q** | **save_stats** :: [Type => Str]		``Arg = c|r|R``
 
     Controls how normalization via N is carried out.
-    ($(GMTdoc)grdgradient.html#q)
 - $(GMT._opt_R)
 - **S** | **slopegrid** :: [Type => Str]
 
     Name of output grid file with scalar magnitudes of gradient vectors. Requires D but makes G optional.
-    ($(GMTdoc)grdgradient.html#s)
 - $(GMT.opt_V)
 - $(GMT._opt_f)
+
+To see the full documentation type: ``@? grdgradient``
 """
 function grdgradient(cmd0::String="", arg1=nothing; kwargs...)
 

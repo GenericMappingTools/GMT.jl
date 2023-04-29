@@ -3,56 +3,46 @@
 
 Clip or mask map areas with no data table coverage
 
-Full option list at [`psmask`]($(GMTdoc)mask.html)
+See full GMT (not the `GMT.jl` one) docs at [`psmask`]($(GMTdoc)mask.html)
 
 Parameters
 ----------
 
 - $(GMT.opt_I)
-    ($(GMTdoc)mask.html#i)
 - $(GMT._opt_R)
 
 - $(GMT._opt_B)
 - **C** | **endclip** | **end_clip_path** :: [Type => Bool]
 
     Mark end of existing clip path. No input file is needed.
-    ($(GMTdoc)mask.html#c)
 - **D** | **dump** :: [Type => Str]
 
     Dump the (x,y) coordinates of each clipping polygon to one or more output files
     (or stdout if template is not given).
-    ($(GMTdoc)mask.html#d)
 - **F** | **oriented** :: [Type => Str | []]
 
     Force clip contours (polygons) to be oriented so that data points are to the left (-Fl [Default]) or right (-Fr) 
-    ($(GMTdoc)mask.html#f)
 - **G** | **fill** :: [Type => Number | Str]
 
     Set fill shade, color or pattern for positive and/or negative masks [Default is no fill].
-    ($(GMTdoc)mask.html#g)
 - $(GMT._opt_J)
 - $(GMT.opt_Jz)
 - **L** | **nodegrid** :: [Type => Str]
 
     Save the internal grid with ones (data constraint) and zeros (no data) to the named nodegrid.
-    ($(GMTdoc)mask.html#l)
 - **N** | **invert** :: [Type => Bool]
 
     Invert the sense of the test, i.e., clip regions where there is data coverage.
-    ($(GMTdoc)mask.html#n)
 - $(GMT.opt_P)
 - **Q** | **cut** | **cut_number** :: [Type => Number | Str]
 
     Do not dump polygons with less than cut number of points [Dumps all polygons].
-    ($(GMTdoc)mask.html#q)
 - **S** | **search_radius** :: [Type => Number | Str]
 
     Sets radius of influence. Grid nodes within radius of a data point are considered reliable.
-    ($(GMTdoc)mask.html#s)
 - **T** | **tiles** :: [Type => Bool]
 
     Plot tiles instead of clip polygons. Use -G to set tile color or pattern. Cannot be used with -D.
-    ($(GMTdoc)mask.html#t)
 - $(GMT.opt_U)
 - $(GMT.opt_V)
 - $(GMT.opt_X)
@@ -67,6 +57,8 @@ Parameters
 - $(GMT._opt_t)
 - $(GMT.opt_w)
 - $(GMT.opt_swap_xy)
+
+To see the full documentation type: ``@? mask``
 """
 function mask(cmd0::String="", arg1=nothing; first=true, kwargs...)
 

@@ -3,7 +3,7 @@
 
 Plot base maps and frames.
 
-Full option list at [`psbasemap`]($(GMTdoc)basemap.html)
+See full GMT (not the `GMT.jl` one) docs at [`psbasemap`]($(GMTdoc)basemap.html)
 
 Parameters
 ----------
@@ -14,31 +14,25 @@ Parameters
 
     No plotting is performed. Instead, we determine the geographical coordinates of the polygon
     outline for the (possibly oblique) rectangular map domain. 
-    ($(GMTdoc)basemap.html#a)
 - $(GMT._opt_B)
 - **D** | **inset** | **inset_box** :: [Type => Str]
 
     Draw a simple map insert box on the map. Requires -F.
-    ($(GMTdoc)basemap.html#d)
 - **F** | **box** :: [Type => Str]
 
     Without further options, draws a rectangular border around any map insert (D), map scale (L)
     or map rose (T)
-    ($(GMTdoc)basemap.html#f)
 - $(GMT.opt_Jz)
 - **L** | **map_scale** :: [Type => Str]
 
     Draw a map scale.
-    ($(GMTdoc)basemap.html#l)
 - $(GMT.opt_P)
 - **Td** | **rose** :: [Type => Str]
 
     Draws a map directional rose on the map at the location defined by the reference and anchor points.
-    ($(GMTdoc)basemap.html#t)
 - **Tm** | **compass** :: [Type => Str]
 
     Draws a map magnetic rose on the map at the location defined by the reference and anchor points.
-    ($(GMTdoc)basemap.html#t)
 - $(GMT.opt_U)
 - $(GMT.opt_V)
 - $(GMT.opt_X)
@@ -47,6 +41,8 @@ Parameters
 - $(GMT._opt_f)
 - $(GMT._opt_p)
 - $(GMT._opt_t)
+
+To see the full documentation type: ``@? basemap``
 """
 function basemap(; first=true, kwargs...)
 

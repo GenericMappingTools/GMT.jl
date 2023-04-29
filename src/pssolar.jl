@@ -3,7 +3,7 @@
 
 Calculate and plot the day-night terminator and the civil, nautical and astronomical twilights.
 
-Full option list at [`solar`]($(GMTdoc)solar.html)
+See full GMT (not the `GMT.jl` one) docs at [`solar`]($(GMTdoc)solar.html)
 
 Parameters
 ----------
@@ -12,27 +12,20 @@ Parameters
 - $(GMT._opt_B)
 - **C** | **format** :: [Type => Bool]
 
-    ($(GMTdoc)solar.html#c)
 - **G** | **fill** :: [Type => Str | Number]
 
-    ($(GMTdoc)solar.html#g)
 - **I** | **sun** :: [Type => Bool | Tuple | NamedTuple]
 
-    ($(GMTdoc)solar.html#i)
 - $(GMT.opt_P)
 - **M** | **dump** :: [Type => Bool]
 
-    ($(GMTdoc)solar.html#m)
 - $(GMT._opt_R)
 - **N** | **invert** :: [Type => Bool]
 
-    ($(GMTdoc)solar.html#n)
 - **T** | **terminators** :: [Type => Bool | Tuple | NamedTuple]
 
-    ($(GMTdoc)solar.html#t)
 - **W** | **pen** :: [Type => Str | Tuple]
 
-    ($(GMTdoc)solar.html#w)
 - $(GMT.opt_U)
 - $(GMT.opt_V)
 - $(GMT.opt_X)
@@ -43,6 +36,8 @@ Parameters
 - $(GMT._opt_p)
 - $(GMT._opt_t)
 - $(GMT.opt_savefig)
+
+To see the full documentation type: ``@? solar``
 """
 function solar(cmd0::String="", arg1=nothing; first=true, kwargs...)
 

@@ -5,7 +5,7 @@ Clip the range of grid values. will set values < low to below and/or values > hi
 You can also specify one or more intervals where all values should be set to ``between``,
 or replace individual values.
 
-Full option list at [`grdclip`]($(GMTdoc)grdclip.html)
+See full GMT (not the `GMT.jl` one) docs at [`grdclip`]($(GMTdoc)grdclip.html)
 
 Parameters
 ----------
@@ -17,7 +17,6 @@ Parameters
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = grdclip(....) form.
-    ($(GMTdoc)grdclip.html#g)
 - $(GMT._opt_R)
 - **above** | **high** :: [Type => Array | Str]
 
@@ -38,7 +37,6 @@ Parameters
 - **S** :: [Type => Str]
 
     Condense all replacement options above in a single string.
-    ($(GMTdoc)grdclip.html#s)
 - $(GMT.opt_V)
 
 -   Examples:

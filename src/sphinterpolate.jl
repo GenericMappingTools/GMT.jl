@@ -3,7 +3,7 @@
 
 Spherical gridding in tension of data on a sphere
 
-Full option list at [`sphinterpolate`]($(GMTdoc)sphinterpolate .html)
+See full GMT (not the `GMT.jl` one) docs at [`sphinterpolate`]($(GMTdoc)sphinterpolate .html)
 
 Parameters
 ----------
@@ -11,26 +11,20 @@ Parameters
 - **D** | **skipdup** :: [Type => Bool]
 
     Delete any duplicate points [Default assumes there are no duplicates].
-    ($(GMTdoc)sphinterpolate.html#d)
 - **G** | **save** | **outgrid** | **outfile** :: [Type => Str]
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = sphinterpolate(....) form.
-    ($(GMTdoc)sphinterpolate.html#g)
 - $(GMT.opt_I)
-    ($(GMTdoc)sphinterpolate.html#i)
 - **Q** | **tension** :: [Type => Number | Str]     ``Arg = mode[/options]``
 
     Specify one of four ways to calculate tension factors to preserve local shape properties or satisfy arc constraints.
-    ($(GMTdoc)sphinterpolate.html#q)
 - **T** | **var_tension** :: [Type => Bool | Str]
 
     Use variable tension (ignored with -Q0 [constant]
-    ($(GMTdoc)sphinterpolate.html#t)
 - **Z** | **scale** :: [Type => Bool | Str]
 
     Before interpolation, scale data by the maximum data range [no scaling].
-    ($(GMTdoc)sphinterpolate.html#z)
 - $(GMT._opt_R)
 - $(GMT.opt_V)
 - $(GMT._opt_bi)
@@ -40,6 +34,8 @@ Parameters
 - $(GMT._opt_i)
 - $(GMT.opt_r)
 - $(GMT.opt_swap_xy)
+
+To see the full documentation type: ``@? sphinterpolate``
 """
 function sphinterpolate(cmd0::String="", arg1=nothing; kwargs...)
 

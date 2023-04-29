@@ -4,57 +4,47 @@
 Performs Delaunay triangulation on x,y[,z] data, i.e., it find how the points should be connected
 to give the most equilateral triangulation possible. 
 
-Full option list at [`triangulate`]($(GMTdoc)triangulate.html)
+See full GMT (not the `GMT.jl` one) docs at [`triangulate`]($(GMTdoc)triangulate.html)
 
 Parameters
 ----------
 - **A** | **annot** :: [Type => Str | Number]       ``Arg = [-|[+]annot_int][labelinfo]``
 
     *annot_int* is annotation interval in data units; it is ignored if contour levels are given in a file.
-    ($(GMTdoc)contour.html#a)
 - $(GMT._opt_B)
 - **C** | **cont** | **contour** | **contours** | **levels** :: [Type => Str | Number | GMTcpt]  ``Arg = [+]cont_int``
 
     Contours to be drawn may be specified in one of three possible ways.
-    ($(GMTdoc)grdcontour.html#c)
 - **E** | **index** :: [Type => Str | Mx3 array]
 
     Give name of file with network information. Each record must contain triplets of node
     numbers for a triangle.
-    ($(GMTdoc)contour.html#e)
 - **G** | **labels** :: [Type => Str]
 
     Controls the placement of labels along the quoted lines.
-    ($(GMTdoc)contour.html#g)
 - $(GMT._opt_J)
 - $(GMT.opt_P)
 - **Q** | **cut** :: [Type => Str | Number]         ``Arg = [cut[unit]][+z]]``
 
     Do not draw contours with less than cut number of points.
-    ($(GMTdoc)contour.html#q)
 - $(GMT._opt_R)
 - **S** | **skip** :: [Type => Str | []]            ``Arg = [p|t]``
 
     Skip all input xyz points that fall outside the region (Used when input data is a table).
-    ($(GMTdoc)contour.html#s)
 - **S** | **smooth** :: [Type => Number]
 
     Used to resample the contour lines at roughly every (gridbox_size/smoothfactor) interval.
     (Used when input data is a grid)
-    ($(GMTdoc)grdcontour.html#s)
 - **T** | **ticks** :: [Type => Str]                 ``Arg = [+|-][+a][+dgap[/length]][+l[labels]]``
 
     Draw tick marks pointing in the downward direction every *gap* along the innermost closed contours.
-    ($(GMTdoc)contour.html#t)
 - $(GMT.opt_U)
 - $(GMT.opt_V)
 - **W** | **pen** :: [Type => Str | Number]
 
     Sets the attributes for the particular line.
-    ($(GMTdoc)contour.html#w)
 - **Z** | **xyz** | **triplets** :: [Type => Bool]
 
-    ($(GMTdoc)triangulate.html#z)
 - $(GMT._opt_bi)
 - $(GMT.opt_bo)
 - $(GMT._opt_di)

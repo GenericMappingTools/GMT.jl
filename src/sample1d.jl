@@ -3,7 +3,7 @@
 
 Resample 1-D table data using splines
 
-Full option list at [`sample1d`]($(GMTdoc)sample1d.html)
+See full GMT (not the `GMT.jl` one) docs at [`sample1d`]($(GMTdoc)sample1d.html)
 
 Parameters
 ----------
@@ -11,26 +11,21 @@ Parameters
 - **A** | **resample** :: [Type => Str]        ``Arg = f|p|m|r|R``
 
     For track resampling (if -T…unit is set) we can select how this is to be performed.
-    ($(GMTdoc)sample1d.html#a)
 - **F** | **interp** :: [Type => Str]   ``Arg = l|a|c|n|s<p>[+1|+2]``
 
     Choose from l (Linear), a (Akima spline), c (natural cubic spline), and n (no interpolation:
     nearest point) [Default is Akima].
-    ($(GMTdoc)sample1d.html#f)
 - **N** | **time_col** :: [Type => Int]      ``Arg = t_col``
 
     Indicates which column contains the independent variable (time). The left-most column
     is # 0, the right-most is # (n_cols - 1). [Default is 0].
-    ($(GMTdoc)sample1d.html#n)
 - **T** | **inc** | **range** :: [Type => List | Str]     ``Arg = [min/max/]inc[+a|n]] or file|list``
 
     Evaluate the best-fit regression model at the equidistant points implied by the arguments.
-    ($(GMTdoc)sample1d.html#t)
 - $(GMT.opt_V)
 - **W** | **weights** :: [Type => Int]     ``Arg = w_col``
 
     Sets the column number of the weights to be used with a smoothing cubic spline. Requires Fs. (GMT6.1)
-    ($(GMTdoc)sample1d.html#w)
 - $(GMT.opt_write)
 - $(GMT.opt_append)
 - $(GMT.opt_b)
@@ -43,6 +38,8 @@ Parameters
 - $(GMT.opt_o)
 - $(GMT.opt_w)
 - $(GMT.opt_swap_xy)
+
+To see the full documentation type: ``@? sample1d``
 """
 function sample1d(cmd0::String="", arg1=nothing; kwargs...)
 

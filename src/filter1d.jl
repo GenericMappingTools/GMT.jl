@@ -3,7 +3,7 @@
 
 Time domain filtering of 1-D data tables.
 
-Full option list at [`filter1d`]($(GMTdoc)filter1d.html)
+See full GMT (not the `GMT.jl` one) docs at [`filter1d`]($(GMTdoc)filter1d.html)
 
 Parameters
 ----------
@@ -12,36 +12,28 @@ Parameters
 
     Sets the filter type. Choose among convolution and non-convolution filters. Append the
     filter code followed by the full filter width in same units as time column.
-    ($(GMTdoc)filter1d.html#f)
 - **D** | **inc** | **increment** :: [Type => Number]        `Arg = increment`
 
     ``increment`` is used when series is NOT equidistantly sampled. Then increment will be the abscissae resolution.
-    ($(GMTdoc)filter1d.html#d)
 - **E** | **end** | **ends** :: [Type => Bool | []]
 
     Include Ends of time series in output. Default loses half the filter-width of data at each end.
-    ($(GMTdoc)filter1d.html#e)
 - **L** | **gap_width** :: [Type => Number | Str]      `Arg = width`
 
     Checks for Lack of data condition. If input data has a gap exceeding width then no output will be given at that point.
-    ($(GMTdoc)filter1d.html#l)
 - **N** | **time_col** | **timecol** :: [Type => Int]      `Arg = t_col`
 
     Indicates which column contains the independent variable (time). The left-most column
     is # 0, the right-most is # (n_cols - 1). [Default is 0].
-    ($(GMTdoc)filter1d.html#n)
 - **Q** | **quality** :: [Type => Number]    `Arg = q_factor`
 
     Assess Quality of output value by checking mean weight in convolution. Enter q_factor between 0 and 1.
-    ($(GMTdoc)filter1d.html#q)
 - **S** | **symetry** :: [Type => Number]    `Arg = symmetry_factor`
 
     Checks symmetry of data about window center. Enter a factor between 0 and 1.
-    ($(GMTdoc)filter1d.html#s)
 - **T** | **equi_space** :: [Type => List | Str]     `Arg = [min/max/]inc[+a|n]`
 
     Make evenly spaced time-steps from min to max by inc [Default uses input times].
-    ($(GMTdoc)filter1d.html#t)
 - $(GMT.opt_V)
 - $(GMT.opt_write)
 - $(GMT.opt_append)

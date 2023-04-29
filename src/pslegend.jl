@@ -3,7 +3,7 @@
 
 Make legends that can be overlaid on maps. It reads specific legend-related information from input or file file.
 
-Full option list at [`legend`]($(GMTdoc)legend.html)
+See full GMT (not the `GMT.jl` one) docs at [`legend`]($(GMTdoc)legend.html)
 
 Parameters
 ----------
@@ -14,27 +14,21 @@ Parameters
 - **C** | **clearance** :: [Type => Str]
 
     Sets the clearance between the legend frame and the internal items [4p/4p].
-    ($(GMTdoc)legend.html#c)
 - **D** | **pos** | **position** :: [Type => Str]  `Arg=[g|j|J|n|x]refpoint+wwidth[/height][+jjustify][+lspacing][+odx[/dy]]`
 
     Defines the reference point on the map for the legend using one of four coordinate systems.
-    ($(GMTdoc)legend.html#d)
 - **F** | **box** :: [Type => Str | Number]   `Arg=[+cclearances][+gfill][+i[[gap/]pen]][+p[pen]][+r[radius]][+s[[dx/dy/][shade]]]`
 
     Without further options, draws a rectangular border around the legend using *MAP_FRAME_PEN*.
-    ($(GMTdoc)legend.html#f)
 - **M** :: [Type => Bool]
 
     Modern mode only:
-    ($(GMTdoc)legend.html#m)
 - **S** | **scale** :: [Type => Number]
 
     Scale all symbol sizes by a common scale
-    ($(GMTdoc)legend.html#s)
 - **T** | **leg_file** :: [Type => Str]
 
     Modern mode only: Write hidden legend specification file to fname.
-    ($(GMTdoc)legend.html#t)
 - $(GMT.opt_Jz)
 - $(GMT.opt_P)
 - $(GMT.opt_U)
@@ -45,6 +39,8 @@ Parameters
 - $(GMT.opt_q)
 - $(GMT._opt_t)
 - $(GMT.opt_savefig)
+
+To see the full documentation type: ``@? legend``
 """
 function legend(cmd0::String="", arg1=nothing; first=true, kwargs...)
 

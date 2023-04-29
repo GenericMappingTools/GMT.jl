@@ -3,7 +3,7 @@
 
 Fit a [weighted] [robust] polynomial model for z = f(x,y) to xyz[w] data.
 
-Full option list at [`trend2d`]($(GMTdoc)trend2d.html)
+See full GMT (not the `GMT.jl` one) docs at [`trend2d`]($(GMTdoc)trend2d.html)
 
 Parameters
 ----------
@@ -11,26 +11,21 @@ Parameters
 - **F** | **out** | **output** :: [Type => Str]   ``Arg = xyzmrw|p``
 
     Specify up to five letters from the set {x y m r w} in any order to create columns of output. 
-    ($(GMTdoc)trend2d.html#f)
 - **N** | **model** :: [Type => Str]      ``Arg = n_model[+r]``
 
     Specify the number of terms in the model, n_model, and append +r to do a robust fit. E.g.,
     a robust bilinear model is N="4+r".
-    ($(GMTdoc)trend2d.html#n)
 - **C** | **condition_number** :: [Type => Number]   ``Arg = condition_number``
 
     Set the maximum allowed condition number for the matrix solution.
-    ($(GMTdoc)trend2d.html#c)
 - **I** | **conf_level** :: [Type => Number | []]   ``Arg = [confidence_level]``
 
     Iteratively increase the number of model parameters, starting at one, until n_model is reachedx
     or the reduction in variance of the model is not significant at the confidence_level level.
-    ($(GMTdoc)trend2d.html#i)
 - **W** | **weights** :: [Type => Str | []]     ``Arg = [+s]``
 
     Weights are supplied in input column 4. Do a weighted least squares fit [or start with
     these weights when doing the iterative robust fit].
-    ($(GMTdoc)trend2d.html#w)
 - $(GMT.opt_V)
 - $(GMT.opt_b)
 - $(GMT.opt_d)
@@ -40,6 +35,8 @@ Parameters
 - $(GMT._opt_i)
 - $(GMT.opt_w)
 - $(GMT.opt_swap_xy)
+
+To see the full documentation type: ``@? trend2d``
 """
 function trend2d(cmd0::String="", arg1=nothing; kwargs...)
 

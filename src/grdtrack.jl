@@ -4,7 +4,7 @@
 Interpolates the grid(s) at the positions in the table and returns the table with the
 interpolated values added as (one or more) new columns.
 
-Full option list at [`grdtrack`]($(GMTdoc)/grdtrack.html)
+See full GMT (not the `GMT.jl` one) docs at [`grdtrack`]($(GMTdoc)/grdtrack.html)
 
 Parameters
 ----------
@@ -12,41 +12,31 @@ Parameters
 - **A** | **interp_path** | **resample** :: [Type => Str]		`Arg = f|p|m|r|R[+l]`
 
     For track resampling (if `crossprofile` or `profile` are set) we can select how this is to be performed. 
-    ($(GMTdoc)grdtrack.html#a)
 - **C** | **crossprofile** :: [Type => Str]		`Arg = length/ds[/spacing][+a|+v][l|r]`
 
     Use input line segments to create an equidistant and (optionally) equally-spaced set of crossing
     profiles along which we sample the grid(s)
-    ($(GMTdoc)grdtrack.html#c)
 - **D** | **dfile** :: [Type => Str]  
 
     In concert with `crossprofile` we can save the (possibly resampled) original lines to the file dfile
-    ($(GMTdoc)grdtrack.html#d)
 - **E** | **profile** :: [Type => Str]
 
     Instead of reading input track coordinates, specify profiles via coordinates and modifiers.
-    ($(GMTdoc)grdtrack.html#e)
 - **F** | **critical** :: [Type => Str]
 
     Find critical points along each cross-profile as a function of along-track distance. Requires
     `crossprofile` and a single input grid.
-    ($(GMTdoc)grdtrack.html#e)
 - **G** | **grid** :: [Type => Str | GMTgrid | Tuple(GMTgrid's)]
 
-    ($(GMTdoc)grdtrack.html#g)
 - **N** | **no_skip** | **noskip** :: [Type => Bool]
 
-    ($(GMTdoc)grdtrack.html#n)
 - $(GMT._opt_R)
 - **S** | **stack** :: [Type => Str]
 
-    ($(GMTdoc)grdtrack.html#s)
 - **T** | **radius** :: [Type => Number, Str | []]
 
-    ($(GMTdoc)grdtrack.html#t)
 - **Z** | **z_only** :: [Type => Bool]
 
-    ($(GMTdoc)grdtrack.html#z)
 - $(GMT.opt_V)
 - $(GMT._opt_bi)
 - $(GMT.opt_bo)
@@ -63,7 +53,9 @@ Parameters
 - $(GMT.opt_swap_xy)
 
 When using two numeric inputs and no G option, the order of the x,y and grid is not important.
-That is, both of this will work: D = grdtrack([0 0], G);  or  D = grdtrack(G, [0 0]); 
+That is, both of this will work: ``D = grdtrack([0 0], G);``  or  ``D = grdtrack(G, [0 0]);`` 
+
+To see the full documentation type: ``@? grdtrack``
 """
 function grdtrack(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 

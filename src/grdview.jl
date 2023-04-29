@@ -5,7 +5,7 @@ Reads a 2-D grid and produces a 3-D perspective plot by drawing a mesh, painting
 colored/grayshaded surface made up of polygons, or by scanline conversion of these polygons
 to a raster image.
 
-Full option list at [`grdview`]($(GMTdoc)grdview.html)
+See full GMT (not the `GMT.jl` one) docs at [`grdview`]($(GMTdoc)grdview.html)
 
 - $(GMT._opt_J)
 - $(GMT.opt_Jz)
@@ -15,33 +15,26 @@ Full option list at [`grdview`]($(GMTdoc)grdview.html)
 - **G** | **drape** | **drapefile** :: [Type => Str | GMTgrid | a Tuple with 3 GMTgrid types]
 
     Drape the image in drapefile on top of the relief provided by relief_file.
-    ($(GMTdoc)grdview.html#g)
 - **I** | **shade** | **shading** | **intensity** :: [Type => Str | GMTgrid]		``Arg = GMTgrid | filename``
 
     Gives the name of a grid file or GMTgrid with intensities in the (-1,+1) range,
     or a grdgradient shading flags.
-    ($(GMTdoc)grdview.html#i)
 - **N** | **plane** :: [Type => Str | Int]		``Arg = (level [,fill])``
 
     Draws a plane at this z-level.
-    ($(GMTdoc)grdview.html#n)
 - $(GMT.opt_P)
 - **Q** | **surftype** | **surf** :: [Type => Str | Int] ``Arg = mesh=Bool, surface=Bool, image=Bool, wterfall=(:rows|cols,[fill])``
 
     Specify **m** for mesh plot, **s** for surface, **i** for image.
-    ($(GMTdoc)grdview.html#q)
 - **S** | **smoothfactor** :: [Type => Number]
 
     Used to resample the contour lines at roughly every (gridbox_size/smoothfactor) interval..
-    ($(GMTdoc)grdview.html#s)
 - **T** | **tiles** | **no_interp** :: [Type => Str | NT]	``Arg = (skip|skip_nan=Bool, outlines=Bool|pen)``
 
     Plot image without any interpolation.
-    ($(GMTdoc)grdview.html#t)
 - **W** | **pens** | **pen** :: [Type => Str]	``Arg = (contour=Bool|pen, mesh=Bool|pen, facade=Bool|pen)``
 
     Draw contour, mesh or facade. Append pen attributes.
-    ($(GMTdoc)grdview.html#w)
 
 - **isgeog** :: [Type => Any]
 
@@ -56,6 +49,8 @@ Full option list at [`grdview`]($(GMTdoc)grdview.html)
 - $(GMT._opt_p)
 - $(GMT._opt_t)
 - $(GMT.opt_savefig)
+
+To see the full documentation type: ``@? grdview``
 """
 function grdview(cmd0::String="", arg1=nothing; first=true, kwargs...)
 

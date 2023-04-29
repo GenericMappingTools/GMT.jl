@@ -5,7 +5,7 @@ Reads a grid file and interpolates it to create a new grid file with either: a
 different registration; or a new grid-spacing or number of nodes, and perhaps
 also a new sub-region
 
-Full option list at [`grdsample`]($(GMTdoc)grdsample.html)
+See full GMT (not the `GMT.jl` one) docs at [`grdsample`]($(GMTdoc)grdsample.html)
 
 Parameters
 ----------
@@ -27,6 +27,8 @@ Parameters
 - $(GMT.opt_n)
 - $(GMT.opt_r)
 - $(GMT.opt_x)
+
+To see the full documentation type: ``@? grdsample``
 """
 function grdsample(cmd0::String="", arg1=nothing; kwargs...)
 

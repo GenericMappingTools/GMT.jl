@@ -7,37 +7,31 @@ The average value is computed as a weighted mean of the nearest point from each 
 radius. The weighting function used is w(r) = 1 / (1 + d ^ 2), where d = 3 * r / search_radius and r is
 distance from the node. This weight is modulated by the weights of the observation points [if supplied].
 	
-Full option list at [`nearneighbor`]($(GMTdoc)nearneighbor.html)
+See full GMT (not the `GMT.jl` one) docs at [`nearneighbor`]($(GMTdoc)nearneighbor.html)
 
 Parameters
 ----------
 
 - $(GMT.opt_I)
-    ($(GMTdoc)nearneighbor.html#i)
 - **N** | **sectors** | **nn** | **nearest** :: [Type => Number | Str | Bool (for nn or nearest)]
 
     The circular area centered on each node is divided into `sectors` sectors.
-    ($(GMTdoc)nearneighbor.html#n)
 - $(GMT._opt_R)
 - **S** | **search_radius** :: [Type => Number]
 
     Sets the search_radius that determines which data points are considered close to a node.
-    ($(GMTdoc)nearneighbor.html#s)
 
 - **E** | **empty** :: [Type => Bool]
 
     Set the value assigned to empty nodes when G is set [NaN].
-    ($(GMTdoc)nearneighbor.html#e)
 - **G** | **save** | **outgrid** | **outfile** :: [Type => Str]
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = nearneighbor(....) form.
-    ($(GMTdoc)nearneighbor.html#g)
 - $(GMT.opt_V)
 - **W** | **weights** :: [Type => Bool]
 
     Input data have a 4th column containing observation point weights.
-    ($(GMTdoc)nearneighbor.html#w)
 - $(GMT._opt_bi)
 - $(GMT._opt_di)
 - $(GMT.opt_e)
@@ -48,6 +42,8 @@ Parameters
 - $(GMT.opt_r)
 - $(GMT.opt_w)
 - $(GMT.opt_swap_xy)
+
+To see the full documentation type: ``@? nearneighbor``
 """
 function nearneighbor(cmd0::String="", arg1=nothing; kwargs...)
 

@@ -5,19 +5,17 @@
 2. The pathfiles simply represent data point locations and the mask is set to the inside or outside
    value depending on whether a node is within a maximum distance from the nearest data point. 
 
-Full option list at [`grdmask`]($(GMTdoc)grdmask.html)
+   See full GMT (not the `GMT.jl` one) docs at [`grdmask`]($(GMTdoc)grdmask.html)
 
 Parameters
 ----------
 
 - $(GMT._opt_R)
 - $(GMT.opt_I)
-    ($(GMTdoc)grdmask.html#i)
 - **A** | **steps** :: [Type => Str | Number]		``Arg = m|p|x|y``
 
     If the input data are geographic then the sides in the polygons will be approximated by great circle arcs.
     When using this option sides will be regarded as straight lines.
-    ($(GMTdoc)grdmask.html#a)
 - **C** | **clobber** :: [Type => Str]		``Arg = f|l|o|u``
 
     Clobber mode: Selects the polygon whose z-value will determine the grid nodes.
@@ -25,12 +23,10 @@ Parameters
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = grdmask(....) form.
-    ($(GMTdoc)grdmask.html#g)
 - **N** | **out_edge_in** :: [Type => Str | List]    ``Arg = [z|Z|p|P]values``
 
     Sets the out/edge/in that will be assigned to nodes that are outside the polygons, on the edge, or inside.
     Values can be any number, including the textstring NaN [Default is 0/0/1].
-    ($(GMTdoc)grdmask.html#n)
 - **S** | **search_radius** :: [Type => Str | List]    ``Arg = search_radius[unit] |xlim/ylim``
 
     Set nodes to inside, on edge, or outside depending on their distance to the nearest data point.
@@ -48,6 +44,8 @@ Parameters
 - $(GMT.opt_x)
 - $(GMT.opt_w)
 - $(GMT.opt_swap_xy)
+
+To see the full documentation type: ``@? grdmask``
 """
 function grdmask(cmd0::String="", arg1=nothing; kwargs...)
 

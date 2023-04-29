@@ -3,7 +3,7 @@
 
 Forward and inverse map transformations, datum conversions and geodesy.
 
-Full option list at [`mapproject`]($(GMTdoc)mapproject.html)
+See full GMT (not the `GMT.jl` one) docs at [`mapproject`]($(GMTdoc)mapproject.html)
 
 Parameters
 ----------
@@ -14,60 +14,46 @@ Parameters
 - **A** | **azim**  | **azimuth**:: [Type => Str]    ``Arg = b|B|f|F|o|O[lon0/lat0][+v]``
 
     Calculate azimuth along track or to the optional fixed point set with lon0/lat0.
-    ($(GMTdoc)mapproject.html#a)
 - **C** | **center** :: [Type => Str | List | []]     ``Arg = [dx/dy]``
 
     Set center of projected coordinates to be at map projection center [Default is lower left corner].
-    ($(GMTdoc)mapproject.html#c)
 - **D** | **lengthunit** :: [Type => Str]    ``Arg = c|i|p``
 
     Temporarily override PROJ_LENGTH_UNIT and use c (cm), i (inch), or p (points) instead.
-    ($(GMTdoc)mapproject.html#d)
 - **E** | **geod2ecef** | **ecef** :: [Type => Str | []]    ``Arg = [datum]``
 
     Convert from geodetic (lon, lat, height) to Earth Centered Earth Fixed (ECEF) (x,y,z) coordinates.
-    ($(GMTdoc)mapproject.html#e)
 - **F** | **one2one** :: [Type => Str | []]    ``Arg = [unit]``
 
     Force 1:1 scaling, i.e., output (or input, see I) data are in actual projected meters.
-    ($(GMTdoc)mapproject.html#f)
 - **G** | **track_distances** :: [Type => Str | List]    ``Arg = [lon0/lat0][+a][+i][+u[+|-]unit][+v]``
 
     Calculate distances along track or to the optional fixed point set with G="lon0/lat0".
-    ($(GMTdoc)mapproject.html#g)
 - **I** | **inverse** :: [Type => Bool]
 
     Do the Inverse transformation, i.e., get (longitude,latitude) from (x,y) data.
-    ($(GMTdoc)mapproject.html#i)
 - **L** | **dist2line** :: [Type => Str | NamedTuple]   ``Arg = line.xy[+u[+|-]unit][+p] | (line=Matrix, unit=x, fractional_pt=_,cartesian=true, projected=true)``
 
     Determine the shortest distance from the input data points to the line(s) given in the
     ASCII multisegment file line.xy.
-    ($(GMTdoc)mapproject.html#l)
 - **N** | **geod2aux** :: [Type => Str | []]       ``Arg = [a|c|g|m]``
 
     Convert from geodetic latitudes to one of four different auxiliary latitudes (longitudes are unaffected).
-    ($(GMTdoc)mapproject.html#n)
 - **Q** | **list** :: [Type => Str | []]           ``Arg = [d|e]``
 
     List all projection parameters. To only list datums, use Q=:d, to only list ellipsoids, use Q=:e.
-    ($(GMTdoc)mapproject.html#q)
 - **S** | **supress** :: [Type => Bool]
 
     Suppress points that fall outside the region.
-    ($(GMTdoc)mapproject.html#s)
 - **T** | **change_datum** :: [Type => Str]    ``Arg = [h]from[/to]``
 
     Coordinate conversions between datums from and to using the standard Molodensky transformation.
-    ($(GMTdoc)mapproject.html#t)
 - **W** | **map_size** | **mapsize** :: [Type => Str | []]    ``Arg = [w|h]``
 
     Prints map width and height on standard output. No input files are read.
-    ($(GMTdoc)mapproject.html#w)
 - **Z** | **traveltime** | **travel_times** :: [Type => Str | Number]    ``Arg = [speed][+a][+i][+f][+tepoch]``
 
     Calculate travel times along track as specified with -G.
-    ($(GMTdoc)mapproject.html#z)
 
 - $(GMT.opt_V)
 - $(GMT.opt_b)
@@ -81,6 +67,8 @@ Parameters
 - $(GMT._opt_p)
 - $(GMT.opt_s)
 - $(GMT.opt_swap_xy)
+
+To see the full documentation type: ``@? mapproject``
 """
 function mapproject(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 

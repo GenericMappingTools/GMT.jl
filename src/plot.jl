@@ -4,7 +4,7 @@
 reads (x,y) pairs from files [or standard input] and generates PostScript code that will plot lines,
 polygons, or symbols at those locations on a map.
 
-Full option list at [`psxy`]($(GMTdoc)plot.html)
+See full GMT (not the `GMT.jl` one) docs at [`psxy`]($(GMTdoc)plot.html)
 
 Parameters
 ----------
@@ -13,7 +13,6 @@ Parameters
 
 	By default, geographic line segments are drawn as great circle arcs.
 	To draw them as straight lines, use this option.
-    ($(GMTdoc)plot.html#a)
 - $(GMT._opt_J)
 - $(GMT._opt_R)
 - $(GMT._opt_B)
@@ -21,38 +20,30 @@ Parameters
 - **D** | **shift** | **offset** :: [Type => Str]
 
     Offset the plot symbol or line locations by the given amounts dx/dy in cm, inch or points.
-    ($(GMTdoc)plot.html#d)
 - **E** | **error** | **error_bars** :: [Type => Str]
 
     Draw symmetrical error bars.
-    ($(GMTdoc)plot.html#e)
 - **F** | **conn** | **connection** :: [Type => Str]
 
     Alter the way points are connected
-    ($(GMTdoc)plot.html#f)
 - **G** | **fill** | **markerfacecolor** | **MarkerFaceColor** | **markercolor** | **mc** :: [Type => Str]
 
     Select color or pattern for filling of symbols or polygons. BUT WARN: the alias 'fill' will set the
     color of polygons OR symbols but not the two together. If your plot has polygons and symbols, use
     'fill' for the polygons and 'markerfacecolor' for filling the symbols. Same applyies for W bellow
-    ($(GMTdoc)plot.html#g)
 - **I** | **intens** :: [Type => Str | number]
 
     Use the supplied intens value (in the [-1 1] range) to modulate the fill color by simulating illumination.
-    ($(GMTdoc)plot.html#i)
 - **L** | **close** | **polygon** :: [Type => Str]
 
     Force closed polygons. 
-    ($(GMTdoc)plot.html#l)
 - **N** | **no_clip** | **noclip** :: [Type => Str or []]
 
     Do NOT clip symbols that fall outside map border 
-    ($(GMTdoc)plot.html#n)
 - $(GMT.opt_P)
 - **S** | **symbol** | **marker** | **Marker** :: [Type => Str]
 
     Plot symbols (including vectors, pie slices, fronts, decorated or quoted lines). 
-    ($(GMTdoc)plot.html#s)
     Alternatively select a sub-set of symbols using the aliases: **marker** or **Marker** and values:
 
     + **-**, **x_dash**
@@ -78,7 +69,6 @@ Parameters
 - **W** | **pen** | **markeredgecolor** | **mec** :: [Type => Str]
 
     Set pen attributes for lines or the outline of symbols
-    ($(GMTdoc)plot.html#w)
     WARNING: the pen attributes will set the pen of polygons OR symbols but not the two together.
     If your plot has polygons and symbols, use **W** or **pen** for the polygons and
     **markeredgecolor** for filling the symbols. Similar to S above.
@@ -90,7 +80,6 @@ Parameters
 - **Z** | **level** :: [Type => Str | NamedTuple]	`Arg = value|file[+f|+l] | (data=Array|Number, outline=_, fill=_)`
 
     Paint polygons after the level given as a cte or a vector with same size of number of polygons. Needs a color map.
-    ($(GMTdoc)plot.html#z)
 
 - **aspect** :: [Type => Str]
 
@@ -218,7 +207,7 @@ plot3d(arg1::Array; kwargs...)
 reads (x,y,z) triplets and generates PostScript code that will plot lines,
 polygons, or symbols at those locations in 3-D.
 
-Full option list at [`plot3d`]($(GMTdoc)plot3d.html)
+See full GMT (not the `GMT.jl` one) docs at [`plot3d`]($(GMTdoc)plot3d.html)
 
 Parameters
 ----------
@@ -233,42 +222,33 @@ Parameters
 - **C** | **color** :: [Type => Str]
 
     Give a CPT or specify -Ccolor1,color2[,color3,...] to build a linear continuous CPT from those colors automatically.
-    ($(GMTdoc)plot3d.html#c)
 - **D** | **offset** :: [Type => Str]
 
     Offset the plot symbol or line locations by the given amounts dx/dy.
-    ($(GMTdoc)plot3d.html#d)
 - **E** | **error_bars** :: [Type => Str]
 
     Draw symmetrical error bars.
-    ($(GMTdoc)plot3d.html#e)
 - **F** | **conn** | **connection** :: [Type => Str]
 
     Alter the way points are connected
-    ($(GMTdoc)plot3d.html#f)
 - **G** | **fill** | **markerfacecolor** | **MarkerFaceColor** | **markercolor** | **mc** :: [Type => Str]
 
     Select color or pattern for filling of symbols or polygons. BUT WARN: the alias 'fill' will set the
     color of polygons OR symbols but not the two together. If your plot has polygons and symbols, use
     'fill' for the polygons and 'markerfacecolor' for filling the symbols. Same applyies for W bellow
-    ($(GMTdoc)plot3d.html#g)
 - **I** | **intens** :: [Type => Str or number]
 
     Use the supplied intens value (in the [-1 1] range) to modulate the fill color by simulating illumination.
-    ($(GMTdoc)plot3d.html#i)
 - **L** | **closed_polygon** :: [Type => Str]
 
     Force closed polygons. 
-    ($(GMTdoc)plot3d.html#l)
 - **N** | **no_clip** :: [Type => Str | []]
 
     Do NOT clip symbols that fall outside map border 
-    ($(GMTdoc)plot3d.html#n)
 - $(GMT.opt_P)
 - **S** | **symbol** | **marker** | **Marker** :: [Type => Str]
 
     Plot symbols (including vectors, pie slices, fronts, decorated or quoted lines). 
-    ($(GMTdoc)plot3d.html#s)
     Alternatively select a sub-set of symbols using the aliases: **marker** or **Marker** and values:
 
     + **-**, **x_dash**
@@ -288,7 +268,6 @@ Parameters
     + **y**, **y_dash**
 - **W** | **pen** | **line_attribs** | **markeredgecolor** | **MarkerEdgeColor** | **mec**:: [Type => Str]
     Set pen attributes for lines or the outline of symbols
-    ($(GMTdoc)plot3d.html#w)
     WARNING: the pen attributes will set the pen of polygons OR symbols but not the two together.
     If your plot has polygons and symbols, use **W** or **line_attribs** for the polygons and
     **markeredgecolor** or **MarkerEdgeColor** for filling the symbols. Similar to S above.
@@ -300,7 +279,6 @@ Parameters
 - **Z** | **level** :: [Type => Str | NamedTuple]	`Arg = value|file[+f|+l] | (data=Array|Number, outline=_, fill=_)`
 
     Paint polygons after the level given as a cte or a vector with same size of number of polygons. Needs a color map.
-    ($(GMTdoc)plot3d.html#z)
 - $(GMT.opt_a)
 - $(GMT._opt_bi)
 - $(GMT._opt_di)
@@ -358,16 +336,13 @@ Parameters
 - **G** | **fill** | **markerfacecolor** :: [Type => Str]
 
     Select color or pattern for filling of symbols or polygons.
-    ($(GMTdoc)plot.html#g)
 - **N** | **noclip** | **no_clip** :: [Type => Str | []]
 
     Do NOT clip symbols that fall outside map border 
-    ($(GMTdoc)plot.html#n)
 - $(GMT.opt_P)
 - **S** :: [Type => Str]
 
     Plot symbols (including vectors, pie slices, fronts, decorated or quoted lines). 
-    ($(GMTdoc)plot.html#s)
 
     Alternatively select a sub-set of symbols using the aliases: **symbol** or **marker** and values:
 
@@ -393,7 +368,6 @@ Parameters
 - **W** | **pen** | **markeredgecolor** | **mec** :: [Type => Str]
 
     Set pen attributes for lines or the outline of symbols
-    ($(GMTdoc)plot.html#w)
 - $(GMT.opt_savefig)
 
 [`GMT man page`]($(GMTdoc)plot.html)
@@ -461,7 +435,6 @@ Reads a file or (x,y) pairs and plots vertical bars extending from base to y.
 - **fill** :: [Type => Str --
 
     Select color or pattern for filling the bars
-    ($(GMTdoc)plot.html#g)
 - **base** | **bottom** :: [Type => Str | Num]		``key=value``
 
     By default, base = ymin. Use this option to change that value. If base is not appended then we read it.
@@ -520,7 +493,6 @@ Read a grid file, a grid or a MxN matrix and plots vertical bars extending from 
 - **fill** :: [Type => Str]		``key=color``
 
     Select color or pattern for filling the bars
-    ($(GMTdoc)plot.html#g)
 - **base** :: [Type => Str | Num]		``key=value``
 
     By default, base = ymin. Use this option to change that value. If base is not appended then we read it.
@@ -629,7 +601,6 @@ Reads a file or (x,y) pairs and plots a collection of different line with decora
 - **W** | **pen** | **line_attrib** :: [Type => Str]
 
     Set pen attributes for lines or the outline of symbols
-    ($(GMTdoc)plot.html#w)
 - $(GMT.opt_savefig)
 
 Examples:
@@ -1004,7 +975,6 @@ The full `arrow` options list can be consulted at [Vector Attributes](@ref)
 - **W** | **pen** | **line_attrib** :: [Type => Str]
 
     Set pen attributes for lines or the outline of symbols
-    ($(GMTdoc)plot.html#w)
 - $(GMT.opt_savefig)
 
 Example:
@@ -1462,7 +1432,6 @@ Plots one or a collection of horizontal lines with eventual decorations
 - **W** | **pen** | **line_attrib** :: [Type => Str]
 
     Set pen attributes for the horizontal lines
-    ($(GMTdoc)plot.html#w)
 
 Example:
 
@@ -1491,7 +1460,6 @@ Plots one or a collection of vertical lines with eventual decorations
 - **W** | **pen** | **line_attrib** :: [Type => Str]
 
     Set pen attributes for the horizontal lines
-    ($(GMTdoc)plot.html#w)
 
 Example:
 
@@ -1601,34 +1569,27 @@ Reads (a,b,c[,z]) records from table [or file] and plots image and symbols at th
     control on annotations and grid spacing (on/off) is achieved by using the `frame=(annot=?, grid=?, alabel=?, blabel=?,
     clabel=?, suffix=?)` form. Note that not all options of the general `frame` options are accepted in this module and for more
     elaborated frame option selection you will have to resort to the pure GMT syntax in the form `frame="<arg> <arg> <arg>"`
-    ($(GMTdoc)psternary.html#b)
 - $(GMT.opt_C)
 - **G** | **fill** :: [Type => Str] --
 
     Select color or pattern for filling the bars
-    ($(GMTdoc)psternary.html#c)
 - **L** | **vertex_labels** :: [Type => Str | Tuple of strings] --		`Arg = a/b/c`
 
     Set the labels for the three diagram vertices where the component is 100% [none]. 
-    ($(GMTdoc)psternary.html#l)
 - **M** | **dump** :: [Type => Str]
 
     Dumps the converted input (a,b,c[,z]) records to Cartesian (x,y,[,z]) records, where x, y
     are normalized coordinates on the triangle (i.e., 0–1 in x and 0–sqrt(3)/2 in y). No plotting occurs.
-    ($(GMTdoc)coast.html#m)
 - **N** | **no_clip** | **noclip** :: [Type => Str or []]
 
     Do NOT clip symbols that fall outside map border 
-    ($(GMTdoc)psternary.html#n)
 - **R** | **region** | **limits** :: [Type => Tuple | Str]
 
     Give the min and max limits for each of the three axis a, b, and c. Default is (0,100,0,100,0,100)
-- $(GMT.opt_P)
 - **S** | **symbol** :: [Type => Str]
 
     Plot individual symbols in a ternary diagram. If `S` is not given then we will instead plot lines
     (requires `pen`) or polygons (requires `color` or `fill`). 
-    ($(GMTdoc)psternary.html#s)
 
     Alternatively select a sub-set of symbols using the aliases: **symbol** or **marker** and values:
 
@@ -1656,7 +1617,6 @@ Reads (a,b,c[,z]) records from table [or file] and plots image and symbols at th
 - **W** | **pen** :: [Type => Str | Number]
 
     Sets the attributes for the particular line.
-    ($(GMTdoc)psternary.html#w)
 - $(GMT.opt_X)
 - $(GMT.opt_Y)
 - $(GMT._opt_bi)
@@ -1729,7 +1689,7 @@ function ternary(cmd0::String="", arg1=nothing; first::Bool=true, image::Bool=fa
 	(G_API[1] == C_NULL) && gmt_restart()	# Force having a valid API. We can't afford otherwise here.
 	r = common_plot_xyz("", mat2ds(arg1), "ternary", first, false, d...)
 	# With the following trick we leave the -R history in 0/1/0/1 and so we can append with plot, text, etc
-	gmt("psxy -Scp -R0/1/0/1 -JX -O -Vq > " * joinpath(tempdir(), "lixo.ps"), [0. 0.])
+	gmt("psxy -Scp -R0/1/0/1 -JX -O -Vq > " * joinpath(tempdir(), "lixo_" * tmpdir_usr[2] * ".ps"), [0. 0.])
 	return r
 end
 
@@ -1796,7 +1756,7 @@ const psternary! = ternary!           # Aliases
 
 Plot event symbols and labels for a moment in time
 
-Full option list at [`events`]($(GMTdoc)events.html)
+See full GMT (not the `GMT.jl` one) docs at [`events`]($(GMTdoc)events.html)
 
 Parameters
 ----------
@@ -1804,39 +1764,31 @@ Parameters
 - **T** | **now** :: [Type => Int | Str]
 
     Set the current plot time. If absolute times are used you must also use -fT.
-    ($(GMTdoc)events.html#t)
 - $(GMT._opt_B)
 - $(GMT.opt_C)
 - **D** | **shift** | **offset** :: [Type => Str]	``Arg = [j|J]dx[/dy][+v[pen]]``
 
     Offset the text from the projected (x,y) point by dx,dy [0/0].
-    ($(GMTdoc)events.html#d)
 - **E** | **knots** :: [Type => Str]	``Arg = s|t[+o|Odt][+rdt][+pdt][+ddt][+fdt][+ldt]``
 
     Set the time knots for the symbol or text time-functions.
-    ($(GMTdoc)events.html#e)
 - **G** | **fill** :: [Type => Str | Int | Touple]
 
     Set constant shade or color for all symbols.
-    ($(GMTdoc)events.html#g)
 - $(GMT._opt_J)
 - **L** | **duration** :: [Type => Bool | Number | Str]		``Arg = [length|t]``
 
     Specify the length (i.e., duration) of the event.
-    ($(GMTdoc)events.html#l)
 - **M** | **rise** :: [Type => Str]		``Arg = i|s|t[val1][+cval2]``
 
     Modify the initial intensity, size magnification, or transparency of the symbol during the rise interval.
-    ($(GMTdoc)events.html#m)
 - **Q** | **save** :: [Type => Number]
 
     Save the intermediate event symbols and labels to permanent files instead of removing them when done.
-    ($(GMTdoc)events.html#q)
 - $(GMT._opt_R)
 - **W** | **pen** | **markeredgecolor** | **mec** :: [Type => Str]
 
     Specify symbol outline pen attributes [Default is no outline].
-    ($(GMTdoc)events.html#w)
 - $(GMT.opt_U)
 - $(GMT.opt_V)
 - $(GMT.opt_X)

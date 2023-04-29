@@ -5,7 +5,7 @@ Takes two 2-D grid files which represents the x- and y-components of a vector fi
 a vector field plot by drawing vectors with orientation and length according to the information
 in the files. Alternatively, polar coordinate r, theta grids may be given instead.
 
-Full option list at [`grdvector`]($(GMTdoc)grdvector.html)
+See full GMT (not the `GMT.jl` one) docs at [`grdvector`]($(GMTdoc)grdvector.html)
 
 Parameters
 ----------
@@ -13,17 +13,14 @@ Parameters
 - **A** | **polar** :: [Type => Bool]  
 
     The grid contain polar (r, theta) components instead of Cartesian (x, y) [Default is Cartesian components].
-    ($(GMTdoc)grdvector.html#a)
 - $(GMT._opt_B)
 - $(GMT.opt_C)
 - **G** | **fill** :: [Type => Str | Number]
 
     Sets color or shade for vector interiors [Default is no fill].
-    ($(GMTdoc)grdvector.html#g)
 - **I** | **inc** | **increment** | **spacing** :: [Type => Sytr | Number]	``Arg=[x]dx[/dy]``
 
     Only plot vectors at nodes every x_inc, y_inc apart (must be multiples of original grid spacing).
-    ($(GMTdoc)grdvector.html#i)
 - **maxlen** :: [Type => Number]
 
     Set the maximum length in plot units that an arrow will have. By default it's equal to fig width / 20.
@@ -31,36 +28,32 @@ Parameters
 - **N** | **noclip** | **no_clip** :: [Type => Bool]
 
     Do NOT clip symbols that fall outside map border 
-    ($(GMTdoc)grdvector.html#n)
 - **Q** | **vec** | **vector** | **arrow** :: [Type => Str]
 
     Modify vector parameters. For vector heads, append vector head size [Default is 0, i.e., stick-plot].
-    ($(GMTdoc)grdvector.html#q)
 - $(GMT.opt_P)
 - $(GMT._opt_R)
 - **S** | **vscale** | **vec_scale** :: [Type => Str | Number]		``Arg = [i|l]scale[unit]``
 
     Sets scale for vector plot length in data units per plot distance measurement unit [1].
-    ($(GMTdoc)grdvector.html#s)
 - **T** | **sign_scale** :: [Type => Bool]
 
     Means the azimuths of Cartesian data sets should be adjusted according to the signs of the
     scales in the x- and y-directions [Leave alone].
-    ($(GMTdoc)grdvector.html#t)
 - $(GMT.opt_U)
 - $(GMT.opt_V)
 - **W** | **pen** :: [Type => Str | Number]
 
     Sets the attributes for the particular line.
-    ($(GMTdoc)grdvector.html#w)
 - $(GMT.opt_X)
 - $(GMT.opt_Y)
 - **Z** | **azimuth** :: [Type => Bool]
 
     The theta grid provided contains azimuths rather than directions (implies -A).
-    ($(GMTdoc)grdvector.html#z)
 - $(GMT.opt_V)
 - $(GMT._opt_f)
+
+To see the full documentation type: ``@? grdvector``
 """
 function grdvector(arg1, arg2; first=true, kwargs...)
 

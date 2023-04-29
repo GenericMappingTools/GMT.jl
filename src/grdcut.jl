@@ -4,7 +4,7 @@
 Produce a new outgrid which is a subregion of ingrid. The subregion is specified with
 ``limits`` (the -R); the specified range must not exceed the range of ingrid (but see ``extend``).
 
-Full option list at [`grdcut`]($(GMTdoc)grdcut.html)
+See full GMT (not the `GMT.jl` one) docs at [`grdcut`]($(GMTdoc)grdcut.html)
 
 Parameters
 ----------
@@ -13,12 +13,10 @@ Parameters
 
     Specify a closed polygon (either a file or a dataset). All grid nodes outside the
     polygon will be set to NaN (>= GMT6.2).
-    ($(GMTdoc)grdcut.html#f)
 - **G** | **save** | **outgrid** | **outfile** :: [Type => Str]
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = grdcut(....) form.
-    ($(GMTdoc)grdcut.html#g)
 - **img** | **usegdal** | **gdal** :: [Type => Any]
 
     Force the cut operation to be done by GDAL. Works for images where GMT fails or even crash.
@@ -27,19 +25,16 @@ Parameters
 
     Allow grid to be extended if new region exceeds existing boundaries. Append nodata value
     to initialize nodes outside current region [Default is NaN].
-    ($(GMTdoc)grdcut.html#n)
 - $(GMT._opt_R)
 - **S** | **circ_subregion** :: [Type => Str]    ``Arg = [n]lon/lat/radius[unit]``
 
     Specify an origin and radius; append a distance unit and we determine the corresponding
     rectangular region so that all grid nodes on or inside the circle are contained in the subset.
-    ($(GMTdoc)grdcut.html#s)
 - $(GMT.opt_V)
 - **Z** | **z_subregion** :: [Type => Str]       ``Arg = [n|N |r][min/max]``
 
     Determine a new rectangular region so that all nodes outside this region are also outside
     the given z-range.
-    ($(GMTdoc)grdcut.html#z)
 - $(GMT._opt_f)
 """
 function grdcut(cmd0::String="", arg1=nothing; kwargs...)

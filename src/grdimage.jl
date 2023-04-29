@@ -1,9 +1,10 @@
 """
     grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; kwargs...)
 
-Produces a gray-shaded (or colored) map by plotting rectangles centered on each grid node and assigning them a gray-shade (or color) based on the z-value.
+Produces a gray-shaded (or colored) map by plotting rectangles centered on each grid node and assigning
+them a gray-shade (or color) based on the z-value.
 
-Full option list at [`grdimage`]($(GMTdoc)grdimage.html)
+See full GMT (not the `GMT.jl` one) docs at [`grdimage`]($(GMTdoc)grdimage.html)
 
 Parameters
 ----------
@@ -11,38 +12,31 @@ Parameters
 - **A** | **img_out** | **image_out** :: [Type => Str]
 
     Save an image in a raster format instead of PostScript.
-    ($(GMTdoc)grdimage.html#a)
 - $(GMT._opt_J)
 - $(GMT._opt_B)
 - $(GMT.opt_C)
 - **D** | **img_in** | **image_in** :: [Type => Str]
 
     Specifies that the grid supplied is an image file to be read via GDAL.
-    ($(GMTdoc)grdimage.html#d)
 - **E** | **dpi** :: [Type => Int]
 
     Sets the resolution of the projected grid that will be created.
-    ($(GMTdoc)grdimage.html#e)
 - **G** | **bit_color** :: [Type => Int]
 
-    ($(GMTdoc)grdimage.html#g)
 - **I** | **shade** | **shading** | **intensity** :: [Type => Bool | Str | GMTgrid]
 
     Gives the name of a grid file or GMTgrid with intensities in the (-1,+1) range,
     or a grdgradient shading flags.
-    ($(GMTdoc)grdimage.html#i)
 - **M** | **monochrome** :: [Type => Bool]
 
     Force conversion to monochrome image using the (television) YIQ transformation.
-    ($(GMTdoc)grdimage.html#m)
 - **N** | **noclip** :: [Type => Bool]
 
     Do not clip the image at the map boundary.
-    ($(GMTdoc)grdimage.html#n)
 - $(GMT.opt_P)
 - **Q** | **alpha_color** | **nan_alpha** :: [Type => Bool | Tuple | Str]	``Q = true | Q = (r,g,b)``
 
-	Make grid nodes with z = NaN transparent, or pick a color for transparency in a image.
+    Make grid nodes with z = NaN transparent, or pick a color for transparency in a image.
 - $(GMT._opt_R)
 - $(GMT.opt_U)
 - $(GMT.opt_V)
@@ -53,6 +47,8 @@ Parameters
 - $(GMT._opt_p)
 - $(GMT._opt_t)
 - $(GMT.opt_savefig)
+
+To see the full documentation type: ``@? grdimage``
 """
 function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; first=true, kwargs...)
 

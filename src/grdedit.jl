@@ -6,7 +6,7 @@ values provided on the command line.
 
 If single input is a G GMTgrid object, it will update the z_min|max values of the G.range member
 
-Full option list at [`grdedit`]($(GMTdoc)grdedit.html)
+See full GMT (not the `GMT.jl` one) docs at [`grdedit`]($(GMTdoc)grdedit.html)
 
 Parameters
 ----------
@@ -14,41 +14,33 @@ Parameters
 - **A** | **adjust_inc** :: [Type => Bool]
 
     If necessary, adjust the file’s x_inc, y_inc to be compatible with its domain.
-    ($(GMTdoc)grdedit.html#a)
 - **C** | **adjust_inc** :: [Type => Bool]
 
     Clear the command history from the grid header.
-    ($(GMTdoc)grdedit.html#c)
 - **D** | **header** :: [Type => Str]    ``Arg = [+xxname][+yyname][+zzname][+sscale][+ooffset][+ninvalid][+ttitle][+rremark``
 
     Change these header parameters.
-    ($(GMTdoc)grdedit.html#d)
 - **E** | **header** :: [Type => Str]    ``Arg = [a|h|l|r|t|v]``
 
     Transform the grid in one of six ways and (for l|r|t) interchange the x and y information
-    ($(GMTdoc)grdedit.html#e)
 - **G** | **save** | **outgrid** | **outfile** :: [Type => Str]
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = grdedit(....) form.
-    ($(GMTdoc)grdedit.html#g)
 - $(GMT._opt_J)
 - **N** | **replace** :: [Type => Str | Mx3 array]      ``Arg = replace=fname | replace=Array``
 
     Read the ASCII (or binary) file table and replace the corresponding nodal values in the
     grid with these x,y,z values. Alternatively, provide a Mx3 matrix with values to be changed. 
-    ($(GMTdoc)grdedit.html#n)
 - $(GMT._opt_R)
 - **S** | **wrap** :: [Type => Bool]
 
     For global, geographical grids only. Grid values will be shifted longitudinally according to
     the new borders given in ``limits`` (R option).
-    ($(GMTdoc)grdedit.html#s)
 - **T** | **toggle_reg** | **toggle** :: [Type => Bool]
 
     Make necessary changes in the header to convert a gridline-registered grid to a pixel-registered
     grid, or vice-versa.
-    ($(GMTdoc)grdedit.html#t)
 - $(GMT.opt_V)
 - $(GMT._opt_bi)
 - $(GMT._opt_di)

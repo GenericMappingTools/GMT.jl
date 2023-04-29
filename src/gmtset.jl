@@ -3,7 +3,7 @@
 
 Adjust individual GMT defaults settings in the current directory’s gmt.conf file.
 
-Full option list at [`gmtset`]($(GMTdoc)gmtset.html)
+See full GMT (not the `GMT.jl` one) docs at [`gmtset`]($(GMTdoc)gmtset.html)
 
 Parameters
 ----------
@@ -11,11 +11,9 @@ Parameters
 - **D** | **units** :: [Type => Str | []]
 
     Modify the GMT defaults based on the system settings. Append u for US defaults or s for SI defaults.
-    ($(GMTdoc)gmtinfo.html#d)
 - **G** | **defaultsfile** :: [Type => Str]
 
     Name of specific gmt.conf file to read and modify. 
-    ($(GMTdoc)gmtset.html#g)
 - $(GMT.opt_V)
 - $(GMT.opt_write)
 

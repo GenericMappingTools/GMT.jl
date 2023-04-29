@@ -4,7 +4,7 @@
 reads a 2-D grid file and fits a low-order polynomial trend to these data by
 [optionally weighted] least-squares.
 
-Full option list at [`grdtrend`]($(GMTdoc)grdtrend.html)
+See full GMT (not the `GMT.jl` one) docs at [`grdtrend`]($(GMTdoc)grdtrend.html)
 
 Parameters
 ----------
@@ -12,21 +12,19 @@ Parameters
 - **N** | **model** :: [Type => Str | Number]
 
     Sets the number of model parameters to fit.
-    ($(GMTdoc)grdtrend.html#n)
 - **D** | **diff** :: [Type => Str | []]
 
     Compute the difference (input data - trend). Optionaly provide a file name to save result on disk.
-    ($(GMTdoc)grdtrend.html#d)
 - **T** | **trend** :: [Type => Str | []]
 
     Compute the trend surface. Optionaly provide a file name to save result on disk.
-    ($(GMTdoc)grdtrend.html#t)
 - **W** | **weights** :: [Type => Str]
 
     If weight.nc exists, it will be read and used to solve a weighted least-squares problem.
-    ($(GMTdoc)grdtrend.html#w)
 - $(GMT._opt_R)
 - $(GMT.opt_V)
+
+To see the full documentation type: ``@? grdtrend``
 """
 function grdtrend(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 

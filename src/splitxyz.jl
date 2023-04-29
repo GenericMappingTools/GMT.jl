@@ -4,7 +4,7 @@
 Reads a series of (x,y[,z]) records [or optionally (x,y,z,d,h)] and splits this into separate lists
 of (x,y[,z]) series, such that each series has a nearly constant azimuth through the x,y plane.
 
-Full option list at [`gmtsplit`]($(GMTdoc)gmtsplit.html)
+See full GMT (not the `GMT.jl` one) docs at [`gmtsplit`]($(GMTdoc)gmtsplit.html)
 
 Parameters
 ----------
@@ -13,32 +13,26 @@ Parameters
 
     Write out only those segments which are within +/- tolerance degrees of azimuth in heading,
     measured clockwise from North, [0 - 360].
-    ($(GMTdoc)gmtsplit.html#a)
 - **C** | **course_change** :: [Type => Number]
 
     Terminate a segment when a course change exceeding course_change degrees of heading is detected.
-    ($(GMTdoc)gmtsplit.html#c)
 - **D** | **min_dist** | **min_distance** :: [Type => Number]
 
     Do not write a segment out unless it is at least minimum_distance units long.
-    ($(GMTdoc)gmtsplit.html#d)
 - **F** | **filter** :: [Type => Str | Array]
 
     Filter the z values and/or the x,y values, assuming these are functions of d coordinate.
     xy_filter and z_filter are filter widths in distance units.
-    ($(GMTdoc)gmtsplit.html#f)
 - **N** | **multi** :: [Type => Bool | Str]
 
     Write each segment to a separate output file.
 - **Q** | **xyzdh** :: [Type => Str]
 
     Specify your desired output using any combination of xyzdh, in any order.
-    ($(GMTdoc)gmtsplit.html#q)
 - **S** | **dh** | **dist_head** :: [Type => Bool]
 
     Both d and h are supplied. In this case, input contains x,y,z,d,h. [Default expects (x,y,z) input,
     and d,h are computed from delta x, delta y.
-    ($(GMTdoc)gmtsplit.html#s)
 - $(GMT.opt_V)
 - $(GMT.opt_write)
 - $(GMT.opt_append)
@@ -52,6 +46,8 @@ Parameters
 - $(GMT._opt_h)
 - $(GMT._opt_i)
 - $(GMT.opt_swap_xy)
+
+To see the full documentation type: ``@? splitxyz``
 """
 function gmtsplit(cmd0::String="", arg1=nothing; kwargs...)
 

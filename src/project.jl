@@ -3,7 +3,7 @@
 
 Project data onto lines or great circles, generate tracks, or translate coordinates.
 
-Full option list at [`project`]($(GMTdoc)project.html)
+See full GMT (not the `GMT.jl` one) docs at [`project`]($(GMTdoc)project.html)
 
 Parameters
 ----------
@@ -11,53 +11,41 @@ Parameters
 - **C** | **origin** | **center** :: [Type => list/tuple]    ``Arg = (x,y)``
 
     Sets the origin of the projection, in Definition 1 or 2.
-    ($(GMTdoc)project.html#c)
 - **A** | **azim** | **azimuth** :: [Type => Number]    ``Arg = azimuth``
 
     Defines the azimuth of the projection (Definition 1).
-    ($(GMTdoc)project.html#a)
 - **E** | **end_pt** | **endpoint** :: [Type => list/tuple]    ``Arg = (bx,by)``
 
     bx,by defines the end point of the projection path (Definition 2).
-    ($(GMTdoc)project.html#e)
 - **F** | **outvars** :: [Type => Str]    ``Arg = xyzpqrs``
 
     Specify your desired output using any combination of xyzpqrs, in any order [Default is xyzpqrs].
-    ($(GMTdoc)project.html#f)
 - **G** | **step** | **generate** :: [Type => Number or list/tuple--    ``Arg = dist[/colat][+h]``
 
     Generate mode. No input is read. Create (r, s, p) output points every dist units of p. See Q option.
-    ($(GMTdoc)project.html#g)
 - **L** | **length** :: [Type => Number or list/tuple]    ``Arg = [w|l_{min}/l_{max}]``
 
     Length controls. Project only those points whose p coordinate is within l\\_min < p < l\\_max.
-    ($(GMTdoc)project.html#l)
 - **N** | **flat_earth** :: [Type => Bool or []]
 
     Flat Earth. Make a Cartesian coordinate transformation in the plane. [Default uses spherical trigonometry.]
-    ($(GMTdoc)project.html#n)
 - **Q** | **km** :: [Type => Bool or []]
 
     Map type units.
-    ($(GMTdoc)project.html#q)
 - **S** | **sort** :: [Type => Bool or []]
 
     Sort the output into increasing p order. Useful when projecting random data into a sequential profile.
-    ($(GMTdoc)project.html#s)
 - **T** | **pole** :: [Type => list/tuple]    ``Arg = (px,py)``
 
     px,py sets the position of the rotation pole of the projection. (Definition 3).
-    ($(GMTdoc)project.html#t)
 - **W** | **width** :: [Type => list/tuple]    ``Arg = (w_{min},w_{max})``
 
     Width controls. Project only those points whose q coordinate is within w\\_min < q < w\\_max.
-    ($(GMTdoc)project.html#w)
 - **Z** | **ellipse** :: [Type => Number | Tuple | String]    ``Arg = major/minor/azimuth[+e|n]``
 
     Make ellipse with major and minor axes given in km (unless **N** is given for a Cartesian ellipse) and the
     azimuth of the major axis in degrees; used in conjunction with **origin** (sets its center) and **step**
     (sets the distance increment).
-    ($(GMTdoc)project.html#z)
 
 - $(GMT.opt_write)
 - $(GMT.opt_append)
@@ -72,6 +60,8 @@ Parameters
 - $(GMT.opt_o)
 - $(GMT.opt_s)
 - $(GMT.opt_swap_xy)
+
+To see the full documentation type: ``@? project``
 """
 function project(cmd0::String="", arg1=nothing; kwargs...)
 

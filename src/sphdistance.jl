@@ -3,7 +3,7 @@
 
 Create Voronoi distance, node, or natural nearest-neighbor grid on a sphere
 
-Full option list at [`sphdistance`]($(GMTdoc)sphdistance.html)
+See full GMT (not the `GMT.jl` one) docs at [`sphdistance`]($(GMTdoc)sphdistance.html)
 
 Parameters
 ----------
@@ -11,35 +11,27 @@ Parameters
 - **C** | **save_mem** :: [Type => Bool]
 
     For large data sets you can save some memory (at the expense of more processing).
-    ($(GMTdoc)sphdistance.html#a)
 - **D** | **duplicates** :: [Type => Bool]
 
     Delete any duplicate points [Default assumes there are no duplicates].
-    ($(GMTdoc)sphdistance.html#d)
 - **E** | **what_quantity** :: [Type => Str]   ``Arg = d|n|z[dist]``
 
     Specify the quantity that should be assigned to the grid nodes.
-    ($(GMTdoc)sphdistance.html#e)
 - **G** | **save** | **outgrid** | **outfile** :: [Type => Str]
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = sphdistance(....) form.
-    ($(GMTdoc)sphdistance.html#g)
 - $(GMT.opt_I)
-    ($(GMTdoc)sphdistance.html#i)
 - **L** | **dist_unit** :: [Type => Str]      ``Arg = d|e|f|k|M|n|u``
 
     Specify the unit used for distance calculations.
-    ($(GMTdoc)sphdistance.html#l)
 - **N** | **nodes** :: [Type => Str]      ``Arg = nodes``
 
     Read the information pertaining to each Voronoi polygon (the unique node lon, lat and polygon area)
     from a separate file.
-    ($(GMTdoc)sphdistance.html#n)
 - **Q** | **voronoi** :: [Type => Str]     ``Arg = voronoifile``
 
     Append the name of a file with pre-calculated Voronoi polygons.
-    ($(GMTdoc)sphdistance.html#q)
 - $(GMT._opt_R)
 - $(GMT.opt_V)
 - $(GMT.opt_b)
@@ -49,6 +41,8 @@ Parameters
 - $(GMT._opt_i)
 - $(GMT.opt_r)
 - $(GMT.opt_swap_xy)
+
+To see the full documentation type: ``@? sphdistance``
 """
 function sphdistance(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 

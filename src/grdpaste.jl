@@ -4,7 +4,7 @@
 Combine grids ``grid1`` and ``grid2`` into ``grid3`` by pasting them together along their common edge.
 Both grids must have the same dx, dy and have one edge in common.
 
-Full option list at [`grdpaste`]($(GMTdoc)grdpaste.html)
+See full GMT (not the `GMT.jl` one) docs at [`grdpaste`]($(GMTdoc)grdpaste.html)
 
 Parameters
 ----------
@@ -13,9 +13,10 @@ Parameters
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = grdpaste(....) form.
-    ($(GMTdoc)grdpaste.html#g)
 - $(GMT.opt_V)
 - $(GMT._opt_f)
+
+To see the full documentation type: ``@? grdpaste``
 """
 function grdpaste(G1::GItype, G2::GItype; kwargs...)
 

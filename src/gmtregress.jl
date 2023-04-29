@@ -3,7 +3,7 @@
 
 Linear regression of 1-D data sets.
 
-Full option list at [`regress`]($(GMTdoc)gmtregress.html)
+See full GMT (not the `GMT.jl` one) docs at [`regress`]($(GMTdoc)gmtregress.html)
 
 Parameters
 ----------
@@ -11,37 +11,29 @@ Parameters
 - **A** | **all_slopes** :: [Type => Str | List]        ``Arg = min/max/inc``
 
     Instead of determining a best-fit regression we explore the full range of regressions.
-    ($(GMTdoc)gmtregress.html#a)
 - **C** | **ci** | **cl** | **confidence_level** :: [Type => Int]      ``Arg = level``
 
     Set the confidence level (in %) to use for the optional calculation of confidence
     bands on the regression [95].
-    ($(GMTdoc)gmtregress.html#c)
 - **E** | **regression_type** :: [Type => Str]   ``Arg = x|y|o|r``
 
     Type of linear regression, i.e., select the type of misfit we should calculate.
-    ($(GMTdoc)gmtregress.html#e)
 - **F** | **column_combination** :: [Type => Str]   ``Arg = x|y|m|l|c``
 
     Append a combination of the columns you wish returned;
-    ($(GMTdoc)gmtregress.html#f)
 - **N** | **norm** :: [Type => Str | Int]          ``Arg = 1|2|r|w``
 
     Selects the norm to use for the misfit calculation.
-    ($(GMTdoc)gmtregress.html#n)
 - **S** | **restrict** :: [Type => Str | []]        ``Arg = [r]``
 
     Restricts which records will be output.
-    ($(GMTdoc)gmtregress.html#s)
 - **T** | **equi_space** :: [Type => Str | List]     ``Arg = [min/max/]inc[+a|n]] or file|list``
 
     Evaluate the best-fit regression model at the equidistant points implied by the arguments.
-    ($(GMTdoc)gmtregress.html#t)
 - **W** | **weighted** :: [Type => Str | []]     ``Arg = [w][x][y][r]``
 
     Specifies weighted regression and which weights will be provided.
-    ($(GMTdoc)gmtregress.html#w)
-- $(GMT.opt_V)
+
 - $(GMT.opt_write)
 - $(GMT.opt_append)
 - $(GMT.opt_b)

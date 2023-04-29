@@ -3,44 +3,36 @@
 	
 Plots gray scales or color scales on maps.
 
-Full option list at [`psscale`]($(GMTdoc)psscale.html)
+See full GMT (not the `GMT.jl` one) docs at [`psscale`]($(GMTdoc)psscale.html)
 
 - **D** | **pos** | **position** :: [Type => Str]
 
     Defines the reference point on the map for the color scale using one of four coordinate systems.
-    ($(GMTdoc)psscale.html#d)
 - $(GMT._opt_B)
 - $(GMT.opt_C)
 - **F** | **box** :: [Type => Str]
 
     Draws a rectangular border around the scale.
-    ($(GMTdoc)psscale.html#f)
 - **G** | **truncate** :: [Type => Str]  
 
     Truncate the incoming CPT so that the lowest and highest z-levels are to zlo and zhi.
-    ($(GMTdoc)psscale.html#g)
 - **I** | **shade** :: [Type => Number | Str]
 
     Add illumination effects.
-    ($(GMTdoc)psscale.html#i)
 - $(GMT._opt_J)
 - $(GMT.opt_Jz)
 - **L** | **equal** | **equal_size** :: [Type => Str | Bool]		`Arg = [i][gap]`
 
     Gives equal-sized color rectangles. Default scales rectangles according to the z-range in the CPT.
-    ($(GMTdoc)psscale.html#l)
 - **M** | **monochrome** :: [Type => Bool]
 
     Force conversion to monochrome image using the (television) YIQ transformation.
-    ($(GMTdoc)psscale.html#m)
 - **N** | **dpi** :: [Type => Str | Number]
 
     Controls how the color scale is represented by the PostScript language.
-    ($(GMTdoc)psscale.html#n)
 - **Q** | **log** :: [Type => Str]
 
     Selects a logarithmic interpolation scheme [Default is linear].
-    ($(GMTdoc)psscale.html#q)
 - $(GMT._opt_R)
 - **S** | **nolines** :: [Type => Bool | []]
 
@@ -50,12 +42,12 @@ Full option list at [`psscale`]($(GMTdoc)psscale.html)
 - **W** | **scale** :: [Type => Number]
 
     Multiply all z-values in the CPT by the provided scale.
-    ($(GMTdoc)psscale.html#w)
 - **Z** | **zfile** :: [Type => Str]
 
     File with colorbar-width per color entry.
-    ($(GMTdoc)psscale.html#z)
 - $(GMT.opt_savefig)
+
+To see the full documentation type: ``@? colorbar``
 """
 function colorbar(cmd0::String="", arg1=nothing; first=true, kwargs...)
 

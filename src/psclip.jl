@@ -3,7 +3,7 @@
 
 Reads (length,azimuth) pairs from file and plot a windclip diagram.
 
-Full option list at [`psclip`]($(GMTdoc)psclip.html)
+See full GMT (not the `GMT.jl` one) docs at [`psclip`]($(GMTdoc)clip.html)
 
 Parameters
 ----------
@@ -11,25 +11,21 @@ Parameters
 - **C** | **endclip** | **end_clip_path** :: [Type => Bool]
 
     Mark end of existing clip path. No input file is needed.
-    ($(GMTdoc)psclip.html#c)
 - $(GMT._opt_J)
 
 - **A** | **steps** :: [Type => Str or []]
 
     By default, geographic line segments are connected as great circle arcs. To connect them as straight lines, use **A** 
-    ($(GMTdoc)psclip.html#a)
 - $(GMT._opt_B)
 - $(GMT.opt_Jz)
 - **N** | **invert** :: [Type => Bool]
 
     Invert the sense of the test, i.e., clip regions where there is data coverage.
-    ($(GMTdoc)psclip.html#n)
 - $(GMT.opt_P)
 - $(GMT._opt_R)
 - **T** | **clip_limits** :: [Type => Bool]
 
     Rather than read any input files, simply turn on clipping for the current map region.
-    ($(GMTdoc)psclip.html#t)
 - $(GMT.opt_U)
 - $(GMT.opt_V)
 - $(GMT.opt_X)
@@ -44,6 +40,8 @@ Parameters
 - $(GMT._opt_p)
 - $(GMT._opt_t)
 - $(GMT.opt_swap_xy)
+
+To see the full documentation type: ``@? clip``
 """
 function clip(cmd0::String="", arg1=nothing; first=true, kwargs...)
 

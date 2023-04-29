@@ -3,7 +3,7 @@
 
 Project a geographical gridded data set onto a rectangular grid or do the inverse projection.
 
-Full option list at [`grdproject`]($(GMTdoc)grdproject.html)
+See full GMT (not the `GMT.jl` one) docs at [`grdproject`]($(GMTdoc)grdproject.html)
 
 Parameters
 ----------
@@ -12,36 +12,31 @@ Parameters
 - **C** | **center** :: [Type => Str | []]      ``Arg = [dx/dy]``
 
     Let projected coordinates be relative to projection center [Default is relative to lower left corner].
-    ($(GMTdoc)grdproject.html#c)
 - **D** | **inc** :: [Type => Str | number]     ``Arg = xinc[unit][+e|n][/yinc[unit][+e|n]]``
 
     Set the grid spacing for the new grid. Append m for arc minute, s for arc second.
-    ($(GMTdoc)grdproject.html#d)
 - **E** | **dpi** :: [Type => Number]
 
     Set the resolution for the new grid in dots per inch.
-    ($(GMTdoc)grdproject.html#e)
 - **F** | **one2one** :: [Type => Str]           ``Arg = [c|i|p|e|f|k|M|n|u]``
 
     Force 1:1 scaling, i.e., output (or input, see -I) data are in actual projected meters [e].
-    ($(GMTdoc)grdproject.html#f)
 - **G** | **save** | **outgrid** | **outfile** :: [Type => Str]
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = grdproject(....) form.
-    ($(GMTdoc)grdproject.html#g)
 - **I** | **inverse** :: [Type => Bool]
 
     Do the Inverse transformation, from rectangular to geographical.
-    ($(GMTdoc)grdproject.html#i)
 - **M** | **projected_unit** :: [Type => Str]    ``Arg = c|i|p``
 
     Append c, i, or p to indicate that cm, inch, or point should be the projected measure unit.
-    ($(GMTdoc)grdproject.html#m)
 - $(GMT._opt_R)
 - $(GMT.opt_V)
 - $(GMT.opt_n)
 - $(GMT.opt_r)
+
+To see the full documentation type: ``@? grdproject``
 """
 function grdproject(cmd0::String="", arg1=nothing; kwargs...)
 

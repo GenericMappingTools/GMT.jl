@@ -3,7 +3,7 @@
 
 Fit a [weighted] [robust] polynomial/Fourier model for y = f(x) to xy[w] data.
 
-Full option list at [`trend1d`]($(GMTdoc)trend1d.html)
+See full GMT (not the `GMT.jl` one) docs at [`trend1d`]($(GMTdoc)trend1d.html)
 
 Parameters
 ----------
@@ -11,25 +11,20 @@ Parameters
 - **F** | **out** | **output** :: [Type => Str]   ``Arg = xymrw|p|P|c``
 
     Specify up to five letters from the set {x y m r w} in any order to create columns of output. 
-    ($(GMTdoc)trend1d.html#f)
 - **N** | **model** :: [Type => Str]      ``Arg = [p|P|f|F|c|C|s|S|x]n[,…][+llength][+oorigin][+r]``
 
     Specify Specify the number of terms in the model, n_model, and append +r to do a robust fit. E.g., a robust bilinear model is -N4+r.
-    ($(GMTdoc)trend1d.html#n)
 - **C** | **condition_number** :: [Type => Number]   ``Arg = condition_number``
 
     Set the maximum allowed condition number for the matrix solution.
-    ($(GMTdoc)trend1d.html#c)
 - **I** | **conf_level** :: [Type => Number | []]   ``Arg = [confe_level]``
 
     Iteratively increase the number of model parameters, starting at one, until n_model is reachedx
     or the reduction in variance of the model is not significant at the conf_level level.
-    ($(GMTdoc)trend1d.html#i)
 - **W** | **weights** :: [Type => Str | []]     ``Arg = [+s]``
 
     Weights are supplied in input column 3. Do a weighted least squares fit [or start with
     these weights when doing the iterative robust fit].
-    ($(GMTdoc)trend1d.html#w)
 - $(GMT.opt_V)
 - $(GMT.opt_b)
 - $(GMT.opt_d)
@@ -39,6 +34,8 @@ Parameters
 - $(GMT._opt_i)
 - $(GMT.opt_w)
 - $(GMT.opt_swap_xy)
+
+To see the full documentation type: ``@? trend1d``
 """
 function trend1d(cmd0::String="", arg1=nothing; kwargs...)
 

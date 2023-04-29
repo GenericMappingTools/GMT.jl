@@ -3,42 +3,36 @@
 
 Block average (x,y,z) data tables by L2 norm.
 	
-Full option list at [`blockmean`]($(GMTdoc)blockmean.html)
+See full GMT (not the `GMT.jl` one) docs at [`blockmean`]($(GMTdoc)blockmean.html)
 
 Parameters
 ----------
 
 - $(GMT._opt_R)
 - $(GMT.opt_I)
-    ($(GMTdoc)blockmean.html#i)
 - **A** | **field** | **fields** :: [Type => Str]
 
     Select which fields to write to individual grids. Append comma-separated codes for available
     fields: **z** (the mean data z, but see **statistic**), **s** (standard deviation), **l** (lowest value),
     **h** (highest value) and **w** (the output weight; requires **weights**). [Default is just **z**].
-    ($(GMTdoc)blockmean.html#a)
 - **C** | **center** :: [Type => Bool]
 
     Use the center of the block as the output location [Default uses the mean location]. Not used when **-A**
-    ($(GMTdoc)blockmean.html#c)
 - **E** | **extend** | **extended** :: [Type => Str | []]
 
     Provide Extended report which includes s (the standard deviation about the mean), l, the lowest
     value, and h, the high value for each block. Output order becomes x,y,z,s,l,h[,w]. [Default
     outputs x,y,z[,w]. See -W for w output. If -Ep is used we assume weights are 1/(sigma squared)
     and s becomes the propagated error of the mean.
-    ($(GMTdoc)blockmean.html#e)
 - **G** | **save** | **outgrid** | **outfile** :: [Type => Str]
 
     Write one or more fields directly to grids on disk; no table data are return. If more than one
     fields are specified via **A** then grdfile must contain the format flag %s so that we can embed the
     field code in the file names. If not provided but **A** is used, return 1 or more GMTgrid type(s).
-    ($(GMTdoc)blockmean.html#g)
 - **S** | **statistic** :: [Type => Str | Symb] 
 
     Use `statistic=:n` to report the number of points inside each block, `statistic=:s` to report the sum of all z-values 
     inside a block, `statistic=:w` to report the sum of weights [Default (or `statistic=:m` reports mean value].
-    ($(GMTdoc)blockmean.html#s)
 - **mean** :: [Type => Any] 
 
     Report the mean value of points inside each block
@@ -58,7 +52,6 @@ Parameters
 
     Unweighted input and output have 3 columns x,y,z; Weighted i/o has 4 columns x,y,z,w. Weights can
     be used in input to construct weighted mean values for each block.
-    ($(GMTdoc)blockmean.html#w)
 - $(GMT.opt_V)
 - $(GMT._opt_bi)
 - $(GMT._opt_di)
@@ -95,7 +88,7 @@ end
 
 Block average (x,y,z) data tables by L1 norm.
 	
-Full option list at [`blockmedian`]($(GMTdoc)blockmedian.html)
+See full GMT (not the `GMT.jl` one) docs at [`blockmedian`]($(GMTdoc)blockmedian.html)
 """
 function blockmedian(cmd0::String="", arg1=nothing; kwargs...)
 
@@ -114,7 +107,7 @@ end
 
 Block average (x,y,z) data tables by mode estimation.
 	
-Full option list at [`blockmode`]($(GMTdoc)blockmode.html)
+See full GMT (not the `GMT.jl` one) docs at [`blockmode`]($(GMTdoc)blockmode.html)
 """
 function blockmode(cmd0::String="", arg1=nothing; kwargs...)
 

@@ -3,7 +3,7 @@
 
 Reads (length,azimuth) pairs and plot a windrose diagram (polar histograms).
 
-Full option list at [`psrose`]($(GMTdoc)rose.html)
+See full GMT (not the `GMT.jl` one) docs at [`psrose`]($(GMTdoc)rose.html)
 
 Parameters
 ----------
@@ -12,63 +12,49 @@ Parameters
 - **A** | **sector** | **sectors** :: [Type => Str | Number]
 
 	Gives the sector width in degrees for sector and rose diagram.
-	($(GMTdoc)rose.html#a)
 - $(GMT._opt_B)
 - **C** | **color** :: [Type => Str | GMTcpt]
 
 	Give a CPT. The mid x-value for each bar is used to look-up the bar color.
-	($(GMTdoc)rose.html#c)
 - **E** | **vectors** :: [Type => Str]
 
 	Plot vectors showing the principal directions given in the mode_file file.
-	($(GMTdoc)rose.html#e)
 - **D** | **shift** :: [Type => Bool]
 
 	Shift sectors so that they are centered on the bin interval (e.g., first sector is centered on 0 degrees).
-	($(GMTdoc)rose.html#d)
 - **F** | **no_scale** :: [Type => Bool]
 
 	Do not draw the scale length bar [Default plots scale in lower right corner].
-	($(GMTdoc)rose.html#f)
 - **G** | **fill** :: [Type => Str | Number]
 
 	Selects shade, color or pattern for filling the sectors [Default is no fill].
-	($(GMTdoc)rose.html#g)
 - **I** | **inquire** :: [Type => Bool]
 
 	Inquire. Computes statistics needed to specify a useful -R. No plot is generated.
-	($(GMTdoc)rose.html#i)
 - **L** | **labels** :: [Type => Str | Number]
 
 	Specify labels for the 0, 90, 180, and 270 degree marks.
-	($(GMTdoc)rose.html#l)
 - **M** | **vector_params** :: [Type => Str]
 
 	Used with -C to modify vector parameters.
-	($(GMTdoc)rose.html#m)
 - $(GMT.opt_P)
 - **Q** | **alpha** :: [Type => Str | []]
 
 	Sets the confidence level used to determine if the mean resultant is significant.
-	($(GMTdoc)rose.html#q)
 - $(GMT._opt_R)
 - **S** | **norm** | **normalize** :: [Type => Bool]
 
 	Specifies radius of plotted circle (append a unit from c|i|p).
-	($(GMTdoc)rose.html#s)
 - **T** | **orientation** :: [Type => Bool]
 
 	Specifies that the input data are orientation data (i.e., have a 180 degree ambiguity)
 	instead of true 0-360 degree directions [Default].
-	($(GMTdoc)rose.html#t)
 - **W** | **pen** :: [Type => Str | Tuple]
 
 	Set pen attributes for sector outline or rose plot. [Default is no outline].
-	($(GMTdoc)rose.html#w)
 - **Z** | **scale** :: [Type => Str]
 
 	Multiply the data radii by scale.
-	($(GMTdoc)rose.html#z)
 - $(GMT.opt_U)
 - $(GMT.opt_V)
 - $(GMT.opt_X)
@@ -83,6 +69,8 @@ Parameters
 - $(GMT.opt_w)
 - $(GMT.opt_swap_xy)
 - $(GMT.opt_savefig)
+
+To see the full documentation type: ``@? rose``
 """
 function rose(cmd0::String="", arg1=nothing; first=true, kwargs...)
 

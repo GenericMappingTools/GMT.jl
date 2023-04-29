@@ -3,7 +3,7 @@
 
 Compute auto- [and cross- ] spectra from one [or two] time-series.
 
-Full option list at [`spectrum1d`]($(GMTdoc)spectrum1d.html)
+See full GMT (not the `GMT.jl` one) docs at [`spectrum1d`]($(GMTdoc)spectrum1d.html)
 
 Parameters
 ----------
@@ -11,32 +11,25 @@ Parameters
 - **S** | **size** :: [Type => Str]        ``Arg = segment_size``
 
     ``segment_size`` is a radix-2 number of samples per window for ensemble averaging.
-    ($(GMTdoc)spectrum1d.html#s)
 - **C** | **response_fun** :: [Type => Str | []]        ``Arg = [xycnpago]``
 
     Read the first two columns of input as samples of two time-series, X(t) and Y(t).
     Consider Y(t) to be the output and X(t) the input in a linear system with noise.
-    ($(GMTdoc)spectrum1d.html#c)
 - **D** | **sample_dist** :: [Type => Number]   ``Arg = dt``
 
     Set the spacing between samples in the time-series [Default = 1].
-    ($(GMTdoc)spectrum1d.html#d)
 - **L** | **leave_trend** :: [Type => Str | []]     ``Arg = [h|m]``
 
     Leave trend alone. By default, a linear trend will be removed prior to the transform.
-    ($(GMTdoc)spectrum1d.html#l)
 - **N** | **time_col** :: [Type => Int]      ``Arg = t_col``
 
     Indicates which
-    ($(GMTdoc)spectrum1d.html#n)
 - **T** :: [Type => Bool]
 
     Disable the writing of a single composite results file to stdout.
-    ($(GMTdoc)spectrum1d.html#t)
 - **W** | **wavelength** :: [Type => Bool | Str]
 
     Write Wavelength rather than frequency in column 1 of the output file[s] [Default = frequency, (cycles / dt)].
-    ($(GMTdoc)spectrum1d.html#w)
 - $(GMT.opt_V)
 - $(GMT.opt_write)
 - $(GMT.opt_append)
@@ -48,6 +41,8 @@ Parameters
 - $(GMT._opt_h)
 - $(GMT._opt_i)
 - $(GMT.opt_swap_xy)
+
+To see the full documentation type: ``@? spectrum1d``
 """
 function spectrum1d(cmd0::String="", arg1=nothing; kwargs...)
 

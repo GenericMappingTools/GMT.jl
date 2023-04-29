@@ -3,7 +3,7 @@
 
 Place images or EPS files on maps.
 
-Full option list at [`psimage`]($(GMTdoc)image.html)
+See full GMT (not the `GMT.jl` one) docs at [`psimage`]($(GMTdoc)image.html)
 
 Parameters
 ----------
@@ -12,24 +12,20 @@ Parameters
 - **D** | **pos** | **position** :: [Type => Str]
 
     Sets reference point on the map for the image using one of four coordinate systems.
-    ($(GMTdoc)image.html#d)
 - **F** | **box** :: [Type => Str | []]
 
     Without further options, draws a rectangular border around the image using MAP_FRAME_PEN.
-    ($(GMTdoc)image.html#f)
 - **G** | **bit_color** | **bit_bg|fg|alpha**:: [Type => Str]
 
     Change certain pixel values to another color or make them transparent.
 - **I** | **invert** :: [Type => Str | Number]
 
     Invert 1-bit image before plotting.
-    ($(GMTdoc)image.html#i)
 - $(GMT._opt_J)
 - $(GMT.opt_Jz)
 - **M** | **monochrome** :: [Type => Bool]
 
     Convert color image to monochrome grayshades using the (television) YIQ-transformation.
-    ($(GMTdoc)image.html#m)
 - $(GMT._opt_R)
 - $(GMT.opt_U)
 - $(GMT.opt_V)
@@ -38,6 +34,8 @@ Parameters
 - $(GMT._opt_p)
 - $(GMT._opt_t)
 - $(GMT.opt_savefig)
+
+To see the full documentation type: ``@? image``
 """
 function image(cmd0::String="", arg1=nothing; first=true, kwargs...)
 

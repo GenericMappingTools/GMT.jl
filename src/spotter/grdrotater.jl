@@ -3,7 +3,7 @@
 
 Takes a geographical grid and reconstructs it given total reconstruction rotations.
 
-Full option list at [`grdrotater`]($(GMTdoc)grdrotater.html)
+See full GMT (not the `GMT.jl` one) docs at [`grdrotater`]($(GMTdoc)grdrotater.html)
 
 Parameters
 ----------

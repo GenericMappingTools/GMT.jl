@@ -8,7 +8,7 @@ convenient for contrast enhancement (histogram stretch). The values represent th
 countings used to estimate the boundings. The option 'zoom=true' will set 'auto=true' and show
 histogram only on the region of interest.
 
-Full option list at [`pshistogram`]($(GMTdoc)histogram.html)
+See full GMT (not the `GMT.jl` one) docs at [`pshistogram`]($(GMTdoc)histogram.html)
 
 Parameters
 ----------
@@ -17,21 +17,17 @@ Parameters
 - **A** | **horizontal** :: [Type => Bool]
 
     Plot the histogram horizontally from x = 0 [Default is vertically from y = 0].
-    ($(GMTdoc)histogram.html#a)
 - $(GMT.opt_Jz)
 - $(GMT._opt_B)
 - **C** | **color** | **cmap** :: [Type => Str | GMTcpt]
 
     Give a CPT. The mid x-value for each bar is used to look-up the bar color.
-    ($(GMTdoc)histogram.html#c)
 - **D** | **annot** | **annotate** | **counts** :: [Type => Str | Tuple]
 
     Annotate each bar with the count it represents.
-    ($(GMTdoc)histogram.html#d)
 - **E** | **width** :: [Type => Bool]			`Arg = width[+ooffset]`
 
     Use an alternative histogram bar width than the default set via T, and optionally shift all bars by an offset.
-    ($(GMTdoc)histogram.html#e)
 - **binmethod** | *BinMethod** :: [Type => Str]			`Arg = method`
 
     Binning algorithm: "scott", "fd", "sturges" or "sqrt" for floating point data. "second", "minute", "hour",
@@ -39,49 +35,38 @@ Parameters
 - **F** | **center** :: [Type => Bool]
 
     Center bin on each value. [Default is left edge].
-    ($(GMTdoc)histogram.html#f)
 - **G** | **fill** :: [Type => Number | Str]
 
     Select filling of bars [if no G, L or C set G=100].
-    ($(GMTdoc)histogram.html#g)
 - **I** | **inquire** | **bins** :: [Type => Bool | :O | :o | bins=(all=true,) | bins=(no_zero=true,) ]
 
     Inquire about min/max x and y after binning OR output the binned array.
-    ($(GMTdoc)histogram.html#i)
 - **L** | **out_range** :: [Type => Str]			`Arg = l|h|b`
 
     Handling of extreme values that fall outside the range set by **T**.
-    ($(GMTdoc)histogram.html#l)
 - **N** | **distribution** | **normal** :: [Type => Str]
 
     Draw the equivalent normal distribution; append desired pen [0.5p,black].
-    ($(GMTdoc)histogram.html#n)
 - $(GMT.opt_P)
 - **Q** | **cumulative** :: [Type => Bool | "r"]
 
     Draw a cumulative histogram. Append r to instead compute the reverse cumulative histogram.
-    ($(GMTdoc)histogram.html#q)
 - **R** | **region** :: [Type => Str]
 
     Specifies the ‘region’ of interest in (r,azimuth) space. r0 is 0, r1 is max length in units.
-    ($(GMTdoc)histogram.html#r)
 - **S** | **stairs** :: [Type => Str | number]
 
     Draws a stairs-step diagram which does not include the internal bars of the default histogram.
-    ($(GMTdoc)histogram.html#s)
 - **T** | **range** | **bin** :: [Type => Str]			`Arg = [min/max/]inc[+n] | file|list]`
 
     Make evenly spaced array of bin boundaries from min to max by inc. If min/max are not given then we
     default to the range in `region`. For constant bin width use `bin=val`..
-    ($(GMTdoc)histogram.html#t)
 - **W** | **pen** :: [Type => Str | Tuple]
 
     Set pen attributes for sector outline or rose plot. [Default is no outline].
-    ($(GMTdoc)histogram.html#w)
 - **Z** | **kind** :: [Type => Number | Str]
 
     Choose between 6 types of histograms.
-    ($(GMTdoc)histogram.html#z)
 - $(GMT.opt_U)
 - $(GMT.opt_V)
 - $(GMT.opt_X)
@@ -97,6 +82,8 @@ Parameters
 - $(GMT.opt_w)
 - $(GMT.opt_swap_xy)
 - $(GMT.opt_savefig)
+
+To see the full documentation type: ``@? histogram``
 """
 function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
