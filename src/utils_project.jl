@@ -197,7 +197,7 @@ function worldrectgrid(proj::String, inc=(30,20); pm=0, worldrect=true)
 	pad = worldrect ? 60 : 0
 
 	meridians = -180.0-pad+pm:inc_x:180+pad+pm
-	meridian  = [(-90.0:1:-80); (-78.0:2:-72); (-70:5:70); (72:2:78); (80:1:90)]	# Attempt to have less points, but ...
+	meridian  = [(-90.0:1:-80); (-78.0:2:78); (72:2:78); (80:1:90)]	# Attempt to have less points, but ...
 	t = collect(0.0:-inc_y:-90)
 	parallels = [t[end]:inc_y:t[2]; 0.0:inc_y:90]		# To center it on 0
 	parallel  = -180.0-pad+pm:5:180+pad+pm
