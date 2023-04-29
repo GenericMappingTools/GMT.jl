@@ -42,17 +42,18 @@ The working or not is controlled by PROJ's `+over` option https://proj.org/usage
    imshow(G)
 """
 # -----------------------------------------------------------------------------------------------
-worldrectangular(fname::String; proj::String="+proj=vandg +over", pm=0, latlim=:auto, latlims=nothing, pad=90, coast=false) =
+worldrectangular(fname::String; proj::StrSymb="+proj=vandg +over", pm=0, latlim=:auto, latlims=nothing, pad=90, coast=false) =
 	worldrectangular(gmtread(fname); proj=proj, pm=pm, latlim=latlim, latlims=latlims, pad=pad, coast=coast)
-function worldrectangular(GI::GItype; proj::String="+proj=vandg +over", pm=0, latlim=:auto, latlims=nothing, pad=90, coast=false)
+function worldrectangular(GI::GItype; proj::StrSymb="+proj=vandg +over", pm=0, latlim=:auto, latlims=nothing, pad=90, coast=false)
 	# Here test if G is global
+	_proj = isa(proj, Symbol) ? string(proj) : proj
 	(latlim === nothing && latlims !== nothing) && (latlim = latlims)	# To accept both latlim & latlims
 	autolat = false
 	isa(latlim, StrSymb) && (autolat = true; latlim = nothing)
 	_latlim = (latlim === nothing) ? (-90,90) : (isa(latlim, Real) ? (-latlim, latlim) : extrema(latlim))
 	(_latlim[1] < -90 || _latlim[2] > 90) && error("Don't kidd, latlim does not have real latitude limits.")
-	!startswith(proj, "+proj=") && (proj = "+proj=" * proj)
-	!contains(proj, " +over") && (proj *= " +over")
+	!startswith(_proj, "+proj=") && (_proj = "+proj=" * _proj)
+	!contains(_proj, " +over") && (_proj *= " +over")
 	(pm > 180) && (pm -= 360);		(pm < -180) && (pm += 360)
 	sw = pad	# This is an attempt to let try minimize the empties that may occur in the corners for some projs
 	res = (isa(coast, Symbol) || isa(coast, String)) ? string(coast) : (coast == 1 ? "crude" : "none")
@@ -76,10 +77,10 @@ function worldrectangular(GI::GItype; proj::String="+proj=vandg +over", pm=0, la
 		Gl.range[1], Gl.range[2] = -360+d, -180
 		G = grdpaste(Gl,Gr)
 	end
-	(pm != 0) && (proj *= " +pm=$pm")
-	G = gdalwarp(G, ["-t_srs", proj])
+	(pm != 0) && (_proj *= " +pm=$pm")
+	G = gdalwarp(G, ["-t_srs", _proj])
 
-	xy = lonlat2xy([-180.0+pm 0; 180+pm 0], t_srs=proj)
+	xy = lonlat2xy([-180.0+pm 0; 180+pm 0], t_srs=_proj)
 	pix_x = axes2pix(xy, size(G), [G.x[1], G.x[end]], [G.y[1], G.y[end]], G.registration, G.layout)[1]
 	if (autolat)
 		t = G[pix_x[1], :]		# The column corresponding to lon = -180
@@ -87,24 +88,24 @@ function worldrectangular(GI::GItype; proj::String="+proj=vandg +over", pm=0, la
 		kb = 0;					while(isnan(t[kb += 1]) && kb < length(t)) end
 		yb, yt = G.y[kb], G.y[kt]
 	else
-		xy = lonlat2xy([-180.0+pm _latlim[1]; 180+pm _latlim[2]], t_srs=proj)
+		xy = lonlat2xy([-180.0+pm _latlim[1]; 180+pm _latlim[2]], t_srs=_proj)
 		_pix_x, _pix_y = axes2pix(xy, size(G), [G.x[1], G.x[end]], [G.y[1], G.y[end]], G.registration, G.layout)
 		yc = pix2axes([_pix_x _pix_y], G.x, G.y)[2]
 		yb, yt = yc[1], yc[2]
 	end
 
 	G = grdcut(G, R=(G.x[pix_x[1]], G.x[pix_x[2]], yb, yt))
-	return res != "none" ? (G, worldrectcoast(proj; res=res)) : G
+	return res != "none" ? (G, worldrectcoast(proj=_proj, res=res)) : G
 end
 
 # -----------------------------------------------------------------------------------------------
 """
-    cl = coastlinesproj(proj::String, res="crude", coastlines=nothing)
+    cl = coastlinesproj(proj="?", res="crude", coastlines=nothing)
 
 Extract the coastlines from GMT's GSHHG database and project them using PROJ (NOT the GMT projection machinery).
 This allows the use of many of the PROJ proijections that are not available from pure GMT.
 
-- `proj`: A proj4 string describing the projection.
+- `proj`: A proj4 string describing the projection (Mandatory).
 - `res`: The GSHHG coastline resolution. Available options are: `crude`, `low`, `intermediate`, `high` and `full`
 - `coastlines`: In alternative to the `res` option, one may pass a GMTdataset with coastlines
    previously loaded (with `gmtread`) from another source.
@@ -115,22 +116,23 @@ A Vector of GMTdataset containing the projected (or not) world GSHHG coastlines 
 ### Example
     cl = coastlinesproj(proj="+proj=ob_tran +o_proj=moll +o_lon_p=40 +o_lat_p=50 +lon_0=60");
 """
-function coastlinesproj(; proj::String="", res="crude", coastlines::Vector{<:GMTdataset}=GMTdataset[])
+function coastlinesproj(; proj::StrSymb="", res="crude", coastlines::Vector{<:GMTdataset}=GMTdataset[])
 	# Project the GSHHG coastlines with PROJ. 'proj' must be a valid proj4 string.
 	proj == "" && return coast(dump=:true, res=res, region=:global)
-	!startswith(proj, "+proj=") && (proj = "+proj=" * proj)
-	worldrectcoast(proj, res=res, coastlines=coastlines, round=true)
+	_proj = isa(proj, Symbol) ? string(proj) : proj
+	!startswith(_proj, "+proj=") && (_proj = "+proj=" * _proj)
+	worldrectcoast(proj=_proj, res=res, coastlines=coastlines, round=true)
 end
 
 # -----------------------------------------------------------------------------------------------
 """
-    cl = worldrectcoast(proj::String, res="crude", coastlines=nothing)
+    cl = worldrectcoast(proj="?", res="crude", coastlines=nothing)
 
 Return a project coastline, at `res` resolution, suitable to overlain in a grid created with the
 `worldrectangular` function. Note that this function, contrary to `coastlinesproj`, returns coastline
 data that spans > 360 degrees.
 
-- `proj`: A proj4 string describing the projection.
+- `proj`: A proj4 string describing the projection (Mandatory).
 - `res`: The GSHHG coastline resolution. Available options are: `crude`, `low`, `intermediate`, `high` and `full`
 - `coastlines`: In alternative to the `res` option, one may pass a GMTdataset with coastlines
    previously loaded (with `gmtread`) from another source.
@@ -138,10 +140,12 @@ data that spans > 360 degrees.
 ### Returns
 A Vector of GMTdataset containing the projected world GSHHG coastlines at resolution `res`.
 """
-function worldrectcoast(proj::String; res="crude", coastlines::Vector{<:GMTdataset}=GMTdataset[], round=false)
+function worldrectcoast(; proj::StrSymb="", res="crude", coastlines::Vector{<:GMTdataset}=GMTdataset[], round=false)
 	# Project also the coastlines to go along with the grid created by worldrectangular
+	(proj == "") && error("'proj' argument cannot be empty.")
+	_proj = isa(proj, Symbol) ? string(proj) : proj
 	cl = (isempty(coastlines)) ? coast(dump=:true, res=res, region=:global) : coastlines
-	cl_prj   = lonlat2xy(cl, t_srs=proj)
+	cl_prj   = lonlat2xy(cl, t_srs=_proj)
 	round && return cl_prj
 
 	#cl_right = coast(dump=:true, res=res, region=(-180,0,-90,90)) .+ 360	# Good try but some points screw
@@ -156,16 +160,17 @@ end
 
 # -----------------------------------------------------------------------------------------------
 """
-    grat = graticules(proj::String, inc=(30,20), pm=0)
+    grat = graticules(proj="", width=(30,20), pm=0)
 or
 
-	grat = graticules(D::GDtype; inc=(30,20))
+	grat = graticules(D::GDtype, width=(30,20))
 
-Create a projected graticule GMTdataset with meridians and parallels at `inc` intervals.
+Create a projected graticule GMTdataset with meridians and parallels at `width` intervals.
 
-- `proj`: A proj4 string describing the projection
+- `proj`: A proj4 string or Symbol describing the projection
 - `D`: Alternatively pass a GMTdataset (or vector of them) holding the projection info in the `proj4` field.
-- `inc`: A scalar or two elements array/tuple with increments in longitude and latitude. If scalar, inc_x = inc_y.
+- `width`: A scalar or two elements array/tuple with increments in longitude and latitude. If scalar, width_x = width_y.
+- `pm`: The projection prime meridian (Default is 0 or whatever is in D.proj4).
 
 ### Returns
 A Vector of GMTdataset containing the projected meridians and parallels. `grat[i]` attributes store
@@ -174,26 +179,35 @@ information about that element lon,lat.
 ### Example
     grat = graticules(proj="+proj=ob_tran +o_proj=moll +o_lon_p=40 +o_lat_p=50 +lon_0=60");
 """
-function graticules(D::GDtype; inc=(30,20))
+function graticules(D::GDtype; width=(30,20))
 	prj = (isa(D, Vector)) ? D[1].proj4 : D.proj4
 	prj == "" && error("Input dataset has no proj4 projection info")
-	graticules(proj=prj, inc=inc)
+	graticules(proj=prj, width=width)
 end
-function graticules(; proj::String="", inc=(30,20), pm=0)
+function graticules(; proj::StrSymb="", width=(30,20), pm=0)
 	# This fun should probably be merged with worldrectgrid
-	(proj != "" && !startswith(proj, "+proj=")) && (proj = "+proj=" * proj)
-	worldrectgrid(proj, inc; pm=pm, worldrect=false)
+	_proj = isa(proj, Symbol) ? string(proj) : proj
+	(_proj != "" && !startswith(_proj, "+proj=")) && (_proj = "+proj=" * _proj)
+	worldrectgrid(proj=_proj, width=width, pm=pm, worldrect=false)
 end
 
 # -----------------------------------------------------------------------------------------------
-function worldrectgrid(proj::String, inc=(30,20); pm=0, worldrect=true)
+function worldrectgrid(D::GDtype; width=(30,20))
+	prj = (isa(D, Vector)) ? D[1].proj4 : D.proj4
+	prj == "" && error("Input dataset has no proj4 projection info")
+	worldrectgrid(proj=prj, width=width)
+end
+function worldrectgrid(; proj::StrSymb="", width=(30,20), pm=0, worldrect=true)
 	# Create a grid of lines in 'proj' coordinates. Input are meridians and parallels at steps
-	# determined by 'inc' and centered at 'pm'. 'pm' can be transmitted via argument or contained in 'proj'
+	# determined by 'width' and centered at 'pm'. 'pm' can be transmitted via argument or contained in 'proj'
 	# 'worldrect=false' means we don't extend beyound  the [-180 180]+pm as we do for worldrectangular.
-	(contains(proj, "+pm=")) && (pm = parse(Float64,string(split(split("+proj=vandg +pm=9 +over", "+pm=")[2])[1])))
-	(pm != 0 && !contains(proj, "+pm=")) && (proj *= " +pm=$pm")
-	(worldrect && !contains(proj, "+over")) && (proj *= " +over")
-	inc_x, inc_y = (length(inc) == 2) ? (inc[1], inc[2]) : (inc, inc)
+
+	_proj = isa(proj, Symbol) ? string(proj) : proj
+	!startswith(_proj, "+proj=") && (_proj = "+proj=" * _proj)
+	(contains(_proj, "+pm=")) && (pm = parse(Float64,string(split(split("+proj=vandg +pm=9 +over", "+pm=")[2])[1])))
+	(pm != 0 && !contains(_proj, "+pm=")) && (_proj *= " +pm=$pm")
+	(worldrect && !contains(_proj, "+over")) && (_proj *= " +over")
+	inc_x, inc_y = (length(width) == 2) ? (width[1], width[2]) : (width, width)
 	pad = worldrect ? 60 : 0
 
 	meridians = -180.0-pad+pm:inc_x:180+pad+pm
@@ -226,12 +240,12 @@ function worldrectgrid(proj::String, inc=(30,20); pm=0, worldrect=true)
 
 	Dgrid = Vector{GMTdataset}(undef, length(meridians)+length(parallels))
 	n = 0
-	if (proj != "")
+	if (_proj != "")
 		for m = meridians
-			Dgrid[n+=1] = mat2ds(lonlat2xy([fill(m,length(meridian)) meridian], t_srs=proj), attrib=Dict("merid_b" => "$m,-90", "merid_e" => "$m,90"))
+			Dgrid[n+=1] = mat2ds(lonlat2xy([fill(m,length(meridian)) meridian], t_srs=_proj), attrib=Dict("merid_b" => "$m,-90", "merid_e" => "$m,90"))
 		end
 		for p = parallels
-			Dgrid[n+=1] = mat2ds(lonlat2xy([parallel fill(p, length(parallel))], t_srs=proj), attrib=Dict("para_b" => "$p,$(parallel[1])", "para_e" => "$p,$(parallel[end])"))
+			Dgrid[n+=1] = mat2ds(lonlat2xy([parallel fill(p, length(parallel))], t_srs=_proj), attrib=Dict("para_b" => "$p,$(parallel[1])", "para_e" => "$p,$(parallel[end])"))
 		end
 		check_gaps(Dgrid, length(meridians)+1, length(Dgrid))	
 	else					# Cartesian graticules
@@ -244,7 +258,7 @@ function worldrectgrid(proj::String, inc=(30,20); pm=0, worldrect=true)
 	end
 	Dgrid[1].attrib["n_meridians"] = "$(length(meridians))"
 	Dgrid[1].attrib["n_parallels"] = "$(length(parallels))"
-	Dgrid[1].proj4 = proj
+	Dgrid[1].proj4 = _proj
 	set_dsBB!(Dgrid, false)
 	return Dgrid
 
@@ -259,25 +273,26 @@ function worldrectgrid(proj::String, inc=(30,20); pm=0, worldrect=true)
 	for k = -90:inc_y:90
 		Dlats[n+=1] = mat2ds([-270:10:270' fill(k,55)])
 	end
-	x = lonlat2xy(Dlons, t_srs=proj)
-	y = lonlat2xy(Dlats, t_srs=proj)
+	x = lonlat2xy(Dlons, t_srs=_proj)
+	y = lonlat2xy(Dlats, t_srs=_proj)
 	x, y
 	=#
 end
 
 # -----------------------------------------------------------------------------------------------
-function plotgrid!(GI::GItype, Dgrid::Vector{<:GMTdataset})
+function plotgrid!(GI::GItype, Dgrat::Vector{<:GMTdataset})
+	# Make an image of the grid G_I overlaid with the graticules in Dgrat
 	bot = [GI.range[1] GI.range[3]; GI.range[2] GI.range[3]]
 	top = [GI.range[1] GI.range[4]; GI.range[2] GI.range[4]]
-	n_meridians = parse(Int16, Dgrid[1].attrib["n_meridians"])
-	n_parallels = parse(Int16, Dgrid[1].attrib["n_parallels"])
+	n_meridians = parse(Int16, Dgrat[1].attrib["n_meridians"])
+	n_parallels = parse(Int16, Dgrat[1].attrib["n_parallels"])
 	lon_b, lon_t = Matrix{Float64}(undef, n_meridians,2), Matrix{Float64}(undef, n_meridians,2)
 	k1, k2 = 0, 0
 	for k = 1:n_meridians
-		t = gmtspatial((Dgrid[k], bot), intersections=:e)
+		t = gmtspatial((Dgrat[k], bot), intersections=:e)
 		isempty(t) && continue
 		lon_b[k1+=1,2], lon_b[k1,1] = round(xy2lonlat(t[1,1:2], s_srs=GI.proj4)[1], digits=0), t[1]
-		t = gmtspatial((Dgrid[k], top), intersections=:e)
+		t = gmtspatial((Dgrat[k], top), intersections=:e)
 		isempty(t) && continue
 		lon_t[k2+=1,2], lon_t[k2,1] = round(xy2lonlat(t[1,1:2], s_srs=GI.proj4)[1], digits=0), t[1]
 	end
@@ -287,14 +302,14 @@ function plotgrid!(GI::GItype, Dgrid::Vector{<:GMTdataset})
 	left = [GI.range[1] GI.range[3]; GI.range[1] GI.range[4]]
 	lat = Matrix{Float64}(undef, n_parallels,2)
 	n = 0
-	for k = n_meridians+1:length(Dgrid)
-		t = gmtspatial((Dgrid[k], left), intersections=:e)
+	for k = n_meridians+1:length(Dgrat)
+		t = gmtspatial((Dgrat[k], left), intersections=:e)
 		isempty(t) && continue
 		lat[n+=1,2], lat[n,1] = round(xy2lonlat(t[1,1:2], s_srs=GI.proj4)[2], digits=0), t[2]
 	end
 	(n != size(lat,1)) && (lat = lat[1:n, :])	# Remove rows not filled because parallels did not cross E-W boundary
 
-	plot!(Dgrid)
+	plot!(Dgrat)
 	txt = [@sprintf("a %d", lat[k,2]) for k = 1:size(lat,1)]
 	basemap!(yaxis=(custom=(pos=lat[:,1], type=txt),), par=(FONT_ANNOT_PRIMARY="+7",))
 	txt = [@sprintf("a %d", lon_b[k,2]) for k = 1:size(lon_b,1)]
