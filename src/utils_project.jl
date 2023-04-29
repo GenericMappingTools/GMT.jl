@@ -244,7 +244,8 @@ function worldrectgrid(proj::String, inc=(30,20); pm=0, worldrect=true)
 	end
 	Dgrid[1].attrib["n_meridians"] = "$(length(meridians))"
 	Dgrid[1].attrib["n_parallels"] = "$(length(parallels))"
-	Dgrid[1].proj4 = proj	
+	Dgrid[1].proj4 = proj
+	set_dsBB!(Dgrid, false)
 	return Dgrid
 
 	#=
