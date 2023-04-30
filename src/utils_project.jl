@@ -57,6 +57,7 @@ function worldrectangular(GI::GItype; proj::StrSymb="+proj=vandg +over", pm=0, l
 	(pm > 180) && (pm -= 360);		(pm < -180) && (pm += 360)
 	sw = pad	# This is an attempt to let try minimize the empties that may occur in the corners for some projs
 	res = (isa(coast, Symbol) || isa(coast, String)) ? string(coast) : (coast == 1 ? "crude" : "none")
+	coastlines = (res == "none" && isa(coast, GDtype)) ? coast : GMTdataset[]	# See if we have an costlines argin.
 
 	if (pm > -90)
 		Gr = grdcut(GI, R=(-180,-180+sw+pm,-90,90))			# Chop of 90 deg on the West
@@ -95,7 +96,7 @@ function worldrectangular(GI::GItype; proj::StrSymb="+proj=vandg +over", pm=0, l
 	end
 
 	G = grdcut(G, R=(G.x[pix_x[1]], G.x[pix_x[2]], yb, yt))
-	return res != "none" ? (G, worldrectcoast(proj=_proj, res=res)) : G
+	return (res != "none" || !isempty(coastlines)) ? (G, worldrectcoast(proj=_proj, res=res, coastlines=coastlines)) : G
 end
 
 # -----------------------------------------------------------------------------------------------
@@ -152,6 +153,11 @@ function worldrectcoast(; proj::StrSymb="", res="crude", coastlines::Vector{<:GM
 	#cl_left  = coast(dump=:true, res=res, region=(0,180,-90,90)) .- 360
 	cl_right = cl .+ 360
 	cl_left  = cl .- 360
+
+	tmp = cat(cl_left, cl)
+	tmp = cat(tmp, cl_right)
+	gdalwrite("cl540.gpkg", tmp)
+
 	cl_right_prj = lonlat2xy(cl_right, t_srs=proj)
 	cl_left_prj  = lonlat2xy(cl_left, t_srs=proj)
 	tmp = cat(cl_left_prj, cl_prj)
