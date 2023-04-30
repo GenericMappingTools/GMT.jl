@@ -153,11 +153,9 @@ function worldrectcoast(; proj::StrSymb="", res="crude", coastlines::Vector{<:GM
 	#cl_left  = coast(dump=:true, res=res, region=(0,180,-90,90)) .- 360
 	cl_right = cl .+ 360
 	cl_left  = cl .- 360
-
-	tmp = cat(cl_left, cl)
-	tmp = cat(tmp, cl_right)
-	gdalwrite("cl540.gpkg", tmp)
-
+	#tmp = cat(cl_left, cl)
+	#tmp = cat(tmp, cl_right)
+	#gdalwrite("cl540.gpkg", tmp)
 	cl_right_prj = lonlat2xy(cl_right, t_srs=proj)
 	cl_left_prj  = lonlat2xy(cl_left, t_srs=proj)
 	tmp = cat(cl_left_prj, cl_prj)
