@@ -116,7 +116,7 @@ mutable struct GMTdataset{T, N} <: AbstractArray{T,N}
 	proj4::String
 	wkt::String
 	epsg::Int
-	geom::Union{UInt32, Int}
+	geom::Union{UInt32, Int}	# 0->Unknown, 1->Point, 2->Line, 3->Polygon, 4->MultiPoint, 5->MultiLine, 6->MultiPolyg
 end
 Base.size(D::GMTdataset) = size(D.data)
 Base.getindex(D::GMTdataset{T,N}, inds::Vararg{Int,N}) where {T,N} = D.data[inds...]
@@ -971,9 +971,9 @@ function grid_init(API::Ptr{Nothing}, X::GMT_RESOURCE, Grid::GMTgrid, pad::Int=2
 		h.z_unit = map(UInt8, (string("z", repeat("\0",79))...,))
 	end
 
-	if (Grid.title != "")    h.title   = map(UInt8, (Grid.title...,))    end
-	if (Grid.remark != "")   h.remark  = map(UInt8, (Grid.remark...,))   end
-	if (Grid.command != "")  h.command = map(UInt8, (Grid.command...,))  end
+	(Grid.title != "")   && (h.title   = map(UInt8, (string(Grid.title, repeat("\0", 80-length(Grid.title)))...,)))
+	(Grid.remark != "")  && (h.remark  = map(UInt8, (string(Grid.remark, repeat("\0", 160-length(Grid.remark)))...,)))
+	(Grid.command != "") && (h.command = map(UInt8, (string(Grid.command, repeat("\0", 320-length(Grid.command)))...,)))
 	if (Grid.proj4 != "")    h.ProjRefPROJ4 = pointer(Grid.proj4)  end
 	if (Grid.wkt != "")      h.ProjRefWKT   = pointer(Grid.wkt)    end
 	if (Grid.epsg != 0)      h.ProjRefEPSG  = Int32(Grid.epsg)     end

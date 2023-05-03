@@ -90,3 +90,38 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 gmtselect(arg1; kw...) = gmtselect("", arg1; kw...)
+
+# ---------------------------------------------------------------------------------------------
+function clipbyrect(D::Vector{<:GMTdataset}, limits; revert::Bool=false)
+	# gmtselect -R (and maybe others) is screwing by not respecting some segments.
+	# This function replaces that functionality. Ideally it should behave differently when clipping lines or polygons 
+	in    = zeros(Bool, numel(D))
+	cross = zeros(Bool, numel(D))
+	for k = 1:numel(D)
+		in[k] = D[k].bbox[1] >= limits[1] &&  D[k].bbox[2] <= limits[2]
+		in[k] && (in[k] = D[k].bbox[3] >= limits[3] && D[k].bbox[4] <= limits[4])
+		out = !in[k]	# In the end a out[k] is one that is not 'in' nor 'cross'
+		if (!in[k])
+			out = D[k].bbox[2] < limits[1] || D[k].bbox[1] > limits[2]
+			!out && (out = (D[k].bbox[4] < limits[3] || D[k].bbox[3] > limits[4]))
+		end
+		cross[k] = !in[k] && !out
+	end
+	revert && (in .= .!in)
+	Dclipped = Vector{GMTdataset}(undef, sum(in)+sum(cross))
+	m = 0
+	for k = 1:numel(D)
+		in[k] && (Dclipped[m+=1] = deepcopy(D[k]))
+		if (cross[k])
+			in_seg = zeros(Bool, size(D[k],1))
+			for n = 1:size(D[k],1)
+				in_seg[n] = D[k][n,1] <= limits[2] && D[k][n,1] >= limits[1]
+				in_seg[n] && (in_seg[n] = (D[k][n,2] <= limits[4] && D[k][n,2] >= limits[3]))
+			end
+			Dclipped[m+=1] = mat2ds(D[k].data[in_seg,:])
+		end
+	end
+	set_dsBB!(Dclipped, false)
+	Dclipped[1].proj4, Dclipped[1].wkt, Dclipped[1].epsg = D[1].proj4, D[1].wkt, D[1].epsg
+	return Dclipped
+end

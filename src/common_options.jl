@@ -3574,7 +3574,9 @@ function round_wesn(_wesn::Vector{Float64}, geo::Bool=false, pad=zeros(2))::Vect
 	range[2] = wesn[4] - wesn[3]
 	if (geo) 					# Special checks due to periodicity
 		if (range[1] > 306.0) 	# If within 15% of a full 360 we promote to 360
-			wesn[1] = 0.0;	wesn[2] = 360.0
+			if ((wesn[1] + wesn[2]) / 2 < 100)  wesn[1] = -180.;	wesn[2] = 180.
+			else                                wesn[1] = 0.;		wesn[2] = 360.
+			end
 			set[1] = true
 		end
 		if (range[2] > 153.0) 	# If within 15% of a full 180 we promote to 180
