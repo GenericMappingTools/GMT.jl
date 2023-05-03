@@ -134,8 +134,9 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 		R = [R[ind]]		# Keep it a vector to be consistent with the other Dump cases
 		R[1].proj4, R[1].geom = prj4WGS84, wkbPolygon
 	end
-	isa(R, Vector{GMTdataset}) && (for k = 1:numel(R)  R[k].colnames = ["Lon", "Lat"]  end)
-	isa(R, GMTdataset) && (R.colnames = ["Lon", "Lat"])
+	geom = occursin(" -M", cmd) ? (occursin(" -E", cmd) ? wkbPolygon : wkbLineString) : wkbUnknown
+	isa(R, Vector{<:GMTdataset}) && (for k = 1:numel(R)  R[k].colnames = ["Lon", "Lat"]; R[k].geom = geom  end; R[1].proj4 = prj4WGS84)
+	isa(R, GMTdataset) && (R.colnames = ["Lon", "Lat"]; R.geom = geom; R.proj4 = prj4WGS84)
 	R
 end
 
