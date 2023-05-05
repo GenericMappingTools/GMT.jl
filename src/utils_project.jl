@@ -386,6 +386,8 @@ function plotgrid!(GI::GItype, Dgrat::Vector{<:GMTdataset}; annot=true, sides::S
 	for k = 1:size(lon_S,1)
 		(annot_S && lon_S[k,2] >  180) && (lon_S[k,2] -= 360.)
 		(annot_S && lon_S[k,2] < -180) && (lon_S[k,2] += 360.)
+	end
+	for k = 1:size(lon_N,1)
 		(annot_N && lon_N[k,2] >  180) && (lon_N[k,2] -= 360.)
 		(annot_N && lon_N[k,2] < -180) && (lon_N[k,2] += 360.)
 	end
