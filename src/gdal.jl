@@ -1639,7 +1639,6 @@ end
 	gdalvectortranslate(ds::GMT.GMTdataset, opts::Vector{String}=String[]; dest="/vsimem/tmp", gdataset=false, save="") = 				gdalvectortranslate([ds], opts; dest=dest, gdataset=gdataset, save=save)
 	function gdalvectortranslate(ds::Vector{GMT.GMTdataset}, opts::Vector{String}=String[]; dest="/vsimem/tmp", gdataset=false, save="")
 		o = gdalvectortranslate(GMT.gmt2gd(ds), opts; dest=dest, gdataset=gdataset, save=save)
-		#(!isa(o, Vector{GMT.GMTdataset}) && dest == "/vsimem/tmp") && deletedatasource(o, "/vsimem/tmp")	# WTF do I need to do this?
 		(!isa(o, GMT.GDtype) && dest == "/vsimem/tmp") && deletedatasource(o, "/vsimem/tmp")	# WTF do I need to do this?
 		o
 	end
