@@ -661,7 +661,10 @@ function lonlat2xy(D::Vector{<:GMTdataset}, t_srs_=nothing; t_srs=nothing, s_srs
 	if (t_srs != "") _t_srs = t_srs
 	else             _t_srs = (D[1].proj4 != "") ? D[1].proj4 : D[1].wkt
 	end
-	ogr2ogr(D, ["-s_srs", s_srs, "-t_srs", _t_srs, "-overwrite"])
+	r = ogr2ogr(D, ["-s_srs", s_srs, "-t_srs", _t_srs, "-overwrite"])
+	# For some bloody reason if we don't do this and call gdalwarp after, we get a "gdalwarp returned a NULL pointer." error 
+	(length(D) > 1) && ogr2ogr([0.0 0], ["-s_srs", "+proj=lonlat", "-t_srs", "+proj=lonlat", "-overwrite"])
+	return r
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -705,5 +708,8 @@ function xy2lonlat(D::Vector{<:GMTdataset}, s_srs_=nothing; s_srs=nothing, t_srs
 	if (s_srs != "") _s_srs = s_srs
 	else             _s_srs = (D[1].proj4 != "") ? D[1].proj4 : D[1].wkt
 	end
-	ogr2ogr(D, ["-s_srs", _s_srs, "-t_srs", t_srs, "-overwrite"])
+	r = ogr2ogr(D, ["-s_srs", _s_srs, "-t_srs", t_srs, "-overwrite"])
+	# For some bloody reason if we don't do this and call gdalwarp after, we get a "gdalwarp returned a NULL pointer." error 
+	(length(D) > 1) && ogr2ogr([0.0 0], ["-s_srs", "+proj=lonlat", "-t_srs", "+proj=lonlat", "-overwrite"])
+	return r
 end
