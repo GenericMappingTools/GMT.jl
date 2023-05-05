@@ -122,6 +122,6 @@ function clipbyrect(D::Vector{<:GMTdataset}, limits; revert::Bool=false)
 		end
 	end
 	set_dsBB!(Dclipped, false)
-	Dclipped[1].proj4, Dclipped[1].wkt, Dclipped[1].epsg = D[1].proj4, D[1].wkt, D[1].epsg
+	if (!isempty(Dclipped)) Dclipped[1].proj4, Dclipped[1].wkt, Dclipped[1].epsg = D[1].proj4, D[1].wkt, D[1].epsg  end
 	return Dclipped
 end
