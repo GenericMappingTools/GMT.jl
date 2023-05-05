@@ -3,7 +3,7 @@ module GMT
 using Printf, Dates, Statistics
 using Tables: Tables
 using PrettyTables
-using SnoopPrecompile
+using PrecompileTools
 
 struct CTRLstruct
 	limits::Vector{Float64}			# To store the data limits. First 6 store: data limits. Second 6: plot limits
@@ -283,8 +283,7 @@ include("imshow.jl")		# Include later because one method depends on knowing abou
 const global current_cpt = [GMTcpt()]		# To store the current palette
 const global legend_type = [legend_bag()]	# To store Legends info
 
-import SnoopPrecompile
-@SnoopPrecompile.precompile_all_calls begin
+@setup_workload begin
 	G_API[1] = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS)
 	GMT.parse_B(Dict(:frame => (annot=10, title="Ai Ai"), :grid => (pen=2, x=10, y=20)), "", " -Baf -BWSen")
 	GMT.parse_R(Dict(:xlim => (1,2), :ylim => (3,4), :zlim => (5,6)), "")
