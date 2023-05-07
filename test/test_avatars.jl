@@ -113,6 +113,8 @@
 	lines(x, sin.(x), ls="linediamond", theme=(:A0atg), Vd=dbg2) 
 	lines(x, sin.(x), ls="linediamond", theme=(:A2atg), Vd=dbg2) 
 	lines(x, sin.(x), ls="linediamond", theme=(:A2agITGraph), Vd=dbg2)
+	lines(1:12, 1:12, legend=(label="data",position=(outside=true,anchor=:TR)), name="lixo.ps")
+	lines(1:12, 1:12, legend=(label="data", pos=:MC), name="lixo.ps")
 	theme("classic", noticks=true, graygrid=true)
 	theme("modern")		# Must reset otherwise many tests would fail due to different configs
 	scatter!(x -> x^3 - 2x^2 + 3x - 1, Vd=dbg2)

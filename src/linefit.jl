@@ -253,13 +253,14 @@ function plotlinefit(D::GMTdataset; first::Bool=true, grp::Bool=false, kw...)
 	end
 
 	leg_off = "0.15"		# Default legend offset
+	_figname = find_in_dict(d, [:name :figname :savefig])[1]	# We can't let it go before last plot command (no use when grp)
 	if (first)
 		mi, ma = min(mi, D.ds_bbox[3]), max(ma, D.ds_bbox[4])
 		wesn::Vector{Float64} = round_wesn([D.ds_bbox[1], D.ds_bbox[2], mi, ma], false, [0.01, 0.01])
 		opt_R = @sprintf("%.12g/%.12g/%.12g/%.12g", wesn[1], wesn[2], wesn[3], wesn[4])
 
 		if (do_legends && (_cmd = parse_params(d, "", false)) != "")
-			contains(_cmd, "inside") && (leg_off = "0.6")	# For inside annotations, offset must be larger
+			contains(_cmd, "inside") && (leg_off = "0.6")		# For inside annotations, offset must be larger
 		end
 
 		(haskey(d, :xlabel) && string(d[:xlabel]) == "auto") && (d[:xlabel] = D.colnames[1])	# Because basemap knows nikles on D
@@ -313,7 +314,8 @@ function plotlinefit(D::GMTdataset; first::Bool=true, grp::Bool=false, kw...)
 		                text=@sprintf("[\\261@~s@~ab] Y = (%.3f \\261 %.3f) + (%.3f \\261 %.3f)*X", a, σa, b, σb)),
 		         symbol2=(marker=:point, size=0, dx_right=0.0,
 		                text=@sprintf("[%d%%]  Y = (%.3f \\261 %.3f) + (%.3f \\261 %.3f)*X", ci, a, σa95, b, σb95))),
-		         F="+p0.5+gwhite", D="j$(pos)+w$(lab_width)+o$(leg_off)", par=(:FONT_ANNOT_PRIMARY, fs), show=do_show)
+		         F="+p0.5+gwhite", D="j$(pos)+w$(lab_width)+o$(leg_off)", par=(:FONT_ANNOT_PRIMARY, fs), show=do_show,
+				 name=(_figname !== nothing) ? _figname : "")
 	end
 end
 plotlinefit!(D; kw...) = plotlinefit(D; first=false, kw...)

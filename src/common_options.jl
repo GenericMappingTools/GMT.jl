@@ -1268,7 +1268,7 @@ function parse_type_anchor(d::Dict, cmd::String, symbs::VMs, mapa::NamedTuple, d
 	if (!got_str && opt != "" && opt[1] != 'j' && opt[1] != 'J' && opt[1] != 'g' && opt[1] != 'n' && opt[1] != 'x')
 		opt = def_CS * opt
 	end
-	if (opt != "")  cmd *= " -" * string(symbs[1]) * opt  end
+	(opt != "") && (cmd = (symbs[1] != :_) ? cmd * " -" * string(symbs[1]) * opt : cmd * opt)
 	return cmd
 end
 
@@ -4425,18 +4425,38 @@ function digests_legend_bag(d::Dict, del::Bool=true)
 	     (haskey(legend_type[1].optsDict, :pos) || haskey(legend_type[1].optsDict, :position)) ?
 		 legend_type[1].optsDict : Dict()
 
-	if ((opt_D::String = add_opt(_d, "", "", [:pos :position],
-		(map_coord="g",plot_coord="x",norm="n",pos="j",width="+w",justify="+j",spacing="+l",offset="+o"))) == "")
+	_opt_D = (((val = find_in_dict(_d, [:pos :position], false)[1]) !== nothing) && isa(val, StrSymb)) ? string(val)::String : ""
+	if ((opt_D::String = parse_type_anchor(_d, "", [:_ :pos :position],
+	                                       (map=("g", arg2str, 1), outside=("J", arg2str, 1), inside=("j", arg2str, 1), norm=("n", arg2str, 1), paper=("x", arg2str, 1), anchor=("", arg2str, 2), width=("+w", arg2str), justify="+j", spacing="+l", offset=("+o", arg2str)), 'j')) == "")
 		opt_D = @sprintf("jTR+w%.3f+o0.1", symbW*1.2 + lab_width)
 	else
-		t = justify(opt_D, true)
-		if (length(t) == 2)
-			opt_D = "j" * t
+		offset = "0.1"		# The default offset. Will be changed in the outside case if we have tick marks
+		# The problem is that the -DJ behaves a bit crazilly on the corners, so we're forced to do some gymns
+		# to not plot the legend "on the diagonal" and that implies the use of +j that is a very confusing option
+		if (startswith(opt_D,"JTL") || startswith(opt_D,"JTR") || startswith(opt_D,"JBL") || startswith(opt_D,"JBR") && !contains(opt_D, "+j"))
+			opt_D *= "+j" * opt_D[2] * (opt_D[3] == 'L' ? 'R' : 'L')
+			if (!occursin("+o", opt_D))
+				# Try to find a -Baxes token and see if 'axes' contains an annotated axis on the same side as the legend
+				s = split(legend_type[1].cmd[1], " -B")
+				for t in s
+					t[1] == '-' && continue				# This one can't be of any interest
+					ss = split(split(t)[1],'+')[1]		# If we have an annotated or with ticks guestimate an offset
+					(opt_D[end] == 'L' && contains(ss, 'e') || opt_D[end] == 'R' && contains(ss, 'W')) && (offset = "0.2/0")
+					if (opt_D[end] == 'L' && contains(ss, 'E') || opt_D[end] == 'R' && contains(ss, 'W'))
+						o = round((abs(floor(log10(CTRL.limits[10]))) + 1) * 12 * 2.54 / 72, digits=1)	# crude estimate
+						(opt_D *= "+o$o" * "/0")
+					end
+				end
+			end
 		else
-			(opt_D[1] != 'j' && opt_D[1] != 'g' && opt_D[1] != 'x' && opt_D[1] != 'n') && (opt_D = "jTR" * opt_D)
+			(_opt_D != "") && (opt_D = _opt_D)
+			t = justify(opt_D, true)
+			if (length(t) == 2)
+				opt_D = "j" * t
+			end
 		end
 		(!occursin("+w", opt_D)) && (opt_D = @sprintf("%s+w%.3f", opt_D, symbW*1.2 + lab_width))
-		(!occursin("+o", opt_D)) && (opt_D *= "+o0.1")
+		(!occursin("+o", opt_D)) && (opt_D *= "+o" * offset)
 	end
 
 	_d = (haskey(dd, :box) && dd[:box] !== nothing) ? dd : haskey(legend_type[1].optsDict, :box) ? legend_type[1].optsDict : Dict()
@@ -4453,6 +4473,7 @@ function digests_legend_bag(d::Dict, del::Bool=true)
 	end
 	
 	if (legend_type[1].Vd > 0)  d[:Vd] = legend_type[1].Vd;  dbg_print_cmd(d, leg[1:kk])  end	# Vd=2 wont work
+	(legend_type[1].Vd > 0) && println("F=",opt_F, " D=",opt_D, " font=",fnt)
 	gmt_restart()		# Some things with the themes may screw
 	legend!(text_record(leg[1:kk]), F=opt_F, D=opt_D, par=(:FONT_ANNOT_PRIMARY, fnt))
 	legend_type[1] = legend_bag()			# Job done, now empty the bag
