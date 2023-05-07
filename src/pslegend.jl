@@ -53,7 +53,7 @@ function legend(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd, = parse_common_opts(d, cmd, [:F :c :p :q :t :JZ :UVXY :params], first)
 
 	opt_D = parse_type_anchor(d, "", [:D :pos :position],
-	                         (map=("g", arg2str, 1), outside=("J", arg2str, 1), inside=("j", arg2str, 1), norm=("n", arg2str, 1), paper=("x", arg2str, 1), width=("+w", arg2str), justify="+j", spacing="+l", offset=("+o", arg2str)), 'j')
+	                         (map=("g", arg2str, 1), outside=("J", arg2str, 1), inside=("j", arg2str, 1), norm=("n", arg2str, 1), paper=("x", arg2str, 1), anchor=("", arg2str, 2), width=("+w", arg2str), justify="+j", spacing="+l", offset=("+o", arg2str)), 'j')
 	cmd  = parse_these_opts(cmd, d, [[:C :clearance], [:M], [:S :scale], [:T :leg_file]])
 
 	show_kwargs[1] && legend_help()
