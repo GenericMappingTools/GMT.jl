@@ -2233,8 +2233,10 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)::String
 	key = keys(nt);						# The keys actually used in this call
 	d = nt2dict(mapa)					# The flags mapping as a Dict (all possible flags of the specific option)
 	cmd::String = "";		cmd_hold = Vector{String}(undef, 2);	order = zeros(Int,2,1);  ind_o = 0
+	count = zeros(Int, length(key))
 	for k = 1:numel(key)::Int			# Loop over the keys of option's tuple
 		!haskey(d, key[k]) && continue
+		count[k] = k
 		isa(nt[k], Dict) && (nt[k] = Base.invokelatest(dict2nt, nt[k]))
 		if (isa(d[key[k]], Tuple))		# Complexify it. Here, d[key[k]][2] must be a function name.
 			if (isa(nt[k], NamedTuple))
@@ -2291,6 +2293,10 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)::String
 		else
 			cmd *= d[key[k]]::String * arg2str(nt[k])::String
 		end
+	end
+
+	if (sum(count) > 0 && any(count .== 0))
+		for k = 1:numel(key) count[k] == 0 && println("\t\tWarning: keyword '$(key[k])' was not consumed") end
 	end
 
 	if (ind_o > 0)			# We have an ordered set of flags (-Tm, -Td, -D, etc...). Not so trivial case
@@ -4433,7 +4439,7 @@ function digests_legend_bag(d::Dict, del::Bool=true)
 		offset = "0.1"		# The default offset. Will be changed in the outside case if we have tick marks
 		# The problem is that the -DJ behaves a bit crazilly on the corners, so we're forced to do some gymns
 		# to not plot the legend "on the diagonal" and that implies the use of +j that is a very confusing option
-		if (startswith(opt_D,"JTL") || startswith(opt_D,"JTR") || startswith(opt_D,"JBL") || startswith(opt_D,"JBR") && !contains(opt_D, "+j"))
+		if ((startswith(opt_D,"JTL") || startswith(opt_D,"JTR") || startswith(opt_D,"JBL") || startswith(opt_D,"JBR")) && !contains(opt_D, "+j"))
 			opt_D *= "+j" * opt_D[2] * (opt_D[3] == 'L' ? 'R' : 'L')
 			if (!occursin("+o", opt_D))
 				# Try to find a -Baxes token and see if 'axes' contains an annotated axis on the same side as the legend
