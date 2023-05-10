@@ -20,6 +20,7 @@ function ecef2enuv(u, v, w, lon0, lat0)
 	return east, north, up
 end
 
+# -----------------------------------------------------------------------------------------------
 """
     GI[,coast] = worldrectangular(GI; proj::String="+proj=vandg", pm=0, latlim=:auto, coast=false)
 
@@ -45,7 +46,6 @@ The working or not is controlled by PROJ's `+over` option https://proj.org/usage
    G = worldrectangular("@earth_relief_10m_g")
    imshow(G)
 """
-# -----------------------------------------------------------------------------------------------
 worldrectangular(fname::String; proj::StrSymb="+proj=vandg +over", pm=0, latlim=:auto, latlims=nothing, pad=0, coast=false) =
 	worldrectangular(gmtread(fname); proj=proj, pm=pm, latlim=latlim, latlims=latlims, pad=pad, coast=coast)
 function worldrectangular(GI::GItype; proj::StrSymb="+proj=vandg +over", pm=0, latlim=:auto, latlims=nothing, pad=0, coast=false)
