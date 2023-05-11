@@ -355,7 +355,7 @@ function opt_R2num(opt_R::String)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_JZ(d::Dict, cmd::String, del::Bool=true)
+function parse_JZ(d::Dict, cmd::String, del::Bool=true; O::Bool=false, is3D::Bool=false)
 	symbs = [:JZ :Jz :zscale :zsize]
 	(show_kwargs[1]) && return (print_kwarg_opts(symbs, "String | Number"), "")
 	opt_J::String = "";		seek_JZ = true
@@ -374,7 +374,8 @@ function parse_JZ(d::Dict, cmd::String, del::Bool=true)
 			cmd *= opt_J
 		end
 	end
-	CTRL.pocket_J[3] = opt_J
+	#CTRL.pocket_J[3] = opt_J
+	(is3D && O && opt_J == "" && CTRL.pocket_J[3] != "") ? (opt_J = CTRL.pocket_J[3]; cmd *= opt_J) : CTRL.pocket_J[3] = opt_J
 	return cmd, opt_J
 end
 
