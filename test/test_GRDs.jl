@@ -14,7 +14,7 @@
 	println("	GRD2CPT")
 	G=gmt("grdmath", "-R0/10/0/10 -I2 X");
 	C=grd2cpt(G);
-	grd2cpt(G, cmap="lixo.cpt")
+	grd2cpt(G, cmap="lixo.cpt", V="q")
 
 	# GRD2XYZ (It's tested near the end)
 	#D=grd2xyz(G); # Use G of previous test

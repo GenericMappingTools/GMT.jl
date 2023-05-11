@@ -237,7 +237,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	if ((do_Z_fill || do_Z_outline || (got_color_line_grad && !is3D)) && !occursin("-C", cmd))
 		if (isempty(current_cpt[1]))
 			if (got_color_line_grad)		# Use the fact that we have min/max already stored
-				mima::Vector{Float64} = (arg1.ds_bbox[5+2*is3D], arg1.ds_bbox[6+2*is3D])
+				mima::Vector{Float64} = (arg1.ds_bbox[5+2*is3D]::Float64, arg1.ds_bbox[6+2*is3D]::Float64)
 			else
 				mima = [extrema(last_non_nothing(arg1, arg2, arg3))...]	# Why 'last'?
 			end
@@ -360,7 +360,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function with_xyvar(d::Dict, arg1::GMTdataset, no_x::Bool=false)::Union{GMTdataset, Vector{<:GMTdataset}}
-	# Make a subset of a GMTdataset by selecting which coluns to extract. The selection can be done by
+	# Make a subset of a GMTdataset by selecting which columns to extract. The selection can be done by
 	# column numbers or column names. 'xvar' selects only the xx col, but 'yvar' can select more than one.
 	# 'no_x' is for croping some columns and not add a x column and not split in many D's (one per column).
 	# By default when yvar is a Vec we split the columns by default (for ploting reasons since we want a

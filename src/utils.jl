@@ -480,16 +480,16 @@ function setfld!(D::Vector{<:GMTdataset}; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function get_group_indices(d::Dict, data)::Tuple{Vector{AbstractVector{Union{Int,String}}}, Vector{Any}}
+function get_group_indices(d::Dict, data)::Tuple{Vector{Vector{Union{Int,String}}}, Vector{Any}}
 	# If 'data' is a Vector{GMTdataset} return results respecting only the first GMTdataset of the array.
-	group::AbstractVector{Union{Int,String}} = ((val = find_in_dict(d, [:group])[1]) === nothing) ? AbstractVector[] : val
+	group::Vector{Union{Int,String}} = ((val = find_in_dict(d, [:group])[1]) === nothing) ? Int[] : val
 	groupvar::StrSymb = ((val = find_in_dict(d, [:groupvar :hue])[1]) === nothing) ? "" : val
 	((groupvar != "") && !isa(data, GDtype)) && error("'groupvar' can only be used when input is a GMTdataset")
-	(isempty(group) && groupvar == "") && return AbstractVector[], []
+	(isempty(group) && groupvar == "") && return Int[], []
 	get_group_indices(isa(data, Vector{<:GMTdataset}) ? data[1] : data, group, groupvar)
 end
 
-function get_group_indices(data, group, groupvar::StrSymb)::Tuple{Vector{AbstractVector{Union{Int,String}}}, Vector{Any}}
+function get_group_indices(data, group, groupvar::StrSymb)::Tuple{Vector{Vector{Union{Int,String}}}, Vector{Any}}
 	# This function is not meant for public consuption. In fact it's only called directly by the parallelplot() fun
 	# or indirectly, via the other method, by plot().
 	# Returns a Vector of AbstractVectors with the indices of each group and a Vector of names or numbers

@@ -119,8 +119,8 @@
 	theme("modern")		# Must reset otherwise many tests would fail due to different configs
 	scatter!(x -> x^3 - 2x^2 + 3x - 1, Vd=dbg2)
 	scatter!(x -> cos(x) * x, y -> sin(y) * y, linspace(0,2pi,100), Vd=dbg2)
-	hlines!([0.2, 0.6], pen=(1, :red))
-	vlines!([0.2, 0.6], pen=(1, :red))
+	hlines!([0.2, 0.6], pen=(1, :red), Vd=dbg2)
+	vlines!([0.2, 0.6], pen=(1, :red), Vd=dbg2)
 
 	println("	BAND")
 	vband([1 2; 2.5 3; 4 5], fill=(:red, :blue), alpha=(0.75, 0.5, 0.3), region=(0,5,-1,5), Vd=dbg2)
