@@ -2295,9 +2295,9 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)::String
 		end
 	end
 
-	if (sum(count) > 0 && any(count .== 0))
-		for k = 1:numel(key) count[k] == 0 && println("\t\tWarning: keyword '$(key[k])' was not consumed") end
-	end
+	#if (sum(count) > 0 && any(count .== 0))
+		#for k = 1:numel(key) count[k] == 0 && println("\t\tWarning: keyword '$(key[k])' was not consumed") end
+	#end
 
 	if (ind_o > 0)			# We have an ordered set of flags (-Tm, -Td, -D, etc...). Not so trivial case
 		if     (order[1] == 1 && order[2] == 2)  cmd = cmd_hold[1] * cmd_hold[2] * cmd;		last = 2
@@ -2673,7 +2673,7 @@ function get_color(val::Array{<:Real})::String
 	out::String = ""
 	if (isa(val, Vector))  val = val'  end
 	(size(val, 2) != 3) && error("\tGET_COLOR: Input as Array must be a Mx3 matrix or 3 elements Vector.")
-	copia = (val[1,1] <= 1 && val[1,2] <= 1 && val[1,3] <= 1) ? val .* 255 : val	# Do not change the original
+	copia = (val[1,1] <= 1 && val[1,2] <= 1 && val[1,3] <= 1) ? Float64.(val) .* 255 : Float64.(val)	# Do not change the original
 	out = @sprintf("%.0f/%.0f/%.0f", copia[1,1], copia[1,2], copia[1,3])
 	for k = 2:size(copia, 1)
 		out = @sprintf("%s,%.0f/%.0f/%.0f", out, copia[k,1], copia[k,2], copia[k,3])
