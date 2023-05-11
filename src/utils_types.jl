@@ -47,15 +47,15 @@ does not need explicit coordinates to place the text.
   - `hdr`: optional String vector with either one or n_rows multisegment headers.
   - `lc` or `linecolor` or `color`: optional array of strings/symbols with color names/values. Its length can be
      smaller than n_cols, case in which colors will be cycled. If `color` is not an array of strings, e.g.
-	 `color="yes"`, the colors cycle trough a pre-defined set of colors (same colors as in Matlab). If you
-	 want the same color repeated for many lines pass color as a vector. *e.g,* `color=[color]`
+     `color="yes"`, the colors cycle trough a pre-defined set of colors (same colors as in Matlab). If you
+     want the same color repeated for many lines pass color as a vector. *e.g,* `color=[color]`
   - `linethick` or `lt`: for selecting different line thicknesses. Works like `color`, but should be 
      a vector of numbers, or just a single number that is then applied to all lines.
   - `fill`:  Optional string array (or a String of comma separated color names, or a Tuple of color names)
              with color names or array of "patterns".
   - `fillalpha` : When `fill` option is used, we can set the transparency of filled polygons with this
      option that takes in an array (vec or 1-row matrix) with numeric values between [0-1] or ]1-100],
-	 where 100 (or 1) means full transparency.
+     where 100 (or 1) means full transparency.
   - `is3D`:  If input 'mat' contains at least x,y,z (?).
   - `ls` or `linestyle`:  Line style. A string or an array of strings with `length = size(mat,2)` with line styles.
   - `front`:  Front Line style. A string or an array of strings with `length = size(mat,2)` with front line styles.
@@ -102,6 +102,7 @@ function mat2ds(mat::AbstractMatrix; hdr=String[], geom=0, kwargs...)
 	end
 	D
 end
+
 function mat2ds(mat::Array{T,N}, txt::Vector{String}=String[]; hdr=String[], geom=0, kwargs...) where {T,N}
 	d = KW(kwargs)
 
