@@ -70,7 +70,7 @@ does not need explicit coordinates to place the text.
   - `wkt`:  A WKT SRS.
   - `colnames`: Optional string vector with names for each column of `mat`.
   - `attrib`: Optional dictionary{String, String} with attributes of this dataset.
-  - `ref:` Pass in a reference GMTdataset from which we'' take the georeference info as well as `attrib` and `colnames`
+  - `ref:` Pass in a reference GMTdataset from which we'll take the georeference info as well as `attrib` and `colnames`
   - `txtcol` or `textcol`: Vector{String} with text to add into the .text field. Warning: no testing is done
      to check if ``length(txtcol) == size(mat,1)`` as it must.
 """
@@ -102,6 +102,25 @@ function mat2ds(mat::AbstractMatrix; hdr=String[], geom=0, kwargs...)
 	end
 	D
 end
+
+##
+function mat2ds(mat::Vector{<:AbstractMatrix}; hdr=String[], kwargs...)
+	d = KW(kwargs)
+	D::Vector{GMTdataset} = Vector{GMTdataset}(undef, length(mat))
+	color = find_in_dict(d, [:lc :linecolor :color])[1]
+	fill  = find_in_dict(d, [:fill :fillcolor])[1]
+	alpha = find_in_dict(d, [:fillalpha])[1]
+	for k = 1:length(mat)
+		_hdr = length(hdr) <= 1 ? hdr : hdr[k]
+		_color = (color !== nothing) ? (isa(color, Vector) ? (length(color) == 1 ? color : color[k]) : [color]) : color
+		_fill  = (fill  !== nothing) ? (isa(fill, Vector)  ? (length(fill)  == 1 ? fill  : fill[k])  : [fill]) : fill
+		_alpha = (alpha !== nothing) ? (isa(alpha, Vector) ? (length(alpha) == 1 ? alpha : alpha[k]) : [alpha]) : alpha
+		D[k] = mat2ds(mat[k], hdr=_hdr, color=_color, fill=_fill, fillalpha=_alpha)
+	end
+	set_dsBB!(D, false)
+	return D
+end
+##
 
 function mat2ds(mat::Array{T,N}, txt::Vector{String}=String[]; hdr=String[], geom=0, kwargs...) where {T,N}
 	d = KW(kwargs)
@@ -499,6 +518,8 @@ function helper_ds_fill(d::Dict, del::Bool=true; symbs=[:fill :fillcolor], nc=0)
 			_fill = [string.(fill_val)...]
 		elseif (isa(fill_val, Array{String}) && !isempty(fill_val))
 			_fill = vec(fill_val)
+		elseif (isa(fill_val, Array{Symbol}))
+			_fill = vec(string.(fill_val))
 		elseif (isa(fill_val, Tuple) && eltype(fill_val) == Symbol)
 			_fill = vec(arg2str(fill_val, ','))
 		else

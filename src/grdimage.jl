@@ -104,11 +104,11 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 	end
 
 	do_finish = false
+	_cmd = ["grdimage " * cmd]
+	_cmd = frame_opaque(_cmd, opt_B, opt_R, opt_J; bot=false)		# No -t in frame
 	if (!occursin("-A", cmd))			# -A means that we are requesting the image directly
-		_cmd = finish_PS_nested(d, ["grdimage " * cmd])
+		_cmd = finish_PS_nested(d, _cmd)
 		do_finish = true
-	else
-		_cmd = ["grdimage " * cmd]
 	end
 
 	_cmd = finish_PS_nested(d, _cmd)

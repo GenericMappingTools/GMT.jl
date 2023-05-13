@@ -122,7 +122,7 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		return gmt(gmt_proggy * cmd, arg1)
 	end
 
-	cmd, _, _, opt_R ::String= parse_BJR(d, cmd, "histogram", O, " -JX14c/14c")
+	cmd, opt_B, opt_J, opt_R ::String= parse_BJR(d, cmd, "histogram", O, " -JX14c/14c")
 	cmd = parse_JZ(d, cmd)[1]
 	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :c :e :f :p :t :w :params], first)[1]
 	cmd = parse_these_opts(cmd, d, [[:A :horizontal], [:F :center], [:Q :cumulative], [:S :stairs]])
@@ -239,6 +239,7 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	(haskey(d, :Vd)) && (Vd_ = d[:Vd])
 
 	_cmd = [gmt_proggy * cmd]				# In any case we need this
+	(length(opt_R) > 5) && (_cmd = frame_opaque(_cmd, opt_B, opt_R, opt_J))		# No -t in frame
 	_cmd = fish_bg(d, _cmd)					# See if we have a "pre-command" (background img)
 
 	# Plot the histogram

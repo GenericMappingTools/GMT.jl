@@ -71,7 +71,7 @@ function grdcontour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 	dict_auto_add!(d)					# The ternary module may send options via another channel
 
-	cmd::String, _, opt_J::String, opt_R::String = parse_BJR(d, "", "", O, " -JX" * split(def_fig_size, '/')[1] * "/0")
+	cmd::String, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX" * split(def_fig_size, '/')[1] * "/0")
 	cmd, = parse_common_opts(d, cmd, [:UVXY :params :bo :c :e :f :h :p :t], first)
 	cmd  = parse_these_opts(cmd, d, [[:D :dump], [:F :force], [:L :range], [:Q :cut], [:S :smooth]])
 	cmd  = parse_contour_AGTW(d::Dict, cmd::String)[1]
@@ -132,7 +132,9 @@ function grdcontour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		opt_extra = "-D";		do_finish = false;	cmd = replace(cmd, opt_J => "")
 	end
 
-	_cmd = finish_PS_nested(d, ["grdcontour " * cmd])
+	_cmd = ["grdcontour " * cmd]
+	_cmd = frame_opaque(_cmd, "grdcontour", opt_B, opt_R, opt_J)		# No -t in frame
+	_cmd = finish_PS_nested(d, _cmd)
 	finish_PS_module(d, _cmd, opt_extra, K, O, do_finish, arg1, arg2, arg3)
 end
 
