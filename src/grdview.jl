@@ -75,8 +75,9 @@ function grdview(cmd0::String="", arg1=nothing; first=true, kwargs...)
 				  (mesh=("m", add_opt_fill), surface="_s", surf="_s", img=("i",arg2str), image="i", nan_alpha="_c", monochrome="_+m", waterfall=(rows="my", cols="mx", fill=add_opt_fill)))
 	cmd = add_opt(d, cmd, "W", [:W :pens :pen], (contour=("c", add_opt_pen),
 	              mesh=("m", add_opt_pen), facade=("f", add_opt_pen)) )
-	cmd = add_opt(d, cmd, "T", [:T :no_interp :tiles], (skip="_+s", skip_nan="_+s", outlines=("+o", add_opt_pen)) )
-	(!occursin(" -T", cmd)) ? cmd = parse_JZ(d, cmd, O=O, is3D=true)[1] : del_from_dict(d, [:JZ])	# Means, even if we had one, ignore silently
+	cmd = add_opt(d, cmd, "T", [:T :no_interp :tiles], (skip="_+s", skip_nan="_+s", outlines=("+o", add_opt_pen)))
+	opt_JZ = ""		# Need to have this one defined because it's need in frame_opaque() bellow.
+	(!occursin(" -T", cmd)) ? (cmd, opt_JZ = parse_JZ(d, cmd, O=O, is3D=true)[1]) : del_from_dict(d, [:JZ])	# Means, even if we had one, ignore silently
 	cmd = add_opt(d, cmd, "%", [:layout :mem_layout], nothing)
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)		# Find how data was transmitted
@@ -89,7 +90,9 @@ function grdview(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd, arg1, arg2, arg3, arg4 = common_shade(d, cmd, arg1, arg2, arg3, arg4, "grdview")
 	cmd, arg1, arg2, arg3, arg4, arg5 = parse_G_grdview(d, [:G :drape :drapefile], cmd0, cmd, arg1, arg2, arg3, arg4, arg5)
 
-	_cmd = finish_PS_nested(d, ["grdview " * cmd])
+	_cmd = ["grdview " * cmd]
+	_cmd = frame_opaque(_cmd, opt_B, opt_R, opt_J, opt_JZ; bot=false)		# No -t in frame
+	_cmd = finish_PS_nested(d, _cmd)
 	if (length(_cmd) > 1 && cmd0 != "")		# In these cases no -R is passed so the nested calls set an unknown -R
 		for k = 2:lastindex(_cmd)  _cmd[k] = replace(_cmd[k], "-R " => "-R" * cmd0 * " ")  end
 	end

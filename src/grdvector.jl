@@ -70,7 +70,7 @@ function grdvector(arg1, arg2; first=true, kwargs...)
 	cmd, opt_J = parse_J(d, cmd, def_J, true, O)
 	parse_theme(d)		# Must be first because some themes change def_fig_axes
 	def_fig_axes_::String = (IamModern[1]) ? "" : def_fig_axes[1]	# def_fig_axes is a global const
-	cmd = parse_B(d, cmd, (O ? "" : def_fig_axes_))[1]
+	cmd, opt_B = parse_B(d, cmd, (O ? "" : def_fig_axes_))
 
 	cmd = parse_common_opts(d, cmd, [:UVXY :f :p :t :params], first)[1]
 	!(contains(cmd, "-V")) && (cmd *= " -Ve")	# Shut up annoying warnings if -S has no units
@@ -138,7 +138,9 @@ function grdvector(arg1, arg2; first=true, kwargs...)
 	(!occursin(" -C", cmd) && !occursin(" -W", cmd) && !occursin(" -G", opt_Q)) && (cmd *= " -W0.5")	# If still nothing, set -W.
 	(opt_Q != "") && (cmd *= opt_Q)
 
-	_cmd = finish_PS_nested(d, ["grdvector " * cmd])
+	_cmd = ["grdvector " * cmd]
+	_cmd = frame_opaque(_cmd, opt_B, opt_R, opt_J)		# No -t in frame
+	_cmd = finish_PS_nested(d, _cmd)
     return finish_PS_module(d, _cmd, "", K, O, true, arg1, arg2, arg3)
 end
 

@@ -80,7 +80,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	end
 
 	cmd, opt_JZ = parse_JZ(d, cmd; O=O, is3D=is3D)
-	#(is3D && O && opt_JZ == "" && CTRL.pocket_J[3] == "") && (cmd *= CTRL.pocket_J[3])
+	#(is3D && O && opt_JZ == "" && CTRL.pocket_J[3] != "") && (cmd *= CTRL.pocket_J[3])
 	cmd, = parse_common_opts(d, cmd, [:a :e :f :g :p :t :w :params], first)
 	cmd, opt_l = parse_l(d, cmd)		# Parse this one (legend) aside so we can use it in classic mode
 	cmd, opt_f = parse_f(d, cmd)		# Parse this one (-f) aside so we can check against D.attrib
@@ -128,7 +128,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	end
 	if (is3D && isempty(opt_JZ) && length(collect(eachmatch(r"/", opt_R))) == 5)
 		cmd *= " -JZ6c"		# Default -JZ
-		CTRL.pocket_J[3] = " -JZ6c"		# Needed for eventual z-axis dir reversal.
+		opt_JZ = CTRL.pocket_J[3] = " -JZ6c"		# Needed for eventual z-axis dir reversal.
 	end
 
 	# Here we check for a direct -A of and indirect via the stairs module.
@@ -276,6 +276,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	(!IamModern[1]) && put_in_legend_bag(d, _cmd, arg1, O, opt_l)
 
 	_cmd = gmt_proggy .* _cmd				# In any case we need this
+	_cmd = frame_opaque(_cmd, opt_B, opt_R, opt_J, opt_JZ) # No -t in -B
 	_cmd = finish_PS_nested(d, _cmd)
 	_cmd = fish_bg(d, _cmd)					# See if we have a "pre-command"
 
@@ -284,6 +285,23 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	CTRL.pocket_d[1] = d					# Store d that may be not empty with members to use in other modules
 	#(occursin("-Sk", opt_S)) && gmt_restart()  # Apparently patterns & custom symbols are screwing the session
 	return r
+end
+
+# ---------------------------------------------------------------------------------------------------
+function frame_opaque(cmd::Vector{String}, oB::String, oR::String, oJ::String, oJZ::String=""; bot::Bool=true)
+	# Transparency affects the frame too, which is bad. So, if we have a transparency request we
+	# plot the frame first with a call to basemap without -t.
+	(!contains(cmd[1], " -t") || length(oB) < 3) && return cmd
+	cmd[1] = replace(cmd[1], oB => "")		# Remove the -B's that would be hit by the transparency.
+	oX, oY = scan_opt(cmd[1], "-X", true), scan_opt(cmd[1], "-Y", true)
+	(oX != "") && (cmd[1] = replace(cmd[1], oX => ""))	# If we have a -X and/or -Y move them to the basemap cmd
+	(oY != "") && (cmd[1] = replace(cmd[1], oY => ""))
+	p = scan_opt(cmd[1], "-p", true)
+	if bot		# Eventual grid will go UNDER the plot
+		[(IamModern[1] ? "basemap" : "psbasemap") * " " * oB * " " * oR * " " * oJ * " " * oJZ * oX * oY * p; cmd]
+	else		# Eventual grid will go ABOVE the image
+		[cmd; (IamModern[1] ? "basemap" : "psbasemap") * " " * oB * " " * oR * " " * oJ * " " * oJZ * oX * oY * p]
+	end
 end
 
 # ---------------------------------------------------------------------------------------------------

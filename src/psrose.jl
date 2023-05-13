@@ -104,7 +104,9 @@ function rose(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
 	cmd *= opt_pen(d, 'W', [:W :pen])
 
-	return finish_PS_module(d, gmt_proggy * cmd, "", K, O, true, arg1, arg2)
+	_cmd = [gmt_proggy * cmd]
+	_cmd = frame_opaque(_cmd, opt_B, opt_R, opt_J)		# No -t in frame
+	return finish_PS_module(d, _cmd, "", K, O, true, arg1, arg2)
 end
 
 # ---------------------------------------------------------------------------------------------------

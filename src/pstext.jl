@@ -109,7 +109,7 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		cmd0 = ""
 	end
 
-	cmd, _, _, opt_R = parse_BJR(d, "", "", O, " -JX" * split(def_fig_size, '/')[1] * "/0")
+	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX" * split(def_fig_size, '/')[1] * "/0")
 	cmd, = parse_common_opts(d, cmd, [:a :e :f :p :t :w :JZ :UVXY :params], first)
 	cmd  = parse_these_opts(cmd, d, [[:A :azimuths :azimuth :azim], [:M :paragraph], [:N :no_clip :noclip],
 	                                 [:Q :change_case], [:S :shade], [:T :text_box], [:Z :threeD]])
@@ -145,7 +145,9 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		end
 	end
 
-	r = finish_PS_module(d, gmt_proggy * cmd, "", K, O, true, arg1, arg2)
+	_cmd = [gmt_proggy * cmd]
+	_cmd = frame_opaque(_cmd, gmt_proggy, opt_B, opt_R, opt_J)		# No -t in frame
+	r = finish_PS_module(d, _cmd, "", K, O, true, arg1, arg2)
 	if (isa(r, String) && startswith(r, gmt_proggy))	# It's a string when called with Vd = 2 and it may be a nested call
 		isa(arg1, GDtype) && (CTRL.pocket_call[1] = arg1)
 	end

@@ -63,7 +63,7 @@ function wiggle(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
-	cmd, _, _, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
+	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd, = parse_common_opts(d, cmd, [:c :e :f :g :p :t :w :F :UVXY :params], first)
 	cmd  = parse_these_opts(cmd, d, [[:A :azimuth], [:C :center], [:I :fixed_azim], [:S], [:Z :ampscale :amp_scale]])
 
@@ -76,7 +76,9 @@ function wiggle(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd *= opt_pen(d, 'W', [:W :pen])
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
 
-	return finish_PS_module(d, gmt_proggy * cmd, "", K, O, true, arg1)
+	_cmd = [gmt_proggy * cmd]
+	_cmd = frame_opaque(_cmd, gmt_proggy, opt_B, opt_R, opt_J)		# No -t in frame
+	return finish_PS_module(d, _cmd, "", K, O, true, arg1)
 end
 
 # ---------------------------------------------------------------------------------------------------
