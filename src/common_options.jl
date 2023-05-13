@@ -875,9 +875,10 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 				end
 				cmd = guess_WESN(d, cmd)
 			elseif (length(_val) <= 5 && !occursin(" ", _val) && occursin(r"[WESNwesnzZ]", _val))
-				_val *= " af"		# To prevent that setting B=:WSen removes all annots
+				autoZ = (!contains(_val, " ") && contains(_val, 'Z')) ? " zaf" : ""
+				_val *= " af" * autoZ		# To prevent that setting B=:WSen removes all annots
 			end
-		elseif (isa(val, Real))		# for example, B=0
+		elseif (isa(val, Real))				# for example, B=0
 			_val = string(val)
 		end
 		isa(val, Dict) && (val = Base.invokelatest(dict2nt,val))
@@ -1030,8 +1031,11 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 		end
 	end
 
-	if (opt_B != def_fig_axes_ && opt_B != def_fig_axes3_)  opt_B = this_opt_B * opt_B
-	elseif (this_opt_B != "")                               opt_B = this_opt_B
+	if (opt_B != def_fig_axes_ && opt_B != def_fig_axes3_)
+		opt_B = contains(this_opt_B, "Bpx") && contains(this_opt_B, "Bpy") && startswith(opt_B, " -Baf") ?
+			this_opt_B * opt_B[6:end] : this_opt_B * opt_B	# First case drops the starting " -Baf" (fragile...)
+	elseif (this_opt_B != "")
+		opt_B = this_opt_B
 	end
 	(got_ticks && opt_B == this_opt_B) && (opt_B *= (contains(opt_B, "-Bpz") ? def_fig_axes3_ : def_fig_axes_))	# When only x|y|z ticks were requested.
 
@@ -2761,10 +2765,11 @@ function axis(D::Dict=Dict(); x::Bool=false, y::Bool=false, z::Bool=false, secon
 	end
 	CTRL.pocket_J[4] = _jx * _jy * _jz
 
-	opt::String = " -B"
-	if ((val = find_in_dict(d, [:axes :frame])[1]) !== nothing)		# The :frame here makes no sense, I think.
+	opt::String, is3D = " -B", false
+	if ((val = find_in_dict(d, [:axes :frame])[1]) !== nothing)
 		isa(val, Dict) && (val = Base.invokelatest(dict2nt, val))
 		o::String = helper0_axes(val)
+		!z && (is3D = contains(o, 'Z'))		# If are not dealing with an explicit Z axis, fish info from axes=...
 		opt = (o == "full") ? opt * "WSEN" : (o == "none") ? opt : opt * o
 	end
 
@@ -2859,6 +2864,8 @@ function axis(D::Dict=Dict(); x::Bool=false, y::Bool=false, z::Bool=false, secon
 	elseif (haskey(d, :phase_sub))  ints *= "-" * arg2str(d[:phase_sub])::String
 	end
 	(ints != "") && (opt = " -B" * primo * axe * ints * opt)
+	(ints != "" && is3D) && (opt *= " -Bz" * ints)	# If some of afg was explicitly passed
+	(ints == "" && is3D) && (opt *= " -Bzaf")			# Otherwise just the default af
 
 	# Check if ax_sup was requested
 	(opt == "" && ax_sup != "") && (opt = " -B" * primo * axe * ax_sup)
