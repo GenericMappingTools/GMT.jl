@@ -128,7 +128,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	end
 	if (is3D && isempty(opt_JZ) && length(collect(eachmatch(r"/", opt_R))) == 5)
 		cmd *= " -JZ6c"		# Default -JZ
-		CTRL.pocket_J[3] = " -JZ6c"		# Needed for eventual z-axis dir reversal.
+		opt_JZ = CTRL.pocket_J[3] = " -JZ6c"		# Needed for eventual z-axis dir reversal.
 	end
 
 	# Here we check for a direct -A of and indirect via the stairs module.
@@ -296,10 +296,11 @@ function frame_opaque(cmd::Vector{String}, oB::String, oR::String, oJ::String, o
 	oX, oY = scan_opt(cmd[1], "-X", true), scan_opt(cmd[1], "-Y", true)
 	(oX != "") && (cmd[1] = replace(cmd[1], oX => ""))	# If we have a -X and/or -Y move them to the basemap cmd
 	(oY != "") && (cmd[1] = replace(cmd[1], oY => ""))
+	p = scan_opt(cmd[1], "-p", true)
 	if bot		# Eventual grid will go UNDER the plot
-		[(IamModern[1] ? "basemap" : "psbasemap") * " " * oB * " " * oR * " " * oJ * " " * oJZ * oX * oY; cmd]
+		[(IamModern[1] ? "basemap" : "psbasemap") * " " * oB * " " * oR * " " * oJ * " " * oJZ * oX * oY * p; cmd]
 	else		# Eventual grid will go ABOVE the image
-		[cmd; (IamModern[1] ? "basemap" : "psbasemap") * " " * oB * " " * oR * " " * oJ * " " * oJZ * oX * oY]
+		[cmd; (IamModern[1] ? "basemap" : "psbasemap") * " " * oB * " " * oR * " " * oJ * " " * oJZ * oX * oY * p]
 	end
 end
 
