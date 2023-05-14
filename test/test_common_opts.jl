@@ -280,6 +280,7 @@
 	D = mat2ds([0 0; 1 1],["a", "b"]); D.header = "-Wred";
 	@test GMT.edit_segment_headers!(D, 'W', :get) == "red"
 	@test GMT.edit_segment_headers!(D, 'W', :set, "blue") == "-Wblue"
+	D = mat2ds([rand(6,3), rand(4,3), rand(3,3)], fill=[[:red], [:green], [:blue]], fillalpha=[0.5,0.7,0.8]);
 
 	@test_throws ErrorException("Bad 'stretch' argument. It must be a 1, 2 or 6 elements array and not 3") GMT.mat2img(img16, histo_bounds=[8440 13540 0]);
 	@test_throws ErrorException("Memory layout option must have 3 characters and not 1") GMT.parse_mem_layouts("-%1")
