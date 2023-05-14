@@ -73,6 +73,30 @@ does not need explicit coordinates to place the text.
   - `ref:` Pass in a reference GMTdataset from which we'll take the georeference info as well as `attrib` and `colnames`
   - `txtcol` or `textcol`: Vector{String} with text to add into the .text field. Warning: no testing is done
      to check if ``length(txtcol) == size(mat,1)`` as it must.
+
+###   D = mat2ds(mat::Vector{<:AbstractMatrix}; hdr=String[], kwargs...)::Vector{GMTdataset}
+
+Create a multi-segment GMTdataset (a vector of GMTdataset) from matrices passed in a vector-of-matrices `mat`.
+The matrices elements of `mat` do not need to have the same number of rows. Think on this as specifying groups
+of lines/points each sharing the same settings. KWarg options of this form are more limitted in number than
+in the general case, but can take the form of a Vector{Vector}, Vector or scalars.
+In the former case (Vector{Vector}) the length of each Vector[i] must equal to the number of rows of each mat[i].
+
+  - `hdr`: optional String vector with either one or `length(mat)` multisegment headers.
+  - `pen`:  A full pen setting. A string or an array of strings with `length = length(mat)` with pen settings.
+  - `lc` or `linecolor` or `color`: optional color or array of strings/symbols with color names/values.
+  - `linethick` or `lt`: for selecting different line thicknesses. Works like `color`, but should be 
+     a vector of numbers, or just a single number that is then applied to all lines.
+  - `ls` or `linestyle`:  Line style. A string or an array of strings with `length = length(mat)` with line styles.
+  - `front`:  Front Line style. A string or an array of strings with `length = length(mat)` with front line styles.
+  - `fill`:  Optional string array (or a String of comma separated color names, or a Tuple of color names)
+             with color names or array of "patterns".
+  - `fillalpha`: When `fill` option is used, we can set the transparency of filled polygons or symbols with this
+     option that takes in an array (vec or 1-row matrix) with numeric values between [0-1] or ]1-100],
+     where 100 (or 1) means full transparency.
+
+### Example:
+  D = mat2ds([rand(6,3), rand(4,3), rand(3,3)], fill=[[:red], [:green], [:blue]], fillalpha=[0.5,0.7,0.8])
 """
 mat2ds(mat::Nothing) = mat		# Method to simplify life and let call mat2ds on a nothing
 mat2ds(mat::GDtype)  = mat		# Method to simplify life and let call mat2ds on a already GMTdataset
@@ -103,25 +127,55 @@ function mat2ds(mat::AbstractMatrix; hdr=String[], geom=0, kwargs...)
 	D
 end
 
-##
+# ---------------------------------------------------------------------------------------------------
 function mat2ds(mat::Vector{<:AbstractMatrix}; hdr=String[], kwargs...)
 	d = KW(kwargs)
 	D::Vector{GMTdataset} = Vector{GMTdataset}(undef, length(mat))
+	pen   = find_in_dict(d, [:pen])[1]
 	color = find_in_dict(d, [:lc :linecolor :color])[1]
+	ls    = find_in_dict(d, [:ls :linestyle])[1]
+	lt    = find_in_dict(d, [:lt :linethick])[1]
+	front = find_in_dict(d, [:front])[1]
 	fill  = find_in_dict(d, [:fill :fillcolor])[1]
 	alpha = find_in_dict(d, [:fillalpha])[1]
 	for k = 1:length(mat)
 		_hdr = length(hdr) <= 1 ? hdr : hdr[k]
+		_pen   = (pen   !== nothing) ? (isa(pen, Vector)   ? (length(pen)   == 1 ? pen   : pen[k])   : [pen]) : pen
+		_ls    = (ls    !== nothing) ? (isa(ls, Vector)    ? (length(ls)    == 1 ? ls    : ls[k])    : [ls]) : ls
+		_lt    = (lt    !== nothing) ? (isa(lt, Vector)    ? (length(lt)    == 1 ? lt    : lt[k])    : [lt]) : lt
+		_front = (front !== nothing) ? (isa(front, Vector) ? (length(front) == 1 ? front : front[k]) : [front]) : front
 		_color = (color !== nothing) ? (isa(color, Vector) ? (length(color) == 1 ? color : color[k]) : [color]) : color
 		_fill  = (fill  !== nothing) ? (isa(fill, Vector)  ? (length(fill)  == 1 ? fill  : fill[k])  : [fill]) : fill
 		_alpha = (alpha !== nothing) ? (isa(alpha, Vector) ? (length(alpha) == 1 ? alpha : alpha[k]) : [alpha]) : alpha
-		D[k] = mat2ds(mat[k], hdr=_hdr, color=_color, fill=_fill, fillalpha=_alpha)
+		D[k] = mat2ds(mat[k], hdr=_hdr, color=_color, fill=_fill, fillalpha=_alpha, pen=_pen, lt=_lt, ls=_ls, front=_front)
 	end
 	set_dsBB!(D, false)
+	D[1].proj4, D[1].wkt, D[1].epsg, _, _ = helper_set_crs(d)	# Fish the eventual CRS options.
 	return D
 end
-##
 
+# ---------------------------------------------------------------------------------------------------
+function helper_set_crs(d)
+	# Return CRS info eventually passed in kwargs (converted into 'd') + attrib & colnames if :ref is used
+	ref_attrib, ref_coln = Dict(), String[]
+	if ((val = find_in_dict(d, [:ref])[1]) !== nothing)		# ref has to be a D but we'll not test it
+		Dt::GMTdataset = val		# To try to escape the f... Any's
+		prj, wkt, epsg = Dt.proj4, Dt.wkt, Dt.epsg
+		ref_attrib, ref_coln = Dt.attrib, Dt.colnames
+	end
+
+	prj::String = ((proj = find_in_dict(d, [:proj :proj4])[1]) !== nothing) ? proj : ""
+	(prj == "geo" || prj == "geog") && (prj = prj4WGS84)
+	(prj != "" && !startswith(prj, "+proj=")) && (prj = "+proj=" * prj)
+	wkt::String = ((wk = find_in_dict(d, [:wkt])[1]) !== nothing) ? wk : ""
+	(prj == "" && wkt != "") && (prj = wkt2proj(wkt))
+	epsg::Int = ((ep = find_in_dict(d, [:epsg])[1]) !== nothing) ? ep : 0
+	(prj == "" && epsg != 0) && (prj = epsg2proj(wkt))
+	(wkt == "" && epsg != 0) && (prj = epsg2wkt(wkt))
+	return prj, wkt, epsg, ref_attrib, ref_coln
+end
+
+# ---------------------------------------------------------------------------------------------------
 function mat2ds(mat::Array{T,N}, txt::Vector{String}=String[]; hdr=String[], geom=0, kwargs...) where {T,N}
 	d = KW(kwargs)
 
@@ -226,6 +280,7 @@ function mat2ds(mat::Array{T,N}, txt::Vector{String}=String[]; hdr=String[], geo
 		end
 	end
 
+	#=
 	ref_attrib, ref_coln = Dict(), String[]
 	if ((val = find_in_dict(d, [:ref])[1]) !== nothing)		# ref has to be a D but we'll not test it
 		Dt::GMTdataset = val		# To try to escape the f... Any's
@@ -241,6 +296,9 @@ function mat2ds(mat::Array{T,N}, txt::Vector{String}=String[]; hdr=String[], geo
 	epsg::Int = ((ep = find_in_dict(d, [:epsg])[1]) !== nothing) ? ep : 0
 	(prj == "" && epsg != 0) && (prj = epsg2proj(wkt))
 	(wkt == "" && epsg != 0) && (prj = epsg2wkt(wkt))
+	=#
+	
+	prj, wkt, epsg, ref_attrib, ref_coln = helper_set_crs(d)
 
 	is_geog::Bool = false
 	if (prj != "")
