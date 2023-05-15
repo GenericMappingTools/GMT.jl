@@ -14,14 +14,11 @@ Parameters
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = grdsample(....) form.
-    ($(GMTdoc)grdsample.html#g)
 - $(GMT.opt_I)
-    ($(GMTdoc)grdsample.html#i)
 - $(GMT._opt_R)
 - **T** | **toggle** :: [Type => Bool]
 
     Toggle the node registration for the output grid so as to become the opposite of the input grid
-    ($(GMTdoc)grdsample.html#t)
 - $(GMT.opt_V)
 - $(GMT._opt_f)
 - $(GMT.opt_n)

@@ -3,7 +3,7 @@
 
 Takes a geographical grid and reconstructs it given total reconstruction rotations.
 
-See full GMT (not the `GMT.jl` one) docs at [`grdrotater`]($(GMTdoc)grdrotater.html)
+See full GMT (not the `GMT.jl` one) docs at [`grdrotater`]($(GMTdoc)supplements/spotter/grdrotater.html)
 
 Parameters
 ----------
@@ -11,20 +11,16 @@ Parameters
 - **A** | **rot_region** :: [Type => Str | Tuple | Vec]
 
     Specify directly the region of the rotated grid.
-    ($(GMTdoc)grdrotater.html#a)
 - **D** | **rot_outline** :: [Type => Bool or Str]	``Arg = true | filename``
 
     Name of the grid polygon outline file. This represents the outline of the grid reconstructed to the specified time.
-    ($(GMTdoc)grdrotater.html#d)
 - **F** | **rot_polyg** | **rot_polygon** :: [Type => Str | GMTdaset | Mx2 array]	``Arg = filename | dataset)``
 
     Specify a multisegment closed polygon file that describes the inside area of the grid that should be rotated.
-    ($(GMTdoc)grdrotater.html#f)
 - **G** | **save** | **outgrid** | **outfile** :: [Type => Str]
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = grdrotater(....) form.
-    ($(GMTdoc)grdrotater.html#g)
 - $(GMT._opt_R)
 - **T** | **ages** :: [Type => Str | Tuple]
 

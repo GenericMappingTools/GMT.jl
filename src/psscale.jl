@@ -54,6 +54,8 @@ function colorbar(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	gmt_proggy = (IamModern[1]) ? "colorbar "  : "psscale "
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
+	parse_paper(d)		# See if user asked to temporarily pass into paper mode coordinates
+
 	cmd, opt_B, = parse_BJR(d, "", "", O, "")
 	cmd  = parse_JZ(d, cmd)[1]
 	cmd, = parse_common_opts(d, cmd, [:F :UVXY :params :c :p :t], first)
