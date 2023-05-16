@@ -58,7 +58,7 @@ if ((!(@isdefined have_jll) || have_jll == 1) && get(ENV, "SYSTEMWIDE_GMT", "") 
 else
 	const isJLL = false
 	const GMTver, libgmt, libgdal, libproj, GMTuserdir = _GMTver, _libgmt, _libgdal, _libproj, [userdir]
-	const GMTdevdate = Date(devdate, dateformat"y.m.d")
+	const GMTdevdate = Date(devdate, dateformat"y-m-d")
 end
 
 const global G_API = [C_NULL]
