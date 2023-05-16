@@ -3,7 +3,7 @@
 
 Compute the gravity/magnetic anomaly of a 3-D body by the method of Okabe.
 
-See full GMT (not the `GMT.jl` one) docs at [`gmtgravmag3d`]($(GMTdoc)gmtgravmag3d.html)
+See full GMT (not the `GMT.jl` one) docs at [`gmtgravmag3d`]($(GMTdoc)supplements/potential/gmtgravmag3d.html)
 
 Parameters
 ----------
@@ -11,45 +11,35 @@ Parameters
 - **C** | **density** :: [Type => Str | GMTgrid]
 
     Sets body density in SI. Provide either a constant density or a grid with a variable one.
-    ($(GMTdoc)gmtgravmag3d.html#c)
 - **F** | **track** :: [Type => Str | Matrix | GMTdataset]
 
     Provide locations where the anomaly will be computed. Note this option is mutually exclusive with `outgrid`.
-    ($(GMTdoc)gmtgravmag3d.html#f)
 - **G** | **save** | **outgrid** | **outfile** :: [Type => Str]
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = gmtgravmag3d(....) form.
-    ($(GMTdoc)gmtgravmag3d.html#g)
 - **H** | **mag_params** :: [Type => Number]
 
     Sets parameters for computation of magnetic anomaly. Alternatively, provide a magnetic intensity grid. 
-    ($(GMTdoc)gmtgravmag3d.html#h)
 - $(GMT.opt_I)
-    ($(GMTdoc)gmtgravmag3d.html#i)
 - **L** | **z_obs** | **observation_level** :: [Type => Number]
 
     Sets level of observation [Default = 0]. That is the height (z) at which anomalies are computed.
-    ($(GMTdoc)gmtgravmag3d.html#l)
 - **M** | **body** :: [Type => Str | Tuple]
 
     Create geometric bodies and compute their grav/mag effect.
-    ($(GMTdoc)gmtgravmag3d.html#m)
 - $(GMT._opt_R)
 - **S** | **radius** :: [Type => Number]
 
     Set search radius in km (valid only in the two grids mode OR when `thickness`) [Default = 30 km].
-    ($(GMTdoc)gmtgravmag3d.html#s)
 - **Tv** | **index** :: [Type => Str]
 - **Tr** | **raw_triang** :: [Type => Str]
 - **Ts** | **stl** :: [Type => Str]
 
     Gives names of a xyz and vertex (ndex="vert_file") files defining a close surface.
-    ($(GMTdoc)gmtgravmag3d.html#t)
 - **Z** | **z_level** | **reference_level** :: [Type => Number]
 
     Level of reference plane [Default = 0].
-    ($(GMTdoc)gmtgravmag3d.html#z)
 
 ### Example
 ```julia
@@ -61,9 +51,9 @@ function gmtgravmag3d(cmd0::String="", arg1=nothing; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	
-	cmd = parse_common_opts(d, "", [:I :R :V_params :bi :f])[1]
+	cmd = parse_common_opts(d, "", [:G :RIr :V_params :bi :f])[1]
 	cmd = parse_these_opts(cmd, d, [[:C :density], [:E :thickness], [:F :track], [:G :grid :outgrid],
-	                                [:L :observation_level], [:S :radius], [:Z :reference_level]])
+	                                [:L :z_obs :observation_level], [:S :radius], [:Z :reference_level]])
 	cmd = add_opt(d, cmd, "H", [:H :mag_params], (field_dec="", field_dip="", mag="", mag_dec="", mag_dip=""))
 
 	arg2 = nothing;

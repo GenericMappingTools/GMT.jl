@@ -4,7 +4,7 @@
 Compute the gravity/magnetic anomaly of the volume contained between a surface provided by one grid
 and a plane, or between a top and a bottom surface provided by two grids.
 
-See full GMT (not the `GMT.jl` one) docs at [`grdgravmag3d`]($(GMTdoc)grdgravmag3d.html)
+See full GMT (not the `GMT.jl` one) docs at [`grdgravmag3d`]($(GMTdoc)supplements/potential/grdgravmag3d.html)
 
 Parameters
 ----------
@@ -12,43 +12,33 @@ Parameters
 - **C** | **density** :: [Type => Str | GMTgrid]
 
     Sets body density in SI. Provide either a constant density or a grid with a variable one.
-    ($(GMTdoc)grdgravmag3d.html#c)
 - **F** | **track** :: [Type => Str | Matrix | GMTdataset]
 
     Provide locations where the anomaly will be computed. Note this option is mutually exclusive with `outgrid`.
-    ($(GMTdoc)grdgravmag3d.html#f)
 - **G** | **save** | **outgrid** | **outfile** :: [Type => Str]
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = grdgravmag3d(....) form.
-    ($(GMTdoc)grdgravmag3d.html#g)
 - **E** | **thickness** :: [Type => Number]
 
     Provide the layer thickness in m [Default = 500 m].
-    ($(GMTdoc)grdgravmag3d.html#e)
 - **H** | **mag_params** :: [Type => Number]
 
     Sets parameters for computation of magnetic anomaly. Alternatively, provide a magnetic intensity grid. 
-    ($(GMTdoc)grdgravmag3d.html#h)
 - $(GMT.opt_I)
-    ($(GMTdoc)grdgravmag3d.html#i)
 - **L** | **z_obs** | **observation_level** :: [Type => Number]
 
     Sets level of observation [Default = 0]. That is the height (z) at which anomalies are computed.
-    ($(GMTdoc)grdgravmag3d.html#l)
 - **Q** | **pad** :: [Type => Number]
 
     Extend the domain of computation with respect to output `region`.
-    ($(GMTdoc)grdgravmag3d.html#q)
 - $(GMT._opt_R)
 - **S** | **radius** :: [Type => Number]
 
     Set search radius in km (valid only in the two grids mode OR when `thickness`) [Default = 30 km].
-    ($(GMTdoc)grdgravmag3d.html#s)
 - **Z** | **z_level** | **reference_level** :: [Type => Number]
 
     Level of reference plane [Default = 0].
-    ($(GMTdoc)grdgravmag3d.html#z)
 - $(GMT.opt_V)
 - $(GMT._opt_f)
 - $(GMT.opt_x)

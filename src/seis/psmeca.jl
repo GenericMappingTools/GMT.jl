@@ -3,7 +3,7 @@
 
 Plot focal mechanisms.
 
-See full GMT (not the `GMT.jl` one) docs at [`meca`]($(GMTdoc)meca.html)
+See full GMT (not the `GMT.jl` one) docs at [`meca`]($(GMTdoc)supplements/seis/meca.html)
 
 Parameters
 ----------
@@ -15,52 +15,40 @@ Parameters
 - **A** | **offset** :: [Type => Bool | Str | GMTcpt]
 
     Offsets focal mechanisms to the longitude, latitude specified in the last two columns of the input
-    ($(GMTdoc)meca.html#a)
 - **C** | **color** | **cmap** :: [Type => Number | Str | GMTcpt]
 
     Give a CPT and let compressive part color be determined by the z-value in the third column. 
-    ($(GMTdoc)meca.html#c)
 - **D** | **depth_limits** :: [Type => Str | Tuple]
 
     Plots events between depmin and depmax.
-    ($(GMTdoc)meca.html#d)
 - **E** | **fill_extensive** :: [Type => Str | Number]
 
     Selects filling of extensive quadrants. [Default is white].
-    ($(GMTdoc)meca.html#e)
 - **Fa** | **Fe** | **Fg** | **Fo** | **Fp** | **Fr** | **Ft** | **Fz** :: [Type => ]
 
     Sets one or more attributes.
-    ($(GMTdoc)meca.html#f)
 - **G** | **fill** :: [Type => Str | Number]
 
     Selects shade, color or pattern for filling the sectors [Default is no fill].
-    ($(GMTdoc)meca.html#g)
 - $(GMT.opt_P)
 - **L** | **outline_pen** | **pen_outline** :: [Type => Str | Number | Tuple]
 
     Draws the “beach ball” outline with pen attributes instead of with the default pen set by **pen**
-    ($(GMTdoc)meca.html#l)
 - **M** | **same_size** | **samesize** :: [Type => Bool]
 
     Use the same size for any magnitude. Size is given with **S**
-    ($(GMTdoc)meca.html#m)
 - **N** | **no_clip** | **noclip** :: [Type => Str | []]
 
     Do NOT skip symbols that fall outside frame boundary.
-    ($(GMTdoc)meca.html#n)
 - **Sc|aki** | **Sc|CMT|gcmt** | **Sm|mt|moment_tensor** | ... :: [Type => Str]
 
     Selects the meaning of the columns in the input data.
-    ($(GMTdoc)meca.html#s)
 - **T** | **nodal** :: [Type => Number | Str]
 
     Plots the nodal planes and outlines the bubble which is transparent.
-    ($(GMTdoc)meca.html#t)
 - **W** | **pen** :: [Type => Str | Tuple]
 
     Set pen attributes for all lines and the outline of symbols.
-    ($(GMTdoc)meca.html#w)
 - $(GMT.opt_U)
 - $(GMT.opt_V)
 - $(GMT.opt_X)

@@ -124,8 +124,8 @@ export
 	rose!, sample1d, scatter, scatter!, scatter3, scatter3!, solar, solar!, spectrum1d, sphdistance, sphinterpolate,
 	sphtriangulate, surface, ternary, ternary!, text, text!, text_record, trend1d, trend2d, triangulate, gmtsplit,
 	decorated, vector_attrib, wiggle, wiggle!, xyz2grd, gmtbegin, gmtend, gmthelp, subplot, gmtfig, inset, showfig,
-	earthtide, gravfft, gmtgravmag3d, grdgravmag3d, pscoupe, pscoupe!, coupe, coupe!, psmeca, psmeca!, meca, meca!,
-	psvelo, psvelo!, velo, velo!, getbyattrib, inwhichpolygon, pcolor, pcolor!, triplot, triplot!,
+	earthtide, gravfft, gmtgravmag3d, grdgravmag3d, gravprisms, pscoupe, pscoupe!, coupe, coupe!, psmeca, psmeca!,
+	meca, meca!, psvelo, psvelo!, velo, velo!, getbyattrib, inwhichpolygon, pcolor, pcolor!, triplot, triplot!,
 	grdrotater, imagesc,
 
 	mbimport, mbgetdata, mbsvplist, mblevitus,
@@ -270,6 +270,7 @@ include("MB/mbsvplist.jl")
 include("MB/mblevitus.jl")
 include("potential/gmtgravmag3d.jl")
 include("potential/grdgravmag3d.jl")
+include("potential/gravprisms.jl")
 include("potential/gravfft.jl")
 include("spotter/grdrotater.jl")
 include("drawing.jl")
@@ -297,6 +298,10 @@ const global legend_type = [legend_bag()]	# To store Legends info
 	GMT.cat_3_arg2(rand(3),rand(3),rand(3));
 	plot(rand(5,2), marker=:point, lc=:red, ls=:dot, lw=1, C=:jet, colorbar=true, Vd=2)
 	plot(rand(5,2))
+	makecpt(T=(0,10))
+	grdimage(rand(Float32,32,32), Vd=2);
+	grdview(rand(Float32,32,32), Vd=2);
+	coast(R=:g, proj=:guess, W=(level=1,pen=(2,:green)), Vd=2);
 	violin(rand(50), fmt=:ps);
 	boxplot(rand(50), fmt=:ps);
 	qqplot(randn(500), randn(50), fmt=:ps);
@@ -304,10 +309,6 @@ const global legend_type = [legend_bag()]	# To store Legends info
 	cornerplot(randn(50,3), scatter=true, fmt=:ps);
 	marginalhist(randn(1000,2), par=(PS_MEDIA="A2",), fmt=:ps);
 	feather([0.0 0 2.0; 0.0 30 2; 0.0 60 2], rtheta=true, aspect="1:1", arrow=(len=0.5, shape=0.5,), fmt=:ps);
-	makecpt(T=(0,10))
-	grdimage(rand(Float32,32,32), Vd=2);
-	grdview(rand(Float32,32,32), Vd=2);
-	coast(R=:g, proj=:guess, W=(level=1,pen=(2,:green)), Vd=2);
 	rm(joinpath(tempdir(), "GMTjl_custom_p_x.txt"))		# This one gets created before username is set.
 end
 
