@@ -562,6 +562,8 @@ function violin(data::Vector{Vector{Vector{T}}}; pos::Vector{<:Real}=Vector{Real
 		for k = 1:length(data[nig])  D3[n+=1] = Dv[k]  end	# Loop over number of groups
 		(scatter) && for k = 1:length(data[nig])  Ds[m+=1] = _D[k]  end		# Store the scatter pts
 	end
+	set_dsBB!(D3, false)		# Set the global BB
+	set_dsBB!(Ds, false)
 	helper2_violin(D3, Ds, data, 1:N_grp, N_grp, ccolor, first, isVert, N_in_each_grp, kwargs)
 end
 
@@ -640,6 +642,9 @@ function helper2_violin(D, Ds, data, xc, N_grp, ccolor, first, isVert, N_in_each
 
 	haskey(d, :split) && delete!(d, :split)		# Could not have been deleted before
 
+	# If we have a figname request we must suspend it till the last plotting command.
+	figname::String = ((val = find_in_dict(d, [:savefig :figname :name])[1]) !== nothing) ? val : ""
+
 	if (find_in_kwargs(kwargs, [:boxplot])[1] !== nothing || showOL)	# Request to plot the candle sticks too
 		delete!(d, :boxplot)
 		haskey(d, :scatter) && delete!(d, :scatter)
@@ -654,20 +659,24 @@ function helper2_violin(D, Ds, data, xc, N_grp, ccolor, first, isVert, N_in_each
 		otl = (!showOL) ? false : (isa(OLcmd, Bool)) ? true : OLcmd		# For the case violins want outliers too
 		this_show = (showSep) ? false : do_show
 		if (isempty(Ds))			# Just the candle sticks
+			(figname != "") && (d[:savefig] = d[:savefig] = figname)
 			R = boxplot(data; first=false, G=fill_box, t=opt_t, hor=hz, otl=otl, byviolin=true, show=this_show)
 		else						# The candles + the scatter
 			boxplot(data; first=false, G=fill_box, t=opt_t, hor=hz, otl=otl, byviolin=true)
 			d[:show], d[:G], d[:marker] = this_show, "black", "point"
+			(figname != "") && (d[:savefig] = d[:savefig] = figname)
 			R = common_plot_xyz("", Ds, "scatter", false, false, d...)		# The scatter plot
 		end
 		(showSep) && (f = (isVert) ? vlines! : hlines!;	R = f(xc[1:end-1] .+ diff(xc)/2, pen=sep_pen, show=do_show))
 	else
 		(!isempty(Ds) || showSep) && (do_show = ((val = find_in_dict(d, [:show])[1]) !== nothing && val != 0)) 
+		(figname != "" && isempty(Ds)) && (d[:savefig] = d[:savefig] = figname)		# Reset the figname now
 		R = common_plot_xyz("", D, "violin", first, false, d...)			# The violins
 		if (!isempty(Ds))
 			del_from_dict(d, [[:xticks], [:yticks], [:G, :fill]])
 			d[:G], d[:marker] = "black", "point"
 			d[:show] = (showSep) ? false : do_show
+			(figname != "") && (d[:savefig] = d[:savefig] = figname)
 			R = common_plot_xyz("", Ds, "scatter", false, false, d...)		# The scatter pts
 		end
 		(showSep) && (f = (isVert) ? vlines! : hlines!;	R = f(xc[1:end-1] .+ diff(xc)/2, pen=sep_pen, show=do_show))
@@ -847,6 +856,8 @@ function qqplot(x, y; qqline=:identity, first=true, kwargs...)
 	(first && is_in_dict(d, [:aspect]) === nothing) && (d[:aspect] = :equal)
 	do_show = ((val = find_in_dict(d, [:show])[1]) !== nothing && val != 0)
 
+	figname::String = ((val = find_in_dict(d, [:savefig :figname :name])[1]) !== nothing) ? val : ""	# Suspend it
+
 	if (plotline)						# Normally, we want the line but a 'qqline=:none' avoids it.
 		if (is_in_dict(d, [:R :region :limits]) === nothing)	# Need to pass in the scatter limits, not the line's
 			t::Vector{Float64} = round_wesn([xs..., extrema(qy)...])
@@ -864,6 +875,7 @@ function qqplot(x, y; qqline=:identity, first=true, kwargs...)
 		(find_in_dict(d, [:mec :markeredgecolor :MarkerEdgeColor], false)[1] === nothing) && (d[:mec] = "0.25p,black")
 	end
 	d[:show] = do_show
+	(figname != "") && (d[:savefig] = figname)		# Restore in case
 	common_plot_xyz("", mat2ds([qx qy]), "scatter", first, false, d...)		# The scatter plot
 end
 
