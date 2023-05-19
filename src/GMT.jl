@@ -1,6 +1,6 @@
 module GMT
 
-using Printf, Dates, Statistics
+using Printf, Dates, Statistics, Downloads
 using Tables: Tables
 using PrettyTables
 using PrecompileTools
@@ -330,9 +330,6 @@ function __init__(test::Bool=false)
 	tmpdir_usr[2] = replace(user, " " => "_")
 	PSname[1] = tmpdir_usr[1] * "/" * "GMTjl_" * tmpdir_usr[2] * ".ps"
 end
-
-#include("precompile_GMT_i.jl")
-#_precompile_()
 
 """
 GMT manipulating geographic and Cartesian data sets (including filtering, trend fitting, gridding, projecting, etc.)
