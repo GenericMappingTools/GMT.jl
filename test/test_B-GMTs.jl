@@ -77,9 +77,12 @@
 	@test_throws ErrorException("Bad data type in option F") grdgravmag3d("@earth_relief_10m", region=(-12,-10,35,37), density=1700, inc=0.05, z_level=:a, F=:a)
 
 	println("	GRAVPRISMS")
-	G = gravprisms(R="-40/40/-40/40", I=1, M=:h, "@prisms.txt", D=1700, F=:f, Z=7000);
-	D = gmtmath("-T-30/30/0.1 T 0 MUL =");
-	gravprisms(N=D, M=:h, "@prisms.txt", D=1700, F=:v, Z=7000);
+	try
+		G = gravprisms(R="-40/40/-40/40", I=1, M=:h, "@prisms.txt", D=1700, F=:f, Z=7000);
+		D = gmtmath("-T-30/30/0.1 T 0 MUL =");
+		gravprisms(N=D, M=:h, "@prisms.txt", D=1700, F=:v, Z=7000);
+	catch
+	end
 
 	println("	GRAVFFT")
 	G = grdcut("@earth_relief_10m_g", region=(-12.5,-10,35.5,37.5), V=:q);

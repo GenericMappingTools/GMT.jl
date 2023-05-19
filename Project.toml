@@ -5,6 +5,7 @@ version = "0.44.8"
 
 [deps]
 Dates  = "ade2ca70-3891-5945-98fb-dc099432e06a"
+Downloads = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
 PrettyTables = "08abe8d2-0d0c-5749-adfa-8a2ac140af0d"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
@@ -16,7 +17,7 @@ PROJ_jll = "58948b4f-47e0-5654-a9ad-f609743f8632"
 Ghostscript_jll = "61579ee1-b43e-5ca0-a5da-69d92c66a64b"
 
 [compat]
-julia = "1.6"
+julia = "1.7"
 Tables = "1"
 PrettyTables = "1, 2"
 PrecompileTools = "1.0"
