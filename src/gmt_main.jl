@@ -1445,6 +1445,24 @@ function resetGMT()
 end
 
 # ---------------------------------------------------------------------------------------------------
+"""
+    upGMT(up=false)
+
+Check if a new GMT (C binaries) version is available. If yes, use `upGMT(true)` to update it.
+"""
+function upGMT(up::Bool=false)
+	!Sys.iswindows() && (@warn("This function is for Windows use only."); return nothing)
+	fn = Downloads.download("http://fct-gmt.ualg.pt/gmt/data/wininstallers/devdate.txt")
+	d = Date(readline(fn), dateformat"y.m.d")
+	if (GMTdevdate < d)
+		!up ? println("A New GMT C library version ($d) is available. Update it with: `upWINGMT(true)`") :
+		      (ENV["UPDATE_GMTWIN"] = 1;  Pkg.build("GMT"))
+	else
+		println("You are using the latest available GMT binary.")
+	end
+end
+
+# ---------------------------------------------------------------------------------------------------
 function clear_sessions(age::Int=0)
 	# Delete stray sessions left behind by old failed process. Thanks to @htyeim
 	# AGE is in seconds
