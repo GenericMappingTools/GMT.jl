@@ -174,6 +174,7 @@
 	image_alpha!(I, alpha_vec=round.(UInt32,rand(6).*255));
 	image_alpha!(I, alpha_band=round.(UInt8,rand(27,27).*255))
 	GMT.resetGMT()
+	upGMT()
 	image_cpt!(I, C)
 	GMT.transpcmap!(I, true)
 	GMT.transpcmap!(I, false)

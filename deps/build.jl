@@ -61,7 +61,7 @@ function get_de_libnames()
 	end
 	userdir    = readlines(`gmt --show-userdir`)[1]
 	out = readlines(`gmt --version`)[1]
-	devdate = ((ind = findlast('_', out)) !== nothing) && out[ind+1:end]
+	devdate = ((ind = findlast('_', out)) !== nothing) ? out[ind+1:end] : "2022.06.18"	# 2022.06.18 is the 6.4 release date
 	Sys.iswindows() && (GMT_bindir = readlines(`gmt --show-bindir`)[1])		# Only on Win is that all dlls are in same bin dir
 	return errou, ver, libgmt, libgdal, libproj, GMT_bindir, userdir, devdate
 end
