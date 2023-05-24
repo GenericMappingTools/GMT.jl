@@ -527,6 +527,9 @@ linspace(start, stop, length=100) = range(start, stop=stop, length=length)
 logspace(start, stop, length=100) = exp10.(range(start, stop=stop, length=length))
 fields(arg) = fieldnames(typeof(arg))
 fields(arg::Array) = fieldnames(typeof(arg[1]))
+flipud(A) = reverse(A, dims=1)
+fliplr(A) = reverse(A, dims=2)
+flipdim(A,dim) = reverse(A, dims=dim)
 #feval(fn_str, args...) = eval(Symbol(fn_str))(args...)
 const numel = length
 
