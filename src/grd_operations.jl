@@ -224,3 +224,9 @@ function Base.:permutedims(G1::GMTgrid, inds; nodata=nothing)
 	GMTgrid(G1.proj4, G1.wkt, epsg, geog, range, inc, registration, _nodata, "", "", "", "", G1.names, x, y, v,
 	        mat, G1.z_unit, G1.y_unit, G1.x_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, G1.hasnans)
 end
+
+# ---------------------------------------------------------------------------------------------------
+flipud(G::GMTgrid) = GMTgrid(G.proj4, G.wkt, G.epsg, G.geog, G.range, G.inc, G.registration, G.nodata, G.title, G.remark, G.command, G.cpt, G.names, G.x, G.y, G.v, flipud(G.z), G.x_unit, G.y_unit, G.v_unit, G.z_unit, G.layout, G.scale, G.offset, G.pad, G.hasnans)
+fliplr(G::GMTgrid) = GMTgrid(G.proj4, G.wkt, G.epsg, G.geog, G.range, G.inc, G.registration, G.nodata, G.title, G.remark, G.command, G.cpt, G.names, G.x, G.y, G.v, fliplr(G.z), G.x_unit, G.y_unit, G.v_unit, G.z_unit, G.layout, G.scale, G.offset, G.pad, G.hasnans)
+flipud(I::GMTimage) = GMTimage(I.proj4, I.wkt, I.epsg, I.geog, I.range, I.inc, I.registration, I.nodata, I.color_interp, I.metadata, I.names, I.x, I.y, I.v, flipud(I.image), I.colormap, I.n_colors, flipud(I.alpha), I.layout, I.pad)
+fliplr(I::GMTimage) = GMTimage(I.proj4, I.wkt, I.epsg, I.geog, I.range, I.inc, I.registration, I.nodata, I.color_interp, I.metadata, I.names, I.x, I.y, I.v, fliplr(I.image), I.colormap, I.n_colors, fliplr(I.alpha), I.layout, I.pad)
