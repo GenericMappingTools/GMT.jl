@@ -29,7 +29,9 @@
 	G1 = GMT.mat2grid(rand(4,4));
 	G2 = GMT.mat2grid(rand(Float32,4,4), G1);
 	@info "1..."
-	GMT.mat2img(rand(UInt8,8,8), G1);
+	I = mat2img(rand(UInt8,8,8), G1);
+	flipud(I)
+	fliplr(I)
 	G2 = mat2grid(rand(Float32,4,4), mat2img(rand(UInt16,32,32),x=[220800 453600], y=[3.5535e6 3.7902e6]));
 	G2 = GMT.mat2grid(rand(Int32,4,4));
 	G2 = GMT.mat2grid(rand(4,4));
@@ -42,6 +44,8 @@
 	getindex(G1,1:2);
 	setindex!(G1, [-1 -1],1:2)
 	size(G1)
+	flipud(G)
+	fliplr(G)
 
 	D = mat2ds(ones(3,2));
 	D + 2;
