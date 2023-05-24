@@ -204,6 +204,7 @@ function gd2gmt(dataset::Gdal.AbstractDataset)
 	(Gdal.OGRGetDriverByName(Gdal.shortname(getdriver(dataset))) == C_NULL) && return gd2gmt(dataset; pad=0)
 
 	D, ds = Vector{GMTdataset}(undef, Gdal.ngeom(dataset)), 1
+	proj = ""		# Fk local vars inside for 
 	for k = 1:Gdal.nlayer(dataset)
 		layer = getlayer(dataset, k-1)
 		Gdal.resetreading!(layer)
@@ -238,6 +239,8 @@ function gd2gmt(dataset::Gdal.AbstractDataset)
 	end
 	(isempty(D)) && (@warn("This dataset has no geometry data. Result is empty."))
 	(length(D) != ds-1) && (D = deleteat!(D,ds:length(D)))
+	D[1].colnames = startswith(proj, "+proj=longlat") ? ["lon","lat", ["z$i" for i=1:size(D[1],2)-2]...] :
+	                ["x","y", ["z$i" for i=1:size(D[1],2)-2]...]	
 	set_dsBB!(D)				# Compute and set the global BoundingBox for this dataset
 	return (length(D) == 1) ? D[1] : D
 end
