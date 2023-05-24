@@ -54,7 +54,6 @@ function nearneighbor(cmd0::String="", arg1=nothing; kwargs...)
 	opt  = add_opt(d, "", "N", [:N :nn :nearest])
 	if (opt != "")  cmd *= " -Nn"  end
 
-	#if (isa(arg1, Matrix{<:Real}))  arg1 = GMTdataset(arg1)  end      # Must find why need this
 	common_grd(d, cmd0, cmd, "nearneighbor ", arg1)		# Finish build cmd and run it
 end
 

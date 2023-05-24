@@ -64,6 +64,7 @@ end
 const global G_API = [C_NULL]
 const global PSname = [""]					# The PS file (filled in __init__) where, in classic mode, all lands.
 const global tmpdir_usr = [tempdir(), ""]	# Save the tmp dir and user name (also filled in __init__)
+const global testdir = joinpath(dirname(pathof(GMT))[1:end-4], "test", "")	# To have easy access to test files
 const global img_mem_layout = [""]			# "TCP"	 For Images.jl. The default is "TRBa"
 const global grd_mem_layout = [""]			# "BRP" is the default for GMT PS images.
 const global current_view   = [""]			# To store the current viewpoint (-p)
@@ -95,7 +96,8 @@ const CPTaliases = [:C :color :cmap :colormap :colorscale]
 const global VMs = Union{Nothing, Vector{Symbol}, Matrix{Symbol}}
 const global VMr = Union{AbstractVector{<:Real}, Matrix{<:Real}}
 const global StrSymb  = Union{AbstractString, Symbol}
-# GItype = Union{GMTgrid, GMTimage} and GDtype = Union{GMTdataset, Vector{GMTdataset}} are edeclared in gmt_main
+# GItype = Union{GMTgrid, GMTimage} and GDtype = Union{GMTdataset, Vector{GMTdataset}} are declared in gmt_main
+# MatGDsGd = Union{Matrix{<:AbstractFloat}, GMTdataset, Vector{GMTdataset}, Gdal.AbstractDataset}	declared down
 #const global unused_opts = [()]					# To track consumed options
 #const global unused_subopts = [()]					# To track consumed options in sub-options
 
@@ -131,10 +133,10 @@ export
 	mbimport, mbgetdata, mbsvplist, mblevitus,
 
 	blendimg!, lonlat2xy, xy2lonlat, df2ds, mat2ds, mat2grid, mat2img, slicecube, cubeslice, linspace, logspace, fields,
-	tic, toc, theme, tern2cart, geodetic2enu, cpt4dcw, gd2gmt, gmt2gd, gdalread, gdalshade, gdalwrite, gadm, xyzw2cube,
-	coastlinesproj, graticules, plotgrid!, worldrectangular, worldrectgrid,
+	flipud, fliplr, flipdim, gridinterp, grdinterp, tic, toc, theme, tern2cart, geodetic2enu, cpt4dcw, gd2gmt, gmt2gd,
+	gdalread, gdalshade, gdalwrite, gadm, xyzw2cube, coastlinesproj, graticules, plotgrid!, worldrectangular, worldrectgrid,
 
-	magic, rescale, stackgrids, delrows!, setgrdminmax!, meshgrid, cart2pol, pol2cat, cart2sph, sph2cart,
+	gridit, magic, rescale, stackgrids, delrows!, setgrdminmax!, meshgrid, cart2pol, pol2cat, cart2sph, sph2cart,
 
 	arcellipse, arccircle, getband, getdriver, getlayer, getproj, getgeom, getgeotransform, toPROJ4, toWKT,
 	importPROJ4, importWKT, importEPSG, gdalinfo, gdalwarp, gdaldem, gdaltranslate, gdalgrid, gdalvectortranslate,
@@ -161,6 +163,12 @@ include("common_docs.jl")
 include("libgmt_h.jl")
 include("libgmt.jl")
 include("gmt_main.jl")
+include("gdal.jl")
+include("gdal_utils.jl")
+include("proj_utils.jl")
+using GMT.Gdal
+const global MatGDsGd = Union{Matrix{<:AbstractFloat}, GMTdataset, Vector{GMTdataset}, Gdal.AbstractDataset}
+
 include("utils_types.jl")
 include("grd_operations.jl")
 include("common_options.jl")
@@ -214,6 +222,8 @@ include("grdvector.jl")
 include("grdview.jl")
 include("grdvolume.jl")
 include("greenspline.jl")
+include("gridit.jl")
+include("imshow.jl")
 include("kml2gmt.jl")
 include("linefit.jl")
 include("loxodromics.jl")
@@ -275,11 +285,6 @@ include("potential/gravfft.jl")
 include("spotter/grdrotater.jl")
 include("drawing.jl")
 include("get_enums.jl")
-include("gdal.jl")
-include("gdal_utils.jl")
-include("proj_utils.jl")
-using GMT.Gdal
-include("imshow.jl")		# Include later because one method depends on knowing about GDAL
 
 const global current_cpt = [GMTcpt()]		# To store the current palette
 const global legend_type = [legend_bag()]	# To store Legends info

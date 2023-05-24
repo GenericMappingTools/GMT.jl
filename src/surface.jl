@@ -69,20 +69,32 @@ Parameters
 
 To see the full documentation type: ``@? surface``
 """
-function surface(cmd0::String="", arg1=nothing; kwargs...)
+function surface(cmd0::String="", arg1::Union{Nothing, MatGDsGd}=nothing; kwargs...)
 
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	arg2 = nothing
-	
+	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+	d = seek_auto_RI(d, cmd0, arg1)				# If -R -I not set, guess them.
+
+	if ((val = find_in_dict(d, [:preproc :preprocess])[1]) !== nothing)
+		_val = string(val)::String
+		fun = (_val == "blockmedian") ? blockmedian : (_val == "blockmode") ? blockmode : blockmean
+		r = ((val = find_in_dict(d, [:r :reg :registration])[1]) !== nothing) ? string(val)::String : "g"
+		Vd::Int = ((val = find_in_dict(d, [:Vd], false)[1]) !== nothing) ? val : 0
+		if (Vd == 2)
+			println(string(fun, " -R",d[:R], " -I",d[:I], " -r",r))
+		else
+			arg1 = (cmd0 != "") ? fun(cmd0; R=d[:R], I=d[:I], r=r) : fun(arg1; R=d[:R], I=d[:I], r=r)
+		end
+	end
+
 	cmd, = parse_common_opts(d, "", [:G :RIr :V_params :a :bi :di :e :f :h :i :w :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :aspect_ratio], [:C :convergence], [:Ll :lower], [:Lu :upper], [:M :mask],
-	                                  [:N :iterations :max_iterations], [:Q :suggest], [:S :search_radius], [:T :tension], [:W :log], [:Z :over_relaxation]])
+	                                 [:N :iterations :max_iterations], [:Q :suggest], [:S :search_radius], [:T :tension], [:W :log], [:Z :over_relaxation]])
 	cmd, args, n, = add_opt(d, cmd, "D", [:D :breakline], :data, Array{Any,1}([arg1, arg2]), (zlevel="+z",))
-	(!contains(cmd, " -R") && !isempty(CTRL.pocket_R[1])) && (cmd *= " -R")
+	#(!contains(cmd, " -R") && !isempty(CTRL.pocket_R[1])) && (cmd *= " -R")
 	if (n > 0)  arg1, arg2 = args[:]  end
 
 	common_grd(d, cmd0, cmd, "surface ", arg1, arg2)		# Finish build cmd and run it
 end
 
-# ---------------------------------------------------------------------------------------------------
-surface(arg1; kw...) = surface("", arg1; kw...)
+surface(arg1::MatGDsGd; kw...) = surface("", arg1; kw...)

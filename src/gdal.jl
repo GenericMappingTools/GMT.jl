@@ -601,12 +601,11 @@ function GDALDEMProcessing(pszDestFilename, hSrcDataset, pszProcessing, pszColor
 	acare(ccall((:GDALDEMProcessing, libgdal), pVoid, (Cstring, pVoid, Cstring, Cstring, pVoid, Ptr{Cint}), pszDestFilename, hSrcDataset, pszProcessing, pszColorFilename, psOptions, pbUE))
 end
 
-GDALGridOptionsNew(pArgv, psOFB) = acare(ccall((:GDALGridOptionsNew, libgdal), pVoid, (Ptr{Cstring}, pVoid), pArgv, psOFB))
-
-GDALGridOptionsFree(psO) = acare(ccall((:GDALGridOptionsFree, libgdal), Cvoid, (pVoid,), psO))
-
 GDALGrid(pDest, hSrcDS, psO, pbUE) =
 	acare(ccall((:GDALGrid, libgdal), pVoid, (Cstring, pVoid, pVoid, Ptr{Cint}), pDest, hSrcDS, psO, pbUE))
+
+GDALGridOptionsFree(psO) = acare(ccall((:GDALGridOptionsFree, libgdal), Cvoid, (pVoid,), psO))
+GDALGridOptionsNew(pArgv, psOFB) = acare(ccall((:GDALGridOptionsNew, libgdal), pVoid, (Ptr{Cstring}, pVoid), pArgv, psOFB))
 
 GDALVectorTranslateOptionsNew(pArgv, psOFB) =
 	acare(ccall((:GDALVectorTranslateOptionsNew, libgdal), pVoid, (Ptr{Cstring}, pVoid), pArgv, psOFB))
@@ -1560,9 +1559,8 @@ end
 		usage_error = Ref{Cint}()
 		result = GDALGrid(dest, dataset.ptr, options, usage_error)
 		GDALGridOptionsFree(options)
-		if (dest != "/vsimem/tmp")
-			GDALClose(result);		return nothing
-		end
+
+		(dest != "/vsimem/tmp") && (GDALClose(result);	return nothing)
 		return (gdataset) ? IDataset(result) : gd2gmt(IDataset(result))
 	end
 	gdalgrid(ds::IDataset, opts::Vector{String}=String[]; dest="/vsimem/tmp", gdataset=false) =

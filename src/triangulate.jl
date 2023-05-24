@@ -2,7 +2,7 @@
 	triangulate(cmd0::String="", arg1=nothing; kwargs...)
 
 Reads randomly-spaced x,y[,z] (or file) and performs Delaunay
-triangulation, i.e., it find how the points should be connected to give the most equilateral
+triangulation, i.e., it finds how the points should be connected to give the most equilateral
 triangulation possible. 
 
 See full GMT (not the `GMT.jl` one) docs at [`triangulate`]($(GMTdoc)triangulate.html)

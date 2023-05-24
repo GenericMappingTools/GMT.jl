@@ -31,6 +31,7 @@ G = sphdistance(R="0/10/0/10", I=0.1, Q=D, L=:k, Vd=dbg2);	# But works with data
 println("	SURFACE")
 G = surface(rand(100,3) * 150, R="0/150/0/150", I=1, Ll=-100, upper=100, V=:q);
 @assert(size(G.z) == (151, 151))
+G = gridit("@ship_15.txt", M=0.3, preproc=:y)
 
 println("	SPLITXYZ")
 # SPLITXYZ (fails?)

@@ -128,12 +128,12 @@ function imshow(arg1::GMTcpt; horizontal::Bool=false, kw...)
 	horizontal ? psscale(arg1; D="x8c/1c+w12c/0.5c+jTC+h", show=see, kw...) : psscale(arg1; J="X15/0", D="x8c/1c+w12c/0.5c+jBC", show=see, kw...)
 end
 
-if (GMTver >= v"6")			# Needed to cheat the autoregister autobot
-	function imshow(arg1::Gdal.AbstractDataset; kw...)
-		(Gdal.OGRGetDriverByName(Gdal.shortname(getdriver(arg1))) != C_NULL) && return plot(gd2gmt(arg1), show=1)
-		imshow(gd2gmt(arg1); kw...)
-	end
+#if (GMTver >= v"6")			# Needed to cheat the autoregister autobot
+function imshow(arg1::Gdal.AbstractDataset; kw...)
+	(Gdal.OGRGetDriverByName(Gdal.shortname(getdriver(arg1))) != C_NULL) && return plot(gd2gmt(arg1), show=1)
+	imshow(gd2gmt(arg1); kw...)
 end
+#end
 
 imshow(x::AbstractVector{Float64}, y::AbstractVector{Float64}, f::Function; kw...) = imshow(mat2grid(f, x, y); kw...)
 
