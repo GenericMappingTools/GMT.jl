@@ -3,8 +3,9 @@ Wraper function to interpolate swcattered data into a grid
 """
 function gridit(fname::String="", arg1::Union{Nothing, MatGDsGd}=nothing; method::StrSymb="surface", proj="", epsg=0, kw...)
 
-	_d = KW(kw)
-	d = seek_auto_RI(_d, fname, arg1)
+	d = KW(kw)
+	len_d = length(d)
+	d = seek_auto_RI(d, fname, arg1)
 
 	(proj == "") && (proj = isa(arg1, GDtype) ? getproj(arg1, proj4=true) : "")
 	(proj == "" && epsg != 0) && (proj = epsg2proj(epsg))
@@ -18,13 +19,13 @@ function gridit(fname::String="", arg1::Union{Nothing, MatGDsGd}=nothing; method
 			d[:A] = _mtd
 		elseif (startswith(_mtd, "nearest"))	# GDAL's nearest neighbor
 			d[:N] = "n";	fun = nearneighbor
-		elseif (_mtd == "linear" || _mtd == "average" || _mth == "invdist" || _mth == "invdistnn")
+		elseif (_mtd == "linear" || _mtd == "average" || _mtd == "invdist" || _mtd == "invdistnn")
 			fun = gdalgrid
 		else
 			error("Unknown interpolation method: $_mtd")
 		end
 	end
-	G = length(d) == length(_d) ? fun(fname, arg1; kw...) : fun(fname, arg1; d...)
+	G = (length(d) == len_d) ? fun(fname, arg1; kw...) : fun(fname, arg1; d...)
 	(proj != "") && (G.proj4 = proj)
 	G
 end
