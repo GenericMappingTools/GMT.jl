@@ -84,6 +84,7 @@ function surface(cmd0::String="", arg1::Union{Nothing, MatGDsGd}=nothing; kwargs
 			println(string(fun, " -R",d[:R], " -I",d[:I], " -r",r))
 		else
 			arg1 = (cmd0 != "") ? fun(cmd0; R=d[:R], I=d[:I], r=r) : fun(arg1; R=d[:R], I=d[:I], r=r)
+			cmd0 = ""	# Since it may have been just consumed above 
 		end
 	end
 
