@@ -46,6 +46,7 @@
 	size(G1)
 	flipud(G)
 	fliplr(G)
+	flipdim(G.z,1)
 
 	D = mat2ds(ones(3,2));
 	D + 2;

@@ -95,8 +95,8 @@ const prj4WGS84 = "+proj=longlat +datum=WGS84 +units=m +no_defs"	# This is used 
 const CPTaliases = [:C :color :cmap :colormap :colorscale]
 const global VMs = Union{Nothing, Vector{Symbol}, Matrix{Symbol}}
 const global VMr = Union{AbstractVector{<:Real}, Matrix{<:Real}}
-const global StrSymb  = Union{AbstractString, Symbol}
-# GItype = Union{GMTgrid, GMTimage} and GDtype = Union{GMTdataset, Vector{GMTdataset}} are declared in gmt_main
+const global StrSymb = Union{AbstractString, Symbol}
+# GItype = Union{GMTgrid, GMTimage} and GDtype = Union{GMTdataset, Vector{GMTdataset}} are declared in gmt_types
 # MatGDsGd = Union{Matrix{<:AbstractFloat}, GMTdataset, Vector{GMTdataset}, Gdal.AbstractDataset}	declared down
 #const global unused_opts = [()]					# To track consumed options
 #const global unused_subopts = [()]					# To track consumed options in sub-options
@@ -162,16 +162,19 @@ export
 include("common_docs.jl")
 include("libgmt_h.jl")
 include("libgmt.jl")
-include("gmt_main.jl")
+include("gmt_types.jl")
 include("gdal.jl")
 include("gdal_utils.jl")
 include("proj_utils.jl")
 using GMT.Gdal
 const global MatGDsGd = Union{Matrix{<:AbstractFloat}, GMTdataset, Vector{GMTdataset}, Gdal.AbstractDataset}
+const global current_cpt = [GMTcpt()]		# To store the current palette
 
+include("gmt_main.jl")
 include("utils_types.jl")
 include("grd_operations.jl")
 include("common_options.jl")
+const global legend_type = [legend_bag()]	# To store Legends info
 include("gmtbegin.jl")
 include("blendimg.jl")
 include("blocks.jl")
@@ -285,9 +288,6 @@ include("potential/gravfft.jl")
 include("spotter/grdrotater.jl")
 include("drawing.jl")
 include("get_enums.jl")
-
-const global current_cpt = [GMTcpt()]		# To store the current palette
-const global legend_type = [legend_bag()]	# To store Legends info
 
 @setup_workload begin
 	G_API[1] = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS)
