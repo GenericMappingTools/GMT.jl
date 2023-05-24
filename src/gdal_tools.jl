@@ -11,11 +11,12 @@ on the input type). To force the return of a GDAL dataset use the option `gdatas
 
 
 - `indata`: Input data. It can be a file name, a GMTgrid or GMTimage object or a GDAL dataset
-- `options`:   List of options. The accepted options are the ones of the gdal_translate utility.
-            This list can be in the form of a vector of strings, or joined in a simgle string.
+- `options`: List of options. The accepted options are the ones of the gdal_translate utility.
+            This list can be in the form of a vector of strings, or joined in a single string.
 - `kwargs`: Besides what was mentioned above one can also use `meta=metadata`, where `metadata`
             is a string vector with the form "NAME=...." for each of its elements. This data
             will be recognized by GDAL as Metadata.
+            The `kwargs` may also contain the GMT region (-R), proj (-J), inc (-I) and `save=fname` options.
 
 ### Returns
 A GMT grid or Image, or a GDAL dataset (or nothing if file was writen on disk).
@@ -28,13 +29,17 @@ end
 """
     gdalwarp(indata, options=String[]; dest="/vsimem/tmp", kwargs...)
 
-Image reprojection and warping function.
+Image/Grid reprojection and warping function.
 
 ### Parameters
 - `indata`:  Input data. It can be a file name, a GMTgrid or GMTimage object or a GDAL dataset
-- `options`: List of options (potentially including filename and open
-   options). The accepted options are the ones of the gdalwarp utility.
-- `kwargs`:  Are kwargs that may contain the GMT region (-R), proj (-J), inc (-I) and `save=fname` options
+- `options`: List of options. The accepted options are the ones of the gdal_translate utility.
+            This list can be in the form of a vector of strings, or joined in a single string.
+            The accepted options are the ones of the gdalwarp utility.
+- `kwargs`: Besides what was mentioned above one can also use `meta=metadata`, where `metadata`
+            is a string vector with the form "NAME=...." for each of its elements. This data
+            will be recognized by GDAL as Metadata.
+            The `kwargs` may also contain the GMT region (-R), proj (-J), inc (-I) and `save=fname` options.
 
 ### Returns
 A GMT grid or Image, or a GDAL dataset (or nothing if file was writen on disk).
@@ -92,6 +97,35 @@ function gdaldem(indata, method::String, opts::Vector{String}=String[]; dest="/v
 	end
 end
 
+# ---------------------------------------------------------------------------------------------------
+"""
+    G = gdalgrid(indata, method::StrSymb="", options=String[]; dest="/vsimem/tmp", kwargs...)
+
+
+### Parameters
+* `indata`: The source dataset. It can be a file name, a GMTdataset, a Mx3 matrix or a GDAL dataset
+* `method`: The interpolation method name (one of "invdist", "invdistnn", "average", "nearest", or "linear").
+- `options`: List of options. The accepted options are the ones of the gdal_grid utility.
+            This list can be in the form of a vector of strings, or joined in a single string.
+
+
+### Returns
+A GMTgrid or a GDAL dataset (or nothing if file was writen on disk).
+"""
+function gdalgrid(indata, opts=String[]; dest="/vsimem/tmp", method::GMT.StrSymb="", kwargs...)
+	if (method == "")
+		_meth = "-a invdist:nodata=NaN"
+	else
+		_meth = isa(method, Symbol) ? string(method) : method 
+		!startswith(_meth, "-a") && (_meth = "-a " * method)
+		(!startswith(_meth, "invdist") && !startswith(_meth, "invdistnn") && !startswith(_meth, "average") &&!startswith(_meth, "nearest") && !startswith(_meth, "linear")) && error("Bad interpolation algorith $_meth")
+		_meth = "-a " * _meth
+		!contains(_meth, "nodata") && (_meth *= ":nodata=NaN")
+	end
+	helper_run_GDAL_fun(gdal_grid, indata, dest, opts, _meth, kwargs...)
+end
+
+# ---------------------------------------------------------------------------------------------------
 """
     ogr2ogr(indata, options=String[]; dest="/vsimem/tmp", kwargs...)
 
