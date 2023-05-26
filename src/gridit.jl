@@ -30,8 +30,8 @@ Interpolation methods may be those of GMT and GDAL (gdal_grid).
      interpolation methods. The user must consult individual manual pages to learn about the available
      possibilities. Two very important (actually, mandatory) *options* are the `region=...` and the
      `inc=...` that select the grid limits and the grid resolution. However, if they are not provided
-     we make a very crude estimate based on data limits and point density. But this should only be used
-     for a very exploratory calculation.
+     (or only one of them is) we make a very crude estimate based on data limits and point density.
+     But this should only be used for a very exploratory calculation.
 - `preproc`: This option only applies to the `method=:surface` and means that the data is previously passed
      through one of ``block*`` modules to decimate the data in each cell as strongly advised by the ``surface``
      program. `preproc=true` will use ``blockmean``. To use any of the other two, pass its name as value.
@@ -88,12 +88,27 @@ gridit(arg1::MatGDsGd; method::StrSymb="surface", proj="", epsg=0, kw...) =
 # ---------------------------------------------------------------------------------------------------
 function seek_auto_RI(d::Dict{Symbol,Any}, fname::String, arg1::Union{Nothing, MatGDsGd})
 	# Check if -R -I was provided and if not make a wild guess of them. 
-	have_R = (is_in_dict(d, [:R :region :limits]) !== nothing)
-	have_I = (is_in_dict(d, [:I :inc :increment :spacing]) !== nothing)
-	(have_R && !have_I) && error("When using 'region|limits' must also use 'inc|sapcing'")
-	(!have_R && have_I) && error("When using 'inc|spacing' must also use 'region|limits'")
+	opt_RI, opt_R = parse_RIr(d, "", false, false)
+	opt_I = (opt_RI != opt_R) ? split(opt_RI)[1] : ""	# opt_RI has -I first than -R
+	have_R, have_I = (opt_R != ""), (opt_RI != opt_R)
+
 	if (!have_R && !have_I)
 		d[:R], d[:I] = estimate_RI(fname != "" ? fname : arg1)
+	elseif (!have_R && have_I)
+		opt_r = parse_r(d, "", false)[1]
+		if (fname != "")
+			d[:R] = gmt("gmtinfo " * fname * " " * opt_I * opt_r).text[1][3:end]
+		else
+			D::GDtype = isa(arg1, Gdal.AbstractDataset) ? gd2gmt(arg1) : isa(arg1, Matrix{<:Real}) ? mat2ds(arg1) : arg1
+			d[:R] = gmt("gmtinfo " * opt_I * opt_r, D).text[1][3:end]
+		end
+	elseif (have_R && !have_I)
+		np = (fname != "") ? get_limits_np(fname)[5] : get_limits_np(arg1)[5]
+		W, E, S, N = parse.(Float64, split(opt_R[4:end], '/'))
+		inc = sqrt(((E-W)*(N-S)) / np) * 4
+		inc_x = (E-W) / (round(Int, (E-W) / inc))
+		inc_y = (N-S) / (round(Int, (N-S) / inc))
+		d[:I] = @sprintf("%.12g/%.12g", inc_x, inc_y)
 	end
 	return d
 end
@@ -101,20 +116,27 @@ end
 # ---------------------------------------------------------------------------------------------------
 function estimate_RI(indata)
 	# Make a wild guess of -R -I
+	W, E, S, N, np = get_limits_np(indata)
+	inc = round(sqrt(((E-W)*(N-S)) / np) * 4, digits=6)
+	nx = round(Int, (E-W) / inc) + 1
+	ny = round(Int, (N-S) / inc) + 1
+	opt_I = @sprintf("%.12g", inc)
+	opt_R = @sprintf("%.12g/%.12g/%.12g/%.12g", W, W+(nx-1)*inc, S, S+(ny-1)*inc)
+	return opt_R, opt_I
+end
+
+# ---------------------------------------------------------------------------------------------------
+function get_limits_np(indata)
+	# Get the data limits and nunmber of points. 'indata' can be a file name, a Matrix, a D or a Gdal obj.
 	if (isa(indata, AbstractString))
 		s = split(gmt("gmtinfo " * indata).text[1], '\t')	# Must follow the parse path because we want
 		W,E = parse.(Float64, split(s[2][2:end-1],'/'))		# also the number of points.
 		S,N = parse.(Float64, split(s[3][2:end-1],'/'))
 		np = parse(Int,split(s[1])[end])
 	else
-		D::GDtype = isa(indata, Gdal.AbstractDataset) ? gd2gmt(indata) : indata
+		D::GDtype = isa(indata, Gdal.AbstractDataset) ? gd2gmt(indata) : isa(indata, Matrix{<:Real}) ? mat2ds(indata) : indata
 		W,E,S,N = isa(D, GMTdataset) ? D.bbox[1:4] : D[1].ds_bbox[1:4]
 		np = isa(D, GMTdataset) ? size(D,1) : sum(size.(D,1))
 	end
-	inc = round(sqrt(((E-W)*(N-S)) / np) * 4, digits=4)
-	nx = round(Int, (E-W) / inc) + 1
-	ny = round(Int, (N-S) / inc) + 1
-	opt_I = @sprintf("%.10g", inc)
-	opt_R = @sprintf("%.12g/%.12g/%.12g/%.12g", W, W+(nx-1)*inc, S, S+(ny-1)*inc)
-	return opt_R, opt_I
+	return W, E, S, N, np
 end

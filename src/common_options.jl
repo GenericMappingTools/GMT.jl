@@ -154,7 +154,7 @@ function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=true, RIr::Bool=
 		return cmd, ""
 	end
 
-	opt_R = merge_R_and_xyzlims(d, opt_R)
+	opt_R = merge_R_and_xyzlims(d, opt_R)	# Let a -R be partially changed by the use of optional xyzlim
 
 	if (RIr)
 		if (isa(val, GItype))
@@ -163,8 +163,8 @@ function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=true, RIr::Bool=
 			opt_r = parse_r(d, "")[2]
 			(opt_r == "") && (cmd *= " -r" * ((val.registration == 0) ? "g" : "p"))
 		else				# Here we must parse the -I and -r separately.
-			cmd = parse_I(d, cmd, [:I :inc :increment :spacing], "I")
-			cmd = parse_r(d, cmd)[1]
+			cmd = parse_I(d, cmd, [:I :inc :increment :spacing], "I", del)
+			cmd = parse_r(d, cmd, del)[1]
 		end
 	end
 
@@ -1454,10 +1454,10 @@ function parse_w(d::Dict, cmd::String)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_r(d::Dict, cmd::String)
+function parse_r(d::Dict, cmd::String, del::Bool=true)
 	# Accept both numeric (0 or != 0) and string/symbol arguments
 	opt_val::String = ""
-	if ((val = find_in_dict(d, [:r :reg :registration])[1]) !== nothing)
+	if ((val = find_in_dict(d, [:r :reg :registration], del)[1]) !== nothing)
 		(isa(val, String) || isa(val, Symbol)) && (opt_val = string(" -r",val)[1:4])
 		(isa(val, Integer)) && (opt_val = (val == 0) ? " -rg" : " -rp")
 		cmd *= opt_val

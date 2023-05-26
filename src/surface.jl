@@ -56,6 +56,12 @@ Parameters
 - **Z** | **over_relaxation** :: [Type => Str | GMTgrid]
 
     Over-relaxation factor. This parameter is used to accelerate the convergence; it is a number between 1 and 2.
+
+- **preproc** :: [Type => Bool | Str/Symb]
+
+    This option means that the data is previously passed through one of ``block*`` modules to decimate the data
+    in each cell as strongly advised. `preproc=true` will use ``blockmean``. To use any of the other two,
+    pass its name as value. *e.g.* `preproc="blockmedian"`.
 - $(GMT.opt_a)
 - $(GMT._opt_bi)
 - $(GMT._opt_di)
@@ -73,7 +79,7 @@ function surface(cmd0::String="", arg1::Union{Nothing, MatGDsGd}=nothing; kwargs
 
 	arg2 = nothing
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
-	d = seek_auto_RI(d, cmd0, arg1)				# If -R -I not set, guess them.
+	d = seek_auto_RI(d, cmd0, arg1)				# If -R -I (or one of them) not set, guess.
 
 	if ((val = find_in_dict(d, [:preproc :preprocess])[1]) !== nothing)
 		_val = string(val)::String
