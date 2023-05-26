@@ -1,7 +1,50 @@
 """
-Wraper function to interpolate swcattered data into a grid
+    G = gridit(fname="", indata=nothing; method="surface", gdopts="", proj="", epsg=0, kw...)
+
+Wrapper function to interpolate scattered data into a grid.
+Interpolation methods may be those of GMT and GDAL (gdal_grid).
+
+### Parameters
+- `fname`: A file name containing the source dataset to be interpolated. It must contain at least 3 columns (x y z).
+- `indata`: Alternative source dataset in the form of a GMTdataset, a Mx3 matrix or a GDAL dataset.
+- `method`: The interpolation method name. One of (GMT): "surface" or "minimum curvature", "triangulate",
+     "nearneighbor", "sphtriangulate", "greenspline". The arguments: "mean", "median", "mode", "std", "highest",
+     "lowest" will compute those amounts inside each *rectangular* cell.
+
+     - Or (GDAL): "invdist", "invdistnn", "average", "nearest", "linear", "minimum", "maximum", "range",
+     "count", "average_distance", "average_distance_pts". See https://gdal.org/programs/gdal_grid.html#gdal-grid
+
+     - Note that there is some overlap between the diverse methods. For example, the GMT's ``nearneighbor``
+     and GDAL's ``invdist`` apply the same algorithm (the Inverse Distance Weight) but they difer on how
+     to select the points to do the weighted average.
+- `gdopts`: List of options, in the form of a single string, accepted by the gdal_grid utility. This option
+     only applies to the GDAL methods.
+- `proj`: An optional proj4 string describing the data's coordinate system. Note that this not imply any
+     data projection. The input data may itself already carry this information, case in which this option
+     is not necessary.
+- `wkt`: An optional wkt string describing the data's coordinate system. Same comments as `proj`
+- `epsg`: An optional epsg code describing the data's coordinate system. Same comments as `proj`
+
+# Kwargs
+* `kw...` keyword=value arguments. These are used to pass options that are specific to a particular GMT
+     interpolation methods. The user must consult individual manual pages to learn about the available
+     possibilities. Two very important (actually, mandatory) *options* are the `region=...` and the
+     `inc=...` that select the grid limits and the grid resolution. However, if they are not provided
+     we make a very crude estimate based on data limits and point density. But this should only be used
+     for a very exploratory calculation.
+- `preproc`: This option only applies to the `method=:surface` and means that the data is previously passed
+     through one of ``block*`` modules to decimate the data in each cell as strongly advised by the ``surface``
+     program. `preproc=true` will use ``blockmean``. To use any of the other two, pass its name as value.
+     *e.g.* `preproc="blockmedian"`.
+
+### Returns
+A GMTgrid or nothing if file was writen on disk.
+
+### Example
+    G = gridit("@ship_15.txt", method=:surface, mask=0.3, preproc=true);
 """
-function gridit(fname::String="", arg1::Union{Nothing, MatGDsGd}=nothing; method::StrSymb="surface", proj="", epsg=0, kw...)
+function gridit(fname::String="", arg1::Union{Nothing, MatGDsGd}=nothing; method::StrSymb="surface",
+                gdopts::String="", proj="", epsg=0, kw...)
 
 	d = KW(kw)
 	len_d = length(d)
@@ -10,7 +53,7 @@ function gridit(fname::String="", arg1::Union{Nothing, MatGDsGd}=nothing; method
 	(proj == "") && (proj = isa(arg1, GDtype) ? getproj(arg1, proj4=true) : "")
 	(proj == "" && epsg != 0) && (proj = epsg2proj(epsg))
 	_mtd = string(method)
-	fun::Function = (_mtd == "surface" || startswith(_mtd, "curvature")) ? surface : startswith(_mtd, "tri") ? triangulate : startswith(_mtd, "nearne") ? nearneighbor : startswith(_mtd, "sph") ? sphtriangulate : startswith(_mtd, "green") ? greenspline : sin
+	fun::Function = (_mtd == "surface" || contains(_mtd, "curvature")) ? surface : startswith(_mtd, "tri") ? triangulate : startswith(_mtd, "nearne") ? nearneighbor : startswith(_mtd, "sph") ? sphtriangulate : startswith(_mtd, "green") ? greenspline : sin
 	if (fun == sin)			# sin was just a fallback function to keep type stability
 		(_mtd == "mean" || _mtd == "std" || _mtd == "highest" || _mtd == "lowest") && (fun = blockmean)
 		(_mtd == "median") && (fun = blockmedian)
@@ -19,13 +62,22 @@ function gridit(fname::String="", arg1::Union{Nothing, MatGDsGd}=nothing; method
 			d[:A] = _mtd
 		elseif (startswith(_mtd, "nearest"))	# GDAL's nearest neighbor
 			d[:N] = "n";	fun = nearneighbor
-		elseif (_mtd == "linear" || _mtd == "average" || _mtd == "invdist" || _mtd == "invdistnn")
+		elseif (startswith(_mtd, "linear") || startswith(_mtd, "average") || startswith(_mtd, "invdist") || startswith(_mtd, "invdistnn") || startswith(_mtd, "minimum") || startswith(_mtd, "maximum") || startswith(_mtd, "range") || startswith(_mtd, "count") || startswith(_mtd, "average_distance") || startswith(_mtd, "average_distance_pts"))
 			fun = gdalgrid
 		else
 			error("Unknown interpolation method: $_mtd")
 		end
 	end
-	G = (length(d) == len_d) ? fun(fname, arg1; kw...) : fun(fname, arg1; d...)
+	if (fun == gdalgrid)
+		if (occursin(' ', _mtd))	# Allow also a syntax with spaces, e.g.: method="average radius=0.3"
+			s = split(_mtd)
+			for k = 2:numel(s) s[k][1] != ':' && (s[k] = ':' * s[k])  end
+			_mtd = join(s)						# Join back into a string with no spaces.
+		end
+		G = gdalgrid((fname != "") ? fname : arg1, gdopts, method=_mtd, R=d[:R], I=d[:I])
+	else
+		G = (length(d) == len_d) ? fun(fname, arg1; kw...) : fun(fname, arg1; d...)
+	end
 	(proj != "") && (G.proj4 = proj)
 	G
 end
@@ -57,7 +109,7 @@ function estimate_RI(indata)
 	else
 		D::GDtype = isa(indata, Gdal.AbstractDataset) ? gd2gmt(indata) : indata
 		W,E,S,N = isa(D, GMTdataset) ? D.bbox[1:4] : D[1].ds_bbox[1:4]
-		np = sum(length.(D))
+		np = isa(D, GMTdataset) ? size(D,1) : sum(size.(D,1))
 	end
 	inc = round(sqrt(((E-W)*(N-S)) / np) * 4, digits=4)
 	nx = round(Int, (E-W) / inc) + 1

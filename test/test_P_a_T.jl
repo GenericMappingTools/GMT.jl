@@ -35,6 +35,7 @@ gridit("@ship_15.txt", M=0.3, preproc=:y);
 gridit("@ship_15.txt", M=0.3, preproc=:y, Vd=2);
 gridit("@ship_15.txt",  method=:mean);
 gridit("@ship_15.txt",  method=:nearest);
+gridit(gmtread("@ship_15.txt"), method="average radius=0.3")
 @test_throws ErrorException("Unknown interpolation method: lele") gridit(gmtread("@ship_15.txt"),  method=:lele) 
 
 println("	SPLITXYZ")

@@ -374,7 +374,7 @@ within(D1, D2) = helper_geoms_run_fun(within, D1, D2, false)
 Returns `true` if g1 contains g2.
 """
 contains(g1::AbstractGeometry, g2::AbstractGeometry) = Bool(OGR_G_Contains(g1.ptr, g2.ptr))
-contains(D1, D2) = helper_geoms_run_fun(contains, D1, D2, false)
+contains(D1::Union{Matrix{<:Real}, GMT.GDtype}, D2::Union{Matrix{<:Real}, GMT.GDtype}) = helper_geoms_run_fun(contains, D1, D2, false)
 
 # ---------------------------------------------------------------------------------------------------
 """
@@ -555,9 +555,8 @@ function helper_geoms_run_fun(f::Function, D, ratio::Float64, holes::Bool=true; 
 	return (gdataset) ? ig : gd2gmt(ig)
 end
 
-function helper_2geoms(D1, D2)
+function helper_2geoms(D1::Union{Matrix{<:Real}, GMT.GDtype}, D2::Union{Matrix{<:Real}, GMT.GDtype})
 	# Helpr function that deals with arg checking and data type conversions, This is common to several funs here
-	(!isa(D1, Matrix{<:Real}) && !isa(D2, Matrix{<:Real}) && !isa(D1, GMT.GMTdataset) && !isa(D1, Vector{<:GMT.GMTdataset}) && !isa(D2, GMT.GMTdataset) && !isa(D2, Vector{<:GMT.GMTdataset})) && error("Input mut be GMTdatset or Matrix{Real}")
 	ds1 = gmt2gd(D1)
 	ds2 = gmt2gd(D2)
 	g1  = getgeom(unsafe_getfeature(getlayer(ds1, 0),0))
@@ -565,8 +564,7 @@ function helper_2geoms(D1, D2)
 	return g1, g2
 end
 
-function helper_1geom(D)
-	(!isa(D, Matrix{<:Real}) && !isa(D, GMT.GMTdataset) && !isa(D, Vector{<:GMT.GMTdataset})) && error("Input mut be GMTdatset or Matrix{Real}")
+function helper_1geom(D::Union{Matrix{<:Real}, GMT.GDtype})
 	ds = gmt2gd(D)
 	getgeom(unsafe_getfeature(getlayer(ds, 0),0))
 end

@@ -31,6 +31,10 @@ Parameters
     + Tuple("code", Str); Tuple(code, number); Tuple("code" [,"fill"], (pen)); Tuple((...),(...),...)
     + ex: ("PT",(0.5,"red","--")); (("PT","gblue",(0.5,"red"),("ES",(0.5,"yellow")))
     +     DCW=:PT; DCW=(:PT, 1); DCW=("PT", :red)
+
+- **getR** | **getregion** | **get_region** :: [Type => Str]
+
+    Return the region corresponding to the code/list-of-codes passed in as argument.
 - **F** | **box** :: [Type => Str]
 
     Draws a rectangular border around the map scale or rose.
@@ -80,6 +84,12 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 
 	gmt_proggy = (IamModern[1]) ? "coast "  : "pscoast "
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
+
+	if ((val = find_in_dict(d, [:getR :getregion :get_region], false)[1]) !== nothing)
+		t = string(gmt_proggy, " -E", val)
+		((Vd = find_in_dict(d, [:Vd], false)[1]) !== nothing) && (Vd == 1 ? println(t) : Vd > 1 ? (return t) : nothing)
+		return gmt(t)
+	end
 
 	cmd = parse_E_coast(d, [:E, :DCW], "")		# Process first to avoid warning about "guess"
 	cmd = add_opt(d, cmd, "M", [:M :dump])

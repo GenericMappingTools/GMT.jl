@@ -76,6 +76,7 @@ r = coast(proj=:Mercator, DCW=((country="GB,IT,FR", fill=:blue, pen=(0.25,:red))
 @test_throws ErrorException("In Overlay mode you cannot change a fig scale and NOT repeat the projection") coast!(region=(-20,60,-90,90), scale=0.03333, Vd=dbg2)
 r = coast(DCW=(:AT, "red"), Vd=dbg2)
 @test startswith(r, "pscoast  -EAT+gred")
+@test coast(getR=:PTC, Vd=0).text[1] == "-R-9.56/-6.18/36.955/42.16"
 
 println("	PSCONTOUR")
 x,y,z=GMT.peaks(grid=false);

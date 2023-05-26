@@ -99,30 +99,33 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    G = gdalgrid(indata, method::StrSymb="", options=String[]; dest="/vsimem/tmp", kwargs...)
-
+    G = gdalgrid(indata, method::StrSymb="", options=String[]; dest="/vsimem/tmp", kw...)
 
 ### Parameters
-* `indata`: The source dataset. It can be a file name, a GMTdataset, a Mx3 matrix or a GDAL dataset
-* `method`: The interpolation method name (one of "invdist", "invdistnn", "average", "nearest", or "linear").
+- `indata`: The source dataset. It can be a file name, a GMTdataset, a Mx3 matrix or a GDAL dataset
+- `method`: The interpolation method name. One of "invdist", "invdistnn", "average", "nearest", "linear",
+            "minimum", "maximum", "range", "count", "average_distance", "average_distance_pts".
 - `options`: List of options. The accepted options are the ones of the gdal_grid utility.
             This list can be in the form of a vector of strings, or joined in a single string.
-
+- `kwargs`: The `kwargs` may also contain the GMT region (-R), inc (-I) and `save=fname` options.
 
 ### Returns
-A GMTgrid or a GDAL dataset (or nothing if file was writen on disk).
+A GMTgrid or a GDAL dataset (or nothing if file was writen on disk). To force the return of a GDAL
+dataset use the option `gdataset=true`.
 """
-function gdalgrid(indata, opts=String[]; dest="/vsimem/tmp", method::GMT.StrSymb="", kwargs...)
+function gdalgrid(indata, opts::Union{String, Vector{String}}=""; dest="/vsimem/tmp", method::GMT.StrSymb="", kwargs...)
 	if (method == "")
-		_meth = "-a invdist:nodata=NaN"
+		_mtd = "-a invdist:nodata=NaN"
 	else
-		_meth = isa(method, Symbol) ? string(method) : method 
-		!startswith(_meth, "-a") && (_meth = "-a " * method)
-		(!startswith(_meth, "invdist") && !startswith(_meth, "invdistnn") && !startswith(_meth, "average") &&!startswith(_meth, "nearest") && !startswith(_meth, "linear")) && error("Bad interpolation algorith $_meth")
-		_meth = "-a " * _meth
-		!contains(_meth, "nodata") && (_meth *= ":nodata=NaN")
+		_mtd = isa(method, Symbol) ? string(method) : method 
+		(!startswith(_mtd, "invdist") && !startswith(_mtd, "invdistnn") && !startswith(_mtd, "average") && !startswith(_mtd, "nearest") && !startswith(_mtd, "linear") && !startswith(_mtd, "minimum") && !startswith(_mtd, "maximum") && !startswith(_mtd, "range") && !startswith(_mtd, "count") && !startswith(_mtd, "average_distance") && !startswith(_mtd, "average_distance_pts")) && error("Bad interpolation algorithm $_mtd")
+		_mtd = "-a " * _mtd
+		!occursin("nodata", _mtd) && (_mtd *= ":nodata=NaN")
 	end
-	helper_run_GDAL_fun(gdal_grid, indata, dest, opts, _meth, kwargs...)
+	_opts = isa(opts, Vector) ? join(opts, " ") : opts		# Let's make a string to reduce confusion
+	!occursin("-ot", _opts) && (_opts *= " -ot Float32")
+	_mtd *= " " * _opts
+	helper_run_GDAL_fun(gdalgrid, indata, dest, _mtd, "", kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -148,7 +151,7 @@ function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::St
 
 	GMT.ressurectGDAL()				# Another black-hole plug attempt.
 	opts = gdal_opts2vec(opts)		# Guarantied to return a Vector{String}
-	d, opts, got_GMT_opts = GMT_opts_to_GDAL(opts, kwargs...)
+	d, opts, got_GMT_opts = GMT_opts_to_GDAL(f, opts, kwargs...)
 	((val = GMT.find_in_dict(d, [:Vd])[1]) !== nothing) && println(opts)
 
 	# For gdaldem color-relief we need a further arg that is the name of a cpt. So save one on disk
@@ -162,7 +165,7 @@ function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::St
 		end
 	end
 
-	dataset, needclose = get_gdaldataset(indata, opts, f == gdalvectortranslate)
+	dataset, needclose = get_gdaldataset(indata, opts, f == gdalvectortranslate || f == gdalgrid)
 	((outname = GMT.add_opt(d, "", "", [:outgrid :outfile :save])) != "") && (dest = outname)
 	default_gdopts!(f, dataset, opts, dest)	# Assign some default options in function of the driver and data type
 	((val = GMT.find_in_dict(d, [:meta])[1]) !== nothing && isa(val,Vector{String})) &&
@@ -215,10 +218,13 @@ function save_cpt4gdal(cpt::GMT.GMTcpt, outname::String)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function GMT_opts_to_GDAL(opts::Vector{String}, kwargs...)
+function GMT_opts_to_GDAL(f::Function, opts::Vector{String}, kwargs...)
 	# Helper function to process some GMT options and turn them into GDAL syntax
 	d = GMT.init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
-	((opt_R = GMT.parse_R(d, "")[1]) != "") && append!(opts, ["-projwin", split(opt_R[4:end], '/')[[1,4,2,3]]...])	# Ugly
+	if ((opt_R = GMT.parse_R(d, "")[1]) != "")
+		s = split(opt_R[4:end], '/')
+		f == gdalgrid ? append!(opts, ["-txe", s[1], s[2], "-tye", s[3], s[4]]) : append!(opts, ["-projwin", split(opt_R[4:end], '/')[[1,4,2,3]]...])	# Ugly
+	end
 	((opt_J = GMT.parse_J(d, "", " ")[1]) != "") && append!(opts, ["-a_srs", opt_J[4:end]])
 	if ((opt_I = GMT.parse_I(d, "", [:I :inc :increment :spacing], "I")) != "")	# Need the 'I' to not fall into parse_I() exceptions
 		t = split(opt_I[4:end], '/')
@@ -263,7 +269,7 @@ function default_gdopts!(f::Function, ds, opts::Vector{String}, dest::String)
 	driver = shortname(getdriver(ds))
 	dt = GDALGetRasterDataType(ds.ptr)
 	# For some reason when MEM driver (only it?) dt comes == 1, even when data is float. So check again.
-	(f != ogr2ogr && startswith(lowercase(driver), "mem") && dt == 1 && isa(ds, Gdal.IDataset)) && (dt = GDALGetRasterDataType(getband(ds,1).ptr))
+	(f != ogr2ogr && f != gdalgrid && startswith(lowercase(driver), "mem") && dt == 1 && isa(ds, Gdal.IDataset)) && (dt = GDALGetRasterDataType(getband(ds,1).ptr))
 	(dt >= 6 && f == gdalwarp && !any(startswith.(opts, "-dstnodata"))) && append!(opts, ["-dstnodata","NaN"])
 	(dt >= 6 && f == gdaltranslate && !any(startswith.(opts, "-a_nodata"))) && append!(opts, ["-a_nodata","NaN"])
 
@@ -282,7 +288,7 @@ end
 function get_gdaldataset(data, opts, isVec::Bool=false)
 	# Get a GDAL dataset from either a file name, a GMT grid or image, or a dataset itself
 	# In case of a file name we must be careful and deal with possible "+b" band requests from GMT.
-	# isVec tells us if the fiename 'data' is to be opened as a Vector or a Raster.
+	# isVec tells us if the filename 'data' is to be opened as a Vector or a Raster.
 	needclose = false
 	if isa(data, AbstractString)			# Check also for remote files (those that start with a @). MAY SCREW VIOLENTLY
 		(data == "") && error("File name is empty.")
@@ -293,14 +299,19 @@ function get_gdaldataset(data, opts, isVec::Bool=false)
 			p = parse.(Int, o) .+ 1
 			o = [string(c) for c in p]
 			if (isa(opts, Vector{String}))
-				for k = 1:length(o)  append!(opts, ["-b", o[k]])  end
+				for k = 1:lastindex(o)  append!(opts, ["-b", o[k]])  end
 			else
 				opts *= " -b" * join(o, " -b ")
 			end
 		end
 		flags = isVec ? GDAL_OF_VECTOR | GDAL_OF_VERBOSE_ERROR : GDAL_OF_READONLY | GDAL_OF_VERBOSE_ERROR
-		ds = (name[1] == '@') ? Gdal.unsafe_read(gmtwhich(name).text[1]) : Gdal.unsafe_read(name, flags=flags)
-		needclose = true					# For some reason file remains open and we must close it explicitly
+		_ext = lowercase(ext[2:end])		# Drop the leading dot too
+		if ((name[1] == '@') || (findfirst(isequal(_ext), ["dat", "txt", "csv"]) !== nothing))
+			ds = gmt2gd(gmtread(name))
+		else
+			ds = Gdal.unsafe_read(name, flags=flags)
+			needclose = true
+		end
 	elseif (isa(data, GMTgrid) || isa(data, GMTimage) || GMT.isGMTdataset(data) || isa(data, Matrix{<:Real}))
 		ds = gmt2gd(data)
 	elseif (isa(data, AbstractGeometry))	# VERY UNSATISFACTORY. SHOULD BE ABLE TO GETPARENT (POSSIBLE?)

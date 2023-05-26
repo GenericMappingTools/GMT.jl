@@ -21,13 +21,13 @@ Parameters
 - **D** | **depth_limits** :: [Type => Str | Tuple]
 
     Plots events between depmin and depmax.
-- **E** | **fill_extensive** :: [Type => Str | Number]
+- **E** | **fill_extensive** | **extensionfill** :: [Type => Str | Number]
 
     Selects filling of extensive quadrants. [Default is white].
 - **Fa** | **Fe** | **Fg** | **Fo** | **Fp** | **Fr** | **Ft** | **Fz** :: [Type => ]
 
     Sets one or more attributes.
-- **G** | **fill** :: [Type => Str | Number]
+- **G** | **fill** | **compressionfill** :: [Type => Str | Number]
 
     Selects shade, color or pattern for filling the sectors [Default is no fill].
 - $(GMT.opt_P)
@@ -43,6 +43,9 @@ Parameters
 - **Sc|aki** | **Sc|CMT|gcmt** | **Sm|mt|moment_tensor** | ... :: [Type => Str]
 
     Selects the meaning of the columns in the input data.
+- **convention=:Sa|:aki|:Sc|:CMT|:gcmt|:Sm|:mt|:moment_tensor|:Sd|:mt_closest|:moment_closest|:Sz|:mt_deviatoric :moment_deviatoric|:Sp :partial|:Sx|:principal|:principal_axis|:Sy|:principal_closest|:St|:principal_deviatoric
+
+    Alternative way of selecting the meaning of the columns in the input data.
 - **T** | **nodal** :: [Type => Number | Str]
 
     Plots the nodal planes and outlines the bubble which is transparent.
@@ -120,7 +123,7 @@ function common_mecas(cmd0, arg1, d, proggy, first, K, O)
 		cmd, = parse_common_opts(d, cmd, [:UVXY :c :di :e :p :t :params], first)
 		(haskey(d, :A) || haskey(d, :offset) && GMTver <= v"6.4.0" && isa(arg1, GDtype)) &&
 			@warn("Due to a GMT bug (fixed in GMT > 6.4.0) plotting with offsets works only when data is in a disk file.")
-		cmd  = parse_these_opts(cmd, d, [[:A :C :offset], [:D :depth_limits]])	# :C is old syntax
+		cmd  = parse_these_opts(cmd, d, [[:A :offset], [:D :depth_limits]])
 	else
 		cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX14c/10c")
 		cmd, = parse_common_opts(d, cmd, [:UVXY :c :di :e :p :t :params], first)
@@ -138,27 +141,31 @@ function common_mecas(cmd0, arg1, d, proggy, first, K, O)
 		cmd *= cmd_
 	end
 
-	cmd = add_opt_fill(cmd, d, [:E :fill_extensive], 'E')
+	cmd = add_opt_fill(cmd, d, [:E :fill_extensive :extensionfill], 'E')
 	cmd  = parse_these_opts(cmd, d, [[:L :outline_pen :pen_outline], [:M :same_size :samesize],
 	                                 [:N :no_clip :noclip], [:T :nodal]])
 	cmd  = parse_these_opts(cmd, d, [[:Fa :PT_axes], [:Fe :T_axis_color], [:Fg :P_axis_color], [:Fo :psvelo],
 	                                 [:Fp :P_axis_pen], [:Fr :label_box], [:Ft :T_axis_pen], [:Fz :zero_trace]])
-	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
+	cmd = add_opt_fill(cmd, d, [:G :fill :compressionfill], 'G')
 	#(occursin("coupe", proggy)) && (cmd = add_opt(d, cmd, "Q", [:Q]))
 
 	# If file name sent in, read it and compute a tight -R if it was not provided 
 	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R)
 	n_cols = (isa(arg1, Matrix) || isa(arg1, GMTdataset)) ? size(arg1,2) : 0
 
-	if     (haskey(d, :Sa) || haskey(d, :aki))  symbs = [:Sa :aki]
-	elseif (haskey(d, :Sc) || haskey(d, :CMT) || haskey(d, :gcmt))  symbs = [:Sc :CMT :gcmt]
-	elseif (haskey(d, :Sm) || haskey(d, :mt) || haskey(d, :moment_tensor))  symbs = [:Sm :mt :moment_tensor]
-	elseif (haskey(d, :Sd) || haskey(d, :mt_closest) || haskey(d, :moment_closest))  symbs = [:Sd :mt_closest :moment_closest]
-	elseif (haskey(d, :Sz) || haskey(d, :mt_deviatoric) || haskey(d, :moment_deviatoric))  symbs = [:Sz :mt_deviatoric :moment_deviatoric]
+	if     ((val = is_in_dict(d, [:Sa :aki])) !== nothing) symbs = [:Sa val]
+	elseif ((val = is_in_dict(d, [:Sc :CMT :gcmt])) !== nothing) symbs = [:Sc val]
+	elseif ((val = is_in_dict(d, [:Sm :mt :moment_tensor])) !== nothing) symbs = [:Sm val]
+	elseif ((val = is_in_dict(d, [:Sd :mt_closest :moment_closest])) !== nothing) symbs = [:Sd val]
+	elseif ((val = is_in_dict(d, [:Sz :mt_deviatoric :moment_deviatoric])) !== nothing) symbs = [:Sz val]
 	elseif (haskey(d, :Sp) || haskey(d, :partial))  symbs = [:Sp :partial]
-	elseif (haskey(d, :Sx) || haskey(d, :principal) || haskey(d, :principal_axis))  symbs = [:Sx :principal :principal_axis]
+	elseif ((val = is_in_dict(d, [:Sx :principal :principal_axis])) !== nothing) symbs = [:Sx val]
 	elseif (haskey(d, :Sy) || haskey(d, :principal_closest))     symbs = [:Sy :principal_closest]
 	elseif (haskey(d, :St) || haskey(d, :principal_deviatoric))  symbs = [:St :principal_deviatoric]
+	elseif ((val = find_in_dict(d, [:convention])[1]) !== nothing)
+		_val = Symbol(val)::Symbol
+		symbs = (_val == :aki) ? [:Sa _val] : (_val == :CMT || _val == :gcmt) ? [:Sc _val] : (_val == :mt || _val == :moment_tensor) ? [:Sm _val] : (_val == :mt_closest || _val == :moment_closest) ? [:Sd _val] : (_val == :mt_deviatoric || _val == :moment_deviatoric) ? [:Sz _val] : (_val == :partial) ? [:Sp _val] : (_val == :principal || _val == :principal_axis) ? [:Sx _val] : (_val == :principal_closest) ? [:Sy _val] : (_val == :principal_deviatoric) ? [:St _val] : error("Unknown convention $_val")
+		d[_val] = true
 	elseif (n_cols >= 7 && n_cols < 10)  d[:Sa] = true; symbs = [:Sa]		# Implicit Aki
 	elseif (n_cols >= 11 && n_cols < 14) d[:Sc] = true; symbs = [:Sc]		# Implicit CMT
 	elseif (show_kwargs[1])  symbs = [:Sa :aki :Sc :CMT :gcmt :Sm :mt :Sd :mt_closest :moment_closest :Sz :mt_deviatoric :moment_deviatoric :Sp :partial :Sx :principal :principal_axis :Sy :principal_closest :St :principal_deviatoric]
