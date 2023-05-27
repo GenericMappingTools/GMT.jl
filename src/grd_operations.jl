@@ -74,8 +74,8 @@ function Base.:*(G1::GMTgrid, scale::Real)
 end
 
 # ---------------------------------------------------------------------------------------------------
-Base.:^(G1::GMTgrid, scale::Int) = Base.:^(G1::GMTgrid, Float64(scale))
-function Base.:^(G1::GMTgrid, scale::Real)
+Base.:^(G1::GMTgrid, scale::Integer) = Base.:^(G1::GMTgrid, Float64(scale))
+function Base.:^(G1::GMTgrid, scale::AbstractFloat)
 	_scale = convert(eltype(G1.z), scale)
 	epsg, geog, range, inc, registration, nodata, x, y, v, pad = dup_G_meta(G1)
 	G2 = GMTgrid(G1.proj4, G1.wkt, epsg, geog, range, inc, registration, nodata, "", "", "", "", G1.names, x, y, v,

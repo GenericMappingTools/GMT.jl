@@ -44,15 +44,16 @@ A GMTgrid or nothing if file was writen on disk.
     G = gridit("@ship_15.txt", method=:surface, mask=0.3, preproc=true);
 """
 function gridit(fname::String="", arg1::Union{Nothing, MatGDsGd}=nothing; method::StrSymb="surface",
-                gdopts::String="", proj="", epsg=0, kw...)
+                gdopts::String="", _proj::String="", epsg::Int=0, kw...)
 
 	d = KW(kw)
 	len_d = length(d)
 	d = seek_auto_RI(d, fname, arg1)
 
+	proj::String = _proj		# If I don't do this JET fck insists '_proj' is a Any. So irritating.
 	(proj == "") && (proj = isa(arg1, GDtype) ? getproj(arg1, proj4=true) : "")
 	(proj == "" && epsg != 0) && (proj = epsg2proj(epsg))
-	_mtd = string(method)
+	_mtd = string(method)::String
 	fun::Function = (_mtd == "surface" || contains(_mtd, "curvature")) ? surface : startswith(_mtd, "tri") ? triangulate : startswith(_mtd, "nearne") ? nearneighbor : startswith(_mtd, "sph") ? sphtriangulate : startswith(_mtd, "green") ? greenspline : sin
 	if (fun == sin)			# sin was just a fallback function to keep type stability
 		(_mtd == "mean" || _mtd == "std" || _mtd == "highest" || _mtd == "lowest") && (fun = blockmean)

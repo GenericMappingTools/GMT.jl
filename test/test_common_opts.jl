@@ -84,8 +84,8 @@
 	@test GMT.parse_w(Dict(:w => (period=10,)), "")[1] == " -wc10"
 	@test GMT.parse_w(Dict(:w => (period=(10,2))), "")[1] == " -wc10/2"
 	@test GMT.parse_w(Dict(:w => (period=(10,2), col=3)), "")[1] == " -wc10/2+c3"
-	@test GMT.opt_pen(Dict(:lw => 5, :lc => :red),'W', nothing) == " -W5,red"
-	@test GMT.opt_pen(Dict(:lw => 5),'W', nothing) == " -W5"
+	@test GMT.opt_pen(Dict(:lw => 5, :lc => :red),'W', [:a]) == " -W5,red"
+	@test GMT.opt_pen(Dict(:lw => 5),'W', [:a]) == " -W5"
 	@test GMT.opt_pen(Dict(:a => (10,:red)),'W', [:a]) == " -W10,red"
 	@test_throws ErrorException("Nonsense in W option") GMT.opt_pen(Dict(:a => [1 2]),'W', [:a])
 	@test GMT.get_color(((1,2,3),)) == "1/2/3"
@@ -363,11 +363,11 @@
 
 	@test GMT.set_aspect_ratio(:eq, "10") == "10/0"
 	@test GMT.set_aspect_ratio("equal", "10c") == "10c/0"
-	@test GMT.set_aspect_ratio(2, "", true) == "14c/7.0c"
-	@test GMT.set_aspect_ratio("2:1", "", true) == "14c/7.0c"
+	@test GMT.set_aspect_ratio(2, "", true) == "15c/7.5c"
+	@test GMT.set_aspect_ratio("2:1", "", true) == "15c/7.5c"
 	@test GMT.set_aspect_ratio("2:1", "14c", false) == "14c/7.0c"
-	@test GMT.set_aspect_ratio("square", "", true) == "14c/14c"
-	@test GMT.set_aspect_ratio(nothing, "", true, true) == "14c/0"
+	@test GMT.set_aspect_ratio("square", "", true) == "15c/15c"
+	@test GMT.set_aspect_ratio(nothing, "", true, true) == "15c/0"
 
 	@test_throws ErrorException("Only integer or floating point types allowed in input. Not this: Char") GMT.dataset_init(GMT.G_API[1], ' ', [0])
 	@test_throws ErrorException("Wrong type (Int64) for the 'text' argin") GMT.text_record(rand(2,2), 0)

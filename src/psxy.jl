@@ -587,8 +587,8 @@ function parse_opt_S(d::Dict, arg1, is3D::Bool)
 		elseif (haskey(d, :hexbin))
 			inc::Float64 = parse(Float64, arg1.attrib["hexbin"])
 			r::Float64   = (CTRL.limits[8] - CTRL.limits[7]) / sqrt(3) / inc
-			(CTRL.figsize[1] == 0) && @warn("Failed to automatically fetch the fig width. Using 14 cm to show something.")
-			w::Float64 = (CTRL.figsize[1] != 0) ? CTRL.figsize[1] : 14.0
+			(CTRL.figsize[1] == 0) && @warn("Failed to automatically fetch the fig width. Using 15 cm to show something.")
+			w::Float64 = (CTRL.figsize[1] != 0) ? CTRL.figsize[1] : 15.0
 			opt_S = " -Sh$(w / (r * 1.5))"		# Is it always 1.5?
 			delete!(d, :hexbin)
 		end

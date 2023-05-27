@@ -82,7 +82,7 @@ const global isFranklin  = Vector{Bool}(undef, 1);isFranklin[1] = false		# Only 
 const global noGrdCopy   = Vector{Bool}(undef, 1);noGrdCopy[1] = false		# If true grids are sent without transpose/copy
 const global FMT = ["png"]                         # The default plot format
 const global box_str = [""]                        # Used in plotyy to know -R of first call
-const def_fig_size  = "14c/9.5c"                   # Default fig size for plot like programs. Approx 16/11
+const def_fig_size  = "15c/10c"                    # Default fig size for plot like programs. Approx 16/11
 const def_fig_axes_bak     = " -Baf -BWSen"        # Default fig axes for plot like programs
 const def_fig_axes3_bak    = " -Baf -Bza"          # 		"" but for 3D views
 const global def_fig_axes  = [def_fig_axes_bak]    # This one may be be changed by theme()
@@ -93,7 +93,7 @@ const global CTRL = CTRLstruct(zeros(12), zeros(6), [true], [false],
 const global CTRLshapes = CTRLstruct2([true], [true], [""])			# Used in sub-module Drawing
 const prj4WGS84 = "+proj=longlat +datum=WGS84 +units=m +no_defs"	# This is used in many places
 const CPTaliases = [:C :color :cmap :colormap :colorscale]
-const global VMs = Union{Nothing, Vector{Symbol}, Matrix{Symbol}}
+const global VMs = Union{Vector{Symbol}, Matrix{Symbol}}
 const global VMr = Union{AbstractVector{<:Real}, Matrix{<:Real}}
 const global StrSymb = Union{AbstractString, Symbol}
 # GItype = Union{GMTgrid, GMTimage} and GDtype = Union{GMTdataset, Vector{GMTdataset}} are declared in gmt_types

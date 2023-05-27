@@ -2,6 +2,7 @@ function text_record(data, text, hdr=Vector{String}())
 	# Create a text record to send to pstext. DATA is the Mx2 coordinates array.
 	# TEXT is a string or a cell array
 
+	(data == []) && (data = [NaN NaN])
 	(isa(data, Vector)) && (data = data[:,:]) 		# Needs to be 2D
 	#(!isa(data, Array{Float64})) && (data = Float64.(data))
 
