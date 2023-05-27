@@ -98,13 +98,13 @@ mutable struct GMTps
 	postscript::String			# Actual PS plot (text string)
 	length::Int 				# Byte length of postscript
 	mode::Int 					# 1 = Has header, 2 = Has trailer, 3 = Has both
-	comment::Array{String,1}	# Cell array with any comments
+	comment::Vector{String}		# Cell array with any comments
 end
 GMTps() = GMTps(string(), 0, 0, String[])
 Base.size(P::GMTps) = P.length
 Base.isempty(P::GMTps) = (P.length == 0)
 
-mutable struct GMTdataset{T, N} <: AbstractArray{T,N}
+mutable struct GMTdataset{T<:Real, N} <: AbstractArray{T,N}
 	data::Array{T,N}
 	ds_bbox::Vector{Float64}
 	bbox::Vector{Float64}

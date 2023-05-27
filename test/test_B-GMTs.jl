@@ -41,7 +41,7 @@
 	earthtide(L=(0,0));
 	D = earthtide(range="2018-06-18T/2018-06-19T/1m", location=(-7,37));
 	r = plot(D, Vd=dbg2);		# Tests automatic -fT and Timecol detection.
-	@test startswith(r, "psxy  -JX14c/9.5c -Baf -BWSen -f0T")
+	@test startswith(r, "psxy  -JX15c/10c -Baf -BWSen -f0T")
 
 	# FILTER1D
 	filter1d([collect((1.0:50)) rand(50)], F="m15");
@@ -78,8 +78,8 @@
 
 	println("	GRAVPRISMS")
 	try
-		G = gravprisms(R="-40/40/-40/40", I=1, M=:h, "@prisms.txt", D=1700, F=:f, Z=7000);
-		D = gmtmath("-T-30/30/0.1 T 0 MUL =");
+		gravprisms(R="-40/40/-40/40", I=1, M=:h, "@prisms.txt", D=1700, F=:f, Z=7000);
+		local D = gmtmath("-T-30/30/0.1 T 0 MUL =");
 		gravprisms(N=D, M=:h, "@prisms.txt", D=1700, F=:v, Z=7000);
 	catch
 	end

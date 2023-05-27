@@ -1652,7 +1652,7 @@ function parse_params(d::Dict, cmd::String, del::Bool=true)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function add_opt_pen(d::Dict, symbs::VMs, opt::String="", del::Bool=true)::String
+function add_opt_pen(d::Dict, symbs::Union{Nothing, VMs}, opt::String="", del::Bool=true)::String
 	# Build a pen option. Input can be either a full hard core string or spread in lw (or lt), lc, ls, etc or a tuple
 
 	(show_kwargs[1]) && return print_kwarg_opts(symbs, "NamedTuple | Tuple | String | Number")	# Just print the options

@@ -65,8 +65,9 @@ to read a jpg image with the bands reversed
 
     I = gmtread("image.jpg", band=[2,1,0]);
 """
-function gmtread(fname::String; kwargs...)
+function gmtread(_fname::String; kwargs...)
 
+	fname::String = _fname				# Because args signatures seam to worth shit in body.
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd::String, opt_R::String = parse_R(d, "")
 	cmd, opt_i = parse_i(d, cmd)
@@ -85,7 +86,7 @@ function gmtread(fname::String; kwargs...)
 	if (opt_T == "")  opt_T = add_opt(d, "", "Tp", [:ps])   end
 	if (opt_T == "")  opt_T = add_opt(d, "", "To", [:ogr])  end
 
-	ogr_layer = Int32(0)			# Used only with ogrread. Means by default read only the first layer
+	ogr_layer::Int32 = Int32(0)			# Used only with ogrread. Means by default read only the first layer
 	if ((varname = find_in_dict(d, [:varname])[1]) !== nothing) # See if we have a nc varname / layer request
 		if (opt_T == "")			# Force read via GDAL
 			if ((val = find_in_dict(d, [:gdal])[1]) !== nothing)  fname = fname * "=gd"  end
@@ -100,14 +101,14 @@ function gmtread(fname::String; kwargs...)
 	else									# See if we have a bands request
 		if ((val = find_in_dict(d, [:layer :layers :band :bands])[1]) !== nothing)
 			if ((lix = guess_T_from_ext(fname)) == " -To")		# See if it's a OGR layer request
-				ogr_layer = Int32(val - 1)	# -1 because it's going to be sent to C (zero based)
+				ogr_layer = Int32(val)::Int32 - 1	# -1 because it's going to be sent to C (zero based)
 			else
 				fname = fname * "+b"
 				if (isa(val, String) || isa(val, Symbol) || isa(val, Number))
-					fname = string(fname, parse(Int, string(val))-1)
+					fname = string(fname, parse(Int, string(val)::String)-1)::String
 				elseif (isa(val, Array) || isa(val, Tuple))
 					# Replacement for the annoying fact that one cannot do @sprintf(repeat("%d,", n), val...)
-					fname  *= @sprintf("%d", val[1]-1)
+					fname  *= @sprintf("%d", Int(val[1])::Int -1)
 					for k = 2:lastindex(val)  fname *= @sprintf(",%d", val[k]-1)  end
 				end
 				(opt_T == "") && (opt_T = " -Ti")
@@ -135,7 +136,7 @@ function gmtread(fname::String; kwargs...)
 
 	if (opt_T == " -Ti" || opt_T == " -Tg")		# See if we have a mem layout request
 		if ((val = find_in_dict(d, [:layout :mem_layout])[1]) !== nothing)
-			(opt_T == " -Ti" && startswith(string(val), "TRB")) && return gdaltranslate(fname)
+			(opt_T == " -Ti" && startswith(string(val)::String, "TRB")) && return gdaltranslate(fname)
 			# MUST TAKE SOME ACTION HERE. FOR IMAGES I THINK ONLY THE "I" FOR IMAGES.JL IS REALLY POSSIBLE
 			cmd = (opt_T == " -Ti") ? cmd * " -%" * arg2str(val) : cmd * " -&" * arg2str(val)
 		end

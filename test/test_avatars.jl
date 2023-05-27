@@ -202,7 +202,7 @@
 	plot3d!(x -> sin(x), y -> cos(y), 0:pi/50:10pi, Vd=dbg2)
 	plot3d!(x -> sin(x)*cos(10x), y -> sin(y)*sin(10y), z -> cos(z), 0:pi/100:pi, Vd=dbg2)
 	r = plot3([1 2 4], frame=(flipx=1,), yaxis=(flip=1,), zaxis=(flip=1,), Vd=2)
-	@test occursin("-JX-14c/-9.5", r)
+	@test occursin("-JX-15c/-10", r)
 	@test occursin("-JZ-", r)
 	scatter3!(x -> sin(x), y -> cos(y), 0:pi/50:10pi, Vd=dbg2)
 	scatter3!(x -> sin(x)*cos(10x), y -> sin(y)*sin(10y), z -> cos(z), 0:pi/100:pi, Vd=dbg2)
