@@ -165,7 +165,7 @@ function gmt(cmd::String, args...)
 		n_out += 1
 	end
 
-	(n_out > 0) ? out = Vector{Any}(undef, n_out) : out = nothing
+	out = Vector{Any}(undef, n_out)
 
 	for k = 1:n_items					# Get results from GMT into Julia arrays
 		if (X[k].direction == GMT_IN) continue 	end      # Only looking for stuff coming OUT of GMT here
