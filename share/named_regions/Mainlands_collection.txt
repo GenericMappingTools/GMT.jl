@@ -1,0 +1,5 @@
+#W(lon),E(lon),S(lat),N(lat),code-region-ref
+-85.9506	-82.5561	8.0329	11.2167	CRC,Continental Costa Rica,Mainlands
+-81.0788	-75.1848	-4.99882	1.43894	ECC,Continental Ecuador,Mainlands
+-9.56	-6.18	36.955	42.16	PTC,Continental Portugal,Mainlands
+-9.29092	4.31502	35.1852	43.7915	ESC,Continental Spain,Mainlands

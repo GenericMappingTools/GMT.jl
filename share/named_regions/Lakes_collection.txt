@@ -1,0 +1,58 @@
+#W(lon),E(lon),S(lat),N(lat),code-region-ref
+46.68	54.766	36.58	47.115	CSPS,Caspian Sea,Lakes
+-92.11	-75.763	41.388	49.022	GRLK,Great Lakes,Lakes
+-92.11	-84.351	46.42	49.022	LSUP,Lake Superior,Lakes
+31.61	34.851	-3.014	0.492	LVIC,Victoria Lake,Lakes
+-84.754	-79.66	43.015	46.553	LHUR,Lake Huron,Lakes
+-88.045	-84.753	41.621	46.109	LMIC,Lake Michigan,Lakes
+29.045	31.201	-8.803	-3.337	LTAN,Lake Tanganyika,Lakes
+103.706	109.965	51.465	55.789	LBAI,Lake Baikal,Lakes
+-125.123	-117.459	64.805	67.047	GRBL,Great Bear Lake,Lakes
+33.895	35.29	-14.406	-9.483	LMAL,Lake Malawi,Lakes
+-117.684	-108.9	60.831	62.953	GRSL,Great Slave Lake,Lakes
+-83.464	-78.861	41.388	43.103	LERI,Lake Erie,Lakes
+-99.251	-96.258	50.378	54.415	LWIN,Lake Winnipeg,Lakes
+-79.776	-75.763	43.188	44.503	LONT,Lake Ontario,Lakes
+29.796	32.956	59.899	61.777	LLAD,Lake Ladoga,Lakes
+130.93	150.877	-10.705	-0.339	NGNI,New Guinea Island,Lakes
+108.845	119.275	-4.185	7.035	BRNI,Borneo Island,Lakes
+-89.543	-61.263	61.863	73.737	BFFI,Baffin Island,Lakes
+95.195	106.087	-5.945	5.661	SMTI,Sumatra Island,Lakes
+130.862	142.07	33.435	41.546	HNSI,Honshu Island,Lakes
+-119.123	-100.846	68.461	73.378	VCTI,Victoria Island,Lakes
+-6.231	1.766	49.957	58.673	GBRI,Great Britain Island,Lakes
+-91.912	-61.101	76.131	83.213	ELLI,Ellesmere Island,Lakes
+118.753	125.252	-5.707	1.756	SLWI,Sulawesi Island,Lakes
+166.425	174.319	-46.679	-40.499	SNZI,South Island,Lakes
+105.206	114.603	-8.782	-5.875	JAVI,Java Island,Lakes
+172.644	178.553	-41.615	-34.396	NNZI,North Island,Lakes
+119.748	124.195	12.535	18.653	LZNI,Luzon Island,Lakes
+-59.412	-52.622	46.611	51.631	NWFI,Newfoundland Island,Lakes
+121.896	126.605	5.555	9.828	MNDI,Mindanao Island,Lakes
+-10.484	-5.431	51.445	55.382	IRLI,Ireland Island,Lakes
+139.767	145.818	41.396	45.523	HKKI,Hokkaido Island,Lakes
+141.622	144.746	45.893	54.429	SKHI,Sakhalin Island,Lakes
+-126.044	-115.339	71.173	74.654	BNKI,Banks Island,Lakes
+-96.971	-79.349	74.455	77.07	DVNI,Devon Island,Lakes
+-75.442	-68.16	-72.68	-68.78	ALXI,Alexander Island,Lakes
+-72.023	-65.114	-55.055	-52.47	TDFI,Isla Grande de Tierra del Fuego,Lakes
+53.659	69.172	73.244	77.006	SVRI,Severny Island,Lakes
+-54.415	-42.929	-80.902	-77.771	BRKI,Berkner Island,Lakes
+-96.742	-84.878	78.135	81.38	AXHI,Axel Heiberg Island,Lakes
+-117.664	-105.356	74.402	76.837	MLVI,Melville Island,Lakes
+-87.229	-80.134	63.098	65.924	SMPI,Southampton Island,Lakes
+-50.815	-48.385	-1.836	-0.096	MRJI,Marajo Island,Lakes
+10.665	21.532	76.556	80.059	SPTI,Spitsbergen Island,Lakes
+129.552	132.086	30.995	33.965	KYSI,Kyushu Island,Lakes
+148.306	152.405	-6.318	-4.135	NWBI,New Britain Island,Lakes
+-102.752	-96.268	71.279	73.953	PRWI,Prince of Wales Island,Lakes
+51.406	57.611	70.545	73.429	YZHI,Yuzhny Island,Lakes
+-128.435	-123.265	48.308	50.877	VNCI,Vancouver Island,Lakes
+123.453	127.305	-10.373	-8.33	TMRI,Timor Island,Lakes
+12.421	15.653	36.65	38.303	SCLI,Sicily Island,Lakes
+-109.455	-109.231	-27.198	-27.054	EASI,Easter Island,Lakes
+-31.267	-24.73	36.927	39.727	AZRI,Azores Islands,Lakes
+-18.168	-13.333	27.636	29.415	CNRI,Canary Islands,Lakes
+-92.012	-89.24	-1.407	1.666	GLPI,Galapagos Islands,Lakes
+-17.264	-15.853	30.026	33.125	MDRI,Madeira Archipelago,Lakes
+1.188	4.329	38.641	40.095	BLRI,Baleares Islands,Lakes

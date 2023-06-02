@@ -1,0 +1,249 @@
+#W(lon),E(lon),S(lat),N(lat),code-region-ref
+1.42	1.8	42.43	42.66	AD,Andorra,DCW
+51	56.4	22.4	26.2	AE,United Arab Emirates,DCW
+60.4	75.2	29.2	38.6	AF,Afghanistan,DCW
+-62.36	-61.64	16.92	17.74	AG,Antigua and Barbuda,DCW
+-63.18	-62.93	18.164	18.304	AI,Anguilla,DCW
+19.24	21.08	39.6	42.7	AL,Albania,DCW
+43.4	46.8	38.8	41.4	AM,Armenia,DCW
+11.6	24.4	-18.4	-4	AO,Angola,DCW
+0	0	-90	-63	AQ,Antarctica,DCW
+-73.6	-53.6	-56	-20	AR,Argentina,DCW
+-171.12	-169.4	-14.4	-11	AS,American Samoa,DCW
+9.4	17.2	46.3	49.1	AT,Austria,DCW
+112	160	-56	-8	AU,Australia,DCW
+-70.064	-69.864	12.41	12.63	AW,Aruba,DCW
+19.3	21.4	59.74	60.66	AX,Åland Islands,DCW
+45	50.8	38.2	42	AZ,Azerbaijan,DCW
+15.6	19.8	42.5	45.3	BA,Bosnia and Herzegovina,DCW
+-59.65	-59.42	13.03	13.33	BB,Barbados,DCW
+88	92.8	20.4	26.8	BD,Bangladesh,DCW
+2.4	6.6	49.4	51.6	BE,Belgium,DCW
+-5.6	2.6	9.4	15.2	BF,Burkina Faso,DCW
+22.2	28.8	41.2	44.3	BG,Bulgaria,DCW
+50.38	50.67	25.78	26.3	BH,Bahrain,DCW
+28.96	30.88	-4.5	-2.3	BI,Burundi,DCW
+0.7	3.9	6.2	12.6	BJ,Benin,DCW
+-62.878	-62.792	17.882	17.934	BL,Saint Barthélemy,DCW
+-64.9	-64.65	32.244	32.396	BM,Bermuda,DCW
+114.04	115.36	4	5.08	BN,Brunei Darussalam,DCW
+-70	-57.2	-23.2	-9.6	BO,Bolivia,DCW
+-68.6	-62.8	12	17.8	BQ,Bonaire; Sint Eustatius and Saba,DCW
+-74	-28	-34	6	BR,Brazil,DCW
+-79.8	-72.6	20.8	27.4	BS,Bahamas,DCW
+88.6	92.2	26.68	28.36	BT,Bhutan,DCW
+3.332	3.488	-54.464	-54.4	BV,Bouvet Island,DCW
+19.8	29.4	-27	-17.6	BW,Botswana,DCW
+23	32.8	51.2	56.2	BY,Belarus,DCW
+-89.3	-86.8	15.8	18.5	BZ,Belize,DCW
+-142	-52	40	84	CA,Canada,DCW
+96.82	96.94	-12.2	-11.8	CC,Cocos (Keeling) Islands,DCW
+12	31.6	-13.6	5.6	CD,Democratic Republic of the Congo,DCW
+14.4	27.6	2.2	11.2	CF,Central African Republic,DCW
+11.2	18.8	-5.2	3.8	CG,Congo,DCW
+5.8	10.6	45.8	47.84	CH,Switzerland,DCW
+-8.6	-2.4	4.2	10.8	CI,Côte d'Ivoire,DCW
+-159.9	-157.3	-22	-18.8	CK,Cook Islands,DCW
+-75.8	-66.4	-56	-16	CL,Chile,DCW
+8.4	16.2	1.6	13.2	CM,Cameroon,DCW
+72	136	14	54	CN,China,DCW
+-79.2	-66.8	-4.4	12.8	CO,Colombia,DCW
+-87.2	-82.4	5.4	11.4	CR,Costa Rica,DCW
+-85.2	-74	19.8	23.4	CU,Cuba,DCW
+-25.4	-22.6	14.8	17.2	CV,Cabo Verde,DCW
+-69.18	-68.62	11.96	12.4	CW,Curaçao,DCW
+105.536	105.72	-10.576	-10.412	CX,Christmas Island,DCW
+32.2	34.6	34.56	35.72	CY,Cyprus,DCW
+12	19	48.5	51.1	CZ,Czech Republic,DCW
+5.8	15	47.2	55.2	DE,Germany,DCW
+41.76	43.44	10.88	12.72	DJ,Djibouti,DCW
+8	15.2	54.4	57.8	DK,Denmark,DCW
+-61.49	-61.24	15.2	15.64	DM,Dominica,DCW
+-72.2	-68.2	17.4	20	DO,Dominican Republic,DCW
+-9	12	18.8	37.2	DZ,Algeria,DCW
+-92.4	-74.8	-5	1.8	EC,Ecuador,DCW
+21.6	28.4	57.5	59.7	EE,Estonia,DCW
+24.4	36	21.6	31.8	EG,Egypt,DCW
+-17.2	-8.6	20.6	27.8	EH,Western Sahara,DCW
+36.4	43.2	12.2	18.2	ER,Eritrea,DCW
+-19	5	27.6	44	ES,Spain,DCW
+32.8	48	3.2	15.2	ET,Ethiopia,DCW
+19.2	31.6	59.6	70.4	FI,Finland,DCW
+176.8	-175	-20.8	-12.4	FJ,Fiji,DCW
+-61.4	-57.6	-52.92	-51	FK,Falkland Islands (Malvinas),DCW
+138	164	5.2	10.2	FM,Micronesia,DCW
+-7.72	-6.24	61.36	62.44	FO,Faroe Islands,DCW
+-5.2	9.6	41.2	51.2	FR,France,DCW
+8.6	14.6	-4	2.4	GA,Gabon,DCW
+-8.8	2	49.6	61.2	GB,United Kingdom,DCW
+-61.8	-61.56	11.98	12.32	GD,Grenada,DCW
+40	46.8	41	43.6	GE,Georgia,DCW
+-54.6	-51.6	2	5.8	GF,French Guiana,DCW
+-2.68	-2.14	49.38	49.74	GG,Guernsey,DCW
+-3.4	1.2	4.6	11.2	GH,Ghana,DCW
+-5.3576	-5.3396	36.112	36.16	GI,Gibraltar,DCW
+-74	-10	59	84	GL,Greenland,DCW
+-16.9	-13.7	13.06	13.84	GM,Gambia,DCW
+-15.2	-7.6	7	12.8	GN,Guinea,DCW
+-61.82	-61	15.82	16.52	GP,Guadeloupe,DCW
+8.4	11.4	0.8	3.8	GQ,Equatorial Guinea,DCW
+19.2	28.4	34.8	41.8	GR,Greece,DCW
+-42	-26	-59.6	-53.6	GS,South Georgia and the South Sandwich Islands,DCW
+-92.4	-88.2	13.6	18	GT,Guatemala,DCW
+144.6	144.96	13.24	13.66	GU,Guam,DCW
+-16.8	-13.6	10.84	12.72	GW,Guinea-Bissau,DCW
+-61.4	-56.4	1	8.6	GY,Guyana,DCW
+72.56	73.88	-53.2	-52.9	HM,Heard Island and McDonald Islands,DCW
+-89.4	-83	12.8	16.6	HN,Honduras,DCW
+13.4	19.6	42.2	46.6	HR,Croatia,DCW
+-74.5	-71.6	18	20.1	HT,Haiti,DCW
+16	23	45.7	48.6	HU,Hungary,DCW
+94	142	-11.2	6	ID,Indonesia,DCW
+-10.8	-6	51.4	55.6	IE,Ireland,DCW
+34.24	35.68	29.4	33.4	IL,Israel,DCW
+-4.84	-4.3	54.04	54.42	IM,Isle of Man,DCW
+68	98	6	36	IN,India,DCW
+71.2	72.52	-7.5	-5.2	IO,British Indian Ocean Territory,DCW
+38.6	48.6	28.8	37.4	IQ,Iraq,DCW
+44	63.6	24.8	40	IR,Iran,DCW
+-24.8	-13.2	63.2	66.6	IS,Iceland,DCW
+6.4	18.8	35.2	47.2	IT,Italy,DCW
+-2.26	-1.92	49.144	49.296	JE,Jersey,DCW
+-78.4	-76.1	17.7	18.54	JM,Jamaica,DCW
+34.8	39.4	29	33.4	JO,Jordan,DCW
+122	146	20	46	JP,Japan,DCW
+33.8	42	-4.8	4.8	KE,Kenya,DCW
+69.2	80.4	39	43.4	KG,Kyrgyzstan,DCW
+102.2	107.8	9.2	14.8	KH,Cambodia,DCW
+172.6	177	-2.8	3.4	KI,Kiribati,DCW
+43.2	44.56	-12.44	-11.36	KM,Comoros,DCW
+-62.88	-62.52	17.08	17.42	KN,Saint Kitts and Nevis,DCW
+124	130.8	37.4	43.2	KP,Democratic People's Republic of Korea,DCW
+125	129.6	33	38.8	KR,Republic of Korea,DCW
+46.52	48.44	28.52	30.12	KW,Kuwait,DCW
+-81.44	-79.72	19.26	19.78	KY,Cayman Islands,DCW
+46	88	40.8	55.6	KZ,Kazakhstan,DCW
+100	107.8	13.8	22.6	LA,Lao People's Democratic Republic,DCW
+35.08	36.64	33.04	34.72	LB,Lebanon,DCW
+-61.076	-60.872	13.7	14.12	LC,Saint Lucia,DCW
+9.476	9.636	47.05	47.28	LI,Liechtenstein,DCW
+79.6	81.9	5.8	10	LK,Sri Lanka,DCW
+-11.6	-7.2	4.2	8.6	LR,Liberia,DCW
+27	29.5	-30.7	-28.5	LS,Lesotho,DCW
+20.8	27	53.9	56.5	LT,Lithuania,DCW
+5.72	6.54	49.44	50.2	LU,Luxembourg,DCW
+20.8	28.4	55.6	58.1	LV,Latvia,DCW
+9.2	25.2	19.2	33.2	LY,Libya,DCW
+-13.2	-0.8	27.6	36	MA,Morocco,DCW
+7.394	7.454	43.73	43.77	MC,Monaco,DCW
+26.6	30.2	45.4	48.5	MD,Moldova,DCW
+18.44	20.32	41.84	43.6	ME,Montenegro,DCW
+-63.156	-62.968	18.044	18.126	MF,Saint Martin (French part),DCW
+43	50.6	-26	-11.6	MG,Madagascar,DCW
+160.4	172.4	4.4	14.8	MH,Marshall Islands,DCW
+20.4	23.1	40.84	42.4	MK,North Macedonia,DCW
+-12.4	4.4	10	25.2	ML,Mali,DCW
+92	101.2	9.6	28.8	MM,Myanmar,DCW
+86	120	41.2	52.4	MN,Mongolia,DCW
+145.12	146.1	14	20.2	MP,Northern Mariana Islands,DCW
+-61.24	-60.8	14.38	14.88	MQ,Martinique,DCW
+-17.2	-4.8	14.4	27.6	MR,Mauritania,DCW
+-62.244	-62.146	16.668	16.82	MS,Montserrat,DCW
+14.18	14.58	35.81	36.09	MT,Malta,DCW
+57.3	59.6	-20.6	-16.6	MU,Mauritius,DCW
+72.68	73.72	-0.8	7.2	MV,Maldives,DCW
+32.6	36	-17.2	-9.2	MW,Malawi,DCW
+-120	-86	14.4	32.8	MX,Mexico,DCW
+98	120	0.8	7.4	MY,Malaysia,DCW
+30	41.2	-27.2	-10.4	MZ,Mozambique,DCW
+11.6	25.6	-29.2	-16.8	NA,Namibia,DCW
+163.4	169	-22.8	-19.4	NC,New Caledonia,DCW
+0	16	11.6	23.6	NE,Niger,DCW
+168.006	168.092	-29.12	-28.992	NF,Norfolk Island,DCW
+2.4	14.8	4.2	14	NG,Nigeria,DCW
+-87.8	-82.4	10.6	15.2	NI,Nicaragua,DCW
+3.2	7.4	50.7	53.6	NL,Netherlands,DCW
+4	32	57.6	71.2	NO,Norway,DCW
+80	88.2	26.2	30.6	NP,Nepal,DCW
+166.898	166.946	-0.554	-0.504	NR,Nauru,DCW
+-169.952	-169.772	-19.16	-18.95	NU,Niue,DCW
+166.4	178.8	-48.4	-34	NZ,New Zealand,DCW
+51.8	60	16.6	25	OM,Oman,DCW
+-83.2	-77	7.1	9.7	PA,Panama,DCW
+-81.6	-68.4	-18.4	-0	PE,Peru,DCW
+-154.8	-134.8	-28	-7.6	PF,French Polynesia,DCW
+140.8	159.6	-12	-0.8	PG,Papua New Guinea,DCW
+116.8	126.8	4.8	21.2	PH,Philippines,DCW
+60.8	78	23.6	37.2	PK,Pakistan,DCW
+14	24.4	49	55	PL,Poland,DCW
+-56.41	-56.12	46.74	47.16	PM,Saint Pierre and Miquelon,DCW
+-128.348	-128.286	-24.408	-24.314	PN,Pitcairn,DCW
+-68	-65.2	17.88	18.54	PR,Puerto Rico,DCW
+34.2	35.6	31.2	32.56	PS,Palestine,DCW
+-32	-6	30	42.4	PT,Portugal,DCW
+132.3	134.7	4.2	7.8	PW,Palau,DCW
+-62.8	-54.2	-27.8	-19.2	PY,Paraguay,DCW
+50.72	52.44	24.48	26.2	QA,Qatar,DCW
+55.2	55.86	-21.38	-20.84	RE,Réunion,DCW
+20.2	29.8	43.6	48.4	RO,Romania,DCW
+18.8	23	42.2	46.2	RS,Serbia,DCW
+16	-168	40	82	RU,Russian Federation,DCW
+28.8	30.9	-2.88	-1.04	RW,Rwanda,DCW
+34	56	16	32.4	SA,Saudi Arabia,DCW
+155.2	169.2	-12.4	-5	SB,Solomon Islands,DCW
+50.6	56.4	-9.6	-3.6	SC,Seychelles,DCW
+21.6	39.2	8.4	23.2	SD,Sudan,DCW
+10.8	24.4	55.2	69.2	SE,Sweden,DCW
+103.62	104.1	1.16	1.48	SG,Singapore,DCW
+-5.796	-5.636	-16.024	-15.896	SH,Saint Helena; Ascension and Tristan da Cunha,DCW
+13.2	16.6	45.4	46.88	SI,Slovenia,DCW
+-10	34	70.8	81.2	SJ,Svalbard and Jan Mayen,DCW
+16.8	22.6	47.72	49.64	SK,Slovakia,DCW
+-13.4	-10.2	6.9	10	SL,Sierra Leone,DCW
+12.4	12.516	43.896	44	SM,San Marino,DCW
+-17.6	-11.2	12.2	16.8	SN,Senegal,DCW
+40.8	51.6	-2	12	SO,Somalia,DCW
+-58.2	-53.8	1.8	6.2	SR,Suriname,DCW
+24	36	3.4	12.4	SS,South Sudan,DCW
+6.46	7.48	-0.04	1.72	ST,Sao Tome and Principe,DCW
+-90.2	-87.6	13.12	14.48	SV,El Salvador,DCW
+-63.14	-62.996	17.998	18.064	SX,Sint Maarten,DCW
+35.4	42.4	32.2	37.4	SY,Syria,DCW
+30.76	32.16	-27.32	-25.68	SZ,Eswatini,DCW
+-72.52	-71.08	21.16	21.98	TC,Turks and Caicos,DCW
+13.2	24.4	7.2	23.6	TD,Chad,DCW
+40	78	-52	-10	TF,French Southern Territories,DCW
+-0.16	1.84	6	11.2	TG,Togo,DCW
+97.2	105.8	5.6	20.8	TH,Thailand,DCW
+67.2	75.2	36.6	41.2	TJ,Tajikistan,DCW
+-172.56	-171.16	-9.46	-8.52	TK,Tokelau,DCW
+124	127.4	-9.52	-8.12	TL,Timor-Leste,DCW
+52.4	66.8	35	42.8	TM,Turkmenistan,DCW
+7.4	11.6	30.2	37.6	TN,Tunisia,DCW
+-176.24	-174.52	-22.4	-20	TO,Tonga,DCW
+25.6	45.2	35.8	42.2	TR,Turkey,DCW
+-61.96	-60.48	10	11.36	TT,Trinidad and Tobago,DCW
+176	180	-9.6	-5.6	TV,Tuvalu,DCW
+119.3	122.1	21.8	25.4	TW,Taiwan,DCW
+29.2	40.8	-12	-0.8	TZ,Tanzania,DCW
+22	40.4	44.2	52.4	UA,Ukraine,DCW
+29.4	35.2	-1.6	4.4	UG,Uganda,DCW
+164	-72	-1	29	UM,United States Minor Outlying Islands,DCW
+172	-64	18	72	US,United States,DCW
+-58.6	-53	-35	-30	UY,Uruguay,DCW
+55.6	73.2	37	45.8	UZ,Uzbekistan,DCW
+12.4456	12.4588	41.9	41.9076	VA,Holy See (Vatican City State),DCW
+-61.52	-61.1	12.4	13.38	VC,Saint Vincent and the Grenadines,DCW
+-73.6	-59.6	0.4	12.4	VE,Venezuela,DCW
+-64.8	-63.24	18.26	18.76	VG,British Virgin Islands,DCW
+-65.1	-64.56	17.68	18.46	VI,Virgin Islands,DCW
+102	109.6	8.4	23.6	VN,Viet Nam,DCW
+166.4	170.4	-20.4	-13	VU,Vanuatu,DCW
+-178.3	-176.1	-14.4	-13.2	WF,Wallis and Futuna,DCW
+-172.8	-171.4	-14.08	-13.42	WS,Samoa,DCW
+19.96	21.8	41.76	43.28	XK,Kosovo,DCW
+41.6	54.8	12	19	YE,Yemen,DCW
+45.01	45.3	-13.02	-12.62	YT,Mayotte,DCW
+16.4	33.2	-35.2	-22	ZA,South Africa,DCW
+21.6	34	-18.2	-8.2	ZM,Zambia,DCW
+25.2	33.2	-22.6	-15.6	ZW,Zimbabwe,DCW
