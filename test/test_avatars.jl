@@ -316,3 +316,11 @@
 	grdconvert("lixo.xyz");		# Read it back with GDAL
 	@test_throws ErrorException("BAR3: When NOT providing *width* data must contain at least 5 columns.") bar3("lixo.xyz", dataset=true)
 	rm("lixo.xyz")
+
+	println("	EARTHREGIONS")
+	#earthregions("Mainlands")		# Fails in test but runs fine from REPL
+	earthregions("PT", Vd=2)
+	earthregions("PTC", Vd=2)
+	earthregions("PT,ES", Vd=2)
+	earthregions("PT", dataset="earth_relief", res="01d")
+	earthregions("PT", dataset="earth_night", res="01d")
