@@ -88,7 +88,7 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 	if ((val = find_in_dict(d, [:getR :getregion :get_region], false)[1]) !== nothing)
 		t = string(gmt_proggy, " -E", val)
 		((Vd = find_in_dict(d, [:Vd], false)[1]) !== nothing) && (Vd == 1 ? println(t) : Vd > 1 ? (return t) : nothing)
-		return gmt(t)
+		return gmt(t).text[1]
 	end
 
 	cmd = parse_E_coast(d, [:E, :DCW], "")		# Process first to avoid warning about "guess"
@@ -178,6 +178,7 @@ function parse_E_coast(d::Dict, symbs::Vector{Symbol}, cmd::String)
 	if ((val = find_in_dict(d, symbs, false)[1]) !== nothing)
 		if (isa(val, String) || isa(val, Symbol))	# Simple case, ex E="PT,+gblue" or E=:PT
 			t::String = string(" -E", val)
+			(t == " -E") && (del_from_dict(d, [:E, :DCW]); return cmd)	# This lets use E="" like earthregions may do
 			!contains(t, "+") && (t *= "+p0.5")		# If only code(s), append pen
 			cmd *= t
 		elseif (isa(val, NamedTuple) || isa(val, Dict))
@@ -235,3 +236,145 @@ coast!(cmd0::String=""; clip=nothing, kw...) = coast(cmd0; clip=clip, first=fals
 
 const pscoast  = coast			# Alias
 const pscoast! = coast!
+ 
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    [GI = ] earthregions(name=""; proj="guess", country=false, dataset="", grid=false,
+                         res, registration="", exact=false)
+
+`earthregions` plots or automatically extracts grid/image over a named geographic region. A large number of
+predefined regions is provided via _collections_, which are lists of names, their rectangular geographic
+boundaries and a code to access them. Users pick a region by its code(s) and choose between making a map
+of that region or download topo/bathymetric data (a grid or image) of that area.
+
+### Parameters
+- `name`: It can be either the name of one collection or the code of one geographic region. If it is the
+    a collection name (one of: ``"DCW", "NatEarth", "UN", "Mainlands", "IHO", "Wiki", "Lakes"``) the regions
+    of that collection are printed displaying the region's boundaries, code and name. If, instead, a code
+    is passed (codes are unique) then depending on the values of `grid` or `dataset` we either produce a
+    map of that region (the default) or extract grid/image over it.
+- `proj`: In case a map is requested, pass the desired projection in form of a proj4 string or use the GMT
+    projection syntax for that map. By default, we guess a good projection based on the map limits.
+- `country`: The particular case of the ``DCW`` collection let us also plot the country(ies) border lines.
+    Set `country=true` to do that. Note that the ``DCW`` regions can be specified by a comma separated list
+    of country codes, _e.g._ `earthregions("PT,ES", country=true)`.
+- `dataset`: This option is used to select data download instead of map plotting. The available datasets are
+    those explained in https://www.generic-mapping-tools.org/remote-datasets/, which shortly are: ``"earth_relief",
+    "earth_synbath", "earth_gebco", "earth_mask", "earth_day", "earth_night", "earth_geoid", "earth_faa",
+    "earth_vgg", "earth_wdmam", "earth_age"``.
+
+    Note that ``"earth_day", "earth_night"`` are images that are not stored as tilles in the server, so the
+    entire file is downloaded (only once and stored in your local ~.gmt/server directory). So, this may take
+    a while for the first-time usage.
+- `grid`: A shorthand boolean option equivalent to `dataset="earth_relief"` 
+- `res`: The dataset resolution. Possible resolutions are: ``"01d", "30m", "20m", "15m", "10m", "06m", "05m",
+    "04m", "03m", "02m", "01m", "30s", "15s", "03s", "01s"``. However, they are not all available to all
+    datasets. For example, only ``"earth_relief", "earth_synbath", "earth_gebco"`` exist for all those
+    resolutions. In case a `dataset` is specified but no resolution, we make estimate of that resolution
+    based on map extents and what would be good to create a map with 15 cm width.
+- `registration`: The dataset registration. Either `grid` or `pixel`. If not provided we choose one.
+- `exact`: The region boundaries in the collections were rounded to more friendly numbers (few decimals).
+    This means that they differ slightly from the pure ``GMT`` (`coast`) numbers. Setting `exact=true` will
+    force using the strict ``GMT`` limits.
+
+See also: `coast`
+
+### Returns
+A ``GMTgrid`` or a ``GMTimage`` if `dataset` is used or ``nothing`` otherwise.
+
+## Examples
+   earthregions("IHO")		# List the ocean regions as named by the IHO
+
+   earthregions("PT,ES,FR", country=true)	# Make a map of Portugal, Spain and France regions.
+
+   G = earthregions("IHO31", grid=true);	# Get a grid of the "Sea of Azov"
+
+   viz(G, shade=true, coast=true)			# and make a nice map.
+"""
+function earthregions(name::String=""; proj="guess", grid::Bool=false, dataset="", res="",
+                      registration="", country::Bool=false, exact::Bool=false, Vd::Int=0)
+
+	(name == "") && (println("Available collections:\n\t",["DCW", "NatEarth", "UN", "Mainlands", "IHO", "Wiki", "Lakes"]); return)
+
+	(registration != "" && res == "") && error("ERROR: Cannot specify a registration and NOT specify a resolution.")
+	(grid && dataset == "") && (dataset = "earth_relief")
+
+	datasets = ["earth_relief", "earth_synbath", "earth_gebco", "earth_mask", "earth_day", "earth_night", "earth_geoid", "earth_faa", "earth_vgg", "earth_wdmam", "earth_age"]
+	(dataset != "") && (dataset = string(dataset))		# To let use symbols too.
+	(dataset != "" && !any(startswith.(dataset, datasets))) && error("ERROR: unknown grid/image dataset name: '$dataset'. Must be one of:\n$datasets")
+	type = (dataset != "" || grid) ? "raster" : "map"
+
+	# Check that dataset name and resolutions exists.
+	all_res = ["01d", "30m", "20m", "15m", "10m", "06m", "05m", "04m", "03m", "02m", "01m", "30s", "15s", "03s", "01s"]
+	if (res != "")
+		ind = findfirst(res .== all_res)
+		(ind === nothing) && error("ERROR: unknown resolution '$res'. Must one of:\n$all_res")
+		(ind > 11 && any(dataset .== ["earth_faa", "earth_vgg", "earth_geoid", "earth_age"])) && error("ERROR: maximum vailable resolution for this '$dataset' dataset is 01m")
+		(ind > 12 && any(dataset .== ["earth_day", "earth_night"])) && error("ERROR: maximum vailable resolution for this '$dataset' dataset is 30s")
+		(ind > 13 && dataset == "earth_mask") && error("ERROR: maximum vailable resolution for this '$dataset' dataset is 15s")
+		(ind > 9 && dataset == "earth_wdmam") && error("ERROR: maximum vailable resolution for this '$dataset' dataset is 03m")
+	end
+
+	isImg = any(dataset .== ["earth_day", "earth_night"])
+	(isImg && res == "") && error("When using 'earth_day' or 'earth_night' is mandatory to specify a resolution.")
+
+	d = Dict("NatEarth" => ["SAM", "AFR", "ASI", "EUR", "NAM", "MLNS", "MCNS", "PLNS", "MLYA", "GDRG", "ALP", "TIAN", "URAL", "CCSM", "HMLY", "ANDM", "RCKM", "NCNP", "KZST", "NEUP", "GRPL", "CONB", "AMZB", "IDCP", "ARAP", "GOBD", "SHRD", "WEPL", "IBRP", "TBTP", "CEAM", "SBRP", "EANT", "WANT", "ANTP", "GRSI", "ARTA"], 
+	"UN" => ["UN002", "UN015", "UN202", "UN014", "UN017", "UN018", "UN011", "UN019", "UN419", "UN029", "UN013", "UN005", "UN021", "UN010", "UN142", "UN143", "UN030", "UN035", "UN034", "UN145", "UN151", "UN154", "UN039", "UN155", "UN009", "UN053", "UN054", "UN057", "UN061"],
+	"Mainlands" => ["CRC", "ECC", "PTC", "ESC"],
+	"Lakes" => ["CSPS", "GRLK", "LSUP", "LVIC", "LHUR", "LMIC", "LTAN", "LBAI", "GRBL", "LMAL", "GRSL", "LERI", "LWIN", "LONT", "LLAD", "NGNI", "BRNI", "BFFI", "SMTI", "HNSI", "VCTI", "GBRI", "ELLI", "SLWI", "SNZI", "JAVI", "NNZI", "LZNI", "NWFI", "MNDI", "IRLI", "HKKI", "SKHI", "BNKI", "DVNI", "ALXI", "TDFI", "SVRI", "BRKI", "AXHI", "MLVI", "SMPI", "MRJI", "SPTI", "KYSI", "NWBI", "PRWI", "YZHI", "VNCI", "TMRI", "SCLI", "EASI", "AZRI", "CNRI", "GLPI", "MDRI", "BLRI"],
+	"IHO" => ["IHO1", "IHO1A", "IHO1B", "IHO1C", "IHO2", "IHO3", "IHO4", "IHO5", "IHO6", "IHO7", "IHO8", "IHO9", "IHO10", "IHO11", "IHO12", "IHO13", "IHO14", "IHO14A", "IHO15", "IHO15A", "IHO16", "IHO16A", "IHO17", "IHO17A", "IHO18", "IHO19", "IHO20", "IHO21", "IHO21A", "IHO22", "IHO23", "IHO24", "IHO25", "IHO26", "IHO27", "IHO28", "IHO28-1", "IHO28A", "IHO28B", "IHO28C", "IHO28D", "IHO28-2", "IHO28E", "IHO28F", "IHO28G", "IHO28H", "IHO29", "IHO30", "IHO31", "IHO32", "IHO33", "IHO34", "IHO35", "IHO36", "IHO37", "IHO38", "IHO39", "IHO40", "IHO41", "IHO42", "IHO43", "IHO44", "IHO45", "IHO45A", "IHO46A", "IHO46B", "IHO47", "IHO48", "IHO48A", "IHO48B", "IHO48C", "IHO48D", "IHO48E", "IHO48F", "IHO48G", "IHO48H", "IHO48I", "IHO48J", "IHO48K", "IHO48L", "IHO48M", "IHO48N", "IHO48O", "IHO49", "IHO50", "IHO51", "IHO52", "IHO53", "IHO54", "IHO55", "IHO56", "IHO57", "IHO58", "IHO59", "IHO60", "IHO61", "IHO62", "IHO62A", "IHO63", "IHO64", "IHO65", "IHO66", "SOCE", "SRGS"],
+	"Wiki" => ["STHC", "GUIA", "BLVR", "MANT", "LANT", "LCYA", "BLCS", "SCND", "BLTC", "NRDC", "BNLX", "LVNT", "MSHR", "HOAF", "MGHR", "ARBC"])
+	collections = ["NatEarth", "UN", "Mainlands", "IHO", "Wiki", "Lakes"]
+	collect_dcw = ["DCW", "NatEarth", "UN", "Mainlands", "IHO", "Wiki", "Lakes"]
+
+	pato = joinpath(dirname(pathof(GMT))[1:end-4], "share", "named_regions", "")
+
+	_name = any(name .== collect_dcw) ? name : ""
+	(_name == "") && (code = name)
+
+	if (_name != "")		# Just show the collection
+		return show(gmtread(pato * _name * "_collection.txt"), allrows=true)
+	else					# Need to find region
+		opt_E = ""
+		contains(code,",") && (exact = true)	# For composite codes don't bother to make a union of rounded -R's
+		if (!exact)
+			ind, col = 0, 0
+			for k = 1:numel(collections)
+				((ind = findfirst(code .== d[collections[k]])) !== nothing) && (col = k; break)
+			end
+			if (col == 0)		# We treat the DCW collection differently because it's too big to have pre-loaded.
+				D = gmtread(pato * "DCW_collection.txt")
+				ind = findfirst(startswith.(D.text, code * ","))
+				(ind === nothing) && error("Could not find the code '$code' in any of the collections:\n$collect_dcw")
+				country && (opt_E = code * "+p0.5")
+			else
+				D = gmtread(pato * collections[col] * "_collection.txt")
+			end
+			reg::Vector{Float64} = copy(D[ind,:])
+			lim = @sprintf("%.6g/%.6g/%.6g/%.6g", reg[:]...)
+		else					# Use the limits provided by GMT directly and no check if 'code' is valid
+			lim = code
+			(country && ((length(code) == 2 || contains(code,",") || contains(code,".")))) && (opt_E = code * "+p0.5")
+		end
+	end
+	_type = string(type)
+	if (_type == "map")
+		coast(R=lim, G="tomato", S="lightblue", proj=proj, E=opt_E, Vd=Vd, show=true)
+	else
+		isImg = any(dataset .== ["earth_day", "earth_night"])
+		regist = (registration != "") ? "_" * registration[1] : ""	# If user want to screw (no p or g), let it do.
+		(res != "" && regist == "") && (regist = isImg ? "_p" : "_g") 
+		opt_J = (res == "") ? " -JX15" : ""
+		(res != "") && (res = "_" * res)
+		fname = "@" * dataset * res * regist
+		if (isImg)
+			# Here the problem is that gmt("grdcut ...) is not able to cut images, so we have to resort to GDAL
+			# But GDAL knows nothing about the '@file' mechanism, so we must download the image first with GMT
+			D = gmtwhich(fname, V=:q)				# See if image is already in the cache dir
+			isempty(D) && (gmtwhich(fname, G=:a); D = gmtwhich(fname, V=:q))	# If not, download it
+			return grdcut(D.text[1], R=lim)			# This grdcut call will lower to use gdaltranslate
+		end 
+		gmt("grdcut @"*dataset * res * regist * opt_J * " -R" * lim)
+	end
+end
