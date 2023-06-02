@@ -172,8 +172,9 @@ function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::St
 		Gdal.GDALSetMetadata(dataset.ptr, val, C_NULL)		# Metadata must be in the form NAME=.....
 
 	CPLPushErrorHandler(@cfunction(CPLQuietErrorHandler, Cvoid, (UInt32, Cint, Cstring)))
+	#setconfigoption("CPL_LOG_ERRORS", "ON")
 	o = (method == "") ? f(dataset, opts; dest=dest, gdataset=true) : f(dataset, method, opts; dest=dest, gdataset=true, colorfile=_cmap)
-	(o !== nothing && o.ptr == C_NULL) && @warn("$(f) returned a NULL pointer.")
+	(o !== nothing && o.ptr == C_NULL) && error("$(f) returned a NULL pointer.")
 	if (o !== nothing)
 		# If not explicitly stated to return a GDAL datase, return a GMT type
 		if (f == ogr2ogr)
