@@ -153,7 +153,7 @@ function _download(country)
 
 	println("Downloading geographic data for country $country provided by the https://gadm.org project. It may take a while.")
 	println("The file $ID (after uncompressing) will be stored in $cache")
-	dlfile = download("https://biogeo.ucdavis.edu/data/gadm3.6/gpkg/$(name_zip)", joinpath(cache, name_zip))
+	dlfile = Downloads.download("https://biogeo.ucdavis.edu/data/gadm3.6/gpkg/$(name_zip)", joinpath(cache, name_zip))
 	curr_pato = pwd();	cd(cache)
 	@static Sys.iswindows() ? run(`tar -xf $dlfile`) : run(`unzip $dlfile`)
 	rm(dlfile)
