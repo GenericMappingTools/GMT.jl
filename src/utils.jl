@@ -532,6 +532,7 @@ fliplr(A) = reverse(A, dims=2)
 flipdim(A,dim) = reverse(A, dims=dim)
 #feval(fn_str, args...) = eval(Symbol(fn_str))(args...)
 const numel = length
+const resize = reshape
 
 #=
 function range(x)

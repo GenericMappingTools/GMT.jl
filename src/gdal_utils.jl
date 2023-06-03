@@ -51,6 +51,7 @@ function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int
 		end
 	end
 
+	(layout != "" && layout[2] == 'R') && (mat = reshape(mat, size(mat,2), size(mat,1), size(mat,3)))
 	(!isa(mat, Matrix) && size(mat,3) == 1) && (mat = reshape(mat, size(mat,1), size(mat,2)))	# Fck pain
 	if (layout != "")		# From GDAL it always come as a TR but not sure about the interleave
 		if     (startswith(layout, "BR"))  mat = reverse(mat, dims=1)		# Just flipUD
@@ -252,10 +253,11 @@ function get_cpt_from_colortable(dataset)
 	ct = Gdal.getcolortable(band)
 	(ct.ptr == C_NULL) && return Vector{Int32}(), 0
 	n_colors = Gdal.ncolorentry(ct)
-	cmap, n = Vector{Int32}(undef, 4 * n_colors), 1
+	cmap, n = fill(Int32(255), 4 * 256), 0
 	for k = 0:n_colors-1
 		c = Gdal.getcolorentry(ct, k)
-		cmap[n] = c.c1;	n += 1; cmap[n] = c.c2;	n += 1; cmap[n] = c.c3;	n += 1; cmap[n] = c.c4;	n += 1;
+		#cmap[n+=1] = c.c1;	cmap[n+=1] = c.c2;	cmap[n+=1] = c.c3;	cmap[n+=1] = c.c4	# Row-wise
+		cmap[n+=1] = c.c1;	cmap[n+256] = c.c2;	cmap[n+512] = c.c3;	cmap[n+768] = c.c4	# Col-wise
 	end
 	return cmap, n_colors
 end
@@ -301,39 +303,50 @@ The `save` keyword instructs GDAL to save the contents as an OGR file. Format is
 on `D` is a single or a multi-segment object, or "point" to convert to a multipoint geometry.
 """
 function gmt2gd(GI)
-	width, height = (GI.layout != "" && GI.layout[2] == 'C') ? (size(GI,2), size(GI,1)) : (size(GI,1), size(GI,2))
+	width, height = (size(GI,2), size(GI,1))
+	#width, height = (GI.layout != "" && GI.layout[2] == 'C') ? (size(GI,2), size(GI,1)) : (size(GI,1), size(GI,2))
+	n_dims = ndims(GI)
 	ds = Gdal.create("", driver=getdriver("MEM"), width=width, height=height, nbands=size(GI,3), dtype=eltype(GI[1]))
 	if (isa(GI, GMTgrid))
 		if (GI.layout != "" && GI.layout[2] == 'C')
-			if (ndims(GI.z) == 2)
+			if (n_dims == 2)
 				indata = (GI.layout[1] == 'B') ? collect(reverse(GI.z, dims=1)') : collect(GI.z')
 			else
 				indata = (GI.layout[1] == 'B') ? collect(permutedims(reverse(GI.z, dims=1), (2, 1, 3))) : collect(permutedims(GI.z,(2, 1, 3)))
 			end
 		else
-			indata = GI.z
+			if (GI.layout != "" && GI.layout[2] == 'R')
+				indata = (n_dims == 2) ? reshape(GI.z, width, height) : reshape(GI.z, width, height, size(GI,3))
+			else
+				indata = GI.z
+			end
 		end
-		Gdal.write!(ds, indata, isa(GI.z, Array{<:Real, 3}) ? Cint.(collect(1:size(GI,3))) : 1)
+		Gdal.write!(ds, indata, (n_dims == 3) ? Cint.(collect(1:size(GI,3))) : 1)
 	elseif (isa(GI, GMTimage))
 		if (GI.layout != "" && GI.layout[2] == 'C')
-			if (ndims(GI.image) == 2)
+			if (n_dims == 2)
 				indata = (GI.layout[1] == 'B') ? collect(reverse(GI.image, dims=1)') : collect(GI.image')
 			else
 				indata = (GI.layout[1] == 'B') ? collect(permutedims(reverse(GI.image, dims=1), (2, 1, 3))) : collect(permutedims(GI.image,(2, 1, 3)))
 			end
 		else
-			indata = GI.image
+			if (GI.layout != "" && GI.layout[2] == 'R')
+				indata = (n_dims == 2) ? reshape(GI.image, width, height) : reshape(GI.image, width, height, size(GI,3))
+			else
+				indata = GI.image
+			end
 		end
-		Gdal.write!(ds, indata, isa(GI.image, Array{<:Real, 3}) ? Cint.(collect(1:size(GI,3))) : 1)
+		Gdal.write!(ds, indata, (n_dims == 3) ? Cint.(collect(1:size(GI,3))) : 1)
 
 		if (GI.n_colors > 0)
 			ct = Gdal.createcolortable(UInt32(1))	# RGB
-			n = 1
-			for k = 0:GI.n_colors-1
-				c1, c2, c3, c4 = GI.colormap[n],GI.colormap[n+1],GI.colormap[n+2],GI.colormap[n+3]
-				#Gdal.createcolorramp!(ct, k, Gdal.GDALColorEntry(c1,c2,c3,c4), k, Gdal.GDALColorEntry(c1,c2,c3,c4))
-				Gdal.setcolorentry!(ct, k, Gdal.GDALColorEntry(c1,c2,c3,c4));
-				n += 4
+			n = 0
+			nc1,nc2,nc3 = GI.n_colors, 2*GI.n_colors, 3*GI.n_colors
+			for k = 1:GI.n_colors
+				c1, c2, c3, c4 = GI.colormap[k],GI.colormap[k+nc1],GI.colormap[k+nc2],GI.colormap[k+nc3]
+				#c1, c2, c3, c4 = GI.colormap[n+=1],GI.colormap[n+=1],GI.colormap[n+=1],GI.colormap[n+=1]	# row-wise
+				#Gdal.createcolorramp!(ct, k-1, Gdal.GDALColorEntry(c1,c2,c3,c4), k, Gdal.GDALColorEntry(c1,c2,c3,c4))
+				Gdal.setcolorentry!(ct, k-1, Gdal.GDALColorEntry(c1,c2,c3,c4));
 			end
 			Gdal.setcolortable!(Gdal.getband(ds), ct)
 			(!isnan(GI.nodata)) && (Gdal.setnodatavalue!(Gdal.getband(ds), GI.nodata))

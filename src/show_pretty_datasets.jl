@@ -42,7 +42,12 @@ function _show(io::IO,
 		return nothing
 	end
 
-	names_str = !isempty(D.colnames) ? D.colnames : ["col.$i" for i=1:size(D,2)]
+	is_named_region = (!isempty(D.comment) && endswith(D.comment[1], "code-region-ref")) # A special DS with named regions
+
+	names_str = !isempty(D.colnames) ? copy(D.colnames) : ["col.$i" for i=1:size(D,2)]
+	if (is_named_region)
+		names_str[end] = "Code";	append!(names_str, ["Region", "Ref"])
+	end
 	names_len = Int[textwidth(n) for n in names_str]
 	maxwidth = Int[max(9, nl) for nl in names_len]
 	types = Any[eltype(c) for c in eachcol(D)]
@@ -93,12 +98,14 @@ function _show(io::IO,
 	# display a vertical line after the first column.
 	vlines = fill(1, show_row_number)
 
-	(~all(isempty.(D.comment))) && println("Comment:\t", D.comment)
-	(~isempty(D.attrib))  && println("Attributes:  ", D.attrib)
-	(~isempty(D.bbox))    && println("BoundingBox: ", D.bbox)
-	(D.proj4  != "")      && println("PROJ: ", D.proj4)
-	(D.wkt    != "")      && println("WKT: ", D.wkt)
-	(D.header != "")      && println("Header:\t", D.header)
+	if (!is_named_region)
+		(~all(isempty.(D.comment))) && println("Comment:\t", D.comment)
+		(~isempty(D.attrib))  && println("Attributes:  ", D.attrib)
+		(~isempty(D.bbox))    && println("BoundingBox: ", D.bbox)
+		(D.proj4  != "")      && println("PROJ: ", D.proj4)
+		(D.wkt    != "")      && println("WKT: ", D.wkt)
+		(D.header != "")      && println("Header:\t", D.header)
+	end
 
 	skipd_rows = 0
 	if (~isempty(D.text))
@@ -107,11 +114,23 @@ function _show(io::IO,
 		end
 		push!(alignment, :r)
 		push!(types_str, "String")
+		if (is_named_region)
+			append!(alignment, [:c, :c])
+			append!(types_str, ["String", "String"])
+		end
 		if (size(D,1) > 250)	# Since only dataset's begining and end is displayed do not make a potentially big copy
 			Dt = [[D.data[1:50, :]; D.data[end-50:end, :]] [D.text[1:50, :]; D.text[end-50:end, :]]]
 			skipd_rows = size(D,1) - size(Dt,1)
 		else
-			Dt = [D.data D.text]
+			if (!is_named_region)
+				Dt = [D.data D.text]
+			else
+				nr = Matrix{String}(undef, numel(D.text), 3)
+				for k = 1:numel(D.text)
+					nr[k,:] = string.(split(D.text[k],','))		# Can't find a clever way of doing this
+				end
+				Dt = [D.data nr]
+			end
 		end
 	else
 		Dt = D.data
@@ -141,7 +160,7 @@ function _show(io::IO,
 				 ellipsis_line_skip          = 3,
 				 formatters                  = (_pretty_tables_general_formatter,),
 				 header                      = (names_str, types_str),
-				 header_alignment            = :r,
+				 header_alignment            = alignment,
 				 hlines                      = [:header],
 				 highlighters                = (_PRETTY_TABLES_HIGHLIGHTER,),
 				 maximum_columns_width       = maximum_columns_width,

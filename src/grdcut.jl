@@ -55,6 +55,7 @@ function grdcut(cmd0::String="", arg1=nothing; kwargs...)
 	if (n > 0)  arg1, arg2 = args[:]  end
 	(show_kwargs[1]) && return print_kwarg_opts([:img :usegdal :gdal], "Any")		# Just print the options
 
+	# Images in file or any file but with a gdal request are read-and-cut but GDAL
 	if (cmd0 != "" && (guess_T_from_ext(cmd0) == " -Ti" || (find_in_dict(d, [:usegdal :gdal])[1]) !== nothing))
 		(dbg_print_cmd(d, cmd) !== nothing) && return "grdcut $cmd0 " * cmd		# Vd=2 cause this return
 		t = split(scan_opt(cmd, "-R"), '/')
@@ -103,20 +104,17 @@ function crop(arg::GItype; kw...)
 	# Must test that requested cropping limits fit inside array BB
 	lims[1], lims[2] = max(lims[1], arg.range[1]), min(lims[2], arg.range[2])	# Avoid overflows in Region
 	lims[3], lims[4] = max(lims[3], arg.range[3]), min(lims[4], arg.range[4])
-	row_dim, col_dim = (arg.layout == "" || arg.layout[2] == 'C') ? (1,2) : (2,1)	# If RowMajor the array is transposed 
-	#=
-	one_or_zero = (arg.registration == 0) ? 1.0 : 0.0
-	slope = (size(arg, col_dim) - one_or_zero) / (arg.x[end] - arg.x[1])
-	pix_x = round.(Int, slope .* (lims[1:2] .- arg.x[1]) .+ [1.0, one_or_zero])
-	slope = (size(arg, row_dim) - one_or_zero) / (arg.y[end] - arg.y[1])
-	pix_y = round.(Int, slope .* (lims[3:4] .- arg.y[1]) .+ [1.0, one_or_zero])
-	=#
+	row_dim, col_dim = (arg.layout == "" || arg.layout[2] == 'C') ? (1,2) : (1,2)	# If RowMajor the array is disguised 
+
+	# So far we are not able to crop row-wise array disguised as a column-wise one. So resort to GDAL
+	(arg.layout != "" && arg.layout[2] == 'R') && return gdaltranslate(arg, R=opt_R[4:end]), Int[], Int[]
+
 	pix_x, pix_y = axes2pix([lims[1] lims[3]; lims[2] lims[4]], size(arg), [arg.x[1], arg.x[end]], [arg.y[1], arg.y[end]], arg.registration, arg.layout)
 
 	function rearrange_ranges(pix_x, pix_y)
 		# Rearrange the cropping limits if the layout is Rowmajor and/or Topdown
 		if (arg.layout[1] == 'T')  pix_y = [size(arg, row_dim)-pix_y[2]+1, size(arg, row_dim)-pix_y[1]+1]	end
-		if (arg.layout[2] == 'R')  pix_x, pix_y = pix_y, pix_x  end
+		#if (arg.layout[2] == 'R')  pix_x, pix_y = pix_y, pix_x  end
 		pix_x, pix_y
 	end
 
@@ -148,7 +146,8 @@ Return two vectors of Int with the indices that map `xy` to `x` and `y`
 """
 function axes2pix(xy, dims, x, y, reg=0, layout::String="TC")
 	(numel(x) != 2 || numel(y) != 2) && error("x and y must be a two elements array or tuple.")
-	row_dim, col_dim = (layout == "" || layout[2] == 'C') ? (1,2) : (2,1)	# If RowMajor the array is transposed 
+	#row_dim, col_dim = (layout == "" || layout[2] == 'C') ? (1,2) : (2,1)	# If RowMajor the array is transposed 
+	row_dim, col_dim = 1,2
 	one_or_zero = (reg == 0) ? 1.0 : 0.0
 	slope = (dims[col_dim] - one_or_zero) / (x[end] - x[1])
 	pix_x = round.(Int, slope .* (xy[:,1] .- x[1]) .+ [1.0, one_or_zero])

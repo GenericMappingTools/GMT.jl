@@ -1,0 +1,38 @@
+#W(lon),E(lon),S(lat),N(lat),code-region-ref
+-81.3288	-34.7938	-55.9805	12.4645	SAM,South America,NatEarth
+-17.5338	51.4154	-34.8304	37.3496	AFR,Africa,NatEarth
+26.0687	-169.641	-10.9996	81.2805	ASI,Asia,NatEarth
+-10.4842	66.9097	34.802	71.1838	EUR,Europe,NatEarth
+-168.132	-52.6217	15.6519	83.5996	NAM,North America,NatEarth
+130.93	-175.01	-22.7146	-0.338556	MLNS,Melanesia,NatEarth
+130.158	179.734	-4.44378	21.3267	MCNS,Micronesia,NatEarth
+166.42	-109.231	-48.0195	23.5797	PLNS,Polynesia,NatEarth
+94	130	-12	22	MLYA,Malay Archipelago,NatEarth
+142.4	153.6	-39	-12	GDRG,Great Dividing Range,NatEarth
+4.8	16.4	43.6	48.2	ALP,Alps Mountains,NatEarth
+72	96	39.6	44.2	TIAN,Tian Shan,NatEarth
+56	67.2	51.2	68.4	URAL,Ural Mountains,NatEarth
+37.2	49.6	40.2	45.2	CCSM,Caucasus Mountains,NatEarth
+75	96	26.8	34	HMLY,Himalayas Mountains,NatEarth
+-80.8	-62.8	-56	12	ANDM,Andes Mountains,NatEarth
+-128	-104	35	60	RCKM,Rocky Mountains,NatEarth
+113	122	30	40.4	NCNP,North China Plain,NatEarth
+52	86	46.6	55.6	KZST,Kazakh Steppe,NatEarth
+-6	68	43	70	NEUP,Northern European Plain,NatEarth
+-114.4	-95.2	28	55	GRPL,Great Plains,NatEarth
+11.6	31.2	-12	10	CONB,Congo Basin,NatEarth
+-80	-46	-21	5	AMZB,Amazon Basin,NatEarth
+93.2	109.6	8.4	27.2	IDCP,Indochina Peninsula,NatEarth
+34	60	12.4	31.2	ARAP,Arabian Peninsula,NatEarth
+94	118	37.8	47.8	GOBD,Gobi Desert,NatEarth
+-18	40	9	35	SHRD,Sahara Desert,NatEarth
+115	136	-30.2	-20.6	WEPL,Western Plateau,NatEarth
+-9.6	3.6	36	43.8	IBRP,Iberian Peninsula,NatEarth
+73	105	26.8	40.4	TBTP,Tibetan Plateau,NatEarth
+-95.6	-77.6	7.2	21.6	CEAM,Central America,NatEarth
+68	154	49	74	SBRP,Siberia Peninsula,NatEarth
+0	180	-90	-65	EANT,East Antarctica,NatEarth
+-180	0	-90	-61	WANT,West Antarctica,NatEarth
+-72	-56.8	-74.8	-63.2	ANTP,Antarctic Peninsula,NatEarth
+94	126	-9.6	7.6	GRSI,Greater Sunda Islands,NatEarth
+-128	-60	60	84	ARTA,Arctic Archipelago,NatEarth

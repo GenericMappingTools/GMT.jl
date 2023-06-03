@@ -134,9 +134,10 @@ export
 
 	blendimg!, lonlat2xy, xy2lonlat, df2ds, mat2ds, mat2grid, mat2img, slicecube, cubeslice, linspace, logspace, fields,
 	flipud, fliplr, flipdim, gridinterp, grdinterp, tic, toc, theme, tern2cart, geodetic2enu, cpt4dcw, gd2gmt, gmt2gd,
-	gdalread, gdalshade, gdalwrite, gadm, xyzw2cube, coastlinesproj, graticules, plotgrid!, worldrectangular, worldrectgrid,
+	gdalread, gdalshade, gdalwrite, gadm, xyzw2cube, coastlinesproj, graticules, plotgrid!, resise,worldrectangular,
+	worldrectgrid,
 
-	gridit, magic, rescale, stackgrids, delrows!, setgrdminmax!, meshgrid, cart2pol, pol2cat, cart2sph, sph2cart,
+	earthregions, gridit, magic, rescale, stackgrids, delrows!, setgrdminmax!, meshgrid, cart2pol, pol2cat, cart2sph, sph2cart,
 
 	arcellipse, arccircle, getband, getdriver, getlayer, getproj, getgeom, getgeotransform, toPROJ4, toWKT,
 	importPROJ4, importWKT, importEPSG, gdalinfo, gdalwarp, gdaldem, gdaltranslate, gdalgrid, gdalvectortranslate,
@@ -307,12 +308,14 @@ include("get_enums.jl")
 	grdimage(rand(Float32,32,32), Vd=2);
 	grdview(rand(Float32,32,32), Vd=2);
 	coast(R=:g, proj=:guess, W=(level=1,pen=(2,:green)), Vd=2);
+	gridit(rand(10,3), preproc=true, I=0.1);
+	earthregions("PT", Vd=2);
 	violin(rand(50), fmt=:ps);
 	boxplot(rand(50), fmt=:ps);
 	qqplot(randn(500), randn(50), fmt=:ps);
 	ecdfplot!(randn(50), fmt=:ps);
 	cornerplot(randn(50,3), scatter=true, fmt=:ps);
-	marginalhist(randn(1000,2), par=(PS_MEDIA="A2",), fmt=:ps);
+	marginalhist(randn(1000,2), par=(PS_MEDIA="A2",), fmt=:ps);	rm("GMTplot.ps")
 	feather([0.0 0 2.0; 0.0 30 2; 0.0 60 2], rtheta=true, aspect="1:1", arrow=(len=0.5, shape=0.5,), fmt=:ps);
 	rm(joinpath(tempdir(), "GMTjl_custom_p_x.txt"))		# This one gets created before username is set.
 end

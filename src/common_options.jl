@@ -2717,8 +2717,8 @@ end
 
 # ---------------------------
 function parse_unit_unit(str)::String
+	!isa(str, StrSymb) && error("Argument data type must be String or Symbol but was: $(typeof(str))")
 	if (isa(str, Symbol))  str = string(str)  end
-	!isa(str, String) && error("Argument data type must be String or Symbol but was: $(typeof(val))")
 
 	if     (str == "e" || str == "meter")  out = "e";
 	elseif (str == "M" || str == "mile")   out = "M";
@@ -4415,6 +4415,7 @@ function digests_legend_bag(d::Dict, del::Bool=true)
 		elseif (symb[1] == '~' || symb[1] == 'q' || symb[1] == 'f')
 			if (startswith(symb, "~d"))
 				ind = findfirst(':', symb)
+				(ind === nothing) && error("Error: missing colon (:) in decorated string opt.")
 				symb = string(symb[1],"n1", symb[ind[1]:end])
 			end
 			leg[kk += 1] = @sprintf("S - %s %s %s %s - %s", symb, symbW, fill, pen, legend_type[1].label[k])
