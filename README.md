@@ -91,7 +91,7 @@ robust and keeps being updated to latestes **GMT** developments, this *By module
 in Progress (several of the **GMT supplements** were not ported yet) and some things may not work yet.
 So all help is most than wellcome.
 
-[Documentation and Examples](https://fct-gmt.ualg.pt/GMTjl_doc/)
+[Documentation and Examples](https://genericmappingtools.github.io/GMTjl_doc)
 ================================================================
 
 
