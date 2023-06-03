@@ -8,7 +8,7 @@ Julia wrapper for the Generic Mapping Tools [GMT](https://github.com/GenericMapp
 | [![][docs-latest-img]][docs-latest-url] | [![][travis-img]][travis-url] [![][codecov-img]][codecov-url] | [![][forum-img]][forum-url] | [![][colprac-img]][colprac-url] |
 
 [docs-latest-img]: https://img.shields.io/badge/docs-latest-blue.svg
-[docs-latest-url]: https://joa-quim.github.io/GMTjl_doc/
+[docs-latest-url]: https://genericmappingtools.github.io/GMTjl_doc/
 
 [travis-img]: https://travis-ci.com/GenericMappingTools/GMT.jl.svg?branch=master
 [travis-url]: https://travis-ci.com/GenericMappingTools/GMT.jl
@@ -34,7 +34,7 @@ will take you to an impressive collection of figures made with **GMT**
 
 <a href="https://www.google.com/search?q=%22generic+mapping+tools%22+site%3Awikimedia.org&tbm=isch#imgrc=_"><img src="docs/src/figures/GMT_wikimeia.jpg" width="800" class="center"/></a>
 
-This wrapper works with GMT6.1.0 and above and it is intended not only to access to **GMT** from
+This wrapper works with GMT6.4.0 and above and it is intended not only to access to **GMT** from
 within the Julia language but also to provide a more modern interface to the **GMT** modules.
 For example, instead of using the **GMT** classic syntax to do a line plot:
 
@@ -62,26 +62,18 @@ Install
 
     ] add GMT
 
-A word of warning about the installation. It is recommended that you install the [GMT](https://github.com/GenericMappingTools/gmt)
-program in your system as explained bellow. If you do this then the *GMT.jl* wrapper will be able to find it. However, if you don't
-care about disk space usage and some extra >4 GB are no worries for you then on Unix (Mac and Linux) if the wrapper doesn't find GMT,
-it will install one automatically via Conda. On Windows the installation is done with the Windows installer and no such huge waste
-takes place. One may also force the automatic installation by setting the environment variable ``FORCE_INSTALL_GMT``
+A word about the installation. On Unix (Mac included) we now use a GMT_jll artifact to provide the GMT binary,
+but for Windows we keep using a MSVC GMT binary. This means that on Windows the GMT (the C lib) is not updated
+automatically (but GMT.jl is). Updates there are done manually by running ``upGMT()``. Also, for some reasons
+it may be desirable to use a system wide GMT installation. To swap to a system wide GMT installation, do (in REPL):
 
+- ENV["SYSTEMWIDE_GMT"] = 1;
+- import Pkg; Pkg.build("GMT")
+- restart Julia
 
-  * Windows64
-      Install the [GMT6 version](http://fct-gmt.ualg.pt/gmt/data/wininstallers/gmt-win64.exe)
-
-  * Windows32
-      [..._win32.exe](https://github.com/GenericMappingTools/gmt/releases/download/6.2.0/GMT-6.2.0-win32.exe)
-
-  * Unix
-  
-      Follow instructions at <https://github.com/GenericMappingTools/gmt/blob/master/INSTALL.md>
-
-  * Since *GMT* produces PostScript you need a PS interpreter. Windows installer comes with ghostcript but on Mac/Linux you need to:
-
-      Install `Ghostscript` and `ghostview` at <https://ghostscript.com/releases/gsdnld.html>
+Note the above will work up until some other reason triggers a Julia recompile, where the JLL artifacts 
+will be used again. To make the ENV["SYSTEMWIDE_GMT"] = 1 solution permanent, declare a "SYSTEMWIDE_GMT"
+environment variable permanently in your .bashrc (or whatever).
 
 Using
 =====
