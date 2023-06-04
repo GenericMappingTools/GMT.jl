@@ -232,7 +232,7 @@ function GMT_Encode_Options(V_API::Ptr{Cvoid}, _module, n_argin::Int, head, n::P
 					V_API, _module, n_argin, head, n)
 end
 
-function GMT_Expand_Option(V_API::Ptr{Cvoid}, opt::Ptr{GMT_OPTION}, arg)
+function GMT_Expand_Option(V_API::Ptr{Cvoid}, opt::Ptr{GMT_OPTION}, arg)::Cint
 	ccall((:GMT_Expand_Option, libgmt), Cint, (Cstring, Ptr{GMT_OPTION}, Ptr{UInt8}), V_API, opt, arg)
 end
 

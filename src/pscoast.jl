@@ -88,7 +88,7 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 	if ((val = find_in_dict(d, [:getR :getregion :get_region], false)[1]) !== nothing)
 		t = string(gmt_proggy, " -E", val)
 		((Vd = find_in_dict(d, [:Vd], false)[1]) !== nothing) && (Vd == 1 ? println(t) : Vd > 1 ? (return t) : nothing)
-		return gmt(t).text[1]
+		return gmt(t).text[1]::String
 	end
 
 	cmd = parse_E_coast(d, [:E, :DCW], "")		# Process first to avoid warning about "guess"
@@ -291,6 +291,8 @@ A ``GMTgrid`` or a ``GMTimage`` if `dataset` is used or ``nothing`` otherwise.
    G = earthregions("IHO31", grid=true);	# Get a grid of the "Sea of Azov"
 
    viz(G, shade=true, coast=true)			# and make a nice map.
+
+To see the plots produced by these examples type: ``@? earthregions``
 """
 function earthregions(name::String=""; proj="guess", grid::Bool=false, dataset="", res="",
                       registration="", country::Bool=false, exact::Bool=false, Vd::Int=0)
@@ -328,7 +330,7 @@ function earthregions(name::String=""; proj="guess", grid::Bool=false, dataset="
 	collections = ["NatEarth", "UN", "Mainlands", "IHO", "Wiki", "Lakes"]
 	collect_dcw = ["DCW", "NatEarth", "UN", "Mainlands", "IHO", "Wiki", "Lakes"]
 
-	pato = joinpath(dirname(pathof(GMT))[1:end-4], "share", "named_regions", "")
+	pato::String = joinpath(dirname(pathof(GMT))[1:end-4], "share", "named_regions", "")
 
 	_name = any(name .== collect_dcw) ? name : ""
 	(_name == "") && (code = name)
@@ -344,14 +346,14 @@ function earthregions(name::String=""; proj="guess", grid::Bool=false, dataset="
 				((ind = findfirst(code .== d[collections[k]])) !== nothing) && (col = k; break)
 			end
 			if (col == 0)		# We treat the DCW collection differently because it's too big to have pre-loaded.
-				D = gmtread(pato * "DCW_collection.txt")
+				D::GMTdataset = gmtread(pato * "DCW_collection.txt")::GMTdataset
 				ind = findfirst(startswith.(D.text, code * ","))
 				(ind === nothing) && error("Could not find the code '$code' in any of the collections:\n$collect_dcw")
 				country && (opt_E = code * "+p0.5")
 			else
-				D = gmtread(pato * collections[col] * "_collection.txt")
+				D = gmtread(pato * collections[col] * "_collection.txt")::GMTdataset
 			end
-			reg::Vector{Float64} = copy(D[ind,:])
+			reg::Vector{Float64} = D[ind,:]
 			lim = @sprintf("%.6g/%.6g/%.6g/%.6g", reg[:]...)
 		else					# Use the limits provided by GMT directly and no check if 'code' is valid
 			lim = code
@@ -371,10 +373,10 @@ function earthregions(name::String=""; proj="guess", grid::Bool=false, dataset="
 		if (isImg)
 			# Here the problem is that gmt("grdcut ...) is not able to cut images, so we have to resort to GDAL
 			# But GDAL knows nothing about the '@file' mechanism, so we must download the image first with GMT
-			D = gmtwhich(fname, V=:q)				# See if image is already in the cache dir
+			D = gmtwhich(fname, V=:q)::GMTdataset	# See if image is already in the cache dir
 			isempty(D) && (gmtwhich(fname, G=:a); D = gmtwhich(fname, V=:q))	# If not, download it
-			return grdcut(D.text[1], R=lim)			# This grdcut call will lower to use gdaltranslate
+			return grdcut(D.text[1]::String, R=lim)::GMTimage			# This grdcut call will lower to use gdaltranslate
 		end 
-		gmt("grdcut @"*dataset * res * regist * opt_J * " -R" * lim)
+		gmt("grdcut @"*dataset * res * regist * opt_J * " -R" * lim)::GMTgrid
 	end
 end
