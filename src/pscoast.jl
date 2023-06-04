@@ -373,7 +373,7 @@ function earthregions(name::String=""; proj="guess", grid::Bool=false, dataset="
 		if (isImg)
 			# Here the problem is that gmt("grdcut ...) is not able to cut images, so we have to resort to GDAL
 			# But GDAL knows nothing about the '@file' mechanism, so we must download the image first with GMT
-			D = gmtwhich(fname, V=:q)::GMTdataset	# See if image is already in the cache dir
+			D = gmtwhich(fname, V=:q)::GDtype	# See if image is already in the cache dir
 			isempty(D) && (gmtwhich(fname, G=:a); D = gmtwhich(fname, V=:q))	# If not, download it
 			return grdcut(D.text[1]::String, R=lim)::GMTimage			# This grdcut call will lower to use gdaltranslate
 		end 
