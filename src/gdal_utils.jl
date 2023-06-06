@@ -303,8 +303,7 @@ The `save` keyword instructs GDAL to save the contents as an OGR file. Format is
 on `D` is a single or a multi-segment object, or "point" to convert to a multipoint geometry.
 """
 function gmt2gd(GI)
-	width, height = (size(GI,2), size(GI,1))
-	#width, height = (GI.layout != "" && GI.layout[2] == 'C') ? (size(GI,2), size(GI,1)) : (size(GI,1), size(GI,2))
+	width, height = (GI.layout != "" && GI.layout[2] == 'C') ? (size(GI,2), size(GI,1)) : (size(GI,1), size(GI,2))
 	n_dims = ndims(GI)
 	ds = Gdal.create("", driver=getdriver("MEM"), width=width, height=height, nbands=size(GI,3), dtype=eltype(GI[1]))
 	if (isa(GI, GMTgrid))
