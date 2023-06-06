@@ -94,7 +94,6 @@ function worldrectangular(GI::GItype; proj::StrSymb="+proj=vandg +over", pm=0, l
 
 	lims_geog = G.range
 	G = gdalwarp(G, ["-t_srs", _proj])
-	G.remark = "pad=$pad"		# Use this as a pocket to use in worldrectgrid()
 
 	xy = lonlat2xy([-180.0+pm 0; 180+pm 0], t_srs=_proj)
 	pix_x = axes2pix(xy, size(G), [G.x[1], G.x[end]], [G.y[1], G.y[end]], G.registration, G.layout)[1]
@@ -111,6 +110,7 @@ function worldrectangular(GI::GItype; proj::StrSymb="+proj=vandg +over", pm=0, l
 	end
 
 	G = grdcut(G, R=(G.x[pix_x[1]], G.x[pix_x[2]], yb, yt))
+	G.remark = "pad=$pad"		# Use this as a pocket to use in worldrectgrid()
 	return (res != "none" || !isempty(coastlines)) ? (G, worldrectcoast(proj=_proj, res=res, coastlines=coastlines, limits=lims_geog)) : G
 end
 
@@ -408,7 +408,7 @@ function plotgrid!(GI::GItype, Dgrat::Vector{<:GMTdataset}; annot=true, sides::S
 	if (annot == 1)
 		(annot_W || annot_E) && (txt = [@sprintf("a %d", lat[k,2]) for k = 1:size(lat,1)])
 		ax = (annot_W && annot_E) ? "WE" : annot_W ? "W" : "E"	# Which axis to annot
-		(annot_W) && basemap!(yaxis=(custom=(pos=lat[:,1], type=txt),), par=(FONT_ANNOT_PRIMARY="+7",), B=ax)
+		(annot_W && !isempty(txt)) && basemap!(yaxis=(custom=(pos=lat[:,1], type=txt),), par=(FONT_ANNOT_PRIMARY="+7",), B=ax)
 
 		if (annot_N)
 			txt = [@sprintf("a %d", lon_N[k,2]) for k = 1:size(lon_N,1)]

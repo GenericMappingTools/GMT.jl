@@ -115,7 +115,7 @@ function mat2ds(mat::AbstractMatrix; hdr=String[], geom=0, kwargs...)
 	end
 	#!any(c) && return mat		# Oops, no DateTime? Ok, go to your life and probably blow somewhere.
 
-	D = mat2ds(convert(Matrix{Float64}, mat); hdr=hdr, geom=geom, kwargs...)
+	D = mat2ds(convert(Matrix{Float64}, mat); hdr=hdr, geom=geom, kwargs...)::GMTdataset
 	ind = findall(c)
 	if (!isempty(ind))
 		Tc = ""
@@ -171,8 +171,7 @@ function helper_set_crs(d)
 	wkt::String = ((wk = find_in_dict(d, [:wkt])[1]) !== nothing) ? wk : ""
 	(prj == "" && wkt != "") && (prj = wkt2proj(wkt))
 	epsg::Int = ((ep = find_in_dict(d, [:epsg])[1]) !== nothing) ? ep : 0
-	(prj == "" && epsg != 0) && (prj = epsg2proj(wkt))
-	(wkt == "" && epsg != 0) && (prj = epsg2wkt(wkt))
+	(prj == "" && wkt == "" && epsg != 0) && (prj = epsg2proj(epsg))
 	return prj, wkt, epsg, ref_attrib, ref_coln
 end
 
@@ -208,7 +207,7 @@ function mat2ds(mat::Array{T,N}, txt::Vector{String}=String[]; hdr=String[], geo
 
 	color_cycle = false
 	if ((color = find_in_dict(d, [:lc :linecolor :color])[1]) !== nothing && color != false)
-		_color::Vector{String} = isa(color, Array{String}) ? vec(color) : matlab_cycle_colors
+		_color::Vector{String} = (isa(color, Array{String}) && !isempty(color)) ? vec(color) : matlab_cycle_colors
 		color_cycle = true
 	end
 	_fill::Vector{String} = helper_ds_fill(d)
@@ -579,8 +578,6 @@ function helper_ds_fill(d::Dict, del::Bool=true; symbs=[:fill :fillcolor], nc=0)
 			_fill = vec(fill_val)
 		elseif (isa(fill_val, Array{Symbol}))
 			_fill = vec(string.(fill_val))
-		elseif (isa(fill_val, Tuple) && eltype(fill_val) == Symbol)
-			_fill = vec(arg2str(fill_val, ','))
 		else
 			_fill = (nc <= 8) ? copy(matlab_cycle_colors) : copy(simple_distinct)
 		end

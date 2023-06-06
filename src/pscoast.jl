@@ -88,7 +88,7 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 	if ((val = find_in_dict(d, [:getR :getregion :get_region], false)[1]) !== nothing)
 		t = string(gmt_proggy, " -E", val)
 		((Vd = find_in_dict(d, [:Vd], false)[1]) !== nothing) && (Vd == 1 ? println(t) : Vd > 1 ? (return t) : nothing)
-		return gmt(t).text[1]
+		return gmt(t).text[1]::String
 	end
 
 	cmd = parse_E_coast(d, [:E, :DCW], "")		# Process first to avoid warning about "guess"
@@ -291,6 +291,8 @@ A ``GMTgrid`` or a ``GMTimage`` if `dataset` is used or ``nothing`` otherwise.
    G = earthregions("IHO31", grid=true);	# Get a grid of the "Sea of Azov"
 
    viz(G, shade=true, coast=true)			# and make a nice map.
+
+To see the plots produced by these examples type: ``@? earthregions``
 """
 function earthregions(name::String=""; proj="guess", grid::Bool=false, dataset="", res="",
                       registration="", country::Bool=false, exact::Bool=false, Vd::Int=0)
@@ -316,8 +318,8 @@ function earthregions(name::String=""; proj="guess", grid::Bool=false, dataset="
 		(ind > 9 && dataset == "earth_wdmam") && error("ERROR: maximum vailable resolution for this '$dataset' dataset is 03m")
 	end
 
-	isImg = any(dataset .== ["earth_day", "earth_night"])
-	(isImg && res == "") && error("When using 'earth_day' or 'earth_night' is mandatory to specify a resolution.")
+	isImg = any(contains.(dataset, ["earth_day", "earth_night"]))
+	(isImg && res == "" && !any(contains.(dataset, all_res))) && error("When using 'earth_day' or 'earth_night' is mandatory to specify a resolution.")
 
 	d = Dict("NatEarth" => ["SAM", "AFR", "ASI", "EUR", "NAM", "MLNS", "MCNS", "PLNS", "MLYA", "GDRG", "ALP", "TIAN", "URAL", "CCSM", "HMLY", "ANDM", "RCKM", "NCNP", "KZST", "NEUP", "GRPL", "CONB", "AMZB", "IDCP", "ARAP", "GOBD", "SHRD", "WEPL", "IBRP", "TBTP", "CEAM", "SBRP", "EANT", "WANT", "ANTP", "GRSI", "ARTA"], 
 	"UN" => ["UN002", "UN015", "UN202", "UN014", "UN017", "UN018", "UN011", "UN019", "UN419", "UN029", "UN013", "UN005", "UN021", "UN010", "UN142", "UN143", "UN030", "UN035", "UN034", "UN145", "UN151", "UN154", "UN039", "UN155", "UN009", "UN053", "UN054", "UN057", "UN061"],
@@ -328,7 +330,7 @@ function earthregions(name::String=""; proj="guess", grid::Bool=false, dataset="
 	collections = ["NatEarth", "UN", "Mainlands", "IHO", "Wiki", "Lakes"]
 	collect_dcw = ["DCW", "NatEarth", "UN", "Mainlands", "IHO", "Wiki", "Lakes"]
 
-	pato = joinpath(dirname(pathof(GMT))[1:end-4], "share", "named_regions", "")
+	pato::String = joinpath(dirname(pathof(GMT))[1:end-4], "share", "named_regions", "")
 
 	_name = any(name .== collect_dcw) ? name : ""
 	(_name == "") && (code = name)
@@ -344,14 +346,14 @@ function earthregions(name::String=""; proj="guess", grid::Bool=false, dataset="
 				((ind = findfirst(code .== d[collections[k]])) !== nothing) && (col = k; break)
 			end
 			if (col == 0)		# We treat the DCW collection differently because it's too big to have pre-loaded.
-				D = gmtread(pato * "DCW_collection.txt")
+				D::GMTdataset = gmtread(pato * "DCW_collection.txt")::GMTdataset
 				ind = findfirst(startswith.(D.text, code * ","))
 				(ind === nothing) && error("Could not find the code '$code' in any of the collections:\n$collect_dcw")
 				country && (opt_E = code * "+p0.5")
 			else
-				D = gmtread(pato * collections[col] * "_collection.txt")
+				D = gmtread(pato * collections[col] * "_collection.txt")::GMTdataset
 			end
-			reg::Vector{Float64} = copy(D[ind,:])
+			reg::Vector{Float64} = D[ind,:]
 			lim = @sprintf("%.6g/%.6g/%.6g/%.6g", reg[:]...)
 		else					# Use the limits provided by GMT directly and no check if 'code' is valid
 			lim = code
@@ -362,7 +364,6 @@ function earthregions(name::String=""; proj="guess", grid::Bool=false, dataset="
 	if (_type == "map")
 		coast(R=lim, G="tomato", S="lightblue", proj=proj, E=opt_E, Vd=Vd, show=true)
 	else
-		isImg = any(dataset .== ["earth_day", "earth_night"])
 		regist = (registration != "") ? "_" * registration[1] : ""	# If user want to screw (no p or g), let it do.
 		(res != "" && regist == "") && (regist = isImg ? "_p" : "_g") 
 		opt_J = (res == "") ? " -JX15" : ""
@@ -371,10 +372,10 @@ function earthregions(name::String=""; proj="guess", grid::Bool=false, dataset="
 		if (isImg)
 			# Here the problem is that gmt("grdcut ...) is not able to cut images, so we have to resort to GDAL
 			# But GDAL knows nothing about the '@file' mechanism, so we must download the image first with GMT
-			D = gmtwhich(fname, V=:q)				# See if image is already in the cache dir
-			isempty(D) && (gmtwhich(fname, G=:a); D = gmtwhich(fname, V=:q))	# If not, download it
-			return grdcut(D.text[1], R=lim)			# This grdcut call will lower to use gdaltranslate
+			D2 = gmtwhich(fname, V=:q)	# See if image is already in the cache dir
+			isempty(D2) && (gmtwhich(fname, G=:a); D2 = gmtwhich(fname, V=:q))	# If not, download it
+			return grdcut(D2.text[1]::String, R=lim)::GMTimage			# This grdcut call will lower to use gdaltranslate
 		end 
-		gmt("grdcut @"*dataset * res * regist * opt_J * " -R" * lim)
+		gmt("grdcut @"*dataset * res * regist * opt_J * " -R" * lim)::GMTgrid
 	end
 end

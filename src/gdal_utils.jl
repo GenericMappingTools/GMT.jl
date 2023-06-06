@@ -169,7 +169,7 @@ function gd2gmt(geom::Gdal.AbstractGeometry, proj::String="")::Union{GMTdataset,
 	elseif (gmtype == wkbMultiPolygon || gmtype == wkbMultiLineString || gmtype == Gdal.wkbGeometryCollection)
 		n_pts = Gdal.ngeom(geom)
 		D = Vector{GMTdataset}(undef, n_pts)
-		for k = 1:n_pts  D[k] = gd2gmt(Gdal.getgeom(geom,k-1), "")  end
+		for k = 1:n_pts  D[k] = gd2gmt(Gdal.getgeom(geom,k-1), "")::GMTdataset  end
 		(proj != "") && (D[1].proj4 = proj)
 		set_dsBB!(D)				# Compute and set the BoundingBox's for this dataset
 		return (length(D) == 1) ? D[1] : D
@@ -217,7 +217,7 @@ function gd2gmt(dataset::Gdal.AbstractDataset)
 
 			for j = 0:Gdal.ngeom(feature)-1
 				geom = Gdal.getgeom(feature, j)
-				_D = gd2gmt(geom, proj)
+				_D::GDtype = gd2gmt(geom, proj)
 				gt = Gdal.getgeomtype(geom)
 				# Maybe when there nlayers > 1 or other cases, starting allocated size is not enough
 				len_D = isa(_D, GMTdataset) ? 1 : length(_D)
@@ -303,8 +303,7 @@ The `save` keyword instructs GDAL to save the contents as an OGR file. Format is
 on `D` is a single or a multi-segment object, or "point" to convert to a multipoint geometry.
 """
 function gmt2gd(GI)
-	width, height = (size(GI,2), size(GI,1))
-	#width, height = (GI.layout != "" && GI.layout[2] == 'C') ? (size(GI,2), size(GI,1)) : (size(GI,1), size(GI,2))
+	width, height = (GI.layout != "" && GI.layout[2] == 'C') ? (size(GI,2), size(GI,1)) : (size(GI,1), size(GI,2))
 	n_dims = ndims(GI)
 	ds = Gdal.create("", driver=getdriver("MEM"), width=width, height=height, nbands=size(GI,3), dtype=eltype(GI[1]))
 	if (isa(GI, GMTgrid))

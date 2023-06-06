@@ -454,7 +454,7 @@ function size_unit(dim::AbstractString)
 	fact(c::Char) = (c == 'c') ? 1.0 : (c == 'i' ? 2.54 : (c == 'p' ? 2.54/72 : 1.0))
 	isletter(dim[end]) ? parse(Float64, dim[1:end-1]) * fact(dim[end]) : parse(Float64, dim)
 end
-size_unit(dim::Vector{AbstractString})::Vector{Float64} = [size_unit(t) for t in dim]
+size_unit(dim::Vector{<:AbstractString})::Vector{Float64} = [size_unit(t) for t in dim]
 
 function fish_size_from_J(opt_J)
 	# There are many ways by which a fig size ends up in the -J string. So lets try here to fish the fig

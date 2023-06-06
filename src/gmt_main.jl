@@ -34,7 +34,7 @@ function gmt(cmd::String, args...)
 		(r == "") && (r = isFranklin[1] ? (tmpdir_usr[1] * "/" * "GMTjl_" * tmpdir_usr[2] * " png") : "GMTplot " * FMT[1]::String)
 		IamModern[1] = true
 	elseif (g_module == "end")			# Last command of a MODERN session
-		isempty(r) && (r = "-Vq")		# Cannot have a no-args for this case otherwise it prints help
+		(r == "") && (r = "-Vq")		# Cannot have a no-args for this case otherwise it prints help
 	elseif (r == "" && n_argin == 0)	# Just requesting usage message, add -? to options
 		r = "-?"
 	elseif (n_argin > 1 && (g_module == "psscale" || g_module == "colorbar"))	# Happens with nested calls like in grdimage
@@ -68,7 +68,7 @@ function gmt(cmd::String, args...)
 				return_img = true
 				if (endswith(r, " *"))  r = r[1:end-2];	return_img = false;  end	# Trick to avoid reading back img
 				ind = findfirst("-T", r)
-				tok = lowercase(strtok(r[ind[2]:end])[1])
+				tok = (ind !== nothing) ? lowercase(strtok(r[ind[2]:end])[1]) : ""
 				if (return_img && !occursin("e", tok) && !occursin("f", tok))	# No any -Tef combo so add -F
 					r *= " -F";		need2destroy = true
 				end
@@ -110,7 +110,7 @@ function gmt(cmd::String, args...)
 	end
 
 	# 3. Convert command line arguments to a linked GMT option list
-	LL = NULL
+	#LL = NULL
 	LL = GMT_Create_Options(G_API[1], 0, r)		# It uses also the fact that GMT parses and check options
 
 	# 4. Preprocess to update GMT option lists and return info array X
@@ -446,6 +446,7 @@ function get_image(API::Ptr{Nothing}, object)::GMTimage
 	I::GMT_IMAGE = unsafe_load(convert(Ptr{GMT_IMAGE}, object))
 	(I.data == C_NULL) && error("get_image: programming error, output matrix is empty")
 	if     (I.type == 3)  data = convert(Ptr{Cushort}, I.data)
+	elseif (I.type == 5)  data = convert(Ptr{Cuint}, I.data)
 	elseif (I.type <= 1)  data = convert(Ptr{Cuchar}, I.data)
 	end
 
@@ -463,7 +464,7 @@ function get_image(API::Ptr{Nothing}, object)::GMTimage
 
 	layout = join([Char(gmt_hdr.mem_layout[k]) for k=1:4])		# This is damn diabolic
 	if (occursin("0", img_mem_layout[1]) || occursin("1", img_mem_layout[1]))	# WTF is 0 or 1?
-		t = deepcopy(unsafe_wrap(Array, data, ny * nx * nz))
+		t::Union{Array{Cuchar}, Array{Cushort}, Array{Cuint}} = deepcopy(unsafe_wrap(Array, data, ny * nx * nz))
 	else
 		if (img_mem_layout[1] != "")  layout = img_mem_layout[1][1:3] * layout[4]  end	# 4rth is data determined
 		if (layout != "" && layout[1] == 'I')		# The special layout for using this image in Images.jl
@@ -684,7 +685,7 @@ function GMTJL_Set_Object(API::Ptr{Nothing}, X::GMT_RESOURCE, ptr, pad)::GMT_RES
 			if (X.direction == GMT_OUT)		# Here we accept ptr === nothing
 				X.object = convert(Ptr{GMT_DATASET}, GMT_Create_Data(API, GMT_IS_DATASET, GMT_IS_PLP, GMT_IS_OUTPUT, NULL, NULL, NULL, 0, 0, NULL))
 			else
-				X.object = dataset_init(API, ptr, actual_family)
+				X.object = (ptr !== nothing) ? dataset_init(API, ptr, actual_family) : error("'ptr' = nothing in call to dataset_init()")
 			end
 		end
 		X.family = actual_family[1]
@@ -692,7 +693,7 @@ function GMTJL_Set_Object(API::Ptr{Nothing}, X::GMT_RESOURCE, ptr, pad)::GMT_RES
 		if (!isa(ptr, GMTcpt) && X.direction == GMT_OUT)	# To avoid letting call palette_init() with a nothing
 			X.object = convert(Ptr{GMT_PALETTE}, GMT_Create_Data(API, GMT_IS_PALETTE, GMT_IS_NONE, GMT_IS_OUTPUT, NULL, NULL, NULL, 0, 0, NULL))
 		else
-			X.object = palette_init(API, ptr)
+			X.object = (ptr !== nothing) ? palette_init(API, ptr) : error("'ptr' = nothing in call to palette_init()")
 		end
 	elseif (X.family == GMT_IS_POSTSCRIPT)	# Get a PostScript struct from Matlab or a dummy one to hold GMT output
 		X.object = ps_init(API, ptr, X.direction)
@@ -701,12 +702,12 @@ function GMTJL_Set_Object(API::Ptr{Nothing}, X::GMT_RESOURCE, ptr, pad)::GMT_RES
 	end
 	(X.object == NULL) && error("GMT: Failure to register the resource")
 
-	name = String([X.name...])
+	name::String = String([X.name...])
 	# Make filename with embedded object ID
 	(GMT_Open_VirtualFile(API, X.family, X.geometry, X.direction, X.object, name) != 0) && error("GMT: Failure to open virtual file") 
 	# Replace ? in argument with name
 	(GMT_Expand_Option(API, X.option, name) != 0) && error("GMT: Failure to expand filename marker (?)") 
-	X.name::NTuple{32, UInt8} = map(UInt8, (name...,))
+	X.name = map(UInt8, (name...,))::NTuple{32, UInt8}
 
 	return X
 end
