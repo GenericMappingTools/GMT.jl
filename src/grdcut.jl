@@ -104,17 +104,27 @@ function crop(arg::GItype; kw...)
 	# Must test that requested cropping limits fit inside array BB
 	lims[1], lims[2] = max(lims[1], arg.range[1]), min(lims[2], arg.range[2])	# Avoid overflows in Region
 	lims[3], lims[4] = max(lims[3], arg.range[3]), min(lims[4], arg.range[4])
-	row_dim, col_dim = (arg.layout == "" || arg.layout[2] == 'C') ? (1,2) : (1,2)	# If RowMajor the array is disguised 
+	row_dim, col_dim = (arg.layout == "" || arg.layout[2] == 'C') ? (1,2) : (2,1)	# If RowMajor the array is disguised 
 
 	# So far we are not able to crop row-wise array disguised as a column-wise one. So resort to GDAL
-	(arg.layout != "" && arg.layout[2] == 'R') && return gdaltranslate(arg, R=opt_R[4:end]), Int[], Int[]
+	if (arg.layout != "" && arg.layout[2] == 'R')
+		proj, wkt, epsg = arg.proj4, arg.wkt, arg.epsg		# Save these because gdaltranslate may f cahnge them
+		if (arg.registration == 0)
+			inc_x2, inc_y2 = arg.inc[1]/2, arg.inc[2]/2
+			G = gdaltranslate(arg, R=(lims[1]-inc_x2, lims[2]+inc_x2, lims[3]-inc_y2, lims[4]+inc_y2))#, Int[], Int[]
+		else
+			G = gdaltranslate(arg, R=opt_R[4:end]), Int[], Int[]
+		end
+		G.proj4, G.wkt, G.epsg = proj, wkt, epsg
+		return G, Int[], Int[]
+	end
 
 	pix_x, pix_y = axes2pix([lims[1] lims[3]; lims[2] lims[4]], size(arg), [arg.x[1], arg.x[end]], [arg.y[1], arg.y[end]], arg.registration, arg.layout)
 
 	function rearrange_ranges(pix_x, pix_y)
 		# Rearrange the cropping limits if the layout is Rowmajor and/or Topdown
 		if (arg.layout[1] == 'T')  pix_y = [size(arg, row_dim)-pix_y[2]+1, size(arg, row_dim)-pix_y[1]+1]	end
-		#if (arg.layout[2] == 'R')  pix_x, pix_y = pix_y, pix_x  end
+		if (arg.layout[2] == 'R')  pix_x, pix_y = pix_y, pix_x  end
 		pix_x, pix_y
 	end
 
@@ -146,8 +156,8 @@ Return two vectors of Int with the indices that map `xy` to `x` and `y`
 """
 function axes2pix(xy, dims, x, y, reg=0, layout::String="TC")
 	(numel(x) != 2 || numel(y) != 2) && error("x and y must be a two elements array or tuple.")
-	#row_dim, col_dim = (layout == "" || layout[2] == 'C') ? (1,2) : (2,1)	# If RowMajor the array is transposed 
-	row_dim, col_dim = 1,2
+	row_dim, col_dim = (layout == "" || layout[2] == 'C') ? (1,2) : (2,1)	# If RowMajor the array is transposed 
+	#row_dim, col_dim = 1,2
 	one_or_zero = (reg == 0) ? 1.0 : 0.0
 	slope = (dims[col_dim] - one_or_zero) / (x[end] - x[1])
 	pix_x = round.(Int, slope .* (xy[:,1] .- x[1]) .+ [1.0, one_or_zero])
