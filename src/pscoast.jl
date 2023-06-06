@@ -318,8 +318,8 @@ function earthregions(name::String=""; proj="guess", grid::Bool=false, dataset="
 		(ind > 9 && dataset == "earth_wdmam") && error("ERROR: maximum vailable resolution for this '$dataset' dataset is 03m")
 	end
 
-	isImg = any(dataset .== ["earth_day", "earth_night"])
-	(isImg && res == "") && error("When using 'earth_day' or 'earth_night' is mandatory to specify a resolution.")
+	isImg = any(contains.(dataset, ["earth_day", "earth_night"]))
+	(isImg && res == "" && !any(contains.(dataset, all_res))) && error("When using 'earth_day' or 'earth_night' is mandatory to specify a resolution.")
 
 	d = Dict("NatEarth" => ["SAM", "AFR", "ASI", "EUR", "NAM", "MLNS", "MCNS", "PLNS", "MLYA", "GDRG", "ALP", "TIAN", "URAL", "CCSM", "HMLY", "ANDM", "RCKM", "NCNP", "KZST", "NEUP", "GRPL", "CONB", "AMZB", "IDCP", "ARAP", "GOBD", "SHRD", "WEPL", "IBRP", "TBTP", "CEAM", "SBRP", "EANT", "WANT", "ANTP", "GRSI", "ARTA"], 
 	"UN" => ["UN002", "UN015", "UN202", "UN014", "UN017", "UN018", "UN011", "UN019", "UN419", "UN029", "UN013", "UN005", "UN021", "UN010", "UN142", "UN143", "UN030", "UN035", "UN034", "UN145", "UN151", "UN154", "UN039", "UN155", "UN009", "UN053", "UN054", "UN057", "UN061"],
@@ -364,7 +364,6 @@ function earthregions(name::String=""; proj="guess", grid::Bool=false, dataset="
 	if (_type == "map")
 		coast(R=lim, G="tomato", S="lightblue", proj=proj, E=opt_E, Vd=Vd, show=true)
 	else
-		isImg = any(dataset .== ["earth_day", "earth_night"])
 		regist = (registration != "") ? "_" * registration[1] : ""	# If user want to screw (no p or g), let it do.
 		(res != "" && regist == "") && (regist = isImg ? "_p" : "_g") 
 		opt_J = (res == "") ? " -JX15" : ""
