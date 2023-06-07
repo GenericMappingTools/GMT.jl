@@ -77,7 +77,9 @@ function grdview(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	              mesh=("m", add_opt_pen), facade=("f", add_opt_pen)) )
 	cmd = add_opt(d, cmd, "T", [:T :no_interp :tiles], (skip="_+s", skip_nan="_+s", outlines=("+o", add_opt_pen)))
 	opt_JZ = ""		# Need to have this one defined because it's need in frame_opaque() bellow.
-	(!occursin(" -T", cmd)) ? (cmd, opt_JZ = parse_JZ(d, cmd, O=O, is3D=true)[1]) : del_from_dict(d, [:JZ])	# Means, even if we had one, ignore silently
+	if (!occursin(" -T", cmd))  cmd, opt_JZ = parse_JZ(d, cmd, O=O, is3D=true)
+	else                        del_from_dict(d, [:JZ])			# Means, even if we had one, ignore silently
+	end
 	cmd = add_opt(d, cmd, "%", [:layout :mem_layout], nothing)
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)		# Find how data was transmitted
