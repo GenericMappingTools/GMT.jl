@@ -247,3 +247,10 @@
 16.4	33.2	-35.2	-22	ZA,South Africa,DCW
 21.6	34	-18.2	-8.2	ZM,Zambia,DCW
 25.2	33.2	-22.6	-15.6	ZW,Zimbabwe,DCW
+-26	52	-35	38	01,Africa,DCW
+0	360	-90	-64	02,Antarctica,DCW
+19.0	191	-12.0	82	03,Asia,DCW
+-74.0	41.0	27.0	84.0	04,Europe,DCW
+-170.0	-52.0	22.0	84.0	05,North America,DCW
+96.0	285.0	-56.0	29.0	06,Oceania,DCW
+-82.0	-34.0	-56.0	13.0	07,South America,DCW
