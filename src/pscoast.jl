@@ -241,7 +241,7 @@ const pscoast! = coast!
 # ---------------------------------------------------------------------------------------------------
 """
     [GI = ] earthregions(name=""; proj="guess", country=false, dataset="", grid=false,
-                         res, registration="", exact=false)
+                         res="", registration="", round=0, exact=false)
 
 `earthregions` plots or automatically extracts grid/image over a named geographic region. A large number of
 predefined regions is provided via _collections_, which are lists of names, their rectangular geographic
@@ -277,6 +277,9 @@ of that region or download topo/bathymetric data (a grid or image) of that area.
 - `exact`: The region boundaries in the collections were rounded to more friendly numbers (few decimals).
     This means that they differ slightly from the pure ``GMT`` (`coast`) numbers. Setting `exact=true` will
     force using the strict ``GMT`` limits.
+- `round=inc`: Adjust the region boundaries by rounding to multiples of the steps indicated by inc, (xinc,yinc), or
+    (winc,einc,sinc,ninc). Aditionally, `round` can be a string but in that case it must strictly follow the
+	hard core GMT syntax explained at https://docs.generic-mapping-tools.org/dev/coast.html#r
 
 See also: `coast`
 
@@ -294,8 +297,8 @@ A ``GMTgrid`` or a ``GMTimage`` if `dataset` is used or ``nothing`` otherwise.
 
 To see the plots produced by these examples type: ``@? earthregions``
 """
-function earthregions(name::String=""; proj="guess", grid::Bool=false, dataset="", res="",
-                      registration="", country::Bool=false, exact::Bool=false, Vd::Int=0)
+function earthregions(name::String=""; proj="guess", grid::Bool=false, dataset="", res="", exact::Bool=false,
+                      registration="", country::Bool=false, round=0, Vd::Int=0)
 
 	(name == "") && (println("Available collections:\n\t",["DCW", "NatEarth", "UN", "Mainlands", "IHO", "Wiki", "Lakes"]); return)
 
@@ -314,8 +317,8 @@ function earthregions(name::String=""; proj="guess", grid::Bool=false, dataset="
 		(ind === nothing) && error("ERROR: unknown resolution '$res'. Must one of:\n$all_res")
 		(ind > 11 && any(dataset .== ["earth_faa", "earth_vgg", "earth_geoid", "earth_age"])) && error("ERROR: maximum vailable resolution for this '$dataset' dataset is 01m")
 		(ind > 12 && any(dataset .== ["earth_day", "earth_night"])) && error("ERROR: maximum vailable resolution for this '$dataset' dataset is 30s")
-		(ind > 13 && dataset == "earth_mask") && error("ERROR: maximum vailable resolution for this '$dataset' dataset is 15s")
-		(ind > 9 && dataset == "earth_wdmam") && error("ERROR: maximum vailable resolution for this '$dataset' dataset is 03m")
+		(ind > 13 && dataset == "earth_mask") && error("ERROR: maximum available resolution for this '$dataset' dataset is 15s")
+		(ind > 9 && dataset == "earth_wdmam") && error("ERROR: maximum available resolution for this '$dataset' dataset is 03m")
 	end
 
 	isImg = any(contains.(dataset, ["earth_day", "earth_night"]))
@@ -332,14 +335,14 @@ function earthregions(name::String=""; proj="guess", grid::Bool=false, dataset="
 
 	pato::String = joinpath(dirname(pathof(GMT))[1:end-4], "share", "named_regions", "")
 
-	_name = any(name .== collect_dcw) ? name : ""
-	(_name == "") && (code = name)
+	coll_name = any(name .== collect_dcw) ? name : ""	# Check if 'name' is a collection name
+	code = (coll_name == "") ? name : ""				# If not, than it must be a code
 
-	if (_name != "")		# Just show the collection
-		return show(gmtread(pato * _name * "_collection.txt"), allrows=true)
-	else					# Need to find region
+	if (coll_name != "")		# Just show the collection
+		return show(gmtread(pato * coll_name * "_collection.txt"), allrows=true)
+	else						# Need to find region
 		opt_E = ""
-		contains(code,",") && (exact = true)	# For composite codes don't bother to make a union of rounded -R's
+		(contains(code,",") || contains(code, '.')) && (exact = true)	# For composite codes don't bother to make a union of rounded -R's
 		if (!exact)
 			ind, col = 0, 0
 			for k = 1:numel(collections)
@@ -347,19 +350,34 @@ function earthregions(name::String=""; proj="guess", grid::Bool=false, dataset="
 			end
 			if (col == 0)		# We treat the DCW collection differently because it's too big to have pre-loaded.
 				D::GMTdataset = gmtread(pato * "DCW_collection.txt")::GMTdataset
-				ind = findfirst(startswith.(D.text, code * ","))
+				extra_guys, code_continent = ["01", "02", "03", "04", "05", "06", "07"], ""
+				if (((ind = findfirst(code .== extra_guys)) !== nothing) ||
+					((ind = findfirst(code .== ["Africa", "Antarctica", "Asia", "Europe", "Noth America", "Oceania", "South America"])) !== nothing))
+					code_continent = ["=AF", "=AN", "=AS", "=EU", "=NA", "=OC", "=SA"][ind]
+					code = extra_guys[ind]		# This one is for next findfirst be able to find ind for coordinates.
+				end
+				ind = findfirst(startswith.(D.text, code * ","))	# Trailing comma because we want to find sep code/name
 				(ind === nothing) && error("Could not find the code '$code' in any of the collections:\n$collect_dcw")
+				(code_continent != "") && (code = code_continent)
 				country && (opt_E = code * "+p0.5")
 			else
 				D = gmtread(pato * collections[col] * "_collection.txt")::GMTdataset
 			end
+
+			(col != 0 && col != 2 && country) &&	# Using numbers (0 & 2) is dangerours. If collection lists change ...
+				(@warn("This collection knows nothing about DCW country polygons."); country = false)
 			reg::Vector{Float64} = D[ind,:]
-			lim = @sprintf("%.6g/%.6g/%.6g/%.6g", reg[:]...)
+			lim::String = @sprintf("%.6g/%.6g/%.6g/%.6g", reg[:]...)
 		else					# Use the limits provided by GMT directly and no check if 'code' is valid
 			lim = code
 			(country && ((length(code) == 2 || contains(code,",") || contains(code,".")))) && (opt_E = code * "+p0.5")
 		end
 	end
+
+	# Let user expand the bounding box to the nearest multiples of round
+	(isa(round, String) && !any(startswith.(round, ["+r", "+R", "+e"]))) && error("When given as a string the 'round' option must start with one of +r, +R or +e. See GMT -R pscoast docs.")
+	lim = isa(round, String) ? lim * round	: (round != 0) ? string(lim, "+r", arg2str(round)) : lim
+
 	_type = string(type)
 	if (_type == "map")
 		coast(R=lim, G="tomato", S="lightblue", proj=proj, E=opt_E, Vd=Vd, show=true)
