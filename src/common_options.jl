@@ -795,7 +795,7 @@ function guess_proj(lonlim, latlim)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_grid(d::Dict, args, opt_B::String="", stalone::Bool=true)
+function parse_grid(d::Dict, args, opt_B::String="", stalone::Bool=true)::String
 	# Parse the contents of the "grid" option. This option can be used as grid=(pen=:red, x=10), case on
 	# which the parsed result will be appended to def_fig_axes, or as a member of the "frame" option.
 	# In this case def_fig_axes is dropped and only the contents of "frame" will be used. The argument can
@@ -822,10 +822,13 @@ function parse_grid(d::Dict, args, opt_B::String="", stalone::Bool=true)
 	else
 		# grid=:on => -Bg;	grid=:x => -Bxg;	grid="x10" => -Bxg10; grid=:y ...;  grid=:xyz => " -Bg -Bzg"
 		o = string(args)
-		_x::Bool, _y::Bool, _xyz::Bool = (o[1] == 'x'), (o[1] == 'y'), startswith(o, "xyz")
-		if     (_x && !_xyz)  opt_B *= pre*"xg" * (length(o) > 1 ? o[2:end] : "")		# grid=:x or grid="x10"
-		elseif (_y && !_xyz)  opt_B *= pre*"yg" * (length(o) > 1 ? o[2:end] : "")
+		spli = split(opt_B)
+		_x::Bool, _y::Bool, _xyz::Bool, _xy::Bool = (o[1] == 'x'), (o[1] == 'y'), (o == "xyz"), (o == "xy")
+		if     (_x && !_xy && !_xyz)  opt_B *= pre*"xg" * (length(o) > 1 ? o[2:end] : "")	# grid=:x or grid="x10"
+		elseif (_y)           opt_B *= pre*"yg" * (length(o) > 1 ? o[2:end] : "")
 		elseif (_xyz)         opt_B *= pre*"g -Bzg"
+		elseif (_xy)          spli[1] *= "g";	opt_B = " " * join(spli, " ")
+		elseif (o == "true")  opt_B = " " * join(spli .* "g", " ")
 		else                  opt_B *= pre*"g"			# For example: grid=:on
 		end
 	end
@@ -2776,7 +2779,7 @@ function axis(D::Dict=Dict(); x::Bool=false, y::Bool=false, z::Bool=false, secon
 	haskey(d, :corners) && (opt *= string(d[:corners])::String)		# 1234
 	val, symb = find_in_dict(d, [:fill :bg :bgcolor :background], false)
 	if (val !== nothing)
-		tB::String = "+g" * add_opt_fill(d, [symb])::String
+		tB = "+g" * add_opt_fill(d, [symb])::String
 		opt *= tB					# Works, but patterns can screw
 		CTRL.pocket_B[2] = tB		# Save this one because we may need to revert it during psclip parsing
 	end
@@ -2817,19 +2820,34 @@ function axis(D::Dict=Dict(); x::Bool=false, y::Bool=false, z::Bool=false, secon
 	end
 
 	# intervals
-	ints::String = ""
-	if (haskey(d, :annot))      ints *= "a" * helper1_axes(d[:annot])  end
-	if (haskey(d, :annot_unit)) ints *= helper2_axes(d[:annot_unit])   end
-	if (haskey(d, :ticks))      ints *= "f" * helper1_axes(d[:ticks])  end
-	if (haskey(d, :ticks_unit)) ints *= helper2_axes(d[:ticks_unit])   end
+	ints::String, ann_2, ann_3, tic_2, tic_3, gri_2, gri_3, gri_d  = "", "", "", "", "", "", "", ""
+	if (haskey(d, :annot))      ints *= "a" * helper1_axes(d[:annot], is3D, 'a')  end
+	contains(ints, ' ') && (spli = split(ints); ints = string(spli[1]); ann_2 = string(spli[2]); ann_3 = string(spli[3]))
+	(haskey(d, :annot_unit)) && (ints *= helper2_axes(d[:annot_unit]))
+
+	if (haskey(d, :ticks))      ints *= "f" * helper1_axes(d[:ticks], is3D, 'f')  end
+	contains(ints, ' ') && (spli = split(ints); ints = string(spli[1]); tic_2 = string(spli[2]); tic_3 = string(spli[3]))
+	(haskey(d, :ticks_unit)) && (ints *= helper2_axes(d[:ticks_unit]))
+
 	if (haskey(d, :grid))
-		if (isa(d[:grid], NamedTuple))  tB = parse_grid(D, d[:grid], "", false)		# Whatever comes out
-		else                            tB = "g" * helper1_axes(d[:grid])
+		if (isa(d[:grid], NamedTuple))  gri_d = parse_grid(D, d[:grid], "", false)		# Whatever comes out
+		else                            gri_d = "g" * helper1_axes(d[:grid], is3D, 'g')
 		end
-		ints *= tB;	CTRL.pocket_B[1] = tB
+		contains(gri_d, ' ') && (spli = split(gri_d); gri_d = string(spli[1]); gri_2 = string(spli[2]); gri_3 = string(spli[3]))
+		ints *= gri_d;	CTRL.pocket_B[1] = gri_d	# If gri_d has a space in it a guess some shit will happen later
 	end
-	if (haskey(d, :prefix))     ints *= "+p" * str_with_blancs(arg2str(d[:prefix])::String)  end
-	if (haskey(d, :suffix))     ints *= "+u" * str_with_blancs(arg2str(d[:suffix])::String)  end
+
+	# Time to join the afg pieces (if that's the case)
+	afg_y, afg_z = "", ""
+	nBs = (ann_3 != "" || tic_3 != "" || gri_3 != "") ? 3 : (ann_2 != "" || tic_2 != "" || gri_2 != "") ? 2 : 1
+	if (nBs > 1)									# We have multi -B axes.
+		afg2, afg3 = ann_2 * tic_2 * gri_2, ann_3 * tic_3 * gri_3
+		(nBs == 3) && (afg_y = afg2; afg_z = afg3)	# This is for sure because it's a 3D case
+		(nBs == 2) && (is3D ? (afg_z = afg2) : (afg_y = afg2))
+	end
+
+	(haskey(d, :prefix)) && (ints *= "+p" * str_with_blancs(arg2str(d[:prefix])::String))
+	(haskey(d, :suffix)) && (ints *= "+u" * str_with_blancs(arg2str(d[:suffix])::String))
 	if (haskey(d, :slanted))
 		s::String = arg2str(d[:slanted])
 		if (s != "")
@@ -2863,9 +2881,12 @@ function axis(D::Dict=Dict(); x::Bool=false, y::Bool=false, z::Bool=false, secon
 	if     (haskey(d, :phase_add))  ints *= "+" * arg2str(d[:phase_add])::String
 	elseif (haskey(d, :phase_sub))  ints *= "-" * arg2str(d[:phase_sub])::String
 	end
-	(ints != "") && (opt = " -B" * primo * axe * ints * opt)
-	(ints != "" && is3D) && (opt *= " -Bz" * ints)	# If some of afg was explicitly passed
-	(ints == "" && is3D) && (opt *= " -Bzaf")			# Otherwise just the default af
+	_axe = (nBs == 1) ? axe : "x"
+	(ints != "") && (opt = " -B" * primo * _axe * ints * opt)
+	# If some of afg was explicitly passed
+	(afg_z != "") ? (opt *= " -B" * primo * "y" * afg_y * " -Bz" * afg_z) : (afg_y != "") ? (opt *= " -B" * primo * "y" * afg_y) : nothing 
+	(is3D && afg_z == "" && (ints == "" || contains(opt_Bframe, 'Z'))) && (opt *= ((gri_d == "g") ? " -Bzafg" : " -Bzaf"))
+	(is3D && gri_d == "g" && !contains(opt, "-Bz")) && (opt *= " -Bzg")		# Case of 'frame=(grid=true,)'
 
 	# Check if ax_sup was requested
 	(opt == "" && ax_sup != "") && (opt = " -B" * primo * axe * ax_sup)
@@ -2909,7 +2930,7 @@ function helper0_axes(arg)::String
 
 	opt = "";	lbrtu = "lbrtu";	WSENZ = "WSENZ";	wsenz = "wsenz";	lbrtu = "lbrtu"
 	for k = 1:numel(arg)
-		t = string(arg[k])		# For the case it was a symbol
+		t = string(arg[k])::String		# For the case it was a symbol
 		if (occursin("_f", t))
 			for n = 1:5  (t[1] == lbrtu[n]) && (opt *= WSENZ[n]; continue)  end
 		elseif (occursin("_t", t))
@@ -2922,10 +2943,16 @@ function helper0_axes(arg)::String
 end
 
 # ------------------------
-function helper1_axes(arg)::String
+function helper1_axes(arg, is3D::Bool, c::Char)::String
 	# Used by annot, ticks and grid to accept also 'auto' and "" to mean automatic
 	out::String = arg2str(arg)
-	(out != "" && out[1] == 'a') && (out = "")
+	(out != "" && out[1] == 'a') && return ""
+	if ((is3D || isa(arg, Tuple)) && ((nc = count_chars(out, '/')) > 0))
+		nc == 1 && return @sprintf("%.12g %s%.12g %s%.12g", arg[1], c, arg[1], c, arg[2])::String
+		nc == 2 && return @sprintf("%.12g %s%.12g %s%.12g", arg[1], c, arg[2], c, arg[3])::String
+	end
+	(out != "" && isletter(out[1]) && out[1] != 'p') &&	# "pi" is allowed
+		(@warn("Probable misuse of the 'grid' sub-otpion. Defaulting to a valid value."); out = "")
 	return out
 end
 # ------------------------
