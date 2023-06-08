@@ -309,6 +309,7 @@
 	@test GMT.axis(phase_add=10)[1] == " -Bp+10";
 	@test GMT.axis(phase_sub=10)[1] == " -Bp-10";
 	@test GMT.axis("zz", Dict())[1] == " -Bzz"
+	@test GMT.axis(Dict(), axes=:WESNZ, annot=(1,2,3), ticks=(4,5,6), grid=(1,2))[1] == " -Bpxa1f4g1 -Bpya2f5g1 -Bza3f6g2 -BWESNZ"
 
 	@test GMT.parse_grid(Dict(), (z=25,)) == " -Bzg25"
 	@test GMT.parse_grid(Dict(), ()) == " -Bg"

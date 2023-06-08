@@ -70,12 +70,12 @@ end
 
 # ----------------------------------------------------------------------------------------------------------
 """
-    count_chars(str::AbstractString, c::Char)
+    count_chars(str::AbstractString, c::Char[=','])
 
 Count the number of characters `c` in the AbstracString `str`
 """
-function count_chars(str::AbstractString, c::Char)::Int
-	count(i->(i == ','), str)
+function count_chars(str::AbstractString, c::Char=',')::Int
+	count(i->(i == c), str)
 end
 
 # ----------------------------------------------------------------------------------------------------------
