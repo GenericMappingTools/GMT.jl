@@ -892,12 +892,14 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 			have_axes = :axes in keys(val)
 			if (!have_axes && opt_B != "" && findlast(" ", opt_B)[1] != 1)	# If not have frame=(axes=..., ) use the default
 				def_Bframe = def_opt_B_split[end]	# => "-BWSen" when opt_B holds the default " -Baf -BWSen"
+				(startswith(def_Bframe, "-Bz") || !occursin(r"[WESNwesnzZ]", def_Bframe)) && (have_Bframe = false; def_Bframe = "")
 				if (have_Bframe)					# If we already have a Bframe bit must append it to def_Bframe
 					s = split(_opt_B)
 					nosplit_spaces!(s)	# Check (and fix) that the above split did not split across multi words sub-options
 					opt_B = " " * join(s[1:end-1], " ") * " " * def_Bframe * s[end][3:end]
 				else
 					opt_B = _opt_B * " " * def_Bframe
+					opt_B == " " && (opt_B = "")
 				end
 				opt_B = consolidate_Baxes(opt_B)
 			else
@@ -2768,11 +2770,13 @@ function axis(D::Dict=Dict(); x::Bool=false, y::Bool=false, z::Bool=false, secon
 	end
 	CTRL.pocket_J[4] = _jx * _jy * _jz
 
-	opt::String, is3D = " -B", false
+	#opt::String, is3D = " -B", false
+	opt::String = " -B"
+	is3D = (is_in_dict(D, [:JZ :Jz]) !== nothing) ? true : false
 	if ((val = find_in_dict(d, [:axes :frame])[1]) !== nothing)
 		isa(val, Dict) && (val = Base.invokelatest(dict2nt, val))
 		o::String = helper0_axes(val)
-		!z && (is3D = contains(o, 'Z'))		# If are not dealing with an explicit Z axis, fish info from axes=...
+		#!z && (is3D = contains(o, 'Z'))		# If are not dealing with an explicit Z axis, fish info from axes=...
 		opt = (o == "full") ? opt * "WSEN" : (o == "none") ? opt : opt * o
 	end
 
@@ -2787,10 +2791,11 @@ function axis(D::Dict=Dict(); x::Bool=false, y::Bool=false, z::Bool=false, secon
 	((val = find_in_dict(d, [:Yfill :Ybg :Ywall])[1]) !== nothing) && (opt = add_opt_fill(val, opt, "+y"))
 	((val = find_in_dict(d, [:Zfill :Zbg :Zwall])[1]) !== nothing) && (opt = add_opt_fill(val, opt, "+z"))
 	((p = add_opt_pen(d, [:wall_outline], "+w")) != "") && (opt *= p)
+	(haskey(d, :cube))     && (opt *= "+b")
 	(haskey(d, :internal)) && (opt *= "+i" * arg2str(d[:internal])::String)
-	(haskey(d, :cube))    && (opt *= "+b")
-	(haskey(d, :noframe)) && (opt *= "+n")
-	(haskey(d, :pole))    && (opt *= "+o" * arg2str(d[:pole])::String)
+	(startswith(opt, " -B+") && !startswith(opt, " -B+g")) && (opt = " -BWSENZ" * opt[4:end])	# Without axes prev opts screw -B
+	(haskey(d, :noframe))  && (opt *= "+n")
+	(haskey(d, :pole))     && (opt *= "+o" * arg2str(d[:pole])::String)
 	if (haskey(d, :title))
 		opt *= "+t" * str_with_blancs(arg2str(d[:title]))::String
 		(haskey(d, :subtitle)) && (opt *= "+s" * str_with_blancs(arg2str(d[:subtitle])::String))
