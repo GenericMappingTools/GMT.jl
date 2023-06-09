@@ -28,7 +28,6 @@
 	@test_throws ErrorException("Grids have different sizes, so they cannot be divided.") G1 / G2;
 	G1 = GMT.mat2grid(rand(4,4));
 	G2 = GMT.mat2grid(rand(Float32,4,4), G1);
-	@info "1..."
 	I = mat2img(rand(UInt8,8,8), G1);
 	flipud(I)
 	fliplr(I)
@@ -37,7 +36,6 @@
 	G2 = GMT.mat2grid(rand(4,4));
 	G1 .* G2;
 	G = mat2grid(ones(Float32, 4,4))
-	@info "2..."
 	sqrt(G);
 	log(G);
 	log10(G);
@@ -49,14 +47,16 @@
 	flipdim(G.z,1)
 
 	D = mat2ds(ones(3,2));
-	D + 2;
-	2 + D;
-	D - 2;
-	2 - D;
-	D + [2 1];
-	[2 1] + D;
-	D - [2 1];
-	D2 = [2 1] - D;
+	@test D + 2 == [3 1; 3 1; 3 1];
+	@test 2 + D == [3 1; 3 1; 3 1];
+	@test D - 2 == [-1 1; -1 1; -1 1];
+	@test 2 - D == [-1 1; -1 1; -1 1];
+	@test D + [2 1] == [3 2; 3 2; 3 2]
+	@test [2 1] + D == [3 2; 3 2; 3 2]
+	@test D - [2 1] == [-1 0; -1 0; -1 0]
+	@test [2 1] - D == [-1 0; -1 0; -1 0]
+	@test D + D == [2 2; 2 2; 2 2]
+	@test D - D == [0 0; 0 0; 0 0]
 	cat(D, D2);
 	cat([D], D2);
 	cat([D], [D2]);
