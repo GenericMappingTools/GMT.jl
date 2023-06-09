@@ -140,16 +140,33 @@ Base.:+(D1::GMTdataset, add::Real) = Base.:+(D1::GMTdataset, [add;;])
 function Base.:+(D1::GMTdataset, add::T) where T<:AbstractArray
 	# Add constant(s) on a per column basis. If 'add' is a scalar add it to first column.
 	# Use a 1 row matrix to add different values to each column.
-	!isa(add, Matrix) && error("Add factors must be a scalar or a one row matrix.")
-	_data, _add = copy(D1.data), copy(add)
-	(length(_add) > size(_data,2)) && error("Number of adding factores greater than number of columns in dataset")
-	(length(_add) < size(_data,2)) && (_add = [_add fill(zero(eltype(add)), 1, size(_data,2)-length(add))])
-
-	_data .+= _add
+	if (size(D1) == size(add))
+		_data = isa(add, GMTdataset) ? D1.data .+ add.data : D1.data .+ add
+	else
+		!isa(add, Matrix) && error("Add factors must be a scalar or a one row matrix.")
+		_data, _add = copy(D1.data), copy(add)
+		(length(_add) > size(_data,2)) && error("Number of adding factores greater than number of columns in dataset")
+		(length(_add) < size(_data,2)) && (_add = [_add fill(zero(eltype(add)), 1, size(_data,2)-length(add))])
+		_data .+= _add
+	end
 	D2 = GMTdataset(_data, D1.ds_bbox, D1.bbox, D1.attrib, D1.colnames, D1.text, D1.header, D1.comment, D1.proj4, D1.wkt, D1.epsg, D1.geom)
 	set_dsBB!(D2)
 
 	return D2
+end
+function Base.:+(D1::GMTdataset, D2::GMTdataset)
+	(size(D1) != size(D2)) && error("Can not add two datasets that do not have the same size.")
+	_data = D1.data .+ D2.data
+	D = GMTdataset(_data, D1.ds_bbox, D1.bbox, D1.attrib, D1.colnames, D1.text, D1.header, D1.comment, D1.proj4, D1.wkt, D1.epsg, D1.geom)
+	set_dsBB!(D)
+	return D
+end
+function Base.:-(D1::GMTdataset, D2::GMTdataset)
+	(size(D1) != size(D2)) && error("Can not subtract two datasets that do not have the same size.")
+	_data = D1.data .- D2.data
+	D = GMTdataset(_data, D1.ds_bbox, D1.bbox, D1.attrib, D1.colnames, D1.text, D1.header, D1.comment, D1.proj4, D1.wkt, D1.epsg, D1.geom)
+	set_dsBB!(D)
+	return D
 end
 
 # ---------------------------------------------------------------------------------------------------
