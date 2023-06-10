@@ -1228,7 +1228,8 @@ function parse_BJR(d::Dict, cmd::String, caller::String, O::Bool, defaultJ::Stri
 	cmd, opt_J = parse_J(d, cmd, defaultJ, true, O, del)
 
 	parse_theme(d)		# Must be first because some themes change def_fig_axes
-	def_fig_axes_::String = (IamModern[1]) ? "" : def_fig_axes[1]	# def_fig_axes is a global const
+	is3D = (is_in_dict(d, [:JZ :Jz :zscale :zsize]) !== nothing)
+	def_fig_axes_::String = (IamModern[1]) ? "" : is3D ? def_fig_axes3[1] : def_fig_axes[1]	# def_fig_axes is global
 
 	if (caller != "" && occursin("-JX", opt_J))		# e.g. plot() sets 'caller'
 		if (occursin("3", caller) || caller == "grdview")
@@ -2261,6 +2262,7 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)::String
 					cmd *= string(d[key[k]][1])::String * d[key[k]][2](Dict(key[k] => nt[k]), [key[k]])::String
 				else					# This branch is to deal with options -Td, -Tm, -L and -D of basemap & psscale
 					ind_o += 1
+					(ind_o > 2) && (@warn("You passed more than 1 of the exclusive options in a anchor type option, keeping first but this may break."); ind_o = 1)
 					if (d[key[k]][2] === nothing)  cmd_hold[ind_o] = d[key[k]][1]	# Only flag char and order matters
 					elseif (length(d[key[k]][1]) == 2 && d[key[k]][1][1] == '-' && !isa(nt[k], Tuple))	# e.g. -L (&g, arg2str, 1)
 						cmd_hold[ind_o] = string(d[key[k]][1][2])	# where g<scalar>
@@ -2770,13 +2772,11 @@ function axis(D::Dict=Dict(); x::Bool=false, y::Bool=false, z::Bool=false, secon
 	end
 	CTRL.pocket_J[4] = _jx * _jy * _jz
 
-	#opt::String, is3D = " -B", false
 	opt::String = " -B"
-	is3D = (is_in_dict(D, [:JZ :Jz]) !== nothing) ? true : false
+	is3D = (is_in_dict(D, [:JZ :Jz :zscale :zsize]) !== nothing) ? true : false
 	if ((val = find_in_dict(d, [:axes :frame])[1]) !== nothing)
 		isa(val, Dict) && (val = Base.invokelatest(dict2nt, val))
 		o::String = helper0_axes(val)
-		#!z && (is3D = contains(o, 'Z'))		# If are not dealing with an explicit Z axis, fish info from axes=...
 		opt = (o == "full") ? opt * "WSEN" : (o == "none") ? opt : opt * o
 	end
 
