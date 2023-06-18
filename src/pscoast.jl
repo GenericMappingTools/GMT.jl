@@ -86,7 +86,7 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
 	if ((val = find_in_dict(d, [:getR :getregion :get_region], false)[1]) !== nothing)
-		t = string(gmt_proggy, " -E", val)
+		t = string(gmt_proggy, " -E", val)::String
 		((Vd = find_in_dict(d, [:Vd], false)[1]) !== nothing) && (Vd == 1 ? println(t) : Vd > 1 ? (return t) : nothing)
 		return gmt(t).text[1]::String
 	end

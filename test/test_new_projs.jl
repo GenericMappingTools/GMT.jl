@@ -15,6 +15,9 @@
 	catch
 	end
 
+	cubeplot(mat2img(rand(UInt8,8,8,3)), p=(145,30), front=false, zsize=10, notop=true, back=true)
+	cubeplot(mat2img(rand(UInt8,8,8,3)))
+
 	cl = coastlinesproj(proj="fouc");
 	grid = graticules(cl);
 end

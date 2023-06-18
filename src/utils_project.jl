@@ -425,3 +425,91 @@ function plotgrid!(GI::GItype, Dgrat::Vector{<:GMTdataset}; annot=true, sides::S
 	_name = (name != "") ? string(name) : figname != "" ? string(figname) : savefig != "" ? string(savefig) : ""
 	(show == 1) ? showfig(fmt=_fmt, name=_name) : nothing
 end
+
+# -----------------------------------------------------------------------------------------------
+"""
+"""
+function cubeplot(fname1::Union{GMTimage, String}, fname2::Union{GMTimage, String}="", fname3::Union{GMTimage, String}=""; back::Bool=false, show=false, notop::Bool=false, kw...)
+	# ...
+	d = KW(kw)
+	opt_R = ((txt = parse_R(d, "")[2]) != "") ? txt[4:end] : "0/9/0/9/0/9"
+	((opt_J = parse_J(d, "", " ")[2]) == "") && (opt_J = "X15/0")
+	opt_JZ = ((txt::String = parse_JZ(d, "")[2]) != "") ? txt[5:end] : "15"
+	opt_p = ((txt = parse_p(d, "")[2]) != "") ? txt[4:end] : "135/30"
+	opt_t = ((txt = parse_t(d, "")[2]) != "") ? txt[4:end] : "0"
+	front, see = !back, show == 1
+
+	f1 = fname1
+	if     (isempty(fname2) && isempty(fname3))    f2, f3 = fname1, fname1	# Only one image
+	elseif (!isempty(fname2) && !isempty(fname3))  f2, f3 = fname2, fname3	# Three different images
+	else                                           f2, f3 = fname2, fname2	# Two images, repeat second on the vert sides
+	end
+
+	basemap(R=opt_R, J=opt_J, JZ=opt_JZ, p=opt_p)
+	vsz = parse(Float64, opt_JZ)
+	TB = front ? :T : :B
+	SN = front ? :S : :N
+	EW = front ? :E : :W
+	!notop && image!(f1, compact=sideplot(plane=TB, vsize=vsz), t=opt_t)
+	image!(f2, compact=sideplot(plane=SN, vsize=vsz), t=opt_t)
+	image!(f3, compact=sideplot(plane=EW, vsize=vsz), t=opt_t, show=see)
+end
+
+# -----------------------------------------------------------------------------------------------
+"""
+"""
+function sideplot(; plane=:xz, vsize=8, depth=NaN, kw...)
+	# ...
+	# basemap(R="-3/3/-3/3", JZ=8, J=:linear, p=(135,30))
+	# image!("@maxresdefault.jpg", compact=GMT.sideplot(plane=:W))
+	d = KW(kw)
+	opt_R = (is_in_dict(d, [:R :limits :region]) !== nothing) ? parse_R(d, "")[2] : CTRL.pocket_R[1]
+	(opt_R == "") && error("Map limits not provided nor found in memory from a previous command.")
+	lims = (CTRL.limits != zeros(12)) ? CTRL.limits[7:12] : opt_R2num(opt_R)
+	(lims == zeros(4)) && error("Bad limts. Can't continue.")
+
+	opt_J = (is_in_dict(d, [:J :proj :projection]) !== nothing) ? parse_J(d, "")[2] : CTRL.pocket_J[1]
+	(opt_J == "") && error("Must provide the map projection")
+
+	opt_JZ = parse_JZ(d, "")[2]
+	zsize = (opt_JZ == "") ? vsize : parse(Float64, opt_JZ[5:end])
+
+	o = (is_in_dict(d, [:p :view :perspective]) !== nothing) ? parse_p(d, "")[2] : current_view[1]
+	spli = split(o[4:end], '/')
+	(length(spli) < 2) && error("The 'view' option must contain (azim,elev,z) or just (azim,elev)")
+	azim, elev = parse(Float64, spli[1]), parse(Float64, spli[2])
+	(length(spli) == 3) && (depth = parse(Float64, spli[3]))
+
+	# Over which side is the plot going to be made?
+	_p = string(plane)
+	_p = (_p == "W") ? "yz" : (_p == "E") ? "zy" : (_p == "S") ? "xz" : (_p == "N") ? "zx" :
+	     (_p == "B") ? "xy" : (_p == "T") ? "yx" : _p	# Accept aslso WESNTB
+
+	p = (_p == "xz" || _p == "zx") ? 'y' : (_p == "yz" || _p == "zy") ? 'x' : (_p == "xy" || _p == "yx") ? 'z' :
+	    (_p == "x" || _p == "y" || _p == "z") ? _p[1] : error("Unknown plane '$plane'")
+	if (length(_p) == 2 && (_p[1] == 'z' || _p == "yx"))
+		!isnan(depth) && @warn("Error: $plane and depth = $depth are conflicting choices. Ignoring the 'depth' selection.")
+		depth = (_p == "zx") ? lims[4] : (_p == "zy") ? lims[2] : lims[6]
+	end
+
+	t::Matrix{Float64} = gmt("mapproject -W " * opt_R * opt_J).data
+	W, H = t[1], t[2]
+	opt_X, opt_Y = "", ""
+	mi, len = (p == 'x') ? (lims[1], (lims[2] - lims[1])) : (p == 'y') ? (lims[3], (lims[4] - lims[3])) : (lims[5], (lims[6] - lims[5])) 
+	if (!isnan(depth))
+		a = azim - 180
+		rot = [cosd(a) sind(a); -sind(a) cosd(a)]
+		pct = (depth - mi) / len
+		if (p != 'z')
+			side, y_sign = (p == 'x') ? (W,1.0) : (H, 1.0)		# Later we'll deal with Z
+			t = [0 side * pct] * rot
+			if (p == 'x')  t[1], t[2] = t[2], -t[1]  end
+			opt_X = @sprintf(" -Xa%.4f", t[1])
+			opt_Y = @sprintf(" -Ya%.4f", t[2] * sind(elev) * y_sign)
+		else
+			opt_Y, opt_X = @sprintf(" -Ya%.4f", vsize * pct * cosd(elev)), ""
+		end
+	end
+	_W, _H = (p == 'x') ? (H, zsize) : (p == 'y') ? (W, zsize) : (W, H)
+	@sprintf(" -Dg%.12g/%.12g+w%.12g/%.12g -p%c%.0f/%.0f %s %s", lims[1], lims[3], _W, _H, p, azim, elev, opt_X, opt_Y)
+end

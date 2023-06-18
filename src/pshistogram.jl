@@ -133,7 +133,6 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	(show_kwargs[1]) && print_kwarg_opts(symbs, "NamedTuple | Tuple | Dict | String")
 
 	cmd = add_opt(d, cmd, "E", [:E :width], (width = "", off = "+o", offset = "+o"))
-	cmd = GMTsyntax_opt(d, cmd)		# See if an hardcore GMT syntax string has been passed
 	
 	# If file name sent in, read it and compute a tight -R if this was not provided
 	is_datetime = isa(arg1, Array{<:DateTime})

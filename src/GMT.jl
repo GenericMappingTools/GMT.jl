@@ -155,7 +155,7 @@ export
 
 	add2PSfile, append2fig, linearfitxy, regiongeog, streamlines, wmsinfo, wmstest, wmsread, polygonlevels,
 
-	ablines, ablines!, density, density!, boxplot, boxplot!, cornerplot, cornerplot!, ecdfplot, ecdfplot!,
+	ablines, ablines!, density, density!, boxplot, boxplot!, cornerplot, cornerplot!, cubeplot, ecdfplot, ecdfplot!,
 	fill_between, fill_between!, marginalhist, marginalhist!, parallelplot, parallelplot!, plotlinefit, plotlinefit!,
 	qqplot, qqplot!, qqnorm, qqnorm!, violin, violin!, viz,
 	@?
