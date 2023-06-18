@@ -86,7 +86,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	cmd, opt_f = parse_f(d, cmd)		# Parse this one (-f) aside so we can check against D.attrib
 	cmd  = parse_these_opts(cmd, d, [[:D :shift :offset], [:I :intens], [:N :no_clip :noclip]])
 	parse_ls_code!(d::Dict)				# Check for linestyle codes (must be before the GMTsyntax_opt() call)
-	cmd  = GMTsyntax_opt(d, cmd)		# See if an hardcore GMT syntax string has been passed
+	cmd  = GMTsyntax_opt(d, cmd)[1]		# See if an hardcore GMT syntax string has been passed by mk_styled_line!
 	(is_ternary) && (cmd = add_opt(d, cmd, "M", [:M :dump]))
 	opt_UVXY = parse_UVXY(d, "")		# Need it separate to not risk to double include it.
 	cmd, opt_c = parse_c(d, cmd)		# Need opt_c because we may need to remove it from double calls

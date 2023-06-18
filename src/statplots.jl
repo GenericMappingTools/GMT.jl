@@ -1405,14 +1405,14 @@ function marginalhist(arg1::Union{GDtype, Matrix{<:Real}}; first=true, kwargs...
 		opt_R = @sprintf("%.10g/%.10g/0/0", mima[1], mima[2])
 		cmd_hist_t = deepcopy(cmd_hist)
 		cmd_hist_t *= (doBH) ? ((annotHst == "") ? " -Blb" : " -BWb" * annotHst) : " -Bb --MAP_FRAME_PEN=0.001,white@100"
-		doDensity ? density(t, GMTopt=cmd_hist_t, panel=(1,1), Vd=Vd) : histogram(t, R=opt_R, GMTopt=cmd_hist_t, panel=(1,1), Vd=Vd)
+		doDensity ? density(t, compact=cmd_hist_t, panel=(1,1), Vd=Vd) : histogram(t, R=opt_R, compact=cmd_hist_t, panel=(1,1), Vd=Vd)
 
 		# Right Histogram
 		t = D[:,2]
 		mima = round_wesn([extrema(t)...,0,0])
 		opt_R = @sprintf("%.10g/%.10g/0/0", mima[1], mima[2])
 		cmd_hist *= (doBH) ? ((annotHst == "") ? " -Blb" : " -BlS" * annotHst) : " -Bl --MAP_FRAME_PEN=0.001,white@100"
-		doDensity ? density(t, horizontal=true, GMTopt=cmd_hist_t, panel=(2,2), Vd=Vd) : histogram(t, R=opt_R, horizontal=true, GMTopt=cmd_hist, panel=(2,2), Vd=Vd)
+		doDensity ? density(t, horizontal=true, compact=cmd_hist_t, panel=(2,2), Vd=Vd) : histogram(t, R=opt_R, horizontal=true, compact=cmd_hist, panel=(2,2), Vd=Vd)
 
 		# The scatterogram
 		d[:panel] = (2,1)
