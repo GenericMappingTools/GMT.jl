@@ -192,7 +192,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function check_remote_cpt(cmd0::String)
 	out = ""
-	(cmd0 != "" && cmd0[1] != '@') && return ""
+	(cmd0 == "" || (cmd0 != "" && cmd0[1] != '@')) && return ""
 	cpt_path = joinpath(dirname(pathof(GMT)), "..", "share", "cpt")
 	if (any(occursin.(["earth_relief_", "earth_gebco_", "earth_gebcosi_", "earth_synbath_"], cmd0))) out = "geo"
 	elseif (any(occursin.(["earth_mag4km_", "earth_mag_"], cmd0)))  out = cpt_path * "/earth_mag.cpt"
