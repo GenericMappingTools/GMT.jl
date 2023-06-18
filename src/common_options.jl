@@ -93,14 +93,15 @@ function init_module(first::Bool, kwargs...)
 	return d, K, O
 end
 
-function GMTsyntax_opt(d::Dict, cmd::String)::String
-	if haskey(d, :GMTopt)
-		o::String = d[:GMTopt]
-		(o == "") && return cmd
+function GMTsyntax_opt(d::Dict, cmd::String)::Tuple{String, String}
+	o::String = ""
+	if haskey(d, :compact)
+		o = d[:compact]
+		(o == "") && return cmd, ""
 		cmd = (o[1] == ' ') ? cmd * o : cmd * " " * o
-		delete!(d, :GMTopt)
+		delete!(d, :compact)
 	end
-	cmd
+	return cmd, o
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -169,7 +170,7 @@ function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=true, RIr::Bool=
 	end
 
 	(O && opt_R == "") && (opt_R = " -R")
-	if (opt_R != "" && opt_R != " -R" && !IamInset[1])			# Save limits in numeric
+	if (opt_R != "" && opt_R != " -R" && !IamInset[1])		# Save limits in numeric
 		try
 			limits = opt_R2num(opt_R)
 			CTRL.limits[7:7+length(limits)-1] = limits		# The plot limits
@@ -382,7 +383,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bool=false, del::Bool=true)
 	# Build the option -J string. Make it simply -J if in overlay mode (-O) and no new -J is fished here
-	# Default to 14c if no size is provided.
+	# Default to 15c if no size is provided.
 	# If MAP == false, do not try to append a fig size
 
 	(show_kwargs[1]) && return (print_kwarg_opts([:J :proj :projection], "NamedTuple | String"), "")
@@ -778,7 +779,7 @@ function guess_proj(lonlim, latlim)::String
 	elseif abs(latlim[2]-latlim[1]) <= 90 && abs(sum(latlim)) > 20 && maximum(abs.(latlim)) < 90
 		# doesn't extend to the pole, not straddling equator
 		parallels = latlim .+ diff(latlim) .* [1/6 -1/6]
-		proj = string(" -JD", mean_x(lonlim), '/', mean_x(latlim), '/', parallels[1], '/', parallels[2])	# eqdc
+		proj = @sprintf(" -JD%.6g/%.6g/%.6g/%.6g", mean_x(lonlim), mean_x(latlim), parallels[1], parallels[2])	# eqdc
 	elseif abs(latlim[2]-latlim[1]) < 85 && maximum(abs.(latlim)) < 90	# doesn't extend to the pole, not straddling equator
 		proj = string(" -JI", mean_x(lonlim))							# Sinusoidal
 	elseif (maximum(latlim) == 90 && minimum(latlim) >= 75)
@@ -1475,7 +1476,7 @@ end
 function parse_t(d::Dict, cmd::String, del::Bool=true)
 	opt_val::String = ""
 	if ((val = find_in_dict(d, [:t :alpha :transparency], del)[1]) !== nothing)
-		(val == "") && return cmd, ""		# To allow programatically calls were -t is unknown
+		(val == "" || val == 0) && return cmd, ""		# To allow programatically calls were -t is unknown
 		t::Float64 = (isa(val, String)) ? parse(Float64, val) : Float64(val)
 		if (t < 1) t *= 100  end
 		opt_val = string(" -t", t)
@@ -1515,12 +1516,22 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_common_opts(d::Dict, cmd::String, opts::VMs, first::Bool=true)
 	(show_kwargs[1]) && return (print_kwarg_opts(opts, "(Common options)"),"")	# Just print the options
+
+	ignore_J, ignore_R, ignore_p, ignore_t = false, false, false, false
+	cmd, _cmd = GMTsyntax_opt(d, cmd)		# See if an hardcore GMT syntax string has been passed
+	if (_cmd != "")							# Yes, it was. Take care wont repeat from inheritances.
+		ignore_p = (:p in opts) && contains(_cmd, " -p")
+		ignore_t = (:t in opts) && contains(_cmd, " -t")
+		ignore_J = (:J in opts) && contains(_cmd, " -J")
+		ignore_R = (:R in opts) && contains(_cmd, " -R")
+	end
+	
 	opt_p = nothing;	o::String = ""
 	for opt in opts
 		if     (opt == :RIr)  cmd, o = parse_RIr(d, cmd)
-		elseif (opt == :R)  cmd, o = parse_R(d, cmd)
+		elseif (opt == :R && !ignore_R)  cmd, o = parse_R(d, cmd)
 		elseif (opt == :I)  cmd  = parse_I(d, cmd, [:I :inc :increment :spacing], "I")
-		elseif (opt == :J)  cmd, o = parse_J(d, cmd)
+		elseif (opt == :J && !ignore_J)  cmd, o = parse_J(d, cmd)
 		elseif (opt == :JZ) cmd, o = parse_JZ(d, cmd)
 		elseif (opt == :G)  cmd, = parse_G(d, cmd)
 		elseif (opt == :F)  cmd  = parse_F(d, cmd)
@@ -1543,11 +1554,11 @@ function parse_common_opts(d::Dict, cmd::String, opts::VMs, first::Bool=true)
 		elseif (opt == :l)  cmd, o = parse_l(d, cmd)
 		elseif (opt == :n)  cmd, o = parse_n(d, cmd)
 		elseif (opt == :o)  cmd, o = parse_o(d, cmd)
-		elseif (opt == :p)  cmd, opt_p = parse_p(d, cmd)
+		elseif (opt == :p && !ignore_p)  cmd, opt_p = parse_p(d, cmd)
 		elseif (opt == :r)  cmd, o = parse_r(d, cmd)
 		elseif (opt == :s)  cmd, o = parse_s(d, cmd)
 		elseif (opt == :x)  cmd, o = parse_x(d, cmd)
-		elseif (opt == :t)  cmd, o = parse_t(d, cmd)
+		elseif (opt == :t && !ignore_t)  cmd, o = parse_t(d, cmd)
 		elseif (opt == :w)  cmd, o = parse_w(d, cmd)
 		elseif (opt == :yx) cmd, o = parse_swap_xy(d, cmd)
 		elseif (opt == :params)   cmd = parse_params(d, cmd)
@@ -1840,7 +1851,7 @@ function break_pen(pen::AbstractString)::Tuple{String, String, String}
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_arg_and_pen(arg::Tuple, sep="/", pen::Bool=true, opt="")::String
+function parse_arg_and_pen(arg::Tuple, sep::String="/", pen::Bool=true, opt::String="")::String
 	# Parse an ARG of the type (arg, (pen)) and return a string. These may be used in pscoast -I & -N
 	# OPT is the option code letter including the leading - (e.g. -I or -N). This is only used when
 	# the ARG tuple has 4, 6, etc elements (arg1,(pen), arg2,(pen), arg3,(pen), ...)
@@ -1911,9 +1922,9 @@ function mk_styled_line!(d::Dict, code)
 
 	if (is1line || isfront)							# e.g. line&Circ or line_Triang or line!Square
 		if (decor_str)
-			d[:GMTopt] = line_decorated_with_string(symbol)
+			d[:compact] = line_decorated_with_string(symbol)
 		else
-			d[:GMTopt] = line_decorated_with_symbol(d, isfront, lw=lw, lc=lc, symbol=symbol)
+			d[:compact] = line_decorated_with_symbol(d, isfront, lw=lw, lc=lc, symbol=symbol)
 		end
 	else											# e.g. lineCirc
 		marca = get_marker_name(Dict(:marker => symbol), nothing, [:marker], false)[1]	# This fun lieves in psxy.jl
