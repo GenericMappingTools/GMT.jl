@@ -98,7 +98,7 @@ A grid or an image, depending on the input type, plus two 1x2 matrices with the 
 """
 function crop(arg::GItype; kw...)
 	d = KW(kw)
-	_, opt_R = parse_R(d, "")
+	opt_R = parse_R(d, "")[2]
 	(opt_R == "") && error("Must provide the cropping limits")
 	lims = opt_R2num(opt_R)
 	# Must test that requested cropping limits fit inside array BB
