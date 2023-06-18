@@ -62,6 +62,9 @@ end
 # ---------------------------------------------------------------------------------------------------
 image!(cmd0::String="", arg1=nothing; kw...) = image(cmd0, arg1; first=false, kw...)
 
+image(arg1; kw...)  = image("", arg1; first=true, kw...)
+image!(arg1; kw...) = image("", arg1; first=false, kw...)
+
 # ---------------------------------------------------------------------------------------------------
 const psimage  = image			# Alias
 const psimage! = image!			# Alias
