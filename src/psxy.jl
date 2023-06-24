@@ -543,37 +543,79 @@ function _helper_psxy_line(d::Dict, cmd::String, opt_W::String, is3D::Bool, args
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_opt_S(d::Dict, arg1, is3D::Bool)
+function parse_opt_S(d::Dict, arg1, is3D::Bool=false)
 
-	opt_S::String = ""
+	opt_S::String, have_custom = "", false
+	is1D = isvector(arg1)
 	# First see if the requested symbol is a custom one from GMT.jl share/custom
 	if ((symb = is_in_dict(d, [:csymbol :cmarker :custom_symbol :custom_marker])) !== nothing)
 		marca::String = add_opt(d, "", "", [symb], (name="", size="/", unit="1"))
+		have_custom, custom_no_size = true, !isdigit(marca[end])	# So that we can have custom symbs with sizes in arg1
 		marca_fullname::String, marca_name::String = seek_custom_symb(marca)
 		(marca_name != "") && (opt_S = " -Sk" * marca_fullname)
 	else
 		opt_S = add_opt(d, "", "S", [:S :symbol], (symb="1", size="", unit="1"))
 	end
+				
+	_scale(isInt::Bool) = (isInt) ? 2.54/72 : 1.0
+	function helper_varsizes(arg1, n_args, mi_sz, ma_sz, mi_val, ma_val, isInt)
+		if (n_args == 2)
+			arg1[arg1 .< mi_val] .= mi_sz
+			arg1[arg1 .> ma_val] .= ma_sz
+		end
+		((sc = _scale(isInt)) != 1.0) && (arg1 .*= sc)
+	end
 
-	if (opt_S == "")			# OK, no symbol given via the -S option. So fish in aliases
+	if (opt_S == "" || (have_custom && custom_no_size))		# OK, no symbol given via the -S option. So fish in aliases
 		marca, arg1, more_cols = get_marker_name(d, arg1, [:marker, :Marker, :shape], is3D, true)
-		if ((val = find_in_dict(d, [:ms :markersize :MarkerSize :size])[1]) !== nothing)
+		if ((_val = find_in_dict(d, [:ms :markersize :MarkerSize :size])[1]) !== nothing)
 			(marca == "") && (marca = "c")		# If a marker name was not selected, defaults to circle
+			val = isa(_val, Tuple) ? _val : isa(_val, VMr) && is1D ? (_val,) : _val		# Let also size=[3 20] && is1D do it right
 			if (isa(val, VMr))
 				val_::Vector{Float64} = vec(Float64.(val))
 				if (length(val_) == 2)			# A two elements array is interpreted as [min max]
-					scale = (Base.invokelatest(eltype, val) <: Integer) ? 2.54/72 : 1.0	# In integers, assumes they are points
-					arg1 = hcat(arg1, linspace(val_[1], val_[2], size(arg1,1)).*scale)
+					sc = _scale(eltype(val) <: Integer)
+					arg1 = hcat(arg1, linspace(val_[1], val_[2], size(arg1,1)) .* sc)
 				else
 					(length(val_) != size(arg1,1)) &&
 						error("The size array must have the same number of elements as rows in data")
 					arg1 = hcat(arg1, val_[:])
 				end
-			elseif (isa(val, Tuple) && isa(val[1], Function) && isa(val[2], VMr))
-				val2::Tuple = val
-				scale::Float64 = (eltype(val2[2]) <: Integer) ? 2.54/72 : 1.0
-				ind = sortperm(Base.invokelatest(funcurve, val2[1], vec(Float64.(val2[2].*scale)), size(arg1,1)))
-				arg1 = hcat(arg1, is3D ? Base.invokelatest(view, arg1,:,3)[ind] : Base.invokelatest(view, arg1,:,2)[ind])
+			elseif (isa(val, Tuple))
+				# size=([3 10])  => Scale extrema(arg1) berween 3 and 10
+				# size=([3 10],[1 2])  => All numbers in arg1 <= 1 get size 3; >= 2 get size 10; in between interpolate
+				# size(fun,[]); size(fun,[],[])  => Same but using scaling function 'fun' instead of linear.
+				if (is1D)
+					n_args::Int = length(val)::Int
+					fun = isa(val[1], Function) ? val[1] : isa(val[1], Tuple) && isa(val[1][1], Function) ? val[1][1] : nothing
+					(fun == pow) && (exponent = val[1][2])
+					(n_args == 1 && fun !== nothing) && error("Cannot pass a Function and no size limits.")
+					isInt = (fun !== nothing ? (eltype(val[2][1]) <: Integer) : (eltype(val[1][1]) <: Integer)) 
+					mi_sz::Float64, ma_sz::Float64 = (fun === nothing) ? val[1] : val[2]
+					mi_val::Float64, ma_val::Float64 = val[end]
+					mi, ma = extrema(arg1)
+					if (fun !== nothing)
+						# size=(exp10, [10 40]); plot(0:0.1:1, exp10.(log10(31) .* (0:0.1:1)).+9, show=1)
+						arg1 .= (arg1 .- mi) ./ (ma - mi)		# [0 1.0]
+						if (fun == exp10 || fun == exp)
+							lo = mi_sz - 1; hi = ma_sz - mi_sz + 1
+							fun_inv = (fun == exp10) ? log10 : log
+							arg1 .= fun.(fun_inv(hi) .* arg1) .+ lo
+						elseif (fun == pow || fun == sqrt)
+							lo = mi_sz; hi = ma_sz - mi_sz
+							arg1 .= (fun == pow) ? pow.(pow(hi, 1/exponent) .* arg1, exponent) .+ lo : sqrt.(hi ^2 .* arg1) .+ lo
+						end
+						helper_varsizes(arg1, n_args, mi_sz, ma_sz, mi_val, ma_val, isInt)
+					else
+						mi, ma = (n_args == 1) ? extrema(arg1) : val[2]
+						arg1 .= (mi_sz .+ (arg1 .- mi) ./ (ma - mi) .* (ma_sz - mi_sz))
+						helper_varsizes(arg1, n_args, mi_sz, ma_sz, mi_val, ma_val, isInt)
+					end
+				elseif (isa(val, Tuple) && isa(val[1], Function) && isa(val[2], VMr))	# ~useless size=(fun, [2,20]) but no col size
+					val2::Tuple = val
+					sc = _scale(eltype(val2[2]) <: Integer)
+					arg1 = hcat(arg1, funcurve(val2[1], vec(Float64.(val2[2] .* sc)), size(arg1,1)))
+				end
 			elseif (string(val)::String != "indata")	# WTF is "indata"?
 				marca *= arg2str(val)::String
 			end
@@ -582,7 +624,7 @@ function parse_opt_S(d::Dict, arg1, is3D::Bool)
 			opt_S = " -S" * marca
 			# If data comes from a file, then no automatic symbol size is added
 			op = lowercase(marca[1])
-			def_size::String = (op == 'p') ? "2p" : "7p"	# 'p' here stands for symbol points, not units
+			def_size::String = (op == 'p') ? "2p" : "7p"	# 'p' stands for symbol points, not units. Att 7p used in seismicity() 
 			(!more_cols && arg1 !== nothing && !isa(arg1, GMTcpt) && !occursin(op, "bekmrvw")) && (opt_S *= def_size)
 		elseif (haskey(d, :hexbin))
 			inc::Float64 = parse(Float64, arg1.attrib["hexbin"])
@@ -596,7 +638,7 @@ function parse_opt_S(d::Dict, arg1, is3D::Bool)
 		val, symb = find_in_dict(d, [:ms :markersize :MarkerSize :size])
 		(val !== nothing) && @warn("option *$(symb)* is ignored when either 'S' or 'symbol' options are used")
 		val, symb = find_in_dict(d, [:marker :Marker :shape])
-		(val !== nothing) && @warn("option *$(symb)* is ignored when either *S* or 'symbol' options are used")
+		(val !== nothing) && @warn("option *$(symb)* is ignored when either 'S' or 'symbol' options are used")
 	end
 	return arg1, opt_S
 end
