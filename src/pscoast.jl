@@ -88,6 +88,7 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 	if ((val = find_in_dict(d, [:getR :getregion :get_region], false)[1]) !== nothing)
 		t = string(gmt_proggy, " -E", val)::String
 		((Vd = find_in_dict(d, [:Vd], false)[1]) !== nothing) && (Vd == 1 ? println(t) : Vd > 1 ? (return t) : nothing)
+		t = parse_V(d::Dict, t)
 		return gmt(t).text[1]::String
 	end
 
@@ -147,6 +148,7 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 	geom = occursin(" -M", cmd) ? (occursin(" -E", cmd) ? wkbPolygon : wkbLineString) : wkbUnknown
 	isa(R, Vector{<:GMTdataset}) && (for k = 1:numel(R)  R[k].colnames = ["Lon", "Lat"]; R[k].geom = geom  end; R[1].proj4 = prj4WGS84)
 	isa(R, GMTdataset) && (R.colnames = ["Lon", "Lat"]; R.geom = geom; R.proj4 = prj4WGS84)
+	CTRL.pocket_d[1] = d					# Store d that may be not empty with members to use in other modules
 	R
 end
 
