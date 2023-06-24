@@ -147,16 +147,28 @@ function gmtread(_fname::String; kwargs...)
 		#return (dbg_print_cmd(d, cmd) !== nothing) ? "gmtread " * cmd : gmt("read " * fname * cmd)
 		(dbg_print_cmd(d, cmd) !== nothing) && return "gmtread " * cmd
 		o = gmt("read " * fname * cmd)
-		(isempty(o)) && error("\tFailed to read file \"$fname\"\n")
+		(isempty(o)) && (@warn("\tfile \"$fname\" is empty or has no data after the header.\n"); return GMTdataset())
+	
+		if (opt_i != "" && contains(opt_i, '+'))
+			spli = split(opt_i[4:end], ',')
+			for k = 1:numel(spli)
+				((ind = findfirst('+', spli[k])) !== nothing) && (spli[k] = spli[k][1:ind[1]-1])
+			end
+			corder = parse.(Int, spli) .+ 1
+		elseif (opt_i != "")
+			corder = parse.(Int, split(opt_i[4:end], ',')) .+ 1		# +1 because -i in GMT is 0 based
+		else
+			corder = Int[]
+		end
 
 		# If GMTdataset see if the comment may have the column names
 		if (isa(o, GMTdataset) && isempty(o.colnames) && !isempty(o.comment)) ||
 			(isa(o, Vector{<:GMTdataset}) && isempty(o[1].colnames) && !isempty(o[1].comment))
-			helper_set_colnames!(o)		# Set colnames if file has a comment line supporting it
+			helper_set_colnames!(o, corder)		# Set colnames if file has a comment line supporting it
 		end
 
 		# Try guess if ascii file has time columns and if yes leave trace of it in GMTdadaset metadata.
-		(opt_bi == "" && opt_i == "" && isa(o, GDtype)) && file_has_time!(fname, o)
+		(opt_bi == "" && isa(o, GDtype)) && file_has_time!(fname, o, corder)
 
 		if (isa(o, GMTgrid))
 			o.hasnans = any(!isfinite, o) ? 2 : 1
@@ -183,28 +195,34 @@ function gmtread(_fname::String; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------
-function helper_set_colnames!(o::GDtype)
+function helper_set_colnames!(o::GDtype, corder::Vector{Int}=Int[])
 	# This is used both by gmtread() and inside read_data()
 	if (isa(o, GMTdataset))
 		isempty(o.comment) && return nothing
 		ncs = size(o,2)			# Next line checks if the comment is comma separated
 		hfs = (count(i->(i == ','), o.comment[1]) >= ncs-1) ? strip.(split(o.comment[1], ',')) : split(o.comment[1])
-		#(length(hfs) >= ncs) && (o.colnames = string.(hfs)[1:ncs])
-		o.colnames = string.(hfs)
+		col_text = (!isempty(o.text) && length(hfs) > ncs) ? hfs[ncs+1] : ""
+		(!isempty(corder)) && (hfs = hfs[corder])
+		o.colnames = (length(hfs) > ncs) ? string.(hfs)[1:ncs] : string.(hfs)
+		(col_text != "") && (append!(o.colnames, [col_text]))
 	else
 		isempty(o[1].comment) && return nothing
 		hfs, ncs = split(o[1].comment[1]), size(o[1],2)
 		(length(hfs) == 1) && (hfs = split(o[1].comment[1], ','))	# Try also the comma separator
-		#(length(hfs) >= ncs) && (o[1].colnames = string.(hfs)[1:ncs])
-		o[1].colnames = string.(hfs)
+		col_text = (!isempty(o[1].text) && length(hfs) > ncs) ? hfs[ncs+1] : ""
+		(!isempty(corder)) && (hfs = hfs[corder])
+		o[1].colnames = (length(hfs) > ncs) ? string.(hfs)[1:ncs] : string.(hfs)
+		#(!isempty(corder)) && (o[1].colnames = o[1].colnames[corder])
+		(col_text != "") && (append!(o[1].colnames, [col_text]))
 	end
 	return nothing
 end
 
 # ---------------------------------------------------------------------------------
-function file_has_time!(fname::String, D::GDtype)
+function file_has_time!(fname::String, D::GDtype, corder::Vector{Int}=Int[])
 	# Try guess if 'fname' file has time columns and if yes leave trace of it in D's metadata.
 	# We do that by scanning the first valid line in file.
+	# 'corder' is a vector of ints filled with column orders specified by -i. If no -i that it is empty
 
 	#line1 = split(collect(Iterators.take(eachline(fname), 1))[1])	# Read first line and cut it in tokens
 	isone = isa(D, GMTdataset) ? true : false
@@ -219,30 +237,34 @@ function file_has_time!(fname::String, D::GDtype)
 	iter = eachline(fid)
 	try
 		for it in iter
-			line1 = split(it)
+			(n_it > 10 || Tc != "") && break			# Means that previous iteration found it.
+			n_commas = count_chars(it)
+			use_commas = (n_commas >= n_cols)			# To see if we split on spaces or on commas.
+			line1 = (use_commas) ? split(it, ',') : split(it)
 			n_it += 1			# Counter to not let this go on infinetely
-			(n_it > 10 || isempty(line1) || contains(">#!%;", line1[1][1])) && continue
-			for k = 1:n_cols
+			(isempty(line1) || contains(">#!%;", line1[1][1])) && continue
+			loop_inds = isempty(corder) ? (1:n_cols) : corder
+			for k in loop_inds
 				# Time cols may come in forms like [-]yyyy-mm-dd[T| [hh:mm:ss.sss]], so to find them we seek for
 				# '-' chars in the middle of strings that we KNOW have been converted to numbers. The shit that is
 				# left to be solved is that we can have TWO strings, 'yyyy-mm-dd hh:mm:ss.sss' to mean a single time.
 				if ((i = findlast("-", line1[k])) !== nothing && i[1] > 1 && lowercase(line1[k][i[1]-1]) != 'e')
-					Tc = (Tc == "") ? "$k" : Tc * ",$k"			# Accept more than one time columns
 					Ts = (f1 == 1) ? "Time" : "Time$(f1)";		f1 += 1
-					(isone) ? (D.colnames[k] = Ts) : (D[1].colnames[k] = Ts)
+					ind_t = (!isempty(corder)) ? findfirst(k .== corder) : k	# When -i was used 'corder' has new col order
+					Tc = (Tc == "") ? "$ind_t" : Tc * ",$ind_t"			# Accept more than one time columns
+					(isone) ? (D.colnames[ind_t] = Ts) : (D[1].colnames[ind_t] = Ts)
 				end
 			end
 			(Tc != "") && ((isone) ? (D.attrib["Timecol"] = Tc) : (D[1].attrib["Timecol"] = Tc))
-			break
 		end
 	catch err
 		isone ? (D.colnames = String[]) : [D[k].colnames = String[] for k = 1:lastindex(D)]
-		@warn("Failed to parse file $fname for file_has_time!(). Error was: $err")
+		@warn("Failed to parse file '$fname' for file_has_time!(). Error was:\n $err")
 	end
 	close(fid)
 	return nothing
 end
-
+	
 # ---------------------------------------------------------------------------------
 function guess_T_from_ext(fname::String)::String
 	# Guess the -T option from a couple of known extensions
