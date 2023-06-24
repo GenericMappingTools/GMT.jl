@@ -191,7 +191,7 @@
 	gmtwrite("lixo.dat", mat2ds([1 2 10; 3 4 20]))
 	gmtwrite("lixo.dat", convert.(UInt8, [1 2 3; 2 3 4]))
 	gmtwrite("lixo.dat", [1 2 10; 3 4 20])
-	D = gmtread("lixo.dat", i="0,1s10", table=true);
+	D = gmtread("lixo.dat", i="0,1+s10", table=true);
 	@test(sum(D.data) == 64.0)
 	gmtread("test_ds_with_comment.dat")
 	gmtread("test_vds_with_comment.dat")
