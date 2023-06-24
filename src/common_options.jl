@@ -93,13 +93,13 @@ function init_module(first::Bool, kwargs...)
 	return d, K, O
 end
 
-function GMTsyntax_opt(d::Dict, cmd::String)::Tuple{String, String}
+function GMTsyntax_opt(d::Dict, cmd::String, del::Bool=true)::Tuple{String, String}
 	o::String = ""
 	if haskey(d, :compact)
 		o = d[:compact]
-		(o == "") && return cmd, ""
+		(o == "") && (delete!(d, :compact); return cmd, "")
 		cmd = (o[1] == ' ') ? cmd * o : cmd * " " * o
-		delete!(d, :compact)
+		del && delete!(d, :compact)
 	end
 	return cmd, o
 end
@@ -775,7 +775,7 @@ function guess_proj(lonlim, latlim)::String
 	if (latlim == [-90, 90] && (lonlim[2]-lonlim[1]) > 359.99)	# Whole Earth
 		proj = string(" -JN", mean_x(lonlim))		# Robinson
 	elseif (maximum(abs.(latlim)) < 30)
-		proj = string(" -JM")						# Mercator
+		proj = " -JM"						# Mercator
 	elseif abs(latlim[2]-latlim[1]) <= 90 && abs(sum(latlim)) > 20 && maximum(abs.(latlim)) < 90
 		# doesn't extend to the pole, not straddling equator
 		parallels = latlim .+ diff(latlim) .* [1/6 -1/6]
@@ -1166,9 +1166,10 @@ subtitle(; str::AbstractString="", font=nothing, offset=0) = titles_e_comp(str, 
 xlabel(; str::AbstractString="", font=nothing, offset=0) = titles_e_comp(str, font, offset, "x")
 ylabel(; str::AbstractString="", font=nothing, offset=0) = titles_e_comp(str, font, offset, "y")
 zlabel(; str::AbstractString="", font=nothing, offset=0) = titles_e_comp(str, font, offset, "z")
-function titles_e_comp(str::AbstractString, fnt, offset, tipo::String="")
+function titles_e_comp(str::AbstractString, fnt, offset, tipo::String="")::Tuple{String, String}
 	f::String = (fnt !== nothing) ? font(fnt) : ""
 	o::String = (offset != 0) ? string(offset) : ""
+	(str == "") && return str, ""
 	if (tipo == "")
 		r2 = (f != "") ? " --FONT_TITLE=" * f : ""
 		(o != "") && (r2 *= " --MAP_TITLE_OFFSET=" * o)
@@ -3457,7 +3458,7 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", i
 			arg::GDtype = gmt("read -Td " * opt_i * opt_bi * opt_di * opt_h * opt_yx * " " * fname)
 			helper_set_colnames!(arg)				# Set colnames if file has a comment line supporting it
 			# Try guess if ascii file has time columns and if yes leave trace of it in GMTdadaset metadata.
-			(opt_bi == "") && file_has_time!(fname, arg)
+			(opt_bi == "") && file_has_time!(fname, arg)	# If fname is a .gmt file this does not make much sense.
 			# Remove the these options from cmd. Their job is done
 			if (opt_i != "")  cmd = replace(cmd, opt_i => "");	opt_i = ""  end
 			if (opt_h != "")  cmd = replace(cmd, opt_h => "");	opt_h = ""  end
