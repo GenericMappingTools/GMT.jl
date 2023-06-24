@@ -85,15 +85,16 @@ function imshow(arg1::GMTgrid; kw...)
 		see = false			# because here we know that 'see' has to wait till last command
 	end
 	opt_p, = parse_common_opts(d, "", [:p], true)
-	til = find_in_dict(d, [:T :no_interp :tiles])[1]
+	have_tilles::Bool = ((til = find_in_dict(d, [:T :no_interp :tiles])[1]) !== nothing)
+	(!have_tilles && opt_p != "" && !contains(opt_p, '/')) && (flat = true)		# If only 'azimuth' and no 'elev'
 	flat::Bool = (find_in_dict(d, [:flat])[1] !== nothing)		# If true, force the use of grdimage
-	if (flat || (opt_p == "" && til === nothing))
+	if (flat || (opt_p == "" && !have_tilles))
 		(flat && opt_p != "") && (d[:p] = opt_p[4:end])		# Restore the meanwhile deleted -p option
 		R = grdimage("", arg1; show=see, d...)
 	else
 		zsize = ((val = find_in_dict(d, [:JZ :Jz :zscale :zsize])[1]) !== nothing) ? val : 8
 		srf = ((val = find_in_dict(d, [:Q :surf :surftype])[1]) !== nothing) ? val : "i100"
-		if (til !== nothing)		# This forces some others
+		if (have_tilles)			# This forces some others
 			srf = zsize = nothing	# These are mutually exclusive
 			opt_p = " -p180/90"
 		end

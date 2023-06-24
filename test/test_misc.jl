@@ -201,6 +201,12 @@
 	tic();toc()
 	@test_throws ErrorException("`toc()` without `tic()`") toc()
 
+	# Seismicity
+	println("	Seismicity")
+	seismicity(last="1w", circle=(-90,10,500), data=1)
+	seismicity(last="1w", R=:d, show=false);
+	seismicity(last="1w", R=:d, size=5, show=false);
+
 	# MB-System
 	println("	MB-System")
 	mbgetdata("aa", Vd=2)

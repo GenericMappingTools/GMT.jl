@@ -88,7 +88,7 @@ const def_fig_axes3_bak    = " -Baf -Bza"          # 		"" but for 3D views
 const global def_fig_axes  = [def_fig_axes_bak]    # This one may be be changed by theme()
 const global def_fig_axes3 = [def_fig_axes3_bak]   #		""
 const global CTRL = CTRLstruct(zeros(12), zeros(6), [true], [false],
-                               [:arrows, :bublechart, :basemap, :band, :clip, :coast, :colorbar, :hband, :hlines, :logo, :lines, :grdvector, :plot, :plot3, :quiver, :scatter, :scatter3, :stairs, :text, :vlines, :vband],
+                               [:arrows, :bubblechart, :basemap, :band, :clip, :coast, :colorbar, :hband, :hlines, :logo, :lines, :grdvector, :plot, :plot3, :quiver, :scatter, :scatter3, :stairs, :text, :vlines, :vband],
 							   [nothing, nothing, nothing], ["",""], ["","", "", "   "], [""], ["",""], [false,true], [C_NULL], [Dict()])
 const global CTRLshapes = CTRLstruct2([true], [true], [""])			# Used in sub-module Drawing
 const prj4WGS84 = "+proj=longlat +datum=WGS84 +units=m +no_defs"	# This is used in many places
@@ -133,7 +133,7 @@ export
 	mbimport, mbgetdata, mbsvplist, mblevitus,
 
 	blendimg!, lonlat2xy, xy2lonlat, df2ds, mat2ds, mat2grid, mat2img, slicecube, cubeslice, linspace, logspace, fields,
-	flipud, fliplr, flipdim, gridinterp, grdinterp, tic, toc, theme, tern2cart, geodetic2enu, cpt4dcw, gd2gmt, gmt2gd,
+	flipud, fliplr, flipdim, gridinterp, grdinterp, pow, tic, toc, theme, tern2cart, geodetic2enu, cpt4dcw, gd2gmt, gmt2gd,
 	gdalread, gdalshade, gdalwrite, gadm, xyzw2cube, coastlinesproj, graticules, plotgrid!, resise,worldrectangular,
 	worldrectgrid,
 
@@ -157,7 +157,7 @@ export
 
 	ablines, ablines!, density, density!, boxplot, boxplot!, cornerplot, cornerplot!, cubeplot, ecdfplot, ecdfplot!,
 	fill_between, fill_between!, marginalhist, marginalhist!, parallelplot, parallelplot!, plotlinefit, plotlinefit!,
-	qqplot, qqplot!, qqnorm, qqnorm!, violin, violin!, viz,
+	qqplot, qqplot!, qqnorm, qqnorm!, seismicity, violin, violin!, viz,
 	@?
 
 include("common_docs.jl")

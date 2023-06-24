@@ -6,7 +6,8 @@ getdecimal(x::AbstractFloat) = x - trunc(Int, x)
 """ Return an ierator over data skipping non-finite values"""
 skipnan(itr) = Iterators.filter(el->isfinite(el), itr)
 
-square(x) = x^2
+square(x) = x ^ 2
+pow(b,e)  = b ^ e
 
 function funcurve(f::Function, lims::VMr, n=100)::Vector{Float64}
 	# Geneate a curve between lims[1] and lims[2] having the form of function 'f'

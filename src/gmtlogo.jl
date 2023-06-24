@@ -64,7 +64,7 @@ function logo(cmd0::String=""; first=true, kwargs...)
 			# Too soon to set the format. Need to finish the PS first
 			((val = find_in_dict(d, [:fmt])[1]) !== nothing) && (fmt = arg2str(val))
 			savefig::AbstractString = ""
-			if ((val = find_in_dict(d, [:savefig :name])[1]) !== nothing)		#  Also too early for savefig
+			if ((val = find_in_dict(d, [:savefig :name :figname])[1]) !== nothing)		#  Also too early for savefig
 				savefig = val
 			end
 		end

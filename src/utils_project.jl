@@ -432,9 +432,9 @@ end
 function cubeplot(fname1::Union{GMTimage, String}, fname2::Union{GMTimage, String}="", fname3::Union{GMTimage, String}=""; back::Bool=false, show=false, notop::Bool=false, kw...)
 	# ...
 	d = KW(kw)
-	opt_R = ((txt = parse_R(d, "")[2]) != "") ? txt[4:end] : "0/9/0/9/0/9"
-	((opt_J = parse_J(d, "", " ")[2]) == "") && (opt_J = "X15/0")
-	opt_JZ = ((txt::String = parse_JZ(d, "")[2]) != "") ? txt[5:end] : "15"
+	opt_R = ((txt::String = parse_R(d, "")[2]) != "") ? txt[4:end] : "0/9/0/9/0/9"
+	opt_J = ((txt = parse_J(d, "")[2]) != "") ? txt[4:end] : "X15/0"
+	opt_JZ = ((txt = parse_JZ(d, "")[2]) != "") ? txt[5:end] : "15"
 	opt_p = ((txt = parse_p(d, "")[2]) != "") ? txt[4:end] : "135/30"
 	opt_t = ((txt = parse_t(d, "")[2]) != "") ? txt[4:end] : "0"
 	front, see = !back, show == 1

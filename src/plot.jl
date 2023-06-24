@@ -1920,3 +1920,125 @@ function help_parametric_3f(f1::Function, f2::Function, f3::Function, range_t=no
 	return hcat(x[:], y[:], z[:])
 end
 # ------------------------------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------------------------------
+"""
+    seismicity(starttime="", endtime="", minmagnitude=3, mindepth=0, maxdepth=0, last=0, printurl=false, show=true, kw...)
+
+- `starttime`: Limit to events on or after the specified start time. NOTE: All times use ISO8601 Date/Time format
+    OR a DateTime type. Default is NOW - 30 days.
+- `endtime`: Limit to events on or before the specified end time. Same remarks as for `starttime`. Default is present time.
+- `minmagnitude`: Limit to events with a magnitude larger than the specified minimum.
+- `mindepth`: Limit to events with depth more than the specified minimum (km positive down).
+- `maxdepth`: Limit to events with depth less than the specified maximum (km positive down).
+- `printurl`: Print the url of the requested data.
+- `circle`: A 3 elements Tuple or Array with ``lon,lat,radius``, where ``radius`` is in km, to perform a circle search.
+- `data`: The default is to make a seismicity map but if the `data` option is used (containing whatever) we return
+    we return the data in a ``GMTdataset`` 
+- `figname`: $(GMT.opt_savefig)
+- `land`: By default we paint the continents with the "burlywood" color. Like in the ``coast`` module, use
+   `land=`"othercolor" to replace it.
+- `ocean`: By default we paint the oceans with the "lightblue" color. Use `ocean=`"othercolor" to replace it.
+- `region`: The region of interest. By default it is [-180 180 -90 90] but one may pass a sub-region like
+    all other modules that accept this option (e.g. ``coast``)
+- `proj`: By default we select an appropriate projection based on the `region` extents, but that may be overridden
+    by specifying a `proj=xxx` like, for example, in ``coast``.
+- `size`: Can be a scalar to plot all events with same size. This size is expected to be in cm but > 1 it is interpreted
+    to be in points.
+    - `size=[min_sz max_sz]` will scale linearly min/max magnitude to have sizes min_sz/max_sz
+    - `size=([min_sz max_sz], [min_mag max_mag])` will scale linearly min_mag/max_mag magnitude to have sizes min_sz/max_sz
+    - `size=(fun, [min_sz max_sz] [, [min_mag max_mag]])` does the same as above but the transformation is determined
+       by the function 'fun'. Possibles functions are ``exp10``, ``exp``, ``pow`` and ``sqrt``. In the ``pow`` case
+       we must pass in also the exponent and the syntax is: `size=((pow,2), [min_sz max_sz])`` to have a square scaling.
+- `show`: By default this function shows the plot (when no `data` option). Use `show=false` to prevent that (and leave
+    the figure open to accept more plots from posterior commands.)
+- `title`: By default we plot a title informing the dates range. If want another tiple pass it via this option.
+
+### Examples
+    seismicity(size=8)
+    seismicity(marker=:star, size=[3 10])
+    seismicity(size=(exp10, [3 15], [3 9])
+"""
+function seismicity(; starttime::Union{DateTime, String}="", endtime::Union{DateTime, String}="", minmagnitude=3,
+                      mindepth=0, maxdepth=0, last=0, printurl::Bool=false, show=true, kw...)
+	d = KW(kw)
+	url = "https://earthquake.usgs.gov/fdsnws/event/1/query.csv?format=csv&orderby=time-asc&minmagnitude=$minmagnitude"
+
+	(starttime != "" && last != 0) && (@warn("Options 'starttime' and 'last' are incompatible. Droping 'last'."); last=0)
+	(endtime != "" && startime == "") && (@warn("Gave a 'endtime' but not a 'starttime'. Ignoring it."); endtime = "")
+	(isa(last, Integer) && last > 0) && (starttime = string(Date(now() - Dates.Day(last))))
+	if (isa(last, String))			# Requests of Weeks, Months, Years
+		_last = lowercase(last)
+		if     ((ind = findfirst('y', _last)) !== nothing)  starttime = Date(now() - Dates.Year(parse(Int, _last[1:ind-1])))
+		elseif ((ind = findfirst('m', _last)) !== nothing)  starttime = Date(now() - Dates.Month(parse(Int, _last[1:ind-1])))
+		elseif ((ind = findfirst('w', _last)) !== nothing)  starttime = Date(now() - Dates.Week(parse(Int, _last[1:ind-1])))
+		end
+	end
+	(starttime != "") && (url *= "&starttime=" * string(starttime))
+	(endtime != "") && (url *= "&endtime=" * string(endtime))
+	if ((opt_R::String = parse_R(d, "")[2]) != "")
+		(opt_R[end] == 'r') && error("Region as lon_min/lat_min/lon_max/lat_max form is not supported here.")
+		!contains(opt_R, '/') && (opt_R = " " * coast(getR=opt_R[4:end]))
+		contains(opt_R, "NaN") && (@warn("Bad 'region' argument. Defaulting to global."); opt_R = " -R-180/180/-90/90")
+		spli = split(opt_R[4:end], '/')
+		((x = parse(Float64, spli[1])) > 180) && (spli[1] = @sprintf("%.6g", x-360))
+		((x = parse(Float64, spli[2])) > 180) && (spli[2] = @sprintf("%.6g", x-360))
+		url *= "&minlongitude="*spli[1]
+		url *= "&maxlongitude="*spli[2]
+		url *= "&minlatitude="*spli[3]
+		url *= "&maxlatitude="*spli[4]
+	end
+	(opt_R == "") && (opt_R = " -Rd")
+	if (((val = find_in_dict(d, [:circle])[1]) !== nothing) && length(val) == 3)
+		c::Vector{Float64} = [Float64.(val)...]
+		url *= "&longitude=$(c[1])"
+		url *= "&latitude=$(c[2])"
+		url *= "&maxradiuskm=$(c[3])"
+	end
+	(mindepth > 0) && (url *= "&mindepth=$mindepth")
+	(maxdepth > 0) && (url *= "&maxdepth=$maxdepth")
+
+	printurl && println(url)
+	file = Downloads.download(url, "_query.csv")
+	no_plot = (find_in_dict(d, [:data])[1] !== nothing)
+	opt_i = no_plot ? "2,1,3,4,0" : "2,1,3,4"
+	D = gmtread(file, h=1, i=opt_i)
+	rm(file)
+	isempty(D) && (println("\tThe query return an empty result."); return nothing)
+
+	no_plot && return D			# No map, just return the data.
+
+	if (!haskey(d, :title))
+		st = (starttime != "") ? string(starttime) : string(Date(now() - Dates.Day(30)))
+		et = (endtime != "") ? string(endtime) : string(Date(now()))
+		d[:title] = "From " * st * " to " * et	
+	end
+	Vd::Int = ((val = find_in_dict(d, [:Vd])[1]) !== nothing) ? val : 0
+	name_bak::String = ((val = find_in_dict(d, [:savefig :figname :name])[1]) !== nothing) ? string(val) : ""	# Tmp remove it
+	(is_in_dict(d, [:G :land]) === nothing) && (d[:G] = "burlywood")
+	(is_in_dict(d, [:S :water :ocean]) === nothing) && (d[:S] = "lightblue")
+	r = coast(; R=opt_R[4:end], A="1000", Vd=Vd, d...)
+	(Vd == 2) && return r
+	d = CTRL.pocket_d[1]
+	(name_bak != "") && (d[:savefig] = name_bak)			# Restore the fig name
+	C = gmt("makecpt -Cred,green,blue -T0,100,300,10000 -N")
+
+	mag_size, opt_S = parse_opt_S(d, view(D, :, 4))
+
+	if (opt_S == "" || endswith(opt_S, "7p"))
+		@inbounds for k =1:size(D,1)  D[k,4] *= 0.015  end
+		endswith(opt_S, "7p") && (opt_S = opt_S[1:end-2])	# parse_opt_S() was not meant to be used like this, need strip that 7p
+	else
+		if (length(opt_S) > 4 && isdigit(opt_S[5]))			# Fixed size in cm or pts, but NO UNITS allowed
+			siz = parse(Float64, opt_S[5:end])
+			opt_S = opt_S[1:4]								# Drop the size since it will be passed in D[:,4]
+			(siz > 1) && ( siz *= 2.54/72)					# If size > 1, assume that it was given in points.
+			@inbounds for k =1:size(D,1)  D[k,4] = siz  end
+		#elseif (size(mag_size,2) == 2)
+			#@inbounds for k =1:size(D,1)  D[k,4] = mag_size[k,2]  end
+		end
+	end
+	opt_S = (opt_S == "") ? "c" : opt_S[4:end]
+
+	plot!(D[:,1:4]; ml="faint", S=opt_S, C=C, show=show, Vd=Vd, d...)
+end
