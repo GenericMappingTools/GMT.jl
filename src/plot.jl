@@ -2013,7 +2013,7 @@ function seismicity(; starttime::Union{DateTime, String}="", endtime::Union{Date
 		et = (endtime != "") ? string(endtime) : string(Date(now()))
 		d[:title] = "From " * st * " to " * et	
 	end
-	Vd::Int = ((val = find_in_dict(d, [:Vd])[1]) !== nothing) ? val : 0
+	Vd::Int = get(d, :Vd, 0)
 	name_bak::String = ((val = find_in_dict(d, [:savefig :figname :name])[1]) !== nothing) ? string(val) : ""	# Tmp remove it
 	(is_in_dict(d, [:G :land]) === nothing) && (d[:G] = "burlywood")
 	(is_in_dict(d, [:S :water :ocean]) === nothing) && (d[:S] = "lightblue")
