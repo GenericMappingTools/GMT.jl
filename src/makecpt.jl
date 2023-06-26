@@ -98,6 +98,7 @@ function helper_cpt(d::Dict, cmd::String)
 	cmd = parse_these_opts(cmd, d, [[:A :alpha :transparency], [:D :bg :background], [:F :color_model], [:G :truncate],
 	                                [:I :inverse :reverse], [:L :datarange :clim], [:M :overrule_bg], [:Q :log], [:S :auto :symetric], [:W :wrap :categorical], [:Z :continuous]])
 	cmd, Tvec = parse_opt_range(d, cmd, "T")
+	!isempty(Tvec) && (cmd *= arg2str(Tvec, ',')) # Work arround a semi-bug in GMT that is (< 6.5) unable to recognize num lists.
 	if ((val = find_in_dict(d, [:name :save])[1]) !== nothing)
 		(IamModern[1]) && (cmd *= " -H")
 		cmd *=  " > " * string(val)::String
@@ -126,7 +127,6 @@ function parse_opt_range(d::Dict, cmd::String, opt::String="")::Tuple{String, Ve
 				end
 			end
 		elseif (isa(val, VMr))
-			#out = arg2str(val,',')		# This works arround a semi-bug in GMT that was not (up to 6.4) able to recognize num lists.
 			Tvec, out = vec(Float64.(val)), ""	# In 6.5, Tvec needs to be a GMTdataset with comment = LIST
 		else
 			out = arg2str(val)		# Everything fits here if given as a string
