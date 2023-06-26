@@ -3579,7 +3579,7 @@ function _read_data(d::Dict, cmd::String, arg, opt_R::String="", is3D::Bool=fals
 			        Dates.format(min_max[2], "yyyy-mm-ddTHH:MM:SS.s")
 			(!is_onecol) && (opt_R *= @sprintf("/%.12g/%.12g", wesn_f64[3], wesn_f64[4])::String)
 		elseif (is3D)
-			opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g/%.12g/%.12g", wesn_f64[1], wesn_f64[2],
+			opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g/%.10g/%.10g", wesn_f64[1], wesn_f64[2],
 			                 wesn_f64[3], wesn_f64[4], wesn_f64[5], wesn_f64[6])
 		else
 			opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g", wesn_f64[1], wesn_f64[2], wesn_f64[3], wesn_f64[4])

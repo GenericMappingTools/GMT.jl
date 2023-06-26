@@ -992,7 +992,8 @@ function make_color_column_(d::Dict, cmd::String, len_cmd::Int, N_args::Int, n_p
 		if (mz !== nothing)   mi::Float64, ma::Float64 = extrema(mz)
 		else
 			the_col = min(n_col,3)+is3D
-			got_Ebars && (the_col -= 1)			# Bars => 2 cols
+			(the_col > n_col) && (the_col = n_col)	# Shitty logic before may have lead to this need.
+			got_Ebars && (the_col -= 1)				# Bars => 2 cols
 			if   (isa(arg1, Vector{<:GMTdataset}))  mi, ma = arg1[1].ds_bbox[2the_col-1:2the_col]
 			else                                    mi, ma = arg1.ds_bbox[2the_col-1:2the_col]
 			end

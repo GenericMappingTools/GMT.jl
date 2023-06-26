@@ -126,8 +126,8 @@ function parse_opt_range(d::Dict, cmd::String, opt::String="")::Tuple{String, Ve
 				end
 			end
 		elseif (isa(val, VMr))
-			out = arg2str(val,',')		# This works arround a semi-bug in GMT that was not (up to 6.4) able to recognize num lists.
-			#Tvec, out = vec(Float64.(val)), ""	# In 6.5, Tvec needs to be a GMTdataset with comment = LIST
+			#out = arg2str(val,',')		# This works arround a semi-bug in GMT that was not (up to 6.4) able to recognize num lists.
+			Tvec, out = vec(Float64.(val)), ""	# In 6.5, Tvec needs to be a GMTdataset with comment = LIST
 		else
 			out = arg2str(val)		# Everything fits here if given as a string
 		end

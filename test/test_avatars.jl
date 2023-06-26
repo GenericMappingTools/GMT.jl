@@ -185,6 +185,10 @@
 	stem(Y,[Y -Y], multicol=1, Vd=dbg2)
 	stem!(Y,[Y -Y], multicol=1, Vd=dbg2)
 
+	println("	TRISURF")
+	x,y,z = GMT.peaks(N=30, grid=false);
+	trisurf!([x[:] y[:] z[:]])
+
 	println("	RADAR")
 	radar([10.5 20.5 30.6 40.9 46], axeslimts=[15, 25, 50, 90, 50], labels=["Spoons","Forks","Knifes","Dishes","Oranges"], annotall=true, marker=:circ, fill=true, Vd=dbg2)
 	radar!([0.5 0.5 0.6 0.9 0.77; 0.6 0.5 0.8 0.2 0.9], Vd=dbg2)

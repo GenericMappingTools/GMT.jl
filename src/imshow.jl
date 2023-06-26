@@ -33,6 +33,10 @@ See also: [`grdimage`](@ref)
 function imshow(arg1, x::AbstractVector{Float64}=Vector{Float64}(), y::AbstractVector{Float64}=Vector{Float64}(); kw...)
 	# Take a 2D array of floats and turn it into a GMTgrid or if input is a string assume it's a file name
 	# In this later case try to figure if it's a grid or an image and act accordingly.
+
+	d = KW(kw)
+	see::Bool = (!haskey(d, :show)) ? true : (d[:show] != 0)	# No explicit 'show' keyword means show=true
+
 	is_image = false
 	if (isa(arg1, String))		# If it's string it has to be a file name. Check extension to see if is an image
 		ext = splitext(arg1)[2]
@@ -50,16 +54,16 @@ function imshow(arg1, x::AbstractVector{Float64}=Vector{Float64}(), y::AbstractV
 		ginfo = gmt("gmtinfo -C", arg1)
 		CTRL.limits[1:4] = ginfo.data[1:4];		CTRL.limits[7:10] = ginfo.data[1:4]
 		call_plot3 = ((isa(arg1, GMTdataset) && arg1.geom == Gdal.wkbLineStringZ) || (isa(arg1, Vector{<:GMTdataset}) && arg1[1].geom == Gdal.wkbLineStringZ)) ? true : false		# Should evolve into a fun that detects the several plot3d cases.
-		return (call_plot3) ? plot3d(arg1; show=true, kw...) : plot(arg1; show=true, kw...)
+		opt_p = find_in_kwargs(kw, [:p :view :perspective])[1]
+		(isa(opt_p, String) && contains(opt_p, '/')) && (call_plot3 = true)
+		((isa(opt_p, Tuple) || isa(opt_p, VMr)) && length(opt_p) > 1) && (call_plot3 = true) 
+		return (call_plot3) ? plot3d(arg1; show=see, kw...) : plot(arg1; show=see, kw...)
 	elseif (isa(arg1, GMTcpt))
 		return (find_in_kwargs(kw, [:D :pos :position])[1] === nothing) ?
 			psscale(arg1; show=true, D="x0/0+w7+h", kw...) : psscale(arg1; show=true, kw...)
 	else
 		G = mat2grid(arg1, x, y, reg=1)							# For displaying, pixel registration is more appropriate
 	end
-
-	d = KW(kw)
-	see::Bool = (!haskey(d, :show)) ? true : (d[:show] != 0)	# No explicit 'show' keyword means show=true
 
 	if (is_image)
 		grdimage(G; show=see, kw...)
@@ -71,7 +75,8 @@ function imshow(arg1, x::AbstractVector{Float64}=Vector{Float64}(), y::AbstractV
 			else
 				grdimage(G; show=see, kw...)
 			end
-		else	imshow(G; kw...)					# Call the specialized method
+		else
+			imshow(G; kw...)					# Call the specialized method
 		end
 	end
 end
@@ -84,10 +89,10 @@ function imshow(arg1::GMTgrid; kw...)
 		new_see = see
 		see = false			# because here we know that 'see' has to wait till last command
 	end
-	opt_p, = parse_common_opts(d, "", [:p], true)
+	opt_p, = parse_common_opts(d, "", [:p :view :perspective], true)
 	have_tilles::Bool = ((til = find_in_dict(d, [:T :no_interp :tiles])[1]) !== nothing)
 	(!have_tilles && opt_p != "" && !contains(opt_p, '/')) && (flat = true)		# If only 'azimuth' and no 'elev'
-	flat::Bool = (find_in_dict(d, [:flat])[1] !== nothing)		# If true, force the use of grdimage
+	flat::Bool = (find_in_dict(d, [:flat])[1] !== nothing)	# If true, force the use of grdimage
 	if (flat || (opt_p == "" && !have_tilles))
 		(flat && opt_p != "") && (d[:p] = opt_p[4:end])		# Restore the meanwhile deleted -p option
 		R = grdimage("", arg1; show=see, d...)

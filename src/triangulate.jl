@@ -105,7 +105,7 @@ Plots the 2-D triangulation or Voronoi polygons defined by the points in a matri
    `onlyedges=true` to compute multiple line segments.
 - `region`: Sets the data region (xmin,xmax,ymin,ymax) for `voronoi` (required). If not provided we compute it from `in`.
 - `voronoi`: Compute Voronoi cells instead of Delaunay triangles (requires `region`).
-- `kw...`: Are keyword arguments used in the ``plot`` module (ignore if `noplot=true`).
+- `kw...`: keyword arguments used in the ``plot`` module (ignore if `noplot=true`).
 
 
 ### Returns
@@ -134,6 +134,36 @@ function triplot(in::Matrix; onlyedges::Bool=false, noplot::Bool=false, first::B
 end
 
 triplot!(in::Matrix; onlyedges::Bool=false, noplot::Bool=false, kw...) = triplot(in; onlyedges=onlyedges, noplot=noplot, first=false, kw...)
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    trisurf(in, kw...)
+
+Plots the 3-D triangular surface defined by the points in a Mx3 matrix or a GMTdataset with data 
+x, y, z in the 3 first columns. The triangles are computed with a Delaunay triangulation done internaly.
+Since this is a `plot3d` _avatar_ all options in this function are those of the `plot3d` program.
+
+### Example
+    x,y,z = GMT.peaks(N=45, grid=false);
+	trisurf([x[:] y[:] z[:]], pen=0.5, show=true)
+"""
+function trisurf(in::Union{Matrix, GDtype}; gdal=true, first::Bool=true, kw...)
+	(size(in, 2) < 3) && error("'trisurf' needs at least 3 columns in input")
+	d = KW(kw)
+	first && (d[:aspect] = get(d, :aspect, "equal"))
+	d[:p] = get(d, :p, "135/30")
+	D = gdal ? delaunay(in, 0.0, false) : triangulate(in, S=true, Z=true)
+	Zs = Vector{Float64}(undef, size(D,1))
+	for k = 1:numel(Zs)
+		Zs[k] = (D[k].bbox[5] + D[k].bbox[6]) / 2
+	end
+	ind = sortperm(Zs)			# Sort in groing z. Needed to sort the triangles too otherwise is a mess.
+	ds_bbox = D[1].ds_bbox
+	D = D[ind];		D[1].ds_bbox = ds_bbox
+	d[:Z] = Zs[ind]
+	common_plot_xyz("", D, "plot3d", first, true, d...)
+end
+trisurf!(in::Union{Matrix, GDtype}; gdal=true, kw...) = trisurf(in; gdal=gdal, first=false, kw...)
 
 # ---------------------------------------------------------------------------------------------------
 """

@@ -128,7 +128,7 @@ export
 	decorated, vector_attrib, wiggle, wiggle!, xyz2grd, gmtbegin, gmtend, gmthelp, subplot, gmtfig, inset, showfig,
 	earthtide, gravfft, gmtgravmag3d, grdgravmag3d, gravprisms, pscoupe, pscoupe!, coupe, coupe!, psmeca, psmeca!,
 	meca, meca!, psvelo, psvelo!, velo, velo!, getbyattrib, inwhichpolygon, pcolor, pcolor!, triplot, triplot!,
-	grdrotater, imagesc, upGMT,
+	trisurf, trisurf!, grdrotater, imagesc, upGMT,
 
 	mbimport, mbgetdata, mbsvplist, mblevitus,
 
@@ -144,8 +144,9 @@ export
 	ogr2ogr, gdalrasterize, gdalbuildvrt, readraster, setgeotransform!, setproj!, destroy,
 	delaunay, dither, buffer, centroid, intersection, intersects, polyunion, fromWKT,
 	concavehull, convexhull, difference, symdifference, distance, geomarea, pointalongline, polygonize, simplify,
-	wkbUnknown, wkbPoint, wkbLineString, wkbPolygon, wkbMultiPoint, wkbMultiLineString, wkbMultiPolygon,
-	wkbGeometryCollection,
+	wkbUnknown, wkbPoint, wkbPointZ, wkbLineString, wkbPolygon, wkbMultiPoint, wkbMultiPointZ, wkbMultiLineString,
+	wkbMultiPolygon, wkbGeometryCollection, wkbPoint25D, wkbLineString25D, wkbPolygon25D, wkbMultiPoint25D,
+	wkbMultiLineString25D, wkbMultiPolygon25D, wkbGeometryCollection25D,
 
 	buffergeo, circgeo, epsg2proj, epsg2wkt, geod, invgeod, loxodrome, loxodrome_direct, loxodrome_inverse,
 	geodesic, orthodrome, proj2wkt, setfld!, vecangles, wkt2proj,
