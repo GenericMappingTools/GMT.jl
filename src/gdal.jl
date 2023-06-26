@@ -97,6 +97,7 @@ const wkbNone = UInt32(100)
 const wkbLinearRing = UInt32(101)
 const wkbPointZ = UInt32(1001)
 const wkbLineStringZ = UInt32(1002)
+const wkbMultiPointZ = UInt32(1004)
 const wkbMultiLineStringZ = UInt32(1005)
 const wkbCircularStringZ = UInt32(1008)
 const wkbCompoundCurveZ = UInt32(1009)
@@ -2442,8 +2443,9 @@ end
 		delaunay, dither, buffer, centroid, intersection, intersects, polyunion, fromWKT,
 		concavehull, convexhull, difference, symdifference, distance, geomarea, pointalongline, polygonize, simplify,
 		boundary, crosses, disjoint, equals, envelope, envelope3d, geomlength, overlaps, touches, within,
-		wkbUnknown, wkbPoint, wkbLineString, wkbPolygon, wkbMultiPoint, wkbMultiLineString, wkbMultiPolygon,
-		wkbGeometryCollection
+		wkbUnknown, wkbPoint, wkbPointZ, wkbLineString, wkbPolygon, wkbMultiPoint, wkbMultiPointZ, wkbMultiLineString,
+		wkbMultiPolygon, wkbGeometryCollection, wkbPoint25D, wkbLineString25D, wkbPolygon25D, wkbMultiPoint25D,
+		wkbMultiLineString25D, wkbMultiPolygon25D, wkbGeometryCollection25D
 
 
 	const DRIVER_MANAGER = Ref{DriverManager}()
