@@ -164,9 +164,9 @@ end
 function gd2gmt(geom::Gdal.AbstractGeometry, proj::String="")::Union{GMTdataset, Vector{<:GMTdataset}}
 	# Convert a geometry into a GMTdataset/Vector{GMTdadaset}
 	gmtype = Gdal.getgeomtype(geom)
-	if (gmtype == Gdal.wkbPolygon)		# getx() doesn't work for polygons
+	if (gmtype == wkbPolygon || gmtype == Gdal.wkbPolygon25D)		# getx() doesn't work for polygons
 		geom = Gdal.getgeom(geom,0)
-	elseif (gmtype == wkbMultiPolygon || gmtype == wkbMultiLineString || gmtype == Gdal.wkbGeometryCollection)
+	elseif (gmtype == wkbMultiPolygon || gmtype == wkbMultiLineString || gmtype == Gdal.wkbGeometryCollection || gmtype == Gdal.wkbGeometryCollection25D)
 		n_pts = Gdal.ngeom(geom)
 		D = Vector{GMTdataset}(undef, n_pts)
 		for k = 1:n_pts  D[k] = gd2gmt(Gdal.getgeom(geom,k-1), "")::GMTdataset  end
@@ -374,7 +374,7 @@ function gmt2gd(D::Vector{<:GMTdataset}; save::String="", geometry::String="")
 	(n_cols < 2) && error("GMTdataset must have at least 2 columns")
 
 	geometry = lowercase(geometry)
-	ismulti  = (length(D) > 1) || (D[1].geom == wkbPoint && size(D[1].data, 1) > 1)
+	ismulti  = (length(D) > 1) || ((D[1].geom == wkbPoint || D[1].geom == wkbPointZ) && size(D[1].data, 1) > 1)
 	ispolyg  = occursin("poly", geometry);
 	isline   = occursin("line", geometry);
 	ispoint  = occursin("point", geometry);
@@ -402,6 +402,9 @@ function gmt2gd(D::Vector{<:GMTdataset}; save::String="", geometry::String="")
 		                                   (wkbMultiLineString, Gdal.createmultilinestring())
 	elseif (D[1].geom == wkbMultiPoint || (ispoint && !ismulti))
 		geom_code, geom_cmd = wkbMultiPoint, Gdal.createmultipoint()
+	elseif (D[1].geom == wkbPoint25D || D[1].geom == wkbMultiPoint25D)
+		geom_code, geom_cmd = (D[1].geom == wkbPoint25D) ? (wkbPoint25D, Gdal.createpoint()) :
+		                                                   (wkbMultiPoint25D, Gdal.createmultipoint())
 	else
 		geom_code, geom_cmd = (!ismulti) ? (wkbPoint, Gdal.createpoint()) :
 		                                   (wkbMultiPoint, Gdal.createmultipoint())
@@ -414,7 +417,7 @@ function gmt2gd(D::Vector{<:GMTdataset}; save::String="", geometry::String="")
 	if (ispolyg || D[1].geom == wkbPolygon || D[1].geom == wkbMultiPolygon)
 		if (ismulti)
 			for k = 1:length(D)
-				poly = Gdal.creategeom(Gdal.wkbPolygon)
+				poly = Gdal.creategeom(wkbPolygon)
 				Gdal.addgeom!(geom, Gdal.addgeom!(poly, makering(D[k].data)))
 			end
 		else			# Polygons with islands
@@ -436,15 +439,20 @@ function gmt2gd(D::Vector{<:GMTdataset}; save::String="", geometry::String="")
 			                Gdal.OGR_G_SetPoints(geom.ptr, size(D[1].data, 1), x, 8, y, 8, z, 8)
 		end
 		Gdal.setgeom!(feature, geom)
-	elseif (ispoint || D[1].geom == wkbPoint || D[1].geom == wkbMultiPoint)
+	elseif (ispoint || D[1].geom == wkbPoint || D[1].geom == wkbMultiPoint || D[1].geom == wkbPointZ || D[1].geom == Gdal.wkbMultiPoint25D)
 		if (D[1].geom == wkbMultiPoint || ismulti)
 			for k = 1:length(D)
 				x,y,z = helper_gmt2gd_xyz(D[k], n_cols)
 				if (n_cols == 2)
-					[Gdal.addgeom!(geom, Gdal.createpoint(x[n], y[n])) for n = 1:length(x)]
+					[Gdal.addgeom!(geom, Gdal.createpoint(x[n], y[n])) for n = 1:lastindex(x)]
 				else
-					[Gdal.addgeom!(geom, Gdal.createpoint(x[n], y[n], z[n])) for n = 1:length(x)]
+					[Gdal.addgeom!(geom, Gdal.createpoint(x[n], y[n], z[n])) for n = 1:lastindex(x)]
 				end
+			end
+		elseif (D[1].geom == wkbMultiPointZ || D[1].geom == Gdal.wkbMultiPoint25D)
+			for k = 1:length(D)
+				x,y,z = helper_gmt2gd_xyz(D[k], n_cols)
+				[Gdal.addgeom!(geom, Gdal.createpoint(x[n], y[n], z[n])) for n = 1:lastindex(x)]
 			end
 		else
 			x,y,z = helper_gmt2gd_xyz(D[1], n_cols)
