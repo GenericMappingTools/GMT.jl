@@ -91,7 +91,7 @@ function psconvert(cmd0::String="", arg1=nothing; kwargs...)
 		if (isa(val, String) || isa(val, Symbol))
 			cmd = string(cmd, " -C", val)
 		elseif (isa(val, Array{String})) 
-			for k = 1:length(val)
+			for k = 1:numel(val)
 				cmd *= " -C" * val[k]
 			end
 		end

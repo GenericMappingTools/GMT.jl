@@ -253,7 +253,7 @@ function gdal_opts2vec(opts)::Vector{String}
 	end
 
 	v = split(_opts)
-	[v[i] = replace(v[i], '\x7f' => ' ') for i = 1:length(v)]		# Undo the Char(127) char
+	[v[i] = replace(v[i], '\x7f' => ' ') for i = 1:lastindex(v)]		# Undo the Char(127) char
 end
 
 function helper_opts2vec(opts::String)

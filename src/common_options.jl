@@ -38,7 +38,7 @@ function del_from_dict(d::Dict, symbs::Vector{Symbol})
 	end
 end
 
-#=
+##
 function is_in_kwargs(p, symbs::VMs)::Bool
 	# Just check if any of the symbols in SYMBS is present in the P kwargs
 	for symb in symbs
@@ -46,7 +46,7 @@ function is_in_kwargs(p, symbs::VMs)::Bool
 	end
 	return false
 end
-=#
+##
 
 function find_in_kwargs(p, symbs::VMs, del::Bool=true, primo::Bool=true, help_str::String="")
 	# See if P contains any of the symbols in SYMBS. If yes, return corresponding value

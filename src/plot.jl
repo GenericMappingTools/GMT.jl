@@ -1938,6 +1938,10 @@ end
 - `figname`: $(GMT.opt_savefig)
 - `land`: By default we paint the continents with the "burlywood" color. Like in the ``coast`` module, use
    `land=`"othercolor" to replace it.
+- `layers`: By default we divide depth into three layers; 1-100, 100-300 and > 300 km, Use `layers=4` to subdivide
+    top layer into 0-50 and 50-100 km.
+- `legend`: By default we plot a legend. Particular options for the legend command (e.g. `pos`, `box`, etc) are passed
+    via the `kw...` options. Use `legend=false` to have no legend.
 - `ocean`: By default we paint the oceans with the "lightblue" color. Use `ocean=`"othercolor" to replace it.
 - `region`: The region of interest. By default it is [-180 180 -90 90] but one may pass a sub-region like
     all other modules that accept this option (e.g. ``coast``)
@@ -1952,15 +1956,16 @@ end
        we must pass in also the exponent and the syntax is: `size=((pow,2), [min_sz max_sz])`` to have a square scaling.
 - `show`: By default this function shows the plot (when no `data` option). Use `show=false` to prevent that (and leave
     the figure open to accept more plots from posterior commands.)
-- `title`: By default we plot a title informing the dates range. If want another tiple pass it via this option.
 
 ### Examples
     seismicity(size=8)
     seismicity(marker=:star, size=[3 10])
-    seismicity(size=(exp10, [3 15], [3 9])
+    seismicity(size=(exp10, [2 12], [3 9])
 """
 function seismicity(; starttime::Union{DateTime, String}="", endtime::Union{DateTime, String}="", minmagnitude=3,
-                      mindepth=0, maxdepth=0, last=0, printurl::Bool=false, show=true, kw...)
+                      mindepth=0, maxdepth=0, last=0, printurl::Bool=false, layers=3, legend=true, show=true, kw...)
+
+	(layers != 3 && layers != 4) && error("Only 3 or 4 (depth) layers are allowed.")
 	d = KW(kw)
 	url = "https://earthquake.usgs.gov/fdsnws/event/1/query.csv?format=csv&orderby=time-asc&minmagnitude=$minmagnitude"
 
@@ -1981,8 +1986,8 @@ function seismicity(; starttime::Union{DateTime, String}="", endtime::Union{Date
 		!contains(opt_R, '/') && (opt_R = " " * coast(getR=opt_R[4:end]))
 		contains(opt_R, "NaN") && (@warn("Bad 'region' argument. Defaulting to global."); opt_R = " -R-180/180/-90/90")
 		spli = split(opt_R[4:end], '/')
-		((x = parse(Float64, spli[1])) > 180) && (spli[1] = @sprintf("%.6g", x-360))
-		((x = parse(Float64, spli[2])) > 180) && (spli[2] = @sprintf("%.6g", x-360))
+		x1, x2 = parse.(Float64, spli[1:2])
+		x2 > 180 && (spli[1] = @sprintf("%.6g", x2-180-(x2-x1)); spli[2] = @sprintf("%.6g", x2-180);)
 		url *= "&minlongitude="*spli[1]
 		url *= "&maxlongitude="*spli[2]
 		url *= "&minlatitude="*spli[3]
@@ -2008,11 +2013,6 @@ function seismicity(; starttime::Union{DateTime, String}="", endtime::Union{Date
 
 	no_plot && return D			# No map, just return the data.
 
-	if (!haskey(d, :title))
-		st = (starttime != "") ? string(starttime) : string(Date(now() - Dates.Day(30)))
-		et = (endtime != "") ? string(endtime) : string(Date(now()))
-		d[:title] = "From " * st * " to " * et	
-	end
 	Vd::Int = get(d, :Vd, 0)
 	name_bak::String = ((val = find_in_dict(d, [:savefig :figname :name])[1]) !== nothing) ? string(val) : ""	# Tmp remove it
 	(is_in_dict(d, [:G :land]) === nothing) && (d[:G] = "burlywood")
@@ -2021,12 +2021,13 @@ function seismicity(; starttime::Union{DateTime, String}="", endtime::Union{Date
 	(Vd == 2) && return r
 	d = CTRL.pocket_d[1]
 	(name_bak != "") && (d[:savefig] = name_bak)			# Restore the fig name
-	C = gmt("makecpt -Cred,green,blue -T0,100,300,10000 -N")
+	C = (layers == 3) ? gmt("makecpt -Cred,green,blue -T0,100,300,10000") : gmt("makecpt -Cred,darkred,green,blue -T0,50,100,300,10000")
 
+	_size = get(d, :size, nothing)
 	mag_size, opt_S = parse_opt_S(d, view(D, :, 4))
 
 	if (opt_S == "" || endswith(opt_S, "7p"))
-		@inbounds for k =1:size(D,1)  D[k,4] *= 0.015  end
+		@inbounds for k =1:size(D,1)  D[k,4] *= 0.02  end
 		endswith(opt_S, "7p") && (opt_S = opt_S[1:end-2])	# parse_opt_S() was not meant to be used like this, need strip that 7p
 	else
 		if (length(opt_S) > 4 && isdigit(opt_S[5]))			# Fixed size in cm or pts, but NO UNITS allowed
@@ -2040,5 +2041,77 @@ function seismicity(; starttime::Union{DateTime, String}="", endtime::Union{Date
 	end
 	opt_S = (opt_S == "") ? "c" : opt_S[4:end]
 
-	plot!(D[:,1:4]; ml="faint", S=opt_S, C=C, show=show, Vd=Vd, d...)
+	see = !legend ? show : false
+	plot!(D[:,1:4]; ml="faint", S=opt_S, C=C, show=see, Vd=Vd, d...)
+	d = CTRL.pocket_d[1]
+	d[:show] = show
+	ms = (_size !== nothing) ? parse_opt_S(Dict(:size => _size), [3., 4, 5, 6, 7, 8, 9])[1] : [3., 4, 5, 6, 7, 8, 9] .* 0.02
+	st = (starttime != "") ? string(starttime) : string(Date(now() - Dates.Day(30)))
+	et = (endtime != "") ? string(endtime) : string(Date(now()))
+	legend && seislegend(; first=false, title="From "*st*" to "*et, cmap=C, mags=ms, pos="JBC+o0/1c+w12c/2.3c", d...)
+end
+
+# ------------------------------------------------------------------------------------------------------
+"""
+    seislegend(; title="", font=(16,"Times-Roman"), cmap=GMTcpt(), mags=Float64[], lowermag=3, kw...)
+
+Adds a legend to plots produced by `seismicity` function. All options are optional.
+
+- `cmap`: A colormap (CPT) with either 3 or 4 colors only. This is used to paint symbols according to depth layer.
+- `mags`: The seizes in cm for the magnitudes 3 to 9.
+- `title`: The legend head title.
+- `font`: The legend head font.
+"""
+function seislegend(; title="", font=(16,"Times-Roman"), cmap=GMTcpt(), mags::VecOrMat=Float64[], lowermag=3, first=true,  kw...)
+	# ...
+	mags = isempty(mags) ? [3., 4, 5, 6, 7, 8, 9] .* 0.02 : mags
+
+	nc = isempty(cmap) ? 3 : size(cmap.colormap, 1)
+	if isempty(cmap)
+		nt1 = (symbol1=(marker=:circ, dx_left=0., size=0.2, fill="red", dx_right=0.2, text="Shallow (0-100 km)"),
+			symbol2=(marker=:circ, dx_left=0., size=0.2, fill="green", dx_right=0.2, text="Intermediate (100-300 km)"),
+			symbol3=(marker=:circ, dx_left=0., size=0.2, fill="blue", dx_right=0.2, text="Very deep (> 300 km)"))
+	else
+		nt1 = NamedTuple()
+		leg_d = (nc == 3) ? ["Shallow (0-100 km)", "Intermediate (100-300 km)", "Very deep (> 300 km)"] :
+		                    ["Shallow (0-50 km)", "(50-100 km)", "Intermediate (100-300 km)", "Very deep (> 300 km)"]
+		for k = 1:nc
+			nt1 = (; nt1..., Symbol("symbol$k") => (marker=:circ, dx_left=0., size=0.2, fill=arg2str(cmap.colormap[k,:].*255), dx_right=0.2, text=leg_d[k]))
+		end
+	end
+
+	i, lm = nc+1, lowermag
+	nt2 = NamedTuple()
+	for k = 1:numel(mags)
+		nt2 = (; nt2..., Symbol("symbol$i") => (marker=:circ, dx_left=0.25, size=mags[k], pen=0.25, dx_right=0.75, text="M$lm"))
+		i += 1; lm += 1
+	end
+
+	extra_vs = maximum(mags) > 0.3 ? 0.05 : 0.		# When symbols are big we need extra space between the hlines.
+	d = KW(kw)
+	!is_in_kwargs(kw, [:D :pos :position]) && (d[:D] = (paper=(0.25,0.25), width=14, justify=:BL, spacing=1.2))
+	!is_in_kwargs(kw, [:C :clearance]) && (d[:C] = (0.25,0.25))
+	!is_in_kwargs(kw, [:F :box]) && (d[:F] = (pen=0.5, fill=:azure1))
+	!is_in_kwargs(kw, [:R :region :limits]) && (d[:R] = (0,10,0,4))
+	!is_in_kwargs(kw, [:par]) && (d[:par] = (:FONT_ANNOT_PRIMARY, 8))		# Shitty solution. Must use conf for other configs
+
+	legend((
+       vspace=-0.25,
+       header=(text= (title != "") ? title : "Map Legend", font=font),
+       hline=(pen=0.75,),
+       ncolumns = (nc == 3) ? "0.29 0.38 0.33" : "0.24 0.17 0.32 0.27",
+	   vline=(pen=0.75, offset=0),
+	   nt1...,
+	   hline2=(pen=0.75,),
+	   vline2=(pen=0.75, offset=0),
+       vspace1=extra_vs,
+	   ncolumns2=length(mags),
+	   vline3=(pen=0.75, offset=0),
+	   nt2...,
+       vspace2=extra_vs,
+	   hline3=(pen=0.75,),
+	   vline4=(pen=0.75,),
+	   ncolumns3=1,
+	   label=(txt="Data from the US National Earthquake Information Center", justify=:R, font=(8,"Times-Italic")),
+	); first=first, d...)
 end

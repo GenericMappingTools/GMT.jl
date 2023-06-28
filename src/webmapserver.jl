@@ -54,7 +54,7 @@ function wmsinfo(server::String)::WMS
 			ind = findfirst("=", f[1]); t = f[1][ind[1]+5:end]
 			ind = findfirst("?", t);	onlineRes = t[1:ind[1]]
 		end
-		for n = 2:length(f)			# Loop over the fields of the SUBDATASET_XX_NAME
+		for n = 2:numel(f)			# Loop over the fields of the SUBDATASET_XX_NAME
 			if     (startswith(f[n], "VERSION"))  ver = f[n][9:end];  continue
 			elseif (startswith(f[n], "REQUEST"))  req = f[n][9:end];  continue
 			elseif (startswith(f[n], "LAYERS"))   name = f[n][8:end]; continue
