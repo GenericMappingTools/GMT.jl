@@ -67,8 +67,8 @@ function pcolor(X_::VMr, Y_::VMr, C::AbstractMatrix{<:Real}; first::Bool=true, k
 	if (isvector(X) && gridreg)		# Expand X,Y to make them pix reg
 		X,Y = copy(X_), copy(Y_)
 		xinc, yinc = X[2]-X[1], Y[2]-Y[1];		xinc2, yinc2 = xinc/2, yinc/2
-		[X[k] -= xinc2 for k = 1:length(X)];	append!(X, X[end]+xinc)
-		[Y[k] -= yinc2 for k = 1:length(Y)];	append!(Y, Y[end]+yinc)
+		[X[k] -= xinc2 for k = 1:numel(X)];	append!(X, X[end]+xinc)
+		[Y[k] -= yinc2 for k = 1:numel(Y)];	append!(Y, Y[end]+yinc)
 	end
 
 	D::Vector{GMTdataset}, k = Vector{GMTdataset}(undef, length(C)), 0
@@ -95,7 +95,7 @@ function pcolor(X_::VMr, Y_::VMr, C::AbstractMatrix{<:Real}; first::Bool=true, k
 
 	if (got_labels)
 		mat = Matrix{Float64}(undef, length(D), 2)
-		for k = 1:length(D)
+		for k = 1:numel(D)
 			mat[k,1], mat[k,2] = mean(D[k].bbox[1:2]), mean(D[k].bbox[3:4])
 		end
 		Dt = mat2ds(mat, string.(round.(Z,digits=ndigit)))

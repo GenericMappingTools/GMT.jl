@@ -168,7 +168,7 @@ function streamlines(U::GMTgrid, V::GMTgrid, sx::VMr, sy::VMr; step=0.1, max_ver
 	else
 		D = Vector{GMTdataset}(undef, length(_sx))
 		kk, c = 0, false
-		for k = 1:length(_sx)
+		for k = 1:numel(_sx)
 			x = interp_vec(x_vec, _sx[k])
 			y = interp_vec(y_vec, _sy[k])
 			t, n_allocated = helper_stream(x, y, x_vec, y_vec, n_rows, n_cols, isT, n_allocated)
@@ -304,7 +304,7 @@ function streamlines(U::GMTgrid, V::GMTgrid, W::GMTgrid, sx::VMr, sy::VMr, sz::V
 	else
 		D = Vector{GMTdataset}(undef, length(_sx))
 		kk, c = 0, false
-		for k = 1:length(_sx)
+		for k = 1:numel(_sx)
 			x = interp_vec(U.x,  _sx[k])
 			y = interp_vec(V.y,  _sy[k])
 			z = interp_vec(z_coord, _sz[k])

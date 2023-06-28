@@ -104,7 +104,7 @@ function grdtrack(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 			R.colnames = coln
 		else
 			(size(R[1].data, 2) == 3) ? append!(coln, ["Z"]) : append!(coln, ["Z$(i-2)" for i=3:size(R[1].data, 2)])
-			for k = 1:length(R)  R[k].colnames = coln  end
+			for k = 1:numel(R)  R[k].colnames = coln  end
 		end
 	end
 	R
