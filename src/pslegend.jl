@@ -48,7 +48,8 @@ function legend(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
-	cmd, _, _, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
+	def_J = " -JX" * split(def_fig_size, '/')[1] * "/0"
+	cmd, _, _, opt_R = parse_BJR(d, "", "", O, def_J)
 	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R)	# If called from classic without input it hangs here.
 	cmd, = parse_common_opts(d, cmd, [:F :c :p :q :t :JZ :UVXY :params], first)
 
