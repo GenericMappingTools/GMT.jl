@@ -206,6 +206,7 @@
 	seismicity(last="1w", circle=(-90,10,500), data=1)
 	seismicity(last="1w", R=:d, show=false);
 	seismicity(last="1w", R=:d, size=5, show=false);
+	GMT.seislegend(Vd=2);
 
 	# MB-System
 	println("	MB-System")
