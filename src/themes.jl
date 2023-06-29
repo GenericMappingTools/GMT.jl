@@ -166,6 +166,8 @@ function theme_modern()
 	swapmode(G_API[1], classic=false)			# Set GMT->current.setting.run_mode = GMT_MODERN
 	resetdefaults(G_API[1])
 	gmtlib_setparameter(G_API[1], "MAP_FRAME_PEN", "0.75")
+	gmtlib_setparameter(G_API[1], "FONT_TITLE", "auto,Times-Roman,black")
+	gmtlib_setparameter(G_API[1], "FONT_SUBTITLE", "auto,Times-Roman,black")
 	!IamModern[1] && swapmode(G_API[1], classic=true)	# Reset GMT->current.setting.run_mode = GMT_CLASSIC
 	return nothing
 end
