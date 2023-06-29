@@ -27,6 +27,9 @@ julia> imshow(rand(128,128))
 
 # Display a web downloaded jpeg image wrapped into a sinusoidal projection
 julia> imshow(gmtread()"http://larryfire.files.wordpress.com/2009/07/untooned_jessicarabbit.jpg"), region=:global, frame="g", proj=:sinu)
+
+# Plot images in the walls of the cube for the 3D view cases. Replace file names with those that exist for you.
+julia> viz(G, zsize=6, facades=("cenora_base.jpg", "bunny_cenora.webp", "burro_cenora.webp"))
 ```
 See also: [`grdimage`](@ref)
 """
@@ -34,8 +37,9 @@ function imshow(arg1, x::AbstractVector{Float64}=Vector{Float64}(), y::AbstractV
 	# Take a 2D array of floats and turn it into a GMTgrid or if input is a string assume it's a file name
 	# In this later case try to figure if it's a grid or an image and act accordingly.
 
-	d = KW(kw)
-	see::Bool = (!haskey(d, :show)) ? true : (d[:show] != 0)	# No explicit 'show' keyword means show=true
+	#d = KW(kw)
+	#see::Bool = (!haskey(d, :show)) ? true : (d[:show] != 0)	# No explicit 'show' keyword means show=true
+	see = ((val = find_in_kwargs(kw, [:show])[2]) === nothing) ? true : (val != 0)	# No explicit 'show' keyword means show=true
 
 	is_image = false
 	if (isa(arg1, String))		# If it's string it has to be a file name. Check extension to see if is an image
@@ -93,17 +97,24 @@ function imshow(arg1::GMTgrid; kw...)
 	have_tilles::Bool = ((til = find_in_dict(d, [:T :no_interp :tiles])[1]) !== nothing)
 	(!have_tilles && opt_p != "" && !contains(opt_p, '/')) && (flat = true)		# If only 'azimuth' and no 'elev'
 	flat::Bool = (find_in_dict(d, [:flat])[1] !== nothing)	# If true, force the use of grdimage
-	if (flat || (opt_p == "" && !have_tilles))
+	docube = is_in_kwargs(kw, [:facades :cubeplot])
+	(flat && docube) && (flat = false)
+	if (!docube && (flat || (opt_p == "" && !have_tilles)))
 		(flat && opt_p != "") && (d[:p] = opt_p[4:end])		# Restore the meanwhile deleted -p option
 		R = grdimage("", arg1; show=see, d...)
 	else
 		zsize = ((val = find_in_dict(d, [:JZ :Jz :zscale :zsize])[1]) !== nothing) ? val : 8
 		srf = ((val = find_in_dict(d, [:Q :surf :surftype])[1]) !== nothing) ? val : "i100"
-		if (have_tilles)			# This forces some others
-			srf = zsize = nothing	# These are mutually exclusive
+		done = false
+		if (have_tilles)					# This forces some others
+			srf = zsize = nothing			# These are mutually exclusive
 			opt_p = " -p180/90"
+		elseif ((val = find_in_dict(d, [:facades :cubeplot])[1]) !== nothing)	# Plot images on the cube walls
+			cubeplot(val..., zsize=zsize, R=arg1, p=opt_p[4:end], back=true)
+			R = grdview!("", arg1; show=see, Q=srf, d...)
+			done = true
 		end
-		R = grdview("", arg1; show=see, p=opt_p[4:end], JZ=zsize, Q=srf, T=til, d...)
+		(!done) && (R = grdview("", arg1; show=see, p=opt_p[4:end], JZ=zsize, Q=srf, T=til, d...))
 	end
 	if (isa(cont_opts, Bool))				# Automatic contours
 		R = grdcontour!(arg1; J="", show=new_see)
