@@ -433,9 +433,10 @@ function cubeplot(fname1::Union{GMTimage, String}, fname2::Union{GMTimage, Strin
 	# ...
 	d = KW(kw)
 	opt_R = ((txt::String = parse_R(d, "")[2]) != "") ? txt[4:end] : "0/9/0/9/0/9"
-	opt_J = ((txt = parse_J(d, "")[2]) != "") ? txt[4:end] : "X15/0"
-	opt_JZ = ((txt = parse_JZ(d, "")[2]) != "") ? txt[5:end] : "15"
-	opt_p = ((txt = parse_p(d, "")[2]) != "") ? txt[4:end] : "135/30"
+	opt_J = ((txt = parse_J(d, "")[2]) != "") ? txt[4:end] : "X15/0";	txt = ""
+	opt_JZ = ((txt = parse_JZ(d, "")[2]) != "") ? txt[5:end] : "15";
+	txt == "" && (CTRL.pocket_J[3] = " -JZ15")
+	opt_p = ((txt = parse_p(d, "")[2]) != "" && txt != " -p") ? txt[4:end] : "135/30"
 	opt_t = ((txt = parse_t(d, "")[2]) != "") ? txt[4:end] : "0"
 	front, see = !back, show == 1
 
@@ -450,9 +451,13 @@ function cubeplot(fname1::Union{GMTimage, String}, fname2::Union{GMTimage, Strin
 	TB = front ? :T : :B
 	SN = front ? :S : :N
 	EW = front ? :E : :W
-	!notop && image!(f1, compact=sideplot(plane=TB, vsize=vsz), t=opt_t)
+	bak = CTRL.pocket_J[3]		# Save this because sideplot() calls parse_JZ with too few info to preserve it in case of need.
+	!notop && image!(f1, compact=sideplot(plane=TB, vsize=vsz), t=opt_t)	# 'compact' is that option that lets pass a GMT str
 	image!(f2, compact=sideplot(plane=SN, vsize=vsz), t=opt_t)
-	image!(f3, compact=sideplot(plane=EW, vsize=vsz), t=opt_t, show=see)
+	R = image!(f3, compact=sideplot(plane=EW, vsize=vsz), t=opt_t)
+	CTRL.pocket_J[3] = bak
+	see && showfig(d...)
+	return R
 end
 
 # -----------------------------------------------------------------------------------------------
