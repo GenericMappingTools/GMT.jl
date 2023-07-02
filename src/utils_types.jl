@@ -608,9 +608,7 @@ const simple_distinct = ["#e6194b", "#3cb44b", "#ffe119", "#4363d8", "#f58231", 
 # ---------------------------------------------------------------------------------------------------
 function df2ds(arg)
 	# If arg is a DataFrame, try to convert it into a GMTdataset. Keep all numerical columns and first Text one
-	(arg === nothing || isa(arg, GDtype) || isa(arg, Matrix{<:Real})) && return arg
-	fs = fields(arg)		# (:columns, :colindex, :metadata, :colmetadata, :allnotemetadata)
-	(isempty(fs) || fs[1] != :columns || fs[end] != :allnotemetadata) && return arg	# Not a DataFrame
+	!isdataframe(arg) && return arg
 
 	# OK, arrived here it seems arg is likely a DataFrame so try to convert it into a GMTdataset
 	colnames = [i for i in names(arg) if Base.nonmissingtype(eltype(arg[!,i])) <: Number]
@@ -619,6 +617,15 @@ function df2ds(arg)
 	colnames = [i for i in names(arg) if Base.nonmissingtype(eltype(arg[!,i])) <: AbstractString]	# Fish first (if any) text column
 	!isempty(colnames) && (D.text = string.(arg[!,colnames[1]]); append!(D.colnames, [colnames[1]]))
 	return D
+end
+ 
+# ---------------------------------------------------------------------------------------------------
+function isdataframe(arg)::Bool
+	# Try to guess if ARG is a DataFrame type. Note, we do this without having DataFrames as a dependency (even indirect)
+	(arg === nothing || isa(arg, GDtype) || isa(arg, Matrix{<:Real})) && return false
+	fs = fields(arg)		# (:columns, :colindex, :metadata, :colmetadata, :allnotemetadata)
+	(isempty(fs) || fs[1] != :columns || fs[end] != :allnotemetadata) && return false
+	return true
 end
 
 # ---------------------------------------------------------------------------------------------------
