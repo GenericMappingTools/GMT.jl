@@ -8,7 +8,7 @@ if they are not provided. Contrary to other image producing modules the "show' k
 display the image. Here it is set by default. If user wants to use *imshow* to create layers of a more complex
 fig he can use *show=false* for the intermediate layers.
 
-This module uses some internal logic to decide whether use `grdimge`, `grdview` or `plot`. Namely, when the
+This module uses an internal logic to decide whether use `grdimge`, `grdview` or `plot`. Namely, when the
 `view` option is used `grdview` is choosed and a default vertical scale is assigned. However, sometimes we want
 a rotated plot, optionally tilted, but not 3D view. In that case use the option `flat=true`, which forces
 the use of `grdimage`.
@@ -31,7 +31,7 @@ julia> imshow(gmtread()"http://larryfire.files.wordpress.com/2009/07/untooned_je
 # Plot images in the walls of the cube for the 3D view cases. Replace file names with those that exist for you.
 julia> viz(G, zsize=6, facades=("cenora_base.jpg", "bunny_cenora.webp", "burro_cenora.webp"))
 ```
-See also: [`grdimage`](@ref)
+See also: [`grdimage`](@ref), [`grdview`](@ref)
 """
 function imshow(arg1, x::AbstractVector{Float64}=Vector{Float64}(), y::AbstractVector{Float64}=Vector{Float64}(); kw...)
 	# Take a 2D array of floats and turn it into a GMTgrid or if input is a string assume it's a file name
