@@ -119,7 +119,7 @@ function plot(arg1; first=true, kw...)
 			return plotlinefit(Dv; first=first, d...)
 		end
 	end
-	common_plot_xyz("", cat_1_arg(arg1, true), "plot", first, false, kw...)
+	common_plot_xyz("", isdataframe(arg1) ? arg1 : cat_1_arg(arg1, true), "plot", first, false, kw...)
 end
 plot!(arg1; kw...) = plot(arg1; first=false, kw...)
 

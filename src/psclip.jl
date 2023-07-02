@@ -8,7 +8,7 @@ See full GMT (not the `GMT.jl` one) docs at [`psclip`]($(GMTdoc)clip.html)
 Parameters
 ----------
 
-- **C** | **endclip** | **end_clip_path** :: [Type => Bool]
+- **C** | **endclip** :: [Type => Bool]
 
     Mark end of existing clip path. No input file is needed.
 - $(GMT._opt_J)
@@ -23,7 +23,7 @@ Parameters
     Invert the sense of the test, i.e., clip regions where there is data coverage.
 - $(GMT.opt_P)
 - $(GMT._opt_R)
-- **T** | **clip_limits** :: [Type => Bool]
+- **T** | **clipregion** :: [Type => Bool]
 
     Rather than read any input files, simply turn on clipping for the current map region.
 - $(GMT.opt_U)
@@ -51,7 +51,7 @@ function clip(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	cmd, _, _, opt_R = parse_BJR(d, "", "", O, " -JX" * split(def_fig_size, '/')[1] * "/0")
 	cmd, = parse_common_opts(d, cmd, [:UVXY :JZ :c :e :f :g :p :t :yx :params], first)
-	cmd  = parse_these_opts(cmd, d, [[:A :steps :straight_lines], [:C :endclip :end_clip_path], [:N :invert], [:T :clip_limits]])
+	cmd  = parse_these_opts(cmd, d, [[:A :steps :straightlines], [:C :endclip], [:N :invert], [:T :clipregion :clip_limits]])
 	cmd *= add_opt_pen(d, [:W :pen], "W")
 
 	# If file name sent in, read it and compute a tight -R if this was not provided 
