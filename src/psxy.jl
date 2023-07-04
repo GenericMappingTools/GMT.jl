@@ -17,7 +17,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	else		        gmt_proggy = (IamModern[1]) ? "plot "    : "psxy "
 	end
 
-	arg1 = df2ds(arg1)							# If arg1 is a DataFrame, try to convert it into a GMTdataset
+	arg1 = tabletypes2ds(arg1)					# If arg1 is a Tables (better, a DataFrame), try to convert it into a GMTdataset
 	(!O) && (legend_type[1] = legend_bag())		# Make sure that we always start with an empty one
 
 	cmd::String = "";	sub_module::String = ""	# Will change to "scatter", etc... if called by sub-modules
@@ -386,7 +386,7 @@ function with_xyvar(d::Dict, arg1::GMTdataset, no_x::Bool=false)::Union{GMTdatas
 	# line per column). Pass nomulticol=1 in 'd' to prevent this.
 	# The zvar, [:svar :sizevar] and [:cvar :colorvar] are used to pull out the respective columns.
 
-	((val_y = find_in_dict(d, [:yvar])[1]) === nothing) && return arg1	# No y colname, no business
+	((val_y = find_in_dict(d, [:y :yvar])[1]) === nothing) && return arg1	# No y colname, no business
 	ycv::Vector{Int}, ismulticol = Int[], false
 	if (isa(val_y, Integer) || isa(val_y, String) || isa(val_y, Symbol))
 		yc = isa(val_y, Integer) ? val_y : ((ind = findfirst(string(val_y) .== arg1.colnames)) !== nothing ? ind : 0)
@@ -417,8 +417,8 @@ function with_xyvar(d::Dict, arg1::GMTdataset, no_x::Bool=false)::Union{GMTdatas
 		return c
 	end
 
-	xc = getcolvar(d, [:xvar])
-	zc = getcolvar(d, [:zvar]);				(zc != 0) && (ycv = [ycv..., zc])
+	xc = getcolvar(d, [:x :xvar])
+	zc = getcolvar(d, [:z :zvar]);			(zc != 0) && (ycv = [ycv..., zc])
 	cc = getcolvar(d, [:cvar :colorvar]);	(cc != 0) && (ycv = [ycv..., cc])
 	sc = getcolvar(d, [:svar :sizevar]);	(sc != 0) && (ycv = [ycv..., sc])
 	if (!no_x)

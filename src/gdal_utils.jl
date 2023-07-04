@@ -107,7 +107,7 @@ function gd2gmt_helper_scalefac(mat, scale_factor, add_offset, got_fill_val, fil
 	if (eltype(mat) <: Integer)
 		mat = mat .* scale_factor .+ add_offset		# Also promotes (and pay) the array to float32
 	else
-		@inbounds Threads.@threads for k = 1:length(mat)  mat[k] = mat[k] * scale_factor + add_offset  end
+		@inbounds Threads.@threads for k = 1:lastindex(mat)  mat[k] = mat[k] * scale_factor + add_offset  end
 	end
 	(got_fill_val) && (mat[nodata] .= NaN32)
 	mat
