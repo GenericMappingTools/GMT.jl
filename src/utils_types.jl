@@ -606,12 +606,21 @@ const alphabet_colors = ["#2BCE48", "#4C005C", "#005C31", "#5EF1F2", "#8F7C00", 
 const simple_distinct = ["#e6194b", "#3cb44b", "#ffe119", "#4363d8", "#f58231", "#911eb4", "#46f0f0", "#f032e6", "#bcf60c", "#fabebe", "#008080", "#e6beff", "#9a6324", "#fffac8", "#800000", "#aaffc3", "#808000", "#ffd8b1", "#000075", "#808080"]
  
 # ---------------------------------------------------------------------------------------------------
-function df2ds(arg)
-	# If arg is a DataFrame, try to convert it into a GMTdataset. Keep all numerical columns and first Text one
-	!isdataframe(arg) && return arg
+function tabletypes2ds(arg)
+	# Try guesswork to convert Tables types into GMTdatasets usable in plots.
+	(arg === nothing || isa(arg, GDtype) || isa(arg, Matrix{<:Real})) && return arg
+	isdataframe(arg) && return df2ds(arg)				# DataFrames are(?) easier to deal with.
 
-	# OK, arrived here it seems arg is likely a DataFrame so try to convert it into a GMTdataset
-	colnames = [i for i in names(arg) if Base.nonmissingtype(eltype(arg[!,i])) <: Number]
+	# Harder guesswork. It may easily screw.
+	colnames = [i for i in fields(arg) if Base.nonmissingtype(eltype(getproperty(arg, i))) <: AbstractFloat]
+	vv = [getproperty(arg,i) for i in colnames]			# A f. Vector-of-vectors
+	mat2ds(hcat(vv...), colnames=string.(colnames))		# More f. cryptic cmds
+end
+
+# ---------------------------------------------------------------------------------------------------
+function df2ds(arg)
+	# Try to convert a DataFrame into a GMTdataset. Keep all numerical columns and first Text one
+	colnames = [i for i in names(arg) if Base.nonmissingtype(eltype(arg[!,i])) <: Real]
 	mat = Matrix(coalesce.(arg[!,[colnames...]], NaN))
 	D = mat2ds(mat, colnames=colnames)
 	colnames = [i for i in names(arg) if Base.nonmissingtype(eltype(arg[!,i])) <: AbstractString]	# Fish first (if any) text column
@@ -622,7 +631,6 @@ end
 # ---------------------------------------------------------------------------------------------------
 function isdataframe(arg)::Bool
 	# Try to guess if ARG is a DataFrame type. Note, we do this without having DataFrames as a dependency (even indirect)
-	(arg === nothing || isa(arg, GDtype) || isa(arg, Matrix{<:Real})) && return false
 	fs = fields(arg)		# (:columns, :colindex, :metadata, :colmetadata, :allnotemetadata)
 	(isempty(fs) || fs[1] != :columns || fs[end] != :allnotemetadata) && return false
 	return true
