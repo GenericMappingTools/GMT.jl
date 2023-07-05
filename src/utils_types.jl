@@ -608,17 +608,18 @@ const simple_distinct = ["#e6194b", "#3cb44b", "#ffe119", "#4363d8", "#f58231", 
 # ---------------------------------------------------------------------------------------------------
 function tabletypes2ds(arg)
 	# Try guesswork to convert Tables types into GMTdatasets usable in plots.
-	(arg === nothing || isa(arg, GDtype) || isa(arg, Matrix{<:Real})) && return arg
+	#(arg === nothing || isa(arg, GDtype) || isa(arg, Matrix{<:Real})) && return arg
 	isdataframe(arg) && return df2ds(arg)				# DataFrames are(?) easier to deal with.
+	isODE(arg) && return ODE2ds(arg)					# DifferentialEquations type is a complex beast.
 
-	# Harder guesswork. It may easily screw.
+	# Guesswork, it may easily screw.
 	colnames = [i for i in fields(arg) if Base.nonmissingtype(eltype(getproperty(arg, i))) <: AbstractFloat]
 	vv = [getproperty(arg,i) for i in colnames]			# A f. Vector-of-vectors
-	mat2ds(hcat(vv...), colnames=string.(colnames))		# More f. cryptic cmds
+	mat2ds(reduce(hcat,vv), colnames=string.(colnames))	# More f. cryptic cmds
 end
 
 # ---------------------------------------------------------------------------------------------------
-function df2ds(arg)
+function df2ds(arg)::GMTdataset
 	# Try to convert a DataFrame into a GMTdataset. Keep all numerical columns and first Text one
 	colnames = [i for i in names(arg) if Base.nonmissingtype(eltype(arg[!,i])) <: Real]
 	mat = Matrix(coalesce.(arg[!,[colnames...]], NaN))
@@ -627,14 +628,49 @@ function df2ds(arg)
 	!isempty(colnames) && (D.text = string.(arg[!,colnames[1]]); append!(D.colnames, [colnames[1]]))
 	return D
 end
- 
+
 # ---------------------------------------------------------------------------------------------------
-function isdataframe(arg)::Bool
-	# Try to guess if ARG is a DataFrame type. Note, we do this without having DataFrames as a dependency (even indirect)
-	fs = fields(arg)		# (:columns, :colindex, :metadata, :colmetadata, :allnotemetadata)
-	(isempty(fs) || fs[1] != :columns || fs[end] != :allnotemetadata) && return false
-	return true
+function ODE2ds(arg)::GMTdataset
+	vv = getproperty(arg,:u)			# A potentially Vector-of-vectors or Vector-of-matrices
+	if isa(vv, Vector{<:Matrix})
+		mat = [arg.t reshape(reshape(reduce(hcat,vv),size(first(vv))...,:), length(vv[1]), length(vv))'[:,end:-1:1]]	# No comments
+	else
+		mat = (isa(vv, Vector{<:Vector})) ? [arg.t reduce(hcat,vv)'] : [arg.t arg.u]
+	end
+	colnames = Vector{String}(undef, size(mat,2));	colnames[1] = "t"
+	(size(mat,2) == 2) ? colnames[2] = "u" : (for k = 1:size(mat,2)-1  colnames[k+1] = "u$k"  end)
+	mat2ds(mat, colnames=colnames)
 end
+
+# ---------------------------------------------------------------------------------------------------
+function rasters2grid(arg)::GMTgrid
+	_y = collect(arg.dims[2]);	(_y[2] < _y[1]) ? (_y = _y[end:-1:1]; Yorder = 'T') : (Yorder = 'B')
+	_z = (size(arg,3) > 1) ? collect(ras.dims[3]) : Float64[]
+	n_cols = size(arg.data)[2]
+	is_transp = (n_cols == length(_y))
+	layout = is_transp ? Yorder * "RB" : ""
+
+	proj::String, wkt::String, epsg::Int = "", "", 0
+	t = !isempty(arg.dims) ? arg.dims[1].val.crs.val : nothing		# It took an awful debug effort to find this
+	isa(t, Int) ? (epsg = t; proj = epsg2proj(t)) : startswith(t, "GEOGCS") ? (wkt=t; proj=wkt2proj(t)) : startswith(t, "+proj") ? (proj=t) : nothing
+
+	data = nothing
+	(isa(arg.missingval, Real) && !isnan(arg.missingval)) && (@inbounds Threads.@threads for k=1:numel(arg.data) arg.data[k] == arg.missingval && (arg.data[k] = NaN)  end; arg.missingval = NaN)
+
+	# If Raster{Union{Missing, Float32},2} we're f... Copies and repetions all the time.
+	(ismissing(arg.missingval)) && (@inbounds Threads.@threads for k=1:numel(arg.data) ismissing(arg.data[k]) && (arg.data[k] = NaN)  end; data = convert(Matrix{eltype(arg.data[1])}, arg.data))
+
+	(data === nothing) && (data = collect(arg.data))
+	mat2grid(data, x=collect(arg.dims[1]), y=_y, v=_z, tit=string(arg.name), rem="Converted from a Rasters object.", is_transposed=is_transp, layout=layout, proj4=proj, wkt=wkt, epsg=epsg)
+end
+
+# ---------------------------------------------------------------------------------------------------
+# Try to guess if ARG is a DataFrame type. Note, we do this without having DataFrames as a dependency (even indirect)
+isdataframe(arg) = (fs = fields(arg); return (isempty(fs) || fs[1] != :columns || fs[end] != :allnotemetadata) ? false : true)
+# Check if it is a DifferentialEquations type
+isODE(arg) = (fs = fields(arg); return (!isempty(fs) && (fs[1] == :u && any(fs .== :t) && fs[end] == :retcode)) ? true : false)
+# See if it is a Rasters type
+israsters(arg) = (fs = fields(arg); return (length(fs) == 6 && (fs[1] == :data && fs[end] == :missingval)) ? true : false)
 
 # ---------------------------------------------------------------------------------------------------
 function color_gradient_line(D::Matrix{<:Real}; is3D::Bool=false, color_col::Int=3, first::Bool=true)
@@ -1435,11 +1471,13 @@ end
 istransposed(mat) = !isempty(fields(mat)) && (fields(mat)[1] == :parent)
 
 function mat2grid(mat, xx=Vector{Float64}(), yy=Vector{Float64}(), zz=Vector{Float64}(); reg=nothing,
-	x=Vector{Float64}(), y=Vector{Float64}(), v=Vector{Float64}(), hdr=nothing, proj4::String="", proj::String="",
-	wkt::String="", epsg::Int=0, geog::Int=-1, tit::String="", rem::String="", cmd::String="", names::Vector{String}=String[],
-	scale::Float32=1f0, offset::Float32=0f0, is_transposed::Bool=false)
+                  x=Vector{Float64}(), y=Vector{Float64}(), v=Vector{Float64}(), hdr=nothing, proj4::String="",
+                  proj::String="", wkt::String="", epsg::Int=0, geog::Int=-1, tit::String="", rem::String="",
+                  cmd::String="", names::Vector{String}=String[], scale::Float32=1f0, offset::Float32=0f0,
+                  layout::String="", is_transposed::Bool=false)
 	# Take a 2/3D array and turn it into a GMTgrid
 
+	israsters(mat) && return rasters2grid(mat)
 	!isa(mat[2], Real) && error("input matrix must be of Real numbers")
 	(isempty(proj4) && !isempty(proj)) && (proj4 = proj)	# Allow both proj4 or proj keywords
 	if (!isempty(proj4) && !startswith(proj4, "+proj=") && !startswith(proj4, "proj="))
@@ -1475,7 +1513,8 @@ function mat2grid(mat, xx=Vector{Float64}(), yy=Vector{Float64}(), zz=Vector{Flo
 		end
 	end
 	hasnans = any(!isfinite, mat) ? 2 : 1
-	GMTgrid(proj4, wkt, epsg, geog, range, inc, reg_, NaN, tit, rem, cmd, "", names, vec(x), vec(y), vec(v), isT ? copy(mat) : mat, "x", "y", "v", "z", "BCB", scale, offset, 0, hasnans)
+	_layout = (layout == "") ? "BCB" : layout
+	GMTgrid(proj4, wkt, epsg, geog, range, inc, reg_, NaN, tit, rem, cmd, "", names, vec(x), vec(y), vec(v), isT ? copy(mat) : mat, "x", "y", "v", "z", _layout, scale, offset, 0, hasnans)
 end
 
 # This method creates a new GMTgrid but retains all the header data from the G object
@@ -1496,7 +1535,7 @@ function mat2grid(mat, I::GMTimage)
 end
 
 function mat2grid(f::Function, xx::AbstractVector{<:Float64}=Vector{Float64}(),
-	              yy::AbstractVector{<:Float64}=Vector{Float64}(); reg=nothing, x::AbstractVector{<:Float64}=Vector{Float64}(), y::AbstractVector{<:Float64}=Vector{Float64}(), proj4::String="", proj::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="")
+                  yy::AbstractVector{<:Float64}=Vector{Float64}(); reg=nothing, x::AbstractVector{<:Float64}=Vector{Float64}(), y::AbstractVector{<:Float64}=Vector{Float64}(), proj4::String="", proj::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="")
 	(isempty(x) && !isempty(xx)) && (x = xx)
 	(isempty(y) && !isempty(yy)) && (y = yy)
 	(isempty(x) || isempty(y)) && error("Must transmit the domain coordinates over which to calculate function.")
