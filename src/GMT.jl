@@ -133,9 +133,9 @@ export
 	mbimport, mbgetdata, mbsvplist, mblevitus,
 
 	blendimg!, lonlat2xy, xy2lonlat, df2ds, mat2ds, mat2grid, mat2img, slicecube, cubeslice, linspace, logspace, fields,
-	flipud, fliplr, flipdim, gridinterp, grdinterp, pow, tic, toc, theme, tern2cart, geodetic2enu, cpt4dcw, gd2gmt, gmt2gd,
-	gdalread, gdalshade, gdalwrite, gadm, xyzw2cube, coastlinesproj, graticules, plotgrid!, resise,worldrectangular,
-	worldrectgrid,
+	flipud, fliplr, flipdim, flipdim!, gridinterp, grdinterp, pow, tic, toc, theme, tern2cart, geodetic2enu, cpt4dcw,
+	gd2gmt, gmt2gd, gdalread, gdalshade, gdalwrite, gadm, xyzw2cube, coastlinesproj, graticules, plotgrid!, resise,
+	worldrectangular, worldrectgrid,
 
 	earthregions, gridit, magic, rescale, stackgrids, delrows!, setgrdminmax!, meshgrid, cart2pol, pol2cat, cart2sph, sph2cart,
 
