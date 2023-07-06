@@ -644,6 +644,9 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function rasters2grid(arg)::GMTgrid
+	# Deals with Rasters.jl arrays (grids and cubes). Given that the type is immutable we cannot change the
+	# 'missingval' and hence some checks will be repeated everytime this function is run. So the best is
+	# to call 'G = mat2grid(arg)' once and use 'G'
 	_y = collect(arg.dims[2]);	(_y[2] < _y[1]) ? (_y = _y[end:-1:1]; Yorder = 'T') : (Yorder = 'B')
 	_z = (size(arg,3) > 1) ? collect(ras.dims[3]) : Float64[]
 	n_cols = size(arg.data)[2]
@@ -655,12 +658,13 @@ function rasters2grid(arg)::GMTgrid
 	isa(t, Int) ? (epsg = t; proj = epsg2proj(t)) : startswith(t, "GEOGCS") ? (wkt=t; proj=wkt2proj(t)) : startswith(t, "+proj") ? (proj=t) : nothing
 
 	data = nothing
-	(isa(arg.missingval, Real) && !isnan(arg.missingval)) && (@inbounds Threads.@threads for k=1:numel(arg.data) arg.data[k] == arg.missingval && (arg.data[k] = NaN)  end; arg.missingval = NaN)
+	(isa(arg.missingval, Real) && !isnan(arg.missingval)) && (@inbounds Threads.@threads for k=1:numel(arg.data) arg.data[k] == arg.missingval && (arg.data[k] = NaN)  end)
 
 	# If Raster{Union{Missing, Float32},2} we're f... Copies and repetions all the time.
 	(ismissing(arg.missingval)) && (@inbounds Threads.@threads for k=1:numel(arg.data) ismissing(arg.data[k]) && (arg.data[k] = NaN)  end; data = convert(Matrix{eltype(arg.data[1])}, arg.data))
 
 	(data === nothing) && (data = collect(arg.data))
+	(is_transp && Yorder == 'B') && (reverse!(data, dims=2); layout = "TRB")	# GMT expects grids to be scanline and Top->Bot
 	mat2grid(data, x=collect(arg.dims[1]), y=_y, v=_z, tit=string(arg.name), rem="Converted from a Rasters object.", is_transposed=is_transp, layout=layout, proj4=proj, wkt=wkt, epsg=epsg)
 end
 
