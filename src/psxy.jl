@@ -17,7 +17,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	else		        gmt_proggy = (IamModern[1]) ? "plot "    : "psxy "
 	end
 
-	arg1 = tabletypes2ds(arg1)					# If arg1 is a Tables (better, a DataFrame), try to convert it into a GMTdataset
+	(arg1 !== nothing && !isa(arg1, GDtype) && !isa(arg1, Matrix{<:Real})) && (arg1 = tabletypes2ds(arg1))
 	(!O) && (legend_type[1] = legend_bag())		# Make sure that we always start with an empty one
 
 	cmd::String = "";	sub_module::String = ""	# Will change to "scatter", etc... if called by sub-modules

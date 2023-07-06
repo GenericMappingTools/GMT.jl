@@ -120,7 +120,6 @@ function plot(arg1; first=true, kw...)
 		end
 	end
 	common_plot_xyz("", Tables.istable(arg1) ? arg1 : cat_1_arg(arg1, true), "plot", first, false, kw...)
-	#common_plot_xyz("", isdataframe(arg1) ? arg1 : cat_1_arg(arg1, true), "plot", first, false, kw...)
 end
 plot!(arg1; kw...) = plot(arg1; first=false, kw...)
 
@@ -1838,6 +1837,8 @@ function cat_1_arg(arg, toDS::Bool=false)
 		end
 	elseif (isa(arg, NTuple))
 		arg = hcat(collect(eltype(arg), 1:length(arg)), collect(arg))
+	elseif (isdataframe(arg) || isODE(arg))
+		return arg
 	end
 	return toDS ? mat2ds(arg) : arg
 end
@@ -1848,7 +1849,8 @@ function cat_2_arg2(arg1, arg2, toDS::Bool=false)::Union{Matrix{<:Real}, GMTdata
 
 	arg2 === nothing && return arg1
 	isa(arg1, Real) && isa(arg2, Real) && return [arg1 arg2]
-	!((isa(arg1, Vector) || typeof(arg1) <: AbstractRange || isa(arg1, NTuple) || isa(arg1, Matrix)) && (isa(arg2, Vector) || typeof(arg2) <: AbstractRange || isa(arg2, NTuple) || isa(arg2, Matrix)) ) &&
+	isa(arg2, Function) && (arg2 = arg2.(arg1))
+	!((isa(arg1, Vector) || typeof(arg1) <: AbstractRange || isa(arg1, NTuple) || isa(arg1, Matrix)) && (isa(arg2, Vector) || typeof(arg2) <: AbstractRange || isa(arg2, NTuple) || isa(arg2, Matrix))) &&
 		error("Unknown types ($(typeof(arg1))) and ($(typeof(arg2))) in cat_2_arg2() function")
 
 	if (isa(arg1, NTuple))  arg1 = collect(arg1)  end
