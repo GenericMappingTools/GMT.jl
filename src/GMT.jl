@@ -170,7 +170,7 @@ include("gdal_utils.jl")
 include("proj_utils.jl")
 using GMT.Gdal
 const global MatGDsGd = Union{Matrix{<:AbstractFloat}, GMTdataset, Vector{GMTdataset}, Gdal.AbstractDataset}
-const global current_cpt = [GMTcpt()]		# To store the current palette
+const global CURRENT_CPT = [GMTcpt()]		# To store the current palette
 
 include("gmt_main.jl")
 include("utils_types.jl")
@@ -319,6 +319,7 @@ include("get_enums.jl")
 	marginalhist(randn(1000,2), par=(PS_MEDIA="A2",), fmt=:ps);	rm("GMTplot.ps")
 	feather([0.0 0 2.0; 0.0 30 2; 0.0 60 2], rtheta=true, aspect="1:1", arrow=(len=0.5, shape=0.5,), fmt=:ps);
 	rm(joinpath(tempdir(), "GMTjl_custom_p_x.txt"))		# This one gets created before username is set.
+	resetGMT()
 end
 
 function __init__(test::Bool=false)
