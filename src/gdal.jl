@@ -384,7 +384,7 @@ OSRImportFromEPSG(a1, a2) = acare(ccall((:OSRImportFromEPSG, libgdal), Cint, (pV
 OSRNewSpatialReference(a1) = acare(ccall((:OSRNewSpatialReference, libgdal), pVoid, (Cstring,), a1))
 
 function OSRSetAxisMappingStrategy(hSRS, strategy)
-	(Gdal.GDALVERSION[] < v"3.0.0") && return
+	#(Gdal.GDALVERSION[] < v"3.0.0") && return	# This breakes precompile if called from one PrecompileTools call
 	acare(ccall((:OSRSetAxisMappingStrategy, libgdal), Cvoid, (pVoid, UInt32), hSRS, strategy))
 end
 
