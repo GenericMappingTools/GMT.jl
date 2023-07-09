@@ -78,7 +78,7 @@ function makecpt(cmd0::String="", arg1=nothing; kwargs...)::Union{String, GMTcpt
 	_r = gmt(cmd, arg1, !isempty(Tvec) ? Tvec : nothing)
 	r = (_r !== nothing) ? _r : GMTcpt()	# _r === nothing when we save CPT on disk.
 	(got_N && !isempty(r)) && (r.bfn = ones(3,3))	# Cannot remove the bfn like in plain GMT so make it all whites
-	current_cpt[1] = r
+	CURRENT_CPT[1] = r
 	return r
 end
 

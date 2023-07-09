@@ -648,7 +648,8 @@ function rasters2grid(arg)::GMTgrid
 	# 'missingval' and hence some checks will be repeated everytime this function is run. So the best is
 	# to call 'G = mat2grid(arg)' once and use 'G'
 	_y = collect(arg.dims[2]);	(_y[2] < _y[1]) ? (_y = _y[end:-1:1]; Yorder = 'T') : (Yorder = 'B')
-	_z = (size(arg,3) > 1) ? collect(ras.dims[3]) : Float64[]
+	_z = (size(arg,3) > 1) ? collect(arg.dims[3]) : Float64[]
+	#_z = (size(arg,3) > 1) && (eltype(arg.dims[3]) <: TimeType ? [arg.dims[3][i].instant.periods.value for i=1:length(arg.dims[3])] : Float64[])	# Store in milisecs just to have something numeric
 	n_cols = size(arg.data)[2]
 	is_transp = (n_cols == length(_y))
 	layout = is_transp ? Yorder * "RB" : ""
@@ -661,7 +662,10 @@ function rasters2grid(arg)::GMTgrid
 	(isa(arg.missingval, Real) && !isnan(arg.missingval)) && (@inbounds Threads.@threads for k=1:numel(arg.data) arg.data[k] == arg.missingval && (arg.data[k] = NaN)  end)
 
 	# If Raster{Union{Missing, Float32},2} we're f... Copies and repetions all the time.
-	(ismissing(arg.missingval)) && (@inbounds Threads.@threads for k=1:numel(arg.data) ismissing(arg.data[k]) && (arg.data[k] = NaN)  end; data = convert(Matrix{eltype(arg.data[1])}, arg.data))
+	if (ismissing(arg.missingval))
+		@inbounds Threads.@threads for k=1:numel(arg.data) ismissing(arg.data[k]) && (arg.data[k] = NaN)  end
+		data = convert(Array{eltype(arg.data[1]), ndims(arg)}, arg.data)
+	end
 
 	(data === nothing) && (data = collect(arg.data))
 	(is_transp && Yorder == 'B') && (reverse!(data, dims=2); layout = "TRB")	# GMT expects grids to be scanline and Top->Bot
@@ -1494,9 +1498,9 @@ function mat2grid(mat, xx=Vector{Float64}(), yy=Vector{Float64}(), zz=Vector{Flo
 	elseif (isa(reg, Real))
 		reg_ = (reg == 0) ? 0 : 1
 	end
-	if (isempty(x) && !isempty(xx))  x = vec(xx)  end
-	if (isempty(y) && !isempty(yy))  y = vec(yy)  end
-	if (isempty(v) && !isempty(zz))  v = vec(zz)  end
+	(isempty(x) && !isempty(xx)) && (x = vec(xx))
+	(isempty(y) && !isempty(yy)) && (y = vec(yy))
+	(isempty(v) && !isempty(zz)) && (v = vec(zz))
 	x, y, hdr, x_inc, y_inc = grdimg_hdr_xy(mat, reg_, hdr, x, y, is_transposed)
 
 	# Now we still must check if the method with no input MAT was called. In that case mat = [nothing val]
@@ -1508,7 +1512,7 @@ function mat2grid(mat, xx=Vector{Float64}(), yy=Vector{Float64}(), zz=Vector{Flo
 		(fill_val != 0) && fill!(mat, fill_val)
 	end
 
-	isT = istransposed(mat)
+	isT = istransposed(mat)			# Checks if mat is of a transposed type (not if the array is transposed).
 	if (ndims(mat) == 2)
 		inc, range = [x_inc, y_inc], hdr[1:6]
 	else
@@ -1518,6 +1522,7 @@ function mat2grid(mat, xx=Vector{Float64}(), yy=Vector{Float64}(), zz=Vector{Flo
 	end
 	hasnans = any(!isfinite, mat) ? 2 : 1
 	_layout = (layout == "") ? "BCB" : layout
+	(geog == -1 && helper_geod(proj4, wkt, epsg)[3]) && (geog = (range[2] <= 180) ? 1 : 2)		# Signal if grid is geog.
 	GMTgrid(proj4, wkt, epsg, geog, range, inc, reg_, NaN, tit, rem, cmd, "", names, vec(x), vec(y), vec(v), isT ? copy(mat) : mat, "x", "y", "v", "z", _layout, scale, offset, 0, hasnans)
 end
 

@@ -82,7 +82,13 @@ function grdview(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	end
 	cmd = add_opt(d, cmd, "%", [:layout :mem_layout], nothing)
 
-	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)		# Find how data was transmitted
+	if (isa(arg1, GMTgrid) && length(opt_R) > 3 && CTRL.limits[1:4] != arg1.range[1:4])
+		# If a -R is used and grid is in mem, better to crop it right now. Also helps with getting the auto CPT from crop
+		arg1 = grdcut(arg1, R=opt_R[4:end])	
+		got_fname = 0
+	else
+		cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)		# Find how data was transmitted
+	end
 
 	(isa(arg1, Matrix{<:Real})) && (arg1 = mat2grid(arg1))
 

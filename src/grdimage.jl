@@ -70,7 +70,7 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 	cmd::String, opt_B::String, opt_J::String, opt_R::String = parse_BJR(d, "", "", O, " -JX" * split(def_fig_size, '/')[1] * "/0")
 	(startswith(opt_J, " -JX") && !contains(opt_J, "/")) && (cmd = replace(cmd, opt_J => opt_J * "/0")) # When sub-regions
 	(!has_opt_B && isa(arg1, GMTimage) && (isimgsize(arg1) || CTRL.limits[1:4] == zeros(4)) && opt_B == def_fig_axes_bak) &&
-		(cmd = replace(cmd, opt_B => ""))	# Dont plot axes for plain images if that was not required
+		(cmd = replace(cmd, opt_B => ""))			# Dont plot axes for plain images if that was not required
 
 	cmd, = parse_common_opts(d, cmd, [:UVXY :params :c :f :n :p :t], first)
 	cmd  = parse_these_opts(cmd, d, [[:A :img_out :image_out], [:D :img_in :image_in], [:E :dpi], [:G :bit_color],
@@ -78,9 +78,15 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 	cmd = add_opt(d, cmd, "%", [:layout :mem_layout], nothing)
 	cmd = add_opt(d, cmd, "T", [:T :no_interp :tiles], (skip="_+s", skip_nan="_+s", outlines=("+o", add_opt_pen)))
 
-	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)		# Find how data was transmitted
-	if (got_fname == 0 && isa(arg1, Tuple))			# Then it must be using the three r,g,b grids
-		cmd, got_fname, arg1, arg2, arg3 = find_data(d, cmd0, cmd, arg1, arg2, arg3)
+	if (isa(arg1, GMTgrid) && length(opt_R) > 3 && CTRL.limits[1:4] != arg1.range[1:4])
+		# If a -R is used and grid is in mem, better to crop it right now. Also helps with getting the auto CPT from crop
+		arg1 = grdcut(arg1, R=opt_R[4:end])
+		got_fname = 0
+	else
+		cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)		# Find how data was transmitted
+		if (got_fname == 0 && isa(arg1, Tuple))		# Then it must be using the three r,g,b grids
+			cmd, got_fname, arg1, arg2, arg3 = find_data(d, cmd0, cmd, arg1, arg2, arg3)
+		end
 	end
 
 	if (isa(arg1, Matrix{<:Real}))

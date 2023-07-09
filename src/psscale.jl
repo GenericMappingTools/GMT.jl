@@ -66,8 +66,8 @@ function colorbar(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	cmd, arg1, = add_opt_cpt(d, cmd, CPTaliases, 'C', 0, arg1)
 	if (!isa(arg1, GMTcpt) && !occursin("-C", cmd))	# If given no CPT, try to see if we have a current one stored in global
-		if (!isempty(current_cpt[1]))
-			cmd *= " -C";	arg1 = current_cpt[1]
+		if (!isempty(CURRENT_CPT[1]))
+			cmd *= " -C";	arg1 = CURRENT_CPT[1]
 		end
 	end
 

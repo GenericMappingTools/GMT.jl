@@ -766,7 +766,7 @@ function grid_init(API::Ptr{Nothing}, X::GMT_RESOURCE, Grid::GMTgrid, pad::Int=2
 		G = convert(Ptr{GMT_CUBE}, GMT_Create_Data(API, GMT_IS_CUBE, GMT_IS_VOLUME, mode, NULL, Grid.range, Grid.inc, UInt32(Grid.registration), pad))
 		X.family, X.geometry = GMT_IS_CUBE, GMT_IS_VOLUME
 	else
-		G = convert(Ptr{GMT_GRID}, GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, mode, NULL, Grid.range[1:4], Grid.inc[1:2], UInt32(Grid.registration), pad))
+		G = convert(Ptr{GMT_GRID}, GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, mode, NULL, Float64.(Grid.range[1:4]), Float64.(Grid.inc[1:2]), UInt32(Grid.registration), pad))
 	end
 
 	Gb = unsafe_load(G)			# Gb = GMT_GRID | GMT_CUBE
@@ -857,7 +857,7 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage)::Ptr{GMT_IMAGE}
 	(pad == 2 && Img.pad == 0 && Img.layout[2] == 'R') && (mode = GMT_CONTAINER_AND_DATA)	# Unfortunately
 
 	I = convert(Ptr{GMT_IMAGE}, GMT_Create_Data(API, family, GMT_IS_SURFACE, mode, pointer([n_cols, n_rows, n_bands]),
-	                                            Img.range[1:4], Img.inc, Img.registration, pad))
+	                                            Float64.(Img.range[1:4]), Float64.(Img.inc), Img.registration, pad))
 	Ib::GMT_IMAGE = unsafe_load(I)				# Ib = GMT_IMAGE (constructor with 1 method)
 	h::GMT_GRID_HEADER = unsafe_load(Ib.header)
 
@@ -1275,7 +1275,7 @@ function resetGMT()
 	multi_col[1] = false;	convert_syntax[1] = false;	current_view[1] = "";	show_kwargs[1] = false;
 	img_mem_layout[1] = "";	grd_mem_layout[1] = "";		CTRL.limits .= 0.0;	CTRL.proj_linear[1] = true;
 	CTRLshapes.fname[1] = "";CTRLshapes.first[1] = true; CTRLshapes.points[1] = false;
-	current_cpt[1]  = GMTcpt();		legend_type[1] = legend_bag();	ressurectGDAL()
+	CURRENT_CPT[1]  = GMTcpt();		legend_type[1] = legend_bag();	ressurectGDAL()
 	def_fig_axes[1] = def_fig_axes_bak;		def_fig_axes3[1] = def_fig_axes3_bak;
 	CTRL.pocket_J[1], CTRL.pocket_J[2], CTRL.pocket_J[3], CTRL.pocket_J[4] = "", "", "", "   ";
 	CTRL.IamInPaperMode[:] = [false, true];	IamInset[1] = false
@@ -1365,6 +1365,7 @@ Base.:display(D::GMTdataset) = show(D)		# Otherwise the default prints nothing w
 
 # ---------------------------------------------------------------------------------------------------
 function Base.show(io::IO, C::GMTcpt)
+	isempty(C) && return
 	mat = (size(C.cpt,1) > 1) ? [round.([C.cpt.*255 C.alpha[1:size(C.cpt,1)].*255], digits=0) C.range] : [round.([C.cpt.*255 C.alpha[1].*255], digits=0) C.range]
 	D = mat2ds(mat, colnames=["r1", "g1", "b1", "r2", "g2", "b2", "alpha", "z1", "z2"])
 	D.bbox = Float64[]

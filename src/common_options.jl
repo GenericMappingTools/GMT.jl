@@ -587,6 +587,27 @@ function set_aspect_ratio(aspect::String, width::String, def_fig::Bool=false, is
 	return width
 end
 
+# ----------------------------------------------------------------------------------------------------
+"""
+    w, h = plot_GI_size(GI, proj="", region="")
+
+Compute the plot width and height in cm given the the region `region` and projection `proj`. Note that
+here the `region` and `proj` options, if provided, must be the full " -R...." and " -J..." strings and
+the later MUST contain the figure width too. If any of those is empty we get/estimate them from the `GI`
+limits, where `GI` is either a grid or an image. For this we use a default value of 15c but this
+value is not particularly important because the main idea here is to be able to compute the H/W ratio.
+
+Returns a tuple of Float64 with the width, height in cm.
+"""
+function plot_GI_size(GI::GItype, opt_J="", opt_R="")
+	got_J = (opt_J != "")
+	(opt_R == "") && (opt_R = @sprintf(" -R%.10g/%.10g/%.10g/%.10g", GI.range[1:4]...))
+	(opt_J == "") && (opt_J = (GI.geog > 0) ? guess_proj(GI.range[1:2], GI.range[3:4]) : " -JX")
+	!got_J && (opt_J *= '/' * split(def_fig_size, '/')[1])
+	w,h = gmt("mapproject -W " * opt_R * opt_J).data
+end
+
+# ----------------------------------------------------------------------------------------------------
 function check_flipaxes(d::Dict, width::AbstractString)
 	# Deal with the case that we want to invert the axis sense.
 	# flipaxes(x=true, y=true) OR  flipaxes("x", :y) OR flipaxes(:xy)
@@ -2419,7 +2440,7 @@ function add_opt_cpt(d::Dict, cmd::String, symbs::VMs, opt::Char, N_args::Int=0,
 	# STORE, when true, will save the cpt in the global state
 	# DEF, when true, means to use the default cpt (Turbo)
 	# OPT_T, when != "", contains a min/max/n_slices/+n string to calculate a cpt with n_slices colors between [min max]
-	# IN_BAG, if true means that, if not empty, we return the contents of `current_cpt`
+	# IN_BAG, if true means that, if not empty, we return the contents of `CURRENT_CPT`
 
 	(show_kwargs[1]) && return print_kwarg_opts(symbs, "GMTcpt | Tuple | Array | String | Number"), arg1, arg2, N_args
 
@@ -2451,11 +2472,11 @@ function add_opt_cpt(d::Dict, cmd::String, symbs::VMs, opt::Char, N_args::Int=0,
 				if (store && c != "" && tryparse(Float32, c) === nothing)	# Because if !== nothing then it's a number and -Cn is not valid
 					try			# Wrap in try because not always (e.g. grdcontour -C) this is a makecpt callable
 						r = makecpt(opt_C * " -Vq")
-						global current_cpt[1] = (r !== nothing) ? r : GMTcpt()
+						global CURRENT_CPT[1] = (r !== nothing) ? r : GMTcpt()
 					catch
 					end
-				elseif (in_bag && !isempty(current_cpt[1]))	# If we have something in Bag, return it
-					cmd, arg1, arg2, N_args = helper_add_cpt(cmd, "", N_args, arg1, arg2, current_cpt[1], false)
+				elseif (in_bag && !isempty(CURRENT_CPT[1]))	# If we have something in Bag, return it
+					cmd, arg1, arg2, N_args = helper_add_cpt(cmd, "", N_args, arg1, arg2, CURRENT_CPT[1], false)
 				end
 			end
 		end
@@ -2469,8 +2490,8 @@ function add_opt_cpt(d::Dict, cmd::String, symbs::VMs, opt::Char, N_args::Int=0,
 			cpt.bfn[3, :] = [1.0 1.0 1.0]	# Some deep bug, in occasions, returns grays on 2nd and on calls
 		end
 		cmd, arg1, arg2, N_args = helper_add_cpt(cmd, opt, N_args, arg1, arg2, cpt, store)
-	elseif (in_bag && !isempty(current_cpt[1]))		# If everything else has failed and we have one in the Bag, return it
-		cmd, arg1, arg2, N_args = helper_add_cpt(cmd, opt, N_args, arg1, arg2, current_cpt[1], false)
+	elseif (in_bag && !isempty(CURRENT_CPT[1]))		# If everything else has failed and we have one in the Bag, return it
+		cmd, arg1, arg2, N_args = helper_add_cpt(cmd, opt, N_args, arg1, arg2, CURRENT_CPT[1], false)
 	end
 	if (occursin(" -C", cmd))
 		if ((val = find_in_dict(d, [:hinge])[1]) !== nothing)       cmd *= string("+h", val)::String  end
@@ -2483,7 +2504,7 @@ end
 function helper_add_cpt(cmd::String, opt, N_args::Int, arg1, arg2, val::GMTcpt, store::Bool)
 	# Helper function to avoid repeating 3 times the same code in add_opt_cpt
 	(N_args == 0) ? arg1 = val : arg2 = val;	N_args += 1
-	if (store)  global current_cpt[1] = val  end
+	if (store)  global CURRENT_CPT[1] = val  end
 	(isa(opt, Char) || (isa(opt, String) && opt != "")) && (cmd *= " -" * opt)
 	return cmd, arg1, arg2, N_args
 end
@@ -2536,18 +2557,18 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fname::Int, arg1, arg2=nothing, arg3=nothing, prog::String="")
-	# Get CPT either from keyword input of from current_cpt.
+	# Get CPT either from keyword input of from CURRENT_CPT.
 	# Also puts -R in cmd when accessing grids from grdimage|view|contour, etc... (due to a GMT bug that doesn't do it)
 	# Use CMD0 = "" to use this function from within non-grd modules
-	global current_cpt
+	global CURRENT_CPT
 	cpt_opt_T::String = ""
 	if (isa(arg1, GItype))			# GMT bug, -R will not be stored in gmt.history
-		range::Vector{Float64} = vec(arg1.range)
+		range::Vector{Float64} = isa(arg1.range, Float64) ? vec(arg1.range) : vec(arg1.range[1:6])	# Beyond 6 can be a Time
 	elseif (cmd0 != "" && cmd0[1] != '@')
 		info = grdinfo(cmd0 * " -C");	range = vec(info.data)
 	end
 	if (isa(arg1, GItype) || (cmd0 != "" && cmd0[1] != '@'))
-		if (isempty(current_cpt[1]) && (val = find_in_dict(d, CPTaliases, false)[1]) === nothing)
+		if (isempty(CURRENT_CPT[1]) && (val = find_in_dict(d, CPTaliases, false)[1]) === nothing)
 			# If no cpt name sent in, then compute (later) a default cpt
 			if (isa(arg1, GMTgrid) && ((val = find_in_dict(d, [:percent])[1])) !== nothing)
 				lh = quantile(any(!isfinite, arg1) ? skipnan(vec(arg1)) : vec(arg1), [(100 - val)/200, (1 - (100 - val)/200)])
@@ -2559,6 +2580,7 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 				(length(val) != 2) && error("The clim option must have two elements and not $(length(val)::Int)")
 				cpt_opt_T = @sprintf(" -T%.12g/%.12g/256+n -D", val[1], val[2])	# Piggyback -D
 			else
+				((range[6] - range[5]) > 1e6) && @warn("The z range expands to more then 6 orders of magnitude. Missed to replace the nodatavalues?\n\n")
 				cpt_opt_T = @sprintf(" -T%.12g/%.12g/256+n", range[5] - 1e-6, range[6] + 1e-6)
 			end
 			(range[5] > 1e100) && (cpt_opt_T = "")	# cmd0 is an image name and now grdinfo does not compute its min/max
@@ -2580,7 +2602,7 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 	end
 
 	N_used = (got_fname == 0) ? 1 : 0			# To know whether a cpt will go to arg1 or arg2
-	get_cpt = false;	in_bag = true;			# IN_BAG means seek if current_cpt != nothing and return it
+	get_cpt = false;	in_bag = true;			# IN_BAG means seek if CURRENT_CPT != nothing and return it
 	if (prog == "grdview")
 		get_cpt = true
 		if ((val = find_in_dict(d, [:G :drapefile], false)[1]) !== nothing)
@@ -3832,7 +3854,7 @@ function dbg_print_cmd(d::Dict, cmd::Vector{String})
 			CTRL.pocket_call[3] = nothing	# This is mostly for testing purposes, but potentially needed elsewhere.
 			CTRL.limits[1:12] = zeros(12)
 			# Some times an automtic CPT has been generated by the Vd'ed cmd but when that happens MUST debug it
-			#GMT.current_cpt[1] = GMT.GMTcpt()		# Can't do this because it would f. plot(..., colorbar=true)
+			#GMT.CURRENT_CPT[1] = GMT.GMTcpt()		# Can't do this because it would f. plot(..., colorbar=true)
 		end
 		if (length(d) > 0)
 			dd = deepcopy(d)		# Make copy so that we can harmlessly delete those below
@@ -3886,7 +3908,7 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K:
 	# OPT_T holds the psconvert -T option, again when not PS
 	# FNAME is for when using the savefig option
 
-	global current_cpt[1] = GMTcpt()			# Reset to empty when fig is finalized
+	global CURRENT_CPT[1] = GMTcpt()			# Reset to empty when fig is finalized
 
 	digests_legend_bag(d)						# Plot the legend if requested
 
@@ -4267,7 +4289,7 @@ end
 function show_non_consumed(d::Dict, cmd)
 	# First delete some that could not have been delete earlier (from legend for example)
 	del_from_dict(d, [[:fmt], [:show], [:leg, :legend], [:box_pos], [:leg_pos], [:P, :portrait], [:this_cpt], [:linefit, :linearfit]])
-	!isempty(current_cpt[1]) && del_from_dict(d, [[:percent], [:clim]])	# To not (wrongly) complain about these
+	!isempty(CURRENT_CPT[1]) && del_from_dict(d, [[:percent], [:clim]])	# To not (wrongly) complain about these
 	if (!haskey(d, :Vd) && length(d) > 0)		# Vd, if exists, must be a Vd=0 to signal no warnings.
 		prog = isa(cmd, String) ? split(cmd)[1] : split(cmd[1])[1]
 		println("Warning: the following options were not consumed in $prog => ", keys(d))
@@ -4365,7 +4387,7 @@ function put_in_legend_bag(d::Dict, cmd, arg, O::Bool=false, opt_l::String="")
 		for k = 1:numel(pens)  pens[k] *= extra_opt  end
 		if ((ind = findfirst(arg.colnames .== "Zcolor")) !== nothing)
 			rgb = [0.0, 0.0, 0.0]
-			P::Ptr{GMT.GMT_PALETTE} = palette_init(G_API[1], current_cpt[1])	# A pointer to a GMT CPT
+			P::Ptr{GMT.GMT_PALETTE} = palette_init(G_API[1], CURRENT_CPT[1])	# A pointer to a GMT CPT
 			gmt_get_rgb_from_z(G_API[1], P, arg[gindex[1],ind], rgb)
 			cmd_[1] *= " -G" * arg2str(rgb.*255)
 			for k = 1:numel(pens)

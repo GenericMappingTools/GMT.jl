@@ -63,7 +63,7 @@ function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int
 	end
 
 	# If we found a scale_factor above, apply it
-	(scale_factor != 1) && (mat = gd2gmt_helper_scalefac(mat, scale_factor, add_offset, got_fill_val, fill_val))
+	(scale_factor != 1 || got_fill_val) && (mat = gd2gmt_helper_scalefac(mat, scale_factor, add_offset, got_fill_val, fill_val))
 
 	local gt
 	try
@@ -102,14 +102,16 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function gd2gmt_helper_scalefac(mat, scale_factor, add_offset, got_fill_val, fill_val)
-	# Apply a scale + offset
+	# Apply a scale + offset and/or replace the fill_val by NaNs
 	(got_fill_val) && (nodata = isnodata(mat, fill_val))
-	if (eltype(mat) <: Integer)
-		mat = mat .* scale_factor .+ add_offset		# Also promotes (and pay) the array to float32
-	else
-		@inbounds Threads.@threads for k = 1:lastindex(mat)  mat[k] = mat[k] * scale_factor + add_offset  end
+	if (scale_factor != 1 || add_offset != 0)
+		if (eltype(mat) <: Integer)
+			mat = mat .* scale_factor .+ add_offset		# Also promotes (and pay) the array to float32
+		else
+			@inbounds Threads.@threads for k = 1:lastindex(mat)  mat[k] = mat[k] * scale_factor + add_offset  end
+		end
 	end
-	(got_fill_val) && (mat[nodata] .= NaN32)
+	(got_fill_val) && (mat[nodata] .= NaN)
 	mat
 end
 
@@ -154,8 +156,8 @@ function gd2gmt_helper(input, sds)
 				ind2 = findfirst('\n', info[ind[1]:end])
 				add_offset = tryparse(Float32, info[ind[1]+11 : ind[1] + ind2[1]-2])
 			end
-			fill_val, got_fill_val = get_FillValue(info)
 		end
+		fill_val, got_fill_val = get_FillValue(info)
 	end
 	return dataset, scale_factor, add_offset, got_fill_val, fill_val
 end
@@ -560,7 +562,10 @@ function gdalread(fname::AbstractString, optsP=String[]; opts=String[], gdataset
 	(isempty(optsP) && !isempty(opts)) && (optsP = opts)		# Accept either Positional or KW argument
 	ressurectGDAL();
 	ds_t = Gdal.read(fname, flags=Gdal.GDAL_OF_RASTER, I=false)
-	if (ds_t.ptr != C_NULL && Gdal.OGRGetDriverByName(Gdal.shortname(getdriver(ds_t))) == C_NULL)
+	driver = (ds_t.ptr != C_NULL) ? Gdal.shortname(getdriver(ds_t)) : ""
+	if (ds_t.ptr != C_NULL && Gdal.OGRGetDriverByName(driver) == C_NULL)
+		ds = gdaltranslate(ds_t, optsP; gdataset=gdataset, kw...)
+	elseif (driver == "netCDF" && (Gdal.nraster(ds_t) > 1 || Gdal.width(ds_t) > 100))	# 100 is just inventing
 		ds = gdaltranslate(ds_t, optsP; gdataset=gdataset, kw...)
 	else
 		(ds_t.ptr == C_NULL) && (ds_t = Gdal.read(fname, flags = Gdal.GDAL_OF_VECTOR | Gdal.GDAL_OF_VERBOSE_ERROR, I=false))

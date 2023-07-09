@@ -3,8 +3,8 @@ Base.@kwdef mutable struct GMTgrid{T<:Real,N} <: AbstractArray{T,N}
 	wkt::String
 	epsg::Int
 	geog::Int
-	range::Array{Float64,1}
-	inc::Array{Float64,1}
+	range::Union{Vector{Float64}, Vector{Any}}
+	inc::Union{Vector{Float64}, Vector{Any}}
 	registration::Int
 	nodata::Union{Float64, Float32}
 	title::String
@@ -14,7 +14,7 @@ Base.@kwdef mutable struct GMTgrid{T<:Real,N} <: AbstractArray{T,N}
 	names::Vector{String}
 	x::Array{Float64,1}
 	y::Array{Float64,1}
-	v::Union{Vector{<:Real}, Vector{String}}
+	v::Union{Vector{<:Real}, Vector{String}, Vector{<:TimeType}}
 	z::Array{T,N}
 	x_unit::String
 	y_unit::String

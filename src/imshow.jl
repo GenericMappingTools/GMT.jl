@@ -37,8 +37,6 @@ function imshow(arg1, x::AbstractVector{Float64}=Vector{Float64}(), y::AbstractV
 	# Take a 2D array of floats and turn it into a GMTgrid or if input is a string assume it's a file name
 	# In this later case try to figure if it's a grid or an image and act accordingly.
 
-	#d = KW(kw)
-	#see::Bool = (!haskey(d, :show)) ? true : (d[:show] != 0)	# No explicit 'show' keyword means show=true
 	see = ((val = find_in_kwargs(kw, [:show])[2]) === nothing) ? true : (val != 0)	# No explicit 'show' keyword means show=true
 
 	is_image = false
@@ -101,7 +99,27 @@ function imshow(arg1::GMTgrid; kw...)
 	(flat && docube) && (flat = false)
 	if (!docube && (flat || (opt_p == "" && !have_tilles)))
 		(flat && opt_p != "") && (d[:p] = opt_p[4:end])		# Restore the meanwhile deleted -p option
-		R = grdimage("", arg1; show=see, d...)
+		if ((nl = size(arg1, 3)) > 1)
+			(arg1.geog > 0 && is_in_dict(d, [:J :proj :projection]) === nothing) && (d[:J] = "guess")
+			opt_J = parse_J(d, "", "", true, false, false)[2]
+  			w, h = plot_GI_size(arg1, opt_J)	# Compute the plot Width,Height given the arg1 limits and proj
+			aspect = h / w
+			nc = 2		# Number of subplot columns
+			_w = 15 / nc;	_h = _w * aspect
+			grid = isodd(nl) ? "$((div(nl, nc)+1))x$(nc)" : "$(div(nl, nc))x$(nc)"
+
+			subplot(grid=grid, dims=(panels=(_w, _h), divlines=(1,:dashed)), row_axes=(left=true,row_title=""), col_axes=(bott=true,), T=find_in_dict(d, [:title])[1])
+				#gmtset(MAP_TITLE_OFFSET="0",MAP_FRAME_AXES="WSNE")
+				d[:par] = (MAP_TITLE_OFFSET="0p",)
+				grdimage("", mat2grid(arg1[:,:,1], arg1); d...)
+				for k = 2:nl
+					grdimage("", mat2grid(arg1[:,:,k], arg1); panel=:next, d...)
+				end
+			subplot(:show)
+			R = nothing
+		else
+			R = grdimage("", arg1; show=see, d...)
+		end
 	else
 		zsize = ((val = find_in_dict(d, [:JZ :Jz :zscale :zsize])[1]) !== nothing) ? val : 8
 		srf = ((val = find_in_dict(d, [:Q :surf :surftype])[1]) !== nothing) ? val : "i100"
