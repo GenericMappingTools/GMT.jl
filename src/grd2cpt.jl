@@ -80,7 +80,7 @@ function grd2cpt(cmd0::String="", arg1=nothing; kwargs...)
 	r = common_grd(d, "grd2cpt " * cmd, arg1, arg2)		# r may be a tuple if -E+f was used
 	(isa(r, String)) && (return got_N ? r * " -N" : r)	# If it's a String it's beause of a Vd=2
 	got_N && (r.bfn = ones(3,3))	# Cannot remove the bfn like in plain GMT so make it all whites
-	current_cpt[1] = (r !== nothing) ? (isa(r, Tuple) ? r[1] : r) : GMTcpt()
+	CURRENT_CPT[1] = (r !== nothing) ? (isa(r, Tuple) ? r[1] : r) : GMTcpt()
 	isa(r, Tuple) && (r[2].colnames = ["Z", "CDF(Z)"])
 	return r
 end

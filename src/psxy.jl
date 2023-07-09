@@ -236,7 +236,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	(got_Zvars && (do_Z_fill || opt_G != "") && opt_L == "") && (cmd *= " -L")	# GMT requires -L when -Z fill or -G
 
 	if ((do_Z_fill || do_Z_outline || (got_color_line_grad && !is3D)) && !occursin("-C", cmd))
-		if (isempty(current_cpt[1]))
+		if (isempty(CURRENT_CPT[1]))
 			if (got_color_line_grad)		# Use the fact that we have min/max already stored
 				mima::Vector{Float64} = (arg1.ds_bbox[5+2*is3D]::Float64, arg1.ds_bbox[6+2*is3D]::Float64)
 			else
@@ -244,7 +244,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 			end
 			r = makecpt(@sprintf("-T%f/%f/65+n -Cturbo -Vq", mima[1]-eps(1e10), mima[2]+eps(1e10)))
 		else
-			r = current_cpt[1]
+			r = CURRENT_CPT[1]
 		end
 		(arg1 === nothing) ? arg1 = r : ((arg2 === nothing) ? arg2 = r : (arg3 === nothing ? arg3 = r : arg4 = r))
 		cmd *= " -C"
@@ -511,8 +511,8 @@ function _helper_psxy_line(d::Dict, cmd::String, opt_W::String, is3D::Bool, args
 				CPTname = scan_opt(cmd, "-C")
 				cpt = gmtread(CPTname, cpt=true)
 			end
-		elseif (!isempty(current_cpt[1]))
-			cpt = current_cpt[1]
+		elseif (!isempty(CURRENT_CPT[1]))
+			cpt = CURRENT_CPT[1]
 		else
 			mima = (size(args[1],2) == 2) ? (1,size(args[1],1)) : (args[1].ds_bbox[5+0*is3D], args[1].ds_bbox[6+0*is3D])
 			cpt::GMTcpt = gmt(@sprintf("makecpt -T%f/%f/65+n -Cturbo -Vq", mima[1]-eps(1e10), mima[2]+eps(1e10)))
@@ -951,7 +951,7 @@ function make_color_column(d::Dict, cmd::String, opt_i::String, len_cmd::Int, N_
 			for k = 1:numel(arg1)  add2ds!(arg1[k], 1:n_rows; name="Zcolor")  end		# Will error if the n_rows varies
 		end
 		arg2::GMTcpt = gmt(string("makecpt -T1/$(n_rows+1)/1 -C" * join(bar_fill, ",")))
-		current_cpt[1] = arg2
+		CURRENT_CPT[1] = arg2
 		(!occursin(" -C", cmd)) && (cmd *= " -C")	# Need to inform that there is a cpt to use
 		find_in_dict(d, [:G :fill])					# Deletes the :fill. Not used anymore
 		return cmd, arg1, arg2, 2, true
@@ -1004,7 +1004,7 @@ function make_color_column_(d::Dict, cmd::String, len_cmd::Int, N_args::Int, n_p
 			just_C  = just_C[1:ind[1]-1]
 		end
 		arg2 = gmt(string("makecpt -T", mi-0.001*abs(mi), '/', ma+0.001*abs(ma), " ", just_C) * (IamModern[1] ? " -H" : ""))
-		current_cpt[1] = arg2
+		CURRENT_CPT[1] = arg2
 		if (occursin(" -C", cmd))  cmd = cmd[1:len_cmd+3]  end		# Strip the cpt name
 		if (reset_i != "")  cmd *= reset_i  end		# Reset -i, in case it existed
 

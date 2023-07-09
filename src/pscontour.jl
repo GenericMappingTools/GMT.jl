@@ -124,7 +124,7 @@ function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	if (occursin("-I", cmd) && !occursin("-C", cmd))
 		r = round_wesn([wesn[5], wesn[6], wesn[5], wesn[6]])
 		wesn[5], wesn[6] = r[1], r[2]
-		opt_T = (isempty(current_cpt[1])) ? @sprintf(" -T%.14g/%.14g/11+n", wesn[5], wesn[6]) : ""
+		opt_T = (isempty(CURRENT_CPT[1])) ? @sprintf(" -T%.14g/%.14g/11+n", wesn[5], wesn[6]) : ""
 		if (N_used <= 1)
 			cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:C], 'C', N_used, arg1, arg2, true, true, opt_T, true)
 		else
