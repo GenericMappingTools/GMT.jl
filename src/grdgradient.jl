@@ -54,7 +54,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_Q_grdgrad(d::Dict, symbs::Array{<:Symbol}, cmd::String)
-	(show_kwargs[1]) && return print_kwarg_opts(symbs, "String")
+	(SHOW_KWARGS[1]) && return print_kwarg_opts(symbs, "String")
     if ((val = find_in_dict(d, symbs)[1]) !== nothing)
 		val = string(val)[1]
 		(val == 's') && (val = 'c')

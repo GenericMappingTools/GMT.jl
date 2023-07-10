@@ -130,7 +130,7 @@ function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
 	cmd = add_opt(d, cmd, "D", [:D :annot :annotate :counts], (beneath = "_+b", font = "+f", offset = "+o", vertical = "_+r"))
 	cmd = parse_INW_coast(d, [[:N :distribution :normal]], cmd, "N")
-	(show_kwargs[1]) && print_kwarg_opts(symbs, "NamedTuple | Tuple | Dict | String")
+	(SHOW_KWARGS[1]) && print_kwarg_opts(symbs, "NamedTuple | Tuple | Dict | String")
 
 	cmd = add_opt(d, cmd, "E", [:E :width], (width = "", off = "+o", offset = "+o"))
 	

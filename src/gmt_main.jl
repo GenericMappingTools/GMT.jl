@@ -77,10 +77,10 @@ function gmt(cmd::String, args...)
 		isJLL && (r *= " -G" * GSbin)
 	end
 	if (occursin("-%", r) || occursin("-&", r))			# It has also a mem layout request
-		r, img_mem_layout[1], grd_mem_layout[1] = parse_mem_layouts(r)
-		(img_mem_layout[1] != "") && (mem_layout::String = img_mem_layout[1];	mem_kw = "API_IMAGE_LAYOUT")
-		(grd_mem_layout[1] != "") && (mem_layout = grd_mem_layout[1];	mem_kw = "API_GRID_LAYOUT")
-		(img_mem_layout[1] != "" && mem_layout[end] != 'a')  && (mem_layout *= "a")
+		r, IMG_MEM_LAYOUT[1], GRD_MEM_LAYOUT[1] = parse_mem_layouts(r)
+		(IMG_MEM_LAYOUT[1] != "") && (mem_layout::String = IMG_MEM_LAYOUT[1];	mem_kw = "API_IMAGE_LAYOUT")
+		(GRD_MEM_LAYOUT[1] != "") && (mem_layout = GRD_MEM_LAYOUT[1];	mem_kw = "API_GRID_LAYOUT")
+		(IMG_MEM_LAYOUT[1] != "" && mem_layout[end] != 'a')  && (mem_layout *= "a")
 		GMT_Set_Default(G_API[1], mem_kw, mem_layout);	# Tell module to give us the image/grid with this mem layout
 	end
 
@@ -99,7 +99,7 @@ function gmt(cmd::String, args...)
 				r *= " -Tc"
 			end
 		end
-		r, img_mem_layout[1], grd_mem_layout[1] = parse_mem_layouts(r)
+		r, IMG_MEM_LAYOUT[1], GRD_MEM_LAYOUT[1] = parse_mem_layouts(r)
 	elseif (occursin("read", g_module) && (occursin("-Ti", r) || occursin("-Tg", r)))
 		need2destroy = true
 	end
@@ -201,7 +201,7 @@ function gmt(cmd::String, args...)
 	#if (IamModern[1])  gmt_put_history(G_API[1]);	end	# Needed, otherwise history is not updated
 	(IamModern[1]) && gmt_restart()		# Needed, otherwise history is not updated
 
-	img_mem_layout[1] = "";		grd_mem_layout[1] = ""		# Reset to not afect next readings
+	IMG_MEM_LAYOUT[1] = "";		GRD_MEM_LAYOUT[1] = ""		# Reset to not afect next readings
 
 	# GMT6.1.0 f up and now we must be very careful to not let the GMT breaking screw us
 	(need2destroy && !IamModern[1]) && gmt_restart()
@@ -278,26 +278,26 @@ function parse_mem_layouts(cmd::AbstractString)
 # See if a specific grid or image mem layout is requested. If found return its value and also
 # strip the corresponding option from the CMD string (otherwise GMT would scream)
 # The specific codes "-%" and "-&" are set in gmtreadwrite
-	grd_mem_layout[1] = "";	img_mem_layout[1] = ""
+	GRD_MEM_LAYOUT[1] = "";	IMG_MEM_LAYOUT[1] = ""
 
 	if ((ind = findfirst( "-%", cmd)) !== nothing)
-		img_mem_layout[1], resto = strtok(cmd[ind[1]+2:end])
-		if (length(img_mem_layout[1]) < 3 || length(img_mem_layout[1]) > 4)
-			error("Memory layout option must have 3 characters and not $(img_mem_layout[1])")
+		IMG_MEM_LAYOUT[1], resto = strtok(cmd[ind[1]+2:end])
+		if (length(IMG_MEM_LAYOUT[1]) < 3 || length(IMG_MEM_LAYOUT[1]) > 4)
+			error("Memory layout option must have 3 characters and not $(IMG_MEM_LAYOUT[1])")
 		end
 		cmd = cmd[1:ind[1]-1] * " " * resto 	# Remove the -L pseudo-option because GMT would bail out
 	end
-	if (isempty(img_mem_layout[1]))				# Only if because we can't have a double request
+	if (isempty(IMG_MEM_LAYOUT[1]))				# Only if because we can't have a double request
 		if ((ind = findfirst( "-&", cmd)) !== nothing)
-			grd_mem_layout[1], resto = strtok(cmd[ind[1]+2:end])
-			if (length(grd_mem_layout[1]) < 2)
-				error("Memory layout option must have at least 2 chars and not $(grd_mem_layout[1])")
+			GRD_MEM_LAYOUT[1], resto = strtok(cmd[ind[1]+2:end])
+			if (length(GRD_MEM_LAYOUT[1]) < 2)
+				error("Memory layout option must have at least 2 chars and not $(GRD_MEM_LAYOUT[1])")
 			end
 			cmd = cmd[1:ind[1]-1] * " " * resto 	# Remove the -L pseudo-option because GMT would bail out
 		end
 	end
-	img_mem_layout[1] = string(img_mem_layout[1]);	grd_mem_layout[1] = string(grd_mem_layout[1]);	# We don't want substrings
-	return cmd, img_mem_layout[1], grd_mem_layout[1]
+	IMG_MEM_LAYOUT[1] = string(IMG_MEM_LAYOUT[1]);	GRD_MEM_LAYOUT[1] = string(GRD_MEM_LAYOUT[1]);	# We don't want substrings
+	return cmd, IMG_MEM_LAYOUT[1], GRD_MEM_LAYOUT[1]
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -381,7 +381,7 @@ function get_grid(API::Ptr{Nothing}, object, cube::Bool)::GMTgrid
 			end
 			layout = "BCB";
 		end
-	elseif (grd_mem_layout[1] == "" || startswith(grd_mem_layout[1], "BC"))
+	elseif (GRD_MEM_LAYOUT[1] == "" || startswith(GRD_MEM_LAYOUT[1], "BC"))
 		for col = 1:nx
 			for row = 1:ny
 				ij = ((row-1) + padTop) * mx + col + padLeft		# Was GMT_IJP(row, col, mx, padTop, padLeft)
@@ -389,9 +389,9 @@ function get_grid(API::Ptr{Nothing}, object, cube::Bool)::GMTgrid
 			end
 		end
 		layout = "BCB";
-	elseif (grd_mem_layout[1][2] == 'R')		# Store array in Row Major
+	elseif (GRD_MEM_LAYOUT[1][2] == 'R')		# Store array in Row Major
 		ind_y = 1:ny		# Start assuming "TR"
-		if (startswith(grd_mem_layout[1], "BR"))  ind_y = ny:-1:1  end	# Bottom up
+		if (startswith(GRD_MEM_LAYOUT[1], "BR"))  ind_y = ny:-1:1  end	# Bottom up
 		k = 1
 		for row = ind_y
 			tt = ((row-1) + padTop) * mx + padLeft
@@ -400,7 +400,7 @@ function get_grid(API::Ptr{Nothing}, object, cube::Bool)::GMTgrid
 				k = k + 1
 			end
 		end
-		layout = grd_mem_layout[1][1:2]*'B';
+		layout = GRD_MEM_LAYOUT[1][1:2]*'B';
 	else
 		# Was t[GMT_IJP(row, col, mx, padTop, padLeft)
 		#[z[row,col] = t[((row-1) + padTop) * mx + col + padLeft] for row = 1:ny, col = 1:nx]
@@ -411,7 +411,7 @@ function get_grid(API::Ptr{Nothing}, object, cube::Bool)::GMTgrid
 		end
 		layout = "TCB";
 	end
-	grd_mem_layout[1] = ""		# Reset because this variable is global
+	GRD_MEM_LAYOUT[1] = ""		# Reset because this variable is global
 
 	# Return grids via a float matrix in a struct
 	rng, inc = (gmt_hdr.n_bands > 1) ? (fill(NaN,8), fill(NaN,3)) : (fill(NaN,6), fill(NaN,2))
@@ -463,10 +463,10 @@ function get_image(API::Ptr{Nothing}, object)::GMTimage
 	Y  = collect(range(wesn[3], stop=wesn[4], length=(ny + gmt_hdr.registration)))
 
 	layout = join([Char(gmt_hdr.mem_layout[k]) for k=1:4])		# This is damn diabolic
-	if (occursin("0", img_mem_layout[1]) || occursin("1", img_mem_layout[1]))	# WTF is 0 or 1?
+	if (occursin("0", IMG_MEM_LAYOUT[1]) || occursin("1", IMG_MEM_LAYOUT[1]))	# WTF is 0 or 1?
 		t::Union{Array{Cuchar}, Array{Cushort}, Array{Cuint}} = deepcopy(unsafe_wrap(Array, data, ny * nx * nz))
 	else
-		if (img_mem_layout[1] != "")  layout = img_mem_layout[1][1:3] * layout[4]  end	# 4rth is data determined
+		if (IMG_MEM_LAYOUT[1] != "")  layout = IMG_MEM_LAYOUT[1][1:3] * layout[4]  end	# 4rth is data determined
 		if (layout != "" && layout[1] == 'I')		# The special layout for using this image in Images.jl
 			o = (nz == 1) ? (ny, nx) : (nz, ny, nx)
 		else
@@ -831,8 +831,8 @@ function image_init(API::Ptr{Nothing}, img_box)::Ptr{GMT_IMAGE}
 
 	if (isempty_(img_box))			# Just tell image_init() to allocate an empty container
 		I = convert(Ptr{GMT_IMAGE}, GMT_Create_Data(API, GMT_IS_IMAGE, GMT_IS_SURFACE, GMT_IS_OUTPUT, NULL, NULL, NULL, 0, 0, NULL))
-		if (img_mem_layout[1] != "")
-			mem_layout = length(img_mem_layout[1]) == 3 ? img_mem_layout[1] * "a" : img_mem_layout[1]
+		if (IMG_MEM_LAYOUT[1] != "")
+			mem_layout = length(IMG_MEM_LAYOUT[1]) == 3 ? IMG_MEM_LAYOUT[1] * "a" : IMG_MEM_LAYOUT[1]
 			GMT_Set_Default(API, "API_IMAGE_LAYOUT", mem_layout);
 		end
 		return I
@@ -1272,11 +1272,11 @@ end
 function resetGMT()
 	# Reset everything to a fresh GMT session. That is reset all global variables to their initial state
 	IamModern[1] = false;	FirstModern[1] = false;		IamSubplot[1] = false;	usedConfPar[1] = false;
-	multi_col[1] = false;	convert_syntax[1] = false;	current_view[1] = "";	show_kwargs[1] = false;
-	img_mem_layout[1] = "";	grd_mem_layout[1] = "";		CTRL.limits .= 0.0;	CTRL.proj_linear[1] = true;
+	MULTI_COL[1] = false;	CONVERT_SYNTAX[1] = false;	CURRENT_VIEW[1] = "";	SHOW_KWARGS[1] = false;
+	IMG_MEM_LAYOUT[1] = "";	GRD_MEM_LAYOUT[1] = "";		CTRL.limits .= 0.0;	CTRL.proj_linear[1] = true;
 	CTRLshapes.fname[1] = "";CTRLshapes.first[1] = true; CTRLshapes.points[1] = false;
-	CURRENT_CPT[1]  = GMTcpt();		legend_type[1] = legend_bag();	ressurectGDAL()
-	def_fig_axes[1] = def_fig_axes_bak;		def_fig_axes3[1] = def_fig_axes3_bak;
+	CURRENT_CPT[1]  = GMTcpt();		LEGEND_TYPE[1] = legend_bag();	ressurectGDAL()
+	DEF_FIG_AXES[1] = DEF_FIG_AXES_BAK;		DEF_FIG_AXES3[1] = DEF_FIG_AXES3_BAK;
 	CTRL.pocket_J[1], CTRL.pocket_J[2], CTRL.pocket_J[3], CTRL.pocket_J[4] = "", "", "", "   ";
 	CTRL.IamInPaperMode[:] = [false, true];	IamInset[1] = false
 	CTRL.pocket_call[1] = CTRL.pocket_call[3] = nothing;	CTRL.pocket_R[1] = "";	CTRL.figsize .= 0.0

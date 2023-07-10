@@ -40,8 +40,8 @@ function theme(name="modern"; kwargs...)
 	color::String = ((val = find_in_dict(d, [:fg_color])[1]) !== nothing) ? string(val) : ""
 	
 	# Some previous calls may have changed these and a new theme option may be caught with the pens down
-	def_fig_axes[1]  = def_fig_axes_bak		# So that we always start with the defaults
-	def_fig_axes3[1] = def_fig_axes3_bak
+	DEF_FIG_AXES[1]  = DEF_FIG_AXES_BAK		# So that we always start with the defaults
+	DEF_FIG_AXES3[1] = DEF_FIG_AXES3_BAK
 
 	_name::String = string(name)
 	if (_name == "classic")
@@ -108,7 +108,7 @@ function parse_theme_names(name::String)
 			end
 		end
 
-		def_fig_axes[1] = t1 * t2
+		DEF_FIG_AXES[1] = t1 * t2
 		if     (contains(name, "nt") || contains(name, "NT"))  helper_theme_noticks()	# No ticks
 		elseif (contains(name, "it") || contains(name, "IT"))  helper_theme_inticks()	# Inside ticks
 		end

@@ -78,11 +78,11 @@ function grdgravmag3d(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 	cmd, arg = get_opt_str_or_obj(d, cmd, [:C :density], GMTgrid)
 	(arg !== nothing) &&
 		(arg1 === nothing ? arg1 = arg : (arg2 === nothing ? arg2 = arg : (arg3 === nothing ? arg3 = arg : arg4 = arg)))
-	(show_kwargs[1]) && print_kwarg_opts([:C :density], " Density value/gridname, or density grid")
+	(SHOW_KWARGS[1]) && print_kwarg_opts([:C :density], " Density value/gridname, or density grid")
 	cmd, arg = get_opt_str_or_obj(d, cmd, [:F :track], GDtype)
 	(arg !== nothing) &&
 		(arg1 === nothing ? arg1 = arg : (arg2 === nothing ? arg2 = arg : (arg3 === nothing ? arg3 = arg : arg4 = arg)))
-	(show_kwargs[1]) && print_kwarg_opts([:F :track], " Filename or GMTdataset with locations where to compute the anomaly")
+	(SHOW_KWARGS[1]) && print_kwarg_opts([:F :track], " Filename or GMTdataset with locations where to compute the anomaly")
 
 	(!occursin(" -F", cmd) && !occursin(" -G", cmd)) && (cmd *= " -G")
 

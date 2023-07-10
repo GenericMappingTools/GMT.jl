@@ -67,9 +67,9 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 	end
 
 	has_opt_B = (is_in_dict(d, [:B :frame :axis :axes]) !== nothing)
-	cmd::String, opt_B::String, opt_J::String, opt_R::String = parse_BJR(d, "", "", O, " -JX" * split(def_fig_size, '/')[1] * "/0")
+	cmd::String, opt_B::String, opt_J::String, opt_R::String = parse_BJR(d, "", "", O, " -JX" * split(DEF_FIG_SIZE, '/')[1] * "/0")
 	(startswith(opt_J, " -JX") && !contains(opt_J, "/")) && (cmd = replace(cmd, opt_J => opt_J * "/0")) # When sub-regions
-	(!has_opt_B && isa(arg1, GMTimage) && (isimgsize(arg1) || CTRL.limits[1:4] == zeros(4)) && opt_B == def_fig_axes_bak) &&
+	(!has_opt_B && isa(arg1, GMTimage) && (isimgsize(arg1) || CTRL.limits[1:4] == zeros(4)) && opt_B == DEF_FIG_AXES_BAK) &&
 		(cmd = replace(cmd, opt_B => ""))			# Dont plot axes for plain images if that was not required
 
 	cmd, = parse_common_opts(d, cmd, [:UVXY :params :c :f :n :p :t], first)
@@ -153,7 +153,7 @@ end
 function common_shade(d::Dict, cmd::String, arg1, arg2, arg3, arg4, prog)
 	# Used both by grdimage and grdview
 	symbs = [:I :shade :shading :intensity]
-	(show_kwargs[1]) && return print_kwarg_opts(symbs, "GMTgrid | String"), arg1, arg2, arg3, arg4
+	(SHOW_KWARGS[1]) && return print_kwarg_opts(symbs, "GMTgrid | String"), arg1, arg2, arg3, arg4
 
 	if ((val = find_in_dict(d, symbs, false)[1]) !== nothing)
 		if (!isa(val, GMTgrid))			# Uff, simple. Either a file name or a -A type modifier
@@ -178,7 +178,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function common_get_R_cpt(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fname::Int, arg1, arg2, arg3, prog::String)
 	# Used by several proggys
-	if (convert_syntax[1])		# Here we cannot risk to execute any code. Just parsing. Movie stuff
+	if (CONVERT_SYNTAX[1])		# Here we cannot risk to execute any code. Just parsing. Movie stuff
 		cmd, = add_opt_cpt(d, cmd, CPTaliases, 'C')
 		N_used = !isempty_(arg1) + !isempty_(arg2) + !isempty_(arg3)
 	else

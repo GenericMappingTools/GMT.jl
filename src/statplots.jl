@@ -1108,7 +1108,7 @@ function parallelplot(cmd0::String="", arg1=nothing; first::Bool=true, axeslabel
 		helper_D(D, _data, gidx, "range", _bbox, gc, _quantile)
 	end
 
-	(is_in_dict(d, [:figsize :fig_size]) === nothing) && (d[:figsize] = def_fig_size)
+	(is_in_dict(d, [:figsize :fig_size]) === nothing) && (d[:figsize] = DEF_FIG_SIZE)
 	d[:xticks] = (ax_pos, axeslabels)
 	do_show = ((val = find_in_dict(d, [:show])[1]) !== nothing && val != 0)
 
@@ -1372,7 +1372,7 @@ function marginalhist(arg1::Union{GDtype, Matrix{<:Real}}; first=true, kwargs...
 	if (length(s) > 1 && s[2] == "0" || s[2] == "?")	# In this case, recompute fig size to e isometric
 		H = W * (D.ds_bbox[4] - D.ds_bbox[3]) / (D.ds_bbox[2] - D.ds_bbox[1])
 		opt_J = "$(W)/$(H)"
-	elseif (opt_J == def_fig_size)		# Here switch of Hexbins. The ELSE case is not taken care (no hexbins if not iso)
+	elseif (opt_J == DEF_FIG_SIZE)		# Here switch of Hexbins. The ELSE case is not taken care (no hexbins if not iso)
 		do_hexbin && @warn("The hexagon bins can only be used with figure sizes with an aspect ratio of 1.\n For that use the option 'aspect=:equal'")
 		do_hexbin, do_scatter = false, true
 		delete!(d, :hexbin)

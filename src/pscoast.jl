@@ -98,7 +98,7 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 		cmd, = parse_R(d, cmd, O)
 		if (!contains(cmd, " -M"))				# If Dump no -R & -B
 			cmd = parse_J(d, cmd, "guess", true, O)[1]
-			cmd = parse_B(d, cmd, (O ? "" : (IamModern[1]) ? "" : def_fig_axes[1]))[1]
+			cmd = parse_B(d, cmd, (O ? "" : (IamModern[1]) ? "" : DEF_FIG_AXES[1]))[1]
 		end
 	end
 	cmd, = parse_common_opts(d, cmd, [:F :JZ :UVXY :bo :c :p :t :params], first)
@@ -121,9 +121,9 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 
 	# Parse these three options that can be made to respond to same code
 	cmd = parse_INW_coast(d, [[:I :rivers], [:N :borders], [:W :shore :shorelines :coast :coastlines]], cmd, "INW")
-	(show_kwargs[1]) && print_kwarg_opts([:I :rivers],  "NamedTuple | Tuple | Dict | String")
-	(show_kwargs[1]) && print_kwarg_opts([:N :borders], "NamedTuple | Tuple | Dict | String")
-	(show_kwargs[1]) && print_kwarg_opts([:W :shore :shorelines :coast],   "NamedTuple | Tuple | Dict | String")
+	(SHOW_KWARGS[1]) && print_kwarg_opts([:I :rivers],  "NamedTuple | Tuple | Dict | String")
+	(SHOW_KWARGS[1]) && print_kwarg_opts([:N :borders], "NamedTuple | Tuple | Dict | String")
+	(SHOW_KWARGS[1]) && print_kwarg_opts([:W :shore :shorelines :coast],   "NamedTuple | Tuple | Dict | String")
 
 	if (!occursin(" -C",cmd) && !occursin(" -E",cmd) && !occursin(" -G",cmd) && !occursin(" -I",cmd) &&
 		!occursin(" -M",cmd) && !occursin(" -N",cmd) && !occursin(" -Q",cmd) && !occursin(" -S",cmd) && !occursin(" -W",cmd))
@@ -176,7 +176,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_E_coast(d::Dict, symbs::Vector{Symbol}, cmd::String)
-	(show_kwargs[1]) && return print_kwarg_opts(symbs, "NamedTuple | Tuple | Dict | String")
+	(SHOW_KWARGS[1]) && return print_kwarg_opts(symbs, "NamedTuple | Tuple | Dict | String")
 	if ((val = find_in_dict(d, symbs, false)[1]) !== nothing)
 		if (isa(val, String) || isa(val, Symbol))	# Simple case, ex E="PT,+gblue" or E=:PT
 			t::String = string(" -E", val)

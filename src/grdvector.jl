@@ -66,11 +66,11 @@ function grdvector(arg1, arg2; first=true, kwargs...)
 	info2 = get_grdinfo(arg2, opt_R)
 	isa(arg1, String) && (CTRL.limits[1:4] = info[1:4]; CTRL.limits[7:10] = info[1:4])
 
-	def_J = " -JX" * split(def_fig_size, '/')[1] * "/0"
+	def_J = " -JX" * split(DEF_FIG_SIZE, '/')[1] * "/0"
 	cmd, opt_J = parse_J(d, cmd, def_J, true, O)
-	parse_theme(d)		# Must be first because some themes change def_fig_axes
-	def_fig_axes_::String = (IamModern[1]) ? "" : def_fig_axes[1]	# def_fig_axes is a global const
-	cmd, opt_B = parse_B(d, cmd, (O ? "" : def_fig_axes_))
+	parse_theme(d)		# Must be first because some themes change DEF_FIG_AXES
+	DEF_FIG_AXES_::String = (IamModern[1]) ? "" : DEF_FIG_AXES[1]	# DEF_FIG_AXES is a global const
+	cmd, opt_B = parse_B(d, cmd, (O ? "" : DEF_FIG_AXES_))
 
 	cmd = parse_common_opts(d, cmd, [:UVXY :f :p :t :params], first)[1]
 	!(contains(cmd, "-V")) && (cmd *= " -Ve")	# Shut up annoying warnings if -S has no units
@@ -147,7 +147,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_Q_grdvec(d::Dict, symbs::Array{<:Symbol}, len::String="", stop::String="", norm::String="")::String
 	# LEN, STOP & NORM are default values (if != "")
-	(show_kwargs[1]) && return print_kwarg_opts(symbs, "NamedTuple | String")
+	(SHOW_KWARGS[1]) && return print_kwarg_opts(symbs, "NamedTuple | String")
 	cmd::String = ""
 	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
 		if (isa(val, String))

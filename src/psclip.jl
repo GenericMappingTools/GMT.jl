@@ -49,7 +49,7 @@ function clip(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
-	cmd, _, _, opt_R = parse_BJR(d, "", "", O, " -JX" * split(def_fig_size, '/')[1] * "/0")
+	cmd, _, _, opt_R = parse_BJR(d, "", "", O, " -JX" * split(DEF_FIG_SIZE, '/')[1] * "/0")
 	cmd, = parse_common_opts(d, cmd, [:UVXY :JZ :c :e :f :g :p :t :yx :params], first)
 	cmd  = parse_these_opts(cmd, d, [[:A :steps :straightlines], [:C :endclip], [:N :invert], [:T :clipregion :clip_limits]])
 	cmd *= add_opt_pen(d, [:W :pen], "W")

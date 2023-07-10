@@ -134,7 +134,7 @@ function movie(main; pre=nothing, post=nothing, kwargs...)
 	end
 
 	global cmds_history
-	IamModern[1] = false; FirstModern[1] = false; convert_syntax[1] = false; cmds_history = [""]
+	IamModern[1] = false; FirstModern[1] = false; CONVERT_SYNTAX[1] = false; cmds_history = [""]
 
 	cmd = "movie " * mainName * cmd				# In any case we need this
 	(dbg_print_cmd(d, cmd) !== nothing) && return cmd
@@ -157,9 +157,9 @@ end
 # --------------------------------------------------------------------------------------------------
 function jl_sc_2_shell_sc(name, name2::String)
 	global cmds_history
-	IamModern[1] = true; FirstModern[1] = true; convert_syntax[1] = true; cmds_history = [""]
+	IamModern[1] = true; FirstModern[1] = true; CONVERT_SYNTAX[1] = true; cmds_history = [""]
 	if (isa(name, String))
-		include(name)	# This include plus the convert_syntax = true will put all cmds in 'name' into cmds_history
+		include(name)	# This include plus the CONVERT_SYNTAX = true will put all cmds in 'name' into cmds_history
 	else
 		name()			# Run the function, which must be defined ...
 	end

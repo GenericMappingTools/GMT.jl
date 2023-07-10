@@ -62,7 +62,7 @@
 	@test GMT.parse_J(Dict(:scale=>"1:10"), "")[1] == " -Jx1:10"
 	@test GMT.parse_J(Dict(:s=>"1:10"), "", " -JU")[1] == " -JU"
 	@test GMT.parse_J(Dict(:J => "Merc", :figsize => 10), "", "", true, true)[1] == " -JM10"
-	@test GMT.parse_J(Dict(:J => "+proj=merc"), "")[1] == " -J+proj=merc+width=" * split(GMT.def_fig_size, '/')[1]
+	@test GMT.parse_J(Dict(:J => "+proj=merc"), "")[1] == " -J+proj=merc+width=" * split(GMT.DEF_FIG_SIZE, '/')[1]
 	@test GMT.parse_J(Dict(:J => (name=:albers, parallels=[45 65])), "", "", false)[1] == " -JB0/0/45/65"
 	@test GMT.parse_J(Dict(:J => (name=:albers, center=[10 20], parallels=[45 65])), "", "", false)[1] == " -JB10/20/45/65"
 	@test GMT.parse_J(Dict(:J => "winkel"), "", "", false)[1] == " -JR"
@@ -210,12 +210,12 @@
 	@test GMT.add_opt(d, "", "", [:L], (pen=("+p",GMT.add_opt_pen),) ) == "+p10,red"
 	@test GMT.add_opt_pen(Dict(:pen => (width=0.1, style=".")), [:W :pen]) == "0.1,,."
 	r = psxy([0.0, 1],[0, 1.1], L=(pen=(10,:red),bot=true), Vd=dbg2);
-	@test startswith(r,"psxy  -JX" * GMT.def_fig_size * " -Baf -BWSen -R-0.04/1.04/-0.04/1.12 -L+p10,red+yb")
+	@test startswith(r,"psxy  -JX" * GMT.DEF_FIG_SIZE * " -Baf -BWSen -R-0.04/1.04/-0.04/1.12 -L+p10,red+yb")
 	r = psxy([0.0, 1],[0, 1.1], L=(pen=(lw=10,cline=true),bot=true), Vd=dbg2);
-	@test startswith(r,"psxy  -JX" * GMT.def_fig_size * " -Baf -BWSen -R-0.04/1.04/-0.04/1.12 -L+p10+cl+yb")
+	@test startswith(r,"psxy  -JX" * GMT.DEF_FIG_SIZE * " -Baf -BWSen -R-0.04/1.04/-0.04/1.12 -L+p10+cl+yb")
 	@test startswith(psxy([0.0, 1],[0, 1.1], figsize=(10,12), aspect=:equal, Vd=dbg2), "psxy  -JX10/12")
 	@test startswith(psxy([0.0, 1],[0, 1.1], figsize=10, aspect=:equal, Vd=dbg2), "psxy  -JX10/0")
-	@test startswith(psxy([0.0, 1],[0, 1.1], aspect=:equal, Vd=dbg2), "psxy  -JX" * split(GMT.def_fig_size, '/')[1] * "/0")
+	@test startswith(psxy([0.0, 1],[0, 1.1], aspect=:equal, Vd=dbg2), "psxy  -JX" * split(GMT.DEF_FIG_SIZE, '/')[1] * "/0")
 	psxy!([0 0; 1 1.1], Vd=dbg2);
 	psxy!("", [0 0; 1 1.1], Vd=dbg2);
 	GMT.get_marker_name(Dict(:y => "y"), nothing, [:y], false)

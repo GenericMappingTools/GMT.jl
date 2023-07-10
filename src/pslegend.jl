@@ -48,7 +48,7 @@ function legend(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
-	def_J = " -JX" * split(def_fig_size, '/')[1] * "/0"
+	def_J = " -JX" * split(DEF_FIG_SIZE, '/')[1] * "/0"
 	cmd, _, _, opt_R = parse_BJR(d, "", "", O, def_J)
 	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R)	# If called from classic without input it hangs here.
 	cmd, = parse_common_opts(d, cmd, [:F :c :p :q :t :JZ :UVXY :params], first)
@@ -57,7 +57,7 @@ function legend(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	                         (map=("g", arg2str, 1), outside=("J", arg2str, 1), inside=("j", arg2str, 1), norm=("n", arg2str, 1), paper=("x", arg2str, 1), anchor=("", arg2str, 2), width=("+w", arg2str), justify="+j", spacing="+l", offset=("+o", arg2str)), 'j')
 	cmd  = parse_these_opts(cmd, d, [[:C :clearance], [:M], [:S :scale], [:T :leg_file]])
 
-	show_kwargs[1] && legend_help()
+	SHOW_KWARGS[1] && legend_help()
 	(opt_D == "") && error("The `position` argument is mandatory.")
 	#!contains(opt_D, "+w") && error("The `position` argument MUST contain the legend's width specification.")
 	cmd *= opt_D

@@ -137,7 +137,7 @@ function common_mecas(cmd0, arg1, d, proggy, first, K, O)
 		if (cmd_ == "")
 			cmd_ = add_opt(d, "", "Ad", [:Ad :cross_xy_azim], (x1="", y1="", strike="", length="", dip="", width="", dmin="", dmax="", frame="_+f"))
 		end
-		(cmd_ == "" && !show_kwargs[1]) && error("Specifying cross-section type is mandatory")
+		(cmd_ == "" && !SHOW_KWARGS[1]) && error("Specifying cross-section type is mandatory")
 		cmd *= cmd_
 	end
 
@@ -168,7 +168,7 @@ function common_mecas(cmd0, arg1, d, proggy, first, K, O)
 		d[_val] = true
 	elseif (n_cols >= 7 && n_cols < 10)  d[:Sa] = true; symbs = [:Sa]		# Implicit Aki
 	elseif (n_cols >= 11 && n_cols < 14) d[:Sc] = true; symbs = [:Sc]		# Implicit CMT
-	elseif (show_kwargs[1])  symbs = [:Sa :aki :Sc :CMT :gcmt :Sm :mt :Sd :mt_closest :moment_closest :Sz :mt_deviatoric :moment_deviatoric :Sp :partial :Sx :principal :principal_axis :Sy :principal_closest :St :principal_deviatoric]
+	elseif (SHOW_KWARGS[1])  symbs = [:Sa :aki :Sc :CMT :gcmt :Sm :mt :Sd :mt_closest :moment_closest :Sz :mt_deviatoric :moment_deviatoric :Sp :partial :Sx :principal :principal_axis :Sy :principal_closest :St :principal_deviatoric]
 	else  error("Must select one convention")
 	end
 	cmd_ = add_opt(d, "", string(symbs[1]), symbs, (scale="", angle="+a", font=("+f", font), justify="+j",

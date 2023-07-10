@@ -65,10 +65,10 @@ const global G_API = [C_NULL]
 const global PSname = [""]					# The PS file (filled in __init__) where, in classic mode, all lands.
 const global tmpdir_usr = [tempdir(), ""]	# Save the tmp dir and user name (also filled in __init__)
 const global testdir = joinpath(dirname(pathof(GMT))[1:end-4], "test", "")	# To have easy access to test files
-const global img_mem_layout = [""]			# "TCP"	 For Images.jl. The default is "TRBa"
-const global grd_mem_layout = [""]			# "BRP" is the default for GMT PS images.
-const global current_view   = [""]			# To store the current viewpoint (-p)
-const global multi_col   = Vector{Bool}(undef, 1);multi_col[1] = false	# To allow plottig multiple columns at once.
+const global IMG_MEM_LAYOUT = [""]			# "TCP"	 For Images.jl. The default is "TRBa"
+const global GRD_MEM_LAYOUT = [""]			# "BRP" is the default for GMT PS images.
+const global CURRENT_VIEW   = [""]			# To store the current viewpoint (-p)
+const global MULTI_COL   = Vector{Bool}(undef, 1);MULTI_COL[1] = false	# To allow plottig multiple columns at once.
 const global IamModern   = Vector{Bool}(undef, 1);IamModern[1] = false		# To know if we are in modern mode
 const global FirstModern = Vector{Bool}(undef, 1);FirstModern[1] = false	# To know
 const global IamModernBySubplot = Vector{Bool}(undef, 1);	IamModernBySubplot[1] = false	# To know if set in subpot
@@ -76,17 +76,17 @@ const global IamSubplot  = Vector{Bool}(undef, 1);IamSubplot[1]  = false	# To kn
 const global IamInset    = Vector{Bool}(undef, 1);IamInset[1]    = false	# To know if we are in Inset mode
 const global usedConfPar = Vector{Bool}(undef, 1);usedConfPar[1] = false	# Hacky solution for the session's memory trouble
 const global ThemeIsOn   = Vector{Bool}(undef, 1);ThemeIsOn[1] = false		# To know if we have an active plot theme
-const global convert_syntax = Vector{Bool}(undef, 1);convert_syntax[1] = false	# To only convert to hard core GMT syntax (like Vd=2)
-const global show_kwargs = Vector{Bool}(undef, 1);show_kwargs[1] = false	# To just print the kwargs of a option call)
+const global CONVERT_SYNTAX = Vector{Bool}(undef, 1);CONVERT_SYNTAX[1] = false	# To only convert to hard core GMT syntax (like Vd=2)
+const global SHOW_KWARGS = Vector{Bool}(undef, 1);SHOW_KWARGS[1] = false	# To just print the kwargs of a option call)
 const global isFranklin  = Vector{Bool}(undef, 1);isFranklin[1] = false		# Only set/unset by the Docs building scripts.
 const global noGrdCopy   = Vector{Bool}(undef, 1);noGrdCopy[1] = false		# If true grids are sent without transpose/copy
 const global FMT = ["png"]                         # The default plot format
-const global box_str = [""]                        # Used in plotyy to know -R of first call
-const def_fig_size  = "15c/10c"                    # Default fig size for plot like programs. Approx 16/11
-const def_fig_axes_bak     = " -Baf -BWSen"        # Default fig axes for plot like programs
-const def_fig_axes3_bak    = " -Baf -Bza"          # 		"" but for 3D views
-const global def_fig_axes  = [def_fig_axes_bak]    # This one may be be changed by theme()
-const global def_fig_axes3 = [def_fig_axes3_bak]   #		""
+const global BOX_STR = [""]                        # Used in plotyy to know -R of first call
+const DEF_FIG_SIZE  = "15c/10c"                    # Default fig size for plot like programs. Approx 16/11
+const DEF_FIG_AXES_BAK     = " -Baf -BWSen"        # Default fig axes for plot like programs
+const DEF_FIG_AXES3_BAK    = " -Baf -Bza"          # 		"" but for 3D views
+const global DEF_FIG_AXES  = [DEF_FIG_AXES_BAK]    # This one may be be changed by theme()
+const global DEF_FIG_AXES3 = [DEF_FIG_AXES3_BAK]   #		""
 const global CTRL = CTRLstruct(zeros(12), zeros(6), [true], [false],
                                [:arrows, :bubblechart, :basemap, :band, :clip, :coast, :colorbar, :hband, :hlines, :logo, :lines, :grdvector, :plot, :plot3, :quiver, :scatter, :scatter3, :stairs, :text, :vlines, :vband],
 							   [nothing, nothing, nothing], ["",""], ["","", "", "   "], [""], ["",""], [false,true], [C_NULL], [Dict()])
@@ -176,7 +176,7 @@ include("gmt_main.jl")
 include("utils_types.jl")
 include("grd_operations.jl")
 include("common_options.jl")
-const global legend_type = [legend_bag()]	# To store Legends info
+const global LEGEND_TYPE = [legend_bag()]	# To store Legends info
 include("gmtbegin.jl")
 include("blendimg.jl")
 include("blocks.jl")

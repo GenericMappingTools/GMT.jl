@@ -934,7 +934,7 @@ function stem(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		_show = d[:show] != 0;		d[:show]=false		# Backup the :show val
 	end
 
-	multi_col[1] = false		# Some cat_2_arg2 paths set it to true, wich cannot happen in this function
+	MULTI_COL[1] = false		# Some cat_2_arg2 paths set it to true, wich cannot happen in this function
 	have_baseline = ((find_in_dict(d, [:nobaseline])[1]) === nothing)
 	out1, out2 = common_plot_xyz("", mat2ds(arg1), "stem", first, false, d...), nothing
 	(have_baseline) && (out2 = hlines!(0.0, show=_show))	# See if we have a no-baseline request
@@ -999,7 +999,7 @@ arrows!(arg1; kw...) = arrows("", arg1; first=false, kw...)
 
 function helper_arrows(d::Dict, del::Bool=true)::String
 	# Helper function to set the vector head attributes
-	(show_kwargs[1]) && return print_kwarg_opts([:arrow :vector :arrow4 :vector4 :vecmap :geovec :geovector], "NamedTuple | String")
+	(SHOW_KWARGS[1]) && return print_kwarg_opts([:arrow :vector :arrow4 :vector4 :vecmap :geovec :geovector], "NamedTuple | String")
 
 	val, symb = find_in_dict(d, [:arrow :vector :arrow4 :vector4 :vecmap :geovec :geovector], del)
 	(val === nothing) && return ""
@@ -1242,7 +1242,7 @@ function quiver(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	len = ((val = find_in_dict(d, [:ms :markersize :MarkerSize :size])[1]) !== nothing) ? arg2str(val) : "8p"
 	d[:S] = "v$(len)+e+s"
 
-	multi_col[1] = false		# Some cat_2_arg2 paths set it to true, wich cannot happen in this function 
+	MULTI_COL[1] = false		# Some cat_2_arg2 paths set it to true, wich cannot happen in this function 
 	common_plot_xyz("", mat2ds(arg1), "quiver", first, false, d...)
 end
 function quiver(arg1, arg2, arg3, arg4; first=true, kw...)
@@ -1395,7 +1395,7 @@ function band(cmd0::String="", arg1=nothing; first=true, width=0.0, envelope=fal
 	# Above we made some -L guessings but users may want to apply finer control, so let them access all options
 	_L = add_opt(d, "", "", [:L :polygon], (sym="_+d", asym="_+D", envelope="_+b", pen=("+p",add_opt_pen)))
 	d[:L] = (_L != "") ? _L : opt_L
-	multi_col[1] = false		# Some cat_2_arg2 paths set it to true, wich cannot happen in this function 
+	MULTI_COL[1] = false		# Some cat_2_arg2 paths set it to true, wich cannot happen in this function 
 
 	common_plot_xyz("", mat2ds(arg1), "lines", first, false, d...)
 end
@@ -1649,7 +1649,7 @@ function ternary(cmd0::String="", arg1=nothing; first::Bool=true, image::Bool=fa
 	(cmd0 == "" && arg1 === nothing) && (arg1 = [0.0 0.0 0.0])	# No data in, just a kind of ternary basemap
 	(cmd0 != "") && (arg1 = gmtread(cmd0))
 	d = init_module(first, kwargs...)[1]
-	opt_J::String = parse_J(d, "", " -JX" * split(def_fig_size, '/')[1] * "/0", true, false, false)[2]
+	opt_J::String = parse_J(d, "", " -JX" * split(DEF_FIG_SIZE, '/')[1] * "/0", true, false, false)[2]
 	opt_R::String = parse_R(d, "")[1]
 	d[:R] = (opt_R ==  "") ? "0/100/0/100/0/100" : opt_R[4:end]
 	parse_B4ternary!(d, first)
@@ -1858,7 +1858,7 @@ function cat_2_arg2(arg1, arg2, toDS::Bool=false)::Union{Matrix{<:Real}, GMTdata
 	if (size(arg1,1) == 1 && size(arg1,2) != 1)  arg1 = arg1[:]  end
 	if (size(arg2,1) == 1 && size(arg2,2) != 1)  arg2 = arg2[:]  end
 	arg = toDS ? mat2ds(hcat(arg1, arg2)) : hcat(arg1, arg2)
-	if (size(arg,2) > 2)  global multi_col[1] = true  end
+	if (size(arg,2) > 2)  global MULTI_COL[1] = true  end
 	return arg
 end
 function cat_2_arg2(arg1::GMTdataset, arg2::VMr, toDS::Bool=false)::GMTdataset

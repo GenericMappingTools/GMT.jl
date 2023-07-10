@@ -59,7 +59,7 @@ function subplot(fim=nothing; stop=false, kwargs...)
 	cmd = add_opt(d, cmd, "Fs", [:Fs :panels_size :panel_size :panel_sizes])
 	cmd = add_opt(d, cmd, "Ff", [:Ff :splot_size])
 
-	if ((val = find_in_dict(d, [:F :dims :dimensions :size :sizes], false)[1]) !== nothing || show_kwargs[1])
+	if ((val = find_in_dict(d, [:F :dims :dimensions :size :sizes], false)[1]) !== nothing || SHOW_KWARGS[1])
 		if (isa(val, NamedTuple) && haskey(nt2dict(val), :width))	# Preferred way
 			cmd *= " -F" * helper_sub_F(val)		# VAL = (width=x, height=x, fwidth=(...), fheight=(...))
 			del_from_dict(d, [:F, :dims, :dimensions, :size, :sizes])

@@ -13,18 +13,18 @@ basemap(region="416/542/0/6.2831852", proj="X-12/6.5",
 basemap(region="416/542/0/6.2831852", proj="X-12/6.5", axis=(axes=(:left_full, :bot_full), fill=:lightblue), xaxis=(annot=25, ticks=5, grid=25, suffix=" Ma"), xaxis2=(customticks=([416.0; 443.7; 488.3; 542], ["/ig Devonian", "/ig Silurian", "/ig Ordovician", "/ig Cambrian"]),), yticks=([0 1 2 2.71828 3 3.1415926 4 5 6 6.2831852], ["/a", "/a", "/f", "/ag e", "/f", "/ag @~p@~", "/f", "/f", "/f", "/ag 2@~p@~"]), par=(MAP_ANNOT_OFFSET_SECONDARY="10p", MAP_GRID_PEN_SECONDARY="2p"), Vd=dbg2)
 basemap(region=:PT, scatter=(data=[-15. 35], mc=:red), Vd=dbg2)
 r = basemap(rose=(anchor="10:35/0.7", width=1, fancy=2, offset=0.4), Vd=dbg2);
-@test startswith(r,"psbasemap  -JX" * split(GMT.def_fig_size, '/')[1] * "/0" * " -Baf -BWSen -Tdg10:35/0.7+w1+f2+o0.4")
+@test startswith(r,"psbasemap  -JX" * split(GMT.DEF_FIG_SIZE, '/')[1] * "/0" * " -Baf -BWSen -Tdg10:35/0.7+w1+f2+o0.4")
 r = basemap(rose=(norm=true, anchor=[0.5 0.7], width=1, fancy=2, offset=0.4), Vd=dbg2);
-@test startswith(r,"psbasemap  -JX" * split(GMT.def_fig_size, '/')[1] * "/0" * " -Baf -BWSen -Tdn0.5/0.7+w1+f2+o0.4")
+@test startswith(r,"psbasemap  -JX" * split(GMT.DEF_FIG_SIZE, '/')[1] * "/0" * " -Baf -BWSen -Tdn0.5/0.7+w1+f2+o0.4")
 r = basemap(rose=(anchor=:TR, width=1, fancy=2, offset=0.4), Vd=dbg2);
-@test startswith(r,"psbasemap  -JX" * split(GMT.def_fig_size, '/')[1] * "/0" * " -Baf -BWSen -TdjTR+w1+f2+o0.4")
+@test startswith(r,"psbasemap  -JX" * split(GMT.DEF_FIG_SIZE, '/')[1] * "/0" * " -Baf -BWSen -TdjTR+w1+f2+o0.4")
 r = basemap(rose=(anchor=:TR, width=1, fancy=2, offset=0.4), Vd=dbg2);
-@test startswith(r,"psbasemap  -JX" * split(GMT.def_fig_size, '/')[1] * "/0" * " -Baf -BWSen -TdjTR+w1+f2+o0.4")
+@test startswith(r,"psbasemap  -JX" * split(GMT.DEF_FIG_SIZE, '/')[1] * "/0" * " -Baf -BWSen -TdjTR+w1+f2+o0.4")
 r = basemap(compass=(anchor=:TR, width=1, dec=-14, offset=0.4), Vd=dbg2);
-@test startswith(r,"psbasemap  -JX" * split(GMT.def_fig_size, '/')[1] * "/0" * " -Baf -BWSen -TmjTR+w1+d-14+o0.4")
+@test startswith(r,"psbasemap  -JX" * split(GMT.DEF_FIG_SIZE, '/')[1] * "/0" * " -Baf -BWSen -TmjTR+w1+d-14+o0.4")
 r = basemap(L=(anchor=:TR, length=1, align=:top, fancy=0.4), Vd=dbg2);
-@test startswith(r,"psbasemap  -JX" * split(GMT.def_fig_size, '/')[1] * "/0" * " -Baf -BWSen -LjTR+w1+at+f")
-@test startswith(basemap(frame=(annot=10, slanted=:p), Vd=dbg2), "psbasemap  -JX" * split(GMT.def_fig_size, '/')[1] * "/0" * " -Bpa10+ap")
+@test startswith(r,"psbasemap  -JX" * split(GMT.DEF_FIG_SIZE, '/')[1] * "/0" * " -Baf -BWSen -LjTR+w1+at+f")
+@test startswith(basemap(frame=(annot=10, slanted=:p), Vd=dbg2), "psbasemap  -JX" * split(GMT.DEF_FIG_SIZE, '/')[1] * "/0" * " -Bpa10+ap")
 r = basemap(region=(1,1000,0,1), proj=:logx, figsize=(8,0.7), frame=(annot=1, ticks=2, grid=3, scale=:pow), Vd=dbg2);
 @test startswith(r, "psbasemap  -R1/1000/0/1 -JX8l/0.7 -Bpa1f2g3p")
 r = basemap(region=(1,1000,0,1), proj=:logx, figsize=8, frame=(annot=1, ticks=2, scale=:pow), Vd=dbg2)
@@ -67,10 +67,10 @@ r = coast(region=:g, proj=(name=:Gnomonic, center=(-120,35), horizon=60), frame=
 @test startswith(r, "pscoast  -Rg -JF-120/35/60/10 -Bpa30g15 -BWSen -A10000 -Dcrude -Gtan -Scyan -Wthinnest")
 r = coast(region=:g, proj="A300/30/14c", axis=:g, resolution=:crude, title="Hello Round World", Vd=dbg2);
 @test startswith(r, "pscoast  -Rg -JA300/30/14c -Bg -B+t\"Hello Round World\" -Dcrude")
-@test startswith(coast(R=:g, W=(level=1,pen=(2,:green)), Vd=dbg2), "pscoast  -Rg -JN180.0/" * split(GMT.def_fig_size, '/')[1] * " -Baf -BWSen -W1/2,green")
-@test startswith(coast(R=:g, W=(2,:green), Vd=dbg2), "pscoast  -Rg -JN180.0/" * split(GMT.def_fig_size, '/')[1] * " -Baf -BWSen -W2,green")
+@test startswith(coast(R=:g, W=(level=1,pen=(2,:green)), Vd=dbg2), "pscoast  -Rg -JN180.0/" * split(GMT.DEF_FIG_SIZE, '/')[1] * " -Baf -BWSen -W1/2,green")
+@test startswith(coast(R=:g, W=(2,:green), Vd=dbg2), "pscoast  -Rg -JN180.0/" * split(GMT.DEF_FIG_SIZE, '/')[1] * " -Baf -BWSen -W2,green")
 r = coast(R=:g, N=((level=1,pen=(2,:green)), (level=3,pen=(4,:blue, "--"))), Vd=dbg2);
-@test startswith(r, "pscoast  -Rg -JN180.0/" * split(GMT.def_fig_size, '/')[1] * " -Baf -BWSen -N1/2,green -N3/4,blue,--")
+@test startswith(r, "pscoast  -Rg -JN180.0/" * split(GMT.DEF_FIG_SIZE, '/')[1] * " -Baf -BWSen -N1/2,green -N3/4,blue,--")
 r = coast(proj=:Mercator, DCW=((country="GB,IT,FR", fill=:blue, pen=(0.25,:red)), (country="ES,PT,GR", fill=:yellow)), Vd=dbg2);
 @test startswith(r, "pscoast  -EGB,IT,FR+gblue+p0.25,red -EES,PT,GR+gyellow -Vq")
 @test_throws ErrorException("In Overlay mode you cannot change a fig scale and NOT repeat the projection") coast!(region=(-20,60,-90,90), scale=0.03333, Vd=dbg2)
@@ -193,7 +193,7 @@ pstext!(T, font=(16,"Times-Roman",:red), justify=:TC, M=true)
 pstext!(["MERDA"], x=2.0, y=2.0, Vd=dbg2)
 text(text="aiai", x=1, y=2.6, Vd=dbg2)
 text(text=["aiai"], x=1, y=2.6, Vd=dbg2)
-@test startswith(GMT.text([1 2 3; 4 5 6], Vd=dbg2), "pstext  -JX" * split(GMT.def_fig_size, '/')[1] * "/0" * " -Baf -BWSen -R0.9/4.1/1.9/5.1")
+@test startswith(GMT.text([1 2 3; 4 5 6], Vd=dbg2), "pstext  -JX" * split(GMT.DEF_FIG_SIZE, '/')[1] * "/0" * " -Baf -BWSen -R0.9/4.1/1.9/5.1")
 @test_throws ErrorException("TEXT: input file must have at least three columns") text([1 2; 4 5], Vd=dbg2)
 text(rich("H", subscript("2"), greek("O")," is the ", smallcaps("formula")," for ", rich(underline("water"), color=:red, font=4, size=18)), x=1, y=1, Vd=dbg2)
 @test superscript("4") == "@+4@+"

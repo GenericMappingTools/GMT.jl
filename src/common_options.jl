@@ -9,7 +9,7 @@ dict2nt(d::Dict)::NamedTuple = NamedTuple{Tuple(Symbol.(keys(d)))}(values(d))
 
 function find_in_dict(d::Dict, symbs::VMs, del::Bool=true, help_str::String="")
 	# See if D contains any of the symbols in SYMBS. If yes, return corresponding value
-	(show_kwargs[1] && help_str != "") && return (print_kwarg_opts(symbs, help_str), Symbol())
+	(SHOW_KWARGS[1] && help_str != "") && return (print_kwarg_opts(symbs, help_str), Symbol())
 	for symb in symbs
 		if (haskey(d, symb))
 			val = d[symb]				# SHIT is that 'val' is always a ANY
@@ -50,7 +50,7 @@ end
 
 function find_in_kwargs(p, symbs::VMs, del::Bool=true, primo::Bool=true, help_str::String="")
 	# See if P contains any of the symbols in SYMBS. If yes, return corresponding value
-	(show_kwargs[1] && help_str != "") && return (print_kwarg_opts(symbs, help_str), Symbol())
+	(SHOW_KWARGS[1] && help_str != "") && return (print_kwarg_opts(symbs, help_str), Symbol())
 	_k = keys(p)
 	for symb in symbs
 		if ((ind = findfirst(_k .== symb)) !== nothing)
@@ -64,7 +64,7 @@ end
 
 function is_in_dict(d::Dict, symbs::VMs, help_str::String=""; del::Bool=false)
 	# See if D contains any of the symbols in SYMBS. If yes, return the used smb in symbs
-	(show_kwargs[1] && help_str != "") && return print_kwarg_opts(symbs, help_str)
+	(SHOW_KWARGS[1] && help_str != "") && return print_kwarg_opts(symbs, help_str)
 	for symb in symbs
 		if (haskey(d, symb))
 			del && delete!(d, symb)
@@ -145,7 +145,7 @@ function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=true, RIr::Bool=
 	# The RIr option is to assign also the -I and -r when R was given a GMTgrid|image value. This is a
 	# workaround for a GMT bug that ignores this behaviour when from externals.
 
-	(show_kwargs[1]) && return (print_kwarg_opts([:R :region :limits], "GMTgrid | NamedTuple |Tuple | Array | String"), "")
+	(SHOW_KWARGS[1]) && return (print_kwarg_opts([:R :region :limits], "GMTgrid | NamedTuple |Tuple | Array | String"), "")
 
 	opt_R::String = ""
 	val, symb = find_in_dict(d, [:R :region :limits :region_llur :limits_llur :limits_diag :region_diag], del)
@@ -358,7 +358,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_JZ(d::Dict, cmd::String, del::Bool=true; O::Bool=false, is3D::Bool=false)
 	symbs = [:JZ :Jz :zscale :zsize]
-	(show_kwargs[1]) && return (print_kwarg_opts(symbs, "String | Number"), "")
+	(SHOW_KWARGS[1]) && return (print_kwarg_opts(symbs, "String | Number"), "")
 	opt_J::String = "";		seek_JZ = true
 	if ((val = find_in_dict(d, [:aspect3])[1]) !== nothing)
 		o = scan_opt(cmd, "-J")
@@ -386,7 +386,7 @@ function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bo
 	# Default to 15c if no size is provided.
 	# If MAP == false, do not try to append a fig size
 
-	(show_kwargs[1]) && return (print_kwarg_opts([:J :proj :projection], "NamedTuple | String"), "")
+	(SHOW_KWARGS[1]) && return (print_kwarg_opts([:J :proj :projection], "NamedTuple | String"), "")
 
 	opt_J::String = "";		mnemo::Bool = false
 	if ((val = find_in_dict(d, [:J :proj :projection], del)[1]) !== nothing)
@@ -414,7 +414,7 @@ function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bo
 			opt_J = IamSubplot[1] ? " -JX?" : (default != "guess" ? default : opt_J) 	# -JX was a working default
 		elseif (occursin("+width=", opt_J))		# OK, a proj4 string, don't touch it. Size already in.
 		elseif (occursin("+proj", opt_J))		# A proj4 string but no size info. Use default size
-			opt_J *= "+width=" * string(split(def_fig_size, '/')[1])::String
+			opt_J *= "+width=" * string(split(DEF_FIG_SIZE, '/')[1])::String
 		elseif (mnemo)							# Proj name was obtained from a name mnemonic and no size. So use default
 			opt_J = append_figsize(d, opt_J)
 		elseif (!isdigit(opt_J[end]) && (length(opt_J) < 6 || (isletter(opt_J[5]) && !isdigit(opt_J[6]))) )
@@ -423,7 +423,7 @@ function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bo
 					opt_J *= set_aspect_ratio(val, "", true, haskey(d, :aspect3))::String
 				else
 					opt_J = (!startswith(opt_J, " -JX")) ? append_figsize(d, opt_J) :
-					         opt_J * def_fig_size::String; CTRL.pocket_J[2] = def_fig_size
+					         opt_J * DEF_FIG_SIZE::String; CTRL.pocket_J[2] = DEF_FIG_SIZE
 				end
 				#CTRL.pocket_J[1] = opt_J
 			elseif (!occursin("?", opt_J))		# If we dont have one ? for size/scale already
@@ -523,7 +523,7 @@ function append_figsize(d::Dict, opt_J::String, width::String="", scale::Bool=fa
 	# use the DEF_FIG_SIZE, otherwise use WIDTH that can be a size or a scale.
 
 	if (width == "")
-		width::String = (IamSubplot[1]) ? "?" : split(def_fig_size, '/')[1]		# In subplot "?" is auto width
+		width::String = (IamSubplot[1]) ? "?" : split(DEF_FIG_SIZE, '/')[1]		# In subplot "?" is auto width
 	elseif (IamSubplot[1] && (width == "auto" || width == "auto,auto"))	# In subplot one can say figsize="auto" or figsize="auto,auto"
 		width = (width == "auto") ? "?" : "?/?"
 	elseif (((val = find_in_dict(d, [:aspect])[1]) !== nothing) || haskey(d, :aspect3))
@@ -568,7 +568,7 @@ set_aspect_ratio(aspect::Symbol, width::String, def_fig::Bool=false, is_aspect3:
 set_aspect_ratio(aspect::Real, width::String, def_fig::Bool=false, is_aspect3::Bool=false)::String = set_aspect_ratio(string(aspect, ":1"), width, def_fig, is_aspect3)
 function set_aspect_ratio(aspect::String, width::String, def_fig::Bool=false, is_aspect3::Bool=false)::String
 	# Set the aspect ratio. ASPECT can be "equal", "eq"; "square", "sq" or a ratio in the form "4:3", "16:12", etc.
-	def_fig && (width = split(def_fig_size, '/')[1])
+	def_fig && (width = split(DEF_FIG_SIZE, '/')[1])
 	if (startswith(aspect, "eq") || is_aspect3)
 		width *= "/0"
 	elseif (startswith(aspect, "sq"))
@@ -603,7 +603,7 @@ function plot_GI_size(GI::GItype, opt_J="", opt_R="")
 	got_J = (opt_J != "")
 	(opt_R == "") && (opt_R = @sprintf(" -R%.10g/%.10g/%.10g/%.10g", GI.range[1:4]...))
 	(opt_J == "") && (opt_J = (GI.geog > 0) ? guess_proj(GI.range[1:2], GI.range[3:4]) : " -JX")
-	!got_J && (opt_J *= '/' * split(def_fig_size, '/')[1])
+	!got_J && (opt_J *= '/' * split(DEF_FIG_SIZE, '/')[1])
 	w,h = gmt("mapproject -W " * opt_R * opt_J).data
 end
 
@@ -819,8 +819,8 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_grid(d::Dict, args, opt_B::String="", stalone::Bool=true)::String
 	# Parse the contents of the "grid" option. This option can be used as grid=(pen=:red, x=10), case on
-	# which the parsed result will be appended to def_fig_axes, or as a member of the "frame" option.
-	# In this case def_fig_axes is dropped and only the contents of "frame" will be used. The argument can
+	# which the parsed result will be appended to DEF_FIG_AXES, or as a member of the "frame" option.
+	# In this case DEF_FIG_AXES is dropped and only the contents of "frame" will be used. The argument can
 	# be a NamedTuple, which allows setting grid pen and individual axes, or as a string (see ex bellow).
 	pre::String = (stalone) ? " -B" : ""
 	get_int(oo) = return (tryparse(Float64, oo) !== nothing) ? oo : ""	# Micro nested-function
@@ -861,12 +861,12 @@ end
 function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tuple{String,String}
 	# opt_B is used to transmit a default value. If not empty the Bframe part must be at the end and only one -B...
 
-	(show_kwargs[1]) && return (print_kwarg_opts([:B :frame :axes :axis :xaxis :yaxis :zaxis :axis2 :xaxis2 :yaxis2], "NamedTuple | String"), "")
+	(SHOW_KWARGS[1]) && return (print_kwarg_opts([:B :frame :axes :axis :xaxis :yaxis :zaxis :axis2 :xaxis2 :yaxis2], "NamedTuple | String"), "")
 
 	opt_B::String = opt_B__	# Otherwise opt_B is core Boxed??
-	parse_theme(d)			# Must be first because some themes change def_fig_axes
-	def_fig_axes_::String  = (IamModern[1]) ? "" : def_fig_axes[1]		# def_fig_axes is a global const
-	def_fig_axes3_::String = (IamModern[1]) ? "" : def_fig_axes3[1]		# def_fig_axes is a global const
+	parse_theme(d)			# Must be first because some themes change DEF_FIG_AXES
+	DEF_FIG_AXES_::String  = (IamModern[1]) ? "" : DEF_FIG_AXES[1]		# DEF_FIG_AXES is a global const
+	DEF_FIG_AXES3_::String = (IamModern[1]) ? "" : DEF_FIG_AXES3[1]		# DEF_FIG_AXES is a global const
 
 	have_Bframe, got_Bstring, have_axes::Bool = false, false, false	# To know if the axis() function returns a -B<frame> setting
 
@@ -889,14 +889,14 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 			elseif (startswith(_val, "auto"))
 				is3D = false
 				if     (occursin("XYZg", _val)) _val = " -Bafg -Bzafg -B+" * "w";  is3D = true
-				elseif (occursin("XYZ", _val))  _val = def_fig_axes3[1];		is3D = true
+				elseif (occursin("XYZ", _val))  _val = DEF_FIG_AXES3[1];		is3D = true
 				elseif (occursin("XYg", _val))  _val = " -Bafg -BWSen"
-				elseif (occursin("XY", _val))   _val = def_fig_axes[1]
+				elseif (occursin("XY", _val))   _val = DEF_FIG_AXES[1]
 				elseif (occursin("Xg", _val))   _val = " -Bafg -BwSen"
 				elseif (occursin("X",  _val))   _val = " -Baf -BwSen"
 				elseif (occursin("Yg", _val))   _val = " -Bafg -BWsen"
 				elseif (occursin("Y",  _val))   _val = " -Baf -BWsen"
-				elseif (_val == "auto")         _val = def_fig_axes[1]		# 2D case
+				elseif (_val == "auto")         _val = DEF_FIG_AXES[1]		# 2D case
 				end
 				cmd = guess_WESN(d, cmd)
 			elseif (length(_val) <= 5 && !occursin(" ", _val) && occursin(r"[WESNwesnzZ]", _val))
@@ -936,7 +936,7 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 		else
 			opt_B = string(_val)
 		end
-		(extra_parse && (isa(val, String) || isa(val, Symbol))) && (got_Bstring = true)	# Signal to not try to consolidate with def_fig_axes
+		(extra_parse && (isa(val, String) || isa(val, Symbol))) && (got_Bstring = true)	# Signal to not try to consolidate with DEF_FIG_AXES
 		if (got_Bstring)		# Must check for spaces in titles, like in "ya10g10 +t\"Sector Diagram\""
 			first = false
 			for k in eachindex(opt_B)
@@ -980,7 +980,7 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 
 	if (t != "")
 		if (opt_B == "" && (val = find_in_dict(d, [:xaxis :yaxis :zaxis :xticks :yticks :zticks], false)[1] === nothing))
-			(!have_a_none) ? (opt_B = def_fig_axes_) : have_a_none = false	# False to not trigger the white@100 trick
+			(!have_a_none) ? (opt_B = DEF_FIG_AXES_) : have_a_none = false	# False to not trigger the white@100 trick
 		elseif (opt_B != "")			# Because  findlast("-B","") Errors!!!!!
 			if !(((ind = findlast("-B",opt_B)) !== nothing || (ind = findlast(" ",opt_B)) !== nothing) &&
 				 (occursin(r"[WESNwesntlbu+g+o]", opt_B[ind[1]:end])))
@@ -994,7 +994,7 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 	end
 
 	# These are not and we can have one or all of them. NamedTuples are dealt at the end
-	is_still_Bdef = (opt_B == def_fig_axes_ || opt_B == def_fig_axes3_)
+	is_still_Bdef = (opt_B == DEF_FIG_AXES_ || opt_B == DEF_FIG_AXES3_)
 	for symb in [:xaxis :yaxis :zaxis :axis2 :xaxis2 :yaxis2]
 		if (haskey(d, symb) && !isa(d[symb], NamedTuple) && !isa(d[symb], Dict))
 			_ax::String = string(symb);
@@ -1007,7 +1007,7 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 		end
 	end
 
-	if (extra_parse && (opt_B != def_fig_axes[1] && opt_B != def_fig_axes3[1]))
+	if (extra_parse && (opt_B != DEF_FIG_AXES[1] && opt_B != DEF_FIG_AXES3[1]))
 		# This is old code that takes care to break a string in tokens and prefix with a -B to each token
 		tok = Vector{String}(undef, 10)
 		k = 1;		r = opt_B;		found = false
@@ -1043,7 +1043,7 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 			delete!(d, symb)
 		end
 	end
-	(xax && yax) && (opt_B = replace(opt_B, def_fig_axes_ => ""))	# If x&yaxis have been called, remove default
+	(xax && yax) && (opt_B = replace(opt_B, DEF_FIG_AXES_ => ""))	# If x&yaxis have been called, remove default
 	(!isempty(opt_B) && (opt_B[1] == '+' || occursin(opt_B[1], "WSENZwsenzlrbtu"))) && (opt_B = " -B" * opt_B)	# If above has removed the " -B". Happens when (xaxis, yaxis, title)
 
 	# These can come up outside of an ?axis tuple, so need to be seeked too.
@@ -1058,19 +1058,19 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 		end
 	end
 
-	if (opt_B != def_fig_axes_ && opt_B != def_fig_axes3_)
+	if (opt_B != DEF_FIG_AXES_ && opt_B != DEF_FIG_AXES3_)
 		opt_B = contains(this_opt_B, "Bpx") && contains(this_opt_B, "Bpy") && startswith(opt_B, " -Baf") ?
 			this_opt_B * opt_B[6:end] : this_opt_B * opt_B	# First case drops the starting " -Baf" (fragile...)
 	elseif (this_opt_B != "")
 		opt_B = this_opt_B
 	end
-	(got_ticks && opt_B == this_opt_B) && (opt_B *= (contains(opt_B, "-Bpz") ? def_fig_axes3_ : def_fig_axes_))	# When only x|y|z ticks were requested.
+	(got_ticks && opt_B == this_opt_B) && (opt_B *= (contains(opt_B, "-Bpz") ? DEF_FIG_AXES3_ : DEF_FIG_AXES_))	# When only x|y|z ticks were requested.
 
-	if (def_fig_axes[1] != def_fig_axes_bak && opt_B != def_fig_axes[1])	# Consolidation only under themes
-		if (opt_B != "" && !got_Bstring && CTRL.proj_linear[1] && !occursin(def_fig_axes_, opt_B) &&
+	if (DEF_FIG_AXES[1] != DEF_FIG_AXES_BAK && opt_B != DEF_FIG_AXES[1])	# Consolidation only under themes
+		if (opt_B != "" && !got_Bstring && CTRL.proj_linear[1] && !occursin(DEF_FIG_AXES_, opt_B) &&
 			!(occursin("pxc", opt_B) || occursin("pyc", opt_B)))
-			# By using def_fig_axes_ this has no effect in modern mode.
-			opt_B = ((have_Bframe) ? split(def_fig_axes_)[1] : def_fig_axes_) * opt_B
+			# By using DEF_FIG_AXES_ this has no effect in modern mode.
+			opt_B = ((have_Bframe) ? split(DEF_FIG_AXES_)[1] : DEF_FIG_AXES_) * opt_B
 		end
 		opt_B = consolidate_Baxes(opt_B)
 	end
@@ -1154,7 +1154,7 @@ function consolidate_Baxes(opt_B::String)::String
 		occursin("-Bg", opt_B) && (opt_B = replace(opt_B, "-Bg" => ""))
 	end
 
-	sdef = split(def_fig_axes[1])			# sdef[1] should contain only axes settings
+	sdef = split(DEF_FIG_AXES[1])			# sdef[1] should contain only axes settings
 	occursin("a", sdef[1]) && (opt_B = helper_consolidate_B(opt_B, "a", have_Bpxa, have_Bpya))
 	occursin("f", sdef[1]) && (opt_B = helper_consolidate_B(opt_B, "f", have_Bpxf, have_Bpyf))
 	occursin("g", sdef[1]) && (opt_B = helper_consolidate_B(opt_B, "g", have_Bpxg, have_Bpyg))
@@ -1250,20 +1250,20 @@ function parse_BJR(d::Dict, cmd::String, caller::String, O::Bool, defaultJ::Stri
 	cmd, opt_R = parse_R(d, cmd, O, del)
 	cmd, opt_J = parse_J(d, cmd, defaultJ, true, O, del)
 
-	parse_theme(d)		# Must be first because some themes change def_fig_axes
+	parse_theme(d)		# Must be first because some themes change DEF_FIG_AXES
 	is3D = (is_in_dict(d, [:JZ :Jz :zscale :zsize]) !== nothing)
-	def_fig_axes_::String = (IamModern[1]) ? "" : is3D ? def_fig_axes3[1] : def_fig_axes[1]	# def_fig_axes is global
+	DEF_FIG_AXES_::String = (IamModern[1]) ? "" : is3D ? DEF_FIG_AXES3[1] : DEF_FIG_AXES[1]	# DEF_FIG_AXES is global
 
 	if (caller != "" && occursin("-JX", opt_J))		# e.g. plot() sets 'caller'
 		if (occursin("3", caller) || caller == "grdview")
-			def_fig_axes3_::String = (IamModern[1]) ? "" : def_fig_axes3[1]
-			cmd, opt_B = parse_B(d, cmd, (O ? "" : def_fig_axes3_), del)
+			DEF_FIG_AXES3_::String = (IamModern[1]) ? "" : DEF_FIG_AXES3[1]
+			cmd, opt_B = parse_B(d, cmd, (O ? "" : DEF_FIG_AXES3_), del)
 		else
-			xx::String = (O ? "" : caller != "ternary" ? def_fig_axes_ : string(split(def_fig_axes_)[1]))
+			xx::String = (O ? "" : caller != "ternary" ? DEF_FIG_AXES_ : string(split(DEF_FIG_AXES_)[1]))
 			cmd, opt_B = parse_B(d, cmd, xx, del)	# For overlays, default is no axes
 		end
 	else
-		cmd, opt_B = parse_B(d, cmd, (O ? "" : def_fig_axes_), del)
+		cmd, opt_B = parse_B(d, cmd, (O ? "" : DEF_FIG_AXES_), del)
 	end
 	return cmd, opt_B, opt_J, opt_R
 end
@@ -1293,7 +1293,7 @@ function parse_type_anchor(d::Dict, cmd::String, symbs::VMs, mapa::NamedTuple, d
 	# SYMBS: [:D :pos :position] | ...
 	# MAPA is the NamedTuple of suboptions
 	# def_CS is the default "Coordinate system". Colorbar has 'J', logo has 'g', many have 'j'
-	(show_kwargs[1]) && return print_kwarg_opts(symbs, mapa)	# Just print the kwargs of this option call
+	(SHOW_KWARGS[1]) && return print_kwarg_opts(symbs, mapa)	# Just print the kwargs of this option call
 	got_str = false
 	for s in symbs		# Check if arg value is a string. If yes, ignore 'def_CS'
 		(haskey(d, s) && isa(d[s], String)) && (got_str = true; break)
@@ -1386,7 +1386,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_d(d::Dict, cmd::String, symbs::VMs=[:d :nodata])
-	(show_kwargs[1]) && return (print_kwarg_opts(symbs, "$(symbs[2])=val"),"")
+	(SHOW_KWARGS[1]) && return (print_kwarg_opts(symbs, "$(symbs[2])=val"),"")
 	parse_helper(cmd, d, [:d :nodata], " -d")
 end
 parse_di(d::Dict, cmd::String) = parse_d(d, cmd, [:di :nodata_in])
@@ -1526,7 +1526,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_helper(cmd::String, d::Dict, symbs::VMs, opt::String, sep='/')
 	# Helper function to the parse_?() global options.
-	(show_kwargs[1]) && return (print_kwarg_opts(symbs, "(Common option not yet expanded)"),"")
+	(SHOW_KWARGS[1]) && return (print_kwarg_opts(symbs, "(Common option not yet expanded)"),"")
 	opt_val::String = ""
 	if ((val = find_in_dict(d, symbs, true)[1]) !== nothing)
 		opt_val = opt * arg2str(val, sep)::String
@@ -1537,7 +1537,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_common_opts(d::Dict, cmd::String, opts::VMs, first::Bool=true)
-	(show_kwargs[1]) && return (print_kwarg_opts(opts, "(Common options)"),"")	# Just print the options
+	(SHOW_KWARGS[1]) && return (print_kwarg_opts(opts, "(Common options)"),"")	# Just print the options
 
 	ignore_J, ignore_R, ignore_p, ignore_t = false, false, false, false
 	cmd, _cmd = GMTsyntax_opt(d, cmd)		# See if an hardcore GMT syntax string has been passed
@@ -1590,17 +1590,17 @@ function parse_common_opts(d::Dict, cmd::String, opts::VMs, first::Bool=true)
 	end
 	if (opt_p !== nothing)		# Restrict the contents of this block to when -p was used
 		if (opt_p != "")
-			if (opt_p == " -pnone")  current_view[1] = "";	cmd = cmd[1:end-7];	opt_p = ""
+			if (opt_p == " -pnone")  CURRENT_VIEW[1] = "";	cmd = cmd[1:end-7];	opt_p = ""
 			elseif (startswith(opt_p, " -pa") || startswith(opt_p, " -pd"))
-				current_view[1] = " -p210/30";
-				cmd = replace(cmd, opt_p => "") * current_view[1]::String		# auto, def, 3d
+				CURRENT_VIEW[1] = " -p210/30";
+				cmd = replace(cmd, opt_p => "") * CURRENT_VIEW[1]::String		# auto, def, 3d
 			else
-				current_view[1] = opt_p
+				CURRENT_VIEW[1] = opt_p
 			end
-		elseif (!first && current_view[1] != "")
-			cmd *= current_view[1]::String
+		elseif (!first && CURRENT_VIEW[1] != "")
+			cmd *= CURRENT_VIEW[1]::String
 		elseif (first)
-			current_view[1] = ""		# Ensure we start empty
+			CURRENT_VIEW[1] = ""		# Ensure we start empty
 		end
 	end
 	#cmd   = GMTsyntax_opt(d, cmd)		# See if an hardcore GMT syntax string has been passed
@@ -1694,7 +1694,7 @@ end
 function add_opt_pen(d::Dict, symbs::Union{Nothing, VMs}, opt::String="", del::Bool=true)::String
 	# Build a pen option. Input can be either a full hard core string or spread in lw (or lt), lc, ls, etc or a tuple
 
-	(show_kwargs[1]) && return print_kwarg_opts(symbs, "NamedTuple | Tuple | String | Number")	# Just print the options
+	(SHOW_KWARGS[1]) && return print_kwarg_opts(symbs, "NamedTuple | Tuple | String | Number")	# Just print the options
 
 	if (opt != "")  opt = " -" * opt  end		# Will become -W<pen>, for example
 	out::String = ""
@@ -1773,7 +1773,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function opt_pen(d::Dict, opt::Char, symbs::VMs)::String
 	# Create an option string of the type -Wpen
-	(show_kwargs[1]) && return print_kwarg_opts(symbs, "Tuple | String | Number")	# Just print the options
+	(SHOW_KWARGS[1]) && return print_kwarg_opts(symbs, "Tuple | String | Number")	# Just print the options
 
 	out::String = ""
 	pen = build_pen(d)						# Either a full pen string or empty ("")
@@ -2103,7 +2103,7 @@ function finish_PS(d::Dict, cmd::String, output::String, K::Bool, O::Bool)::Stri
 	else
 		if ((K && !O) || (!K && !O) || O)  cmd *= opt  end
 	end
-	!O && !startswith(cmd, "psxy") && (legend_type[1] = legend_bag())	# Make sure that we always start with an empty one
+	!O && !startswith(cmd, "psxy") && (LEGEND_TYPE[1] = legend_bag())	# Make sure that we always start with an empty one
 	return cmd
 end
 
@@ -2151,7 +2151,7 @@ function add_opt_1char(cmd::String, d::Dict, symbs::Vector{Matrix{Symbol}}, del:
 	# If DEL == true we remove the found key.
 	# The keyword value must be a string, symbol or a tuple of them. We only retain the first character of each item
 	# Ex:  GMT.add_opt_1char("", Dict(:N => ("abc", "sw", "x"), :Q=>"datum"), [[:N :geod2aux], [:Q :list]]) == " -Nasx -Qd"
-	(show_kwargs[1]) && return print_kwarg_opts(symbs, "Str | Symb | Tuple")
+	(SHOW_KWARGS[1]) && return print_kwarg_opts(symbs, "Str | Symb | Tuple")
 	for opt in symbs
 		((val = find_in_dict(d, opt, del)[1]) === nothing) && continue
 		args::String = ""
@@ -2176,7 +2176,7 @@ function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, mapa=nothing, de
 	# If ARG is a string, then the keys of MAPA can be used as values of SYMBS and are replaced by vals of MAPA
 	#    Example (hitogram -Z): add_opt(d, "", "Z", [:Z :kind], (counts="0", freq="1",...)) Z=freq => -Z1
 	#  But this only works when sub-options have default values. i.e. they are aliases
-	(show_kwargs[1]) && return print_kwarg_opts(symbs, mapa)	# Just print the kwargs of this option call
+	(SHOW_KWARGS[1]) && return print_kwarg_opts(symbs, mapa)	# Just print the kwargs of this option call
 
 	if ((val = find_in_dict(d, symbs, del)[1]) === nothing)
 		if (isa(arg, Bool) && isa(mapa, NamedTuple))	# Make each mapa[i] a mapa[i]key=mapa[i]val
@@ -2384,7 +2384,7 @@ function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, need_symb::Symbo
 	# ARGS is a 1-to-3 array of GMT types in which some may be NOTHING. If the value is an array, it will be
 	# stored in first non-empty element of ARGS.
 	# Example where this is used (plot -Z):  Z=(outline=true, data=[1, 4])
-	(show_kwargs[1]) && print_kwarg_opts(symbs)		# Just print the kwargs of this option call
+	(SHOW_KWARGS[1]) && print_kwarg_opts(symbs)		# Just print the kwargs of this option call
 
 	N_used = 0;		got_one = false
 	val, symb = find_in_dict(d, symbs, false)
@@ -2442,7 +2442,7 @@ function add_opt_cpt(d::Dict, cmd::String, symbs::VMs, opt::Char, N_args::Int=0,
 	# OPT_T, when != "", contains a min/max/n_slices/+n string to calculate a cpt with n_slices colors between [min max]
 	# IN_BAG, if true means that, if not empty, we return the contents of `CURRENT_CPT`
 
-	(show_kwargs[1]) && return print_kwarg_opts(symbs, "GMTcpt | Tuple | Array | String | Number"), arg1, arg2, N_args
+	(SHOW_KWARGS[1]) && return print_kwarg_opts(symbs, "GMTcpt | Tuple | Array | String | Number"), arg1, arg2, N_args
 
 	function equalize(d, arg1, cptname::String, opt_T::String)::GMTcpt
 		if ((isa(arg1, GMTgrid) || isa(arg1, String)) && (val_eq = find_in_dict(d, [:equalize])[1]) !== nothing)
@@ -2517,7 +2517,7 @@ end
 add_opt_fill(d::Dict, symbs::VMs, opt="") = add_opt_fill("", d, symbs, opt)
 function add_opt_fill(cmd::String, d::Dict, symbs::VMs, opt="", del::Bool=true)::String
 	# Deal with the area fill attributes option. Normally, -G
-	(show_kwargs[1]) && return print_kwarg_opts(symbs, "NamedTuple | Tuple | Array | String | Number")
+	(SHOW_KWARGS[1]) && return print_kwarg_opts(symbs, "NamedTuple | Tuple | Array | String | Number")
 	((val = find_in_dict(d, symbs, del)[1]) === nothing) && return cmd
 	isa(val, Dict) && (val = Base.invokelatest(dict2nt, val))
 	(val == true && symbs == [:G :fill]) && (val="#0072BD")		# Let fill=true mean a default color
@@ -3475,7 +3475,7 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", i
 
 	(fname == "") && return _read_data(d, cmd, arg, opt_R, is3D, get_info, opt_i, opt_di, opt_yx)
 
-	if (((!IamModern[1] && opt_R == "") || get_info) && !convert_syntax[1])		# Must read file to find -R
+	if (((!IamModern[1] && opt_R == "") || get_info) && !CONVERT_SYNTAX[1])		# Must read file to find -R
 		if (!IamSubplot[1] || GMTver > v"6.1.1")	# Protect against a GMT bug
 			arg::GDtype = gmt("read -Td " * opt_i * opt_bi * opt_di * opt_h * opt_yx * " " * fname)
 			helper_set_colnames!(arg)				# Set colnames if file has a comment line supporting it
@@ -3490,14 +3490,14 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", i
 	end
 
 	no_R = (opt_R == "" || opt_R[1] == '/' || opt_R == " -Rtight")
-	if (!convert_syntax[1] && !IamModern[1] && no_R)
+	if (!CONVERT_SYNTAX[1] && !IamModern[1] && no_R)
 		wesn_f64::Matrix{Float64} = gmt("gmtinfo -C" * opt_bi * opt_i * opt_di * opt_h * opt_yx * " " * fname).data	#
 		opt_R::String = @sprintf(" -R%.12g/%.12g/%.12g/%.12g", wesn_f64[1], wesn_f64[2], wesn_f64[3], wesn_f64[4])
 		(is3D) && (opt_R = @sprintf("%s/%.12g/%.12g", opt_R, wesn_f64[5], wesn_f64[6]))
 		cmd *= opt_R
 	end
 
-	(show_kwargs[1]) && return cmd, arg, opt_R, [NaN NaN NaN NaN], ""		# In HELP mode we do nothing here
+	(SHOW_KWARGS[1]) && return cmd, arg, opt_R, [NaN NaN NaN NaN], ""		# In HELP mode we do nothing here
 
 	_read_data(d, cmd, arg, opt_R, is3D, get_info, opt_i, opt_di, opt_yx)
 end
@@ -3540,7 +3540,7 @@ function _read_data(d::Dict, cmd::String, arg, opt_R::String="", is3D::Bool=fals
 	is_geo = contains(prj, "longlat") || contains(prj, "latlong")
 	ds_bbox = isGMTdataset(arg) ? (isa(arg, GMTdataset) ? arg.ds_bbox : arg[1].ds_bbox) : Float64[]
 
-	if (!convert_syntax[1] && !IamModern[1] && no_R)	# Here 'arg' can no longer be a file name (string)
+	if (!CONVERT_SYNTAX[1] && !IamModern[1] && no_R)	# Here 'arg' can no longer be a file name (string)
 		if (opt_i == "" && opt_di == "" && opt_yx == "" && !isempty(ds_bbox))
 			wesn_f64::Matrix{<:Float64} = reshape(copy(ds_bbox), 1, length(ds_bbox))
 		else
@@ -3610,7 +3610,7 @@ function _read_data(d::Dict, cmd::String, arg, opt_R::String="", is3D::Bool=fals
 		(!is_onecol) && (cmd *= opt_R)		# The onecol case (for histogram) has an imcomplete -R
 	end
 
-	if (!convert_syntax[1] && get_info && !have_info)
+	if (!CONVERT_SYNTAX[1] && get_info && !have_info)
 		wesn_f64 = gmt("gmtinfo -C" * opt_i * opt_di * opt_yx, arg).data
 		if (wesn_f64[1] > wesn_f64[2])		# Workaround a bug/feature in GMT when -: is arround
 			wesn_f64[2], wesn_f64[1] = wesn_f64[1], wesn_f64[2]
@@ -3740,7 +3740,7 @@ isGMTdataset(x)::Bool = (isa(x, GMTdataset) || isa(x, Vector{<:GMTdataset}))
 function find_data(d::Dict, cmd0::String, cmd::String, args...)
 	# ...
 
-	(show_kwargs[1]) && return cmd, 0, nothing		# In HELP mode we do nothing here
+	(SHOW_KWARGS[1]) && return cmd, 0, nothing		# In HELP mode we do nothing here
 
 	got_fname = 0;		data_kw = nothing
 	if (haskey(d, :data))  data_kw = d[:data];  delete!(d, :data)  end
@@ -3840,12 +3840,12 @@ end
 dbg_print_cmd(d::Dict, cmd::String) = dbg_print_cmd(d, [cmd])
 function dbg_print_cmd(d::Dict, cmd::Vector{String})
 	# Print the gmt command when the Vd>=1 kwarg was used.
-	# In case of convert_syntax = true, just put the cmds in a global var 'cmds_history' used in movie
+	# In case of CONVERT_SYNTAX = true, just put the cmds in a global var 'cmds_history' used in movie
 
-	if (show_kwargs[1])  show_kwargs[1] = false; return ""  end	# If in HELP mode
+	if (SHOW_KWARGS[1])  SHOW_KWARGS[1] = false; return ""  end	# If in HELP mode
 
-	if ( ((Vd = find_in_dict(d, [:Vd])[1]) !== nothing) || convert_syntax[1])
-		(convert_syntax[1]) && return update_cmds_history(cmd)	# For movies mainly.
+	if ( ((Vd = find_in_dict(d, [:Vd])[1]) !== nothing) || CONVERT_SYNTAX[1])
+		(CONVERT_SYNTAX[1]) && return update_cmds_history(cmd)	# For movies mainly.
 		(Vd <= 0) && (d[:Vd] = 0)		# Later, if Vd == 0, do not print the "not consumed" warnings
 		(Vd <= 0) && return nothing
 
@@ -3862,7 +3862,7 @@ function dbg_print_cmd(d::Dict, cmd::Vector{String})
 			prog = isa(cmd, String) ? split(cmd)[1] : split(cmd[1])[1]
 			(length(dd) > 0) && println("Warning: the following options were not consumed in $prog => ", keys(dd))
 		end
-		(size(legend_type[1].label, 1) != 0) && (legend_type[1].Vd = Vd)	# So that autolegend can also work
+		(size(LEGEND_TYPE[1].label, 1) != 0) && (LEGEND_TYPE[1].Vd = Vd)	# So that autolegend can also work
 		(Vd == 1) && println("\t", length(cmd) == 1 ? cmd[1] : cmd)
 		(Vd >= 2) && return length(cmd) == 1 ? cmd[1] : cmd
 	end
@@ -3954,7 +3954,7 @@ end
 function reset_theme()
 	if (ThemeIsOn[1])
 		theme_modern();		ThemeIsOn[1] = false
-		def_fig_axes[1] = def_fig_axes_bak;		def_fig_axes3[1] = def_fig_axes3_bak;
+		DEF_FIG_AXES[1] = DEF_FIG_AXES_BAK;		DEF_FIG_AXES3[1] = DEF_FIG_AXES3_BAK;
 	end
 end
 
@@ -3965,7 +3965,7 @@ function showfig(; kwargs...)
 	d = KW(kwargs)
 	(!haskey(d, :show)) && (d[:show] = true)		# The default is to show
 	CTRL.limits .= 0.0;		CTRL.proj_linear[1] = true;		# Reset these for safety
-	!isempty(legend_type[1].optsDict) && (d[:legend] = dict2nt(legend_type[1].optsDict))	# Recover opt settings
+	!isempty(LEGEND_TYPE[1].optsDict) && (d[:legend] = dict2nt(LEGEND_TYPE[1].optsDict))	# Recover opt settings
 	digests_legend_bag(d)							# Plot the legend if requested
 	finish_PS_module(d, "psxy -R0/1/0/1 -JX0.001c -T -O", "", false, true, true)
 end
@@ -4128,8 +4128,8 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 	have_Vd = haskey(d, :Vd)
 	(have_Vd && d[:Vd] > 2) && show_args_types(args...)
 	if ((r = dbg_print_cmd(d, cmd)) !== nothing)  return length(r) == 1 ? r[1] : r  end
-	img_mem_layout[1] = add_opt(d, "", "", [:layout])
-	(img_mem_layout[1] == "images") && (img_mem_layout[1] = "I   ")		# Special layout for Images.jl
+	IMG_MEM_LAYOUT[1] = add_opt(d, "", "", [:layout])
+	(IMG_MEM_LAYOUT[1] == "images") && (IMG_MEM_LAYOUT[1] = "I   ")		# Special layout for Images.jl
 
 	if (fname_ext != "ps" && !IamModern[1] && !O)		# Exptend to a larger paper size
 		cmd[1] *= " --PS_MEDIA=32767x32767"				# In Modern mode GMT takes care of this.
@@ -4200,19 +4200,19 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 		if (fname_ext == "" && opt_extra == "")		# Return result as an GMTimage
 			P = showfig(d, output, fname_ext, "", K)
 			CTRL.limits .= 0.0
-			legend_type[1] = legend_bag()
+			LEGEND_TYPE[1] = legend_bag()
 			gmt_restart()							# Returning a PS screws the session
 		elseif ((haskey(d, :show) && d[:show] != 0) || fname != "" || opt_T != "")
 			P = showfig(d, output, fname_ext, opt_T, K, fname)	# Return something here for the case we are in Pluto
 			(typeof(P) == Base.Process) && (P = nothing)		# Don't want spurious message on REPL when plotting
 			CTRL.IamInPaperMode[2] = true			# Means, next time a paper mode is used offset XY only on first call 
 			CTRL.limits .= 0.0
-			legend_type[1] = legend_bag()
+			LEGEND_TYPE[1] = legend_bag()
 		end
 	elseif ((haskey(d, :show) && d[:show] != 0))	# Let modern mode also call show=true
 		helper_showfig4modern()
 		CTRL.limits .= 0.0
-		legend_type[1] = legend_bag()
+		LEGEND_TYPE[1] = legend_bag()
 	end
 	CTRL.XYlabels[1] = "";	CTRL.XYlabels[2] = "";	# Reset these in case they weren't empty
 	show_non_consumed(d, cmd)
@@ -4419,17 +4419,17 @@ function put_in_legend_bag(d::Dict, cmd, arg, O::Bool=false, opt_l::String="")
 		for k = 1:nDs  lab[k] = string('y',k)  end
 	end
 
-	(!O) && (legend_type[1] = legend_bag())		# Make sure that we always start with an empty one
+	(!O) && (LEGEND_TYPE[1] = legend_bag())		# Make sure that we always start with an empty one
 
-	if (size(legend_type[1].label, 1) == 0)		# First time
-		legend_type[1] = legend_bag(lab, [cmd_[1]], length(cmd_) == 1 ? [""] : [cmd_[2]], opt_l, dd, 0)
+	if (size(LEGEND_TYPE[1].label, 1) == 0)		# First time
+		LEGEND_TYPE[1] = legend_bag(lab, [cmd_[1]], length(cmd_) == 1 ? [""] : [cmd_[2]], opt_l, dd, 0)
 		# Forgot about the logic of the above and it errors when first arg is a GMTdataset vec,
 		# so do this till a decent fix gets invented.
-		(length(lab) > 1) && (legend_type[1] = legend_bag(lab, cmd_, cmd_, opt_l, dd, 0))
+		(length(lab) > 1) && (LEGEND_TYPE[1] = legend_bag(lab, cmd_, cmd_, opt_l, dd, 0))
 	else
-		append!(legend_type[1].cmd, [cmd_[1]])
-		append!(legend_type[1].cmd2, (length(cmd_) > 1) ? [cmd_[2]] : [""])
-		append!(legend_type[1].label, lab)
+		append!(LEGEND_TYPE[1].cmd, [cmd_[1]])
+		append!(LEGEND_TYPE[1].cmd2, (length(cmd_) > 1) ? [cmd_[2]] : [""])
+		append!(LEGEND_TYPE[1].label, lab)
 	end
 
 	return nothing
@@ -4438,44 +4438,44 @@ end
 # --------------------------------------------------------------------------------------------------
 function digests_legend_bag(d::Dict, del::Bool=true)
 	# Plot a legend if the leg or legend keywords were used. Legend info is stored in LEGEND_TYPE global variable
-	(size(legend_type[1].label, 1) == 0) && return
+	(size(LEGEND_TYPE[1].label, 1) == 0) && return
 
 	dd::Dict = ((val = find_in_dict(d, [:leg :legend], false)[1]) !== nothing && isa(val, NamedTuple)) ? nt2dict(val) : Dict{Symbol, Any}()
 
 	kk, fs = 0, 8				# Font size in points
 	symbW = 0.65				# Symbol width. Default to 0.75 cm (good for lines but bad for symbols)
-	nl, count_no = length(legend_type[1].label), 0
+	nl, count_no = length(LEGEND_TYPE[1].label), 0
 	leg::Vector{String} = Vector{String}(undef, 3nl)
-	all(contains.(legend_type[1].cmd, "-S")) && (symbW = 0.25)	# When all entries are symbols shrink the 'symbW'
+	all(contains.(LEGEND_TYPE[1].cmd, "-S")) && (symbW = 0.25)	# When all entries are symbols shrink the 'symbW'
 
-	#lab_width = maximum(length.(legend_type[1].label[:])) * fs / 72 * 2.54 * 0.50 + 0.25	# Guess label width in cm
+	#lab_width = maximum(length.(LEGEND_TYPE[1].label[:])) * fs / 72 * 2.54 * 0.50 + 0.25	# Guess label width in cm
 	# Problem is that we may have a lot more chars in label than those effectively printed (PS octal chars etc)
 	n_max_chars = 0
-	for k = 1:numel(legend_type[1].label)
-		s = split(legend_type[1].label[k], "`")		# Means that after the '`' comes the this string char counting
-		n_chars = (length(s) == 2) ? (legend_type[1].label[k] = s[1]; parse(Int,s[2])) : length(legend_type[1].label[k])
+	for k = 1:numel(LEGEND_TYPE[1].label)
+		s = split(LEGEND_TYPE[1].label[k], "`")		# Means that after the '`' comes the this string char counting
+		n_chars = (length(s) == 2) ? (LEGEND_TYPE[1].label[k] = s[1]; parse(Int,s[2])) : length(LEGEND_TYPE[1].label[k])
 		n_max_chars = max(n_chars, n_max_chars)
 	end
 	lab_width = n_max_chars * fs / 72 * 2.54 * 0.50 + 0.25	# Guess label width in cm
 
 	for k = 1:nl						# Loop over number of entries
-		(legend_type[1].label[k] == " ") && (count_no += 1;	continue)	# Sometimes we may want to open a leg entry but not plot it
-		if ((symb = scan_opt(legend_type[1].cmd[k], "-S")) == "")  symb = "-"
+		(LEGEND_TYPE[1].label[k] == " ") && (count_no += 1;	continue)	# Sometimes we may want to open a leg entry but not plot it
+		if ((symb = scan_opt(LEGEND_TYPE[1].cmd[k], "-S")) == "")  symb = "-"
 		else                                                       symbW_ = symb[2:end];
 		end
-		((fill = scan_opt(legend_type[1].cmd[k], "-G")) == "") && (fill = "-")
-		pen  = scan_opt(legend_type[1].cmd[k], "-W");
+		((fill = scan_opt(LEGEND_TYPE[1].cmd[k], "-G")) == "") && (fill = "-")
+		pen  = scan_opt(LEGEND_TYPE[1].cmd[k], "-W");
 		(pen == "" && symb[1] != '-' && fill != "-") ? pen = "-" : (pen == "" ? pen = "0.25p" : pen = pen)
 		if (symb[1] == '-')
 			leg[kk += 1] = @sprintf("S %.3fc %s %.2fc %s %s %.2fc %s",
-			                symbW/2, symb[1], symbW, fill, pen, symbW+0.14, legend_type[1].label[k])
-			if ((symb2 = scan_opt(legend_type[1].cmd2[k], "-S")) != "")		# A line + a symbol
+			                symbW/2, symb[1], symbW, fill, pen, symbW+0.14, LEGEND_TYPE[1].label[k])
+			if ((symb2 = scan_opt(LEGEND_TYPE[1].cmd2[k], "-S")) != "")		# A line + a symbol
 				leg[kk += 1] = "G -1l"			# Go back one line before plotting the overlaying symbol
 				xx = split(pen, ',')
 				if (length(xx) == 2)  fill = xx[2]
-				else                  fill = ((c = scan_opt(legend_type[1].cmd2[k], "-G")) != "") ? c : "black"
+				else                  fill = ((c = scan_opt(LEGEND_TYPE[1].cmd2[k], "-G")) != "") ? c : "black"
 				end
-				penS = scan_opt(legend_type[1].cmd2[k], "-W");
+				penS = scan_opt(LEGEND_TYPE[1].cmd2[k], "-W");
 				leg[kk += 1] = @sprintf("S - %s %s %s %s - %s", symb2[1], symb2[2:end], fill, penS, "")
 			end
 		elseif (symb[1] == '~' || symb[1] == 'q' || symb[1] == 'f')
@@ -4484,9 +4484,9 @@ function digests_legend_bag(d::Dict, del::Bool=true)
 				(ind === nothing) && error("Error: missing colon (:) in decorated string opt.")
 				symb = string(symb[1],"n1", symb[ind[1]:end])
 			end
-			leg[kk += 1] = @sprintf("S - %s %s %s %s - %s", symb, symbW, fill, pen, legend_type[1].label[k])
+			leg[kk += 1] = @sprintf("S - %s %s %s %s - %s", symb, symbW, fill, pen, LEGEND_TYPE[1].label[k])
 		else
-			leg[kk += 1] = @sprintf("S - %s %s %s %s - %s", symb[1], symbW_, fill, pen, legend_type[1].label[k])	# Who is this?
+			leg[kk += 1] = @sprintf("S - %s %s %s %s - %s", symb[1], symbW_, fill, pen, LEGEND_TYPE[1].label[k])	# Who is this?
 		end
 	end
 	(count_no > 0) && (resize!(leg, nl-count_no))
@@ -4501,10 +4501,10 @@ function digests_legend_bag(d::Dict, del::Bool=true)
 	end
 
 	# Because we accept extended settings either from first or last legend() commands we must seek which
-	# one may have the desired keyword. First command is stored in 'legend_type[1].optsDict' and last in 'dd'
+	# one may have the desired keyword. First command is stored in 'LEGEND_TYPE[1].optsDict' and last in 'dd'
 	_d = (haskey(dd, :pos) || haskey(dd, :position)) ? dd :
-	     (haskey(legend_type[1].optsDict, :pos) || haskey(legend_type[1].optsDict, :position)) ?
-		 legend_type[1].optsDict : Dict()
+	     (haskey(LEGEND_TYPE[1].optsDict, :pos) || haskey(LEGEND_TYPE[1].optsDict, :position)) ?
+		 LEGEND_TYPE[1].optsDict : Dict()
 
 	_opt_D = (((val = find_in_dict(_d, [:pos :position], false)[1]) !== nothing) && isa(val, StrSymb)) ? string(val)::String : ""
 	if ((opt_D::String = parse_type_anchor(_d, "", [:_ :pos :position],
@@ -4518,7 +4518,7 @@ function digests_legend_bag(d::Dict, del::Bool=true)
 			opt_D *= "+j" * opt_D[2] * (opt_D[3] == 'L' ? 'R' : 'L')
 			if (!occursin("+o", opt_D))
 				# Try to find a -Baxes token and see if 'axes' contains an annotated axis on the same side as the legend
-				s = split(legend_type[1].cmd[1], " -B")
+				s = split(LEGEND_TYPE[1].cmd[1], " -B")
 				for t in s
 					t[1] == '-' && continue				# This one can't be of any interest
 					ss = split(split(t)[1],'+')[1]		# If we have an annotated or with ticks guestimate an offset
@@ -4540,7 +4540,7 @@ function digests_legend_bag(d::Dict, del::Bool=true)
 		(!occursin("+o", opt_D)) && (opt_D *= "+o" * offset)
 	end
 
-	_d = (haskey(dd, :box) && dd[:box] !== nothing) ? dd : haskey(legend_type[1].optsDict, :box) ? legend_type[1].optsDict : Dict()
+	_d = (haskey(dd, :box) && dd[:box] !== nothing) ? dd : haskey(LEGEND_TYPE[1].optsDict, :box) ? LEGEND_TYPE[1].optsDict : Dict()
 	if ((opt_F::String = add_opt(_d, "", "", [:box],
 		(clearance="+c", fill=("+g", add_opt_fill), inner="+i", pen=("+p", add_opt_pen), rounded="+r", shade="+s"), false)) == "")
 		opt_F = "+p0.5+gwhite"
@@ -4553,11 +4553,11 @@ function digests_legend_bag(d::Dict, del::Bool=true)
 		end
 	end
 	
-	if (legend_type[1].Vd > 0)  d[:Vd] = legend_type[1].Vd;  dbg_print_cmd(d, leg[1:kk])  end	# Vd=2 wont work
-	(legend_type[1].Vd > 0) && println("F=",opt_F, " D=",opt_D, " font=",fnt)
+	if (LEGEND_TYPE[1].Vd > 0)  d[:Vd] = LEGEND_TYPE[1].Vd;  dbg_print_cmd(d, leg[1:kk])  end	# Vd=2 wont work
+	(LEGEND_TYPE[1].Vd > 0) && println("F=",opt_F, " D=",opt_D, " font=",fnt)
 	gmt_restart()		# Some things with the themes may screw
 	legend!(text_record(leg[1:kk]), F=opt_F, D=opt_D, par=(:FONT_ANNOT_PRIMARY, fnt))
-	legend_type[1] = legend_bag()			# Job done, now empty the bag
+	LEGEND_TYPE[1] = legend_bag()			# Job done, now empty the bag
 
 	return nothing
 end
@@ -4607,7 +4607,7 @@ end
 
 # --------------------------------------------------------------------------------------------------
 function help_show_options(d::Dict)
-	if (find_in_dict(d, [:help])[1] !== nothing)  show_kwargs[1] = true  end	# Put in HELP mode
+	if (find_in_dict(d, [:help])[1] !== nothing)  SHOW_KWARGS[1] = true  end	# Put in HELP mode
 end
 
 # --------------------------------------------------------------------------------------------------
@@ -4635,7 +4635,7 @@ end
 
 # --------------------------------------------------------------------------------------------------
 function gmthelp(opt)
-	show_kwargs[1] = true
+	SHOW_KWARGS[1] = true
 	if (isa(opt, Array{Symbol}))
 		for o in opt  gmthelp(o)  end
 	else
@@ -4647,7 +4647,7 @@ function gmthelp(opt)
 			println("   LastError ==>  '$err'")
 		end
 	end
-	show_kwargs[1] = false
+	SHOW_KWARGS[1] = false
 	return nothing
 end
 

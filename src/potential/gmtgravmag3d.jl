@@ -63,7 +63,7 @@ function gmtgravmag3d(cmd0::String="", arg1=nothing; kwargs...)
 	elseif ((val = find_in_dict(d, [:M :body], false, "String | NamedTuple")[1]) !== nothing && val != "")
 		cmd = add_opt(d, cmd, "M", [:M :body], (shape="+s", params=","))
 		opt = " -Ts"
-	elseif (show_kwargs[1])  opt = "" 
+	elseif (SHOW_KWARGS[1])  opt = "" 
 	else   error("Missing one of 'index', 'raw_triang' or 'str' data")
 	end
 

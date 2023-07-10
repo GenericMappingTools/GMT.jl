@@ -34,7 +34,7 @@ function grdtrend(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 	cmd = parse_V_params(d, cmd)
 	cmd = parse_these_opts(cmd, d, [[:D :diff], [:T :trend]])
 	opt_N = add_opt(d, "", "N", [:N :model], (n="", n_model="", robust="_+r", xonly="_+x", yonly="_+y"), true, true)
-	(opt_N == "" && !show_kwargs[1]) && error("The 'model' parameter is mandatory")
+	(opt_N == "" && !SHOW_KWARGS[1]) && error("The 'model' parameter is mandatory")
 	cmd *= opt_N
 
 	cmd, _, arg1 = find_data(d, cmd0, cmd, arg1)
@@ -54,7 +54,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_W_grdtrend(d::Dict, symbs::Array{<:Symbol}, cmd::String, arg1, arg2)
 
-	(show_kwargs[1]) && return (print_kwarg_opts(symbs, "Tuple | String"), arg1,arg2)
+	(SHOW_KWARGS[1]) && return (print_kwarg_opts(symbs, "Tuple | String"), arg1,arg2)
 
 	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
 		if (isa(val, String) || isa(val, Symbol))
