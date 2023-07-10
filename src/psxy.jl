@@ -18,7 +18,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	end
 
 	(arg1 !== nothing && !isa(arg1, GDtype) && !isa(arg1, Matrix{<:Real})) && (arg1 = tabletypes2ds(arg1))
-	(!O) && (legend_type[1] = legend_bag())		# Make sure that we always start with an empty one
+	(!O) && (LEGEND_TYPE[1] = legend_bag())		# Make sure that we always start with an empty one
 
 	cmd::String = "";	sub_module::String = ""	# Will change to "scatter", etc... if called by sub-modules
 	opt_A::String = ""							# For the case the caller was in fact "stairs"
@@ -64,10 +64,10 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	end
 
 	if (is_ternary && !first) 	# Either a -J was set and we'll fish it here or no and we'll use the default.
-		def_J = " -JX" * split(def_fig_size, '/')[1]
+		def_J = " -JX" * split(DEF_FIG_SIZE, '/')[1]
 		cmd, opt_J::String = parse_J(d, cmd, def_J)
 	else
-		def_J = (is_ternary) ? " -JX" * split(def_fig_size, '/')[1] : ""		# Gives "-JX14c" 
+		def_J = (is_ternary) ? " -JX" * split(DEF_FIG_SIZE, '/')[1] : ""		# Gives "-JX14c" 
 		(!is_ternary && isa(arg1, GMTdataset) && length(arg1.ds_bbox) >= 4) && (CTRL.limits[1:4] = arg1.ds_bbox[1:4])
 		(!is_ternary && isa(arg1, Vector{<:GMTdataset}) && length(arg1[1].ds_bbox) >= 4) && (CTRL.limits[1:4] = arg1[1].ds_bbox[1:4])
 		(!is_ternary && CTRL.limits[7:10] == [0,0,0,0]) && (CTRL.limits[7:10] = CTRL.limits[1:4])	# Start with plot=data limits
@@ -111,20 +111,20 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	(opt_R == "" && sub_module == "bar") && (opt_R = "/-0.4/0.4/0")		# Make sure y_min = 0
 	if (O && caller == "plotyy")
 		cmd = replace(cmd, opt_R => "")					# Must remove old opt_R because a new one will be constructed
-		ind = collect(findall("/", box_str[1])[2])		# 'box_str' was set in first call
-		opt_R = '/' * box_str[1][4:ind[1]] * "?/?"		# Will become /x_min/x_max/?/?
+		ind = collect(findall("/", BOX_STR[1])[2])		# 'BOX_STR' was set in first call
+		opt_R = '/' * BOX_STR[1][4:ind[1]] * "?/?"		# Will become /x_min/x_max/?/?
 	end
 
 	cmd, arg1, opt_R, _, opt_i = read_data(d, cmd0, cmd, arg1, opt_R, is3D)
 	(cmd0 != "" && isa(arg1, GMTdataset)) && (arg1 = with_xyvar(d, arg1))	# If we read a file, see if requested cols
 	(!got_usr_R && opt_R != "") && (CTRL.pocket_R[1] = opt_R)	# Still on time to store it.
 	(N_args == 0 && arg1 !== nothing) && (N_args = 1)	# arg1 might have started as nothing and got values above
-	(!O && caller == "plotyy") && (box_str[1] = opt_R)	# This needs modifications (in plotyy) by second call
+	(!O && caller == "plotyy") && (BOX_STR[1] = opt_R)	# This needs modifications (in plotyy) by second call
 
 	check_grouping!(d, arg1)			# See about request to do row groupings (and legends for that case)
 
-	if (isGMTdataset(arg1) && !isTimecol_in_pltcols(arg1) && getproj(arg1, proj4=true) != "" && opt_J == " -JX" * def_fig_size)
-		cmd = replace(cmd, opt_J => " -JX" * split(def_fig_size, '/')[1] * "/0")	# If projected, it's a axis equal for sure
+	if (isGMTdataset(arg1) && !isTimecol_in_pltcols(arg1) && getproj(arg1, proj4=true) != "" && opt_J == " -JX" * DEF_FIG_SIZE)
+		cmd = replace(cmd, opt_J => " -JX" * split(DEF_FIG_SIZE, '/')[1] * "/0")	# If projected, it's a axis equal for sure
 	end
 	if (is3D && isempty(opt_JZ) && length(collect(eachmatch(r"/", opt_R))) == 5)
 		cmd *= " -JZ6c"		# Default -JZ
@@ -1213,7 +1213,7 @@ function check_caller(d::Dict, cmd::String, opt_S::String, opt_W::String, caller
 	end
 
 	if (occursin('3', caller))
-		if (!occursin(" -B", cmd) && !O)  cmd *= def_fig_axes3[1]  end	# For overlays default is no axes
+		if (!occursin(" -B", cmd) && !O)  cmd *= DEF_FIG_AXES3[1]  end	# For overlays default is no axes
 	end
 
 	return cmd

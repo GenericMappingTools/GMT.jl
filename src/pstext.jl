@@ -109,7 +109,7 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		cmd0 = ""
 	end
 
-	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX" * split(def_fig_size, '/')[1] * "/0")
+	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX" * split(DEF_FIG_SIZE, '/')[1] * "/0")
 	cmd, = parse_common_opts(d, cmd, [:a :e :f :p :t :w :JZ :UVXY :params], first)
 	cmd  = parse_these_opts(cmd, d, [[:A :azimuths :azimuth :azim], [:M :paragraph], [:N :no_clip :noclip],
 	                                 [:Q :change_case], [:S :shade], [:T :text_box], [:Z :threeD]])

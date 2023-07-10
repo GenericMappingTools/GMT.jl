@@ -84,7 +84,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_E_mkcpt(d::Dict, symbs::Array{<:Symbol}, cmd::String, arg1)
-	(show_kwargs[1]) && return print_kwarg_opts(symbs, "Number")
+	(SHOW_KWARGS[1]) && return print_kwarg_opts(symbs, "Number")
 	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
 		(arg1 === nothing && cmd[1] == ' ') && error("E option requires that a data table is provided as well")
 		cmd *= " -E" * arg2str(val)::String
@@ -110,7 +110,7 @@ end
 # -------------------------------------------------------------------------------------------
 function parse_opt_range(d::Dict, cmd::String, opt::String="")::Tuple{String, Vector{Float64}}
 	symbs = [:T :range :inc :bin]
-	(show_kwargs[1]) && return print_kwarg_opts(symbs, "Tuple | Array | String | Number"), Float64[]	# Just print the options
+	(SHOW_KWARGS[1]) && return print_kwarg_opts(symbs, "Tuple | Array | String | Number"), Float64[]	# Just print the options
 	Tvec::Vector{Float64} = Float64[]
 	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
 		if (isa(val, Tuple))

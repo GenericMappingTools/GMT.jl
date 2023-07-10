@@ -82,7 +82,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_Q_tri(d::Dict, symbs::Array{Symbol}, cmd::String)
-	(show_kwargs[1]) && return print_kwarg_opts(symbs, "Bool | String")	# Just print the options
+	(SHOW_KWARGS[1]) && return print_kwarg_opts(symbs, "Bool | String")	# Just print the options
 	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
 		cmd *= " -Q";   val_::String = string(val)
 		(startswith(val_, "pol")) && (cmd *= "n")

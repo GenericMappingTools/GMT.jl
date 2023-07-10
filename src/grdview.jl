@@ -61,9 +61,9 @@ function grdview(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	common_insert_R!(d, O, cmd0, arg1)			# Set -R in 'd' out of grid/images (with coords) if limits was not used
 
 	has_opt_B = (find_in_dict(d, [:B :frame :axis :axes], false)[1] !== nothing)
-	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "grdview", O, " -JX" * split(def_fig_size, '/')[1] * "/0")
+	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "grdview", O, " -JX" * split(DEF_FIG_SIZE, '/')[1] * "/0")
 	(startswith(opt_J, " -JX") && !contains(opt_J, "/")) && (cmd = replace(cmd, opt_J => opt_J * "/0")) # When sub-regions
-	(!has_opt_B && isa(arg1, GMTimage) && (isimgsize(arg1) || CTRL.limits[1:4] == zeros(4)) && opt_B == def_fig_axes_bak) &&
+	(!has_opt_B && isa(arg1, GMTimage) && (isimgsize(arg1) || CTRL.limits[1:4] == zeros(4)) && opt_B == DEF_FIG_AXES_BAK) &&
 		(cmd = replace(cmd, opt_B => ""))	# Dont plot axes for plain images if that was not required
 
 	cmd, = parse_common_opts(d, cmd, [:UVXY :c :f :n :p :t :params], first)
@@ -109,7 +109,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_G_grdview(d::Dict, symbs::Array{<:Symbol}, cmd0::String, cmd::String, arg1, arg2, arg3, arg4, arg5)
-	(show_kwargs[1]) && return print_kwarg_opts(symbs, "GMTgrid | Tuple | String"), arg1, arg2, arg3, arg4, arg5
+	(SHOW_KWARGS[1]) && return print_kwarg_opts(symbs, "GMTgrid | Tuple | String"), arg1, arg2, arg3, arg4, arg5
 	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
 		function intern!(cmd, val, arg1, arg2, arg3, arg4)
 			opt = isa(val, GMTgrid) ? 'G' : 'z'		# 'z' is the fake option that works as a backdoor for images
