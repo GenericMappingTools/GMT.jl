@@ -6,7 +6,7 @@ using PrettyTables
 using PrecompileTools
 
 struct CTRLstruct
-	limits::Vector{Float64}			# To store the data limits. First 6 store: data limits. Second 6: plot limits
+	limits::Vector{Float64}			# To store the data limits. First 6 store: data limits. Second 6: plot limits, 13th +r
 	figsize::Vector{Float64}		# To store the current fig size (xsize,ysize[,zsize]). Needed, for example, in hexbin
 	proj_linear::Vector{Bool}		# To know if images sent to GMT need Pad
 	returnPS::Vector{Bool}			# To know if returning the PS to Julia
@@ -87,7 +87,7 @@ const DEF_FIG_AXES_BAK     = " -Baf -BWSen"        # Default fig axes for plot l
 const DEF_FIG_AXES3_BAK    = " -Baf -Bza"          # 		"" but for 3D views
 const global DEF_FIG_AXES  = [DEF_FIG_AXES_BAK]    # This one may be be changed by theme()
 const global DEF_FIG_AXES3 = [DEF_FIG_AXES3_BAK]   #		""
-const global CTRL = CTRLstruct(zeros(12), zeros(6), [true], [false],
+const global CTRL = CTRLstruct(zeros(13), zeros(6), [true], [false],
                                [:arrows, :bubblechart, :basemap, :band, :clip, :coast, :colorbar, :hband, :hlines, :logo, :lines, :grdvector, :plot, :plot3, :quiver, :scatter, :scatter3, :stairs, :text, :vlines, :vband],
 							   [nothing, nothing, nothing], ["",""], ["","", "", "   "], [""], ["",""], [false,true], [C_NULL], [Dict()])
 const global CTRLshapes = CTRLstruct2([true], [true], [""])			# Used in sub-module Drawing
