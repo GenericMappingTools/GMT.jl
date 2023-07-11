@@ -167,8 +167,13 @@ function theme_modern()
 	resetdefaults(G_API[1])
 	gmtlib_setparameter(G_API[1], "MAP_FRAME_PEN", "0.75")
 	gmtlib_setparameter(G_API[1], "FONT_TITLE", "auto,Times-Roman,black")
+	gmtlib_setparameter(G_API[1], "FONT_HEADING", "auto,Times-Roman,black")
 	gmtlib_setparameter(G_API[1], "FONT_SUBTITLE", "auto,Times-Roman,black")
 	!IamModern[1] && swapmode(G_API[1], classic=true)	# Reset GMT->current.setting.run_mode = GMT_CLASSIC
+	if (IamModern[1])
+		gmtlib_setparameter(G_API[1], "MAP_ORIGIN_X", "0")	# Workarround GMT bug.
+		gmtlib_setparameter(G_API[1], "MAP_ORIGIN_Y", "0")
+	end
 	return nothing
 end
 
