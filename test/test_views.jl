@@ -82,7 +82,7 @@ imshow(mat2ds([0 0; 10 0; 10 10; 11 10]), Vd=dbg2)
 imshow(makecpt(1,5, cmap=:polar), Vd=dbg2)
 imshow(:gray, Vd=dbg2)
 X4 = mat2grid(rand(Float32,32,32,4), title="lixo");
-viz(X4, show=false)
+#viz(X4, show=false)
 GMT.mat2grid("ackley");
 GMT.mat2grid("egg");
 GMT.mat2grid("sombrero");
