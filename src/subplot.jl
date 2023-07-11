@@ -56,7 +56,7 @@ function subplot(fim=nothing; stop=false, kwargs...)
 	              (left=("l", nothing, 1), right=("r", nothing, 1), label="+l", parallel="_+p", row_title="_+t", top_row_title="_+tc", grid=("+w", add_opt_pen)))
 	opt_C = add_opt(d, "", "", [:C :clearance],
 				  (left=(" -Cw", arg2str), right=(" -Ce", arg2str), bott=(" -Cs", arg2str), bottom=(" -Cs", arg2str), top=(" -Cn", arg2str)))
-	!startswith(opt_C, " -C") && (opt_C = " -C" * opt_C)	# When C="str" was passed.
+	(opt_C != "" && !startswith(opt_C, " -C")) && (opt_C = " -C" * opt_C)	# When C="str" was passed.
 	cmd = add_opt(d, cmd, "Fs", [:Fs :panels_size :panel_size :panel_sizes])
 	cmd = add_opt(d, cmd, "Ff", [:Ff :splot_size])
 
