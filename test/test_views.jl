@@ -1,4 +1,4 @@
-G = gmt("grdmath -R-2/2/-2/2 -I1 1");
+G = gmt("grdmath -R-2/2/-2/2 -I1 X");
 gmtwrite("lixo.grd", G)
 
 println("	GRDIMAGE")
@@ -40,9 +40,9 @@ r = grdview(G, surf=(waterfall=(:rows,:red),surf=true, mesh=true, img=50), Vd=db
 I = mat2grid(rand(Float32,128,128));
 grdview(rand(128,128), G=(Gr,Gg,Gb), I=I, J=:X12, JZ=5, Q=:i, view="145/30")
 gmtwrite("lixo.grd", I)
-	@info "13..."
+	@info "1..."
 grdview(rand(128,128), G=I, I=I, J=:X12, JZ=5, Q=:i, view="145/30")
-	@info "14..."
+	@info "2..."
 grdview(rand(128,128), G="lixo.grd", I=I, J=:X12, JZ=5, Q=:i, view="145/30", Vd=dbg2)
 I = mat2img(rand(UInt8,89,120,3), proj4="+proj=longlat +datum=WGS84 +no_defs");	# 'proj' is ignored
 gmtwrite("lixo.tif", I)
@@ -81,8 +81,9 @@ imshow(I,Vd=dbg2)
 imshow(mat2ds([0 0; 10 0; 10 10; 11 10]), Vd=dbg2)
 imshow(makecpt(1,5, cmap=:polar), Vd=dbg2)
 imshow(:gray, Vd=dbg2)
+GMT.CURRENT_CPT[1] = GMT.GMTcpt()		# The fact that I need to do this because prev line did no "show", shows a subtle bug.
 X4 = mat2grid(rand(Float32,32,32,4), title="lixo");
-#viz(X4, show=false)
+viz(X4, show=false)
 GMT.mat2grid("ackley");
 GMT.mat2grid("egg");
 GMT.mat2grid("sombrero");

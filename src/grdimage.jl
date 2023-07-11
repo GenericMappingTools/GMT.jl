@@ -132,6 +132,8 @@ function common_insert_R!(d::Dict, O::Bool, cmd0, I_G)
 		if (isa(I_G, GMTgrid) || !isimgsize(I_G))
 			d[:R] = @sprintf("%.15g/%.15g/%.15g/%.15g", I_G.range[1], I_G.range[2], I_G.range[3], I_G.range[4])
 		end
+	elseif (val === nothing && IamModern[1] && CTRL.limits[13] == 1.0)
+		# Should it apply also to classic? And should the -R be rebuilt here?
 	elseif (val === nothing && (isa(cmd0, String) && cmd0 != "") && (CTRL.limits[1:4] != zeros(4) || snif_GI_set_CTRLlimits(cmd0)) )
 		d[:R] = @sprintf("%.15g/%.15g/%.15g/%.15g", CTRL.limits[1], CTRL.limits[2], CTRL.limits[3], CTRL.limits[4])
 	elseif (val !== nothing)
