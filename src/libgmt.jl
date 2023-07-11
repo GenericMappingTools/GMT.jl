@@ -387,7 +387,7 @@ end
 
 function gmtlib_getparameter(API, keyword::String)
 	(!isa(API, Ptr{Nothing}) || API == C_NULL) && return UInt32(1)
-	ccall((:gmtlib_getparameter, libgmt), Ptr{UInt8}, (Cstring, Ptr{UInt8}), GMT_Get_Ctrl(API), keyword)
+	unsafe_string(ccall((:gmtlib_getparameter, libgmt), Ptr{UInt8}, (Cstring, Ptr{UInt8}), GMT_Get_Ctrl(API), keyword))
 end
 
 function reset_defaults(API::Ptr{Cvoid})
