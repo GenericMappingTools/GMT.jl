@@ -643,13 +643,14 @@ function _geod_direct!(geod::geod_geodesic, lonlat, azim, distance)
 end
 
 # -------------------------------------------------------------------------------------------------
-function helper_geod(proj::String, s_srs::String, epsg::Integer)::Tuple{String, Ptr{Nothing}, Bool}
+function helper_geod(proj::String, s_srs::String, epsg::Integer, usedefault=true)::Tuple{String, Ptr{Nothing}, Bool}
 	# 'proj' and 's_srs' are synonyms.
 	# Return the projection string and also if the projection is geogs.
 	if     (proj  != "")  prj_string = proj
 	elseif (s_srs != "")  prj_string = s_srs
 	elseif (epsg > 0)     prj_string = toPROJ4(importEPSG(epsg))
-	else                  prj_string = prj4WGS84
+	elseif (usedefault)   prj_string = prj4WGS84
+	else                  return "", C_NULL, false		# Slightly dangerous.
 	end
 	(startswith(prj_string, "GEOGC")) && (prj_string = toPROJ4(importWKT(prj_string)))
 	prj_string, proj_create(prj_string), (startswith(prj_string, "+proj=longl") || startswith(prj_string, "+proj=lonl") || startswith(prj_string, "+proj=latl") || epsg == 4326)
