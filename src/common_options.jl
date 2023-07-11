@@ -2486,7 +2486,7 @@ function add_opt_cpt(d::Dict, cmd::String, symbs::VMs, opt::Char, N_args::Int=0,
 			cpt_name::String = d[:this_cpt]			# Because of the terrible invalidations
 			cpt = equalize(d, arg1, cpt_name, opt_T);	delete!(d, :this_cpt)
 		else
-			cpt = equalize(d, arg1, "turbo", opt_T)
+			cpt = equalize(d, arg1, "turbo", opt_T)	# In fact it only equalizes if the equalize option is in d
 			cpt.bfn[3, :] = [1.0 1.0 1.0]	# Some deep bug, in occasions, returns grays on 2nd and on calls
 		end
 		cmd, arg1, arg2, N_args = helper_add_cpt(cmd, opt, N_args, arg1, arg2, cpt, store)

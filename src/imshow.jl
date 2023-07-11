@@ -48,7 +48,7 @@ function imshow(arg1, x::AbstractVector{Float64}=Vector{Float64}(), y::AbstractV
 			G = arg1
 			ext = lowercase(ext)
 			(ext == ".jpg" || ext == ".tif" || ext == ".tiff" || ext == ".png" || ext == ".bmp" || ext == ".gif") && (is_image = true)
-			snif_GI_set_CTRLlimits(arg1)			# Set CTRL.limits to be eventually used by J=:guess
+			#snif_GI_set_CTRLlimits(arg1)			# Set CTRL.limits to be eventually used by J=:guess
 		end
 	elseif (isa(arg1, Array{UInt8}) || isa(arg1, Array{UInt16,3}))
 		G = mat2img(arg1; kw...)
@@ -64,8 +64,10 @@ function imshow(arg1, x::AbstractVector{Float64}=Vector{Float64}(), y::AbstractV
 		return (find_in_kwargs(kw, [:D :pos :position])[1] === nothing) ?
 			psscale(arg1; show=true, D="x0/0+w7+h", kw...) : psscale(arg1; show=true, kw...)
 	else
-		G = mat2grid(arg1, x, y, reg=1)							# For displaying, pixel registration is more appropriate
+		G = mat2grid(arg1, x, y, reg=1)						# For displaying, pixel registration is more appropriate
 	end
+
+	isa(G, GItype) && snif_GI_set_CTRLlimits(G)				# Set CTRL.limits to be eventually used by J=:guess
 
 	if (is_image)
 		grdimage(G; show=see, kw...)
@@ -97,25 +99,47 @@ function imshow(arg1::GMTgrid; kw...)
 	flat::Bool = (find_in_dict(d, [:flat])[1] !== nothing)	# If true, force the use of grdimage
 	docube = is_in_kwargs(kw, [:facades :cubeplot])
 	(flat && docube) && (flat = false)
+
 	if (!docube && (flat || (opt_p == "" && !have_tilles)))
 		(flat && opt_p != "") && (d[:p] = opt_p[4:end])		# Restore the meanwhile deleted -p option
 		if ((nl = size(arg1, 3)) > 1)
+			nc = 2		# Number of subplot columns
+			grid = isodd(nl) ? "$((div(nl, nc)+1))x$(nc)" : "$(div(nl, nc))x$(nc)"
+
 			(arg1.geog > 0 && is_in_dict(d, [:J :proj :projection]) === nothing) && (d[:J] = "guess")
 			opt_J = parse_J(d, "", "", true, false, false)[2]
   			w, h = plot_GI_size(arg1, opt_J)	# Compute the plot Width,Height given the arg1 limits and proj
 			aspect = h / w
-			nc = 2		# Number of subplot columns
 			_w = 15 / nc;	_h = _w * aspect
-			grid = isodd(nl) ? "$((div(nl, nc)+1))x$(nc)" : "$(div(nl, nc))x$(nc)"
 
-			subplot(grid=grid, dims=(panels=(_w, _h), divlines=(1,:dashed)), row_axes=(left=true,row_title=""), col_axes=(bott=true,), T=find_in_dict(d, [:title])[1])
-				#gmtset(MAP_TITLE_OFFSET="0",MAP_FRAME_AXES="WSNE")
-				d[:par] = (MAP_TITLE_OFFSET="0p",)
+			tits::Vector{String} = String[]
+			if ((val = find_in_dict(d, [:titles])[1]) === nothing)
+				if     !isempty(arg1.names) tits = arg1.names
+				elseif !isempty(arg1.v)     tits = string.(arg1.v)
+				else                        tits = string.(collect(1:nl))
+				end
+			elseif (val !== nothing && val != false && val != :no)
+				(!isa(val, Vector{String}) || (length(val) != nl)) ? @warn("Panel titles must be a string vector with size equal to number of layers in input cube.") : (tits = val)
+			end
+			rt = !isempty(tits) ? tits : nothing
+
+			tit::Union{String, Nothing} = nothing
+			if ((val = find_in_dict(d, [:title])[1]) === nothing)
+				!isempty(arg1.title) && (tit = arg1.title)
+			elseif (val !== nothing && val != false && val != :no)	# To allow title=:no or title=false
+				tit = string(val)::String
+			end
+
+			row_axes = (rt !== nothing) ? (left=true, row_title=true) : (left=true, )
+			subplot(grid=grid, dims=(panels=(_w, _h), divlines=(1,:dashed)), row_axes=row_axes, col_axes=(bott=true,), T=tit)
+				(rt !== nothing) && (d[:par] = (MAP_TITLE_OFFSET="0p",); d[:title] = rt[1])
+				#d[:Vd] = 1
 				grdimage("", mat2grid(arg1[:,:,1], arg1); d...)
 				for k = 2:nl
+					!isempty(tits) && (d[:title] = rt[k])
 					grdimage("", mat2grid(arg1[:,:,k], arg1); panel=:next, d...)
 				end
-			subplot(:show)
+			subplot(see ? :show : :end)
 			R = nothing
 		else
 			R = grdimage("", arg1; show=see, d...)
@@ -134,6 +158,7 @@ function imshow(arg1::GMTgrid; kw...)
 		end
 		(!done) && (R = grdview("", arg1; show=see, p=opt_p[4:end], JZ=zsize, Q=srf, T=til, d...))
 	end
+
 	if (isa(cont_opts, Bool))				# Automatic contours
 		R = grdcontour!(arg1; J="", show=new_see)
 	elseif (isa(cont_opts, NamedTuple))		# Expect a (cont=..., annot=..., ...)
@@ -173,10 +198,13 @@ imshow(x::AbstractVector{Float64}, y::AbstractVector{Float64}, f::Function; kw..
 function snif_GI_set_CTRLlimits(G_I)::Bool
 	# Set CTRL.limits to be eventually used by J=:guess
 	(G_I == "") && return false
-	(isa(G_I, String) && (G_I[1] == '@' || startswith(G_I, "http"))) && return false	# Remote files are very dangerous to sniff in
-	ginfo = grdinfo(G_I, C=:n)
-	if (isa(ginfo, GMTdataset) && ginfo.data[2] != ginfo.data[9] && ginfo.data[4] != ginfo.data[10])
-		CTRL.limits[1:4] = ginfo.data[1:4];		CTRL.limits[7:10] = ginfo.data[1:4]
+	(isa(G_I, String) && (G_I[1] == '@' || startswith(G_I, "http"))) && return false	# Remotes are very dangerous to sniff in
+
+	# Do not call grdinfo over grid/images already in memory
+	range::Vector{Float64} = isa(G_I, String) ? vec(grdinfo(G_I, C=:n).data) : G_I.range[1:6]
+	if ((isa(G_I, String) && range[2] != range[9] && range[4] != range[10]) ||
+		(!isa(G_I, String) && range[2] != size(G_I, 2) && range[4] != size(G_I, 1)))
+		CTRL.limits[1:4], CTRL.limits[7:10] = range[1:4], range[1:4]
 		return true
 	else
 		CTRL.limits .= 0.0

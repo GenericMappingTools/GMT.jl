@@ -643,13 +643,21 @@ function ODE2ds(arg)::GMTdataset
 end
 
 # ---------------------------------------------------------------------------------------------------
+"""
+    G = rasters2grid(arg)
+
+Deals with Rasters.jl arrays (grids and cubes). The input argument was previously detected (by israsters)
+to be a Rasters.jl type. The input array is not copied when it has no 'missings' but is often modified
+when replacing abstruse missingval by NaN. And given that the type is immutable we cannot change the
+`arg.missingval` and hence some checks # will be repeated everytime this function is run. So the best
+is to call ``G = mat2grid(arg)`` once and use `G`
+
+Returns a GMTgrid type.
+"""
 function rasters2grid(arg)::GMTgrid
-	# Deals with Rasters.jl arrays (grids and cubes). Given that the type is immutable we cannot change the
-	# 'missingval' and hence some checks will be repeated everytime this function is run. So the best is
-	# to call 'G = mat2grid(arg)' once and use 'G'
 	_y = collect(arg.dims[2]);	(_y[2] < _y[1]) ? (_y = _y[end:-1:1]; Yorder = 'T') : (Yorder = 'B')
-	_z = (size(arg,3) > 1) ? collect(arg.dims[3]) : Float64[]
-	#_z = (size(arg,3) > 1) && (eltype(arg.dims[3]) <: TimeType ? [arg.dims[3][i].instant.periods.value for i=1:length(arg.dims[3])] : Float64[])	# Store in milisecs just to have something numeric
+	_v = (size(arg,3) > 1) ? collect(arg.dims[3]) : Float64[]
+	#_v = (size(arg,3) > 1) && (eltype(arg.dims[3]) <: TimeType ? [arg.dims[3][i].instant.periods.value for i=1:length(arg.dims[3])] : Float64[])	# Store in milisecs just to have something numeric
 	n_cols = size(arg.data)[2]
 	is_transp = (n_cols == length(_y))
 	layout = is_transp ? Yorder * "RB" : ""
@@ -667,9 +675,17 @@ function rasters2grid(arg)::GMTgrid
 		data = convert(Array{eltype(arg.data[1]), ndims(arg)}, arg.data)
 	end
 
+	# Only case tested has CF times but I imagine we can have other units that make sense translate to names
+	names = String[]
+	if (eltype(_v) <: TimeType)
+		names = string.(_v)		# Next, strip the "T00:00:00" part if there is no Time info
+		endswith(names[1], "T00:00:00") && endswith(names[end], "T00:00:00") &&
+			(for k = 1:numel(names) names[k] = names[k][1:10] end)
+	end
+
 	(data === nothing) && (data = collect(arg.data))
 	(is_transp && Yorder == 'B') && (reverse!(data, dims=2); layout = "TRB")	# GMT expects grids to be scanline and Top->Bot
-	mat2grid(data, x=collect(arg.dims[1]), y=_y, v=_z, tit=string(arg.name), rem="Converted from a Rasters object.", is_transposed=is_transp, layout=layout, proj4=proj, wkt=wkt, epsg=epsg)
+	mat2grid(data, x=collect(arg.dims[1]), y=_y, v=_v, names=names, tit=string(arg.name), rem="Converted from a Rasters object.", is_transposed=is_transp, layout=layout, proj4=proj, wkt=wkt, epsg=epsg)
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -1420,7 +1436,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 """
     G = mat2grid(mat; reg=nothing, x=[], y=[], v=[], hdr=nothing, proj4::String="",
-	             wkt::String="", tit::String="", rem::String="", cmd::String="",
+	             wkt::String="", title::String="", rem::String="", cmd::String="",
 				 names::Vector{String}=String[], scale::Float32=1f0, offset::Float32=0f0)
 
 Take a 2/3D `mat` array and a HDR 1x9 [xmin xmax ymin ymax zmin zmax reg xinc yinc] header descriptor and 
@@ -1436,7 +1452,7 @@ The `scale` and `offset` options are used when `mat` is an Integer type and we w
 
 Other methods of this function do:
 
-    G = mat2grid([val]; hdr=hdr_vec, reg=nothing, proj4::String="", wkt::String="", tit::String="", rem::String="")
+    G = mat2grid([val]; hdr=hdr_vec, reg=nothing, proj4::String="", wkt::String="", title::String="", rem::String="")
 
 Create Float GMTgrid with size, coordinates and increment determined by the contents of the HDR var. This
 array, which is now MANDATORY, has either the same meaning as above OR, alternatively, containng only
@@ -1446,7 +1462,7 @@ example, VAL = 1.0 Ay other non Float64 will be converted to Float32
 
     Example: mat2grid(1, hdr=[0. 5 0 5 1 1])
 
-    G = mat2grid(f::Function, x, y; reg=nothing, proj4::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="")
+    G = mat2grid(f::Function, x, y; reg=nothing, proj4::String="", wkt::String="", epsg::Int=0, title::String="", rem::String="")
 
 Where F is a function and X,Y the vectors coordinates defining it's domain. Creates a Float32 GMTgrid with
 size determined by the sizes of the X & Y vectors.
@@ -1463,7 +1479,8 @@ creates a Float32 GMTgrid.
     Example: G = mat2grid("sombrero")
 """
 function mat2grid(val::Real=Float32(0); reg=nothing, hdr=nothing, proj4::String="", proj::String="",
-	wkt::String="", epsg::Int=0, geog::Int=-1, tit::String="", rem::String="", names::Vector{String}=String[])
+                  wkt::String="", epsg::Int=0, geog::Int=-1, title::String="", tit::String="", rem::String="",
+                  names::Vector{String}=String[])
 
 	(hdr === nothing) && error("When creating grid type with no data the 'hdr' arg cannot be missing")
 	(!isa(hdr, Array{Float64})) && (hdr = Float64.(hdr))
@@ -1472,6 +1489,7 @@ function mat2grid(val::Real=Float32(0); reg=nothing, hdr=nothing, proj4::String=
 		hdr = [hdr[1], hdr[2], hdr[3], hdr[4], val, val, reg === nothing ? 0. : 1., hdr[5], hdr[6]]
 	end
 	(isempty(proj4) && !isempty(proj)) && (proj4 = proj)	# Allow both proj4 or proj keywords
+	(tit == "") && (tit = title)		# Some versions from 1.2 remove 'tit'
 	mat2grid([nothing val]; reg=reg, hdr=hdr, proj4=proj4, wkt=wkt, epsg=epsg, geog=geog, tit=tit, rem=rem, cmd="", names=names)
 end
 
@@ -1480,9 +1498,9 @@ istransposed(mat) = !isempty(fields(mat)) && (fields(mat)[1] == :parent)
 
 function mat2grid(mat, xx=Vector{Float64}(), yy=Vector{Float64}(), zz=Vector{Float64}(); reg=nothing,
                   x=Vector{Float64}(), y=Vector{Float64}(), v=Vector{Float64}(), hdr=nothing, proj4::String="",
-                  proj::String="", wkt::String="", epsg::Int=0, geog::Int=-1, tit::String="", rem::String="",
-                  cmd::String="", names::Vector{String}=String[], scale::Float32=1f0, offset::Float32=0f0,
-                  layout::String="", is_transposed::Bool=false)
+                  proj::String="", wkt::String="", epsg::Int=0, geog::Int=-1, title::String="", tit::String="",
+                  rem::String="", cmd::String="", names::Vector{String}=String[], scale::Float32=1f0,
+                  offset::Float32=0f0, layout::String="", is_transposed::Bool=false)
 	# Take a 2/3D array and turn it into a GMTgrid
 
 	israsters(mat) && return rasters2grid(mat)
@@ -1522,7 +1540,8 @@ function mat2grid(mat, xx=Vector{Float64}(), yy=Vector{Float64}(), zz=Vector{Flo
 	end
 	hasnans = any(!isfinite, mat) ? 2 : 1
 	_layout = (layout == "") ? "BCB" : layout
-	(geog == -1 && helper_geod(proj4, wkt, epsg)[3]) && (geog = (range[2] <= 180) ? 1 : 2)		# Signal if grid is geog.
+	(geog == -1 && helper_geod(proj4, wkt, epsg, false)[3]) && (geog = (range[2] <= 180) ? 1 : 2)	# Signal if grid is geog.
+	(tit == "") && (tit = title)		# Some versions from 1.2 remove 'tit'
 	GMTgrid(proj4, wkt, epsg, geog, range, inc, reg_, NaN, tit, rem, cmd, "", names, vec(x), vec(y), vec(v), isT ? copy(mat) : mat, "x", "y", "v", "z", _layout, scale, offset, 0, hasnans)
 end
 
