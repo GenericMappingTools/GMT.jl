@@ -33,8 +33,12 @@ function gmt(cmd::String, args...)
 		#(r == "") && (r = isFranklin[1] ? (joinpath(tempdir(), "GMTjl_tmp png")) : "GMTplot " * FMT[1]::String)
 		(r == "") && (r = isFranklin[1] ? (tmpdir_usr[1] * "/" * "GMTjl_" * tmpdir_usr[2] * " png") : "GMTplot " * FMT[1]::String)
 		IamModern[1] = true
+		gmtlib_setparameter(G_API[1], "MAP_ORIGIN_X", "0")	# Workarround GMT bug.
+		gmtlib_setparameter(G_API[1], "MAP_ORIGIN_Y", "0")
 	elseif (g_module == "end")			# Last command of a MODERN session
 		(r == "") && (r = "-Vq")		# Cannot have a no-args for this case otherwise it prints help
+		gmtlib_setparameter(G_API[1], "MAP_ORIGIN_X", "20c")
+		gmtlib_setparameter(G_API[1], "MAP_ORIGIN_Y", "20c")
 	elseif (r == "" && n_argin == 0)	# Just requesting usage message, add -? to options
 		r = "-?"
 	elseif (n_argin > 1 && (g_module == "psscale" || g_module == "colorbar"))	# Happens with nested calls like in grdimage
@@ -240,8 +244,8 @@ end
 # -----------------------------------------------------------------------------------------------
 function extra_sets()
 	gmtlib_setparameter(G_API[1], "MAP_DEFAULT_PEN", "0.5p,black")	# Change the default 0.25 pen thickness in -W
-	gmtlib_setparameter(G_API[1], "COLOR_NAN", "255")	# Stop those ugly grays
-	gmtlib_setparameter(G_API[1], "MAP_ORIGIN_X", "20c")		# Change the origin offset
+	gmtlib_setparameter(G_API[1], "COLOR_NAN", "255")				# Stop those ugly grays
+	gmtlib_setparameter(G_API[1], "MAP_ORIGIN_X", "20c")			# Change the origin offset
 	gmtlib_setparameter(G_API[1], "MAP_ORIGIN_Y", "20c")
 	gmtlib_setparameter(G_API[1], "MAP_EMBELLISHMENT_MODE", "auto")
 end

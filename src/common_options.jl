@@ -176,6 +176,7 @@ function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=true, RIr::Bool=
 			CTRL.limits[7:7+length(limits)-1] = limits		# The plot limits
 			(opt_R != " -Rtight" && opt_R !== nothing && limits != zeros(4) && all(CTRL.limits[1:4] .== 0)) &&
 				(CTRL.limits[1:length(limits)] = limits)	# And this makes data = plot limits, IF data is empty.
+			contains(opt_R, "+r") && (CTRL.limits[13] = 1.0)# To know that -R...+r was used.
 		catch
 			CTRL.limits .= 0.0
 		end
@@ -337,7 +338,8 @@ function opt_R2num(opt_R::String)
 		#contains(rs[2], "T") || contains(rs[2], "t")
 		limits[1] = parse(Float64, rs[1][fst+1:end])
 		for k = 2:lastindex(rs)  limits[k] = parse(Float64, rs[k])  end
-		if (isdiag)  limits[2], limits[4] = limits[4], limits[2]  end
+		#if (isdiag)  limits[2], limits[4] = limits[4], limits[2]  end
+		# Don't know anymore how -R...+r limits should be stored in CTRL.limits
 	elseif (opt_R != " -R" && opt_R != " -Rtight")	# One of those complicated -R forms. Ask GMT the limits (but slow. It takes 0.2 s)
 		kml::GMTdataset = gmt("gmt2kml " * opt_R, [0 0])
 		limits = zeros(4)
