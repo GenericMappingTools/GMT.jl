@@ -102,12 +102,16 @@ function imshow(arg1::GMTgrid; kw...)
 
 	if (!docube && (flat || (opt_p == "" && !have_tilles)))
 		(flat && opt_p != "") && (d[:p] = opt_p[4:end])		# Restore the meanwhile deleted -p option
-		if ((nl = size(arg1, 3)) > 1)
-			nc = 2		# Number of subplot columns
-			grid = isodd(nl) ? "$((div(nl, nc)+1))x$(nc)" : "$(div(nl, nc))x$(nc)"
+		if ((n_levels = size(arg1, 3)) > 1)
+			nc::Int = ((val = find_in_dict(d, [:col :cols :columns])[1]) !== nothing) ? val : 2	# Number of subplot columns
+			nl = div(n_levels, nc)
+			(rem(n_levels, nc) != 0) && (nl += 1)
+			grid = "$(nl)x$(nc)"
 
+			(arg1.geog > 0 && all(CTRL.limits .== 0)) && snif_GI_set_CTRLlimits(arg1)
 			(arg1.geog > 0 && is_in_dict(d, [:J :proj :projection]) === nothing) && (d[:J] = "guess")
 			opt_J = parse_J(d, "", "", true, false, false)[2]
+			(startswith(opt_J, " -JX") && !contains(opt_J, '/')) && (opt_J *= "/0")	# We always want axis equal
   			w, h = plot_GI_size(arg1, opt_J)	# Compute the plot Width,Height given the arg1 limits and proj
 			aspect = h / w
 			_w = 15 / nc;	_h = _w * aspect
@@ -116,10 +120,10 @@ function imshow(arg1::GMTgrid; kw...)
 			if ((val = find_in_dict(d, [:titles])[1]) === nothing)
 				if     !isempty(arg1.names) tits = arg1.names
 				elseif !isempty(arg1.v)     tits = string.(arg1.v)
-				else                        tits = string.(collect(1:nl))
+				else                        tits = string.(collect(1:n_levels))
 				end
 			elseif (val !== nothing && val != false && val != :no)
-				(!isa(val, Vector{String}) || (length(val) != nl)) ? @warn("Panel titles must be a string vector with size equal to number of layers in input cube.") : (tits = val)
+				(!isa(val, Vector{String}) || (length(val) != n_levels)) ? @warn("Panel titles must be a string vector with size equal to number of layers in input cube.") : (tits = val)
 			end
 			rt = !isempty(tits) ? tits : nothing
 
@@ -130,13 +134,25 @@ function imshow(arg1::GMTgrid; kw...)
 				tit = string(val)::String
 			end
 
+			# This is a (poor) pach for a GMT bug that screws when plotting CPTs on the sides.
+			margin = "0"
+			if ((val = find_in_dict(d, [:colorbar], false)[1]) !== nothing)
+				tv = add_opt_module(Dict(:colorbar => val))
+				t2 = scan_opt(tv[1], "-D")
+				t2 = replace(t2, "JMR" => "JMC")
+				!contains(t2, "+o") && (t2 *= "+o$(_w/2 + 0.3)/0")
+				t3 = scan_opt(tv[1], "-B")
+				d[:colorbar] = (D = t2, B = t3)
+				margin = "0.6c/0"
+			end
+
 			row_axes = (rt !== nothing) ? (left=true, row_title=true) : (left=true, )
-			subplot(grid=grid, dims=(panels=(_w, _h), divlines=(1,:dashed)), row_axes=row_axes, col_axes=(bott=true,), T=tit)
+			subplot(grid=grid, dims=(panels=(_w, _h),), row_axes=row_axes, col_axes=(bott=true,), T=tit, margins = margin)
 				(rt !== nothing) && (d[:par] = (MAP_TITLE_OFFSET="0p",); d[:title] = rt[1])
-				#d[:Vd] = 1
 				grdimage("", mat2grid(arg1[:,:,1], arg1); d...)
-				for k = 2:nl
+				for k = 2:n_levels
 					!isempty(tits) && (d[:title] = rt[k])
+					CURRENT_CPT[1] = GMTcpt()	# Force creating a new CPT for next layer
 					grdimage("", mat2grid(arg1[:,:,k], arg1); panel=:next, d...)
 				end
 			subplot(see ? :show : :end)
