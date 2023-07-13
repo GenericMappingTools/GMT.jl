@@ -30,6 +30,10 @@ This last 2D method let users pass the `x` and `y` vector data coordinates, U an
 velocity data and the remaining arguments have the same meaning as in the other methods. Returns a
 Vector{GMTdataset} with the streamlines.
 
+    S = streamlines(x::Matrix, y::Matrix, U::Matrix, V::Matrix; step=0.1, max_vert::Int=10000)
+
+`x` and `y` are assumed to be meshgrids with the *x* and *y* starting coordinates.
+
     S = streamlines(U::GMTgrid, V::GMTgrid, W::GMTgrid, startX, startY, startZ; step=0.1, max_vert::Int=10000)
 
 Conpute 3D volume of vector fields with streamline. Here `U`,`V` and `W` are 3D cubes with `x,y,z`
@@ -49,6 +53,13 @@ function streamlines(x, y, U::Matrix, V::Matrix, sx, sy; step=0.1, max_vert::Int
 	U = mat2grid(U, x, y)
 	V = mat2grid(V, x, y)
 	streamlines(U, V, sx, sy, step=step, max_vert=max_vert)
+end
+function streamlines(x::Matrix, y::Matrix, U::Matrix, V::Matrix; step=0.1, max_vert::Int=10000)
+	# S... Matlab way.
+	xx, yy = x[:,1], y[1,:]		# Assume x,y are meshgrid matrices
+	_U = mat2grid(U, xx, yy)
+	_V = mat2grid(V, xx, yy)
+	streamlines(_U, _V, xx, yy, step=step, max_vert=max_vert)
 end
 
 function streamlines(U::GMTgrid, V::GMTgrid; side::Union{String, Symbol}="", step=0.1, max_vert::Int=10000, density=1, max_density=4)
@@ -198,7 +209,6 @@ function streamlines(U::GMTgrid, V::GMTgrid, W::GMTgrid; axis::Bool=false, start
 
 	return s,a
 end
-##
 
 # -----------------------------------------------------------------------------------------------------------
 function streamlines(U::GMTgrid, V::GMTgrid, W::GMTgrid, startx, starty, startz; step=0.1, max_vert::Int=10000)
