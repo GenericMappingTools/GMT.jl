@@ -644,7 +644,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    G = rasters2grid(arg)
+    G = rasters2grid(arg; scale=1, offset=0)
 
 Deals with Rasters.jl arrays (grids and cubes). The input argument was previously detected (by israsters)
 to be a Rasters.jl type. The input array is not copied when it has no 'missings' but is often modified
@@ -654,7 +654,7 @@ is to call ``G = mat2grid(arg)`` once and use `G`
 
 Returns a GMTgrid type.
 """
-function rasters2grid(arg)::GMTgrid
+function rasters2grid(arg; scale::Real=1f0, offset::Real=0f0)::GMTgrid
 	_y = collect(arg.dims[2]);	(_y[2] < _y[1]) ? (_y = _y[end:-1:1]; Yorder = 'T') : (Yorder = 'B')
 	_v = (size(arg,3) > 1) ? collect(arg.dims[3]) : Float64[]
 	#_v = (size(arg,3) > 1) && (eltype(arg.dims[3]) <: TimeType ? [arg.dims[3][i].instant.periods.value for i=1:length(arg.dims[3])] : Float64[])	# Store in milisecs just to have something numeric
@@ -684,6 +684,8 @@ function rasters2grid(arg)::GMTgrid
 	end
 
 	(data === nothing) && (data = collect(arg.data))
+	(scale != 1 || offset != 0) && (data = muladd.(data, scale, offset))
+
 	(is_transp && Yorder == 'B') && (reverse!(data, dims=2); layout = "TRB")	# GMT expects grids to be scanline and Top->Bot
 	mat2grid(data, x=collect(arg.dims[1]), y=_y, v=_v, names=names, tit=string(arg.name), rem="Converted from a Rasters object.", is_transposed=is_transp, layout=layout, proj4=proj, wkt=wkt, epsg=epsg)
 end
@@ -1071,6 +1073,7 @@ function slicecube(G::GMTgrid, slice::Int; axis="z")
 	this_size = size(G,dim)
 	(slice > this_size) && error("Slice number ($slice) is larger than grid size ($this_size)")
 
+	isempty(G.v) && (G.v = collect(1:size(G,3)))
 	if (_axis == "z")
 		G_ = mat2grid(G[:,:,slice], G.x, G.y, [G.v[slice]], reg=G.registration, is_transposed=(G.layout[2] == 'R'))
 	elseif (_axis == "y")
@@ -1499,11 +1502,11 @@ istransposed(mat) = !isempty(fields(mat)) && (fields(mat)[1] == :parent)
 function mat2grid(mat, xx=Vector{Float64}(), yy=Vector{Float64}(), zz=Vector{Float64}(); reg=nothing,
                   x=Vector{Float64}(), y=Vector{Float64}(), v=Vector{Float64}(), hdr=nothing, proj4::String="",
                   proj::String="", wkt::String="", epsg::Int=0, geog::Int=-1, title::String="", tit::String="",
-                  rem::String="", cmd::String="", names::Vector{String}=String[], scale::Float32=1f0,
-                  offset::Float32=0f0, layout::String="", is_transposed::Bool=false)
+                  rem::String="", cmd::String="", names::Vector{String}=String[], scale::Real=1f0,
+                  offset::Real=0f0, layout::String="", is_transposed::Bool=false)
 	# Take a 2/3D array and turn it into a GMTgrid
 
-	israsters(mat) && return rasters2grid(mat)
+	israsters(mat) && return rasters2grid(mat, scale=scale, offset=offset)
 	!isa(mat[2], Real) && error("input matrix must be of Real numbers")
 	(isempty(proj4) && !isempty(proj)) && (proj4 = proj)	# Allow both proj4 or proj keywords
 	if (!isempty(proj4) && !startswith(proj4, "+proj=") && !startswith(proj4, "proj="))
