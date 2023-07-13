@@ -4565,9 +4565,17 @@ function digests_legend_bag(d::Dict, del::Bool=true)
 end
 
 # --------------------------------------------------------------------------------------------------
+"""
+    str = scan_opt(cmd::AbstractString, opt::String, keepX=false)
+
+Scans the CMD string for the OPT option. Note, OPT must be a 2 chars -X GMT option.
+'keepX' retains the OPT 2 chars -X GMT option in output.
+
+### Example
+    scan_opt(" -Baf", "-B", true)
+	" -Baf"
+"""
 function scan_opt(cmd::AbstractString, opt::String, keepX::Bool=false)::String
-	# Scan the CMD string for the OPT option. Note, OPT must be a 2 chars -X GMT option.
-	# 'keepX' retains the OPT 2 chars -X GMT option in output.
 	out = ((ind = findfirst(opt, cmd)) !== nothing) ? strtok(cmd[ind[1]+2:end])[1] : ""
 	(out != "" && cmd[ind[1]+2] == ' ') && (out = "")		# Because seeking -R in a " -R -JX" would ret "-JX"
 	(keepX && out != "") && (out = string(' ', opt, out))	# Keep the option flag in output
@@ -4598,8 +4606,12 @@ function justify(arg, nowarn::Bool=false)::String
 end
 
 # --------------------------------------------------------------------------------------------------
+"""
+    frac = interp_vec(x, val)
+
+Returns the positional fraction that `val` ocupies in the `x` vector 
+"""
 function interp_vec(x, val)
-	# Returns the positional fraction that `val` ocupies in the `x` vector 
 	(val < x[1] || val > x[end]) && error("Interpolating point ($val) is not inside the vector range [$(x[1]) $(x[end])].")
 	k = 0
 	while(val < x[k+=1]) end
