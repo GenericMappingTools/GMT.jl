@@ -1017,11 +1017,11 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    slicecube(I::GMTimage, layer::Int)
+    slicecube(I::GMTimage, layer::Union{Int, AbstractVector{<:Int}})
 
 Take a slice of a multylayer GMTimage. Return the result still as a GMTimage. `layer` is the z slice number.
 
-    slicecube(G::GMTgrid, slice; axis="z")
+    slicecube(G::GMTgrid, slice::Union{Int, AbstractVector{<:Int}}; axis="z")
 
 Extract a slice from a GMTgrid cube.
 
@@ -1032,6 +1032,8 @@ Extract a slice from a GMTgrid cube.
     neighboring layers. For example, `slice=2.5` on a cube were layers are one unit apart will interpolate
     between layers 2 and 3 where each layer weights 50% in the end result. NOTE: the return type is
     still a cube but with one layer only (and the corresponding axis coordinate).
+
+	`slice` Can also be a vector of integers representing the slices we want to extract. The output is another cube.
   - `axis`: denotes the dimension being sliced. The default, "z", means the slices are taken from the
     vertical axis. `axis="x"` means slice along a column, and `axis="y"` slice along a row.
 
@@ -1054,16 +1056,19 @@ Get the fourth layer of the multi-layered 'I' GMTimage object
 I = slicecube(I, 4)
 ```
 """
-function slicecube(I::GMTimage, layer::Int)
-	(layer < 1 || layer > size(I,3)) && error("Layer number ($layer) is out of bounds of image size ($size(I,3))")
-	(size(I,3) == 1) && return I		# There is nothing to slice here, but save the user fro the due deserved insult.
+function slicecube(I::GMTimage, layer::Union{Int, AbstractVector{<:Int}})
+	isvec = !isa(layer, Int)
+	first_layer = isa(layer, Int) ? layer : layer[1]
+	last_layer  = isa(layer, Int) ? layer : layer[end]
+	(first_layer < 1 || last_layer > size(I,3)) && error("Layer value(s) is out of bounds of image size ($size(I,3))")
+	(size(I,3) == 1) && return I		# There is nothing to slice here, but save the user from the due deserved insult.
 	mat = I.image[:,:,layer]
 	range = copy(I.range);	range[5:6] .= extrema(mat)
-	names = (!isempty(I.names)) ? [I.names[layer]] : I.names
+	names = (!isempty(I.names) && !all(I.names .== "")) ? (isvec ? I.names[layer] : [I.names[layer]]) : I.names
 	GMTimage(I.proj4, I.wkt, I.epsg, I.geog, range, copy(I.inc), I.registration, I.nodata, "Gray", I.metadata, names, copy(I.x), copy(I.y), [0.], mat, zeros(Int32,3), 0, Array{UInt8,2}(undef,1,1), I.layout, I.pad)
 end
 
-function slicecube(G::GMTgrid, slice::Int; axis="z")
+function slicecube(G::GMTgrid, slice::Union{Int, AbstractVector{<:Int}}; axis="z")
 	# Method that slices grid cubes. SLICE is the row|col|layer number. AXIS picks the axis to be sliced
 	(ndims(G) < 3 || size(G,3) < 2) && error("This is not a cube grid.")
 	_axis = lowercase(string(axis))
@@ -1071,23 +1076,26 @@ function slicecube(G::GMTgrid, slice::Int; axis="z")
 	dim = (_axis == "z") ? 3 : (_axis == "y" ? 1 : 2)		# First try to pick which dimension to slice
 	if (G.layout[2] == 'R' && dim < 3)  dim = (dim == 1) ? 2 : 1  end	# For RowMajor swap dim from 1 to 2
 	this_size = size(G,dim)
-	(slice > this_size) && error("Slice number ($slice) is larger than grid size ($this_size)")
+	isvec = !isa(slice, Int)
+	(!isvec && slice > this_size) && error("Slice number ($slice) is larger than grid size ($this_size)")
+	(!isvec && slice[end] > this_size) && error("Last slice number ($(slice[end])) is larger than grid size ($this_size)") 
 
 	isempty(G.v) && (G.v = collect(1:size(G,3)))
 	if (_axis == "z")
-		G_ = mat2grid(G[:,:,slice], G.x, G.y, [G.v[slice]], reg=G.registration, is_transposed=(G.layout[2] == 'R'))
+		G_ = mat2grid(G[:,:,slice], G.x, G.y, isvec ? G.v[slice] : [G.v[slice]], reg=G.registration, is_transposed=(G.layout[2] == 'R'))
+		G_.names = (!isempty(G.names) && !all(G.names .== "")) ? (isvec ? G.names[layer] : [G.names[layer]]) : G.names
 	elseif (_axis == "y")
-		if (G.layout[2] == 'C')  G_ = mat2grid(G[slice,:,:], G.x, G.v, reg=G.registration)
-		else                     G_ = mat2grid(G[:,slice,:], G.x, G.v, reg=G.registration, is_transposed=true)
+		if (G.layout[2] == 'C')  G_ = mat2grid(G[slice,:,:], G.x, G.v, reg=G.registration, names=G.names)
+		else                     G_ = mat2grid(G[:,slice,:], G.x, G.v, reg=G.registration, is_transposed=true, names=G.names)
 		end
-		G_.v = G_.y;	G_.y = [G.y[slice]]		# Shift coords vectors since mat2grid doesn't know how-to.
+		G_.v = G_.y;	G_.y = isvec ? G.y[slice] : [G.y[slice]]	# Shift coords vectors since mat2grid doesn't know how-to.
 	else
-		if (G.layout[2] == 'C')  G_ = mat2grid(G[:,slice,:], G.y, G.v, reg=G.registration)
-		else                     G_ = mat2grid(G[slice,:,:], G.y, G.v, reg=G.registration, is_transposed=true)
+		if (G.layout[2] == 'C')  G_ = mat2grid(G[:,slice,:], G.y, G.v, reg=G.registration, names=G.names)
+		else                     G_ = mat2grid(G[slice,:,:], G.y, G.v, reg=G.registration, is_transposed=true, names=G.names)
 		end
-		G_.v = G_.y;	G_.y = G_.x;	G_.x = [G.x[slice]]	
+		G_.v = G_.y;	G_.y = G_.x;	G_.x = isvec ? G.x[slice] : [G.x[slice]]
 	end
-	G_.layout = G.layout
+	G_.proj4, G_.wkt, G_.epsg, G_.geog, G_.layout = G.proj4, G.wkt, G.epsg, G.geog, G.layout
 	return G_
 end
 
