@@ -18,6 +18,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	end
 
 	(arg1 !== nothing && !isa(arg1, GDtype) && !isa(arg1, Matrix{<:Real})) && (arg1 = tabletypes2ds(arg1))
+	arg1 = if_multicols(d, arg1, is3D)			# Repeat because DataFranes or ODE's havw skipped first round
 	(!O) && (LEGEND_TYPE[1] = legend_bag())		# Make sure that we always start with an empty one
 
 	cmd::String = "";	sub_module::String = ""	# Will change to "scatter", etc... if called by sub-modules
@@ -307,12 +308,13 @@ end
 # ---------------------------------------------------------------------------------------------------
 function if_multicols(d, arg1, is3D::Bool)
 	# If the input is a GMTdataset and 'multicol' is asked, split the DS into a vector of DS's
-	(find_in_dict(d, [:multi :multicol], false)[1] === nothing)  && return arg1
+	(find_in_dict(d, [:multi :multicol :multicols], false)[1] === nothing)  && return arg1
+	(isdataframe(arg1) || isODE(arg1)) && return arg1
 	(isa(arg1, Vector{<:GMTdataset}) && (size(arg1,2) > 2+is3D)) && return arg1		# Play safe
 	d2 = copy(d)
 	!haskey(d, :color) && (d2[:color] = true)	# Default to lines color cycling
 	arg1 = ds2ds(arg1; is3D=is3D, d2...)		# Pass a 'd' copy and remove possible kw that are also parse in psxy
-	del_from_dict(d, [[:multi, :multicol], [:lt, :linethick], [:ls, :linestyle], [:fill], [:fillalpha], [:color]])
+	del_from_dict(d, [[:multi, :multicol, :multicols], [:lt, :linethick], [:ls, :linestyle], [:fill], [:fillalpha], [:color]])
 	return arg1
 end
 
