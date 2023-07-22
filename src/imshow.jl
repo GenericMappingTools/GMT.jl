@@ -39,6 +39,14 @@ function imshow(arg1, x::AbstractVector{Float64}=Vector{Float64}(), y::AbstractV
 
 	see = ((val = find_in_kwargs(kw, [:show])[2]) === nothing) ? true : (val != 0)	# No explicit 'show' keyword means show=true
 
+	function isplot3(kw)
+		call_plot3 = false
+		opt_p = find_in_kwargs(kw, [:p :view :perspective])[1]
+		(isa(opt_p, String) && contains(opt_p, '/')) && (call_plot3 = true)
+		((isa(opt_p, Tuple) || isa(opt_p, VMr)) && length(opt_p) > 1) && (call_plot3 = true)
+		return call_plot3
+	end
+
 	is_image = false
 	if (isa(arg1, String))		# If it's string it has to be a file name. Check extension to see if is an image
 		ext = splitext(arg1)[2]
@@ -56,13 +64,13 @@ function imshow(arg1, x::AbstractVector{Float64}=Vector{Float64}(), y::AbstractV
 		ginfo = gmt("gmtinfo -C", arg1)
 		CTRL.limits[1:4] = ginfo.data[1:4];		CTRL.limits[7:10] = ginfo.data[1:4]
 		call_plot3 = ((isa(arg1, GMTdataset) && arg1.geom == Gdal.wkbLineStringZ) || (isa(arg1, Vector{<:GMTdataset}) && arg1[1].geom == Gdal.wkbLineStringZ)) ? true : false		# Should evolve into a fun that detects the several plot3d cases.
-		opt_p = find_in_kwargs(kw, [:p :view :perspective])[1]
-		(isa(opt_p, String) && contains(opt_p, '/')) && (call_plot3 = true)
-		((isa(opt_p, Tuple) || isa(opt_p, VMr)) && length(opt_p) > 1) && (call_plot3 = true) 
+		!call_plot3 && (call_plot3 = isplot3(kw))
 		return (call_plot3) ? plot3d(arg1; show=see, kw...) : plot(arg1; show=see, kw...)
 	elseif (isa(arg1, GMTcpt))
 		return (find_in_kwargs(kw, [:D :pos :position])[1] === nothing) ?
 			psscale(arg1; show=true, D="x0/0+w7+h", kw...) : psscale(arg1; show=true, kw...)
+	elseif (isdataframe(arg1) || isODE(arg1))
+		return isplot3(kw) ? plot3(arg1; show=see, kw...) :  plot(arg1; show=see, kw...)
 	else
 		G = mat2grid(arg1, x, y, reg=1)						# For displaying, pixel registration is more appropriate
 	end
