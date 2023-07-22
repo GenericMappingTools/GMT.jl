@@ -606,11 +606,11 @@ const alphabet_colors = ["#2BCE48", "#4C005C", "#005C31", "#5EF1F2", "#8F7C00", 
 const simple_distinct = ["#e6194b", "#3cb44b", "#ffe119", "#4363d8", "#f58231", "#911eb4", "#46f0f0", "#f032e6", "#bcf60c", "#fabebe", "#008080", "#e6beff", "#9a6324", "#fffac8", "#800000", "#aaffc3", "#808000", "#ffd8b1", "#000075", "#808080"]
  
 # ---------------------------------------------------------------------------------------------------
-function tabletypes2ds(arg)
+function tabletypes2ds(arg, interp=0)
 	# Try guesswork to convert Tables types into GMTdatasets usable in plots.
 	#(arg === nothing || isa(arg, GDtype) || isa(arg, Matrix{<:Real})) && return arg
 	isdataframe(arg) && return df2ds(arg)				# DataFrames are(?) easier to deal with.
-	isODE(arg) && return ODE2ds(arg)					# DifferentialEquations type is a complex beast.
+	isODE(arg) && return ODE2ds(arg, interp=interp)		# DifferentialEquations type is a complex beast.
 
 	# Guesswork, it may easily screw.
 	colnames = [i for i in fields(arg) if Base.nonmissingtype(eltype(getproperty(arg, i))) <: AbstractFloat]
@@ -619,6 +619,11 @@ function tabletypes2ds(arg)
 end
 
 # ---------------------------------------------------------------------------------------------------
+"""
+    D = df2ds(df)
+
+Extract numeric data from a DataFrame type and return it into a GMTdataset. Works only with 'simple' DataFrames.
+"""
 function df2ds(arg)::GMTdataset
 	# Try to convert a DataFrame into a GMTdataset. Keep all numerical columns and first Text one
 	colnames = [i for i in names(arg) if Base.nonmissingtype(eltype(arg[!,i])) <: Real]
@@ -630,12 +635,25 @@ function df2ds(arg)::GMTdataset
 end
 
 # ---------------------------------------------------------------------------------------------------
-function ODE2ds(arg)::GMTdataset
+"""
+    D = ODE2ds(sol; interp=0)
+
+Extract data from a DifferentialEquations solution type and return it into a GMTdataset.
+
+- `interp`: == 0 means we return the original points (no interpolation). == 2 => do data interpolation to
+    the double of original number of points. == 3 => three times, == n => n times. 
+"""
+function ODE2ds(arg; interp=0)::GMTdataset
 	vv = getproperty(arg,:u)			# A potentially Vector-of-vectors or Vector-of-matrices
-	if isa(vv, Vector{<:Matrix})
-		mat = [arg.t reshape(reshape(reduce(hcat,vv),size(first(vv))...,:), length(vv[1]), length(vv))'[:,end:-1:1]]	# No comments
+	if (interp != 0)
+		ts = range(arg.t[1], stop = arg.t[end], length = interp * length(arg.t))
+		mat = [ts stack([arg(ts, idxs=k).u for k = 1:numel(arg.u[1])])]
 	else
-		mat = (isa(vv, Vector{<:Vector})) ? [arg.t reduce(hcat,vv)'] : [arg.t arg.u]
+		if isa(vv, Vector{<:Matrix})
+			mat = [arg.t reshape(reshape(reduce(hcat,vv),size(first(vv))...,:), length(vv[1]), length(vv))'[:,end:-1:1]]	# No comments
+		else
+			mat = (isa(vv, Vector{<:Vector})) ? [arg.t reduce(hcat,vv)'] : [arg.t arg.u]
+		end
 	end
 	colnames = Vector{String}(undef, size(mat,2));	colnames[1] = "t"
 	(size(mat,2) == 2) ? colnames[2] = "u" : (for k = 1:size(mat,2)-1  colnames[k+1] = "u$k"  end)
@@ -686,8 +704,11 @@ function rasters2grid(arg; scale::Real=1f0, offset::Real=0f0)::GMTgrid
 	(data === nothing) && (data = collect(arg.data))
 	(scale != 1 || offset != 0) && (data = muladd.(data, scale, offset))
 
+	dic = arg.metadata.val;
+	z_units, sc, off = get(dic, "units", ""), get(dic, "scale", 1.0f0), get(dic, "offset", 0.0f0)
+
 	(is_transp && Yorder == 'B') && (reverse!(data, dims=2); layout = "TRB")	# GMT expects grids to be scanline and Top->Bot
-	mat2grid(data, x=collect(arg.dims[1]), y=_y, v=_v, names=names, tit=string(arg.name), rem="Converted from a Rasters object.", is_transposed=is_transp, layout=layout, proj4=proj, wkt=wkt, epsg=epsg)
+	mat2grid(data, x=collect(arg.dims[1]), y=_y, v=_v, names=names, tit=string(arg.name), rem="Converted from a Rasters object.", is_transposed=is_transp, layout=layout, proj4=proj, wkt=wkt, epsg=epsg, scale=sc, offset=off, z_units=z_units)
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -1511,7 +1532,7 @@ function mat2grid(mat, xx=Vector{Float64}(), yy=Vector{Float64}(), zz=Vector{Flo
                   x=Vector{Float64}(), y=Vector{Float64}(), v=Vector{Float64}(), hdr=nothing, proj4::String="",
                   proj::String="", wkt::String="", epsg::Int=0, geog::Int=-1, title::String="", tit::String="",
                   rem::String="", cmd::String="", names::Vector{String}=String[], scale::Real=1f0,
-                  offset::Real=0f0, layout::String="", is_transposed::Bool=false)
+                  offset::Real=0f0, layout::String="", is_transposed::Bool=false, z_units::String="")
 	# Take a 2/3D array and turn it into a GMTgrid
 
 	israsters(mat) && return rasters2grid(mat, scale=scale, offset=offset)
@@ -1553,7 +1574,7 @@ function mat2grid(mat, xx=Vector{Float64}(), yy=Vector{Float64}(), zz=Vector{Flo
 	_layout = (layout == "") ? "BCB" : layout
 	(geog == -1 && helper_geod(proj4, wkt, epsg, false)[3]) && (geog = (range[2] <= 180) ? 1 : 2)	# Signal if grid is geog.
 	(tit == "") && (tit = title)		# Some versions from 1.2 remove 'tit'
-	GMTgrid(proj4, wkt, epsg, geog, range, inc, reg_, NaN, tit, rem, cmd, "", names, vec(x), vec(y), vec(v), isT ? copy(mat) : mat, "x", "y", "v", "z", _layout, scale, offset, 0, hasnans)
+	GMTgrid(proj4, wkt, epsg, geog, range, inc, reg_, NaN, tit, rem, cmd, "", names, vec(x), vec(y), vec(v), isT ? copy(mat) : mat, "x", "y", "v", z_units, _layout, scale, offset, 0, hasnans)
 end
 
 # This method creates a new GMTgrid but retains all the header data from the G object
