@@ -156,3 +156,6 @@ struct WrapperPluto fname::String end
 
 const global GItype = Union{GMTgrid, GMTimage}
 const global GDtype = Union{GMTdataset, Vector{<:GMTdataset}}
+
+#function meta(D::GMTdataset; kw...)
+#end
