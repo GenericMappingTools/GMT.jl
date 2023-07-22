@@ -752,6 +752,7 @@ function grid_init(API::Ptr{Nothing}, X::GMT_RESOURCE, grd_box, pad::Int=2, cube
 		convert(Ptr{GMT_CUBE}, GMT_Create_Data(API, GMT_IS_CUBE, GMT_IS_VOLUME, GMT_IS_OUTPUT, NULL, NULL, NULL, 0, 0, NULL)) :
 		convert(Ptr{GMT_GRID}, GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_IS_OUTPUT, NULL, NULL, NULL, 0, 0, NULL))
 
+	israsters(grd_box) && (grd_box = rasters2grid(grd_box))
 	!isa(grd_box, GMTgrid) && error("grd_init: input ($(typeof(grd_box))) is not a GRID container type")
 	grid_init(API, X, grd_box, pad, cube)
 end
