@@ -701,14 +701,16 @@ function rasters2grid(arg; scale::Real=1f0, offset::Real=0f0)::GMTgrid
 			(for k = 1:numel(names) names[k] = names[k][1:10] end)
 	end
 
-	(data === nothing) && (data = collect(arg.data))
-	(scale != 1 || offset != 0) && (data = muladd.(data, scale, offset))
+	dic = arg.metadata.val
+	(scale  == 1) && (scale  = get(dic, "scale", 1.0f0))
+	(offset == 0) && (offset = get(dic, "offset", 0.0f0))
+	z_units = get(dic, "units", "")
 
-	dic = arg.metadata.val;
-	z_units, sc, off = get(dic, "units", ""), get(dic, "scale", 1.0f0), get(dic, "offset", 0.0f0)
+	(data === nothing) && (data = collect(arg.data))
+	(scale != 1 || offset != 0) && (data = muladd.(data, convert(eltype(data), scale), convert(eltype(data), offset)))
 
 	(is_transp && Yorder == 'B') && (reverse!(data, dims=2); layout = "TRB")	# GMT expects grids to be scanline and Top->Bot
-	mat2grid(data, x=collect(arg.dims[1]), y=_y, v=_v, names=names, tit=string(arg.name), rem="Converted from a Rasters object.", is_transposed=is_transp, layout=layout, proj4=proj, wkt=wkt, epsg=epsg, scale=sc, offset=off, z_units=z_units)
+	mat2grid(data, x=collect(arg.dims[1]), y=_y, v=_v, names=names, tit=string(arg.name), rem="Converted from a Rasters object.", is_transposed=is_transp, layout=layout, proj4=proj, wkt=wkt, epsg=epsg, z_units=z_units)
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -1104,7 +1106,7 @@ function slicecube(G::GMTgrid, slice::Union{Int, AbstractVector{<:Int}}; axis="z
 	isempty(G.v) && (G.v = collect(1:size(G,3)))
 	if (_axis == "z")
 		G_ = mat2grid(G[:,:,slice], G.x, G.y, isvec ? G.v[slice] : [G.v[slice]], reg=G.registration, is_transposed=(G.layout[2] == 'R'))
-		G_.names = (!isempty(G.names) && !all(G.names .== "")) ? (isvec ? G.names[layer] : [G.names[layer]]) : G.names
+		G_.names = (!isempty(G.names) && !all(G.names .== "")) ? (isvec ? G.names[slice] : [G.names[slice]]) : G.names
 	elseif (_axis == "y")
 		if (G.layout[2] == 'C')  G_ = mat2grid(G[slice,:,:], G.x, G.v, reg=G.registration, names=G.names)
 		else                     G_ = mat2grid(G[:,slice,:], G.x, G.v, reg=G.registration, is_transposed=true, names=G.names)
