@@ -555,7 +555,7 @@ function parse_opt_S(d::Dict, arg1, is3D::Bool=false)
 		marca::String = add_opt(d, "", "", [symb], (name="", size="/", unit="1"))
 		have_custom, custom_no_size = true, !isdigit(marca[end])	# So that we can have custom symbs with sizes in arg1
 		marca_fullname::String, marca_name::String = seek_custom_symb(marca)
-		(marca_name != "") && (opt_S = " -Sk" * marca_fullname)
+		(marca_fullname != "") && (opt_S = " -Sk" * marca_fullname)
 	else
 		opt_S = add_opt(d, "", "S", [:S :symbol], (symb="1", size="", unit="1"))
 	end
