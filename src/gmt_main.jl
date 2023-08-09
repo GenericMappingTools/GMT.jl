@@ -307,6 +307,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function strtok(str)
 	# A Matlab like strtok function
+	(str == "") && return str
 	o = split(str, limit=2, keepempty=false)
 	return (length(o) == 2) ? (string(o[1]), string(o[2])) : (string(o[1]), "")
 end

@@ -364,8 +364,9 @@ function parse_JZ(d::Dict, cmd::String, del::Bool=true; O::Bool=false, is3D::Boo
 	opt_J::String = "";		seek_JZ = true
 	if ((val = find_in_dict(d, [:aspect3])[1]) !== nothing)
 		o = scan_opt(cmd, "-J")
+		(o == "") && (o = " ")		# When scaning a string with only -J (i.e., no args), do not error
 		(o[1] != 'X' || o[end] == 'd') &&  @warn("aspect3 works only in linear projections (and no geog), ignoring it.") 
-		if (o[1] == 'X' && o[end] != 'd')
+		if (o[1] == 'X' && o[end] != 'd' && length(o) > 1)
 			opt_J = " -JZ" * split(o[2:end],'/')[1];		seek_JZ = false
 			cmd *= opt_J
 		end
@@ -1754,7 +1755,7 @@ function add_opt_pen(d::Dict, symbs::Union{Nothing, VMs}, opt::String="", del::B
 	elseif (find_in_dict(d, [:zlevel :zlevels])[1] !== nothing) out *= "+z"
 	else
 		((val = find_in_dict(d, [:cline :color_line :color_lines])[1]) !== nothing) && (out *= "+cl")
-		((val = find_in_dict(d, [:ctext :color_text :csymbol :color_symbols :color_symbol])[1]) !== nothing) && (out *= "+cf")
+		((val = find_in_dict(d, [:ctext :color_text :color_symbols :color_symbol])[1]) !== nothing) && (out *= "+cf")
 	end
 	if (haskey(d, :bezier))  out *= "+s";  del_from_dict(d, [:bezier])  end
 	if (haskey(d, :offset))  out *= "+o" * arg2str(d[:offset])::String   end
@@ -4576,7 +4577,7 @@ Scans the CMD string for the OPT option. Note, OPT must be a 2 chars -X GMT opti
 	" -Baf"
 """
 function scan_opt(cmd::AbstractString, opt::String, keepX::Bool=false)::String
-	out = ((ind = findfirst(opt, cmd)) !== nothing) ? strtok(cmd[ind[1]+2:end])[1] : ""
+	out = ((ind = findfirst(opt, cmd)) !== nothing) ? (ind[end] == length(cmd)) ? "" : strtok(cmd[ind[1]+2:end])[1] : ""
 	(out != "" && cmd[ind[1]+2] == ' ') && (out = "")		# Because seeking -R in a " -R -JX" would ret "-JX"
 	(keepX && out != "") && (out = string(' ', opt, out))	# Keep the option flag in output
 	return out
