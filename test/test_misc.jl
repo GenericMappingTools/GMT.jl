@@ -204,6 +204,12 @@
 	tic();toc()
 	@test_throws ErrorException("`toc()` without `tic()`") toc()
 
+	# Orbits
+	println("	Orbits")
+	@test_throws ErrorException("Only Orthographic projection is allowed.") orbits!();
+	orbits()
+	@test_throws ErrorException("Orbit height cannot be 0 when input is in degrees.") orbits([0.0 0; 1 1]);
+
 	# Seismicity
 	println("	Seismicity")
 	seismicity(last="1w", circle=(-90,10,500), data=1)
