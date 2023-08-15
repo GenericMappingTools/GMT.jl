@@ -126,16 +126,16 @@ end
 Compute the Texture Shading calling functions from the software from Leland Brown at
 http://www.textureshading.com/Home.html
 
-  - **detail** is the amount of texture detail. Lower values of detail retain more elevation information,
+  - `detail` is the amount of texture detail. Lower values of detail retain more elevation information,
     giving more sense of the overall, large structures and elevation trends in the terrain, at the expense
-	of fine texture detail. Higher detail enhances the texture but gives an overall "flatter" general appearance,
-	with elevation changes and large structure less apparent.
-  - **contrast** is a parameter called “vertical enhancement.” Higher numbers increase contrast in the midtones,
+    of fine texture detail. Higher detail enhances the texture but gives an overall "flatter" general appearance,
+    with elevation changes and large structure less apparent.
+  - `contrast` is a parameter called “vertical enhancement.” Higher numbers increase contrast in the midtones,
     but may lose detail in the lightest and darkest features. Lower numbers highlight only the sharpest ridges
-	and deepest canyons but reduce contrast overall.
-  - **uint16** controls if output is a UIn16 or a UInt8 image (the dafault). Note that the original code writes
-    only UInt16 images bur if we want to combine this with with the hillshade computed with `gdaldem`, a UInt8
-	image is more handy.
+    and deepest canyons but reduce contrast overall.
+  - `uint16` controls if output is a UIn16 or a UInt8 image (the dafault). Note that the original code writes
+    only UInt16 images but if we want to combine this with with the hillshade computed with `gdaldem`, a UInt8
+    image is more handy.
 
 ### Returns
 A UInt8 (or 16) GMT Image
