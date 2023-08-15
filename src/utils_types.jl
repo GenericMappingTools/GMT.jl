@@ -407,6 +407,29 @@ function mat2ds(D::GMTdataset, inds)::GMTdataset
 end
 
 # ---------------------------------------------------------------------------------------------------
+"""
+    mat2dsnan(mat::Matrix{<:Real}; is3D=false, kw...)
+
+Break the matrix `mat` in a series of GMTdatasets using NaN as the breaking flag. By default it only
+checks for NaNs in the first two columns. Use `is3D=true` to also check the third column. The `kw`
+argument is the same as used in `mat2ds()`.
+
+### Example, create a vector of 2 GMTdatasets:
+   mat2dsnan([0 1; 1 1; NaN 0; 2 2 3 3])
+"""
+function mat2dsnan(mat::Matrix{<:Real}; is3D=false, kw...)
+	ind = isnan.(view(mat, :, 1)) .| isnan.(view(mat, :, 2))
+	is3D && (ind = ind .| isnan.(view(mat, :, 3)))
+	ind2 = [1, findall(diff(ind) .!= 0) .+ 1 ..., size(mat,1)+1]	# Indices of boundaries between NaNs
+	n_ds = length(ind2) - 1
+	Dm = Vector{GMTdataset}(undef, n_ds)
+	for k = 1:n_ds
+		Dm[k] = mat2ds(mat[ind2[k]:ind2[k+1]-1, :], kw...)
+	end
+	return Dm
+end
+
+# ---------------------------------------------------------------------------------------------------
 function add2ds!(D::GMTdataset, mat, ind::Int=0; name::AbstractString="", names::Vector{<:AbstractString}=AbstractString[])
 	# Add the Vector or Matrix 'mat' to D where 'ind' is the column index of the insertion point.
 	# Takes care also of updating the column names.
