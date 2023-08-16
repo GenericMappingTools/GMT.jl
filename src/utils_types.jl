@@ -1054,7 +1054,7 @@ end
 # This method creates a new GMTimage but retains all the header data from the IMG object
 function mat2img(mat, I::GMTimage; names::Vector{String}=String[], metadata::Vector{String}=String[])
 	range = copy(I.range);	(size(mat,3) == 1) && (range[5:6] .= extrema(mat))
-	GMTimage(I.proj4, I.wkt, I.epsg, I.geog, range, copy(I.inc), I.registration, I.nodata, I.color_interp, metadata, names, copy(I.x), copy(I.y), zeros(size(mat,3)), mat, copy(I.colormap), I.n_colors, Array{UInt8,2}(undef,1,1), I.layout, 0)
+	GMTimage(I.proj4, I.wkt, I.epsg, I.geog, range, copy(I.inc), I.registration, convert(eltype(mat), I.nodata), I.color_interp, metadata, names, copy(I.x), copy(I.y), zeros(size(mat,3)), mat, copy(I.colormap), I.n_colors, Array{UInt8,2}(undef,1,1), I.layout, 0)
 end
 function mat2img(mat, G::GMTgrid; names::Vector{String}=String[], metadata::Vector{String}=String[])
 	range = copy(G.range);	range[5:6] .= (size(mat,3) == 1) ? extrema(mat) : [0., 255]
