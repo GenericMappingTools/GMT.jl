@@ -87,3 +87,7 @@ function orbits(xyz::Matrix{<:Real}=Array{Float64}(undef, 0, 0); first::Bool=tru
 end
 
 orbits!(xyz::Matrix{<:Real}=Array{Float64}(undef, 0, 0); radius=6371.007, height=0, lon0=0, lat0=0, show=false, kw...) = orbits(xyz; first=false, radius=radius, height=height, lon0=lon0, lat0=lat0, show=show, kw...)
+
+orbits(D::GMTdataset; radius=6371.007, height=0, lon0=0, lat0=0, show=false, kw...) = orbits(D.data; first=true, radius=radius, height=height, lon0=lon0, lat0=lat0, show=show, kw...)
+
+orbits!(D::GMTdataset; radius=6371.007, height=0, lon0=0, lat0=0, show=false, kw...) = orbits(D.data; first=false, radius=radius, height=height, lon0=lon0, lat0=lat0, show=show, kw...)
