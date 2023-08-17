@@ -46,8 +46,9 @@ function orbits(xyz::Matrix{<:Real}=Array{Float64}(undef, 0, 0); first::Bool=tru
 		xyz = mapproject(xyz, E=true, par=(PROJ_ELLIPSOID=R,))
 		(height == 0) && error("Orbit height cannot be 0 when input is in degrees.")	# At bot so we can run a CI on it.
 	end
+	(size(xyz, 2) > 3) && (xyz = view(xyz, :, 1:3))	# Allow more than 3 columns
 
-	_xyz = (lon0 != 0 || lat0 != 0) ? xyz * (r_lon * r_lat) : copy(xyz)
+	_xyz = (lon0 != 0 || lat0 != 0) ? xyz * (r_lon * r_lat) : deepcopy(xyz)
 	x, y, z = view(_xyz, :, 1), view(_xyz, :, 2), view(_xyz, :, 3)
 	(R < 1e6 && (maximum(x) > 1e4 || maximum(y) > 1e4)) && (R *= 1000)	# Input coords are in meters and radius in km
 
@@ -55,7 +56,7 @@ function orbits(xyz::Matrix{<:Real}=Array{Float64}(undef, 0, 0); first::Bool=tru
 	circ = [R .* cos.(t) R .* sin.(t)]
 	ind = x .< 0									# Those that have negative xx are candidates to be hiden. 
 	ind_h = findall(diff(ind) .!= 0) .+ 1			# Indices of begin/end of the segments to hide
-	(x[1] < 0) && (ind_h = [1 ind_h])				# If first segment is negative, needs to be included
+	(x[1] < 0) && (ind_h = [1, ind_h...])			# If first segment is negative, needs to be included
 	(x[end] < 0) && append!(ind_h, [length(x)])		# If last segment is negative,		""
 	for k = 1:2:numel(ind_h)						# We jump 2 to always start at the to be hiden segments.
 		int = gmtspatial(([y[ind_h[k]:ind_h[k+1]] z[ind_h[k]:ind_h[k+1]]], circ), I="e", sort=1)
