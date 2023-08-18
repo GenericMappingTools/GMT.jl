@@ -21,13 +21,14 @@ Plots the orbit, or whatever the input data in `xyz` represents, about the Earth
   the sphere of radius `radius`. (MUST be > 0 and not 'too small' or this function's algorithm fails.) 
 - `show`: Set this to `true` if want to see the produced image. Leaving it as `false` permits adding more
   elements by posterior plotting calls.
-- `kw`: keyword arguments to be consumed in the ``coast`` call.
+- `kw`: keyword arguments to be consumed in the ``coast`` and ``plot3`` calls. For example, `land=:tomato,
+  lw=1, lc=:blue` paints the continent with the `tomato` color and plots the orbits with blue, 1pt thick lines.
 
 ### Example:
     orbits(show=true)
 """
 function orbits(xyz::Matrix{<:Real}=Array{Float64}(undef, 0, 0); first::Bool=true, radius=6371.007, height=0,
-                lon0=0, lat0=0, show=false, kw...)
+                lon0=0, lat0=0, show=false, savefig="", figname="", name="", kw...)
 
 	!first && !contains(CTRL.pocket_J[1], "-JG") && error("Only Orthographic projection is allowed.")
 	r_lon = [cosd(-lon0) sind(-lon0) 0; -sind(-lon0) cosd(-lon0) 0; 0 0 1]
@@ -79,11 +80,14 @@ function orbits(xyz::Matrix{<:Real}=Array{Float64}(undef, 0, 0); first::Bool=tru
 		end
 	end
 
-	first && coast(; region=:global, projection=(name=:ortho, center=(lon0,lat0)), A=100, kw...)
-	#plot!(circ, R="-6371/6371/-6378/6371", J="X15", lc=:green)
-	D = mat2dsnan([x y z])					# Because of a bug in GMT plot3 that screws when NaNs
+	d = Dict{Symbol, Any}()
+	first && (coast(; region=:global, projection=(name=:ortho, center=(lon0,lat0)), A=100, Vd=-1, kw...); d = CTRL.pocket_d[1])
+	!first && (d = KW(kw))						# Need that Dict
+	fname = (savefig != "") ? string(savefig) : (figname != "") ? string(figname) : (name != "") ? string(name) : ""
+	(fname != "") && (d[:figname] = fname)		# If we have a figure name request
+	D = mat2dsnan([x y z])						# Because of a bug in GMT plot3 that screws when NaNs
 	opt_R = (R > 10) ? @sprintf("%.8g/%.8g/%.8g/%.8g/%.8g/%.8g", -R,R,-R,R,-R,R) : "-7/7/-7/7/-7/7"	# R < 10 is for demo
-	plot3!(D, J="X"*CTRL.pocket_J[2], R=opt_R, aspect3=:equal, N=true, p=(90,0.00001), show=show)
+	plot3!(D; J="X"*CTRL.pocket_J[2], R=opt_R, aspect3=:equal, N=true, p=(90,0.00001), show=show, d...)
 	#plot3d!([x[ind_h] y[ind_h] z[ind_h]], marker=:u, ms=0.1, mc=:blue, N=true, p=(90,0.00001), show=true)
 end
 
