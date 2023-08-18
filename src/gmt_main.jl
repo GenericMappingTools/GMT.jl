@@ -453,6 +453,7 @@ function get_image(API::Ptr{Nothing}, object)::GMTimage
 	if     (I.type == 3)  data = convert(Ptr{Cushort}, I.data)
 	elseif (I.type == 5)  data = convert(Ptr{Cuint}, I.data)
 	elseif (I.type <= 1)  data = convert(Ptr{Cuchar}, I.data)
+	else   error("Only unsigned types are acceped in images. Maybe you meant to read data as a grid?")
 	end
 
 	gmt_hdr::GMT_GRID_HEADER = unsafe_load(I.header)
@@ -469,7 +470,7 @@ function get_image(API::Ptr{Nothing}, object)::GMTimage
 
 	layout = join([Char(gmt_hdr.mem_layout[k]) for k=1:4])		# This is damn diabolic
 	if (occursin("0", IMG_MEM_LAYOUT[1]) || occursin("1", IMG_MEM_LAYOUT[1]))	# WTF is 0 or 1?
-		t::Union{Array{Cuchar}, Array{Cushort}, Array{Cuint}} = deepcopy(unsafe_wrap(Array, data, ny * nx * nz))
+		t = deepcopy(unsafe_wrap(Array, data, ny * nx * nz))
 	else
 		if (IMG_MEM_LAYOUT[1] != "")  layout = IMG_MEM_LAYOUT[1][1:3] * layout[4]  end	# 4rth is data determined
 		if (layout != "" && layout[1] == 'I')		# The special layout for using this image in Images.jl

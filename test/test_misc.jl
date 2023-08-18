@@ -207,7 +207,9 @@
 	# Orbits
 	println("	Orbits")
 	@test_throws ErrorException("Only Orthographic projection is allowed.") orbits!();
+	@test_throws ErrorException("Only Orthographic projection is allowed.") orbits!(mat2ds(rand(10,3)));
 	orbits()
+	orbits(mat2ds(rand(10,3)))
 	@test_throws ErrorException("Orbit height cannot be 0 when input is in degrees.") orbits([0.0 0; 1 1]);
 
 	# Seismicity
