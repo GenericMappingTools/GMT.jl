@@ -662,7 +662,12 @@ function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})::GDtype
 			seg_out = seg_out + 1
 		end
 	end
-	set_dsBB!(Darr, false)				# Compute and set the global BoundingBox for this dataset
+	if (!isempty(Darr))
+		all_bbs = any(isnan.(Darr[1].bbox)) ? true : false		# See if set_dsBB! must compute NaN-resintant bboxes.
+		set_dsBB!(Darr, all_bbs)				# Compute and set the global BoundingBox for this dataset
+	else
+		return GMTdataset()
+	end
 
 	return (length(Darr) == 1) ? Darr[1] : Darr
 end
