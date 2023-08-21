@@ -196,8 +196,8 @@ function merge_R_and_xyzlims(d::Dict, opt_R::String)::String
 		ind = (eixo == 'x') ? 1 : (eixo == 'y') ? 2 : 3
 		symbs = (ind == 1) ? [:xlim :xlims :xlimits] : (ind == 2) ? [:ylim :ylims :ylimits] : [:zlim :zlims :zlimits]
 		((val = find_in_dict(d, symbs, false)[1]) === nothing) && return ""
-		((isa(val, Tuple) || isvector(val)) && eltype(val) <: Number) && return @sprintf("%.15g/%.15g", val[1], val[2])
-		!(eltype(val) <: Tuple{Number, Number}) && error("Wrong data type: $(typeof(val)). Should be ((x1,x2),(x3,x4))")
+		((isa(val, Tuple) || isvector(val)) && eltype(val) <: Real) && return @sprintf("%.15g/%.15g", val[1], val[2])
+		!(eltype(val) <: Tuple{Real, Real}) && error("Wrong data type: $(typeof(val)). Should be ((x1,x2),(x3,x4))")
 		# Here we are dealing with a broken axes limits
 		lims::Vector{Float64} = [val[1][1] val[1][2] val[2][1] val[2][2]]		# To get rid of the Anys
 		frac = (lims[2] - lims[1]) / (lims[4] - lims[1])	# Fractional size of this axis
@@ -2113,7 +2113,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function prepare2geotif(d::Dict, cmd::Vector{String}, opt_T::String, O::Bool)::Tuple{Vector{String}, String}
 	# Prepare automatic settings to allow creating a GeoTIF or a KML from a PS map
-	# Makes use of psconvert -W option -W
+	# Makes use of psconvert -W option
 	function helper2geotif(cmd::String)::String
 		# Strip all -B's and add convenient settings for creating GeoTIFF's and KLM's
 		opts = split(cmd, " ");		cmd  = ""

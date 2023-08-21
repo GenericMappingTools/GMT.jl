@@ -321,6 +321,7 @@ include("get_enums.jl")
 	cornerplot(randn(50,3), scatter=true, fmt=:ps);
 	marginalhist(randn(1000,2), par=(PS_MEDIA="A2",), fmt=:ps);	rm("GMTplot.ps")
 	feather([0.0 0 2.0; 0.0 30 2; 0.0 60 2], rtheta=true, aspect="1:1", arrow=(len=0.5, shape=0.5,), fmt=:ps);
+	orbits(mat2ds(rand(10,3)));
 	rm(joinpath(tempdir(), "GMTjl_custom_p_x.txt"))		# This one gets created before username is set.
 	resetGMT()
 end
