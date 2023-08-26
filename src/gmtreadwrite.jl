@@ -123,6 +123,8 @@ function gmtread(_fname::String; kwargs...)
 		end
 	end
 
+	(opt_T == "" && opt_bi != "") && (opt_T = " -Td")	# If asked to read binary, must be a 'data' file.
+
 	if (opt_T == "")
 		((opt_T = guess_T_from_ext(fname)) == "") && error("Must select one input data type (grid, image, dataset, cmap or ps)")
 		(opt_T == " -Tg" && haskey(d, :ignore_grd)) && return nothing	# contourf uses this
