@@ -60,10 +60,10 @@ Parameters
 - $(GMT.opt_o)
 - $(GMT.opt_swap_xy)
 """
-function gmtspatial(cmd0::String="", arg1=nothing; kwargs...)
+function gmtspatial(cmd0::String="", arg1=nothing, arg2 = nothing; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
-	arg2 = nothing;     arg3 = nothing;     arg4 = nothing
+	arg3 = nothing;     arg4 = nothing
 
 	cmd, = parse_common_opts(d, "", [:R :V_params :b :d :e :f :g :h :i :o :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :nn :nearest_neighbor], [:C :clip], [:E :handedness], [:F :force_polygons],
@@ -75,7 +75,7 @@ function gmtspatial(cmd0::String="", arg1=nothing; kwargs...)
 		arg1, arg2 = args[:];   cmd *= "+f"
 	end
  
-	cmd, args, n, = add_opt(d, cmd, "N", [:N :in_polyg], :data, Array{Any,1}([arg1, arg2, arg3]), (all="_+a", start="+p", has_feature="_+r", add_IDs="_+z"))
+	cmd, args, n, = add_opt(d, cmd, "N", [:N :in_polyg], :data, Array{Any,1}([arg1, arg2, arg3]), (all="_+a", start="+p", has_feature="_+r", add_IDs="_+z", individual="_+i"))
 	if (n > 0)  arg1, arg2, arg3 = args[:]  end
 
 	cmd, args, n, = add_opt(d, cmd, "T", [:T :truncate], :data, Array{Any,1}([arg1, arg2, arg3, arg4]), (x="",))
@@ -84,16 +84,21 @@ function gmtspatial(cmd0::String="", arg1=nothing; kwargs...)
 	do_sort = (find_in_dict(d, [:sort])[1] !== nothing)
 	if (isa(arg1,Tuple))
 		D = common_grd(d, cmd0, cmd, "gmtspatial ", arg1..., arg2, arg3, arg4)		# Finish build cmd and run it
+		arg = arg1[end]
 	else
 		D = common_grd(d, cmd0, cmd, "gmtspatial ", arg1, arg2, arg3, arg4)
+		arg = arg2
 	end
+	hasID = (isa(arg, GMTdataset) && (contains(arg.header, "-Z") || contains(arg.header, "-L"))) ||	# To know if add +1 to start at 1
+	        (isa(arg, Vector{<:GMTdataset}) && (contains(arg[1].header, "-Z") || contains(arg[1].header, "-L")))
 	if (do_sort && !isempty(D))
 		ind = sortperm(view(D, :, 3))
 		D.data = D.data[ind, :]
 		!isempty(D.text) && (D.text = D.text[ind])
 	end
+	contains(cmd, "-N+i") && (D.colnames = ["x","y","polID"]; (!hasID && [D[k,3] += 1 for k = 1:size(D,1)]))
 	D
 end
 
 # ---------------------------------------------------------------------------------------------------
-gmtspatial(arg1; kw...) = gmtspatial("", arg1; kw...)
+gmtspatial(arg1, arg2=nothing; kw...) = gmtspatial("", arg1, arg2; kw...)

@@ -1363,7 +1363,7 @@ function parse_b(d::Dict, cmd::String, symbs::Array{Symbol}=[:b :binary], io::St
 	               (ncols=("", arg2str, 1), type=("", data_type, 2), swapp_bytes="_w", little_endian="_+l", big_endian="+b"))
 	return cmd * cmd_, cmd_
 end
-parse_bi(d::Dict, cmd::String) = parse_b(d, cmd, [:b :bi :binary_in],  "i")
+parse_bi(d::Dict, cmd::String) = parse_b(d, cmd, [:b :bi :binary :binary_in],  "i")
 parse_bo(d::Dict, cmd::String) = parse_b(d, cmd, [:b :bo :binary_out], "o")
 # ---------------------------------------------------------------------------------------------------
 
