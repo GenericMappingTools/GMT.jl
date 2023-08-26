@@ -307,10 +307,24 @@ include("get_enums.jl")
 	GMT.cat_2_arg2(mat2ds(rand(3,2)), mat2ds(rand(3,2)));
 	GMT.cat_3_arg2(rand(3),rand(3),rand(3));
 	plot(rand(5,2), marker=:point, lc=:red, ls=:dot, lw=1, C=:jet, colorbar=true, Vd=2)
-	plot(rand(5,2))
 	makecpt(T=(0,10))
+	t = joinpath(tempdir(), "lixo.dat");
+	gmtwrite(t,[0.0 0; 1 1]);
+	gmtread(t);
+	rm(t)
 	grdimage(rand(Float32,32,32), Vd=2);
 	grdview(rand(Float32,32,32), Vd=2);
+	grdinfo(mat2grid(rand(Float32,4,4)));
+	G=gmt("grdmath", "-R0/10/0/10 -I2 X");
+	grdcontour(G);
+	grd2cpt(G);
+	grd2xyz(G);
+	grdlandmask(R="-10/4/37/45", res=:c, inc=0.1);
+	grdmask([10 20; 40 40; 70 20; 10 20], R="0/100/0/100", out_edge_in=[100 0 0], I=2);
+	grdsample(G, inc=0.5);
+	grdtrend(G, model=3);
+	grdtrack(G, [1 1]);
+	mat2img(rand(UInt8, 32, 32, 3));
 	coast(R=:g, proj=:guess, W=(level=1,pen=(2,:green)), Vd=2);
 	gridit(rand(10,3), preproc=true, I=0.1);
 	earthregions("PT", Vd=2);
