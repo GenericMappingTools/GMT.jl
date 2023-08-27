@@ -8,9 +8,10 @@ Base.show(io::IO, D::GMTdataset;
 		  summary::Bool = true,
 		  eltypes::Bool = true,
 		  truncate::Int = 32,
+		  attrib_table::Matrix{String} = Matrix{String}(undef, 0, 0),
 		  text_colname::String = "",
 		  kwargs...) =
-	_show(io, D; allrows=allrows, allcols=allcols, rowlabel=rowlabel, summary=summary, eltypes=eltypes, truncate=truncate, text_colname=text_colname, kwargs...)
+	_show(io, D; allrows=allrows, allcols=allcols, rowlabel=rowlabel, summary=summary, eltypes=eltypes, truncate=truncate, attrib_table=attrib_table, text_colname=text_colname, kwargs...)
 
 Base.show(D::GMTdataset;
           allrows::Bool = !get(stdout, :limit, true),
@@ -19,9 +20,10 @@ Base.show(D::GMTdataset;
           summary::Bool = true,
           eltypes::Bool = true,
           truncate::Int = 32,
+		  attrib_table::Matrix{String} = Matrix{String}(undef, 0, 0),
 		  text_colname::String = "",
           kwargs...) =
-    show(stdout, D; allrows=allrows, allcols=allcols, rowlabel=rowlabel, summary=summary, eltypes=eltypes, truncate=truncate, text_colname=text_colname, kwargs...)
+    show(stdout, D; allrows=allrows, allcols=allcols, rowlabel=rowlabel, summary=summary, eltypes=eltypes, truncate=truncate, attrib_table=attrib_table, text_colname=text_colname, kwargs...)
 
 function _show(io::IO,
 			   D::GMTdataset;
@@ -31,6 +33,7 @@ function _show(io::IO,
 			   summary::Bool = true,
 			   eltypes::Bool = true,
 			   truncate::Int = 32,
+			   attrib_table::Matrix{String}  = Matrix{String}(undef, 0, 0),
 			   text_colname::String = "",
 			   kwargs...)
 
@@ -100,11 +103,19 @@ function _show(io::IO,
 
 	if (!is_named_region)
 		(~all(isempty.(D.comment))) && println("Comment:\t", D.comment)
-		(~isempty(D.attrib))  && println("Attributes:  ", D.attrib)
+		if (~isempty(D.attrib))
+			hdr, tit = vec(string.(keys(D.attrib))), "Attributes table (Dict{String, String})"
+			if (!isempty(attrib_table))
+				pretty_table(attrib_table; header=hdr, alignment=:c, show_row_number=true, title=tit, vcrop_mode=:middle)
+			else
+				pretty_table(reshape(vec(string.(values(D.attrib))),1,length(D.attrib)), header=hdr, title=tit)
+			end
+		end
 		(~isempty(D.bbox))    && println("BoundingBox: ", D.bbox)
 		(D.proj4  != "")      && println("PROJ: ", D.proj4)
 		(D.wkt    != "")      && println("WKT: ", D.wkt)
 		(D.header != "")      && println("Header:\t", D.header)
+		println("")
 	end
 
 	skipd_rows = 0
