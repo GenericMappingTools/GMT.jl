@@ -128,15 +128,17 @@ function gmtread(_fname::String; kwargs...)
 	if (opt_T == "")
 		((opt_T = guess_T_from_ext(fname)) == "") && error("Must select one input data type (grid, image, dataset, cmap or ps)")
 		(opt_T == " -Tg" && haskey(d, :ignore_grd)) && return nothing	# contourf uses this
-		if (opt_T == " -To" && fname[1] == '@')	# Because GMT ogrread does not know the '@' mechanism.
+		if (opt_T == " -To" && fname[1] == '@')		# Because GMT ogrread does not know the '@' mechanism.
 			fname = joinpath(readlines(`gmt --show-userdir`)[1], "cache", fname[2:end])
 			!isfile(fname) && error("File $fname does not exist in cache.")
+		elseif (opt_T == " -Toz")					# Means we got a zipped ogr file
+			fname, opt_T = "/vsizip/" * fname, " -To"
 		end
 	else
-		opt_T = opt_T[1:4]      				# Remove whatever was given as argument to type kwarg
+		opt_T = opt_T[1:4]      					# Remove whatever was given as argument to type kwarg
 	end
 
-	if (opt_T == " -Ti" || opt_T == " -Tg")		# See if we have a mem layout request
+	if (opt_T == " -Ti" || opt_T == " -Tg")			# See if we have a mem layout request
 		if ((val = find_in_dict(d, [:layout :mem_layout])[1]) !== nothing)
 			(opt_T == " -Ti" && startswith(string(val)::String, "TRB")) && return gdaltranslate(fname)
 			# MUST TAKE SOME ACTION HERE. FOR IMAGES I THINK ONLY THE "I" FOR IMAGES.JL IS REALLY POSSIBLE
@@ -270,7 +272,11 @@ end
 # ---------------------------------------------------------------------------------
 function guess_T_from_ext(fname::String)::String
 	# Guess the -T option from a couple of known extensions
-	ext = splitext(fname)[2]
+	fn, ext = splitext(fname)
+	if (ext == ".zip")			# Accept ogr zipped files, e.g., *.shp.zip
+		((out = guess_T_from_ext(fn)) == " -To") && return " -Toz"
+	end
+
 	(length(ext) > 8 || occursin("?", ext)) && return (occursin("?", ext)) ? " -Tg" : "" # A SUBDATASET encoded fname?
 	ext = lowercase(ext[2:end])
 	((ext == "jp2" || ext == "tif" || ext == "tiff") && (!isfile(fname) && !startswith(fname, "/vsi") &&
