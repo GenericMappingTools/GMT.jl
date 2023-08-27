@@ -1370,7 +1370,16 @@ function Base.:show(io::IO, ::MIME"text/plain", D::Vector{<:GMTdataset})
 	(length(D) == 0) && return
 
 	println("Show first segment. To see other segments just type its element number. E.g. D[7]\n")
-	show(D[1])
+	if (~isempty(D[1].attrib))
+		len_D, len_att = length(D), length(D[1].attrib)
+		att_tbl = Matrix{String}(undef, len_D, len_att)
+		for k = 1:len_D
+			att_tbl[k, :] = reshape(vec(string.(values(D[k].attrib))), 1, len_att)
+		end
+		show(D[1], attrib_table=att_tbl)
+	else
+		show(D[1])
+	end
 end
 Base.:show(io::IO, ::MIME"text/plain", D::GMTdataset) = show(D)
 Base.:display(D::GMTdataset) = show(D)		# Otherwise the default prints nothing when text only (data == [])
