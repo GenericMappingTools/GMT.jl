@@ -235,8 +235,8 @@
 	plot!(collect(x)*60, seno, lw=0.5, lc="red", marker="circle", markeredgecolor=0, size=0.05, markerfacecolor="cyan")
 
 	G = GMT.peaks();
-	show(GMT.peaks(N=2));
-	show(mat2ds(rand(2,3), multi=true));
+	info(GMT.peaks(N=2));
+	info(mat2ds(rand(2,3), multi=true));
 	grdcontour(G, cont=1, annot=2, axis="a")
 	cpt = makecpt(T="-6/8/1");      # Create the color map
 	grdcontour(G, axis="a", color=cpt, pen="+c", fmt=:png, savefig="lixo")
