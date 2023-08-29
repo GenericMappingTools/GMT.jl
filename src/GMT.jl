@@ -160,6 +160,8 @@ export
 	fill_between, fill_between!, marginalhist, marginalhist!, parallelplot, parallelplot!, plotlinefit, plotlinefit!,
 	qqplot, qqplot!, qqnorm, qqnorm!, seismicity, violin, violin!, viz,
 
+	info,
+
 	df2ds, ODE2ds,
 	@?
 
