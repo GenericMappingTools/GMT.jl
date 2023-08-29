@@ -242,7 +242,7 @@
 	grdcontour(G, axis="a", color=cpt, pen="+c", fmt=:png, savefig="lixo")
 	D = grdcontour(G, cont=[-2,0,5], dump=true);
 
-	show(makecpt(C=:rainbow))
+	info(makecpt(C=:rainbow))
 
 	add2PSfile("Bla")
 	add2PSfile(["Bla", "Bla"])
