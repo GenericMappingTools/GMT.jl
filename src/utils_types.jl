@@ -1930,6 +1930,9 @@ function getbyattrib(D::Vector{<:GMTdataset}, ind_::Bool; kw...)::Vector{Int}
 	(isempty(D[1].attrib)) && (@warn("This datset does not have an `attrib` field and is hence unusable here."); return Int[])
 	dounion = Int(1e9)		# Just a big number
 	if ((_att = find_in_kwargs(kw, [:att :attrib])[1]) !== nothing)		# For backward compat.
+		if !isa(_att, NamedTuple)
+			((val = find_in_kwargs(kw, [:val :value])[1])  === nothing) && error("Must provide the `attribute` VALUE.")
+		end
 		atts, vals = isa(_att, NamedTuple) ? (string.(keys(_att)), string.(values(_att))) : ((string(_att),), (string(val),))
 	else
 		# FCK unbelievable case. Julia can be f. desparing. It took me an whole afternoon to make this work.
