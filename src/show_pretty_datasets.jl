@@ -104,9 +104,9 @@ function _show(io::IO,
 	if (!is_named_region)
 		(~all(isempty.(D.comment))) && println("Comment:\t", D.comment)
 		if (~isempty(D.attrib))
-			hdr, tit = vec(string.(keys(D.attrib))), "Attributes table (Dict{String, String})"
+			hdr, tit = vec(string.(keys(D.attrib))), "Attribute table (Dict{String, String})"
 			if (!isempty(attrib_table))
-				pretty_table(attrib_table; header=hdr, alignment=:c, show_row_number=true, title=tit, vcrop_mode=:middle)
+				pretty_table(attrib_table; header=hdr, alignment=:l, show_row_number=true, title=tit, vcrop_mode=:middle)
 			else
 				pretty_table(reshape(vec(string.(values(D.attrib))),1,length(D.attrib)), header=hdr, title=tit)
 			end

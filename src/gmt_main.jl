@@ -1320,7 +1320,7 @@ function clear_sessions(age::Int=0)
 	# Delete stray sessions left behind by old failed process. Thanks to @htyeim
 	# AGE is in seconds
 	# Windows version of ``gmt clear sessions`` fails in 6.0 and it errors if no sessions dir
-	try		# Becuse the sessions dir may not exist 
+	try		# Because the sessions dir may not exist 
 		sp = joinpath(GMTuserdir[1], "sessions")
 		dirs = readdir(sp)
 		isempty(dirs) && return nothing
@@ -1334,52 +1334,97 @@ function clear_sessions(age::Int=0)
 	end
 end
 
-# ---------------------------------------------------------------------------------------------------
-function Base.:show(io::IO, G::GMTgrid)
-	(G.title   != "" && G.title[1]   != '\0') && println("title: ", rstrip(G.title, '\0'))
-	(G.remark  != "" && G.remark[1]  != '\0') && println("remark: ", rstrip(G.remark, '\0'))
-	(G.command != "" && G.command[1] != '\0') && println("command: ", rstrip(G.command, '\0'))
-	println((G.registration == 0) ? "Gridline " : "Pixel ", "node registration used")
-	println("x_min: ", G.range[1], "\tx_max :", G.range[2], "\tx_inc :", G.inc[1], "\tn_columns :", size(G.z,2))
-	println("y_min: ", G.range[3], "\ty_max :", G.range[4], "\ty_inc :", G.inc[2], "\tn_rows :", size(G.z,1))
-	println("z_min: ", G.range[5], "\tz_max :", G.range[6])
-	(G.scale != 1)  && println("Scale, Offset: ", G.scale, "\t", G.offset)
-	(G.proj4 != "") && println("PROJ: ", G.proj4)
-	(G.wkt   != "") && println("WKT: ", G.wkt)
-	(G.epsg  != 0)  && println("EPSG: ", G.epsg)
-	display(G.z)		# Convoluted but this prints the numbers
+function print_ranges(GI::GItype)
+	println("x_min: ", GI.range[1], "\tx_max :", GI.range[2], "\tx_inc :", GI.inc[1], "\tn_columns :", size(GI,2))
+	println("y_min: ", GI.range[3], "\ty_max :", GI.range[4], "\ty_inc :", GI.inc[2], "\tn_rows :", size(GI,1))
+	println("z_min: ", GI.range[5], "\tz_max :", GI.range[6])
 end
-Base.:display(G::GMTgrid) = show(G)		# Otherwise by default it only displays the numbers
+function print_crs(GID, saysomething=false)
+	(saysomething && GID.proj4 == "" && GID.wkt == "" && GID.epsg == 0) && (println("This object have no proj information."); return)
+	(GID.proj4 != "") && println("PROJ: ", GID.proj4)
+	(GID.wkt   != "") && println("WKT: ", GID.wkt)
+	(GID.epsg  != 0)  && println("EPSG: ", GID.epsg)
+end
+
+"""
+### `info(GI, showdata::Bool=true; crs::Bool=false)`
+
+Shows information about the `GI` grid or image that includes dimensional and, if exists, referencing data.
+
+- `showdata`: Boolean that controls if a small array subset is printed or not.
+- `crs`: Boolean that if `true` only prints the referencing information.
+
+### `info(D::GDtype; crs::Bool=false, attribs=false)`
+
+Shows information about the `D` GMTdataset (or vector of them).
+
+- `crs`: Boolean that if `true` only prints the referencing information.
+- `attribs`: In case the dataset has attributes, like they do when resulting from reading a shape file, use
+  this parameter to print only the attribute table. A setting of `attribs=true` will print the entire attributes
+  table. Give a positive number, _e.g._ `attribs=5` to show only the first 5 attributes. A negative number prints
+  the last n attribs. A vector range, `attribs=5:9` is also accepted. 
+"""
+function info(GI::GItype, showdata::Bool=true; crs::Bool=false)
+	crs && return print_crs(GI)
+	if isa(GI, GMTgrid)
+		(GI.title   != "" && GI.title[1]   != '\0') && println("title: ", rstrip(GI.title, '\0'))
+		(GI.remark  != "" && GI.remark[1]  != '\0') && println("remark: ", rstrip(GI.remark, '\0'))
+		(GI.command != "" && GI.command[1] != '\0') && println("command: ", rstrip(GI.command, '\0'))
+	end
+	println((G.registration == 0) ? "Gridline " : "Pixel ", "node registration used")
+	print_ranges(G)
+	(isa(GI, GMTgrid) && GI.scale != 1) && println("Scale, Offset: ", GI.scale, "\t", GI.offset)
+	print_crs(G)
+	showdata && (isa(GI, GMTgrid) ? display(GI.z) : display(GI.image))
+end
+
+function info(D::GDtype; crs::Bool=false, attribs=false)
+	crs && return isa(D, Vector) ? print_crs(D[1]) : print_crs(D)
+	(attribs == false) && return isempty(D[1].attrib) ? show(D[1]) : show(D[1], attrib_table=make_atrtbl(D, false)[1])
+
+	n_att = (attribs == true) ? 0 : attribs
+	!isa(n_att, Int) && !isa(n_att, AbstractVector) && error("'attribs' can only be an integer or an AbstractVector.")
+	
+	tit = "Attribute table (Dict{String, String})"
+	if (!isa(D, Vector))
+		pretty_table(reshape(vec(string.(values(D.attrib))), 1, length(D.attrib)), header=vec(string.(keys(D.attrib))), title=tit)
+	else
+		att_tbl, att_names = make_atrtbl(D, true)
+		if (isa(n_att, Int))
+			tbl = (n_att > 0) ? att_tbl[1:n_att,:] : (n_att < 0) ? att_tbl[size(att_tbl,1)+n_att+1:end,:] : att_tbl
+		else
+			tbl = att_tbl[n_att, :]
+		end
+		pretty_table(tbl; header=att_names, alignment=:l, show_row_number=true, title=tit, crop=:horizontal)
+	end
+	return nothing
+end
 
 # ---------------------------------------------------------------------------------------------------
-function Base.:show(io::IO, G::GMTimage)
-	println((G.registration == 0) ? "Gridline " : "Pixel ", "node registration used")
-	println("x_min: ", G.range[1], "\tx_max :", G.range[2], "\tx_inc :", G.inc[1], "\tn_columns :", size(G.image,2))
-	println("y_min: ", G.range[3], "\ty_max :", G.range[4], "\ty_inc :", G.inc[2], "\tn_rows :", size(G.image,1))
-	println("z_min: ", G.range[5], "\tz_max :", G.range[6])
-	(G.proj4 != "") && println("PROJ: ", G.proj4)
-	(G.wkt   != "") && println("WKT: ", G.wkt)
-	(G.epsg  != 0)  && println("EPSG: ", G.epsg)
-	display(G.image)		# Convoluted but this prints the numbers
+Base.:show(io::IO, G::GMTgrid) = info(G, false)
+Base.:display(G::GMTgrid) = show(G)		# Otherwise by default it only displays the numbers
+Base.:show(io::IO, I::GMTimage) = info(I, false)
+Base.:display(I::GMTimage) = show(I)
+
+function make_atrtbl(D::Vector{<:GMTdataset}, names::Bool=false)
+	# Create a string matrix with the dataset attributes. 'names', if true, returns also a string
+	# vector with attribute names.
+	len_D, len_att = length(D), length(D[1].attrib)
+	att_tbl = Matrix{String}(undef, len_D, len_att)
+	for k = 1:len_D
+		att_tbl[k, :] = reshape(vec(string.(values(D[k].attrib))), 1, len_att)
+	end
+	att_names = names ? vec(string.(keys(D[1].attrib))) : String[]
+	att_tbl, att_names
 end
-Base.:display(G::GMTimage) = show(G)		# Otherwise by default it only displays the numbers
 
 # ---------------------------------------------------------------------------------------------------
 function Base.:show(io::IO, ::MIME"text/plain", D::Vector{<:GMTdataset})
 	println(typeof(D), " with ", length(D), " segments")
 	(length(D) == 0) && return
 
-	println("Show first segment. To see other segments just type its element number. E.g. D[7]\n")
-	if (~isempty(D[1].attrib))
-		len_D, len_att = length(D), length(D[1].attrib)
-		att_tbl = Matrix{String}(undef, len_D, len_att)
-		for k = 1:len_D
-			att_tbl[k, :] = reshape(vec(string.(values(D[k].attrib))), 1, len_att)
-		end
-		show(D[1], attrib_table=att_tbl)
-	else
-		show(D[1])
-	end
+	println("Showing first segment. To see other segments just type its element number. e.g. D[2]\n")
+	isempty(D[1].attrib) ? show(D[1]) : show(D[1], attrib_table=make_atrtbl(D, false)[1])
 end
 Base.:show(io::IO, ::MIME"text/plain", D::GMTdataset) = show(D)
 Base.:display(D::GMTdataset) = show(D)		# Otherwise the default prints nothing when text only (data == [])
@@ -1399,6 +1444,8 @@ function Base.show(io::IO, C::GMTcpt)
 	show(D, text_colname="Labels")		# text_colname will not be used if CPT.label is empty (most of times)
 end
 Base.:show(io::IO, ::MIME"text/plain", C::GMTcpt) = show(C)
+
+info(C::GMTcpt) = show(C)
 
 # ---------- For Pluto ------------------------------------------------------------------------------
 Base.:show(io::IO, mime::MIME"image/png", wp::WrapperPluto) = write(io, read(wp.fname))
