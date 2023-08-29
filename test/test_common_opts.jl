@@ -276,7 +276,9 @@
 	GMT.polygonlevels(D, ["a", "b", "c"], [1,2,missing], att="nome");
 	GMT.edit_segment_headers!(D, [1], "0");
 	GMT.getbyattrib(D, att="nome", val="a");
-	GMT.getbyattrib(D, att=(nome="a", nome2="b"));
+	filter(D, nome="a", nome2="b");
+	filter(D, nome=("a","b"));
+	findall(D, nome="a");
 	D = mat2ds([0 0; 1 1],["a", "b"]); D.header = "-Wred";
 	@test GMT.edit_segment_headers!(D, 'W', :get) == "red"
 	@test GMT.edit_segment_headers!(D, 'W', :set, "blue") == "-Wblue"

@@ -1892,17 +1892,28 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    getbyattrib(D::Vector{<:GMTdataset}[, index::Bool]; kw...)
+    getbyattrib(D::Vector{<:GMTdataset}[, index::Bool=false]; kw...)
 
-Take a GMTdataset vector and return only its elememts that match the condition(s) set by the `attrib` keywords.
+or
+
+    filter(D::Vector{<:GMTdataset}; kw...)
+or
+
+    findall(D::Vector{<:GMTdataset}; kw...)
+
+Take a GMTdataset vector and return only its elements that match the condition(s) set by the `kw` keywords.
 Note, this assumes that `D` has its `attrib` fields set with usable information.
 
+NOTE: Instead of ``getbyattrib`` one case use instead ``filter`` (==> `index=false`) or ``findall`` (==> `index=true`)
+
 ### Parameters
-- `attrib` or `att`: keyword with the attribute `name` used in selection. It can be a single name as in `att="NAME_2"`
-        or a NamedTuple with the attribname, attribvalue as in `att=(NAME_2="value")`. Use more elements if
-        wishing to do a composite match. E.g. `att=(NAME_1="val1", NAME_2="val2")` in which case oly segments
-        matching the two conditions are returned.
-- `val` or `value`: keyword with the attribute ``value`` used in selection. Use this only when `att` is not a NamedTuple.
+- `attrib name(s)=value(s)`: Easier to explain by examples: `NAME="Antioquia"`, select all elements that have
+  that attribute/value combination. `NAME=("Antioquia", "Caldas"), pick elements that have those `NAME` attributes.
+  Add as many as wished. If using two `kwargs` the second works as a condition. ``(..., NAME=("Antioquia", "Caldas"), feature_id=0)``
+  means select all elements from ``Antioquia`` and ``Caldas`` that have the attribute `feature_id` = 0.
+- `attrib` or `att`: (OLD SYNTAX) A NamedTuple with the attribname, attribvalue as in `att=(NAME_2="value",)`.
+  Use more elements if wishing to do a composite match. E.g. `att=(NAME_1="val1", NAME_2="val2")` in which
+  case only segments matching the two conditions are returned.
 - `index`: Use this `positional` argument = `true` to return only the segment indices that match the `att` condition(s).
 
 ### Returns
@@ -1911,31 +1922,52 @@ Or `nothing` if the query results in an empty GMTdataset
 
 ## Example:
 
-    D = getbyattrib(D, attrib="NAME_2", val="Porto");
+    D = filter(D, NAME_2="Porto");
 """
 function getbyattrib(D::Vector{<:GMTdataset}, ind_::Bool; kw...)::Vector{Int}
 	# This method does the work but it's not the one normally used by the public.
 	# It returns the indices of the selected segments.
 	(isempty(D[1].attrib)) && (@warn("This datset does not have an `attrib` field and is hence unusable here."); return Int[])
-	((_att = find_in_kwargs(kw, [:att :attrib])[1]) === nothing) && error("Must provide the `attribute` NAME.")
-	if isa(_att, NamedTuple)
-		atts, vals = string.(keys(_att)), string.(values(_att))
+	dounion = Int(1e9)		# Just a big number
+	if ((_att = find_in_kwargs(kw, [:att :attrib])[1]) !== nothing)		# For backward compat.
+		if !isa(_att, NamedTuple)
+			((val = find_in_kwargs(kw, [:val :value])[1])  === nothing) && error("Must provide the `attribute` VALUE.")
+		end
+		atts, vals = isa(_att, NamedTuple) ? (string.(keys(_att)), string.(values(_att))) : ((string(_att),), (string(val),))
 	else
-		atts = (string(_att),)
-		((val = find_in_kwargs(kw, [:val :value])[1])  === nothing) && error("Must provide the `attribute` VALUE.")
-		vals = (string(val),)
+		# FCK unbelievable case. Julia can be f. desparing. It took me an whole afternoon to make this work.
+		#d = KW(kw); Keys = keys(d);
+		#Keys[1] => Internal Error: MethodError: no method matching getindex(::Base.KeySet{Symbol, Dict{Symbol, Any}}, ::Int64)
+		count, kk = 0, 1
+		v = values(kw)
+		for k = 1:numel(kw)  count += (isa(values(v[k]), Tuple)) ? length(values(v[k])) : 1  end
+		atts, vals = Vector{String}(undef, count), Vector{String}(undef, count)
+
+		_keys = string.(keys(kw))
+		for k = 1:numel(kw)
+			vv = values(v[k])
+			if (isa(vv, Tuple))
+				atts[kk:kk+length(vv)-1] .= _keys[k]
+				vals[kk:kk+length(vv)-1] .= string.(vv)
+				kk += length(vv) 
+			else
+				atts[kk], vals[kk] = _keys[k], string(vv)
+				kk += 1
+			end
+			(k == 1) && (dounion = kk)		# Index that separates the unions from the interceptions
+		end
 	end
 
 	indices::Vector{Int} = Int[]
+	ky = keys(D[1].attrib)
 	for n = 1:numel(atts)
-		ky = keys(D[1].attrib)
-		((ind = findfirst(ky .== atts[n])) === nothing) && return Int[]
+		((ind = findfirst(ky .== atts[n])) === nothing) && continue#return Int[]
 		tf = fill(false, length(D))
 		for k = 1:length(D)
 			(!isempty(D[k].attrib) && (D[k].attrib[atts[n]] == vals[n])) && (tf[k] = true)
 		end
 		if (n == 1)  indices = findall(tf)
-		else         indices = intersect(indices, findall(tf))
+		else         indices = (dounion > n) ? union(indices, findall(tf)) : intersect(indices, findall(tf))
 		end
 	end
 	return indices
@@ -1946,3 +1978,7 @@ function getbyattrib(D::Vector{<:GMTdataset}; kw...)::Union{Nothing, Vector{GMTd
 	ind = getbyattrib(D, true; kw...)
 	return isempty(ind) ? nothing : D[ind]
 end
+
+# ---------------------------------------------------------------------------------------------------
+Base.:filter(D::Vector{<:GMTdataset}; kw...) = getbyattrib(D; kw...)
+Base.:findall(D::Vector{<:GMTdataset}; kw...) = getbyattrib(D, true; kw...)
