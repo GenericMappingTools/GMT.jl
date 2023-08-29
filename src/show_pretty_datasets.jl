@@ -208,6 +208,7 @@ function batch_compacttype(types::Vector{Any}, maxwidths::Vector{Int})
 	end
 end
 
+#=
 function batch_compacttype(types::Vector{Any}, maxwidth::Int)
 	cache = Dict{Type, String}()
 	return map(types) do T
@@ -216,6 +217,7 @@ function batch_compacttype(types::Vector{Any}, maxwidth::Int)
 		end
 	end
 end
+=#
 
 """
 	compacttype(T::Type, maxwidth::Int=8, initial::Bool=true)
