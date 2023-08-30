@@ -72,7 +72,7 @@ end
     centroid(geom; gdataset=false)
 
 ### Parameters
-* `geom`: the geometry. This can either be a GDAL AbstractGeometry or a GMTdataset (or vector of it), or a Matrix
+* `geom`: the geometry. This can either be a GDAL AbstractGeometry or a GMTdataset (or vector of them), or a Matrix
 * `gdataset`: Returns a GDAL IGeometry even when input is a GMTdataset or Matrix
 
 Compute the geometry centroid.
@@ -544,9 +544,23 @@ function helper_geoms_run_fun(f::Function, D1, D2, retds::Bool=true; gdataset=fa
 	return (retds) ? gd2gmt(ig) : ig
 end
 function helper_geoms_run_fun(f::Function, D, retds::Bool=true; gdataset=false)
+	(gdataset) && (retds = false)
+	if (isa(D, Vector{<:GMTdataset}) && (f == centroid))
+		# Don't know if due to bad implementation or it's the way it is, the centroid function only Computes
+		# that of first polygon, so we have to loop over D[k]. Restrictred so far to the centroid function.
+		mat = Array{Float64,2}(undef, length(D), 2)
+		for k = 1:GMT.numel(D)
+			geom = helper_1geom(D[k])
+			ig = f(geom)
+			mat[k,1], mat[k,2] = Gdal.getx(ig, 0), Gdal.gety(ig, 0)
+		end
+		Dc = mat2ds(mat, geom=1, proj4=D[1].proj4, wkt=D[1].wkt, epsg=D[1].epsg)
+		!isempty(D[1].colnames) && (Dc.colnames = D[1].colnames[1:2])
+		Dc.comment = ["Centroids"]
+		return (retds) ? Dc : gmt2gd(Dc)
+	end
 	geom = helper_1geom(D)
 	ig = f(geom)
-	(gdataset) && (retds = false)
 	return (retds) ? gd2gmt(ig) : ig
 end
 function helper_geoms_run_fun(f::Function, D, ratio::Float64, holes::Bool=true; gdataset=false)

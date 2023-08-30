@@ -269,6 +269,7 @@
 	mat2ds(rand(3,3), segnan=true)
 	@test mat2ds([1. NaN 3; NaN 3 4; 5 6 NaN]).ds_bbox == [1.0, 5.0, 3.0, 6.0, 3.0, 4.0]
 	D[1].attrib = Dict("nome" => "a", "nome2" => "b");
+	info(D, attribs=true);
 	GMT.polygonlevels(D, ["a", "b"], [1,2], att="nome");
 	GMT.polygonlevels(D, ["a", "b"], [1,2], att="nome", nocase=1);
 	GMT.polygonlevels(D, ["a" "aa"; "b" "bb"], [1,2], att=["nome", "nome2"]);
