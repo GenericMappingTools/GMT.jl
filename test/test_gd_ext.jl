@@ -10,6 +10,8 @@
 	bf = buffer([0 0], 1)
 	@test bf.geom == Gdal.wkbPolygon
 	c = centroid(bf)
+	D = [mat2ds([0. 0; 1 1; 2 0; 0 0], geom=UInt32(3)), mat2ds([0. 0; 1 1; 2 0; 0 0], geom=UInt32(3))];
+	centroid(D);		# Test multipolygons
 	#@test c.data ≈ [0. 0.]
 	bf2 = buffer([0.5 0], 1);
 	polyunion(bf, bf2);

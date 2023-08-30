@@ -115,6 +115,7 @@ function _show(io::IO,
 		(D.proj4  != "")      && println("PROJ: ", D.proj4)
 		(D.wkt    != "")      && println("WKT: ", D.wkt)
 		(D.header != "")      && println("Header:\t", D.header)
+		(!isempty(D.comment)) && println("Comment:\t", D.comment)
 		println("")
 	end
 
@@ -167,7 +168,7 @@ function _show(io::IO,
 				 alignment_anchor_regex      = alignment_anchor_regex,
 				 compact_printing            = compact_printing,
 				 crop                        = crop,
-				 crop_num_lines_at_beginning = 2,
+				 reserved_display_lines = 2,
 				 ellipsis_line_skip          = 3,
 				 formatters                  = (_pretty_tables_general_formatter,),
 				 header                      = (names_str, types_str),
@@ -176,11 +177,11 @@ function _show(io::IO,
 				 highlighters                = (_PRETTY_TABLES_HIGHLIGHTER,),
 				 maximum_columns_width       = maximum_columns_width,
 				 newline_at_end              = false,
-				 nosubheader                 = !eltypes,
-				 row_name_alignment          = :r,
-				 row_name_crayon             = Crayon(),
-				 row_name_column_title       = string(rowlabel),
-				 row_names                   = row_names,
+				 show_subheader                 = !eltypes,
+				 row_label_alignment          = :r,
+				 row_label_crayon             = Crayon(),
+				 row_label_column_title       = string(rowlabel),
+				 row_labels                   = row_names,
 				 row_number_alignment        = :r,
 				 row_number_column_title     = string(rowlabel),
 				 show_row_number             = show_row_number,

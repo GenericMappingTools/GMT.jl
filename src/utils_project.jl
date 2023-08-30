@@ -518,3 +518,13 @@ function sideplot(; plane=:xz, vsize=8, depth=NaN, kw...)
 	_W, _H = (p == 'x') ? (H, zsize) : (p == 'y') ? (W, zsize) : (W, H)
 	@sprintf(" -Dg%.12g/%.12g+w%.12g/%.12g -p%c%.0f/%.0f %s %s", lims[1], lims[3], _W, _H, p, azim, elev, opt_X, opt_Y)
 end
+
+"""
+    isgeog(in)::Bool
+
+Find if the input (a GMTgrid, GMTimage, GMTdadaset or string), if referenced, is in geographical coordinates.
+"""
+function isgeog(in)::Bool
+	prj = getproj(in, proj4=true)
+	(prj != "" && contains(prj, "=long") || contains(prj, "=lat"))
+end
