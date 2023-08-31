@@ -112,6 +112,7 @@ function _show(io::IO,
 			end
 		end
 		(~isempty(D.bbox))    && println("BoundingBox: ", D.bbox)
+		(~isempty(D.bbox) && D.bbox != D.ds_bbox) && println("Global BoundingBox: ", D.ds_bbox)
 		(D.proj4  != "")      && println("PROJ: ", D.proj4)
 		(D.wkt    != "")      && println("WKT: ", D.wkt)
 		(D.header != "")      && println("Header:\t", D.header)
