@@ -1344,6 +1344,7 @@ function print_crs(GID, saysomething=false)
 	(GID.proj4 != "") && println("PROJ: ", GID.proj4)
 	(GID.wkt   != "") && println("WKT: ", GID.wkt)
 	(GID.epsg  != 0)  && println("EPSG: ", GID.epsg)
+	return nothing
 end
 
 """
@@ -1354,7 +1355,7 @@ Shows information about the `GI` grid or image that includes dimensional and, if
 - `showdata`: Boolean that controls if a small array subset is printed or not.
 - `crs`: Boolean that if `true` only prints the referencing information.
 
-### `info(D::GDtype; crs::Bool=false, attribs=false)`
+### `info(D::GDtype; crs::Bool=false, attribs=false, att="")`
 
 Shows information about the `D` GMTdataset (or vector of them).
 
@@ -1362,7 +1363,13 @@ Shows information about the `D` GMTdataset (or vector of them).
 - `attribs`: In case the dataset has attributes, like they do when resulting from reading a shape file, use
   this parameter to print only the attribute table. A setting of `attribs=true` will print the entire attributes
   table. Give a positive number, _e.g._ `attribs=5` to show only the first 5 attributes. A negative number prints
-  the last n attribs. A vector range, `attribs=5:9` is also accepted. 
+  the last n attribs. A vector range, `attribs=5:9` is also accepted.
+- `att`: Name of one attribute. Returns a string vector with the values of the attribute passed into this option.
+  Example, ``attn = info(D, att="NAME")`` returns all values of the attribute ``NAME``.
+
+### `info(any)`
+
+Runs ``show(stdout, "text/plain", any)`` which prints all elements of `any`
 """
 function info(GI::GItype, showdata::Bool=true; crs::Bool=false)
 	crs && return print_crs(GI)
@@ -1378,10 +1385,14 @@ function info(GI::GItype, showdata::Bool=true; crs::Bool=false)
 	showdata && (isa(GI, GMTgrid) ? display(GI.z) : display(GI.image))
 end
 
-function info(D::GDtype; crs::Bool=false, attribs=false)
-	crs && return isa(D, Vector) ? print_crs(D[1]) : print_crs(D)
-	(attribs == false) && return isempty(D[1].attrib) ? show(D[1]) : show(D[1], attrib_table=make_atrtbl(D, false)[1])
+function info(D::GDtype; crs::Bool=false, attribs=false, att::StrSymb="")
+	crs && return isa(D, Vector) ? print_crs(D[1]) : print_crs(D)	# Report projection info and return
 
+	(attribs == false) && (_D = isa(D, Vector) ? D[1] : D)
+	(attribs == false && att == "") && return isempty(_D.attrib) ? show(_D) : show(_D, attrib_table=make_attrtbl(D, false)[1])
+
+	# OK, here we are dealing with printing the attribs, or returning a column with the values of one attrib.
+	(attribs == false && att != "")	&& (attribs = true)
 	n_att = (attribs == true) ? 0 : attribs
 	!isa(n_att, Int) && !isa(n_att, AbstractVector) && error("'attribs' can only be an integer or an AbstractVector.")
 	
@@ -1389,16 +1400,21 @@ function info(D::GDtype; crs::Bool=false, attribs=false)
 	if (!isa(D, Vector))
 		pretty_table(reshape(vec(string.(values(D.attrib))), 1, length(D.attrib)), header=vec(string.(keys(D.attrib))), title=tit)
 	else
-		att_tbl, att_names = make_atrtbl(D, true)
+		# Do differently depending on: plot whole attrib table or return the values of one attribute.
+		if (att == "") att_tbl, att_names = make_attrtbl(D, true)
+		else           att_tbl = make_attrtbl(D, att=att)
+		end
 		if (isa(n_att, Int))
 			tbl = (n_att > 0) ? att_tbl[1:n_att,:] : (n_att < 0) ? att_tbl[size(att_tbl,1)+n_att+1:end,:] : att_tbl
 		else
 			tbl = att_tbl[n_att, :]
 		end
+		(att != "") && return tbl				# If only one attribute was requested we end here.
 		pretty_table(tbl; header=att_names, alignment=:l, show_row_number=true, title=tit, crop=:horizontal)
 	end
 	return nothing
 end
+info(any) = show(stdout, "text/plain", any)		# Show the f all of whatever 'any' is
 
 # ---------------------------------------------------------------------------------------------------
 Base.:show(io::IO, G::GMTgrid) = info(G, false)
@@ -1406,15 +1422,23 @@ Base.:display(G::GMTgrid) = show(G)		# Otherwise by default it only displays the
 Base.:show(io::IO, I::GMTimage) = info(I, false)
 Base.:display(I::GMTimage) = show(I)
 
-function make_atrtbl(D::Vector{<:GMTdataset}, names::Bool=false)
-	# Create a string matrix with the dataset attributes. 'names', if true, returns also a string
-	# vector with attribute names.
+"""
+    att_tbl, att_names = make_attrtbl(D::GDtype, names::Bool=false; att::StrSymb="")
+
+Create a string matrix with the dataset attributes. 'names', if true, returns also a string
+vector with attribute names. 'att', if == to one atribute, returns only that column of the att table.
+"""
+function make_attrtbl(D::GDtype, names::Bool=false; att::StrSymb="")
+	!isa(D, Vector) && (att_tbl = reshape(vec(string.(values(D.attrib))),1,length(D.attrib)))
+	!isa(D, Vector) && return att_tbl
+
 	len_D, len_att = length(D), length(D[1].attrib)
 	att_tbl = Matrix{String}(undef, len_D, len_att)
 	for k = 1:len_D
 		att_tbl[k, :] = reshape(vec(string.(values(D[k].attrib))), 1, len_att)
 	end
-	att_names = names ? vec(string.(keys(D[1].attrib))) : String[]
+	att_names = (names || att != "") ? vec(string.(keys(D[1].attrib))) : String[]
+	(att != "") && ((ind = findfirst(string(att) .== att_names)) !== nothing) && return att_tbl[:,ind]
 	att_tbl, att_names
 end
 
@@ -1424,7 +1448,7 @@ function Base.:show(io::IO, ::MIME"text/plain", D::Vector{<:GMTdataset})
 	(length(D) == 0) && return
 
 	println("Showing first segment. To see other segments just type its element number. e.g. D[2]\n")
-	isempty(D[1].attrib) ? show(D[1]) : show(D[1], attrib_table=make_atrtbl(D, false)[1])
+	isempty(D[1].attrib) ? show(D[1]) : show(D[1], attrib_table=make_attrtbl(D, false)[1])
 end
 Base.:show(io::IO, ::MIME"text/plain", D::GMTdataset) = show(D)
 Base.:display(D::GMTdataset) = show(D)		# Otherwise the default prints nothing when text only (data == [])
