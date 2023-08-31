@@ -1961,7 +1961,7 @@ function getbyattrib(D::Vector{<:GMTdataset}, ind_::Bool; kw...)::Vector{Int}
 	indices::Vector{Int} = Int[]
 	ky = keys(D[1].attrib)
 	for n = 1:numel(atts)
-		((ind = findfirst(ky .== atts[n])) === nothing) && continue#return Int[]
+		((ind = findfirst(ky .== atts[n])) === nothing) && continue
 		tf = fill(false, length(D))
 		for k = 1:length(D)
 			(!isempty(D[k].attrib) && (D[k].attrib[atts[n]] == vals[n])) && (tf[k] = true)
