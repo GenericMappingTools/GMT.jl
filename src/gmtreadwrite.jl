@@ -126,7 +126,7 @@ function gmtread(_fname::String; kwargs...)
 	(opt_T == "" && opt_bi != "") && (opt_T = " -Td")	# If asked to read binary, must be a 'data' file.
 
 	if (opt_T == "")
-		((opt_T = guess_T_from_ext(fname)) == "") && error("Must select one input data type (grid, image, dataset, cmap or ps)")
+		((opt_T = guess_T_from_ext(fname)) == "") && error("Must select the input data type (grid, image, dataset, ogr, cmap or ps)")
 		(opt_T == " -Tg" && haskey(d, :ignore_grd)) && return nothing	# contourf uses this
 		if (opt_T == " -To" && fname[1] == '@')		# Because GMT ogrread does not know the '@' mechanism.
 			fname = joinpath(readlines(`gmt --show-userdir`)[1], "cache", fname[2:end])
