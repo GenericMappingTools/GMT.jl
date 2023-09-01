@@ -522,6 +522,38 @@ function grp2idx(s)
 	gidx, gnames
 end
 
+# ----------------------------------------------------------------------------------------------------------
+"""
+"""
+function replicateline(xy, d)
+	# https://stackoverflow.com/questions/1250419/finding-points-on-a-line-with-a-given-distance
+	# magnitude = (1^2 + m^2)^(1/2)
+	# N = <1, m> / magnitude = <1 / magnitude, m / magnitude>
+	# f(t) = A + t*N
+
+	line2 = Matrix{Float64}(undef, size(xy))
+	m1 = -(xy[2,1] - xy[1,1]) / (xy[2,2] - xy[1,2])		# Slope of the perpendicular to first segment
+	inv_mag_d = d / sqrt(1 + m1*m1)
+	line2[1, 1] = xy[1, 1] + inv_mag_d
+	line2[1, 2] = xy[1, 2] + m1 * inv_mag_d
+
+	@inbounds for k = 2:size(xy,1)-1
+		m2 = -(xy[k,1] - xy[k-1,1]) / (xy[k,2] - xy[k-1,2])		# Slope of the perpendicular to line segment k -> k+1
+		m = (m1 + m2) / 2						# ...
+		inv_mag_d = d / sqrt(1 + m*m)
+		line2[k, 1] = xy[k, 1] + inv_mag_d
+		line2[k, 2] = xy[k, 2] + m * inv_mag_d
+		m1 = m2
+	end
+
+	m1 = -(xy[end,1] - xy[end-1,1]) / (xy[end,2] - xy[end-1,2])		# Slope of the perpendicular to last segment
+	inv_mag_d = d / sqrt(1 + m1*m1)
+	line2[end, 1] = xy[end, 1] + inv_mag_d
+	line2[end, 2] = xy[end, 2] + m1 * inv_mag_d
+
+	return line2
+end
+
 # EDIPO SECTION
 # ---------------------------------------------------------------------------------------------------
 linspace(start, stop, length=100) = range(start, stop=stop, length=length)

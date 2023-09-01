@@ -242,6 +242,8 @@
 	grdcontour(G, axis="a", color=cpt, pen="+c", fmt=:png, savefig="lixo")
 	D = grdcontour(G, cont=[-2,0,5], dump=true);
 
+	GMT.replicateline([0 0; 1 1; 2 1], 0.1);
+
 	info(makecpt(C=:rainbow));
 
 	add2PSfile("Bla")

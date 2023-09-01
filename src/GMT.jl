@@ -58,13 +58,13 @@ if ((!(@isdefined have_jll) || have_jll == 1) && get(ENV, "SYSTEMWIDE_GMT", "") 
 else
 	const isJLL = false
 	const GMTver, libgmt, libgdal, libproj, GMTuserdir = _GMTver, _libgmt, _libgdal, _libproj, [userdir]
-	const GMTdevdate = Date(devdate, dateformat"y.m.d")
+	const GMTdevdate = Date(devdate, dateformat"y.m.d")		# 'devdate' comes from reading 'deps.jl'
 end
 
 const global G_API = [C_NULL]
 const global PSname = [""]					# The PS file (filled in __init__) where, in classic mode, all lands.
 const global tmpdir_usr = [tempdir(), ""]	# Save the tmp dir and user name (also filled in __init__)
-const global testdir = joinpath(dirname(pathof(GMT))[1:end-4], "test", "")	# To have easy access to test files
+const global TESTSDIR = joinpath(dirname(pathof(GMT))[1:end-4], "test", "")	# To have easy access to test files
 const global IMG_MEM_LAYOUT = [""]			# "TCP"	 For Images.jl. The default is "TRBa"
 const global GRD_MEM_LAYOUT = [""]			# "BRP" is the default for GMT PS images.
 const global CURRENT_VIEW   = [""]			# To store the current viewpoint (-p)
@@ -79,7 +79,7 @@ const global ThemeIsOn   = Vector{Bool}(undef, 1);ThemeIsOn[1] = false		# To kno
 const global CONVERT_SYNTAX = Vector{Bool}(undef, 1);CONVERT_SYNTAX[1] = false	# To only convert to hard core GMT syntax (like Vd=2)
 const global SHOW_KWARGS = Vector{Bool}(undef, 1);SHOW_KWARGS[1] = false	# To just print the kwargs of a option call)
 const global isFranklin  = Vector{Bool}(undef, 1);isFranklin[1] = false		# Only set/unset by the Docs building scripts.
-const global noGrdCopy   = Vector{Bool}(undef, 1);noGrdCopy[1] = false		# If true grids are sent without transpose/copy
+const global noGrdCopy   = Vector{Bool}(undef, 1);noGrdCopy[1] = false		# If true, grids are sent without transpose/copy
 const global FMT = ["png"]                         # The default plot format
 const global BOX_STR = [""]                        # Used in plotyy to know -R of first call
 const DEF_FIG_SIZE  = "15c/10c"                    # Default fig size for plot like programs. Approx 16/11
@@ -341,6 +341,8 @@ include("get_enums.jl")
 	rm(joinpath(tempdir(), "GMTjl_custom_p_x.txt"))		# This one gets created before username is set.
 	resetGMT()
 end
+
+Base.precompile(Tuple{typeof(upGMT),Bool, Bool})		# Here it doesn't print anything.
 
 function __init__(test::Bool=false)
 	if !isfile(libgmt) || (!Sys.iswindows() && (!isfile(libgdal) || !isfile(libproj)))
