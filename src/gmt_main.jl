@@ -1303,16 +1303,17 @@ end
 
 Check if a new GMT (C binaries) version is available. If yes, use `upGMT(true)` to update it.
 """
-function upGMT(up::Bool=false)
+function upGMT(up::Bool=false, auto::Bool=false)
 	!Sys.iswindows() && (@warn("This function is for Windows use only."); return nothing)
-	fn = Downloads.download("http://fct-gmt.ualg.pt/gmt/data/wininstallers/devdate.txt")
-	d = Date(readline(fn), dateformat"y.m.d")
+	fn = joinpath(dirname(@__FILE__),"..","deps","devdate.txt")
+	d = Date(readline(fn), dateformat"y-m-d")
 	if (GMTdevdate < d)
-		!up ? println("A New GMT C library version ($d) is available. Update it with: `upWINGMT(true)`") :
+		!up ? println("A New GMT C library version ($d) is available. Update it with:\n\t upGMT(true)") :
 		      (ENV["UPDATE_GMTWIN"] = 1;  Pkg.build("GMT"))
 	else
-		println("You are using the latest available GMT binary.")
+		!auto && println("You are using the latest available GMT binary.")
 	end
+	return nothing
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -1369,7 +1370,7 @@ Shows information about the `D` GMTdataset (or vector of them).
 
 ### `info(any)`
 
-Runs ``show(stdout, "text/plain", any)`` which prints all elements of `any`
+Runs ``show(stdout, "text/plain", any)`` which prints all elements of `any`. Good for printing the entire vector or matrix.
 """
 function info(GI::GItype, showdata::Bool=true; crs::Bool=false)
 	crs && return print_crs(GI)
@@ -1389,7 +1390,7 @@ function info(D::GDtype; crs::Bool=false, attribs=false, att::StrSymb="")
 	crs && return isa(D, Vector) ? print_crs(D[1]) : print_crs(D)	# Report projection info and return
 
 	(attribs == false) && (_D = isa(D, Vector) ? D[1] : D)
-	(attribs == false && att == "") && return isempty(_D.attrib) ? show(_D) : show(_D, attrib_table=make_attrtbl(D, false)[1])
+	(attribs == false && att == "") && return isempty(_D.attrib) ? show(_D) : show(_D, attrib_table=make_attrtbl(D, false))
 
 	# OK, here we are dealing with printing the attribs, or returning a column with the values of one attrib.
 	(attribs == false && att != "")	&& (attribs = true)
@@ -1397,7 +1398,7 @@ function info(D::GDtype; crs::Bool=false, attribs=false, att::StrSymb="")
 	!isa(n_att, Int) && !isa(n_att, AbstractVector) && error("'attribs' can only be an integer or an AbstractVector.")
 	
 	tit = "Attribute table (Dict{String, String})"
-	if (!isa(D, Vector))
+	if (!isa(D, Vector) && att == "")
 		pretty_table(reshape(vec(string.(values(D.attrib))), 1, length(D.attrib)), header=vec(string.(keys(D.attrib))), title=tit)
 	else
 		# Do differently depending on: plot whole attrib table or return the values of one attribute.
