@@ -1928,15 +1928,20 @@ end
 """
     seismicity(starttime="", endtime="", minmagnitude=3, mindepth=0, maxdepth=0, last=0, printurl=false, show=true, kw...)
 
+Make automatic maps of of world-wide seismicity obtained from the USGS Earthquake Hazards Program page at
+https://earthquake.usgs.gov
+
 - `starttime`: Limit to events on or after the specified start time. NOTE: All times use ISO8601 Date/Time format
     OR a DateTime type. Default is NOW - 30 days.
 - `endtime`: Limit to events on or before the specified end time. Same remarks as for `starttime`. Default is present time.
 - `minmagnitude`: Limit to events with a magnitude larger than the specified minimum.
 - `mindepth`: Limit to events with depth more than the specified minimum (km positive down).
 - `maxdepth`: Limit to events with depth less than the specified maximum (km positive down).
+- `last`: If value is an integer (*e.g.* `last=90`), select the events in the last n days. If it is a string
+   than we expect that it ends with a 'w'(eek), 'm'(onth) or 'y'(ear). Example: `last="2Y"` (period code is caseless)
 - `printurl`: Print the url of the requested data.
 - `circle`: A 3 elements Tuple or Array with ``lon,lat,radius``, where ``radius`` is in km, to perform a circle search.
-- `data`: The default is to make a seismicity map but if the `data` option is used (containing whatever) we return
+- `data`: The default is to make a seismicity map but if the `data` option is used (containing whatever)
     we return the data in a ``GMTdataset`` 
 - `figname`: $(GMT.opt_savefig)
 - `land`: By default we paint the continents with the "burlywood" color. Like in the ``coast`` module, use
@@ -1952,18 +1957,18 @@ end
     by specifying a `proj=xxx` like, for example, in ``coast``.
 - `size`: Can be a scalar to plot all events with same size. This size is expected to be in cm but > 1 it is interpreted
     to be in points.
-    - `size=[min_sz max_sz]` will scale linearly min/max magnitude to have sizes min_sz/max_sz
-    - `size=([min_sz max_sz], [min_mag max_mag])` will scale linearly min_mag/max_mag magnitude to have sizes min_sz/max_sz
+    - `size=[min_sz max_sz]` will scale linearly min/max magnitude to have sizes `min_sz/max_sz`
+    - `size=([min_sz max_sz], [min_mag max_mag])` will scale linearly `min_mag/max_mag` magnitude to have sizes `min_sz/max_sz`
     - `size=(fun, [min_sz max_sz] [, [min_mag max_mag]])` does the same as above but the transformation is determined
        by the function 'fun'. Possibles functions are ``exp10``, ``exp``, ``pow`` and ``sqrt``. In the ``pow`` case
-       we must pass in also the exponent and the syntax is: `size=((pow,2), [min_sz max_sz])`` to have a square scaling.
+       we must pass in also the exponent and the syntax is: `size=((pow,2), [min_sz max_sz])` to have a square scaling.
 - `show`: By default this function shows the plot (when no `data` option). Use `show=false` to prevent that (and leave
     the figure open to accept more plots from posterior commands.)
 
 ### Examples
     seismicity(size=8)
     seismicity(marker=:star, size=[3 10])
-    seismicity(size=(exp10, [2 12], [3 9])
+    seismicity(size=(exp10, [2 12], [3 9]))
 """
 function seismicity(; starttime::Union{DateTime, String}="", endtime::Union{DateTime, String}="", minmagnitude=3,
                       mindepth=0, maxdepth=0, last=0, printurl::Bool=false, layers=3, legend=true, show=true, kw...)
@@ -1973,7 +1978,7 @@ function seismicity(; starttime::Union{DateTime, String}="", endtime::Union{Date
 	url = "https://earthquake.usgs.gov/fdsnws/event/1/query.csv?format=csv&orderby=time-asc&minmagnitude=$minmagnitude"
 
 	(starttime != "" && last != 0) && (@warn("Options 'starttime' and 'last' are incompatible. Droping 'last'."); last=0)
-	(endtime != "" && startime == "") && (@warn("Gave a 'endtime' but not a 'starttime'. Ignoring it."); endtime = "")
+	(endtime != "" && starttime == "") && (@warn("Gave a 'endtime' but not a 'starttime'. Ignoring it."); endtime = "")
 	(isa(last, Integer) && last > 0) && (starttime = string(Date(now() - Dates.Day(last))))
 	if (isa(last, String))			# Requests of Weeks, Months, Years
 		_last = lowercase(last)
@@ -2026,20 +2031,23 @@ function seismicity(; starttime::Union{DateTime, String}="", endtime::Union{Date
 	(name_bak != "") && (d[:savefig] = name_bak)			# Restore the fig name
 	C = (layers == 3) ? gmt("makecpt -Cred,green,blue -T0,100,300,10000") : gmt("makecpt -Cred,darkred,green,blue -T0,50,100,300,10000")
 
-	_size = get(d, :size, nothing)
+	_size_t = get(d, :size, nothing)
+	# This gimn is because if size is a scalar we get the wrong answer below in parse_opt_S(). Don't know if its a bug or
+	# just bad use. Since that fun is complex it's better not touch it and just make an array by duplicating the scalar.
+	_size = (_size_t === nothing) ? _size_t : isa(_size_t, Number) ? [_size_t _size_t] : _size_t
+
 	mag_size, opt_S = parse_opt_S(d, view(D, :, 4))
 
 	if (opt_S == "" || endswith(opt_S, "7p"))
 		@inbounds for k =1:size(D,1)  D[k,4] *= 0.02  end
 		endswith(opt_S, "7p") && (opt_S = opt_S[1:end-2])	# parse_opt_S() was not meant to be used like this, need strip that 7p
 	else
-		if (length(opt_S) > 4 && isdigit(opt_S[5]))			# Fixed size in cm or pts, but NO UNITS allowed
-			siz = parse(Float64, opt_S[5:end])
+		if (length(opt_S) > 4 && isdigit(opt_S[5]))			# Fixed size in cm or pts, but NO other than pt UNITS allowed
+			fac = opt_S[end] == 'p' ? 2.54/2 : 1.0
+			siz = (fac == 1) ? parse(Float64, opt_S[5:end]) : parse(Float64, opt_S[5:end-1]) * fac	# Accept only pt as units
 			opt_S = opt_S[1:4]								# Drop the size since it will be passed in D[:,4]
 			(siz > 1) && ( siz *= 2.54/72)					# If size > 1, assume that it was given in points.
 			@inbounds for k =1:size(D,1)  D[k,4] = siz  end
-		#elseif (size(mag_size,2) == 2)
-			#@inbounds for k =1:size(D,1)  D[k,4] = mag_size[k,2]  end
 		end
 	end
 	opt_S = (opt_S == "") ? "c" : opt_S[4:end]
