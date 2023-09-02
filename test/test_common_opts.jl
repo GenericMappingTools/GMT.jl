@@ -271,6 +271,7 @@
 	D[1].attrib = Dict("nome" => "a", "nome2" => "b");
 	info(D, attribs=true);
 	info(D[1], att="nome");			# This case is bugged. It returns 1×2 Matrix{String}: "b"  "a"
+	info(D)
 	info(rand(1));
 	GMT.polygonlevels(D, ["a", "b"], [1,2], att="nome");
 	GMT.polygonlevels(D, ["a", "b"], [1,2], att="nome", nocase=1);

@@ -1390,7 +1390,9 @@ function info(D::GDtype; crs::Bool=false, attribs=false, att::StrSymb="")
 	crs && return isa(D, Vector) ? print_crs(D[1]) : print_crs(D)	# Report projection info and return
 
 	(attribs == false) && (_D = isa(D, Vector) ? D[1] : D)
-	(attribs == false && att == "") && return isempty(_D.attrib) ? show(_D) : show(_D, attrib_table=make_attrtbl(D, false))
+	(attribs == false && att == "" && isempty(_D.attrib)) && return show(_D)
+	(attribs == false && att == "") && (t = make_attrtbl(D, false);
+		return isa(t, Tuple) ? show(_D, attrib_table=t[1]) : show(_D, attrib_table=t))
 
 	# OK, here we are dealing with printing the attribs, or returning a column with the values of one attrib.
 	(attribs == false && att != "")	&& (attribs = true)
