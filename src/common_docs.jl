@@ -11,7 +11,7 @@ const opt_I = "**I** | **inc** | **increment** | **spacing** :: [Type => Str]	``
 
 const _opt_J = "**J** | **proj** | **projection** :: [Type => String]
 
-    Select map projection. Defaults to 14x9.5 cm with linear (non-projected) maps."
+    Select map projection. Defaults to 15x10 cm with linear (non-projected) maps."
 
 const opt_Jz = "**Jz** | **zscale** | **zsize** :: [Type => String]"
 const opt_JZ = "**JZ** | **zsize** :: [Type => String]

@@ -428,12 +428,36 @@ end
 
 # -----------------------------------------------------------------------------------------------
 """
+    cubeplot(img1::Union{GMTimage, String}, img12::Union{GMTimage, String}="", img1e3::Union{GMTimage, String}="";
+             back::Bool=false, show=false, notop::Bool=false, kw...)
+
+Plot images on the sides of a cube. Those images can be provided as file names, or GMTimage objects.
+
+- `img1,2,3`: File names or GMTimages of the images to be plotted on the three cube sides. Of those three, only
+  `img1` is mandatory, case in which it will be repeated in the thre visible sides of the cube. If `img1` and
+  `img2`, this second image is plotted on the two vertical sides. When the three images are provided, the first
+  goes to top (or bottom if `back=true`) the second to the *xz* and third to *yz* planes. 
+- `back`: Boolean that defaults to false, meaning that images are printed on the front sides of the cube. If `false`,
+  the images are printed in the back sides. Use this option when wanting to plot on the walls of a 3D lines/scatter
+  or grid views. The default is to print on the front facades.
+- `notop`: If true, do not plot the top side (implies `back=false`)
+- `show`: If `true`, finish and display the figure.
+
+The `kw...` keyword/value options may be used to pass:
+
+- `region`: The limits extents that will be used to annotate the *x,y,z* axes. It uses the same syntax as all
+  other modules that accept this option (*e.g.* ``coast``). It defaults to "0/9/0/9/0/9"
+- `figsize`: Select the horizontal size(s). Defaults to 15x15 cm.
+- `zsize`: Sets the size of *z* axis in cm. The default is 15.
+- `view`: The view point. Default is `(135,30)`. WARNING: only azimute views from the 4rth quadrant are implemented.
+- `transparency`: Sets the image's transparency level in the [0,1] or [0 100] intervals. Default is opaque.
+
 """
-function cubeplot(fname1::Union{GMTimage, String}, fname2::Union{GMTimage, String}="", fname3::Union{GMTimage, String}=""; back::Bool=false, show=false, notop::Bool=false, kw...)
+function cubeplot(fname1::Union{GMTimage, String}, fname2::Union{GMTimage, String}="", fname3::Union{GMTimage, String}=""; back::Bool=false, notop::Bool=false, show=false, kw...)
 	# ...
 	d = KW(kw)
 	opt_R = ((txt::String = parse_R(d, "")[2]) != "") ? txt[4:end] : "0/9/0/9/0/9"
-	opt_J = ((txt = parse_J(d, "")[2]) != "") ? txt[4:end] : "X15/0";	txt = ""
+	opt_J = ((txt = parse_J(d, "", " ")[2]) != "") ? txt[4:end] : "X15/0";	txt = ""
 	opt_JZ = ((txt = parse_JZ(d, "")[2]) != "") ? txt[5:end] : "15";
 	txt == "" && (CTRL.pocket_J[3] = " -JZ15")
 	opt_p = ((txt = parse_p(d, "")[2]) != "" && txt != " -p") ? txt[4:end] : "135/30"
@@ -462,6 +486,9 @@ end
 
 # -----------------------------------------------------------------------------------------------
 """
+    sideplot(; plane=:xz, vsize=8, depth=NaN, kw...)
+
+Lower level function, normaly only called by `cubeplot`, that plots an image on one side of a cube.
 """
 function sideplot(; plane=:xz, vsize=8, depth=NaN, kw...)
 	# ...
@@ -488,7 +515,7 @@ function sideplot(; plane=:xz, vsize=8, depth=NaN, kw...)
 	# Over which side is the plot going to be made?
 	_p = string(plane)
 	_p = (_p == "W") ? "yz" : (_p == "E") ? "zy" : (_p == "S") ? "xz" : (_p == "N") ? "zx" :
-	     (_p == "B") ? "xy" : (_p == "T") ? "yx" : _p	# Accept aslso WESNTB
+	     (_p == "B") ? "xy" : (_p == "T") ? "yx" : _p	# Accept also WESNTB
 
 	p = (_p == "xz" || _p == "zx") ? 'y' : (_p == "yz" || _p == "zy") ? 'x' : (_p == "xy" || _p == "yx") ? 'z' :
 	    (_p == "x" || _p == "y" || _p == "z") ? _p[1] : error("Unknown plane '$plane'")
