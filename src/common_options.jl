@@ -3730,8 +3730,12 @@ end
 =#
 
 # ---------------------------------------------------------------------------------------------------
+"""
+    isvector(x)::Bool
+
+Return true if x is a vector in the Matlab sense.
+"""
 function isvector(x)::Bool
-	# Return true if x is a vector in the Matlab sense
 	isa(x, AbstractVector) || (isa(x, Matrix) && ( ((size(x,1) == 1) && size(x,2) > 1) || ((size(x,1) > 1) && size(x,2) == 1) ))
 end
 
