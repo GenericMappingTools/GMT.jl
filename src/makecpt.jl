@@ -78,13 +78,14 @@ function makecpt(cmd0::String="", arg1=nothing; kwargs...)::Union{String, GMTcpt
 	_r = gmt(cmd, arg1, !isempty(Tvec) ? Tvec : nothing)
 	r = (_r !== nothing) ? _r : GMTcpt()	# _r === nothing when we save CPT on disk.
 	(got_N && !isempty(r)) && (r.bfn = ones(3,3))	# Cannot remove the bfn like in plain GMT so make it all whites
+	CTRL.pocket_d[1] = d					# Store d that may be not empty with members to use in other modules
 	CURRENT_CPT[1] = r
 	return r
 end
 function makecpt(G::GMTgrid; equalize=false, kw...)		# A version that works on grids.
 	# equalize = true uses default grd2cpt. equalize=n uses grd2cpt -Tn
 	# The kw... are those of makecpt or grd2cpt depending on 'equalize'.
-	cpt = (find_in_kwargs(kw, CPTaliases) === nothing) ? (G.cpt != "") ? G.cpt : :turbo : nothing
+	cpt = ((val = find_in_kwargs(kw, CPTaliases)[1]) === nothing) ? (G.cpt != "") ? G.cpt : :turbo : nothing
 	if (equalize == 0)
 		makecpt(T=@sprintf("%.12g/%.12g/256+n", G.range[5]*(1-0.001), G.range[6]*(1+0.001)), C=cpt, kw...)
 	else
