@@ -305,7 +305,17 @@ The `save` keyword instructs GDAL to save the contents as an OGR file. Format is
 on `D` is a single or a multi-segment object, or "point" to convert to a multipoint geometry.
 """
 function gmt2gd(GI)
-	width, height = (GI.layout != "" && GI.layout[2] == 'C') ? (size(GI,2), size(GI,1)) : (size(GI,1), size(GI,2))
+	# A difficulty we have here is the GI's memory layout. The problem is that to pass GI objects to GMT
+	# it doesn't really matter the shape of the array, as long as the "layout" field is correct. But to pass
+	# data into GDAL, the array *realy* needs to be row major and with the rows as columns when seen from
+	# Julia show methods. A further problem is that if we use 'GI = gmtread("file", layout="TRB")', GI's
+	# array still has a visible mem layout equal to a column major array. AS an example of this, see:
+	# gmtwrite("z.grd", mat2grid(reshape(1:20, 4,5))); Gr = gmtread("z.grd", layout="TRB"); Gc = gmtread("z.grd");
+	# Now both Gr.z and Gc.r are 4x5 matrices, but Gr can't be passed as is to 'gmt2gd(...)' because its
+	# memory layout is wrong when seen from the GDAL wrapper functions.  To disambiguate this, we are not
+	# relying in 'size(GI)' but on the length of the x,y coordinates vectors, that are assumed to always be correct. 
+
+	width, height = (GI.layout != "" && GI.layout[2] == 'C') ? (size(GI,2), size(GI,1)) : (length(GI.x), length(GI.y)) .- GI.registration
 	n_dims = ndims(GI)
 	ds = Gdal.create("", driver=getdriver("MEM"), width=width, height=height, nbands=size(GI,3), dtype=eltype(GI[1]))
 	if (isa(GI, GMTgrid))
@@ -316,8 +326,8 @@ function gmt2gd(GI)
 				indata = (GI.layout[1] == 'B') ? collect(permutedims(reverse(GI.z, dims=1), (2, 1, 3))) : collect(permutedims(GI.z,(2, 1, 3)))
 			end
 		else
-			if (GI.layout != "" && GI.layout[2] == 'R')
-				indata = (n_dims == 2) ? reshape(GI.z, width, height) : reshape(GI.z, width, height, size(GI,3))
+			if (GI.layout != "" && GI.layout[2] == 'R')		# Here we may need to reshape the GI array to fit GDAL needs.
+				indata = (height != size(GI, 1)) ? (n_dims == 2) ? reshape(GI.z, width, height) : reshape(GI.z, width, height, size(GI,3)) : GI.z
 			else
 				indata = GI.z
 			end
