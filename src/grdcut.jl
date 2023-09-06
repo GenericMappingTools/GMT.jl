@@ -12,7 +12,7 @@ Parameters
 - **F** | **clip** | **cutline** :: [Type => Str | GMTdaset | Mx2 array | NamedTuple]	`Arg = array|fname[+c] | (polygon=Array|Str, crop2cutline=Bool, invert=Bool)`
 
     Specify a closed polygon (either a file or a dataset). All grid nodes outside the
-    polygon will be set to NaN (>= GMT6.2).
+    polygon will be set to NaN.
 - **G** | **save** | **outgrid** | **outfile** :: [Type => Str]
 
     Output grid file name. Note that this is optional and to be used only when saving
