@@ -72,11 +72,11 @@ function gdaldem(indata, method::String, opts::Vector{String}=String[]; dest="/v
 	opts = gdal_opts2vec(opts)		# Guarantied to return a Vector{String}
 	if (method == "hillshade")		# So far the only method that accept kwarg options
 		d = GMT.KW(kwargs)
-		band = ((val = GMT.find_in_dict(d, [:band])[1]) !== nothing) ? string(val) : "1"
+		band = ((val = GMT.find_in_dict(d, [:band])[1]) !== nothing) ? string(val)::String : "1"
 		append!(opts, ["-compute_edges", "-b", band])
 		if ((val = GMT.find_in_dict(d, [:scale])[1]) === nothing)
 			if (isa(indata, GMT.GMTgrid) && (occursin("longlat", indata.proj4) || occursin("latlong", indata.proj4)) ||
-											grdinfo(indata, C="n").data[end] == 1)
+			                                 grdinfo(indata, C="n").data[end] == 1)
 				append!(opts, ["-s", "111120"])
 			end
 		else
