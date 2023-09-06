@@ -245,6 +245,8 @@
 	GMT.replicateline([0 0; 1 1; 2 1], 0.1);
 
 	info(makecpt(C=:rainbow));
+	makecpt(G);
+	makecpt(G, equalize=true);
 
 	add2PSfile("Bla")
 	add2PSfile(["Bla", "Bla"])
