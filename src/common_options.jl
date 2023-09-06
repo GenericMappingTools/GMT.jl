@@ -2573,10 +2573,10 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 	if (isa(arg1, GItype) || (cmd0 != "" && cmd0[1] != '@'))
 		if (isempty(CURRENT_CPT[1]) && (val = find_in_dict(d, CPTaliases, false)[1]) === nothing)
 			# If no cpt name sent in, then compute (later) a default cpt
-			if (isa(arg1, GMTgrid) && ((val = find_in_dict(d, [:percent])[1])) !== nothing)
+			if (isa(arg1, GMTgrid) && ((val = find_in_dict(d, [:percent :pct])[1])) !== nothing)
 				lh = quantile(any(!isfinite, arg1) ? skipnan(vec(arg1)) : vec(arg1), [(100 - val)/200, (1 - (100 - val)/200)])
 				cpt_opt_T = @sprintf(" -T%.12g/%.12g/256+n -D", lh[1], lh[2])	# Piggyback -D
-			elseif ((val = find_in_dict(d, [:percent])[1]) !== nothing)			# Case of a grid file
+			elseif ((val = find_in_dict(d, [:percent :pct])[1]) !== nothing)			# Case of a grid file
 				range = vec(grdinfo(cmd0 * " -C -T+a$(100-val)"::String).data);
 				cpt_opt_T = @sprintf(" -T%.12g/%.12g/256+n -D", range[5], range[6])
 			elseif ((val = find_in_dict(d, [:clim])[1]) !== nothing)
@@ -2595,7 +2595,7 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 		if ((val = find_in_dict(d, [:clim])[1]) !== nothing)
 			(length(val) != 2) && error("The clim option must have two elements and not $(length(val)::Int)")
 			cpt_opt_T = @sprintf(" -T%.12g/%.12g/256+n -D", val[1], val[2])
-		elseif (any(contains.(cmd0, ["_01d", "_30m", "_20m", "_15m", "_10m", "_06m"])) && (val = find_in_dict(d, [:percent])[1]) !== nothing)
+		elseif (any(contains.(cmd0, ["_01d", "_30m", "_20m", "_15m", "_10m", "_06m"])) && (val = find_in_dict(d, [:percent :pct])[1]) !== nothing)
 			infa = grdinfo(cmd0 * " -T+a$(100-val)"::String).text[1]	# Bloody complicated output
 			mima = split(infa[3:end], "/")		# Because the output is like "-T-5384/2729"
 			cpt_opt_T = " -T" * mima[1] * "/" * mima[2] * "/256+n -D"

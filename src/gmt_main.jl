@@ -1073,15 +1073,15 @@ function palette_init(API::Ptr{Nothing}, cpt::GMTcpt)::Ptr{GMT.GMT_PALETTE}
 	n_colors = size(cpt.colormap, 1)	# n_colors != n_ranges for continuous CPTs
 	n_ranges = size(cpt.range, 1)
 	one = 0
-	if (n_colors > n_ranges)		# Continuous
-		n_ranges, one = n_colors, 1;# Actual length of colormap array
-		n_colors = n_colors - 1;	# Number of CPT slices
+	if (n_colors > n_ranges)			# Continuous
+		n_ranges, one = n_colors, 1;	# Actual length of colormap array
+		n_colors = n_colors - 1;		# Number of CPT slices
 	end
 
 	P = convert(Ptr{GMT.GMT_PALETTE}, GMT_Create_Data(API, GMT_IS_PALETTE, GMT_IS_NONE, 0, pointer([n_colors]), NULL, NULL, 0, 0, NULL))
 	(n_colors > 100000) && @warn("Que exagero de cores")	# Just to protect n_colors to be GC'ed before here
 
-	Pb::GMT_PALETTE = unsafe_load(P)				# We now have a GMT.GMT_PALETTE
+	Pb::GMT_PALETTE = unsafe_load(P)	# We now have a GMT.GMT_PALETTE
 
 	(one != 0) && (Pb.is_continuous = UInt32(1))
 	if (cpt.depth == 1)      Pb.is_bw   = UInt32(1) 
@@ -1089,7 +1089,7 @@ function palette_init(API::Ptr{Nothing}, cpt::GMTcpt)::Ptr{GMT.GMT_PALETTE}
 	end
 	!isnan(cpt.hinge) && (Pb.has_hinge = UInt32(1))
 
-	if (!isnan(cpt.hinge))			# If we have a hinge pass it in to the GMT owned struct
+	if (!isnan(cpt.hinge))				# If we have a hinge pass it in to the GMT owned struct
 		Pb.hinge = cpt.hinge
 		Pb.mode = Pb.mode & GMT.GMT_CPT_HINGED
 	end
@@ -1343,7 +1343,7 @@ end
 function print_crs(GID, saysomething=false)
 	(saysomething && GID.proj4 == "" && GID.wkt == "" && GID.epsg == 0) && (println("This object have no proj information."); return)
 	(GID.proj4 != "") && println("PROJ: ", GID.proj4)
-	(GID.wkt   != "") && println("WKT: ", GID.wkt)
+	(GID.wkt   != "") && println("WKT: ",  GID.wkt)
 	(GID.epsg  != 0)  && println("EPSG: ", GID.epsg)
 	return nothing
 end
@@ -1379,10 +1379,11 @@ function info(GI::GItype, showdata::Bool=true; crs::Bool=false)
 		(GI.remark  != "" && GI.remark[1]  != '\0') && println("remark: ", rstrip(GI.remark, '\0'))
 		(GI.command != "" && GI.command[1] != '\0') && println("command: ", rstrip(GI.command, '\0'))
 	end
-	println((G.registration == 0) ? "Gridline " : "Pixel ", "node registration used")
-	print_ranges(G)
+	println((GI.registration == 0) ? "Gridline " : "Pixel ", "node registration used")
+	print_ranges(GI)
 	(isa(GI, GMTgrid) && GI.scale != 1) && println("Scale, Offset: ", GI.scale, "\t", GI.offset)
-	print_crs(G)
+	println("Mem layout:\t", GI.layout)
+	print_crs(GI)
 	showdata && (isa(GI, GMTgrid) ? display(GI.z) : display(GI.image))
 end
 

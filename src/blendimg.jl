@@ -15,7 +15,7 @@ A GMT RGB Image
 Blend two 2D UInt8 or 2 RGB images using transparency. 
   - `transparency` The default value, 0.5, gives equal weight to both images. 0.75 will make
     `img` weight 3/4 of the total sum, and so forth.
-  - `new` If true returns a new GMTimage object, otherwise it cahnges the `img` content.
+  - `new` If true returns a new GMTimage object, otherwise it changes the `img` content.
 
 ### Returns
 A GMT intensity Image
@@ -121,41 +121,121 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    texture_img(G::GMTgrid; detail=1.0, contrast=2.0, uint16=false)
+    texture_img(G::GMTgrid; detail=1.0, contrast=2.0, intensity=false)
 
 Compute the Texture Shading calling functions from the software from Leland Brown at
 http://www.textureshading.com/Home.html
 
-  - `detail` is the amount of texture detail. Lower values of detail retain more elevation information,
-    giving more sense of the overall, large structures and elevation trends in the terrain, at the expense
-    of fine texture detail. Higher detail enhances the texture but gives an overall "flatter" general appearance,
-    with elevation changes and large structure less apparent.
-  - `contrast` is a parameter called “vertical enhancement.” Higher numbers increase contrast in the midtones,
-    but may lose detail in the lightest and darkest features. Lower numbers highlight only the sharpest ridges
-    and deepest canyons but reduce contrast overall.
-  - `uint16` controls if output is a UIn16 or a UInt8 image (the dafault). Note that the original code writes
-    only UInt16 images but if we want to combine this with with the hillshade computed with `gdaldem`, a UInt8
-    image is more handy.
+- `G`: The ``GMTgrid`` from which to compute the Leland texture illumination image.
+- `detail` is the amount of texture detail. Lower values of detail retain more elevation information,
+  giving more sense of the overall, large structures and elevation trends in the terrain, at the expense
+  of fine texture detail. Higher detail enhances the texture but gives an overall "flatter" general appearance,
+  with elevation changes and large structure less apparent.
+- `contrast` is a parameter called “vertical enhancement.” Higher numbers increase contrast in the midtones,
+  but may lose detail in the lightest and darkest features. Lower numbers highlight only the sharpest ridges
+  and deepest canyons but reduce contrast overall.
+- `intensity | uint16` controls if output is a UInt16 or a UInt8 image (the default). Note that the original code
+  writes only UInt16 images but if we want to combine this with the hillshade computed with ``gdaldem``,
+  a UInt8 image is more handy.
 
 ### Returns
 A UInt8 (or 16) GMT Image
 """
 function texture_img(G::GMTgrid; detail=1.0, contrast=2.0, uint16=false, intensity=false)
-	if (G.layout[2] == 'C')  texture = reverse(G.z', dims=1)
-	else                     texture = deepcopy(G.z)
+	# Here we have a similar problem with the memory layout as described in gmt2ds(). Specialy with the
+	# variants of the TRB layout. Other than that, it's strange (probably to dive in the C code to relearn)
+	# why the memory layout of the BCB mode needs to changed in the way we do below.
+	memlayout = (!isempty(G.layout)) ? G.layout : "BCB"		# Shield against no layout info
+	if (memlayout[2] == 'C')  texture = reshape(reverse(G.z', dims=2), size(G))
+	else                      texture = (size(G.z,1) == length(G.x) - G.registration) ?
+	                                     reshape(copy(G.z), (length(G.y), length(G.x)) .- G.registration) : deepcopy(G.z)
 	end
-	terrain_filter(texture, detail, size(G,1), size(G,2), G.inc[1], G.inc[2], 0)
-	(startswith(G.proj4, "+proj=merc")) && fix_mercator(texture, detail, size(G,1), size(G,2), G.range[3], G.range[4])
+	n_rows, n_cols = size(texture,1), size(texture,2)
+	terrain_filter(texture, detail, n_rows, n_cols, G.inc[1], G.inc[2], 0)
+	(startswith(G.proj4, "+proj=merc")) && fix_mercator(texture, detail, n_rows, n_cols, G.range[3], G.range[4])
 	(intensity) && (uint16 = true)
-	terrain_image_data(texture, contrast, size(G,1), size(G,2), 0.0, (uint16) ? 65535.0 : 255.0)
-	if (intensity)
+	terrain_image_data(texture, contrast, n_rows, n_cols, 0.0, (uint16) ? 65535.0 : 255.0)
+	if (intensity) 
 		texture = texture ./ 65535 .* 2 .- 1
 		Go = mat2grid(texture, G)
 		Go.range[5:6] .= extrema(Go.z)
 	else
 		mat = (uint16) ? round.(UInt16, texture) : round.(UInt8, texture)
-		Go = mat2img(mat, hdr=grid2pix(G), proj4=G.proj4, wkt=G.wkt, noconv=true, layout=G.layout*"a")
+		Go = mat2img(mat, hdr=grid2pix(G), proj4=G.proj4, wkt=G.wkt, noconv=true, layout="TRBa")#layout=G.layout*"a")
 		Go.range[5:6] .= extrema(Go.image)
 	end
 	Go
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    [I = ] lelandshade(G::GMTgrid; detail=1.0, contrast=2.0, intensity=false, zfactor=3, transparency=0.6,
+                       show=false, color=false, opts=String[], cmap="", kw...)
+
+Compute a grayscale or color shaded illumination image using the thechnique developed by [Leland Brown's "texture shading"](http://www.textureshading.com/Home.html) 
+
+- `G`: A ``GMTgrid`` or a grid file name from which to compute the Leland texture illumination image.
+- `detail` is the amount of texture detail. Lower values of detail retain more elevation information,
+  giving more sense of the overall, large structures and elevation trends in the terrain, at the expense
+  of fine texture detail. Higher detail enhances the texture but gives an overall "flatter" general appearance,
+  with elevation changes and large structure less apparent.
+- `contrast` is a parameter called “vertical enhancement.” Higher numbers increase contrast in the midtones,
+  but may lose detail in the lightest and darkest features. Lower numbers highlight only the sharpest ridges
+  and deepest canyons but reduce contrast overall.
+- `intensity | uint16` controls if output is a UInt16 or a UInt8 image (the default). Note that the original code
+  writes only UInt16 images but if we want to combine this with the hillshade computed with ``gdaldem``,
+  a UInt8 image is more handy.
+- `zfactor`: A terrain amplification factor used in ``gdaldem`` when computing the "hillshade"
+- `transparency`: The transparency of the texture image computed with the Leland algorithm when blended with
+  hillshade computed with ``gdaldem``. The default value, 0.5, gives equal weight to both images. A value of
+  0.75 will make the texture image weight 3/4 of the total sum, and so forth.
+- `color`: Boolean that selects if the output is a color or a grayscale image (the default). For color images
+  we create a default linear color map (via a call to ``makecpt``), but this can be overruled with the `cmap` option.
+- `equalize`: For color images one may select to histogram equalize the colors (via a call to ``grd2cpt``).
+  This option alone (as well as `cmap`) also sets `color=true`. 
+- `opts`: A (optional) string vector with ``gdaldem`` dedicated options (see its man mage). Use this to fine tune
+  the "hillshade" part of the final image.
+- `cmap`: When doing color images and don't want the default cmap, pass a color map (cpt) name (file or master
+  cpt name) or ``GMTcpt``. This also sets `color=true`.
+- `colorbar`: Boolean, used only when `show=true`, to add a colorbar on the right side of the image.
+- `show`: Boolean that if set to `true` will show the result immediately. If `false`, a ``GMTimage`` object
+  is returned.
+- `kw`: The keword/value pairs that can be used to pass arguments to ``makecpt``, ``grd2cpt`` and ``gdaldem``.
+
+### Examples:
+    lelandshade(gmtread("@earth_relief_01s_g", region=(-114,-113,35,36)), color=true, colorbar=true, show=true)
+
+### Returns
+A GMTimage object (8 or 16 bits depending on the `intensity` option) if show == false, or nothing otherwise.
+"""
+function lelandshade(G::String; detail=1.0, contrast=2.0, uint16=false, intensity=false, zfactor=3, transparency=0.6,
+                     color=false, equalize=false, opts::Vector{String}=String[], cmap="", colorbar=false, show=false, kw...)
+	lelandshade(gmtread(G); detail=detail, contrast=contrast, uint16=uint16, intensity=intensity, zfactor=zfactor,
+                transparency=transparency, color=color, equalize=equalize, opts=opts, cmap=cmap, colorbar=colorbar, show=show, kw...)
+end
+function lelandshade(G::GMTgrid; detail=1.0, contrast=2.0, uint16=false, intensity=false, zfactor=3, transparency=0.6,
+                     color=false, equalize=false, opts::Vector{String}=String[], cmap="", colorbar=false, show=false, kw...)
+	(cmap != "" || equalize != 0) && (color = true)
+	gray = (color == 1) ? false : true
+	(color == 1) && (gray = false)
+	I1 = texture_img(G, detail=detail, contrast=contrast, uint16=uint16, intensity=intensity)	# Compute the texture
+	Ihill = gdaldem(G, "hillshade", opts, zfactor=zfactor, kw...)     # Compute the hillshade. zfactor is a terrain amp factor
+	if (gray == 1)
+		I2 = blendimg!(I1, Ihill, new=true, transparency=transparency)
+	else
+		iscptmaster = (cmap != "") && (isa(cmap, Symbol) || (isa(cmap, String) && !endswith(cmap, ".cpt")))
+		_cpt = iscptmaster ? cmap : nothing
+		if     (cmap != "") cpt = cmap
+		elseif (equalize == 0)
+			cpt = makecpt(G, C=_cpt, Vd=-1, kw...)	# The 'nothing' branch will pick G's cpt
+		else
+			cpt = (equalize == 1) ? grd2cpt(G, C=_cpt, kw...) : grd2cpt(G, T="$equalize", C=_cpt, Vd=-1, kw...)
+		end
+		#cpt = (cmap == "") ? grd2cpt(G) : cmap		# If cpt not provided, compute one with grd2cpt
+		color = gdaldem(G, "color-relief", color=cpt, kw...)
+		_I = blendimg!(I1, Ihill, new=true)
+		I2 = blendimg!(color, _I, new=true)
+	end
+	
+	return show == 1 ? viz(I2, colorbar=colorbar) : I2
 end

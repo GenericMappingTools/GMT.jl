@@ -119,8 +119,10 @@ function gmtread(_fname::String; kwargs...)
 	# These are tricky gals, but we know who they are so use that knowledge.
 	if (opt_T == "")
 		if (startswith(fname, "@earth_day") || startswith(fname, "@earth_night"))  opt_T = " -Ti"
-		elseif (startswith(fname, "@earth_"))                                      opt_T = " -Tg"
+		elseif (startswith(fname, "@earth_")|| startswith(fname, "@srtm_"))        opt_T = " -Tg"
 		end
+		# To shut up a f annoying GMT warning.
+		(opt_T == " -Tg") && startswith(fname, "@earth_") && !endswith(fname, "_g") && !endswith(fname, "_p") && (fname *= "_g")
 	end
 
 	(opt_T == "" && opt_bi != "") && (opt_T = " -Td")	# If asked to read binary, must be a 'data' file.
