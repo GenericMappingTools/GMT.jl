@@ -81,6 +81,16 @@ function makecpt(cmd0::String="", arg1=nothing; kwargs...)::Union{String, GMTcpt
 	CURRENT_CPT[1] = r
 	return r
 end
+function makecpt(G::GMTgrid; equalize=false, kw...)		# A version that works on grids.
+	# equalize = true uses default grd2cpt. equalize=n uses grd2cpt -Tn
+	# The kw... are those of makecpt or grd2cpt depending on 'equalize'.
+	cpt = (find_in_kwargs(kw, CPTaliases) === nothing) ? (G.cpt != "") ? G.cpt : :turbo : nothing
+	if (equalize == 0)
+		makecpt(T=@sprintf("%.12g/%.12g/256+n", G.range[5]*(1-0.001), G.range[6]*(1+0.001)), C=cpt, kw...)
+	else
+		(equalize == 1) ? grd2cpt(G, C=cpt, kw...) : grd2cpt(G, T="$equalize", C=cpt, kw...)
+	end
+end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_E_mkcpt(d::Dict, symbs::Array{<:Symbol}, cmd::String, arg1)
