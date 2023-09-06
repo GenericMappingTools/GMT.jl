@@ -278,7 +278,7 @@ function peaks(; N=49, grid::Bool=true, pixreg::Bool=false)
 		z = Float32.(z)
 		reg = (pixreg) ? 1 : 0
 		G = GMTgrid("", "", 0, 0, [_x[1], _x[end], _y[1], _y[end], minimum(z), maximum(z)], [inc, inc],
-					reg, NaN, "", "", "", "", String[], _x, _y, Vector{Float64}(), z, "x", "y", "", "z", "", 1f0, 0f0, 0, 0)
+					reg, NaN, "", "", "", "", String[], _x, _y, Vector{Float64}(), z, "x", "y", "", "z", "BCB", 1f0, 0f0, 0, 0)
 		return G
 	else
 		return x,y,z
