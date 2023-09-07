@@ -203,7 +203,7 @@ Compute a grayscale or color shaded illumination image using the thechnique deve
 - `kw`: The keword/value pairs that can be used to pass arguments to ``makecpt``, ``grd2cpt`` and ``gdaldem``.
 
 ### Examples:
-    lelandshade(gmtread("@earth_relief_01s_g", region=(-114,-113,35,36)), color=true, colorbar=true, show=true)
+    lelandshade(gmtread("@earth_relief_01s", region=(-114,-113,35,36)), color=true, colorbar=true, show=true)
 
 ### Returns
 A GMTimage object (8 or 16 bits depending on the `intensity` option) if show == false, or nothing otherwise.
@@ -219,23 +219,23 @@ function lelandshade(G::GMTgrid; detail=1.0, contrast=2.0, uint16=false, intensi
 	gray = (color == 1) ? false : true
 	(color == 1) && (gray = false)
 	I1 = texture_img(G, detail=detail, contrast=contrast, uint16=uint16, intensity=intensity)	# Compute the texture
-	Ihill = gdaldem(G, "hillshade", opts, zfactor=zfactor, kw...)     # Compute the hillshade. zfactor is a terrain amp factor
+	Ihill = gdaldem(G, "hillshade", opts; zfactor=zfactor, Vd=-1, kw...)	# Compute the hillshade. zfactor is a terrain amp factor
 	if (gray == 1)
-		I2 = blendimg!(I1, Ihill, new=true, transparency=transparency)
+		blendimg!(I1, Ihill, transparency=transparency)
 	else
 		iscptmaster = (cmap != "") && (isa(cmap, Symbol) || (isa(cmap, String) && !endswith(cmap, ".cpt")))
 		_cpt = iscptmaster ? cmap : nothing
 		if     (cmap != "") cpt = cmap
 		elseif (equalize == 0)
-			cpt = makecpt(G, C=_cpt, Vd=-1, kw...)	# The 'nothing' branch will pick G's cpt
+			cpt = makecpt(G; C=_cpt, Vd=-1, kw...)	# The 'nothing' branch will pick G's cpt
 		else
 			cpt = (equalize == 1) ? grd2cpt(G, C=_cpt, kw...) : grd2cpt(G, T="$equalize", C=_cpt, Vd=-1, kw...)
 		end
-		#cpt = (cmap == "") ? grd2cpt(G) : cmap		# If cpt not provided, compute one with grd2cpt
-		color = gdaldem(G, "color-relief", color=cpt, kw...)
-		_I = blendimg!(I1, Ihill, new=true)
-		I2 = blendimg!(color, _I, new=true)
+		color = gdaldem(G, "color-relief"; color=cpt, kw...)
+		blendimg!(I1, Ihill)
+		blendimg!(color, I1)
+		I1 = color			# To use the same name as in the gray branch
 	end
 	
-	return show == 1 ? viz(I2, colorbar=colorbar) : I2
+	return show == 1 ? viz(I1; colorbar=colorbar, Vd=-1, kw...) : I1
 end
