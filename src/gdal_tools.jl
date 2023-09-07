@@ -152,7 +152,8 @@ function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::St
 	GMT.ressurectGDAL()				# Another black-hole plug attempt.
 	opts = gdal_opts2vec(opts)		# Guarantied to return a Vector{String}
 	d, opts, got_GMT_opts = GMT_opts_to_GDAL(f, opts, kwargs...)
-	((val = GMT.find_in_dict(d, [:Vd])[1]) !== nothing) && println(opts)
+	Vd::Int = ((val = GMT.find_in_dict(d, [:Vd])[1]) !== nothing) ? val : 0		# More gymns to avoid Anys
+	(Vd > 0) && println(opts)
 
 	# For gdaldem color-relief we need a further arg that is the name of a cpt. So save one on disk
 	_cmap = C_NULL
@@ -199,10 +200,11 @@ function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::St
 	end
 	(needclose) && GDALClose(dataset.ptr)
 	CPLPopErrorHandler();
-	(length(d) > 0) && println("Warning: the following options were not consumed in $f => ", keys(d))
+	(Vd > 0 && length(d) > 0) && println("Warning: the following options were not consumed in $f => ", keys(d))
 	o
 end
 
+# ---------------------------------------------------------------------------------------------------
 # Because the GDAL reconnaissance of GMT cpts is very very weak, we must re-write CPTs in a way that it can swallow
 save_cpt4gdal(cpt::String, outname::String) = save_cpt4gdal(GMT.gmtread(cpt), outname)
 function save_cpt4gdal(cpt::GMT.GMTcpt, outname::String)
