@@ -24,7 +24,7 @@ end
 """
     GI[,coast] = worldrectangular(GI; proj::String="+proj=vandg", pm=0, latlim=:auto, coast=false)
 
-Try to createa rectangular map out miscellaneous and not cylindrical projections.
+Try to create a rectangular map out miscellaneous and not cylindrical projections.
 
 - `GI`: A GMTgrid or GMTimage data type. `GI` can also be a string with a file name of a grid or image.
 - `proj`: A PROJ4 string describing the projection.
@@ -119,7 +119,7 @@ end
     cl = coastlinesproj(proj="?", res="crude", coastlines=nothing)
 
 Extract the coastlines from GMT's GSHHG database and project them using PROJ (NOT the GMT projection machinery).
-This allows the use of many of the PROJ proijections that are not available from pure GMT.
+This allows the use of many of the PROJ projections that are not available from pure GMT.
 
 - `proj`: A proj4 string describing the projection (Mandatory).
 - `res`: The GSHHG coastline resolution. Available options are: `crude`, `low`, `intermediate`, `high` and `full`
@@ -236,7 +236,8 @@ Create a grid of lines (graticules) in projected coordinates. The projection sys
 the `GI` metadata.
 
 - `GI`: A GMTgrid or GMTimage data type created with the `worldrectangular` function.
-- `D`: Alternatively pass a "projection" (as a proj4 string) holding the projection info.
+- `proj`: Pass a proj4 string or Symbol describing the projection. Alternatively pass a referenced
+  GMTdataset from which the projection will be extracted.
 - `width`: A scalar or two elements array/tuple with increments in longitude and latitude. If scalar, width_x = width_y.
 - `grid`: Instead of using the `width` argument, that generates an automatic set of graticules, one may pass
   a two elements Vector{Vector{Real}} with the meridians (grid[1]) and parallels (grid[2]) to create.
@@ -451,7 +452,6 @@ The `kw...` keyword/value options may be used to pass:
 - `zsize`: Sets the size of *z* axis in cm. The default is 15.
 - `view`: The view point. Default is `(135,30)`. WARNING: only azimute views from the 4rth quadrant are implemented.
 - `transparency`: Sets the image's transparency level in the [0,1] or [0 100] intervals. Default is opaque.
-
 """
 function cubeplot(fname1::Union{GMTimage, String}, fname2::Union{GMTimage, String}="", fname3::Union{GMTimage, String}=""; back::Bool=false, notop::Bool=false, show=false, kw...)
 	# ...
