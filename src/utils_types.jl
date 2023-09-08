@@ -43,9 +43,9 @@ Alternatively, if `mat` is a string or vector of strings we return a dataset wit
 the coordinates. This form is useful to pass to `text` when using the `region_justify` option that
 does not need explicit coordinates to place the text.
   - `txt`: Return a Text record which is a Dataset with data = Mx2 and text in third column. The ``text``
-     can be an array with same size as `mat` rows or a string (will be reapeated n_rows times.) 
+     can be an array with same size as `mat` rows or a string (will be repeated n_rows times.) 
   - `x`:   An optional vector with the _xx_ coordinates
-  - `hdr`: optional String vector with either one or n_rows multisegment headers.
+  - `hdr`: optional String vector with either one or n_rows multis-egment headers.
   - `lc` or `linecolor` or `color`: optional array of strings/symbols with color names/values. Its length can be
      smaller than n_cols, case in which colors will be cycled. If `color` is not an array of strings, e.g.
      `color="yes"`, the colors cycle trough a pre-defined set of colors (same colors as in Matlab). If you
@@ -61,12 +61,12 @@ does not need explicit coordinates to place the text.
   - `ls` or `linestyle`:  Line style. A string or an array of strings with `length = size(mat,2)` with line styles.
   - `front`:  Front Line style. A string or an array of strings with `length = size(mat,2)` with front line styles.
   - `pen`:  A full pen setting. A string or an array of strings with `length = size(mat,2)` with pen settings.
-     This differes from `lt` in the sense that `lt` does not directly set the line thickness.
+     This differs from `lt` in the sense that `lt` does not directly set the line thickness.
   - `multi` or `multicol`: When number of columns in `mat` > 2, or == 2 and x != nothing, make an multisegment Dataset
      with first column and 2, first and 3, etc. Convenient when want to plot a matrix where each column is a line. 
-  - `segnan` or `nanseg`: Boolean. If true make a multisegment made out of segments separated by NaNs.
-  - `datatype`: Keep the original data type of `mat`. Default, converts to Float64.
-  - `geom`: The data geometry. By default we set `wkbUnknown` but try to do some basic guess.
+  - `segnan` or `nanseg`: Boolean. If true make a multi-segment made out of segments separated by NaNs.
+  - `datatype`: Keep the original data type of `mat`. Default converts to Float64.
+  - `geom`: The data geometry. By default, we set `wkbUnknown` but try to do some basic guess.
   - `proj` or `proj4`:  A proj4 string for dataset SRS.
   - `wkt`:  A WKT SRS.
   - `colnames`: Optional string vector with names for each column of `mat`.
@@ -79,11 +79,11 @@ does not need explicit coordinates to place the text.
 
 Create a multi-segment GMTdataset (a vector of GMTdataset) from matrices passed in a vector-of-matrices `mat`.
 The matrices elements of `mat` do not need to have the same number of rows. Think on this as specifying groups
-of lines/points each sharing the same settings. KWarg options of this form are more limitted in number than
+of lines/points each sharing the same settings. KWarg options of this form are more limited in number than
 in the general case, but can take the form of a Vector{Vector}, Vector or scalars.
 In the former case (Vector{Vector}) the length of each Vector[i] must equal to the number of rows of each mat[i].
 
-  - `hdr`: optional String vector with either one or `length(mat)` multisegment headers.
+  - `hdr`: optional String vector with either one or `length(mat)` multi-segment headers.
   - `pen`:  A full pen setting. A string or an array of strings with `length = length(mat)` with pen settings.
   - `lc` or `linecolor` or `color`: optional color or array of strings/symbols with color names/values.
   - `linethick` or `lt`: for selecting different line thicknesses. Works like `color`, but should be 
@@ -527,7 +527,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function ds2ds(D::Vector{<:GMTdataset})::GMTdataset
-	# Take a vector of GS and collapse it into a single GMTdataset DS. Some metadata, proj, colnames
+	# Take a vector of DS and collapse it into a single GMTdataset DS. Some metadata, proj, colnames
 	# and attributes are copied from first segment. Colors in header and text are lost.
 	tot_rows = sum(size.(D,1))
 	data = zeros(tot_rows, size(D[1],2))
@@ -846,11 +846,11 @@ end
 """
     I = mat2img(mat::Array{<:Unsigned}; x=[], y=[], hdr=nothing, proj4="", wkt="", cmap=nothing, kw...)
 
-Take a 2D 'mat' array and a HDR 1x9 [xmin xmax ymin ymax zmin zmax reg xinc yinc] header descriptor
+Take a 2D 'mat' array and a `hdr` 1x9 [xmin xmax ymin ymax zmin zmax reg xinc yinc] header descriptor
 and return a GMTimage type.
-Alternatively to HDR, provide a pair of vectors, x & y, with the X and Y coordinates.
-Optionaly, the HDR arg may be ommited and it will computed from 'mat' alone, but then x=1:ncol, y=1:nrow
-When 'mat' is a 3D UInt16 array we automatically compute a UInt8 RGB image. In that case 'cmap' is ignored.
+Alternatively to `hdr`, provide a pair of vectors, x & y, with the X and Y coordinates.
+Optionally, the `hdr` arg may be omitted and it will computed from `mat` alone, but then x=1:ncol, y=1:nrow
+When `mat` is a 3D UInt16 array we automatically compute a UInt8 RGB image. In that case `cmap` is ignored.
 But if no conversion is wanted use option `noconv=true`
 
     I = mat2img(mat::Array{UInt16}; x=[], y=[], hdr=nothing, proj4::String="", wkt::String="", kw...)
@@ -860,7 +860,7 @@ If the kw variable `stretch` is used, we stretch the intervals in `stretch` to [
 Use this option to stretch the image histogram.
 If `stretch` is a scalar, scale the values > `stretch` to [0 255]
   - stretch = [v1 v2] scales all values >= v1 && <= v2 to [0 255]
-  - stretch = [v1 v2 v3 v4 v5 v6] scales firts band >= v1 && <= v2 to [0 255], second >= v3 && <= v4, same for third
+  - stretch = [v1 v2 v3 v4 v5 v6] scales first band >= v1 && <= v2 to [0 255], second >= v3 && <= v4, same for third
   - stretch = :auto | "auto" | true | 1 will do an automatic stretching from values obtained from histogram thresholds
 
 The `kw...` kwargs search for [:layout :mem_layout], [:names] and [:metadata]
@@ -1071,17 +1071,17 @@ Take a slice of a multylayer GMTimage. Return the result still as a GMTimage. `l
 
 Extract a slice from a GMTgrid cube.
 
-  - `slice`: If it is an Int it will return a GMTgrid corresponding to that layer.
-    However, if `slice` is a float this is interpreted to mean: search that dimension (see the `axis` below)
-    coordinates and find the closest layer that has coordinate = `slice`. If the `slice` value is not within
-    10% of the coordinate of closest layer, the returned layer is obtained by linear interpolation of the
-    neighboring layers. For example, `slice=2.5` on a cube were layers are one unit apart will interpolate
-    between layers 2 and 3 where each layer weights 50% in the end result. NOTE: the return type is
-    still a cube but with one layer only (and the corresponding axis coordinate).
+- `slice`: If it is an Int it will return a GMTgrid corresponding to that layer.
+  However, if `slice` is a float this is interpreted to mean: search that dimension (see the `axis` below)
+  coordinates and find the closest layer that has coordinate = `slice`. If the `slice` value is not within
+  10% of the coordinate of closest layer, the returned layer is obtained by linear interpolation of the
+  neighboring layers. For example, `slice=2.5` on a cube were layers are one unit apart will interpolate
+  between layers 2 and 3 where each layer weights 50% in the end result. NOTE: the return type is
+  still a cube but with one layer only (and the corresponding axis coordinate).
+  slice` Can also be a vector of integers representing the slices we want to extract. The output is another cube.
 
-	`slice` Can also be a vector of integers representing the slices we want to extract. The output is another cube.
-  - `axis`: denotes the dimension being sliced. The default, "z", means the slices are taken from the
-    vertical axis. `axis="x"` means slice along a column, and `axis="y"` slice along a row.
+- `axis`: denotes the dimension being sliced. The default, "z", means the slices are taken from the
+  vertical axis. `axis="x"` means slice along a column, and `axis="y"` slice along a row.
 
 	slicecube(GI::GItype; slice::Int=0, angle=0.0, axis="x", cmap=GMTcpt())
 
@@ -1493,19 +1493,19 @@ end
 # ---------------------------------------------------------------------------------------------------
 """
     G = mat2grid(mat; reg=nothing, x=[], y=[], v=[], hdr=nothing, proj4::String="",
-	             wkt::String="", title::String="", rem::String="", cmd::String="",
-				 names::Vector{String}=String[], scale::Float32=1f0, offset::Float32=0f0)
+                 wkt::String="", title::String="", rem::String="", cmd::String="",
+                 names::Vector{String}=String[], scale::Float32=1f0, offset::Float32=0f0)
 
 Take a 2/3D `mat` array and a HDR 1x9 [xmin xmax ymin ymax zmin zmax reg xinc yinc] header descriptor and 
 return a grid GMTgrid type. Alternatively to HDR, provide a pair of vectors, `x` & `y`, with the X and Y coordinates.
-Optionaly add a `v` vector with vertical coordinates if `mat` is a 3D array and one wants to create a ``cube``.
-Optionaly, the HDR arg may be ommited and it will computed from `mat` alone, but then x=1:ncol, y=1:nrow
-When HDR is not used, REG == nothing [default] means create a gridline registration grid and REG == 1,
+Optionally add a `v` vector with vertical coordinates if `mat` is a 3D array and one wants to create a ``cube``.
+Optionally, the HDR arg may be omitted and it will computed from `mat` alone, but then x=1:ncol, y=1:nrow
+When HDR is not used, REG == nothing [default] means create a gridline registration grid and REG = 1,
 or REG="pixel" a pixel registered grid.
 
 For 3D arrays the `names` option is used to give a description for each layer (also saved to file when using a GDAL function).
 
-The `scale` and `offset` options are used when `mat` is an Integer type and we want to save the grid with an scale/offset.  
+The `scale` and `offset` options are used when `mat` is an Integer type and we want to save the grid with a scale/offset.  
 
 Other methods of this function do:
 
@@ -1515,7 +1515,7 @@ Create Float GMTgrid with size, coordinates and increment determined by the cont
 array, which is now MANDATORY, has either the same meaning as above OR, alternatively, containng only
 [xmin xmax ymin ymax xinc yinc]
 VAL is the value that will be fill the matrix (default VAL = Float32(0)). To get a Float64 array use, for
-example, VAL = 1.0 Ay other non Float64 will be converted to Float32
+example, VAL = 1.0 Any other non Float64 will be converted to Float32
 
     Example: mat2grid(1, hdr=[0. 5 0 5 1 1])
 
@@ -1528,7 +1528,7 @@ size determined by the sizes of the X & Y vectors.
 
     G = mat2grid(f::String)
 
-Whre f is a pre-set function name. Currently available:
+Where f is a pre-set function name. Currently available:
    - "ackley", "eggbox", "sombrero", "parabola" and "rosenbrock" 
 X,Y are vectors coordinates defining the function's domain, but default values are provided for each function.
 creates a Float32 GMTgrid.

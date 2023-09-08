@@ -15,7 +15,7 @@ A GMT RGB Image
 Blend two 2D UInt8 or 2 RGB images using transparency. 
   - `transparency` The default value, 0.5, gives equal weight to both images. 0.75 will make
     `img` weight 3/4 of the total sum, and so forth.
-  - `new` If true returns a new GMTimage object, otherwise it changes the `img` content.
+  - `new` If true returns a new GMTimage object, otherwise it changes the `img1` content.
 
 ### Returns
 A GMT intensity Image

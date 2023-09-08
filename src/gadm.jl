@@ -9,16 +9,16 @@
 
 Returns a GMTdataset for the requested country, or country subregion(s)
 
-1. `country`: ISO 3166 Alpha 3 country code  .
-2. subregions: Full official names in hierarchial order (provinces, districts, etc...).
+- `country`: ISO 3166 Alpha 3 country code  .
+- `subregions`: Full official names in hierarchial order (provinces, districts, etc...).
    To know the names of all administrative children of parent, use the option `names`.
-3. `children`: When true, function returns all subregions of parent.
-4. `children_raw`: When true, function returns two variables -> parent, children, where children is a GDAL object
+- `children`: When true, function returns all subregions of parent.
+- `children_raw`: When true, function returns two variables -> parent, children, where children is a GDAL object
    E.g. when children is set to true and when querying just the country,
    second return parameter are the states/provinces. If `children` we return a Vector of GMTdataset with
    the polygons. If `children_raw` the second output is a GDAL object much like in GADM.jl (less the Tables.jl)
-5. `names`: Return a string vector with all `children` names. 
-6. `reportlevels`: just report the number of administrative levels (including the country) and exit.
+- `names`: Return a string vector with all `children` names. 
+- `reportlevels`: just report the number of administrative levels (including the country) and exit.
 
 ## Examples  
   
