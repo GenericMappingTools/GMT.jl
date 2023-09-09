@@ -49,7 +49,7 @@ When files are multiband or nc files with 3D or 4D arrays, we access them via th
 grid, layer can be a scalar (to read 3D arrays) or an array of two elements (to read a 4D array).
 
 If file is an image `layer` can be a 1 or a 1x3 array (to read a RGB image). Not that in this later case
-bands do not need to be contiguous. A `band=[1,5,2]`` composes an RGB out of those bands. See more at
+bands do not need to be contiguous. A `band=[1,5,2]` composes an RGB out of those bands. See more at
 $(GMTdoc)/GMT_Docs.html#modifiers-for-coards-compliant-netcdf-files) but note that we use **1 based** indexing here.
 
 - $(GMT._opt_R)
