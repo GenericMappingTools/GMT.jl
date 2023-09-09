@@ -42,6 +42,7 @@
 	getindex(G1,1:2);
 	setindex!(G1, [-1 -1],1:2)
 	size(G1)
+	size(GMT.GMTcpt())
 	flipud(G)
 	fliplr(G)
 	flipdim(G.z,1)

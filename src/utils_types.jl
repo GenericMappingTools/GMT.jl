@@ -1041,7 +1041,7 @@ result (that we easily do with `imshow(mat)`) but return instead a GMTimage obje
 
   - `clim`: Specify clims as a two-element vector of the form [cmin cmax], where values of the scaled image
      less than or equal to cmin are assigned that value. The same goes for cmax.
-  - `cmap`: If provided, `cmap` is a GMTcpt and its contents is converted to the `GMTimage` colormp.
+  - `cmap`: If provided, `cmap` is a GMTcpt and its contents is converted to the `GMTimage` colormap.
   - `GI`: This can be either a GMTgrid or a GMTimage and its contents is used to set spatial contents
      (x,y coordinates) and projection info that one may attach to the created image result. This is
      a handy alterative to the `x=, y=, proj4=...` options.

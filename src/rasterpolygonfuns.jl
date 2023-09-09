@@ -87,13 +87,13 @@ is large (think Russia size) because even at a moderately resultion it can imply
 - `img`: the image from which the stats (`fun`) of each color for each polygon will be computed.
 - `url`: In case the `img` option is not used, pass the Web Map Server URL (see the `wmsinfo` and `wmsread` functions)
    from where the the images covering the BoundingBox of each polygon will be downloaded. Warning, this is a much slower
-   method but potentially usefull when the images to download risk to be very big. 
+   method but potentially useful when the images to download risk to be very big. 
 - `layer`: When the `url` option is used this one becomes mandatory and represents the layer number or layer name of
-   interest from those provided by the WMS service. That is, both of these forms are allowed: `layer=3` or
+   interest from those provided by the WMS service. That is, both forms are allowed: `layer=3` or
    `layer="Invented layer name"`
 - `pixelsize`: Sets the requested cell size in meters [default]. Use a string appended with a 'd'
    (e.g. `resolution="0.001d"`) if the resolution is given in degrees. This way works only when the layer is in geogs.
-- `append`: By default the color assignement to each of the polygons in the `shapes` vector is achieved by
+- `append`: By default, the color assignment  to each of the polygons in the `shapes` vector is achieved by
    appending the fill color to the possibly existing header field. Running the `colorzones` command more than once
    keeps adding (now ignored, because only the first is used) colors. Setting `append=false` forces rewriting
    the header field at each run and hence the assigned color is always the one used (but the previous header is cleared out).

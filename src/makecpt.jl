@@ -85,9 +85,17 @@ end
 function makecpt(G::GMTgrid; equalize=false, kw...)		# A version that works on grids.
 	# equalize = true uses default grd2cpt. equalize=n uses grd2cpt -Tn
 	# The kw... are those of makecpt or grd2cpt depending on 'equalize'.
-	cpt = ((val = find_in_kwargs(kw, CPTaliases)[1]) === nothing) ? (G.cpt != "") ? G.cpt : :turbo : nothing
+	
+	val, symb = find_in_kwargs(kw, CPTaliases)
+	cpt = (val === nothing) ? (G.cpt != "") ? G.cpt : :turbo : nothing
+	d = Dict{Symbol, Any}()
+	if (equalize == 0 && symb != Symbol() && val === nothing && cpt !== nothing)
+		# It means kw have a -C, but it can be a C=nothing. Remove the duplicate  that was in kw.
+		d = KW(kw...);	delete!(d, symb)	# This confusion is due to the crazziness possible in lelandshade()
+	end
 	if (equalize == 0)
-		makecpt(T=@sprintf("%.12g/%.12g/256+n", G.range[5]*(1-0.001), G.range[6]*(1+0.001)), C=cpt, kw...)
+		t = isempty(d) ? kw : d
+		makecpt(; T=@sprintf("%.12g/%.12g/256+n", G.range[5]*(1-0.001), G.range[6]*(1+0.001)), C=cpt, t...)
 	else
 		(equalize == 1) ? grd2cpt(G, C=cpt, kw...) : grd2cpt(G, T="$equalize", C=cpt, kw...)
 	end
