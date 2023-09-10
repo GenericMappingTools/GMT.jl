@@ -216,6 +216,7 @@ end
 function lelandshade(G::GMTgrid; detail=1.0, contrast=2.0, uint16=false, intensity=false, zfactor=3, transparency=0.6,
                      color=false, equalize=false, opts::Vector{String}=String[], cmap="", colorbar=false, show=false, kw...)
 	(cmap != "" || equalize != 0) && (color = true)
+	(cmap == "" && (isa(color, GMTcpt) || isa(color, StrSymb))) && (cmap = color) 	# Allow color=cpt under the hood.
 	gray = (color == 1) ? false : true
 	(color != 0) && (gray = false)
 	I1 = texture_img(G, detail=detail, contrast=contrast, uint16=uint16, intensity=intensity)	# Compute the texture
@@ -225,9 +226,11 @@ function lelandshade(G::GMTgrid; detail=1.0, contrast=2.0, uint16=false, intensi
 	else
 		iscptmaster = (cmap != "") && (isa(cmap, Symbol) || (isa(cmap, String) && !endswith(cmap, ".cpt")))
 		_cpt = iscptmaster ? cmap : nothing
-		if     (cmap != "") cpt = cmap
+		if (cmap != "")
+			cpt = cmap
+			isa(cpt, GMTcpt) && (CURRENT_CPT[1] = cpt)
 		elseif (equalize == 0)
-			cpt = makecpt(G; C=_cpt, Vd=-1, kw...)	# The 'nothing' branch will pick G's cpt
+			cpt = makecpt(G; C=_cpt, Vd=-1, kw...)		# The 'nothing' branch will pick G's cpt
 		else
 			cpt = (equalize == 1) ? grd2cpt(G, C=_cpt, kw...) : grd2cpt(G, T="$equalize", C=_cpt, Vd=-1, kw...)
 		end
