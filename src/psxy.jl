@@ -18,7 +18,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	end
 
 	(arg1 !== nothing && !isa(arg1, GDtype) && !isa(arg1, Matrix{<:Real})) && (arg1 = tabletypes2ds(arg1, ((val = find_in_dict(d, [:interp])[1]) !== nothing) ? interp=val : interp=0))
-	arg1 = if_multicols(d, arg1, is3D)			# Repeat because DataFranes or ODE's havw skipped first round
+	arg1 = if_multicols(d, arg1, is3D)			# Repeat because DataFranes or ODE's have skipped first round
 	(!O) && (LEGEND_TYPE[1] = legend_bag())		# Make sure that we always start with an empty one
 
 	cmd::String = "";	sub_module::String = ""	# Will change to "scatter", etc... if called by sub-modules

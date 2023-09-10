@@ -217,7 +217,7 @@ function lelandshade(G::GMTgrid; detail=1.0, contrast=2.0, uint16=false, intensi
                      color=false, equalize=false, opts::Vector{String}=String[], cmap="", colorbar=false, show=false, kw...)
 	(cmap != "" || equalize != 0) && (color = true)
 	gray = (color == 1) ? false : true
-	(color == 1) && (gray = false)
+	(color != 0) && (gray = false)
 	I1 = texture_img(G, detail=detail, contrast=contrast, uint16=uint16, intensity=intensity)	# Compute the texture
 	Ihill = gdaldem(G, "hillshade", opts; zfactor=zfactor, Vd=-1, kw...)	# Compute the hillshade. zfactor is a terrain amp factor
 	if (gray == 1)
