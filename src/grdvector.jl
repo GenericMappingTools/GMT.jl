@@ -119,6 +119,9 @@ function grdvector(arg1, arg2; first=true, kwargs...)
 		as = km_per_plotint / (max_extrema * 1.05)		# Plus 5% to compensate a bit max_extrema not being max_mag.
 	end
 
+	isbarbs = (find_in_dict(d, [:barbs])[1] !== nothing) ? true : false		# true if called from windbarbs
+	isbarbs && (opt_S = " ")
+
 	if (opt_S == "")
 		opt_S = @sprintf(" -S%s%.8g%s", inv_c, as, km_u)
 	elseif (startswith(opt_S, " -S+c") || startswith(opt_S, " -S+s"))	# For legends stuff
@@ -132,7 +135,7 @@ function grdvector(arg1, arg2; first=true, kwargs...)
 	defLen = @sprintf("%.4g",  sqrt((w*h) / ((length(1:multx:n_cols)-1)*(length(1:multy:n_rows)-1))) / 3)
 	defNorm, defHead = @sprintf("%.6g%s", as/2+1e-7, km_u), "yes"
 
-	opt_Q = parse_Q_grdvec(d, [:Q :vec :vector :arrow], defLen, defHead, defNorm)
+	opt_Q = !isbarbs ? parse_Q_grdvec(d, [:Q :vec :vector :arrow], defLen, defHead, defNorm) : ""
 	!occursin(" -G", opt_Q) && (cmd = add_opt_fill(cmd, d, [:G :fill], 'G'))	# If fill not passed in arrow, try from regular option
 	cmd *= add_opt_pen(d, [:W :pen], "W")
 	(!occursin(" -C", cmd) && !occursin(" -W", cmd) && !occursin(" -G", opt_Q)) && (cmd *= " -W0.5")	# If still nothing, set -W.
@@ -141,7 +144,8 @@ function grdvector(arg1, arg2; first=true, kwargs...)
 	_cmd = ["grdvector " * cmd]
 	_cmd = frame_opaque(_cmd, opt_B, opt_R, opt_J)		# No -t in frame
 	_cmd = finish_PS_nested(d, _cmd)
-    return finish_PS_module(d, _cmd, "", K, O, true, arg1, arg2, arg3)
+	isbarbs && return d, _cmd, arg1, arg2, arg3				# If called by winbarbs return what we have
+    finish_PS_module(d, _cmd, "", K, O, true, arg1, arg2, arg3)
 end
 
 # ---------------------------------------------------------------------------------------------------

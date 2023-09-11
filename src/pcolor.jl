@@ -18,7 +18,7 @@ compute a default one.
   where ``n`` is integer and represents the number of printed decimals. Any other value like ``true``, ``"y"``
   or ``:y`` tells the program to guess the number of decimals.
 - `font`: When `label` is used one may also control text font settings. Options are a subset of the ``text`` `attrib`
-  option. Namelly, the angle and the ``font``. Example: ``font=(angle=45, font=(5,:red))``. If not specified, it
+  option. Namely, the angle and the ``font``. Example: ``font=(angle=45, font=(5,:red))``. If not specified, it
   defaults to ``font=(font=(6,:black),)``.
 
 
@@ -26,7 +26,7 @@ compute a default one.
 
 This form takes a grid (or the file name of one) as input an paints it's cell with a constant color.
 
-- `outline`: Draw the tile outlines, and specify a custom pen if the default pen is not to your liking.
+- `outline`: Draw the tile outlines and specify a custom pen if the default pen is not to your liking.
 - `kwargs`: This form of `pcolor` is a wrap of ``grdview`` so any option of that module can be used here.
   One can for example control the tilling option via ``grdview's`` ``tiles`` option.
 
