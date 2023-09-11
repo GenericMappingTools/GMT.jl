@@ -190,6 +190,8 @@
 	grdvector!(meshgrid(1:41)[1], meshgrid(1:41)[2], dzdx.z, dzdy.z, Vd=dbg2)
 	r = grdvector!(dzdx, dzdy, I=0.2, vector=(len=0.25, stop=1, norm=0.65), W="1p", S=12, Vd=dbg2);
 	@test startswith(r, "grdvector  -R -J -Ve -I0.2 -S12 -W1p -Q0.25+e+n0.65")
+	windbarbs(dzdx, dzdy, Vd=2)
+	windbarbs([0 90 0 45; 10 90 10 45],  R=:g, Vd=2)
 
 	println("	GRDVOLUME")
 	grdvolume(G);
