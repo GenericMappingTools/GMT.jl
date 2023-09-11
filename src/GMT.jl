@@ -293,7 +293,7 @@ include("potential/grdgravmag3d.jl")
 include("potential/gravprisms.jl")
 include("potential/gravfft.jl")
 include("spotter/grdrotater.jl")
-include("windbarbs/windbarbs.jl")
+#include("windbarbs/windbarbs.jl")
 include("drawing.jl")
 include("get_enums.jl")
 
