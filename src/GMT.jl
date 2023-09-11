@@ -158,7 +158,7 @@ export
 
 	ablines, ablines!, density, density!, boxplot, boxplot!, cornerplot, cornerplot!, cubeplot, ecdfplot, ecdfplot!,
 	fill_between, fill_between!, marginalhist, marginalhist!, parallelplot, parallelplot!, plotlinefit, plotlinefit!,
-	qqplot, qqplot!, qqnorm, qqnorm!, seismicity, violin, violin!, viz,
+	qqplot, qqplot!, qqnorm, qqnorm!, seismicity, violin, violin!, viz, #windbarbs,
 
 	info,
 
@@ -293,6 +293,7 @@ include("potential/grdgravmag3d.jl")
 include("potential/gravprisms.jl")
 include("potential/gravfft.jl")
 include("spotter/grdrotater.jl")
+#include("windbarbs/windbarbs.jl")
 include("drawing.jl")
 include("get_enums.jl")
 

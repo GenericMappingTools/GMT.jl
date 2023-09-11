@@ -2438,7 +2438,7 @@ function add_opt_cpt(d::Dict, cmd::String, symbs::VMs, opt::Char, N_args::Int=0,
 	                 store::Bool=false, def::Bool=false, opt_T::String="", in_bag::Bool=false)
 	# Deal with options of the form -Ccolor, where color can be a string or a GMTcpt type
 	# SYMBS is normally: CPTaliases
-	# N_args only applyies to when a GMTcpt was transmitted. Than it's either 0, case in which
+	# N_args only applyies to when a GMTcpt was transmitted. Then it's either 0, case in which
 	# the cpt is put in arg1, or 1 and the cpt goes to arg2.
 	# STORE, when true, will save the cpt in the global state
 	# DEF, when true, means to use the default cpt (Turbo)

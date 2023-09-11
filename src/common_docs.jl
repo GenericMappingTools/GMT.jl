@@ -102,7 +102,7 @@ const opt_j = "**j** | **spherical_dist** | **spherical** :: [Type => Str]     `
 
     Determine how spherical distances are calculated in modules that support this."
 
-const _opt_l = "**l** | **legend** :: [Type => Str]     ``Arg = [label][+dpen][+ffont][+ggap][+hheader][+jjust][+ncols][+ssize][+v[pen]][+wwidth][+xscale``
+const _opt_l = "**l** | **legend** :: [Type => Str]     ``Arg = [label][+Dpen][+Ggap][+Hheader][+L[code/]text][+Ncols][+Ssize[/height]][+V[pen]][+ffont][+gfill][+jjustify][+ooff][+ppen][+sscale][+wwidth]``
 
     Add a map legend entry to the session legend information file for the current plot."
 

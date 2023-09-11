@@ -110,8 +110,8 @@ function psconvert(cmd0::String="", arg1=nothing; kwargs...)
 		cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)		# Find how data was transmitted
 	end
 
-	if (isempty(cmd))          cmd = "-A1p -Tj -Qg4 -Qt4"  end 	# Means no options were used. Allowed case
-	if (!occursin("-Q", cmd))  cmd = cmd * " -Qt4 -Qg4"    end	# We promised to have these as default
+	(isempty(cmd)) && (cmd = "-A1p -Tj -Qg4 -Qt4")   	# Means no options were used. Allowed case
+	(!occursin("-Q", cmd)) && (cmd *= " -Qt4 -Qg4")		# We promised to have these as default
 
 	if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end
 	gmt("psconvert " * cmd, arg1)

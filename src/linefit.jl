@@ -361,12 +361,15 @@ parameters in the data type attributes. All `plot` options are available via the
 ```julia-repl
 ablines([1, 2, 3], [1, 1.5, 2], linecolor=[:red, :orange, :pink], linestyle=:dash, linewidth=2, show=true)
 ```
-D = linearfitxy([0.0, 0.9, 1.8, 2.6, 3.3, 4.4, 5.2, 6.1, 6.5, 7.4], [5.9, 5.4, 4.4, 4.6, 3.5, 3.7, 2.8, 2.8, 2.4, 1.5], sx=1 ./ sqrt.([1000., 1000, 500, 800, 200, 80,  60, 20, 1.8, 1]), sy=1 ./ sqrt.([1., 1.8, 4, 8, 20, 20, 70, 70, 100, 500]));
+```julia-repl
+D = linearfitxy([0.0, 0.9, 1.8, 2.6, 3.3, 4.4, 5.2, 6.1, 6.5, 7.4], [5.9, 5.4, 4.4, 4.6, 3.5, 3.7, 2.8, 2.8, 2.4, 1.5],
+                 sx = 1 ./ sqrt.([1000., 1000, 500, 800, 200, 80,  60, 20, 1.8, 1]), sy=1 ./
+                 sqrt.([1., 1.8, 4, 8, 20, 20, 70, 70, 100, 500]));
 plot(D, linefit=true, band_ab=true, band_CI=true, ellipses=true, Vd=2)
 plot!(D, linefit=true, Vd=2)
 ablines!(D, Vd=2)
 ablines!(0,1, Vd=2)
-ablines!([1, 2, 3], [1, 1.5, 2], linecolor=[:red, :orange, :pink], linestyle=:dash, linewidth=2, Vd=2)
+```
 """
 function ablines(D::GMTdataset; first::Bool=true, kw...)
 	(get(D.attrib, "linearfit", "") == "") &&
