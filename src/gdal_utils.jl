@@ -103,6 +103,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function gd2gmt_helper_scalefac(mat, scale_factor, add_offset, got_fill_val, fill_val)
 	# Apply a scale + offset and/or replace the fill_val by NaNs
+	(eltype(mat) <: Integer && isa(fill_val, AbstractFloat)) && return mat	# Sign that we are in that GDAL BUG
 	(got_fill_val) && (nodata = isnodata(mat, fill_val))
 	if (scale_factor != 1 || add_offset != 0)
 		if (eltype(mat) <: Integer)

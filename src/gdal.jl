@@ -823,7 +823,8 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 		GDT_UInt32     => UInt32,
 		GDT_Int32      => Int32,
 		GDT_Float32    => Float32,
-		GDT_Float64    => Float64)
+		GDT_Float64    => Float64,
+		UInt32(14)     => UInt8)		# TEMPORARY to workaround a GDAL BUG
 
 	macro gdal(args...)
 		@assert length(args) > 0
