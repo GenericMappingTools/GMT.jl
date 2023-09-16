@@ -202,7 +202,7 @@
 	GMT.findmin_nan([1., 3, NaN, 8])
 	fields(7);
 	fields(rand(2,2))
-	tic();toc()
+	tic();toc();
 	@test_throws ErrorException("`toc()` without `tic()`") toc()
 
 	# Orbits

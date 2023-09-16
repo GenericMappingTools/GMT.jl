@@ -4,6 +4,7 @@ using Printf, Dates, Statistics, Downloads
 using Tables: Tables
 using PrettyTables
 using PrecompileTools
+using LinearAlgebra
 
 struct CTRLstruct
 	limits::Vector{Float64}			# To store the data limits. First 6 store: data limits. Second 6: plot limits, 13th +r
@@ -160,7 +161,7 @@ export
 	fill_between, fill_between!, marginalhist, marginalhist!, parallelplot, parallelplot!, plotlinefit, plotlinefit!,
 	qqplot, qqplot!, qqnorm, qqnorm!, seismicity, violin, violin!, viz, windbarbs,
 
-	info,
+	info, pca,
 
 	df2ds, ODE2ds,
 	@?
@@ -240,6 +241,7 @@ include("makecpt.jl")
 include("mapproject.jl")
 include("movie.jl")
 include("nearneighbor.jl")
+include("pca.jl")
 include("pcolor.jl")
 include("orbits.jl")
 include("plot.jl")
@@ -339,6 +341,8 @@ include("get_enums.jl")
 	marginalhist(randn(1000,2), par=(PS_MEDIA="A2",), fmt=:ps);	rm("GMTplot.ps")
 	feather([0.0 0 2.0; 0.0 30 2; 0.0 60 2], rtheta=true, aspect="1:1", arrow=(len=0.5, shape=0.5,), fmt=:ps);
 	orbits(mat2ds(rand(10,3)));
+	pca(rand(25,6));
+	pca(mat2img(rand(UInt8, 64,64,4)));
 	rm(joinpath(tempdir(), "GMTjl_custom_p_x.txt"))		# This one gets created before username is set.
 	resetGMT()
 end
