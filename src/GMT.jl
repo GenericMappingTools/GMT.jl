@@ -4,6 +4,7 @@ using Printf, Dates, Statistics, Downloads
 using Tables: Tables
 using PrettyTables
 using PrecompileTools
+using LinearAlgebra
 
 struct CTRLstruct
 	limits::Vector{Float64}			# To store the data limits. First 6 store: data limits. Second 6: plot limits, 13th +r
@@ -160,7 +161,7 @@ export
 	fill_between, fill_between!, marginalhist, marginalhist!, parallelplot, parallelplot!, plotlinefit, plotlinefit!,
 	qqplot, qqplot!, qqnorm, qqnorm!, seismicity, violin, violin!, viz, windbarbs,
 
-	info,
+	info, pca,
 
 	df2ds, ODE2ds,
 	@?
