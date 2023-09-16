@@ -150,11 +150,16 @@ function gmtread(_fname::String; kwargs...)
 
 	if (opt_T != " -To")			# All others but OGR
 		cmd *= opt_T
-		#return (dbg_print_cmd(d, cmd) !== nothing) ? "gmtread " * cmd : gmt("read " * fname * cmd)
 		(dbg_print_cmd(d, cmd) !== nothing) && return "gmtread " * cmd
 		o = gmt("read " * fname * cmd)
 		(isempty(o)) && (@warn("\tfile \"$fname\" is empty or has no data after the header.\n"); return GMTdataset())
-	
+
+		# If loading a cube, see also if there are layers descriptions to fetch.
+		if ((isa(o, GMTgrid) && size(o,3) > 1)) || (isa(o, GMTimage) && !(eltype(o) <: UInt8))
+			desc = get_cube_layers_desc(fname)
+			!all(desc .== "") && (o.names = desc)
+		end
+
 		if (opt_i != "" && contains(opt_i, '+'))
 			spli = split(opt_i[4:end], ',')
 			for k = 1:numel(spli)
@@ -198,6 +203,26 @@ function gmtread(_fname::String; kwargs...)
 	ressurectGDAL()				# Because GMT called GDALDestroyDriverManager()
 	GMT_Destroy_Session(API2)
 	return O
+end
+
+# ---------------------------------------------------------------------------------
+"""
+    desc = get_cube_layers_desc(fname::String, layers::Vector{Int}=Int[]) -> Vector{String}
+
+- `fname`: The name of a disk file of a cube.
+
+- `layers`: Only used when called from ``find_layers()`` in ``RemoteS``
+"""
+function get_cube_layers_desc(fname::String, layers::Vector{Int}=Int[])#::String[]
+	ds = Gdal.unsafe_read(fname)
+	n_bands, msg = Gdal.nraster(ds), ""
+	(n_bands < 2) && (msg = "This file ($fname) does not contain cube data (more than one layer).")
+	(!isempty(layers) && maximum(layers) > n_bands) && (msg = "Asked for more 'layers' ($(n_bands)) than this cube contains.")
+	(msg != "") && (Gdal.GDALClose(ds.ptr); error(msg))
+	desc = fill("", n_bands)
+	[desc[k] = Gdal.GDALGetDescription(Gdal.GDALGetRasterBand(ds.ptr, k)) for k = 1:n_bands]
+	Gdal.GDALClose(ds.ptr)
+	return desc
 end
 
 # ---------------------------------------------------------------------------------
