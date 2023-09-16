@@ -15,6 +15,7 @@ GMT_jll = "b68b8c3f-ed99-5bef-9675-4739d9426b26"
 GDAL_jll = "a7073274-a066-55f0-b90d-d619367d196c"
 PROJ_jll = "58948b4f-47e0-5654-a9ad-f609743f8632"
 Ghostscript_jll = "61579ee1-b43e-5ca0-a5da-69d92c66a64b"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 
 [compat]
 Tables = "1"
