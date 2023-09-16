@@ -468,7 +468,7 @@ function get_image(API::Ptr{Nothing}, object)::GMTimage
 	X  = collect(range(wesn[1], stop=wesn[2], length=(nx + gmt_hdr.registration)))
 	Y  = collect(range(wesn[3], stop=wesn[4], length=(ny + gmt_hdr.registration)))
 
-	layout = join([Char(gmt_hdr.mem_layout[k]) for k=1:4])		# This is damn diabolic
+	layout = join([Char(gmt_hdr.mem_layout[k]) for k=1:4])		# This is damn diabolic (and GMT is lying for cubes)
 	if (occursin("0", IMG_MEM_LAYOUT[1]) || occursin("1", IMG_MEM_LAYOUT[1]))	# WTF is 0 or 1?
 		t = deepcopy(unsafe_wrap(Array, data, ny * nx * nz))
 	else
@@ -480,6 +480,9 @@ function get_image(API::Ptr{Nothing}, object)::GMTimage
 			isBRP = startswith(layout, "BRP")
 			(nz == 1 && isBRP) && (layout = "BRPa")	# For 1 layer "BRBa" and "BRPa" is actualy the same.
 			(!isBRP) && @warn("Only 'I' for Images.jl and 'BRP' MEM layouts are allowed.")
+			
+			# OK, the above is not always true. Image cubes are not pixel interleaved. But how to detect them?
+			(I.type > 1 || (nz == 2 || nz > 4)) && (layout = layout[1:2] * "B")	# Stil leaves out cases of uint8 cubes.
 		end
 		t = reshape(unsafe_wrap(Array, data, ny * nx * nz), o)	# Apparently the reshape() creates a copy
 	end
@@ -1374,6 +1377,9 @@ Runs ``show(stdout, "text/plain", any)`` which prints all elements of `any`. Goo
 """
 function info(GI::GItype, showdata::Bool=true; crs::Bool=false)
 	crs && return print_crs(GI)
+	isa(GI, GMTimage) ? println("A GMTimage object with $(size(GI,3)) bands of type $(eltype(GI))") :
+	                    println("A GMTgrid object with $(size(GI,3)) layers of type $(eltype(GI))")
+	!isempty(GI.names) && [println('\t',name) for name in GI.names]#display(GI.names)
 	if isa(GI, GMTgrid)
 		(GI.title   != "" && GI.title[1]   != '\0') && println("title: ", rstrip(GI.title, '\0'))
 		(GI.remark  != "" && GI.remark[1]  != '\0') && println("remark: ", rstrip(GI.remark, '\0'))
@@ -1393,7 +1399,7 @@ function info(D::GDtype; crs::Bool=false, attribs=false, att::StrSymb="")
 	(attribs == false) && (_D = isa(D, Vector) ? D[1] : D)
 	(attribs == false && att == "" && isempty(_D.attrib)) && return show(_D)
 	(attribs == false && att == "") && (t = make_attrtbl(D, false);
-		return isa(t, Tuple) ? show(_D, attrib_table=t[1]) : show(_D, attrib_table=t))
+	                                    return isa(t, Tuple) ? show(_D, attrib_table=t[1]) : show(_D, attrib_table=t))
 
 	# OK, here we are dealing with printing the attribs, or returning a column with the values of one attrib.
 	(attribs == false && att != "")	&& (attribs = true)
