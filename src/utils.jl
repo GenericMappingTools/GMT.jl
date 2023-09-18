@@ -665,3 +665,5 @@ function hopalong(num, a, b, c)
 	return u, v, d
 end
 =#
+
+#isdefined(Main, :VSCodeServer) && (vsd = Main.VSCodeServer.vscodedisplay)

@@ -140,3 +140,107 @@ function GI2vectors(GI, DT::DataType=Float32)
 		X = DT.(reshape(GI, n_rc, n_layers))
 	end
 end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    Ik = kmeans(I::GMTimage, k=5; seeds=nothing, maxiter=100, tol=1e-7, V=false) -> GMTimage
+
+Compute a k-means clustering on an RGB image `I`. It produces a fixed number of clusters, each associated
+with a center, and each RGB color is assigned to a cluster with the nearest center.
+
+- `I`: The input ``GMTimage`` object.
+- `k`: The number of clusters when using unsupervised classification.
+- `seeds`: For supervised classifications this is Mx3 UInt8 matrix with the colors of the cluster
+  centers. The algorithm than aggregates  all colors in the image around these M seed colors.
+  Attention, if provided, this option resets `k`.
+- `maxiter`: Maximum number of iterations that the algorithm may run till reach a solution.
+- `tol`: Alternatively, sets the minimal allowed change of the objective during convergence.
+  The iteration process stops when one of the two conditions is met first.
+- `V`: Print some info at the end of the iterative loop (number of iterations, time spent).
+
+
+    kmeans(X::Union{GMTdataset, Matrix{<:Real}}, k=3; seeds=nothing, maxiter=100, tol=1e-7,
+           raw::Bool=false, V=false) -> Vector{GMTdataset} | idx, centers, counts
+
+This method accepts a M-by-d matrix or a ``GMTdataset`` where columns represent the data points and
+rows the `d`-dimensional data point.
+
+- `raw`: A Boolean that if `false` makes the return data be a vector of ``GMTdatset``, one for each
+  cluster found in input data. If `raw=true`, we return: `idx, centers, counts`, where
+  - `idx`: A vector of ints with the assignments of each data points (by position in the `idx` vector) to clusters.
+  - `centers`: A k-by-d matrix with the centers of each cluster.
+  - `counts`: A matrix of integers with the cluster number in first column, and number of elements
+    in that cluster in second column.
+
+### Example
+    D = gmtread(GMT.TESTSDIR * "iris.dat");
+
+	Dk = kmeans(D, k=3)		# Unsupervised segment data into 3 clusters.
+"""
+function kmeans(I::GMTimage, k=5; seeds=nothing, maxiter=100, tol=1e-7, V=false)
+	X = GI2vectors(I, eltype(I))
+
+	dist, centers = helper_kmeans(X, k; seeds=seeds, maxiter=maxiter, tol=tol, V=V)
+	t = [convert(eltype(I), (argmin(_dist)-1)) for _dist in eachrow(dist)]
+	Ik = mat2img(reshape(t, size(I,1), size(I,2)), I)
+	Ik.colormap = zeros(Int32, 256 * 3)
+	Ik.n_colors, Ik.color_interp = 256,  "Palette"	# Because for GDAL we always send 256 even if they are not all filled
+	for n = 1:3, m = 1:size(centers, 1)				# Write 'colormap' col-wise
+		@inbounds Ik.colormap[m + (n-1)*Ik.n_colors] = round(Int32, centers[m,n]);
+	end
+	return Ik
+end
+
+# ---------------------------------------------------------------------------------------------------
+function kmeans(X::Union{GMTdataset, Matrix{<:Real}}, k=3; seeds=nothing, maxiter=100, tol=1e-7,
+                raw::Bool=false, V=false)
+	dist, centers = helper_kmeans(X, k; seeds=seeds, maxiter=maxiter, tol=tol, V=V)
+	idx = argmin.(eachrow(dist))
+	classes = sort(unique(idx))
+	
+	(raw) && return idx, centers, [classes [sum(idx .== classes[n]) for n = 1:numel(classes)]]
+
+	Dv = Vector{GMTdataset}(undef, length(classes))
+	colnames = isa(X, GMTdataset) ? X.colnames : String[]
+	has_text = isa(X, GMTdataset) && !isempty(X.text)
+	for n = 1:numel(classes)
+		ind = (idx .== classes[n])
+		txt = has_text ? X.text[ind] : String[]
+		Dv[n] = mat2ds(X[ind, :], txtcol=txt, colnames=colnames, geom=wkbPoint)
+		Dv[n].comment = ["kmeans-class = $(classes[n]); centers = $(round.(centers[classes[n],:], digits=4))"]
+	end
+	return Dv
+end
+
+# ---------------------------------------------------------------------------------------------------
+function helper_kmeans(X, k=5; seeds=nothing, maxiter=100, tol=1e-7, V=false)
+	(seeds === nothing) && (seeds = X[round.(Int, rand(k) * (size(X,1) - 1) .+ 1), :])
+	k = size(seeds, 1)				# Needed when seeds != nothing
+	centers = Float32.(seeds)
+	OldCenters = copy(centers)
+
+	V == 1 && tic()
+	n, change = 0, 1e8
+	dist = Matrix{Float32}(undef, size(X,1), k)
+	while (n < maxiter && change > tol)
+		# Not particularly faster than "sum((centers.^2), dims=2)' .- 2.0f0 * X * centers'" but uses less memory
+		t1, t2 = sum((centers.^2), dims=2)', 2.0f0 * X * centers'
+		for i = 1:k, j = 1:size(X,1)
+			@inbounds dist[j,i] = t1[i] - t2[j,i]	# i.e. d^2 = (x-c)^2 = x^2 + c^2 -2xc (droped x^2 because is a constant)
+		end
+		# label of nearest center for each pointalongline
+		center = [Int8(argmin(_dist)) for _dist in eachrow(dist)]	# argmin.(eachrow(dist)) returns Int64
+		for j = 1:k
+			idx = (center .== j)
+			if (any(idx))
+				@inbounds centers[j,:] = mean(X[idx,:], dims=1)
+			end
+		end
+
+		change = sum(abs.(OldCenters .- centers))
+		OldCenters = copy(centers)
+		n += 1
+	end
+	V == 1 && (toc(); println("\tN iterations = ",n, "\tTol = ", change))
+	return dist, centers
+end
