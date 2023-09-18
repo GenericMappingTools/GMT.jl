@@ -116,7 +116,6 @@ function _show(io::IO,
 		(D.proj4  != "")      && println("PROJ: ", D.proj4)
 		(D.wkt    != "")      && println("WKT: ", D.wkt)
 		(D.header != "")      && println("Header:\t", D.header)
-		(!isempty(D.comment)) && println("Comment:\t", D.comment)
 		println("")
 	end
 
