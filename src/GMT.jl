@@ -161,7 +161,7 @@ export
 	fill_between, fill_between!, marginalhist, marginalhist!, parallelplot, parallelplot!, plotlinefit, plotlinefit!,
 	qqplot, qqplot!, qqnorm, qqnorm!, seismicity, violin, violin!, viz, windbarbs,
 
-	info, pca,
+	info, kmeans, pca,
 
 	df2ds, ODE2ds,
 	@?
@@ -343,6 +343,7 @@ include("get_enums.jl")
 	orbits(mat2ds(rand(10,3)));
 	pca(rand(25,6));
 	pca(mat2img(rand(UInt8, 64,64,4)));
+	kmeans(rand(100,3), 3, maxiter=10);
 	rm(joinpath(tempdir(), "GMTjl_custom_p_x.txt"))		# This one gets created before username is set.
 	resetGMT()
 end

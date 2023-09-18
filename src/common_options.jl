@@ -3629,7 +3629,7 @@ end
 round_wesn(wesn::Array{Int}, geo::Bool=false, pad=zeros(2)) = round_wesn(float(wesn), geo, pad)
 function round_wesn(wesn::Array{Float64, 2}, geo::Bool=false, pad=zeros(2))::Array{Float64, 2}
 	# When input is an one row matix return an output of same size
-	_wesn = wesn[:]
+	_wesn = vec(wesn)
 	_wesn = round_wesn(_wesn, geo, pad)
 	reshape(_wesn, 1, length(_wesn))
 end
@@ -3686,6 +3686,8 @@ function round_wesn(_wesn::Vector{Float64}, geo::Bool=false, pad=zeros(2))::Vect
 				s, inc = 3600.0, 1.0
 				if ((s * range[side] / inc) > 10.0) inc *= 2.0	end		# 2 arcsec
 				if ((s * range[side] / inc) > 10.0) inc *= 2.5	end		# 5 arcsec
+			elseif (inc > 1)							# Nearest degree
+				inc = 1.0
 			end
 			wesn[item] = (floor(s * wesn[item] / inc) * inc) / s;	item += 1;
 			wesn[item] = (ceil(s * wesn[item] / inc) * inc) / s;	item += 1;

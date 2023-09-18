@@ -28,19 +28,19 @@ jobs:
           #- '1.6' # Replace this with the minimum Julia version that your package supports. E.g. if your package requires Julia 1.5 or higher, change this to '1.5'.
           #- '1.7' # Leave this line unchanged. '1' will automatically expand to the latest stable 1.x release of Julia.
           - '1'
-          - '~1.9.0-0'
+          - '~1.10.0-0'
           - 'nightly'
         os:
-          #- ubuntu-latest
-          - ubuntu-20.04
+          - ubuntu-latest
+          #- ubuntu-20.04
           - macos-latest
         arch:
           - x64
         include:
           # Linux
           - name: Linux - Compile only
-            os: ubuntu-20.04
-            #os: ubuntu-latest
+            #os: ubuntu-20.04
+            os: ubuntu-latest
             run_in_pr : true
           - name: macOS
             os: macos-latest
