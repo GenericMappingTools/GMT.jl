@@ -111,6 +111,9 @@
 	getindex(D[1],1);
 	setindex!(D[1], 1,1);
 	Base.BroadcastStyle(typeof(D[1]));
+	D = mat2ds(rand(3,3), colnames=["Time","b","c"]); D.attrib = Dict("Timecol" => "1");
+	D[:Time];
+	D["Time", "b"];
 	try
 	display(D);		# It seems the pretty tables solution has an Heisenbug.
 	catch
