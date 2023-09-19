@@ -134,11 +134,11 @@ export
 	mbimport, mbgetdata, mbsvplist, mblevitus,
 
 	blendimg!, lonlat2xy, xy2lonlat, df2ds, mat2ds, mat2grid, mat2img, slicecube, cubeslice, linspace, logspace, fields,
-	flipud, fliplr, flipdim, flipdim!, gridinterp, grdinterp, pow, tic, toc, theme, tern2cart, geodetic2enu, cpt4dcw,
+	flipud, fliplr, flipdim, flipdim!, grdinterpolate, pow, tic, toc, theme, tern2cart, geodetic2enu, cpt4dcw,
 	gd2gmt, gmt2gd, gdalread, gdalshade, gdalwrite, gadm, xyzw2cube, coastlinesproj, graticules, orbits, orbits!,
-	plotgrid!, resise, worldrectangular, worldrectgrid,
+	plotgrid!, worldrectangular, worldrectgrid,
 
-	earthregions, gridit, magic, rescale, stackgrids, delrows!, setgrdminmax!, meshgrid, cart2pol, pol2cat, cart2sph, sph2cart,
+	earthregions, gridit, magic, rescale, stackgrids, delrows!, setgrdminmax!, meshgrid, cart2pol, pol2cart, cart2sph, sph2cart,
 
 	arcellipse, arccircle, getband, getdriver, getlayer, getproj, getgeom, getgeotransform, toPROJ4, toWKT,
 	importPROJ4, importWKT, importEPSG, gdalinfo, gdalwarp, gdaldem, gdaltranslate, gdalgrid, gdalvectortranslate,
@@ -317,6 +317,8 @@ include("get_enums.jl")
 	gmtwrite(t,[0.0 0; 1 1]);
 	gmtread(t);
 	rm(t)
+	D = mat2ds(rand(3,3), colnames=["Time","b","c"]); D.attrib = Dict("Timecol" => "1");
+	D[:Time];	D["Time", "b"];
 	grdimage(rand(Float32,32,32), Vd=2);
 	grdview(rand(Float32,32,32), Vd=2);
 	grdinfo(mat2grid(rand(Float32,4,4)));

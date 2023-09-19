@@ -121,6 +121,19 @@ end
 Base.size(D::GMTdataset) = size(D.data)
 Base.getindex(D::GMTdataset{T,N}, inds::Vararg{Int,N}) where {T,N} = D.data[inds...]
 
+Base.getindex(D::GMTdataset{T,N}, ind::Symbol) where {T,N} = Base.getindex(D, string(ind))
+function Base.getindex(D::GMTdataset{T,N}, ind::String) where {T,N}
+	mat = Tables.getcolumn(D, Symbol(ind))
+	D2 = mat2ds(mat, colnames=[ind], proj4=D.proj4, wkt=D.wkt)::GMTdataset
+	if ((Tc = get(D.attrib, "Timecol", "")) != "")		# If original has one, try to keep it but may need to recalculate
+		Tcn = Tables.columnnames(D)[parse(Int,Tc)]		# The Timecol name in input D
+		i = findfirst(Tables.columnnames(D) .== Tcn)
+		c = findfirst(Tables.columnnames(D) .== ind)
+		(i == c) && (D2.attrib = Dict("Timecol" => "$i"))	# The selected column was the Time one.
+	end
+	D2
+end
+Base.getindex(D::GMTdataset{T,N}, inds::Vararg{String,N}) where {T,N} = Base.getindex(D, Symbol.(inds)...)
 function Base.getindex(D::GMTdataset{T,N}, inds::Vararg{Symbol,N}) where {T,N}
 	# If accessed by column names, create a new GMTdataset.
 	# Most of this and more should go into a new mat2ds method.
@@ -129,8 +142,13 @@ function Base.getindex(D::GMTdataset{T,N}, inds::Vararg{Symbol,N}) where {T,N}
 	D2 = mat2ds(mat, colnames=colnames_inds, proj4=D.proj4, wkt=D.wkt)::GMTdataset
 	if ((Tc = get(D.attrib, "Timecol", "")) != "")		# If original has one, try to keep it but may need to recalculate
 		Tcn = Tables.columnnames(D)[parse(Int,Tc)]		# The Timecol name in input D
+		idx = [findfirst(Tables.columnnames(D) .== ind) for ind in colnames_inds]	# Find the column numbers of inds
 		i = findfirst(Tables.columnnames(D) .== Tcn)
-		(i !== nothing) && (D2.attrib = Dict("Timecol" => "$i"))
+		itc = (i !== nothing) ? intersect(idx, i) : Int[]
+		if (!isempty(itc))								# One of the selected columns has a Time column
+			i = findfirst(idx .== itc)					# Find the new column number of the Time column
+			D2.attrib = Dict("Timecol" => "$i")
+		end
 	end
 	D2
 end
