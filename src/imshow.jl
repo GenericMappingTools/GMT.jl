@@ -33,7 +33,7 @@ julia> viz(G, zsize=6, facades=("cenora_base.jpg", "bunny_cenora.webp", "burro_c
 ```
 See also: [`grdimage`](@ref), [`grdview`](@ref)
 """
-function imshow(arg1, x::AbstractVector{Float64}=Vector{Float64}(), y::AbstractVector{Float64}=Vector{Float64}(); kw...)
+function imshow(arg1, x::AbstractVector{Float64}=Float64[], y::AbstractVector{Float64}=Float64[]; kw...)
 	# Take a 2D array of floats and turn it into a GMTgrid or if input is a string assume it's a file name
 	# In this later case try to figure if it's a grid or an image and act accordingly.
 
@@ -68,7 +68,7 @@ function imshow(arg1, x::AbstractVector{Float64}=Vector{Float64}(), y::AbstractV
 		return (call_plot3) ? plot3d(arg1; show=see, kw...) : plot(arg1; show=see, kw...)
 	elseif (isa(arg1, GMTcpt))
 		return (find_in_kwargs(kw, [:D :pos :position])[1] === nothing) ?
-			psscale(arg1; show=true, D="x0/0+w7+h", kw...) : psscale(arg1; show=true, kw...)
+		        psscale(arg1; show=true, D="x0/0+w7+h", kw...) : psscale(arg1; show=true, kw...)
 	elseif (isdataframe(arg1) || isODE(arg1))
 		return isplot3(kw) ? plot3(arg1; show=see, kw...) :  plot(arg1; show=see, kw...)
 	else
