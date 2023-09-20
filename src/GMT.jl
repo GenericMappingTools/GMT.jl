@@ -159,7 +159,7 @@ export
 
 	ablines, ablines!, density, density!, boxplot, boxplot!, cornerplot, cornerplot!, cubeplot, ecdfplot, ecdfplot!,
 	fill_between, fill_between!, marginalhist, marginalhist!, parallelplot, parallelplot!, plotlinefit, plotlinefit!,
-	qqplot, qqplot!, qqnorm, qqnorm!, seismicity, violin, violin!, viz, windbarbs,
+	qqplot, qqplot!, qqnorm, qqnorm!, seismicity, sealand, terramar, violin, violin!, viz, windbarbs,
 
 	info, kmeans, pca,
 
@@ -263,6 +263,7 @@ include("psxy.jl")
 include("pswiggle.jl")
 include("rasterpolygonfuns.jl")
 include("sample1d.jl")
+include("sealand.jl")
 include("spectrum1d.jl")
 include("sphdistance.jl")
 include("sphinterpolate.jl")

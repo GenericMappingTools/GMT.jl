@@ -24,6 +24,10 @@ G = gmt("grdmath -Rg -fg -I5 X");
 gmtwrite("lixo.grd", G)
 grdimage("lixo.grd", proj=:Winkel, colorbar=true, coast=true)
 
+G2 = mat2grid(rand(181,361), x=-180:180, y=-90:90);
+sealand(grdimage, G2, NamedTuple(), grdimage, G2, NamedTuple())
+terramar(grdimage, G2, NamedTuple(), grdimage, G2, NamedTuple(), shore=0.5)
+
 println("	GRDVIEW")
 PS = grdview(G, J="X6i", JZ=5,  I=45, Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", ps=1);
 gmt("destroy")
