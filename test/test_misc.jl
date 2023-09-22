@@ -188,6 +188,7 @@
 	catch
 	end
 	image_cpt!(I, C)
+	GMT.cmap2cpt(I)
 	GMT.transpcmap!(I, true)
 	GMT.transpcmap!(I, false)
 	@info "before image_cpt!"

@@ -97,7 +97,7 @@
 		gmtbinstats("@capitals.gmt", a="2=population", R=:g, I=5, C=:z, S="1000k");
 		gmtbinstats("@capitals.gmt", aspatial="2=population", R=:g, I=5, C="q10", search_radius="1000k", Vd=dbg2);
 		@test_throws ErrorException("Bad argument for the 'tile' option (vv)") gmtbinstats("@capitals.gmt", R=:g, I=5, C="vv")
-		@test gmtbinstats("@capitals.gmt", R=:g, I=5, tiling=:hexagon, stats=:n, Vd=2) == "gmtbinstats @capitals.gmt  -I5 -Rg -Cn -Th"
+		@test gmtbinstats("@capitals.gmt", R=:g, I=5, tiling=:hexagon, stats=:n, Vd=2) == "gmtbinstats  -I5 -Rg -Cn -Th"
 		gmt("destroy")
 		xy = rand(100,2) .* [5 3];
     	D = gmtbinstats(xy, region=(0,5,0,3), inc=1, tiling=:hex, stats=:number, f=:c);

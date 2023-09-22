@@ -52,10 +52,16 @@ Parameters
 
 To see the full documentation type: ``@? gmtbinstats``
 """
-function binstats(cmd0::String="", arg1=nothing; nbins=0, kwargs...)
+function binstats(fname::String=""; nbins=0, kwargs...)
+	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+	arg1 = read_data(d, fname, "", nothing, " ", false, true)[2]	# Make sure we have the data here
+	binstats(arg1; nbins=0, d...)
+end
+function binstats(arg1; nbins=0, kwargs...)
+#function binstats(cmd0::String="", arg1=nothing; nbins=0, kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
-	(cmd0 != "") && (arg1 = read_data(d, cmd0, "", arg1, " ", false, true)[2])	# Make sure we have the data here
+	#arg1 = read_data(d, "", "", arg1, " ", false, true)[2]	# Make sure we have the data here
 	data = mat2ds(arg1)
 	isa(data, Vector{<:GMTdataset}) && isempty(data[1].ds_bbox) && set_dsBB!(data)
 
@@ -109,7 +115,7 @@ function binstats(cmd0::String="", arg1=nothing; nbins=0, kwargs...)
 	(!contains(cmd, " -R")) && (cmd *= @sprintf(" -R%.10g/%.10g/%.10g/%.10g", mima...))
 	val = find_in_dict(d, [:threshold])[1]
 
-	R = common_grd(d, cmd0, cmd, "gmtbinstats ", data)		# Finish build cmd and run it
+	R = common_grd(d, "", cmd, "gmtbinstats ", data)		# Finish build cmd and run it
 	if (isa(R, GMTdataset) && (val !== nothing))
 		th::Float64 = val		# Don't use the bloody Anys in next comparison.
 		#R.data = R[(view(R.data,:,3) .>= th), :]
@@ -124,6 +130,6 @@ function binstats(cmd0::String="", arg1=nothing; nbins=0, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-binstats(arg1; kw...) = binstats("", arg1; kw...)
+#binstats(arg1; kw...) = binstats("", arg1; kw...)
 
 const gmtbinstats = binstats			# Alias

@@ -871,7 +871,7 @@ function mat2img(mat::AbstractArray{<:Unsigned}, dumb::Int=0; x=Vector{Float64}(
 	# Note: if HDR is empty we guess the registration from the sizes of MAT & X,Y
 	color_interp = "";		n_colors = 0;
 	if (cmap !== nothing)
-		colormap, n_colors = cmap2colormap(cmap)
+		colormap, n_colors = cpt2cmap(cmap)
 	else
 		(size(mat,3) == 1) && (color_interp = "Gray")
 		if (hdr !== nothing && (hdr[5] == 0 && hdr[6] == 1))	# A mask. Let's create a colormap for it
@@ -898,26 +898,48 @@ function mat2img(mat::AbstractArray{<:Unsigned}, dumb::Int=0; x=Vector{Float64}(
 end
 
 # ---------------------------------------------------------------------------------------------------
-function cmap2colormap(cmap::GMTcpt, force_alpha=true)
+function cpt2cmap(cpt::GMTcpt, force_alpha=true)
 	# Convert a GMT CPT into a colormap to be ingested by GDAL
-	have_alpha = !all(cmap.alpha .== 0.0)
+	have_alpha = !all(cpt.alpha .== 0.0)
 	nc = (have_alpha || force_alpha) ? 4 : 3
-	colormap = zeros(Int32, 256 * nc)
+	cmap = zeros(Int32, 256 * nc)
 	n_colors = 256;			# Because for GDAL we always send 256 even if they are not all filled
-	@inbounds for n = 1:3	# Write 'colormap' col-wise
-		@inbounds for m = 1:size(cmap.colormap, 1)
-			colormap[m + (n-1)*n_colors] = round(Int32, cmap.colormap[m,n] * 255);
+	for n = 1:3	# Write 'cmap' col-wise
+		for m = 1:size(cpt.colormap, 1)
+			@inbounds cmap[m + (n-1)*n_colors] = round(Int32, cpt.colormap[m,n] * 255);
 		end
 	end
 	if (have_alpha)						# Have alpha color(s)
-		for m = 1:size(cmap.colormap, 1)
-			colormap[m + 3*n_colors] = round(Int32, cmap.colormap[m,4] * 255)
+		for m = 1:size(cpt.colormap, 1)
+			@inbounds cmap[m + 3*n_colors] = round(Int32, cpt.colormap[m,4] * 255)
 		end
 		n_colors *= 1000				# Flag that we have alpha colors in an indexed image
 	elseif (force_alpha)
-		colormap[256*3+1:end] = zeros(UInt32, 256)
+		cmap[256*3+1:end] = zeros(Int32, 256)
 	end
-	return colormap, n_colors
+	return cmap, n_colors
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    C = map2cpt(I::GMTimage) -> GMTcpt
+
+Converts the `I` coilormat, which is a plain vector, into a GMTcpt.
+"""
+function cmap2cpt(I::GMTimage)
+	(length(I.colormap) <= 4) && (@warn("This image has no associated colormap");	return nothing)
+	_nc = length(I.colormap) / I.n_colors
+	(_nc != 4 && _nc != 3) && (@warn("Something is wrong with this Image colormap. Returning nothing"); return nothing)
+
+	nc, n_colors, n = Int(_nc), I.n_colors, I.n_colors
+	cmap = reshape(I.colormap, n, nc)
+	while (n > 0)
+		n = (cmap[n,1] == 0 && cmap[n,2] == 0 && cmap[n,3] == 0) ? n-1 : -n
+	end
+	n = -n						# Revert the negative sign with which it left the while loop.
+	cm = cmap[1:n,1:3]/255
+	alpha = length(I.alpha) == n_colors ? I.alpha[1:n]/255 : (nc == 4) ? cmap[1:n,4]/255 : zeros(n)
+	GMTcpt(cm, alpha, [0.0:n-1 1.0:n], [0.0, n], ones(3,3), 24, NaN, [cm cm], fill("",n), fill("",n), "rgb", ["Converted from a GDAL cmap"])
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -1019,7 +1041,7 @@ function mat2img(mat::Union{GMTgrid,Matrix{<:AbstractFloat}}; x=Vector{Float64}(
 	end
 	if (!isa(mat, GMTgrid) && GI !== nothing)
 		I = mat2img(img, GI)
-		if (cmap !== nothing)  I.colormap, I.n_colors = cmap2colormap(cmap)
+		if (cmap !== nothing)  I.colormap, I.n_colors = cpt2cmap(cmap)
 		else                   I.colormap, I.n_colors = zeros(Int32,3), 0	# Do not inherit this from GI
 		end
 	elseif (isa(mat, GMTgrid))
@@ -1206,7 +1228,7 @@ function slicecube(GI::GItype; slice::Int=0, α=0.0, angle=0.0, axis="x", cmap=G
 			end
 		end
 		I = mat2img(sc, GI)
-		if (cmap !== nothing)  I.colormap, I.n_colors = cmap2colormap(cmap)
+		if (cmap !== nothing)  I.colormap, I.n_colors = cpt2cmap(cmap)
 		else                   I.colormap, I.n_colors = zeros(Int32,3), 0	# Do not inherit this from GI
 		end
 		return mat2grid(z, GI), I
@@ -1436,7 +1458,7 @@ Use `image_cpt!(img, clear=true)` to remove a previously existant `colormap` fie
 image_cpt!(I::GMTimage, cpt::String) = image_cpt!(I, gmtread(cpt))
 function image_cpt!(I::GMTimage, cpt::GMTcpt)
 	# Insert the cpt info in the img.colormap member
-	I.colormap, I.n_colors = cmap2colormap(cpt)
+	I.colormap, I.n_colors = cpt2cmap(cpt)
 	I.color_interp = "Palette"
 	return nothing
 end
@@ -1459,7 +1481,7 @@ function ind2rgb(I::GMTimage, cmap::GMTcpt=GMTcpt(), layout="BRPa")
 
 	# If the CPT is shorter them maximum in I, reinterpolate the CPT
 	(!isempty(cmap) && (ma = maximum(I)) > size(cmap.colormap,1)) && (cmap = gmt("makecpt -T0/{$ma}/+n{$ma}", cmap))
-	_cmap = (!isempty(cmap)) ? cmap2colormap(cmap::GMTcpt)[1] : I.colormap
+	_cmap = (!isempty(cmap)) ? cpt2cmap(cmap::GMTcpt)[1] : I.colormap
 
 	have_alpha = (length(I.colormap) / I.n_colors) == 4 && !all(I.colormap[end-Int(I.n_colors/4+1):end] .== 255)
 	if (I.n_colors == 0 && isempty(cmap))		# If no cmap just replicate the first layer.
