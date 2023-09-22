@@ -1,5 +1,5 @@
 """
-	colorbar(cmd0::String="", arg1=nothing; kwargs...)
+	colorbar(arg1=nothing; kwargs...)
 	
 Plots gray scales or color scales on maps.
 
@@ -49,20 +49,20 @@ See full GMT (not the `GMT.jl` one) docs at [`psscale`]($(GMTdoc)psscale.html)
 
 To see the full documentation type: ``@? colorbar``
 """
-function colorbar(cmd0::String="", arg1=nothing; first=true, kwargs...)
+function colorbar(arg1::Union{Nothing, GMTcpt}=nothing; first=true, kwargs...)
 
 	gmt_proggy = (IamModern[1]) ? "colorbar "  : "psscale "
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
 	parse_paper(d)		# See if user asked to temporarily pass into paper mode coordinates
 
-	cmd, opt_B, = parse_BJR(d, "", "", O, "")
-	cmd  = parse_JZ(d, cmd)[1]
-	cmd, = parse_common_opts(d, cmd, [:F :UVXY :params :c :p :t], first)
-	cmd  = parse_these_opts(cmd, d, [[:G :truncate], [:I :shade], [:M :monochrome], [:N :dpi],
+	cmd = parse_BJR(d, "", "", O, "")[1]
+	cmd = parse_JZ(d, cmd)[1]
+	cmd = parse_common_opts(d, cmd, [:F :UVXY :params :c :p :t], first)[1]
+	cmd = parse_these_opts(cmd, d, [[:G :truncate], [:I :shade], [:M :monochrome], [:N :dpi],
 	                                [:Q :log], [:S :nolines], [:W :scale], [:Z :zfile]])
 	cmd = parse_type_anchor(d, cmd, [:D :pos :position],
-							(map=("g", arg2str, 1), outside=("J", arg2str, 1), inside=("j", arg2str, 1), norm=("n", arg2str, 1), paper=("x", arg2str, 1), anchor=("", arg2str, 2), length=("+w", arg2str), size=("+w", arg2str), justify="+j", triangles="+e", horizontal="_+h", move_annot="+m", neon="_+mc", nan="+n", offset=("+o", arg2str)), 'J')
+	                        (map=("g", arg2str, 1), outside=("J", arg2str, 1), inside=("j", arg2str, 1), norm=("n", arg2str, 1), paper=("x", arg2str, 1), anchor=("", arg2str, 2), length=("+w", arg2str), size=("+w", arg2str), justify="+j", triangles="+e", horizontal="_+h", move_annot="+m", neon="_+mc", nan="+n", offset=("+o", arg2str)), 'J')
 
 	cmd, arg1, = add_opt_cpt(d, cmd, CPTaliases, 'C', 0, arg1)
 	if (!isa(arg1, GMTcpt) && !occursin("-C", cmd))	# If given no CPT, try to see if we have a current one stored in global
@@ -80,9 +80,9 @@ function colorbar(cmd0::String="", arg1=nothing; first=true, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-colorbar(arg1; kw...) = colorbar("", arg1; first=true, kw...)
-colorbar!(arg1; kw...) = colorbar("", arg1; first=false, kw...)
-colorbar!(cmd0::String="", arg1=nothing; kw...) = colorbar(cmd0, arg1; first=false, kw...)
+#colorbar(arg1; kw...) = colorbar("", arg1; first=true, kw...)
+colorbar!(arg1::Union{Nothing, GMTcpt}=nothing; kw...) = colorbar(arg1; first=false, kw...)
+#colorbar!(cmd0::String="", arg1=nothing; kw...) = colorbar(cmd0, arg1; first=false, kw...)
 
 const psscale  = colorbar         # Alias
 const psscale! = colorbar!        # Alias
