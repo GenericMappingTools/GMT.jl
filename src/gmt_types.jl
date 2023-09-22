@@ -60,6 +60,7 @@ mutable struct GMTimage{T<:Unsigned, N} <: AbstractArray{T,N}
 	v::Vector{Float64}
 	image::Array{T,N}
 	colormap::Vector{Int32}
+	labels::Vector{String}		# Labels of a Categorical CPT
 	n_colors::Int
 	alpha::Matrix{UInt8}
 	layout::String
@@ -72,7 +73,7 @@ Base.setindex!(I::GMTimage{T,N}, val, inds::Vararg{Int,N}) where {T,N} = I.image
 Base.BroadcastStyle(::Type{<:GMTimage}) = Broadcast.ArrayStyle{GMTimage}()
 function Base.similar(bc::Broadcast.Broadcasted{Broadcast.ArrayStyle{GMTimage}}, ::Type{ElType}) where ElType
 	I = find4similar(bc.args)		# Scan the inputs for the GMTimage:
-	GMTimage(I.proj4, I.wkt, I.epsg, I.geog, I.range, I.inc, I.registration, I.nodata, I.color_interp, I.metadata, I.names, I.x, I.y, I.v, similar(Array{ElType}, axes(bc)), I.colormap, I.n_colors, I.alpha, I.layout, I.pad)
+	GMTimage(I.proj4, I.wkt, I.epsg, I.geog, I.range, I.inc, I.registration, I.nodata, I.color_interp, I.metadata, I.names, I.x, I.y, I.v, similar(Array{ElType}, axes(bc)), I.colormap, I.labels, I.n_colors, I.alpha, I.layout, I.pad)
 end
 find4similar(I::GMTimage, rest) = I
 

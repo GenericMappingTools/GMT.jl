@@ -497,7 +497,7 @@ function get_image(API::Ptr{Nothing}, object)::GMTimage
 	# Return image via a uint8 matrix in a struct
 	cinterp = (I.color_interp != C_NULL) ? unsafe_string(I.color_interp) : ""
 	out = GMTimage("", "", 0, -1, zeros(6)*NaN, [NaN, NaN], 0, gmt_hdr.nan_value, cinterp, String[], String[], X, Y,
-	               zeros(nz), t, colormap, n_colors, Array{UInt8,2}(undef,1,1), layout, 0)
+	               zeros(nz), t, colormap, String[], n_colors, Array{UInt8,2}(undef,1,1), layout, 0)
 
 	GMT_Set_AllocMode(API, GMT_IS_IMAGE, object)
 	unsafe_store!(convert(Ptr{GMT_IMAGE}, object), I)

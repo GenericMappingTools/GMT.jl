@@ -80,7 +80,7 @@ imshow("lixo", Vd=dbg2);
 mat = reshape(UInt8.([255 0 0 0 0 0 0 0 0 0 0 0 0 255 0 0 0 0 0 0 0 0 0 0 0 0 255]), 3,3,3);
 I = mat2img(mat, hdr=[0.0 3 0 3 0 255 1 1 1]);
 imshow(I, J=:Merc, show=false)
-I = GMT.GMTimage("", "", 0, 0, [1., 10, 1, 10, 0, 1, 1, 1, 1], [1., 1], 1, NaN32, "gray", String[], String[], collect(1.:11), collect(1.:11), [0.],rand(UInt16,10,10), zeros(Int32,3), 0, Array{UInt8,2}(undef,1,1), "TRBa", 0);
+I = GMT.GMTimage("", "", 0, 0, [1., 10, 1, 10, 0, 1, 1, 1, 1], [1., 1], 1, NaN32, "gray", String[], String[], collect(1.:11), collect(1.:11), [0.],rand(UInt16,10,10), zeros(Int32,3), String[], 0, Array{UInt8,2}(undef,1,1), "TRBa", 0);
 imshow(I,Vd=dbg2)
 imshow(mat2ds([0 0; 10 0; 10 10; 11 10]), Vd=dbg2)
 imshow(makecpt(1,5, cmap=:polar), Vd=dbg2)
