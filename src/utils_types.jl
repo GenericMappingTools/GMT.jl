@@ -893,7 +893,7 @@ function mat2img(mat::AbstractArray{<:Unsigned}, dumb::Int=0; x=Vector{Float64}(
 	_names = ((val = find_in_dict(d, [:names])[1]) !== nothing) ? val : String[]
 	_meta  = ((val = find_in_dict(d, [:metadata])[1]) !== nothing) ? val : String[]
 
-	GMTimage(proj4, wkt, 0, -1, hdr[1:6], [x_inc, y_inc], reg, zero(eltype(mat)), color_interp, _meta, _names,
+	GMTimage(proj4, wkt, 0, -1, hdr[1:6], [x_inc, y_inc], reg, NaN32, color_interp, _meta, _names,
 	         x,y,v,mat, colormap, n_colors, Array{UInt8,2}(undef,1,1), mem_layout, 0)
 end
 
@@ -1076,11 +1076,11 @@ end
 # This method creates a new GMTimage but retains all the header data from the IMG object
 function mat2img(mat, I::GMTimage; names::Vector{String}=String[], metadata::Vector{String}=String[])
 	range = copy(I.range);	(size(mat,3) == 1) && (range[5:6] .= extrema(mat))
-	GMTimage(I.proj4, I.wkt, I.epsg, I.geog, range, copy(I.inc), I.registration, convert(eltype(mat), I.nodata), I.color_interp, metadata, names, copy(I.x), copy(I.y), zeros(size(mat,3)), mat, copy(I.colormap), I.n_colors, Array{UInt8,2}(undef,1,1), I.layout, 0)
+	GMTimage(I.proj4, I.wkt, I.epsg, I.geog, range, copy(I.inc), I.registration, NaN32, I.color_interp, metadata, names, copy(I.x), copy(I.y), zeros(size(mat,3)), mat, copy(I.colormap), I.n_colors, Array{UInt8,2}(undef,1,1), I.layout, 0)
 end
 function mat2img(mat, G::GMTgrid; names::Vector{String}=String[], metadata::Vector{String}=String[])
 	range = copy(G.range);	range[5:6] .= (size(mat,3) == 1) ? extrema(mat) : [0., 255]
-	GMTimage(G.proj4, G.wkt, G.epsg, G.geog, range, copy(G.inc), G.registration, zero(eltype(mat)), "Gray", metadata, names, copy(G.x), copy(G.y), zeros(size(mat,3)), mat, zeros(Int32,3), 0, Array{UInt8,2}(undef,1,1), G.layout*"a", 0)
+	GMTimage(G.proj4, G.wkt, G.epsg, G.geog, range, copy(G.inc), G.registration, NaN32, "Gray", metadata, names, copy(G.x), copy(G.y), zeros(size(mat,3)), mat, zeros(Int32,3), 0, Array{UInt8,2}(undef,1,1), G.layout*"a", 0)
 end
 
 # ---------------------------------------------------------------------------------------------------
