@@ -97,7 +97,6 @@ image("@vader1.png", bit_bg=:darkgray, bit_fg=:yellow, Vd=dbg2)
 println("	PSSCALE")
 C = makecpt(T="-200/1000/100", C="rainbow");
 colorbar(C=C, D="x8c/1c+w12c/0.5c+jTC+h", B="xaf+l\"topography\" y+lkm", fmt="ps", par=(MAP_FRAME_WIDTH=0.2,))
-colorbar!("", C=C, D="x8c/1c+w12c/0.5c+jTC+h", B="xaf+l\"topography\" y+lkm", Vd=dbg2)
 colorbar!(C=C, D="x8c/1c+w12c/0.5c+jTC+h", B="xaf+l\"topography\" y+lkm", Vd=dbg2)
 colorbar(C, D="x8c/1c+w12c/0.5c+jTC+h", B="xaf+l\"topography\" y+lkm", Vd=dbg2)
 colorbar!(C, D="x8c/1c+w12c/0.5c+jTC+h", B="xaf+l\"topography\" y+lkm", Vd=dbg2)
