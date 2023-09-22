@@ -313,7 +313,7 @@ function guess_T_from_ext(fname::String)::String
 		error("File $fname does not exist.")
 	if     (findfirst(isequal(ext), ["grd", "nc", "nc=gd"])  !== nothing)  out = " -Tg";
 	elseif (findfirst(isequal(ext), ["dat", "txt", "csv"])   !== nothing)  out = " -Td";
-	elseif (findfirst(isequal(ext), ["jpg", "png", "bmp", "webp"]) 	!== nothing)  out = " -Ti";
+	elseif (findfirst(isequal(ext), ["jpg", "jpeg", "png", "bmp", "webp"]) 	!== nothing)  out = " -Ti";
 	elseif (findfirst(isequal(ext), ["shp", "kml", "json", "geojson", "gmt", "gpkg", "gpx", "gml"]) !== nothing)  out = " -To";
 	elseif (ext == "jp2") ressurectGDAL(); out = (findfirst("Type=UInt", gdalinfo(fname)) !== nothing) ? " -Ti" : " -Tg"
 	elseif (ext == "cpt")  out = " -Tc";

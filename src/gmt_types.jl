@@ -51,7 +51,7 @@ mutable struct GMTimage{T<:Unsigned, N} <: AbstractArray{T,N}
 	range::Vector{Float64}
 	inc::Vector{Float64}
 	registration::Int
-	nodata::T
+	nodata::Float32
 	color_interp::String
 	metadata::Vector{String}
 	names::Vector{String}
