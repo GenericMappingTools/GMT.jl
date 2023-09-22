@@ -48,20 +48,20 @@ mutable struct GMTimage{T<:Unsigned, N} <: AbstractArray{T,N}
 	wkt::String
 	epsg::Int
 	geog::Int
-	range::Array{Float64,1}
-	inc::Array{Float64,1}
+	range::Vector{Float64}
+	inc::Vector{Float64}
 	registration::Int
 	nodata::T
 	color_interp::String
 	metadata::Vector{String}
 	names::Vector{String}
-	x::Array{Float64,1}
-	y::Array{Float64,1}
-	v::Array{Float64,1}
+	x::Vector{Float64}
+	y::Vector{Float64}
+	v::Vector{Float64}
 	image::Array{T,N}
-	colormap::Array{Int32,1}
+	colormap::Vector{Int32}
 	n_colors::Int
-	alpha::Array{UInt8,2}
+	alpha::Matrix{UInt8}
 	layout::String
 	pad::Int
 end
@@ -88,7 +88,7 @@ mutable struct GMTcpt
 	label::Vector{String}		# Labels of a Categorical CPT
 	key::Vector{String}			# Keys of a Categorical CPT
 	model::String				# String with color model rgb, hsv, or cmyk [rgb]
-	comment::Array{String,1}	# Cell array with any comments
+	comment::Vector{String}		# Cell array with any comments
 end
 GMTcpt() = GMTcpt(Array{Float64,2}(undef,0,0), Vector{Float64}(undef,0), Array{Float64,2}(undef,0,0), Vector{Float64}(undef,0), Array{Float64,2}(undef,0,0), 0, 0.0, Array{Float64,2}(undef,0,0), String[], String[], string(), String[])
 Base.size(C::GMTcpt) = size(C.range, 1)
