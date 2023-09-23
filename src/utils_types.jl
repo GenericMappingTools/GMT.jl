@@ -871,7 +871,7 @@ function mat2img(mat::AbstractArray{<:Unsigned}, dumb::Int=0; x=Vector{Float64}(
 	# Note: if HDR is empty we guess the registration from the sizes of MAT & X,Y
 	color_interp = "";		n_colors = 0;
 	if (cmap !== nothing)
-		colormap, n_colors = cpt2cmap(cmap)
+		colormap, labels, n_colors = cpt2cmap(cmap)
 	else
 		(size(mat,3) == 1) && (color_interp = "Gray")
 		if (hdr !== nothing && (hdr[5] == 0 && hdr[6] == 1))	# A mask. Let's create a colormap for it
@@ -881,6 +881,7 @@ function mat2img(mat::AbstractArray{<:Unsigned}, dumb::Int=0; x=Vector{Float64}(
 		else
 			colormap = zeros(Int32,3)		# Because we need an array
 		end
+		labels = String[]
 	end
 
 	nx = size(mat, 2);		ny = size(mat, 1);
@@ -894,7 +895,7 @@ function mat2img(mat::AbstractArray{<:Unsigned}, dumb::Int=0; x=Vector{Float64}(
 	_meta  = ((val = find_in_dict(d, [:metadata])[1]) !== nothing) ? val : String[]
 
 	GMTimage(proj4, wkt, 0, -1, hdr[1:6], [x_inc, y_inc], reg, NaN32, color_interp, _meta, _names,
-	         x,y,v,mat, colormap, n_colors, Array{UInt8,2}(undef,1,1), mem_layout, 0)
+	         x,y,v,mat, colormap, labels, n_colors, Array{UInt8,2}(undef,1,1), mem_layout, 0)
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -917,14 +918,14 @@ function cpt2cmap(cpt::GMTcpt, force_alpha=true)
 	elseif (force_alpha)
 		cmap[256*3+1:end] = zeros(Int32, 256)
 	end
-	return cmap, n_colors
+	return cmap, cpt.label, n_colors
 end
 
 # ---------------------------------------------------------------------------------------------------
 """
     C = map2cpt(I::GMTimage) -> GMTcpt
 
-Converts the `I` coilormat, which is a plain vector, into a GMTcpt.
+Converts the `I` colormap, which is a plain vector, into a GMTcpt.
 """
 function cmap2cpt(I::GMTimage)
 	(length(I.colormap) <= 4) && (@warn("This image has no associated colormap");	return nothing)
@@ -939,7 +940,7 @@ function cmap2cpt(I::GMTimage)
 	n = -n						# Revert the negative sign with which it left the while loop.
 	cm = cmap[1:n,1:3]/255
 	alpha = length(I.alpha) == n_colors ? I.alpha[1:n]/255 : (nc == 4) ? cmap[1:n,4]/255 : zeros(n)
-	GMTcpt(cm, alpha, [0.0:n-1 1.0:n], [0.0, n], ones(3,3), 24, NaN, [cm cm], fill("",n), fill("",n), "rgb", ["Converted from a GDAL cmap"])
+	GMTcpt(cm, alpha, [0.0:n-1 1.0:n], [0.0, n], ones(3,3), 24, NaN, [cm cm], !isempty(I.labels) ? I.labels : fill("",n), fill("",n), "rgb", ["Converted from a GDAL cmap"])
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -1013,7 +1014,7 @@ function mat2img(img::GMTimage; kw...)
 	I.range = img.range;	I.inc = img.inc;	I.registration = img.registration
 	I.nodata = img.nodata;	I.color_interp = img.color_interp;
 	I.names = img.names;	I.metadata = img.metadata
-	I.x = img.x;	I.y = img.y;	I.colormap = img.colormap;
+	I.x = img.x;	I.y = img.y;	I.colormap = img.colormap;	I.labels = img.labels
 	I.n_colors = img.n_colors;		I.alpha = img.alpha;	I.layout = img.layout;
 	return I
 end
@@ -1041,8 +1042,8 @@ function mat2img(mat::Union{GMTgrid,Matrix{<:AbstractFloat}}; x=Vector{Float64}(
 	end
 	if (!isa(mat, GMTgrid) && GI !== nothing)
 		I = mat2img(img, GI)
-		if (cmap !== nothing)  I.colormap, I.n_colors = cpt2cmap(cmap)
-		else                   I.colormap, I.n_colors = zeros(Int32,3), 0	# Do not inherit this from GI
+		if (cmap !== nothing)  I.colormap, I.labels, I.n_colors = cpt2cmap(cmap)
+		else                   I.colormap, I.labels, I.n_colors = zeros(Int32,3), String[], 0	# Do not inherit this from GI
 		end
 	elseif (isa(mat, GMTgrid))
 		I = mat2img(img; x=mat.x, y=mat.y, hdr=hdr, proj4=mat.proj4, wkt=mat.wkt, cmap=cmap, kw...)
@@ -1076,11 +1077,11 @@ end
 # This method creates a new GMTimage but retains all the header data from the IMG object
 function mat2img(mat, I::GMTimage; names::Vector{String}=String[], metadata::Vector{String}=String[])
 	range = copy(I.range);	(size(mat,3) == 1) && (range[5:6] .= extrema(mat))
-	GMTimage(I.proj4, I.wkt, I.epsg, I.geog, range, copy(I.inc), I.registration, NaN32, I.color_interp, metadata, names, copy(I.x), copy(I.y), zeros(size(mat,3)), mat, copy(I.colormap), I.n_colors, Array{UInt8,2}(undef,1,1), I.layout, 0)
+	GMTimage(I.proj4, I.wkt, I.epsg, I.geog, range, copy(I.inc), I.registration, NaN32, I.color_interp, metadata, names, copy(I.x), copy(I.y), zeros(size(mat,3)), mat, copy(I.colormap), String[], I.n_colors, Array{UInt8,2}(undef,1,1), I.layout, 0)
 end
 function mat2img(mat, G::GMTgrid; names::Vector{String}=String[], metadata::Vector{String}=String[])
 	range = copy(G.range);	range[5:6] .= (size(mat,3) == 1) ? extrema(mat) : [0., 255]
-	GMTimage(G.proj4, G.wkt, G.epsg, G.geog, range, copy(G.inc), G.registration, NaN32, "Gray", metadata, names, copy(G.x), copy(G.y), zeros(size(mat,3)), mat, zeros(Int32,3), 0, Array{UInt8,2}(undef,1,1), G.layout*"a", 0)
+	GMTimage(G.proj4, G.wkt, G.epsg, G.geog, range, copy(G.inc), G.registration, NaN32, "Gray", metadata, names, copy(G.x), copy(G.y), zeros(size(mat,3)), mat, zeros(Int32,3), String[], 0, Array{UInt8,2}(undef,1,1), G.layout*"a", 0)
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -1133,7 +1134,7 @@ function slicecube(I::GMTimage, layer::Union{Int, AbstractVector{<:Int}})
 	mat = I.image[:,:,layer]
 	range = copy(I.range);	range[5:6] .= extrema(mat)
 	names = (!isempty(I.names) && !all(I.names .== "")) ? (isvec ? I.names[layer] : [I.names[layer]]) : I.names
-	GMTimage(I.proj4, I.wkt, I.epsg, I.geog, range, copy(I.inc), I.registration, I.nodata, "Gray", I.metadata, names, copy(I.x), copy(I.y), [0.], mat, zeros(Int32,3), 0, Array{UInt8,2}(undef,1,1), I.layout, I.pad)
+	GMTimage(I.proj4, I.wkt, I.epsg, I.geog, range, copy(I.inc), I.registration, I.nodata, "Gray", I.metadata, names, copy(I.x), copy(I.y), [0.], mat, zeros(Int32,3), String[], 0, Array{UInt8,2}(undef,1,1), I.layout, I.pad)
 end
 
 function slicecube(G::GMTgrid, slice::Union{Int, AbstractVector{<:Int}}; axis="z")
@@ -1228,8 +1229,8 @@ function slicecube(GI::GItype; slice::Int=0, α=0.0, angle=0.0, axis="x", cmap=G
 			end
 		end
 		I = mat2img(sc, GI)
-		if (cmap !== nothing)  I.colormap, I.n_colors = cpt2cmap(cmap)
-		else                   I.colormap, I.n_colors = zeros(Int32,3), 0	# Do not inherit this from GI
+		if (cmap !== nothing)  I.colormap, I.labels, I.n_colors = cpt2cmap(cmap)
+		else                   I.colormap, I.labels, I.n_colors = zeros(Int32,3), String[], 0	# Do not inherit this from GI
 		end
 		return mat2grid(z, GI), I
 	else
@@ -1458,13 +1459,13 @@ Use `image_cpt!(img, clear=true)` to remove a previously existant `colormap` fie
 image_cpt!(I::GMTimage, cpt::String) = image_cpt!(I, gmtread(cpt))
 function image_cpt!(I::GMTimage, cpt::GMTcpt)
 	# Insert the cpt info in the img.colormap member
-	I.colormap, I.n_colors = cpt2cmap(cpt)
+	I.colormap, I.labels, I.n_colors = cpt2cmap(cpt)
 	I.color_interp = "Palette"
 	return nothing
 end
 function image_cpt!(img::GMTimage; clear::Bool=true)
 	if (clear)
-		img.colormap, img.n_colors, img.color_interp = fill(Int32(0), 3), 0, "Gray"
+		img.colormap, img.labels, img.n_colors, img.color_interp = fill(Int32(0), 3), String[], 0, "Gray"
 	end
 	return nothing
 end
