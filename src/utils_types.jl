@@ -899,15 +899,18 @@ function mat2img(mat::AbstractArray{<:Unsigned}, dumb::Int=0; x=Vector{Float64}(
 end
 
 # ---------------------------------------------------------------------------------------------------
-function cpt2cmap(cpt::GMTcpt, force_alpha=true)
+function cpt2cmap(cpt::GMTcpt, start::Float32=NaN32, force_alpha::Bool=true)
 	# Convert a GMT CPT into a colormap to be ingested by GDAL
+	s = isnan(start) ? 0 : (start == 0) ? 1 : 0		# When I has a nodata = 0, make first color white.
+	(size(cpt.colormap,1) + s > 256) && error("Size of CPT + nodata value is greater than 256. Can't be.")
 	have_alpha = !all(cpt.alpha .== 0.0)
 	nc = (have_alpha || force_alpha) ? 4 : 3
 	cmap = zeros(Int32, 256 * nc)
+	(s == 1) && (cmap[1] = 255; cmap[257] = 255; cmap[513] = 255)	# nodata pixel color = white
 	n_colors = 256;			# Because for GDAL we always send 256 even if they are not all filled
-	for n = 1:3	# Write 'cmap' col-wise
+	for n = 1:3				# Write 'cmap' col-wise
 		for m = 1:size(cpt.colormap, 1)
-			@inbounds cmap[m + (n-1)*n_colors] = round(Int32, cpt.colormap[m,n] * 255);
+			@inbounds cmap[m+s + (n-1)*n_colors] = round(Int32, cpt.colormap[m,n] * 255);
 		end
 	end
 	if (have_alpha)						# Have alpha color(s)
@@ -918,7 +921,7 @@ function cpt2cmap(cpt::GMTcpt, force_alpha=true)
 	elseif (force_alpha)
 		cmap[256*3+1:end] = zeros(Int32, 256)
 	end
-	return cmap, cpt.label, n_colors
+	return cmap, cpt.label, n_colors# - s	# Subtract s to account for when nodata != NaN (= 0)	
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -937,10 +940,15 @@ function cmap2cpt(I::GMTimage)
 	while (n > 0)
 		n = (cmap[n,1] == 0 && cmap[n,2] == 0 && cmap[n,3] == 0) ? n-1 : -n
 	end
-	n = -n						# Revert the negative sign with which it left the while loop.
-	cm = cmap[1:n,1:3]/255
-	alpha = length(I.alpha) == n_colors ? I.alpha[1:n]/255 : (nc == 4) ? cmap[1:n,4]/255 : zeros(n)
-	GMTcpt(cm, alpha, [0.0:n-1 1.0:n], [0.0, n], ones(3,3), 24, NaN, [cm cm], !isempty(I.labels) ? I.labels : fill("",n), fill("",n), "rgb", ["Converted from a GDAL cmap"])
+	n  = -n								# Revert the negative sign with which it left the while loop.
+	if (I.nodata == 0.0)  s, nn, f = 2, n-1, 1.0	# If nodata = 0, jump first color in 'cmap'
+	else                  s, nn, f = 1, n,   0.0
+	end
+	cm = cmap[s:n,1:3]/255
+	alpha = length(I.alpha) == n_colors ? I.alpha[s:n]/255 : (nc == 4) ? cmap[s:n,4]/255 : zeros(nn)
+	lab = !isempty(I.labels) ? I.labels : fill("",nn)
+	key = !isempty(I.labels) ? string.(f:nn) : fill("",nn)
+	GMTcpt(cm, alpha, [f:nn f+1.0:nn+1], [f, nn], ones(3,3), 24, NaN, [cm cm], lab, key, "rgb", ["Converted from GDAL cmap"])
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -1459,7 +1467,7 @@ Use `image_cpt!(img, clear=true)` to remove a previously existant `colormap` fie
 image_cpt!(I::GMTimage, cpt::String) = image_cpt!(I, gmtread(cpt))
 function image_cpt!(I::GMTimage, cpt::GMTcpt)
 	# Insert the cpt info in the img.colormap member
-	I.colormap, I.labels, I.n_colors = cpt2cmap(cpt)
+	I.colormap, I.labels, I.n_colors = cpt2cmap(cpt, I.nodata)
 	I.color_interp = "Palette"
 	return nothing
 end
@@ -1482,7 +1490,7 @@ function ind2rgb(I::GMTimage, cmap::GMTcpt=GMTcpt(), layout="BRPa")
 
 	# If the CPT is shorter them maximum in I, reinterpolate the CPT
 	(!isempty(cmap) && (ma = maximum(I)) > size(cmap.colormap,1)) && (cmap = gmt("makecpt -T0/{$ma}/+n{$ma}", cmap))
-	_cmap = (!isempty(cmap)) ? cpt2cmap(cmap::GMTcpt)[1] : I.colormap
+	_cmap = (!isempty(cmap)) ? cpt2cmap(cmap::GMTcpt, I.nodata)[1] : I.colormap
 
 	have_alpha = (length(I.colormap) / I.n_colors) == 4 && !all(I.colormap[end-Int(I.n_colors/4+1):end] .== 255)
 	if (I.n_colors == 0 && isempty(cmap))		# If no cmap just replicate the first layer.

@@ -1072,6 +1072,9 @@ end
 # ---------------------------------------------------------------------------------------------------
 function palette_init(API::Ptr{Nothing}, cpt::GMTcpt)::Ptr{GMT.GMT_PALETTE}
 	# Create and fill a GMT CPT.
+	# A CPT is categorical when the 'keys' are not empty, and is of type 2 when 'keys' are non-numeric
+	# 'labels' can be present in both normal and categorical CPTs so they can't be used to indentify categoricals
+	# So, in fact, a normal CPT with labels is equivalent to a categorical with numeric and contiguous 'keys'.
 
 	n_colors = size(cpt.colormap, 1)	# n_colors != n_ranges for continuous CPTs
 	n_ranges = size(cpt.range, 1)
@@ -1081,7 +1084,8 @@ function palette_init(API::Ptr{Nothing}, cpt::GMTcpt)::Ptr{GMT.GMT_PALETTE}
 		n_colors = n_colors - 1;		# Number of CPT slices
 	end
 
-	P = convert(Ptr{GMT.GMT_PALETTE}, GMT_Create_Data(API, GMT_IS_PALETTE, GMT_IS_NONE, 0, pointer([n_colors]), NULL, NULL, 0, 0, NULL))
+	P = convert(Ptr{GMT.GMT_PALETTE}, GMT_Create_Data(API, GMT_IS_PALETTE, GMT_IS_NONE, 0, pointer([n_colors]),
+	                                                  NULL, NULL, 0, 0, NULL))
 	(n_colors > 100000) && @warn("Que exagero de cores")	# Just to protect n_colors to be GC'ed before here
 
 	Pb::GMT_PALETTE = unsafe_load(P)	# We now have a GMT.GMT_PALETTE
@@ -1108,28 +1112,31 @@ function palette_init(API::Ptr{Nothing}, cpt::GMTcpt)::Ptr{GMT.GMT_PALETTE}
 		glut = unsafe_load(Pb.data, j)
 		rgb_low  = (cpt.cpt[j,1], cpt.cpt[j,2], cpt.cpt[j,3], cpt.alpha[j])
 		rgb_high = (cpt.cpt[j,4], cpt.cpt[j,5], cpt.cpt[j,6], cpt.alpha[j+one])
-		#rgb_low  = (cpt.colormap[j,1], cpt.colormap[j,2], cpt.colormap[j,3], cpt.alpha[j])
-		#rgb_high = (cpt.colormap[j+one,1], cpt.colormap[j+one,2], cpt.colormap[j+one,3], cpt.alpha[j+one])
+		rgb_diff = (cpt.cpt[j,4]-cpt.cpt[j,1], cpt.cpt[j,5]-cpt.cpt[j,2], cpt.cpt[j,6]-cpt.cpt[j,3], 0.0)
 		z_low  = cpt.range[j,1]
 		z_high = cpt.range[j,2]
 		# GMT6.1 bug does not free "key" but frees "label" and does not see if memory is external. Hence crash or mem leaks
-		_key = glut.key
 
 		annot = (j == Pb.n_colors) ? 3 : 1				# Annotations L for all but last which is B(oth)
-		lut = GMT_LUT(z_low, z_high, glut.i_dz, rgb_low, rgb_high, glut.rgb_diff, glut.hsv_low, glut.hsv_high,
-		              glut.hsv_diff, annot, glut.skip, glut.fill, glut.label, _key)
+		lut = GMT_LUT(z_low, z_high, glut.i_dz, rgb_low, rgb_high, rgb_diff, glut.hsv_low, glut.hsv_high,
+		              glut.hsv_diff, annot, glut.skip, glut.fill, C_NULL, C_NULL)
 
 		unsafe_store!(Pb.data, lut, j)
 	end
-	unsafe_store!(P, Pb)
 
 	# Categorical case was half broken till 6.2 so we must treat things differently
 	if (cpt.key[1] != "")
-		GMT_Put_Strings(API, GMT_IS_PALETTE | GMT_IS_PALETTE_KEY, convert(Ptr{Cvoid}, P), cpt.key);
-		(cpt.label[1] != "") &&
-			GMT_Put_Strings(API, GMT_IS_PALETTE | GMT_IS_PALETTE_LABEL, convert(Ptr{Cvoid}, P), cpt.label);
-		Pb.categorical = UInt32(2)
+		GMT_Put_Strings(API, GMT_IS_PALETTE | GMT_IS_PALETTE_KEY, convert(Ptr{Cvoid}, P), cpt.key)
 	end
+	if (cpt.label[1] != "")
+		GMT_Put_Strings(API, GMT_IS_PALETTE | GMT_IS_PALETTE_LABEL, convert(Ptr{Cvoid}, P), cpt.label)
+	end
+
+	# Check 'categorality' code
+	(cpt.key[1] != "") && (Pb.categorical = (tryparse(Float64, cpt.key[1]) === nothing) ? 2 : 1)
+
+	GMT_Set_AllocMode(API, GMT_IS_PALETTE, P)		# Tell GMT that memory is external (IS IT REALY NEEDED?)
+	unsafe_store!(P, Pb)
 
 	return P
 end
