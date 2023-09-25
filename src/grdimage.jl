@@ -106,6 +106,7 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 
 	if (isa(arg1, GMTimage) && !occursin("-Q", cmd))
 		if (!occursin("-D", cmd))  cmd *= " -D"  end	# Lost track why but need this so gmt_main knows it should init a img
+		#(!occursin("-D", cmd) && !occursin(" -C", cmd)) && (cmd *= " -D")	# Lost track why but need this so gmt_main knows it should init a img
 		(length(opt_J) > 3 && (opt_J[4] != 'X' && opt_J[4] != 'x')) && (cmd *= "r")	# GMT crashes when just -D and proj
 	end
 

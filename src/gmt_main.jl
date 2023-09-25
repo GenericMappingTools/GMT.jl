@@ -527,6 +527,7 @@ function get_palette(API::Ptr{Nothing}, object::Ptr{Nothing})::GMTcpt
 # depth	Color depth 24, 8, 1
 # hinge:	Z-value at discontinuous color break, or NaN
 # cpt:		Nx6 full GMT CPT array
+# categorical: 0 = No, 1 = Yes, 2 = Yes and keys are strings.
 # label		# Labels of a Categorical CPT. Vector of strings, one for each color
 # key		# Keys of a Categorical CPT. Vector of strings, one for each color
 # model:	String with color model rgb, hsv, or cmyk [rgb]
@@ -540,7 +541,7 @@ function get_palette(API::Ptr{Nothing}, object::Ptr{Nothing})::GMTcpt
 	n_colors::UInt32 = (C.is_continuous != 0) ? C.n_colors + 1 : C.n_colors
 
 	out = GMTcpt(zeros(n_colors, 3), zeros(n_colors), zeros(C.n_colors, 2), [NaN,NaN], zeros(3,3), 8, 0.0,
-	             zeros(C.n_colors,6), Vector{String}(undef,C.n_colors), Vector{String}(undef,C.n_colors), model, String[])
+	             zeros(C.n_colors,6), C.categorical, Vector{String}(undef,C.n_colors), Vector{String}(undef,C.n_colors), model, String[])
 
 	gmt_lut = unsafe_load(C.data, 1)
 	for j = 1:C.n_colors       # Copy r/g/b from palette to Julia array
@@ -560,11 +561,10 @@ function get_palette(API::Ptr{Nothing}, object::Ptr{Nothing})::GMTcpt
 		for k = 1:3 	out.colormap[n_colors, k] = gmt_lut.rgb_high[1]		end
 		out.alpha[n_colors] = gmt_lut.rgb_low[4]
 	end
-	for j = 1:3
-		for k = 1:3
-			out.bfn[j,k] = C.bfn[j].rgb[k]
-		end
+	for j = 1:3, k = 1:3
+		out.bfn[j,k] = C.bfn[j].rgb[k]
 	end
+
 	gmt_lut = unsafe_load(C.data, 1)
 	out.minmax[1] = gmt_lut.z_low
 	gmt_lut = unsafe_load(C.data, C.n_colors)
@@ -1103,11 +1103,16 @@ function palette_init(API::Ptr{Nothing}, cpt::GMTcpt)::Ptr{GMT.GMT_PALETTE}
 
 	Pb.model = (cpt.model == "rgb") ? GMT_RGB : ((cpt.model == "hsv") ? GMT_HSV : GMT_CMYK)
 
-	b = (GMT.GMT_BFN((cpt.bfn[1,1], cpt.bfn[1,2], cpt.bfn[1,3],0), Pb.bfn[1].hsv, Pb.bfn[1].skip, Pb.bfn[1].fill),
-	     GMT.GMT_BFN((cpt.bfn[2,1], cpt.bfn[2,2], cpt.bfn[2,3],0), Pb.bfn[1].hsv, Pb.bfn[1].skip, Pb.bfn[1].fill),
-	     GMT.GMT_BFN((cpt.bfn[3,1], cpt.bfn[3,2], cpt.bfn[3,3],0), Pb.bfn[1].hsv, Pb.bfn[1].skip, Pb.bfn[1].fill))
-	Pb.bfn = b
+	# Check 'categorality'
+	(cpt.key[1] != "") && (Pb.categorical = (tryparse(Float64, cpt.key[1]) === nothing) ? 2 : 1)
 
+	if (Pb.categorical == 0)			# Categorical CPTs have no BFN
+		b = (GMT.GMT_BFN((cpt.bfn[1,1], cpt.bfn[1,2], cpt.bfn[1,3],0), Pb.bfn[1].hsv, Pb.bfn[1].skip, Pb.bfn[1].fill),
+			GMT.GMT_BFN((cpt.bfn[2,1], cpt.bfn[2,2], cpt.bfn[2,3],0), Pb.bfn[1].hsv, Pb.bfn[1].skip, Pb.bfn[1].fill),
+			GMT.GMT_BFN((cpt.bfn[3,1], cpt.bfn[3,2], cpt.bfn[3,3],0), Pb.bfn[1].hsv, Pb.bfn[1].skip, Pb.bfn[1].fill))
+		Pb.bfn = b
+	end
+	
 	for j = 1:Pb.n_colors
 		glut = unsafe_load(Pb.data, j)
 		rgb_low  = (cpt.cpt[j,1], cpt.cpt[j,2], cpt.cpt[j,3], cpt.alpha[j])
@@ -1131,9 +1136,6 @@ function palette_init(API::Ptr{Nothing}, cpt::GMTcpt)::Ptr{GMT.GMT_PALETTE}
 	if (cpt.label[1] != "")
 		GMT_Put_Strings(API, GMT_IS_PALETTE | GMT_IS_PALETTE_LABEL, convert(Ptr{Cvoid}, P), cpt.label)
 	end
-
-	# Check 'categorality' code
-	(cpt.key[1] != "") && (Pb.categorical = (tryparse(Float64, cpt.key[1]) === nothing) ? 2 : 1)
 
 	GMT_Set_AllocMode(API, GMT_IS_PALETTE, P)		# Tell GMT that memory is external (IS IT REALY NEEDED?)
 	unsafe_store!(P, Pb)
@@ -1473,11 +1475,17 @@ Base.:display(D::GMTdataset) = show(D)		# Otherwise the default prints nothing w
 # ---------------------------------------------------------------------------------------------------
 function Base.show(io::IO, C::GMTcpt)
 	isempty(C) && return
-	mat = (size(C.cpt,1) > 1) ? [round.([C.cpt.*255 C.alpha[1:size(C.cpt,1)].*255], digits=0) C.range] : [round.([C.cpt.*255 C.alpha[1].*255], digits=0) C.range]
-	D = mat2ds(mat, colnames=["r1", "g1", "b1", "r2", "g2", "b2", "alpha", "z1", "z2"])
+	if (C.categorical > 0)
+		mat = (size(C.cpt,1) > 1) ? [C.range[:,1] round.([C.colormap*255 C.alpha[1:size(C.cpt,1)]*255], digits=0)] : [C.range[1] round.([C.colormap*255 C.alpha[1]*255], digits=0)]
+		D = mat2ds(mat, colnames=["z", "r", "g", "b", "alpha"])
+	else
+		mat = (size(C.cpt,1) > 1) ? [round.([C.cpt.*255 C.alpha[1:size(C.cpt,1)].*255], digits=0) C.range] : [round.([C.cpt.*255 C.alpha[1].*255], digits=0) C.range]
+		D = mat2ds(mat, colnames=["r1", "g1", "b1", "r2", "g2", "b2", "alpha", "z1", "z2"])
+	end
 	D.bbox = Float64[]
 	(!isempty(C.label) && length(C.label) == size(C.cpt,1) && any(C.label .!= "")) && (D.text = C.label)
-	println("Extract of a GMTcpt exposed as a GMTdataset for display. Colors converted to [0-255]")
+	println("Extract of a GMTcpt exposed as a GMTdataset for display.")
+	(C.categorical > 0) && println("CATEGORICAL palette.")
 	(~all(isempty.(C.comment))) && println("Comment:\t", C.comment)
 	println("Model: ", C.model)
 	println("Color depth: ", C.depth)

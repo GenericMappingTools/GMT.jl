@@ -86,12 +86,13 @@ mutable struct GMTcpt
 	depth::Cint					# Color depth 24, 8, 1
 	hinge::Cdouble				# Z-value at discontinuous color break, or NaN
 	cpt::Array{Float64,2}		# Mx6 matrix with r1 g1 b1 r2 g2 b2 for z1 z2 of each slice
+	categorical::Int			# 0 = No, 1 = Yes, 2 = Yes and keys are strings.
 	label::Vector{String}		# Labels of a Categorical CPT
 	key::Vector{String}			# Keys of a Categorical CPT
 	model::String				# String with color model rgb, hsv, or cmyk [rgb]
 	comment::Vector{String}		# Cell array with any comments
 end
-GMTcpt() = GMTcpt(Array{Float64,2}(undef,0,0), Vector{Float64}(undef,0), Array{Float64,2}(undef,0,0), Vector{Float64}(undef,0), Array{Float64,2}(undef,0,0), 0, 0.0, Array{Float64,2}(undef,0,0), String[], String[], string(), String[])
+GMTcpt() = GMTcpt(Array{Float64,2}(undef,0,0), Vector{Float64}(undef,0), Array{Float64,2}(undef,0,0), Vector{Float64}(undef,0), Array{Float64,2}(undef,0,0), 0, 0.0, Array{Float64,2}(undef,0,0), 0, String[], String[], string(), String[])
 Base.size(C::GMTcpt) = size(C.range, 1)
 Base.isempty(C::GMTcpt) = (size(C) == 0)
 
