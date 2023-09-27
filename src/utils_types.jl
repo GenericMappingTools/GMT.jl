@@ -102,6 +102,7 @@ In the former case (Vector{Vector}) the length of each Vector[i] must equal to t
 mat2ds(mat::Nothing) = mat		# Method to simplify life and let call mat2ds on a nothing
 mat2ds(mat::GDtype)  = mat		# Method to simplify life and let call mat2ds on a already GMTdataset
 mat2ds(text::Union{AbstractString, Vector{<:AbstractString}}) = text_record(text)	# Now we can hide text_record
+mat2ds(text::Vector{String}; hdr::String="") = text_record(fill(NaN,length(text),2), text, [hdr])
 #function mat2ds(mat::Matrix{Any}; hdr=String[], geom=0, kwargs...)
 function mat2ds(mat::AbstractMatrix; hdr=String[], geom=0, kwargs...)
 	# Here we are expecting that Any-ness results from columns with DateTime. If not returm 'mat' as is
@@ -176,7 +177,7 @@ function helper_set_crs(d)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function mat2ds(mat::Array{T,N}, txt::Vector{String}=String[]; hdr=String[], geom=0, kwargs...) where {T,N}
+function mat2ds(mat::Array{T,N}, txt::Union{String,Vector{String}}=String[]; hdr=String[], geom=0, kwargs...) where {T,N}
 	d = KW(kwargs)
 
 	(!isempty(txt)) && return text_record(mat, txt,  hdr)

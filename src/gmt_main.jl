@@ -62,7 +62,7 @@ function gmt(cmd::String, args...)
 	end
 
 	# 2+ Add -F to psconvert if user requested a return image but did not give -F.
-	# The problem is that we can't use nargout to decide what to do, so we use -T to solve the ambiguity.
+	# The problem is that we can't use nargout to decide what to do, so we use -T to resolve the ambiguity.
 	need2destroy = false
 	if (g_module == "psconvert")
 		if (!occursin("-F", r))
@@ -73,7 +73,7 @@ function gmt(cmd::String, args...)
 				if (endswith(r, " *"))  r = r[1:end-2];	return_img = false;  end	# Trick to avoid reading back img
 				ind = findfirst("-T", r)
 				tok = (ind !== nothing) ? lowercase(strtok(r[ind[2]:end])[1]) : ""
-				if (return_img && !occursin("e", tok) && !occursin("f", tok))	# No any -Tef combo so add -F
+				if (return_img && !occursin("e", tok) && !occursin("f", tok))		# No any -Tef combo so add -F
 					r *= " -F";		need2destroy = true
 				end
 			end
@@ -535,7 +535,7 @@ function get_palette(API::Ptr{Nothing}, object::Ptr{Nothing})::GMTcpt
 
 	C::GMT_PALETTE = unsafe_load(convert(Ptr{GMT_PALETTE}, object))
 
-	@GC.preserve C (C.data == C_NULL) && error("get_palette: programming error, output CPT is empty")
+	(C.data == C_NULL) && error("get_palette: programming error, output CPT is empty")
 
 	model::String = (C.model & GMT_HSV != 0) ? "hsv" : ((C.model & GMT_CMYK != 0) ? "cmyk" : "rgb")
 	n_colors::UInt32 = (C.is_continuous != 0) ? C.n_colors + 1 : C.n_colors
@@ -565,12 +565,12 @@ function get_palette(API::Ptr{Nothing}, object::Ptr{Nothing})::GMTcpt
 		out.bfn[j,k] = C.bfn[j].rgb[k]
 	end
 
+	out.depth = (C.is_bw != 0) ? 1 : ((C.is_gray != 0) ? 8 : 24)
+	out.hinge = (C.has_hinge != 0) ? C.hinge : NaN;
 	gmt_lut = unsafe_load(C.data, 1)
 	out.minmax[1] = gmt_lut.z_low
 	gmt_lut = unsafe_load(C.data, C.n_colors)
 	out.minmax[2] = gmt_lut.z_high
-	out.depth = (C.is_bw != 0) ? 1 : ((C.is_gray != 0) ? 8 : 24)
-	@GC.preserve C out.hinge = (C.has_hinge != 0) ? C.hinge : NaN;
 
 	return out
 end

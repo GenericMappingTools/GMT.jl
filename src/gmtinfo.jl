@@ -61,7 +61,7 @@ function gmtinfo(cmd0::String="", arg1=nothing; kwargs...)::Union{String, GMTdat
 	cmd = parse_these_opts(cmd, d, [[:A :ranges], [:C :numeric :per_column], [:D :center], [:E :get_record], [:F :counts],
 	                                [:L :common_limits], [:S :for_error_bars]])
 	cmd = add_opt(d, cmd, "I", [:I :inc :increment :spacing],
-	              (exact=("e", nothing, 1), polyg=("b", nothing, 1), surface=("s", nothing, 1), fft=("d", nothing, 1), inc=("", arg2str, 2)), false, true)
+	              (exact=("e", nothing, 1), polyg=("b", nothing, 1), surface=("s", nothing, 1), fft=("d", nothing, 1), inc=("", arg2str, 2)))
 	cmd = add_opt(d, cmd, "T", [:T :nearest_multiple], (dz="", col="+c", column="+c"))
 
 	# If file name sent in, read it.
