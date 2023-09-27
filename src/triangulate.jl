@@ -91,7 +91,7 @@ function parse_Q_tri(d::Dict, symbs::Array{Symbol}, cmd::String)
 end
 
 # ---------------------------------------------------------------------------------------------------
-triangulate(arg1::Array, cmd0::String=""; kw...) = triangulate(cmd0, arg1; kw...)
+triangulate(arg1; kw...) = triangulate("", arg1; kw...)
 
 # ---------------------------------------------------------------------------------------------------
 """
