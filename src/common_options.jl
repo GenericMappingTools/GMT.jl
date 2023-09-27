@@ -171,6 +171,7 @@ function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=true, RIr::Bool=
 
 	(O && opt_R == "") && (opt_R = " -R")
 	if (opt_R != "" && opt_R != " -R" && !IamInset[1])		# Save limits in numeric
+		bak = IamModern[1]
 		try
 			limits = opt_R2num(opt_R)
 			CTRL.limits[7:7+length(limits)-1] = limits		# The plot limits
@@ -179,6 +180,7 @@ function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=true, RIr::Bool=
 			contains(opt_R, "+r") && (CTRL.limits[13] = 1.0)# To know that -R...+r was used.
 		catch
 			CTRL.limits .= 0.0
+			IamModern[1] = bak
 		end
 		(opt_R != " -R") && (CTRL.pocket_R[1] = opt_R)
 	end
@@ -2397,6 +2399,7 @@ function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, need_symb::Symbo
 		if (isa(val, Tuple) && length(val) == 2)
 			# This is crazzy trickery to accept also (e.g) C=(pratt,"200k") instead of C=(pts=pratt,dist="200k")
 			d[symb] = Base.invokelatest(dict2nt, Dict(need_symb => val[1], keys(nt_opts)[1] => val[2]))	# Need to patch also the input option
+			val = d[symb]
 		end
 		if (isa(val, NamedTuple))
 			di::Dict = nt2dict(val)
