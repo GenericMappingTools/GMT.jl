@@ -185,7 +185,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function resetdefaults(API::Ptr{Cvoid})
-	# reset_defaults() lieves in libjmt.jl that is loaded very early in the loading stack, hence the need of this
+	# reset_defaults() lieves in libgmt.jl that is loaded very early in the loading stack, hence the need of this
 	reset_defaults(API)							# Set the modern mode settings
 	extra_sets()
 end
