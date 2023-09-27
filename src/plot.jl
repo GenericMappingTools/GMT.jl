@@ -1072,6 +1072,7 @@ function helper_vecZscale!(d::Dict, arg1, first::Bool, typevec::Int, opt_R::Stri
 
 	len = ((val = find_in_dict(d, [:ms :markersize :MarkerSize :size])[1]) !== nothing) ? arg2str(val)::String : "8p"
 	(ahdr != "" && ahdr[1] != '+') && (len = "")		# Because a length was set in the arrow(len=?,...) and it takes precedence(?)
+	contains(ahdr, "+s") && (def_z = "")				# If second point (+s) no scaling(+z)
 	d[:S] = "v$(len)" * ahdr * def_e * def_h * ((typevec < 2) ? def_z : "+s")
 
 	# Need to apply a scale factor that also compensates for the GMT bug.
