@@ -314,22 +314,22 @@ function worldrectgrid(; proj::StrSymb="", width=(30,20), grid=Vector{Vector{Rea
 		for m = meridians
 			_m = m;	(_m < -180) && (_m += 360.);	(_m > 180) && (_m -= 360.)	
 			an = isempty(annot_x) ? true : _m in annot_x
-			Dgrid[n+=1] = mat2ds(lonlat2xy([fill(m,length(meridian)) meridian], t_srs=_proj), attrib=Dict("merid_b" => "$m,-90", "merid_e" => "$m,90", "annot" => an ? "y" : "n"))
+			Dgrid[n+=1] = mat2ds(lonlat2xy([fill(m,length(meridian)) meridian], t_srs=_proj), attrib=Dict("merid_b" => "$m,-90", "merid_e" => "$m,90", "annot" => an ? "y" : "n", "n_meridians" => "$(length(meridians))", "n_parallels" => "$(length(parallels))"))
 		end
 		for p = parallels
-			Dgrid[n+=1] = mat2ds(lonlat2xy([parallel fill(p, length(parallel))], t_srs=_proj), attrib=Dict("para_b" => "$p,$(parallel[1])", "para_e" => "$p,$(parallel[end])"))
+			Dgrid[n+=1] = mat2ds(lonlat2xy([parallel fill(p, length(parallel))], t_srs=_proj), attrib=Dict("para_b" => "$p,$(parallel[1])", "para_e" => "$p,$(parallel[end])", "annot" => "n", "n_meridians" => "$(length(meridians))", "n_parallels" => "$(length(parallels))"))
 		end
 		!worldrect && check_gaps(Dgrid, length(meridians)+1, length(Dgrid))		# Try this only with non-worldrect
 	else					# Cartesian graticules
 		for m = meridians
-			Dgrid[n+=1] = mat2ds([fill(m,length(meridian)) meridian], attrib=Dict("merid_b" => "$m,-90", "merid_e" => "$m,90"))
+			Dgrid[n+=1] = mat2ds([fill(m,length(meridian)) meridian], attrib=Dict("merid_b" => "$m,-90", "merid_e" => "$m,90", "n_meridians" => "$(length(meridians))", "n_parallels" => "$(length(parallels))"))
 		end
 		for p = parallels
-			Dgrid[n+=1] = mat2ds([parallel fill(p, length(parallel))], attrib=Dict("para_b" => "$p,$(parallel[1])", "para_e" => "$p,$(parallel[end])"))
+			Dgrid[n+=1] = mat2ds([parallel fill(p, length(parallel))], attrib=Dict("para_b" => "$p,$(parallel[1])", "para_e" => "$p,$(parallel[end])", "n_meridians" => "$(length(meridians))", "n_parallels" => "$(length(parallels))"))
 		end
 	end
-	Dgrid[1].attrib["n_meridians"] = "$(length(meridians))"
-	Dgrid[1].attrib["n_parallels"] = "$(length(parallels))"
+	#Dgrid[1].attrib["n_meridians"] = "$(length(meridians))"
+	#Dgrid[1].attrib["n_parallels"] = "$(length(parallels))"
 	Dgrid[1].proj4 = _proj
 	set_dsBB!(Dgrid, false)
 	return Dgrid
