@@ -140,8 +140,8 @@ function common_insert_R!(d::Dict, O::Bool, cmd0, I_G)
 		if (isa(val, StrSymb))
 			s = string(val)::String
 			d[:R] = (s == "global" || s == "d") ? (-180,180,-90,90) : (s == "global360" || s == "g") ? (0,360,-90,90) : val
-		else
-			d[:R] = val
+		#else
+			#d[:R] = val
 		end
 		!(isa(cmd0, String) && !isempty(cmd0) && (cmd0[1] == '@' || startswith(cmd0, "http"))) &&
 			del_from_dict(d, [:region, :limits, :region_llur, :limits_llur, :limits_diag, :region_diag])	# Dangerous remotes were not sniffed.
