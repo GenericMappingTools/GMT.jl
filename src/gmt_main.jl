@@ -1293,7 +1293,7 @@ function num2str(mat)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function resetGMT()
+function resetGMT(dorestart::Bool=true)
 	# Reset everything to a fresh GMT session. That is reset all global variables to their initial state
 	IamModern[1] = false;	FirstModern[1] = false;		IamSubplot[1] = false;	usedConfPar[1] = false;
 	MULTI_COL[1] = false;	CONVERT_SYNTAX[1] = false;	CURRENT_VIEW[1] = "";	SHOW_KWARGS[1] = false;
@@ -1305,8 +1305,7 @@ function resetGMT()
 	CTRL.IamInPaperMode[:] = [false, true];	IamInset[1] = false
 	CTRL.pocket_call[1] = CTRL.pocket_call[3] = nothing;	CTRL.pocket_R[1] = "";	CTRL.figsize .= 0.0
 	CTRL.XYlabels[1] = "";	CTRL.XYlabels[2] = "";	CTRL.returnPS[1] = false
-	gmt_restart()
-	clear_sessions()
+	(dorestart) && (gmt_restart(); clear_sessions())
 end
 
 # ---------------------------------------------------------------------------------------------------
