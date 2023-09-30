@@ -10,12 +10,12 @@ As an alternative use 'fmt' as a string or symbol containing the format (ps, pdf
 By default name="GMTplot" and fmt="ps"
 """
 function gmtbegin(name::String=""; fmt=nothing, verbose=nothing)
-	FirstModern[1] = true			# To know if we need to compute -R in plot. Due to a GMT6.0 BUG
+	resetGMT()			# Reset everything to a fresh GMT session. That is reset all global variables to their initial state
 	cmd = "begin"       # Default name (GMTplot.ps) is set in gmt_main()
 	(name != "") && (cmd *= " " * get_format(name, fmt))
 	(verbose !== nothing) && (cmd *= " -V" * string(verbose))
-	gmt_restart()		# Always start with a clean session
 	IamModern[1], IamSubplot[1] = false, false
+	FirstModern[1] = true			# To know if we need to compute -R in plot. Due to a GMT6.0 BUG
 	gmt(cmd)
 	return nothing
 end
@@ -36,7 +36,7 @@ function gmtend(arg=nothing; show=false, verbose=nothing)
 	end
 	gmt(cmd)
 	IamModern[1] = false;	FirstModern[1] = false
-	CTRL.pocket_J[1], CTRL.pocket_J[2] = "", ""
+	resetGMT(false)			# With 'false' it only resets the all global variables
 	return nothing
 end
  
