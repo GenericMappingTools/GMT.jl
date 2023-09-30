@@ -163,8 +163,8 @@ end
 # ---------------------------------------------------------------------------------------------------
 function theme_modern()
 	# Set the MODERN mode settings
-	swapmode(G_API[1], classic=false)			# Set GMT->current.setting.run_mode = GMT_MODERN
-	resetdefaults(G_API[1])
+	swapmode(G_API[1], classic=false)		# Set GMT->current.setting.run_mode = GMT_MODERN
+	resetdefaults(G_API[1])					# Set the modern mode settings (will clear eventual gmt.conf contents)
 	gmtlib_setparameter(G_API[1], "MAP_FRAME_PEN", "0.75")
 	gmtlib_setparameter(G_API[1], "FONT_TITLE", "auto,Times-Roman,black")
 	gmtlib_setparameter(G_API[1], "FONT_HEADING", "auto,Times-Roman,black")
@@ -174,19 +174,20 @@ function theme_modern()
 		gmtlib_setparameter(G_API[1], "MAP_ORIGIN_X", "0")	# Workarround GMT bug.
 		gmtlib_setparameter(G_API[1], "MAP_ORIGIN_Y", "0")
 	end
+	gmt_getdefaults(G_API[1])			# Read back eventual gmt.conf file whose contents we wipped out above
 	return nothing
 end
 
 # ---------------------------------------------------------------------------------------------------
 function theme_classic()
-	swapmode(G_API[1], classic=true)			# Set GMT->current.setting.run_mode = GMT_CLASSIC
+	swapmode(G_API[1], classic=true)	# Set GMT->current.setting.run_mode = GMT_CLASSIC
 	resetdefaults(G_API[1])
 end
 
 # ---------------------------------------------------------------------------------------------------
 function resetdefaults(API::Ptr{Cvoid})
 	# reset_defaults() lieves in libgmt.jl that is loaded very early in the loading stack, hence the need of this
-	reset_defaults(API)							# Set the modern mode settings
+	reset_defaults(API)					# Set the modern mode settings (will clear eventual gmt.conf contents)
 	extra_sets()
 end
 

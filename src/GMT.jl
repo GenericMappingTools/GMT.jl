@@ -81,6 +81,7 @@ const global CONVERT_SYNTAX = Vector{Bool}(undef, 1);CONVERT_SYNTAX[1] = false	#
 const global SHOW_KWARGS = Vector{Bool}(undef, 1);SHOW_KWARGS[1] = false	# To just print the kwargs of a option call)
 const global isFranklin  = Vector{Bool}(undef, 1);isFranklin[1] = false		# Only set/unset by the Docs building scripts.
 const global noGrdCopy   = Vector{Bool}(undef, 1);noGrdCopy[1] = false		# If true, grids are sent without transpose/copy
+const global GMTCONF     = Vector{Bool}(undef, 1);GMTCONF[1] = false		# Flag if gmtset was used and must be 'unused' 
 const global FMT = ["png"]                         # The default plot format
 const global BOX_STR = [""]                        # Used in plotyy to know -R of first call
 const DEF_FIG_SIZE  = "15c/10c"                    # Default fig size for plot like programs. Approx 16/11

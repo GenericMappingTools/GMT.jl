@@ -390,6 +390,10 @@ function gmtlib_getparameter(API, keyword::String)
 	unsafe_string(ccall((:gmtlib_getparameter, libgmt), Ptr{UInt8}, (Cstring, Ptr{UInt8}), GMT_Get_Ctrl(API), keyword))
 end
 
+function gmt_getdefaults(API::Ptr{Cvoid}, file=C_NULL)
+	ccall((:gmt_getdefaults, libgmt), Cint, (Cstring, Ptr{UInt8}), GMT_Get_Ctrl(API), file)
+end
+
 function reset_defaults(API::Ptr{Cvoid})
 	ccall((:gmt_conf_SI, libgmt), Cvoid, (Cstring,), GMT_Get_Ctrl(API))
 end
