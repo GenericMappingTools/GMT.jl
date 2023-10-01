@@ -128,7 +128,7 @@ end
 function common_insert_R!(d::Dict, O::Bool, cmd0, I_G)
 	# Set -R in 'd' under several conditions. We may need this to make -J=:guess to work
 	O && return
-	if ((val = find_in_dict(d, [:R :region :limits :region_llur :limits_llur :limits_diag :region_diag], false)[1]) === nothing && (isa(I_G, GItype)))
+	if ((val = find_in_dict(d, [:R :region :limits], false)[1]) === nothing && (isa(I_G, GItype)))
 		if (isa(I_G, GMTgrid) || !isimgsize(I_G))
 			d[:R] = @sprintf("%.15g/%.15g/%.15g/%.15g", I_G.range[1], I_G.range[2], I_G.range[3], I_G.range[4])
 		end
@@ -143,8 +143,7 @@ function common_insert_R!(d::Dict, O::Bool, cmd0, I_G)
 		#else
 			#d[:R] = val
 		end
-		!(isa(cmd0, String) && !isempty(cmd0) && (cmd0[1] == '@' || startswith(cmd0, "http"))) &&
-			del_from_dict(d, [:region, :limits, :region_llur, :limits_llur, :limits_diag, :region_diag])	# Dangerous remotes were not sniffed.
+		del_from_dict(d, [:region, :limits])
 	end
 end
 function isimgsize(I_G)
