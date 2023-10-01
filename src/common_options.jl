@@ -160,7 +160,7 @@ function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=true, RIr::Bool=
 	if (RIr)
 		if (isa(val, GItype))
 			opt_I = parse_I(d, "", [:I :inc :increment :spacing], "I")
-			(opt_I == "") && (cmd *= " -I" * arg2str(val.inc))::String
+			(opt_I == "") && (cmd *= " -I" * arg2str(val.inc))
 			opt_r = parse_r(d, "")[2]
 			(opt_r == "") && (cmd *= " -r" * ((val.registration == 0) ? "g" : "p"))
 		else				# Here we must parse the -I and -r separately.
@@ -256,7 +256,7 @@ function build_opt_R(Val, symb::Symbol=Symbol())::String		# Generic function tha
 			_val::Vector{<:Float64} = vec(Float64.(collect(Val)))
 			R = " -R" * @sprintf("%.15g/%.15g/%.15g/%.15g+r", _val[1], _val[3], _val[2], _val[4])::String
 		else
-			R = " -R" * rstrip(arg2str(Val)::String, '/')		# Remove last '/'
+			R = " -R" * arg2str(Val)
 		end
 	elseif (isa(Val, GItype))
 		R = @sprintf(" -R%.15g/%.15g/%.15g/%.15g", Val.range[1], Val.range[2], Val.range[3], Val.range[4])
@@ -1330,7 +1330,7 @@ function parse_V(d::Dict, cmd::String)::String
 	# Parse the global -V option. Return CMD same as input if no -V option in args
 	if ((val = find_in_dict(d, [:V :verbose], true)[1]) !== nothing)
 		if (isa(val, Bool) && val) cmd *= " -V"
-		else                       cmd *= " -V" * arg2str(val)::String
+		else                       cmd *= " -V" * arg2str(val)
 		end
 	end
 	return cmd
@@ -1372,13 +1372,15 @@ parse_bo(d::Dict, cmd::String) = parse_b(d, cmd, [:b :bo :binary_out], "o")
 # ---------------------------------------------------------------------------------------------------
 function parse_c(d::Dict, cmd::String)::Tuple{String, String}
 	# Most of the work here is because GMT counts from 0 but here we count from 1, so conversions needed
-	opt_val::String = ""
+	opt_val = ""
 	if ((val = find_in_dict(d, [:c :panel])[1]) !== nothing)
-		if (isa(val, Tuple) || isa(val, Array{<:Real}) || isa(val, Integer))
+		if isa(val, Integer) 
+            opt_val = string(val - 1)
+        elseif isa(val, Tuple) || isa(val, Array{<:Real})
 			opt_val = arg2str(val .- 1, ',')
 		elseif (isa(val, String) || isa(val, Symbol))
-			_val::String = string(val)		# In case it was a symbol
-			if ((ind = findfirst(",", _val)) !== nothing)	# Shit, user really likes complicating
+			_val = string(val)		# In case it was a symbol
+			if ((ind = findfirst(",", _val)) !== nothing)
 				opt_val = string(parse(Int, val[1:ind[1]-1]) - 1, ',', parse(Int, _val[ind[1]+1:end]) - 1)
 			elseif (_val != "" && _val != "next")
 				opt_val = string(parse(Int, _val) - 1)
@@ -1534,7 +1536,7 @@ function parse_helper(cmd::String, d::Dict, symbs::VMs, opt::String, sep='/')
 	(SHOW_KWARGS[1]) && return (print_kwarg_opts(symbs, "(Common option not yet expanded)"),"")
 	opt_val::String = ""
 	if ((val = find_in_dict(d, symbs, true)[1]) !== nothing)
-		opt_val = opt * arg2str(val, sep)::String
+		opt_val = opt * arg2str(val, sep)
 		cmd *= opt_val
 	end
 	return cmd, opt_val
@@ -1667,7 +1669,7 @@ function parse_I(d::Dict, cmd::String, symbs, opt::String, del::Bool=true)::Stri
 			end
 		else
 			if (opt != "")  cmd  = string(cmd, " -", opt, arg2str(val))
-			else            cmd *= arg2str(val)::String
+			else            cmd *= arg2str(val)
 			end
 		end
 	end
@@ -1739,7 +1741,7 @@ function add_opt_pen(d::Dict, symbs::Union{Nothing, VMs}, opt::String="", del::B
 					end
 				end
 			else
-				(val != :none && val != "none") && (out = opt * arg2str(val)::String)
+				(val != :none && val != "none") && (out = opt * arg2str(val))
 			end
 		end
 	end
@@ -1760,7 +1762,7 @@ function add_opt_pen(d::Dict, symbs::Union{Nothing, VMs}, opt::String="", del::B
 		((val = find_in_dict(d, [:ctext :color_text :color_symbols :color_symbol])[1]) !== nothing) && (out *= "+cf")
 	end
 	if (haskey(d, :bezier))  out *= "+s";  del_from_dict(d, [:bezier])  end
-	if (haskey(d, :offset))  out *= "+o" * arg2str(d[:offset])::String   end
+	if (haskey(d, :offset))  out *= "+o" * arg2str(d[:offset])   end
 
 	if (out != "")		# Search for eventual vec specs, but only if something above has activated -W
 		v = false
@@ -2012,34 +2014,32 @@ function line_decorated_with_string(str::AbstractString; dist=0)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function arg2str(d::Dict, symbs)::String
+function arg2str(d::Dict, symbs)
 	# Version that allow calls from add_opt()
-	return ((val = find_in_dict(d, symbs)[1]) !== nothing) ? arg2str(val) : ""
+	arg2str(find_in_dict(d, symbs)[1])
 end
-
-# ---------------------------------------------------------------------------------------------------
-function arg2str(arg, sep='/')::String
-	# Convert an empty, a numeric or string ARG into a string ... if it's not one to start with
-	# ARG can also be a Bool, in which case the TRUE value is converted to "" (empty string)
-	# SEP is the char separator used when ARG is a tuple or array of numbers
-	if (isa(arg, AbstractString) || isa(arg, Symbol))
-		out::String = string(arg)::String
-		if (occursin(" ", out) && !startswith(out, "\""))	# Wrap it in quotes
-			out = "\"" * out * "\""
-		end
-	elseif ((isa(arg, Bool) && arg) || isempty_(arg))
-		out = ""
-	elseif (isa(arg, Real))		# Have to do it after the Bool test above because Bool is a Number too
-		out = @sprintf("%.12g", arg)::String
-	elseif (isa(arg, Array{<:Real}) || (isa(arg, Tuple) && !isa(arg[1], String)) )
-		out = join([string(x, sep)::String for x in arg])
-		out = rstrip(out, sep)		# Remove last '/'
-	elseif (isa(arg, Tuple) && isa(arg[1], String))		# Maybe better than above but misses nice %.xxg
-		out = join(arg, sep)
-	else
-		error("arg2str: argument 'arg' can only be a String, Symbol, Number, Array or a Tuple, but was $(typeof(arg))")
+"""
+	Convert an empty, a numeric or string ARG into a string ... if it's not one to start with
+	ARG can also be a Bool, in which case the TRUE value is converted to "" (empty string)
+	SEP is the char separator used when ARG is a tuple or array of numbers
+"""
+arg2str(arg::Nothing) = ""
+arg2str(arg::Real) = @sprintf("%.12g", arg)
+arg2str(arg::Symbol) = string(arg)
+arg2str(arg::Array{<:Real}, sep = '/') = rstrip(join([string(x, sep) for x in arg]), sep)
+arg2str(arg::Tuple, sep = '/') = rstrip(join([string(x, sep) for x in arg]), sep)
+function arg2str(arg::Bool)
+    arg && return ""
+end
+function arg2str(arg::AbstractString)
+	if occursin(" ", arg) && !startswith(arg, "\"")
+		return string("\"", arg, "\"")
+    else
+        return arg
 	end
-	return out
+end
+function arg2str(arg)
+	error("arg2str: argument 'arg' can only be a String, Symbol, Number, Array or a Tuple, but was $(typeof(arg))")
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -2305,7 +2305,7 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)::String
 					elseif (length(d[key[k]][1]) == 2 && d[key[k]][1][1] == '-' && !isa(nt[k], Tuple))	# e.g. -L (&g, arg2str, 1)
 						cmd_hold[ind_o] = string(d[key[k]][1][2])	# where g<scalar>
 					else		# Run the fun
-						cmd_hold[ind_o] = (d[key[k]][1] == "") ? d[key[k]][2](nt[k]) : string(d[key[k]][1][end])::String * d[key[k]][2](nt[k])::String
+						cmd_hold[ind_o] = (d[key[k]][1] == "") ? d[key[k]][2](nt[k]) : string(d[key[k]][1][end]) * d[key[k]][2](nt[k])
 					end
 					order[ind_o]    = d[key[k]][3];				# Store the order of this sub-option
 				end
@@ -2341,7 +2341,7 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)::String
 		elseif (d[key[k]] != "" && d[key[k]][end] == '#')	# Means put flag at the end and make this arg first in cmd (coast -W)
 			cmd = arg2str(nt[k])::String * string(d[key[k]][1:end-1])::String * cmd
 		else
-			cmd *= d[key[k]]::String * arg2str(nt[k])::String
+			cmd *= d[key[k]] * arg2str(nt[k])
 		end
 	end
 
@@ -3388,20 +3388,20 @@ function parse_quoted(d::Dict, opt)::String
 	cmd::String = (isa(opt, String)) ? opt : ""			# Need to do this to prevent from calls that don't set OPT
 	if (haskey(d, :angle))   cmd  = string(cmd, "+a", d[:angle])  end
 	if (haskey(d, :debug))   cmd *= "+d"  end
-	if (haskey(d, :clearance ))  cmd *= "+c" * arg2str(d[:clearance])::String end
+	if (haskey(d, :clearance ))  cmd *= "+c" * arg2str(d[:clearance]) end
 	if (haskey(d, :delay))   cmd *= "+e"  end
 	if (haskey(d, :font))    cmd *= "+f" * font(d[:font])::String    end
-	if (haskey(d, :color))   cmd *= "+g" * arg2str(d[:color])::String   end
+	if (haskey(d, :color))   cmd *= "+g" * arg2str(d[:color])   end
 	if (haskey(d, :justify)) cmd = string(cmd, "+j", d[:justify]) end
 	if (haskey(d, :const_label)) cmd = string(cmd, "+l", str_with_blancs(d[:const_label]))  end
-	if (haskey(d, :nudge))   cmd *= "+n" * arg2str(d[:nudge])::String   end
+	if (haskey(d, :nudge))   cmd *= "+n" * arg2str(d[:nudge])   end
 	if (haskey(d, :rounded)) cmd *= "+o"  end
-	if (haskey(d, :min_rad)) cmd *= "+r" * arg2str(d[:min_rad])::String end
-	if (haskey(d, :unit))    cmd *= "+u" * arg2str(d[:unit])::String    end
+	if (haskey(d, :min_rad)) cmd *= "+r" * arg2str(d[:min_rad]) end
+	if (haskey(d, :unit))    cmd *= "+u" * arg2str(d[:unit])    end
 	if (haskey(d, :curved))  cmd *= "+v"  end
-	if (haskey(d, :n_data))  cmd *= "+w" * arg2str(d[:n_data])::String  end
-	if (haskey(d, :prefix))  cmd *= "+=" * arg2str(d[:prefix])::String  end
-	if (haskey(d, :suffices)) cmd *= "+x" * arg2str(d[:suffices])::String  end		# Only when -SqN2
+	if (haskey(d, :n_data))  cmd *= "+w" * arg2str(d[:n_data])  end
+	if (haskey(d, :prefix))  cmd *= "+=" * arg2str(d[:prefix])  end
+	if (haskey(d, :suffices)) cmd *= "+x" * arg2str(d[:suffices])  end		# Only when -SqN2
 	if (haskey(d, :label))
 		if (isa(d[:label], String))
 			cmd *= "+L" * d[:label]::String

@@ -155,8 +155,8 @@ function plotyy(arg1, arg2; first=true, kw...)
 	d = KW(kw)
 	(haskey(d, :xlabel)) ? (xlabel = string(d[:xlabel])::String;	delete!(d, :xlabel)) : xlabel = ""	# Only to used at the end
 	(haskey(d, :seclabel)) ? (seclabel = string(d[:seclabel])::String;	delete!(d, :seclabel)) : seclabel = ""
-	fmt = ((val = find_in_dict(d, [:fmt])[1]) !== nothing) ? arg2str(val)::String : FMT[1]::String
-	savefig = ((val = find_in_dict(d, [:savefig :figname :name])[1]) !== nothing) ? arg2str(val)::String : nothing
+	fmt = ((val = find_in_dict(d, [:fmt])[1]) !== nothing) ? arg2str(val) : FMT[1]::String
+	savefig = ((val = find_in_dict(d, [:savefig :figname :name])[1]) !== nothing) ? arg2str(val) : nothing
 	Vd = ((val = find_in_dict(d, [:Vd])[1]) !== nothing) ? val : 0
 
 	cmd::String, opt_B::String = parse_B(d, "", " -Baf -BW")
@@ -926,7 +926,7 @@ function stem(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		d[:R] = opt_R[4:end]
 	end
 
-	len = ((val = find_in_dict(d, [:ms :markersize :MarkerSize :size])[1]) !== nothing) ? arg2str(val)::String : "8p"
+	len = ((val = find_in_dict(d, [:ms :markersize :MarkerSize :size])[1]) !== nothing) ? arg2str(val) : "8p"
 	d[:S] = "v$(len)+ec+s"
 
 	_show = false
@@ -1070,7 +1070,7 @@ function helper_vecZscale!(d::Dict, arg1, first::Bool, typevec::Int, opt_R::Stri
 		ahdr = ahdr[2:end]								# Need to drop the code because that is set elsewhere.
 	end
 
-	len = ((val = find_in_dict(d, [:ms :markersize :MarkerSize :size])[1]) !== nothing) ? arg2str(val)::String : "8p"
+	len = ((val = find_in_dict(d, [:ms :markersize :MarkerSize :size])[1]) !== nothing) ? arg2str(val) : "8p"
 	(ahdr != "" && ahdr[1] != '+') && (len = "")		# Because a length was set in the arrow(len=?,...) and it takes precedence(?)
 	contains(ahdr, "+s") && (def_z = "")				# If second point (+s) no scaling(+z)
 	d[:S] = "v$(len)" * ahdr * def_e * def_h * ((typevec < 2) ? def_z : "+s")

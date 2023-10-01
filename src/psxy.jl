@@ -620,7 +620,7 @@ function parse_opt_S(d::Dict, arg1, is3D::Bool=false)
 					arg1 = hcat(arg1, funcurve(val2[1], vec(Float64.(val2[2] .* sc)), size(arg1,1)))
 				end
 			elseif (string(val)::String != "indata")	# WTF is "indata"?
-				marca *= arg2str(val)::String
+				marca *= arg2str(val)
 			end
 			opt_S = " -S" * marca
 		elseif (marca != "")					# User only selected a marker name but no size.

@@ -86,7 +86,7 @@ function subplot(fim=nothing; stop=false, kwargs...)
 
 	if (!stop && !do_set)
 		(val_grid === nothing) && error("SUBPLOT: 'grid' keyword is mandatory")
-		cmd = arg2str(val_grid, 'x') * " " * cmd * opt_C		# Also add the eventual global -C clearance option
+		cmd = arg2str(val_grid) * " " * cmd * opt_C		# Also add the eventual global -C clearance option
 		cmd = guess_panels_size(cmd, val_grid)					# For limitted grid dims, guess panel sizes if not provided
 		(dbg_print_cmd(d, cmd) !== nothing) && return cmd		# Vd=2 cause this return
 

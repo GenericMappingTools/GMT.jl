@@ -281,7 +281,7 @@ function plotlinefit(D::GMTdataset; first::Bool=true, grp::Bool=false, kw...)
 	ms = ((val = find_in_dict(d, [:ms :markersize :MarkerSize])[1]) !== nothing) ? string(val)::String : "0.1"
 	mc = ((val = find_in_dict(d, [:mc :markercolor :markerfacecolor :MarkerFaceColor])[1]) !== nothing) ? string(val)::String : "#0072BD"
 	(grp) && (mc = ((mc = edit_segment_headers!(D, 'G', :get)) != "" ? mc : "#0072BD"))
-	mk = ((val = find_in_dict(d, [:marker])[1]) !== nothing) ? arg2str(val)::String : "circ"
+	mk = ((val = find_in_dict(d, [:marker])[1]) !== nothing) ? arg2str(val) : "circ"
 
 	pos = (b > 0) ? "TL" : "TR"
 	(is_in_dict(d, [:lc :linecolor]) === nothing) &&
