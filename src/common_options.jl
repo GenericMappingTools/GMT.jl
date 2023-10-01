@@ -346,7 +346,12 @@ function opt_R2num(opt_R::String)
 		#if (isdiag)  limits[2], limits[4] = limits[4], limits[2]  end
 		# Don't know anymore how -R...+r limits should be stored in CTRL.limits
 	elseif (opt_R != " -R" && opt_R != " -Rtight")	# One of those complicated -R forms. Ask GMT the limits (but slow. It takes 0.2 s)
-		kml::GMTdataset = gmt("gmt2kml " * opt_R, [0 0])
+
+		# If opt_R is not a grid's name, we are f.
+		((ind = findfirst("-R@", opt_R)) !== nothing) && return grdinfo(opt_R[ind[3]:end], C=true)[1:4]	# should be a cache file
+		(((f = guess_T_from_ext(opt_R)) == " -Tg") || f == " -Ti") && return grdinfo(opt_R[4:end], C=true)[1:4]	# any local file
+
+		kml::GMTdataset = gmt("gmt2kml " * opt_R, [0 0])		# for example, opt_R = " -RPT"
 		limits = zeros(4)
 		t::String = kml.text[28][12:end];	ind = findfirst("<", t)		# north
 		limits[4] = parse(Float64, t[1:(ind[1]-1)])
