@@ -1536,7 +1536,11 @@ function parse_helper(cmd::String, d::Dict, symbs::VMs, opt::String, sep='/')
 	(SHOW_KWARGS[1]) && return (print_kwarg_opts(symbs, "(Common option not yet expanded)"),"")
 	opt_val::String = ""
 	if ((val = find_in_dict(d, symbs, true)[1]) !== nothing)
-		opt_val = opt * arg2str(val, sep)
+        if isa(val, Array) || isa(val, Tuple)
+		    opt_val = opt * arg2str(val, sep)
+        else
+            opt_val = opt * arg2str(val)
+        end
 		cmd *= opt_val
 	end
 	return cmd, opt_val
