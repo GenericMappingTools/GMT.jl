@@ -2039,6 +2039,7 @@ function arg2str(arg::AbstractString)
 	end
 end
 function arg2str(arg)
+    isempty_(arg) && return ""
 	error("arg2str: argument 'arg' can only be a String, Symbol, Number, Array or a Tuple, but was $(typeof(arg))")
 end
 
@@ -2297,7 +2298,7 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)::String
 				end
 			else						#
 				if (length(d[key[k]]) == 2)		# Run the function
-					cmd *= string(d[key[k]][1])::String * d[key[k]][2](Dict(key[k] => nt[k]), [key[k]])::String
+					cmd *= string(d[key[k]][1]) * d[key[k]][2](Dict(key[k] => nt[k]), [key[k]])
 				else					# This branch is to deal with options -Td, -Tm, -L and -D of basemap & psscale
 					ind_o += 1
 					(ind_o > 2) && (@warn("You passed more than 1 of the exclusive options in a anchor type option, keeping first but this may break."); ind_o = 1)
@@ -2991,7 +2992,7 @@ end
 # ------------------------
 function helper1_axes(arg, is3D::Bool, c::Char)::String
 	# Used by annot, ticks and grid to accept also 'auto' and "" to mean automatic
-	out::String = arg2str(arg)
+	out = arg2str(arg)
 	(out != "" && out[1] == 'a') && return ""
 	if ((is3D || isa(arg, Tuple)) && ((nc = count_chars(out, '/')) > 0))
 		nc == 1 && return @sprintf("%.12g %s%.12g %s%.12g", arg[1], c, arg[1], c, arg[2])::String
