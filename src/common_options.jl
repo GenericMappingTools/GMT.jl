@@ -151,7 +151,7 @@ function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=true, RIr::Bool=
 	val, symb = find_in_dict(d, [:R :region :limits :region_llur :limits_llur :limits_diag :region_diag], del)
 	if (val !== nothing)
 		opt_R = build_opt_R(val, symb)
-	elseif (IamModern[1])
+	elseif (IamModern[1] && !RIr)
 		return cmd, ""
 	end
 
