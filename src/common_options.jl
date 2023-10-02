@@ -259,7 +259,7 @@ function build_opt_R(Val, symb::Symbol=Symbol())::String		# Generic function tha
 			_val::Vector{<:Float64} = vec(Float64.(collect(Val)))
 			R = " -R" * @sprintf("%.15g/%.15g/%.15g/%.15g+r", _val[1], _val[3], _val[2], _val[4])::String
 		else
-			R = " -R" * arg2str(Val)
+			R = " -R" * arg2str(Val, '/')
 		end
 	elseif (isa(Val, GItype))
 		R = @sprintf(" -R%.15g/%.15g/%.15g/%.15g", Val.range[1], Val.range[2], Val.range[3], Val.range[4])
@@ -1377,9 +1377,7 @@ function parse_c(d::Dict, cmd::String)::Tuple{String, String}
 	# Most of the work here is because GMT counts from 0 but here we count from 1, so conversions needed
 	opt_val = ""
 	if ((val = find_in_dict(d, [:c :panel])[1]) !== nothing)
-		if isa(val, Integer) 
-            opt_val = string(val - 1)
-        elseif isa(val, Tuple) || isa(val, Array{<:Real})
+		if (isa(val, Tuple) || isa(val, Array{<:Real})) || isa(val, Integer) 
 			opt_val = arg2str(val .- 1, ',')
 		elseif (isa(val, String) || isa(val, Symbol))
 			_val = string(val)		# In case it was a symbol
@@ -1539,11 +1537,7 @@ function parse_helper(cmd::String, d::Dict, symbs::VMs, opt::String, sep='/')
 	(SHOW_KWARGS[1]) && return (print_kwarg_opts(symbs, "(Common option not yet expanded)"),"")
 	opt_val::String = ""
 	if ((val = find_in_dict(d, symbs, true)[1]) !== nothing)
-        if isa(val, Array) || isa(val, Tuple)
-		    opt_val = opt * arg2str(val, sep)
-        else
-            opt_val = opt * arg2str(val)
-        end
+		opt_val = opt * arg2str(val, sep)
 		cmd *= opt_val
 	end
 	return cmd, opt_val
@@ -2030,22 +2024,22 @@ end
 	ARG can also be a Bool, in which case the TRUE value is converted to "" (empty string)
 	SEP is the char separator used when ARG is a tuple or array of numbers
 """
-arg2str(arg::Nothing) = ""
-arg2str(arg::Real) = @sprintf("%.12g", arg)
-arg2str(arg::Symbol) = string(arg)
+arg2str(arg::Nothing,       sep = '/') = ""
+arg2str(arg::Real,          sep = '/') = @sprintf("%.12g", arg)
+arg2str(arg::Symbol,        sep = '/') = string(arg)
 arg2str(arg::Array{<:Real}, sep = '/') = rstrip(join([string(x, sep) for x in arg]), sep)
-arg2str(arg::Tuple, sep = '/') = rstrip(join([string(x, sep) for x in arg]), sep)
-function arg2str(arg::Bool)
+arg2str(arg::Tuple,         sep = '/') = rstrip(join([string(x, sep) for x in arg]), sep)
+function arg2str(arg::Bool, sep = '/')
     arg && return ""
 end
-function arg2str(arg::AbstractString)
+function arg2str(arg::AbstractString, sep = '/')
 	if occursin(" ", arg) && !startswith(arg, "\"")
 		return string("\"", arg, "\"")
     else
         return arg
 	end
 end
-function arg2str(arg)
+function arg2str(arg, sep = '/')
     isempty_(arg) && return ""
 	error("arg2str: argument 'arg' can only be a String, Symbol, Number, Array or a Tuple, but was $(typeof(arg))")
 end
