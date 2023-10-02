@@ -210,9 +210,12 @@ function merge_R_and_xyzlims(d::Dict, opt_R::String)::String
 	xlim, ylim, zlim = parse_lims(d, 'x'), parse_lims(d, 'y'), parse_lims(d, 'z')
 =#
 
-	xlim::String = ((val = find_in_dict(d, [:xlim :xlims :xlimits], false)[1]) !== nothing) ? @sprintf("%.15g/%.15g", val[1], val[2]) : ""
-	ylim::String = ((val = find_in_dict(d, [:ylim :ylims :ylimits], false)[1]) !== nothing) ? @sprintf("%.15g/%.15g", val[1], val[2]) : ""
-	zlim::String = ((val = find_in_dict(d, [:zlim :zlims :zlimits], false)[1]) !== nothing) ? @sprintf("%.15g/%.15g", val[1], val[2]) : ""
+	xlim::String = ((val = find_in_dict(d, [:xlim :xlims :xlimits], false)[1]) !== nothing) ?
+	                @sprintf("%.15g/%.15g", val[1], val[2]) : ""
+	ylim::String = ((val = find_in_dict(d, [:ylim :ylims :ylimits], false)[1]) !== nothing) ?
+	                @sprintf("%.15g/%.15g", val[1], val[2]) : ""
+	zlim::String = ((val = find_in_dict(d, [:zlim :zlims :zlimits], false)[1]) !== nothing) ?
+	                @sprintf("%.15g/%.15g", val[1], val[2]) : ""
 	(xlim == "" && ylim == "" && zlim == "") && return opt_R
 	function clear_xyzlims(d::Dict, xlim, ylim, zlim)
 		# When calling this fun, if they exist they were used too so must remove them
@@ -3946,12 +3949,13 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K:
 		out = (fname != "") ? mv(fname_ps, fname, force=true) : fname_ps
 	end
 
+	retPluto = false					# To know if we are in Plut
 	if (haskey(d, :show) && d[:show] != 0)
 		if (isdefined(Main, :IJulia) && Main.IJulia.inited) #|| isdefined(Main, :VSCodeServer)		# From Jupyter?
 			#https://stackoverflow.com/questions/70620607/how-can-i-programmatically-check-that-i-am-running-code-in-a-notebook-in-julia
 			(fname == "") ? display("image/png", read(out)) : @warn("In Jupyter you can only visualize png files. File $fname was saved in disk though.")
 		elseif isdefined(Main, :PlutoRunner) && Main.PlutoRunner isa Module
-			return WrapperPluto(out)	# This return must make it all way down to base so that Plut displays it
+			retPluto = true
 		elseif (!isFranklin[1])			# !isFranklin is true when building the docs and there we don't want displays.
 			display_file(out)
 		end
@@ -3960,7 +3964,7 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K:
 	CTRL.limits .= 0.0;		CTRL.figsize .= 0.0;	CTRL.proj_linear[1] = true;		# Reset these for safety
 	CTRL.pocket_J[1], CTRL.pocket_J[2], CTRL.pocket_J[3], CTRL.pocket_J[4] = "", "", "", "   ";
 	CTRL.pocket_R[1] = ""
-	return nothing
+	return retPluto ? WrapperPluto(out) : nothing	# retPluto should make it all way down to base so that Plut displays it
 end
 
 function display_file(out)
@@ -3975,6 +3979,15 @@ function reset_theme()
 		theme_modern();		ThemeIsOn[1] = false
 		DEF_FIG_AXES[1] = DEF_FIG_AXES_BAK;		DEF_FIG_AXES3[1] = DEF_FIG_AXES3_BAK;
 	end
+	desconf()
+end
+function desconf(resetdef::Bool=true)
+	# Undo the gmtset() doing and delete eventual gmt.conf files in current dir.
+	!GMTCONF[1] && return nothing			# No gmtset was used in classic or outside a modern mode block	
+	resetdef && resetdefaults(G_API[1])		# Set the modern mode settings (will clear eventual gmt.conf contents)
+	isfile("gmt.conf") && rm("gmt.conf")	# If gmt.conf file is to be kept, save it at ~.gmt/gmt.conf
+	GMTCONF[1] = false
+	return nothing
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -3991,16 +4004,15 @@ end
 function helper_showfig4modern(show::String="show")::Bool
 	# If called from modern mode, do the equivalent of classic to close and show fig
 	# Use show="" in modern when only wanting to finish plot but NOT display it.
-	if (IamModern[1])
-		try
-			gmt("subplot end");		IamSubplot[1] = false
-		catch erro;		println(erro)
-		end
-		IamModern[1] = false
-		isFranklin[1] ? gmt("end") : (show == "") ? gmt("end") : gmt("end " * show)	# isFranklin = true when building the docs
-		return true
+	!IamModern[1] && return false
+	try
+		gmt("subplot end");		IamSubplot[1] = false
+	catch erro;		println(erro)
 	end
-	return false
+	IamModern[1] = false
+	isFranklin[1] ? gmt("end") : (show == "") ? gmt("end") : gmt("end " * show)	# isFranklin = true when building the docs
+	desconf(false)		# FALSE because modern mode calls do a gmt_restart() in the gmt() main function.
+	return true
 end
 
 # ---------------------------------------------------------------------------------------------------

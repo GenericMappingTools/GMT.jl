@@ -138,7 +138,6 @@ using Dates, Printf#, Logging
 	# Remove garbage
 	println("	REMOVE GARBAGE")
 	rm("gmt.history")
-	rm("gmt.conf")
 	rm("lixo.ps")
 	rm("lixo.png")
 	rm("png.png")

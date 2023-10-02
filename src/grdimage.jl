@@ -140,8 +140,8 @@ function common_insert_R!(d::Dict, O::Bool, cmd0, I_G)
 		if (isa(val, StrSymb))
 			s = string(val)::String
 			d[:R] = (s == "global" || s == "d") ? (-180,180,-90,90) : (s == "global360" || s == "g") ? (0,360,-90,90) : val
-		else
-			d[:R] = val
+		#else
+			#d[:R] = val
 		end
 		del_from_dict(d, [:region, :limits])
 	end
