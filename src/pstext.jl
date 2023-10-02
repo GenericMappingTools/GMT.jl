@@ -104,7 +104,7 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 			arg1 = (!haskey(d, :x) && isa(arg1, Matrix) || isvector(arg1)) ? mat2ds(arg1, [string(val)]) : parse_xy(d, val)
 			del_from_dict(d, [[:text, :txt], [:region_justify]])
 		end
-	elseif (cmd0 != "" && !isfile(cmd0) && cmd0[1] != '@')	# To accept text("BlaBla", x=?, y=?, ...)
+	elseif (cmd0 != "" && !isfile(cmd0) && (cmd0[1] != '@' || cmd0[1] == '@' && !isletter(cmd0[2])))	# To accept text("BlaBla", x=?, y=?, ...)
 		arg1 = parse_xy(d, cmd0)
 		cmd0 = ""
 	end
