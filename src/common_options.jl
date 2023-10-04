@@ -259,7 +259,7 @@ function build_opt_R(val, symb::Symbol=Symbol())::String		# Generic function tha
 			_val::Vector{<:Float64} = vec(Float64.(collect(val)))
 			R = " -R" * @sprintf("%.15g/%.15g/%.15g/%.15g+r", _val[1], _val[3], _val[2], _val[4])::String
 		else
-			R = " -R" * arg2str(Val, '/')
+			R = " -R" * arg2str(val, '/')
 		end
 	elseif (isa(val, GItype))
 		R = @sprintf(" -R%.15g/%.15g/%.15g/%.15g", val.range[1], val.range[2], val.range[3], val.range[4])
