@@ -151,7 +151,7 @@ function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=true, RIr::Bool=
 	val, symb = find_in_dict(d, [:R :region :limits :region_llur :limits_llur :limits_diag :region_diag], del)
 	if (val !== nothing)
 		opt_R = build_opt_R(val, symb)
-	elseif (IamModern[1])
+	elseif (IamModern[1] && !RIr)
 		return cmd, ""
 	end
 
@@ -245,26 +245,26 @@ function merge_R_and_xyzlims(d::Dict, opt_R::String)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function build_opt_R(Val, symb::Symbol=Symbol())::String		# Generic function that deals with all but NamedTuple args
+function build_opt_R(val, symb::Symbol=Symbol())::String		# Generic function that deals with all but NamedTuple args
 	R::String = ""
-	if (isa(Val, String) || isa(Val, Symbol))
-		r::String = string(Val)
+	if (isa(val, String) || isa(val, Symbol))
+		r::String = string(val)
 		if     (r == "global")     R = " -Rd"
 		elseif (r == "global360")  R = " -Rg"
 		elseif (r == "same")       R = " -R"
 		else                       R = " -R" * r
 		end
-	elseif ((isvector(Val) || isa(Val, Tuple)) && (length(Val) == 4 || length(Val) == 6))
+	elseif ((isvector(val) || isa(val, Tuple)) && (length(val) == 4 || length(val) == 6))
 		if (symb ∈ (:region_llur, :limits_llur, :limits_diag, :region_diag))
-			_val::Vector{<:Float64} = vec(Float64.(collect(Val)))
+			_val::Vector{<:Float64} = vec(Float64.(collect(val)))
 			R = " -R" * @sprintf("%.15g/%.15g/%.15g/%.15g+r", _val[1], _val[3], _val[2], _val[4])::String
 		else
 			R = " -R" * arg2str(Val, '/')
 		end
-	elseif (isa(Val, GItype))
-		R = @sprintf(" -R%.15g/%.15g/%.15g/%.15g", Val.range[1], Val.range[2], Val.range[3], Val.range[4])
-	elseif (isa(Val, GDtype))
-		bb::Vector{<:Float64} = isa(Val, GMTdataset) ? Val.bbox : Val[1].ds_bbox
+	elseif (isa(val, GItype))
+		R = @sprintf(" -R%.15g/%.15g/%.15g/%.15g", val.range[1], val.range[2], val.range[3], val.range[4])
+	elseif (isa(val, GDtype))
+		bb::Vector{<:Float64} = isa(val, GMTdataset) ? val.bbox : val[1].ds_bbox
 		R = (symb ∈ (:region_llur, :limits_llur, :limits_diag, :region_diag)) ?
 			@sprintf(" -R%.15g/%.15g/%.15g/%.15g", bb[1], bb[3], bb[2], bb[4]) :
 			@sprintf(" -R%.15g/%.15g/%.15g/%.15g", bb[1], bb[2], bb[3], bb[4])
@@ -661,24 +661,24 @@ function check_flipaxes(d::Dict, width::AbstractString)
 	return width
 end
 
-function build_opt_J(Val)::Tuple{String, Bool}
+function build_opt_J(val)::Tuple{String, Bool}
 	out::String = "";		mnemo = false
-	if (isa(Val, String) || isa(Val, Symbol))
-		if (string(Val) == "guess")
+	if (isa(val, String) || isa(val, Symbol))
+		if (string(val) == "guess")
 			out, mnemo = guess_proj(CTRL.limits[7:8], CTRL.limits[9:10]), true
 		else
-			prj::String, mnemo = parse_proj(string(Val))
+			prj::String, mnemo = parse_proj(string(val))
 			out = " -J" * prj
 		end
-	elseif (isa(Val, NamedTuple))
-		prj, mnemo = parse_proj(Val)
+	elseif (isa(val, NamedTuple))
+		prj, mnemo = parse_proj(val)
 		out = " -J" * prj
-	elseif (isa(Val, Real))
-		if (!(typeof(Val) <: Int) || Val < 2000)
-			error("The only valid case to provide a number to the 'proj' option is when that number is an EPSG code, but this (" * string(Val)::String * ") is clearly an invalid EPSG")
+	elseif (isa(val, Real))
+		if (!(typeof(val) <: Int) || val < 2000)
+			error("The only valid case to provide a number to the 'proj' option is when that number is an EPSG code, but this (" * string(val)::String * ") is clearly an invalid EPSG")
 		end
-		out = string(" -J", string(Val)::String)
-	elseif (isempty(Val))
+		out = string(" -J", string(val)::String)
+	elseif (isempty(val))
 		out = " -J"
 	end
 	return out, mnemo
@@ -4058,7 +4058,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function put_in_slot(cmd::String, opt::Char, args...)
-	# Find the first non-empty slot in ARGS and assign it the Val of OPT
+	# Find the first non-empty slot in ARGS and assign it the val of OPT
 	# Return also the index of that first non-empty slot in ARGS
 	k = 1
 	for arg in args					# Find the first empty slot
