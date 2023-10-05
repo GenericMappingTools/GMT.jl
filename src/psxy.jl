@@ -1144,7 +1144,12 @@ function helper2_markers(opt::String, alias::Vector{String})::String
 	else
 		for k = 2:length(alias)		# Loop because of cases like ["w" "pie" "web"]
 			o2 = alias[k][1:min(2,length(alias[k]))]	# check the first 2 chars and Ro, Rotrect or RotRec are all good
-			if (startswith(opt, o2))  marca = alias[1]; break  end		# Good when, for example, marker=:Pie
+			#if (startswith(opt, o2))  marca = alias[1]; break  end		# Good when, for example, marker=:Pie
+			if (startswith(opt, o2))	# Good when, for example, marker=:Pie
+				marca = alias[1];
+				(opt[end] == '-') && (marca *= '-')
+				break 
+			end
 		end
 	end
 
