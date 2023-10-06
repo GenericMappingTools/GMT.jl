@@ -502,7 +502,7 @@ function get_figsize(opt_R::String="", opt_J::String="")
 	# Compute the current fig dimensions in paper coords using the know -R -J
 	(opt_R == "" || opt_R == " -R") && (opt_R = CTRL.pocket_R[1])
 	(opt_J == "" || opt_J == " -J") && (opt_J = CTRL.pocket_J[1])
-	(opt_R == "" || opt_J == "") && error("One or both of 'limits' ($opt_R) or 'proj' ($opt_J) is empty. Cannot compute fig size.")
+	((opt_R == "" || opt_J == "") && !IamModern[1]) && error("One or both of 'limits' ($opt_R) or 'proj' ($opt_J) is empty. Cannot compute fig size.")
 	Dwh = gmt("mapproject -W " * opt_R * opt_J)
 	return Dwh[1], Dwh[2]		# Width, Height
 end
