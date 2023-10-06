@@ -102,9 +102,17 @@ function grdtrack(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 		if (isa(R, GMTdataset))
 			(size(R.data, 2) == 3) ? append!(coln, ["Z"]) : append!(coln, ["Z$(i-2)" for i=3:size(R.data, 2)])
 			R.colnames = coln
-		else
+		elseif (isa(R, Vector))
 			(size(R[1].data, 2) == 3) ? append!(coln, ["Z"]) : append!(coln, ["Z$(i-2)" for i=3:size(R[1].data, 2)])
 			for k = 1:numel(R)  R[k].colnames = coln  end
+		else		# A Tuple when -S+s was used
+			if (isa(R[1], GMTdataset))
+				(size(R[1].data, 2) == 3) ? append!(coln, ["Z"]) : append!(coln, ["Z$(i-2)" for i=3:size(R[1].data, 2)])
+				R[1].colnames = coln
+			else
+				(size(R[1][1].data, 2) == 3) ? append!(coln, ["Z"]) : append!(coln, ["Z$(i-2)" for i=3:size(R[1][1].data, 2)])
+				for k = 1:numel(R[1])  R[1][k].colnames = coln  end
+			end
 		end
 	end
 	R
