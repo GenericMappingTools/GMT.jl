@@ -91,7 +91,7 @@ const global DEF_FIG_AXES  = [DEF_FIG_AXES_BAK]    # This one may be be changed 
 const global DEF_FIG_AXES3 = [DEF_FIG_AXES3_BAK]   #		""
 const global CTRL = CTRLstruct(zeros(13), zeros(6), [true], [false],
                                [:arrows, :bubblechart, :basemap, :band, :clip, :coast, :colorbar, :hband, :hlines, :logo, :lines, :grdvector, :plot, :plot3, :quiver, :scatter, :scatter3, :stairs, :text, :vlines, :vband],
-							   [nothing, nothing, nothing], ["",""], ["","", "", "   "], [""], ["",""], [false,true], [C_NULL], [Dict()])
+							   [nothing, nothing, nothing], ["","",""], ["","", "", "   "], [""], ["",""], [false,true], [C_NULL], [Dict()])
 const global CTRLshapes = CTRLstruct2([true], [true], [""])			# Used in sub-module Drawing
 const prj4WGS84 = "+proj=longlat +datum=WGS84 +units=m +no_defs"	# This is used in many places
 const CPTaliases = [:C :color :cmap :colormap :colorscale]
