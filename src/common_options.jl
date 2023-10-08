@@ -916,6 +916,10 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 				autoZ = (!contains(_val, " ") && contains(_val, 'Z')) ? " zaf" : ""
 				_val *= " af" * autoZ		# To prevent that setting B=:WSen removes all annots
 			end
+
+			# Next line is a check if a color bg was passed in -B string. BG colors f screw the API continuity
+			(CTRL.pocket_B[3] == "" && contains(_val, "+g")) && (CTRL.pocket_B[3] = ".")	# Signal that a restart is due.
+
 		elseif (isa(val, Real))				# for example, B=0
 			_val = string(val)
 		end
@@ -2835,6 +2839,7 @@ function axis(D::Dict=Dict(); x::Bool=false, y::Bool=false, z::Bool=false, secon
 		tB = "+g" * add_opt_fill(d, [symb])::String
 		opt *= tB					# Works, but patterns can screw
 		CTRL.pocket_B[2] = tB		# Save this one because we may need to revert it during psclip parsing
+		CTRL.pocket_B[3] = "."		# Signal gmt() to call gmt_restart because bg screws the API continuity
 	end
 	((val = find_in_dict(d, [:Xfill :Xbg :Xwall])[1]) !== nothing) && (opt = add_opt_fill(val, opt, "+x"))
 	((val = find_in_dict(d, [:Yfill :Ybg :Ywall])[1]) !== nothing) && (opt = add_opt_fill(val, opt, "+y"))

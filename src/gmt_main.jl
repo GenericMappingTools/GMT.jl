@@ -212,6 +212,7 @@ function gmt(cmd::String, args...)
 
 	ressurectGDAL()		# Some GMT modules may have called GDALDestroyDriverManager() and some GDAL module may come after us.
 	(contains(cmd, " -Gp") || contains(cmd, " -GP")) && gmt_restart()	# Apparently patterns are screwing the session
+	(CTRL.pocket_B[3] != "") && (CTRL.pocket_B[3] = ""; gmt_restart())	# Apparently bg colors screw the session
 
 	# Return a variable number of outputs but don't think we even can return 3
 	if (n_out == 0)
@@ -1493,10 +1494,13 @@ function Base.show(io::IO, C::GMTcpt)
 end
 Base.:show(io::IO, ::MIME"text/plain", C::GMTcpt) = show(C)
 
+
 info(C::GMTcpt) = show(C)
 
 # ---------- For Pluto ------------------------------------------------------------------------------
 Base.:show(io::IO, mime::MIME"image/png", wp::WrapperPluto) = write(io, read(wp.fname))
+
+Base.:names(D::GDtype) = isa(D, Vector) ? D[1].colnames : D.colnames
 
 # ---------- For fck stop printing UInts in hexadecinal ---------------------------------------------
 #Base.show(io::IO, x::T) where {T<:Union{UInt, UInt128, UInt64, UInt32, UInt16, UInt8}} = Base.print(io, x)
