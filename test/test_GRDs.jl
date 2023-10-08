@@ -176,6 +176,7 @@
 	@assert(D.data == [0.0 0 1 1])
 	G = grdcut("@earth_relief_01m", region=(-118,-107,-49,-42));
 	table, stack = grdtrack(G, [-111.6 -43.0; -113.3 -47.5], equidistant="400k/2k/10k+v", stack="m+s");
+	GMT.resetGMT()
 
 	println("	GRDVECTOR")
 	G = gmt("grdmath -R-2/2/-2/2 -I0.1 X Y R2 NEG EXP X MUL");
