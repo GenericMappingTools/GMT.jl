@@ -57,11 +57,19 @@ Parameters
 
 To see the full documentation type: ``@? pswiggle``
 """
-function wiggle(cmd0::String="", arg1=nothing; first=true, kwargs...)
+wiggle(cmd0::String; kw...) = wiggle_helper(cmd0, nothing; kw...)
+wiggle(arg1; kw...) = wiggle_helper("", arg1; kw...)
+wiggle!(cmd0::String; kw...) = wiggle_helper(cmd0, nothing; first=false, kw...)
+wiggle!(arg1; kw...) = wiggle_helper("", arg1; first=false, kw...)
 
-    gmt_proggy = (IamModern[1]) ? "wiggle "  : "pswiggle "
+const pswiggle  = wiggle			# Alias
+const pswiggle! = wiggle!			# Alias
 
-	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
+# ---------------------------------------------------------------------------------------------------
+function wiggle_helper(cmd0::String, arg1; first=true, kw...)
+	gmt_proggy = (IamModern[1]) ? "wiggle "  : "pswiggle "
+
+	d, K, O = init_module(first, kw...)		# Also checks if the user wants ONLY the HELP mode
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd, = parse_common_opts(d, cmd, [:c :e :f :g :p :t :w :F :UVXY :params], first)
@@ -78,13 +86,5 @@ function wiggle(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	_cmd = [gmt_proggy * cmd]
 	_cmd = frame_opaque(_cmd, gmt_proggy, opt_B, opt_R, opt_J)		# No -t in frame
-	return finish_PS_module(d, _cmd, "", K, O, true, arg1)
+	finish_PS_module(d, _cmd, "", K, O, true, arg1)
 end
-
-# ---------------------------------------------------------------------------------------------------
-wiggle!(cmd0::String="", arg1=nothing; kw...) = wiggle(cmd0, arg1; first=false, kw...)
-wiggle(arg1; kw...)  = wiggle("", arg1; first=true, kw...)
-wiggle!(arg1; kw...) = wiggle("", arg1; first=false, kw...)
-
-const pswiggle  = wiggle			# Alias
-const pswiggle! = wiggle!			# Alias

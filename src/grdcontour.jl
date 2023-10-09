@@ -65,10 +65,15 @@ Parameters
 
 To see the full documentation type: ``@? grdcontour``
 """
-function grdcontour(cmd0::String="", arg1=nothing; first=true, kwargs...)
+grdcontour(cmd0::String; kw...) = grdcontour_helper(cmd0, nothing; kw...)
+grdcontour(arg1; kw...) = grdcontour_helper("", arg1; kw...)
+grdcontour!(cmd0::String; kw...) = grdcontour_helper(cmd0, nothing; first=false, kw...)
+grdcontour!(arg1; kw...) = grdcontour_helper("", arg1; first=false, kw...)
 
+# ---------------------------------------------------------------------------------------------------
+function grdcontour_helper(cmd0::String, arg1; first=true, kw...)
 	arg2 = arg3 = nothing
-	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
+	d, K, O = init_module(first, kw...)		# Also checks if the user wants ONLY the HELP mode
 	dict_auto_add!(d)					# The ternary module may send options via another channel
 
 	cmd::String, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX" * split(DEF_FIG_SIZE, '/')[1] * "/0")
@@ -159,8 +164,3 @@ function parse_contour_AGTW(d::Dict, cmd::String)
 	opt_W = add_opt_pen(d, [:W :pen], "W")
 	return cmd * opt_W, opt_W
 end
-
-# ---------------------------------------------------------------------------------------------------
-grdcontour!(cmd0::String="", arg1=nothing; kw...) = grdcontour(cmd0, arg1; first=false, kw...)
-grdcontour(arg1; kw...) = grdcontour("", arg1; first=true, kw...)
-grdcontour!(arg1; kw...) = grdcontour("", arg1; first=false, kw...)

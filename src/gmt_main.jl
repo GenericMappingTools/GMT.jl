@@ -232,7 +232,7 @@ end
 # -----------------------------------------------------------------------------------------------
 function gmt_restart(restart::Bool=true)
 	# Destroy the contents of the current API pointer and, by default, recreate a new one.
-	GMT_Destroy_Session(G_API[1]);
+	GMT_Destroy_Session(G_API[1])
 	if (restart)
 		G_API[1] = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS)
 		theme_modern()				# Set the MODERN theme and calls extra_sets()

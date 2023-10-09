@@ -51,9 +51,9 @@
 	@test startswith(r, "grdcontour lixo.grd  -JX" * split(GMT.DEF_FIG_SIZE, '/')[1] * "/0" * " -Baf -BWSen -A50+f7p -Gd4i -Wcthinnest,- -Wathin,-")
 	G = GMT.peaks()
 	cpt = makecpt(T="-6/8/1");
-	grdcontour(G, axis="a", fmt="png", color=cpt, pen="+c", X=1, Y=1, N=true, U=[])
+	grdcontour(G, axis="a", fmt="png", color=cpt, pen="+c", X=1, Y=1, N=true, U=[]);
 	grdcontour!(G, axis="a", color=cpt, pen="+c", X=1, Y=1, N=true, Vd=dbg2)
-	grdcontour!("", G, axis="a", color=cpt, pen="+c", X=1, Y=1, N=cpt, Vd=dbg2)
+	grdcontour!(G, axis="a", color=cpt, pen="+c", X=1, Y=1, N=cpt, Vd=dbg2)
 
 	println("	GRDCUT")
 	G=gmt("grdmath", "-R0/10/0/10 -I1 X Y MUL");
