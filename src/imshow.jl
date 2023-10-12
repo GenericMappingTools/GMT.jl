@@ -105,7 +105,7 @@ function imshow(arg1::GMTgrid; kw...)
 	have_tilles::Bool = ((til = find_in_dict(d, [:T :no_interp :tiles])[1]) !== nothing)
 	(!have_tilles && opt_p != "" && !contains(opt_p, '/')) && (flat = true)		# If only 'azimuth' and no 'elev'
 	flat::Bool = (find_in_dict(d, [:flat])[1] !== nothing)	# If true, force the use of grdimage
-	docube = is_in_kwargs(kw, [:facades :cubeplot])
+	docube = kw in [:facades :cubeplot]
 	(flat && docube) && (flat = false)
 
 	if (!docube && (flat || (opt_p == "" && !have_tilles)))

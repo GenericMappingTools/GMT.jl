@@ -2101,11 +2101,11 @@ function seislegend(; title="", font=(16,"Times-Roman"), cmap=GMTcpt(), mags::Ve
 
 	extra_vs = maximum(mags) > 0.3 ? 0.05 : 0.		# When symbols are big we need extra space between the hlines.
 	d = KW(kw)
-	!is_in_kwargs(kw, [:D :pos :position]) && (d[:D] = (paper=(0.25,0.25), width=14, justify=:BL, spacing=1.2))
-	!is_in_kwargs(kw, [:C :clearance]) && (d[:C] = (0.25,0.25))
-	!is_in_kwargs(kw, [:F :box]) && (d[:F] = (pen=0.5, fill=:azure1))
-	!is_in_kwargs(kw, [:R :region :limits]) && (d[:R] = (0,10,0,4))
-	!is_in_kwargs(kw, [:par]) && (d[:par] = (:FONT_ANNOT_PRIMARY, 8))		# Shitty solution. Must use conf for other configs
+	!in(kw, [:D :pos :position]) && (d[:D] = (paper=(0.25,0.25), width=14, justify=:BL, spacing=1.2))
+	!in(kw, [:C :clearance]) && (d[:C] = (0.25,0.25))
+	!in(kw, [:F :box]) && (d[:F] = (pen=0.5, fill=:azure1))
+	!in(kw, [:R :region :limits]) && (d[:R] = (0,10,0,4))
+	!in(kw, [:par]) && (d[:par] = (:FONT_ANNOT_PRIMARY, 8))		# Shitty solution. Must use conf for other configs
 
 	legend((
        vspace=-0.25,
