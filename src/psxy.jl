@@ -83,7 +83,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	cmd, opt_JZ = parse_JZ(d, cmd; O=O, is3D=is3D)
 	#(is3D && O && opt_JZ == "" && CTRL.pocket_J[3] != "") && (cmd *= CTRL.pocket_J[3])
 	cmd, = parse_common_opts(d, cmd, [:a :e :f :g :p :t :w :params], first)
-	cmd, opt_l = parse_l(d, cmd)		# Parse this one (legend) aside so we can use it in classic mode
+	cmd, opt_l = parse_l(d, cmd, true)	# Parse this one (legend) aside so we can use it in classic mode
 	cmd, opt_f = parse_f(d, cmd)		# Parse this one (-f) aside so we can check against D.attrib
 	cmd  = parse_these_opts(cmd, d, [[:D :shift :offset], [:I :intens], [:N :no_clip :noclip]])
 	parse_ls_code!(d::Dict)				# Check for linestyle codes (must be before the GMTsyntax_opt() call)
@@ -152,10 +152,11 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		if isa(val, String)
 			cmd *= " -E" * val
 		else
-			cmd, mat_t::Matrix{Float64} = add_opt(add_opt, (d, cmd, "E", [symb]),
-                                (x="|x",y="|y",xy="|xy",X="|X",Y="|Y", asym="_+a", colored="_+c", cline="_+cl", csymbol="_+cf", notch="|+n", boxwidth="+w", cap="+w", pen=("+p",add_opt_pen)), false, isa(arg1, GMTdataset) ? arg1.data : arg1[1].data)
-			isa(arg1, GMTdataset) ? (arg1.data = mat_t; append!(arg1.colnames, ["Ebar"])) :
-			                        (arg1[1].data = mat_t; append!(arg1[1].colnames, ["Ebar"]))
+			_mat = (arg1 === nothing) ? arg1 : isa(arg1, GMTdataset) ? arg1.data : arg1[1].data
+			cmd, mat_t = add_opt(add_opt, (d, cmd, "E", [symb]),
+                                (x="|x",y="|y",xy="|xy",X="|X",Y="|Y", asym="_+a", colored="_+c", cline="_+cl", csymbol="_+cf", notch="|+n", boxwidth="+w", cap="+w", pen=("+p",add_opt_pen)), false, _mat)
+			(arg1 !== nothing) && (isa(arg1, GMTdataset) ? (arg1.data = mat_t; append!(arg1.colnames, ["Ebar"])) :
+			                       (arg1[1].data = mat_t; append!(arg1[1].colnames, ["Ebar"])))
 		end
 		got_Ebars = true
 		del_from_dict(d, [symb])
@@ -285,6 +286,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	r = finish_PS_module(d, _cmd, "", K, O, finish, arg1, arg2, arg3, arg4)
 	CTRL.pocket_d[1] = d					# Store d that may be not empty with members to use in other modules
 	#(occursin("-Sk", opt_S)) && gmt_restart()  # Apparently patterns & custom symbols are screwing the session
+	(opt_B == " -B") && gmt_restart()		# For some Fking mysterious reason (see Ex45)
 	return r
 end
 
@@ -674,7 +676,8 @@ function build_run_cmd(cmd, opt_B, opt_Gsymb, opt_ML, opt_S, opt_W, opt_Wmarker,
 
 	elseif (opt_W != "" && opt_S != "")						# We have both line/polygon and a symbol
 		(occursin(opt_Gsymb, cmd)) && (opt_Gsymb = "")
-		if (opt_S[4] == 'v' || opt_S[4] == 'V' || opt_S[4] == '=')
+		c = lowercase(opt_S[4])
+		if (c == 'v' || c == 'm' || c == 'w' || c == '=')	# Are there more cases where the pen applies to the symbol?
 			_cmd = [cmd * opt_W * opt_S * opt_Gsymb * opt_UVXY]
 		else
 			(opt_Wmarker != "") && (opt_Wmarker = " -W" * opt_Wmarker)		# Set Symbol edge color
