@@ -47,7 +47,10 @@ Parameters
 - $(GMT.opt_o)
 - $(GMT.opt_swap_xy)
 """
-function filter1d(cmd0::String="", arg1=nothing; kwargs...)
+filter1d(cmd0::String; kw...) = filter1d_helper(cmd0, nothing; kw...)
+filter1d(arg1; kw...)         = filter1d_helper("", arg1; kw...)
+
+function filter1d_helper(cmd0::String, arg1; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
@@ -69,6 +72,3 @@ function filter1d(cmd0::String="", arg1=nothing; kwargs...)
 	(isvector(arg1)) && (arg1 = cat_1_arg(arg1))	# Accept vectors (GMT should do that too)
 	common_grd(d, cmd0, cmd, "filter1d ", arg1)		# Finish build cmd and run it
 end
-
-# ---------------------------------------------------------------------------------------------------
-filter1d(arg1; kw...) = filter1d("", arg1; kw...)

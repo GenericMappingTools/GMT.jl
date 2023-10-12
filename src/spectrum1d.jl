@@ -44,11 +44,15 @@ Parameters
 
 To see the full documentation type: ``@? spectrum1d``
 """
-function spectrum1d(cmd0::String="", arg1=nothing; kwargs...)
+spectrum1d(cmd0::String; kw...) = spectrum1d_helper(cmd0, nothing; kw...)
+spectrum1d(arg1; kw...)         = spectrum1d_helper("", arg1; kw...)
+
+# ---------------------------------------------------------------------------------------------------
+function spectrum1d_helper(cmd0::String, arg1; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
-	cmd   = parse_common_opts(d, "", [:V_params :b :d :e :g :h :i :yx])[1]
-	cmd   = parse_these_opts(cmd, d, [[:D :sample_dist], [:L :leave_trend], [:N :time_col], [:S :size], [:T :multifiles], [:W :wavelength]])
+	cmd = parse_common_opts(d, "", [:V_params :b :d :e :g :h :i :yx])[1]
+	cmd = parse_these_opts(cmd, d, [[:D :sample_dist], [:L :leave_trend], [:N :time_col], [:S :size], [:T :multifiles], [:W :wavelength]])
 	opt_C = add_opt(d, "", "C", [:C :components :outputs :response_fun],
 	                (xpower="_x", ypower="_y", cpower="_c", npower="_n", phase="_p", admit="_a", gain="_g", coh="_o"))
     if (!contains(cmd, " -T"))                  # Return vars, otherwise it saves them in disk files
@@ -88,6 +92,3 @@ function spectrum1d(cmd0::String="", arg1=nothing; kwargs...)
     (D !== nothing) && (D.colnames = cnames)
     return D
 end
-
-# -------------------------------------------------------------------------------------------------
-spectrum1d(arg1; kw...) = spectrum1d("", arg1; kw...)
