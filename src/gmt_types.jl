@@ -135,8 +135,8 @@ function Base.getindex(D::GMTdataset{T,N}, ind::String) where {T,N}
 	end
 	D2
 end
-Base.getindex(D::GMTdataset{T,N}, inds::Vararg{String,N}) where {T,N} = Base.getindex(D, Symbol.(inds)...)
-function Base.getindex(D::GMTdataset{T,N}, inds::Vararg{Symbol,N}) where {T,N}
+Base.getindex(D::GMTdataset{T,N}, inds::Vararg{String}) where {T,N} = Base.getindex(D, Symbol.(inds)...)
+function Base.getindex(D::GMTdataset{T,N}, inds::Vararg{Symbol}) where {T,N}
 	# If accessed by column names, create a new GMTdataset.
 	# Most of this and more should go into a new mat2ds method.
 	mat = hcat([Tables.getcolumn(D, ind) for ind in inds]...)
@@ -155,7 +155,7 @@ function Base.getindex(D::GMTdataset{T,N}, inds::Vararg{Symbol,N}) where {T,N}
 	D2
 end
 
-Base.setindex!(D::GMTdataset{T,N}, val, inds::Vararg{Int,N}) where {T,N} = D.data[inds...] = val
+Base.setindex!(D::GMTdataset{T,N}, val, inds::Vararg{Int}) where {T,N} = D.data[inds...] = val
 
 Base.BroadcastStyle(::Type{<:GMTdataset}) = Broadcast.ArrayStyle{GMTdataset}()
 function Base.similar(bc::Broadcast.Broadcasted{Broadcast.ArrayStyle{GMTdataset}}, ::Type{ElType}) where ElType
@@ -164,13 +164,20 @@ function Base.similar(bc::Broadcast.Broadcasted{Broadcast.ArrayStyle{GMTdataset}
 end
 find4similar(D::GMTdataset, rest) = D
 
-GMTdataset(data::Array{Float64,2}, text::Vector{String}) = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], text, "", String[], "", "", 0, 0)
-GMTdataset(data::Array{Float64,2}, text::String) = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], [text], "", String[], "", "", 0, 0)
-GMTdataset(data::Array{Float64,2}) = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], String[], "", String[], "", "", 0, 0)
-GMTdataset(data::Array{Float32,2}, text::Vector{String}) = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], text, "", String[], "", "", 0, 0)
-GMTdataset(data::Array{Float32,2}, text::String) = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], [text], "", String[], "", "", 0, 0)
-GMTdataset(data::Array{Float32,2}) = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], String[], "", String[], "", "", 0, 0)
-GMTdataset() = GMTdataset(Array{Float64,2}(undef,0,0), Float64[], Float64[], Dict{String, String}(), String[], String[], "", String[], "", "", 0, 0)
+GMTdataset(data::Array{Float64,2}, text::Vector{String}) =
+	GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], text, "", String[], "", "", 0, 0)
+GMTdataset(data::Array{Float64,2}, text::String) =
+	GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], [text], "", String[], "", "", 0, 0)
+GMTdataset(data::Array{Float64,2}) =
+	GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], String[], "", String[], "", "", 0, 0)
+GMTdataset(data::Array{Float32,2}, text::Vector{String}) =
+	GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], text, "", String[], "", "", 0, 0)
+GMTdataset(data::Array{Float32,2}, text::String) =
+	GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], [text], "", String[], "", "", 0, 0)
+GMTdataset(data::Array{Float32,2}) =
+	GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], String[], "", String[], "", "", 0, 0)
+GMTdataset() =
+	GMTdataset(Array{Float64,2}(undef,0,0), Float64[], Float64[], Dict{String, String}(), String[], String[], "", String[], "", "", 0, 0)
 
 struct WrapperPluto fname::String end
 

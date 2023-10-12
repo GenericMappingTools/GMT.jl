@@ -71,7 +71,7 @@ end
 function gmtinfo_helper(;kw...)
 	d = init_module(false, kw...)[1]		# Also checks if the user wants ONLY the HELP mode
 
-	cmd, = parse_common_opts(d, "", [:V_params :e :f :o :r :w :yx])
+	cmd, = parse_common_opts(d, "", [:V_params :e :f :i :o :r :w :yx])
 	(endswith(cmd, "-:")) && (cmd *= "i")    # Need to be -:i not -: to not swap output too
 	cmd = parse_these_opts(cmd, d, [[:A :ranges], [:C :numeric :per_column], [:D :center], [:E :get_record], [:F :counts],
 	                                [:L :common_limits], [:S :for_error_bars]])

@@ -419,7 +419,7 @@ function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bo
 		if (default == "guess" && opt_J == "")
 			opt_J = guess_proj(CTRL.limits[7:8], CTRL.limits[9:10]);	mnemo = true	# To force append fig size
 		end
-		if (opt_J == "")  opt_J = " -JX"  end
+		(opt_J == "") && (opt_J = " -JX")
 		# If only the projection but no size, try to get it from the kwargs.
 		if ((s = helper_append_figsize(d, opt_J, O, del)) != "")		# Takes care of both fig scales and fig sizes
 			opt_J = s
@@ -565,6 +565,8 @@ function append_figsize(d::Dict, opt_J::String, width::String="", scale::Bool=fa
 				elseif (ax == 'y')  error("Can't select Y scaling and provide X dimension only")
 				else
 					width *= flag
+					(ax == 'l' && flag == 'l') && (width = IamModern[1] ? width * "/?l" : width * "/l")	# The loglog case
+					(width[1] == '?' && !contains(width, '/')) && (width *= "/?")
 				end
 			end
 		end
@@ -1423,9 +1425,9 @@ function parse_f(d::Dict, cmd::String)
 end
 
 # ---------------------------------------------------------------------------------
-function parse_l(d::Dict, cmd::String)
+function parse_l(d::Dict, cmd::String, del::Bool=false)
 	cmd_::String = add_opt(d, "", "l", [:l :legend],
-		(text=("", arg2str, 1), hline=("+D", add_opt_pen), vspace="+G", header="+H", image="+I", line_text="+L", n_cols="+N", ncols="+N", ssize="+S", start_vline=("+V", add_opt_pen), end_vline=("+v", add_opt_pen), font=("+f", font), fill="+g", justify="+j", offset="+o", frame_pen=("+p", add_opt_pen), width="+w", scale="+x"), false)
+		(text=("", arg2str, 1), hline=("+D", add_opt_pen), vspace="+G", header="+H", image="+I", line_text="+L", n_cols="+N", ncols="+N", ssize="+S", start_vline=("+V", add_opt_pen), end_vline=("+v", add_opt_pen), font=("+f", font), fill="+g", justify="+j", offset="+o", frame_pen=("+p", add_opt_pen), width="+w", scale="+x"), del)
 	# Now make sure blanks in legend text are wrapped in ""
 	if ((ind = findfirst("+", cmd_)) !== nothing)
 		cmd_ = " -l" * str_with_blancs(cmd_[4:ind[1]-1]) * cmd_[ind[1]:end]
@@ -2052,6 +2054,14 @@ function arg2str(arg, sep='/')::String
 		error("arg2str: argument 'arg' can only be a String, Symbol, Number, Array or a Tuple, but was $(typeof(arg))")
 	end
 	return out
+end
+
+# ---------------------------------------------------------------------------------------------------
+function arg2str(arg::GMTdataset, sep='/')::String
+	# This method is mainly to allow passing the direct output of gmtinfo()
+	(size(arg,1) != 1) && error("When passing a GMTdataset to arg2str, it must have only one row")
+	out = join([string(x, sep)::String for x in arg.data])
+	rstrip(out, sep)		# Remove last '/'
 end
 
 # ---------------------------------------------------------------------------------------------------
