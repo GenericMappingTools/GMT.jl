@@ -804,7 +804,7 @@ function fill_between(arg1, arg2=nothing; first=true, kwargs...)
 	do_stairs && (d[:A] = "y")
 	common_plot_xyz("", Dsd, "", first, false, d...)	# The patches
 	do_stairs && (delete!(d, :A))
-	del_from_dict(d, [[:theme], [:figsize], [:frame], [:xaxis], [:yaxis]])	# To not repeat -B -J
+	delete!(d, [[:theme], [:figsize], [:frame], [:xaxis], [:yaxis]])	# To not repeat -B -J
 	# -------------------------------------------------------------------------------------------
 
 	_D2 = one_array ? mat2ds(D1, (:,[1,3])) : D2		# Put second line in a unique var
@@ -1490,7 +1490,7 @@ function helper_vhlines(arg1, vert::Bool, first::Bool, xymin, xymax, percent, kw
 	!isnan(xymax) && (xy[2] = !percent ? xymax : xy[1] + (xy[2]-xy[1]) * xymax)
 	D::GMTdataset = mat2ds(mat, x=xy, multi=true, nanseg=true)[1]
 	vert && (d[:yx] = true)		# Because we need to swapp x / y columns in the vlines case
-	del_from_dict(d, [[:xmin], [:xmax], [:ymin], [:ymax]])
+	delete!(d, [[:xmin], [:xmax], [:ymin], [:ymax]])
 
 	common_plot_xyz("", D, "lines", first, false, d...)
 end
@@ -1681,7 +1681,7 @@ function ternary(cmd0::String="", arg1=nothing; first::Bool=true, image::Bool=fa
 	if (clockwise)
 		endswith(opt_J, "/0") && (opt_J = opt_J[1:end-2])		# Strip the trailing "/0". Very important.
 		d[:J] = "X-" * opt_J[5:end]
-		del_from_dict(d, [:proj, :projection])		# To avoid non-consumed warnings
+		delete!(d, [:proj, :projection])		# To avoid non-consumed warnings
 		delete!(d, :clockwise)
 	end
 	if ((val = find_in_dict(d, [:par :conf :params], false)[1]) === nothing)

@@ -143,7 +143,7 @@ function common_insert_R!(d::Dict, O::Bool, cmd0, I_G)
 		elseif (isa(val, Tuple) || isa(val, VMr))
 			d[:R] = val
 		end
-		del_from_dict(d, [:region, :limits])
+		delete!(d, [:region, :limits])
 	end
 end
 function isimgsize(I_G)
@@ -172,7 +172,7 @@ function common_shade(d::Dict, cmd::String, arg1, arg2, arg3, arg4, prog)
 			end
 			(N_used == 1) ? arg1 = val : ((N_used == 2) ? arg2 = val : ((N_used == 3) ? arg3 = val : arg4 = val))
 		end
-		del_from_dict(d, [:I, :shade, :shading, :intensity])
+		delete!(d, [:I, :shade, :shading, :intensity])
 	end
 	return cmd, arg1, arg2, arg3, arg4
 end

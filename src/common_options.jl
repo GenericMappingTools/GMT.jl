@@ -20,22 +20,20 @@ function find_in_dict(d::Dict, symbs::VMs, del::Bool=true, help_str::String="")
 	return nothing, Symbol()
 end
 
-function del_from_dict(d::Dict, symbs::Vector{Vector{Symbol}})
-	# Delete SYMBS from the D dict where SYMBS is an array of array os symbols
-	# Example:  del_from_dict(d, [[:a, :b], [:c]])
-	for symb in symbs
-		del_from_dict(d, symb)
-	end
-end
+"""
+    delete!(d::Dict, symbs::Vector{T}) where T
 
-function del_from_dict(d::Dict, symbs::Vector{Symbol})
-	# Delete SYMBS from the D dict where SYMBS is an array of symbols and elements are aliases
-	for symb in symbs
-		if (haskey(d, symb))
-			delete!(d, symb)
-			return
-		end
-	end
+## example
+delete!(d, [:a :b])
+delete!(d, [:a, :b])
+delete!(d, [[:a, :b], [:c]])
+delete!(d, [[:a :b] [:c]])
+"""
+function Base.delete!(d::Dict, symbs::Array{T, N}) where {T, N}
+    for symb in symbs
+        delete!(d, symb)
+    end
+    return d
 end
 
 function find_in_kwargs(p, symbs::VMs, del::Bool=true, primo::Bool=true, help_str::String="")
@@ -210,9 +208,9 @@ function merge_R_and_xyzlims(d::Dict, opt_R::String)::String
 	function clear_xyzlims(d::Dict, xlim, ylim, zlim)
 		# When calling this fun, if they exist they were used too so must remove them
 		# In the other case - they exist but were not used - we keep them to be eventually used in read_data()
-		(xlim != "") && del_from_dict(d, [:xlim, :xlims, :xlimits])
-		(ylim != "") && del_from_dict(d, [:ylim, :ylims, :ylimits])
-		(zlim != "") && del_from_dict(d, [:zlim, :zlims, :zlimits])
+		(xlim != "") && delete!(d, [:xlim, :xlims, :xlimits])
+		(ylim != "") && delete!(d, [:ylim, :ylims, :ylimits])
+		(zlim != "") && delete!(d, [:zlim, :zlims, :zlimits])
 	end
 
 	if (opt_R == "" && xlim != "" && ylim != "")	# Deal with this easy case
@@ -1763,7 +1761,7 @@ function add_opt_pen(d::Dict, symbs::Union{Nothing, VMs}, opt::String="", del::B
 		((val = find_in_dict(d, [:cline :color_line :color_lines])[1]) !== nothing) && (out *= "+cl")
 		((val = find_in_dict(d, [:ctext :color_text :color_symbols :color_symbol])[1]) !== nothing) && (out *= "+cf")
 	end
-	if (haskey(d, :bezier))  out *= "+s";  del_from_dict(d, [:bezier])  end
+	if (haskey(d, :bezier))  out *= "+s";  delete!(d, [:bezier])  end
 	if (haskey(d, :offset))  out *= "+o" * arg2str(d[:offset])::String   end
 
 	if (out != "")		# Search for eventual vec specs, but only if something above has activated -W
@@ -2206,7 +2204,7 @@ function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, mapa=nothing, de
 					else                    cmd_ *= mapa[k] * arg2str(val_)::String
 					end
 				end
-				del_from_dict(d, [k])		# Now we can delete the key
+				delete!(d, [k])		# Now we can delete the key
 			end
 			(cmd_ != "") && (cmd *= " -" * opt * cmd_)
 		end
@@ -2442,7 +2440,7 @@ function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, need_symb::Symbo
 				end
 			end
 		end
-		isa(symbs, Matrix{Symbol}) ? del_from_dict(d, vec(symbs)) : del_from_dict(d, symbs)
+		delete!(d, symbs)
 		got_one = true
 	end
 	return cmd, args, N_used, got_one
@@ -2682,7 +2680,7 @@ function add_opt_module(d::Dict)::Vector{String}
 				else
 					!(symb in CTRL.callable) && error("Nested Fun call $symb not in the callable nested functions list")
 					_d = nt2dict(nt)
-					(haskey(_d, :data)) && (CTRL.pocket_call[1] = _d[:data]; del_from_dict(d, [:data]))
+					(haskey(_d, :data)) && (CTRL.pocket_call[1] = _d[:data]; delete!(d, [:data]))
 					this_symb = CTRL.callable[findfirst(symb .== CTRL.callable)]
 					fn = getfield(GMT, Symbol(string(this_symb, "!")))
 					if (this_symb in [:vband, :hband, :vspan, :hspan])
@@ -3530,15 +3528,15 @@ function _read_data(d::Dict, cmd::String, arg, opt_R::String="", is3D::Bool=fals
 	(IamModern[1] && FirstModern[1]) && (FirstModern[1] = false)
 
 	if (haskey(d, :data))
-		arg = mat2ds(d[:data]);		del_from_dict(d, [:data])
+		arg = mat2ds(d[:data]);		delete!(d, [:data])
 	elseif (arg === nothing)	# OK, last chance of findig the data is in the x=..., y=... kwargs
 		if (haskey(d, :x) && haskey(d, :y))
 			_arg = cat_2_arg2(d[:x], d[:y])
-			(haskey(d, :z)) && (_arg = hcat(_arg, d[:z][:]);	del_from_dict(d, [:z]))
-			del_from_dict(d, [[:x, :x], [:y]])		# [:x :x] to satisfy signature ::Vector{Vector{Symbol}} != ::Array{Array{Symbol}}
+			(haskey(d, :z)) && (_arg = hcat(_arg, d[:z][:]);	delete!(d, [:z]))
+			delete!(d, [[:x, :x], [:y]])		# [:x :x] to satisfy signature ::Vector{Vector{Symbol}} != ::Array{Array{Symbol}}
 			arg = mat2ds(_arg)
 		elseif (haskey(d, :x) && length(d[:x]) > 1)	# Only this guy. I guess that histogram may use this
-			arg = mat2ds(d[:x]);		del_from_dict(d, [:x])
+			arg = mat2ds(d[:x]);		delete!(d, [:x])
 		end
 	end
 
@@ -3876,7 +3874,7 @@ function dbg_print_cmd(d::Dict, cmd::Vector{String})
 		(Vd <= 0) && return nothing
 
 		if (Vd >= 2)					# Delete these first before reporting
-			del_from_dict(d, [[:show], [:leg, :legend], [:box_pos], [:leg_pos], [:figname], [:name], [:savefig]])
+			delete!(d, [[:show], [:leg, :legend], [:box_pos], [:leg_pos], [:figname], [:name], [:savefig]])
 			CTRL.pocket_call[3] = nothing	# This is mostly for testing purposes, but potentially needed elsewhere.
 			CTRL.limits[1:12] = zeros(12)
 			# Some times an automtic CPT has been generated by the Vd'ed cmd but when that happens MUST debug it
@@ -3884,7 +3882,7 @@ function dbg_print_cmd(d::Dict, cmd::Vector{String})
 		end
 		if (length(d) > 0)
 			dd = deepcopy(d)		# Make copy so that we can harmlessly delete those below
-			del_from_dict(dd, [[:show], [:leg, :legend], [:box_pos], [:leg_pos], [:fmt, :savefig, :figname, :name], [:linefit, :linearfit]])
+			delete!(dd, [[:show], [:leg, :legend], [:box_pos], [:leg_pos], [:fmt, :savefig, :figname, :name], [:linefit, :linearfit]])
 			prog = isa(cmd, String) ? split(cmd)[1] : split(cmd[1])[1]
 			(length(dd) > 0) && println("Warning: the following options were not consumed in $prog => ", keys(dd))
 		end
@@ -4326,8 +4324,8 @@ end
 # --------------------------------------------------------------------------------------------------
 function show_non_consumed(d::Dict, cmd)
 	# First delete some that could not have been delete earlier (from legend for example)
-	del_from_dict(d, [[:fmt], [:show], [:leg, :legend], [:box_pos], [:leg_pos], [:P, :portrait], [:this_cpt], [:linefit, :linearfit]])
-	!isempty(CURRENT_CPT[1]) && del_from_dict(d, [[:percent], [:clim]])	# To not (wrongly) complain about these
+	delete!(d, [[:fmt], [:show], [:leg, :legend], [:box_pos], [:leg_pos], [:P, :portrait], [:this_cpt], [:linefit, :linearfit]])
+	!isempty(CURRENT_CPT[1]) && delete!(d, [[:percent], [:clim]])	# To not (wrongly) complain about these
 	if (!haskey(d, :Vd) && length(d) > 0)		# Vd, if exists, must be a Vd=0 to signal no warnings.
 		prog = isa(cmd, String) ? split(cmd)[1] : split(cmd[1])[1]
 		println("Warning: the following options were not consumed in $prog => ", keys(d))
