@@ -45,19 +45,18 @@ Parameters
 
 To see the full documentation type: ``@? nearneighbor``
 """
-nearneighbor(cmd0::String; kw...) = nearneighbor_helper(cmd0, nothing; kw...)
-nearneighbor(arg1; kw...)         = nearneighbor_helper("", arg1; kw...)
+function nearneighbor(cmd0::String="", arg1=nothing; kwargs...)
 
-# ---------------------------------------------------------------------------------------------------
-function nearneighbor_helper(cmd0::String, arg1; kw...)
-
-	d = init_module(false, kw...)[1]		# Also checks if the user wants ONLY the HELP mode
+	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	d = seek_auto_RI(d, cmd0, arg1)				# If -R -I (or one of them) not set, guess.
 	cmd, = parse_common_opts(d, "", [:G :RIr :V_params :bi :di :e :f :h :i :n :w :yx])
 	cmd  = parse_these_opts(cmd, d, [[:E :empty], [:S :search_radius], [:W :weights], [:A]])
 	cmd  = add_opt(d, cmd, "N", [:N :sectors], (n="", min_sectors="+m"), true)
 	opt  = add_opt(d, "", "N", [:N :nn :nearest])
-	(opt != "") && (cmd *= " -Nn")
+	if (opt != "")  cmd *= " -Nn"  end
 
 	common_grd(d, cmd0, cmd, "nearneighbor ", arg1)		# Finish build cmd and run it
 end
+
+# ---------------------------------------------------------------------------------------------------
+nearneighbor(arg1; kw...) = nearneighbor("", arg1; kw...)
