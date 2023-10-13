@@ -63,7 +63,7 @@ function subplot(fim=nothing; stop=false, kwargs...)
 	if ((val = find_in_dict(d, [:F :dims :dimensions :size :sizes], false)[1]) !== nothing || SHOW_KWARGS[1])
 		if (isa(val, NamedTuple) && haskey(nt2dict(val), :width))	# Preferred way
 			cmd *= " -F" * helper_sub_F(val)		# VAL = (width=x, height=x, fwidth=(...), fheight=(...))
-			del_from_dict(d, [:F, :dims, :dimensions, :size, :sizes])
+			delete!(d, [:F, :dims, :dimensions, :size, :sizes])
 		else
 			cmd = add_opt(d, cmd, "F", [:F :dims :dimensions :size :sizes],
 			              (panels=("-s", helper_sub_F, 1), figsize=("_f", helper_sub_F, 1), size=("", helper_sub_F, 2), sizes=("", helper_sub_F, 2), frac=("+f", helper_sub_F), fractions=("+f", helper_sub_F), clearance=("+c", arg2str), outine=("+p", add_opt_pen), fill=("+g", add_opt_fill), divlines=("+w", add_opt_pen)))

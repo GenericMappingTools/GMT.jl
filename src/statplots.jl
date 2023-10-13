@@ -653,7 +653,7 @@ function helper2_violin(D, Ds, data, xc, N_grp, ccolor, first, isVert, N_in_each
 		(opt_t != "") && (opt_t = opt_t[4:end])
 
 		R = common_plot_xyz("", D, "violin", first, false, d...)		# The violins
-		del_from_dict(d, [[:xticks], [:yticks], [:G, :fill]])			# To no plot them again
+		delete!(d, [[:xticks], [:yticks], [:G, :fill]])			# To no plot them again
 		hz  = !isVert ? true : false			# For the case horizontal violins want candle sticks too
 		(showOL && isempty(Ds) && isa(OLcmd, Bool)) && (OLcmd = (size="4p",))	# No scatter, smaller stars
 		otl = (!showOL) ? false : (isa(OLcmd, Bool)) ? true : OLcmd		# For the case violins want outliers too
@@ -673,7 +673,7 @@ function helper2_violin(D, Ds, data, xc, N_grp, ccolor, first, isVert, N_in_each
 		(figname != "" && isempty(Ds)) && (d[:savefig] = d[:savefig] = figname)		# Reset the figname now
 		R = common_plot_xyz("", D, "violin", first, false, d...)			# The violins
 		if (!isempty(Ds))
-			del_from_dict(d, [[:xticks], [:yticks], [:G, :fill]])
+			delete!(d, [[:xticks], [:yticks], [:G, :fill]])
 			d[:G], d[:marker] = "black", "point"
 			d[:show] = (showSep) ? false : do_show
 			(figname != "") && (d[:savefig] = d[:savefig] = figname)
@@ -865,7 +865,7 @@ function qqplot(x, y; qqline=:identity, first=true, kwargs...)
 		end
 		lines("", [xs ys]; first=first, d...)		# Plot the line
 		is_in_dict(d, [:aspect :xaxis :yaxis :axis2 :xaxis2 :yaxis2 :title :subtitle :xlabel :ylabel :xticks :yticks], del=true)
-		del_from_dict(d, [[:R, :region, :limits], [:W, :pen], [:B, :frame, :axes, :axis]])
+		delete!(d, [[:R, :region, :limits], [:W, :pen], [:B, :frame, :axes, :axis]])
 		first = false
 	end
 
@@ -1112,7 +1112,7 @@ function parallelplot(cmd0::String="", arg1=nothing; first::Bool=true, axeslabel
 	d[:xticks] = (ax_pos, axeslabels)
 	do_show = ((val = find_in_dict(d, [:show])[1]) !== nothing && val != 0)
 
-	del_from_dict(d, [:R, :region, :limits])		# Clear any eventualy user provided -R
+	delete!(d, [:R, :region, :limits])		# Clear any eventualy user provided -R
 	if (normalize != "" && normalize != "none")
 		d[:R], d[:B] = @sprintf("1/%d/0/1", n_axes), "xa0 S"
 	else
@@ -1122,7 +1122,7 @@ function parallelplot(cmd0::String="", arg1=nothing; first::Bool=true, axeslabel
 	!haskey(d, :Vd) && (d[:Vd] = 0)					# To no warn if basemap unknown options have been used. e.g. -W
 	basemap(; d...)						# <== Start the plot
 
-	del_from_dict(d, [[:R], [:B, :frame, :axes, :axis], [:J, :proj], [:figsize, :fig_size], [:band], [:aspect], [:xaxis], [:yaxis], [:axis2], [:xaxis2], [:yaxis2], [:title], [:subtitle], [:xlabel], [:ylabel], [:xticks], [:yticks]])
+	delete!(d, [[:R], [:B, :frame, :axes, :axis], [:J, :proj], [:figsize, :fig_size], [:band], [:aspect], [:xaxis], [:yaxis], [:axis2], [:xaxis2], [:yaxis2], [:title], [:subtitle], [:xlabel], [:ylabel], [:xticks], [:yticks]])
 
 	if (normalize != "" && normalize != "none")		# Plot the vertical axes
 		for k = 1:n_axes-1

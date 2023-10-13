@@ -78,7 +78,7 @@ function grdview(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd = add_opt(d, cmd, "T", [:T :no_interp :tiles], (skip="_+s", skip_nan="_+s", outlines=("+o", add_opt_pen)))
 	opt_JZ = ""		# Need to have this one defined because it's need in frame_opaque() bellow.
 	if (!occursin(" -T", cmd))  cmd, opt_JZ = parse_JZ(d, cmd, O=O, is3D=true)
-	else                        del_from_dict(d, [:JZ])			# Means, even if we had one, ignore silently
+	else                        delete!(d, [:JZ])			# Means, even if we had one, ignore silently
 	end
 	cmd = add_opt(d, cmd, "%", [:layout :mem_layout], nothing)
 

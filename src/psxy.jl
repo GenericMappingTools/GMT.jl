@@ -159,7 +159,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 			                       (arg1[1].data = mat_t; append!(arg1[1].colnames, ["Ebar"])))
 		end
 		got_Ebars = true
-		del_from_dict(d, [symb])
+		delete!(d, [symb])
 	end
 
 	# Look for color request. Do it after error bars because they may add a column
@@ -311,13 +311,13 @@ end
 function if_multicols(d, arg1, is3D::Bool)
 	# If the input is a GMTdataset and 'multicol' is asked, split the DS into a vector of DS's
 	(find_in_dict(d, [:multi :multicol :multicols], false)[1] === nothing)  && return arg1
-	is3D && (del_from_dict(d, [:multi, :multicol, :multicols]); @warn("'multile coluns' in 3D plots are not allowed. Ignoring."))
+	is3D && (delete!(d, [:multi, :multicol, :multicols]); @warn("'multile coluns' in 3D plots are not allowed. Ignoring."))
 	(isdataframe(arg1) || isODE(arg1)) && return arg1
 	(isa(arg1, Vector{<:GMTdataset}) && (size(arg1,2) > 2+is3D)) && return arg1		# Play safe
 	d2 = copy(d)
 	!haskey(d, :color) && (d2[:color] = true)	# Default to lines color cycling
 	arg1 = ds2ds(arg1; is3D=is3D, d2...)		# Pass a 'd' copy and remove possible kw that are also parse in psxy
-	del_from_dict(d, [[:multi, :multicol, :multicols], [:lt, :linethick], [:ls, :linestyle], [:fill], [:fillalpha], [:color]])
+	delete!(d, [[:multi, :multicol, :multicols], [:lt, :linethick], [:ls, :linestyle], [:fill], [:fillalpha], [:color]])
 	return arg1
 end
 

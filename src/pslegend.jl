@@ -99,7 +99,7 @@ function mk_legend(; kwargs...)
 	ky = keys(kwargs)
 
 	function check_unused(d::Dict, opt::String, symb=nothing)
-		(symb !== nothing) && del_from_dict(d, [symb])
+		(symb !== nothing) && delete!(d, [symb])
 		(length(d) > 0) && println("\tThe following options were not consumed in the legend's '$(opt)' option => ", keys(d))
 	end
 
