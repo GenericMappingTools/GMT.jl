@@ -336,7 +336,12 @@ function opt_R2num(opt_R::String)
 		#if (isdiag)  limits[2], limits[4] = limits[4], limits[2]  end
 		# Don't know anymore how -R...+r limits should be stored in CTRL.limits
 	elseif (opt_R != " -R" && opt_R != " -Rtight")	# One of those complicated -R forms. Ask GMT the limits (but slow. It takes 0.2 s)
-		kml::GMTdataset = gmt("gmt2kml " * opt_R, [0 0])
+
+		# If opt_R is not a grid's name, we are f.
+		((ind = findfirst("-R@", opt_R)) !== nothing) && return grdinfo(opt_R[ind[3]:end], C=true)[1:4]	# should be a cache file
+		(((f = guess_T_from_ext(opt_R)) == " -Tg") || f == " -Ti") && return grdinfo(opt_R[4:end], C=true)[1:4]	# any local file
+
+		kml::GMTdataset = gmt("gmt2kml " * opt_R, [0 0])		# for example, opt_R = " -RPT"
 		limits = zeros(4)
 		t::String = kml.text[28][12:end];	ind = findfirst("<", t)		# north
 		limits[4] = parse(Float64, t[1:(ind[1]-1)])
@@ -404,7 +409,7 @@ function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bo
 		if (default == "guess" && opt_J == "")
 			opt_J = guess_proj(CTRL.limits[7:8], CTRL.limits[9:10]);	mnemo = true	# To force append fig size
 		end
-		if (opt_J == "")  opt_J = " -JX"  end
+		(opt_J == "") && (opt_J = " -JX")
 		# If only the projection but no size, try to get it from the kwargs.
 		if ((s = helper_append_figsize(d, opt_J, O, del)) != "")		# Takes care of both fig scales and fig sizes
 			opt_J = s
@@ -487,7 +492,7 @@ function get_figsize(opt_R::String="", opt_J::String="")
 	# Compute the current fig dimensions in paper coords using the know -R -J
 	(opt_R == "" || opt_R == " -R") && (opt_R = CTRL.pocket_R[1])
 	(opt_J == "" || opt_J == " -J") && (opt_J = CTRL.pocket_J[1])
-	(opt_R == "" || opt_J == "") && error("One or both of 'limits' ($opt_R) or 'proj' ($opt_J) is empty. Cannot compute fig size.")
+	((opt_R == "" || opt_J == "") && !IamModern[1]) && error("One or both of 'limits' ($opt_R) or 'proj' ($opt_J) is empty. Cannot compute fig size.")
 	Dwh = gmt("mapproject -W " * opt_R * opt_J)
 	return Dwh[1], Dwh[2]		# Width, Height
 end
@@ -550,6 +555,8 @@ function append_figsize(d::Dict, opt_J::String, width::String="", scale::Bool=fa
 				elseif (ax == 'y')  error("Can't select Y scaling and provide X dimension only")
 				else
 					width *= flag
+					(ax == 'l' && flag == 'l') && (width = IamModern[1] ? width * "/?l" : width * "/l")	# The loglog case
+					(width[1] == '?' && !contains(width, '/')) && (width *= "/?")
 				end
 			end
 		end
@@ -901,6 +908,10 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 				autoZ = (!contains(_val, " ") && contains(_val, 'Z')) ? " zaf" : ""
 				_val *= " af" * autoZ		# To prevent that setting B=:WSen removes all annots
 			end
+
+			# Next line is a check if a color bg was passed in -B string. BG colors f screw the API continuity
+			(CTRL.pocket_B[3] == "" && contains(_val, "+g")) && (CTRL.pocket_B[3] = ".")	# Signal that a restart is due.
+
 		elseif (isa(val, Real))				# for example, B=0
 			_val = string(val)
 		end
@@ -1404,9 +1415,9 @@ function parse_f(d::Dict, cmd::String)
 end
 
 # ---------------------------------------------------------------------------------
-function parse_l(d::Dict, cmd::String)
+function parse_l(d::Dict, cmd::String, del::Bool=false)
 	cmd_::String = add_opt(d, "", "l", [:l :legend],
-		(text=("", arg2str, 1), hline=("+D", add_opt_pen), vspace="+G", header="+H", image="+I", line_text="+L", n_cols="+N", ncols="+N", ssize="+S", start_vline=("+V", add_opt_pen), end_vline=("+v", add_opt_pen), font=("+f", font), fill="+g", justify="+j", offset="+o", frame_pen=("+p", add_opt_pen), width="+w", scale="+x"), false)
+		(text=("", arg2str, 1), hline=("+D", add_opt_pen), vspace="+G", header="+H", image="+I", line_text="+L", n_cols="+N", ncols="+N", ssize="+S", start_vline=("+V", add_opt_pen), end_vline=("+v", add_opt_pen), font=("+f", font), fill="+g", justify="+j", offset="+o", frame_pen=("+p", add_opt_pen), width="+w", scale="+x"), del)
 	# Now make sure blanks in legend text are wrapped in ""
 	if ((ind = findfirst("+", cmd_)) !== nothing)
 		cmd_ = " -l" * str_with_blancs(cmd_[4:ind[1]-1]) * cmd_[ind[1]:end]
@@ -2033,6 +2044,14 @@ function arg2str(arg, sep='/')::String
 		error("arg2str: argument 'arg' can only be a String, Symbol, Number, Array or a Tuple, but was $(typeof(arg))")
 	end
 	return out
+end
+
+# ---------------------------------------------------------------------------------------------------
+function arg2str(arg::GMTdataset, sep='/')::String
+	# This method is mainly to allow passing the direct output of gmtinfo()
+	(size(arg,1) != 1) && error("When passing a GMTdataset to arg2str, it must have only one row")
+	out = join([string(x, sep)::String for x in arg.data])
+	rstrip(out, sep)		# Remove last '/'
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -2820,6 +2839,7 @@ function axis(D::Dict=Dict(); x::Bool=false, y::Bool=false, z::Bool=false, secon
 		tB = "+g" * add_opt_fill(d, [symb])::String
 		opt *= tB					# Works, but patterns can screw
 		CTRL.pocket_B[2] = tB		# Save this one because we may need to revert it during psclip parsing
+		CTRL.pocket_B[3] = "."		# Signal gmt() to call gmt_restart because bg screws the API continuity
 	end
 	((val = find_in_dict(d, [:Xfill :Xbg :Xwall])[1]) !== nothing) && (opt = add_opt_fill(val, opt, "+x"))
 	((val = find_in_dict(d, [:Yfill :Ybg :Ywall])[1]) !== nothing) && (opt = add_opt_fill(val, opt, "+y"))

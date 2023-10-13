@@ -51,9 +51,9 @@
 	@test startswith(r, "grdcontour lixo.grd  -JX" * split(GMT.DEF_FIG_SIZE, '/')[1] * "/0" * " -Baf -BWSen -A50+f7p -Gd4i -Wcthinnest,- -Wathin,-")
 	G = GMT.peaks()
 	cpt = makecpt(T="-6/8/1");
-	grdcontour(G, axis="a", fmt="png", color=cpt, pen="+c", X=1, Y=1, N=true, U=[])
+	grdcontour(G, axis="a", fmt="png", color=cpt, pen="+c", X=1, Y=1, N=true, U=[]);
 	grdcontour!(G, axis="a", color=cpt, pen="+c", X=1, Y=1, N=true, Vd=dbg2)
-	grdcontour!("", G, axis="a", color=cpt, pen="+c", X=1, Y=1, N=cpt, Vd=dbg2)
+	grdcontour!(G, axis="a", color=cpt, pen="+c", X=1, Y=1, N=cpt, Vd=dbg2)
 
 	println("	GRDCUT")
 	G=gmt("grdmath", "-R0/10/0/10 -I1 X Y MUL");
@@ -174,6 +174,9 @@
 	grdtrack([0 0], G=G);
 	D = grdtrack([0 0], G=(G,G));
 	@assert(D.data == [0.0 0 1 1])
+	G = grdcut("@earth_relief_01m", region=(-118,-107,-49,-42));
+	table, stack = grdtrack(G, [-111.6 -43.0; -113.3 -47.5], equidistant="400k/2k/10k+v", stack="m+s");
+	GMT.resetGMT()
 
 	println("	GRDVECTOR")
 	G = gmt("grdmath -R-2/2/-2/2 -I0.1 X Y R2 NEG EXP X MUL");

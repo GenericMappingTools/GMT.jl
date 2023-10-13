@@ -174,7 +174,8 @@ function contourf(cmd0::String="", arg1=nothing, arg2=nothing; first=true, kwarg
 		if (opt_T !== nothing)  d[:T] = opt_T  end
 		if (opt_S !== nothing)  d[:S] = opt_S  end
 		if (opt_W !== nothing)  d[:W] = opt_W  end
-		grdcontour(cmd0, arg1; first=false, d...)
+		#grdcontour(cmd0, arg1; first=false, d...)
+		grdcontour_helper(cmd0, arg1; first=false, d...)
 	else
 		if (isa(CPT_arg, GMTcpt))
 			d[:C] = CPT_arg;

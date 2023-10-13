@@ -38,18 +38,14 @@ Parameters
 
 To see the full documentation type: ``@? grdgradient``
 """
-function grdgradient(cmd0::String="", arg1=nothing; kwargs...)
+function grdgradient(cmd0::String; kwargs...)
+	d, cmd = grdgrad_helper(;kwargs...)
+	common_grd(d, cmd0, cmd, "grdgradient ", nothing)		# Finish build cmd and run it
+end
 
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
-	cmd, = parse_common_opts(d, "", [:G :R :V_params :f :n])
-	cmd  = parse_these_opts(cmd, d, [[:A :azim], [:D :find_dir], [:S :slopegrid]])
-	cmd  = add_opt(d, cmd, "E", [:E :lambert], 
-	       (manip=("m", nothing, 1), simple=("s", nothing, 1), peucker=("p", nothing, 1), view=("", arg2str), ambient="+a", difuse="+d", specular="+p", shine="+s") )
-	cmd  = add_opt(d, cmd, "N", [:N :norm :normalize],
-           (laplace=("e", nothing, 1), cauchy=("t", nothing, 1), amp="", sigma="+s", offset="+o"))
-	cmd = parse_Q_grdgrad(d, [:Q :save_stats], cmd)
-
-	common_grd(d, cmd0, cmd, "grdgradient ", arg1)		# Finish build cmd and run it
+function grdgradient(arg1; kwargs...)
+	d, cmd = grdgrad_helper(;kwargs...)
+	common_grd(d, "", cmd, "grdgradient ", arg1)		# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -64,4 +60,14 @@ function parse_Q_grdgrad(d::Dict, symbs::Array{<:Symbol}, cmd::String)
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdgradient(arg1; kw...) = grdgradient("", arg1; kw...)
+function grdgrad_helper(;kw...)
+	d = init_module(false, kw...)[1]		# Also checks if the user wants ONLY the HELP mode
+	cmd, = parse_common_opts(d, "", [:G :R :V_params :f :n])
+	cmd  = parse_these_opts(cmd, d, [[:A :azim], [:D :find_dir], [:S :slopegrid]])
+	cmd  = add_opt(d, cmd, "E", [:E :lambert], 
+	       (manip=("m", nothing, 1), simple=("s", nothing, 1), peucker=("p", nothing, 1), view=("", arg2str), ambient="+a", difuse="+d", specular="+p", shine="+s") )
+	cmd  = add_opt(d, cmd, "N", [:N :norm :normalize],
+           (laplace=("e", nothing, 1), cauchy=("t", nothing, 1), amp="", sigma="+s", offset="+o"))
+	cmd = parse_Q_grdgrad(d, [:Q :save_stats], cmd)
+	return d, cmd
+end

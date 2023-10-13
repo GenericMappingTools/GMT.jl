@@ -35,8 +35,7 @@ function gmtend(arg=nothing; show=false, verbose=nothing)
 		gmt("subplot end")
 	end
 	gmt(cmd)
-	IamModern[1] = false;	FirstModern[1] = false
-	resetGMT(false)			# With 'false' it only resets the all global variables
+	resetGMT()
 	return nothing
 end
  

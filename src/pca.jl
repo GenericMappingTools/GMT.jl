@@ -22,7 +22,8 @@
 Note, this function follows approximately the Matlab one and has influences of a similar function in the
 *Digital Image Processing Using MATLAB* book.
 """
-function princomp!(X, q=0)
+princomp!(X) = princomp!(X, 0)
+function princomp!(X, q)
 
 	n_rows, n_vars = size(X,1), size(X,2)
 	(q == 0) && (q = n_vars)
@@ -102,7 +103,17 @@ function pca(I::GMTimage; DT::DataType=Float32, npc::Int=0)
 	P = reshape(Y, n_rows, n_cols, n_bands)
 	Ipca = deepcopy(I)
 	for k = 1:n_bands
-		Ipca[:,:,k] = imagesc(P[:,:,k]).image	# Each component must be scaled independently
+		#Ipca[:,:,k] = imagesc(P[:,:,k]).image	# Each component must be scaled independently
+		viewmat = view(P,:,:,k)
+		mi, ma = extrema(viewmat)
+		if (isnan(mi))			# Shit, such a memory waste we need to do.
+			mi, ma = extrema_nan(viewmat)
+			t = Float32.((viewmat .- mi) ./ (ma - mi) .* 255)
+			for k in CartesianIndices(t)  isnan(t[k]) && (t[k] = 255f0)  end
+			Ipca[:,:,k] = round.(UInt8, t)
+		else
+			Ipca[:,:,k] = round.(UInt8, (viewmat .- mi) ./ (ma - mi) .* 255) 
+		end
 	end
 	Ipca.names = [@sprintf("PC %d, explained variance %.1f", k, explained[k]) for k = 1:n_bands]
 	Ipca.range[5:6] = [0, 255]
