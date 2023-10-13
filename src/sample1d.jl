@@ -41,7 +41,11 @@ Parameters
 
 To see the full documentation type: ``@? sample1d``
 """
-function sample1d(cmd0::String="", arg1=nothing; kwargs...)
+sample1d(cmd0::String; kw...) = sample1d_helper(cmd0, nothing; kw...)
+sample1d(arg1; kw...)         = sample1d_helper("", arg1; kw...)
+
+# ---------------------------------------------------------------------------------------------------
+function sample1d_helper(cmd0::String, arg1; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :o :w :yx])[1]
@@ -83,6 +87,3 @@ function sample1d(cmd0::String="", arg1=nothing; kwargs...)
 
 	common_grd(d, cmd0, cmd, "sample1d ", arg1, isempty(Tvec) ? nothing : Tvec)		# Finish build cmd and run it
 end
-
-# ---------------------------------------------------------------------------------------------------
-sample1d(arg1; kw...) = sample1d("", arg1; kw...)
