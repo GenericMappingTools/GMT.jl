@@ -3,6 +3,7 @@
 	@test_throws ErrorException("Must select one convention (S options. Run gmthelp(velo) to learn about them)") velo!("",mat2ds([0. -8 0 0 4 6 0.5; -8 5 3 3 0 0 0.5], ["4x6", "3x3"]), region=(-15,10,-10,10))
 
 	println("	MISC")
+	GMT.resetGMT()
 	G = nearneighbor(rand(100,3) * 150, R="0/150/0/150", I=1, N=4, S=10, r=true);
 	G = GMT.mat2grid(G.z; reg=0, hdr=[G.range; G.registration; G.inc]);
 	G1 = gmt("grdmath -R-2/2/-2/2 -I0.5 X Y MUL");
@@ -46,6 +47,7 @@
 	flipud(G)
 	fliplr(G)
 	flipdim(G.z,1)
+	GMT.resetGMT()
 
 	D = mat2ds(ones(3,2));
 	@test D + 2 == [3 1; 3 1; 3 1];
@@ -85,10 +87,9 @@
 	I .+ UInt8(0);
 
 	@info "linearfitxy"
+	GMT.resetGMT()
 	D = linearfitxy([0.0, 0.9, 1.8, 2.6, 3.3, 4.4, 5.2, 6.1, 6.5, 7.4], [5.9, 5.4, 4.4, 4.6, 3.5, 3.7, 2.8, 2.8, 2.4, 1.5], sx=1 ./ sqrt.([1000., 1000, 500, 800, 200, 80,  60, 20, 1.8, 1]), sy=1 ./ sqrt.([1., 1.8, 4, 8, 20, 20, 70, 70, 100, 500]));
-	@info "1..."
 	plot(D, linefit=true, band_ab=true, band_CI=true, ellipses=true, Vd=dbg2)
-	@info "2..."
 	plot!(D, linefit=true, Vd=dbg2)
 	@info "ablines"
 	ablines!(D, Vd=dbg2)
@@ -134,6 +135,7 @@
 	GMT.line2multiseg(mat2ds(rand(5,2)), lt=[1,2,4], auto_color=true);
 	GMT.line2multiseg(mat2ds(rand(3,2)), lt=[1,2,4]);
 	GMT.line2multiseg([mat2ds(rand(3,2)), mat2ds(rand(4,2))], lt=[1,2], auto_color=true);
+	GMT.resetGMT()
 
 	@info "mat2grid"
 	GMT.mat2grid(rand(Float32, 10,10), reg=1);

@@ -37,7 +37,12 @@ Parameters
     the given z-range.
 - $(GMT._opt_f)
 """
-function grdcut(cmd0::String="", arg1=nothing; kwargs...)
+grdcut(cmd0::String; kwargs...) = grdcut_helper(cmd0, nothing; kwargs...)
+grdcut(arg1; kwargs...)         = grdcut_helper("", arg1; kwargs...)
+grdcut(; kwargs...)             = grdcut_helper("", nothing; kwargs...)		# To allow grdcut(data=..., ...)
+
+# ---------------------------------------------------------------------------------------------------
+function grdcut_helper(cmd0::String, arg1; kwargs...)
 
 	arg2 = nothing
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
@@ -76,9 +81,6 @@ function cut_with_gdal(fname::String, opts::Vector{<:AbstractString}, outname::S
 		return nothing				# Since it wrote a file so nothing to return
 	end
 end
-
-# ---------------------------------------------------------------------------------------------------
-grdcut(arg1; kw...) = grdcut("", arg1; kw...)
 
 # ---------------------------------------------------------------------------------------------------
 """

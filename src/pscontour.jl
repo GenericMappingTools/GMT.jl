@@ -72,7 +72,13 @@ Parameters
 
 To see the full documentation type: ``@? contour``
 """
-function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
+contour(cmd0::String; kwargs...)  = contour_helper(cmd0, nothing; kwargs...)
+contour(arg1; kwargs...)          = contour_helper("", arg1; kwargs...)
+contour!(cmd0::String; kwargs...) = contour_helper(cmd0, nothing; first=false, kwargs...)
+contour!(arg1; kwargs...)         = contour_helper("", arg1; first=false, kwargs...)
+
+# ---------------------------------------------------------------------------------------------------
+function contour_helper(cmd0::String, arg1; first=true, kwargs...)
 
     gmt_proggy = (IamModern[1]) ? "contour " : "pscontour "
 
@@ -142,11 +148,6 @@ function contour(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	_cmd = finish_PS_nested(d, [gmt_proggy * cmd])
 	return finish_PS_module(d, _cmd, "-D", K, O, true, arg1, arg2, arg3)
 end
-
-# ---------------------------------------------------------------------------------------------------
-contour!(cmd0::String="", arg1=nothing; kw...) = contour(cmd0, arg1; first=false, kw...)
-contour(arg1; kw...) = contour("", arg1; first=true, kw...)
-contour!(arg1; kw...) = contour("", arg1; first=false, kw...)
 
 # ---------------------------------------------------------------------------------------------------
 const pscontour  = contour

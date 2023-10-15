@@ -65,7 +65,11 @@ Parameters
 - $(GMT.opt_w)
 - $(GMT.opt_swap_xy)
 """
-function blockmean(cmd0::String="", arg1=nothing; kwargs...)
+blockmean(cmd0::String; kwargs...) = blockmean_helper(cmd0, nothing; kwargs...)
+blockmean(arg1; kwargs...)         = blockmean_helper("", arg1; kwargs...)
+
+# ---------------------------------------------------------------------------------------------------
+function blockmean_helper(cmd0::String, arg1; kwargs...)
 
 	d = KW(kwargs)
 	help_show_options(d)		# Check if user wants ONLY the HELP mode
@@ -90,7 +94,11 @@ Block average (x,y,z) data tables by L1 norm.
 	
 See full GMT (not the `GMT.jl` one) docs at [`blockmedian`]($(GMTdoc)blockmedian.html)
 """
-function blockmedian(cmd0::String="", arg1=nothing; kwargs...)
+blockmedian(cmd0::String; kwargs...) = blockmedian_helper(cmd0, nothing; kwargs...)
+blockmedian(arg1; kwargs...)         = blockmedian_helper("", arg1; kwargs...)
+
+# ---------------------------------------------------------------------------------------------------
+function blockmedian_helper(cmd0::String, arg1; kwargs...)
 
 	d = KW(kwargs)
 	help_show_options(d)		# Check if user wants ONLY the HELP mode
@@ -109,7 +117,11 @@ Block average (x,y,z) data tables by mode estimation.
 	
 See full GMT (not the `GMT.jl` one) docs at [`blockmode`]($(GMTdoc)blockmode.html)
 """
-function blockmode(cmd0::String="", arg1=nothing; kwargs...)
+blockmode(cmd0::String; kwargs...) = blockmode_helper(cmd0, nothing; kwargs...)
+blockmode(arg1; kwargs...)         = blockmode_helper("", arg1; kwargs...)
+
+# ---------------------------------------------------------------------------------------------------
+function blockmode_helper(cmd0::String, arg1; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd = parse_these_opts("", d, [[:D :histogram_binning], [:Q :quick]])
@@ -144,10 +156,3 @@ function common_blocks(cmd0, arg1, d, cmd, proggy, kwargs...)
 	opt_r = ((r = scan_opt(cmd, "-r")) == "") ? "g" : r
 	xyz2grd(R, R=opt_R, I=opt_I, r=opt_r)
 end
-
-# ---------------------------------------------------------------------------------------------------
-blockmean(arg1; kw...)   = blockmean("", arg1; kw...)
-# ---------------------------------------------------------------------------------------------------
-blockmedian(arg1; kw...) = blockmedian("", arg1; kw...)
-# ---------------------------------------------------------------------------------------------------
-blockmode(arg1; kw...)   = blockmode("", arg1; kw...)

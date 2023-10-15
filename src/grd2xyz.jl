@@ -36,7 +36,11 @@ Parameters
 - $(GMT.opt_o)
 - $(GMT.opt_s)
 """
-function grd2xyz(cmd0::String="", arg1=nothing; kwargs...)
+grd2xyz(cmd0::String; kwargs...) = grd2xyz_helper(cmd0, nothing; kwargs...)
+grd2xyz(arg1; kwargs...)         = grd2xyz_helper("", arg1; kwargs...)
+
+# ---------------------------------------------------------------------------------------------------
+function grd2xyz_helper(cmd0::String, arg1; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:R :V_params :bo :d :f :h :o :s])
@@ -44,6 +48,3 @@ function grd2xyz(cmd0::String="", arg1=nothing; kwargs...)
 	((val = find_in_dict(d, [:name :save])[1]) !== nothing) && (cmd *=  " > " * string(val))
 	common_grd(d, cmd0, cmd, "grd2xyz ", arg1)	# Finish build cmd and run it
 end
-
-# ---------------------------------------------------------------------------------------------------
-grd2xyz(arg1; kw...) = grd2xyz("", arg1; kw...)

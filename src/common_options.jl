@@ -2673,7 +2673,7 @@ function add_opt_module(d::Dict)::Vector{String}
 					CTRL.pocket_call[1] = val[1];
 					k,v = keys(nt), values(nt)
 					nt = NamedTuple{Tuple(Symbol.(k[2:end]))}(v[2:end])		# Fck, what a craziness to remove 1 el from a nt
-					r = clip!(; Vd=2, nt...)
+					r = clip!(""; Vd=2, nt...)
 					r = r[1:findfirst(" -K", r)[1]];	# Remove the "-K -O >> ..."
 					r = replace(r, " -R -J" => "")
 					r = "clip " * strtok(r)[2]			# Make sure the prog name is 'clip' and not 'psclip'

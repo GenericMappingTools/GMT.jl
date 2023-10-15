@@ -1020,7 +1020,20 @@ Example:
 
     parallelplot("iris.dat", groupvar="text", quantile=0.25, legend=true, band=true, show=1)
 """
-function parallelplot(cmd0::String="", arg1=nothing; first::Bool=true, axeslabels::Vector{String}=String[],
+parallelplot(arg1; axeslabels::Vector{String}=String[], labels::Vector{String}=String[], group::AbstractVector=AbstractVector[], groupvar="", normalize="range", kw...) =
+	parplot_helper("", arg1; axeslabels=axeslabels, labels=labels, group=group, groupvar=groupvar, normalize=normalize, kw...)
+
+parallelplot(cmd0::String; axeslabels::Vector{String}=String[], labels::Vector{String}=String[], group::AbstractVector=AbstractVector[], groupvar="", normalize="range", kw...) =
+	parplot_helper(cmd0, nothing; axeslabels=axeslabels, labels=labels, group=group, groupvar=groupvar, normalize=normalize, kw...)
+
+parallelplot!(arg1; axeslabels::Vector{String}=String[], labels::Vector{String}=String[], group::AbstractVector=AbstractVector[], groupvar="", normalize="range", kw...) =
+	parplot_helper("", arg1; first=false, axeslabels=axeslabels, labels=labels, group=group, groupvar=groupvar, normalize=normalize, kw...)
+
+parallelplot!(cmd0::String; axeslabels::Vector{String}=String[], labels::Vector{String}=String[], group::AbstractVector=AbstractVector[], groupvar="", normalize="range", kw...) =
+	parplot_helper(cmd0, nothing; first=false, axeslabels=axeslabels, labels=labels, group=group, groupvar=groupvar, normalize=normalize, kw...)
+
+# ----------------------------------------------------------------------------------------------------------
+function parplot_helper(cmd0::String, arg1; first::Bool=true, axeslabels::Vector{String}=String[],
                       labels::Vector{String}=String[], group::AbstractVector=AbstractVector[], groupvar="", normalize="range", kwargs...)
 	d = KW(kwargs)
 	(cmd0 != "") && (arg1 = read_data(d, cmd0, "", arg1, " ", false, true)[2])	# Make sure we have the data here
@@ -1139,12 +1152,6 @@ function parallelplot(cmd0::String="", arg1=nothing; first::Bool=true, axeslabel
 	(!haveband && haskey(d, :legend) && isa(d[:legend], Bool) && d[:legend] && !isempty(gnames)) && (d[:label] = gnames)
 	!haveband ? common_plot_xyz("", D, "line", false, false, d...) : plot_bands_from_vecDS(D, d, do_show, d[:W], gnames)
 end
-
-parallelplot!(cmd0::String="", arg1=nothing; axeslabels::Vector{String}=String[], labels::Vector{String}=String[], group::AbstractVector=AbstractVector[], groupvar="", normalize="range", kw...) = parallelplot(cmd0, arg1; first=false, axeslabels=axeslabels, labels=labels, group=group, groupvar=groupvar, normalize=normalize, kw...)
-
-parallelplot(arg1; axeslabels::Vector{String}=String[], labels::Vector{String}=String[], group::AbstractVector=AbstractVector[], groupvar="", normalize="range", kw...) = parallelplot("", arg1; first=true, axeslabels=axeslabels, labels=labels, group=group, groupvar=groupvar, normalize=normalize, kw...)
-
-parallelplot!(arg1; axeslabels::Vector{String}=String[], labels::Vector{String}=String[], group::AbstractVector=AbstractVector[], groupvar="", normalize="range", kw...) = parallelplot("", arg1; first=false, axeslabels=axeslabels, labels=labels, group=group, groupvar=groupvar, normalize=normalize, kw...)
 
 # ----------------------------------------------------------------------------------------------------------
 function plot_bands_from_vecDS(D::Vector{GMTdataset}, d, do_show, pen, gnames)

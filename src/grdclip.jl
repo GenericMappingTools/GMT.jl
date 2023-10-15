@@ -48,7 +48,11 @@ Parameters
 
         G2=grdclip(G, S="a5/6 -Sb2/2 -Si3/4/3.5")
 """
-function grdclip(cmd0::String="", arg1=nothing; kwargs...)
+grdclip(cmd0::String; kwargs...) = grdclip_helper(cmd0, nothing; kwargs...)
+grdclip(arg1; kwargs...)         = grdclip_helper("", arg1; kwargs...)
+
+# ---------------------------------------------------------------------------------------------------
+function grdclip_helper(cmd0::String, arg1; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
@@ -61,9 +65,6 @@ function grdclip(cmd0::String="", arg1=nothing; kwargs...)
 
 	common_grd(d, cmd0, cmd, "grdclip ", arg1)		# Finish build cmd and run it
 end
-
-# ---------------------------------------------------------------------------------------------------
-grdclip(arg1; kw...) = grdclip("", arg1; kw...)
 
 # ---------------------------------------------------------------------------------------------------
 function opt_S(d::Dict, cmd::String, symbs, flag::Char)

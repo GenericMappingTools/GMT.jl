@@ -131,9 +131,9 @@ function pcolor(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		if ((val = find_in_kwargs(kwargs, [:outline])[1]) !== nothing)	# -T+o is bugged for line styles
 			opt_T *= "+o" * add_opt_pen(Dict(:outline => val), [:outline])
 		end
-		grdview(cmd0, arg1; first=first, T=opt_T, kwargs...)
+		grdview_helper(cmd0, arg1; first=first, T=opt_T, kwargs...)
 	else
-		grdview(cmd0, arg1; first=first, kwargs...)
+		grdview_helper(cmd0, arg1; first=first, kwargs...)
 	end
 
 	if (got_labels)

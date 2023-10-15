@@ -28,7 +28,11 @@ Parameters
 - $(GMT.opt_V)
 - $(GMT._opt_f)
 """
-function grdfill(cmd0::String="", arg1=nothing; kwargs...)
+grdfill(cmd0::String; kwargs...) = grdfill_helper(cmd0, nothing; kwargs...)
+grdfill(arg1; kwargs...)         = grdfill_helper("", arg1; kwargs...)
+
+# ---------------------------------------------------------------------------------------------------
+function grdfill_helper(cmd0::String, arg1; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:G :R :V_params :f])
@@ -36,6 +40,3 @@ function grdfill(cmd0::String="", arg1=nothing; kwargs...)
 
 	common_grd(d, cmd0, cmd, "grdfill ", arg1)		# Finish build cmd and run it
 end
-
-# ---------------------------------------------------------------------------------------------------
-grdfill(arg1; kw...) = grdfill("", arg1; kw...)

@@ -43,7 +43,13 @@ Parameters
 
 To see the full documentation type: ``@? clip``
 """
-function clip(cmd0::String="", arg1=nothing; first=true, kwargs...)
+clip(cmd0::String; kwargs...)  = clip_helper(cmd0, nothing; kwargs...)
+clip(arg1; kwargs...)          = clip_helper("", arg1; kwargs...)
+clip!(cmd0::String; kwargs...) = clip_helper(cmd0, nothing; first=false, kwargs...)
+clip!(arg1; kwargs...)         = clip_helper("", arg1; first=false, kwargs...)
+
+# ---------------------------------------------------------------------------------------------------
+function clip_helper(cmd0::String, arg1; first=true, kwargs...)
 
 	gmt_proggy = (IamModern[1]) ? "clip " : "psclip "
 
@@ -61,9 +67,5 @@ function clip(cmd0::String="", arg1=nothing; first=true, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-clip!(cmd0::String="", arg1=nothing; kw...) = clip(cmd0, arg1; first=false, kw...)
-clip(arg1; kw...)  = clip("", arg1; first=true, kw...)
-clip!(arg1; kw...) = clip("", arg1; first=false, kw...)
-
 psclip  = clip			# Alias
 psclip! = clip!			# Alias

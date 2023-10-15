@@ -1301,8 +1301,14 @@ Examples:
     radar([10.5 20.5 30.6 40.9 46], axeslimts=[15, 25, 50, 90, 50], labels=["Spoons","Forks","Knifes","Dishes","Oranges"],
           annotall=true, marker=:circ, fill=true, show=1)
 """
-function radar(cmd0::String="", arg1=nothing; first::Bool=true, axeslimts=Float64[], annotall::Bool=false,
-	           axeslabels::Vector{String}=String[], labels::Vector{String}=String[], kwargs...)
+radar(cmd0::String; kwargs...)  = radar_helper(cmd0, nothing; kwargs...)
+radar(arg1; kwargs...)          = radar_helper("", arg1; kwargs...)
+radar!(cmd0::String; kwargs...) = radar_helper(cmd0, nothing; first=false, kwargs...)
+radar!(arg1; kwargs...)         = radar_helper("", arg1; first=false, kwargs...)
+
+# ---------------------------------------------------------------------------------------------------
+function radar_helper(cmd0::String, arg1; first::Bool=true, axeslimts=Float64[], annotall::Bool=false,
+	                  axeslabels::Vector{String}=String[], labels::Vector{String}=String[], kwargs...)
 	d = KW(kwargs)
 	(cmd0 != "") && (arg1 = read_data(d, cmd0, "", arg1, " ", false, true)[2])	# Make sure we have the data here
 	if (isa(arg1, GMTdataset))                data::Matrix{Float64} = arg1.data
@@ -1348,10 +1354,6 @@ function radar(cmd0::String="", arg1=nothing; first::Bool=true, axeslimts=Float6
 	(is_in_dict(d, [:lw :W :pen]) === nothing) && (d[:lw] = 1)
 	common_plot_xyz("", D, "line", false, false, d...)
 end
-radar(arg1; kwargs...) = radar("", arg1; first=true, kwargs...)
-
-radar!(cmd0::String="", arg1=nothing; axeslimts=Float64[], annotall::Bool=false, axeslabels::Vector{String}=String[], labels::Vector{String}=String[], kw...) = radar(cmd0, arg1; axeslimts=axeslimts, annotall=annotall, axeslabels=axeslabels, labels=labels, first=false, kw...)
-radar!(arg1; kwargs...) = radar("", arg1; first=false, kwargs...)
 
 # ------------------------------------------------------------------------------------------------------
 """

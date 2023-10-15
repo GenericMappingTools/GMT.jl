@@ -27,7 +27,11 @@ Parameters
 
 To see the full documentation type: ``@? grdsample``
 """
-function grdsample(cmd0::String="", arg1=nothing; kwargs...)
+grdsample(cmd0::String; kwargs...) = grdsample_helper(cmd0, nothing; kwargs...)
+grdsample(arg1; kwargs...)         = grdsample_helper("", arg1; kwargs...)
+
+# ---------------------------------------------------------------------------------------------------
+function grdsample_helper(cmd0::String, arg1; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:G :RIr :V_params :f :n :x])
@@ -35,6 +39,3 @@ function grdsample(cmd0::String="", arg1=nothing; kwargs...)
 
 	common_grd(d, cmd0, cmd, "grdsample ", arg1)		# Finish build cmd and run it
 end
-
-# ---------------------------------------------------------------------------------------------------
-grdsample(arg1; kw...) = grdsample("", arg1; kw...)
