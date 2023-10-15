@@ -177,10 +177,10 @@ function imshow(arg1::GMTgrid; kw...)
 			opt_p = " -p180/90"
 		elseif ((val = find_in_dict(d, [:facades :cubeplot])[1]) !== nothing)	# Plot images on the cube walls
 			cubeplot(val..., zsize=zsize, R=arg1, p=opt_p[4:end], back=true)
-			R = grdview!("", arg1; show=see, Q=srf, d...)
+			R = grdview!(arg1; show=see, Q=srf, d...)
 			done = true
 		end
-		(!done) && (R = grdview("", arg1; show=see, p=opt_p[4:end], JZ=zsize, Q=srf, T=til, d...))
+		(!done) && (R = grdview(arg1; show=see, p=opt_p[4:end], JZ=zsize, Q=srf, T=til, d...))
 	end
 
 	if (isa(cont_opts, Bool))				# Automatic contours

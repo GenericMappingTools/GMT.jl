@@ -30,7 +30,11 @@ Parameters
 - $(GMT.opt_o)
 - $(GMT.opt_swap_xy)
 """
-function fitcircle(cmd0::String="", arg1=nothing; kwargs...)
+fitcircle(cmd0::String; kwargs...) = fitcircle_helper(cmd0, nothing; kwargs...)
+fitcircle(arg1; kwargs...)         = fitcircle_helper("", arg1; kwargs...)
+
+# ---------------------------------------------------------------------------------------------------
+function fitcircle_helper(cmd0::String, arg1; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:V_params :bi :di :e :f :g :h :i :o :yx])
@@ -45,6 +49,3 @@ function fitcircle(cmd0::String="", arg1=nothing; kwargs...)
 	end
 	D
 end
-
-# ---------------------------------------------------------------------------------------------------
-fitcircle(arg1; kw...) = fitcircle("", arg1; kw...)

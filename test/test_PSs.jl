@@ -37,7 +37,7 @@ println("	PSCLIP")
 d = [0.2 0.2; 0.2 0.8; 0.8 0.8; 0.8 0.2; 0.2 0.2];
 psclip(d, J="X3i", R="0/1/0/1", N=true, V=:q);
 psclip!(d, J="X3i", R="0/1/0/1", Vd=dbg2);
-psclip!("", d, J="X3i", R="0/1/0/1", Vd=dbg2);
+psclip!(d, J="X3i", R="0/1/0/1", Vd=dbg2);
 
 println("	PSCONVERT")
 gmt("psbasemap -R-10/0/35/45 -Ba -P -JX10d -Vq > lixo.ps")
@@ -84,7 +84,7 @@ contour([x[:] y[:] z[:]], cont=1, annot=2, axis="a")
 contour([x[:] y[:] z[:]], I=true, axis="a", Vd=dbg2)
 contour!([x[:] y[:] z[:]], cont=1, Vd=dbg2)
 contour!([x[:] y[:] z[:]], cont=1, E="lixo", Vd=dbg2)	# Cheating E opt because Vd=dbg2 prevents its usage
-contour!("", [x[:] y[:] z[:]], cont=1, Vd=dbg2)
+contour!([x[:] y[:] z[:]], cont=1, Vd=dbg2)
 D = contour([x[:] y[:] z[:]], cont=[1,3,5], dump=true);
 contour([x[:] y[:] z[:]],cont=[-2,0,3], Vd=dbg2)
 #@test_throws ErrorException("fill option rquires passing a CPT") contour(rand(5,2),cont=[-2,0,3], I=true)
@@ -104,7 +104,7 @@ colorbar!(C, D="x8c/1c+w12c/0.5c+jTC+h", B="xaf+l\"topography\" y+lkm", Vd=dbg2)
 println("	PSHISTOGRAM")
 histogram(randn(1000),T=0.1,center=true,B=:a,N=0, x_offset=1, y_offset=1, timestamp=[], t=50)
 histogram(randn(100),T=0.1,center=true, Z=:counts, Vd=dbg2)
-histogram!("", randn(1000),T=0.1,center=true,N="1+p0.5", Vd=dbg2)
+histogram!(randn(1000),T=0.1,center=true,N="1+p0.5", Vd=dbg2)
 histogram!(randn(1000),T=0.1,center=true,N=(mode=1,pen=(1,:red)), Vd=dbg2)
 I = mat2img(rand(UInt8,4,4));
 histogram(I, Vd=dbg2);

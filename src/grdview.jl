@@ -52,7 +52,13 @@ See full GMT (not the `GMT.jl` one) docs at [`grdview`]($(GMTdoc)grdview.html)
 
 To see the full documentation type: ``@? grdview``
 """
-function grdview(cmd0::String="", arg1=nothing; first=true, kwargs...)
+grdview(cmd0::String; kwargs...)  = grdview_helper(cmd0, nothing; kwargs...)
+grdview(arg1; kwargs...)          = grdview_helper("", arg1; kwargs...)
+grdview!(cmd0::String; kwargs...) = grdview_helper(cmd0, nothing; first=false, kwargs...)
+grdview!(arg1; kwargs...)         = grdview_helper("", arg1; first=false, kwargs...)
+
+# ---------------------------------------------------------------------------------------------------
+function grdview_helper(cmd0::String, arg1; first=true, kwargs...)
 
 	arg2 = nothing;	arg3 = nothing;	arg4 = nothing;	arg5 = nothing;
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
@@ -217,8 +223,3 @@ function drape_prepare(d::Dict, fname, opts::Vector{<:AbstractString}, prj::Stri
 	ressurectGDAL()
 	return def_name
 end
-
-# ---------------------------------------------------------------------------------------------------
-grdview!(cmd0::String="", arg1=nothing; kw...) = grdview(cmd0, arg1; first=false, kw...)
-grdview(arg1; kw...) = grdview("", arg1; first=true, kw...)
-grdview!(arg1; kw...) = grdview("", arg1; first=false, kw...)

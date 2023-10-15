@@ -37,7 +37,13 @@ Parameters
 
 To see the full documentation type: ``@? image``
 """
-function image(cmd0::String="", arg1=nothing; first=true, kwargs...)
+image(cmd0::String; kwargs...)  = image_helper(cmd0, nothing; kwargs...)
+image(arg1; kwargs...)          = image_helper("", arg1; kwargs...)
+image!(cmd0::String; kwargs...) = image_helper(cmd0, nothing; first=false, kwargs...)
+image!(arg1; kwargs...)         = image_helper("", arg1; first=false, kwargs...)
+
+# ---------------------------------------------------------------------------------------------------
+function image_helper(cmd0::String, arg1; first=true, kwargs...)
 
 	gmt_proggy = (IamModern[1]) ? "image "  : "psimage "
 
@@ -58,12 +64,6 @@ function image(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	return finish_PS_module(d, gmt_proggy * cmd, "", K, O, true, arg1)
 end
-
-# ---------------------------------------------------------------------------------------------------
-image!(cmd0::String="", arg1=nothing; kw...) = image(cmd0, arg1; first=false, kw...)
-
-image(arg1; kw...)  = image("", arg1; first=true, kw...)
-image!(arg1; kw...) = image("", arg1; first=false, kw...)
 
 # ---------------------------------------------------------------------------------------------------
 const psimage  = image			# Alias

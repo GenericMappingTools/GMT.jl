@@ -21,6 +21,7 @@
 	boxplot(randn(50,10), fill=true, outliers=(size="6p",), hbar=true, Vd=dbg2)
 	boxplot!(randn(100,3,2), separator=true, cap="5p", Vd=dbg2)
 	boxplot!(y, Vd=dbg2)
+	GMT.resetGMT()
 
 	@info "2..."
 	y = randn(100,3,2);
@@ -47,6 +48,7 @@
 	violin(randn(30), rand(1:3,30), Vd=dbg2)
 	violin!(randn(20), rand(1:3,20), Vd=dbg2)
 	boxplot(randn(50), rand(1:3,50), Vd=dbg2)
+	GMT.resetGMT()
 
 	@info "4..."
 	qqplot(randn(500), randn(50))
@@ -71,29 +73,35 @@
 	parallelplot("iris.dat", groupvar="text", band=true, quantile=0.25, legend=true)
 	parallelplot("iris.dat", groupvar="text", std=1.0, legend=true)
 	D = gmtread("iris.dat");
+	GMT.resetGMT()
 	@info "51..."
 	parallelplot!(D, normalize="scale")
 	parallelplot(D, normalize="zscore")
 	parallelplot(D, normalize="")
+	GMT.resetGMT()
 	@info "52..."
 	plot(D, xvar=1, yvar=2, groupvar="text", legend=true)
+	GMT.resetGMT()
 	plot(D, xvar=1, yvar=2, hue="Species", xlabel=:auto, ylabel=:auto, linefit=true, band_CI=true, legend=true)
+	GMT.resetGMT()
 
 	A = rand(10,2);		A[1] = NaN
 	@info "6..."
 	GMT.normalizeArray("zscore", A);
 	@info "61..."
 	try cornerplot("lixo"); catch end
+	GMT.resetGMT()
 	@info "62..."
 	try cornerplot!("lixo"); catch end
+	GMT.resetGMT()
 	@info "63..."
 	cornerplot(randn(50,3), scatter=true)
 	@info "64..."
 	cornerplot(randn(500,3), truths=[0.25, 0.5, 0.75])
 	@info "65..."
 	cornerplot(randn(500,3), hexbin=(inc=0.2, threshold=1.0))
-	@info "66..."
 	cornerplot!(randn(500,3), hexbin=true)
+	GMT.resetGMT()
 
 	@info "7..."
 	marginalhist(randn(1000,2), scatter=true, histkw=(annot=true,))
@@ -101,4 +109,5 @@
 	marginalhist!(randn(2001,2), aspect=:equal)
 	try marginalhist("lixo", Vd=dbg2); catch end
 	try marginalhist!("lixo", Vd=dbg2); catch end
+	GMT.resetGMT()
 end
