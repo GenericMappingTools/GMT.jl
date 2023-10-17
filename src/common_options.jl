@@ -1322,7 +1322,7 @@ function parse_UXY(cmd::String, d::Dict, aliases, opt::Char)::String
 		cmd::String = string(cmd, " -", opt, val)
 	end
 	# If -X|Y assume it's a new fig so plot any legend that may be trailing around.
-	# This may screw but also screws if we don't do it. 
+	# This may screw but also screws if we don't do it.
 	(symb in [:X :xshift :x_offset :Y :yshift :y_offset]) && digests_legend_bag(d)
 	return cmd
 end
@@ -1363,7 +1363,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_b(d::Dict, cmd::String, symbs::Array{Symbol}=[:b :binary], io::String="")
 	# Parse the global -b option. Return CMD same as input if no -b option in args
-	cmd_::String = add_opt(d, "", string(symbs[1])*io, symbs, 
+	cmd_::String = add_opt(d, "", string(symbs[1])*io, symbs,
 	               (ncols=("", arg2str, 1), type=("", data_type, 2), swapp_bytes="_w", little_endian="_+l", big_endian="+b"))
 	return cmd * cmd_, cmd_
 end
@@ -1376,7 +1376,7 @@ function parse_c(d::Dict, cmd::String)::Tuple{String, String}
 	# Most of the work here is because GMT counts from 0 but here we count from 1, so conversions needed
 	opt_val = ""
 	if ((val = find_in_dict(d, [:c :panel])[1]) !== nothing)
-		if (isa(val, Tuple) || isa(val, Array{<:Real})) || isa(val, Integer) 
+		if isa(val, Tuple) || isa(val, Array{<:Real}) || isa(val, Integer)
 			opt_val = arg2str(val .- 1, ',')
 		elseif (isa(val, String) || isa(val, Symbol))
 			_val = string(val)		# In case it was a symbol
@@ -2307,7 +2307,7 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)::String
 				end
 			else						#
 				if (length(d[key[k]]) == 2)		# Run the function
-					cmd *= string(d[key[k]][1]) * d[key[k]][2](Dict(key[k] => nt[k]), [key[k]])
+					cmd *= string(d[key[k]][1]) * string(d[key[k]][2](Dict(key[k] => nt[k]), [key[k]]))
 				else					# This branch is to deal with options -Td, -Tm, -L and -D of basemap & psscale
 					ind_o += 1
 					(ind_o > 2) && (@warn("You passed more than 1 of the exclusive options in a anchor type option, keeping first but this may break."); ind_o = 1)
@@ -2315,7 +2315,7 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)::String
 					elseif (length(d[key[k]][1]) == 2 && d[key[k]][1][1] == '-' && !isa(nt[k], Tuple))	# e.g. -L (&g, arg2str, 1)
 						cmd_hold[ind_o] = string(d[key[k]][1][2])	# where g<scalar>
 					else		# Run the fun
-						cmd_hold[ind_o] = (d[key[k]][1] == "") ? d[key[k]][2](nt[k]) : string(d[key[k]][1][end]) * d[key[k]][2](nt[k])
+						cmd_hold[ind_o] = (d[key[k]][1] == "") ? d[key[k]][2](nt[k]) : string(d[key[k]][1][end]) * string(d[key[k]][2](nt[k]))
 					end
 					order[ind_o]    = d[key[k]][3];				# Store the order of this sub-option
 				end
@@ -2351,7 +2351,7 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)::String
 		elseif (d[key[k]] != "" && d[key[k]][end] == '#')	# Means put flag at the end and make this arg first in cmd (coast -W)
 			cmd = arg2str(nt[k])::String * string(d[key[k]][1:end-1])::String * cmd
 		else
-			cmd *= d[key[k]] * arg2str(nt[k])
+			cmd *= string(d[key[k]]) * arg2str(nt[k])
 		end
 	end
 
