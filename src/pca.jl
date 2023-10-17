@@ -101,9 +101,8 @@ function pca(I::GMTimage; DT::DataType=Float32, npc::Int=0)
 	(n_bands == 1) && (error("With one band only it is not possible to compute PCA.")) 
 	Y, _, _, explained, = princomp!(GI2vectors(I, DT), npc)
 	P = reshape(Y, n_rows, n_cols, n_bands)
-	Ipca = deepcopy(I)
+	Ipca::GMTimage = deepcopy(I)
 	for k = 1:n_bands
-		#Ipca[:,:,k] = imagesc(P[:,:,k]).image	# Each component must be scaled independently
 		viewmat = view(P,:,:,k)
 		mi, ma = extrema(viewmat)
 		if (isnan(mi))			# Shit, such a memory waste we need to do.
