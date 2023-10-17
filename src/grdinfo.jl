@@ -47,7 +47,11 @@ Parameters
 
 To see the full documentation type: ``@? grdinfo``
 """
-function grdinfo(cmd0::String="", arg1=nothing; kwargs...)
+grdinfo(cmd0::String; kwargs...) = grdinfo_helper(cmd0, nothing; kwargs...)
+grdinfo(arg1; kwargs...)         = grdinfo_helper("", arg1; kwargs...)
+
+# ---------------------------------------------------------------------------------------------------
+function grdinfo_helper(cmd0::String, arg1; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:R :V_params :f :o])
@@ -75,4 +79,4 @@ function grdinfo(cmd0::String="", arg1=nothing; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdinfo(arg1; kw...) = grdinfo("", arg1; kw...)
+#grdinfo(arg1; kw...) = grdinfo("", arg1; kw...)

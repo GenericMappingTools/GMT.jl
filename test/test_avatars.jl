@@ -192,7 +192,7 @@
 	println("	RADAR")
 	radar([10.5 20.5 30.6 40.9 46], axeslimts=[15, 25, 50, 90, 50], labels=["Spoons","Forks","Knifes","Dishes","Oranges"], annotall=true, marker=:circ, fill=true, Vd=dbg2)
 	radar!([0.5 0.5 0.6 0.9 0.77; 0.6 0.5 0.8 0.2 0.9], Vd=dbg2)
-	radar!("", [0.5 0.5 0.6 0.9 0.77], Vd=dbg2)
+	radar!([0.5 0.5 0.6 0.9 0.77], Vd=dbg2)
 
 	plotyy([1 1; 2 2], [1.5 1.5; 3 3], R="0.8/3/0/5", title="Ai", ylabel=:Bla, xlabel=:Ble, seclabel=:Bli, Vd=dbg2);
 

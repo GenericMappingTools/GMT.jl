@@ -152,8 +152,8 @@ function contourf(cmd0::String="", arg1=nothing, arg2=nothing; first=true, kwarg
 			if (opt_W !== nothing)  d[:W] = opt_W  end
 			d[:W] = "c";  done = true
 		end
-		grdview(cmd0, arg1; first=first, d...)
-		del_from_dict(d, [[:C, :z], [:Q], [:W]])
+		grdview_helper(cmd0, arg1; first=first, d...)
+		delete!(d, [[:C, :z], [:Q], [:W]])
 		if (done)  return  end
 
 		if (C_int > 0 || C_contours != "" || opt_A !== nothing)
@@ -174,7 +174,8 @@ function contourf(cmd0::String="", arg1=nothing, arg2=nothing; first=true, kwarg
 		if (opt_T !== nothing)  d[:T] = opt_T  end
 		if (opt_S !== nothing)  d[:S] = opt_S  end
 		if (opt_W !== nothing)  d[:W] = opt_W  end
-		grdcontour(cmd0, arg1; first=false, d...)
+		#grdcontour(cmd0, arg1; first=false, d...)
+		grdcontour_helper(cmd0, arg1; first=false, d...)
 	else
 		if (isa(CPT_arg, GMTcpt))
 			d[:C] = CPT_arg;
@@ -188,7 +189,7 @@ function contourf(cmd0::String="", arg1=nothing, arg2=nothing; first=true, kwarg
 		d[:I] = true
 		(C_int != 0 && opt_W === nothing) && (opt_W = "0.25p")
 		(opt_W !== nothing) && (d[:W] = opt_W)
-		contour("", arg1; first=first, d...)
+		contour(arg1; first=first, d...)
 	end
 
 end

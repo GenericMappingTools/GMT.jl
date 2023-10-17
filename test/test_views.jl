@@ -23,6 +23,7 @@ grdimage("lixo.grd", coast=true, colorbar=true, logo=true, Vd=dbg2)
 G = gmt("grdmath -Rg -fg -I5 X");
 gmtwrite("lixo.grd", G)
 grdimage("lixo.grd", proj=:Winkel, colorbar=true, coast=true)
+@test startswith(grdimage("@earth_relief", region=(-74,-59,5,15), proj=:guess,  Vd=2), "grdimage @earth_relief  -R-74/-59/5/15")
 
 G2 = mat2grid(rand(181,361), x=-180:180, y=-90:90);
 sealand(grdimage,  G2, (V=:q,), grdimage, G2, (V=:q,))
@@ -31,7 +32,7 @@ terramar(grdimage, G2, (V=:q,), grdimage, G2, (V=:q,), shore=0.5)
 println("	GRDVIEW")
 PS = grdview(G, J="X6i", JZ=5,  I=45, Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", ps=1);
 gmt("destroy")
-grdview!("",G, J="X6i", JZ=5, I=45, Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", Vd=dbg2);
+grdview!(G, J="X6i", JZ=5, I=45, Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", Vd=dbg2);
 grdview!(G, J="X6i", JZ=5,  I=45, Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", Vd=dbg2);
 grdview!(G, G=G, J="X6i", JZ=5,  I=45, Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", Vd=dbg2);
 r = grdview!(G, plane=(-6,:lightgray), surftype=(surf=true,mesh=:red), view="120/30", Vd=dbg2);
@@ -44,9 +45,7 @@ r = grdview(G, surf=(waterfall=(:rows,:red),surf=true, mesh=true, img=50), Vd=db
 I = mat2grid(rand(Float32,128,128));
 grdview(rand(128,128), G=(Gr,Gg,Gb), I=I, J=:X12, JZ=5, Q=:i, view="145/30")
 gmtwrite("lixo.grd", I)
-	@info "1..."
 grdview(rand(128,128), G=I, I=I, J=:X12, JZ=5, Q=:i, view="145/30")
-	@info "2..."
 grdview(rand(128,128), G="lixo.grd", I=I, J=:X12, JZ=5, Q=:i, view="145/30", Vd=dbg2)
 I = mat2img(rand(UInt8,89,120,3), proj4="+proj=longlat +datum=WGS84 +no_defs");	# 'proj' is ignored
 gmtwrite("lixo.tif", I)

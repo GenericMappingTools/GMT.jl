@@ -48,7 +48,11 @@ Parameters
 - $(GMT._opt_f)
 - $(GMT.opt_swap_xy)
 """
-function grdedit(cmd0::String="", arg1=nothing; kwargs...)
+grdedit(cmd0::String; kwargs...) = grdedit_helper(cmd0, nothing; kwargs...)
+grdedit(arg1; kwargs...)         = grdedit_helper("", arg1; kwargs...)
+
+# ---------------------------------------------------------------------------------------------------
+function grdedit_helper(cmd0::String, arg1; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	arg2 = nothing
@@ -66,6 +70,3 @@ function grdedit(cmd0::String="", arg1=nothing; kwargs...)
     (arg1 !== nothing) && (G.wkt = wkt; G.proj4 = proj4)
     G
 end
-
-# ---------------------------------------------------------------------------------------------------
-grdedit(arg1; kw...) = grdedit("", arg1; kw...)

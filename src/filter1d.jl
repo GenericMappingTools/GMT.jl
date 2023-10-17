@@ -31,7 +31,7 @@ Parameters
 - **S** | **symetry** :: [Type => Number]    `Arg = symmetry_factor`
 
     Checks symmetry of data about window center. Enter a factor between 0 and 1.
-- **T** | **equi_space** :: [Type => List | Str]     `Arg = [min/max/]inc[+a|n]`
+- **T** | **range** | **equi_space** :: [Type => List | Str]     `Arg = [min/max/]inc[+a|n]`
 
     Make evenly spaced time-steps from min to max by inc [Default uses input times].
 - $(GMT.opt_V)
@@ -47,13 +47,16 @@ Parameters
 - $(GMT.opt_o)
 - $(GMT.opt_swap_xy)
 """
-function filter1d(cmd0::String="", arg1=nothing; kwargs...)
+filter1d(cmd0::String; kw...) = filter1d_helper(cmd0, nothing; kw...)
+filter1d(arg1; kw...)         = filter1d_helper("", arg1; kw...)
+
+function filter1d_helper(cmd0::String, arg1; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
 	cmd, = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :o :yx])
 	cmd = parse_these_opts(cmd, d, [[:D :inc :increment], [:E :end :ends], [:L :gap_width],
-                                    [:N :time_col :timecol], [:Q :quality], [:S :symetry], [:T :equi_space]])
+                                    [:N :time_col :timecol], [:Q :quality], [:S :symetry], [:T :range :equi_space]])
 
 	if ((symb = is_in_dict(d, [:F :filter :filter_type])) !== nothing && isa(d[symb], Tuple))
 		# Accept either a F=(:gaus, 10, 1) => -Fg10+h
@@ -69,6 +72,3 @@ function filter1d(cmd0::String="", arg1=nothing; kwargs...)
 	(isvector(arg1)) && (arg1 = cat_1_arg(arg1))	# Accept vectors (GMT should do that too)
 	common_grd(d, cmd0, cmd, "filter1d ", arg1)		# Finish build cmd and run it
 end
-
-# ---------------------------------------------------------------------------------------------------
-filter1d(arg1; kw...) = filter1d("", arg1; kw...)

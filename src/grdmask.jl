@@ -47,7 +47,11 @@ Parameters
 
 To see the full documentation type: ``@? grdmask``
 """
-function grdmask(cmd0::String="", arg1=nothing; kwargs...)
+grdmask(cmd0::String; kwargs...) = grdmask_helper(cmd0, nothing; kwargs...)
+grdmask(arg1; kwargs...)         = grdmask_helper("", arg1; kwargs...)
+
+# ---------------------------------------------------------------------------------------------------
+function grdmask_helper(cmd0::String, arg1; kwargs...)
 
 	d = init_module(false, kwargs...)[1]	    	# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:G :RIr :V_params :a :e :f :g :j :n :yx :x :w])
@@ -61,6 +65,3 @@ function grdmask(cmd0::String="", arg1=nothing; kwargs...)
 	end
 	common_grd(d, "grdmask " * cmd, arg1)           # Finish build cmd and run it
 end
-
-# ---------------------------------------------------------------------------------------------------
-grdmask(arg1; kw...) = grdmask("", arg1; kw...)

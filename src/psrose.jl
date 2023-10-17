@@ -72,7 +72,13 @@ Parameters
 
 To see the full documentation type: ``@? rose``
 """
-function rose(cmd0::String="", arg1=nothing; first=true, kwargs...)
+rose(cmd0::String; kwargs...)  = rose_helper(cmd0, nothing; kwargs...)
+rose(arg1; kwargs...)          = rose_helper("", arg1; kwargs...)
+rose!(cmd0::String; kwargs...) = rose_helper(cmd0, nothing; first=false, kwargs...)
+rose!(arg1; kwargs...)         = rose_helper("", arg1; first=false, kwargs...)
+
+# ---------------------------------------------------------------------------------------------------
+function rose_helper(cmd0::String, arg1; first=true, kwargs...)
 
     gmt_proggy = (IamModern[1]) ? "rose "  : "psrose "
 
@@ -110,9 +116,5 @@ function rose(cmd0::String="", arg1=nothing; first=true, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-rose!(cmd0::String="", arg1=nothing; kw...) = rose(cmd0, arg1; first=false, kw...)
-rose(arg1; kw...)  = rose("", arg1; first=true, kw...)
-rose!(arg1; kw...) = rose("", arg1; first=false, kw...)
-
 const psrose  = rose 			# Alias
 const psrose! = rose!			# Alias

@@ -134,7 +134,7 @@ function parse_opt_range(d::Dict, cmd::String, opt::String="")::Tuple{String, Ve
 	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
 		if (isa(val, Tuple))
 			n = length(val)
-            		out = isa(val[1], Symbol) ? arg2str(val[1:min(n,3)], ',') : arg2str(val[1:min(n,3)])
+			out = isa(val[1], Symbol) ? arg2str(val[1:min(n,3)], ',') : arg2str(val[1:min(n,3)])
 			if (n > 3)
 				for k = 4:n			# N should be at most = 5 (e.g. +n+b)
 					_opt::String = string(val[k])
@@ -145,7 +145,7 @@ function parse_opt_range(d::Dict, cmd::String, opt::String="")::Tuple{String, Ve
 					end
 				end
 			end
-		elseif (isa(val, VMr))
+		elseif (isa(val, VMr) || isa(val, GMTdataset))
 			Tvec, out = vec(Float64.(val)), ""	# In 6.5, Tvec needs to be a GMTdataset with comment = LIST
 		else
 			out = arg2str(val)		# Everything fits here if given as a string

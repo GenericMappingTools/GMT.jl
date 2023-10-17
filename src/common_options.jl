@@ -20,33 +20,21 @@ function find_in_dict(d::Dict, symbs::VMs, del::Bool=true, help_str::String="")
 	return nothing, Symbol()
 end
 
-function del_from_dict(d::Dict, symbs::Vector{Vector{Symbol}})
-	# Delete SYMBS from the D dict where SYMBS is an array of array os symbols
-	# Example:  del_from_dict(d, [[:a, :b], [:c]])
-	for symb in symbs
-		del_from_dict(d, symb)
-	end
-end
+"""
+    delete!(d::Dict, symbs::Vector{T}) where T
 
-function del_from_dict(d::Dict, symbs::Vector{Symbol})
-	# Delete SYMBS from the D dict where SYMBS is an array of symbols and elements are aliases
-	for symb in symbs
-		if (haskey(d, symb))
-			delete!(d, symb)
-			return
-		end
-	end
+## example
+delete!(d, [:a :b])
+delete!(d, [:a, :b])
+delete!(d, [[:a, :b], [:c]])
+delete!(d, [[:a :b] [:c]])
+"""
+function Base.delete!(d::Dict, symbs::Array{T, N}) where {T, N}
+    for symb in symbs
+        delete!(d, symb)
+    end
+    return d
 end
-
-##
-function is_in_kwargs(p, symbs::VMs)::Bool
-	# Just check if any of the symbols in SYMBS is present in the P kwargs
-	for symb in symbs
-		(haskey(p, symb)) && return true
-	end
-	return false
-end
-##
 
 function find_in_kwargs(p, symbs::VMs, del::Bool=true, primo::Bool=true, help_str::String="")
 	# See if P contains any of the symbols in SYMBS. If yes, return corresponding value
@@ -220,9 +208,9 @@ function merge_R_and_xyzlims(d::Dict, opt_R::String)::String
 	function clear_xyzlims(d::Dict, xlim, ylim, zlim)
 		# When calling this fun, if they exist they were used too so must remove them
 		# In the other case - they exist but were not used - we keep them to be eventually used in read_data()
-		(xlim != "") && del_from_dict(d, [:xlim, :xlims, :xlimits])
-		(ylim != "") && del_from_dict(d, [:ylim, :ylims, :ylimits])
-		(zlim != "") && del_from_dict(d, [:zlim, :zlims, :zlimits])
+		(xlim != "") && delete!(d, [:xlim, :xlims, :xlimits])
+		(ylim != "") && delete!(d, [:ylim, :ylims, :ylimits])
+		(zlim != "") && delete!(d, [:zlim, :zlims, :zlimits])
 	end
 
 	if (opt_R == "" && xlim != "" && ylim != "")	# Deal with this easy case
@@ -346,7 +334,12 @@ function opt_R2num(opt_R::String)
 		#if (isdiag)  limits[2], limits[4] = limits[4], limits[2]  end
 		# Don't know anymore how -R...+r limits should be stored in CTRL.limits
 	elseif (opt_R != " -R" && opt_R != " -Rtight")	# One of those complicated -R forms. Ask GMT the limits (but slow. It takes 0.2 s)
-		kml::GMTdataset = gmt("gmt2kml " * opt_R, [0 0])
+
+		# If opt_R is not a grid's name, we are f.
+		((ind = findfirst("-R@", opt_R)) !== nothing) && return grdinfo(opt_R[ind[3]:end], C=true)[1:4]	# should be a cache file
+		(((f = guess_T_from_ext(opt_R)) == " -Tg") || f == " -Ti") && return grdinfo(opt_R[4:end], C=true)[1:4]	# any local file
+
+		kml::GMTdataset = gmt("gmt2kml " * opt_R, [0 0])		# for example, opt_R = " -RPT"
 		limits = zeros(4)
 		t::String = kml.text[28][12:end];	ind = findfirst("<", t)		# north
 		limits[4] = parse(Float64, t[1:(ind[1]-1)])
@@ -414,7 +407,7 @@ function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bo
 		if (default == "guess" && opt_J == "")
 			opt_J = guess_proj(CTRL.limits[7:8], CTRL.limits[9:10]);	mnemo = true	# To force append fig size
 		end
-		if (opt_J == "")  opt_J = " -JX"  end
+		(opt_J == "") && (opt_J = " -JX")
 		# If only the projection but no size, try to get it from the kwargs.
 		if ((s = helper_append_figsize(d, opt_J, O, del)) != "")		# Takes care of both fig scales and fig sizes
 			opt_J = s
@@ -497,7 +490,7 @@ function get_figsize(opt_R::String="", opt_J::String="")
 	# Compute the current fig dimensions in paper coords using the know -R -J
 	(opt_R == "" || opt_R == " -R") && (opt_R = CTRL.pocket_R[1])
 	(opt_J == "" || opt_J == " -J") && (opt_J = CTRL.pocket_J[1])
-	(opt_R == "" || opt_J == "") && error("One or both of 'limits' ($opt_R) or 'proj' ($opt_J) is empty. Cannot compute fig size.")
+	((opt_R == "" || opt_J == "") && !IamModern[1]) && error("One or both of 'limits' ($opt_R) or 'proj' ($opt_J) is empty. Cannot compute fig size.")
 	Dwh = gmt("mapproject -W " * opt_R * opt_J)
 	return Dwh[1], Dwh[2]		# Width, Height
 end
@@ -560,6 +553,8 @@ function append_figsize(d::Dict, opt_J::String, width::String="", scale::Bool=fa
 				elseif (ax == 'y')  error("Can't select Y scaling and provide X dimension only")
 				else
 					width *= flag
+					(ax == 'l' && flag == 'l') && (width = IamModern[1] ? width * "/?l" : width * "/l")	# The loglog case
+					(width[1] == '?' && !contains(width, '/')) && (width *= "/?")
 				end
 			end
 		end
@@ -911,6 +906,10 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 				autoZ = (!contains(_val, " ") && contains(_val, 'Z')) ? " zaf" : ""
 				_val *= " af" * autoZ		# To prevent that setting B=:WSen removes all annots
 			end
+
+			# Next line is a check if a color bg was passed in -B string. BG colors f screw the API continuity
+			(CTRL.pocket_B[3] == "" && contains(_val, "+g")) && (CTRL.pocket_B[3] = ".")	# Signal that a restart is due.
+
 		elseif (isa(val, Real))				# for example, B=0
 			_val = string(val)
 		end
@@ -1414,9 +1413,9 @@ function parse_f(d::Dict, cmd::String)
 end
 
 # ---------------------------------------------------------------------------------
-function parse_l(d::Dict, cmd::String)
+function parse_l(d::Dict, cmd::String, del::Bool=false)
 	cmd_::String = add_opt(d, "", "l", [:l :legend],
-		(text=("", arg2str, 1), hline=("+D", add_opt_pen), vspace="+G", header="+H", image="+I", line_text="+L", n_cols="+N", ncols="+N", ssize="+S", start_vline=("+V", add_opt_pen), end_vline=("+v", add_opt_pen), font=("+f", font), fill="+g", justify="+j", offset="+o", frame_pen=("+p", add_opt_pen), width="+w", scale="+x"), false)
+		(text=("", arg2str, 1), hline=("+D", add_opt_pen), vspace="+G", header="+H", image="+I", line_text="+L", n_cols="+N", ncols="+N", ssize="+S", start_vline=("+V", add_opt_pen), end_vline=("+v", add_opt_pen), font=("+f", font), fill="+g", justify="+j", offset="+o", frame_pen=("+p", add_opt_pen), width="+w", scale="+x"), del)
 	# Now make sure blanks in legend text are wrapped in ""
 	if ((ind = findfirst("+", cmd_)) !== nothing)
 		cmd_ = " -l" * str_with_blancs(cmd_[4:ind[1]-1]) * cmd_[ind[1]:end]
@@ -1762,7 +1761,8 @@ function add_opt_pen(d::Dict, symbs::Union{Nothing, VMs}, opt::String="", del::B
 		((val = find_in_dict(d, [:cline :color_line :color_lines])[1]) !== nothing) && (out *= "+cl")
 		((val = find_in_dict(d, [:ctext :color_text :color_symbols :color_symbol])[1]) !== nothing) && (out *= "+cf")
 	end
-	if (haskey(d, :bezier))  out *= "+s";  del_from_dict(d, [:bezier])  end
+
+	if (haskey(d, :bezier))  out *= "+s";  delete!(d, [:bezier])  end
 	if (haskey(d, :offset))  out *= "+o" * arg2str(d[:offset])   end
 
 	if (out != "")		# Search for eventual vec specs, but only if something above has activated -W
@@ -2045,6 +2045,14 @@ function arg2str(arg, sep = '/')
 end
 
 # ---------------------------------------------------------------------------------------------------
+function arg2str(arg::GMTdataset, sep='/')::String
+	# This method is mainly to allow passing the direct output of gmtinfo()
+	(size(arg,1) != 1) && error("When passing a GMTdataset to arg2str, it must have only one row")
+	out = join([string(x, sep)::String for x in arg.data])
+	rstrip(out, sep)		# Remove last '/'
+end
+
+# ---------------------------------------------------------------------------------------------------
 function finish_PS_nested(d::Dict, cmd::Vector{String})::Vector{String}
 	# Finish the PS creating command, but check also if we have any nested module calls like 'coast', 'colorbar', etc
 	!has_opt_module(d) && return cmd
@@ -2196,7 +2204,7 @@ function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, mapa=nothing, de
 					else                    cmd_ *= mapa[k] * arg2str(val_)::String
 					end
 				end
-				del_from_dict(d, [k])		# Now we can delete the key
+				delete!(d, [k])		# Now we can delete the key
 			end
 			(cmd_ != "") && (cmd *= " -" * opt * cmd_)
 		end
@@ -2432,7 +2440,7 @@ function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, need_symb::Symbo
 				end
 			end
 		end
-		isa(symbs, Matrix{Symbol}) ? del_from_dict(d, vec(symbs)) : del_from_dict(d, symbs)
+		delete!(d, symbs)
 		got_one = true
 	end
 	return cmd, args, N_used, got_one
@@ -2665,14 +2673,14 @@ function add_opt_module(d::Dict)::Vector{String}
 					CTRL.pocket_call[1] = val[1];
 					k,v = keys(nt), values(nt)
 					nt = NamedTuple{Tuple(Symbol.(k[2:end]))}(v[2:end])		# Fck, what a craziness to remove 1 el from a nt
-					r = clip!(; Vd=2, nt...)
+					r = clip!(""; Vd=2, nt...)
 					r = r[1:findfirst(" -K", r)[1]];	# Remove the "-K -O >> ..."
 					r = replace(r, " -R -J" => "")
 					r = "clip " * strtok(r)[2]			# Make sure the prog name is 'clip' and not 'psclip'
 				else
 					!(symb in CTRL.callable) && error("Nested Fun call $symb not in the callable nested functions list")
 					_d = nt2dict(nt)
-					(haskey(_d, :data)) && (CTRL.pocket_call[1] = _d[:data]; del_from_dict(d, [:data]))
+					(haskey(_d, :data)) && (CTRL.pocket_call[1] = _d[:data]; delete!(d, [:data]))
 					this_symb = CTRL.callable[findfirst(symb .== CTRL.callable)]
 					fn = getfield(GMT, Symbol(string(this_symb, "!")))
 					if (this_symb in [:vband, :hband, :vspan, :hspan])
@@ -2829,6 +2837,7 @@ function axis(D::Dict=Dict(); x::Bool=false, y::Bool=false, z::Bool=false, secon
 		tB = "+g" * add_opt_fill(d, [symb])::String
 		opt *= tB					# Works, but patterns can screw
 		CTRL.pocket_B[2] = tB		# Save this one because we may need to revert it during psclip parsing
+		CTRL.pocket_B[3] = "."		# Signal gmt() to call gmt_restart because bg screws the API continuity
 	end
 	((val = find_in_dict(d, [:Xfill :Xbg :Xwall])[1]) !== nothing) && (opt = add_opt_fill(val, opt, "+x"))
 	((val = find_in_dict(d, [:Yfill :Ybg :Ywall])[1]) !== nothing) && (opt = add_opt_fill(val, opt, "+y"))
@@ -3519,15 +3528,15 @@ function _read_data(d::Dict, cmd::String, arg, opt_R::String="", is3D::Bool=fals
 	(IamModern[1] && FirstModern[1]) && (FirstModern[1] = false)
 
 	if (haskey(d, :data))
-		arg = mat2ds(d[:data]);		del_from_dict(d, [:data])
+		arg = mat2ds(d[:data]);		delete!(d, [:data])
 	elseif (arg === nothing)	# OK, last chance of findig the data is in the x=..., y=... kwargs
 		if (haskey(d, :x) && haskey(d, :y))
 			_arg = cat_2_arg2(d[:x], d[:y])
-			(haskey(d, :z)) && (_arg = hcat(_arg, d[:z][:]);	del_from_dict(d, [:z]))
-			del_from_dict(d, [[:x, :x], [:y]])		# [:x :x] to satisfy signature ::Vector{Vector{Symbol}} != ::Array{Array{Symbol}}
+			(haskey(d, :z)) && (_arg = hcat(_arg, d[:z][:]);	delete!(d, [:z]))
+			delete!(d, [[:x, :x], [:y]])		# [:x :x] to satisfy signature ::Vector{Vector{Symbol}} != ::Array{Array{Symbol}}
 			arg = mat2ds(_arg)
 		elseif (haskey(d, :x) && length(d[:x]) > 1)	# Only this guy. I guess that histogram may use this
-			arg = mat2ds(d[:x]);		del_from_dict(d, [:x])
+			arg = mat2ds(d[:x]);		delete!(d, [:x])
 		end
 	end
 
@@ -3865,7 +3874,7 @@ function dbg_print_cmd(d::Dict, cmd::Vector{String})
 		(Vd <= 0) && return nothing
 
 		if (Vd >= 2)					# Delete these first before reporting
-			del_from_dict(d, [[:show], [:leg, :legend], [:box_pos], [:leg_pos], [:figname], [:name], [:savefig]])
+			delete!(d, [[:show], [:leg, :legend], [:box_pos], [:leg_pos], [:figname], [:name], [:savefig]])
 			CTRL.pocket_call[3] = nothing	# This is mostly for testing purposes, but potentially needed elsewhere.
 			CTRL.limits[1:12] = zeros(12)
 			# Some times an automtic CPT has been generated by the Vd'ed cmd but when that happens MUST debug it
@@ -3873,7 +3882,7 @@ function dbg_print_cmd(d::Dict, cmd::Vector{String})
 		end
 		if (length(d) > 0)
 			dd = deepcopy(d)		# Make copy so that we can harmlessly delete those below
-			del_from_dict(dd, [[:show], [:leg, :legend], [:box_pos], [:leg_pos], [:fmt, :savefig, :figname, :name], [:linefit, :linearfit]])
+			delete!(dd, [[:show], [:leg, :legend], [:box_pos], [:leg_pos], [:fmt, :savefig, :figname, :name], [:linefit, :linearfit]])
 			prog = isa(cmd, String) ? split(cmd)[1] : split(cmd[1])[1]
 			(length(dd) > 0) && println("Warning: the following options were not consumed in $prog => ", keys(dd))
 		end
@@ -4315,8 +4324,8 @@ end
 # --------------------------------------------------------------------------------------------------
 function show_non_consumed(d::Dict, cmd)
 	# First delete some that could not have been delete earlier (from legend for example)
-	del_from_dict(d, [[:fmt], [:show], [:leg, :legend], [:box_pos], [:leg_pos], [:P, :portrait], [:this_cpt], [:linefit, :linearfit]])
-	!isempty(CURRENT_CPT[1]) && del_from_dict(d, [[:percent], [:clim]])	# To not (wrongly) complain about these
+	delete!(d, [[:fmt], [:show], [:leg, :legend], [:box_pos], [:leg_pos], [:P, :portrait], [:this_cpt], [:linefit, :linearfit]])
+	!isempty(CURRENT_CPT[1]) && delete!(d, [[:percent], [:clim]])	# To not (wrongly) complain about these
 	if (!haskey(d, :Vd) && length(d) > 0)		# Vd, if exists, must be a Vd=0 to signal no warnings.
 		prog = isa(cmd, String) ? split(cmd)[1] : split(cmd[1])[1]
 		println("Warning: the following options were not consumed in $prog => ", keys(d))

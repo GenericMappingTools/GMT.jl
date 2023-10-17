@@ -85,7 +85,13 @@ Parameters
 
 To see the full documentation type: ``@? histogram``
 """
-function histogram(cmd0::String="", arg1=nothing; first=true, kwargs...)
+histogram(cmd0::String; kwargs...)  = histogram_helper(cmd0, nothing; kwargs...)
+histogram(arg1; kwargs...)          = histogram_helper("", arg1; kwargs...)
+histogram!(cmd0::String; kwargs...) = histogram_helper(cmd0, nothing; first=false, kwargs...)
+histogram!(arg1; kwargs...)         = histogram_helper("", arg1; first=false, kwargs...)
+
+# ---------------------------------------------------------------------------------------------------
+function histogram_helper(cmd0::String, arg1; first=true, kwargs...)
 
 	arg2 = nothing		# May be needed if GMTcpt type is sent in via C
 	N_args = (arg1 === nothing) ? 0 : 1
@@ -367,9 +373,5 @@ function binmethod(d::Dict, cmd::String, X, is_datetime::Bool)
 end
 
 # ---------------------------------------------------------------------------------------------------
-histogram!(cmd0::String="", arg1=nothing; kw...) = histogram(cmd0, arg1; first=false, kw...)
-histogram(arg1; kw...)  = histogram("", arg1; first=true, kw...)
-histogram!(arg1; kw...) = histogram("", arg1; first=false, kw...)
-
 const pshistogram  = histogram			# Alias
 const pshistogram! = histogram!			# Alias

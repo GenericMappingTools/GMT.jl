@@ -27,13 +27,21 @@ Parameters
 
 To see the full documentation type: ``@? grdhisteq``
 """
-function grdhisteq(cmd0::String="", arg1=nothing; kwargs...)
-
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
-	cmd, = parse_common_opts(d, "", [:G :R :V_params])
-	cmd  = parse_these_opts(cmd, d, [[:C :n_cells], [:D :dump], [:N :gaussian], [:Q :quadratic]])
-	common_grd(d, cmd0, cmd, "grdhisteq ", arg1)		# Finish build cmd and run it
+function grdhisteq(cmd0::String; kwargs...)
+	d, cmd = grdhisteq_helper(; kwargs...)
+	common_grd(d, cmd0, cmd, "grdhisteq ")			# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdhisteq(arg1; kw...) = grdhisteq("", arg1; kw...)
+function grdhisteq(arg1; kwargs...)
+	d, cmd = grdhisteq_helper(; kwargs...)
+	common_grd(d, "", cmd, "grdhisteq ", arg1)		# Finish build cmd and run it
+end
+
+# ---------------------------------------------------------------------------------------------------
+function grdhisteq_helper(;kw...)
+	d = init_module(false, kw...)[1]				# Also checks if the user wants ONLY the HELP mode
+	cmd, = parse_common_opts(d, "", [:G :R :V_params])
+	cmd  = parse_these_opts(cmd, d, [[:C :n_cells], [:D :dump], [:N :gaussian], [:Q :quadratic]])
+	return d, cmd
+end

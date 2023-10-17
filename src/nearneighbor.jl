@@ -45,7 +45,12 @@ Parameters
 
 To see the full documentation type: ``@? nearneighbor``
 """
-function nearneighbor(cmd0::String="", arg1=nothing; kwargs...)
+nearneighbor(cmd0::String; kwargs...) = nearneighbor_helper(cmd0, nothing; kwargs...)
+nearneighbor(arg1; kwargs...)         = nearneighbor_helper("", arg1; kwargs...)
+nearneighbor(; kwargs...)             = nearneighbor_helper("", nothing; kwargs...)		# To allow nearneighbor(data=..., ...)
+
+# ---------------------------------------------------------------------------------------------------
+function nearneighbor_helper(cmd0::String, arg1; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	d = seek_auto_RI(d, cmd0, arg1)				# If -R -I (or one of them) not set, guess.
@@ -57,6 +62,3 @@ function nearneighbor(cmd0::String="", arg1=nothing; kwargs...)
 
 	common_grd(d, cmd0, cmd, "nearneighbor ", arg1)		# Finish build cmd and run it
 end
-
-# ---------------------------------------------------------------------------------------------------
-nearneighbor(arg1; kw...) = nearneighbor("", arg1; kw...)

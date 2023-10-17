@@ -77,7 +77,11 @@ function gridit(fname::String="", arg1::Union{Nothing, MatGDsGd}=nothing; method
 		end
 		G = gdalgrid((fname != "") ? fname : arg1, gdopts, method=_mtd, R=d[:R], I=d[:I])
 	else
-		G = (length(d) == len_d) ? fun(fname, arg1; kw...) : fun(fname, arg1; d...)
+		if (fname != "")
+			G = (length(d) == len_d) ? fun(fname; kw...) : fun(fname; d...)
+		else
+			G = (length(d) == len_d) ? fun(arg1; kw...) : fun(arg1; d...)
+		end
 	end
 	(_proj != "") && (G.proj4 = _proj)
 	G

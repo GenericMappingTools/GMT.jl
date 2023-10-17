@@ -76,7 +76,11 @@ Parameters
 
 To see the full documentation type: ``@? gmt2kiml``
 """
-function gmt2kml(cmd0::String="", arg1=nothing; kwargs...)
+gmt2kml(cmd0::String; kwargs...) = gmt2kml_helper(cmd0, nothing; kwargs...)
+gmt2kml(arg1; kwargs...)         = gmt2kml_helper("", arg1; kwargs...)
+
+# ---------------------------------------------------------------------------------------------------
+function gmt2kml_helper(cmd0::String, arg1; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
@@ -93,6 +97,3 @@ function gmt2kml(cmd0::String="", arg1=nothing; kwargs...)
     cmd = write_data(d, cmd)
 	common_grd(d, "gmt2kml " * cmd, arg1, arg2)		# Finish build cmd and run it
 end
-
-# ---------------------------------------------------------------------------------------------------
-gmt2kml(arg1; kw...) = gmt2kml("", arg1; kw...)

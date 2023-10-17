@@ -105,7 +105,7 @@ function imshow(arg1::GMTgrid; kw...)
 	have_tilles::Bool = ((til = find_in_dict(d, [:T :no_interp :tiles])[1]) !== nothing)
 	(!have_tilles && opt_p != "" && !contains(opt_p, '/')) && (flat = true)		# If only 'azimuth' and no 'elev'
 	flat::Bool = (find_in_dict(d, [:flat])[1] !== nothing)	# If true, force the use of grdimage
-	docube = is_in_kwargs(kw, [:facades :cubeplot])
+	docube = kw in [:facades :cubeplot]
 	(flat && docube) && (flat = false)
 
 	if (!docube && (flat || (opt_p == "" && !have_tilles)))
@@ -177,10 +177,10 @@ function imshow(arg1::GMTgrid; kw...)
 			opt_p = " -p180/90"
 		elseif ((val = find_in_dict(d, [:facades :cubeplot])[1]) !== nothing)	# Plot images on the cube walls
 			cubeplot(val..., zsize=zsize, R=arg1, p=opt_p[4:end], back=true)
-			R = grdview!("", arg1; show=see, Q=srf, d...)
+			R = grdview!(arg1; show=see, Q=srf, d...)
 			done = true
 		end
-		(!done) && (R = grdview("", arg1; show=see, p=opt_p[4:end], JZ=zsize, Q=srf, T=til, d...))
+		(!done) && (R = grdview(arg1; show=see, p=opt_p[4:end], JZ=zsize, Q=srf, T=til, d...))
 	end
 
 	if (isa(cont_opts, Bool))				# Automatic contours
@@ -197,7 +197,7 @@ function imshow(arg1::GMTimage; kw...)
 	if (isa(arg1.image, Array{UInt16}))
 		I::GMTimage = mat2img(arg1; kw...)
 		d = KW(kw)			# Needed because we can't delete from kwargs
-		(haskey(kw, :stretch) || haskey(kw, :histo_bounds)) && del_from_dict(d, [:histo_bounds, :stretch])
+		(haskey(kw, :stretch) || haskey(kw, :histo_bounds)) && delete!(d, [:histo_bounds, :stretch])
 		grdimage("", I; show=see, d...)
 	else
 		grdimage("", arg1; show=see, kw...)

@@ -83,7 +83,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	cmd, opt_JZ = parse_JZ(d, cmd; O=O, is3D=is3D)
 	#(is3D && O && opt_JZ == "" && CTRL.pocket_J[3] != "") && (cmd *= CTRL.pocket_J[3])
 	cmd, = parse_common_opts(d, cmd, [:a :e :f :g :p :t :w :params], first)
-	cmd, opt_l = parse_l(d, cmd)		# Parse this one (legend) aside so we can use it in classic mode
+	cmd, opt_l = parse_l(d, cmd)	# Parse this one (legend) aside so we can use it in classic mode
 	cmd, opt_f = parse_f(d, cmd)		# Parse this one (-f) aside so we can check against D.attrib
 	cmd  = parse_these_opts(cmd, d, [[:D :shift :offset], [:I :intens], [:N :no_clip :noclip]])
 	parse_ls_code!(d::Dict)				# Check for linestyle codes (must be before the GMTsyntax_opt() call)
@@ -152,13 +152,14 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		if isa(val, String)
 			cmd *= " -E" * val
 		else
-			cmd, mat_t::Matrix{Float64} = add_opt(add_opt, (d, cmd, "E", [symb]),
-                                (x="|x",y="|y",xy="|xy",X="|X",Y="|Y", asym="_+a", colored="_+c", cline="_+cl", csymbol="_+cf", notch="|+n", boxwidth="+w", cap="+w", pen=("+p",add_opt_pen)), false, isa(arg1, GMTdataset) ? arg1.data : arg1[1].data)
-			isa(arg1, GMTdataset) ? (arg1.data = mat_t; append!(arg1.colnames, ["Ebar"])) :
-			                        (arg1[1].data = mat_t; append!(arg1[1].colnames, ["Ebar"]))
+			_mat = (arg1 === nothing) ? arg1 : isa(arg1, GMTdataset) ? arg1.data : arg1[1].data
+			cmd, mat_t = add_opt(add_opt, (d, cmd, "E", [symb]),
+                                (x="|x",y="|y",xy="|xy",X="|X",Y="|Y", asym="_+a", colored="_+c", cline="_+cl", csymbol="_+cf", notch="|+n", boxwidth="+w", cap="+w", pen=("+p",add_opt_pen)), false, _mat)
+			(arg1 !== nothing) && (isa(arg1, GMTdataset) ? (arg1.data = mat_t; append!(arg1.colnames, ["Ebar"])) :
+			                       (arg1[1].data = mat_t; append!(arg1[1].colnames, ["Ebar"])))
 		end
 		got_Ebars = true
-		del_from_dict(d, [symb])
+		delete!(d, [symb])
 	end
 
 	# Look for color request. Do it after error bars because they may add a column
@@ -285,6 +286,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	r = finish_PS_module(d, _cmd, "", K, O, finish, arg1, arg2, arg3, arg4)
 	CTRL.pocket_d[1] = d					# Store d that may be not empty with members to use in other modules
 	#(occursin("-Sk", opt_S)) && gmt_restart()  # Apparently patterns & custom symbols are screwing the session
+	(opt_B == " -B") && gmt_restart()		# For some Fking mysterious reason (see Ex45)
 	return r
 end
 
@@ -309,13 +311,13 @@ end
 function if_multicols(d, arg1, is3D::Bool)
 	# If the input is a GMTdataset and 'multicol' is asked, split the DS into a vector of DS's
 	(find_in_dict(d, [:multi :multicol :multicols], false)[1] === nothing)  && return arg1
-	is3D && (del_from_dict(d, [:multi, :multicol, :multicols]); @warn("'multile coluns' in 3D plots are not allowed. Ignoring."))
+	is3D && (delete!(d, [:multi, :multicol, :multicols]); @warn("'multile coluns' in 3D plots are not allowed. Ignoring."))
 	(isdataframe(arg1) || isODE(arg1)) && return arg1
 	(isa(arg1, Vector{<:GMTdataset}) && (size(arg1,2) > 2+is3D)) && return arg1		# Play safe
 	d2 = copy(d)
 	!haskey(d, :color) && (d2[:color] = true)	# Default to lines color cycling
 	arg1 = ds2ds(arg1; is3D=is3D, d2...)		# Pass a 'd' copy and remove possible kw that are also parse in psxy
-	del_from_dict(d, [[:multi, :multicol, :multicols], [:lt, :linethick], [:ls, :linestyle], [:fill], [:fillalpha], [:color]])
+	delete!(d, [[:multi, :multicol, :multicols], [:lt, :linethick], [:ls, :linestyle], [:fill], [:fillalpha], [:color]])
 	return arg1
 end
 
@@ -674,7 +676,8 @@ function build_run_cmd(cmd, opt_B, opt_Gsymb, opt_ML, opt_S, opt_W, opt_Wmarker,
 
 	elseif (opt_W != "" && opt_S != "")						# We have both line/polygon and a symbol
 		(occursin(opt_Gsymb, cmd)) && (opt_Gsymb = "")
-		if (opt_S[4] == 'v' || opt_S[4] == 'V' || opt_S[4] == '=')
+		c = lowercase(opt_S[4])
+		if (c == 'v' || c == 'm' || c == 'w' || c == '=')	# Are there more cases where the pen applies to the symbol?
 			_cmd = [cmd * opt_W * opt_S * opt_Gsymb * opt_UVXY]
 		else
 			(opt_Wmarker != "") && (opt_Wmarker = " -W" * opt_Wmarker)		# Set Symbol edge color
@@ -1144,7 +1147,12 @@ function helper2_markers(opt::String, alias::Vector{String})::String
 	else
 		for k = 2:length(alias)		# Loop because of cases like ["w" "pie" "web"]
 			o2 = alias[k][1:min(2,length(alias[k]))]	# check the first 2 chars and Ro, Rotrect or RotRec are all good
-			if (startswith(opt, o2))  marca = alias[1]; break  end		# Good when, for example, marker=:Pie
+			#if (startswith(opt, o2))  marca = alias[1]; break  end		# Good when, for example, marker=:Pie
+			if (startswith(opt, o2))	# Good when, for example, marker=:Pie
+				marca = alias[1];
+				(opt[end] == '-') && (marca *= '-')
+				break 
+			end
 		end
 	end
 

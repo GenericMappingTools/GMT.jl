@@ -168,7 +168,7 @@ function parse_INW_coast(d::Dict, symbs::Vector{Matrix{Symbol}}, cmd::String, fl
 				end
 			else    cmd *= " -" * flags[k] * arg2str(val)	# Includes Str, Number or Symb
 			end
-			del_from_dict(d, vec(symbs[k]))			# Now we can delete the kwarg
+			delete!(d, symbs[k])			# Now we can delete the kwarg
 		end
 	end
 	return cmd
@@ -180,7 +180,7 @@ function parse_E_coast(d::Dict, symbs::Vector{Symbol}, cmd::String)
 	if ((val = find_in_dict(d, symbs, false)[1]) !== nothing)
 		if (isa(val, String) || isa(val, Symbol))	# Simple case, ex E="PT,+gblue" or E=:PT
 			t::String = string(" -E", val)
-			(t == " -E") && (del_from_dict(d, [:E, :DCW]); return cmd)	# This lets use E="" like earthregions may do
+			(t == " -E") && (delete!(d, [:E, :DCW]); return cmd)	# This lets use E="" like earthregions may do
 			!contains(t, "+") && (t *= "+p0.5")		# If only code(s), append pen
 			cmd *= t
 		elseif (isa(val, NamedTuple) || isa(val, Dict))
@@ -190,7 +190,7 @@ function parse_E_coast(d::Dict, symbs::Vector{Symbol}, cmd::String)
 			cmd = parse_dcw(cmd, val)
 		end
 		cmd *= " -Vq"				# Suppress annoying warnings regarding filling syntax with +r<dpi>
-		del_from_dict(d, symbs)
+		delete!(d, symbs)
 	end
 	return cmd
 end

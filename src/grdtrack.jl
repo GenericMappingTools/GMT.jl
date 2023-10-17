@@ -63,7 +63,7 @@ function grdtrack(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
 	cmd, = parse_common_opts(d, "", [:R :V_params :bi :bo :di :e :f :g :h :i :n :o :s :w :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :interp_path :resample], [:C :crossprofile :equidistant], [:D :dfile],
-	                                 [:E :profile], [:F :critical], [:N :no_skip :noskip], [:S :stack], [:T :radius], [:Z :z_only]])
+	                                 [:E :profile], [:F :critical], [:M :between], [:N :no_skip :noskip], [:S :stack], [:T :radius], [:Z :z_only]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)
 	cmd, grid_tuple, arg1, arg2 = parse_G_grdtrk(d, [:G, :grid], cmd, arg1, arg2)
@@ -102,9 +102,17 @@ function grdtrack(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 		if (isa(R, GMTdataset))
 			(size(R.data, 2) == 3) ? append!(coln, ["Z"]) : append!(coln, ["Z$(i-2)" for i=3:size(R.data, 2)])
 			R.colnames = coln
-		else
+		elseif (isa(R, Vector))
 			(size(R[1].data, 2) == 3) ? append!(coln, ["Z"]) : append!(coln, ["Z$(i-2)" for i=3:size(R[1].data, 2)])
 			for k = 1:numel(R)  R[k].colnames = coln  end
+		else		# A Tuple when -S+s was used
+			if (isa(R[1], GMTdataset))
+				(size(R[1].data, 2) == 3) ? append!(coln, ["Z"]) : append!(coln, ["Z$(i-2)" for i=3:size(R[1].data, 2)])
+				R[1].colnames = coln
+			else
+				(size(R[1][1].data, 2) == 3) ? append!(coln, ["Z"]) : append!(coln, ["Z$(i-2)" for i=3:size(R[1][1].data, 2)])
+				for k = 1:numel(R[1])  R[1][k].colnames = coln  end
+			end
 		end
 	end
 	R

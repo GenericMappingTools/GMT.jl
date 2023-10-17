@@ -88,7 +88,7 @@ using Dates, Printf#, Logging
 	println("	PSMECA")
 	meca([0.0 3.0 0.0 0 45 90 5 0 0], fill=:black, region=(-1,4,0,6), proj=:Merc, Vd=dbg2)
 	meca!([0.0 3.0 0.0 0 45 90 5 0 0], fill=:black, region=(-1,4,0,6), proj=:Merc, Vd=dbg2)
-	@test_throws ErrorException("Must select one convention") meca!("", [0.0 3 0 0 45 90 5 0 0 0], fill=:black, region=(-1,4,0,6), proj=:Merc)
+	@test_throws ErrorException("Must select one convention") meca!([0.0 3 0 0 45 90 5 0 0 0], fill=:black, region=(-1,4,0,6), proj=:Merc)
 	@test_throws ErrorException("Specifying cross-section type is mandatory") coupe([0.0 3 0 0 45 90 5 0 0], region=(-1,4,0,6))
 	velo(mat2ds([0. -8 0 0 4 6 0.5; -8 5 3 3 0 0 0.5], ["4x6", "3x3"]), pen=(0.6,:red), fill_wedges=:green, outlines=true, Se="0.2/0.39/18", arrow="0.3c+p1p+e+gred", region=(-15,10,-10,10), Vd=dbg2)
 
@@ -118,12 +118,14 @@ using Dates, Printf#, Logging
 		C = cpt4dcw("PT,ES,FR", [3., 5, 8], range=[3,9,1]);
 		C = cpt4dcw("PT,ES,FR", [.3, .5, .8], cmap=cpt);
 	end
+	GMT.resetGMT()
 	println("		MAKECPT - 1")
 	@test_throws ErrorException("Unknown continent ue") cpt4dcw("ue")
 	GMT.iso3to2_eu();
 	GMT.iso3to2_af();
 	GMT.resetGMT()
 	println("		MAKECPT - 2")
+	GMT.resetGMT()
 	GMT.iso3to2_na();
 	GMT.resetGMT()
 	GMT.iso3to2_world();
@@ -133,6 +135,7 @@ using Dates, Printf#, Logging
 	@test_throws ErrorException("The region ue is invalid or has not been implemented yet.") GMT.mk_codes_values(["PRT"], [1.0], region="ue")
 
 	println("		Entering: test_misc.jl")
+	GMT.resetGMT()
 	include("test_misc.jl")
 
 	# Remove garbage
