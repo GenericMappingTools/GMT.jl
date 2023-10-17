@@ -52,31 +52,25 @@ Parameters
 - $(GMT.opt_w)
 - $(GMT.opt_swap_xy)
 """
-function gmtinfo(cmd0::String; kwargs...)::Union{String, GMTdataset}
-
-	d, cmd = gmtinfo_helper(; kwargs...)
-	cmd, arg1, = read_data(d, cmd0, cmd, nothing, " ")
-	(dbg_print_cmd(d, cmd) !== nothing) && return cmd
-	gmt("gmtinfo " * cmd, arg1)
-end
+gmtinfo(cmd0::String; kwargs...) = gmtinfo_helper(cmd0, nothing; kwargs...)
+gmtinfo(arg1; kwargs...)         = gmtinfo_helper("", arg1; kwargs...)
 
 # ---------------------------------------------------------------------------------------------------
-function gmtinfo(arg1; kwargs...)::Union{String, GMTdataset}
-	d, cmd = gmtinfo_helper(; kwargs...)
-	(dbg_print_cmd(d, cmd) !== nothing) && return cmd
-	isa(arg1, Tuple) ? gmt("gmtinfo " * cmd, arg1...) : gmt("gmtinfo " * cmd, arg1)
-end
 
-# ---------------------------------------------------------------------------------------------------
-function gmtinfo_helper(;kw...)
-	d = init_module(false, kw...)[1]		# Also checks if the user wants ONLY the HELP mode
+function gmtinfo_helper(cmd0::String, arg1; kwargs...)::Union{String, GMTdataset}
+
+	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
 	cmd, = parse_common_opts(d, "", [:V_params :e :f :i :o :r :w :yx])
 	(endswith(cmd, "-:")) && (cmd *= "i")    # Need to be -:i not -: to not swap output too
 	cmd = parse_these_opts(cmd, d, [[:A :ranges], [:C :numeric :per_column], [:D :center], [:E :get_record], [:F :counts],
 	                                [:L :common_limits], [:S :for_error_bars]])
 	cmd = add_opt(d, cmd, "I", [:I :inc :increment :spacing],
-	              (exact=("e", nothing, 1), polyg=("b", nothing, 1), surface=("s", nothing, 1), fft=("d", nothing, 1), inc=("", arg2str, 2)))
+	              (exact=("e", nothing, 1), polyg=("b", nothing, 1), surface=("s", nothing, 1), fft=("d", nothing, 1), inc=("", arg2str, 2)), false, true)
 	cmd = add_opt(d, cmd, "T", [:T :nearest_multiple], (dz="", col="+c", column="+c"))
-	return d, cmd
+
+	# If file name sent in, read it.
+	if (cmd0 != "")  cmd, arg1, = read_data(d, cmd0, cmd, arg1, " ")  end
+	if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end
+	isa(arg1, Tuple) ? gmt("gmtinfo " * cmd, arg1...) : gmt("gmtinfo " * cmd, arg1)
 end
