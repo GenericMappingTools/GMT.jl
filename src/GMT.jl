@@ -157,6 +157,7 @@ export
 	quantile, std, nanmean, nanstd, skipnan,
 
 	add2PSfile, append2fig, linearfitxy, regiongeog, streamlines, wmsinfo, wmstest, wmsread, polygonlevels,
+	sample_polygon,
 
 	ablines, ablines!, density, density!, boxplot, boxplot!, cornerplot, cornerplot!, cubeplot, ecdfplot, ecdfplot!,
 	fill_between, fill_between!, marginalhist, marginalhist!, parallelplot, parallelplot!, plotlinefit, plotlinefit!,
@@ -265,6 +266,7 @@ include("pswiggle.jl")
 include("rasterpolygonfuns.jl")
 include("sample1d.jl")
 include("sealand.jl")
+include("spatial_funs.jl")
 include("spectrum1d.jl")
 include("sphdistance.jl")
 include("sphinterpolate.jl")
