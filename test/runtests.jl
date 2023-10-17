@@ -15,6 +15,7 @@ using Dates, Printf#, Logging
 	API = GMT.GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL);
 	GMT.GMT_Get_Ctrl(API);
 
+##
 	if (GMTver > v"6.1.1")
 		#println("		Entering: test_gd_features.jl")
 		#include("test_gd_features.jl")
@@ -51,6 +52,7 @@ using Dates, Printf#, Logging
 	include("test_common_opts.jl")
 	println("		Entering: test_B-GMTs.jl")
 	include("test_B-GMTs.jl")
+##
 	println("		Entering: test_avatars.jl")
 	include("test_avatars.jl")
 	println("		Entering: test_new_projs.jl")
