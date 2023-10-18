@@ -91,12 +91,15 @@
 	@info "linearfitxy"
 	GMT.resetGMT()
 	D = linearfitxy([0.0, 0.9, 1.8, 2.6, 3.3, 4.4, 5.2, 6.1, 6.5, 7.4], [5.9, 5.4, 4.4, 4.6, 3.5, 3.7, 2.8, 2.8, 2.4, 1.5], sx=1 ./ sqrt.([1000., 1000, 500, 800, 200, 80,  60, 20, 1.8, 1]), sy=1 ./ sqrt.([1., 1.8, 4, 8, 20, 20, 70, 70, 100, 500]));
+	GMT.GMTdataset();
 	plot(D, linefit=true, band_ab=true, band_CI=true, ellipses=true, Vd=dbg2)
 	plot!(D, linefit=true, Vd=dbg2)
 	@info "ablines"
 	ablines!(D, Vd=dbg2)
 	ablines!(0,1, Vd=dbg2)
+	GMT.GMTdataset();
 	ablines!([1, 2, 3], [1, 1.5, 2], linecolor=[:red, :orange, :pink], linestyle=:dash, linewidth=2, Vd=dbg2)
+	GMT.GMTdataset();
 
 	@info "1..."
 	GMT.GMTdataset();
@@ -176,12 +179,16 @@
 
 	check = UInt8[zeros(9,9) ones(9,9) ones(9,9).*2; ones(9,9).*3 ones(9,9).*4 ones(9,9).*5; ones(9,9).*6 ones(9,9).*7 ones(9,9).*8];
 	@info "before one makecpt"
+	GMT.resetGMT()
 	C = makecpt(range=(0,9,1));
+	GMT.resetGMT()
 	I = mat2img(check);
 	I.n_colors = 0
 	rgb = GMT.ind2rgb(I);
+	GMT.resetGMT()
 	I = mat2img(check, cmap=C);
 	rgb = GMT.ind2rgb(I);
+	GMT.resetGMT()
 	@info "before image_alpha!"
 	image_alpha!(I, alpha_ind=5);
 	image_alpha!(I, alpha_vec=round.(UInt32,rand(6).*255));
