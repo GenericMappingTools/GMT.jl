@@ -779,7 +779,13 @@ function grid_init(API::Ptr{Nothing}, X::GMT_RESOURCE, Grid::GMTgrid, pad::Int=2
 	_cube = (cube || n_bds > 1) ? true : false
 
 	if (_cube)
-		G = convert(Ptr{GMT_CUBE}, GMT_Create_Data(API, GMT_IS_CUBE, GMT_IS_VOLUME, mode, NULL, Grid.range, Grid.inc, UInt32(Grid.registration), pad))
+		_inc = copy(Grid.inc)
+		# We need to make sure z_inc is correct because GMT allocates memory based on the n_bands computed it and z_range
+		if ((_nz = round(Int, (Grid.range[6] - Grid.range[5]) / Grid.inc[3] + 1)) != size(Grid.z, 3))
+			_inc[3] = (Grid.range[6] - Grid.range[5]) / (size(Grid.z, 3) - 1.0)
+			@warn("The z_inc of this cube is wrong. It is $(Grid.inc[3]) but should be $(_inc[3])")
+		end
+		G = convert(Ptr{GMT_CUBE}, GMT_Create_Data(API, GMT_IS_CUBE, GMT_IS_VOLUME, mode, NULL, Grid.range, _inc, UInt32(Grid.registration), pad))
 		X.family, X.geometry = GMT_IS_CUBE, GMT_IS_VOLUME
 	else
 		G = convert(Ptr{GMT_GRID}, GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, mode, NULL, Float64.(Grid.range[1:4]), Float64.(Grid.inc[1:2]), UInt32(Grid.registration), pad))
@@ -790,12 +796,14 @@ function grid_init(API::Ptr{Nothing}, X::GMT_RESOURCE, Grid::GMTgrid, pad::Int=2
 
 	if (mode == GMT_CONTAINER_AND_DATA)
 		grd = Grid.z
-		n_rows = size(grd, 1);		n_cols = size(grd, 2);		mx = n_cols + 2*pad;
-		t::Vector{Float32} = unsafe_wrap(Array, Gb.data, h.size * n_bds)
+		n_rows = size(grd, 1);		n_cols = size(grd, 2);#		mx = n_cols + 2*pad;
+		mx, my = Int(h.mx), Int(h.my)
+		size2D = mx*my
+		t::Vector{Float32} = unsafe_wrap(Array, Gb.data, size2D * n_bds)
 
 		k = 1
 		for bnd = 1:n_bds
-			off = (bnd - 1) * h.size + pad
+			off = (bnd - 1) * size2D + pad
 			if (eltype(grd) == Float32)
 				for col = 1:n_cols, row = n_rows:-1:1
 					t[((row-1) + pad) * mx + col + off] = grd[k];		k += 1

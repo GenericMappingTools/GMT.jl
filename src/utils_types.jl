@@ -1183,6 +1183,7 @@ function slicecube(G::GMTgrid, slice::AbstractFloat; axis="z")
 	_axis = lowercase(string(axis))
 
 	which_coord_vec = (_axis == "z") ? G.v : (_axis == "y" ? G.y : G.x)
+	isempty(which_coord_vec) && (which_coord_vec = 1.0:size(G,3))	# To at least have something.
 	x = interp_vec(which_coord_vec, slice)
 	layer = trunc(Int, x)
 	frac = x - layer			# Used for layer interpolation.
@@ -1623,9 +1624,8 @@ function mat2grid(mat, xx=Float64[], yy=Float64[], zz=Float64[]; reg=nothing,
 	if (ndims(mat) == 2)
 		inc, range = [x_inc, y_inc], hdr[1:6]
 	else
-		if (isempty(v))  inc, range = [x_inc, y_inc, 1.], [vec(hdr[1:6]); [1., size(mat,3)]]
-		else             inc, range = [x_inc, y_inc, v[2] - v[1]], [vec(hdr[1:6]); [v[1], v[end]]]
-		end
+		(length(v) <= 1) && (v = collect(linspace(hdr[5], hdr[6], size(mat,3))))	# We need a v vector
+		inc, range = [x_inc, y_inc, v[2] - v[1]], [vec(hdr[1:6]); [v[1], v[end]]]
 	end
 	hasnans = any(!isfinite, mat) ? 2 : 1
 	_layout = (layout == "") ? "BCB" : layout
