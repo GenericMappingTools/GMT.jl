@@ -1402,7 +1402,7 @@ parse_e(d::Dict,  cmd::String) = parse_helper(cmd, d, [:e :pattern :find], " -e"
 parse_g(d::Dict,  cmd::String) = parse_helper(cmd, d, [:g :gap], " -g")
 parse_h(d::Dict,  cmd::String) = parse_helper(cmd, d, [:h :header], " -h")
 parse_i(d::Dict,  cmd::String) = parse_helper(cmd, d, [:i :incols :incol], " -i", ',')
-parse_j(d::Dict,  cmd::String) = parse_helper(cmd, d, [:j :spherical_dist :spherical], " -j")
+parse_j(d::Dict,  cmd::String) = parse_helper(cmd, d, [:j :metric :spherical :spherical_dist], " -j")
 
 # ---------------------------------------------------------------------------------
 function parse_f(d::Dict, cmd::String)

@@ -253,6 +253,10 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	end
 
 	arg1, opt_S = parse_opt_S(d, arg1, is3D)
+	if (opt_S == "" && isa(arg1, GDtype) && !contains(cmd, " -S"))	# Let datasets with point/multipoint geometries plot points
+		geom = isa(arg1, Vector) ? arg1[1].geom : arg1.geom
+		((geom == wkbPoint || geom == wkbMultiPoint) && caller != "bar") && (opt_S = " -Sp2p")
+	end
 
 	opt_ML::String = ""
 	if (opt_S != "")
@@ -904,6 +908,7 @@ end
 function recompute_R_4bars!(cmd::String, opt_R::String, arg1)
 	# Recompute the -R for bar plots (non-grouped), taking into account the width embeded in option S
 	opt_S = scan_opt(cmd, "-S")
+	opt_S == "" && return cmd				# Nothing to do
 	sub_b = ((ind = findfirst("+", opt_S)) !== nothing) ? opt_S[ind[1]:end] : ""	# The +Base modifier
 	(sub_b != "") && (opt_S = opt_S[1:ind[1]-1])# Strip it because we need to (re)find Bar width
 	bw = (isletter(opt_S[end])) ? parse(Float64, opt_S[3:end-1]) : parse(Float64, opt_S[2:end])	# Bar width
