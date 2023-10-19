@@ -1345,7 +1345,7 @@ end
 Stack a bunch of single grids in a multiband cube like file.
 
 - `names`: A string vector with the names of the grids to stack
-- `v`: A vector with the vertical coordinates. If not provided one with 1:length(names) will be generated.
+- `v`: A vector with the vertical coordinates. If not provided, one with 1:length(names) will be generated.
   - If `v` is a TimeType use the `z_unit` keyword to select what to store in file (case insensitive).
     - `decimalyear` or `yeardecimal` converts the DateTime to decimal years (Floa64)
     - `milliseconds` (or just `mil`) will store the DateTime as milliseconds since 0000-01-01T00:00:00 (Float64)
@@ -1399,10 +1399,10 @@ function stackgrids(names::Vector{String}, v=nothing; zcoord=nothing, zdim_name:
 	x, y, range, inc = G.x, G.y, G.range, G.inc		# So read first with GMT anf keep only the coords info.
 	G = gdaltranslate(names[1])
 	mat = Array{eltype(G)}(undef, size(G,1), size(G,2), length(names))
-	mat[:,:,1] = G.z
+	mat[:,:,1] .= G.z
 	for k = 2:length(names)
 		G = gdaltranslate(names[k])
-		mat[:,:,k] = G.z
+		mat[:,:,k] .= G.z
 	end
 	cube = mat2grid(mat, G)
 	cube.x = x;		cube.y = y;		cube.range = range;		cube.inc = inc

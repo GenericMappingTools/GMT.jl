@@ -780,10 +780,11 @@ function grid_init(API::Ptr{Nothing}, X::GMT_RESOURCE, Grid::GMTgrid, pad::Int=2
 
 	if (_cube)
 		_inc = copy(Grid.inc)
+		(length(_inc) < 3) && (append!(_inc, 1.0))		# Shit this cube has no v_inc
 		# We need to make sure z_inc is correct because GMT allocates memory based on the n_bands computed it and z_range
-		if ((_nz = round(Int, (Grid.range[6] - Grid.range[5]) / Grid.inc[3] + 1)) != size(Grid.z, 3))
+		if ((_nz = round(Int, (Grid.range[6] - Grid.range[5]) / _inc[3] + 1)) != size(Grid.z, 3))
 			_inc[3] = (Grid.range[6] - Grid.range[5]) / (size(Grid.z, 3) - 1.0)
-			@warn("The z_inc of this cube is wrong. It is $(Grid.inc[3]) but should be $(_inc[3])")
+			(length(Grid.inc) < 3) ? @warn("This cube doesn't even has a z_inc. Computing one to not error.") : @warn("The z_inc of this cube is wrong. It is $(Grid.inc[3]) but should be $(_inc[3])")
 		end
 		G = convert(Ptr{GMT_CUBE}, GMT_Create_Data(API, GMT_IS_CUBE, GMT_IS_VOLUME, mode, NULL, Grid.range, _inc, UInt32(Grid.registration), pad))
 		X.family, X.geometry = GMT_IS_CUBE, GMT_IS_VOLUME
