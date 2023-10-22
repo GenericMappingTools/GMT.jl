@@ -1397,7 +1397,7 @@ function info(GI::GItype, showdata::Bool=true; crs::Bool=false)
 	crs && return print_crs(GI)
 	isa(GI, GMTimage) ? println("A GMTimage object with $(size(GI,3)) bands of type $(eltype(GI))") :
 	                    println("A GMTgrid object with $(size(GI,3)) layers of type $(eltype(GI))")
-	!isempty(GI.names) && [println('\t',name) for name in GI.names]#display(GI.names)
+	!all(isempty.(GI.names)) && [println('\t',name) for name in GI.names]
 	if isa(GI, GMTgrid)
 		(GI.title   != "" && GI.title[1]   != '\0') && println("title: ", rstrip(GI.title, '\0'))
 		(GI.remark  != "" && GI.remark[1]  != '\0') && println("remark: ", rstrip(GI.remark, '\0'))
