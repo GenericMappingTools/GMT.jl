@@ -1500,10 +1500,11 @@ end
 
 	function gdaltranslate(dataset::Dataset, options=String[]; dest="/vsimem/tmp", gdataset=false, save::AbstractString="")
 		(save != "") && (dest = save)
-		options = GDALTranslateOptionsNew(options, C_NULL)
+		_options = GDALTranslateOptionsNew(options, C_NULL)
 		usage_error = Ref{Cint}()
-		result = GDALTranslate(dest, dataset.ptr, options, usage_error)
-		GDALTranslateOptionsFree(options)
+		result = GDALTranslate(dest, dataset.ptr, _options, usage_error)
+		GDALTranslateOptionsFree(_options)
+		result == C_NULL && (return nothing)
 		if (dest != "/vsimem/tmp")
 			GDALClose(result);		return nothing
 		end
