@@ -28,10 +28,10 @@ Parameters
 - **Q** | **quality** :: [Type => Number]    `Arg = q_factor`
 
     Assess Quality of output value by checking mean weight in convolution. Enter q_factor between 0 and 1.
-- **S** | **symetry** :: [Type => Number]    `Arg = symmetry_factor`
+- **S** | **symmetry** :: [Type => Number]    `Arg = symmetry_factor`
 
     Checks symmetry of data about window center. Enter a factor between 0 and 1.
-- **T** | **range** | **equi_space** :: [Type => List | Str]     `Arg = [min/max/]inc[+a|n]`
+- **T** | **range** | **equispace** :: [Type => List | Str]     `Arg = [min/max/]inc[+a|n]`
 
     Make evenly spaced time-steps from min to max by inc [Default uses input times].
 - $(GMT.opt_V)
@@ -56,7 +56,7 @@ function filter1d_helper(cmd0::String, arg1; kwargs...)
 
 	cmd, = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :o :yx])
 	cmd = parse_these_opts(cmd, d, [[:D :inc :increment], [:E :end :ends], [:L :gap_width],
-                                    [:N :time_col :timecol], [:Q :quality], [:S :symetry], [:T :range :equi_space]])
+                                    [:N :time_col :timecol], [:Q :quality], [:S :symmetry], [:T :range :equispace]])
 
 	if ((symb = is_in_dict(d, [:F :filter :filter_type])) !== nothing && isa(d[symb], Tuple))
 		# Accept either a F=(:gaus, 10, 1) => -Fg10+h
