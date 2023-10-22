@@ -247,7 +247,7 @@ function build_opt_R(val, symb::Symbol=Symbol())::String		# Generic function tha
 			_val::Vector{<:Float64} = vec(Float64.(collect(val)))
 			R = " -R" * @sprintf("%.15g/%.15g/%.15g/%.15g+r", _val[1], _val[3], _val[2], _val[4])::String
 		else
-			R = " -R" * rstrip(arg2str(val)::String, '/')		# Remove last '/'
+			R = " -R" * arg2str(val)
 		end
 	elseif (isa(val, GItype))
 		R = @sprintf(" -R%.15g/%.15g/%.15g/%.15g", val.range[1], val.range[2], val.range[3], val.range[4])
@@ -2014,42 +2014,40 @@ function line_decorated_with_string(str::AbstractString; dist=0)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function arg2str(d::Dict, symbs)::String
+function arg2str(d::Dict, symbs)
 	# Version that allow calls from add_opt()
-	return ((val = find_in_dict(d, symbs)[1]) !== nothing) ? arg2str(val) : ""
+	arg2str(find_in_dict(d, symbs)[1])
 end
-
-# ---------------------------------------------------------------------------------------------------
-function arg2str(arg, sep='/')::String
-	# Convert an empty, a numeric or string ARG into a string ... if it's not one to start with
-	# ARG can also be a Bool, in which case the TRUE value is converted to "" (empty string)
-	# SEP is the char separator used when ARG is a tuple or array of numbers
-	if (isa(arg, AbstractString) || isa(arg, Symbol))
-		out::String = string(arg)::String
-		if (occursin(" ", out) && !startswith(out, "\""))	# Wrap it in quotes
-			out = "\"" * out * "\""
-		end
-	elseif ((isa(arg, Bool) && arg) || isempty_(arg))
-		out = ""
-	elseif (isa(arg, Real))		# Have to do it after the Bool test above because Bool is a Number too
-		out = @sprintf("%.12g", arg)::String
-	elseif (isa(arg, Array{<:Real}) || (isa(arg, Tuple) && !isa(arg[1], String)) )
-		out = join([string(x, sep)::String for x in arg])
-		out = rstrip(out, sep)		# Remove last '/'
-	elseif (isa(arg, Tuple) && isa(arg[1], String))		# Maybe better than above but misses nice %.xxg
-		out = join(arg, sep)
-	else
-		error("arg2str: argument 'arg' can only be a String, Symbol, Number, Array or a Tuple, but was $(typeof(arg))")
+"""
+	Convert an empty, a numeric or string ARG into a string ... if it's not one to start with
+	ARG can also be a Bool, in which case the TRUE value is converted to "" (empty string)
+	SEP is the char separator used when ARG is a tuple or array of numbers
+"""
+arg2str(arg::Nothing,       sep = '/') = ""
+arg2str(arg::Real,          sep = '/') = @sprintf("%.12g", arg)
+arg2str(arg::Symbol,        sep = '/') = string(arg)
+arg2str(arg::Array{<:Real}, sep = '/') = string(rstrip(join([string(x, sep) for x in arg]), sep))
+arg2str(arg::Tuple,         sep = '/') = string(rstrip(join([string(x, sep) for x in arg]), sep))
+function arg2str(arg::Bool, sep = '/')
+    @assert arg "arg is false!"
+    arg && return ""
+end
+function arg2str(arg::AbstractString, sep = '/')
+	if occursin(" ", arg) && !startswith(arg, "\"")
+		return string("\"", arg, "\"")
+    else
+        return arg
 	end
-	return out
 end
-
-# ---------------------------------------------------------------------------------------------------
+function arg2str(arg, sep = '/')
+    isempty_(arg) && return ""
+	error("arg2str: argument 'arg' can only be a String, Symbol, Number, Array or a Tuple, but was $(typeof(arg))")
+end
 function arg2str(arg::GMTdataset, sep='/')::String
 	# This method is mainly to allow passing the direct output of gmtinfo()
 	(size(arg,1) != 1) && error("When passing a GMTdataset to arg2str, it must have only one row")
 	out = join([string(x, sep)::String for x in arg.data])
-	rstrip(out, sep)		# Remove last '/'
+	string(rstrip(out, sep))		# Remove last '/'
 end
 
 # ---------------------------------------------------------------------------------------------------
