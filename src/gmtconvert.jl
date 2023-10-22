@@ -47,7 +47,7 @@ Parameters
 
     Attempt to gmtconvert each word in the trialing text to a number and append such values
     to the numerical output columns.
-- **Z** | **range** :: [Type => Str | []]      ``Arg =  [first][:last]``
+- **Z** | **transpose** :: [Type => Str | []]      ``Arg =  [first][:last]``
 
     Limit output to the specified record range. If first is not set it defaults to record 0
     (very first record) and if last is not set then it defaults to the very last record.
@@ -73,7 +73,7 @@ function gmtconvert(cmd0::String="", arg1=nothing; kwargs...)
 
 	cmd, = parse_common_opts(d, "", [:V_params :write :append :a :b :bo :d :e :f :g :h :i :o :s :w :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :hcat], [:C :n_records], [:D :dump], [:E :first_last], [:F :conn_method],
-	                                 [:I :invert :reverse], [:L :list_only], [:N :sort], [:Q :select_num], [:S :select_hdr], [:T :suppress :skip], [:W :word2num], [:Z :range]])
+	                                 [:I :invert :reverse], [:L :list_only], [:N :sort], [:Q :select_num], [:S :select_hdr], [:T :suppress :skip], [:W :word2num], [:Z :transpose]])
 
 	common_grd(d, cmd0, cmd, "gmtconvert ", arg1)		# Finish build cmd and run it
 end
