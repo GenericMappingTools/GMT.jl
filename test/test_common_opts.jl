@@ -392,7 +392,7 @@
 
 	# Test here is to the showfig fun
 	grdimage([1 2;3 4])
-	showfig(savefig="lixo.png",show=false)
+	showfig(savefig="lixo2.png",show=false)
 
 	y = [NaN 2 3 4;5 6 NaN 8;9 10 11 12];
 	@test nanmean(y,1) == [7.0  6.0  7.0  8.0]

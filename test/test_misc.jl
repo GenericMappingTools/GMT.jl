@@ -255,7 +255,7 @@
 	info(mat2ds(rand(2,3), multi=true));
 	grdcontour(G, cont=1, annot=2, axis="a")
 	cpt = makecpt(T="-6/8/1");      # Create the color map
-	grdcontour(G, axis="a", color=cpt, pen="+c", fmt=:png, savefig="lixo")
+	grdcontour(G, axis="a", color=cpt, pen="+c", fmt=:png, savefig="lixo1")
 	D = grdcontour(G, cont=[-2,0,5], dump=true);
 
 	GMT.replicateline([0 0; 1 1; 2 1], 0.1);
