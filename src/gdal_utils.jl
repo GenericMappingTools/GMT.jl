@@ -37,7 +37,7 @@ function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int
 	(scale_factor != 1 || add_offset != 0) && (dType = Float32)
 	mat = (dataset isa Gdal.AbstractRasterBand) ? zeros(dType, ncol, nrow) : zeros(dType, ncol, nrow, length(in_bands))
 	n_colors = 0
-	desc = Vector{String}(undef,0)
+	desc = String[]
 	if (isa(dataset, Gdal.AbstractRasterBand))
 		Gdal.rasterio!(dataset, mat, in_bands, 0, 0, xSize, ySize, Gdal.GF_Read, 0, 0, C_NULL, pad)
 		colormap, n_colors = get_cpt_from_colortable(dataset)
@@ -50,6 +50,7 @@ function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int
 			append!(desc, [Gdal.GDALGetDescription(Gdal.GDALGetRasterBand(ds.ptr, bd))])
 		end
 	end
+	all(isempty.(desc)) && (desc = String[])
 
 	(layout != "" && layout[2] == 'R') && (mat = reshape(mat, size(mat,2), size(mat,1), size(mat,3)))
 	(!isa(mat, Matrix) && size(mat,3) == 1) && (mat = reshape(mat, size(mat,1), size(mat,2)))	# Fck pain
@@ -95,7 +96,7 @@ function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int
 			((nodata = Gdal.getnodatavalue(Gdal.getband(dataset))) !== nothing) && (O.nodata = nodata)
 		end
 	end
-	O.inc = [x_inc, y_inc]		# Reset because if pad != 0 they were recomputed inside the mat2? funs
+	O.inc[1], O.inc[2] = x_inc, y_inc		# Reset because if pad != 0 they were recomputed inside the mat2? funs
 	O.pad = pad
 	return O
 end
@@ -570,6 +571,7 @@ A GMT grid/image or a GDAL dataset
 """
 function gdalread(fname::AbstractString, optsP=String[]; opts=String[], gdataset=false, kw...)
 	(fname == "") && error("Input file name is missing.")
+	!isfile(fname) && error("Input file '$fname' does not exist.")
 	(isempty(optsP) && !isempty(opts)) && (optsP = opts)		# Accept either Positional or KW argument
 	ressurectGDAL();
 	ds_t = Gdal.read(fname, flags=Gdal.GDAL_OF_RASTER, I=false)
@@ -584,8 +586,8 @@ function gdalread(fname::AbstractString, optsP=String[]; opts=String[], gdataset
 		ds = ogr2ogr(ds_t, optsP; gdataset=true, kw...)
 		(ds.ptr != C_NULL) && Gdal.deletedatasource(ds, "/vsimem/tmp")		# WTF I need to do this?
 	end
-	Gdal.GDALClose(ds_t.ptr)			# WTF it needs explicit close?
-	return (gdataset) ? ds : gd2gmt(ds)
+	#Gdal.GDALClose(ds_t.ptr)			# WTF it needs explicit close? To close the file? But sometimes causes a crash.
+	return (gdataset || ds === nothing) ? ds : gd2gmt(ds)
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -618,7 +620,7 @@ Write a raster or a vector file to disk
 
 or
 
-    gdalwrite(cube, fname::AbstractString, v=nothing; dim_name::String="time", dim_units::String="")
+    gdalwrite(cube::GItype, fname::AbstractString, v=nothing; dim_name::String="time", dim_units::String="")
 
 Write a MxNxP `cube` object to disk as a multilayered file.
 
