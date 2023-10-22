@@ -2023,20 +2023,22 @@ end
 	ARG can also be a Bool, in which case the TRUE value is converted to "" (empty string)
 	SEP is the char separator used when ARG is a tuple or array of numbers
 """
-arg2str(arg::Nothing,       sep = '/') = ""
-arg2str(arg::Real,          sep = '/') = @sprintf("%.12g", arg)
-arg2str(arg::Symbol,        sep = '/') = string(arg)
-arg2str(arg::Array{<:Real}, sep = '/') = string(rstrip(join([string(x, sep) for x in arg]), sep))
-arg2str(arg::Tuple,         sep = '/') = string(rstrip(join([string(x, sep) for x in arg]), sep))
+# THe ::String annotations are necessary because the arguments of arg2str are normally obtained
+# from the values of the 'd' Dictionary that is a Dict{:String, Any}.
+arg2str(arg::Nothing,       sep = '/')::String = ""
+arg2str(arg::Real,          sep = '/')::String = @sprintf("%.12g", arg)
+arg2str(arg::Symbol,        sep = '/')::String = string(arg)
+arg2str(arg::Array{<:Real}, sep = '/')::String = string(rstrip(join([string(x, sep) for x in arg]), sep))
+arg2str(arg::Tuple,         sep = '/')::String = string(rstrip(join([string(x, sep) for x in arg]), sep))
 function arg2str(arg::Bool, sep = '/')
     @assert arg "arg is false!"
     arg && return ""
 end
-function arg2str(arg::AbstractString, sep = '/')
+function arg2str(arg::AbstractString, sep = '/')::String
 	if occursin(" ", arg) && !startswith(arg, "\"")
 		return string("\"", arg, "\"")
-    else
-        return arg
+	else
+		return arg
 	end
 end
 function arg2str(arg, sep = '/')
