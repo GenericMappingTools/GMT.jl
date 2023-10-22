@@ -1395,9 +1395,10 @@ function stackgrids(names::Vector{String}, v=nothing; zcoord=nothing, zdim_name:
 		return nothing
 	end
 
-	G = gmtread(names[1], grid=true)	# reading with GDAL f screws sometimes with the "is not a Latitude/Y dimension."
-	x, y, range, inc = G.x, G.y, G.range, G.inc		# So read first with GMT anf keep only the coords info.
+	#G = gmtread(names[1], grid=true)	# reading with GDAL f screws sometimes with the "is not a Latitude/Y dimension."
+	#x, y, range, inc = G.x, G.y, G.range, G.inc		# So read first with GMT anf keep only the coords info.
 	G = gdaltranslate(names[1])
+	x, y, range, inc = G.x, G.y, G.range, G.inc
 	mat = Array{eltype(G)}(undef, size(G,1), size(G,2), length(names))
 	mat[:,:,1] .= G.z
 	for k = 2:length(names)
@@ -1407,7 +1408,8 @@ function stackgrids(names::Vector{String}, v=nothing; zcoord=nothing, zdim_name:
 	cube = mat2grid(mat, G)
 	cube.x = x;		cube.y = y;		cube.range = range;		cube.inc = inc
 	cube.z_unit = z_unit
-	(isempty(_v) || eltype(_v) == String) ? append!(cube.range, [0., 1.]) : append!(cube.range, [_v[1], _v[end]])
+	isempty(_v) && (_v = collect(linspace(range[5], range[6], size(cube, 3))))
+	(eltype(_v) == String) ? append!(cube.range, [0., 1.]) : append!(cube.range, [_v[1], _v[end]])
 	cube.names = names;		cube.v = _v
 	(save != "") && gdalwrite(cube, save, _v, dim_name=zdim_name)
 	return (save != "") ? nothing : cube
