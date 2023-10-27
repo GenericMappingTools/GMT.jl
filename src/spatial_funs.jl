@@ -26,8 +26,8 @@ with the same `ids`, has the same value.
 function polygonlevels(D::Vector{<:GMTdataset}, user_ids::VecOrMat{<:AbstractString}, vals; kw...)
 	# Damn missings are so annoying. And the f types too. Can't restrict it to Vector{Union{Missing, <:Real}}
 	# This method works for both Vector or Matrix 'user_ids'.
-	et = eltype(vals);
-	(et != Union{Missing, Float64} && et != Union{Missing, Float32} && et != Union{Missing, Int}) && @warn("Probable error in data type ($et)")
+	DT = eltype(vals);
+	(DT != Union{Missing, Float64} && DT != Union{Missing, Float32} && DT != Union{Missing, Int}) && @warn("Probable error in data type ($DT)")
 	inds, _vals = ismissing.(vals), collect(skipmissing(vals))
 	any(inds) && (user_ids = isa(user_ids, Matrix) ? user_ids[:,.!inds] : user_ids[.!inds])
 	polygonlevels(D, user_ids, _vals; kw...)
@@ -284,30 +284,66 @@ function inwhichpolygon(D::Vector{<:GMTdataset}, point::VMr)::Union{Int, Vector{
 end
 
 # ---------------------------------------------------------------------------------------------------
-function sample_polygon(Din::GDtype, dens, np::Int=0)
+"""
+    D = randinpolygon(Din; density=0.1, np::Int=0)
 
-	D::Vector{GMTdataset} = Vector{GMTdataset}(undef, length(Din))
+Generate random samples inside polygons. The method used hete is that of poin-in-polygon. That is,
+we generate random points inside a rectangular BoundingBox of each polygon and retain those inside
+the polygon. For geographical polygons we generate random angles but do NOT connect the polygon
+sides with great circles, so solution is not really geographic but the error is rather small if the
+polygon vertices are close to each other.
 
-	function get_the_points(_D, dx, dy, dens, np)
-		_np = (np > 0) ? np : round(Int, (dx * dens + dy * dens)*0.5)
-		x = rand(_np, 1) * dx .+ _D.bbox[1]
-		y = rand(_np, 1) * dy .+ _D.bbox[3]
+- `Din`: The input polygons. It can be a ``GMTdaset``, a vector of them or a Mx2 matrix with the polygon vertices.
+- `density`: the average density of the randomly generated points. For the Cartesian case this is a percentage
+  that can be expressed in the ]0 1] or ]0 100] interval. For example, the default `density=0.1` means that points
+  are created more or less at 1/10th of polygon's side. For geographical polygons (identified by the `proj` fields
+  of the `GMTdataset`) the `density` means number of points per degree. The default of 20 represents a point
+  scattering of about 1 every 5 km.
+- `np`: The approximate number of points in each polygon. Note that this option overrides `density` and is not
+  an exact requirement. That is `np=10` might return 9 or 11 or other number of points.
+
+### Returns
+A GMTdatset if only one polygon was passed or a Vector{GMTaset} otherwise.
+"""
+randinpolygon(mat::Matrix{<:AbstractFloat}; density=0.1, np::Int=0) = randinpolygon(mat2ds(mat); density=density, np=np)
+function randinpolygon(Din::GDtype; density=0.1, np::Int=0)
+
+	D::Vector{GMTdataset} = Vector{GMTdataset}(undef, isa(Din, Vector) ? length(Din) : 1)
+
+	function get_the_points(_D, dx, dy, density, np, isgeo)
+		# Points are returned in same data types as those of _D
+		_dens = (!isgeo && density > 1) ? density / 10.0 : density
+		_np = (np > 0) ? np : round(Int, (dx + dy) * 0.5 * ((isgeo && _dens == 0.1) ? 20 : _dens))	# In geog case default is 20/degree
+		DT = eltype(_D)
+		(DT == Float64) ? (_dx = dx; _dy = dy; x0 = _D.bbox[1]; y0 = _D.bbox[3]) : (_dx = convert(DT, dx); _dy = convert(DT, dy); x0 = convert(DT, _D.bbox[1]); y0 = convert(DT, _D.bbox[3]))
+		if (isgeo)
+			D2R = pi / 180
+			x = rand(DT, _np) * _dx * D2R .+ x0 * D2R
+			y = rand(DT, _np) * _dy * D2R .+ y0 * D2R
+			x /= D2R;		y /= D2R
+		else
+			x = rand(DT, _np) * _dx .+ x0
+			y = rand(DT, _np) * _dy .+ y0
+		end
 		gmtselect([x y], polygon=_D)
 	end
 
-	for k = 1:numel(Din)				# Loop over number of polygons
-		dx = Din[k].bbox[2] - Din[k].bbox[1]
-		dy = Din[k].bbox[4] - Din[k].bbox[3]
+	isgeo = isgeog(Din)
+	nelm = isa(Din, Vector) ? length(Din) : 1	# Number of polygons
+	for k = 1:nelm				# Loop over number of polygons
+		isa(Din, Vector) ? ((dx, dy) = (Din[k].bbox[2] - Din[k].bbox[1], Din[k].bbox[4] - Din[k].bbox[3])) :
+		                   ((dx, dy) = (Din.bbox[2] - Din.bbox[1], Din.bbox[4] - Din.bbox[3]))
+		_D = isa(Din, Vector) ? Din[k] : Din
 		insist = true
 		local r
 		while (insist)					# Insist untill we get points inside the polygon
-			r = get_the_points(Din[k], dx, dy, dens, np)
+			r = get_the_points(_D, dx, dy, density, np, isgeo)
 			insist = isempty(r)			# No points found
-			insist && (dens *= 1.5)		# Increase density to make next attempt more likely of success
+			insist && (density *= 1.5)	# Increase density to make next attempt more likely of success
 		end
-		r.attrib, r.geom, r.proj4, r.wkt, r.epsg = Din[k].attrib, wkbMultiPoint, Din[k].proj4, Din[k].wkt, Din[k].epsg
+		r.attrib, r.geom, r.proj4, r.wkt, r.epsg = _D.attrib, wkbMultiPoint, _D.proj4, _D.wkt, _D.epsg
 		D[k] = r
 	end
 	set_dsBB!(D, false)
-	return D
+	return length(D) == 1 ? D[1] : D
 end
