@@ -531,7 +531,7 @@ function ds2ds(D::Vector{<:GMTdataset})::GMTdataset
 	# Take a vector of DS and collapse it into a single GMTdataset DS. Some metadata, proj, colnames
 	# and attributes are copied from first segment. Colors in header and text are lost.
 	tot_rows = sum(size.(D,1))
-	data = zeros(tot_rows, size(D[1],2))
+	data = zeros(eltype(D[1]), tot_rows, size(D[1],2))
 	s, e = 1, size(D[1],1)
 	data[s:e, :] = D[1].data
 	for k = 2:numel(D)
@@ -1471,6 +1471,7 @@ Use `image_cpt!(img, clear=true)` to remove a previously existant `colormap` fie
 image_cpt!(I::GMTimage, cpt::String) = image_cpt!(I, gmtread(cpt))
 function image_cpt!(I::GMTimage, cpt::GMTcpt)
 	# Insert the cpt info in the img.colormap member
+	(cpt.categorical > 0 && I.range[5] == 1 && isnan(I.nodata)) && (I.nodata = 0.0)
 	I.colormap, I.labels, I.n_colors = cpt2cmap(cpt, I.nodata)
 	I.color_interp = "Palette"
 	return nothing
