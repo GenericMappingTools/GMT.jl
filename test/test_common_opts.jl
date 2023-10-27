@@ -282,6 +282,9 @@
 	filter(D, nome="a", nome2="b");
 	filter(D, nome=("a","b"));
 	findall(D, nome="a");
+	randinpolygon(mat2ds([-17.2 26.8; -12.7 43.75; -4.9 24.1; -17.2 26.8]));
+	randinpolygon([mat2ds([-17.2 26.8; -12.7 43.75; -4.9 24.1; -17.2 26.8], proj4="lonlat")]);
+	randinpolygon([-17.2 26.8; -12.7 43.75; -4.9 24.1; -17.2 26.8]);
 	D = mat2ds([0 0; 1 1],["a", "b"]); D.header = "-Wred";
 	@test GMT.edit_segment_headers!(D, 'W', :get) == "red"
 	@test GMT.edit_segment_headers!(D, 'W', :set, "blue") == "-Wblue"
@@ -430,4 +433,8 @@
 	GMT.parse_opt_S(Dict(:size => (exp, [1 2])), rand(4))
 	GMT.parse_opt_S(Dict(:size => ((pow,2), [1 2])), rand(4))
 
+	GMT.sprintf("%f", 0.1)
+	GMT.sprintf("%f,%f", 0.1, 0.2)
+	GMT.sprintf("%f/%f/%f", 0.1, 0.2, 0.3)
+	GMT.sprintf("%f/%f/%f/%f", 0.1, 0.2, 0.3, 0.4)
 end
