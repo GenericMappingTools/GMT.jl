@@ -560,6 +560,16 @@ function replicateline(xy, d)
 	return line2
 end
 
+# ---------------------------------------------------------------------------------------------------
+"""
+    height (nrows), width (ncols) = dims(GI::GItype)
+
+Return the width and height of the grid/cube or image. The difference from `size` is that
+the when the memory layout is 'rows' the array is transposed and we get the wrong info. Here,
+we use the sizes of the 'x,y' coordinate vectors to determine the array's true shape.
+"""
+dims(GI::GItype) = (GI.layout != "" && GI.layout[2] == 'C') ? (size(GI,1), size(GI,2)) : (length(GI.y), length(GI.x)) .- GI.registration
+
 # EDIPO SECTION
 # ---------------------------------------------------------------------------------------------------
 linspace(start, stop, length=100) = range(start, stop=stop, length=length)

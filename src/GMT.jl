@@ -157,7 +157,7 @@ export
 	quantile, std, nanmean, nanstd, skipnan,
 
 	add2PSfile, append2fig, linearfitxy, regiongeog, streamlines, wmsinfo, wmstest, wmsread, polygonlevels,
-	sample_polygon,
+	randinpolygon,
 
 	ablines, ablines!, density, density!, boxplot, boxplot!, cornerplot, cornerplot!, cubeplot, ecdfplot, ecdfplot!,
 	fill_between, fill_between!, marginalhist, marginalhist!, parallelplot, parallelplot!, plotlinefit, plotlinefit!,
@@ -166,6 +166,7 @@ export
 	info, kmeans, pca,
 
 	df2ds, ODE2ds,
+	sprintf,
 	@?
 
 include("common_docs.jl")

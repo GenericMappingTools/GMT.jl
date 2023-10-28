@@ -553,5 +553,5 @@ Find if the input (a GMTgrid, GMTimage, GMTdadaset or string), if referenced, is
 """
 function isgeog(in)::Bool
 	prj = getproj(in, proj4=true)
-	(prj != "" && contains(prj, "=long") || contains(prj, "=lat"))
+	(prj != "" && contains(prj, "=lon") || contains(prj, "=lat"))
 end
