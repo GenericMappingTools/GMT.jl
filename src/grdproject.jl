@@ -38,7 +38,11 @@ Parameters
 
 To see the full documentation type: ``@? grdproject``
 """
-function grdproject(cmd0::String="", arg1=nothing; kwargs...)
+grdproject(cmd0::String; kwargs...) = grdproject_helper(cmd0, nothing; kwargs...)
+grdproject(arg1; kwargs...)         = grdproject_helper("", arg1; kwargs...)
+
+# ---------------------------------------------------------------------------------------------------
+function grdproject_helper(cmd0::String, arg1; kwargs...)
 
 	d = init_module(false, kwargs...)[1]	        # Also checks if the user wants ONLY the HELP mode
 	cmd::String = parse_n(d, "", true)[1]			# Here we keep the GMT default to Antialiasing
@@ -54,6 +58,3 @@ function grdproject(cmd0::String="", arg1=nothing; kwargs...)
 
 	common_grd(d, cmd0, cmd, "grdproject ", arg1)	# Finish build cmd and run it
 end
-
-# ---------------------------------------------------------------------------------------------------
-grdproject(arg1; kw...) = grdproject("", arg1; kw...)

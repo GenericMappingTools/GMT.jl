@@ -25,7 +25,11 @@ Parameters
 - $(GMT.opt_o)
 - $(GMT.opt_swap_xy)
 """
-function gmtsimplify(cmd0::String="", arg1=nothing; kwargs...)
+gmtsimplify(cmd0::String; kwargs...) = gmtsimplify_helper(cmd0, nothing; kwargs...)
+gmtsimplify(arg1; kwargs...)         = gmtsimplify_helper("", arg1; kwargs...)
+
+# ---------------------------------------------------------------------------------------------------
+function gmtsimplify_helper(cmd0::String, arg1; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
@@ -34,6 +38,3 @@ function gmtsimplify(cmd0::String="", arg1=nothing; kwargs...)
 
 	common_grd(d, cmd0, cmd, "gmtsimplify ", arg1)		# Finish build cmd and run it
 end
-
-# ---------------------------------------------------------------------------------------------------
-gmtsimplify(arg1; kw...) = gmtsimplify("", arg1; kw...)

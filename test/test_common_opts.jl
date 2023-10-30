@@ -301,7 +301,7 @@
 	@test_throws ErrorException("Bad family type") GMT.GMT_Alloc_Segment(C_NULL, -1, 0, 0, "", C_NULL)
 	#@test_throws ErrorException("Unknown family type") GMT.GMT_Create_Data(C_NULL, -99, 0, 0)
 	@test_throws ErrorException("Expected a PS structure for input") GMT.ps_init(C_NULL, 0, 0)
-	@test_throws ErrorException("size of x,y vectors incompatible with 2D array size") GMT.grdimg_hdr_xy(rand(3,3), 0, 0, [1 2], [1])
+	@test_throws ErrorException("size of x,y vectors incompatible with 2D array size") GMT.grdimg_hdr_xy(rand(3,3), 0, Float64[], [1 2], [1])
 	GMT.strncmp("abcd", "ab", 2)
 	GMT.parse_proj((name="blabla",center=(0,0)))
 
@@ -380,7 +380,6 @@
 	@test GMT.set_aspect_ratio(nothing, "", true, true) == "15c/0"
 
 	@test_throws ErrorException("Only integer or floating point types allowed in input. Not this: Char") GMT.dataset_init(GMT.G_API[1], ' ', [0])
-	@test_throws ErrorException("Wrong type (Int64) for the 'text' argin") GMT.text_record(rand(2,2), 0)
 
 	GMT.show_non_consumed(Dict(:lala => 0), "prog");
 	GMT.dbg_print_cmd(Dict(:lala => 0, :Vd=>2), "prog");

@@ -63,7 +63,11 @@ Parameters
 - $(GMT.opt_V)
 - $(GMT.opt_write)
 """
-function grd2cpt(cmd0::String="", arg1=nothing; kw...)
+grd2cpt(cmd0::String; kwargs...) = grd2cpt_helper(cmd0, nothing; kwargs...)
+grd2cpt(arg1; kwargs...)         = grd2cpt_helper("", arg1; kwargs...)
+
+# ---------------------------------------------------------------------------------------------------
+function grd2cpt_helper(cmd0::String, arg1; kw...)
 
 	d = init_module(false, kw...)[1]			# Also checks if the user wants ONLY the HELP mode
 
@@ -86,6 +90,3 @@ function grd2cpt(cmd0::String="", arg1=nothing; kw...)
 	CTRL.pocket_d[1] = d			# Store d that may be not empty with members to use in other modules
 	return r
 end
-
-# ---------------------------------------------------------------------------------------------------
-grd2cpt(arg1; kw...) = grd2cpt("", arg1; kw...)

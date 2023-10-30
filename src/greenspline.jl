@@ -70,7 +70,11 @@ Parameters
 
 To see the full documentation type: ``@? greenspline``
 """
-function greenspline(cmd0::String="", arg1=nothing; kwargs...)
+greenspline(cmd0::String; kwargs...) = greenspline_helper(cmd0, nothing; kwargs...)
+greenspline(arg1; kwargs...)         = greenspline_helper("", arg1; kwargs...)
+
+# ---------------------------------------------------------------------------------------------------
+function greenspline_helper(cmd0::String, arg1; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	arg2 = nothing;     arg3 = nothing
@@ -85,6 +89,3 @@ function greenspline(cmd0::String="", arg1=nothing; kwargs...)
 
 	common_grd(d, cmd0, cmd, "greenspline ", arg1, arg2, arg3)		# Finish build cmd and run it
 end
-
-# ---------------------------------------------------------------------------------------------------
-greenspline(arg1; kw...) = greenspline("", arg1; kw...)

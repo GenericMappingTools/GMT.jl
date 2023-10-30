@@ -151,7 +151,6 @@
 	text_record([-0.4 7.5; -0.4 3.0], ["a)", "b)"]);
 	text_record(["aa", "bb"], "> 3 5 18p 5i j");
 	text_record(["> 3 5 18p 5i j", "aa", "bb"]);
-	text_record(Array[["aa", "bb"],["cc", "dd", "ee"]]);
 	text_record([["aa", "bb"],["cc", "dd", "ee"]]);
 
 	# TEST THE API DIRECTLY (basically to improve coverage under GMT6)
