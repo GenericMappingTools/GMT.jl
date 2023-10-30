@@ -495,18 +495,18 @@ function sideplot(; plane=:xz, vsize=8, depth=NaN, kw...)
 	# basemap(R="-3/3/-3/3", JZ=8, J=:linear, p=(135,30))
 	# image!("@maxresdefault.jpg", compact=GMT.sideplot(plane=:W))
 	d = KW(kw)
-	opt_R = (is_in_dict(d, [:R :limits :region]) !== nothing) ? parse_R(d, "")[2] : CTRL.pocket_R[1]
+	opt_R::String = (is_in_dict(d, [:R :limits :region]) !== nothing) ? parse_R(d, "")[2] : CTRL.pocket_R[1]
 	(opt_R == "") && error("Map limits not provided nor found in memory from a previous command.")
 	lims = (CTRL.limits != zeros(12)) ? CTRL.limits[7:12] : opt_R2num(opt_R)
 	(lims == zeros(4)) && error("Bad limts. Can't continue.")
 
-	opt_J = (is_in_dict(d, [:J :proj :projection]) !== nothing) ? parse_J(d, "")[2] : CTRL.pocket_J[1]
+	opt_J::String = (is_in_dict(d, [:J :proj :projection]) !== nothing) ? parse_J(d, "")[2] : CTRL.pocket_J[1]
 	(opt_J == "") && error("Must provide the map projection")
 
-	opt_JZ = parse_JZ(d, "")[2]
+	opt_JZ::String = parse_JZ(d, "")[2]
 	zsize = (opt_JZ == "") ? vsize : parse(Float64, opt_JZ[5:end])
 
-	o = (is_in_dict(d, [:p :view :perspective]) !== nothing) ? parse_p(d, "")[2] : CURRENT_VIEW[1]
+	o::String = (is_in_dict(d, [:p :view :perspective]) !== nothing) ? parse_p(d, "")[2] : CURRENT_VIEW[1]
 	spli = split(o[4:end], '/')
 	(length(spli) < 2) && error("The 'view' option must contain (azim,elev,z) or just (azim,elev)")
 	azim, elev = parse(Float64, spli[1]), parse(Float64, spli[2])
@@ -544,14 +544,4 @@ function sideplot(; plane=:xz, vsize=8, depth=NaN, kw...)
 	end
 	_W, _H = (p == 'x') ? (H, zsize) : (p == 'y') ? (W, zsize) : (W, H)
 	@sprintf(" -Dg%.12g/%.12g+w%.12g/%.12g -p%c%.0f/%.0f %s %s", lims[1], lims[3], _W, _H, p, azim, elev, opt_X, opt_Y)
-end
-
-"""
-    isgeog(in)::Bool
-
-Find if the input (a GMTgrid, GMTimage, GMTdadaset or string), if referenced, is in geographical coordinates.
-"""
-function isgeog(in)::Bool
-	prj = getproj(in, proj4=true)
-	(prj != "" && contains(prj, "=lon") || contains(prj, "=lat"))
 end
