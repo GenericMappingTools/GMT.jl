@@ -49,7 +49,11 @@ Parameters
 
 To see the full documentation type: ``@? splitxyz``
 """
-function gmtsplit(cmd0::String="", arg1=nothing; kwargs...)
+gmtsplit(cmd0::String; kwargs...) = gmtsplit_helper(cmd0, nothing; kwargs...)
+gmtsplit(arg1; kwargs...)         = gmtsplit_helper("", arg1; kwargs...)
+
+# ---------------------------------------------------------------------------------------------------
+function gmtsplit_helper(cmd0::String, arg1; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		    # Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:V_params :bi :bo :di :do :e :f :g :h :i :yx])
@@ -59,5 +63,4 @@ function gmtsplit(cmd0::String="", arg1=nothing; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-gmtsplit(arg1; kw...) = gmtsplit("", arg1; kw...)
 const splitxyz = gmtsplit			# Alias

@@ -15,10 +15,10 @@ Parameters
 - **D** | **dump** :: [Type => Str | []]   `Arg = [template]`
 
     For multiple segment data, dump each segment to a separate output file
-- **L** | **linkfile** :: [Type => Str | []]      `Arg = [linkfile]`
+- **L** | **links** | **linkfile** :: [Type => Str | []]      `Arg = [linkfile]`
 
     Writes the link information to the specified file [gmtgmtconnect_link.txt].
-- **Q** | **list_file** :: [Type => Str | []]      `Arg =  [listfile]`
+- **Q** | **list** | **listfile** :: [Type => Str | []]      `Arg =  [listfile]`
 
     Used with **D** to write a list file with the names of the individual output files.
 - **T** | **tolerance** :: [Type => Str | List]    `Arg = [cutoff[unit][/nn_dist]]`
@@ -42,7 +42,7 @@ function gmtconnect(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :o :yx])
-	cmd  = parse_these_opts(cmd, d, [[:C :closed], [:D :dump], [:L :linkfile], [:Q :list_file], [:T :tolerance]])
+	cmd  = parse_these_opts(cmd, d, [[:C :closed], [:D :dump], [:L :links :linkfile], [:Q :list :listfile], [:T :tolerance]])
 
 	common_grd(d, cmd0, cmd, "gmtconnect ", arg1)		# Finish build cmd and run it
 end

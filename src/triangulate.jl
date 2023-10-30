@@ -65,7 +65,11 @@ Parameters
 
 To see the full documentation type: ``@? triangulate``
 """
-function triangulate(cmd0::String="", arg1=nothing; kwargs...)
+triangulate(cmd0::String; kwargs...) = triangulate_helper(cmd0, nothing; kwargs...)
+triangulate(arg1; kwargs...)         = triangulate_helper("", arg1; kwargs...)
+
+# ---------------------------------------------------------------------------------------------------
+function triangulate_helper(cmd0::String, arg1; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:G :RIr :V_params :bi :bo :di :e :f :h :i :w :yx])
@@ -89,9 +93,6 @@ function parse_Q_tri(d::Dict, symbs::Array{Symbol}, cmd::String)
 	end
 	return cmd
 end
-
-# ---------------------------------------------------------------------------------------------------
-triangulate(arg1; kw...) = triangulate("", arg1; kw...)
 
 # ---------------------------------------------------------------------------------------------------
 """

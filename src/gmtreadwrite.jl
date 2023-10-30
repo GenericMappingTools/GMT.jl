@@ -272,7 +272,7 @@ function file_has_time!(fname::String, D::GDtype, corder::Vector{Int}=Int[])
 		for it in iter
 			(n_it > 10 || Tc != "") && break			# Means that previous iteration found it.
 			n_commas = count_chars(it)
-			use_commas = (n_commas >= n_cols)			# To see if we split on spaces or on commas.
+			use_commas = (n_commas >= n_cols-1)			# To see if we split on spaces or on commas.
 			line1 = (use_commas) ? split(it, ',') : split(it)
 			n_it += 1			# Counter to not let this go on infinetely
 			(isempty(line1) || contains(">#!%;", line1[1][1])) && continue

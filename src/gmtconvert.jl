@@ -33,7 +33,7 @@ Parameters
 - **N** | **sort** :: [Type => Str | Number]      ``Arg = [-|+]col``
 
     Numerically sort each segment based on values in column col.
-- **Q** | **select_num** :: [Type => Str]      ``Arg =  [~]selection``
+- **Q** | **segments** :: [Type => Str]      ``Arg =  [~]selection``
 
     Only write segments whose number is included in ``selection`` and skip all others.
 - **S** | **select_hdr** :: [Type => Str]      ``Arg =  [~]”search string” or [~]/regexp/[i]``
@@ -73,7 +73,7 @@ function gmtconvert(cmd0::String="", arg1=nothing; kwargs...)
 
 	cmd, = parse_common_opts(d, "", [:V_params :write :append :a :b :bo :d :e :f :g :h :i :o :s :w :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :hcat], [:C :n_records], [:D :dump], [:E :first_last], [:F :conn_method],
-	                                 [:I :invert :reverse], [:L :list_only], [:N :sort], [:Q :select_num], [:S :select_hdr], [:T :suppress :skip], [:W :word2num], [:Z :transpose]])
+	                                 [:I :invert :reverse], [:L :list_only], [:N :sort], [:Q :segments], [:S :select_hdr], [:T :suppress :skip], [:W :word2num], [:Z :transpose]])
 
 	common_grd(d, cmd0, cmd, "gmtconvert ", arg1)		# Finish build cmd and run it
 end

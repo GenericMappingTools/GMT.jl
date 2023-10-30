@@ -32,7 +32,11 @@ Parameters
 
 To see the full documentation type: ``@? grdfilter``
 """
-function grdfilter(cmd0::String="", arg1=nothing; kwargs...)
+grdfilter(cmd0::String; kwargs...) = grdfilter_helper(cmd0, nothing; kwargs...)
+grdfilter(arg1; kwargs...)         = grdfilter_helper("", arg1; kwargs...)
+
+# ---------------------------------------------------------------------------------------------------
+function grdfilter_helper(cmd0::String, arg1; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:G :RIr :V_params :f])
@@ -40,6 +44,3 @@ function grdfilter(cmd0::String="", arg1=nothing; kwargs...)
 
 	common_grd(d, cmd0, cmd, "grdfilter ", arg1)		# Finish build cmd and run it
 end
-
-# ---------------------------------------------------------------------------------------------------
-grdfilter(arg1; kw...) = grdfilter("", arg1; kw...)

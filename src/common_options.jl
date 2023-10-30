@@ -199,11 +199,11 @@ function merge_R_and_xyzlims(d::Dict, opt_R::String)::String
 =#
 
 	xlim::String = ((val = find_in_dict(d, [:xlim :xlims :xlimits], false)[1]) !== nothing) ?
-	                @sprintf("%.15g/%.15g", val[1], val[2]) : ""
+	                sprintf("%.15g/%.15g", val[1], val[2]) : ""
 	ylim::String = ((val = find_in_dict(d, [:ylim :ylims :ylimits], false)[1]) !== nothing) ?
-	                @sprintf("%.15g/%.15g", val[1], val[2]) : ""
+	                sprintf("%.15g/%.15g", val[1], val[2]) : ""
 	zlim::String = ((val = find_in_dict(d, [:zlim :zlims :zlimits], false)[1]) !== nothing) ?
-	                @sprintf("%.15g/%.15g", val[1], val[2]) : ""
+	                sprintf("%.15g/%.15g", val[1], val[2]) : ""
 	(xlim == "" && ylim == "" && zlim == "") && return opt_R
 	function clear_xyzlims(d::Dict, xlim, ylim, zlim)
 		# When calling this fun, if they exist they were used too so must remove them
@@ -266,7 +266,7 @@ function build_opt_R(arg::NamedTuple, symb::Symbol=Symbol())::String
 	BB::String = ""
 	d = nt2dict(arg)					# Convert to Dict
 	if ((val = find_in_dict(d, [:limits :region])[1]) !== nothing)
-		if ((isa(val, Array{<:Real}) || isa(val, Tuple)) && (length(val) == 4 || length(val) == 6))
+		if ((isa(val, VecOrMat{<:Real}) || isa(val, Tuple)) && (length(val) == 4 || length(val) == 6))
 			vval::Vector{<:Float64} = vec(Float64.(collect(val)))
 			if (haskey(d, :diag) || haskey(d, :diagonal))		# The diagonal case
 				BB = @sprintf("%.15g/%.15g/%.15g/%.15g+r", vval[1], vval[3], vval[2], vval[4])
@@ -299,8 +299,8 @@ function build_opt_R(arg::NamedTuple, symb::Symbol=Symbol())::String
 	if ((val = find_in_dict(d, [:adjust :pad :extend :expand])[1]) !== nothing)
 		if (isa(val, String) || isa(val, Real))
 			t::String = string(val)
-		elseif (isa(val, Array{<:Real}) || isa(val, Tuple))
-			t = join([@sprintf("%.15g/", Float64(x)) for x in val])
+		elseif (isa(val, VecOrMat{<:Real}) || isa(val, Tuple))
+			t = join([sprintf("%.15g/", Float64(x)) for x in val])
 			t = rstrip(t, '/')		# and remove last '/'
 		else
 			error("Increments for limits must be a String, a Number, Array or Tuple")
@@ -751,12 +751,12 @@ function parse_proj(p::NamedTuple)::Tuple{String, Bool}
 	center::String = ""
 	if ((val = find_in_dict(d, [:center])[1]) !== nothing)
 		if     (isa(val, String))  center = val
-		elseif (isa(val, Real))    center = @sprintf("%.12g", val)
+		elseif (isa(val, Real))    center = sprintf("%.12g", val)
 		elseif (isa(val, Array) || isa(val, Tuple) && length(val) == 2)
-			if (isa(val, Array))   center = @sprintf("%.12g/%.12g", val[1], val[2])
+			if (isa(val, Array))   center = sprintf("%.12g/%.12g", val[1], val[2])
 			else		# Accept also strings in tuple (Needed for movie)
-				center  = (isa(val[1], String)) ? val[1]::String * "/" : @sprintf("%.12g/", val[1])
-				center *= (isa(val[2], String)) ? val[2]::String : @sprintf("%.12g", val[2])::String
+				center  = (isa(val[1], String)) ? val[1]::String * "/" : sprintf("%.12g/", val[1])
+				center *= (isa(val[2], String)) ? val[2]::String : sprintf("%.12g", val[2])
 			end
 		end
 	end
@@ -766,9 +766,9 @@ function parse_proj(p::NamedTuple)::Tuple{String, Bool}
 	parallels::String = ""
 	if ((val = find_in_dict(d, [:parallel :parallels])[1]) !== nothing)
 		if     (isa(val, String))  parallels = "/" * val
-		elseif (isa(val, Real))    parallels = @sprintf("/%.12g", val)
+		elseif (isa(val, Real))    parallels = sprintf("/%.12g", val)
 		elseif (isa(val, Array) || isa(val, Tuple) && (length(val) <= 3 || length(val) == 6))
-			parallels = join([@sprintf("/%.12g",x)::String for x in val])
+			parallels = join([sprintf("/%.12g",x)::String for x in val])
 		end
 	end
 
@@ -2588,13 +2588,13 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 			# If no cpt name sent in, then compute (later) a default cpt
 			if (isa(arg1, GMTgrid) && ((val = find_in_dict(d, [:percent :pct])[1])) !== nothing)
 				lh = quantile(any(!isfinite, arg1) ? skipnan(vec(arg1)) : vec(arg1), [(100 - val)/200, (1 - (100 - val)/200)])
-				cpt_opt_T = @sprintf(" -T%.12g/%.12g/256+n -D", lh[1], lh[2])	# Piggyback -D
+				cpt_opt_T = sprintf(" -T%.12g/%.12g/256+n -D", lh[1], lh[2])	# Piggyback -D
 			elseif ((val = find_in_dict(d, [:percent :pct])[1]) !== nothing)			# Case of a grid file
 				range = vec(grdinfo(cmd0 * " -C -T+a$(100-val)"::String).data);
 				cpt_opt_T = @sprintf(" -T%.12g/%.12g/256+n -D", range[5], range[6])
 			elseif ((val = find_in_dict(d, [:clim])[1]) !== nothing)
 				(length(val) != 2) && error("The clim option must have two elements and not $(length(val)::Int)")
-				cpt_opt_T = @sprintf(" -T%.12g/%.12g/256+n -D", val[1], val[2])	# Piggyback -D
+				cpt_opt_T = sprintf(" -T%.12g/%.12g/256+n -D", val[1], val[2])	# Piggyback -D
 			else
 				((range[6] - range[5]) > 1e6) && @warn("The z range expands to more then 6 orders of magnitude. Missed to replace the nodatavalues?\n\n")
 				cpt_opt_T = @sprintf(" -T%.12g/%.12g/256+n", range[5] - 1e-6, range[6] + 1e-6)
@@ -2607,7 +2607,7 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 	elseif (cmd0 != "" && cmd0[1] == '@')		# No reason not to let @grids use clim=[...]
 		if ((val = find_in_dict(d, [:clim])[1]) !== nothing)
 			(length(val) != 2) && error("The clim option must have two elements and not $(length(val)::Int)")
-			cpt_opt_T = @sprintf(" -T%.12g/%.12g/256+n -D", val[1], val[2])
+			cpt_opt_T = sprintf(" -T%.12g/%.12g/256+n -D", val[1], val[2])
 		elseif (any(contains.(cmd0, ["_01d", "_30m", "_20m", "_15m", "_10m", "_06m"])) && (val = find_in_dict(d, [:percent :pct])[1]) !== nothing)
 			infa = grdinfo(cmd0 * " -T+a$(100-val)"::String).text[1]	# Bloody complicated output
 			mima = split(infa[3:end], "/")		# Because the output is like "-T-5384/2729"
@@ -2713,17 +2713,15 @@ function get_color(val)::String
 	# Parse a color input. Always return a string
 	# color1,color2[,color3,…] colorn can be a r/g/b triplet, a color name, or an HTML hexadecimal color (e.g. #aabbcc
 	(isa(val, AbstractString) || isa(val, Symbol) || isa(val, Real)) && return isa(val, Bool) ? "" : string(val)
-
-	@warn("got this bad data type: $(typeof(val))")		# Need to split because f julia change in 6.1
 	error("\tGET_COLOR: got an unsupported data type")
 end
 function get_color(val::Tuple)::String
 	out::String = ""
 	for k = 1:numel(val)
 		if (isa(val[k], Tuple) && (length(val[k]) == 3))
-			s = 1
-			if (val[k][1] <= 1 && val[k][2] <= 1 && val[k][3] <= 1)  s = 255  end	# colors in [0 1]
-			out *= @sprintf("%.0f/%.0f/%.0f,", val[k][1]*s, val[k][2]*s, val[k][3]*s)
+			s = 1.0
+			if (val[k][1] <= 1 && val[k][2] <= 1 && val[k][3] <= 1)  s = 255.0  end	# colors in [0 1]
+			out *= sprintf("%.0f/%.0f/%.0f,", val[k][1]*s, val[k][2]*s, val[k][3]*s)
 		elseif (isa(val[k], Symbol) || isa(val[k], String) || isa(val[k], Real))
 			out *= string(val[k],",")::String
 		else
@@ -2732,14 +2730,14 @@ function get_color(val::Tuple)::String
 	end
 	out = rstrip(out, ',')		# Strip last ','
 end
-function get_color(val::Array{<:Real})::String
+function get_color(val::VecOrMat{<:Real})::String
 	out::String = ""
-	if (isa(val, Vector))  val = val'  end
+	if (isa(val, Vector))  val = reshape(val, 1, length(val))  end
 	(size(val, 2) != 3) && error("\tGET_COLOR: Input as Array must be a Mx3 matrix or 3 elements Vector.")
-	copia = (val[1,1] <= 1 && val[1,2] <= 1 && val[1,3] <= 1) ? Float64.(val) .* 255 : Float64.(val)	# Do not change the original
-	out = @sprintf("%.0f/%.0f/%.0f", copia[1,1], copia[1,2], copia[1,3])
+	copia::Matrix{Int} = (val[1,1] <= 1 && val[1,2] <= 1 && val[1,3] <= 1) ? round.(Int, val .* 255) : round.(Int, val)
+	out = string(copia[1,1], '/', copia[1,2], '/', copia[1,3])
 	for k = 2:size(copia, 1)
-		out = @sprintf("%s,%.0f/%.0f/%.0f", out, copia[k,1], copia[k,2], copia[k,3])
+		out = string(out, ',', copia[k,1], '/', copia[k,2], '/', copia[k,3])
 	end
 	out
 end
@@ -3759,6 +3757,16 @@ end
 # ---------------------------------------------------------------------------------------------------
 # Convenient function to tell if x is a GMTdataset (or vector of it) or not
 isGMTdataset(x)::Bool = (isa(x, GMTdataset) || isa(x, Vector{<:GMTdataset}))
+
+"""
+    isgeog(in)::Bool
+
+Find if the input (a GMTgrid, GMTimage, GMTdadaset or string), if referenced, is in geographical coordinates.
+"""
+function isgeog(in)::Bool
+	prj = getproj(in, proj4=true)
+	(prj != "" && contains(prj, "=lon") || contains(prj, "=lat"))
+end
 
 # ---------------------------------------------------------------------------------------------------
 function find_data(d::Dict, cmd0::String, cmd::String, args...)
