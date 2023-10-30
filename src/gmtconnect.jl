@@ -38,11 +38,7 @@ Parameters
 - $(GMT.opt_o)
 - $(GMT.opt_swap_xy)
 """
-gmtconnect(cmd0::String; kwargs...) = connect_helper(cmd0, nothing; kwargs...)
-gmtconnect(arg1; kwargs...)         = connect_helper("", arg1; kwargs...)
-
-# ---------------------------------------------------------------------------------------------------
-function connect_helper(cmd0::String, arg1; kwargs...)
+function gmtconnect(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :o :yx])
@@ -50,3 +46,6 @@ function connect_helper(cmd0::String, arg1; kwargs...)
 
 	common_grd(d, cmd0, cmd, "gmtconnect ", arg1)		# Finish build cmd and run it
 end
+
+# ---------------------------------------------------------------------------------------------------
+gmtconnect(arg1, arg2=nothing; kw...) = gmtconnect("", arg1, arg2; kw...)
