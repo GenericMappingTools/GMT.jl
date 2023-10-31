@@ -101,7 +101,7 @@ function pca(I::GMTimage; DT::DataType=Float32, npc::Int=0)
 	(n_bands == 1) && (error("With one band only it is not possible to compute PCA.")) 
 	Y, _, _, explained, = princomp!(GI2vectors(I, DT), npc)
 	P = reshape(Y, n_rows, n_cols, n_bands)
-	Ipca::GMTimage = deepcopy(I)
+	Ipca::GMTimage = mat2img(copy(I.image), I)
 	for k = 1:n_bands
 		viewmat = view(P,:,:,k)
 		mi, ma = extrema(viewmat)
@@ -145,9 +145,9 @@ function GI2vectors(GI, DT::DataType=Float32)
 		@inbounds for b = 1:n_layers, k = 0:n_rc-1
 			img[n+=1] = GI.image[k*3+b]
 		end
-		X = img
+		return img
 	else
-		X = DT.(reshape(GI, n_rc, n_layers))
+		return isa(GI, GMTgrid) ? DT.(reshape(GI.z, n_rc, n_layers)) : DT.(reshape(GI.image, n_rc, n_layers))
 	end
 end
 

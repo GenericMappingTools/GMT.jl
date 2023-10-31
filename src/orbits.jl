@@ -27,12 +27,13 @@ Plots the orbit, or whatever the input data in `xyz` represents, about the Earth
 ### Example:
     orbits(show=true)
 """
-function orbits(xyz::Matrix{<:Real}=Array{Float64}(undef, 0, 0); first::Bool=true, radius=6371.007, height=0,
+function orbits(xyz::Matrix{<:AbstractFloat}=Array{Float64}(undef, 0, 0); first::Bool=true, radius=6371.007, height=0,
                 lon0=0, lat0=0, show=false, savefig="", figname="", name="", kw...)
 
 	!first && !contains(CTRL.pocket_J[1], "-JG") && error("Only Orthographic projection is allowed.")
 	r_lon = [cosd(-lon0) sind(-lon0) 0; -sind(-lon0) cosd(-lon0) 0; 0 0 1]
 	r_lat = [cosd(-lat0) 0 sind(-lat0); 0.0 1 0; -sind(-lat0) 0 cosd(-lat0)]
+	xyz::Matrix{Float64} = xyz
 
 	R = radius
 	if (isempty(xyz))
@@ -44,12 +45,12 @@ function orbits(xyz::Matrix{<:Real}=Array{Float64}(undef, 0, 0); first::Bool=tru
 	if (size(xyz, 2) == 2)							# Input came in degrees
 		(R < 1e6) && (R *= 1e3)						# Here radius must be in meters
 		xyz = [xyz fill(height,size(xyz,1))]
-		xyz = mapproject(xyz, E=true, par=(PROJ_ELLIPSOID=R,))
+		xyz = mapproject(xyz, E=true, par=(PROJ_ELLIPSOID=R,)).data
 		(height == 0) && error("Orbit height cannot be 0 when input is in degrees.")	# At bot so we can run a CI on it.
 	end
 	(size(xyz, 2) > 3) && (xyz = view(xyz, :, 1:3))	# Allow more than 3 columns
 
-	_xyz = (lon0 != 0 || lat0 != 0) ? xyz * (r_lon * r_lat) : deepcopy(xyz)
+	_xyz = (lon0 != 0 || lat0 != 0) ? xyz * (r_lon * r_lat) : copy(xyz)
 	x, y, z = view(_xyz, :, 1), view(_xyz, :, 2), view(_xyz, :, 3)
 	(R < 1e6 && (maximum(x) > 1e4 || maximum(y) > 1e4)) && (R *= 1000)	# Input coords are in meters and radius in km
 
@@ -60,7 +61,7 @@ function orbits(xyz::Matrix{<:Real}=Array{Float64}(undef, 0, 0); first::Bool=tru
 	(x[1] < 0) && (ind_h = [1, ind_h...])			# If first segment is negative, needs to be included
 	(x[end] < 0) && append!(ind_h, [length(x)])		# If last segment is negative,		""
 	for k = 1:2:numel(ind_h)						# We jump 2 to always start at the to be hiden segments.
-		int = gmtspatial(([y[ind_h[k]:ind_h[k+1]] z[ind_h[k]:ind_h[k+1]]], circ), I="e", sort=1)
+		int::Matrix{Float64} = gmtspatial(([y[ind_h[k]:ind_h[k+1]] z[ind_h[k]:ind_h[k+1]]], circ), I="e", sort=1).data
 		isempty(int) && continue
 
 		if (size(int,1) == 1)						# Only one intersection. It means the curve doesn't reenter.
