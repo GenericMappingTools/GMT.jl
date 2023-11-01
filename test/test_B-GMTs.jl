@@ -9,11 +9,9 @@
 	println("	BLOCK*s")
 	d = [0.1 1.5 1; 0.5 1.5 2; 0.9 1.5 3; 0.1 0.5 4; 0.5 0.5 5; 0.9 0.5 6; 1.1 1.5 7; 1.5 1.5 8; 1.9 1.5 9; 1.1 0.5 10; 1.5 0.5 11; 1.9 0.5 12];
 	G = blockmedian(region=[0 2 0 2], inc=1, fields="z", reg=true, d);
-	if (G !== nothing)	# If run from GMT5 it will return nothing
-		G = blockmean(d, region=[0 2 0 2], inc=1, grid=true, reg=true, S=:n);	# Number of points in cell
-		G,L = blockmode(region=[0 2 0 2], inc=1, fields="z,l", reg=true, d);
-		G,L,H = blockmode(d, region=[0 2 0 2], inc=1, fields="z,l,h", reg=true)
-	end
+	G = blockmean(d, region=[0 2 0 2], inc=1, grid=true, reg=true, S=:n);	# Number of points in cell
+	G,L = blockmode(region=[0 2 0 2], inc=1, fields="z,l", reg=true, d);
+	G,L,H = blockmode(d, region=[0 2 0 2], inc=1, fields="z,l,h", reg=true)
 	D = blockmedian(region=[0 2 0 2], inc=1,  reg=true, d);
 	D = blockmean(region=[0 2 0 2], inc=1,  reg=true, d);
 	D = blockmode(region=[0 2 0 2], inc=1,  reg=true, d);

@@ -11,7 +11,7 @@ Parameters
 - **A** | **ranges** :: [Type => Str]
 
     Specify how the range should be reported.
-- **C** | **numeric** :: [Type => Bool]
+- **C** | **numeric** | **per_column** :: [Type => Bool]
 
     Report the min/max values per column in separate columns [Default uses <min/max> format].
 - **D** | **center** :: [Type => Bool]

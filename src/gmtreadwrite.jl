@@ -94,7 +94,7 @@ function gmtread(_fname::String; kwargs...)
 		end
 		fname *= "?" * arg2str(varname)
 		if ((val = find_in_dict(d, [:layer :band])[1]) !== nothing)
-			if (isa(val, Number))     fname *= @sprintf("[%d]", val-1)
+			if (isa(val, Real))       fname *= @sprintf("[%d]", val-1)
 			elseif (isa(val, Array))  fname *= @sprintf("[%d,%d]", val[1]-1, val[2]-1)	# A 4D array
 			end
 		end
@@ -104,7 +104,7 @@ function gmtread(_fname::String; kwargs...)
 				ogr_layer = Int32(val)::Int32 - 1	# -1 because it's going to be sent to C (zero based)
 			else
 				fname = fname * "+b"
-				if (isa(val, String) || isa(val, Symbol) || isa(val, Number))
+				if (isa(val, String) || isa(val, Symbol) || isa(val, Real))
 					fname = string(fname, parse(Int, string(val)::String)-1)::String
 				elseif (isa(val, Array) || isa(val, Tuple))
 					# Replacement for the annoying fact that one cannot do @sprintf(repeat("%d,", n), val...)
@@ -272,7 +272,7 @@ function file_has_time!(fname::String, D::GDtype, corder::Vector{Int}=Int[])
 		for it in iter
 			(n_it > 10 || Tc != "") && break			# Means that previous iteration found it.
 			n_commas = count_chars(it)
-			use_commas = (n_commas >= n_cols-1)			# To see if we split on spaces or on commas.
+			use_commas = (n_cols > 1) && (n_commas >= n_cols-1)		# To see if we split on spaces or on commas.
 			line1 = (use_commas) ? split(it, ',') : split(it)
 			n_it += 1			# Counter to not let this go on infinetely
 			(isempty(line1) || contains(">#!%;", line1[1][1])) && continue

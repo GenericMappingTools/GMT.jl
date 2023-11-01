@@ -1379,6 +1379,7 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 	getproj(ds::AbstractDataset) = GDALGetProjectionRef(ds.ptr)
 	getproj(layer::AbstractFeatureLayer) = SpatialRef(OGR_L_GetSpatialRef(layer.ptr))
 	function getproj(name::AbstractString; proj4::Bool=false, wkt::Bool=false, epsg::Bool=false)
+		(name == "") && return name
 		ds = unsafe_read(name)
 		prj = getproj(ds)
 		GDALClose(ds.ptr)

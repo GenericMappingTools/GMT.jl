@@ -339,19 +339,19 @@ include("get_enums.jl")
 	mat2img(rand(UInt8, 32, 32, 3));
 	coast(R=:g, proj=:guess, W=(level=1,pen=(2,:green)), Vd=2);
 	gridit(rand(10,3), preproc=true, I=0.1);
-	earthregions("PT", Vd=2);
-	violin(rand(50), fmt=:ps);
-	boxplot(rand(50), fmt=:ps);
-	qqplot(randn(500), randn(50), fmt=:ps);
-	ecdfplot!(randn(50), fmt=:ps);
-	cornerplot(randn(50,3), scatter=true, fmt=:ps);
-	marginalhist(randn(1000,2), par=(PS_MEDIA="A2",), fmt=:ps);	rm("GMTplot.ps")
-	feather([0.0 0 2.0; 0.0 30 2; 0.0 60 2], rtheta=true, aspect="1:1", arrow=(len=0.5, shape=0.5,), fmt=:ps);
+	#earthregions("PT", Vd=2);
+	#violin(rand(50), fmt=:ps);
+	#boxplot(rand(50), fmt=:ps);
+	#qqplot(randn(500), randn(50), fmt=:ps);
+	#ecdfplot!(randn(50), fmt=:ps);
+	#cornerplot(randn(50,3), scatter=true, fmt=:ps);
+	#marginalhist(randn(1000,2), par=(PS_MEDIA="A2",), fmt=:ps);	rm("GMTplot.ps")
+	#feather([0.0 0 2.0; 0.0 30 2; 0.0 60 2], rtheta=true, aspect="1:1", arrow=(len=0.5, shape=0.5,), fmt=:ps);
 	#orbits(mat2ds(rand(10,3)));
 	#pca(rand(25,6));
 	#pca(mat2img(rand(UInt8, 64,64,4)));
 	#kmeans(rand(100,3), 3, maxiter=10);
-	rm(joinpath(tempdir(), "GMTjl_custom_p_x.txt"))		# This one gets created before username is set.
+	#rm(joinpath(tempdir(), "GMTjl_custom_p_x.txt"))		# This one gets created before username is set.
 	resetGMT()
 end
 

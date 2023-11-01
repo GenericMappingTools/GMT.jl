@@ -3558,7 +3558,7 @@ function _read_data(d::Dict, cmd::String, arg, opt_R::String="", is3D::Bool=fals
 
 	if (!CONVERT_SYNTAX[1] && !IamModern[1] && no_R)	# Here 'arg' can no longer be a file name (string)
 		if (opt_i == "" && opt_di == "" && opt_yx == "" && !isempty(ds_bbox))
-			wesn_f64::Matrix{<:Float64} = reshape(copy(ds_bbox), 1, length(ds_bbox))
+			wesn_f64::Matrix{Float64} = reshape(copy(ds_bbox), 1, length(ds_bbox))
 		else
 			wesn_f64 = gmt("gmtinfo -C" * opt_i * opt_di * opt_yx, arg).data		# Avoid bloody Any's
 		end
@@ -3764,8 +3764,12 @@ isGMTdataset(x)::Bool = (isa(x, GMTdataset) || isa(x, Vector{<:GMTdataset}))
 Find if the input (a GMTgrid, GMTimage, GMTdadaset or string), if referenced, is in geographical coordinates.
 """
 function isgeog(in)::Bool
+	if (isa(in, String)) 
+		(contains(in, "=lon") || contains(in, "=lat")) && return true
+		!isfile(in) && return false			# A proj4 string of a non geog proj
+	end
 	prj = getproj(in, proj4=true)
-	(prj != "" && contains(prj, "=lon") || contains(prj, "=lat"))
+	(prj != "" && (contains(prj, "=lon") || contains(prj, "=lat")))
 end
 
 # ---------------------------------------------------------------------------------------------------

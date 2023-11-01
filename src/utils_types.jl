@@ -159,13 +159,13 @@ end
 # ---------------------------------------------------------------------------------------------------
 function helper_set_crs(d)
 	# Return CRS info eventually passed in kwargs (converted into 'd') + attrib & colnames if :ref is used
-	ref_attrib, ref_coln = Dict(), String[]
 	if ((val = find_in_dict(d, [:ref])[1]) !== nothing)		# ref has to be a D but we'll not test it
 		Dt::GMTdataset = val		# To try to escape the f... Any's
 		prj, wkt, epsg = Dt.proj4, Dt.wkt, Dt.epsg
-		ref_attrib, ref_coln = Dt.attrib, Dt.colnames
+		return prj, wkt, epsg, Dt.attrib, Dt.colnames
 	end
 
+	ref_attrib, ref_coln = Dict(), String[]
 	prj::String = ((proj = find_in_dict(d, [:proj :proj4])[1]) !== nothing) ? proj : ""
 	(prj == "geo" || prj == "geog") && (prj = prj4WGS84)
 	(prj != "" && !startswith(prj, "+proj=")) && (prj = "+proj=" * prj)
@@ -301,10 +301,11 @@ function mat2ds(mat::Array{T,N}, txt::Union{String,Vector{String}}=String[]; hdr
 	
 	prj, wkt, epsg, ref_attrib, ref_coln = helper_set_crs(d)
 
-	is_geog::Bool = false
-	if (prj != "")
-		is_geog = (contains(prj, "=longlat") || contains(prj, "=latlong")) ? true : false
-	end
+	#is_geog::Bool = false
+	#if (prj != "")
+		#is_geog = (contains(prj, "=longlat") || contains(prj, "=latlong")) ? true : false
+	#end
+	is_geog::Bool = isgeog(prj)
 	coln::Vector{String} = ((val = find_in_dict(d, [:colnames])[1]) === nothing) ? String[] : val
 
 	function fill_colnames(coln::Vector{String}, nc::Int, is_geog::Bool)	# Fill the column names vector
@@ -379,7 +380,7 @@ function mat2ds(mat::Array{T,N}, txt::Union{String,Vector{String}}=String[]; hdr
 		end
 	end
 	!isempty(ref_attrib) && (D[1].attrib = ref_attrib)		# When a reference Ds was used
-	(length(ref_coln) >= size(D[1],2)) && (D[1].colnames = ref_coln[1:size(D[1],2)])	# This still loses Text colname
+	(length(ref_coln) >= size(D[1].data,2)) && (D[1].colnames = ref_coln[1:size(D[1].data,2)])	# This still loses Text colname
 	CTRL.pocket_d[1] = d		# Store d that may be not empty with members to use in other functions
 	set_dsBB!(D)				# Compute and set the global BoundingBox for this dataset
 	return (find_in_kwargs(kwargs, [:letsingleton])[1] !== nothing) ? D : (length(D) == 1 && !multi) ? D[1] : D
@@ -500,7 +501,7 @@ function set_dsBB!(D, all_bbs::Bool=true)
 				if (any(isnan.(_bb)))				# Shit, we don't have a minimum_nan(A, dims)
 					n = 1
 					for kk = 1:size(D[k].data, 2)
-						isnan(_bb[n]) && (_bb[n:n+1] .= extrema_cols(D[k], col=kk))
+						isnan(_bb[n]) && (_bb[n:n+1] .= extrema_cols(D[k].data, col=kk))
 						n += 2
 					end
 					all(isnan.(_bb)) && continue	# Shit, they are all still NaNs
