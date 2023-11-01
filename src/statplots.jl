@@ -307,7 +307,7 @@ function plotcandles_and_showsep(d, D, first::Bool, isVert::Bool, n4t, isGroup::
 			(allvar && issplit) && (xc = n4t[1])		# A trick because the group info was already lost here
 			xs = xc[1:end-1] .+ diff(xc)/2
 		else
-			xc = (issplit) ? [mean(D[k][:,1]) for k=1:numel(D)] : D[:, isVert ? 1 : 2];
+			xc = (issplit) ? [mean(D[k].data[:,1]) for k=1:numel(D)] : D.data[:, isVert ? 1 : 2];
 			xs = xc[1:end-1] .+ diff(xc)/2
 		end
 		(isVert) ? vlines!(xs, pen=sep_pen, show=do_show) : hlines!(xs, pen=sep_pen, show=do_show)
@@ -358,7 +358,7 @@ function helper1_boxplot(kwargs)
 			isa(val, NamedTuple) && (OLcmd = val)
 		end
 	end
-	_fill = ((val = find_in_dict(d, [:G :fill], false)[1]) !== nothing) ? val : ""	# fill should be made a string always
+	_fill::String = string(((val = find_in_dict(d, [:G :fill], false)[1]) !== nothing) ? val : "")
 	w = ((val = find_in_dict(d, [:weights])[1]) !== nothing) ? Float64.(val) : Float64[]
 	
 	return d, isVert, _fill, showOL, OLcmd, w
@@ -648,7 +648,7 @@ function helper2_violin(D, Ds, data, xc, N_grp, ccolor, first, isVert, N_in_each
 	if (find_in_kwargs(kwargs, [:boxplot])[1] !== nothing || showOL)	# Request to plot the candle sticks too
 		delete!(d, :boxplot)
 		haskey(d, :scatter) && delete!(d, :scatter)
-		do_show = ((val = find_in_dict(d, [:show])[1]) !== nothing && val != 0)
+		do_show::Bool = ((val = find_in_dict(d, [:show])[1]) !== nothing && val != 0)
 		opt_t = parse_t(d, "", false)[1]		# Seek for transparency opt
 		(opt_t != "") && (opt_t = opt_t[4:end])
 
@@ -656,7 +656,7 @@ function helper2_violin(D, Ds, data, xc, N_grp, ccolor, first, isVert, N_in_each
 		delete!(d, [[:xticks], [:yticks], [:G, :fill]])			# To no plot them again
 		hz  = !isVert ? true : false			# For the case horizontal violins want candle sticks too
 		(showOL && isempty(Ds) && isa(OLcmd, Bool)) && (OLcmd = (size="4p",))	# No scatter, smaller stars
-		otl = (!showOL) ? false : (isa(OLcmd, Bool)) ? true : OLcmd		# For the case violins want outliers too
+		otl::Bool = (!showOL) ? false : (isa(OLcmd, Bool)) ? true : OLcmd		# For the case violins want outliers too
 		this_show = (showSep) ? false : do_show
 		if (isempty(Ds))			# Just the candle sticks
 			(figname != "") && (d[:savefig] = d[:savefig] = figname)
