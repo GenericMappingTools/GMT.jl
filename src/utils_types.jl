@@ -208,7 +208,7 @@ function mat2ds(mat::Array{T,N}, txt::Union{String,Vector{String}}=String[]; hdr
 
 	color_cycle = false
 	if ((color = find_in_dict(d, [:lc :linecolor :color])[1]) !== nothing && color != false)
-		_color::Vector{String} = (isa(color, Array{String}) && !isempty(color)) ? vec(color) : matlab_cycle_colors
+		_color::Vector{String} = (isa(color, VecOrMat{String}) && !isempty(color)) ? vec(color) : matlab_cycle_colors
 		color_cycle = true
 	end
 	_fill::Vector{String} = helper_ds_fill(d)
@@ -301,10 +301,6 @@ function mat2ds(mat::Array{T,N}, txt::Union{String,Vector{String}}=String[]; hdr
 	
 	prj, wkt, epsg, ref_attrib, ref_coln = helper_set_crs(d)
 
-	#is_geog::Bool = false
-	#if (prj != "")
-		#is_geog = (contains(prj, "=longlat") || contains(prj, "=latlong")) ? true : false
-	#end
 	is_geog::Bool = isgeog(prj)
 	coln::Vector{String} = ((val = find_in_dict(d, [:colnames])[1]) === nothing) ? String[] : val
 
@@ -316,7 +312,7 @@ function mat2ds(mat::Array{T,N}, txt::Union{String,Vector{String}}=String[]; hdr
 		return coln
 	end
 
-	att = ((v = find_in_dict(d, [:attrib])[1]) !== nothing && isa(v, Dict{String, String})) ? v : Dict{String, String}()
+	att::Dict{String, String} = ((v = find_in_dict(d, [:attrib])[1]) !== nothing && isa(v, Dict{String, String})) ? v : Dict{String, String}()
 	txtcol::Vector{String} = ((val = find_in_dict(d, [:txtcol :textcol])[1]) !== nothing) ? val : String[]
 
 	D::Vector{GMTdataset} = Vector{GMTdataset}(undef, n_ds)
@@ -599,9 +595,9 @@ function helper_ds_fill(d::Dict, del::Bool=true; symbs=[:fill :fillcolor], nc=0)
 			end
 		elseif (isa(fill_val, Tuple) && eltype(fill_val) == Symbol)
 			_fill = [string.(fill_val)...]
-		elseif (isa(fill_val, Array{String}) && !isempty(fill_val))
+		elseif (isa(fill_val, VecOrMat{String}) && !isempty(fill_val))
 			_fill = vec(fill_val)
-		elseif (isa(fill_val, Array{Symbol}))
+		elseif (isa(fill_val, VecOrMat{Symbol}))
 			_fill = vec(string.(fill_val))
 		else
 			_fill = (nc <= 8) ? copy(matlab_cycle_colors) : copy(simple_distinct)
@@ -887,7 +883,8 @@ function mat2img(mat::AbstractArray{<:Unsigned}; x=Float64[], y=Float64[], v=Flo
 	end
 
 	nx = size(mat, 2);		ny = size(mat, 1);
-	reg = (!isempty(hdr)) ? Int(hdr[7]) : (nx == length(x) && ny == length(y)) ? 0 : 1
+	reg::Int = (!isempty(hdr)) ? Int(hdr[7]) : (nx == length(x) && ny == length(y)) ? 0 : 1
+	hdr::Vector{Float64} = vec(hdr);	x::Vector{Float64} = vec(x);	y::Vector{Float64} = vec(y)	# Otherwis JET screammmms
 	x, y, hdr, x_inc, y_inc = grdimg_hdr_xy(mat, reg, hdr, x, y, is_transposed)
 
 	mem_layout = (size(mat,3) == 1) ? "TCBa" : "TCBa"		# Just to have something. Likely wrong for 3D
@@ -954,7 +951,7 @@ function cmap2cpt(I::GMTimage)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function mat2img(mat::AbstractArray{UInt16}; x=Float64[], y=Float64[], v=Float64[], hdr=Float64[], proj4::String="", wkt::String="", img8=Matrix{UInt8}(undef,0,0), kw...)
+function mat2img(mat::Union{Matrix{UInt16},Array{UInt16,3}}; x=Float64[], y=Float64[], v=Float64[], hdr=Float64[], proj4::String="", wkt::String="", img8::Matrix{UInt8}=Matrix{UInt8}(undef,0,0), kw...)
 	# Take an array of UInt16 and scale it down to UInt8. Input can be 2D or 3D.
 	# If the kw variable 'stretch' is used, we stretch the intervals in 'stretch' to [0 255].
 	# Use this option to stretch the image histogram.
@@ -966,42 +963,47 @@ function mat2img(mat::AbstractArray{UInt16}; x=Float64[], y=Float64[], v=Float64
 	# Use the keyword NOCONV to return GMTimage UInt16 type. I.e., no conversion to UInt8
 
 	d = KW(kw)
+	x::Vector{Float64} = vec(x);	y::Vector{Float64} = vec(y);	v::Vector{Float64} = vec(v);
+	hdr::Vector{Float64} = vec(hdr)
 	if ((val = find_in_dict(d, [:noconv])[1]) !== nothing)		# No conversion to UInt8 is wished
 		return mat2img(mat; x=x, y=y, v=v, hdr=hdr, proj4=proj4, wkt=wkt, d...)
 	end
-	img = isempty(img8) ? Array{UInt8}(undef, size(mat)) : img8
+
+	img = isempty(img8) ? Array{UInt8, ndims(mat)}(undef, size(mat)) : img8
 	(size(img) != size(mat)) && error("Incoming matrix and image holder have different sizes")
 	if ((vals = find_in_dict(d, [:histo_bounds :stretch], false)[1]) !== nothing)
 		nz = 1
 		isa(mat, Array{UInt16,3}) ? (ny, nx, nz) = size(mat) : (ny, nx) = size(mat)
 
-		(vals == "auto" || vals == :auto || (isa(vals, Bool) && vals) || (isa(vals, Real) && vals == 1)) &&
+		(vals == "auto" || vals == :auto || (isa(vals, Real) && vals == 1)) &&
 			(vals = [find_histo_limits(mat)...])	# Out is a tuple, convert to vector
-		len = length(vals)
+		len::Int = length(vals)
 
 		(len > 2*nz) && error("'stretch' has more elements then allowed by image dimensions")
 		(len != 1 && len != 2 && len != 6) &&
 			error("Bad 'stretch' argument. It must be a 1, 2 or 6 elements array and not $len")
 
-		val = (len == 1) ? convert(UInt16, vals)::UInt16 : convert(Array{UInt16}, vals)::Array{UInt16}
+		#val = (len == 1) ? convert(UInt16, vals)::UInt16 : convert(Vector{UInt16}, vals)::Vector{UInt16}
+		(len > 1) && (val26::Vector{UInt16} = convert(Vector{UInt16}, vec(vals)))
 		if (len == 1)
-			sc = 255 / (65535 - val)
+			val1::UInt16 = convert(UInt16, vals)
+			sc = 255 / (65535 - val1)
 			@inbounds @simd for k = 1:numel(img)
-				img[k] = (mat[k] < val) ? 0 : round(UInt8, (mat[k] - val) * sc)
+				img[k] = (mat[k] < val1) ? 0 : round(UInt8, (mat[k] - val1) * sc)
 			end
 		elseif (len == 2)
-			val = [parse(UInt16, @sprintf("%d", vals[1])) parse(UInt16, @sprintf("%d", vals[2]))]
-			sc = 255 / (val[2] - val[1])
+			val_ = [parse(UInt16, @sprintf("%d", val26[1])) parse(UInt16, @sprintf("%d", val26[2]))]
+			sc = 255 / (val_[2] - val_[1])
 			@inbounds @simd for k = 1:numel(img)
-				img[k] = (mat[k] < val[1]) ? 0 : ((mat[k] > val[2]) ? 255 : round(UInt8, (mat[k]-val[1])*sc))
+				img[k] = (mat[k] < val_[1]) ? 0 : ((mat[k] > val_[2]) ? 255 : round(UInt8, (mat[k]-val_[1])*sc))
 			end
 		else	# len = 6
 			nxy = nx * ny
 			v1 = [1 3 5];	v2 = [2 4 6]
-			sc = [255 / (val[2] - val[1]), 255 / (val[4] - val[3]), 255 / (val[6] - val[5])]
+			sc = [255 / (val26[2] - val26[1]), 255 / (val26[4] - val26[3]), 255 / (val26[6] - val26[5])]
 			@inbounds @simd for n = 1:nz
 				@inbounds @simd for k = 1+(n-1)*nxy:n*nxy
-					img[k] = (mat[k] < val[v1[n]]) ? 0 : ((mat[k] > val[v2[n]]) ? 255 : round(UInt8, (mat[k]-val[v1[n]])*sc[n]))
+					img[k] = (mat[k] < val26[v1[n]]) ? 0 : ((mat[k] > val26[v2[n]]) ? 255 : round(UInt8, (mat[k]-val26[v1[n]])*sc[n]))
 				end
 			end
 		end
@@ -1018,7 +1020,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function mat2img(img::GMTimage; kw...)
 	# Scale a UInt16 GMTimage to UInt8. Return a new object but with all old image parameters
-	(!isa(img.image, Array{UInt16}))  && return img		# Nothing to do
+	(eltype(img.image) != UInt16) && return img			# Nothing to do
 	I = mat2img(img.image; kw...)
 	I.proj4 = img.proj4;	I.wkt = img.wkt;	I.epsg = img.epsg
 	I.range = img.range;	I.inc = img.inc;	I.registration = img.registration
@@ -1400,7 +1402,7 @@ function stackgrids(names::Vector{String}, v=nothing; zcoord=nothing, zdim_name:
 	#x, y, range, inc = G.x, G.y, G.range, G.inc		# So read first with GMT anf keep only the coords info.
 	G = gdaltranslate(names[1])
 	x, y, range, inc = G.x, G.y, G.range, G.inc
-	mat = Array{eltype(G)}(undef, size(G,1), size(G,2), length(names))
+	mat = Array{eltype(G), 3}(undef, size(G,1), size(G,2), length(names))
 	mat[:,:,1] .= G.z
 	for k = 2:length(names)
 		G = gdaltranslate(names[k])
@@ -1576,8 +1578,8 @@ function mat2grid(val::Real=Float32(0); reg=nothing, hdr=Float64[], proj4::Strin
                   wkt::String="", epsg::Int=0, geog::Int=-1, title::String="", tit::String="", rem::String="",
                   names::Vector{String}=String[])
 
-	(hdr === nothing) && error("When creating grid type with no data the 'hdr' arg cannot be missing")
-	(!isa(hdr, Array{Float64})) && (hdr = Float64.(hdr))
+	isempty(hdr) && error("When creating grid type with no data the 'hdr' arg cannot be missing")
+	(eltype(hdr) != Float64) && (hdr = Float64.(hdr))
 	(!isa(val, AbstractFloat)) && (val = Float32(val))		# We only want floats here
 	if (length(hdr) == 6)
 		hdr = [hdr[1], hdr[2], hdr[3], hdr[4], val, val, reg === nothing ? 0. : 1., hdr[5], hdr[6]]
@@ -1723,7 +1725,7 @@ function grdimg_hdr_xy(mat, reg, hdr, x=Float64[], y=Float64[], is_transposed=fa
 		end
 		x_inc = (x[end] - x[1]) / (nx - one_or_zero)
 		y_inc = (y[end] - y[1]) / (ny - one_or_zero)
-		zmin, zmax = extrema_nan(mat)
+		zmin::Float64, zmax::Float64 = extrema_nan(mat)
 		hdr = Float64.([x[1], x[end], y[1], y[end], zmin, zmax])
 	elseif (isempty(hdr))
 		zmin, zmax = extrema_nan(mat)
@@ -1734,7 +1736,7 @@ function grdimg_hdr_xy(mat, reg, hdr, x=Float64[], y=Float64[], is_transposed=fa
 		x_inc = 1.0;	y_inc = 1.0
 	else
 		(length(hdr) != 9) && error("The HDR array must have 9 elements")
-		(!isa(hdr, Array{Float64})) && (hdr = Float64.(hdr))
+		(eltype(hdr) != Float64) && (hdr = Float64.(hdr))
 		one_or_zero = (hdr[7] == 0) ? 1 : 0
 		if (ny == 1 && nx == 2 && mat[1] === nothing)
 			# In this case the 'mat' is a tricked matrix with [nothing val]. Compute nx,ny from header

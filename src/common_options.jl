@@ -233,24 +233,27 @@ function merge_R_and_xyzlims(d::Dict, opt_R::String)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
+function build_opt_R(val::StrSymb, symb::Symbol=Symbol())::String
+	r::String = string(val)
+	if     (r == "global")     R = " -Rd"
+	elseif (r == "global360")  R = " -Rg"
+	elseif (r == "same")       R = " -R"
+	else                       R = " -R" * r
+	end
+	R
+end
+
 function build_opt_R(val, symb::Symbol=Symbol())::String		# Generic function that deals with all but NamedTuple args
 	R::String = ""
-	if (isa(val, String) || isa(val, Symbol))
-		r::String = string(val)
-		if     (r == "global")     R = " -Rd"
-		elseif (r == "global360")  R = " -Rg"
-		elseif (r == "same")       R = " -R"
-		else                       R = " -R" * r
-		end
-	elseif ((isvector(val) || isa(val, Tuple)) && (length(val) == 4 || length(val) == 6))
+	if ((isvector(val) || isa(val, Tuple)) && (length(val) == 4 || length(val) == 6))
 		if (symb ∈ (:region_llur, :limits_llur, :limits_diag, :region_diag))
-			_val::Vector{<:Float64} = vec(Float64.(collect(val)))
+			_val::Vector{Float64} = vec(Float64.(collect(val)))
 			R = " -R" * @sprintf("%.15g/%.15g/%.15g/%.15g+r", _val[1], _val[3], _val[2], _val[4])::String
 		else
 			R = " -R" * arg2str(val)
 		end
 	elseif (isa(val, GItype))
-		R = @sprintf(" -R%.15g/%.15g/%.15g/%.15g", val.range[1], val.range[2], val.range[3], val.range[4])
+		R = sprintf(" -R%.15g/%.15g/%.15g/%.15g", val.range[1], val.range[2], val.range[3], val.range[4])
 	elseif (isa(val, GDtype))
 		bb::Vector{<:Float64} = isa(val, GMTdataset) ? val.bbox : val[1].ds_bbox
 		R = (symb ∈ (:region_llur, :limits_llur, :limits_diag, :region_diag)) ?
@@ -267,7 +270,7 @@ function build_opt_R(arg::NamedTuple, symb::Symbol=Symbol())::String
 	d = nt2dict(arg)					# Convert to Dict
 	if ((val = find_in_dict(d, [:limits :region])[1]) !== nothing)
 		if ((isa(val, VecOrMat{<:Real}) || isa(val, Tuple)) && (length(val) == 4 || length(val) == 6))
-			vval::Vector{<:Float64} = vec(Float64.(collect(val)))
+			vval::Vector{Float64} = vec(Float64.(collect(val)))
 			if (haskey(d, :diag) || haskey(d, :diagonal))		# The diagonal case
 				BB = @sprintf("%.15g/%.15g/%.15g/%.15g+r", vval[1], vval[3], vval[2], vval[4])
 			else
@@ -278,7 +281,7 @@ function build_opt_R(arg::NamedTuple, symb::Symbol=Symbol())::String
 			BB = string(val) 			# Whatever good stuff or shit it may contain
 		end
 	elseif ((val = find_in_dict(d, [:limits_diag :region_diag])[1]) !== nothing)	# Alternative way of saying "+r"
-		_val::Vector{<:Float64} = collect(Float64, val)
+		_val::Vector{Float64} = collect(Float64, val)
 		BB = @sprintf("%.15g/%.15g/%.15g/%.15g+r", _val[1], _val[3], _val[2], _val[4])
 	elseif ((val = find_in_dict(d, [:continent :cont])[1]) !== nothing)
 		val_::String = uppercase(string(val))
@@ -315,7 +318,7 @@ function build_opt_R(arg::NamedTuple, symb::Symbol=Symbol())::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function opt_R2num(opt_R::String)
+function opt_R2num(opt_R::String)::Vector{Float64}
 	# Take a -R option string and convert it to numeric
 	(opt_R == "") && error("opt_R is empty but that shouldn't happen here.")
 	(endswith(opt_R, "Rg")) && return [0.0, 360., -90., 90.]
@@ -326,7 +329,7 @@ function opt_R2num(opt_R::String)
 			opt_R = opt_R[1:ind[1]-1];	isdiag = true		# Strip the "+r"
 		end
 		rs = split(opt_R, '/')
-		limits::Vector{<:Float64} = zeros(length(rs))
+		limits::Vector{Float64} = zeros(length(rs))
 		fst = ((ind = findfirst("R", rs[1])) !== nothing) ? ind[1] : 0
 		#contains(rs[2], "T") || contains(rs[2], "t")
 		limits[1] = parse(Float64, rs[1][fst+1:end])
@@ -659,10 +662,11 @@ end
 function build_opt_J(val)::Tuple{String, Bool}
 	out::String = "";		mnemo = false
 	if (isa(val, String) || isa(val, Symbol))
-		if (string(val) == "guess")
+		val_s::String = string(val)
+		if (val_s == "guess")
 			out, mnemo = guess_proj(CTRL.limits[7:8], CTRL.limits[9:10]), true
 		else
-			prj::String, mnemo = parse_proj(string(val))
+			prj::String, mnemo = parse_proj(string(val_s))
 			out = " -J" * prj
 		end
 	elseif (isa(val, NamedTuple))
@@ -787,7 +791,7 @@ function parse_proj(p::NamedTuple)::Tuple{String, Bool}
 end
 
 # ---------------------------------------------------------------------------------------------------
-function guess_proj(lonlim, latlim)::String
+function guess_proj(lonlim::VecOrMat{Float64}, latlim::VecOrMat{Float64})::String
 	# Select a projection based on map limits. Follows closely the Matlab behavior
 
 	if (lonlim[1] == 0.0 && lonlim[2] == 0.0 && latlim[1] == 0.0 && latlim[2] == 0.0)
@@ -1643,6 +1647,7 @@ function parse_I(d::Dict, cmd::String, symbs, opt::String, del::Bool=true)::Stri
 	# Parse the quasi-global -I option. But arguments can be strings, arrays, tuples or NamedTuples
 	# At the end we must recreate this syntax: xinc[unit][+e|n][/yinc[unit][+e|n]] or
 	get_that_string(arg)::String = string(arg)::String		# Function barrier. Shuting up JET, etc.
+	cmd::String = cmd
 
 	if ((val = find_in_dict(d, symbs, del)[1]) !== nothing)
 		isa(val, Dict) && (val = Base.invokelatest(dict2nt,val))
@@ -2030,7 +2035,7 @@ arg2str(arg::Real,          sep = '/')::String = @sprintf("%.12g", arg)
 arg2str(arg::Symbol,        sep = '/')::String = string(arg)
 arg2str(arg::Array{<:Real}, sep = '/')::String = string(rstrip(join([string(x, sep) for x in arg]), sep))
 arg2str(arg::Tuple,         sep = '/')::String = string(rstrip(join([string(x, sep) for x in arg]), sep))
-function arg2str(arg::Bool, sep = '/')
+function arg2str(arg::Bool, sep = '/')::String
     @assert arg "arg is false!"
     arg && return ""
 end
@@ -2043,7 +2048,7 @@ function arg2str(arg::AbstractString, sep = '/')::String
 end
 function arg2str(arg, sep = '/')
     isempty_(arg) && return ""
-	error("arg2str: argument 'arg' can only be a String, Symbol, Number, Array or a Tuple, but was $(typeof(arg))")
+	error("arg2str: argument 'arg' can only be a String, Symbol, Number, Array or a Tuple.")
 end
 function arg2str(arg::GMTdataset, sep='/')::String
 	# This method is mainly to allow passing the direct output of gmtinfo()
@@ -4690,7 +4695,7 @@ function print_kwarg_opts(symbs::VMs, mapa=nothing)::String
 		opt *= " => Tuple | String | Number | Bool [Possibly not yet expanded]"
 	end
 	println(opt)
-	return ""		# Must return != nothing so that dbg_print_cmd() signals stop progam's execution
+	return ""		# Must return != nothing so that dbg_print_cmd() signals stop program's execution
 end
 
 # --------------------------------------------------------------------------------------------------

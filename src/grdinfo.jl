@@ -64,14 +64,14 @@ function grdinfo_helper(cmd0::String, arg1; kwargs...)
 	(isa(arg1, GMTgrid) && size(arg1,3) > 1 && !occursin("-Q", cmd)) && (cmd *= " -Q")  # arg1 is a CUBE
 	R = common_grd(d, cmd0, cmd, "grdinfo ", arg1)		# Finish build cmd and run it
 	if (isa(R, GMTdataset) && contains(cmd, " -C"))
-		hdims = (R[end] == 1) ? ["lon_min", "lon_max", "lat_min", "lat_max"] : ["x_min", "x_max", "y_min", "y_max"]
+		hdims = (R.data[end] == 1) ? ["lon_min", "lon_max", "lat_min", "lat_max"] : ["x_min", "x_max", "y_min", "y_max"]
 		if (opt_M == "" && opt_L == "")            # 
-			(length(R) == 12) ?
+			(length(R.data) == 12) ?
 				append!(hdims, ["z_min","z_max","dx","dy","n_cols","n_rows","reg","isgeog"]) :
 				append!(hdims, ["b(?)","t(?)","z_min","z_max","dx","dy","dz","n_cols","n_rows","n_layers","reg","isgeog"])
 			R.colnames = hdims
 		elseif (opt_M != "" && opt_L == "")
-			(length(R) == 17) &&    # It can be 19 for cubes (not implemented yet)
+			(length(R.data) == 17) &&    # It can be 19 for cubes (not implemented yet)
 				(R.colnames = append!(hdims, ["z_min","z_max","dx","dy","n_cols","n_rows","xmin_pos","ymin_pos","xmax_pos","ymax_pos","n_NaNs","reg","isgeog"]))
 		end
 	end

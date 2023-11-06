@@ -86,8 +86,8 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
 	if ((val = find_in_dict(d, [:getR :getregion :get_region], false)[1]) !== nothing)
-		t = string(gmt_proggy, " -E", val)::String
-		((Vd = find_in_dict(d, [:Vd], false)[1]) !== nothing) && (Vd == 1 ? println(t) : Vd > 1 ? (return t) : nothing)
+		t::String = string(gmt_proggy, " -E", val)
+		((Vd = find_in_dict(d, [:Vd], false)[1]) !== nothing) && (Vd_::Int = Vd; Vd_ == 1 ? println(t) : Vd_ > 1 ? (return t) : nothing)
 		t = parse_V(d::Dict, t)
 		return gmt(t).text[1]::String
 	end
@@ -302,13 +302,13 @@ To see the plots produced by these examples type: ``@? earthregions``
 function earthregions(name::String=""; proj="guess", grid::Bool=false, dataset="", res="", exact::Bool=false,
                       registration="", country::Bool=false, round=0, Vd::Int=0)
 
-	(name == "") && (println("Available collections:\n\t",["DCW", "NatEarth", "UN", "Mainlands", "IHO", "Wiki", "Lakes"]); return)
+	(name == "") && (println("Available collections:\n\t" * join(["DCW", "NatEarth", "UN", "Mainlands", "IHO", "Wiki", "Lakes"], ", ")); return)
 
 	(registration != "" && res == "") && error("ERROR: Cannot specify a registration and NOT specify a resolution.")
 	(grid && dataset == "") && (dataset = "earth_relief")
 
 	datasets = ["earth_relief", "earth_synbath", "earth_gebco", "earth_mask", "earth_day", "earth_night", "earth_geoid", "earth_faa", "earth_vgg", "earth_wdmam", "earth_age"]
-	(dataset != "") && (dataset = string(dataset))		# To let use symbols too.
+	(dataset != "") && (dataset::String = string(dataset))		# To let use symbols too.
 	(dataset != "" && !any(startswith.(dataset, datasets))) && error("ERROR: unknown grid/image dataset name: '$dataset'. Must be one of:\n$datasets")
 	type = (dataset != "" || grid) ? "raster" : "map"
 
@@ -368,7 +368,7 @@ function earthregions(name::String=""; proj="guess", grid::Bool=false, dataset="
 
 			(col != 0 && col != 2 && country) &&	# Using numbers (0 & 2) is dangerours. If collection lists change ...
 				(@warn("This collection knows nothing about DCW country polygons."); country = false)
-			reg::Vector{Float64} = D[ind,:]
+			reg::Vector{Float64} = D.data[ind,:]
 			lim::String = @sprintf("%.6g/%.6g/%.6g/%.6g", reg[:]...)
 		else					# Use the limits provided by GMT directly and no check if 'code' is valid
 			lim = code

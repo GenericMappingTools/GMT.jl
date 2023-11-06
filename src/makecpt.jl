@@ -76,7 +76,7 @@ function makecpt(cmd0::String="", arg1=nothing; kwargs...)::Union{String, GMTcpt
 	(dbg_print_cmd(d, cmd) !== nothing) && return cmd
 	(arg1 === nothing && !isempty(Tvec)) && (arg1 = Tvec; Tvec = Float64[])
 	_r = gmt(cmd, arg1, !isempty(Tvec) ? Tvec : nothing)
-	r = (_r !== nothing) ? _r : GMTcpt()	# _r === nothing when we save CPT on disk.
+	r::GMTcpt = (_r !== nothing) ? _r : GMTcpt()	# _r === nothing when we save CPT on disk.
 	(got_N && !isempty(r)) && (r.bfn = ones(3,3))	# Cannot remove the bfn like in plain GMT so make it all whites
 	CTRL.pocket_d[1] = d					# Store d that may be not empty with members to use in other modules
 	CURRENT_CPT[1] = r
