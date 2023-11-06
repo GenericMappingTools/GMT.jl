@@ -45,14 +45,16 @@ using Dates, Printf#, Logging
 	catch
 	end
 
+	println("		Entering: test_avatars.jl")
+	include("test_avatars.jl")
+	println("		Entering: test_misc.jl")
+	include("test_misc.jl")
 	println("		Entering: test_tables.jl")
 	include("test_tables.jl")
 	println("		Entering: test_common_opts.jl")
 	include("test_common_opts.jl")
 	println("		Entering: test_B-GMTs.jl")
 	include("test_B-GMTs.jl")
-	println("		Entering: test_avatars.jl")
-	include("test_avatars.jl")
 	println("		Entering: test_new_projs.jl")
 	include("test_new_projs.jl")
 	println("		Entering: test_GRDs.jl")
@@ -134,9 +136,6 @@ using Dates, Printf#, Logging
 	GMT.resetGMT()
 	@test_throws ErrorException("The region ue is invalid or has not been implemented yet.") GMT.mk_codes_values(["PRT"], [1.0], region="ue")
 
-	println("		Entering: test_misc.jl")
-	GMT.resetGMT()
-	include("test_misc.jl")
 
 	# Remove garbage
 	println("	REMOVE GARBAGE")
