@@ -28,7 +28,7 @@
 	@test GMT.arg2str(("aa",2,3)) == "aa/2/3"
 	@test GMT.arg2str(Dict(:shaded => "-4p/-6p/grey20@40"), [:shaded]) == "-4p/-6p/grey20@40"
 	@test GMT.arg2str(Dict(:shaded => "aa bb"), [:shaded]) == "\"aa bb\""
-	@test_throws ErrorException("arg2str: argument 'arg' can only be a String, Symbol, Number, Array or a Tuple, but was DataType") GMT.arg2str(typeof(1))
+	@test_throws ErrorException("arg2str: argument 'arg' can only be a String, Symbol, Number, Array or a Tuple.") GMT.arg2str(typeof(1))
 	@test GMT.parse_b(Dict(:b => (ncols=2, swapp_bytes=true, little_endian=true, type=:char)), "")[2] == " -b2cw+l"
 	@test GMT.parse_b(Dict(:b => (ncols=2, type=:double)), "")[2] == " -b2d"
 	@test GMT.parse_b(Dict(:b => (ncols=2, type=:ai)), "")[2] == " -b2d"
