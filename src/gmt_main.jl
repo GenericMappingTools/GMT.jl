@@ -136,7 +136,7 @@ function gmt(cmd::String, args...)
 		pLL = Ref([LL], 1)		# Need this because GMT_Destroy_Options() wants a Ref
 	end
 
-	X = Array{GMT_RESOURCE}(undef, 1, n_items)
+	X = Vector{GMT_RESOURCE}(undef, n_items)
 	for k = 1:n_items
 		X[k] = unsafe_load(XX, k)        # Cannot use pointer_to_array() because GMT_RESOURCE is not immutable and would BOOM!
 	end
@@ -679,8 +679,6 @@ end
 # ---------------------------------------------------------------------------------------------------
 function GMTJL_Set_Object(API::Ptr{Nothing}, X::GMT_RESOURCE, ptr, pad)::GMT_RESOURCE
 	# Create the object container and hook as X->object
-	#oo = unsafe_load(X.option)
-	#module_input = (oo.option == GMT.GMT_OPT_INFILE)
 
 	if (X.family == GMT_IS_GRID)			# Get a grid from Julia or a dummy one to hold GMT output
 		X.object =  grid_init(API, X, ptr, pad, false)
@@ -763,7 +761,7 @@ function grid_init(API::Ptr{Nothing}, X::GMT_RESOURCE, grd_box, pad::Int=2, cube
 		convert(Ptr{GMT_CUBE}, GMT_Create_Data(API, GMT_IS_CUBE, GMT_IS_VOLUME, GMT_IS_OUTPUT, NULL, NULL, NULL, 0, 0, NULL)) :
 		convert(Ptr{GMT_GRID}, GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_IS_OUTPUT, NULL, NULL, NULL, 0, 0, NULL))
 
-	israsters(grd_box) && (grd_box = rasters2grid(grd_box))
+	israsters(grd_box) && (grd_box::GMTgrid = rasters2grid(grd_box))
 	!isa(grd_box, GMTgrid) && error("grd_init: input ($(typeof(grd_box))) is not a GRID container type")
 	grid_init(API, X, grd_box, pad, cube)
 end
