@@ -382,7 +382,7 @@ function helper2_boxplot(data::Union{Vector{Vector{T}}, AbstractMatrix{T}}, x::V
 			mi, ma = min(mi, q0), max(ma, q100)		# For keeping a global min/max that includes the outliers too
 			ind_l = t .< (q25 - 1.5*(q75-q25))
 			ind_h = t .> (q75 + 1.5*(q75-q25))
-			ind = ind_l .|| ind_h
+			ind = collect(ind_l .| ind_h)
 			if (any(ind))
 				q0, q25, q50, q75, q100 = _quantile(t[.!ind], w, [0.0, 0.25, 0.5, 0.75, 1.0])
 				t_ol = t[ind]
