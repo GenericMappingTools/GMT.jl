@@ -96,7 +96,7 @@ function histogram_helper(cmd0::String, arg1; first=true, kwargs...)
 	arg2 = nothing		# May be needed if GMTcpt type is sent in via C
 	N_args = (arg1 === nothing) ? 0 : 1
 
-	gmt_proggy = (IamModern[1]) ? "histogram "  : "pshistogram "
+	gmt_proggy = (IamModern[1]) ? "histogram " : "pshistogram "
 
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
@@ -176,7 +176,7 @@ function histogram_helper(cmd0::String, arg1; first=true, kwargs...)
 
 	limit_L = nothing
 	do_auto = ((val_auto = find_in_dict(d, [:auto :thresholds])[1]) !== nothing) ? true : false	# Automatic bounds detetion
-	do_getauto = ((val_getauto = find_in_dict(d, [:getauto :getthreshols])[1]) !== nothing) ? true : false
+	do_getauto = ((val_getauto = find_in_dict(d, [:getauto :getthresholds])[1]) !== nothing) ? true : false
 	do_zoom = ((find_in_dict(d, [:zoom])[1]) !== nothing) ? true : false	# Automatic zoom to interesting region
 
 	function if_zoom()
@@ -190,13 +190,13 @@ function histogram_helper(cmd0::String, arg1; first=true, kwargs...)
 
 	if (isa(arg1, GMTimage) || is_subarray_uint)				# If it's an image with no bin option, default to bin=1
 		do_clip = (isa(arg1[1], UInt16) && (val = find_in_dict(d, [:full_histo])[1]) === nothing) ? true : false
-		(do_zoom && !do_auto) && (val_auto = nothing)		# I.e. 'zoom' sets also the auto mode
+		(do_zoom && !do_auto) && (val_auto = nothing)			# I.e. 'zoom' sets also the auto mode
 		hst, cmd = loc_histo(arg1, cmd, opt_T, opt_Z)
 		(do_clip && (all(hst[3:10,2] .== 0)) || hst[1,2] > 100 * mean(hst[2:10,2])) && (hst[1,2] = 0; hst[2,2] = 0)
 		if (do_auto || do_getauto || do_zoom)
 			which_auto = (do_auto) ? val_auto : val_getauto
 			limit_L, limit_R = find_histo_limits(arg1, which_auto, 20)
-			(do_getauto) && return [Int(limit_L), Int(limit_R)]		# If only want the histogram limits, we are done then.
+			(do_getauto) && return [Int(limit_L), Int(limit_R)]	# If only want the histogram limits, we are done then.
 			(do_zoom) && (cmd, opt_R = if_zoom())
 		end
 		arg1 = hst		# We want to send the histogram, not the GMTimage
@@ -284,7 +284,7 @@ function find_histo_limits(In, thresholds=nothing, width=20, hst_::Matrix{Float6
 	end
 	max_ = maximum(hst, dims=1)[2]
 	(max_ == 0) && error("This histogram had nothing but countings ONLY in first bin. No point to proceed.")
-	thresh_l = 0.001;		thresh_r = 0.004
+	thresh_l::Float64 = 0.001;		thresh_r::Float64 = 0.004
 	if (isa(thresholds, Tuple) && length(thresholds) == 2)
 		thresh_l, thresh_r = thresholds[:] ./ 100
 	end
