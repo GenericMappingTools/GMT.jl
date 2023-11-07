@@ -47,6 +47,18 @@ function princomp!(X, q)
 	return score, coeff, latent, explained, collect(mu'), ems
 end
 
+#=
+function covzm(x::AbstractMatrix)
+	x = x .- mean(x, dims=1)
+	C = x'x	
+    T = promote_type(typeof(first(C) / 1), eltype(C))
+    A = convert(AbstractMatrix{T}, C)
+    b = 1/(size(x, 1) - 1)
+    A .= A .* b
+    return A
+end
+=#
+
 # ---------------------------------------------------------------------------------------------------
 """
     score, coeff, latent, explained, mu, ems = pca(X; DT::DataType=Float32, npc=0)

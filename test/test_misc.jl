@@ -174,16 +174,13 @@
 
 	check = UInt8[zeros(9,9) ones(9,9) ones(9,9).*2; ones(9,9).*3 ones(9,9).*4 ones(9,9).*5; ones(9,9).*6 ones(9,9).*7 ones(9,9).*8];
 	@info "before one makecpt"
-	GMT.resetGMT()
 	C = makecpt(range=(0,9,1));
-	GMT.resetGMT()
 	I = mat2img(check);
 	I.n_colors = 0
 	rgb = GMT.ind2rgb(I);
 	GMT.resetGMT()
 	I = mat2img(check, cmap=C);
 	rgb = GMT.ind2rgb(I);
-	GMT.resetGMT()
 	@info "before image_alpha!"
 	image_alpha!(I, alpha_ind=5);
 	image_alpha!(I, alpha_vec=round.(UInt32,rand(6).*255));
