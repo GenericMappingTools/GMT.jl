@@ -2979,14 +2979,14 @@ end
 # ------------------------
 function helper0_axes(arg)::String
 	# Deal with the available ways of specifying the WESN(Z),wesn(z),lbrt(u)
-	# The solution is very enginious and allows using "left_full", "l_full" or only "l_f"
+	# The solution is very engenious and allows using "left_full", "l_full" or only "l_f"
 	# to mean 'W'. Same for others:
 	# bottom|bot|b_f(ull);  right|r_f(ull);  t(op)_f(ull);  up_f(ull)  => S, E, N, Z
 	# bottom|bot|b_t(icks); right|r_t(icks); t(op)_t(icks); up_t(icks) => s, e, n, z
 	# bottom|bot|b_b(are);  right|r_b(are);  t(op)_b(are);  up_b(are)  => b, r, t, u
 
 	(isa(arg, String) || isa(arg, Symbol)) && return string(arg) # Assume that a WESNwesn was already sent in.
-	!isa(arg, Tuple) && error("'axes' argument must be a String, Symbol or a Tuple but was ($(typeof(arg)))")
+	!isa(arg, Tuple) && error("'axes' argument must be a String, Symbol or a Tuple.")
 
 	opt = "";	lbrtu = "lbrtu";	WSENZ = "WSENZ";	wsenz = "wsenz";	lbrtu = "lbrtu"
 	for k = 1:numel(arg)
