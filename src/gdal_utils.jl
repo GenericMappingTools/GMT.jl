@@ -770,9 +770,8 @@ function gdaldrivers(type="raster"; out::Bool=false)
 	other_DCAP = (_type == "raster") ? "DCAP_VECTOR" : "DCAP_RASTER"
 	n_gdal_driver = Gdal.GDALGetDriverCount()
 	n_ogr_driver = Gdal.OGRGetDriverCount()
-	n_drv = (_type == "raster") ? n_gdal_driver : n_ogr_driver
-	list1 = Vector{String}(undef, n_drv);	list2 = Vector{String}(undef, n_drv)
-	list3 = Vector{String}(undef, n_drv);	list4 = Vector{String}(undef, n_drv)
+	list1 = Vector{String}(undef, n_gdal_driver);	list2 = Vector{String}(undef, n_gdal_driver)
+	list3 = Vector{String}(undef, n_gdal_driver);	list4 = Vector{String}(undef, n_gdal_driver)
 	n = 1
 	for k = 1:n_gdal_driver
 		drv = Gdal.GDALGetDriver(k-1)
@@ -785,7 +784,7 @@ function gdaldrivers(type="raster"; out::Bool=false)
 		list4[n] = (i === nothing) ? "" : meta[i][16:end]
 		n += 1
 	end
-	deleteat!(list1, n:n_drv)
+	deleteat!(list1, n:n_gdal_driver)
 	ind = sortperm(list1)
 	list1, list2, list3, list4 = list1[ind], list2[ind], list3[ind], list4[ind]
 	!out && pretty_table([list1 list2 list3 list4]; header=["Short Name", "Long Name", "Type(s)", "File extension(s)"], alignment=:l, crop=:none)
