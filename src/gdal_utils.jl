@@ -754,3 +754,40 @@ function xy2lonlat(D::Vector{<:GMTdataset}, s_srs_=nothing; s_srs=nothing, t_srs
 	(length(D) > 1) && ogr2ogr([0.0 0], ["-s_srs", "+proj=lonlat", "-t_srs", "+proj=lonlat", "-overwrite"])
 	return r
 end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    gdaldrivers(type="raster"; out::Bool=false)
+
+List all the GDAL drivers available in this GMT.jl installation. By default it prints the names of the raster
+drivers, but if `type="vector"` it will print the names of the vector drivers. If `out=true`, instead of printing
+a table it will return the four columns of the table in separate 4 vectors.
+"""
+function gdaldrivers(type="raster"; out::Bool=false)
+	_type = (type == "raster" || type == :raster) ? "raster" : "vector"
+	DCAP = (_type == "raster") ? "DCAP_RASTER" : "DCAP_VECTOR"
+	other_type = (_type == "raster") ? ",vector" : ",raster"
+	other_DCAP = (_type == "raster") ? "DCAP_VECTOR" : "DCAP_RASTER"
+	n_gdal_driver = Gdal.GDALGetDriverCount()
+	n_ogr_driver = Gdal.OGRGetDriverCount()
+	n_drv = (_type == "raster") ? n_gdal_driver : n_ogr_driver
+	list1 = Vector{String}(undef, n_drv);	list2 = Vector{String}(undef, n_drv)
+	list3 = Vector{String}(undef, n_drv);	list4 = Vector{String}(undef, n_drv)
+	n = 1
+	for k = 1:n_gdal_driver
+		drv = Gdal.GDALGetDriver(k-1)
+		meta = Gdal.metadata(drv)
+		!Gdal.fetchbool(meta, DCAP) && continue
+		list1[n] = Gdal.shortname(drv)
+		list2[n] = Gdal.longname(drv)
+		list3[n] = Gdal.fetchbool(meta, other_DCAP) ? _type * other_type : _type
+		i = findfirst(startswith.(meta, "DMD_EXTENSIONS"))
+		list4[n] = (i === nothing) ? "" : meta[i][16:end]
+		n += 1
+	end
+	deleteat!(list1, n:n_drv)
+	ind = sortperm(list1)
+	list1, list2, list3, list4 = list1[ind], list2[ind], list3[ind], list4[ind]
+	!out && pretty_table([list1 list2 list3 list4]; header=["Short Name", "Long Name", "Type(s)", "File extension(s)"], alignment=:l, crop=:none)
+	return out ? (list1, list2, list3, list4) : nothing
+end

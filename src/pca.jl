@@ -33,6 +33,10 @@ function princomp!(X, q)
 	idx = sortperm(F.values, rev=true)
 	latent::Vector{eltype(X)} = F.values[idx]	# Eigenvalues (latent is what Matlab calls to this in pca() ??)
 	V::Matrix{eltype(X)}      = F.vectors[:, idx]
+	#U, S, Vt = svd(cov_X)
+	#idx = sortperm(S, rev=true)
+	#latent::Vector{eltype(X)} = S[idx]
+	#V::Matrix{eltype(X)}      = U[:, idx]
 	coeff = V[:, 1:q]						# first q rows of V.
 
 	mu = sum(X, dims=1) / n_rows

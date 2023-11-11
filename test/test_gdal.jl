@@ -298,4 +298,6 @@ Gdal.GDALDestroyDriverManager()
 	I1.layout = "TRPa"
 	I2.image[end] = UInt8(200)		# to make tests visit another if branch
 	GMT.blendimg!(I1, I2)
+
+	gdaldrivers(:vec, out=true);
 end
