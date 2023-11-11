@@ -289,6 +289,7 @@ GDALGetDescription(a1) = acare(ccall((:GDALGetDescription, libgdal), Cstring, (p
 GDALGetMetadata(a1, a2) = acare(ccall((:GDALGetMetadata, libgdal), Ptr{Cstring}, (pVoid, Cstring), a1, a2))
 GDALGetMetadataDomainList(a1) = acare(ccall((:GDALGetMetadataDomainList, libgdal), Ptr{Cstring}, (pVoid,), a1))
 GDALGetDriver(a1) = acare(ccall((:GDALGetDriver, libgdal), pVoid, (Cint,), a1))
+OGRGetDriver(a1) = acare(ccall((:OGRGetDriver, libgdal), pVoid, (Cint,), a1))
 GDALGetDriverByName(a1) = acare(ccall((:GDALGetDriverByName, libgdal), pVoid, (Cstring,), a1))
 GDALGetDriverShortName(a1) = acare(ccall((:GDALGetDriverShortName, libgdal), Cstring, (pVoid,), a1), false)
 GDALGetDriverLongName(a1) = acare(ccall((:GDALGetDriverLongName, libgdal), Cstring, (pVoid,), a1), false)
@@ -360,6 +361,17 @@ function fetchnamevalue(strlist::Vector{String}, name::String="")::String
 	item = CSLFetchNameValue(strlist, name)
 	return item == C_NULL ? "" : unsafe_string(item)
 end
+
+CPLFetchBool(a1, a2) = acare(ccall((:CPLFetchBool, libgdal), Bool, (Ptr{Cstring}, Cstring), a1, a2))
+"""
+    fetchbool(strlist::Vector{String}, name::String)
+
+In a StringList of "Name=Value" pairs, look to see if there is a key with the given name, and if it can be
+interpreted as being TRUE. If the key appears without any "=Value" portion it will be considered true.
+If the value is NO, FALSE or 0 it will be considered FALSE otherwise if the key appears in the list it will
+be considered TRUE. If the key doesn't appear at all, the indicated default value will be returned.
+"""
+fetchbool(strlist::Vector{String}, name::String)::Bool = CPLFetchBool(strlist, name)
 
 GDALSetDescription(a1, a2) = acare(ccall((:GDALSetDescription, libgdal), Cvoid, (pVoid, Cstring), a1, a2))
 GDALSetMetadata(a1, a2, a3) = acare(ccall((:GDALSetMetadata, libgdal), UInt32, (pVoid, Ptr{Cstring}, Cstring), a1, a2, a3))
@@ -1451,7 +1463,9 @@ end
 	readraster(args...; kwargs...) = RasterDataset(unsafe_read(args...; kwargs...))
 
 	shortname(drv::Driver) = GDALGetDriverShortName(drv.ptr)
+	shortname(obj::Ptr{Nothing}) = GDALGetDriverShortName(obj)
 	longname(drv::Driver) = GDALGetDriverLongName(drv.ptr)
+	longname(obj::Ptr{Nothing}) = GDALGetDriverLongName(obj)
 	options(drv::Driver) = GDALGetDriverCreationOptionList(drv.ptr)
 	driveroptions(name::AbstractString) = options(getdriver(name))
 
@@ -1803,6 +1817,7 @@ end
 	ncolorentry(ct::ColorTable) = GDALGetColorEntryCount(ct.ptr)
 	getcolorentry(ct::ColorTable, i::Integer) = unsafe_load(GDALGetColorEntry(ct.ptr, i))
 	metadata(obj; domain::AbstractString="") = GDALGetMetadata(obj.ptr, domain)
+	metadata(obj::Ptr{Nothing}; domain::AbstractString="") = GDALGetMetadata(obj, domain)
 	metadatadomainlist(obj)::Vector{String} = GDALGetMetadataDomainList(obj.ptr)
 	function metadataitem(obj, name::AbstractString; domain::AbstractString="",)::String
 		item = GDALGetMetadataItem(obj.ptr, name, domain)

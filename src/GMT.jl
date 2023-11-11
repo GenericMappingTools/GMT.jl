@@ -141,7 +141,7 @@ export
 
 	earthregions, gridit, magic, rescale, stackgrids, delrows!, setgrdminmax!, meshgrid, cart2pol, pol2cart, cart2sph, sph2cart,
 
-	arcellipse, arccircle, getband, getdriver, getlayer, getproj, getgeom, getgeotransform, toPROJ4, toWKT,
+	arcellipse, arccircle, getband, getdriver, getlayer, getproj, getgeom, getgeotransform, gdaldrivers, toPROJ4, toWKT,
 	importPROJ4, importWKT, importEPSG, gdalinfo, gdalwarp, gdaldem, gdaltranslate, gdalgrid, gdalvectortranslate,
 	ogr2ogr, gdalrasterize, gdalbuildvrt, readraster, setgeotransform!, setproj!, destroy,
 	delaunay, dither, buffer, centroid, intersection, intersects, polyunion, fromWKT,
@@ -348,7 +348,7 @@ include("get_enums.jl")
 	#marginalhist(randn(1000,2), par=(PS_MEDIA="A2",), fmt=:ps);	rm("GMTplot.ps")
 	#feather([0.0 0 2.0; 0.0 30 2; 0.0 60 2], rtheta=true, aspect="1:1", arrow=(len=0.5, shape=0.5,), fmt=:ps);
 	#orbits(mat2ds(rand(10,3)));
-	#pca(rand(Float32, 25, 6));
+	#pca(rand(Float32, 24, 4));
 	#pca(mat2img(rand(UInt8, 64,64,4)));
 	#kmeans(rand(100,3), 3, maxiter=10);
 	#rm(joinpath(tempdir(), "GMTjl_custom_p_x.txt"))		# This one gets created before username is set.
