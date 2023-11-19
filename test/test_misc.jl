@@ -47,6 +47,7 @@
 	flipud(G)
 	fliplr(G)
 	flipdim(G.z,1)
+	fileparts("C:/a/b/c.d");
 	GMT.resetGMT()
 
 	D = mat2ds(ones(3,2));
