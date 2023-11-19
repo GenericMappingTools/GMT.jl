@@ -587,7 +587,9 @@ function gdalread(fname::AbstractString, optsP=String[]; opts=String[], gdataset
 		(ds.ptr != C_NULL) && Gdal.deletedatasource(ds, "/vsimem/tmp")		# WTF I need to do this?
 	end
 	#Gdal.GDALClose(ds_t.ptr)			# WTF it needs explicit close? To close the file? But sometimes causes a crash.
-	return (gdataset || ds === nothing) ? ds : gd2gmt(ds)
+	out = (gdataset || ds === nothing) ? ds : gd2gmt(ds)
+	Gdal.GDALClose(ds_t.ptr)
+	return out
 end
 
 # ---------------------------------------------------------------------------------------------------
