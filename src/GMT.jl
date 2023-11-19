@@ -98,6 +98,7 @@ const CPTaliases = [:C :color :cmap :colormap :colorscale]
 const global VMs = Union{Vector{Symbol}, Matrix{Symbol}}
 const global VMr = Union{AbstractVector{<:Real}, Matrix{<:Real}}
 const global StrSymb = Union{AbstractString, Symbol}
+const global filesep = Sys.iswindows() ? "\\" : "/"
 # GItype = Union{GMTgrid, GMTimage} and GDtype = Union{GMTdataset, Vector{GMTdataset}} are declared in gmt_types
 # MatGDsGd = Union{Matrix{<:AbstractFloat}, GMTdataset, Vector{GMTdataset}, Gdal.AbstractDataset}	declared down
 #const global unused_opts = [()]					# To track consumed options
@@ -134,8 +135,8 @@ export
 
 	mbimport, mbgetdata, mbsvplist, mblevitus,
 
-	blendimg!, lonlat2xy, xy2lonlat, df2ds, mat2ds, mat2grid, mat2img, slicecube, cubeslice, linspace, logspace, fields,
-	flipud, fliplr, flipdim, flipdim!, grdinterpolate, pow, tic, toc, theme, tern2cart, geodetic2enu, cpt4dcw,
+	blendimg!, lonlat2xy, xy2lonlat, df2ds, mat2ds, mat2grid, mat2img, slicecube, cubeslice, linspace, logspace, fileparts,
+	fields, flipud, fliplr, flipdim, flipdim!, grdinterpolate, pow, tic, toc, theme, tern2cart, geodetic2enu, cpt4dcw,
 	gd2gmt, gmt2gd, gdalread, gdalshade, gdalwrite, gadm, xyzw2cube, coastlinesproj, graticules, orbits, orbits!,
 	plotgrid!, worldrectangular, worldrectgrid,
 
@@ -163,7 +164,7 @@ export
 	fill_between, fill_between!, marginalhist, marginalhist!, parallelplot, parallelplot!, plotlinefit, plotlinefit!,
 	qqplot, qqplot!, qqnorm, qqnorm!, seismicity, sealand, terramar, violin, violin!, viz, windbarbs,
 
-	info, kmeans, pca,
+	info, kmeans, pca, mosaic, quadbounds, quadkey,
 
 	df2ds, ODE2ds,
 	sprintf,
@@ -237,6 +238,7 @@ include("grdvolume.jl")
 include("greenspline.jl")
 include("gridit.jl")
 include("imshow.jl")
+include("imgtiles.jl")
 include("kml2gmt.jl")
 include("linefit.jl")
 include("loxodromics.jl")
