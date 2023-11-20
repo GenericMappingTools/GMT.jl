@@ -800,3 +800,151 @@ epsg2proj(code::Integer)  = toPROJ4(importEPSG(code))
 Convert a EPSG code into the WKT form. Use `pretty=true` to return a more human readable text.
 """
 epsg2wkt(code::Integer; pretty::Bool=false) = toWKT(importEPSG(code), pretty)
+
+# The next functions are from GMT but stored here since thay are about projections too.
+
+# -----------------------------------------------------------------------------------------
+"""
+    lat = isometric2geod(latin, flat)
+
+Convert isometric latitudes to geodetic latitudes.
+
+### Arguments
+- `latin`: Isometric latitude(s) in degrees
+- `flat`: Flattening of the ellipsoid (use 0.0 for is spherical).
+
+### Returns
+- Geodetic latitude(s) in degrees
+"""
+function isometric2geod(latin, flat)
+    latcnf = 2 * atan.(exp.(latin * pi / 180)) .- pi / 2
+    lat = conf2geod(latcnf, flat)
+    return lat * 180 / pi
+end
+
+# -----------------------------------------------------------------------------------------
+"""
+    lat = conf2geod(latin, flat)
+
+Convert conformal latitude `latin` to geodetic latitude using the flattening of the ellipsoid.
+
+### Arguments
+- `latin`: Conformal latitude(s) in radians
+- `flat`: Flattening of ellipsoid (use 0.0 for is spherical)
+
+### Returns
+- `lat`: Geodetic latitude(s) in radians
+"""
+function conf2geod(latin, flat)
+    e2 = flat * (2.0 - flat)
+    e4 = e2 * e2
+    e6 = e4 * e2
+    e8 = e4 * e4
+
+    c0 = e2 / 2 + 5 * e4 / 24 + e6 / 12 + 13 * e8 / 360
+    c1 = 7 * e4 / 48 + 29 * e6 / 240 + 811 * e8 / 11520
+    c2 = 7 * e6 / 120 + 81 * e8 / 1120
+    c3 = 4279 * e8 / 161280
+
+    rl2 = 2.0 * latin
+    sin2phi = sin.(rl2)
+    cos2phi = cos.(rl2)
+	return latin .+ sin2phi .* (c0 .+ cos2phi .* (c1 .+ cos2phi .* (c2 .+ cos2phi * c3)))
+end
+
+# -----------------------------------------------------------------------------------------
+"""
+    lat = geod2isometric(latin, flat)
+
+Convert geodetic latitudes to isometric latitudes.
+
+### Arguments
+- `latin`: Geodetic latitude(s) in degrees
+- `flat`: Flattening of the ellipsoid  (Use 0.0 for is spherical)
+
+### Returns
+- Isometric latitude in degrees
+"""
+function geod2isometric(latin, flat)
+    latin = latin * pi / 180
+    latcnf = geod2cnf(latin, flat)
+    lat = log.(tan.(pi / 4 .+ latcnf / 2))
+    return lat * 180 / pi
+end
+
+# -----------------------------------------------------------------------------------------
+"""
+    latconf = geod2cnf(latin, flat)
+
+Convert geodetic latitudes `latin` to conformal latitudes using the
+flattening `flat` of the ellipsoid.
+
+### Arguments
+- `latin`: Geodetic latitude(s) in radians
+- `flat`: Flattening of the ellipsoid  (Use 0.0 for is spherical)
+
+### Returns
+- Conformal latitude(s) in radians.
+"""
+function geod2cnf(latin, flat)
+    f1 = 1 .- flat * sin.(latin)
+    f2 = 1 .+ flat * sin.(latin)
+    f3 = 1 .- sin.(latin)
+    f4 = 1 .+ sin.(latin)
+    return 2 * atan.(sqrt.((f4 ./ f3) .* ((f1 ./ f2) .^ flat))) .- pi / 2
+end
+
+# -----------------------------------------------------------------------------------------
+function meridionalRad(a, flat)
+	# Compute Meridional radius as defined in GMT_lar_swap_init() of gmt_map.c
+	# A -> Equatorial radius; F -> flatness
+	e2 = flat * (2.0 - flat)
+	e4 = e2 * e2
+	e6 = e4 * e2
+	e8 = e4 * e4
+
+	xx0 = 1 / 4
+	xx1 = xx0 * 3 / 16
+	xx2 = xx1 * 3 * 5 / 36
+	xx3 = xx2 * 5 * 7 / 64
+	x = xx0 * e2 + (xx1 * e4 + (xx2 * e6 + xx3 * e8))
+	return a * (1 - x)
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    x, y = geog2merc(lon, lat, pt_radius)
+
+Convert from mercator to geographic coordinates in degrees. For a sphere, `lat` should be the geocentric
+latitude(s), but for an ellipsoid `lat` should contain the isometric latitude(s).
+
+### Returns
+- x,y Mercator coordinates in meters.
+"""
+function geog2merc(lon, lat, pt_radius)
+	D2R = pi / 180
+	x = lon * D2R * pt_radius
+	y = log.(tan.((pi/4) .+ 0.5 .* D2R .* lat)) * pt_radius
+	return x, y
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    lon = wraplon180(lon)
+
+Wrap longitudes to be in the range -180 to 180.
+"""
+function wraplon180(lon)
+	ind = lon .< -180
+	while any(ind)
+		lon[ind] .+= 360
+		ind = lon .< -180
+	end
+
+	ind = lon .> 180
+	while any(ind)
+		lon[ind] .-= 360
+		ind = lon .> 180
+	end
+	return lon
+end

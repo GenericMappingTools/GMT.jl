@@ -890,8 +890,8 @@ function mat2img(mat::AbstractArray{<:Unsigned}; x=Float64[], y=Float64[], v=Flo
 	mem_layout = (size(mat,3) == 1) ? "TCBa" : "TCBa"		# Just to have something. Likely wrong for 3D
 	d = KW(kw)
 	((val = find_in_dict(d, [:layout :mem_layout])[1]) !== nothing) && (mem_layout = string(val)::String)
-	_names = ((val = find_in_dict(d, [:names])[1]) !== nothing) ? val : String[]
-	_meta  = ((val = find_in_dict(d, [:metadata])[1]) !== nothing) ? val : String[]
+	_names::Vector{String} = ((val = find_in_dict(d, [:names])[1]) !== nothing) ? val : String[]
+	_meta::Vector{String}  = ((val = find_in_dict(d, [:metadata])[1]) !== nothing) ? val : String[]
 
 	GMTimage(proj4, wkt, 0, -1, hdr[1:6], [x_inc, y_inc], reg, NaN32, color_interp, _meta, _names,
 	         x,y,v,mat, colormap, labels, n_colors, Array{UInt8,2}(undef,1,1), mem_layout, 0)
@@ -1497,7 +1497,7 @@ function ind2rgb(I::GMTimage, cmap::GMTcpt=GMTcpt(), layout="BRPa")
 	(size(I.image, 3) >= 3) && return I 	# Image is already RGB(A)
 
 	# If the CPT is shorter them maximum in I, reinterpolate the CPT
-	(!isempty(cmap) && (ma = maximum(I)) > size(cmap.colormap,1)) && (cmap = gmt("makecpt -T0/{$ma}/+n{$ma}", cmap))
+	(!isempty(cmap) && (ma = maximum(I.image)) > size(cmap.colormap,1)) && (cmap = gmt("makecpt -T0/{$ma}/+n{$ma}", cmap))
 	_cmap = (!isempty(cmap)) ? cpt2cmap(cmap::GMTcpt, I.nodata)[1] : I.colormap
 
 	have_alpha = (length(I.colormap) / I.n_colors) == 4 && !all(I.colormap[end-Int(I.n_colors/4+1):end] .== 255)
@@ -1516,8 +1516,8 @@ function ind2rgb(I::GMTimage, cmap::GMTcpt=GMTcpt(), layout="BRPa")
 				have_alpha && (imgRGB[n+=1] = _cmap[I.image[k] + jp4])
 			end
 		else
-			layout = (I.layout[2] == 'R') ? "TCBa" : I.layout
-			img    = (I.layout[2] == 'R') ? I.image' : I.image
+			layout = (I.layout[2] == 'R') ? I.layout : "TCBa"
+			img    = (I.layout[2] == 'R') ? I.image  : I.image'
 			for c = 1:3+have_alpha
 				start_c = (c - 1) * I.n_colors + 1		# +1 because indices start a 1
 				for k in eachindex(I.image)
