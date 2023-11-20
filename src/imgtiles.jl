@@ -213,7 +213,7 @@ function mosaic(lon, lat; pt_radius=6371007.0, provider="", zoom::Int=0, cache::
 
 		xx = collect(linspace(x[1], x[2], size(img,1)+1))
 		yy = collect(linspace(y[1], y[2], size(img,2)+1))
-		I = mat2img(img, x=xx, y=yy, proj4="+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +a=6378137 +b=6378137 +units=m +no_defs", layout="TRBa", is_transposed=true)
+		I = mat2img(img, x=xx, y=yy, proj4="+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +a=$pt_radius +b=$pt_radius +units=m +no_defs", layout="TRBa", is_transposed=true)
 
 		!inMerc	&& (I = gdalwarp(I, ["-t_srs","+proj=latlong +datum=WGS84"]))		# That is, if project to Geogs
 

@@ -9,7 +9,9 @@
 	GMT.getprovider("OSM", 2);
 	GMT.getprovider("moon", 2);
 	GMT.getprovider("esri", 2);
-	GMT.getprovider("go", 2);
-	quadtree = mosaic([-10. -8],[37. 39.], zoom=8, quadonly=1)[1];
+	GMT.getprovider(("goo","sat"), 2);
+	quadtree = mosaic([-10. -8],[37. 39.], quadonly=1)[1];
+	quadbounds(quadtree[1]);
 	quadbounds(quadtree);
+	GMT.meridionalRad(6371007.0, 0.0)
 end
