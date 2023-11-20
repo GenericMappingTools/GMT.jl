@@ -63,7 +63,9 @@ Get image tiles from a web map tiles provider for given longitude, latitude coor
   If `zoom=0`, the zoom level is computed automatically based on the `mapwidth` and `dpi` options.
 - `cache`: Full name of the the cache directory where to save the downloaded tiles. If empty, a cache
   directory is created in the system's TMP directory. If `cache="gmt"` the cache directory is created in
-  ~/.gmt/cache_tileserver.
+  ~/.gmt/cache_tileserver. NOTE: this normally is neeaded only for the first time you run this function when,
+  if `cache!=""`, the cache dir location is saved in the ``~./gmt/tiles_cache_dir.txt`` file and used in
+  subsequent calls.
 - `mapwidth`: Map width in cm. Used together with the `dpi` option to automatically compute the zoom level.
 - `dpi`: Dots per inch. Used together with the `mapwidth` option to automatically compute the zoom level.
 - `verbose`: Verbosity level. A number between 0 and 2. Print out info while downloading the image files.
@@ -103,12 +105,21 @@ function mosaic(lon, lat; pt_radius=6371007.0, provider="", zoom::Int=0, cache::
 	isXeYeZ = contains(provider_url, "lyrs=")
 	isBing  = contains(provider_url, "virtualearth")
 
+	# Check for user cache location
+	f = joinpath(GMTuserdir[1], "tiles_cache_dir.txt")
+	if (cache == "")
+		(isfile(f)) && (cache = readline(f))
+		length(cache) < 3 && (cache = joinpath(tmpdir_usr[1], "cache_" * tmpdir_usr[2]))
+	else
+		(cache == "gmt") && (cache = joinpath(GMTuserdir[1], "cache_tileserver"))	# cache it in ~/.gmt
+		(isfile(f)) && rm(f)			# Remove old cache location
+		write(f, cache)					# Save new cache location
+	end
+
 	quadkey::Matrix{Char} = ['0' '1'; '2' '3']
-	(cache == "") && (cache = tempdir())
-	(cache == "gmt") && (cache = joinpath(GMTuserdir[1], "cache_tileserver"))
 	quadonly = ((val = find_in_dict(d, [:quadonly])[1]) !== nothing) ? true : false
 	inMerc = ((val = find_in_dict(d, [:merc :mercator])[1]) !== nothing) ? true : false
-	neighbors::Matrix{Float64} = ((val = find_in_dict(d, [:neighbors :mosaic])[1]) === nothing) ? [1.0;;] : isa(val, Int) ? ones(Int64(val),Int64(val)) : ones(size(val))
+	neighbors::Matrix{Float64} = ((val = find_in_dict(d, [:N :neighbors :mosaic])[1]) === nothing) ? [1.0;;] : isa(val, Int) ? ones(Int64(val),Int64(val)) : ones(size(val))
 	(length(neighbors) > 1 && length(lon) > 1) && error("The 'neighbor' option is only for single point queries.")
 
 	any(lat .> 85.0511)  && (lat[lat .> 85.0511]  .= 85.0511)
@@ -235,7 +246,8 @@ is only relevant for internal use and is an implementation detail not documented
   and the second string is the variant name (see the `variant` bellow).
 - `zoom`: Requested zoom level. Will be capped at the provider's maximum.
 - `variant`: Optional variant for providers with multiple map layers.
-  For `Bing`, the variants can be "Aerial" (default), "Road", or "Hybrid".
+  - `Bing`: variants => "Aerial" (default), "Road", or "Hybrid".
+  - `Esri`: variants => "World\\_Street\\_Map" (default), "Elevation/World\\_Hillshade", or "World\\_Imagery".
 """
 getprovider(name::Tuple{String,String}, zoom::Int) = getprovider(name[1], zoom; variant=name[2])
 function getprovider(name, zoom::Int; variant="")
@@ -256,8 +268,7 @@ function getprovider(name, zoom::Int; variant="")
 	elseif _name == "esri"
 		t = (variant == "") ? "World_Street_Map" : variant
 		url = "https://server.arcgisonline.com/ArcGIS/rest/services/" * t * "/MapServer/tile/";
-		max_zoom = 19;	isZXY, isZYX = true, true;	code = "esri";	variant = t
-		#https://server.arcgisonline.com/arcgis/rest/services/Elevation/World_Hillshade/MapServer/tile/15/12753/8004
+		max_zoom = 23;	isZXY, isZYX = true, true;	code = "esri";	variant = t
 	elseif (startswith(_name, "goo"))
 		# variants: satelite="s", roadmap="m", terrain="p", hybrid="y"
 		v = (variant == "") ? 's' : lowercase(variant)[1]
@@ -277,7 +288,7 @@ function completeCacheName(cache, zoomL, provider_code; variant="")
 	cache_supp = ""
 	name = lowercase(fileparts(cache)[2])
 	
-	(name != "cache" && !endswith(cache, "cache_tileserver")) && (cache = joinpath(cache, "cache"))
+	!startswith(name, "cache_") && (cache = joinpath(cache, "cache"))
 	plusZLnumber = (zoomL > 9) ? "$(zoomL)" : "0" * "$(zoomL)"			# If the zoomlevel is less than 10, add a leading 0
 	v = (variant == "") ? "" : filesep * variant
 	cache_supp = filesep * provider_code * v * filesep * plusZLnumber	# Append the zoomlevel to the cache dir tree
