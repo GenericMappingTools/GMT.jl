@@ -14,4 +14,7 @@
 	quadbounds(quadtree[1]);
 	quadbounds(quadtree);
 	GMT.meridionalRad(6371007.0, 0.0)
+	D = geocoder("Universidade do Algarve, Gambelas");
+	mosaic(D, zoom=2, quadonly=1);
+	mosaic(D, zoom=2, bb=1, quadonly=1);
 end

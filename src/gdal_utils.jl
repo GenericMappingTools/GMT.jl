@@ -78,7 +78,7 @@ function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int
 	(is_grid) && (x_min += x_inc/2;	 y_max -= y_inc/2)	# Maitain the GMT default that grids are gridline reg.
 	x_max = x_min + (xSize - 1*is_grid - 2pad) * x_inc
 	y_min = y_max - (ySize - 1*is_grid - 2pad) * y_inc
-	z_min, z_max = (is_grid) ? extrema_nan(mat) : extrema(mat)
+	z_min::Float64, z_max::Float64 = (is_grid) ? extrema_nan(mat) : extrema(mat)
 	hdr = [x_min, x_max, y_min, y_max, z_min, z_max, Float64(!is_grid), x_inc, y_inc]
 	prj = getproj(dataset)
 	(prj != "" && !startswith(prj, "+proj")) && (prj = toPROJ4(importWKT(prj)))
@@ -102,7 +102,7 @@ function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int
 end
 
 # ---------------------------------------------------------------------------------------------------
-function gd2gmt_helper_scalefac(mat, scale_factor, add_offset, got_fill_val, fill_val)
+function gd2gmt_helper_scalefac(mat::Array{<:Real}, scale_factor, add_offset, got_fill_val, fill_val)
 	# Apply a scale + offset and/or replace the fill_val by NaNs
 	(eltype(mat) <: Integer && isa(fill_val, AbstractFloat)) && return mat	# Sign that we are in that GDAL BUG
 	(got_fill_val) && (nodata = isnodata(mat, fill_val))
@@ -244,8 +244,8 @@ function gd2gmt(dataset::Gdal.AbstractDataset)
 	end
 	(isempty(D)) && (@warn("This dataset has no geometry data. Result is empty."))
 	(length(D) != ds-1) && (D = deleteat!(D,ds:length(D)))
-	D[1].colnames = startswith(proj, "+proj=longlat") ? ["lon","lat", ["z$i" for i=1:size(D[1],2)-2]...] :
-	                ["x","y", ["z$i" for i=1:size(D[1],2)-2]...]	
+	D[1].colnames = startswith(proj, "+proj=longlat") ? ["lon","lat", ["z$i" for i=1:size(D[1].data,2)-2]...] :
+	                ["x","y", ["z$i" for i=1:size(D[1].data,2)-2]...]	
 	set_dsBB!(D)				# Compute and set the global BoundingBox for this dataset
 	return (length(D) == 1) ? D[1] : D
 end

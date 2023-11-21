@@ -332,12 +332,30 @@ end
 Return a boolean array with the same size a `array` with 1's (`true`) where ``array[i] == val``.
 Test with an image have shown that this function was 5x faster than ``ind = (I.image .== 0)``
 """
+#=
 function isnodata(array::AbstractArray, val=0)
 	nrows, ncols = size(array,1), size(array,2)
 	nlayers = (ndims(array) == 3) ? size(array,3) : 1
 	if (ndims(array) == 3)  indNaN = fill(false, nrows, ncols, nlayers)
 	else                    indNaN = fill(false, nrows, ncols)
 	end
+	@inbounds Threads.@threads for k = 1:nrows * ncols * nlayers	# 5x faster than: indNaN = (I.image .== 0)
+		(array[k] == val) && (indNaN[k] = true)
+	end
+	indNaN
+end
+=#
+function isnodata(array::Matrix{T}, val=0) where T
+	nrows, ncols = size(array)
+	indNaN = fill(false, nrows, ncols)
+	@inbounds Threads.@threads for k = 1:nrows * ncols	# 5x faster than: indNaN = (I.image .== 0)
+		(array[k] == val) && (indNaN[k] = true)
+	end
+	indNaN
+end
+function isnodata(array::Array{T,3}, val=0) where T
+	nrows, ncols, nlayers = size(array)
+	indNaN = fill(false, nrows, ncols, nlayers)
 	@inbounds Threads.@threads for k = 1:nrows * ncols * nlayers	# 5x faster than: indNaN = (I.image .== 0)
 		(array[k] == val) && (indNaN[k] = true)
 	end

@@ -571,6 +571,11 @@ OGR_F_SetFieldDateTime(a1, a2, a3, a4, a5, a6, a7, a8, a9) =
 
 OGR_Dr_DeleteDataSource(a1, a2) = acare(ccall((:OGR_Dr_DeleteDataSource, libgdal), Cint, (pVoid, Cstring), a1, a2))
 
+OGRGeocodeCreateSession(a1) = acare(ccall((:OGRGeocodeCreateSession, libgdal), pVoid, (Ptr{Cstring},), a1))
+OGRGeocode(a1, a2, a3, a4) = acare(ccall((:OGRGeocode, libgdal), pVoid, (pVoid, Cstring, Ptr{Cstring}, Ptr{Cstring}), a1, a2, a3, a4)) 
+OGRGeocodeFreeResult(a1) = acare(ccall((:OGRGeocodeFreeResult, libgdal), Cvoid, (pVoid,), a1)) 
+OGRGeocodeDestroySession(a1) = acare(ccall((:OGRGeocodeDestroySession, libgdal), Cvoid, (pVoid,), a1)) 
+
 OSRClone(arg1) = acare(ccall((:OSRClone, libgdal), pVoid, (pVoid,), arg1))
 
 GDALDeleteDataset(a1, a2) = acare(ccall((:GDALDeleteDataset, libgdal), Cint, (pVoid, Cstring), a1, a2))

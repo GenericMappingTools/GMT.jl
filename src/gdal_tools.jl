@@ -146,7 +146,7 @@ function gdalvectortranslate(indata, opts=String[]; dest="/vsimem/tmp", kwargs..
 end
 
 # ---------------------------------------------------------------------------------------------------
-function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::String="", kwargs...)
+function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::String="", kwargs...)::Union{GMT.GItype, GMT.GDtype, Gdal.AbstractDataset, Nothing}
 	# Helper function to run the GDAL function under 'some protection' and returning obj or saving in file
 
 	GMT.ressurectGDAL()				# Another black-hole plug attempt.
@@ -201,7 +201,7 @@ function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::St
 	(needclose) && GDALClose(dataset.ptr)
 	CPLPopErrorHandler();
 	(Vd > 0 && length(d) > 0) && println("Warning: the following options were not consumed in $f => ", keys(d))
-	o
+	return o
 end
 
 # ---------------------------------------------------------------------------------------------------

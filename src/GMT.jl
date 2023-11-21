@@ -164,7 +164,7 @@ export
 	fill_between, fill_between!, marginalhist, marginalhist!, parallelplot, parallelplot!, plotlinefit, plotlinefit!,
 	qqplot, qqplot!, qqnorm, qqnorm!, seismicity, sealand, terramar, violin, violin!, viz, windbarbs,
 
-	info, kmeans, pca, mosaic, quadbounds, quadkey,
+	info, kmeans, pca, mosaic, quadbounds, quadkey, geocoder,
 
 	df2ds, ODE2ds,
 	sprintf,

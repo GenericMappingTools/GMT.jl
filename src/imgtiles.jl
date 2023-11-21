@@ -8,7 +8,7 @@
 
 Returns the x,y,z & the quadtree string or the bounds
 
-# Examples
+### Examples
 ```jldoctest
 julia> quadkey(-9,39, 8)
 ([121, 97, 8], ["03311003";;])
@@ -25,7 +25,7 @@ The form bellow returns the quadtree representation of the XYZ tile or the bound
 
     quadkey(xyz::VecOrMat{<:Int}; bounds=true, geog=true)
 
-# Examples
+### Examples
 ```jldoctest
 julia> quadkey([121, 97, 8], bounds=false)
 "03311003"
@@ -53,9 +53,14 @@ end
 Get image tiles from a web map tiles provider for given longitude, latitude coordinates.
 
 ### Arguments
-- `lon` & `lat`: longitude, latitude coordinates of region of interest. These can be a pair of scalars or a
-  pair of two elements vector or matrix with the region's [lon_min, lon_max], [lat_min, lat_max]. For the
-  first case (scalars) see the `neighbors` or `mosaic` option below.
+- `lon` & `lat`:
+  - `lon, lat` two scalars with the coordinates of region of interest center. To completly define
+    the image area see the `neighbors` or `mosaic` option below.
+  - `lon, lat` are two elements vector or matrix with the region's [lon\\_min, lon\\_max], [lat\\_min, lat\\_max].
+  - Instead of two arguments, pass just one containing a GMTdataset obtained with the ``geocoder`` function.
+    Example: ``mosaic(D, ...)`` or, if the search with ``geocoder`` was sufficiently generic (see its docs),
+    ``mosaic(D, bbox=true)`` to use the BoundingBox returned by the query.
+  pair of two elements vector or matrix with the region's [lon\\_min, lon\\_max], [lat\\_min, lat\\_max].
 - `pt_radius`: The planetary radius. Defaults to Earth's WGS84 authalic radius (6371007 m).
 - `provider`: Tile provider name. Currently available options are: "Bing" (the default), "OSM", "Esri".
   For more details see the docs of the `getprovider` function, *i.e.* ``? getprovider``
@@ -63,7 +68,7 @@ Get image tiles from a web map tiles provider for given longitude, latitude coor
   If `zoom=0`, the zoom level is computed automatically based on the `mapwidth` and `dpi` options.
 - `cache`: Full name of the the cache directory where to save the downloaded tiles. If empty, a cache
   directory is created in the system's TMP directory. If `cache="gmt"` the cache directory is created in
-  ~/.gmt/cache_tileserver. NOTE: this normally is neeaded only for the first time you run this function when,
+  ``~/.gmt/cache_tileserver``. NOTE: this normally is neeaded only for the first time you run this function when,
   if `cache!=""`, the cache dir location is saved in the ``~./gmt/tiles_cache_dir.txt`` file and used in
   subsequent calls.
 - `mapwidth`: Map width in cm. Used together with the `dpi` option to automatically compute the zoom level.
@@ -91,6 +96,15 @@ julia> I = mosaic(0.1,0.1,zoom=1)
 viz(I, coast=true)
 ```
 """
+function mosaic(D::GMTdataset; pt_radius=6371007.0, provider="", zoom::Int=0, cache::String="", mapwidth=15, dpi=96, verbose::Int=0, kw...)
+	if (find_in_kwargs(kw, [:bb :BB :bbox :BoundingBox :boundingbox])[1] !== nothing)
+		lon = D.ds_bbox[1:2];	lat = D.ds_bbox[3:4]
+	else
+		lon, lat = D.data[1,1], D.data[1,2]
+	end
+	mosaic(lon, lat; pt_radius=pt_radius, provider=provider, zoom=zoom, cache=cache, mapwidth=mapwidth, dpi=dpi, verbose=verbose, kw...)
+end
+
 function mosaic(lon, lat; pt_radius=6371007.0, provider="", zoom::Int=0, cache::String="",
                   mapwidth=15, dpi=96, verbose::Int=0, kw...)
 	(size(lon) != size(lat)) && throw(error("lon & lat must be of the same size"))
@@ -581,4 +595,70 @@ function guessZoomLevel(mapWidthInCm, dLon, dpi=100)
 	pixPerCm = 1 * dpi / 2.54
 	pixPerDeg = pixPerCm / (dLon / mapWidthInCm) / 256
 	round(Int, log2(pixPerDeg * 360) + 1)
+end
+
+# -----------------------------------------------------------------------------------------
+"""
+    D = geocoder(address::String; options=String[]) => GMTdataset
+
+Get the geocoder info for a given address by calling the GDAL/OGR geocoding functions.
+See https://gdal.org/doxygen/ogr__geocoding_8h.html
+
+### Arguments
+- `address`: The string to geocode.
+- `options`: These are the options passed to GDAL and in the form of a vector of strings. For example,
+  the default is equivalent to `options=["SERVICE", "OSM_NOMINATIM"]`.
+    - "CACHE\\_FILE" : Defaults to "ogr\\_geocode\\_cache.sqlite" (or otherwise "ogr\\_geocode\\_cache.csv" if the
+      SQLite driver isn't available). Might be any CSV, SQLite or PostgreSQL datasource.
+    - "READ_CACHE" : "TRUE" (default) or "FALSE"
+    - "WRITE_CACHE" : "TRUE" (default) or "FALSE"
+    - "SERVICE": "OSM\\_NOMINATIM" (default), "MAPQUEST\\_NOMINATIM", "YAHOO", "GEONAMES", "BING" or other value.
+      Note: "YAHOO" is no longer available as a free service.
+    - "EMAIL": used by OSM_NOMINATIM. Optional, but recommended.
+    - "USERNAME": used by GEONAMES. Compulsory in that case.
+    - "KEY": used by BING. Compulsory in that case.
+    - "APPLICATION": used to set the User-Agent MIME header. Defaults to GDAL/OGR version string.
+    - "LANGUAGE": used to set the Accept-Language MIME header. Preferred language order for showing search results.
+    - "DELAY": minimum delay, in second, between 2 consecutive queries. Defaults to 1.0.
+    - "QUERY\\_TEMPLATE": URL template for GET requests. Must contain one and only one occurrence of %s in it.
+      If not specified, for SERVICE=OSM\\_NOMINATIM, MAPQUEST\\_NOMINATIM, YAHOO, GEONAMES or BING, the URL
+      template is hard-coded.
+    - "REVERSE\\_QUERY\\_TEMPLATE": URL template for GET requests for reverse geocoding. Must contain one and only
+      one occurrence of {lon} and {lat} in it. If not specified, for SERVICE=OSM\\_NOMINATIM, MAPQUEST\\_NOMINATIM,
+      YAHOO, GEONAMES or BING, the URL template is hard-coded.
+
+
+### Returns
+A GMTdataset with the longitude, latitude, and full attribute dictionary returned by the geocoder for
+the input address. This dataset contains only one point but geocoding service resturns also a BoundingBox
+containing that point. When the `address` is very specific that BB is tiny arround the point, but when the
+query is general (for example,just the name of a city or even a country), the BB is large and may be very
+useful to use in the `mosaic` program. For that purpose, the returned BB is sored in the GMTdatset
+``ds_bbox`` field.
+
+### Example
+    geocoder("Paris, France")
+"""
+function geocoder(address::String; options=String[])
+	# Get the geocoder info for a given address. Adapted from https://www.itopen.it/geocoding-with-gdal/
+
+	_ops = isempty(options) ? C_NULL : options	# The default is ["SERVICE", "OSM_NOMINATIM"]
+	hSession = GMT.Gdal.OGRGeocodeCreateSession(_ops)
+	hLayer = GMT.Gdal.OGRGeocode(hSession, address, C_NULL, [""])
+	hFDefn = GMT.Gdal.OGR_L_GetLayerDefn(hLayer)
+	hFeature = GMT.Gdal.OGR_L_GetNextFeature(hLayer)
+	count = GMT.Gdal.OGR_FD_GetFieldCount(hFDefn)
+	(count == 0) && (@warn("No result found for the address $address"); return nothing)
+	dic = Dict{String,String}()
+	for k = 0:count-1
+		hFieldDefn = GMT.Gdal.OGR_FD_GetFieldDefn(hFDefn,k)
+		dic[GMT.Gdal.OGR_Fld_GetNameRef(hFieldDefn)] = GMT.Gdal.OGR_F_GetFieldAsString(hFeature, k)
+	end
+
+	BB = parse.(Float64, split(dic["boundingbox"], ","))
+	GMT.Gdal.OGRGeocodeFreeResult(hLayer)
+	GMT.Gdal.OGRGeocodeDestroySession(hSession)
+	D = mat2ds([parse(Float64, dic["lon"]) parse(Float64, dic["lat"])], attrib=dic, proj4=prj4WGS84, geom=wkbPoint)
+	D.ds_bbox = [BB[3], BB[4], BB[1], BB[2]]
+	return D
 end
