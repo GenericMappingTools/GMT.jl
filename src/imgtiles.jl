@@ -83,6 +83,10 @@ Get image tiles from a web map tiles provider for given longitude, latitude coor
   form of a matrix and the number of tiles is then determined by the number of rows and columns.
 - `merc` or `mercator`: Return tiled image in Mercator coordinates. The default is to project it back
   to geographical coordinates.
+- `exact` or `exact_region`: By default we return an image with limits that are a bit larger than the
+  requested region because wev use all the tiles that intersect the requested region. This option forces
+  the output to be exactly what was asked for with the `lon` and `lat` arguments. Note that this does not
+  work for point queries.
 - `quadonly`: Return only the quadtree string. A string or a matrix of strings when number of tiles > 1.
   Other from the quadtree string this option return also the `decimal_adress, lon, lat, x, y` that are:
   the XYZ tiles coordinates, the longitude, latitude , mercator X and Y coordinates in meters of first tile.
@@ -132,7 +136,10 @@ function mosaic(lon, lat; pt_radius=6371007.0, provider="", zoom::Int=0, cache::
 
 	quadkey::Matrix{Char} = ['0' '1'; '2' '3']
 	quadonly = ((val = find_in_dict(d, [:quadonly])[1]) !== nothing) ? true : false
-	inMerc = ((val = find_in_dict(d, [:merc :mercator])[1]) !== nothing) ? true : false
+	inMerc   = ((val = find_in_dict(d, [:merc :mercator])[1]) !== nothing) ? true : false
+	isExact  = ((val = find_in_dict(d, [:exact :exact_region])[1]) !== nothing) ? true : false
+	(isExact && length(lon) == 1) &&
+		(@warn("Single point queries are not compatible with an exact region option. Ignoring the exact option."); isExact = false)
 	neighbors::Matrix{Float64} = ((val = find_in_dict(d, [:N :neighbors :mosaic])[1]) === nothing) ? [1.0;;] : isa(val, Int) ? ones(Int64(val),Int64(val)) : ones(size(val))
 	(length(neighbors) > 1 && length(lon) > 1) && error("The 'neighbor' option is only for single point queries.")
 
@@ -140,6 +147,7 @@ function mosaic(lon, lat; pt_radius=6371007.0, provider="", zoom::Int=0, cache::
 	any(lat .< -85.0511) && (lat[lat .< -85.0511] .= -85.0511)
 	lon = wraplon180(lon)							# Make sure that longitudes are in the range -180 to 180
 
+	lat_orig = lat		# Save original lat for eventual use in the exact region option
 	lat = geod2isometric(lat, flatness)
 	x, y, xmm, ymm = getPixel(lon, lat, zoom)		# x,y are the fractional number of the 256 bins counting from origin
 	x, y = floor.(x), floor.(y)
@@ -240,7 +248,14 @@ function mosaic(lon, lat; pt_radius=6371007.0, provider="", zoom::Int=0, cache::
 		yy = collect(linspace(y[1], y[2], size(img,2)+1))
 		I = mat2img(img, x=xx, y=yy, proj4="+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +a=$pt_radius +b=$pt_radius +units=m +no_defs", layout="TRBa", is_transposed=true)
 
-		!inMerc	&& (I = gdalwarp(I, ["-t_srs","+proj=latlong +datum=WGS84"]))		# That is, if project to Geogs
+		if (inMerc && isExact)		# Cut to the exact required limits
+			mat::Matrix{Float64} = mapproject([lon[1] lat_orig[1]; lon[2] lat_orig[2]], J=I.proj4).data
+			I = grdcut(I, R=(mat[1,1], mat[2,1], mat[1,2], mat[2,2]))
+		elseif (!inMerc)			# That is, if project to Geogs
+			gdwopts = ["-t_srs","+proj=latlong +datum=WGS84"]
+			isExact && append!(gdwopts, ["-te"], ["$(lon[1])"], ["$(lat_orig[1])"], ["$(lon[2])"], ["$(lat_orig[2]))"])
+			I = gdalwarp(I, gdwopts)
+		end
 
 		return I
 	end
