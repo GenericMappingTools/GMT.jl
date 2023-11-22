@@ -62,8 +62,11 @@ Get image tiles from a web map tiles provider for given longitude, latitude coor
     ``mosaic(D, bbox=true)`` to use the BoundingBox returned by the query.
   pair of two elements vector or matrix with the region's [lon\\_min, lon\\_max], [lat\\_min, lat\\_max].
 - `pt_radius`: The planetary radius. Defaults to Earth's WGS84 authalic radius (6371007 m).
-- `provider`: Tile provider name. Currently available options are: "Bing" (the default), "OSM", "Esri".
-  For more details see the docs of the `getprovider` function, *i.e.* ``? getprovider``
+- `provider`: Tile provider name. Currently available options are (but for more details see the docs of the
+  `getprovider` function, *i.e.* ``? getprovider``):
+  - "Bing" (the default), "OSM", "Esri" or a custom provider.
+  - A `Provider` type from the ``TileProviders.jl`` package. You must consult the documentation of that package
+	for more details on how to choose a *provider*.
 - `zoom`: Zoom level (0 for automatic). A number between 0 and ~19. The maximum is provider and area dependent.
   If `zoom=0`, the zoom level is computed automatically based on the `mapwidth` and `dpi` options.
 - `cache`: Full name of the the cache directory where to save the downloaded tiles. If empty, a cache
@@ -273,14 +276,19 @@ is only relevant for internal use and is an implementation detail not documented
 - `name`: Name of the tile provider. Currently available are "Bing" (the default), "OSM", "Esri".
   Optionally, the `name` can be a tuple of two strings, where the first string is the provider name
   and the second string is the variant name (see the `variant` bellow).
+- The `name` argument can also be a `Provider` type from the TileProviders.jl package. For example,
+  after importing TileProviders.jl, ``provider = NASAGIBSTimeseries()`` and next pass it to `getprovider`.
 - `zoom`: Requested zoom level. Will be capped at the provider's maximum.
 - `variant`: Optional variant for providers with multiple map layers.
   - `Bing`: variants => "Aerial" (default), "Road", or "Hybrid".
   - `Esri`: variants => "World\\_Street\\_Map" (default), "Elevation/World\\_Hillshade", or "World\\_Imagery".
 """
 getprovider(name::Tuple{String,String}, zoom::Int) = getprovider(name[1], zoom; variant=name[2])
-function getprovider(name, zoom::Int; variant="")
-	isZXY, isZYX, ext = false, false, "jpg"
+function getprovider(name::StrSymb, zoom::Int; variant="", format="", ZYX::Bool=false, dir_code="")
+	# The 'format', 'dir_code' and 'ZYX' kwargs are of internal use only and passed in when using a TileProviders type
+	isZXY, ext = false, "jpg"
+	isZYX = ZYX ? true : false
+	(format != "") && (ext = format)
 	_name = lowercase(string(name))
 	if (_name == "" || _name == "bing")
 		t::String = (variant == "") ? "a" : string(lowercase(variant)[1])
@@ -305,12 +313,42 @@ function getprovider(name, zoom::Int; variant="")
 		url = "https://mt1.google.com/vt/lyrs=" * t * "&x=";
 		max_zoom = 22;	isZXY = true; code = "g" * t;	variant = t
 	else
-		url, isZXY, code, max_zoom = name, true, "unknown", 22
+		url, isZXY, max_zoom, code = name, true, 22, dir_code == "" ? "unknown" : dir_code
 	end
 	zoom += 1
 	(zoom > max_zoom+1) && (zoom = max_zoom+1; @warn("Zoom level $zoom is too high for the '$code' provider. Zoom level set to $max_zoom"))
 	return url, zoom, ext, isZXY, isZYX, code, variant
 end
+
+function getprovider(arg, zoom::Int)
+	# This method uses as input a TileProviders type. Note that we don't have TileProviders as a dependency
+	# but make a dummy guess about it. Example usage: (night lights)
+	# provider = NASAGIBSTimeseries()
+	# I = mosaic(geocoder("Iberia"), bbox=true, provider=provider, verbose=2)
+	isProvider(arg) = (fs = fields(arg); return (length(fs) == 2 && (fs[1] == :url && fs[2] == :options)) ? true : false)
+	!isProvider(arg) && error("Argument for this method must be a TileProviders provider.")
+
+	function geturl(provider)		# This function was "borrowed"/modified from TileProviders.jl
+		ops = provider.options
+		zoom > get(ops, :max_zoom, 19) && throw(ArgumentError("zoom is larger than max_zoom"))
+		subdomain = haskey(ops, :subdomains) ? string(rand(ops[:subdomains]), ".") : ""		# Choose a random subdomain
+		replacements = ["{s}." => subdomain,		# We replace the trailing . in case there is no subdomain
+						"{x}" => "0", "{y}" => "0", "{z}" => "0", "{r}" => ""]
+		foreach(keys(ops), values(ops)) do key, val
+			if !(key in (:attributes, :html_attributes, :name))
+				push!(replacements, string('{', key, '}') => string(val))
+			end
+		end
+		return replace(provider.url, replacements...)
+	end
+
+	url = geturl(arg)
+	ind = findfirst("0/0/0", url)		# Will strip this part and let the manin mosaic() fun fill it with its due.
+	code = string(arg.options[:name])	# A unique subdir name for the cache directory.
+	((v = get(arg.options, :variant, "")) !== "") && (code *= filesep * v)
+	getprovider(url[1:ind[1]-1], zoom; format=arg.options[:format], ZYX=contains(arg.url, "{z}/{y}/{x}"), dir_code=code)
+end
+
 
 # ---------------------------------------------------------------------------------------------------
 function completeCacheName(cache, zoomL, provider_code; variant="")
@@ -667,7 +705,7 @@ function geocoder(address::String; options=String[])
 	dic = Dict{String,String}()
 	for k = 0:count-1
 		hFieldDefn = GMT.Gdal.OGR_FD_GetFieldDefn(hFDefn,k)
-		dic[GMT.Gdal.OGR_Fld_GetNameRef(hFieldDefn)] = GMT.Gdal.OGR_F_GetFieldAsString(hFeature, k)
+		((val = GMT.Gdal.OGR_F_GetFieldAsString(hFeature, k)) != "") && (dic[GMT.Gdal.OGR_Fld_GetNameRef(hFieldDefn)] = val)
 	end
 
 	BB = parse.(Float64, split(dic["boundingbox"], ","))

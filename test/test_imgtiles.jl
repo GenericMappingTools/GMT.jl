@@ -18,4 +18,11 @@
 	D = geocoder("Universidade do Algarve, Gambelas");
 	mosaic(D, zoom=2, quadonly=1);
 	mosaic(D, zoom=2, bb=1, quadonly=1);
+
+	struct Provider
+		url::String
+		options::Dict{Symbol,Any}
+	end
+	p = Provider("https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/{variant}/default/{date}/GoogleMapsCompatible_Level{max_zoom}/{z}/{y}/{x}.{format}", Dict(:variant => "VIIRS_CityLights_2012", :name => :NASAGIBSTimeseries, :format => "jpeg", :max_zoom => 8));
+	GMT.getprovider(p, 2);
 end
