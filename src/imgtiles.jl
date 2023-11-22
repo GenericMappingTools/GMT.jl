@@ -46,6 +46,8 @@ function quadkey(xyz::VecOrMat{<:Int}; bounds=true, geog=true)
 end
 
 # ----------------------------------------------------------------------------------------------------------
+# These functions root in a translation of the Matlab code "url2image" written by me (Joaquim Luis)
+# back in 2008 and included in Mirone.
 """
     I = mosaic(lon, lat; pt_radius=6371007.0, provider="", zoom::Int=0, cache::String="",
                mapwidth=15, dpi=96, verbose::Int=0, kw...)
@@ -59,7 +61,8 @@ Get image tiles from a web map tiles provider for given longitude, latitude coor
   - `lon, lat` are two elements vector or matrix with the region's [lon\\_min, lon\\_max], [lat\\_min, lat\\_max].
   - Instead of two arguments, pass just one containing a GMTdataset obtained with the ``geocoder`` function.
     Example: ``mosaic(D, ...)`` or, if the search with ``geocoder`` was sufficiently generic (see its docs),
-    ``mosaic(D, bbox=true)`` to use the BoundingBox returned by the query.
+    ``mosaic(D, bbox=true)`` to use the BoundingBox returned by the query. `bbox` supports `bb`, `BB` or
+	`BoundingBox` as aliases.
   pair of two elements vector or matrix with the region's [lon\\_min, lon\\_max], [lat\\_min, lat\\_max].
 - `pt_radius`: The planetary radius. Defaults to Earth's WGS84 authalic radius (6371007 m).
 - `provider`: Tile provider name. Currently available options are (but for more details see the docs of the
@@ -86,10 +89,9 @@ Get image tiles from a web map tiles provider for given longitude, latitude coor
   form of a matrix and the number of tiles is then determined by the number of rows and columns.
 - `merc` or `mercator`: Return tiled image in Mercator coordinates. The default is to project it back
   to geographical coordinates.
-- `exact` or `exact_region`: By default we return an image with limits that are a bit larger than the
-  requested region because wev use all the tiles that intersect the requested region. This option forces
-  the output to be exactly what was asked for with the `lon` and `lat` arguments. Note that this does not
-  work for point queries.
+- `loose` or `loose_bounds`: By default we return an image with the limits requested in the `lon` and
+  `lat` arguments. This option makes it return an image with the limits that are determined by those of
+  the tiles that intersect the requested region. Note that this does not work for point queries.
 - `quadonly`: Return only the quadtree string. A string or a matrix of strings when number of tiles > 1.
   Other from the quadtree string this option return also the `decimal_adress, lon, lat, x, y` that are:
   the XYZ tiles coordinates, the longitude, latitude , mercator X and Y coordinates in meters of first tile.
@@ -103,17 +105,19 @@ julia> I = mosaic(0.1,0.1,zoom=1)
 viz(I, coast=true)
 ```
 """
-function mosaic(D::GMTdataset; pt_radius=6371007.0, provider="", zoom::Int=0, cache::String="", mapwidth=15, dpi=96, verbose::Int=0, kw...)
-	if (find_in_kwargs(kw, [:bb :BB :bbox :BoundingBox :boundingbox])[1] !== nothing)
+function mosaic(D::GMTdataset; pt_radius=6371007.0, provider="", zoom::Int=0, cache::String="",
+                mapwidth=15, dpi=96, verbose::Int=0, kw...)
+	if (find_in_kwargs(kw, [:bb :BB :bbox :BoundingBox])[1] !== nothing)
 		lon = D.ds_bbox[1:2];	lat = D.ds_bbox[3:4]
 	else
 		lon, lat = D.data[1,1], D.data[1,2]
 	end
-	mosaic(lon, lat; pt_radius=pt_radius, provider=provider, zoom=zoom, cache=cache, mapwidth=mapwidth, dpi=dpi, verbose=verbose, kw...)
+	mosaic(lon, lat; pt_radius=pt_radius, provider=provider, zoom=zoom, cache=cache, mapwidth=mapwidth,
+           dpi=dpi, verbose=verbose, kw...)
 end
 
 function mosaic(lon, lat; pt_radius=6371007.0, provider="", zoom::Int=0, cache::String="",
-                  mapwidth=15, dpi=96, verbose::Int=0, kw...)
+                mapwidth=15, dpi=96, verbose::Int=0, kw...)
 	(size(lon) != size(lat)) && throw(error("lon & lat must be of the same size"))
 	d = Dict{Symbol,Any}(kw)
 	flatness = 0.0		# Not needed because the tile servers serve data in spherical Mercator, but some funs expect flatness
@@ -140,11 +144,13 @@ function mosaic(lon, lat; pt_radius=6371007.0, provider="", zoom::Int=0, cache::
 	quadkey::Matrix{Char} = ['0' '1'; '2' '3']
 	quadonly = ((val = find_in_dict(d, [:quadonly])[1]) !== nothing) ? true : false
 	inMerc   = ((val = find_in_dict(d, [:merc :mercator])[1]) !== nothing) ? true : false
-	isExact  = ((val = find_in_dict(d, [:exact :exact_region])[1]) !== nothing) ? true : false
+	isExact  = ((val = find_in_dict(d, [:loose :loose_bounds])[1]) === nothing) ? true : false
 	(isExact && length(lon) == 1) &&
 		(@warn("Single point queries are not compatible with an exact region option. Ignoring the exact option."); isExact = false)
 	neighbors::Matrix{Float64} = ((val = find_in_dict(d, [:N :neighbors :mosaic])[1]) === nothing) ? [1.0;;] : isa(val, Int) ? ones(Int64(val),Int64(val)) : ones(size(val))
 	(length(neighbors) > 1 && length(lon) > 1) && error("The 'neighbor' option is only for single point queries.")
+	delete!(d, [[:bb], [:BB], [:bbox], [:BoundingBox]])		# Remove this valid ones befor checking for mistakes.
+	(length(d) > 0) && println("\n\tWarning: the following options were not consumed in mosaic => ", keys(d),"\n")
 
 	any(lat .> 85.0511)  && (lat[lat .> 85.0511]  .= 85.0511)
 	any(lat .< -85.0511) && (lat[lat .< -85.0511] .= -85.0511)
@@ -320,13 +326,14 @@ function getprovider(name::StrSymb, zoom::Int; variant="", format="", ZYX::Bool=
 	return url, zoom, ext, isZXY, isZYX, code, variant
 end
 
+# ---------------------------------------------------------------------------------------------------
 function getprovider(arg, zoom::Int)
 	# This method uses as input a TileProviders type. Note that we don't have TileProviders as a dependency
 	# but make a dummy guess about it. Example usage: (night lights)
 	# provider = NASAGIBSTimeseries()
 	# I = mosaic(geocoder("Iberia"), bbox=true, provider=provider, verbose=2)
-	isProvider(arg) = (fs = fields(arg); return (length(fs) == 2 && (fs[1] == :url && fs[2] == :options)) ? true : false)
-	!isProvider(arg) && error("Argument for this method must be a TileProviders provider.")
+	fs = fields(arg)
+	!(length(fs) == 2 && (fs[1] == :url && fs[2] == :options)) && error("Argument for this method must be a TileProviders provider.")
 
 	function geturl(provider)		# This function was "borrowed"/modified from TileProviders.jl
 		ops = provider.options
