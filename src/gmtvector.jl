@@ -8,7 +8,7 @@ See full GMT (not the `GMT.jl` one) docs at [`gmtvector`]($(GMTdoc)gmtvector.htm
 Parameters
 ----------
 
-- **A** | **single_vec** :: [Type => Str]   `Arg = m[conf]|vector`
+- **A** | **primary_vec** :: [Type => Str]   `Arg = m[conf]|vector`
 
     Specify a single, primary vector instead of reading tables.
 - **C** | **cartesian** :: [Type => Str | []]        `Arg = [i|o]`
@@ -44,7 +44,7 @@ function gmtvector(cmd0::String="", arg1=nothing; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :o :yx])
-	cmd  = parse_these_opts(cmd, d, [[:A :single_vec], [:C :cartesian], [:E :geod2geoc], [:N :normalize],
+	cmd  = parse_these_opts(cmd, d, [[:A :primary_vec], [:C :cartesian], [:E :geod2geoc], [:N :normalize],
 	                                 [:S :secondary_vec], [:T :transform]])
 
 	common_grd(d, cmd0, cmd, "gmtvector ", arg1)		# Finish build cmd and run it

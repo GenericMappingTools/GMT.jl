@@ -8,7 +8,7 @@ See full GMT (not the `GMT.jl` one) docs at [`gmtwhich`]($(GMTdoc)gmtwhich.html)
 Parameters
 ----------
 
-- **A** | **with_permissions** :: [Type => Bool]
+- **A** | **readable** :: [Type => Bool]
 
 	Only consider files that the user has permission to read [Default consider all files found].
 - **C** | **confirm** :: [Type => Bool]
@@ -29,7 +29,7 @@ function gmtwhich(cmd0::String; kwargs...)
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
 	cmd = parse_V_params(d, "")
-    cmd = parse_these_opts(cmd, d, [[:A :with_permissions], [:C :confirm], [:D :report_dir], [:G :download]])
+    cmd = parse_these_opts(cmd, d, [[:A :readable], [:C :confirm], [:D :report_dir], [:G :download]])
 
 	common_grd(d, cmd0, cmd, "gmtwhich ", nothing)		# Finish build cmd and run it
 end

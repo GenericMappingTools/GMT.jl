@@ -29,7 +29,7 @@ Parameters
 - **I** | **intersections** :: [Type => Str | []]   `Arg = [e|i]`
 
     Determine the intersection locations between all pairs of polygons.
-- **N** | **in_polyg** :: [Type => Str]     `Arg = pfile[+a][+pstart][+r][+z]`
+- **N** | **in_polygons** | **in_polyg** :: [Type => Str]     `Arg = pfile[+a][+pstart][+r][+z]`
 
     Determine if one (or all, with +a) points of each feature in the input data are inside any of
     the polygons given in the pfile.
@@ -68,14 +68,14 @@ function gmtspatial(cmd0::String="", arg1=nothing, arg2 = nothing; kwargs...)
 	cmd, = parse_common_opts(d, "", [:R :V_params :b :d :e :f :g :h :i :o :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :nn :nearest_neighbor], [:C :clip], [:E :handedness], [:F :force_polygons],
 	                                 [:I :intersections], [:Q :centroid :area :length], [:W :extend]])
-	cmd = add_opt(d, cmd, "S", [:S :polygons :polyg_process], (buffer="b", holes="_h", dateline="_s"))
+	cmd = add_opt(d, cmd, "S", [:S :polygons :polyg_process], (buffer="b", holes="_h", intersection ="_i", dateline="_s", union="_u"))
 
 	cmd, args, n, = add_opt(d, cmd, "D", [:D :duplicates], :data, Array{Any,1}([arg1, arg2]), (amax="+a", dmax="+d", cmax="+c", Cmax="+c", fact="+s", ortho="_+p"))
 	if (n > 0)
 		arg1, arg2 = args[:];   cmd *= "+f"
 	end
  
-	cmd, args, n, = add_opt(d, cmd, "N", [:N :in_polyg], :data, Array{Any,1}([arg1, arg2, arg3]), (all="_+a", start="+p", has_feature="_+r", add_IDs="_+z", individual="_+i"))
+	cmd, args, n, = add_opt(d, cmd, "N", [:N :in_polyg :in_polygons], :data, Array{Any,1}([arg1, arg2, arg3]), (all="_+a", start="+p", has_feature="_+r", add_IDs="_+z", individual="_+i"))
 	if (n > 0)  arg1, arg2, arg3 = args[:]  end
 
 	cmd, args, n, = add_opt(d, cmd, "T", [:T :truncate], :data, Array{Any,1}([arg1, arg2, arg3, arg4]), (x="",))

@@ -23,10 +23,10 @@ Parameters
 
     Filter the z values and/or the x,y values, assuming these are functions of d coordinate.
     xy_filter and z_filter are filter widths in distance units.
-- **N** | **multi** :: [Type => Bool | Str]
+- **N** | **multi** | **multifile** :: [Type => Bool | Str]
 
     Write each segment to a separate output file.
-- **Q** | **xyzdh** :: [Type => Str]
+- **Q** | **fields** :: [Type => Str]
 
     Specify your desired output using any combination of xyzdh, in any order.
 - **S** | **dh** | **dist_head** :: [Type => Bool]
@@ -58,7 +58,7 @@ function gmtsplit_helper(cmd0::String, arg1; kwargs...)
 	d = init_module(false, kwargs...)[1]		    # Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:V_params :bi :bo :di :do :e :f :g :h :i :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :azim_tol], [:C :course_change], [:D :min_dist :min_distance], [:F :filter],
-	                                 [:N :multi], [:Q :xyzdh], [:S :dh :dist_head]])
+	                                 [:N :multi :multifile], [:Q :fields :xyzdh], [:S :dh :dist_head]])
 	common_grd(d, cmd0, cmd, "gmtsplit" * " ", arg1)	# Finish build cmd and run it
 end
 
