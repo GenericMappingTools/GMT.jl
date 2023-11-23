@@ -63,7 +63,6 @@ Get image tiles from a web map tiles provider for given longitude, latitude coor
     Example: ``mosaic(D, ...)`` or, if the search with ``geocoder`` was sufficiently generic (see its docs),
     ``mosaic(D, bbox=true)`` to use the BoundingBox returned by the query. `bbox` supports `bb`, `BB` or
 	`BoundingBox` as aliases.
-  pair of two elements vector or matrix with the region's [lon\\_min, lon\\_max], [lat\\_min, lat\\_max].
 - `pt_radius`: The planetary radius. Defaults to Earth's WGS84 authalic radius (6371007 m).
 - `provider`: Tile provider name. Currently available options are (but for more details see the docs of the
   `getprovider` function, *i.e.* ``? getprovider``):
