@@ -34,7 +34,7 @@ necessary to download the data. The `show` method will display the contents of t
 
 As an option, use the form
 
-    wmsinfo(wms::WMS; layer)
+    wmsinfo(wms; layer)
 
 to get further information, in particular the number of bands and sizes, of the layer number or layer name `layer`. `wms` is
 returned by the first form.
@@ -95,7 +95,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    wmsread(wms::WMS; layer, kwargs...)
+    wmsread(wms::WMS; layer=?, kwargs...)
 
 Read the `layer` number provided by the service from which the `wms` type was created.
 

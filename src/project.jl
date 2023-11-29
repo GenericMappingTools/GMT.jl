@@ -8,7 +8,7 @@ See full GMT (not the `GMT.jl` one) docs at [`project`]($(GMTdoc)project.html)
 Parameters
 ----------
 
-- **C** | **origin** | **center** :: [Type => list/tuple]    ``Arg = (x,y)``
+- **C** | **origin** | **start_point** :: [Type => list/tuple]    ``Arg = (x,y)``
 
     Sets the origin of the projection, in Definition 1 or 2.
 - **A** | **azim** | **azimuth** :: [Type => Number]    ``Arg = azimuth``
@@ -67,7 +67,7 @@ function project(cmd0::String="", arg1=nothing; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :o :s :yx])
-	cmd  = parse_these_opts(cmd, d, [[:A :azim], [:C :origin :startpoint :start_pt], [:E :endpoint :end_pt],
+	cmd  = parse_these_opts(cmd, d, [[:A :azim], [:C :origin :start_point], [:E :endpoint :end_pt],
                                      [:F :outvars :out_flags], [:G :step :generate], [:L :length], [:N :flat_earth], [:Q :km], [:S :sort], [:T :pole], [:W :width], [:Z :ellipse]])
 
 	if (!occursin("-G", cmd)) cmd, _, arg1 = find_data(d, cmd0, cmd, arg1)

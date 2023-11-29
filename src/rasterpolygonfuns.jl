@@ -127,8 +127,8 @@ function colorzones!(shapes::GDtype, fun::Function; img::GMTimage=nothing, url::
 
 	(url != "") && (wms = wmsinfo(url))
 	(url != "") && (layer_n = get_layer_number(wms, layer))
-	layout = ""		# GDAL always returns TRB, so if img has a different one, we must convert (arg in gdalrasterize).
-	(img !== nothing && !startswith(img.layout, "TR")) && (layout = img.layout)
+	#layout = ""		# GDAL always returns TRB, so if img has a different one, we must convert (arg in gdalrasterize).
+	#(img !== nothing && !startswith(img.layout, "TR")) && (layout = img.layout)
 	#row_dim, col_dim = (img.layout == "" || img.layout[2] == 'C') ? (1,2) : (2,1)	# If RowMajor the array is disguised 
 	row_dim, col_dim = (1,2)
 
@@ -136,11 +136,12 @@ function colorzones!(shapes::GDtype, fun::Function; img::GMTimage=nothing, url::
 	for k = 1:numel(shapes)
 		!within(k) && continue				# Catch any exterior polygon before it errors
 		_img = (url != "") ? wmsread(wms, layer=layer_n, region=shapes[k], pixelsize=pixelsize) : GMT.crop(img, region=shapes[k])[1]
+		_img === nothing && continue		# Catch crop shits (for example, polygons too small)
 
 		mk = gdalrasterize(shapes[k],
-			["-of", "MEM", "-ts","$(size(_img, col_dim))","$(size(_img, row_dim))", "-burn", "1", "-ot", "Byte"], layout=layout)
-		mask = reinterpret(Bool, mk)
-		(!any(mask)) && continue		# If mask is all falses stop before it errors
+			["-of", "MEM", "-ts","$(size(_img, col_dim))","$(size(_img, row_dim))", "-burn", "1", "-ot", "Byte"], layout=img.layout)
+		mask = reinterpret(Bool, mk.image)
+		(!any(mask)) && continue			# If mask is all falses stop before it errors
 
 		opt_G = (ndims(_img) >= 3) ? @sprintf(" -G%.0f/%.0f/%.0f", fun(_img[mask,1]), fun(_img[mask,2]), fun(_img[mask,3])) :
 		         (c = fun(_img[mask,1]); @sprintf(" -G%.0f/%.0f/%.0f", c,c,c)) 

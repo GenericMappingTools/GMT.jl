@@ -61,9 +61,11 @@ function colorbar(arg1::Union{Nothing, GMTcpt}=nothing; first=true, kwargs...)
 	cmd = parse_common_opts(d, cmd, [:F :UVXY :params :c :p :t], first)[1]
 	cmd = parse_these_opts(cmd, d, [[:G :truncate], [:I :shade], [:M :monochrome], [:N :dpi],
 	                                [:Q :log], [:S :nolines], [:W :scale], [:Z :zfile]])
-	cmd = parse_type_anchor(d, cmd, [:D :pos :position],
-	                        (map=("g", arg2str, 1), outside=("J", arg2str, 1), inside=("j", arg2str, 1), norm=("n", arg2str, 1), paper=("x", arg2str, 1), anchor=("", arg2str, 2), length=("+w", arg2str), size=("+w", arg2str), justify="+j", triangles="+e", horizontal="_+h", move_annot="+m", neon="_+mc", nan="+n", offset=("+o", arg2str)), 'J')
+	opt_D = parse_type_anchor(d, "", [:D :pos :position],
+	                          (map=("g", arg2str, 1), outside=("J", arg2str, 1), inside=("j", arg2str, 1), norm=("n", arg2str, 1), paper=("x", arg2str, 1), anchor=("", arg2str, 2), length=("+w", arg2str), size=("+w", arg2str), justify="+j", triangles="+e", horizontal="_+h", move_annot="+m", neon="_+mc", nan="+n", offset=("+o", arg2str)), 'J')
 
+	(!isempty(opt_D)) && (!contains(opt_D, "DJ") && !contains(opt_D, "Dj") && !contains(opt_D, "Dg")) && (cmd = replace(cmd, "-R " => ""))
+	cmd *= opt_D
 	cmd, arg1, = add_opt_cpt(d, cmd, CPTaliases, 'C', 0, arg1)
 	if (!isa(arg1, GMTcpt) && !occursin("-C", cmd))	# If given no CPT, try to see if we have a current one stored in global
 		if (!isempty(CURRENT_CPT[1]))
@@ -72,7 +74,7 @@ function colorbar(arg1::Union{Nothing, GMTcpt}=nothing; first=true, kwargs...)
 	end
 
 	cmd = add_opt(d, cmd, "L", [:L :equal :equal_size], (range="i", gap=""))	# Aditive
-	(!occursin(" -D", cmd)) && (cmd *= " -DJMR")			#  So that we can call it with just a CPT
+	isempty(opt_D) && (cmd *= " -DJMR")			#  So that we can call it with just a CPT
 
 	r = finish_PS_module(d, gmt_proggy * cmd, "", K, O, true, arg1)
 	(!isa(r,String)) && gmt("destroy")      # Probably because of the rasters in cpt

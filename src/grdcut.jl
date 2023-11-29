@@ -110,13 +110,14 @@ function crop(arg::GItype; kw...)
 
 	# So far we are not able to crop row-wise array disguised as a column-wise one. So resort to GDAL
 	if (arg.layout != "" && arg.layout[2] == 'R')
-		proj, wkt, epsg = arg.proj4, arg.wkt, arg.epsg		# Save these because gdaltranslate may f cahnge them
+		proj, wkt, epsg = deepcopy(arg.proj4), deepcopy(arg.wkt), copy(arg.epsg)	# Save these because gdaltranslate may f change them
 		if (arg.registration == 0)
 			inc_x2, inc_y2 = arg.inc[1]/2, arg.inc[2]/2
 			G = gdaltranslate(arg, R=(lims[1]-inc_x2, lims[2]+inc_x2, lims[3]-inc_y2, lims[4]+inc_y2))
 		else
 			G = gdaltranslate(arg, R=opt_R[4:end])
 		end
+		G === nothing && return nothing, Int[], Int[]		# Happened with the colorzones!
 		G.proj4, G.wkt, G.epsg = proj, wkt, epsg
 		return G, Int[], Int[]
 	end
