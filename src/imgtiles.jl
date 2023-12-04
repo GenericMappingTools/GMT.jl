@@ -144,8 +144,7 @@ function mosaic(lon, lat; pt_radius=6371007.0, provider="", zoom::Int=0, cache::
 	quadonly = ((val = find_in_dict(d, [:quadonly])[1]) !== nothing) ? true : false
 	inMerc   = ((val = find_in_dict(d, [:merc :mercator])[1]) !== nothing) ? true : false
 	isExact  = ((val = find_in_dict(d, [:loose :loose_bounds])[1]) === nothing) ? true : false
-	(isExact && length(lon) == 1) &&
-		(@warn("Single point queries are not compatible with an exact region option. Ignoring the exact option."); isExact = false)
+	(isExact && length(lon) == 1) && (isExact = false)
 	neighbors::Matrix{Float64} = ((val = find_in_dict(d, [:N :neighbors :mosaic])[1]) === nothing) ? [1.0;;] : isa(val, Int) ? ones(Int64(val),Int64(val)) : ones(size(val))
 	(length(neighbors) > 1 && length(lon) > 1) && error("The 'neighbor' option is only for single point queries.")
 	delete!(d, [[:bb], [:BB], [:bbox], [:BoundingBox]])		# Remove this valid ones befor checking for mistakes.
