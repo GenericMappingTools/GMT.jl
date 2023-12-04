@@ -703,6 +703,7 @@ function rasters2grid(arg; scale::Real=1f0, offset::Real=0f0)::GMTgrid
 
 	proj::String, wkt::String, epsg::Int = "", "", 0
 	t = !isempty(arg.dims) ? arg.dims[1].val.crs.val : nothing		# It took an awful debug effort to find this
+	isa(t, Tuple) && (t = t[1])
 	isa(t, Int) ? (epsg = t; proj = epsg2proj(t)) : startswith(t, "GEOGCS") ? (wkt=t; proj=wkt2proj(t)) : startswith(t, "+proj") ? (proj=t) : nothing
 
 	data = nothing
