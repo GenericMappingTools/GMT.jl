@@ -16,6 +16,7 @@ function gmtbegin(name::String=""; fmt=nothing, verbose=nothing)
 	(verbose !== nothing) && (cmd *= " -V" * string(verbose))
 	IamModern[1], IamSubplot[1] = false, false
 	FirstModern[1] = true			# To know if we need to compute -R in plot. Due to a GMT6.0 BUG
+	isJupyter[1] = isdefined(Main, :IJulia)		# show fig relies on this
 	gmt(cmd)
 	return nothing
 end
@@ -36,6 +37,7 @@ function gmtend(arg=nothing; show=false, verbose=nothing)
 	end
 	gmt(cmd)
 	resetGMT()
+	isPSclosed[1] = true
 	return nothing
 end
  

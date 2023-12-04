@@ -3991,7 +3991,7 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K:
 	end
 	CTRL.limits .= 0.0;		CTRL.figsize .= 0.0;	CTRL.proj_linear[1] = true;		# Reset these for safety
 	CTRL.pocket_J[1], CTRL.pocket_J[2], CTRL.pocket_J[3], CTRL.pocket_J[4] = "", "", "", "   ";
-	CTRL.pocket_R[1] = ""
+	CTRL.pocket_R[1] = "";	isJupyter[1] = false
 	return retPluto ? WrapperPluto(out) : nothing	# retPluto should make it all way down to base so that Plut displays it
 end
 
@@ -4027,19 +4027,25 @@ function showfig(; kwargs...)
 	CTRL.limits .= 0.0;		CTRL.proj_linear[1] = true;		# Reset these for safety
 	!isempty(LEGEND_TYPE[1].optsDict) && (d[:legend] = dict2nt(LEGEND_TYPE[1].optsDict))	# Recover opt settings
 	digests_legend_bag(d)							# Plot the legend if requested
-	finish_PS_module(d, "psxy -R0/1/0/1 -JX0.001c -T -O", "", false, true, true)
+	arg = (isPSclosed[1]) ? "" : "psxy -R0/1/0/1 -JX0.001c -T -O"		# In Modern the PS is already closed
+	finish_PS_module(d, arg, "", false, true, true)
 end
 function helper_showfig4modern(show::String="show")::Bool
+	# Called with show=?? by subplot() and with no args by finish_PS_module()
 	# If called from modern mode, do the equivalent of classic to close and show fig
 	# Use show="" in modern when only wanting to finish plot but NOT display it.
-	!IamModern[1] && return false
+	!IamModern[1] && return false		# Only subplot() calls go beyond this point
 	try
 		gmt("subplot end");		IamSubplot[1] = false
 	catch erro;		println(erro)
 	end
 	IamModern[1] = false
-	isFranklin[1] ? gmt("end") : (show == "") ? gmt("end") : gmt("end " * show)	# isFranklin = true when building the docs
+	call_display = false
+	(isJupyter[1] && show != "") && (show = ""; call_display = true)
+	(isFranklin[1] || show == "") ? gmt("end") : gmt("end " * show)		# isFranklin = true when building the docs
+	isPSclosed[1] = true
 	desconf(false)		# FALSE because modern mode calls do a gmt_restart() in the gmt() main function.
+	call_display && showfig()		# Fragile. How to assert that modern_fname is not empty?
 	return true
 end
 
@@ -4182,7 +4188,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 	output::String, opt_T::String, fname_ext::String, fname, ret_ps = fname_out(d, true)
 	(ret_ps) && (output = "") 	 						# Here we don't want to save to file
 	cmd, opt_T = prepare2geotif(d, cmd, opt_T, O)		# Settings for the GeoTIFF and KML cases
-	(finish) && (cmd = finish_PS(d, cmd, output, K, O))
+	(finish && cmd[1] != "") && (cmd = finish_PS(d, cmd, output, K, O))
 
 	have_Vd = haskey(d, :Vd)
 	(have_Vd && d[:Vd] > 2) && show_args_types(args...)

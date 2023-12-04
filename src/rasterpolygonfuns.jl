@@ -103,7 +103,7 @@ See also: `rasterzones!`
 ### Returns
 It does't return anything but the input `shapes` is modified.
 
-## Example
+### Example
     Read the 2020 Sentinel2 Earth color for Portugal at 100 m resolution. Load the administrative
 	regions and compute their median colors.
 	
