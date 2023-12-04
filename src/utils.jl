@@ -326,12 +326,6 @@ function toc(V=true)
 end
 
 # --------------------------------------------------------------------------------------------------
-"""
-    isnodata(array::AbstractArray, val=0)
-
-Return a boolean array with the same size a `array` with 1's (`true`) where ``array[i] == val``.
-Test with an image have shown that this function was 5x faster than ``ind = (I.image .== 0)``
-"""
 #=
 function isnodata(array::AbstractArray, val=0)
 	nrows, ncols = size(array,1), size(array,2)
@@ -345,6 +339,12 @@ function isnodata(array::AbstractArray, val=0)
 	indNaN
 end
 =#
+"""
+    isnodata(array::AbstractArray, val=0)
+
+Return a boolean array with the same size a `array` with 1's (`true`) where ``array[i] == val``.
+Test with an image have shown that this function was 5x faster than ``ind = (I.image .== 0)``
+"""
 function isnodata(array::Matrix{T}, val=0) where T
 	nrows, ncols = size(array)
 	indNaN = fill(false, nrows, ncols)
@@ -457,6 +457,12 @@ function rescale(A::AbstractArray, low=0.0, up=1.0; inputmin=nothing, inputmax=n
 end
 
 # --------------------------------------------------------------------------------------------------
+"""
+	M = magic(n::Int) => Matrix{Int}
+	
+M = magic(n) returns an n-by-n matrix constructed from the integers 1 through n^2 with equal row and column sums.
+The order n must be a scalar greater than or equal to 3 in order to create a valid magic square.
+"""
 function magic(n::Int)
 	# From:  https://gist.github.com/phillipberndt/2db94bf5e0c16161dedc
 	# Had to suffer with Julia painful matrix indexing system to make it work. Gives the same as magic.m
