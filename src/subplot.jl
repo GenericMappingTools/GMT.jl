@@ -109,6 +109,7 @@ function subplot(fim=nothing; stop=false, kwargs...)
 		catch; resetGMT()
 		end
 		IamSubplot[1], IamModern[1] = true, true
+		isJupyter[1] = isdefined(Main, :IJulia)		# show fig relies on this
 	elseif (do_set)
 		(!IamSubplot[1]) && error("Cannot call subplot(set, ...) before setting dimensions")
 		_, pane = parse_c(d, cmd)

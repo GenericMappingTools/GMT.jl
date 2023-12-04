@@ -6,6 +6,7 @@ except when using the ``monolithic`` mode. Usage:
 """
 function gmt(cmd::String, args...)
 
+	(cmd == "") && return nothing		# Building docs with Quarto leads here when examples use ModernMode
 	(cmd == "destroy") && return gmt_restart()
 	ressurectGDAL()			# Some GMT modules may have called GDALDestroyDriverManager() 
 
@@ -29,9 +30,10 @@ function gmt(cmd::String, args...)
 	# First argument is the command string, e.g., "blockmean -R0/5/0/5 -I1" or just "help"
 	g_module::String, r = strtok(cmd)
 
+	isPSclosed[1] = false				# Only a gmtend() call sets this to true
 	if (g_module == "begin")			# Use this default fig name instead of "gmtsession"
-		#(r == "") && (r = isFranklin[1] ? (joinpath(tempdir(), "GMTjl_tmp png")) : "GMTplot " * FMT[1]::String)
-		(r == "") && (r = isFranklin[1] ? (tmpdir_usr[1] * "/" * "GMTjl_" * tmpdir_usr[2] * " png") : "GMTplot " * FMT[1]::String)
+		fig_ext = (isFranklin[1]) ? " png" : (isJupyter[1]) ? " ps" : FMT[1]::String
+		(r == "") && (r = (isFranklin[1] || isJupyter[1]) ? (tmpdir_usr[1] * "/" * "GMTjl_" * tmpdir_usr[2] * fig_ext) : "GMTplot " * fig_ext)
 		IamModern[1] = true
 		gmtlib_setparameter(G_API[1], "MAP_ORIGIN_X", "0")	# Workarround GMT bug.
 		gmtlib_setparameter(G_API[1], "MAP_ORIGIN_Y", "0")
