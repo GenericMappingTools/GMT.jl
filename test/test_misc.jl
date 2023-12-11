@@ -49,6 +49,13 @@
 	flipdim(G.z,1)
 	fileparts("C:/a/b/c.d");
 	GMT.resetGMT()
+	@test GMT.bin2dec("10111") == 23
+	@test GMT.dec2bin(23) == "10111"
+
+	A = [3 1; 3 3; 1 3; 3 2; 2 3; 1 1; 1 2; 2 3; 3 3; 3 3];
+	C, ia, ic = GMT.uniq(A; dims=1);
+	@test ia == [6, 7, 3, 5, 1, 4, 2]
+    @test ic == [5, 7, 3, 6, 4, 1, 2, 4, 7, 7]
 
 	D = mat2ds(ones(3,2));
 	@test D + 2 == [3 1; 3 1; 3 1];

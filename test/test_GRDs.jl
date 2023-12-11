@@ -69,10 +69,18 @@
 	colorzones!(D, img=im)		# A bit out of place but it reuses the variables above
 	G = GMT.peaks();
 	D = mat2ds([-1 -1; 1 1; 1 -1; -1 -1]);
-	GMT.rasterzones!(G, D, mean)
+	rasterzones(G, D, mean);
+	rasterzones(mean, G, D);
+	rasterzones!(G, D, mean)
+	rasterzones!(mean, G, D)
 	I = GMT.mat2img(rand(UInt8, 32, 32, 3));
 	D = mat2ds([10 10; 15 20; 20 10; 10 10]);
-	GMT.rasterzones!(I, D, mean)
+	rasterzones!(I, D, mean)
+
+	D = [mat2ds([-1 -1; 1 1; 1 -1; -1 -1], attrib=Dict("Feature_ID" => "1", "NAME" => "a")),
+	     mat2ds([1.5 1.0; 1.5 1.5; 2.0 1.0; 1.5 1.0], attrib=Dict("Feature_ID" => "2", "NAME" => "b"))]
+	zonal_statistics(G, D, mean, byfeatures=true);
+	zonal_statistics(mean, G, D, groupby="NAME");
 
 	# GRDEDIT
 	grdedit(G, C=true);
