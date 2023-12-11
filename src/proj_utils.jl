@@ -930,11 +930,11 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    lon = wraplon180(lon)
+    lon = wraplon180!(lon::Vector{<:Real})
 
 Wrap longitudes to be in the range -180 to 180.
 """
-function wraplon180(lon)
+function wraplon180!(lon::VecOrMat{<:Real})
 	ind = lon .< -180
 	while any(ind)
 		lon[ind] .+= 360
@@ -947,4 +947,24 @@ function wraplon180(lon)
 		ind = lon .> 180
 	end
 	return lon
+end
+function wraplon180!(lon::Real)		# This one is for scalars only
+	lon < -180 && (lon += 360)
+	lon > 180 && (lon -= 360)
+	return lon
+end
+
+function wraplon180!(D::GMTdataset)
+	wraplon180!(view(D.data, :, 1))
+	wraplon180!(view(D.bbox, 1:2))
+	wraplon180!(view(D.ds_bbox, 1:2))
+	return D
+end
+function wraplon180!(D::Vector{<:GMTdataset})
+	for n = 1: numel(D)
+		wraplon180!(view(D[n].data, :, 1))
+		wraplon180!(view(D[n].bbox, 1:2))
+	end
+	wraplon180!(view(D[1].ds_bbox, 1:2))
+	return D
 end
