@@ -152,9 +152,9 @@ function mosaic(lon, lat; pt_radius=6371007.0, provider="", zoom::Int=0, cache::
 
 	any(lat .> 85.0511)  && (lat[lat .> 85.0511]  .= 85.0511)
 	any(lat .< -85.0511) && (lat[lat .< -85.0511] .= -85.0511)
-	lon = wraplon180(lon)							# Make sure that longitudes are in the range -180 to 180
+	lon = wraplon180!(lon)		# Make sure that longitudes are in the range -180 to 180 (for scalars need a return value)
 
-	lat_orig = lat		# Save original lat for eventual use in the exact region option
+	lat_orig = lat				# Save original lat for eventual use in the exact region option
 	lat = geod2isometric(lat, flatness)
 	x, y, xmm, ymm = getPixel(lon, lat, zoom)		# x,y are the fractional number of the 256 bins counting from origin
 	x, y = floor.(x), floor.(y)

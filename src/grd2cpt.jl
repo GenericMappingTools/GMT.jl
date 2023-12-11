@@ -44,7 +44,7 @@ Parameters
 
     Selects a logarithmic interpolation scheme [Default is linear].
 - $(GMT._opt_R)
-- **S** | **symetric** :: [Type => Str]			`Arg = h|l|m|u`
+- **S** | **symmetric** :: [Type => Str]			`Arg = h|l|m|u`
 
     Force the color table to be symmetric about zero (from -R to +R).
 
@@ -53,7 +53,7 @@ Parameters
     Set steps in CPT. Calculate entries in CPT from zstart to zstop in steps of (zinc). Default
     chooses arbitrary values by a crazy scheme based on equidistant values for a Gaussian CDF.
 - $(GMT.opt_V)
-- **W** | **wrap** | **categorical** :: [Type => Bool | Str | []]      `Arg = [w]`
+- **W** | **categorical** :: [Type => Bool | Str | []]      `Arg = [w]`
 
     Do not interpolate the input color table but pick the output colors starting at the
     beginning of the color table, until colors for all intervals are assigned.

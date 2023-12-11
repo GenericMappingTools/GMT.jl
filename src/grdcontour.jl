@@ -51,7 +51,7 @@ Parameters
     Sets the attributes for the particular line.
 - $(GMT.opt_X)
 - $(GMT.opt_Y)
-- **Z** | **scale** :: [Type => Str]
+- **Z** | **muladd** | **scale** :: [Type => Str]
 
     Use to subtract shift from the data and multiply the results by factor before contouring starts.
 - $(GMT.opt_bo)
@@ -80,7 +80,7 @@ function grdcontour_helper(cmd0::String, arg1; first=true, kw...)
 	cmd, = parse_common_opts(d, cmd, [:UVXY :params :bo :c :e :f :h :p :t], first)
 	cmd  = parse_these_opts(cmd, d, [[:D :dump], [:F :force], [:L :range], [:Q :cut], [:S :smooth]])
 	cmd  = parse_contour_AGTW(d::Dict, cmd::String)[1]
-	cmd  = add_opt(d, cmd, "Z", [:Z :scale], (factor = "+s", shift = "+o", periodic = "_+p"))
+	cmd  = add_opt(d, cmd, "Z", [:Z :muladd :scale], (factor = "+s", shift = "+o", periodic = "_+p"))
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)	# Find how data was transmitted
 	if (isa(arg1, Matrix{<:Real}))	arg1 = mat2grid(arg1)	end

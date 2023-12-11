@@ -11,11 +11,15 @@ you can use the kwarg `sds` to selec the subdataset numerically. Alternatively, 
 For files with `sds` with a scale_factor (e.g. MODIS data), that scale is applyied automaticaly.
 
 ### Examples:
-       G = gd2gmt("AQUA_MODIS.20210228.L3m.DAY.NSST.sst.4km.NRT.nc", sds=1);
-    or
-       G = gd2gmt("SUBDATASET_1_NAME=NETCDF:AQUA_MODIS.20210228.L3m.DAY.NSST.sst.4km.NRT.nc:sst");
-    or
-       G = gd2gmt("NETCDF:AQUA_MODIS.20210228.L3m.DAY.NSST.sst.4km.NRT.nc:sst");
+   G = gd2gmt("AQUA_MODIS.20210228.L3m.DAY.NSST.sst.4km.NRT.nc", sds=1);
+
+or
+
+   G = gd2gmt("SUBDATASET_1_NAME=NETCDF:AQUA_MODIS.20210228.L3m.DAY.NSST.sst.4km.NRT.nc:sst");
+
+or
+
+   G = gd2gmt("NETCDF:AQUA_MODIS.20210228.L3m.DAY.NSST.sst.4km.NRT.nc:sst");
 """
 function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int=0, layout::String="")
 
@@ -26,6 +30,23 @@ function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int
 	dataset, scale_factor, add_offset, got_fill_val, fill_val = gd2gmt_helper(_dataset, sds)
 	Gdal.CPLPopErrorHandler();
 	(!isa(_dataset, String) && _dataset.ptr == C_NULL) && error("NULL dataset sent in")
+
+	#=
+	zeragem(::Float64, ncol, nrow, nb)::Array{Float64,3} = zeros(Float64, ncol, nrow, nb)
+	zeragem(::Float64, ncol, nrow)::Matrix{Float64}      = zeros(Float64, ncol, nrow)
+	zeragem(::Float32, ncol, nrow, nb)::Array{Float32,3} = zeros(Float32, ncol, nrow, nb)
+	zeragem(::Float32, ncol, nrow)::Matrix{Float32}      = zeros(Float32, ncol, nrow)
+	zeragem(::Int32, ncol, nrow, nb)::Array{Int32,3} = zeros(Int32, ncol, nrow, nb)
+	zeragem(::Int32, ncol, nrow)::Matrix{Int32}      = zeros(Int32, ncol, nrow)
+	zeragem(::Int16, ncol, nrow, nb)::Array{Int16,3} = zeros(Int16, ncol, nrow, nb)
+	zeragem(::Int16, ncol, nrow)::Matrix{Int16}      = zeros(Int16, ncol, nrow)
+	zeragem(::UInt16, ncol, nrow, nb)::Array{UInt16,3} = zeros(UInt16, ncol, nrow, nb)
+	zeragem(::UInt16, ncol, nrow)::Matrix{UInt16}      = zeros(UInt16, ncol, nrow)
+	zeragem(::UInt8, ncol, nrow, nb)::Array{UInt8,3} = zeros(UInt8, ncol, nrow, nb)
+	zeragem(::UInt8, ncol, nrow)::Matrix{UInt8}      = zeros(UInt8, ncol, nrow)
+	zeragem(::Int8, ncol, nrow, nb)::Array{Int8,3} = zeros(Int8, ncol, nrow, nb)
+	zeragem(::Int8, ncol, nrow)::Matrix{Int8}      = zeros(Int8, ncol, nrow)
+	=#
 
 	n_dsbands = Gdal.nraster(dataset)
 	xSize, ySize, nBands = Gdal.width(dataset), Gdal.height(dataset), n_dsbands
@@ -125,6 +146,7 @@ function gd2gmt_helper(input, sds)
 	if (sds > 0)					# Must fish the SUBDATASET name in in gdalinfo
 		# Let's fish the SDS 1 name in: SUBDATASET_1_NAME=NETCDF:"AQUA_MODIS.20210228.L3m.DAY.NSST.sst.4km.NRT.nc":sst
 		info = gdalinfo(input)
+		@assert info !== nothing "Input has no information. Must be an error"
 		ind = findall("SUBDATASET_", info)
 		nn = 0
 		for k = 1:2:length(ind)
@@ -148,7 +170,7 @@ function gd2gmt_helper(input, sds)
 
 	# Hmmm, check also for scale_factor, add_offset, _FillValue
 	info = gdalinfo(dataset)
-	(info === nothing) && error("\tGDAL failed to read " * (isa(input, AbstractString) ? sds_name : "input dataset\n"))
+	@assert info !== nothing "\tGDAL failed to read " * (isa(input, AbstractString) ? sds_name : "input dataset\n")
 	if (occursin("Metadata:", info))
 		if ((ind = findfirst("scale_factor=", info)) !== nothing)	# OK, found one
 			ind2 = findfirst('\n', info[ind[1]:end])

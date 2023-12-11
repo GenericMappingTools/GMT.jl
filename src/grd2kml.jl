@@ -28,7 +28,7 @@ Parameters
 
     Gives the name of a grid file or GMTgrid with intensities in the (-1,+1) range,
     or a grdgradient shading flags.
-- **L** | **tilisize** | **tile_size** :: [Type => Number]			`Arg = tilesize`
+- **L** | **tilesize** | **tile_size** :: [Type => Number]			`Arg = tilesize`
 
     Sets the fixed size of the image building blocks. Must be an integer that is radix 2.
     Typical values are 256 or 512 [256].
@@ -39,7 +39,7 @@ Parameters
 - **Q** | **nan_t** | **nan_alpha** :: [Type => Bool]
 
     Make grid nodes with z = NaN transparent, using the color-masking feature in PostScript Level 3.
-- **S** | **extralayers** :: [Type => Str]
+- **S** | **extra_layers** | **extralayers** :: [Type => Str]
 
     Add extra layers beyond that necessary to capture the full resolution of the data.
 - **T** | **title** :: [Type => Str]		        `Arg = title`
@@ -61,7 +61,7 @@ function grd2kml(cmd0::String="", arg1=nothing; kwargs...)
 
 	cmd, = parse_common_opts(d, "", [:V_params :f :n])
 	cmd  = parse_these_opts(cmd, d, [[:A :mode], [:E :url], [:F :filter], [:H :subpixel :sub_pixel],
-                                     [:L :tilesize :tile_size], [:N :prefix], [:Q :nan_t :nan_alpha], [:S :extralayers], [:T :title], [:W :contours]])
+                                     [:L :tilesize :tile_size], [:N :prefix], [:Q :nan_t :nan_alpha], [:S :extra_layers :extralayers], [:T :title], [:W :contours]])
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)		# Find how data was transmitted
 	cmd, N_used, arg1, arg2, = get_cpt_set_R(d, cmd0, cmd, " ", got_fname, arg1, arg2)

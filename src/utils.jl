@@ -141,12 +141,9 @@ function std_nan(A, dims=1)
 end
 
 # --------------------------------------------------------------------------------------------------
-function extrema_nan(A)
-	# Incredibly Julia ignores the NaN nature and incredibly min(1,NaN) = NaN, so need to ... fck
-	if (eltype(A) <: AbstractFloat)  return minimum_nan(A), maximum_nan(A)
-	else                             return extrema(A)
-	end
-end
+# Incredibly Julia ignores the NaN nature and incredibly min(1,NaN) = NaN, so need to ... fck
+extrema_nan(A::Array{<:AbstractFloat}) = minimum_nan(A), maximum_nan(A)
+extrema_nan(A) = extrema(A)
 
 """
     extrema_cols(A; col=1)
@@ -163,29 +160,23 @@ function extrema_cols(A; col=1)
 	return mi, ma
 end
 
-function minimum_nan(A)
-	if (eltype(A) <: AbstractFloat)
-		mi = minimum(A);	!isnan(mi) && return mi		# The noNaNs version is a order of magnitude faster
-		mi = typemax(eltype(A))
-		@inbounds for k in eachindex(A) mi = ifelse(!isnan(A[k]), min(mi, A[k]), mi)  end
-		mi == typemax(eltype(A)) && (mi = convert(eltype(A), NaN))	# Better to return NaN than +Inf
-		mi
-	else
-		minimum(A)
-	end
+function minimum_nan(A::Array{<:AbstractFloat})
+	mi = minimum(A);	!isnan(mi) && return mi		# The noNaNs version is a order of magnitude faster
+	mi = typemax(eltype(A))
+	@inbounds for k in eachindex(A) mi = ifelse(!isnan(A[k]), min(mi, A[k]), mi)  end
+	mi == typemax(eltype(A)) && (mi = convert(eltype(A), NaN))	# Better to return NaN than +Inf
+	return mi
 end
+minimum_nan(A) = minimum(A)
 
-function maximum_nan(A)
-	if (eltype(A) <: AbstractFloat)
-		ma = maximum(A);	!isnan(ma) && return ma		# The noNaNs version is a order of magnitude faster
-		ma = typemin(eltype(A))
-		@inbounds for k in eachindex(A) ma = ifelse(!isnan(A[k]), max(ma, A[k]), ma)  end
-		ma == typemin(eltype(A)) && (ma = convert(eltype(A), NaN))	# Better to return NaN than -Inf
-		ma
-	else
-		maximum(A)
-	end
+function maximum_nan(A::Array{<:AbstractFloat})
+	ma = maximum(A);	!isnan(ma) && return ma		# The noNaNs version is a order of magnitude faster
+	ma = typemin(eltype(A))
+	@inbounds for k in eachindex(A) ma = ifelse(!isnan(A[k]), max(ma, A[k]), ma)  end
+	ma == typemin(eltype(A)) && (ma = convert(eltype(A), NaN))	# Better to return NaN than -Inf
+	return ma
 end
+maximum_nan(A) = maximum(A)
 
 function findmax_nan(x::AbstractVector{T}) where T
 	# Since Julia doesn't ignore NaNs and prefer to return wrong results findmax is useless when data
@@ -613,6 +604,22 @@ function fileparts(fn::String)
 	pato, ext = splitext(fn)
 	pato, fname = splitdir(pato)
 	return pato, fname, ext
+end
+
+function uniq(A; dims=1)
+	# Like the Matlab function
+	# https://discourse.julialang.org/t/unique-indices-method-similar-to-matlab/34446/7
+	@assert ndims(A) ∈ (1, 2)
+	slA = ndims(A) > 1 ? eachslice(A; dims) : A
+  
+	ia = unique(i -> slA[i], axes(A, dims))
+	sort!(ia; by=i -> slA[i])
+  
+	C = stack(slA[ia]; dims)
+	slC = ndims(A) > 1 ? eachslice(C; dims) : C
+  
+	ic = map(r -> findfirst(==(slA[r]), slC), axes(A, dims))
+	C, ia, ic
 end
 
 #=

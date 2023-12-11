@@ -9,7 +9,7 @@ Parameters
 ----------
 
 - $(GMT._opt_J)
-- **C** | **rcnumbers** | **row_col** :: [Type => Bool]
+- **C** | **row_col** | **rowcol** :: [Type => Bool]
 
     Replace the x- and y-coordinates on output with the corresponding column and row numbers.
 - **L** | **hvline** :: [Type => String]
@@ -23,7 +23,7 @@ Parameters
 - **W** | **weight** :: [Type => Str]           `Arg = [a|weight]`
 
     Write out x,y,z,w, where w is the supplied weight (or 1 if not supplied) [Default writes x,y,z only].
-- **Z** | **onecol** :: [Type => Str]
+- **Z** | **onecol** | **one_col** :: [Type => Str]
 
     Write a 1-column table. Output will be organized according to the specified ordering
     convention contained in ``flags``.
@@ -44,7 +44,7 @@ function grd2xyz_helper(cmd0::String, arg1; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:R :V_params :bo :d :f :h :o :s])
-	cmd  = parse_these_opts(cmd, d, [[:C :rcnumbers :row_col], [:L :hvline], [:T :stl :STL], [:W :weight], [:Z :onecol]])
+	cmd  = parse_these_opts(cmd, d, [[:C :rcnumbers :row_col :rowcol], [:L :hvline], [:T :stl :STL], [:W :weight], [:Z :onecol :one_col]])
 	((val = find_in_dict(d, [:name :save])[1]) !== nothing) && (cmd *=  " > " * string(val))
 	common_grd(d, cmd0, cmd, "grd2xyz ", arg1)	# Finish build cmd and run it
 end

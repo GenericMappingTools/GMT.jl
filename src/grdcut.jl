@@ -132,6 +132,7 @@ function crop(arg::GItype; kw...)
 	end
 
 	x, y = arg.x[pix_x[1]:pix_x[2]+arg.registration], arg.y[pix_y[1]:pix_y[2]+arg.registration]
+	#x, y = arg.x[pix_x[1]:pix_x[2]], arg.y[pix_y[1]:pix_y[2]]
 	if (arg.layout != "")  pix_x, pix_y = rearrange_ranges(pix_x, pix_y)  end
 	cropped = (ndims(arg) == 2) ? arg[pix_y[1]:pix_y[2], pix_x[1]:pix_x[2]] : arg[pix_y[1]:pix_y[2], pix_x[1]:pix_x[2], :]
 	range = copy(arg.range)
@@ -166,6 +167,22 @@ function axes2pix(xy, dims, x, y, reg=0, layout::String="TC")
 	pix_x = round.(Int, slope .* (xy[:,1] .- x[1]) .+ [1.0, one_or_zero])
 	slope = (dims[row_dim] - one_or_zero) / (y[end] - y[1])
 	pix_y = round.(Int, slope .* (xy[:,2] .- y[1]) .+ [1.0, one_or_zero])
+
+	#=
+	inc_x = (x[end] - x[1]) / (dims[col_dim] - one_or_zero)
+	inc_y = (y[end] - y[1]) / (dims[row_dim] - one_or_zero)
+	if (reg == 0)
+		pix_x = round.(Int, (xy[:,1] .- x[1]) / inc_x) .+ 1
+		pix_y = round.(Int, (xy[:,2] .- y[1]) / inc_y) .+ 1
+	else
+		pix_x = floor.(Int, (xy[:,1] .- x[1]) / inc_x) .+ 1
+		pix_y = floor.(Int, (xy[:,2] .- y[1]) / inc_y) .+ 1
+	end
+	pix_x[2] > dims[col_dim] && (pix_x[2] = dims[col_dim])		# Happens when x|y are equal to the xy limits
+	pix_y[2] > dims[row_dim] && (pix_y[2] = dims[row_dim])
+	=#
+	pix_x[2] < pix_x[1] && (pix_x[2] = pix_x[1])		# May happen when only one cell and for not obvious reasons
+	pix_y[2] < pix_y[1] && (pix_y[2] = pix_y[1])
 	pix_x, pix_y
 end
 

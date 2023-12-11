@@ -337,27 +337,27 @@ struct Gmt_libinfo
 end
 
 struct OGR_FEATURES
-	n_rows::Cint
-	n_cols::Cint
+	n_rows::Cint				# Number of Features in layer
+	n_cols::Cint				# Number of geometries in this Feature
 	n_layers::Cint
 	n_filled::Cint
-	is3D::Cint
-	np::Cuint
-	att_number::Cint
+	is3D::Cint					# True when geometries have a z component
+	np::Cuint					# Number of data points in this feature
+	att_number::Cint			# Number of attributes of a Feature
 	n_islands::Cint				# Number of islands in a polygon
-	name::Ptr{UInt8} 
+	name::Ptr{UInt8} 			# A string holding the Feature ID. Same for all geometries in a Feature
 	wkt::Ptr{UInt8} 
 	proj4::Ptr{UInt8} 
 	type::Ptr{UInt8}            # Geometry type. E.g. Point, Polygon or LineString
 	att_names::Ptr{Ptr{UInt8}}  # Names of the attributes of a Feature
 	att_values::Ptr{Ptr{UInt8}} # Values of the attributes of a Feature as strings
-	att_types::Ptr{Cint}
-	islands::Ptr{Cint}
+	att_types::Ptr{Cint}		# a vector with the codes allowing the conversion into their original data types as returned by OGR_Fld_GetType(hField)
+	islands::Ptr{Cint}			#2 columns matrix with start and ending indexes of the main Ring and its islands (if any).
 	BoundingBox::NTuple{6,Cdouble}
 	BBgeom::Ptr{Cdouble};       # Not currently assigned (would be the BoundingBox of each individual geometry)
-	x::Ptr{Cdouble}
-	y::Ptr{Cdouble}
-	z::Ptr{Cdouble}
+	x::Ptr{Cdouble}				# Column vector of doubles with the vector x-coordinates
+	y::Ptr{Cdouble}				# Column vector of doubles with the vector y-coordinates
+	z::Ptr{Cdouble}				# Same for z when vector is 3-D, otherwise empty
 end
 
 struct OGRREAD_CTRL
