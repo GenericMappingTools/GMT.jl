@@ -1,16 +1,34 @@
 """
-    rasterzones!(GI::GItype, shapes::Vector{GMTdataset}, fun::Function)
+    rasterzones!(GI::GItype, shapes::Vector{GMTdataset}, fun::Function; touches=false, byfeatures::Bool=false, groupby="")
+or
+
+    rasterzones!(fun::Function, GI::GItype, shapes::Vector{GMTdataset}; touches=false, byfeatures::Bool=false, groupby="")
 
 Apply a unidimensional function `fun` to to the elements of the grid or image `GI` that lie inside the polygons
 of the GMTdataset `shapes`. The `GI` array is modified in place.
 
-### Parameters
+### Arguments
 - `GI`: A grid (GMTgrid) or image (GMTimage) type that will be modified by applying `fun` to the elements that
    fall inside the polygons of `shapes`.
 - `shapes`: A vector of GMTdataset containing the polygons inside which the elements if `GI` will be assigned
    a single value obtained by applying the function `fun`.
 - `fun`: A unidemensional function name used to compute the contant value for the `GI` elements that fall
    inside each of the polygons of `shapes`.
+
+### Parameters
+- `touches`: include all cells/pixels that are touched by the polygons. The default is to include only the
+  cells whose centers that are inside the polygons.
+
+- `byfeatures`: Datasets read from OGR vector filres (shapes, geopackages, arrow, etc) are organized in features
+  that may contain several geomeometries each. Each group of geometries in a Feature share the same `Feauture_ID`
+  atribute. If `byfeatures` is true, the function `fun` will be applied to each feature independently. This
+  option is actually similar to the `groupby` parameter but doesn't require an attribute name. If neither of
+  `byfeatures` or `groupby` are provided, the `fun` function is applied to each of the polygons independently.
+
+- `groupby`: If provided, it must be an attribute name, for example, `groupby="NAME"`. If not provided, we use
+  the `Feature_ID` attribute that is a unique identifier assigned during an OGR file reading (by the GMT6.5 C lib).
+  If neither of `byfeatures` or `groupby` are provided, the `fun` function is applied to each of the polygons
+  independently.
 
 See also: `colorzones!`
 
@@ -25,44 +43,137 @@ It does't return anything but the input `GI` is modified.
 	rasterzones!(G, D, mean)
 
 """
-function rasterzones!(GI::GItype, shapes::GDtype, fun::Function)
+rasterzones!(fun::Function, GI::GItype, shapes::GDtype; isRaster=true, touches=false, byfeatures::Bool=false, groupby="") =
+	rasterzones!(GI, shapes, fun; isRaster=isRaster, touches=touches, byfeatures=byfeatures, groupby=groupby)
+function rasterzones!(GI::GItype, shapes::GDtype, fun::Function; isRaster=true, touches=false,
+                      byfeatures::Bool=false, groupby="")
 
-	function within(bbox_p, bbox_R)		# Check if the polygon BB is contained inside the image's region.
+	function within(bbox_p::Vector{Float64}, bbox_R::Vector{Float64})	# Check if the polygon BB is contained inside the image's region.
 		bbox_p[1] >= bbox_R[1] && bbox_p[2] <= bbox_R[2] && bbox_p[3] >= bbox_R[3] && bbox_p[4] <= bbox_R[4]
 	end
 	function maskit(GI_, mask, band)
-		if (band > 0)
-			r = (eltype(GI_) <: Integer) ? round(eltype(GI_), fun(GI_[mask, band])) : fun(GI_[mask, band])
+		t = (band > 0) ? skipnan(GI_[mask, band]) : skipnan(GI_[mask])
+		return (eltype(GI_) <: Integer) ? round(eltype(GI_), fun(t)) : fun(t)
+	end
+	function get_the_mask(D, nx, ny, touches, layout)::Union{Nothing, Matrix{Bool}}
+		# Compute the mask matrix
+		local mask
+		opts = ["-of", "MEM", "-ts","$(nx)","$(ny)", "-burn", "1", "-ot", "Byte"]
+		(touches == 1) && append!(opts, ["-at"])
+		try
+			mk = gdalrasterize(D, opts, layout=layout)	# This may fail if the polygon is degenerated.
+			mask = reinterpret(Bool, mk.image)
+			(!any(mask)) && return nothing				# If mask is all falses stop before it errors
+		catch
+			return nothing
+		end
+		return mask
+	end
+	function mask_GI(_GI, pix_x, pix_y, mask, n_layers) # Apply the mask to a Grid/Image
+		if (n_layers == 1)
+			_GI[mask] .= maskit(_GI, mask, 0)
+			GI[pix_y[1]:pix_y[2], pix_x[1]:pix_x[2]] = _GI
 		else
-			r = (eltype(GI_) <: Integer) ? round(eltype(GI_), fun(GI_[mask])) : fun(GI_[mask])
+			for n = 1:n_layers
+				_GI[mask, n] .= maskit(_GI, mask, n)
+				GI[pix_y[1]:pix_y[2], pix_x[1]:pix_x[2], n] = _GI[:,:,n]
+			end
 		end
 	end
 
 	# GDAL always returns TRB, so if GI has a different one, must convert. Also assume that an empty layout <=> BCB
 	layout = startswith(GI.layout, "TR") ? "" : (GI.layout == "" ? "BCB" : GI.layout)
 	row_dim, col_dim = (GI.layout == "" || GI.layout[2] == 'C') ? (1,2) : (2,1)	# If RowMajor the array is transposed 
+	n_layers = size(GI, 3)
 
-	isa(shapes, GMTdataset) && (shapes = [shapes])
-	for k = 1:numel(shapes)
-		!within(shapes[k].bbox, GI.range) && continue		# Catch any exterior polygon before it errors
-		_GI, pix_x, pix_y = GMT.crop(GI, region=shapes[k])
+	if (byfeatures || groupby != "")		# Compute the result (stats or raster) on a per feature basis
+		vv, names = splitds(shapes, groupby=groupby)
+		!isRaster && (mat = zeros(length(vv), n_layers))
+		for k = 1:numel(vv)
+			Dt = shapes[vv[k]]
+			set_dsBB!(Dt, false)	# Compute the BB for all polygons in this feature
+			# TODO. Eventualy check if only some polygoms are outside and drop them.
+			!within(Dt[1].ds_bbox, GI.range) && continue
+			_GI, pix_x, pix_y = GMT.crop(GI, region=Dt[1].ds_bbox)
+			((mask = get_the_mask(Dt, size(_GI, col_dim), size(_GI, row_dim), touches, layout)) === nothing) && continue
 
-		mask = reinterpret(Bool, gdalrasterize(shapes[k], 
-			["-of", "MEM", "-ts","$(size(_GI, col_dim))","$(size(_GI, row_dim))", "-burn", "1", "-ot", "Byte"], layout=layout))
-		(!any(mask)) && continue		# If mask is all falses stop before it errors
-
-		if (ndims(_GI) == 2)
-			_GI[mask] .= maskit(_GI, mask, 0)
-			GI[pix_y[1]:pix_y[2], pix_x[1]:pix_x[2]] = _GI
-		else
-			for n = 1:3
-				_GI[mask, n] .= maskit(_GI, mask, n)
-				GI[pix_y[1]:pix_y[2], pix_x[1]:pix_x[2], n] = _GI[:,:,n]
+			if (isRaster)  GI = mask_GI(_GI, pix_x, pix_y, mask, n_layers)
+			else           for n = 1:n_layers   mat[k,n] = maskit(_GI, mask, n-1)   end
 			end
 		end
+	else									# Compute the result (stats or raster) on a per polygon basis
+		isa(shapes, GMTdataset) && (shapes = [shapes])
+		!isRaster && (mat = zeros(length(shapes), n_layers))
+		for k = 1:numel(shapes)
+			!within(shapes[k].bbox, GI.range) && continue		# Catch any exterior polygon before it errors
+			_GI, pix_x, pix_y = GMT.crop(GI, region=shapes[k].bbox)
+			((mask = get_the_mask(shapes[k], size(_GI, col_dim), size(_GI, row_dim), touches, layout)) === nothing) && continue
+
+			if (isRaster)  GI = mask_GI(_GI, pix_x, pix_y, mask, n_layers)
+			else           for n = 1:n_layers   mat[k,n] = maskit(_GI, mask, n-1)   end
+			end
+		end
+		names = String[]					# We need something to return
 	end
-	nothing
+	return isRaster ? nothing : mat, names
 end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    GI = rasterzones(GI::GItype, shapes::GDtype, fun::Function; touches=false)
+or
+
+	GI = rasterzones(fun::Function, GI::GItype, shapes::GDtype; touches=false)
+
+Compute the statistics of `fun` applied to the elements of the grid or image `GI` that lie inside the polygons
+of the GMTdataset `shapes`. See the `rasterzones!` documentation for more details. The difference is that
+this function returns a new grid/image instead of changing the input.
+"""
+rasterzones(GI::GItype, shapes::GDtype, fun::Function) = rasterzones!(deepcopy(GI), shapes, fun)
+rasterzones(fun::Function, GI::GItype, shapes::GDtype) = rasterzones!(deepcopy(GI), shapes, fun)
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    zonal_statistics(GI::GItype, shapes::GDtype, fun::Function; touches=false, byfeatures=false, groupby="")
+or
+
+    zonal_statistics(fun::Function, GI::GItype, shapes::GDtype; touches=false, byfeatures=false, groupby="")
+
+Compute the statistics of `fun` applied to the elements of the grid or image `GI` that lie inside the polygons
+of the GMTdataset `shapes`. 
+
+### Arguments
+- `GI`: A grid (GMTgrid) or image (GMTimage) type uppon which the statistics will be computed by applying the
+   `fun` function to the elements that fall inside the polygons of `shapes`.
+
+- `shapes`: A vector of GMTdataset containing the polygons inside which the elements if `GI` will be assigned
+   a single value obtained by applying the function `fun`.
+
+- `fun`: A unidemensional function name used to compute the contant value for the `GI` elements that fall
+   inside each of the polygons of `shapes`.
+
+### Parameters
+- `touches`: include all cells/pixels that are touched by the polygons. The default is to include only the
+  cells whose centers that are inside the polygons.
+
+- `byfeatures`: Datasets read from OGR vector filres (shapes, geopackages, arrow, etc) are organized in features
+  that may contain several geomeometries each. Each group of geometries in a Feature share the same `Feauture_ID`
+  atribute. If `byfeatures` is true, the function `fun` will be applied to each feature independently. This
+  option is actually similar to the `groupby` parameter but doesn't require an attribute name. If neither of
+  `byfeatures` or `groupby` are provided, the `fun` function is applied to each of the polygons independently.
+
+- `groupby`: If provided, it must be an attribute name, for example, `groupby="NAME"`. If not provided, we use
+  the `Feature_ID` attribute that is a unique identifier assigned during an OGR file reading (by the GMT6.5 C lib).
+  If neither of `byfeatures` or `groupby` are provided, the `fun` function is applied to each of the polygons independently.
+
+"""
+zonal_statistics(fun::Function, GI::GItype, shapes::GDtype; touches=false, byfeatures::Bool=false, groupby="") =
+	zonal_statistics(GI, shapes, fun; touches=touches, byfeatures=byfeatures, groupby=groupby)
+function zonal_statistics(GI::GItype, shapes::GDtype, fun::Function; touches=false, byfeatures::Bool=false, groupby="")
+	mat, names = rasterzones!(GI, shapes, fun; isRaster=false, touches=touches, byfeatures=byfeatures, groupby=groupby)
+	mat2ds(mat, names)
+end
+const zonal_stats  = zonal_statistics			# Alias
 
 # ---------------------------------------------------------------------------------------------------
 """
