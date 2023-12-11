@@ -156,8 +156,8 @@ export
 	buffergeo, circgeo, epsg2proj, epsg2wkt, geod, invgeod, loxodrome, loxodrome_direct, loxodrome_inverse,
 	geodesic, orthodrome, proj2wkt, setfld!, vecangles, wkt2proj,
 
-	colorzones!, rasterzones!, lelandshade, texture_img, crop, doy2date, date2doy, yeardecimal, median, mean,
-	quantile, std, nanmean, nanstd, skipnan,
+	colorzones!, rasterzones!, rasterzones, lelandshade, texture_img, crop, doy2date, date2doy, yeardecimal,
+	median, mean, quantile, std, nanmean, nanstd, skipnan, zonal_statistics, zonal_stats,
 
 	add2PSfile, append2fig, linearfitxy, regiongeog, streamlines, wmsinfo, wmstest, wmsread, polygonlevels,
 	randinpolygon,
