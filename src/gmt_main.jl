@@ -1222,6 +1222,7 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)::Union{GMTdat
 				for i = 1:OGR_F.att_number
 					attrib[unsafe_string(unsafe_load(OGR_F.att_names,i))] = unsafe_string(unsafe_load(OGR_F.att_values,i))
 				end
+				attrib["Feature_ID"] = unsafe_string(OGR_F.name)
 			else		# use the previous attrib. This is RISKY but gmt_ogrread only stores attribs in 1st geom of each feature
 				(n > 1) && (attrib = D[n-1].attrib)
 			end
