@@ -627,6 +627,53 @@ const alphabet_colors = ["#2BCE48", "#4C005C", "#005C31", "#5EF1F2", "#8F7C00", 
 const simple_distinct = ["#e6194b", "#3cb44b", "#ffe119", "#4363d8", "#f58231", "#911eb4", "#46f0f0", "#f032e6", "#bcf60c", "#fabebe", "#008080", "#e6beff", "#9a6324", "#fffac8", "#800000", "#aaffc3", "#808000", "#ffd8b1", "#000075", "#808080"]
  
 # ---------------------------------------------------------------------------------------------------
+"""
+    v, names = splitds(D::Vector{<:GMTdataset}; groupby::String="") --> Tuple{Vector{Vector{Int}}, Vector{String}}
+
+Compute the indices that split a vector of datasets into groups. The grouping is done either by a provided 
+attribute name (`groupby`) or by the Feature_ID attribute. This function is mostly used internally by `zonal_statistics`
+
+- `D`: A vector of GMTdataset
+
+- `groupby`: If provided, it must be an attribute name, for example, `groupby="NAME"`. If not provided, we use
+  the `Feature_ID` attribute that is a unique identifier assigned during an OGR file reading (by the GMT6.5 C lib).
+  If the `Feature_ID` attribute does not exist, you must use a valid attribute name passed in `groupby`.
+  If neither of those exists, an error is thrown.
+
+### Returns
+- `v`: A Vector{Vector{Int}} with the indices that split the datasets into groups. The length of `v` is the
+  number of groups found and each element of `v` is a vector of indices that belong to that group.
+
+- `names`: A Vector{String} with the names of the groups. These names are fetched from the attributes.
+  It will be the values of the attribute name provided by `groupby` or those of the first attribute value
+  if that option is not used.
+"""
+function splitds(D::Vector{<:GMTdataset}; groupby::String="")
+	# Split a vector of datasets into groups by the Feature_ID attribute.
+	if (groupby != "")		# Use the attribute selected by the user
+		att_names = vec(string.(keys(D[1].attrib)))
+		ind = findfirst(groupby .== att_names)
+		(ind === nothing) && error("Attribute '$groupby' not found in dataset!")
+		names = Vector{String}(undef, length(D))
+		for k = 1:length(D)  names[k] = D[k].attrib[att_names[ind]]  end
+
+		feature_names = unique(names)
+		nf = length(feature_names)
+		vv = Vector{Vector{Int}}(undef, nf)
+		for k = 1:nf  vv[k] = findall(names .== feature_names[k])  end
+	else					# Use the 'Feature_ID' attribute
+		get(D[1].attrib, "Feature_ID", "") == "" && error("Attribute 'Feature_ID' not found in dataset!")
+		nf = parse(Int, D[end].attrib["Feature_ID"])
+		vv = Vector{Vector{Int}}(undef, nf)
+		for k = 1:nf  vv[k] = filter(D, indices=true, Feature_ID = "$k")  end
+		att_ref = (get(D[1].attrib, "NAME", "") == "") ? "NAME" : collect(keys(D[1].attrib))[1]
+		feature_names = Vector{String}(undef, nf)
+		for k = 1:nf  feature_names[k] = D[vv[k][1]].attrib[att_ref]  end
+	end
+	return vv, feature_names
+end
+
+# ---------------------------------------------------------------------------------------------------
 function tabletypes2ds(arg, interp=0)
 	# Try guesswork to convert Tables types into GMTdatasets usable in plots.
 	#(arg === nothing || isa(arg, GDtype) || isa(arg, Matrix{<:Real})) && return arg
@@ -707,7 +754,7 @@ function rasters2grid(arg; scale::Real=1f0, offset::Real=0f0)::GMTgrid
 	isa(t, Int) ? (epsg = t; proj = epsg2proj(t)) : startswith(t, "GEOGCS") ? (wkt=t; proj=wkt2proj(t)) : startswith(t, "+proj") ? (proj=t) : nothing
 
 	data = nothing
-	(isa(arg.missingval, Real) && !isnan(arg.missingval)) && (@inbounds Threads.@threads for k=1:numel(arg.data) arg.data[k] == arg.missingval && (arg.data[k] = NaN)  end)
+	(isa(arg.missingval, Real) && !isnan(arg.missingval) && eltype(arg.data) <: AbstractFloat) && (@inbounds Threads.@threads for k=1:numel(arg.data) arg.data[k] == arg.missingval && (arg.data[k] = NaN)  end)
 
 	# If Raster{Union{Missing, Float32},2} we're f... Copies and repetions all the time.
 	if (ismissing(arg.missingval))
@@ -730,6 +777,7 @@ function rasters2grid(arg; scale::Real=1f0, offset::Real=0f0)::GMTgrid
 
 	(data === nothing) && (data = collect(arg.data))
 	(scale != 1 || offset != 0) && (data = muladd.(data, convert(eltype(data), scale), convert(eltype(data), offset)))
+	(eltype(data) == Int16) && (data = convert(Array{Float32, ndims(data)}, data))	# And what about UInt16, UInt8, etc ...?
 
 	(is_transp && Yorder == 'B') && (reverse!(data, dims=2); layout = "TRB")	# GMT expects grids to be scanline and Top->Bot
 	mat2grid(data, x=collect(arg.dims[1]), y=_y, v=_v, names=names, tit=string(arg.name), rem="Converted from a Rasters object.", is_transposed=is_transp, layout=layout, proj4=proj, wkt=wkt, epsg=epsg, z_units=z_units)
@@ -741,7 +789,7 @@ isdataframe(arg) = (fs = fields(arg); return (isempty(fs) || fs[1] != :columns |
 # Check if it is a DifferentialEquations type
 isODE(arg) = (fs = fields(arg); return (!isempty(fs) && (fs[1] == :u && any(fs .== :t) && fs[end] == :retcode)) ? true : false)
 # See if it is a Rasters type
-israsters(arg) = (fs = fields(arg); return (length(fs) == 6 && (fs[1] == :data && fs[end] == :missingval)) ? true : false)
+israsters(arg) = (fs = fields(arg); return (length(fs) >= 6 && (fs[1] == :data && fs[end] == :missingval)) ? true : false)
 
 # ---------------------------------------------------------------------------------------------------
 function color_gradient_line(D::Matrix{<:Real}; is3D::Bool=false, color_col::Int=3, first::Bool=true)
