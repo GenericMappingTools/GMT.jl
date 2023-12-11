@@ -155,7 +155,7 @@ or
 Take a GMTdataset vector and return only its elements that match the condition(s) set by the `kw` keywords.
 Note, this assumes that `D` has its `attrib` fields set with usable information.
 
-NOTE: Instead of ``getbyattrib`` one case use instead ``filter`` (==> `index=false`) or ``findall`` (==> `index=true`)
+NOTE: Instead of ``getbyattrib`` one case use instead ``filter`` (...,`index=false`) or ``findall`` (..., `index=true`)
 
 ### Parameters
 - `attrib name(s)=value(s)`: Easier to explain by examples: `NAME="Antioquia"`, select all elements that have
@@ -224,10 +224,11 @@ function getbyattrib(D::Vector{<:GMTdataset}, ind_::Bool; kw...)::Vector{Int}
 	return indices
 end
 
-function getbyattrib(D::Vector{<:GMTdataset}; kw...)::Union{Nothing, Vector{GMTdataset}}
+function getbyattrib(D::Vector{<:GMTdataset}; indices=false, kw...)::Union{Nothing, Vector{<:GMTdataset}, Vector{Int}}
 	# This is the intended public method. It returns a subset of the selected segments
 	ind = getbyattrib(D, true; kw...)
-	isempty(ind) && return nothing
+	isempty(ind)   && return nothing
+	(indices == 1) && return ind
 	o = D[ind]
 	set_dsBB!(o, false)
 	return o
