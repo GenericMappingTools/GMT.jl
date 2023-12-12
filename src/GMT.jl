@@ -86,6 +86,7 @@ const global noGrdCopy   = Vector{Bool}(undef, 1);noGrdCopy[1] = false		# If tru
 const global GMTCONF     = Vector{Bool}(undef, 1);GMTCONF[1] = false		# Flag if gmtset was used and must be 'unused' 
 const global FMT = ["png"]                         # The default plot format
 const global BOX_STR = [""]                        # Used in plotyy to know -R of first call
+const global POSTMAN = Dict{String,String}()       # To pass messages to functions (start with get_dataset) 
 const DEF_FIG_SIZE  = "15c/10c"                    # Default fig size for plot like programs. Approx 16/11
 const DEF_FIG_AXES_BAK     = " -Baf -BWSen"        # Default fig axes for plot like programs
 const DEF_FIG_AXES3_BAK    = " -Baf -Bza"          # 		"" but for 3D views
