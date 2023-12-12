@@ -606,6 +606,12 @@ function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})::GDtype
 	(object == C_NULL) && return GMTdataset()		# No output produced - return a null data set
 	D::GMT_DATASET = unsafe_load(convert(Ptr{GMT_DATASET}, object))
 
+	# This is for the particular case of the DCW countries that have a myriad of small segments and no Attributes
+	min_pts = (get(POSTMAN, "minpts", "") != "") ? parse(Int, POSTMAN["minpts"]) - 1 : 0
+	(min_pts > 0) && delete!(POSTMAN, "minpts")
+	DCWnames = (get(POSTMAN, "DCWnames", "") != "") ? true : false		# If DCW country names will turn into attribs
+	(DCWnames) && delete!(POSTMAN, "DCWnames")
+
 	seg_out = 0;
 	T::Vector{Ptr{GMT.GMT_DATATABLE}} = unsafe_wrap(Array, D.table, D.n_tables)
 	for tbl = 1:D.n_tables
@@ -613,7 +619,7 @@ function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})::GDtype
 		for seg = 1:DT.n_segments
 			S::Vector{Ptr{GMT.GMT_DATASEGMENT}} = unsafe_wrap(Array, DT.segment, seg)
 			DS::GMT_DATASEGMENT = unsafe_load(S[seg])
-			if (DS.n_rows != 0)
+			if (DS.n_rows > min_pts)
 				seg_out += 1
 			end
 		end
@@ -628,7 +634,7 @@ function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})::GDtype
 		S = unsafe_wrap(Array, DT.segment, DT.n_segments)	# n_segments-element Array{Ptr{GMT.GMT_DATASEGMENT},1}
 		for seg = 1:DT.n_segments
 			DS = unsafe_load(S[seg])						# GMT.GMT_DATASEGMENT
-			(DS.n_rows == 0) && continue 					# Skip empty segments
+			(DS.n_rows <= min_pts) && continue 				# Skip empty/small segments
 
 			C = unsafe_wrap(Array, DS.data, DS.n_columns)	# DS.data = Ptr{Ptr{Float64}}; C = Array{Ptr{Float64},1}
 			dest::Matrix{Float64} = zeros(Float64, DS.n_rows, DS.n_columns)
@@ -655,7 +661,14 @@ function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})::GDtype
 				end
 			end
 
-			if (DS.header != C_NULL)	Darr[seg_out].header = unsafe_string(DS.header)	end
+			if (DS.header != C_NULL)
+				hdrstr = unsafe_string(DS.header)
+				if (!DCWnames)
+					Darr[seg_out].header = hdrstr
+				else
+					((ind = findfirst(" Segment", hdrstr)) !== nothing) && (Darr[seg_out].attrib["NAME"] = hdrstr[2:ind[1]-1])
+				end
+			end
 			if (seg == 1)
 				#headers = pointer_to_array(DT.header, DT.n_headers)	# n_headers-element Array{Ptr{UInt8},1}
 				headers = unsafe_wrap(Array, DT.header, DT.n_headers)	# n_headers-element Array{Ptr{UInt8},1}
@@ -665,7 +678,7 @@ function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})::GDtype
 				end
 				Darr[seg_out].comment = dest_s
 			end
-			seg_out = seg_out + 1
+			seg_out += 1
 		end
 	end
 	if (!isempty(Darr))
