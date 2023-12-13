@@ -666,7 +666,8 @@ function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})::GDtype
 				if (!DCWnames)
 					Darr[seg_out].header = hdrstr
 				else
-					((ind = findfirst(" Segment", hdrstr)) !== nothing) && (Darr[seg_out].attrib["NAME"] = hdrstr[2:ind[1]-1])
+					(DCWnames && (ind = findfirst(" Segment", hdrstr)) !== nothing) &&
+						(Darr[seg_out].attrib["NAME"] = hdrstr[2:ind[1]-1])
 				end
 			end
 			if (seg == 1)

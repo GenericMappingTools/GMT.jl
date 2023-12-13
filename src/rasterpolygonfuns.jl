@@ -139,6 +139,8 @@ or
 
     zonal_statistics(fun::Function, GI::GItype, shapes::GDtype; touches=false, byfeatures=false, groupby="")
 
+or `zonal_stats(...)`
+
 Compute the statistics of `fun` applied to the elements of the grid or image `GI` that lie inside the polygons
 of the GMTdataset `shapes`. 
 
@@ -166,6 +168,18 @@ of the GMTdataset `shapes`.
   the `Feature_ID` attribute that is a unique identifier assigned during an OGR file reading (by the GMT6.5 C lib).
   If neither of `byfeatures` or `groupby` are provided, the `fun` function is applied to each of the polygons independently.
 
+### Examples
+  What is the mean altitude of Swisserland?
+```julia
+G = gmtread("@earth_relief_06m");
+Swiss = coast(DCW=:CH, dump=true, minpts=50);
+zonal_statistics(G, Swiss, mean)
+
+1×1 GMTdataset{Float64, 2}
+ Row │       X
+─────┼─────────
+   1 │ 1313.21
+```
 """
 zonal_statistics(fun::Function, GI::GItype, shapes::GDtype; touches=false, byfeatures::Bool=false, groupby="") =
 	zonal_statistics(GI, shapes, fun; touches=touches, byfeatures=byfeatures, groupby=groupby)
