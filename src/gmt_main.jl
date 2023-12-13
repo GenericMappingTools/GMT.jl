@@ -1217,6 +1217,7 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)::Union{GMTdat
 
 	n = 1
 	attrib = Dict{String, String}();	# For the case there are no attribs at all.
+	have_Feature_ID = (GMTdevdate > Date("2023-12-10"))		# Feature_ID is available only in >= GMT6.5.0
 	for k = 1:n_max
 		OGR_F = unsafe_load(in, k)
 		if (k == 1)
@@ -1236,7 +1237,7 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)::Union{GMTdat
 				for i = 1:OGR_F.att_number
 					attrib[unsafe_string(unsafe_load(OGR_F.att_names,i))] = unsafe_string(unsafe_load(OGR_F.att_values,i))
 				end
-				attrib["Feature_ID"] = unsafe_string(OGR_F.name)
+				(have_Feature_ID) && (attrib["Feature_ID"] = unsafe_string(OGR_F.name))		# Needs GMT6.5.0
 			else		# use the previous attrib. This is RISKY but gmt_ogrread only stores attribs in 1st geom of each feature
 				(n > 1) && (attrib = D[n-1].attrib)
 			end
