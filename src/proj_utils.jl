@@ -934,7 +934,7 @@ end
 
 Wrap longitudes to be in the range -180 to 180.
 """
-function wraplon180!(lon::AbstractArray{<:Real})
+function wraplon180!(lon::AbstractVecOrMat{<:Real})
 	ind = lon .< -180
 	while any(ind)
 		lon[ind] .+= 360
