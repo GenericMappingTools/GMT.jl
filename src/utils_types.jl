@@ -1191,8 +1191,14 @@ function slicecube(I::GMTimage, layer::Union{Int, AbstractVector{<:Int}})
 	first_layer = isa(layer, Int) ? layer : layer[1]
 	last_layer  = isa(layer, Int) ? layer : layer[end]
 	(first_layer < 1 || last_layer > size(I,3)) && error("Layer value(s) is out of bounds of image size ($size(I,3))")
-	(size(I,3) == 1) && return I		# There is nothing to slice here, but save the user from the due deserved insult.
-	mat = I.image[:,:,layer]
+	if (I.layout[3] == 'P')			# Shit, Pixel interleaving
+		(first_layer != last_layer) && (@warn("Slicing a Pixel interleaved image only works with a single layer"); return I)
+		mat = zeros(eltype(I), size(I,1), size(I,2))
+		np  = size(I,3)
+		for k = 1:size(I,1) * size(I,2)  mat[k] = I.image[layer + (k-1) * np]  end
+	else							# Still fails in the Line interleaving case.
+		mat = I.image[:,:,layer]
+	end
 	range = copy(I.range);	range[5:6] .= extrema(mat)
 	names = (!isempty(I.names) && !all(I.names .== "")) ? (isvec ? I.names[layer] : [I.names[layer]]) : I.names
 	GMTimage(I.proj4, I.wkt, I.epsg, I.geog, range, copy(I.inc), I.registration, I.nodata, "Gray", I.metadata, names, copy(I.x), copy(I.y), [0.], mat, zeros(Int32,3), String[], 0, Array{UInt8,2}(undef,1,1), I.layout, I.pad)
