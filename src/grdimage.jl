@@ -146,9 +146,9 @@ function common_insert_R!(d::Dict, O::Bool, cmd0, I_G)
 		delete!(d, [:region, :limits])
 	end
 end
-function isimgsize(I_G)
-	xy = (length(I_G.layout) > 1 && I_G.layout[2] == 'R') ? [1,2] : [2,1]	# 'R' means array is row major and first dim is xx
-	(I_G.range[2] - I_G.range[1]) == size(I_G, xy[1]) && (I_G.range[4] - I_G.range[3]) == size(I_G, xy[2])
+function isimgsize(GI)
+	width, height = (GI.layout != "" && GI.layout[2] == 'C') ? (size(GI,2), size(GI,1)) : (length(GI.x), length(GI.y)) .- GI.registration
+	(GI.range[2] - GI.range[1]) == width && (GI.range[4] - GI.range[3]) == height
 end
 
 # ---------------------------------------------------------------------------------------------------
