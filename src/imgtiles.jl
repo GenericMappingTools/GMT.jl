@@ -335,7 +335,7 @@ function getprovider(arg, zoom::Int)
 
 	function geturl(provider)		# This function was "borrowed"/modified from TileProviders.jl
 		ops = provider.options
-		zoom > get(ops, :max_zoom, 19) && throw(ArgumentError("zoom is larger than max_zoom"))
+		zoom > get(ops, :max_zoom, 19) && (@warn("zoom ($(zoom)) is larger than max_zoom ($(ops[:max_zoom]))"); zoom = ops[:max_zoom])
 		subdomain = haskey(ops, :subdomains) ? string(rand(ops[:subdomains]), ".") : ""		# Choose a random subdomain
 		replacements = ["{s}." => subdomain,		# We replace the trailing . in case there is no subdomain
 						"{x}" => "0", "{y}" => "0", "{z}" => "0", "{r}" => ""]

@@ -3977,9 +3977,9 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K:
 		out = (fname != "") ? mv(fname_ps, fname, force=true) : fname_ps
 	end
 
-	retPluto = false					# To know if we are in Plut
+	retPluto = false					# To know if we are in Pluto
 	if (haskey(d, :show) && d[:show] != 0)
-		if (isdefined(Main, :IJulia) && Main.IJulia.inited) #|| isdefined(Main, :VSCodeServer)		# From Jupyter?
+		if ((isdefined(Main, :IJulia) && Main.IJulia.inited) || (isdefined(Main, :VSCodeServer) && get(ENV, "DISPLAY_IN_VSC", "") != ""))
 			#https://stackoverflow.com/questions/70620607/how-can-i-programmatically-check-that-i-am-running-code-in-a-notebook-in-julia
 			(fname == "") ? display("image/png", read(out)) : @warn("In Jupyter you can only visualize png files. File $fname was saved in disk though.")
 		elseif isdefined(Main, :PlutoRunner) && Main.PlutoRunner isa Module
