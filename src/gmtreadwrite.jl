@@ -499,8 +499,8 @@ function transpcmap!(I::GMTimage, toGMT::Bool=true)
 		n_cols = Int(length(I.colormap) / n_colors)
 		(I.n_colors < 2000 || n_cols == 4) && (I.n_colors *= 1000)	#  Because gmtwrite uses a trick to know if cmap is Mx2 or Mx4
 	else
-		#(I.n_colors > 2000) && (I.n_colors = div(I.n_colors, 1000))		# Revert the trick 
-		n_cols = Int(length(I.colormap) / n_colors)
+		(I.n_colors > 2000) && (I.n_colors = div(I.n_colors, 1000))		# Revert the trick 
+		#n_cols = Int(length(I.colormap) / n_colors)
 	end
 	return nothing
 end
