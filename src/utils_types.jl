@@ -967,7 +967,7 @@ function cpt2cmap(cpt::GMTcpt, start::Float32=NaN32, force_alpha::Bool=true)
 		end
 		n_colors *= 1000				# Flag that we have alpha colors in an indexed image
 	elseif (force_alpha)
-		cmap[256*3+1:end] = zeros(Int32, 256)
+		cmap[256*3+1:end] .= Int32(255)
 	end
 	return cmap, cpt.label, n_colors# - s	# Subtract s to account for when nodata != NaN (= 0)	
 end
@@ -1488,15 +1488,17 @@ Use `alpha_band` to change, or add, the alpha of true color images (RGB).
     Example2: change to the first 6 colors in cmap by assigning them random values
         image_alpha!(img, alpha_vec=round.(Int32,rand(6).*255))
 """
-function image_alpha!(img::GMTimage; alpha_ind=nothing, alpha_vec=nothing, alpha_band=nothing)
+function image_alpha!(img::GMTimage; alpha_ind=nothing, alpha_vec::Vector{<:Integer}=Int[], alpha_band=nothing)
 	# Change the alpha transparency of an image
 	n_colors = img.n_colors
 	if (n_colors > 100000)  n_colors = Int(floor(n_colors / 1000))  end
 	if (alpha_ind !== nothing)			# Change the index of the alpha color
 		(alpha_ind < 0 || alpha_ind > 255) && error("Alpha color index must be in the [0 255] interval")
-		img.n_colors = n_colors * 1000 + Int32(alpha_ind)
+		#img.n_colors = n_colors * 1000 + Int32(alpha_ind)
+		n_col = div(length(img.colormap), n_colors)
+		(n_col == 3) && (img.colormap = [img.colormap; fill(Int32(255), n_colors)])		# If only Mx3, add a 4rth column
+		img.colormap[3*n_colors + alpha_ind] = 0
 	elseif (alpha_vec !== nothing)		# Replace/add the alpha column of the colormap matrix. Allow also shorter vectors
-		@assert(isa(alpha_vec, Vector{<:Integer}))
 		(length(alpha_vec) > n_colors) && error("Length of alpha vector is larger than the number of colors")
 		n_col = div(length(img.colormap), n_colors)
 		vec = convert.(Int32, alpha_vec)
