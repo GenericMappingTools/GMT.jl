@@ -912,10 +912,11 @@ If `stretch` is a scalar, scale the values > `stretch` to [0 255]
 
 The `kw...` kwargs search for [:layout :mem_layout], [:names] and [:metadata]
 """
-function mat2img(mat::AbstractArray{<:Unsigned}; x=Float64[], y=Float64[], v=Float64[], hdr=Float64[],
+function mat2img(mat::AbstractArray{<:Unsigned}, lixo::Bool=false; x=Float64[], y=Float64[], v=Float64[], hdr=Float64[],
                  proj4::String="", wkt::String="", cmap=nothing, is_transposed::Bool=false, kw...)
 	# Take a 2D array of uint8 and turn it into a GMTimage.
 	# Note: if HDR is empty we guess the registration from the sizes of MAT & X,Y
+	# Note2: the 'lixo' positional arg is to help the multiple dispatch.
 	color_interp = "";		n_colors = 0;
 	if (cmap !== nothing)
 		colormap, labels, n_colors = cpt2cmap(cmap)
@@ -1015,7 +1016,7 @@ function mat2img(mat::Union{Matrix{UInt16},Array{UInt16,3}}; x=Float64[], y=Floa
 	x::Vector{Float64} = vec(x);	y::Vector{Float64} = vec(y);	v::Vector{Float64} = vec(v);
 	hdr::Vector{Float64} = vec(hdr)
 	if ((val = find_in_dict(d, [:noconv])[1]) !== nothing)		# No conversion to UInt8 is wished
-		return mat2img(mat; x=x, y=y, v=v, hdr=hdr, proj4=proj4, wkt=wkt, d...)
+		return mat2img(mat, true; x=x, y=y, v=v, hdr=hdr, proj4=proj4, wkt=wkt, d...)
 	end
 
 	img = isempty(img8) ? Array{UInt8, ndims(mat)}(undef, size(mat)) : img8
@@ -1498,7 +1499,7 @@ function image_alpha!(img::GMTimage; alpha_ind=nothing, alpha_vec::Vector{<:Inte
 		n_col = div(length(img.colormap), n_colors)
 		(n_col == 3) && (img.colormap = [img.colormap; fill(Int32(255), n_colors)])		# If only Mx3, add a 4rth column
 		img.colormap[3*n_colors + alpha_ind] = 0
-	elseif (alpha_vec !== nothing)		# Replace/add the alpha column of the colormap matrix. Allow also shorter vectors
+	elseif (!isempty(alpha_vec))		# Replace/add the alpha column of the colormap matrix. Allow also shorter vectors
 		(length(alpha_vec) > n_colors) && error("Length of alpha vector is larger than the number of colors")
 		n_col = div(length(img.colormap), n_colors)
 		vec = convert.(Int32, alpha_vec)
