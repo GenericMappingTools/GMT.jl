@@ -98,13 +98,19 @@ function gmtread(_fname::String; kwargs...)
 			if (opt_T == " -To")					# See if it's a OGR layer request
 				ogr_layer = Int32(val)::Int32 - 1	# -1 because it's going to be sent to C (zero based)
 			else
+				ds = Gdal.unsafe_read(fname)
+				(Gdal.nraster(ds) < 2) &&			# Cgeck that file is indeed a cube
+					(println("\tThis file ($fname) does not contain cube data (more than one layer).
+					\n\tRun 'println(gdalinfo(\"$fname\"))' for details.");
+					Gdal.GDALClose(ds.ptr); return nothing)
 				if (isa(val, String) || isa(val, Symbol) || isa(val, Real))
 					bd_str::String = string(val)::String
 					if (bd_str == "all") proggy = "grdinterpolate "		# So far, that's the only module that reads entire cubes.
 					else                 fname = string(fname, "+b", parse(Int, bd_str)-1)
 					end
 				elseif (isa(val, Array) || isa(val, Tuple))
-					(opt_T == " -Tg") && (println("\tSorry, we do not yet support loading multiple layers from grids."); return nothing)
+					#(opt_T == " -Tg") && (println("\tSorry, we do not yet support loading multiple layers from grids."); return nothing)
+					opt_T = " -Ti"
 					# Replacement for the annoying fact that one cannot do @sprintf(repeat("%d,", n), val...)
 					fname  *= @sprintf("+b%d", Int(val[1])::Int -1)
 					for k = 2:lastindex(val)  fname *= @sprintf(",%d", val[k]-1)  end
