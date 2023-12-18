@@ -317,7 +317,12 @@ function toc(V=true)
 end
 
 # --------------------------------------------------------------------------------------------------
-#=
+"""
+    isnodata(array::AbstractArray, val=0)
+
+Return a boolean array with the same size a `array` with 1's (`true`) where ``array[i] == val``.
+Test with an image have shown that this function was 5x faster than ``ind = (I.image .== 0)``
+"""
 function isnodata(array::AbstractArray, val=0)
 	nrows, ncols = size(array,1), size(array,2)
 	nlayers = (ndims(array) == 3) ? size(array,3) : 1
@@ -329,13 +334,8 @@ function isnodata(array::AbstractArray, val=0)
 	end
 	indNaN
 end
-=#
-"""
-    isnodata(array::AbstractArray, val=0)
 
-Return a boolean array with the same size a `array` with 1's (`true`) where ``array[i] == val``.
-Test with an image have shown that this function was 5x faster than ``ind = (I.image .== 0)``
-"""
+#=
 function isnodata(array::Matrix{T}, val=0) where T
 	nrows, ncols = size(array)
 	indNaN = fill(false, nrows, ncols)
@@ -352,6 +352,7 @@ function isnodata(array::Array{T,3}, val=0) where T
 	end
 	indNaN
 end
+=#
 
 # ---------------------------------------------------------------------------------------------------
 function fakedata(sz...)
