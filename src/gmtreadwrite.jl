@@ -17,40 +17,33 @@ Parameters
 ----------
 
 Specify data type (with *type*=true, e.g. `img=true`).  Choose among:
-- **grd** | **grid** :: [Type => Any]
+- `grd` | `grid`: Load a grid.
 
-    Load a grid.
-- **img** | **image** :: [Type => Any]
+- `img` | `image`: Load an image.
 
-    Load an image.
-- **cpt** | **cmap** :: [Type => Any]
+- `cpt` | `cmap`: Load a GMT color palette.
 
-    Load a GMT color palette.
-- **data** | **dataset** | **table** :: [Type => Any]
+- `data` | `dataset` | `table`: Load a dataset (a table of numbers).
 
-    Load a dataset (a table of numbers).
-- **ogr** :: [Type => Any]
+- `ogr`: Load a dataset via GDAL OGR (a table of numbers). Many things can happen here.
 
-    Load a dataset via GDAL OGR (a table of numbers). Many things can happen here.
-- **ps** :: [Type => Any]
+- `ps`: Load a PostScript file
 
-    Load a PostScript file
-- **gdal** :: [Type => Any]
+- `gdal`: Force reading the file via GDAL. Should only be used to read grids.
 
-    Force reading the file via GDAL. Should only be used to read grids.
-- **varname** :: [Type => Str]
+- `varname`: When netCDF files have more than one 2D (or higher) variables use *varname* to pick the wished
+  variable. e.g. ``varname=:slp`` to read the variable named ``slp``. This option defaults data type to `grid`
 
-    When netCDF files have more than one 2D (or higher) variables use *varname* to pick the wished variable.
-    e.g. varname=:slp to read the variable named 'slp'. This option defaults data type to 'grid'
-- **layer** | **band** :: [Type => Str, Number, Array]
+- `layer`| `layers` | `band` | `bands`: A string, or a number or an Array. When files are multiband or
+  nc files with 3D or 4D arrays, we access them via these keywords. `layer=4` reads the fourth layer (or band)
+  of the file. The file can be a grid or an image. If it is a grid, layer can be a scalar (to read 3D arrays)
+  or an array of two elements (to read a 4D array).
 
-When files are multiband or nc files with 3D or 4D arrays, we access them via these keywords.
-`layer=4` reads the fourth layer (or band) of the file. But the file can be a grid or an image. If it is a
-grid, layer can be a scalar (to read 3D arrays) or an array of two elements (to read a 4D array).
+  If file is an image `layer` can be a 1 or a 1x3 array (to read a RGB image). Note that in this later case
+  bands do not need to be contiguous. A `band=[1,5,2]` composes an RGB out of those bands. See more at
+  $(GMTdoc)/GMT_Docs.html#modifiers-for-coards-compliant-netcdf-files) but note that we use **1 based** indexing here.
 
-If file is an image `layer` can be a 1 or a 1x3 array (to read a RGB image). Not that in this later case
-bands do not need to be contiguous. A `band=[1,5,2]` composes an RGB out of those bands. See more at
-$(GMTdoc)/GMT_Docs.html#modifiers-for-coards-compliant-netcdf-files) but note that we use **1 based** indexing here.
+  Use ``layers=:all`` to read all levels of a 3D cube netCDF file.
 
 - $(GMT._opt_R)
 - $(GMT.opt_V)
@@ -67,12 +60,13 @@ to read a jpg image with the bands reversed
 """
 function gmtread(_fname::String; kwargs...)
 
-	fname::String = _fname				# Because args signatures seam to worth shit in body.
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+	fname::String = _fname					# Because args signatures seam to worth shit in body.
+	d = init_module(false, kwargs...)[1]	# Also checks if the user wants ONLY the HELP mode
 	cmd::String, opt_R::String = parse_R(d, "")
 	cmd, opt_i = parse_i(d, cmd)
 	cmd = parse_common_opts(d, cmd, [:V_params :f :h])[1]
 	cmd, opt_bi = parse_bi(d, cmd)
+	proggy = "read "						# When reading an entire grid cube, this will change to 'grdinterpolate'
 
 	# Process these first so they may take precedence over defaults set below
 	opt_T = add_opt(d, "", "Tg", [:grd :grid])
@@ -98,20 +92,23 @@ function gmtread(_fname::String; kwargs...)
 			elseif (isa(val, Array))  fname *= @sprintf("[%d,%d]", val[1]-1, val[2]-1)	# A 4D array
 			end
 		end
-	else									# See if we have a bands request
+	else											# See if we have a bands request
 		if ((val = find_in_dict(d, [:layer :layers :band :bands])[1]) !== nothing)
-			if ((lix = guess_T_from_ext(fname)) == " -To")		# See if it's a OGR layer request
+			(opt_T == "") && (opt_T = guess_T_from_ext(fname))
+			if (opt_T == " -To")					# See if it's a OGR layer request
 				ogr_layer = Int32(val)::Int32 - 1	# -1 because it's going to be sent to C (zero based)
 			else
-				fname = fname * "+b"
 				if (isa(val, String) || isa(val, Symbol) || isa(val, Real))
-					fname = string(fname, parse(Int, string(val)::String)-1)::String
+					bd_str::String = string(val)::String
+					if (bd_str == "all") proggy = "grdinterpolate "		# So far, that's the only module that reads entire cubes.
+					else                 fname = string(fname, "+b", parse(Int, bd_str)-1)
+					end
 				elseif (isa(val, Array) || isa(val, Tuple))
+					(opt_T == " -Tg") && (println("\tSorry, we do not yet support loading multiple layers from grids."); return nothing)
 					# Replacement for the annoying fact that one cannot do @sprintf(repeat("%d,", n), val...)
-					fname  *= @sprintf("%d", Int(val[1])::Int -1)
+					fname  *= @sprintf("+b%d", Int(val[1])::Int -1)
 					for k = 2:lastindex(val)  fname *= @sprintf(",%d", val[k]-1)  end
 				end
-				(opt_T == "") && (opt_T = " -Ti")
 			end
 		end
 	end
@@ -149,9 +146,9 @@ function gmtread(_fname::String; kwargs...)
 	end
 
 	if (opt_T != " -To")			# All others but OGR
-		cmd *= opt_T
-		(dbg_print_cmd(d, cmd) !== nothing) && return "gmtread " * cmd
-		o = gmt("read " * fname * cmd)
+		(proggy == "read ") && (cmd *= opt_T)
+		(dbg_print_cmd(d, cmd) !== nothing) && return proggy * fname * cmd
+		o = gmt(proggy * fname * cmd)
 		(isempty(o)) && (@warn("\tfile \"$fname\" is empty or has no data after the header.\n"); return GMTdataset())
 
 		(isa(o, GMTimage)) && (o.range[5:6] .= extrema(o.image))	# It's ugly to see those floatmin/max in there.
@@ -339,30 +336,30 @@ When saving grids we have a panoply of formats at our disposal.
 Parameters
 ----------
 
-- **id** ::  [Type => Str] 
+- `id`:  [Type => Str] 
 
     Use an ``id`` code when not not saving a grid into a standard COARDS-compliant netCDF grid. This ``id``
     is made up of two characters like ``ef`` to save in ESRI Arc/Info ASCII Grid Interchange format (ASCII float).
     See the full list of ids at $(GMTdoc)grdconvert.html#format-identifier.
 
     ($(GMTdoc)grdconvert.html#g)
-- **scale** | **offset** :: [Type => Number]
+- `scale` | `offset`: [Type => Number]
 
     You may optionally ask to scale the data and then offset them with the specified amounts.
     These modifiers are particularly practical when storing the data as integers, by first removing an offset
     and then scaling down the values.
-- **nan** | **novalue** | **invalid** | **missing** :: [Type => Number]
+- `nan` | `novalue` | `invalid` | `missing`: [Type => Number]
 
     Lets you supply a value that represents an invalid grid entry, i.e., ‘Not-a-Number’.
-- **gdal** :: [Type => Bool]
+- `gdal`: [Type => Bool]
 
     Force the use of the GDAL library to write the grid (to be used only with grids).
     ($(GMTdoc)GMT_Docs.html#grid-file-format-specifications)
-- **driver** :: [Type => Str]
+- `driver`: [Type => Str]
 
     When saving in other than the netCDF format we must tell the GDAL library what is wished format.
     That is done by specifying the driver name used by GDAL itself (e.g., netCDF, GTiFF, etc...).
-- **datatype** :: [Type => Str] 		``Arg = u8|u16|i16|u32|i32|float32``
+- `datatype`: [Type => Str] 		``Arg = u8|u16|i16|u32|i32|float32``
 
     When saving with GDAL we can specify the data type from u8|u16|i16|u32|i32|float32 where ‘i’ and ‘u’ denote
     signed and unsigned integers respectively.
