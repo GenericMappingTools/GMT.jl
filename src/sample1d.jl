@@ -59,7 +59,8 @@ function sample1d_helper(cmd0::String, arg1; kwargs...)
 	cmd = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :o :w :yx])[1]
 	cmd = parse_these_opts(cmd, d, [[:A :resample], [:N :time_col :timecol], [:W :weights :weights_col]])
 	cmd, Tvec = parse_opt_range(d, cmd, "T")
-	((val = find_in_dict(d, [:cumdist :cumsum])[1]) !== nothing) && (cmd *= "c+a")
+	have_cumdist = false
+	((val = find_in_dict(d, [:cumdist :cumsum])[1]) !== nothing) && (cmd *= "c+a"; have_cumdist = true)
 	cmd = add_opt(d, cmd, "E", [:E :keeptext :keeptxt])		# Needs GMT6.4 but not testing that anymore.
 
 	if ((val = find_in_dict(d, [:F :interp :interp_type])[1]) !== nothing)
@@ -94,5 +95,18 @@ function sample1d_helper(cmd0::String, arg1; kwargs...)
 		cmd *= " -F" * opt
 	end
 
-	common_grd(d, cmd0, cmd, "sample1d ", arg1, isempty(Tvec) ? nothing : Tvec)		# Finish build cmd and run it
+	r = common_grd(d, cmd0, cmd, "sample1d ", arg1, isempty(Tvec) ? nothing : Tvec)		# Finish build cmd and run it
+	(r === nothing || isa(r, String)) && return r		# Nothing if saved in file, String if Vd == 2
+
+	if isa(arg1, GDtype)
+		colnames = isa(arg1, GMTdataset) ? arg1.colnames : arg1[1].colnames
+		have_cumdist && append!(colnames, ["cumdist"])
+	else		# Input was eith a matrix or a file name
+		nc = isa(r, GMTdataset) ? size(r, 2) : size(r[1], 2)
+		colnames = [@sprintf("Z%d", k) for k = 1:nc]
+		(nc > 1) && (colnames[1] = "X"; colnames[2] = "Y")
+		have_cumdist && (colnames[end] = "cumdist")
+	end
+	isa(r, GMTdataset) ? (r.colnames = colnames) : (r[1].colnames = colnames)
+	return r
 end
