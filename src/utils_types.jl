@@ -1715,7 +1715,7 @@ end
 # This method creates a new GMTgrid but retains all the header data from the GI object
 function mat2grid(mat::Array{T,N}, GI::GItype) where {T,N}
 	isT = istransposed(mat)
-	hasnans = any(!isfinite, mat.z) ? 2 : 1
+	hasnans = any(!isfinite, mat) ? 2 : 1
 	x_unit, y_unit, v_unit, z_unit = isa(GI, GMTgrid) ? (GI.x_unit, GI.y_unit, GI.v_unit, GI.z_unit) : ("", "", "", "")
 	Go = GMTgrid(GI.proj4, GI.wkt, GI.epsg, GI.geog, copy(GI.range), copy(GI.inc), GI.registration, NaN, "", "", "", "", String[], copy(GI.x), copy(GI.y), [0.], isT ? copy(mat) : mat, x_unit, y_unit, v_unit, z_unit, GI.layout, 1f0, 0f0, GI.pad, hasnans)
 	(length(Go.layout) == 4) && (Go.layout = Go.layout[1:3])	# No space for the a|A
