@@ -1095,7 +1095,7 @@ function mat2img(mat::Union{GMTgrid,Matrix{<:AbstractFloat}}; x=Float64[], y=Flo
 	             proj4::String="", wkt::String="", GI::Union{GItype,Nothing}=nothing, clim=[0,255], cmap=nothing, kw...)
 	# This is the same as Matlab's imagesc() ... plus some extras.
 	mi, ma = (isa(mat,GMTgrid)) ? mat.range[5:6] : extrema(mat)
-	(isa(mat,GMTgrid) && mat.hasnans > 1) && (mi = NaN)		# Don't know yet so force checking
+	(isa(mat,GMTgrid) && mat.hasnans == 0) && (mi = NaN)		# Don't know yet so force checking
 	if (isnan(mi))			# Shit, such a memory waste we need to do.
 		mi, ma = extrema_nan(mat)
 		t = isa(mat, GMTgrid) ? Float32.((mat.z .- mi) ./ (ma - mi) .* 255) : Float32.((mat .- mi) ./ (ma - mi) .* 255)
@@ -1661,8 +1661,8 @@ istransposed(mat) = !isempty(fields(mat)) && (fields(mat)[1] == :parent)
 
 mat2grid(mat, xx, yy, zz=Float64[];
          reg=nothing, hdr=Float64[], proj4::String="", proj::String="", wkt::String="", epsg::Int=0, geog::Int=-1, title::String="", tit::String="", rem::String="", cmd::String="", names::Vector{String}=String[], scale::Real=1f0, offset::Real=0f0, layout::String="", is_transposed::Bool=false, z_units::String="") =
-		 mat2grid(mat; x=xx, y=yy, v=zz, reg=reg, hdr=hdr, proj4=proj4, proj=proj, wkt=wkt, epsg=epsg, geog=geog,
-		          title=title, tit=tit, rem=rem, cmd=cmd, names=names, scale=scale, offset=offset, layout=layout, is_transposed=is_transposed, z_units=z_units)
+	mat2grid(mat; x=xx, y=yy, v=zz, reg=reg, hdr=hdr, proj4=proj4, proj=proj, wkt=wkt, epsg=epsg, geog=geog,
+	         title=title, tit=tit, rem=rem, cmd=cmd, names=names, scale=scale, offset=offset, layout=layout, is_transposed=is_transposed, z_units=z_units)
 
 #function mat2grid(mat, xx=Float64[], yy=Float64[], zz=Float64[]; reg=nothing,
 function mat2grid(mat; reg=nothing, x=Float64[], y=Float64[], v=Float64[], hdr=Float64[], proj4::String="",
@@ -1705,7 +1705,7 @@ function mat2grid(mat; reg=nothing, x=Float64[], y=Float64[], v=Float64[], hdr=F
 		(length(v) <= 1) && (v = collect(linspace(hdr[5], hdr[6], size(mat,3))))	# We need a v vector
 		inc, range = [x_inc, y_inc, v[2] - v[1]], [vec(hdr[1:6]); [v[1], v[end]]]
 	end
-	hasnans = any(!isfinite, mat) ? 2 : 1
+	hasnans = any(!isfinite, mat.z) ? 2 : 1
 	_layout = (layout == "") ? "BCB" : layout
 	(geog == -1 && helper_geod(proj4, wkt, epsg, false)[3]) && (geog = (range[2] <= 180) ? 1 : 2)	# Signal if grid is geog.
 	(tit == "") && (tit = title)		# Some versions from 1.2 remove 'tit'
@@ -1715,7 +1715,7 @@ end
 # This method creates a new GMTgrid but retains all the header data from the GI object
 function mat2grid(mat::Array{T,N}, GI::GItype) where {T,N}
 	isT = istransposed(mat)
-	hasnans = any(!isfinite, mat) ? 2 : 1
+	hasnans = any(!isfinite, mat.z) ? 2 : 1
 	x_unit, y_unit, v_unit, z_unit = isa(GI, GMTgrid) ? (GI.x_unit, GI.y_unit, GI.v_unit, GI.z_unit) : ("", "", "", "")
 	Go = GMTgrid(GI.proj4, GI.wkt, GI.epsg, GI.geog, copy(GI.range), copy(GI.inc), GI.registration, NaN, "", "", "", "", String[], copy(GI.x), copy(GI.y), [0.], isT ? copy(mat) : mat, x_unit, y_unit, v_unit, z_unit, GI.layout, 1f0, 0f0, GI.pad, hasnans)
 	(length(Go.layout) == 4) && (Go.layout = Go.layout[1:3])	# No space for the a|A
