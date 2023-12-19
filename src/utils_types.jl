@@ -1705,7 +1705,7 @@ function mat2grid(mat; reg=nothing, x=Float64[], y=Float64[], v=Float64[], hdr=F
 		(length(v) <= 1) && (v = collect(linspace(hdr[5], hdr[6], size(mat,3))))	# We need a v vector
 		inc, range = [x_inc, y_inc, v[2] - v[1]], [vec(hdr[1:6]); [v[1], v[end]]]
 	end
-	hasnans = any(!isfinite, mat.z) ? 2 : 1
+	hasnans = any(!isfinite, mat) ? 2 : 1
 	_layout = (layout == "") ? "BCB" : layout
 	(geog == -1 && helper_geod(proj4, wkt, epsg, false)[3]) && (geog = (range[2] <= 180) ? 1 : 2)	# Signal if grid is geog.
 	(tit == "") && (tit = title)		# Some versions from 1.2 remove 'tit'
