@@ -12,6 +12,8 @@ sample1d(d, T="2c", A=:r);
 @test sample1d([0 0], F=(:akima, "first"), Vd=2) == "sample1d  -Fa+d1"
 @test sample1d([0 0], F=(:smothing, 0.1), Vd=2) == "sample1d  -Fs0.1"
 @test sample1d([0 0], F=(:smothing, 0.1, :seconf), Vd=2) == "sample1d  -Fs0.1+d2"
+sample1d([0 0 1; 10 10 1], inc=2, cumdist=true)
+sample1d(mat2ds([0 0 1; 10 10 1]), inc=2, cumdist=true)
 
 println("	SPECTRUM1D")
 D = gmt("gmtmath -T0/10239/1 T 10240 DIV 360 MUL 400 MUL COSD");
