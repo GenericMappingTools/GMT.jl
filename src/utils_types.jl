@@ -1095,7 +1095,7 @@ function mat2img(mat::Union{GMTgrid,Matrix{<:AbstractFloat}}; x=Float64[], y=Flo
 	             proj4::String="", wkt::String="", GI::Union{GItype,Nothing}=nothing, clim=[0,255], cmap=nothing, kw...)
 	# This is the same as Matlab's imagesc() ... plus some extras.
 	mi, ma = (isa(mat,GMTgrid)) ? mat.range[5:6] : extrema(mat)
-	(isa(mat,GMTgrid) && mat.hasnans == 0) && (mi = NaN)		# Don't know yet so force checking
+	(isa(mat,GMTgrid) && mat.hasnans == 2) && (mi = NaN)		# Don't know yet so force checking
 	if (isnan(mi))			# Shit, such a memory waste we need to do.
 		mi, ma = extrema_nan(mat)
 		t = isa(mat, GMTgrid) ? Float32.((mat.z .- mi) ./ (ma - mi) .* 255) : Float32.((mat .- mi) ./ (ma - mi) .* 255)
