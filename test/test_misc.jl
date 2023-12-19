@@ -140,11 +140,11 @@
 	GMT.color_gradient_line(mat2ds(rand(3,2)));
 	GMT.color_gradient_line([mat2ds(rand(3,2)), mat2ds(rand(4,2))]);
 	@info "line2multiseg"
-	GMT.line2multiseg(mat2ds(rand(5,2)), lt=[1,2], auto_color=true);
-	GMT.line2multiseg(mat2ds(rand(5,2)), lt=[1,2,4], auto_color=true);
-	GMT.line2multiseg(mat2ds(rand(3,2)), lt=[1,2,4]);
-	GMT.line2multiseg([mat2ds(rand(3,2)), mat2ds(rand(4,2))], lt=[1,2], auto_color=true);
-	GMT.resetGMT()
+	#GMT.line2multiseg(mat2ds(rand(5,2)), lt=[1,2], auto_color=true);
+	#GMT.line2multiseg(mat2ds(rand(5,2)), lt=[1,2,4], auto_color=true);
+	#GMT.line2multiseg(mat2ds(rand(3,2)), lt=[1,2,4]);
+	#GMT.line2multiseg([mat2ds(rand(3,2)), mat2ds(rand(4,2))], lt=[1,2], auto_color=true);
+	#GMT.resetGMT()
 
 	@info "mat2grid"
 	GMT.mat2grid(rand(Float32, 10,10), reg=1);

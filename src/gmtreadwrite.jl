@@ -187,7 +187,7 @@ function gmtread(_fname::String; kwargs...)
 		(opt_bi == "" && isa(o, GDtype)) && file_has_time!(fname, o, corder)
 
 		if (isa(o, GMTgrid))
-			o.hasnans = any(!isfinite, o) ? 2 : 1
+			o.hasnans = any(!isfinite, o.z) ? 2 : 1
 			# Check if we should assign a default CPT to this grid
 			((fname[1] == '@') && (cptname = check_remote_cpt(fname)) != "") && (o.cpt = cptname)
 		end

@@ -1095,7 +1095,7 @@ function mat2img(mat::Union{GMTgrid,Matrix{<:AbstractFloat}}; x=Float64[], y=Flo
 	             proj4::String="", wkt::String="", GI::Union{GItype,Nothing}=nothing, clim=[0,255], cmap=nothing, kw...)
 	# This is the same as Matlab's imagesc() ... plus some extras.
 	mi, ma = (isa(mat,GMTgrid)) ? mat.range[5:6] : extrema(mat)
-	(isa(mat,GMTgrid) && mat.hasnans > 1) && (mi = NaN)		# Don't know yet so force checking
+	(isa(mat,GMTgrid) && mat.hasnans == 2) && (mi = NaN)		# Don't know yet so force checking
 	if (isnan(mi))			# Shit, such a memory waste we need to do.
 		mi, ma = extrema_nan(mat)
 		t = isa(mat, GMTgrid) ? Float32.((mat.z .- mi) ./ (ma - mi) .* 255) : Float32.((mat .- mi) ./ (ma - mi) .* 255)
@@ -1661,8 +1661,8 @@ istransposed(mat) = !isempty(fields(mat)) && (fields(mat)[1] == :parent)
 
 mat2grid(mat, xx, yy, zz=Float64[];
          reg=nothing, hdr=Float64[], proj4::String="", proj::String="", wkt::String="", epsg::Int=0, geog::Int=-1, title::String="", tit::String="", rem::String="", cmd::String="", names::Vector{String}=String[], scale::Real=1f0, offset::Real=0f0, layout::String="", is_transposed::Bool=false, z_units::String="") =
-		 mat2grid(mat; x=xx, y=yy, v=zz, reg=reg, hdr=hdr, proj4=proj4, proj=proj, wkt=wkt, epsg=epsg, geog=geog,
-		          title=title, tit=tit, rem=rem, cmd=cmd, names=names, scale=scale, offset=offset, layout=layout, is_transposed=is_transposed, z_units=z_units)
+	mat2grid(mat; x=xx, y=yy, v=zz, reg=reg, hdr=hdr, proj4=proj4, proj=proj, wkt=wkt, epsg=epsg, geog=geog,
+	         title=title, tit=tit, rem=rem, cmd=cmd, names=names, scale=scale, offset=offset, layout=layout, is_transposed=is_transposed, z_units=z_units)
 
 #function mat2grid(mat, xx=Float64[], yy=Float64[], zz=Float64[]; reg=nothing,
 function mat2grid(mat; reg=nothing, x=Float64[], y=Float64[], v=Float64[], hdr=Float64[], proj4::String="",

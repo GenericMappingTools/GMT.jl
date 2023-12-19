@@ -423,7 +423,8 @@ function get_grid(API::Ptr{Nothing}, object, cube::Bool)::GMTgrid
 
 	# Return grids via a float matrix in a struct
 	rng, inc = (gmt_hdr.n_bands > 1) ? (fill(NaN,8), fill(NaN,3)) : (fill(NaN,6), fill(NaN,2))
-	out = GMTgrid("", "", 0, -1, rng, inc, 0, NaN, "", "", "", "", String[], X, Y, V, z, "", "", "", "", layout, 1f0, 0f0, 0, 0)
+	hasnans = any(!isfinite, z) ? 2 : 1
+	out = GMTgrid("", "", 0, -1, rng, inc, 0, NaN, "", "", "", "", String[], X, Y, V, z, "", "", "", "", layout, 1f0, 0f0, 0, hasnans)
 
 	if (gmt_hdr.ProjRefPROJ4 != C_NULL)  out.proj4 = unsafe_string(gmt_hdr.ProjRefPROJ4)  end
 	if (gmt_hdr.ProjRefWKT != C_NULL)    out.wkt = unsafe_string(gmt_hdr.ProjRefWKT)      end
