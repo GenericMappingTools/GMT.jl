@@ -11,6 +11,10 @@ Parameters
 - **A** | **resample** :: [Type => Str]        ``Arg = f|p|m|r|R``
 
     For track resampling (if -T…unit is set) we can select how this is to be performed.
+- **E** | **keeptext** :: [Type => Bool]
+
+    If the input dataset contains records with trailing text then we will attempt to add these to
+    output records that exactly match the input times.
 - **F** | **interp** :: [Type => Str]   ``Arg = l|a|c|n|s<p>[+1|+2]``
 
     Choose from l (Linear), a (Akima spline), c (natural cubic spline), and n (no interpolation:
@@ -22,10 +26,14 @@ Parameters
 - **T** | **inc** | **range** :: [Type => List | Str]     ``Arg = [min/max/]inc[+a|n]] or file|list``
 
     Evaluate the best-fit regression model at the equidistant points implied by the arguments.
+- `cumdist` | `cumsum`: [Type => Bool]
+
+    Compute the cumulative distance along the input line. Note that for this the first two columns
+    must contain the spatial coordinates.
 - $(GMT.opt_V)
 - **W** | **weights** :: [Type => Int]     ``Arg = w_col``
 
-    Sets the column number of the weights to be used with a smoothing cubic spline. Requires Fs. (GMT6.1)
+    Sets the column number of the weights to be used with a smoothing cubic spline. Requires Fs.
 - $(GMT.opt_write)
 - $(GMT.opt_append)
 - $(GMT.opt_b)
@@ -51,7 +59,8 @@ function sample1d_helper(cmd0::String, arg1; kwargs...)
 	cmd = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :o :w :yx])[1]
 	cmd = parse_these_opts(cmd, d, [[:A :resample], [:N :time_col :timecol], [:W :weights :weights_col]])
 	cmd, Tvec = parse_opt_range(d, cmd, "T")
-	(GMTver >= v"6.4.0") && (cmd = add_opt(d, cmd, "E", [:E :keeptxt]))
+	((val = find_in_dict(d, [:cumdist :cumsum])[1]) !== nothing) && (cmd *= "c+a")
+	cmd = add_opt(d, cmd, "E", [:E :keeptext :keeptxt])		# Needs GMT6.4 but not testing that anymore.
 
 	if ((val = find_in_dict(d, [:F :interp :interp_type])[1]) !== nothing)
 		# F=:akima, F="akima", F="s0.1+d2", F="cubic+d1", F="c+d1"

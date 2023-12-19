@@ -31,9 +31,13 @@ Parameters
 - **S** | **symmetry** :: [Type => Number]    `Arg = symmetry_factor`
 
     Checks symmetry of data about window center. Enter a factor between 0 and 1.
-- **T** | **range** | **equispace** :: [Type => List | Str]     `Arg = [min/max/]inc[+a|n]`
+- **T** | **range** | **inc** :: [Type => List | Str]     `Arg = [min/max/]inc[+a|n]`
 
     Make evenly spaced time-steps from min to max by inc [Default uses input times].
+- `cumdist` | `cumsum`: [Type => Bool]
+
+    Compute the cumulative distance along the input line. Note that for this the first two columns
+    must contain the spatial coordinates.
 - $(GMT.opt_V)
 - $(GMT.opt_write)
 - $(GMT.opt_append)
@@ -56,7 +60,9 @@ function filter1d_helper(cmd0::String, arg1; kwargs...)
 
 	cmd, = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :o :yx])
 	cmd = parse_these_opts(cmd, d, [[:D :inc :increment], [:E :end :ends], [:L :gap_width],
-                                    [:N :time_col :timecol], [:Q :quality], [:S :symmetry], [:T :range :equispace]])
+                                    [:N :time_col :timecol], [:Q :quality], [:S :symmetry]])
+	cmd = parse_opt_range(d, cmd, "T")[1]
+	((val = find_in_dict(d, [:cumdist :cumsum])[1]) !== nothing) && (cmd *= "c+a")
 
 	if ((symb = is_in_dict(d, [:F :filter :filter_type])) !== nothing && isa(d[symb], Tuple))
 		# Accept either a F=(:gaus, 10, 1) => -Fg10+h
