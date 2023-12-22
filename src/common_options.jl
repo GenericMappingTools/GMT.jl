@@ -2609,8 +2609,10 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 				(length(val) != 2) && error("The clim option must have two elements and not $(length(val)::Int)")
 				cpt_opt_T = sprintf(" -T%.12g/%.12g/256+n -D", val[1], val[2])	# Piggyback -D
 			else
-				((range[6] - range[5]) > 1e6) && @warn("The z range expands to more then 6 orders of magnitude. Missed to replace the nodatavalues?\n\n")
-				cpt_opt_T = @sprintf(" -T%.12g/%.12g/256+n", range[5] - 1e-6, range[6] + 1e-6)
+				drange = range[6] - range[5]
+				(drange > 1e6) && @warn("The z range expands to more then 6 orders of magnitude. Missed to replace the nodatavalues?\n\n")
+				loc_eps = (drange > 1e-8) ? 1e-8 : 1e-15		# Totally ad hoc condition
+				cpt_opt_T = @sprintf(" -T%.12g/%.12g/256+n", range[5] - loc_eps, range[6] + loc_eps)
 			end
 			(range[5] > 1e100) && (cpt_opt_T = "")	# cmd0 is an image name and now grdinfo does not compute its min/max
 		end

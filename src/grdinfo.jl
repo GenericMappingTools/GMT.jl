@@ -21,7 +21,7 @@ Parameters
 - **F** | **report_ingeog** :: [Type => Bool]
 
     Report grid domain and x/y-increments in world mapping format.
-- **G** | **force** :: [Type => Bool]
+- **G** | **download** :: [Type => Bool]
 
     Force (possible) download and mosaicing of all tiles of tiled global remote grids in order
     to report the requested information.
@@ -57,7 +57,7 @@ function grdinfo_helper(cmd0::String, arg1; kwargs...)
 	cmd, = parse_common_opts(d, "", [:R :V_params :f :o])
 	(is_in_dict(d, [:numeric], del=true) !== nothing) && (cmd *= " -Cn")
 	cmd  = parse_these_opts(cmd, d, [[:C :oneliner], [:D :tiles], [:E :extrema :extreme], [:F :report_ingeog],
-                                     [:G :force :force_download], [:I :nearest], [:L :force_scan], [:Q :cube], [:T :minmax :zmin_max]])
+                                     [:G :download :force], [:I :nearest], [:L :force_scan], [:Q :cube], [:T :minmax :zmin_max]])
 	opt_M = add_opt(d, "", "M", [:M :minmax_pos]);  (opt_M != "") && (cmd *= opt_M)
 	opt_L = add_opt(d, "", "L", [:L :force_scan]);  (opt_L != "") && (cmd *= opt_L)
 

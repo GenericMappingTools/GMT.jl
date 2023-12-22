@@ -403,6 +403,8 @@ function gmtwrite(fname::AbstractString, data; kwargs...)
 		if (fmt == "" && opt_f == "" && (ext == ".grd" || ext == ".nc"))
 			prj = getproj(data, proj4=true)
 			(prj != "" && !contains(prj, "=long") && !contains(prj, "=lat")) && return gdaltranslate(data, dest=fname)
+		elseif (fmt == "" && ext == ".tif" || ext == ".tiff")	# If .tif, write a Geotiff file
+			fmt = "=gd:GTiff"
 		end
 		opt_T = " -Tg"
 		fname *= fmt

@@ -17,6 +17,20 @@
 - `extend`: By default the density curve is computed at the `bins` locatins or between data extrema as
     mentioned above. However, this is not normally enough to go down to zero. Use this option in terms of
     number of bandwidth to expand de curve. *e.g.* `extend=2`
+
+The version
+    G = density(data, x,y; weights=nothing, bandwidth=nothing, showbw=false)
+
+Computes the smoothed kernel probability density estimate of a two-column matrix `data`. The estimate is
+based on a normal kernel function, and is evaluated at the points defined by the vectors `x` and `y`.
+The `showbw` option is used to print the bandwidth used. It returns a GMTgrid of the same size as `x` and `y`.
+
+### Example
+```julia
+  X = [0.5*rand(20,1) 5 .+ 2.5*rand(20,1); .75 .+ 0.25*rand(10,1) 8.75 .+ 1.25*rand(10,1)]
+  G = density(X, -0.25:.05:1.25, 0:.1:15)[1];
+  viz(G, figsize=(12,12), view=(225,30))
+```
 """
 function density(x; first::Bool=true, nbins::Integer=200, bins::Vector{<:Real}=Vector{Real}(), bandwidth=nothing,
                  kernel::StrSymb="normal", printbw::Bool=false, horizontal::Bool=false, extend=0, kwargs...)
@@ -25,6 +39,7 @@ function density(x; first::Bool=true, nbins::Integer=200, bins::Vector{<:Real}=V
 end
 density!(x; nbins::Integer=200, bins::Vector{<:Real}=Vector{Real}(), bandwidth=nothing, kernel::StrSymb="normal", printbw::Bool=false, horizontal::Bool=false, extend=0, kw...) = density(x; first=false, nbins=nbins, bins=bins, bandwidth=bandwidth, kernel=kernel, printbw=printbw, horizontal=horizontal, extend=extend, kw...)
 
+const ksdensity = density
 # ----------------------------------------------------------------------------------------------------------
 # Adapted from the Matlab FEX contribution 60772 by Christopher Hummersone, Licensed under MIT
 function kernelDensity(x::AbstractVector{<:Real}, hz=false; nbins::Integer=200, bins::Vector{<:Real}=Vector{Real}(),
@@ -86,6 +101,62 @@ function kernelDensity(mat::Vector{Vector{Vector{T}}}; nbins::Integer=200, bins:
 	end
 	return D
 end
+
+# ----------------------------------------------------------------------------------------------------------
+ function density(data, x,y; weights=nothing, bandwidth=nothing, showbw=false, verbose=false)
+	n_pts = size(data, 1)
+	_weights = (weights === nothing) ? fill(1 / n_pts, n_pts) : weights / sum(weights)
+	#bdwidth = [0.246364625653727, 1.295827476295806]
+	bdwidth = (bandwidth === nothing) ? [default_bandwidth(view(data, :, 1)), default_bandwidth(view(data, :, 2))] :
+	                                    length(bandwidth) == 2 ? bandwidth : length(bandwidth) == 1 ?
+										[bandwidth, bandwidth] : error("length(bandwidth) != 1 or 2")
+	half_bdwidth = 4 * bdwidth
+	@assert length(_weights) == n_pts "The number of weights must match the number of data points"
+ 
+	nx, ny = numel(x), length(y)		# First numel is to cheat the annoying Lint
+	out = zeros(Float32, nx * ny)
+	ind_pts = 1:n_pts
+ 
+	sqtwopi = 1. / sqrt(2 * pi)
+	ind = ones(Bool, n_pts)
+	ij = 1
+	for ix = 1:nx
+		verbose && rem(ix, 100) == 0 && println("ix = ", ix, " of ", nx)
+		for iy = 1:ny
+			for j = 1:n_pts
+				# For each data point, compute the distance to all grid locations and check if it's within the kernel bdwidth
+				dist = abs(x[ix] - data[j, 1])
+				ind[j] &= dist <= half_bdwidth[1]
+				dist = abs(y[iy] - data[j, 2])
+				ind[j] &= dist <= half_bdwidth[2]
+			end
+ 
+			neighbors = ind_pts[ind]
+			ind .= true					# Reset it for next round
+			if !isempty(neighbors)
+				w = 0.0
+				for k = 1:numel(neighbors)
+					z = (x[ix] .- data[neighbors[k], 1]) / bdwidth[1]
+					f = exp(-0.5 * z ^ 2) * sqtwopi
+					z = (y[iy] .- data[neighbors[k], 2]) / bdwidth[2]
+					f *= exp(-0.5 * z ^ 2) * sqtwopi
+					w += _weights[neighbors[k]] * f
+				end
+				out[ij] = Float32(w)
+			end
+			ij += 1
+		end
+	end
+	(showbw != 0) && println("Bandwidth: ", bdwidth)
+ 
+	return mat2grid(reshape(out / (bdwidth[1] * bdwidth[2]), ny, nx), x=x, y=y)
+ end
+ function density(D::GMTdataset, x,y; weights=nothing, bandwidth=nothing, showbw=false)
+	G = density(D.data, x, y; weights=weights, bandwidth=bandwidth, showbw=showbw)
+	G.proj4, G.wkt, G.epsg = D.proj4, D.wkt, D.epsg
+	return G
+ end
+  
 
 # Silverman's rule of thumb for KDE bandwidth selection from KernelDensity.jl
 function default_bandwidth(data, alpha::Float64 = 0.9)::Float64

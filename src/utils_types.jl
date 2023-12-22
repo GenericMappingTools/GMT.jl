@@ -784,6 +784,22 @@ function rasters2grid(arg; scale::Real=1f0, offset::Real=0f0)::GMTgrid
 end
 
 # ---------------------------------------------------------------------------------------------------
+"""
+    G = kde2grid(arg)
+
+Wrap a `KernelDensity` object to a `GMTgrid`
+"""
+function kde2grid(arg)
+	# KernelDensity types come in row major order and rows as columns, so we have to trick things a little bit here.
+	G = mat2grid(Float32.(arg.density), arg.y, arg.x)
+	G.layout = "TRB"
+	G.x, G.y = G.y, G.x
+	G.range[1:2], G.range[3:4] = G.range[3:4], G.range[1:2]
+	G.inc[1], G.inc[2] = G.inc[2], G.inc[1]
+	return G
+end
+
+# ---------------------------------------------------------------------------------------------------
 # Try to guess if ARG is a DataFrame type. Note, we do this without having DataFrames as a dependency (even indirect)
 isdataframe(arg) = (fs = fields(arg); return (isempty(fs) || fs[1] != :columns || fs[end] != :allnotemetadata) ? false : true)
 # Check if it is a DifferentialEquations type
@@ -1672,6 +1688,7 @@ function mat2grid(mat; reg=nothing, x=Float64[], y=Float64[], v=Float64[], hdr=F
 	# Take a 2/3D array and turn it into a GMTgrid
 
 	israsters(mat) && return rasters2grid(mat, scale=scale, offset=offset)
+	(fields(mat) == (:x, :y, :density)) && return kde2grid(mat)		# A KernelDensity type
 	!isa(mat[2], Real) && error("input matrix must be of Real numbers")
 	(isempty(proj4) && !isempty(proj)) && (proj4 = proj)	# Allow both proj4 or proj keywords
 	if (!isempty(proj4) && !startswith(proj4, "+proj=") && !startswith(proj4, "proj="))

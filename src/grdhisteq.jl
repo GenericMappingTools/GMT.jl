@@ -9,6 +9,9 @@ See full GMT (not the `GMT.jl` one) docs at [`grdhisteq`]($(GMTdoc)grdhisteq.htm
 Parameters
 ----------
 
+- **C** | **ncels** | **n_cels** :: [Type => Number]
+
+    Sets how many cells (or divisions) of data range to make [16].
 - **D** | **dump** :: [Type => Str or []]
 
     Dump level information to file, or standard output if no file is provided.
@@ -42,6 +45,6 @@ end
 function grdhisteq_helper(;kw...)
 	d = init_module(false, kw...)[1]				# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:G :R :V_params])
-	cmd  = parse_these_opts(cmd, d, [[:C :n_cells], [:D :dump], [:N :gaussian], [:Q :quadratic]])
+	cmd  = parse_these_opts(cmd, d, [[:C :n_cels :ncells], [:D :dump], [:N :gaussian], [:Q :quadratic]])
 	return d, cmd
 end
