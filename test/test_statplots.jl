@@ -9,6 +9,10 @@
 	GMT._quantile(randn(30), rand(30), [0.25, 0.75])
 	GMT.parse_candle_outliers_par("")
 
+	X = [0.5*rand(20,1) 5 .+ 2.5*rand(20,1); .75 .+ 0.25*rand(10,1) 8.75 .+ 1.25*rand(10,1)];
+	GMT.density(X, -0.25:.05:1.25, 0:.1:15);
+	GMT.density(mat2ds(X), -0.25:.05:1.25, 0:.1:15);
+
 	@info "1..."
 	violin(v, Vd=dbg2)
 	violin!(v, Vd=dbg2)
