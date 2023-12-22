@@ -34,7 +34,7 @@ Parameters
     Specify an origin and radius; append a distance unit and we determine the corresponding
     rectangular region so that all grid nodes on or inside the circle are contained in the subset.
 - $(GMT.opt_V)
-- **Z** | **z_subregion** :: [Type => Str]       ``Arg = [n|N |r][min/max]``
+- **Z** | **range** :: [Type => Str]       ``Arg = [n|N |r][min/max]``
 
     Determine a new rectangular region so that all nodes outside this region are also outside
     the given z-range.
@@ -53,7 +53,7 @@ function grdcut_helper(cmd0::String, arg1; kwargs...)
     cmd, = parse_common_opts(d, cmd, [:V_params :f])
     opt_J, = parse_J(d, "")
     (!startswith(opt_J, " -JX")) && (cmd *= opt_J)
-	cmd = parse_these_opts(cmd, d, [[:D :dryrun], [:E], [:N :extend], [:S :circ_subregion], [:Z :z_subregion]])
+	cmd = parse_these_opts(cmd, d, [[:D :dryrun], [:E], [:N :extend], [:S :circ_subregion], [:Z :range]])
 	!contains(cmd, " -E") && (((val = find_in_dict(d, [:rowslice])[1]) !== nothing) && (cmd *= " -Ey$val"))
 	!contains(cmd, " -E") && (((val = find_in_dict(d, [:colslice])[1]) !== nothing) && (cmd *= " -Ex$val"))
 	opt_G = parse_G(d, "")[1]

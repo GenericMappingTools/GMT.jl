@@ -36,7 +36,7 @@ function grdfill_helper(cmd0::String, arg1; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:G :R :V_params :f])
-	cmd  = parse_these_opts(cmd, d, [[:A :mode :algo], [:L :list], [:N :nodata]])
+	cmd  = parse_these_opts(cmd, d, [[:A :mode :algo], [:L :list], [:N :nodata :hole]])
 
 	common_grd(d, cmd0, cmd, "grdfill ", arg1)		# Finish build cmd and run it
 end
