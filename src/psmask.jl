@@ -30,7 +30,7 @@ Parameters
 - **L** | **nodegrid** :: [Type => Str]
 
     Save the internal grid with ones (data constraint) and zeros (no data) to the named nodegrid.
-- **N** | **invert** :: [Type => Bool]
+- **N** | **invert** | **inverse** :: [Type => Bool]
 
     Invert the sense of the test, i.e., clip regions where there is data coverage.
 - $(GMT.opt_P)
@@ -68,7 +68,7 @@ function mask(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	cmd, _, _, opt_R = parse_BJR(d, "", "", O, " -JX12c/12c")
 	cmd, = parse_common_opts(d, cmd, [:I :UVXY :JZ :c :e :p :r :t :w :params], first)
-	cmd  = parse_these_opts(cmd, d, [[:C :endclip :end_clip_path], [:D :dump], [:L :nodegrid], [:N :invert],
+	cmd  = parse_these_opts(cmd, d, [[:C :endclip :end_clip_path], [:D :dump], [:L :nodegrid], [:N :invert :inverse],
 	                                 [:Q :cut :cut_number], [:S :search_radius], [:T :tiles]])
 
 	if ((val = find_in_dict(d, [:F :oriented])[1]) !== nothing)

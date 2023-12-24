@@ -1333,12 +1333,12 @@ function cornerplot(arg1; first::Bool=true, kwargs...)
 			mima = round_wesn([extrema(t)...,0,0])
 			opt_R = @sprintf("%.10g/%.10g/0/0", mima[1], mima[2])
 			if (k == 1)
-				histogram(t, panel=(k,k), R=opt_R, G=hstColor, W=0.1, Vd=Vd)
+				histogram(t, panel=(k,k), R=opt_R, G=hstColor, W="0.1p", Vd=Vd)
 			elseif (k < ndims)
-				histogram(t, conf=(MAP_FRAME_TYPE="inside",), B="Wsrt a", R=opt_R, G=hstColor, W=0.1, panel=(k,k), Vd=Vd)
+				histogram(t, conf=(MAP_FRAME_TYPE="inside",), B="Wsrt a", R=opt_R, G=hstColor, W="0.1p", panel=(k,k), Vd=Vd)
 			else			# Here we want to have annotations both inside and outside, which is not possible. So trickit
 				histogram(t, B="lSrt a", R=opt_R, panel=(k,k), fill="", W="0,white", Vd=Vd)	# Used only to plot the bott axis
-				histogram(t, conf=(MAP_FRAME_TYPE="inside",), B="Wbrt a", R=opt_R, G=hstColor, W=0.1, Vd=Vd)
+				histogram(t, conf=(MAP_FRAME_TYPE="inside",), B="Wbrt a", R=opt_R, G=hstColor, W="0.1p", Vd=Vd)
 			end
 			(!isempty(quantiles)) && vlines!(quantile(Base.invokelatest(view,D,:,k), quantiles); ls=:dash)
 			(!isempty(truths))    && vlines!(truths[k]; lw=0.75)
