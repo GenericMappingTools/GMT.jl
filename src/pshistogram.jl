@@ -332,7 +332,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function binmethod(d::Dict, cmd::String, X, is_datetime::Bool)
 	# Compute bin width for a series of binning alghoritms or intervals when X (DateTime) comes in seconds
-	val = ((val_ = find_in_dict(d, [:binmethod :BinMethod])[1]) !== nothing) ? lowercase(string(val_)) : ""
+	val::String = ((val_ = find_in_dict(d, [:binmethod :BinMethod])[1]) !== nothing) ? lowercase(string(val_)) : ""
 	min_max = (zero(eltype(X)), zero(eltype(X)))
 	(!is_datetime) && (min_max = extrema(X))		# X should already be sorted but don't trust that
 	if (val == "")
