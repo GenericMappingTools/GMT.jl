@@ -110,6 +110,9 @@
 
 	println("	GRDLANDMASK")
 	grdlandmask(R="-10/4/37/45", res=:c, inc=0.1);
+	Gpt = grdcut("@earth_relief_10m", region=(-10.5, -5, 35, 44));
+	grdlandmask(Gpt, maskvalues=(-200,1))
+	grdlandmask(Gpt, maskvalues=(NaN,1))
 
 	println("	GRDMASK")
 	grdmask([10 20; 40 40; 70 20; 10 20], R="0/100/0/100", out_edge_in=[100 0 0], I=2);
