@@ -750,26 +750,26 @@ If that isn't right, pass the appropriate projection info via the `t_srs` option
 ### Returns
 A Matrix if input is a Matrix or a GMTdadaset if input had that type
 """
-function xy2lonlat(xy::Vector{<:Real}, s_srs_=nothing; s_srs=nothing, t_srs=prj4WGS84)
+function xy2lonlat(xy::Vector{<:Real}, s_srs_=""; s_srs="", t_srs=prj4WGS84)
 	vec(xy2lonlat(reshape(xy[:],1,length(xy)), s_srs_; s_srs=s_srs, t_srs=t_srs))
 end
 
-function xy2lonlat(xy::Matrix{<:Real}, s_srs_=nothing; s_srs=nothing, t_srs=prj4WGS84)
-	(s_srs_ !== nothing) && (s_srs = s_srs_)
+function xy2lonlat(xy::Matrix{<:Real}, s_srs_=""; s_srs="", t_srs=prj4WGS84)
+	(s_srs_ != "") && (s_srs = s_srs_)
 	isa(s_srs, Int) && (s_srs = epsg2wkt(s_srs))
 	isa(t_srs, Int) && (t_srs = epsg2wkt(t_srs))
-	(s_srs === nothing) && error("Must specify at least the source referencing system.")
+	(s_srs == "") && error("Must specify at least the source referencing system.")
 	D = ogr2ogr(xy, ["-s_srs", s_srs, "-t_srs", t_srs, "-overwrite"])
 	return D.data		# Return only the array because that's what was sent in
 end
 
-xy2lonlat(D::GMTdataset, s_srs_=nothing; s_srs=nothing, t_srs=prj4WGS84) = xy2lonlat([D], s_srs_; s_srs=s_srs, t_srs=t_srs)
-function xy2lonlat(D::Vector{<:GMTdataset}, s_srs_=nothing; s_srs=nothing, t_srs=prj4WGS84)
-	(s_srs_ !== nothing) && (s_srs = s_srs_)
+xy2lonlat(D::GMTdataset, s_srs_=""; s_srs="", t_srs=prj4WGS84) = xy2lonlat([D], s_srs_; s_srs=s_srs, t_srs=t_srs)
+function xy2lonlat(D::Vector{<:GMTdataset}, s_srs_=""; s_srs="", t_srs=prj4WGS84)
+	(s_srs_ != "") && (s_srs = s_srs_)
 	isa(s_srs, Int) && (s_srs = epsg2wkt(s_srs))
 	isa(t_srs, Int) && (t_srs = epsg2wkt(t_srs))
 
-	(D[1].proj4 == "" && D[1].wkt == "" && s_srs === nothing) && error("No projection information whatsoever on the input data.")
+	(D[1].proj4 == "" && D[1].wkt == "" && s_srs == "") && error("No projection information whatsoever on the input data.")
 	if (s_srs != "") _s_srs = s_srs
 	else             _s_srs = (D[1].proj4 != "") ? D[1].proj4 : D[1].wkt
 	end
