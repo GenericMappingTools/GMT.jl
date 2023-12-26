@@ -288,7 +288,7 @@ end
 """
     D = randinpolygon(Din; density=0.1, np::Int=0)
 
-Generate random samples inside polygons. The method used hete is that of poin-in-polygon. That is,
+Generate random samples inside polygons. The method used here is that of poin-in-polygon. That is,
 we generate random points inside a rectangular BoundingBox of each polygon and retain those inside
 the polygon. For geographical polygons we generate random angles but do NOT connect the polygon
 sides with great circles, so solution is not really geographic but the error is rather small if the
