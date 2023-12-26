@@ -88,5 +88,25 @@ mask!(cmd0::String="", arg1=nothing; kw...) = mask(cmd0, arg1; first=false, kw..
 mask(arg1; kw...)  = mask("", arg1; first=true, kw...)
 mask!(arg1; kw...) = mask("", arg1; first=false, kw...)
 
+# ---------------------------------------------------------------------------------------------------
+# This method has nothing to do with psmask, but can be seen as an extension to it.
+function mask(GI::GItype, D::GDtype; touches=false, inverse::Bool=false)
+	prj1 = GI.proj4
+	prj2 = isa(D, GMTdataset) ? D.proj4 : D[1].proj4
+    geog1, geog2 = isgeog(prj1), isgeog(prj2)
+	(prj1 != "" && prj2 != "" && prj1 != prj2 && !(geog1 && geog2)) &&   # Tricky these geog
+        (D = (geog1) ? xy2lonlat(D, t_srs=prj1) : lonlat2xy(D, t_srs=prj1))
+	_GI = GMT.crop(GI, region = isa(D, GMTdataset) ? D.bbox : D[1].ds_bbox)[1]
+	height, width = dims(_GI)
+	maska = maskgdal(D, width, height, touches=touches, layout=_GI.layout, inverse=!inverse)	# !inverse to mask oceans by default
+	(isa(GI, GMTgrid)) && (_GI[maska] .= NaN)
+	if (isa(GI, GMTimage))        # Here, if image is RGB we may say insitu=true to get the alpha added to original
+		(size(_GI,3) == 1) && (_GI = ind2rgb(_GI))
+		maska = reinterpret(UInt8, .!maska) * UInt8(255)	# Now we do !maska because full tranparency is = 255 (Shit is alpha = opacity)
+		image_alpha!(_GI, alpha_band=maska)
+	end
+	return _GI
+end
+
 const psmask  = mask			# Alias
 const psmask! = mask!			# Alias

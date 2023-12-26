@@ -39,10 +39,53 @@ Parameters
 
 To see the full documentation type: ``@? grdlandmask``
 """
-function grdlandmask(cmd0::String=""; kwargs...)
+grdlandmask(cmd0::String; kwargs...) = grdlandmask_helper(cmd0, nothing; kwargs...)
+grdlandmask(arg1::GItype; kwargs...) = grdlandmask_helper("", arg1; kwargs...)
+grdlandmask(; kwargs...)             = grdlandmask_helper("", nothing; kwargs...)
+
+# ---------------------------------------------------------------------------------------------------
+function grdlandmask_helper(cmd0::String, arg1; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
-	cmd, = parse_common_opts(d, "", [:G :RIr :V_params :x])
-	cmd  = parse_these_opts(cmd, d, [[:A :area], [:D :res :resolution], [:E :border :bordervalues], [:N :mask :maskvalues]])
-	return common_grd(d, "grdlandmask " * cmd, nothing)		# Finish build cmd and run it
+    cmd::String, prj::String = "", ""
+	if (arg1 !== nothing)
+		prj = getproj(arg1, proj4=true)
+		(contains(prj, "=lon") || contains(prj, "=lat")) && (prj = "")  # Cool, it's geog, no proj needed.
+		if (prj == "")
+			d[:R] = sprintf("%.12g/%.12g/%.12g/%.12g", arg1.range[1:4]...)
+			d[:I] = sprintf("%.12g/%.12g", arg1.inc[1:2]...)
+		else
+			t = xy2lonlat([arg1.range[1] 0; arg1.range[2] 0; 0 arg1.range[3]; 0 arg1.range[4]], s_srs=prj, t_srs="+proj=longlat +datum=WGS84")
+			d[:R] = sprintf("%.12g/%.12g/%.12g/%.12g", t[1, 1], t[2, 1], t[3, 2], t[4, 2])
+			height, width = dims(arg1)
+			d[:I] = "$(width)" * "+n/" * "$(height)" * "+n"
+		end
+		isa(arg1, GMTgrid) ? (cmd *= " -&" * arg1.layout) : (cmd *= " -%" * arg1.layout)
+	end
+	cmd, = parse_common_opts(d, cmd, [:G :RIr :V_params :x])
+	cmd  = parse_these_opts(cmd, d, [[:A :area], [:D :res :resolution], [:E :border :bordervalues]])
+	opt_N = add_opt(d, "", "N", [:N :mask :maskvalues])
+	cmd *= opt_N
+	r = common_grd(d, "grdlandmask " * cmd, nothing)		# Finish build cmd and run it
+	if (arg1 !== nothing && prj != "")			# project the mask grid to be compatible with the original grid.
+		r.z = reshape(r.z, width, height)
+		r = gdalwarp(r, ["-of","MEM","-t_srs",prj,"-ts","$(width)", "$(height)", "-te", sprintf("%.12g", arg1.range[1]), sprintf("%.12g", arg1.range[3]), sprintf("%.12g", arg1.range[2]), sprintf("%.12g", arg1.range[4])], layout=r.layout)	# Many things can go wrong here.
+	end
+	if (isa(arg1, GMTgrid))
+		if (r.hasnans == 2 || opt_N == "")  r *= arg1	# If clipping val is NaN or 0
+		else
+			cv = parse(Float32, split(opt_N[4:end], "/")[1])
+			mask = isnodata(r.z, cv)
+			r.z[mask] .= 1				# First set the clipping zone to neutral
+			r *= arg1					# Apply mask
+			r.z[mask] .= cv				# Then set the clipping value back
+			r.range[5], r.range[6] = max(r.range[5], cv), max(r.range[6], cv)
+		end
+	elseif (isa(arg1, GMTimage))		# Here, if image is RGB we may say insitu=true to get the alpha added to original
+		mask = isnodata(r)
+		I = size(arg1,3) == 1 ? ind2rgb(arg1) : (find_in_dict(d, [:insitu])[1] !== nothing) ? arg1 : deepcopy(arg1)
+		image_alpha!(I, alpha_band=mask)
+		return I
+	end
+	return r
 end

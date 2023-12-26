@@ -1403,7 +1403,7 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 		return (!proj4) ? prj : startswith(prj, "PROJCS") ? toPROJ4(importWKT(prj)) : prj
 	end
 	function _getproj(G_I, proj4::Bool, wkt::Bool, epsg::Bool)
-		prj, _prj = "", 0
+		prj::String, _prj::Int = "", 0
 		if (proj4)
 			(G_I.proj4 != "") && (prj = G_I.proj4)
 			(prj == "" && G_I.wkt  != "") && (prj = toPROJ4(importWKT(G_I.wkt)))
@@ -1674,21 +1674,21 @@ end
 	end
 	fromWKT(data::String, args...) = fromWKT([data], args...)
 
-	function toWKT(spref::AbstractSpatialRef)
+	function toWKT(spref::AbstractSpatialRef)::String
 		wktptr = Ref{Cstring}()
 		result = OSRExportToWkt(spref.ptr, wktptr)
 		@ogrerr result "Failed to convert this SRS into WKT format"
 		return unsafe_string(wktptr[])
 	end
 
-	function toWKT(spref::AbstractSpatialRef, simplify::Bool)
+	function toWKT(spref::AbstractSpatialRef, simplify::Bool)::String
 		wktptr = Ref{Cstring}()
 		result = OSRExportToPrettyWkt(spref.ptr, wktptr, simplify)
 		@ogrerr result "Failed to convert this SRS into pretty WKT"
 		return unsafe_string(wktptr[])
 	end
 
-	function toWKT(geom::AbstractGeometry)
+	function toWKT(geom::AbstractGeometry)::String
 		wkt_ptr = Ref(Cstring(C_NULL))
 		result = OGR_G_ExportToWkt(geom.ptr, wkt_ptr)
 		@ogrerr result "OGRErr $result: failed to export geometry to WKT"
@@ -1697,7 +1697,7 @@ end
 		return wkt
 	end
 
-	function toPROJ4(spref::AbstractSpatialRef)
+	function toPROJ4(spref::AbstractSpatialRef)::String
 		(spref.ptr == C_NULL) && return ""
 		projptr = Ref{Cstring}()
 		result = OSRExportToProj4(spref.ptr, projptr)
