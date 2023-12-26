@@ -129,6 +129,9 @@ function mat2ds(mat::AbstractMatrix; hdr=String[], geom=0, kwargs...)
 	D
 end
 
+# Method for catching external types of data (e.g. DataFrame)
+mat2ds(X; kw...) = tabletypes2ds(X, ((val = find_in_dict(KW(kw), [:interp])[1]) !== nothing) ? interp=val : interp=0)
+
 # ---------------------------------------------------------------------------------------------------
 function mat2ds(mat::Vector{<:AbstractMatrix}; hdr=String[], kwargs...)
 	d = KW(kwargs)
@@ -1537,8 +1540,8 @@ function image_alpha!(img::GMTimage; alpha_ind=nothing, alpha_vec::Vector{<:Inte
 		ny1, nx1, = size(img.image)
 		ny2, nx2  = size(alpha_band)
 		(ny1 != ny2 || nx1 != nx2) && error("alpha channel has wrong dimensions")
-		(size(img.image, 3) != 3) ? @warn("Adding alpha band is restricted to true color images (RGB)") :
-		                            img.alpha = (isa(alpha_band,GMTimage)) ? alpha_band.image : alpha_band
+		(size(img.image, 3) != 3) && (@warn("Adding alpha band is restricted to true color images (RGB)"); return nothing)
+		img.alpha = (isa(alpha_band, GMTimage)) ? alpha_band.image : alpha_band
 	end
 	return nothing
 end
@@ -1609,7 +1612,8 @@ function ind2rgb(I::GMTimage, cmap::GMTcpt=GMTcpt(), layout="BRPa")
 			end
 		end
 	end
-	mat2img(imgRGB, x=I.x, y=I.y, proj4=I.proj4, wkt=I.wkt, mem_layout=layout)
+	istransposed = (dims(I)[1] != size(I, 1)) ? true : false
+	mat2img(imgRGB, x=I.x, y=I.y, proj4=I.proj4, wkt=I.wkt, mem_layout=layout, is_transposed=istransposed)
 end
 
 # ---------------------------------------------------------------------------------------------------
