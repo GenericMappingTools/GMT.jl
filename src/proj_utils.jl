@@ -985,6 +985,7 @@ function get_geoglimits(GI::GItype)::Vector{Float64}
 	(prj == "") && return Float64[]		# GI is not referenced
 	isgeog(prj) && return GI.range[1:4]	# GI is already in geographic coordinates
 
+	Gdal.CPLPushErrorHandler(@cfunction(Gdal.CPLQuietErrorHandler, Cvoid, (UInt32, Cint, Cstring)))
 	opts = ["-s_srs", prj, "-t_srs", prj4WGS84, "-overwrite"]
 	ds = Gdal.get_gdaldataset([GI.range[1] GI.range[3]], opts, false)[1]
 	o1 = Gdal.gdalvectortranslate(ds, opts; dest="/vsimem/tmp", gdataset=true)
