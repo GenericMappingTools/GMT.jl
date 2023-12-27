@@ -970,3 +970,32 @@ function wraplon180!(D::Vector{<:GMTdataset})
 	wraplon180!(view(D[1].ds_bbox, 1:2))
 	return D
 end
+
+"""
+    WESN = get_geoglimits(GI::GItype)::Vector{Float64}
+
+Get the geographical limits of grids or images and return them in a [West, East, South, North] vector.
+If grid/image is not referenced, returns an empty vector.
+"""
+function get_geoglimits(GI::GItype)::Vector{Float64}
+	prj = getproj(GI, proj4=true)
+	if (length(prj) > 12 && !contains(prj, " "))	# For when a condensed (for GMT) proj string was passed.
+		prj = replace(prj, "+" => " +")
+	end
+	(prj == "") && return Float64[]		# GI is not referenced
+	isgeog(prj) && return GI.range[1:4]	# GI is already in geographic coordinates
+
+	opts = ["-s_srs", prj, "-t_srs", prj4WGS84, "-overwrite"]
+	ds = Gdal.get_gdaldataset([GI.range[1] GI.range[3]], opts, false)[1]
+	o1 = Gdal.gdalvectortranslate(ds, opts; dest="/vsimem/tmp", gdataset=true)
+	ds = Gdal.get_gdaldataset([GI.range[2] GI.range[4]], opts, false)[1]
+	o2 = Gdal.gdalvectortranslate(ds, opts; dest="/vsimem/tmp", gdataset=true)
+	if (o1.ptr == C_NULL || o2.ptr == C_NULL)		# Diagonals failed, probably a Mollweide or alike projection
+		t = xy2lonlat([GI.range[1] min(0,GI.range[4]); GI.range[2] min(0,GI.range[4]);
+		               0 GI.range[3]; 0 GI.range[4]], s_srs=prj, t_srs=prj4WGS84)
+		return [t[1, 1], t[2, 1], t[3, 2], t[4, 2]]
+	else
+		t = xy2lonlat([GI.range[1] GI.range[3]; GI.range[2] GI.range[4]], s_srs=prj, t_srs=prj4WGS84)
+		return [t[1, 1], t[2, 1], t[1, 2], t[2, 2]]
+	end
+end

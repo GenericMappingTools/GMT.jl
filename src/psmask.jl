@@ -98,7 +98,7 @@ function mask(GI::GItype, D::GDtype; touches=false, inverse::Bool=false)
         (D = (geog1) ? xy2lonlat(D, t_srs=prj1) : lonlat2xy(D, t_srs=prj1))
 	_GI = GMT.crop(GI, region = isa(D, GMTdataset) ? D.bbox : D[1].ds_bbox)[1]
 	height, width = dims(_GI)
-	maska = maskgdal(D, width, height, touches=touches, layout=_GI.layout, inverse=!inverse)	# !inverse to mask oceans by default
+	maska = maskgdal(D, width, height, region=_GI.range, touches=touches, layout=_GI.layout, inverse=!inverse)	# !inverse to mask oceans by default
 	(isa(GI, GMTgrid)) && (_GI[maska] .= NaN)
 	if (isa(GI, GMTimage))        # Here, if image is RGB we may say insitu=true to get the alpha added to original
 		(size(_GI,3) == 1) && (_GI = ind2rgb(_GI))
