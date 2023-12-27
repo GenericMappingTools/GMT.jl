@@ -262,11 +262,17 @@ function colorzones!(shapes::GDtype, fun::Function; img::GMTimage=nothing, url::
 	shapes
 end
 
-function maskgdal(D::GDtype, nx, ny; touches=false, layout::String="", inverse=false)::Union{Nothing, Matrix{Bool}}
+"""
+maskgdal(D::GDtype, nx, ny; region=Float64[], touches=false, layout::String="", inverse=false)
+
+
+"""
+function maskgdal(D::GDtype, nx, ny; region=Float64[], touches=false, layout::String="", inverse=false)::Union{Nothing, Matrix{Bool}}
 	# Compute the mask matrix
 	local mask
 	opts = ["-of", "MEM", "-ts","$(nx)","$(ny)", "-burn", "1", "-ot", "Byte"]
 	(touches == 1) && append!(opts, ["-at"])
+	!isempty(region) && append!(opts, ["-te", sprintf("%.12g", region[1]), sprintf("%.12g", region[3]), sprintf("%.12g", region[2]), sprintf("%.12g", region[4])])
 	try
 		mk = gdalrasterize(D, opts, layout=layout)	# This may fail if the polygon is degenerated.
 		mask = reinterpret(Bool, mk.image)
