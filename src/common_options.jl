@@ -4215,6 +4215,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 		is_psscale = (startswith(cmd[k], "psscale") || startswith(cmd[k], "colorbar"))
 		is_pscoast = (startswith(cmd[k], "pscoast") || startswith(cmd[k], "coast"))
 		is_basemap = (startswith(cmd[k], "psbasemap") || startswith(cmd[k], "basemap"))
+		is_plot    = (startswith(cmd[k], "psxy"))
 		if (k >= 1+fi && is_psscale && !isa(args[1], GMTcpt))	# Ex: imshow(I, cmap=C, colorbar=true)
 			arg1  = add_opt_cpt(d, cmd[k], CPTaliases, 'C', 0, nothing, nothing, false, false, "", true)[2]
 			(arg1 === nothing && haskey(d, :this_cpt)) && (arg1 = gmt("makecpt -C" * d[:this_cpt]::String))	# May bite back.
@@ -4223,15 +4224,18 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 			(arg1.label[1] != "") && (cmd[k] = replace(cmd[k], "-Baf" => "-L0.1c"))	# If it has labels, use them. The gap should be calculated.
 			P = gmt(cmd[k], arg1)
 			continue
-		elseif (k >= 1+fi && (is_pscoast || is_basemap) && (isa(args[1], GMTimage) || isa(args[1], GMTgrid)))
+		elseif (k >= 1+fi && (is_pscoast || is_basemap || is_plot) && (isa(args[1], GMTimage) || isa(args[1], GMTgrid)))
 			proj4::String = args[1].proj4
 			(proj4 == "" && args[1].wkt != "") && (proj4 = toPROJ4(importWKT(args[1].wkt)))
-			if ((proj4 != "") && !startswith(proj4, "+proj=lat") && !startswith(proj4, "+proj=lon"))
+			if ((proj4 != "") && !isgeog(proj4))#!startswith(proj4, "+proj=lat") && !startswith(proj4, "+proj=lon"))
 				opt_J = replace(proj4, " " => "")
-				lims = args[1].range
-				D::GMTdataset = mapproject([lims[1] lims[3]; lims[2] lims[4]], J=opt_J, I=true)
-				xmi::Float64, ymi::Float64, xma::Float64, yma::Float64 = D.data[1],D.data[3],D.data[2],D.data[4]
-				opt_R::String = @sprintf(" -R%f/%f/%f/%f+r ", xmi,ymi,xma,yma)
+				#lims = args[1].range
+				#D::GMTdataset = mapproject([lims[1] lims[3]; lims[2] lims[4]], J=opt_J, I=true)
+				#xmi::Float64, ymi::Float64, xma::Float64, yma::Float64 = D.data[1],D.data[3],D.data[2],D.data[4]
+				#opt_R::String = @sprintf(" -R%f/%f/%f/%f+r ", xmi,ymi,xma,yma)
+				WESN = get_geoglimits(args[1])
+				isoblique = contains(opt_J, "=utm")		# <== ADD OTHER OBLIQUES HERE
+				opt_R::String = isoblique ? sprintf(" -R%f/%f/%f/%f+r", WESN[1],WESN[3],WESN[2],WESN[4]) : sprintf(" -R%f/%f/%f/%f", WESN...)
 				o = scan_opt(cmd[1], "-J")
 				size_::String = (o[1] == 'x') ? "+scale=" * o[2:end] : (o[1] == 'X') ? "+width=" * o[2:end] : ""
 				(size_ == "") && @warn("Could not find the right fig size used. Result will be wrong")  
@@ -4251,7 +4255,8 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 			CTRL.pocket_call[1] = nothing					# For the case it was not yet empty
 			continue
 		end
-		P = gmt(cmd[k], args...)
+		# Allow also plot data from a nested call to plot
+		P = !(k > fi && is_plot && (CTRL.pocket_call[1] !== nothing)) ? gmt(cmd[k], args...) : gmt(cmd[k], CTRL.pocket_call...)
 
 		# If we had a double frame to plot Geog on a Cartesian plot we must reset memory to original -J & -R so
 		# that appending other plots to same fig can continue to work and not fail because proj had become Geog.
