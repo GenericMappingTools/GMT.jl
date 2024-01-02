@@ -158,6 +158,7 @@ function gmtread(_fname::String; kwargs...)
 		(isempty(o)) && (@warn("\tfile \"$fname\" is empty or has no data after the header.\n"); return GMTdataset())
 
 		(isa(o, GMTimage)) && (o.range[5:6] .= extrema(o.image))	# It's ugly to see those floatmin/max in there.
+		(isa(o, GMTimage) && size(o.image, 3) < 3) && (o.layout = o.layout[1:2] * "B" * (length(o.layout) == 4 ? o.layout[4] : "a"))
 
 		# If loading a cube, see also if there are layers descriptions to fetch.
 		if ((isa(o, GMTgrid) && size(o,3) > 1)) || (isa(o, GMTimage) && !(eltype(o) <: UInt8))
