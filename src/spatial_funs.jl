@@ -348,3 +348,35 @@ function randinpolygon(Din::GDtype; density=0.1, np::Int=0)
 	set_dsBB!(D, false)
 	return length(D) == 1 ? D[1] : D
 end
+
+# ---------------------------------------------------------------------------------------------------
+function Base.:in(D1::GMTdataset, D2::GMTdataset)::Union{Bool, Int, Vector{Int}}
+	# Accepts D1 -> Point and D2 -> Polygon, or vice-versa, or both of them as Polygons
+	indPoint = (D1.geom == wkbPoint || D1.geom == wkbMultiPoint) ? 1 : 0
+	indPoint = (indPoint == 0 && (D2.geom == wkbPoint || D2.geom == wkbMultiPoint)) ? 2 : 0
+	indPol = (D1.geom == wkbPolygon) ? 1 : 0
+	indPol = (indPol == 0 && (D2.geom == wkbPolygon)) ? 2 : 0
+	is2Pol = (D2.geom == wkbPolygon && D1.geom == wkbPolygon)
+	(!is2Pol && indPoint == 0 && indPol == 0) && error("Input arguments must have a Point and Polygon geometries, or both be Polygons.")
+	if     (indPoint == 1 && indPol == 2)  inwhichpolygon([D2], D1.data)
+	elseif (indPoint == 2 && indPol == 1)  inwhichpolygon([D1], D2.data)
+	else   GMT.contains(D1, D2)		# Returns `true` if D1 contains D2.
+	end
+end
+
+function Base.:in(D1::GDtype, D2::GDtype)::Union{Bool, Vector{Bool}, Int, Vector{Int}}
+	# Vector version. Accepts D1 -> Point and D2 -> Polygon, or vice-versa, or both of them as Polygons
+	if (isa(D1, GMTdataset) && (D1.geom == wkbPoint || D1.geom == wkbMultiPoint) && isa(D2, Vector) && D2[1].geom == wkbPolygon)
+		inwhichpolygon(D2, D1.data)
+	elseif (isa(D2, GMTdataset) && (D2.geom == wkbPoint || D2.geom == wkbMultiPoint) && isa(D1, Vector) && D1[1].geom == wkbPolygon)
+		inwhichpolygon(D1, D2.data)
+	elseif (isa(D1, Vector) && isa(D2, Vector) && D1[1].geom == wkbPolygon && D2[1].geom == wkbPolygon)	# polygon(s) in polygon(s)
+		ind = Array{Bool}(undef, length(D1))
+		for k = 1:length(D1)
+			ind[k] = contains(D1, D2)
+		end
+		return length(ind) == 1 ? ind[1] : ind
+	else
+		error("One of the input arguments must have a Point and the other a Polygon geometries, or both be Polygons.")
+	end
+end

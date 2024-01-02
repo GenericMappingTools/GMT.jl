@@ -716,4 +716,13 @@ function hopalong(num, a, b, c)
 end
 =#
 
-#isdefined(Main, :VSCodeServer) && (vsd = Main.VSCodeServer.vscodedisplay)
+isdefined(Main, :VSCodeServer) && (const VSdisp = Main.VSCodeServer.vscodedisplay)
+
+function ds2df end
+function Ginnerjoin end
+function Gouterjoin end
+function Gleftjoin end
+function Grightjoin end
+function Gcrossjoin end
+function Gsemijoin end
+function Gantijoin end
