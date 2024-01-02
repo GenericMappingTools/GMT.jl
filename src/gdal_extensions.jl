@@ -373,8 +373,8 @@ within(D1, D2) = helper_geoms_run_fun(within, D1, D2, false)
 
 Returns `true` if g1 contains g2.
 """
-contains(g1::AbstractGeometry, g2::AbstractGeometry) = Bool(OGR_G_Contains(g1.ptr, g2.ptr))
-contains(D1::Union{Matrix{<:Real}, GMT.GDtype}, D2::Union{Matrix{<:Real}, GMT.GDtype}) = helper_geoms_run_fun(contains, D1, D2, false)
+Base.:contains(g1::AbstractGeometry, g2::AbstractGeometry) = Bool(OGR_G_Contains(g1.ptr, g2.ptr))
+Base.:contains(D1::Union{Matrix{<:Real}, GMT.GDtype}, D2::Union{Matrix{<:Real}, GMT.GDtype}) = helper_geoms_run_fun(contains, D1, D2, false)
 
 # ---------------------------------------------------------------------------------------------------
 """

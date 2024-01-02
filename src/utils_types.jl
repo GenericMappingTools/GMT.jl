@@ -186,6 +186,7 @@ function mat2ds(mat::Array{T,N}, txt::Union{String,Vector{String}}=String[]; hdr
 	(!isempty(txt)) && return text_record(mat, txt,  hdr)
 	((text = find_in_dict(d, [:text])[1]) !== nothing) && return text_record(mat, text, hdr)
 	is3D = (find_in_dict(d, [:is3D])[1] === nothing) ? false : true		# Should account for is3D == false?
+	isa(mat, Vector) && (mat = reshape(mat, length(mat), 1))
 
 	val = find_in_dict(d, [:multi :multicol])[1]
 	multi = (val === nothing) ? false : ((val) ? true : false)	# Like this it will error if val is not Bool
@@ -350,8 +351,11 @@ function mat2ds(mat::Array{T,N}, txt::Union{String,Vector{String}}=String[]; hdr
 				D[k] = GMTdataset(mat[:,:,k], Float64[], Float64[], att, coln, txtcol, (isempty(_hdr) ? "" : _hdr[k]), String[], prj, wkt, epsg, _geom)
 			end
 		elseif (!multi)
-			coln = fill_colnames(coln, size(mat,2)-2, is_geog)
-			(size(mat,2) == 1) && (coln = coln[1:1])		# Because it defaulted to two.
+			if (size(mat,2) == 1 && length(coln) == 2 && !isempty(txtcol))	# Do nothing to 'coln'
+			else
+				coln = fill_colnames(coln, size(mat,2)-2, is_geog)
+				(size(mat,2) == 1) && (coln = coln[1:1])		# Because it defaulted to two.
+			end
 			D[1] = GMTdataset(mat, Float64[], Float64[], att, coln, txtcol, (isempty(_hdr) ? "" : _hdr[1]), String[], prj, wkt, epsg, _geom)
 		elseif (segnan)
 			D[1] = segnan_mat(mat, coln, _hdr, is_geog, prj, _geom)

@@ -130,6 +130,8 @@ function triplot(in::Matrix; onlyedges::Bool=false, noplot::Bool=false, first::B
 	doZ = (size(in, 2) > 2)		# If 3 columns, output them too
 	D = (do_voronoi) ? triangulate(in, M=true, voronoi=opt_Q, R=opt_R[4:end], Z=doZ, Vd=Vd) :
 		(onlyedges) ? triangulate(in, M=true, Z=doZ, Vd=Vd) : triangulate(in, S=true, Z=doZ, Vd=Vd)
+	isa(D, Vector{<:GMTdataset}) && (for k = 1:numel(D)  D[k].geom = wkbPolygon  end)
+	isa(D, GMTdataset) && (D.geom = wkbPolygon)
 	(noplot || Vd > 1) && return D
 	GMT.common_plot_xyz("", D, "plot", first, false, d...)
 end
