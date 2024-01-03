@@ -364,19 +364,37 @@ function Base.:in(D1::GMTdataset, D2::GMTdataset)::Union{Bool, Int, Vector{Int}}
 	end
 end
 
-function Base.:in(D1::GDtype, D2::GDtype)::Union{Bool, Vector{Bool}, Int, Vector{Int}}
+function Base.:in(D1::GDtype, D2::GDtype)::Union{Int, Vector{Int}}
 	# Vector version. Accepts D1 -> Point and D2 -> Polygon, or vice-versa, or both of them as Polygons
 	if (isa(D1, GMTdataset) && (D1.geom == wkbPoint || D1.geom == wkbMultiPoint) && isa(D2, Vector) && D2[1].geom == wkbPolygon)
 		inwhichpolygon(D2, D1.data)
 	elseif (isa(D2, GMTdataset) && (D2.geom == wkbPoint || D2.geom == wkbMultiPoint) && isa(D1, Vector) && D1[1].geom == wkbPolygon)
 		inwhichpolygon(D1, D2.data)
 	elseif (isa(D1, Vector) && isa(D2, Vector) && D1[1].geom == wkbPolygon && D2[1].geom == wkbPolygon)	# polygon(s) in polygon(s)
-		ind = Array{Bool}(undef, length(D1))
-		for k = 1:length(D1)
-			ind[k] = contains(D1, D2)
-		end
+		ind = helper_ptvec_joins(D1, D2, contains, ispts=false)
 		return length(ind) == 1 ? ind[1] : ind
 	else
 		error("One of the input arguments must have a Point and the other a Polygon geometries, or both be Polygons.")
 	end
+end
+
+# ---------------------------------------------------------------------------------------------------
+# Still need to figure out how to create a join table from the indices that we calculate here.
+function gisjoin(D1::GMTdataset, D2::Vector{<:GMTdataset}; pred::Function=intersects, kwargs...)
+	!(D1.geom == wkbPoint || D1.geom == wkbMultiPoint) && error("First input must have a Point or Multipoint geometry.")
+	helper_ptvec_joins(D1, D2, pred, ispts=true)
+end
+
+function helper_ptvec_joins(D1, D2, pred; ispts=true)
+	ind = Vector{Int}(undef, size(D1.data,1))
+	nv = length(D2)
+	for k = 1:size(D1.data,1)
+		first_arg = ispts ? D1.data[k:k,1:2] : D1[k]	# A point or a higher order geometry
+		m = 1
+		while (m <= nv && !pred(first_arg, D2[m]))
+			m += 1
+		end
+		ind[k] = m > nv ? 0 : m
+	end
+	ind
 end
