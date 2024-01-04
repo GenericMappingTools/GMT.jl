@@ -71,7 +71,7 @@ function gmtread(_fname::String; kwargs...)
 	# Process these first so they may take precedence over defaults set below
 	opt_T = add_opt(d, "", "Tg", [:grd :grid])
 	if (opt_T != "")		# Force read via GDAL
-		if ((val = find_in_dict(d, [:gdal])[1]) !== nothing)  fname *= "=gd"  end
+		((val = find_in_dict(d, [:gdal])[1]) !== nothing) && (fname *= "=gd")
 	else
 		opt_T = add_opt(d, "", "Ti", [:img :image])
 	end
@@ -82,14 +82,22 @@ function gmtread(_fname::String; kwargs...)
 
 	ogr_layer::Int32 = Int32(0)			# Used only with ogrread. Means by default read only the first layer
 	if ((varname = find_in_dict(d, [:varname])[1]) !== nothing) # See if we have a nc varname / layer request
-		if (opt_T == "")			# Force read via GDAL
-			if ((val = find_in_dict(d, [:gdal])[1]) !== nothing)  fname = fname * "=gd"  end
-			opt_T = " -Tg"
-		end
-		fname *= "?" * arg2str(varname)
-		if ((val = find_in_dict(d, [:layer :band])[1]) !== nothing)
-			if (isa(val, Real))       fname *= @sprintf("[%d]", val-1)
-			elseif (isa(val, Array))  fname *= @sprintf("[%d,%d]", val[1]-1, val[2]-1)	# A 4D array
+		(opt_T == "") && (opt_T = " -Tg")		# Though not used in if 'gdal', it still avoids going into needless tests below
+		if ((val = find_in_dict(d, [:gdal])[1]) !== nothing)	# This branch is fragile
+			gdinfo = gdalinfo(fname)
+			((ind1 = findfirst("SUBDATASET_", gdinfo)) === nothing) && error("The $varname does not exist in $fname")
+			tmp_s  = gdinfo[ind1[end]:ind1[end]+20]		# 20 should be enough to include the format name. e.g. "HDF"
+			ind2   = findfirst("=", tmp_s)				# For example, tmp_s = "_1_NAME=NETCDF:\"woa18"
+			ind3   = findfirst(":", tmp_s)
+			fmt    = tmp_s[ind2[1]+1:ind3[1]]			# e.g. fmt = "NETCDF:"
+			fname  = fmt * fname * ":" * string(varname)::String
+			proggy = "gdalread"
+		else
+			fname *= "?" * arg2str(varname)
+			if ((val = find_in_dict(d, [:layer :layers :band :bands])[1]) !== nothing)
+				if (isa(val, Real))       fname *= @sprintf("[%d]", val-1)
+				elseif (isa(val, AbstractArray))  fname *= @sprintf("[%d,%d]", val[1]-1, val[2]-1);	# A 4D array
+				end
 			end
 		end
 	else											# See if we have a bands request
@@ -99,7 +107,7 @@ function gmtread(_fname::String; kwargs...)
 				ogr_layer = Int32(val)::Int32 - 1	# -1 because it's going to be sent to C (zero based)
 			else
 				ds = Gdal.unsafe_read(fname)
-				(Gdal.nraster(ds) < 2) &&			# Cgeck that file is indeed a cube
+				(Gdal.nraster(ds) < 2) &&			# Check that file is indeed a cube
 					(println("\tThis file ($fname) does not contain cube data (more than one layer).
 					\n\tRun 'println(gdalinfo(\"$fname\"))' for details.");
 					Gdal.GDALClose(ds.ptr); return nothing)
@@ -154,7 +162,7 @@ function gmtread(_fname::String; kwargs...)
 	if (opt_T != " -To")			# All others but OGR
 		(proggy == "read ") && (cmd *= opt_T)
 		(dbg_print_cmd(d, cmd) !== nothing) && return proggy * fname * cmd
-		o = gmt(proggy * fname * cmd)
+		o = (proggy == "gdalread") ? gdalread(fname) : gmt(proggy * fname * cmd)
 		(isempty(o)) && (@warn("\tfile \"$fname\" is empty or has no data after the header.\n"); return GMTdataset())
 
 		(isa(o, GMTimage)) && (o.range[5:6] .= extrema(o.image))	# It's ugly to see those floatmin/max in there.
