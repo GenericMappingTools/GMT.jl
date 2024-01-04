@@ -8,20 +8,20 @@ function text_record(data, text::Union{String, Vector{String}, Vector{Vector{Str
 
 	if (isa(text, String))
 		_hdr = isempty(hdr) ? "" : hdr[1]
-		T = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], [text], _hdr, String[], "", "", 0, 0)
+		T = GMTdataset(data, Float64[], Float64[], DictSvS(), String[], [text], _hdr, String[], "", "", 0, 0)
 	elseif (isa(text, Vector{String}))
 		if (text[1][1] == '>')			# Alternative (but risky) way of setting the header content
-			T = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], text[2:end], text[1], String[], "", "", 0, 0)
+			T = GMTdataset(data, Float64[], Float64[], DictSvS(), String[], text[2:end], text[1], String[], "", "", 0, 0)
 		else
 			_hdr = isempty(hdr) ? "" : (isa(hdr, Vector{String}) ? hdr[1] : hdr)
-			T = GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], text, _hdr, String[], "", "", 0, 0)
+			T = GMTdataset(data, Float64[], Float64[], DictSvS(), String[], text, _hdr, String[], "", "", 0, 0)
 		end
 	elseif (isa(text, Array{Array}) || isa(text, Array{Vector{String}}))
 		nl_t = length(text);	nl_d = size(data,1)
 		(nl_d > 0 && nl_d != nl_t) && error("Number of data points ($nl_d) is not equal to number of text strings ($nl_t).")
 		T = Vector{GMTdataset}(undef,nl_t)
 		for k = 1:nl_t
-			T[k] = GMTdataset((nl_d == 0 ? fill(NaN, length(text[k]) ,2) : data[k]), Float64[], Float64[], Dict{String, String}(), String[], text[k], (isempty(hdr) ? "" : hdr[k]), Vector{String}(), "", "", 0, 0)
+			T[k] = GMTdataset((nl_d == 0 ? fill(NaN, length(text[k]) ,2) : data[k]), Float64[], Float64[], DictSvS(), String[], text[k], (isempty(hdr) ? "" : hdr[k]), Vector{String}(), "", "", 0, 0)
 		end
 	else
 		error("Wrong type ($(typeof(text))) for the 'text' argin")
@@ -316,7 +316,8 @@ function mat2ds(mat::Array{T,N}, txt::Union{String,Vector{String}}=String[]; hdr
 		return coln
 	end
 
-	att::Dict{String, String} = ((v = find_in_dict(d, [:attrib])[1]) !== nothing && isa(v, Dict{String, String})) ? v : Dict{String, String}()
+	att::DictSvS = ((v = find_in_dict(d, [:attrib])[1]) !== nothing && isa(v, Dict)) ? v : DictSvS()
+	!isempty(att) && !isa(att, Dict{String, Union{String, Vector{String}}}) && error("Attributs must be a Dict{String, Union{String, Vector{String}}}")
 	txtcol::Vector{String} = ((val = find_in_dict(d, [:txtcol :textcol])[1]) !== nothing) ? val : String[]
 
 	D::Vector{GMTdataset} = Vector{GMTdataset}(undef, n_ds)
@@ -575,7 +576,7 @@ function ds2ds(D::GMTdataset; is3D::Bool=false, kwargs...)::Vector{<:GMTdataset}
 	Dm = Vector{GMTdataset}(undef, n_ds)
 	if (multi == 'r')
 		for k = 1:n_ds
-			Dm[k] = GMTdataset(D.data[k:k, :], Float64[], Float64[], Dict{String, String}(), String[], String[], (isempty(_fill) ? "" : _hdr[k]), String[], "", "", 0, wkbPoint)
+			Dm[k] = GMTdataset(D.data[k:k, :], Float64[], Float64[], DictSvS(), String[], String[], (isempty(_fill) ? "" : _hdr[k]), String[], "", "", 0, wkbPoint)
 		end
 		Dm[1].colnames = D.colnames
 		(size(D.text) == n_ds) && (for k = 1:n_ds  Dm[k].text = D.text[k]  end)
@@ -886,7 +887,7 @@ function line2multiseg(M::Matrix{<:Real}; is3D::Bool=false, color::GMTcpt=GMTcpt
 	Dm = Vector{GMTdataset}(undef, n_ds)
 	geom = (is3D) ? Int(Gdal.wkbLineStringZ) : Int(Gdal.wkbLineString)
 	for k = 1:n_ds
-		Dm[k] = GMTdataset(M[k:k+1, :], Float64[], Float64[], Dict{String, String}(), String[], String[], _hdr[k], String[], "", "", 0, geom)
+		Dm[k] = GMTdataset(M[k:k+1, :], Float64[], Float64[], DictSvS(), String[], String[], _hdr[k], String[], "", "", 0, geom)
 	end
 	Dm
 end

@@ -1548,7 +1548,7 @@ function helper_hvband(mat::Matrix{<:Real}, tipo="v"; width=false, height=false,
 		t = (size(mat,2) > 3 && !isnan(mat[k,4])) ? mat[k,4] : CTRL.limits[ind_t]	# The bar top
 		hdr = string("-S", bB, w, "u+b", b, "0 -G", colors[i], transp[j])
 		c = (thick || percent != 0) ? mat[k,1] : (mat[k,1] + (mat[k,2] - mat[k,1]) / 2)	# Bar center position
-		D[k] = GMTdataset((tipo == "v") ? [c t 0] : [t c 0], Float64[], Float64[], Dict{String, String}(), String[], String[], hdr, String[], "", "", 0, 0)
+		D[k] = GMTdataset((tipo == "v") ? [c t 0] : [t c 0], Float64[], Float64[], DictSvS(), String[], String[], hdr, String[], "", "", 0, 0)
 	end
 
 	haskey(d, :nested) && (CTRL.pocket_call[1] = D; delete!(d, :nested)) # Happens only when called nested from plot

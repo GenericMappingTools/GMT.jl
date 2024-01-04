@@ -78,7 +78,7 @@
 	rasterzones!(I, D, mean)
 
 	D = [mat2ds([-1 -1; 1 1; 1 -1; -1 -1], attrib=Dict("Feature_ID" => "1", "NAME" => "a")),
-	     mat2ds([1.5 1.0; 1.5 1.5; 2.0 1.0; 1.5 1.0], attrib=Dict("Feature_ID" => "2", "NAME" => "b"))]
+	     mat2ds([1.5 1.0; 1.5 1.5; 2.0 1.0; 1.5 1.0], attrib=Dict("Feature_ID" => "2", "NAME" => "b"))];
 	zonal_statistics(G, D, mean, byfeatures=true);
 	zonal_statistics(mean, G, D, groupby="NAME");
 

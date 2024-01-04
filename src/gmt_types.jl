@@ -206,7 +206,7 @@ The fields of this struct are:
 - `data::Array{T,N}`:             Mx2 Matrix with segment data
 - `ds_bbox::Vector{Float64}`:     Global BoundingBox (for when there are many segments)
 - `bbox::Vector{Float64}`:        Segment BoundingBox
-- `attrib::Dict{String, String}`: Dictionary with attributes/values (optional)
+- `attrib::Dict{String, Union{String, Vector{String}}}`: Dictionary with attributes/values (optional)
 - `colnames::Vector{String}`:     Column names. Antecipate using this with a future Tables inerface
 - `text::Vector{String}`:         Array with text after data coordinates (mandatory only when plotting Text)
 - `header::String`:               String with segment header (Optional but sometimes very useful)
@@ -220,7 +220,7 @@ mutable struct GMTdataset{T<:Real, N} <: AbstractArray{T,N}
 	data::Array{T,N}
 	ds_bbox::Vector{Float64}
 	bbox::Vector{Float64}
-	attrib::Dict{String, String}
+	attrib::DictSvS
 	colnames::Vector{String}
 	text::Vector{String}
 	header::String
@@ -275,19 +275,19 @@ end
 find4similar(D::GMTdataset, rest) = D
 
 GMTdataset(data::Array{Float64,2}, text::Vector{String}) =
-	GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], text, "", String[], "", "", 0, 0)
+	GMTdataset(data, Float64[], Float64[], DictSvS(), String[], text, "", String[], "", "", 0, 0)
 GMTdataset(data::Array{Float64,2}, text::String) =
-	GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], [text], "", String[], "", "", 0, 0)
+	GMTdataset(data, Float64[], Float64[], DictSvS(), String[], [text], "", String[], "", "", 0, 0)
 GMTdataset(data::Array{Float64,2}) =
-	GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], String[], "", String[], "", "", 0, 0)
+	GMTdataset(data, Float64[], Float64[], DictSvS(), String[], String[], "", String[], "", "", 0, 0)
 GMTdataset(data::Array{Float32,2}, text::Vector{String}) =
-	GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], text, "", String[], "", "", 0, 0)
+	GMTdataset(data, Float64[], Float64[], DictSvS(), String[], text, "", String[], "", "", 0, 0)
 GMTdataset(data::Array{Float32,2}, text::String) =
-	GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], [text], "", String[], "", "", 0, 0)
+	GMTdataset(data, Float64[], Float64[], DictSvS(), String[], [text], "", String[], "", "", 0, 0)
 GMTdataset(data::Array{Float32,2}) =
-	GMTdataset(data, Float64[], Float64[], Dict{String, String}(), String[], String[], "", String[], "", "", 0, 0)
+	GMTdataset(data, Float64[], Float64[], DictSvS(), String[], String[], "", String[], "", "", 0, 0)
 GMTdataset() =
-	GMTdataset(Array{Float64,2}(undef,0,0), Float64[], Float64[], Dict{String, String}(), String[], String[], "", String[], "", "", 0, 0)
+	GMTdataset(Array{Float64,2}(undef,0,0), Float64[], Float64[], DictSvS(), String[], String[], "", String[], "", "", 0, 0)
 
 struct WrapperPluto fname::String end
 

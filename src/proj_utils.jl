@@ -590,7 +590,7 @@ function helper_gdirect(projPJ_ptr, lonlat, azim, dist, proj_string, isgeog, dat
 			dest[k, 1:2] = (isgeog) ? d : lonlat2xy(d, proj_string)
 		end
 		(dataset) &&		# Return a GMTdataset
-			(dest = GMTdataset(hcat(dest, azi), Float64[], Float64[], Dict{String, String}(), String[], String[],
+			(dest = GMTdataset(hcat(dest, azi), Float64[], Float64[], DictSvS(), String[], String[],
 			                   "",String[], startswith(proj_string, "+proj") ? proj_string : "", "", 0, Int(wkbLineString)))
 	elseif (isvector(azim) && isvector(dist))					# Multi-lines with variable length and/or number of points
 		n_lines = length(azim)							# Number of lines
@@ -613,7 +613,7 @@ function helper_gdirect(projPJ_ptr, lonlat, azim, dist, proj_string, isgeog, dat
 				dest[np, 1:2] = (isgeog) ? d : lonlat2xy(d, proj_string)
 				dest[np, 3] = azi		# Fck language that makes it a pain to try anything vectorized 
 			end
-			D[nl] = GMTdataset(dest, Float64[], Float64[], Dict{String, String}(), String[], String[], "", String[], "", "", 0, Int(wkbLineString))
+			D[nl] = GMTdataset(dest, Float64[], Float64[], DictSvS(), String[], String[], "", String[], "", "", 0, Int(wkbLineString))
 			helper_gdirect_SRS(dest, proj_string, wkbLineString, D[nl])	# Just assign the SRS
 		end
 		r = (n_lines == 1) ? D[1] : D
@@ -628,7 +628,7 @@ end
 function helper_gdirect_SRS(mat, proj_string::String, geom, D=GMTdataset())
 	# Convert the output of geod_direct into a GMTdataset and, if possible, assign it a SRS
 	# If a 'D' is sent in, we only (eventually) assign it an SRS
-	isempty(D) && (D = GMTdataset(mat, Float64[], Float64[], Dict{String, String}(), String[], String[], "", String[], "", "", 0, Int(geom)))
+	isempty(D) && (D = GMTdataset(mat, Float64[], Float64[], DictSvS(), String[], String[], "", String[], "", "", 0, Int(geom)))
 	(startswith(proj_string, "+proj")) && (D.proj4 = proj_string)
 	D
 end

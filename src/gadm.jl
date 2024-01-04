@@ -86,7 +86,7 @@ function gadm(country, subregions...; children::Bool=false, names::Bool=false, c
 
 	function _get_attrib(feature)
 		n = Gdal.nfield(feature)
-		attrib = Dict{String, String}()
+		attrib = DictSvS()
 		[attrib[Gdal.getname(Gdal.getfielddefn(feature, i))] = string(Gdal.getfield(feature, i)) for i = 0:n-1]
 		attrib
 	end
