@@ -100,6 +100,7 @@ const prj4WGS84 = "+proj=longlat +datum=WGS84 +units=m +no_defs"	# This is used 
 const CPTaliases = [:C :color :cmap :colormap :colorscale]
 const global VMs = Union{Vector{Symbol}, Matrix{Symbol}}
 const global VMr = Union{AbstractVector{<:Real}, Matrix{<:Real}}
+const global DictSvS = Dict{String, Union{String, Vector{String}}}
 const global StrSymb = Union{AbstractString, Symbol}
 const global filesep = Sys.iswindows() ? "\\" : "/"
 # GItype = Union{GMTgrid, GMTimage} and GDtype = Union{GMTdataset, Vector{GMTdataset}} are declared in gmt_types
@@ -169,7 +170,7 @@ export
 
 	VSdisp, info, kmeans, pca, mosaic, quadbounds, quadkey, geocoder,
 	
-	Ginnerjoin, Gouterjoin, Gleftjoin, Grightjoin, Gcrossjoin, Gsemijoin, Gantijoin,
+	Ginnerjoin, Gouterjoin, Gleftjoin, Grightjoin, Gcrossjoin, Gsemijoin, Gantijoin, spatialjoin,
 
 	df2ds, ODE2ds,
 	sprintf,

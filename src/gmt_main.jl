@@ -1217,7 +1217,7 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)::Union{GMTdat
 	D::Vector{GMTdataset} = Vector{GMTdataset}(undef, n_total_segments)
 
 	n = 1
-	attrib = Dict{String, String}();	# For the case there are no attribs at all.
+	attrib = DictSvS();	# For the case there are no attribs at all.
 	have_Feature_ID = (GMTdevdate > Date("2023-12-10"))		# Feature_ID is available only in >= GMT6.5.0
 	for k = 1:n_max
 		OGR_F = unsafe_load(in, k)
@@ -1234,7 +1234,7 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)::Union{GMTdat
 		if (OGR_F.np > 0)
 			hdr = ""
 			if (OGR_F.att_number > 0)
-				attrib = Dict{String, String}()
+				attrib = DictSvS()
 				for i = 1:OGR_F.att_number
 					attrib[unsafe_string(unsafe_load(OGR_F.att_names,i))] = unsafe_string(unsafe_load(OGR_F.att_values,i))
 				end

@@ -380,9 +380,40 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 # Still need to figure out how to create a join table from the indices that we calculate here.
-function gisjoin(D1::GMTdataset, D2::Vector{<:GMTdataset}; pred::Function=intersects, kwargs...)
+function spatialjoin(D1::GMTdataset, D2::Vector{<:GMTdataset}; pred::Function=intersects, kind=:left, kwargs...)
 	!(D1.geom == wkbPoint || D1.geom == wkbMultiPoint) && error("First input must have a Point or Multipoint geometry.")
-	helper_ptvec_joins(D1, D2, pred, ispts=true)
+	ind = helper_ptvec_joins(D1, D2, pred, ispts=true)
+	all(ind .== 0) && return D1						# Nothing joined. Warn?
+	att_names = collect(keys(D2[1].attrib))			# Get all attributes names of D2
+	idx = findfirst("Feature_ID" .== att_names)		# Find the "Feature_ID" attribute
+	idx !== nothing && deleteat!(att_names, idx)	# And remove it if exists
+	atts_vec = Vector{Vector{String}}(undef, length(att_names))
+
+	function fill_atts_vec(D2, ind, atts_vec, att_names, isleft=true)
+		[atts_vec[l] = Vector{String}(undef, length(ind)) for l = 1:length(att_names)]
+		for k = 1:numel(ind)						# Loop over number of points in D1
+			(isleft && ind[k] == 0) && ([atts_vec[l][k] = "" for l = 1:length(att_names)];	continue)	# Skip if not joined
+			dic = D2[ind[k]].attrib					# Get the attributes Dict from this D2 polygon
+			for l = 1:numel(att_names)				# Loop over the attributes
+				atts_vec[l][k] = dic[att_names[l]]
+			end
+		end
+		return atts_vec
+	end
+
+	if (kind == :left)
+		atts_vec = fill_atts_vec(D2, ind, atts_vec, att_names)
+		[D1.attrib[att_names[l]] = atts_vec[l] for l = 1:numel(att_names)]	# Add the new attributes to D1.attrib
+		return D1
+	else
+		(kind != :inner) && error("Only :left or :inner joins are supported")
+		ind_retain = findall(ind .!= 0)				# Indices of points to retain
+		deleteat!(ind, findall(ind .== 0))			# Remove points that are not joined
+		atts_vec = fill_atts_vec(D2, ind, atts_vec, att_names, false)
+		D = mat2ds(D1, (ind_retain,:))				# TODO: Make this case a view
+		[D.attrib[att_names[l]] = atts_vec[l] for l = 1:numel(att_names)]	# Add the new attributes to D.attrib
+		return D
+	end
 end
 
 function helper_ptvec_joins(D1, D2, pred; ispts=true)

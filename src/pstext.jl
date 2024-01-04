@@ -120,7 +120,7 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	contains(opt_R, "NaN") && error("Text element has no coordinates. So you cannot show it in the first command.")
 	(isa(arg1, AbstractString) || isa(arg1, Vector{<:AbstractString})) && (arg1 = parse_xy(d, arg1))	# See if x=.., y=..
 	if (isa(arg1, Array{<:Real}))
-		arg1 = [GMTdataset(arg1, Float64[], Float64[], Dict{String, String}(), String[], String[], "", String[], "", "", 0, 0)]
+		arg1 = [GMTdataset(arg1, Float64[], Float64[], DictSvS(), String[], String[], "", String[], "", "", 0, 0)]
 	end
 
 	cmd, arg1, arg2, N_args = add_opt_cpt(d, cmd, [:C :color], 'C', N_args, arg1)

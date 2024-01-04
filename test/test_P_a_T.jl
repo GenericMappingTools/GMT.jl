@@ -63,7 +63,7 @@ D = triplot(pts, noplot=true);
 @test in(mat2ds([2.4 1.2; 1.4 1.4], geom=wkbPoint), D) == [5,1]
 in(mat2ds([0. 0; 1 1; 2 0; 0 0], geom=wkbPolygon), mat2ds([0.5 0; 1.5 1; 2.5 0; 0.5 0], geom=wkbPolygon));
 #@test_throws ErrorException("One of the input arguments must have a Point and the other a Polygon geometries, or both be Polygons.") in(mat2ds([2.4 1.2; 1.4 1.4]), D)
-GMT.gisjoin(mat2ds([2.4 1.2; 1.4 1.4; 50 50], geom=wkbPoint), D, predicate=GMT.overlaps);
+GMT.spatialjoin(mat2ds([2.4 1.2; 1.4 1.4; 50 50], geom=wkbPoint), D, predicate=GMT.overlaps);
 
 println("	NEARNEIGHBOR")
 G = nearneighbor(rand(100,3) * 150, R="0/150/0/150", I=1, N=4, S=10, r=true);

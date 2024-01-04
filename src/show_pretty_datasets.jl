@@ -104,11 +104,18 @@ function _show(io::IO,
 	if (!is_named_region)
 		(~all(isempty.(D.comment))) && println("Comment:\t", D.comment)
 		if (~isempty(D.attrib))
-			hdr, tit = vec(string.(keys(D.attrib))), "Attribute table (Dict{String, String})"
+			hdr, tit = vec(string.(keys(D.attrib))), "Attribute table"
 			if (!isempty(attrib_table))
 				pretty_table(attrib_table; header=hdr, alignment=:l, show_row_number=true, title=tit, vcrop_mode=:middle)
 			else
-				pretty_table(reshape(vec(string.(values(D.attrib))),1,length(D.attrib)), header=hdr, title=tit)
+				# If we have string vector attributes don't print its contents, just reference them by column number
+				vals = values(D.attrib)
+				ind = findall(isa.(vals, Vector))
+				t_vec = vec(string.(vals))
+				for k = 1:numel(ind)
+					t_vec[ind[k]] = "In col" * string(size(D, 2) + !isempty(D.text) + ind[k])
+				end
+				pretty_table(reshape(t_vec, 1, length(D.attrib)), header=hdr, title=tit)
 			end
 		end
 		(~isempty(D.bbox))    && println("BoundingBox: ", D.bbox)
@@ -117,6 +124,22 @@ function _show(io::IO,
 		(D.wkt    != "")      && println("WKT: ", D.wkt)
 		(D.header != "")      && println("Header:\t", D.header)
 		println("")
+	end
+
+	# See if we have attribs as vector of strings to be displayed as columns in the table.
+	function add_att_cols(D, names_str, types_str)
+		isempty(D.attrib) && return Dt, names_str, types_str
+		ky = collect(keys(D.attrib))
+		for k = 1:numel(ky)
+			!isa(D.attrib[ky[k]], Vector{String}) && continue
+			push!(names_str, ky[k]*" (att)")
+			push!(alignment, :r)
+			push!(types_str, "String")
+			t = D.attrib[ky[k]]
+			(length(t) < size(D.data, 1)) && (t = vcat(t, fill("", size(D, 1) - length(t))))	# Accept shorter vectors
+			Dt = [Dt t]
+		end
+		return Dt, names_str, types_str
 	end
 
 	skipd_rows = 0
@@ -139,7 +162,7 @@ function _show(io::IO,
 			else
 				nr = Matrix{String}(undef, numel(D.text), 3)
 				for k = 1:numel(D.text)
-					nr[k,:] = string.(split(D.text[k],','))		# Can't find a clever way of doing this
+					nr[k,:] = string.(split(D.text[k],','))				# Can't find a clever way of doing this
 				end
 				Dt = [D.data nr]
 			end
@@ -147,6 +170,8 @@ function _show(io::IO,
 	else
 		Dt = D.data
 	end
+
+	Dt, names_str, types_str = add_att_cols(D, names_str, types_str)	# Check for string vector attributes
 
 	if ((Tc = get(D.attrib, "Timecol", "")) != "")
 		Tcn = parse.(Int, split(Tc, ","))

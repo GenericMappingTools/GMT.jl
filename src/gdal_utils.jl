@@ -207,7 +207,7 @@ function gd2gmt(geom::Gdal.AbstractGeometry, proj::String="")::Union{GMTdataset,
 		if (n_dim == 3)
 			for k = 1:n_pts  mat[k,3] = Gdal.getz(Gdal.getgeom(geom,k-1), 0)  end
 		end
-		D = [GMTdataset(mat, Float64[], Float64[], Dict{String, String}(), String[], String[], "", String[], proj, "", 0, Int(gmtype))]
+		D = [GMTdataset(mat, Float64[], Float64[], DictSvS(), String[], String[], "", String[], proj, "", 0, Int(gmtype))]
 		set_dsBB!(D)				# Compute and set the BoundingBox's for this dataset
 		return (length(D) == 1) ? D[1] : D
 	end
@@ -220,7 +220,7 @@ function gd2gmt(geom::Gdal.AbstractGeometry, proj::String="")::Union{GMTdataset,
 	if (n_dim == 3)
 		for k = 1:n_pts  mat[k,3] = Gdal.getz(geom, k-1) end
 	end
-	D = [GMTdataset(mat, Float64[], Float64[], Dict{String, String}(), String[], String[], "", String[], proj, "", 0, Int(gmtype))]
+	D = [GMTdataset(mat, Float64[], Float64[], DictSvS(), String[], String[], "", String[], proj, "", 0, Int(gmtype))]
 	set_dsBB!(D)				# Compute and set the BoundingBox's for this dataset
 	return (length(D) == 1) ? D[1] : D
 end
@@ -238,7 +238,7 @@ function gd2gmt(dataset::Gdal.AbstractDataset)
 		proj = ((p = getproj(layer)) != C_NULL) ? toPROJ4(p) : ""
 		while ((feature = Gdal.nextfeature(layer)) !== nothing)
 			n = Gdal.nfield(feature)
-			attrib = Dict{String, String}()
+			attrib = DictSvS()
 			[attrib[Gdal.getname(Gdal.getfielddefn(feature, i))] = string(Gdal.getfield(feature, i)) for i = 0:n-1]
 
 			for j = 0:Gdal.ngeom(feature)-1
@@ -593,7 +593,9 @@ A GMT grid/image or a GDAL dataset
 """
 function gdalread(fname::AbstractString, optsP=String[]; opts=String[], gdataset=false, kw...)
 	(fname == "") && error("Input file name is missing.")
-	!isfile(fname) && error("Input file '$fname' does not exist.")
+	ind = findfirst(":", fname)
+	check = (ind === nothing || ind[1] < 3) ? true : false
+	(check && !isfile(fname)) && error("Input file '$fname' does not exist.")	# Breaks when passing a SUBDATASET
 	(isempty(optsP) && !isempty(opts)) && (optsP = opts)		# Accept either Positional or KW argument
 	ressurectGDAL();
 	ds_t = Gdal.read(fname, flags=Gdal.GDAL_OF_RASTER, I=false)
