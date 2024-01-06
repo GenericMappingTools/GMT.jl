@@ -1,7 +1,7 @@
 """
     mutable struct GMTgrid{T<:Real,N} <: AbstractArray{T,N}
 
-The GMTgrid type is how grids, 2D or multi-layered, (geo)referenced or not, comunicate in/out
+The GMTgrid type is how grids, 2D or multi-layered, (geo)referenced or not, communicate in/out
 with the GMT and GDAL libraries. They implement the AbstractArray interface.
 
 The fields of this struct are:
@@ -80,7 +80,7 @@ find4similar(::Any, rest) = find4similar(rest)
 """
     mutable struct GMTimage{T<:Unsigned, N} <: AbstractArray{T,N}
 
-The GMTimage type is how images (UInt8, UInt16), 2D or multi-layered, (geo)referenced or not, comunicate in/out
+The GMTimage type is how images (UInt8, UInt16), 2D or multi-layered, (geo)referenced or not, communicate in/out
 with the GMT and GDAL libraries. They implement the AbstractArray interface.
 
 The fields of this struct are:
@@ -199,7 +199,7 @@ Base.isempty(P::GMTps) = (P.length == 0)
 """
     mutable struct GMTdataset{T<:Real, N} <: AbstractArray{T,N}
 
-The GMTdataset type is how tables, (geo)referenced or not, comunicate in/out with the GMT and GDAL libraries.
+The GMTdataset type is how tables, (geo)referenced or not, communicate in/out with the GMT and GDAL libraries.
 They implement the AbstractArray and Tables interface.
 
 The fields of this struct are:

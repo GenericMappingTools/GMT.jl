@@ -32,12 +32,16 @@ Specify data type (with *type*=true, e.g. `img=true`).  Choose among:
 - `gdal`: Force reading the file via GDAL. Should only be used to read grids.
 
 - `varname`: When netCDF files have more than one 2D (or higher) variables use *varname* to pick the wished
-  variable. e.g. ``varname=:slp`` to read the variable named ``slp``. This option defaults data type to `grid`
+  variable. e.g. ``varname=:slp`` to read the variable named ``slp``. This option defaults data type to `grid`.
+  This option can be used both with and without the `gdal` option. Former case uses GMT lib to read the cube and
+  outputs and 3D array in column major order, later case (the one with `gdal`) uses GDAL to read the cube and
+  outputs and 3D array in row major order. Remember that the ``layout`` member of the GMTgrid type informs
+  about memory layout.
 
 - `layer`| `layers` | `band` | `bands`: A string, or a number or an Array. When files are multiband or
   nc files with 3D or 4D arrays, we access them via these keywords. `layer=4` reads the fourth layer (or band)
   of the file. The file can be a grid or an image. If it is a grid, layer can be a scalar (to read 3D arrays)
-  or an array of two elements (to read a 4D array).
+  or an array of two elements (to read a 4D array). This option should not be used with the `gdal` option.
 
   If file is an image `layer` can be a 1 or a 1x3 array (to read a RGB image). Note that in this later case
   bands do not need to be contiguous. A `band=[1,5,2]` composes an RGB out of those bands. See more at
@@ -82,21 +86,17 @@ function gmtread(_fname::String; kwargs...)
 
 	ogr_layer::Int32 = Int32(0)			# Used only with ogrread. Means by default read only the first layer
 	if ((varname = find_in_dict(d, [:varname])[1]) !== nothing) # See if we have a nc varname / layer request
+		varname = string(varname)::String
 		(opt_T == "") && (opt_T = " -Tg")		# Though not used in if 'gdal', it still avoids going into needless tests below
 		if ((val = find_in_dict(d, [:gdal])[1]) !== nothing)	# This branch is fragile
-			gdinfo = gdalinfo(fname)
-			((ind1 = findfirst("SUBDATASET_", gdinfo)) === nothing) && error("The $varname does not exist in $fname")
-			tmp_s  = gdinfo[ind1[end]:ind1[end]+20]		# 20 should be enough to include the format name. e.g. "HDF"
-			ind2   = findfirst("=", tmp_s)				# For example, tmp_s = "_1_NAME=NETCDF:\"woa18"
-			ind3   = findfirst(":", tmp_s)
-			fmt    = tmp_s[ind2[1]+1:ind3[1]]			# e.g. fmt = "NETCDF:"
-			fname  = fmt * fname * ":" * string(varname)::String
+			fname = sneak_in_SUBDASETS(fname, varname)	# Get the composed name (fname + subdaset and driver)
 			proggy = "gdalread"
 		else
-			fname *= "?" * arg2str(varname)
+			fname *= "?" * varname
 			if ((val = find_in_dict(d, [:layer :layers :band :bands])[1]) !== nothing)
 				if (isa(val, Real))       fname *= @sprintf("[%d]", val-1)
 				elseif (isa(val, AbstractArray))  fname *= @sprintf("[%d,%d]", val[1]-1, val[2]-1);	# A 4D array
+				elseif ((isa(val, String) || isa(val, Symbol)) && (string(val) == "all")) proggy = "grdinterpolate "
 				end
 			end
 		end
@@ -113,8 +113,10 @@ function gmtread(_fname::String; kwargs...)
 					Gdal.GDALClose(ds.ptr); return nothing)
 				if (isa(val, String) || isa(val, Symbol) || isa(val, Real))
 					bd_str::String = string(val)::String
-					if (bd_str == "all") proggy = "grdinterpolate "		# So far, that's the only module that reads entire cubes.
-					else                 fname = string(fname, "+b", parse(Int, bd_str)-1)
+					if (bd_str == "all")
+						proggy = ((val = find_in_dict(d, [:gdal])[1]) !== nothing) ? "gdalread" : "grdinterpolate "
+					else
+						fname = string(fname, "+b", parse(Int, bd_str)-1)	# Should be possible to have a GDAL alternative here.
 					end
 				elseif (isa(val, Array) || isa(val, Tuple))
 					#(opt_T == " -Tg") && (println("\tSorry, we do not yet support loading multiple layers from grids."); return nothing)
@@ -219,6 +221,19 @@ function gmtread(_fname::String; kwargs...)
 	return O
 end
 
+function sneak_in_SUBDASETS(fname, varname)
+	# Create a new filename with the SUBDATASET_ name. Need this when GDAL is reading per SUBDASET and not whole file
+	# 'fname' is the file name and 'varname' the name of the subdataset.
+	gdinfo = gdalinfo(fname)
+	((ind1 = findfirst("SUBDATASET_", gdinfo)) === nothing) && error("The $varname SUBDATASET does not exist in $fname")
+	tmp_s  = gdinfo[ind1[end]:ind1[end]+20]		# 20 should be enough to include the format name. e.g. "HDF"
+	ind2   = findfirst("=", tmp_s)				# For example, tmp_s = "_1_NAME=NETCDF:\"woa18"
+	ind3   = findfirst(":", tmp_s)
+	fmt    = tmp_s[ind2[1]+1:ind3[1]]			# e.g. fmt = "NETCDF:"
+	fname  = fmt * fname * ":" * string(varname)::String
+	return fname
+end
+
 # ---------------------------------------------------------------------------------
 """
     desc = get_cube_layers_desc(fname::String, layers::Vector{Int}=Int[]) -> Vector{String}
@@ -228,6 +243,9 @@ end
 - `layers`: Only used when called from ``find_layers()`` in ``RemoteS``
 """
 function get_cube_layers_desc(fname::String, layers::Vector{Int}=Int[])#::String[]
+	if ((ind = findfirst("?", fname)) !== nothing)
+		fname = sneak_in_SUBDASETS(fname[1:ind[1]-1], fname[ind[1]+1:end])
+	end
 	ds = Gdal.unsafe_read(fname)
 	n_bands, msg = Gdal.nraster(ds), ""
 	(n_bands < 2) && (msg = "This file ($fname) does not contain cube data (more than one layer).")
@@ -311,12 +329,14 @@ function file_has_time!(fname::String, D::GDtype, corder::Vector{Int}=Int[])
 end
 	
 # ---------------------------------------------------------------------------------
-function guess_T_from_ext(fname::String)::String
+function guess_T_from_ext(fname::String, write::Bool=false)::String
 	# Guess the -T option from a couple of known extensions
 	fn, ext = splitext(fname)
 	if (ext == ".zip")			# Accept ogr zipped files, e.g., *.shp.zip
 		((out = guess_T_from_ext(fn)) == " -To") && return " -Toz"
 	end
+
+	_kml = (!write) ? "kml" : "*"	# This because on write we dont want to check for kml (let it be written as text)
 
 	(length(ext) > 8 || occursin("?", ext)) && return (occursin("?", ext)) ? " -Tg" : "" # A SUBDATASET encoded fname?
 	ext = lowercase(ext[2:end])
@@ -326,7 +346,7 @@ function guess_T_from_ext(fname::String)::String
 	if     (findfirst(isequal(ext), ["grd", "nc", "nc=gd"])  !== nothing)  out = " -Tg";
 	elseif (findfirst(isequal(ext), ["dat", "txt", "csv"])   !== nothing)  out = " -Td";
 	elseif (findfirst(isequal(ext), ["jpg", "jpeg", "png", "bmp", "webp"]) 	!== nothing)  out = " -Ti";
-	elseif (findfirst(isequal(ext), ["arrow", "shp", "kml", "json", "feather", "geojson", "gmt", "gpkg", "gpx", "gml", "parquet"]) !== nothing)  out = " -To";
+	elseif (findfirst(isequal(ext), ["arrow", "shp", _kml, "json", "feather", "geojson", "gmt", "gpkg", "gpx", "gml", "parquet"]) !== nothing)  out = " -To";
 	elseif (ext == "jp2") ressurectGDAL(); out = (findfirst("Type=UInt", gdalinfo(fname)) !== nothing) ? " -Ti" : " -Tg"
 	elseif (ext == "cpt")  out = " -Tc";
 	elseif (ext == "ps" || ext == "eps")  out = " -Tp";
@@ -346,7 +366,11 @@ end
 Write a GMT object to file. The object is one of "grid" or "grd", "image" or "img",
 "dataset" or "table", "cmap" or "cpt" and "ps" (for postscript).
 
-When saving grids we have a panoply of formats at our disposal.
+When saving grids, images and datasets we have a panoply of formats at our disposal.
+For the datasets case if the file name ends in .arrow, .shp, .json, .feather, .geojson, .gmt,
+.gpkg, .gpx, .gml or .parquet then it automatically selects ``gdalwrite`` and saves the GMT
+dataset in that OGR vector format. The .kml is treated as a special case because there are GMT modules
+(e.g. `gmt2kml`) that produce KML formatted data and so we write it directly as a text file.
 
 Parameters
 ----------
@@ -465,7 +489,9 @@ function gmtwrite(fname::AbstractString, data; kwargs...)
 	(dbg_print_cmd(d, cmd) !== nothing) && return "gmtwrite " * fname * cmd
 
 	(opt_T == " -Tg" && isa(data, GMTgrid) && (data.scale != 1 || data.offset != 0)) && (fname *= "+s$(data.scale)+o$(data.offset)")
-	gmt("write " * fname * cmd, data)
+	if (guess_T_from_ext(fname, true) == " -To")  gdalwrite(fname, data)		# Write OGR data
+	else                                          gmt("write " * fname * cmd, data)
+	end
 	(opt_T == " -Ti") && transpcmap!(data, false)		# Reset original cmap (in case it was changed)
 	return nothing
 end

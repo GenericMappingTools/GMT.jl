@@ -78,7 +78,7 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 	cmd = add_opt(d, cmd, "%", [:layout :mem_layout], nothing)
 	cmd = add_opt(d, cmd, "T", [:T :no_interp :tiles], (skip="_+s", skip_nan="_+s", outlines=("+o", add_opt_pen)))
 
-	if (isa(arg1, GMTgrid) && length(opt_R) > 3 && CTRL.limits[1:4] != arg1.range[1:4])
+	if (isa(arg1, GMTgrid) && length(opt_R) > 3 && !isapprox(CTRL.limits[1:4], arg1.range[1:4]))
 		# If a -R is used and grid is in mem, better to crop it right now. Also helps with getting the auto CPT from crop
 		arg1 = grdcut(arg1, R=opt_R[4:end])
 		got_fname = 0

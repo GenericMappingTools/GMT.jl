@@ -1254,18 +1254,20 @@ function slicecube(G::GMTgrid, slice::Union{Int, AbstractVector{<:Int}}; axis="z
 	if (_axis == "z")
 		G_ = mat2grid(G[:,:,slice], G.x, G.y, isvec ? G.v[slice] : [G.v[slice]], reg=G.registration, is_transposed=(G.layout[2] == 'R'))
 		G_.names = (!isempty(G.names) && !all(G.names .== "")) ? (isvec ? G.names[slice] : [G.names[slice]]) : G.names
+		G_.proj4, G_.wkt, G_.epsg, G_.geog, G_.layout = G.proj4, G.wkt, G.epsg, G.geog, G.layout
 	elseif (_axis == "y")
-		if (G.layout[2] == 'C')  G_ = mat2grid(G[slice,:,:], G.x, G.v, reg=G.registration, names=G.names)
+		if (G.layout[2] == 'C')  G_ = mat2grid(G[slice,:,:], G.v, G.x, reg=G.registration, names=G.names)
 		else                     G_ = mat2grid(G[:,slice,:], G.x, G.v, reg=G.registration, is_transposed=true, names=G.names)
 		end
-		G_.v = G_.y;	G_.y = isvec ? G.y[slice] : [G.y[slice]]	# Shift coords vectors since mat2grid doesn't know how-to.
+		G_.proj4, G_.wkt, G_.epsg, G_.geog, G_.layout = "", "", 0, 0, G.layout
+		G_.v = G_.y;	G_.y = isvec ? G.y[slice] : [G.y[slice]];	# Shift coords vectors since mat2grid doesn't know how-to.
 	else
-		if (G.layout[2] == 'C')  G_ = mat2grid(G[:,slice,:], G.y, G.v, reg=G.registration, names=G.names)
+		if (G.layout[2] == 'C')  G_ = mat2grid(G[:,slice,:], G.v, G.y, reg=G.registration, names=G.names)
 		else                     G_ = mat2grid(G[slice,:,:], G.y, G.v, reg=G.registration, is_transposed=true, names=G.names)
 		end
-		G_.v = G_.y;	G_.y = G_.x;	G_.x = isvec ? G.x[slice] : [G.x[slice]]
+		G_.proj4, G_.wkt, G_.epsg, G_.geog, G_.layout = "", "", 0, 0, G.layout
+		G_.v = G_.y;	G_.y = G_.x;	G_.x = isvec ? G.x[slice] : [G.x[slice]];
 	end
-	G_.proj4, G_.wkt, G_.epsg, G_.geog, G_.layout = G.proj4, G.wkt, G.epsg, G.geog, G.layout
 	return G_
 end
 
