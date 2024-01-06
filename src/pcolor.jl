@@ -21,7 +21,13 @@ compute a default one.
   option. Namely, the angle and the ``font``. Example: ``font=(angle=45, font=(5,:red))``. If not specified, it
   defaults to ``font=(font=(6,:black),)``.
 
+---
+    D = pcolor(X, Y; kwargs...)
 
+This form, that is without a color matrix, accepts `X` and `Y` as before but returns the tiles in a vector of
+GMTdatasets. Use the `kwargs` option to pass for example a projection setting (as for example ``proj=:geo``).
+
+---
     pcolor(G::GMTgrid; kwargs...)
 
 This form takes a grid (or the file name of one) as input an paints it's cell with a constant color.
@@ -47,11 +53,11 @@ This form takes a grid (or the file name of one) as input an paints it's cell wi
 	pcolor(G.x, G.y, G.z, labels=2, font=(angle=45, font=(5,:red)), show=1)
 
 	# An irregular grid
-	X,Y = GMT.meshgrid(-3:6/17:3);
+	X,Y = meshgrid(-3:6/17:3);
 	XX = 2*X .* Y;	YY = X.^2 .- Y.^2;
 	pcolor(XX,YY, reshape(repeat([1:18; 18:-1:1], 9,1), size(XX)), lc=:black, show=true)
 """
-function pcolor(X_::VMr, Y_::VMr, C::AbstractMatrix{<:Real}; first::Bool=true, kwargs...)
+function pcolor(X_::VMr, Y_::VMr, C::Union{Nothing, AbstractMatrix{<:Real}}=nothing; first::Bool=true, kwargs...)
 	(isvector(X_) && !isvector(Y_)) && error("X and Y must be both vectors or matrices, not one of each color.")
 	if (isvector(X_))
 		gridreg = (length(X_) == size(C,2)) && (length(Y_) == size(C,1))
@@ -59,8 +65,10 @@ function pcolor(X_::VMr, Y_::VMr, C::AbstractMatrix{<:Real}; first::Bool=true, k
 			error("The X,Y vectors sizes are not compatible with the size(C)")
 	else
 		(size(X_) != size(Y_)) && error("When X,Y are 2D matrices they MUST have the same size.")
-		(size(C) == size(X_)) && (C = C[1:end-1, 1:end-1])
-		(size(X_) != size(C) .+ 1) && error("X,Y and C matrices must either have the same size or X,Y exceed C by 1 row and 1 column.")
+		if (C !== nothing)
+			(size(C) == size(X_)) && (C = C[1:end-1, 1:end-1])
+			(size(X_) != size(C) .+ 1) && error("X,Y and C matrices must either have the same size or X,Y exceed C by 1 row and 1 column.")
+		end
 	end
 
 	X,Y = X_,Y_
@@ -71,18 +79,22 @@ function pcolor(X_::VMr, Y_::VMr, C::AbstractMatrix{<:Real}; first::Bool=true, k
 		[Y[k] -= yinc2 for k = 1:numel(Y)];	append!(Y, Y[end]+yinc)
 	end
 
-	D::Vector{GMTdataset}, k = Vector{GMTdataset}(undef, length(C)), 0
+	n_tiles = (C !== nothing) ? length(C) : isvector(X_) ? (length(X_) - 1)*(length(Y_) - 1) : (size(X_,1) - 1)*(size(X_,2) - 1)
+	D::Vector{GMTdataset}, k = Vector{GMTdataset}(undef, n_tiles), 0
 	if (isvector(X))
 		for col = 1:length(X)-1, row = 1:length(Y)-1	# Gdal.wkbPolygon = 3
 			D[k+=1] = mat2ds([X[col] Y[row]; X[col] Y[row+1]; X[col+1] Y[row+1]; X[col+1] Y[row]; X[col] Y[row]]; geom=3, kwargs...)
 		end
 		D[1].ds_bbox = [X[1], X[end], Y[1], Y[end]]
 	else
-		for col = 1:size(C,2), row = 1:size(C,1)
+		for col = 1:size(X_,2)-1, row = 1:size(X_,1)-1
 			D[k+=1] = mat2ds([X[row,col] Y[row,col]; X[row+1,col] Y[row+1,col]; X[row+1,col+1] Y[row+1,col+1]; X[row,col+1] Y[row,col+1]; X[row,col] Y[row,col]]; geom=3, kwargs...)
 		end
 		D[1].ds_bbox = vec([extrema(X)... extrema(Y)...])
 	end
+
+	# Only the tiles mesh is requested? If yes, we are done.
+	(C === nothing) && return D
 
 	Z = istransposed(C) ? vec(copy(C)) : vec(C)
 	kwargs, do_show, got_labels, ndigit, opt_F = helper_pcolor(kwargs, Z)
