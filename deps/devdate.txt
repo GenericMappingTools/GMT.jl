@@ -1,4 +1,4 @@
-2023-12-12
+2024-01-05
 # Update the above date when a new version of the GMT installer is updated to the 
 # http://fct-gmt.ualg.pt/gmt/data/wininstallers/gmt-win64.exe server.
 # One day this should be made automatically but so far it needs to be done manually.
