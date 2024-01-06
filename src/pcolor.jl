@@ -60,9 +60,11 @@ This form takes a grid (or the file name of one) as input an paints it's cell wi
 function pcolor(X_::VMr, Y_::VMr, C::Union{Nothing, AbstractMatrix{<:Real}}=nothing; first::Bool=true, kwargs...)
 	(isvector(X_) && !isvector(Y_)) && error("X and Y must be both vectors or matrices, not one of each color.")
 	if (isvector(X_))
-		gridreg = (length(X_) == size(C,2)) && (length(Y_) == size(C,1))
-		(!gridreg && ((length(X_) != size(C,2) + 1) || (length(Y_) != size(C,1) + 1))) &&
-			error("The X,Y vectors sizes are not compatible with the size(C)")
+		if (C !== nothing)
+			gridreg = (length(X_) == size(C,2)) && (length(Y_) == size(C,1))
+			(!gridreg && ((length(X_) != size(C,2) + 1) || (length(Y_) != size(C,1) + 1))) &&
+				error("The X,Y vectors sizes are not compatible with the size(C)")
+		end
 	else
 		(size(X_) != size(Y_)) && error("When X,Y are 2D matrices they MUST have the same size.")
 		if (C !== nothing)
@@ -72,7 +74,7 @@ function pcolor(X_::VMr, Y_::VMr, C::Union{Nothing, AbstractMatrix{<:Real}}=noth
 	end
 
 	X,Y = X_,Y_
-	if (isvector(X) && gridreg)		# Expand X,Y to make them pix reg
+	if (C !== nothing && isvector(X) && gridreg)		# Expand X,Y to make them pix reg
 		X,Y = copy(X_), copy(Y_)
 		xinc, yinc = X[2]-X[1], Y[2]-Y[1];		xinc2, yinc2 = xinc/2, yinc/2
 		[X[k] -= xinc2 for k = 1:numel(X)];	append!(X, X[end]+xinc)
