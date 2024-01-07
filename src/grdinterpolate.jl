@@ -121,17 +121,29 @@ function grdinterp_helper(cmd0::String, arg1; allcols::Bool=false, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function grdinterp_local_opt_S(arg1::GItype, pts::GMTdataset, no_coords::Bool)
+function grdinterp_local_opt_S(arg1::GItype, pts::GMTdataset, no_coords::Bool; rowlayers=false)
 	# GMT grdinterpolate can't handle cubes in memory, so we have to do the interpolations here.
+	# If 'rowlayers' is true the output rows will have first 2 columns with the cordinates (or not if 'no_coords=true')
+	# followed by the interpolated values at each layer. If 'rowlayers' is false, first column holds the
+	# layer number and the rest in the output each column contains the vertical profile for each point.
+	# In this case the point coordinates are not output.
+	# This whole thing needs further documentation and testing.
 	n_pts, n_layers = size(pts,1), size(arg1,3)
-	#D = mat2ds([Matrix{Float64}(undef, n_layers, 3) for k = 1:n_pts])
 	DT = no_coords ? eltype(arg1) : eltype(pts)			# When we have coordinates, their type dominates.
-	D  = no_coords ? mat2ds(Matrix{DT}(undef, n_pts, n_layers)) : mat2ds([pts.data zeros(DT, n_pts, n_layers)])
+	if (rowlayers)
+		D = no_coords ? mat2ds(Matrix{DT}(undef, n_pts, n_layers)) : mat2ds([pts.data zeros(DT, n_pts, n_layers)])
+	else
+		D = mat2ds(Matrix{DT}(undef, n_layers, n_pts+1))
+		layer_vals = isa(arg1.v, Vector{<:Real}) ? arg1.v : collect(1:n_layers)
+	end
 	startcol = no_coords ? 0 : 2
 	for k = 1:n_layers
 		t = grdtrack(slicecube(arg1, k), pts, o=2)		# Want only the third column
-		D[:, k+startcol] .= convert.(DT, t.data)
-		#for i = 1:n_pts  D[i][k,:] .= t.data[i,:]  end
+		if (rowlayers)  D[:, k+startcol] .= convert.(DT, t.data)
+		else
+			for i = 1:n_pts  D.data[k,2:end] .= t.data[i,:]  end
+			D.data[k,1] = layer_vals[k]
+		end
 	end
 	set_dsBB!(D)	
 	!isempty(pts.attrib) && (D.attrib = pts.attrib)		# Pass on the points attributes as well.
@@ -143,6 +155,9 @@ end
 # ---------------------------------------------------------------------------------------------------
 function grdinterp_local_opt_S(arg1::GItype, pts::Vector{<:GMTdataset}, no_coords::Bool)
 	# More complicated case of a multi-segment file
+	# This method has no 'rowlayers' option because it is meant to be used for image classifications that
+	# pass in multi-segment files (groups for training).
+	# This whole thing needs further documentation and testing.
 	n_layers = size(arg1,3)
 	startcol = no_coords ? 0 : 2
 	D = Vector{GMTdataset}(undef, length(pts))
@@ -187,7 +202,7 @@ end
 # ----
 #=
 samp = gmtread("samples.shp.zip");
-pts = sample_polygon(samp, density=0.02);
+pts = randinpolygon(samp, density=0.02);
 C = gdalread("LC08_L1TP_20210525_02_cube.tiff");
 LCsamp = grdinterpolate(C, S=pts, nocoords=true);
 features = GMT.ds2ds(LCsamp);
@@ -197,17 +212,17 @@ labels = parse.(UInt8, vcat([fill(LCsamp[k].attrib["id"], size(LCsamp[k],1)) for
 using DecisionTree
 model = DecisionTreeClassifier(max_depth=3);
 fit!(model, features, labels)
-nr, nc = size(C)[1:2]
+nr, nc = size(C)[1:2];
 mat = Array{UInt8}(undef, nr*nc);
 t = permutedims(C.z, (1,3,2));
-i1 = 1;	i2 = nr
+i1 = 1;	i2 = nr;
 for k = 1:nc			# Loop over columns
 	mat[i1:i2] = predict(model, t[:,:,k])
 	i1 = i2 + 1
 	i2 = i1 + nr - 1
 end
-I = mat2img(reshape(mat, nc,nr), C)
-cpt = makecpt(cmap=:categorical, range="cropland,water,fallow,built,open")
+I = mat2img(reshape(mat, nc,nr), C);
+cpt = makecpt(cmap=:categorical, range="cropland,water,fallow,built,open");
 image_cpt!(I, cpt)
 viz(I, colorbar=true)
 =#
