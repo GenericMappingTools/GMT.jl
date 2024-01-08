@@ -268,7 +268,8 @@ of that region or download topo/bathymetric data (a grid or image) of that area.
 - `dataset`: This option is used to select data download instead of map plotting. The available datasets are
     those explained in https://www.generic-mapping-tools.org/remote-datasets/, which shortly are: ``"earth_relief",
     "earth_synbath", "earth_gebco", "earth_mask", "earth_day", "earth_night", "earth_geoid", "earth_faa",
-    "earth_vgg", "earth_wdmam", "earth_age"``.
+    "earth_mask", "eart_dist", "earth_mss", "earth_vgg", "earth_wdmam", "earth_age", "mars_relief", "moon_relief",
+    "mercury_relief", "venus_relief", "pluto_relief"``.
 
     Note that ``"earth_day", "earth_night"`` are images that are not stored as tilles in the server, so the
     entire file is downloaded (only once and stored in your local ~.gmt/server directory). So, this may take
@@ -285,7 +286,7 @@ of that region or download topo/bathymetric data (a grid or image) of that area.
     force using the strict ``GMT`` limits.
 - `round=inc`: Adjust the region boundaries by rounding to multiples of the steps indicated by inc, (xinc,yinc), or
     (winc,einc,sinc,ninc). Aditionally, `round` can be a string but in that case it must strictly follow the
-	hard core GMT syntax explained at https://docs.generic-mapping-tools.org/dev/coast.html#r
+    hard core GMT syntax explained at https://docs.generic-mapping-tools.org/dev/coast.html#r
 
 See also: `coast`
 
@@ -311,7 +312,7 @@ function earthregions(name::String=""; proj="guess", grid::Bool=false, dataset="
 	(registration != "" && res == "") && error("ERROR: Cannot specify a registration and NOT specify a resolution.")
 	(grid && dataset == "") && (dataset = "earth_relief")
 
-	datasets = ["earth_relief", "earth_synbath", "earth_gebco", "earth_mask", "earth_day", "earth_night", "earth_geoid", "earth_faa", "earth_vgg", "earth_wdmam", "earth_age"]
+	datasets = ["earth_relief", "earth_synbath", "earth_gebco", "earth_mask", "earth_day", "earth_night", "earth_geoid", "earth_faa", "earth_mask", "eart_dist", "earth_mss", "earth_vgg", "earth_wdmam", "earth_age", "mars_relief", "moon_relief", "mercury_relief", "venus_relief", "pluto_relief"]
 	(dataset != "") && (dataset::String = string(dataset))		# To let use symbols too.
 	(dataset != "" && !any(startswith.(dataset, datasets))) && error("ERROR: unknown grid/image dataset name: '$dataset'. Must be one of:\n$datasets")
 	type = (dataset != "" || grid) ? "raster" : "map"
