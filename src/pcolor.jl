@@ -58,31 +58,31 @@ This form takes a grid (or the file name of one) as input an paints it's cell wi
 	pcolor(XX,YY, reshape(repeat([1:18; 18:-1:1], 9,1), size(XX)), lc=:black, show=true)
 """
 function pcolor(X_::VMr, Y_::VMr, C::Union{Nothing, AbstractMatrix{<:Real}}=nothing; first::Bool=true, kwargs...)
-	(isvector(X_) && !isvector(Y_)) && error("X and Y must be both vectors or matrices, not one of each color.")
+	((isvector(X_) && !isvector(Y_)) || (isvector(Y_) && !isvector(X_))) &&
+		error("X and Y must be both vectors or matrices, not one of each color.")
+
+	# Only the tiles mesh is requested? If yes, we are done.
+	(C === nothing) && return boxes(X_, Y_; kwargs...)
+
 	if (isvector(X_))
-		if (C !== nothing)
-			gridreg = (length(X_) == size(C,2)) && (length(Y_) == size(C,1))
-			(!gridreg && ((length(X_) != size(C,2) + 1) || (length(Y_) != size(C,1) + 1))) &&
-				error("The X,Y vectors sizes are not compatible with the size(C)")
-		end
+		gridreg = (length(X_) == size(C,2)) && (length(Y_) == size(C,1))
+		(!gridreg && ((length(X_) != size(C,2) + 1) || (length(Y_) != size(C,1) + 1))) &&
+			error("The X,Y vectors sizes are not compatible with the size(C)")
 	else
 		(size(X_) != size(Y_)) && error("When X,Y are 2D matrices they MUST have the same size.")
-		if (C !== nothing)
-			(size(C) == size(X_)) && (C = C[1:end-1, 1:end-1])
-			(size(X_) != size(C) .+ 1) && error("X,Y and C matrices must either have the same size or X,Y exceed C by 1 row and 1 column.")
-		end
+		(size(C) == size(X_)) && (C = C[1:end-1, 1:end-1])
+		(size(X_) != size(C) .+ 1) && error("X,Y and C matrices must either have the same size or X,Y exceed C by 1 row and 1 column.")
 	end
 
 	X,Y = X_,Y_
-	if (C !== nothing && isvector(X) && gridreg)		# Expand X,Y to make them pix reg
+	if (isvector(X) && gridreg)		# Expand X,Y to make them pix reg
 		X,Y = copy(X_), copy(Y_)
 		xinc, yinc = X[2]-X[1], Y[2]-Y[1];		xinc2, yinc2 = xinc/2, yinc/2
 		[X[k] -= xinc2 for k = 1:numel(X)];	append!(X, X[end]+xinc)
 		[Y[k] -= yinc2 for k = 1:numel(Y)];	append!(Y, Y[end]+yinc)
 	end
 
-	n_tiles = (C !== nothing) ? length(C) : isvector(X_) ? (length(X_) - 1)*(length(Y_) - 1) : (size(X_,1) - 1)*(size(X_,2) - 1)
-	D::Vector{GMTdataset}, k = Vector{GMTdataset}(undef, n_tiles), 0
+	D::Vector{GMTdataset}, k = Vector{GMTdataset}(undef, length(C)), 0
 	if (isvector(X))
 		for col = 1:length(X)-1, row = 1:length(Y)-1	# Gdal.wkbPolygon = 3
 			D[k+=1] = mat2ds([X[col] Y[row]; X[col] Y[row+1]; X[col+1] Y[row+1]; X[col+1] Y[row]; X[col] Y[row]]; geom=3, kwargs...)
@@ -94,9 +94,6 @@ function pcolor(X_::VMr, Y_::VMr, C::Union{Nothing, AbstractMatrix{<:Real}}=noth
 		end
 		D[1].ds_bbox = vec([extrema(X)... extrema(Y)...])
 	end
-
-	# Only the tiles mesh is requested? If yes, we are done.
-	(C === nothing) && return D
 
 	Z = istransposed(C) ? vec(copy(C)) : vec(C)
 	kwargs, do_show, got_labels, ndigit, opt_F = helper_pcolor(kwargs, Z)
@@ -190,4 +187,43 @@ function helper_pcolor(kwargs, Z)
 		end
 	end
 	return kwargs, do_show, got_labels, ndigit, opt_F
+end
+
+# ---------------------------------------------------------------------------------------------------
+function boxes(X::VMr, Y::VMr; kwargs...)
+	# ...
+	((isvector(X) && !isvector(Y)) || (isvector(Y) && !isvector(X))) &&
+		error("X and Y must be both vectors or matrices, not one of each color.")
+	(!isvector(X) && ((size(X) != size(Y)))) && error("When X,Y are 2D matrices they MUST have the same size.")
+
+	d = KW(kwargs)
+	isautomask = false
+	if ((val = find_in_dict(d, [:grdlandmask])[1]) !== nothing)
+		y_inc = Y[2] - Y[1]		# Always good as long as when Y is a matrix it is a meshgrid one
+		x_inc = isvector(X) ? X[2] - X[1] : X[1,2] - X[1]
+		x_min, y_min, x_max, y_max = X[1], Y[1], X[end], Y[end]		# Should be good even for meshgrids
+		cmd = @sprintf("grdlandmask -R%.12g/%.12g/%.12g/%.12g -I%.12g/%.12g -Da -A0/0/1 -r", x_min, x_max, y_min, y_max, x_inc, y_inc)
+		Gmask = gmt(cmd)
+		mask_true = (string(val)::String == "water") ? 0 : 1
+		isautomask = true
+	end
+
+	n_tiles = isvector(X) ? (length(X) - 1)*(length(Y) - 1) : (size(X,1) - 1)*(size(X,2) - 1)
+	D::Vector{GMTdataset}, k = Vector{GMTdataset}(undef, n_tiles), 0
+	if (isvector(X))
+		for col = 1:length(X)-1, row = 1:length(Y)-1
+			(isautomask && Gmask.z[row, col] != mask_true) && continue
+			D[k+=1] = mat2ds([X[col] Y[row]; X[col] Y[row+1]; X[col+1] Y[row+1]; X[col+1] Y[row]; X[col] Y[row]]; geom=3, kwargs...)
+		end
+		k == 0 && return GMTdataset[]
+		(isautomask && k != (length(X)-1)*(length(Y)-1)) && deleteat!(D, k+1:n_tiles)	# Remove the unused D's
+		D[1].ds_bbox = [X[1], X[end], Y[1], Y[end]]
+		isautomask && set_dsBB!(D, false) 
+	else
+		for col = 1:size(X,2)-1, row = 1:size(X,1)-1
+			D[k+=1] = mat2ds([X[row,col] Y[row,col]; X[row+1,col] Y[row+1,col]; X[row+1,col+1] Y[row+1,col+1]; X[row,col+1] Y[row,col+1]; X[row,col] Y[row,col]]; geom=3, kwargs...)
+		end
+		D[1].ds_bbox = vec([extrema(X)... extrema(Y)...])
+	end
+	D
 end
