@@ -135,7 +135,7 @@ export
 	decorated, vector_attrib, wiggle, wiggle!, xyz2grd, gmtbegin, gmtend, gmthelp, subplot, gmtfig, inset, showfig,
 	earthtide, gravfft, gmtgravmag3d, grdgravmag3d, gravprisms, pscoupe, pscoupe!, coupe, coupe!, psmeca, psmeca!,
 	meca, meca!, psvelo, psvelo!, velo, velo!, getbyattrib, inwhichpolygon, pcolor, pcolor!, triplot, triplot!,
-	trisurf, trisurf!, grdrotater, imagesc, upGMT,
+	trisurf, trisurf!, grdrotater, imagesc, upGMT, boxes,
 
 	mbimport, mbgetdata, mbsvplist, mblevitus,
 

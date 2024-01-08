@@ -234,6 +234,9 @@
 	pcolor(G.x, G.y, G.z, labels=:y, show=false)
 	pcolor(G.x, G.y, G.z, labels=1)
 	pcolor(G, labels=1, font=(angle=45, font=(5,:red)))
+	x = -20:5:40; y = 30:5:50;
+	GMT.boxes(x,y, grdlandmask=:water);
+	GMT.boxes(meshgrid(x,y)...);
 
 	println("	SCATTER")
 	sizevec = [s for s = 1:10] ./ 10;
