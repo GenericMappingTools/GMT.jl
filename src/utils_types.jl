@@ -1700,7 +1700,7 @@ function mat2grid(mat; reg=nothing, x=Float64[], y=Float64[], v=Float64[], hdr=F
 
 	israsters(mat) && return rasters2grid(mat, scale=scale, offset=offset)
 	(fields(mat) == (:x, :y, :density)) && return kde2grid(mat)		# A KernelDensity type
-	!isa(mat[2], Real) && error("input matrix must be of Real numbers")
+	#!isa(mat[2], Real) && error("input matrix must be of Real numbers")
 	(isempty(proj4) && !isempty(proj)) && (proj4 = proj)	# Allow both proj4 or proj keywords
 	if (!isempty(proj4) && !startswith(proj4, "+proj=") && !startswith(proj4, "proj="))
 		proj4 = "+proj=" * proj4		# NOW I SHOULD TEST THIS IS A VALID PROJ4 STRING. BUT HOW?
