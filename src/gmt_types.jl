@@ -1,5 +1,5 @@
 """
-    mutable struct GMTgrid{T<:Real,N} <: AbstractArray{T,N}
+    mutable struct GMTgrid{T<:Number,N} <: AbstractArray{T,N}
 
 The GMTgrid type is how grids, 2D or multi-layered, (geo)referenced or not, communicate in/out
 with the GMT and GDAL libraries. They implement the AbstractArray interface.
@@ -32,7 +32,7 @@ The fields of this struct are:
 - `pad::Int=0`:                         When != 0 means that the array is placed in a padded array of PAD rows/cols
 - `hasnans::Int=0`:                     0 -> "don't know"; 1 -> confirmed, "have no NaNs"; 2 -> confirmed, "have NaNs"
 """
-Base.@kwdef mutable struct GMTgrid{T<:Real,N} <: AbstractArray{T,N}
+Base.@kwdef mutable struct GMTgrid{T<:Number,N} <: AbstractArray{T,N}
 	proj4::String
 	wkt::String
 	epsg::Int
