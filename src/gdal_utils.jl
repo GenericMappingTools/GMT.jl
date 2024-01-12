@@ -99,7 +99,11 @@ function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int
 	(is_grid) && (x_min += x_inc/2;	 y_max -= y_inc/2)	# Maitain the GMT default that grids are gridline reg.
 	x_max = x_min + (xSize - 1*is_grid - 2pad) * x_inc
 	y_min = y_max - (ySize - 1*is_grid - 2pad) * y_inc
-	z_min::Float64, z_max::Float64 = (is_grid) ? extrema_nan(mat) : extrema(mat)
+	if !(eltype(mat) <: Complex)
+		z_min::Float64, z_max::Float64 = (is_grid) ? extrema_nan(mat) : extrema(mat)
+	else
+		z_min, z_max, z_im_min, z_im_max = extrema(mat)
+	end
 	hdr = [x_min, x_max, y_min, y_max, z_min, z_max, Float64(!is_grid), x_inc, y_inc]
 	prj = getproj(dataset)
 	(prj != "" && !startswith(prj, "+proj")) && (prj = toPROJ4(importWKT(prj)))
@@ -109,6 +113,7 @@ function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int
 		#(eltype(mat) == Float64) && (mat = Float32.(mat))
 		O = mat2grid(mat; hdr=hdr, proj4=prj, names=desc, is_transposed=is_tp)
 		O.layout = (layout == "") ? "TRB" : layout
+		isa(mat, Matrix{<:Complex}) && (append!(O.range, [z_im_min, z_im_max]))	# Stick the imaginary part limits in the range
 	else
 		O = mat2img(mat; hdr=hdr, proj4=prj, noconv=true, names=desc, is_transposed=is_tp)
 		O.layout = (layout == "") ? "TRBa" : layout * "a"

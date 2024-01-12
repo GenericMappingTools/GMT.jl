@@ -164,7 +164,7 @@ function minimum_nan(A::Array{<:AbstractFloat})
 	mi = minimum(A);	!isnan(mi) && return mi		# The noNaNs version is a order of magnitude faster
 	mi = typemax(eltype(A))
 	@inbounds for k in eachindex(A) mi = ifelse(!isnan(A[k]), min(mi, A[k]), mi)  end
-	mi == typemax(eltype(A)) && (mi = convert(eltype(A), NaN))	# Better to return NaN than +Inf
+	mi == typemax(eltype(A)) && (mi = convert(eltype(A), NaN))	# Better to return NaN then +Inf
 	return mi
 end
 minimum_nan(A) = minimum(A)
@@ -205,6 +205,19 @@ nanmean(x,y) = mapslices(nanmean,x,dims=y)
 nanstd(x)    = std(filter(!isnan,x))
 nanstd(x,y)  = mapslices(nanstd,x,dims=y)
 
+# --------------------------------------------------------------------------------------------------
+Base.minimum(A::Array{<:Complex{<:Integer}}) = minimum(real(A)), minimum(imag(A))
+Base.maximum(A::Array{<:Complex{<:Integer}}) = maximum(real(A)), maximum(imag(A))
+Base.minimum(A::Array{<:Complex{<:AbstractFloat}}) = minimum(real(A)), minimum(imag(A))
+Base.maximum(A::Array{<:Complex{<:AbstractFloat}}) = maximum(real(A)), maximum(imag(A))
+function Base.extrema(A::Array{<:Complex{<:Integer}})		# Returns real_min, real_max, imag_min, imag_max
+	mi_r, mi_i = minimum(A), maximum(A)
+	return mi_r[1], mi_i[1], mi_r[2], mi_i[2]
+end
+function Base.extrema(A::Array{<:Complex{<:AbstractFloat}})
+	mi_r, mi_i = minimum_nan(A), maximum_nan(A)
+	return mi_r[1], mi_i[1], mi_r[2], mi_i[2]
+end
 # --------------------------------------------------------------------------------------------------
 """
     doy2date(doy[, year]) -> Date

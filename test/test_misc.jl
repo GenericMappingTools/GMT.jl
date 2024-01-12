@@ -215,6 +215,8 @@
 	GMT.cart2sph([1 1], [1 1], [1 -1]);
 	GMT.findmax_nan([1., 3, NaN, 8])
 	GMT.findmin_nan([1., 3, NaN, 8])
+	extrema(rand(Complex{Int16}, 3,3))
+	extrema(rand(Complex{Float32}, 3,3))
 	fields(7);
 	fields(rand(2,2))
 	tic();toc();

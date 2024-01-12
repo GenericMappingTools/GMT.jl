@@ -829,8 +829,12 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 		Int16   => GDT_Int16,
 		UInt32  => GDT_UInt32,
 		Int32   => GDT_Int32,
+		Complex{Int16}  => GDT_CInt16,
+		Complex{Int32}  => GDT_CInt32,
 		Float32 => GDT_Float32,
-		Float64 => GDT_Float64)
+		Float64 => GDT_Float64,
+		Complex{Float32} => GDT_CFloat32,
+		Complex{Float64} => GDT_CFloat64)
 
 	const _JLTYPE = Dict{Int32, DataType}(
 		GDT_Unknown    => Any,
@@ -839,8 +843,12 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 		GDT_Int16      => Int16,
 		GDT_UInt32     => UInt32,
 		GDT_Int32      => Int32,
+		GDT_CInt16     => Complex{Int16},
+		GDT_CInt32     => Complex{Int32},
 		GDT_Float32    => Float32,
 		GDT_Float64    => Float64,
+		GDT_CFloat32   => Complex{Float32},
+		GDT_CFloat64   => Complex{Float64},
 		UInt32(14)     => UInt8)		# TEMPORARY to workaround a GDAL BUG
 
 	macro gdal(args...)

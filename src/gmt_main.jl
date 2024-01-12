@@ -1376,6 +1376,7 @@ end
 function print_ranges(GI::GItype)
 	println("x_min: ", GI.range[1], "\tx_max :", GI.range[2], "\tx_inc :", GI.inc[1], "\tn_columns :", size(GI,2))
 	println("y_min: ", GI.range[3], "\ty_max :", GI.range[4], "\ty_inc :", GI.inc[2], "\tn_rows :", size(GI,1))
+	(eltype(GI) <: Complex) ? println("z_min: ", GI.range[5], "\tz_max :", GI.range[6], "\tz_min_img :", GI.range[7], "\tz_max_img :", GI.range[8]) :
 	println("z_min: ", GI.range[5], "\tz_max :", GI.range[6])
 end
 function print_crs(GID, saysomething=false)
