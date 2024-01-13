@@ -156,7 +156,7 @@ export
 	wkbMultiLineString25D, wkbMultiPolygon25D, wkbGeometryCollection25D,
 
 	buffergeo, circgeo, epsg2proj, epsg2wkt, geod, invgeod, loxodrome, loxodrome_direct, loxodrome_inverse,
-	geodesic, orthodrome, proj2wkt, setfld!, vecangles, wkt2proj,
+	geodesic, orthodrome, proj2wkt, setcoords!, setfld!, setcrs!, setsrs!, vecangles, wkt2proj,
 
 	colorzones!, rasterzones!, rasterzones, lelandshade, texture_img, crop, doy2date, date2doy, yeardecimal,
 	median, mean, quantile, std, nanmean, nanstd, skipnan, zonal_statistics, zonal_stats,
