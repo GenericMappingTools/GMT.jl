@@ -602,13 +602,14 @@ function gdalread(fname::AbstractString, optsP=String[]; opts=String[], gdataset
 	check = (ind === nothing || ind[1] < 3) ? true : false
 	(check && !isfile(fname)) && error("Input file '$fname' does not exist.")	# Breaks when passing a SUBDATASET
 	(isempty(optsP) && !isempty(opts)) && (optsP = opts)		# Accept either Positional or KW argument
+	_optsP::Vector{String} = isa(optsP, String) ? string.(split(optsP)) : optsP
 	ressurectGDAL();
 	ds_t = Gdal.read(fname, flags=Gdal.GDAL_OF_RASTER, I=false)
 	driver = (ds_t.ptr != C_NULL) ? Gdal.shortname(getdriver(ds_t)) : ""
 	if (ds_t.ptr != C_NULL && Gdal.OGRGetDriverByName(driver) == C_NULL)
-		ds = gdaltranslate(ds_t, optsP; gdataset=gdataset, kw...)
+		ds = gdaltranslate(ds_t, _optsP; gdataset=gdataset, kw...)
 	elseif (driver == "netCDF" && (Gdal.nraster(ds_t) > 1 || Gdal.width(ds_t) > 100))	# 100 is just inventing
-		ds = gdaltranslate(ds_t, optsP; gdataset=gdataset, kw...)
+		ds = gdaltranslate(ds_t, _optsP; gdataset=gdataset, kw...)
 	else
 		(ds_t.ptr == C_NULL) && (ds_t = Gdal.read(fname, flags = Gdal.GDAL_OF_VECTOR | Gdal.GDAL_OF_VERBOSE_ERROR, I=false))
 		optsP = (isempty(optsP)) ? ["-overwrite"] : (isa(optsP, String) ? ["-overwrite " * optsP] : append!(optsP, ["-overwrite"]))
