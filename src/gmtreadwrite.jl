@@ -91,11 +91,17 @@ function gmtread(_fname::String; kwargs...)
 		if ((val = find_in_dict(d, [:gdal])[1]) !== nothing)	# This branch is fragile
 			fname = sneak_in_SUBDASETS(fname, varname)	# Get the composed name (fname + subdaset and driver)
 			proggy = "gdalread"
+			gdopts = ""
+			if ((val = find_in_dict(d, [:layer :layers :band :bands])[1]) !== nothing)
+				if (isa(val, Real))               gdopts = @sprintf(" -b %d", val)
+				elseif (isa(val, AbstractArray))  gdopts = join([@sprintf(" -b %d", val[i]) for i in 1:numel(val)])
+				end
+			end
 		else
 			fname *= "?" * varname
 			if ((val = find_in_dict(d, [:layer :layers :band :bands])[1]) !== nothing)
 				if (isa(val, Real))       fname *= @sprintf("[%d]", val-1)
-				elseif (isa(val, AbstractArray))  fname *= @sprintf("[%d,%d]", val[1]-1, val[2]-1);	# A 4D array
+				elseif (isa(val, AbstractArray))  fname *= @sprintf("[%d,%d]", val[1]-1, val[2]-1)	# A 4D array
 				elseif ((isa(val, String) || isa(val, Symbol)) && (string(val) == "all")) proggy = "grdinterpolate "
 				end
 			end
@@ -164,7 +170,7 @@ function gmtread(_fname::String; kwargs...)
 	if (opt_T != " -To")			# All others but OGR
 		(proggy == "read ") && (cmd *= opt_T)
 		(dbg_print_cmd(d, cmd) !== nothing) && return proggy * fname * cmd
-		o = (proggy == "gdalread") ? gdalread(fname) : gmt(proggy * fname * cmd)
+		o = (proggy == "gdalread") ? gdalread(fname, gdopts) : gmt(proggy * fname * cmd)
 		(isempty(o)) && (@warn("\tfile \"$fname\" is empty or has no data after the header.\n"); return GMTdataset())
 
 		(isa(o, GMTimage)) && (o.range[5:6] .= extrema(o.image))	# It's ugly to see those floatmin/max in there.
