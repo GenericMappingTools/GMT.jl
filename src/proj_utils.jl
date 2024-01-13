@@ -1000,3 +1000,59 @@ function get_geoglimits(GI::GItype)::Vector{Float64}
 		return [t[1, 1], t[2, 1], t[1, 2], t[2, 2]]
 	end
 end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    setsrs!(GID::Union{GItype, GDtype}; prj::String="", proj::String="", proj4::String="", wkt::String="", epsg::Int=0)
+or
+
+    setcrs!(GID::Union{GItype, GDtype}; prj::String="", proj::String="", proj4::String="", wkt::String="", epsg::Int=0)
+
+Set the spatial reference of a GMTgrid, GMTimage or GMTdataset(s). Pass one or more of the ways to reference the
+grid/image/dataset objects. Note that if you pass more than one way, the rest of the information is redundant and
+should not be contradictory.
+
+- `prj`, `proj` or `proj4`: Aliases for passing a PROJ4 string.
+
+- `wkt`: A WKT (Well Known Format) string.
+
+- `epsg`: A EPSG code.
+
+### Return
+This function returns nothing as what it does is to add/change the object referencing information.
+"""
+function setsrs!(GID::Union{GItype, GDtype}; prj::String="", proj::String="", proj4::String="", wkt::String="", epsg::Int=0)
+	O = (GID isa GItype || GID isa GMTdataset) ? GID : GID[1]	# Select one "comon" type that we can address equaly.
+	_prj = (prj != "" ? prj : proj != "" ? proj : proj4 != "" ? proj4 : "")
+	(_prj != "") && (_prj == "geog" && (_prj = "+proj=longlat"); (!startswith(_prj, "+proj=") && (_prj = "+proj=" * _prj)); O.proj4 = _prj)
+	(wkt != "") && (O.wkt = wkt)
+	(epsg > 0)  && (O.epsg = epsg)		# Here we should be testing that the epsg code is a valide one
+	return nothing
+end
+const setcrs! = setsrs!
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    setcoords!(GI::GItype; x::Vector{<:Real}=Float64[], y::Vector{<:Real}=Float64[], registration::Int=0)
+
+Assign x,y coordinates to a GMTgrid or GMTimage. The `x,y` arguments are mandatory and can be two elements
+vectors with [xmin, xmax] and [ymin, ymax] respectively or vectors with ncolumns and nrows if `registration=0`
+or with ncolumns+1 and nrows+1 if `registration=1`.
+
+### Return
+This function returns nothing as what it does is to change the object coordinates information. See also
+the `setsrs!` function.
+"""
+function setcoords!(GI::GItype; x::Vector{<:Real}=Float64[], y::Vector{<:Real}=Float64[], registration::Int=0)
+	isempty(x) || isempty(y) && error("X and/or Y coordinates vectors are empty")
+	nx = (GI.layout != "" && GI.layout[2] == 'C') ? size(GI,2) : (GI.layout != "" && GI.layout[2] == 'R') ? size(GI,1) : size(GI,2)
+	ny = (GI.layout != "" && GI.layout[2] == 'C') ? size(GI,1) : (GI.layout != "" && GI.layout[2] == 'R') ? size(GI,2) : size(GI,1)
+	(length(x) == nx || length(x) == nx-1) ? (GI.x = x) : (length(x) == 2 ? (GI.x = linspace(x[1], x[2], nx+registration)) :
+		error("X coordinates vector should have length of 2 or $(nx) or $(nx-1)"))
+	(length(y) == ny || length(y) == ny-1) ? (GI.y = y) : (length(y) == 2 ? (GI.y = linspace(y[1], y[2], nx+registration)) :
+		error("Y coordinates vector should have length of 2 or $(ny) or $(ny-1)"))
+	GI.range[1:4] = [GI.x[1], GI.x[end], GI.y[1], GI.y[end]]
+	GI.inc[1:2]   = [GI.x[2] - GI.x[1], GI.y[2] - GI.y[1]]
+	GI.registration = (length(GI.x) == nx) ? 0 : 1
+	return nothing
+end
