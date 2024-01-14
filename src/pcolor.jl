@@ -85,12 +85,18 @@ function pcolor(X_::VMr, Y_::VMr, C::Union{Nothing, AbstractMatrix{<:Real}}=noth
 	D::Vector{GMTdataset}, k = Vector{GMTdataset}(undef, length(C)), 0
 	if (isvector(X))
 		for col = 1:length(X)-1, row = 1:length(Y)-1	# Gdal.wkbPolygon = 3
-			D[k+=1] = mat2ds([X[col] Y[row]; X[col] Y[row+1]; X[col+1] Y[row+1]; X[col+1] Y[row]; X[col] Y[row]]; geom=3, kwargs...)
+			if (k == 0) D[k+=1] = mat2ds([X[col] Y[row]; X[col] Y[row+1]; X[col+1] Y[row+1]; X[col+1] Y[row]; X[col] Y[row]]; geom=3, kwargs...)
+			else        D[k+=1] = mat2ds([X[col] Y[row]; X[col] Y[row+1]; X[col+1] Y[row+1]; X[col+1] Y[row]; X[col] Y[row]]; geom=3)
+			end
 		end
 		D[1].ds_bbox = [X[1], X[end], Y[1], Y[end]]
 	else
 		for col = 1:size(X_,2)-1, row = 1:size(X_,1)-1
-			D[k+=1] = mat2ds([X[row,col] Y[row,col]; X[row+1,col] Y[row+1,col]; X[row+1,col+1] Y[row+1,col+1]; X[row,col+1] Y[row,col+1]; X[row,col] Y[row,col]]; geom=3, kwargs...)
+			if (k == 0)
+				D[k+=1] = mat2ds([X[row,col] Y[row,col]; X[row+1,col] Y[row+1,col]; X[row+1,col+1] Y[row+1,col+1]; X[row,col+1] Y[row,col+1]; X[row,col] Y[row,col]]; geom=3, kwargs...)
+			else
+				D[k+=1] = mat2ds([X[row,col] Y[row,col]; X[row+1,col] Y[row+1,col]; X[row+1,col+1] Y[row+1,col+1]; X[row,col+1] Y[row,col+1]; X[row,col] Y[row,col]]; geom=3)
+			end
 		end
 		D[1].ds_bbox = vec([extrema(X)... extrema(Y)...])
 	end
@@ -213,7 +219,9 @@ function boxes(X::VMr, Y::VMr; kwargs...)
 	if (isvector(X))
 		for col = 1:length(X)-1, row = 1:length(Y)-1
 			(isautomask && Gmask.z[row, col] != mask_true) && continue
-			D[k+=1] = mat2ds([X[col] Y[row]; X[col] Y[row+1]; X[col+1] Y[row+1]; X[col+1] Y[row]; X[col] Y[row]]; geom=3, kwargs...)
+			if (k == 0) D[k+=1] = mat2ds([X[col] Y[row]; X[col] Y[row+1]; X[col+1] Y[row+1]; X[col+1] Y[row]; X[col] Y[row]]; geom=3, kwargs...)
+			else        D[k+=1] = mat2ds([X[col] Y[row]; X[col] Y[row+1]; X[col+1] Y[row+1]; X[col+1] Y[row]; X[col] Y[row]]; geom=3)
+			end
 		end
 		k == 0 && return GMTdataset[]
 		(isautomask && k != (length(X)-1)*(length(Y)-1)) && deleteat!(D, k+1:n_tiles)	# Remove the unused D's
@@ -221,7 +229,11 @@ function boxes(X::VMr, Y::VMr; kwargs...)
 		isautomask && set_dsBB!(D, false) 
 	else
 		for col = 1:size(X,2)-1, row = 1:size(X,1)-1
-			D[k+=1] = mat2ds([X[row,col] Y[row,col]; X[row+1,col] Y[row+1,col]; X[row+1,col+1] Y[row+1,col+1]; X[row,col+1] Y[row,col+1]; X[row,col] Y[row,col]]; geom=3, kwargs...)
+			if (k == 0)
+				D[k+=1] = mat2ds([X[row,col] Y[row,col]; X[row+1,col] Y[row+1,col]; X[row+1,col+1] Y[row+1,col+1]; X[row,col+1] Y[row,col+1]; X[row,col] Y[row,col]]; geom=3, kwargs...)
+			else
+				D[k+=1] = mat2ds([X[row,col] Y[row,col]; X[row+1,col] Y[row+1,col]; X[row+1,col+1] Y[row+1,col+1]; X[row,col+1] Y[row,col+1]; X[row,col] Y[row,col]]; geom=3)
+			end
 		end
 		D[1].ds_bbox = vec([extrema(X)... extrema(Y)...])
 	end
