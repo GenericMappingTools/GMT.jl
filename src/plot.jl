@@ -1929,7 +1929,7 @@ end
 
 # ------------------------------------------------------------------------------------------------------
 """
-    seismicity(starttime="", endtime="", minmagnitude=3, mindepth=0, maxdepth=0, last=0, printurl=false, show=true, kw...)
+    seismicity(starttime="", endtime="", minmagnitude=3, mindepth=0, maxdepth=0, last=0, year=0, printurl=false, show=true, kw...)
 
 Make automatic maps of of world-wide seismicity obtained from the USGS Earthquake Hazards Program page at
 https://earthquake.usgs.gov
@@ -1942,6 +1942,7 @@ https://earthquake.usgs.gov
 - `maxdepth`: Limit to events with depth less than the specified maximum (km positive down).
 - `last`: If value is an integer (*e.g.* `last=90`), select the events in the last n days. If it is a string
    than we expect that it ends with a 'w'(eek), 'm'(onth) or 'y'(ear). Example: `last="2Y"` (period code is caseless)
+- `year`: An integer, restrict data download to this year.
 - `printurl`: Print the url of the requested data.
 - `circle`: A 3 elements Tuple or Array with ``lon,lat,radius``, where ``radius`` is in km, to perform a circle search.
 - `data`: The default is to make a seismicity map but if the `data` option is used (containing whatever)
@@ -1969,17 +1970,22 @@ https://earthquake.usgs.gov
     the figure open to accept more plots from posterior commands.)
 
 ### Examples
+```julia
     seismicity(size=8)
     seismicity(marker=:star, size=[3 10])
     seismicity(size=(exp10, [2 12], [3 9]))
+```
 """
 function seismicity(; starttime::Union{DateTime, String}="", endtime::Union{DateTime, String}="", minmagnitude=3,
-                      mindepth=0, maxdepth=0, last=0, printurl::Bool=false, layers=3, legend=true, show=true, kw...)
+                      mindepth=0, maxdepth=0, last=0, year=0, printurl::Bool=false, layers=3, legend=true, show=true, kw...)
 
 	(layers != 3 && layers != 4) && error("Only 3 or 4 (depth) layers are allowed.")
 	d = KW(kw)
 	url = "https://earthquake.usgs.gov/fdsnws/event/1/query.csv?format=csv&orderby=time-asc&minmagnitude=$minmagnitude"
 
+	url = helper_get_date_interval(d, last, url, starttime, endtime, year=year, sstart="&starttime=", send="&endtime=")	# See if a period was requested
+
+	#=
 	(starttime != "" && last != 0) && (@warn("Options 'starttime' and 'last' are incompatible. Droping 'last'."); last=0)
 	(endtime != "" && starttime == "") && (@warn("Gave a 'endtime' but not a 'starttime'. Ignoring it."); endtime = "")
 	(isa(last, Integer) && last > 0) && (starttime = string(Date(now() - Dates.Day(last))))
@@ -1992,6 +1998,7 @@ function seismicity(; starttime::Union{DateTime, String}="", endtime::Union{Date
 	end
 	(starttime != "") && (url *= "&starttime=" * string(starttime))
 	(endtime != "") && (url *= "&endtime=" * string(endtime))
+	=#
 	if ((opt_R::String = parse_R(d, "")[2]) != "")
 		(opt_R[end] == 'r') && error("Region as lon_min/lat_min/lon_max/lat_max form is not supported here.")
 		!contains(opt_R, '/') && (opt_R = " " * coast(getR=opt_R[4:end]))
@@ -2066,6 +2073,32 @@ function seismicity(; starttime::Union{DateTime, String}="", endtime::Union{Date
 end
 
 # ------------------------------------------------------------------------------------------------------
+function helper_get_date_interval(d, last, url, starttime, endtime; year::Int=0, sstart="&start_date=", send="&end_date=")
+	# Helper function used both in seismicity and weather functions.
+	if (year != 0)
+		(last != 0) && (@warn("Options 'year' and 'last' are incompatible. Droping 'last'."); last=0)
+		starttime = "$year-01-01"
+		endtime = (parse(Int,string(today())[1:4]) == year) ? string(today()) : "$year-12-31"
+	end
+	(starttime == "") && ((val = find_in_dict(d, [:startdate :start_date :start_time])[1]) !== nothing) && (starttime = string(val)::String)
+	(endtime == "")   && ((val = find_in_dict(d, [:enddate :end_date :end_time])[1]) !== nothing) && (endtime = string(val)::String)
+	(starttime != ""  && last != 0)       && (@warn("Options 'starttime' and 'last' are incompatible. Droping 'last'."); last=0)
+	(endtime   != ""  && starttime == "") && (@warn("Gave a 'endtime' but not a 'starttime'. Ignoring it."); endtime = "")
+	(isa(last, Integer) && last > 0)      && (starttime = string(Date(now() - Dates.Day(last))))
+	if (isa(last, String))			# Requests of Weeks, Months, Years
+		_last = lowercase(last)
+		if     ((ind = findfirst('y', _last)) !== nothing)  starttime = Date(now() - Dates.Year(parse(Int, _last[1:ind-1])))
+		elseif ((ind = findfirst('m', _last)) !== nothing)  starttime = Date(now() - Dates.Month(parse(Int, _last[1:ind-1])))
+		elseif ((ind = findfirst('w', _last)) !== nothing)  starttime = Date(now() - Dates.Week(parse(Int, _last[1:ind-1])))
+		end
+		(send == "&end_date=") && (endtime = Date(now()))	# Because weather() needs an end date too.
+	end
+	(starttime != "") && (url *= sstart * string(starttime))
+	(endtime != "")   && (url *= send   * string(endtime))
+	return url
+end
+
+# ------------------------------------------------------------------------------------------------------
 """
     seislegend(; title="", font=(16,"Times-Roman"), cmap=GMTcpt(), mags=Float64[], lowermag=3, kw...)
 
@@ -2128,4 +2161,80 @@ function seislegend(; title="", font=(16,"Times-Roman"), cmap=GMTcpt(), mags::Ve
 	   ncolumns3=1,
 	   label=(txt="Data from the US National Earthquake Information Center", justify=:R, font=(8,"Times-Italic")),
 	); first=first, d...)
+end
+
+# ------------------------------------------------------------------------------------------------------
+"""
+    [D =] weather(lon=0.0, lat=0.0; city::String="", last=0, days=7, year::Int=0, starttime::Union{DateTime, String}="",
+	              endtime::Union{DateTime, String}="", variable="temperature_2m", debug=false, show=false, kw...)
+
+Plots and/or retrieve weather data obtained from the [Open-Meteo](https://open-meteo.com/en/docs) API.
+Please consult the site for further details. You will find that there are many variables available to plot and with
+not so obvious names. There are also _forecast_ and _archive_ versions of the variables. This function tries to guess
+that from the variable names. That list of variable names is a bit extensive and we are not reproducing it entirely here,
+but given it interest for climatological reason, we do list the so called ``daily`` variables.
+
+- `variable`: "temperature_2m_max", "temperature_2m_min", "apparent_temperature_max", "apparent_temperature_min", "precipitation_sum", "rain_sum", "snowfall_sum", "precipitation_hours", "sunshine_duration", "daylight_duration", "wind_speed_10m_max", "wind_gusts_10m_max", "wind_direction_10m_dominant", "shortwave_radiation_sum", "et0_fao_evapotranspiration"
+
+A word of aknowledge is also due to the [WeatherReport.jl](https://github.com/vnegi10/WeatherReport.jl) project
+that inspired this function, that is much smaller (~25 LOC) and has no further dependencies than GMT itself.
+
+- `lon` and `lat`: Explicitly provide the coordinates of the location. If not provided, nor the `city` name,
+   the current location is used from an IP location service (see the `whereami` function help).
+- `city`: The name of the location that will be used. City names are normally OK but if it fails see the help of the
+   `geocoder()` function as that is what is used to transform names to coordinates. The default is to use the current
+   geographic location of the user.
+- `days`: When asking for forecasts this is the number of days to forecast. Maximum is 16 days. Default is 7.
+- `starttime`: Limit to events on or after the specified start time. NOTE: All times use ISO8601 Date/Time format
+    OR a DateTime type. Default is NOW - 30 days.
+- `endtime`: Limit to events on or before the specified end time. Same remarks as for `starttime`. Default is present time.
+- `last`: If value is an integer (*e.g.* `last=90`), select the events in the last n days. If it is a string
+   than we expect that it ends with a 'w'(eek), 'm'(onth) or 'y'(ear). Example: `last="2Y"` (period code is caseless)
+- `year`: An integer, restrict data download to this year.
+- `debug`: Print the url of the requested data and return.
+- `data`: The default is to make a seismicity map but if the `data` option is used (containing whatever)
+    we return the data in a ``GMTdataset`` 
+- `figname`: $(GMT.opt_savefig)
+- `show`: By default this function just returns the data in a `GMTdataset` but if `show=true` it shows the plot.
+   Use `data=true` to also return the data even when `show=true`.
+
+### Examples
+```julia
+# Plot the temperature forecast of your location. Also returns the data table.
+D = weather(data=true, show=true)
+```
+```julia
+# Plot the rain fall during 2023 at Copenhagen
+weather(city="Copenhagen", year=2023, variable="rain_sum", show=true)
+```
+"""
+function weather(lon=0.0, lat=0.0; city::String="", last=0, days=7, year::Int=0, starttime::Union{DateTime, String}="",
+                 endtime::Union{DateTime, String}="", variable="temperature_2m", debug=false, show=false, kw...)
+
+	d = KW(kw)
+	url_forcast = "https://api.open-meteo.com/v1/forecast?format=csv&"
+	url_archive = "https://archive-api.open-meteo.com/v1/archive?format=csv&"
+	url_air     = "https://air-quality-api.open-meteo.com/v1/air-quality?format=csv&"
+	str_loc::String = (lon != 0.0 || lat != 0.0) ? "latitude=$lat&longitude=$lon" : (city != "") ? @sprintf("longitude=%f&latitude=%f", geocoder(city).data...) : @sprintf("longitude=%.3f&latitude=%.3f", whereami().data...)#"latitude=37.0695&longitude=-8.1006"
+
+	variable = string(variable)
+	dt = helper_get_date_interval(d, last, "", starttime, endtime, year=year)	# See if a period was requested
+	url = ((variable == "pm" && (variable = "pm10")) || variable == "pm10" || variable == "pm2.5" || variable == "dust" || variable == "aerosol_optical_depth") ? url_air : (dt != "") ? url_archive : url_forcast
+	(days != 7 && url != url_archive) && (url *= string("forecast_days=", days, "&"))
+	url *= str_loc * dt
+	daily_vars = ["temperature_2m_max", "temperature_2m_min", "apparent_temperature_max", "apparent_temperature_min", "precipitation_sum", "rain_sum", "snowfall_sum", "precipitation_hours", "sunshine_duration", "daylight_duration", "wind_speed_10m_max", "wind_gusts_10m_max", "wind_direction_10m_dominant", "shortwave_radiation_sum", "et0_fao_evapotranspiration"]
+	hourly = any(variable .== daily_vars) ? false : true
+	url *= hourly ? "&hourly=" * variable : "&daily=" * variable
+
+	(debug != 0) && (println(url); return)
+
+	file = Downloads.download(url, "_query.csv")
+	D = gmtread(file, h=4)			# File has 4 header rows but only the 4rth matters
+	rm(file)
+	D.comment = [D.comment[4]]		# Retain only the 4rth: "time,temperature_2m (°C)\n"
+	helper_set_colnames!(D)			# Set column names based on info stored in the 4rth header line
+	D.attrib["Location"] = (city != "") ? city : replace(str_loc, "&" => " ")
+	retD = (find_in_dict(d, [:data])[1] !== nothing)
+	(show != 0) && plot(D; legend=D.colnames[2], title=D.attrib["Location"], show=true, d...)
+	return (retD || show == 0) ? D : nothing
 end

@@ -237,6 +237,11 @@
 	seismicity(last="1w", R=:d, size=5, show=false);
 	GMT.seislegend(Vd=2);
 
+	# Weather
+	println("	Weather")
+	weather(year=2023, debug=1);
+	weather(city="Quarteira", var="rain");
+
 	# MB-System
 	println("	MB-System")
 	mbgetdata("aa", Vd=2)
@@ -246,6 +251,7 @@
 
 	println("	EXAMPLES")
 	# EXAMPLES
+	whereami();
 	plot(1:10,rand(10), lw=1, lc="blue", marker="square", markeredgecolor=:white, size=0.2, markerfacecolor="red", title="Hello World", xlabel="Spoons", ylabel="Forks")
 
 	x = range(0, stop=2pi, length=180);	seno = sin.(x/0.2)*45;
