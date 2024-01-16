@@ -729,6 +729,34 @@ function hopalong(num, a, b, c)
 end
 =#
 
+# ------------------------------------------------------------------------------------------------------
+"""
+    D = whereami() -> GMTdataset
+
+Shows your current location plus some additional information (Timezone, Country, City, Zip, IP address).
+"""
+function whereami()
+	io = IOBuffer()
+	Downloads.download("https://api.ipify.org?format=csv", io)
+	ip = String(take!(io))
+	Downloads.download("http://ip-api.com/json/" * ip, io)
+	_s = String(take!(io))
+	s = split(_s, ",")
+	i_lon, i_lat = findfirst(contains.(s, "lon")), findfirst(contains.(s, "lat"))
+	i_country, i_city = findfirst(contains.(s, "country")), findfirst(contains.(s, "city"))
+	i_zip, i_tz = findfirst(contains.(s, "zip")), findfirst(contains.(s, "timezone"))
+	i_region, i_query = findfirst(contains.(s, "regionName")), findfirst(contains.(s, "query"))
+	lon = parse(Float64, split(s[i_lon],":")[2])
+	lat = parse(Float64, split(s[i_lat],":")[2])
+	country = string(split(s[i_country],":")[2][2:end-1])		# The [2:end-1] removes the quotes
+	city = string(split(s[i_city],":")[2][2:end-1])
+	zip = string(split(s[i_zip],":")[2][2:end-1])
+	timezone = string(split(s[i_tz],":")[2][2:end-1])
+	region = string(split(s[i_region],":")[2][2:end-1])
+	ip = string(split(s[i_query],":")[2][2:end-2])
+	mat2ds([lon lat], colnames=["Lon","Lat"], attrib=Dict("Country" => country, "City" => city, "Region" => region, "Zip" => zip, "Timezone" => timezone, "IP" => ip))
+end
+
 isdefined(Main, :VSCodeServer) && (const VSdisp = Main.VSCodeServer.vscodedisplay)
 
 function ds2df end
