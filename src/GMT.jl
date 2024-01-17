@@ -166,7 +166,7 @@ export
 
 	ablines, ablines!, density, density!, boxplot, boxplot!, cornerplot, cornerplot!, cubeplot, ecdfplot, ecdfplot!,
 	fill_between, fill_between!, marginalhist, marginalhist!, parallelplot, parallelplot!, plotlinefit, plotlinefit!,
-	qqplot, qqplot!, qqnorm, qqnorm!, seismicity, sealand, terramar, violin, violin!, viz, windbarbs,
+	qqplot, qqplot!, qqnorm, qqnorm!, seismicity, sealand, terramar, violin, violin!, viz, weather, windbarbs, whereami,
 
 	VSdisp, info, kmeans, pca, mosaic, quadbounds, quadkey, geocoder,
 	
