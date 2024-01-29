@@ -34,7 +34,7 @@ See full GMT (not the `GMT.jl` one) docs at [`psscale`]($(GMTdoc)psscale.html)
 
     Selects a logarithmic interpolation scheme [Default is linear].
 - $(GMT._opt_R)
-- **S** | **nolines** :: [Type => Bool | []]
+- **S** | **appearance** | **nolines** :: [Type => Bool | []]
 
     Do not separate different color intervals with black grid lines.
 - $(GMT.opt_U)
@@ -60,7 +60,7 @@ function colorbar(arg1::Union{Nothing, GMTcpt}=nothing; first=true, kwargs...)
 	cmd = parse_JZ(d, cmd)[1]
 	cmd = parse_common_opts(d, cmd, [:F :UVXY :params :c :p :t], first)[1]
 	cmd = parse_these_opts(cmd, d, [[:G :truncate], [:I :shade], [:M :monochrome], [:N :dpi],
-	                                [:Q :log], [:S :nolines], [:W :scale], [:Z :zfile]])
+	                                [:Q :log], [:S :appearance :nolines], [:W :scale], [:Z :zfile]])
 	opt_D = parse_type_anchor(d, "", [:D :pos :position],
 	                          (map=("g", arg2str, 1), outside=("J", arg2str, 1), inside=("j", arg2str, 1), norm=("n", arg2str, 1), paper=("x", arg2str, 1), anchor=("", arg2str, 2), length=("+w", arg2str), size=("+w", arg2str), justify="+j", triangles="+e", horizontal="_+h", move_annot="+m", neon="_+mc", nan="+n", offset=("+o", arg2str)), 'J')
 

@@ -20,7 +20,7 @@ Parameters
 - **D** | **header** :: [Type => Str]    ``Arg = [+xxname][+yyname][+zzname][+sscale][+ooffset][+ninvalid][+ttitle][+rremark``
 
     Change these header parameters.
-- **E** | **header** :: [Type => Str]    ``Arg = [a|h|l|r|t|v]``
+- **E** | **flip** :: [Type => Str]    ``Arg = [a|h|l|r|t|v]``
 
     Transform the grid in one of six ways and (for l|r|t) interchange the x and y information
 - **G** | **save** | **outgrid** | **outfile** :: [Type => Str]

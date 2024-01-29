@@ -15,7 +15,7 @@ Parameters
 - **F** | **box** :: [Type => Str | []]
 
     Without further options, draws a rectangular border around the image using MAP_FRAME_PEN.
-- **G** | **bit_color** | **bit_bg|fg|alpha**:: [Type => Str]
+- **G** | **bitcolor** | **bit_color** | **bit_bg|fg|alpha**:: [Type => Str]
 
     Change certain pixel values to another color or make them transparent.
 - **I** | **invert** :: [Type => Str | Number]
@@ -52,7 +52,7 @@ function image_helper(cmd0::String, arg1; first=true, kwargs...)
 	cmd = parse_BJR(d, "", "", O, " -JX" * split(DEF_FIG_SIZE, '/')[1] * "/0")[1]
 	cmd = parse_common_opts(d, cmd, [:F :UVXY :JZ :c :p :t :params], first)[1]
 	cmd = parse_these_opts(cmd, d,  [[:I :invert], [:M :monochrome]])
-	((val = find_in_dict(d, [:G :bit_color])[1]) !== nothing && isa(val, String)) && (cmd *= string(" -G", val))
+	((val = find_in_dict(d, [:G :bitcolor :bit_color])[1]) !== nothing && isa(val, String)) && (cmd *= string(" -G", val))
 	((val = find_in_dict(d, [:bit_bg])[1]) !== nothing) && (cmd = add_opt_fill(val, cmd, " -G") * "+b")
 	((val = find_in_dict(d, [:bit_fg])[1]) !== nothing) && (cmd = add_opt_fill(val, cmd, " -G") * "+f")
 	((val = find_in_dict(d, [:bit_alpha])[1]) !== nothing) && (cmd = add_opt_fill(val, cmd, " -G") * "+t")

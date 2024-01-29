@@ -8,7 +8,7 @@ See full GMT (not the `GMT.jl` one) docs at [`kml2gmt`]($(GMTdoc)kml2gmt.html)
 Parameters
 ----------
 
-- **F** | **select** :: [Type => Str]        ``Arg = s|l|p``
+- **F** | **feature_type** :: [Type => Str]        ``Arg = s|l|p``
 
     Specify a particular feature type to output. Choose from points (s), line (l), or polygon (p).
     By default we output all geometries.
@@ -27,7 +27,7 @@ function kml2gmt(cmd0::String="", arg1=nothing; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:V_params :bo :do :yx])
-	cmd  = parse_these_opts(cmd, d, [[:F :select], [:Z :altitudes], [:E :extended]])
+	cmd  = parse_these_opts(cmd, d, [[:F :feature_type :select], [:Z :altitudes], [:E :extended]])
 	common_grd(d, cmd0, cmd, "kml2gmt ", arg1)		# Finish build cmd and run it
 end
 
