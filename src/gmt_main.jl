@@ -1427,6 +1427,7 @@ function info(GI::GItype, showdata::Bool=true; crs::Bool=false)
 	println("Mem layout:\t", GI.layout)
 	print_crs(GI)
 	showdata && (isa(GI, GMTgrid) ? display(GI.z) : display(GI.image))
+	return nothing
 end
 
 function info(D::GDtype; crs::Bool=false, attribs=false, att::StrSymb="")

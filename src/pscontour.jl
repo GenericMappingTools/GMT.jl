@@ -9,7 +9,7 @@ Parameters
 ----------
 
 - $(GMT._opt_J)
-- **A** | **annot** :: [Type => Str | Number]       ``Arg = [-|[+]annot_int][labelinfo]``
+- **A** | **annot** | **annotation** :: [Type => Str | Number]       ``Arg = [-|[+]annot_int][labelinfo]``
 
     *annot_int* is annotation interval in data units; it is ignored if contour levels are given in a file.
 - $(GMT._opt_B)

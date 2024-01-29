@@ -62,7 +62,7 @@ Get image tiles from a web map tiles provider for given longitude, latitude coor
   - Instead of two arguments, pass just one containing a GMTdataset obtained with the ``geocoder`` function.
     Example: ``mosaic(D, ...)`` or, if the search with ``geocoder`` was sufficiently generic (see its docs),
     ``mosaic(D, bbox=true)`` to use the BoundingBox returned by the query. `bbox` supports `bb`, `BB` or
-	`BoundingBox` as aliases.
+    `BoundingBox` as aliases.
 - `pt_radius`: The planetary radius. Defaults to Earth's WGS84 authalic radius (6371007 m).
 - `provider`: Tile provider name. Currently available options are (but for more details see the docs of the
   `getprovider` function, *i.e.* ``? getprovider``):
@@ -259,7 +259,7 @@ function mosaic(lon, lat; pt_radius=6371007.0, provider="", zoom::Int=0, cache::
 			mat::Matrix{Float64} = mapproject([lon[1] lat_orig[1]; lon[2] lat_orig[2]], J=I.proj4).data
 			I = grdcut(I, R=(mat[1,1], mat[2,1], mat[1,2], mat[2,2]))
 		elseif (!inMerc)			# That is, if project to Geogs
-			gdwopts = ["-t_srs","+proj=latlong +datum=WGS84"]
+			gdwopts = ["-t_srs","+proj=latlong +datum=WGS84", "-r","cubic"]
 			isExact && append!(gdwopts, ["-te"], ["$(lon[1])"], ["$(lat_orig[1])"], ["$(lon[2])"], ["$(lat_orig[2]))"])
 			I = gdalwarp(I, gdwopts)
 		end

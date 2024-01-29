@@ -10,7 +10,7 @@ Parameters
 ----------
 
 - $(GMT._opt_J)
-- **A** | **annot** :: [Type => Str or Number]       ``Arg = [-|[+]annot_int][labelinfo]``
+- **A** | **annot** | **annotation** :: [Type => Str or Number]       ``Arg = [-|[+]annot_int][labelinfo]``
 
     *annot_int* is annotation interval in data units; it is ignored if contour levels are given in a file.
 - $(GMT._opt_B)
@@ -146,7 +146,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_contour_AGTW(d::Dict, cmd::String)
 	# Common to both grd and ps contour
-	if ((val = find_in_dict(d, [:A :annot], false)[1]) !== nothing && isa(val, Array{<:Real}))
+	if ((val = find_in_dict(d, [:A :annot :annotation], false)[1]) !== nothing && isa(val, Array{<:Real}))
 		cmd *= " -A" * arg2str(val, ',')
 		if (!occursin(",", cmd))  cmd *= ","  end
 		delete!(d, [:A, :annot])

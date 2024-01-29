@@ -27,9 +27,9 @@ Parameters
 - **G** | **ghost_path** :: [Type => Bool]
 
     Full path to your GhostScript executable.
-- **I** | **icc_gray** :: [Type => Bool]
+- **I** | **resize** :: [Type => Bool]
 
-    Enforce gray-shades by using ICC profiles.
+    Adjust the BoundingBox and HiResBoundingBox by scaling and/or adding margins.
 - **in_memory** :: [Type => Bool]
 
     Process a in memory PS file. No other input file should be provided.
@@ -37,6 +37,12 @@ Parameters
 - **L** | **list_file** :: [Type => Str]
 
     The listfile is an ASCII file with the names of the PostScript files to be converted.
+- **M** | **embed**
+
+    Sandwich the current psfile between an optional background (-Mb) and optional foreground (-Mf) Postscript plots.
+- **N** | **bgcolor**
+
+    Set optional BoundingBox background fill color, fading, or draw the outline of the BoundingBox.
 - **Q** | **anti_aliasing** :: [Type => Str]
 
     Set the anti-aliasing options for graphics or text. Append the size of the subsample box
@@ -72,7 +78,7 @@ function psconvert(cmd0::String="", arg1=nothing; kwargs...)
 	cmd = add_opt(d, "", "A", [:A :adjust :crop])
 	(cmd == " -A") && (cmd = cmd * "1p")			# If just -A default to -A1p
 	cmd = parse_these_opts(cmd, d, [[:D :out_dir :output_dir], [:E :dpi], [:F :out_name :output_name],
-	                                [:G :ghost_path], [:I :icc_gray], [:L :list_file], [:P :portrait], [:Q :anti_aliasing], [:S :gs_command], [:Z :del_input_ps]])
+	                                [:G :ghost_path], [:I :resize], [:L :list_file], [:M :embed], [:N :bgcolor], [:P :portrait], [:Q :anti_aliasing], [:S :gs_command], [:Z :del_input_ps]])
 	cmd = parse_V_params(d, cmd)
 
 	if ((val = find_in_dict(d, [:fmt])[1]) !== nothing)
