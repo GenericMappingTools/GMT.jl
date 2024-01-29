@@ -4227,22 +4227,28 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 		elseif (k >= 1+fi && (is_pscoast || is_basemap || is_plot) && (isa(args[1], GMTimage) || isa(args[1], GMTgrid)))
 			proj4::String = args[1].proj4
 			(proj4 == "" && args[1].wkt != "") && (proj4 = toPROJ4(importWKT(args[1].wkt)))
-			if ((proj4 != "") && !isgeog(proj4))#!startswith(proj4, "+proj=lat") && !startswith(proj4, "+proj=lon"))
-				opt_J = replace(proj4, " " => "")
-				#lims = args[1].range
-				#D::GMTdataset = mapproject([lims[1] lims[3]; lims[2] lims[4]], J=opt_J, I=true)
-				#xmi::Float64, ymi::Float64, xma::Float64, yma::Float64 = D.data[1],D.data[3],D.data[2],D.data[4]
-				#opt_R::String = @sprintf(" -R%f/%f/%f/%f+r ", xmi,ymi,xma,yma)
+			if (proj4 != "")
 				WESN = get_geoglimits(args[1])
-				isoblique = contains(opt_J, "=utm")		# <== ADD OTHER OBLIQUES HERE
-				opt_R::String = isoblique ? sprintf(" -R%f/%f/%f/%f+r", WESN[1],WESN[3],WESN[2],WESN[4]) : sprintf(" -R%f/%f/%f/%f", WESN...)
-				o = scan_opt(cmd[1], "-J")
-				size_::String = (o[1] == 'x') ? "+scale=" * o[2:end] : (o[1] == 'X') ? "+width=" * o[2:end] : ""
-				(size_ == "") && @warn("Could not find the right fig size used. Result will be wrong")  
-				cmd[k] = replace(cmd[k], " -J" => " -J" * opt_J * size_)
+				J1 = scan_opt(cmd[1], "-J")
+				if (!isgeog(proj4))
+					opt_J = replace(proj4, " " => "")
+					isoblique = contains(opt_J, "=utm")		# <== ADD OTHER OBLIQUES HERE
+					opt_R::String = isoblique ? sprintf(" -R%f/%f/%f/%f+r", WESN[1],WESN[3],WESN[2],WESN[4]) : sprintf(" -R%f/%f/%f/%f", WESN...)
+					size_::String = (J1[1] == 'x') ? "+scale=" * J1[2:end] : (J1[1] == 'X') ? "+width=" * J1[2:end] : ""
+					(size_ == "") && @warn("Could not find the right fig size used. Result will be wrong")  
+					cmd[k] = replace(cmd[k], " -J" => " -J" * opt_J * size_)
+				else
+					@warn("If $J1 is a cylindrical projection, second set of coordinates will likely be wrong.")
+					J2 = replace(scan_opt(cmd[2], "-J"), " " => "")
+					D = mapproject([WESN[1] WESN[3]; WESN[1] WESN[4]; WESN[2] WESN[4]; WESN[2] WESN[3]], J=J2)
+					opt_R = sprintf(" -R%.12g/%.12g/%.12g/%.12g", D.ds_bbox...)
+					W = (CTRL.pocket_J[2] != "") ? CTRL.pocket_J[2] : string(split(DEF_FIG_SIZE, "/")[1])
+					fig_size = W * "/" * string(mapproject([WESN[1] WESN[4]], R=[WESN...], J=J1).data[2])::String
+					cmd[k] = replace(cmd[k], J2 => islowercase(J2[1]) ? "x" * fig_size : "X" * fig_size)	# Fails for scales
+				end
 				cmd[k] = replace(cmd[k], " -R" => opt_R)
 				have_Vd && println("\t",cmd[k])		# Useful to know what command was actually executed.
-				orig_J, orig_R::String = o, scan_opt(cmd[1], "-R")
+				orig_J, orig_R = J1, scan_opt(cmd[1], "-R")
 			end
 		elseif (k >= 1+fi && !is_psscale && !is_pscoast && !is_basemap && CTRL.pocket_call[1] !== nothing)
 			# For nested calls that need to pass data
