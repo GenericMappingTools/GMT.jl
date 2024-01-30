@@ -299,5 +299,9 @@ Gdal.GDALDestroyDriverManager()
 	I2.image[end] = UInt8(200)		# to make tests visit another if branch
 	GMT.blendimg!(I1, I2)
 
+	G = GMT.peaks()
+	G[10:15, 15:20] .= NaN;
+	fillnodata!(G);
+
 	gdaldrivers(:vec, out=true);
 end

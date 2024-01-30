@@ -638,6 +638,10 @@ function GDALWarp(pszDest, hDstDS, nSrcCount, pahSrcDS, psO, pbUE)
 	acare(ccall((:GDALWarp, libgdal), pVoid, (Cstring, pVoid, Cint, Ptr{pVoid}, pVoid, Ptr{Cint}), pszDest, hDstDS, nSrcCount, pahSrcDS, psO, pbUE))
 end
 
+function GDALFillNodata(hTargetBand, hMaskBand, dfMaxSearchDist, deprec, nSmoothingIterations, papszOptions, pfnProgress, pProgressArg)
+	acare(ccall((:GDALFillNodata, libgdal), UInt32, (pVoid, pVoid, Cdouble, Cint, Cint, Ptr{Cstring}, pVoid, Any), hTargetBand, hMaskBand, dfMaxSearchDist, deprec, nSmoothingIterations, papszOptions, pfnProgress, pProgressArg))
+end
+
 GDALWarpAppOptionsFree(psO) = acare(ccall((:GDALWarpAppOptionsFree, libgdal), Cvoid, (pVoid,), psO))
 GDALWarpAppOptionsNew(pArgv, psOFB) =
 	acare(ccall((:GDALWarpAppOptionsNew, libgdal), pVoid, (Ptr{Cstring}, pVoid), pArgv, psOFB))
@@ -1611,7 +1615,7 @@ end
 		return (gdataset) ? IDataset(result) : gd2gmt(IDataset(result), layout=layout)
 	end
 
-	function gdalbuildvrt(datasets::Vector{<:AbstractDataset}, options::Vector{String}=String[]; dest = "/vsimem/tmp", save::AbstractString="")
+	function gdalbuildvrt(datasets::Vector{<:AbstractDataset}, options::Vector{String}=String[]; dest="/vsimem/tmp", save::AbstractString="")
 		(save != "") && (dest = save)
 		options = GDALBuildVRTOptionsNew(options, C_NULL)
 		usage_error = Ref{Cint}()
@@ -1622,6 +1626,16 @@ end
 		end
     	return IDataset(result)
 	end
+
+	function gdalfillnodata!(dataset::Dataset; nodata=NaN, mask::pVoid=C_NULL, maxdist=0, nsmooth=0, progress::pVoid=C_NULL, kw...)
+		nbd = (GMT.find_in_kwargs(kw, [:band])[1] !== nothing) ? kw[:band] : 1
+		bd = getband(dataset, nbd)
+		(getnodatavalue(bd) === nothing) && setnodatavalue!(bd, nodata)
+		(GDALFillNodata(bd.ptr, mask, maxdist, 0, nsmooth, String[], progress, C_NULL) != 0) && error("Failed to fill nodata")
+		return nothing
+	end
+	gdalfillnodata!(ds::IDataset; nodata=NaN, mask::pVoid=C_NULL, maxdist=0, nsmooth=0, progress::pVoid=C_NULL, kw...) =
+		gdalfillnodata!(Dataset(ds.ptr); nodata=nodata, mask=mask, maxdist=maxdist, nsmooth=nsmooth, progress=progress, kw...)
 
 #=
 	for gdalfunc in (:boundary, :buffer, :centroid, :clone, :convexhull, :create, :createcolortable,
@@ -2471,7 +2485,7 @@ end
 		getband, getdriver, getlayer, getproj, getgeom, getgeotransform, toPROJ4, toWKT, importPROJ4,
 		importWKT, importEPSG, gdalinfo, gdalwarp, gdaldem, gdaltranslate, gdalgrid, gdalvectortranslate, ogr2ogr,
 		gdalrasterize, gdalbuildvrt, readraster, setgeotransform!, setproj!, destroy, arcellipse, arccircle,
-		delaunay, dither, buffer, centroid, intersection, intersects, polyunion, fromWKT,
+		delaunay, dither, buffer, centroid, intersection, intersects, polyunion, fromWKT, fillnodata!, fillnodata,
 		concavehull, convexhull, difference, symdifference, distance, geomarea, pointalongline, polygonize, simplify,
 		boundary, crosses, disjoint, equals, envelope, envelope3d, geomlength, overlaps, touches, within,
 		wkbUnknown, wkbPoint, wkbPointZ, wkbLineString, wkbPolygon, wkbMultiPoint, wkbMultiPointZ, wkbMultiLineString,
