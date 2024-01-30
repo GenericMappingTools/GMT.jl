@@ -48,6 +48,52 @@ function gdalwarp(indata, opts=String[]; dest="/vsimem/tmp", kwargs...)
 	helper_run_GDAL_fun(gdalwarp, indata, dest, opts, "", kwargs...)
 end
 
+"""
+    fillnodata!(data::GItype; nodata=nothing, kwargs...)
+
+Fill selected raster regions by interpolation from the edges.
+
+### Parameters
+- `indata`:  Input data. It can be a file name, a GMTgrid or GMTimage object.
+- `nodata`: The nodata value that will be used to fill the regions. Otherwise use the `nodata` attribute of `indata`
+   if it exists, or NaN if none of the above were set.
+- `kwargs`:
+  - band: the band number. Default is first layer in `indata` 
+  - maxdist: the maximum number of cels to search in all directions to find values to interpolate from. Default, fills all.
+  - nsmooth: the number of 3x3 smoothing filter passes to run (0 or more).
+
+### Returns
+The modified input `data`
+"""
+function fillnodata!(indata::GMT.GItype; nodata=nothing, kwargs...)
+	d = GMT.KW(kwargs)
+	d[:nodata] = (nodata !== nothing) ? nodata : isa(indata, GMT.GItype) ? indata.nodata : NaN
+	helper_run_GDAL_fun(gdalfillnodata!, indata, "", String[], "", d...)
+end
+
+"""
+    GI = fillnodata(data::String; nodata=nothing, kwargs...)
+
+Fill selected raster regions by interpolation from the edges.
+
+### Parameters
+- `indata`:  Input data. The file name of a grid or image that can be read with `gmtread`.
+- `nodata`: The nodata value that will be used to fill the regions. Otherwise use the `nodata` attribute of `indata`
+   if it exists, or NaN if none of the above were set.
+- `kwargs`:
+  - band: the band number. Default is first layer in `indata` 
+  - maxdist: the maximum number of cels to search in all directions to find values to interpolate from. Default, fills all.
+  - nsmooth: the number of 3x3 smoothing filter passes to run (0 or more).
+
+### Returns
+A GMTgrid or GMTimage object with the `band` nodata values filled by interpolation.
+"""
+function fillnodata(indata::String; nodata=nothing, kwargs...)
+	indata = gmtread(indata)
+	fillnodata!(indata; nodata=nothing, kwargs...)
+	return indata
+end
+
 # ---------------------------------------------------------------------------------------------------
 """
     gdaldem(dataset, method, options=String[]; dest="/vsimem/tmp", colorfile=name|GMTcpt, kw...)
@@ -159,7 +205,7 @@ function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::St
 	_cmap = C_NULL
 	if (f == gdaldem && ((cmap = GMT.find_in_dict(d, GMT.CPTaliases)[1])) !== nothing)
 		_cmap = GMT.tmpdir_usr[1] * "/GMTjl_cpt_" * GMT.tmpdir_usr[2] * ".cpt"
-		if ( (isa(cmap, String) && (lowercase(splitext(cmap)[2][2:end]) == "cpt")) || isa(cmap, GMT.GMTcpt) )
+		if ((isa(cmap, String) && (lowercase(splitext(cmap)[2][2:end]) == "cpt")) || isa(cmap, GMT.GMTcpt))
 			save_cpt4gdal(cmap, _cmap)	# GDAL pretend to recognise CPTs but it almost doesn't
 		else
 			_cmap = cmap				# Risky, assume it's something GDAL can read
@@ -174,7 +220,18 @@ function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::St
 
 	CPLPushErrorHandler(@cfunction(CPLQuietErrorHandler, Cvoid, (UInt32, Cint, Cstring)))
 	#setconfigoption("CPL_LOG_ERRORS", "ON")
-	o = (method == "") ? f(dataset, opts; dest=dest, gdataset=true) : f(dataset, method, opts; dest=dest, gdataset=true, colorfile=_cmap)
+
+	if (f == gdalfillnodata!)			# This guy has its own peculiarities
+		f(dataset; d...)
+		if (indata.layout[2] == 'C')	# Here a copy has been made so to be comsistent with the ! we must change input
+			o = gd2gmt(dataset)
+			indata.z, indata.hasnans, indata.layout = o.z, 1, o.layout
+		end
+		return nothing
+	else
+		o = (method == "") ? f(dataset, opts; dest=dest, gdataset=true) : f(dataset, method, opts; dest=dest, gdataset=true, colorfile=_cmap)
+	end
+
 	(o !== nothing && o.ptr == C_NULL) && error("$(f) returned a NULL pointer.")
 	if (o !== nothing)
 		# If not explicitly stated to return a GDAL datase, return a GMT type
