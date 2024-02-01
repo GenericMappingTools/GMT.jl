@@ -4044,7 +4044,7 @@ function helper_showfig4modern(show::String="show")::Bool
 	IamModern[1] = false
 	call_display = false
 	(isJupyter[1] && show != "") && (show = ""; call_display = true)
-	(isFranklin[1] || show == "") ? gmt("end") : gmt("end " * show)		# isFranklin = true when building the docs
+	(isFranklin[1] || show == "") ? gmt("end") : (gmt("end " * show); CURRENT_CPT[1] = GMTcpt())	# isFranklin = true for docs
 	isPSclosed[1] = true
 	desconf(false)		# FALSE because modern mode calls do a gmt_restart() in the gmt() main function.
 	call_display && showfig()		# Fragile. How to assert that modern_fname is not empty?
