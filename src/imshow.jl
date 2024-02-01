@@ -110,7 +110,9 @@ function imshow(arg1::GMTgrid; kw...)
 
 	if (!docube && (flat || (opt_p == "" && !have_tilles)))
 		(flat && opt_p != "") && (d[:p] = opt_p[4:end])		# Restore the meanwhile deleted -p option
-		if ((n_levels = size(arg1, 3)) > 1)
+		if (size(arg1, 3) > 1 && ((val = find_in_dict(d, [:slice])[1]) !== nothing))	# Plot just one slice of the cube
+			R = grdimage(slicecube(arg1, val); show=see, d...)
+		elseif ((n_levels = size(arg1, 3)) > 1)
 			nc::Int = ((val = find_in_dict(d, [:col :cols :columns])[1]) !== nothing) ? val : 2	# Number of subplot columns
 			nl = div(n_levels, nc)
 			(rem(n_levels, nc) != 0) && (nl += 1)
