@@ -22,10 +22,10 @@ The fields of this struct are:
 - `y::Vector{Float64}`:                 [1 x n_rows]    vector with YY coordinates
 - `v::Union{Vector{<:Real}, Vector{String}}`:    [v x n_bands]   vector with VV (vertical for 3D grids) coordinates
 - `z::Array{T,N}`:                      [n_rows x n_columns] grid array
-- `x_units::String`:                    Units of XX axis (Optional)
-- `y_units::String`:                    Units of YY axis (Optional)
-- `v_units::String`:                    Units of Vertical axis (Optional)
-- `z_units::String`:                    Units of z vlues (Optional)
+- `x_unit::String`:                     Units of XX axis (Optional)
+- `y_unit::String`:                     Units of YY axis (Optional)
+- `v_unit::String`:                     Units of Vertical axis (Optional)
+- `z_unit::String`:                     Units of z vlues (Optional)
 - `layout::String`:                     A three character string describing the grid memory layout
 - `scale::Union{Float64, Float32}=1f0`: When saving in file apply `z = z * scale + offset`
 - `offset::Union{Float64, Float32}=0f0`
