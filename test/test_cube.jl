@@ -46,3 +46,4 @@ xyzw2cube("test_cube_ascii_rowmaj.dat")[:,:,1] == [10.0  10.0  10.0; 10.0  10.0 
 xyzw2cube("test_cube_ascii_colmaj.dat")[:,:,1] == [10.0  10.0  10.0; 10.0  10.0  10.0]
 xyzw2cube("test_cube_ascii_rowlevmaj.dat")[:,:,2] == [20.0  20.0  20.0; 20.0  20.0  20.0]
 xyzw2cube("test_cube_ascii_collevmaj.dat")[:,:,2] == [20.0  20.0  20.0; 20.0  20.0  20.0]
+xyzw2cube(gmtread("test_cube_ascii_rowmaj.dat"))[:,:,1] == [10.0  10.0  10.0; 10.0  10.0  10.0]

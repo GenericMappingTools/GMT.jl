@@ -1355,8 +1355,12 @@ end
 const cubeslice = slicecube		# I'm incapable of remembering which one it is.
 # ---------------------------------------------------------------------------------------------------
 """
-    xyzw2cube(fname::AbstractString; datatype::DataType=Float32, proj4::String="", wkt::String="",
-	          epsg::Int=0, tit::String="", names::Vector{String}=String[])
+    xyzw2cube(fname::AbstractString; zcol::Int=4, datatype::DataType=Float32, proj4::String="", wkt::String="",
+	          epsg::Int=0, tit::String="", names::Vector{String}=String[], varnames::Vector{String}=String[])
+or
+
+    xyzw2cube(D::GMTdataset; zcol::Int=4, datatype::DataType=Float32, tit::String="",
+	          names::Vector{String}=String[], varnames::Vector{String}=String[])
 
 Convert data table containing a cube into a GMTgrid cube. The input data must contain a completelly filled
 3D matrix and the data layout is guessed from file analysis (if it fails ... bad chance). 
@@ -1369,31 +1373,65 @@ Convert data table containing a cube into a GMTgrid cube. The input data must co
   - `wkt`:  Projection given as a WKT SRS.
   - `epsg`: Same as `proj` but using an EPSG code
   - `names`: used to give a description for each layer (also saved to file when using a GDAL function).
+  - `varnames`: A string vector with the names of the variables in the cube. By default we get those from the
+    column names (when available). Example: `varnames=["lon", "lat", "depth", "temp"]`.	
+  - `zcol`: The column number where the z values are stored. The default is 4. Use a higher number if the
+    data set has more than 4 columns and you want to use one of those last columns as z values.
 
 ### Returns
 A GMTgrid cube object.
 """
-function xyzw2cube(fname::AbstractString="ALL_dRho.dat"; datatype::DataType=Float32, proj4::String="",
-	wkt::String="", epsg::Int=0, tit::String="", names::Vector{String}=String[])
+function xyzw2cube(fname::AbstractString; zcol::Int=4, datatype::DataType=Float32, proj4::String="",
+	wkt::String="", epsg::Int=0, tit::String="", names::Vector{String}=String[], varnames::Vector{String}=String[])
 	# Convert a cube stored in a text file into GMTgrid (cube).
-	function examine_col(fname, col)
-		x = gmtread(fname, T="d", i=col);
-		mima = extrema(x)
-		n = length(x)
-		d = x[2] - x[1]
-		(d != 0) && return mima, d, n, true
-		k = 1
-		while (x[k] == x[k+=1]) end
-		d = x[k] - x[k-1]
-		(d != 0) && return mima, d, n, false
-	end
 
-	mima_X, dx, n, rowmajor = examine_col(fname, 0)
+	xy = gmtread(fname, data=true, i="0,1")
+	mima_X, mima_Y = xy.bbox[1:2], xy.bbox[3:4]
+	xy_colnames = (!isempty(xy.colnames) && !startswith(xy.colnames[1], "col")) ? xy.colnames : String[]
+
+	dx, n, rowmajor = helper1_xyzw2grid(view(xy, :,1))
 	n_cols = round(Int, (mima_X[2] - mima_X[1]) / dx) + 1
-	mima_Y, dy, _, colmajor = examine_col(fname, 1)
+	dy, _, colmajor = helper1_xyzw2grid(view(xy, :,2))
 	n_rows = round(Int, (mima_Y[2] - mima_Y[1]) / dy) + 1
 
-	w = gmtread(fname, T="d", i=2);
+	xy = gmtread(fname, data=true, i="2,$(zcol-1)")
+	cube, v = helper2_xyzw2grid(view(xy, :,1), view(xy, :,2), n, n_rows, n_cols, rowmajor, colmajor, datatype)
+	x_unit, y_unit, v_unit, z_unit = helper3_xyzw2grid(varnames, xy_colnames, xy.colnames, proj4, wkt, epsg)
+
+	mat2grid(cube, linspace(mima_X[1],mima_X[2],n_cols), linspace(mima_Y[1],mima_Y[2],n_rows), v; proj4=proj4, wkt=wkt, epsg=epsg, tit=tit, names=names, x_unit=x_unit, y_unit=y_unit, v_unit=v_unit, z_unit=z_unit)
+end
+
+# Version with a GMTdataset
+function xyzw2cube(D::GMTdataset; zcol::Int=4, datatype::DataType=Float32, tit::String="",
+                   names::Vector{String}=String[], varnames::Vector{String}=String[])
+
+	(size(D,2) < 4) && error("The dataset must contain at least 4 columns (x,y,z,w)")
+	mima_X, mima_Y = D.bbox[1:2], D.bbox[3:4]
+	xy_colnames = (!isempty(D.colnames) && !startswith(D.colnames[1], "col")) ? D.colnames[1:2] : String[]
+	wz_colnames = (!isempty(D.colnames) && !startswith(D.colnames[1], "col")) ? [D.colnames[3], D.colnames[zcol]] : String[]
+
+	dx, n, rowmajor = helper1_xyzw2grid(view(D, :,1))
+	n_cols = round(Int, (mima_X[2] - mima_X[1]) / dx) + 1
+	dy, _, colmajor = helper1_xyzw2grid(view(D, :,2))
+	n_rows = round(Int, (mima_Y[2] - mima_Y[1]) / dy) + 1
+
+	cube, v = helper2_xyzw2grid(view(D, :,3), view(D, :,zcol), n, n_rows, n_cols, rowmajor, colmajor, datatype)
+	x_unit, y_unit, v_unit, z_unit = helper3_xyzw2grid(varnames, xy_colnames, wz_colnames, D.proj4, D.wkt, D.epsg)
+
+	mat2grid(cube, linspace(mima_X[1],mima_X[2],n_cols), linspace(mima_Y[1],mima_Y[2],n_rows), v; proj4=D.proj4, wkt=D.wkt, epsg=D.epsg, tit=tit, names=names, x_unit=x_unit, y_unit=y_unit, v_unit=v_unit, z_unit=z_unit)
+end
+
+function helper1_xyzw2grid(x)
+	n = length(x)
+	d = x[2] - x[1]
+	(d != 0) && return d, n, true
+	k = 1
+	while (x[k] == x[k+=1]) end
+	d = x[k] - x[k-1]
+	(d != 0) && return d, n, false
+end
+
+function helper2_xyzw2grid(w,z, n, n_rows, n_cols, rowmajor, colmajor, datatype)
 	t = n / (n_rows * n_cols)
 	frac = getdecimal(t)		# Get the fractional/decimal part of t 
 	(frac != 0.) && error("This file does not have the full 3D elements. Implementation for this is not yet ... implemented.")
@@ -1405,7 +1443,6 @@ function xyzw2cube(fname::AbstractString="ALL_dRho.dat"; datatype::DataType=Floa
 	v[end] = w[end]		# We didn't compute v[end] in the for loop
 	levmajor = ((w[2] - w[1]) != 0)		#Is it 'level-major'?
 
-	z = gmtread(fname, T="d", i=3);
 	cube = Array{datatype,3}(undef, n_rows, n_cols, n_levs)
 	j = 0
 	if (rowmajor && !levmajor)
@@ -1427,8 +1464,20 @@ function xyzw2cube(fname::AbstractString="ALL_dRho.dat"; datatype::DataType=Floa
 			end
 		end
 	end
+	return cube, v
+end
 
-	mat2grid(cube, linspace(mima_X[1],mima_X[2],n_cols), linspace(mima_Y[1],mima_Y[2],n_rows), v; proj4=proj4, wkt=wkt, epsg=epsg, tit=tit, names=names)
+function helper3_xyzw2grid(varnames, xy_colnames, wz_colnames, proj4, wkt, epsg)
+	# Seek for the names/units of the x, y, w and z variables
+	if (isgeog(proj4) || isgeog(wkt) || isgeog(epsg))
+		x_unit, y_unit = "lon", "lat"
+	else
+		x_unit = (length(varnames) > 0) ? varnames[1] : !isempty(xy_colnames) ? xy_colnames[1] : ""
+		y_unit = (length(varnames) > 1) ? varnames[2] : !isempty(xy_colnames) ? xy_colnames[2] : ""
+	end
+	v_unit = (length(varnames) > 2) ? varnames[3] : !isempty(wz_colnames) ? wz_colnames[1] : ""
+	z_unit = (length(varnames) > 3) ? varnames[4] : !isempty(wz_colnames) ? wz_colnames[2] : ""
+	return x_unit, y_unit, v_unit, z_unit
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -1625,9 +1674,9 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    G = mat2grid(mat; reg=nothing, x=[], y=[], v=[], hdr=[], proj4::String="",
-                 wkt::String="", title::String="", rem::String="", cmd::String="",
-                 names::Vector{String}=String[], scale::Float32=1f0, offset::Float32=0f0)
+    G = mat2grid(mat; reg=nothing, x=[], y=[], v=[], hdr=[], proj4::String="", wkt::String="",
+                 title::String="", rem::String="", cmd::String="", names::Vector{String}=String[],
+                 scale::Float32=1f0, offset::Float32=0f0)
 
 Take a 2/3D `mat` array and a HDR 1x9 [xmin xmax ymin ymax zmin zmax reg xinc yinc] header descriptor and 
 return a grid GMTgrid type. Alternatively to HDR, provide a pair of vectors, `x` & `y`, with the X and Y coordinates.
@@ -1645,7 +1694,7 @@ Other methods of this function do:
     G = mat2grid([val]; hdr=hdr_vec, reg=nothing, proj4::String="", wkt::String="", title::String="", rem::String="")
 
 Create Float GMTgrid with size, coordinates and increment determined by the contents of the HDR var. This
-array, which is now MANDATORY, has either the same meaning as above OR, alternatively, containng only
+array, which is now MANDATORY, has either the same meaning as above OR, alternatively, containing only
 [xmin xmax ymin ymax xinc yinc]
 VAL is the value that will be fill the matrix (default VAL = Float32(0)). To get a Float64 array use, for
 example, VAL = 1.0 Any other non Float64 will be converted to Float32
@@ -1670,7 +1719,8 @@ creates a Float32 GMTgrid.
 """
 function mat2grid(val::Real=Float32(0); reg=nothing, hdr=Float64[], proj4::String="", proj::String="",
                   wkt::String="", epsg::Int=0, geog::Int=-1, title::String="", tit::String="", rem::String="",
-                  names::Vector{String}=String[])
+                  names::Vector{String}=String[], x_unit::String="", y_unit::String="", v_unit::String="",
+				  z_unit::String="")
 
 	isempty(hdr) && error("When creating grid type with no data the 'hdr' arg cannot be missing")
 	(eltype(hdr) != Float64) && (hdr = Float64.(hdr))
@@ -1687,20 +1737,19 @@ end
 istransposed(mat) = !isempty(fields(mat)) && (fields(mat)[1] == :parent)
 
 mat2grid(mat, xx, yy, zz=Float64[];
-         reg=nothing, hdr=Float64[], proj4::String="", proj::String="", wkt::String="", epsg::Int=0, geog::Int=-1, title::String="", tit::String="", rem::String="", cmd::String="", names::Vector{String}=String[], scale::Real=1f0, offset::Real=0f0, layout::String="", is_transposed::Bool=false, z_units::String="") =
+         reg=nothing, hdr=Float64[], proj4::String="", proj::String="", wkt::String="", epsg::Int=0, geog::Int=-1, title::String="", tit::String="", rem::String="", cmd::String="", names::Vector{String}=String[], scale::Real=1f0, offset::Real=0f0, layout::String="", is_transposed::Bool=false, x_unit::String="", y_unit::String="", v_unit::String="", z_unit::String="") =
 	mat2grid(mat; x=xx, y=yy, v=zz, reg=reg, hdr=hdr, proj4=proj4, proj=proj, wkt=wkt, epsg=epsg, geog=geog,
-	         title=title, tit=tit, rem=rem, cmd=cmd, names=names, scale=scale, offset=offset, layout=layout, is_transposed=is_transposed, z_units=z_units)
+	         title=title, tit=tit, rem=rem, cmd=cmd, names=names, scale=scale, offset=offset, layout=layout, is_transposed=is_transposed, x_unit=x_unit, y_unit=y_unit, v_unit=v_unit, z_unit=z_unit)
 
 #function mat2grid(mat, xx=Float64[], yy=Float64[], zz=Float64[]; reg=nothing,
-function mat2grid(mat; reg=nothing, x=Float64[], y=Float64[], v=Float64[], hdr=Float64[], proj4::String="",
-                  proj::String="", wkt::String="", epsg::Int=0, geog::Int=-1, title::String="", tit::String="",
-                  rem::String="", cmd::String="", names::Vector{String}=String[], scale::Real=1f0,
-                  offset::Real=0f0, layout::String="", is_transposed::Bool=false, z_units::String="")
+function mat2grid(mat; reg=nothing, x=Float64[], y=Float64[], v=Float64[], hdr=Float64[], proj4::String="", proj::String="",
+                  wkt::String="", epsg::Int=0, geog::Int=-1, title::String="", tit::String="", rem::String="", cmd::String="",
+                  names::Vector{String}=String[], scale::Real=1f0, offset::Real=0f0, layout::String="", is_transposed::Bool=false,
+                  x_unit::String="x", y_unit::String="y", v_unit::String="v", z_unit::String="z")
 	# Take a 2/3D array and turn it into a GMTgrid
 
 	israsters(mat) && return rasters2grid(mat, scale=scale, offset=offset)
 	(fields(mat) == (:x, :y, :density)) && return kde2grid(mat)		# A KernelDensity type
-	#!isa(mat[2], Real) && error("input matrix must be of Real numbers")
 	(isempty(proj4) && !isempty(proj)) && (proj4 = proj)	# Allow both proj4 or proj keywords
 	if (!isempty(proj4) && !startswith(proj4, "+proj=") && !startswith(proj4, "proj="))
 		proj4 = "+proj=" * proj4		# NOW I SHOULD TEST THIS IS A VALID PROJ4 STRING. BUT HOW?
@@ -1712,9 +1761,6 @@ function mat2grid(mat; reg=nothing, x=Float64[], y=Float64[], v=Float64[], hdr=F
 	elseif (isa(reg, Real))
 		reg_ = (reg == 0) ? 0 : 1
 	end
-	#(isempty(x) && !isempty(xx)) && (x = vec(xx))
-	#(isempty(y) && !isempty(yy)) && (y = vec(yy))
-	#(isempty(v) && !isempty(zz)) && (v = vec(zz))
 	x, y, hdr, x_inc, y_inc = grdimg_hdr_xy(mat, reg_, hdr, x, y, is_transposed)
 
 	# Now we still must check if the method with no input MAT was called. In that case mat = [nothing val]
@@ -1737,7 +1783,7 @@ function mat2grid(mat; reg=nothing, x=Float64[], y=Float64[], v=Float64[], hdr=F
 	_layout = (layout == "") ? "BCB" : layout
 	(geog == -1 && helper_geod(proj4, wkt, epsg, false)[3]) && (geog = (range[2] <= 180) ? 1 : 2)	# Signal if grid is geog.
 	(tit == "") && (tit = title)		# Some versions from 1.2 remove 'tit'
-	GMTgrid(proj4, wkt, epsg, geog, range, inc, reg_, NaN, tit, rem, cmd, "", names, vec(x), vec(y), vec(v), isT ? copy(mat) : mat, "x", "y", "v", z_units, _layout, scale, offset, 0, hasnans)
+	GMTgrid(proj4, wkt, epsg, geog, range, inc, reg_, NaN, tit, rem, cmd, "", names, vec(x), vec(y), vec(v), isT ? copy(mat) : mat, x_unit, y_unit, v_unit, z_unit, _layout, scale, offset, 0, hasnans)
 end
 
 # This method creates a new GMTgrid but retains all the header data from the GI object
@@ -1751,7 +1797,8 @@ function mat2grid(mat::Array{T,N}, GI::GItype) where {T,N}
 	Go
 end
 
-mat2grid(f::Function, xx::AbstractVector{<:Float64}, yy::AbstractVector{<:Float64}; reg=nothing, proj4::String="", proj::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="") = mat2grid(f; x=xx, y=yy, reg=reg, proj4=proj4, proj=proj, wkt=wkt, epsg=epsg, tit=tit, rem=rem)
+mat2grid(f::Function, xx::AbstractVector{<:Float64}, yy::AbstractVector{<:Float64}; reg=nothing, proj4::String="", proj::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="") =
+	mat2grid(f; x=xx, y=yy, reg=reg, proj4=proj4, proj=proj, wkt=wkt, epsg=epsg, tit=tit, rem=rem)
 
 function mat2grid(f::Function; reg=nothing, x::AbstractVector{<:Float64}=Float64[], y::AbstractVector{<:Float64}=Float64[], proj4::String="", proj::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="")
 	(isempty(x) || isempty(y)) && error("Must transmit the domain coordinates over which to calculate function.")

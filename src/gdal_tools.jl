@@ -48,6 +48,7 @@ function gdalwarp(indata, opts=String[]; dest="/vsimem/tmp", kwargs...)
 	helper_run_GDAL_fun(gdalwarp, indata, dest, opts, "", kwargs...)
 end
 
+# ---------------------------------------------------------------------------------------------------
 """
     fillnodata!(data::GItype; nodata=nothing, kwargs...)
 
@@ -71,8 +72,9 @@ function fillnodata!(indata::GMT.GItype; nodata=nothing, kwargs...)
 	helper_run_GDAL_fun(gdalfillnodata!, indata, "", String[], "", d...)
 end
 
+# ---------------------------------------------------------------------------------------------------
 """
-    GI = fillnodata(data::String; nodata=nothing, kwargs...)
+    GI = fillnodata(data::String; nodata=nothing, kwargs...) -> GMTgrid or GMTimage
 
 Fill selected raster regions by interpolation from the edges.
 
@@ -89,7 +91,7 @@ Fill selected raster regions by interpolation from the edges.
 A GMTgrid or GMTimage object with the `band` nodata values filled by interpolation.
 """
 function fillnodata(indata::String; nodata=nothing, kwargs...)
-	indata = gmtread(indata)
+	indata = gmtread(indata, layout="TRB")
 	fillnodata!(indata; nodata=nothing, kwargs...)
 	return indata
 end
@@ -223,10 +225,8 @@ function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::St
 
 	if (f == gdalfillnodata!)			# This guy has its own peculiarities
 		f(dataset; d...)
-		if (indata.layout[2] == 'C')	# Here a copy has been made so to be comsistent with the ! we must change input
-			o = gd2gmt(dataset)
-			indata.z, indata.hasnans, indata.layout = o.z, 1, o.layout
-		end
+		o = gd2gmt(dataset)
+		indata.z, indata.hasnans, indata.layout = o.z, 1, o.layout
 		return nothing
 	else
 		o = (method == "") ? f(dataset, opts; dest=dest, gdataset=true) : f(dataset, method, opts; dest=dest, gdataset=true, colorfile=_cmap)

@@ -1388,12 +1388,14 @@ function print_crs(GID, saysomething=false)
 end
 
 """
-### `info(GI, showdata::Bool=true; crs::Bool=false)`
+### `info(GI, showdata::Bool=true; data=true, full=false, crs::Bool=false)`
 
 Shows information about the `GI` grid or image that includes dimensional and, if exists, referencing data.
 
 - `showdata`: Boolean that controls if a small array subset is printed or not.
+  Alternatively, use `data=false` as a synonym for not showing the data array.
 - `crs`: Boolean that if `true` only prints the referencing information.
+- `full`: For grids print also some more type metadata (var names, etc).
 
 ### `info(D::GDtype; crs::Bool=false, attribs=false, att="")`
 
@@ -1411,8 +1413,9 @@ Shows information about the `D` GMTdataset (or vector of them).
 
 Runs ``show(stdout, "text/plain", any)`` which prints all elements of `any`. Good for printing the entire vector or matrix.
 """
-function info(GI::GItype, showdata::Bool=true; crs::Bool=false)
+function info(GI::GItype, showdata::Bool=true; data=true, full=false, crs::Bool=false)
 	crs && return print_crs(GI)
+	(data != 1) && (showdata = false)
 	isa(GI, GMTimage) ? println("A GMTimage object with $(size(GI,3)) bands of type $(eltype(GI))") :
 	                    println("A GMTgrid object with $(size(GI,3)) layers of type $(eltype(GI))")
 	!all(isempty.(GI.names)) && [println('\t',name) for name in GI.names]
@@ -1425,6 +1428,10 @@ function info(GI::GItype, showdata::Bool=true; crs::Bool=false)
 	print_ranges(GI)
 	(isa(GI, GMTgrid) && GI.scale != 1) && println("Scale, Offset: ", GI.scale, "\t", GI.offset)
 	println("Mem layout:\t", GI.layout)
+	if (isa(GI, GMTgrid) && full == 1)
+		println("Nodata: ", GI.nodata, "\tHas nodata: ", GI.hasnans, "\tPad: ", GI.pad)
+		println("x_unit: ", GI.x_unit, "\ty_unit: ", GI.y_unit, "\tz_unit: ", GI.z_unit, "\tv_unit: ", GI.v_unit)
+	end
 	print_crs(GI)
 	showdata && (isa(GI, GMTgrid) ? display(GI.z) : display(GI.image))
 	return nothing

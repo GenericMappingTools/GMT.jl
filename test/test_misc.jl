@@ -261,7 +261,7 @@
 	G = GMT.peaks();
 	setsrs!(G, prj="geog")
 	setcoords!(G, x=[0,10], y=[5,15])
-	info(GMT.peaks(N=2));
+	info(GMT.peaks(N=2), full=true);
 	info(mat2ds(rand(2,3), multi=true));
 	grdcontour(G, cont=1, annot=2, axis="a")
 	cpt = makecpt(T="-6/8/1");      # Create the color map
