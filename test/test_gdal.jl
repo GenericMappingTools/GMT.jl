@@ -302,6 +302,7 @@ Gdal.GDALDestroyDriverManager()
 	G = GMT.peaks()
 	G[10:15, 15:20] .= NaN;
 	fillnodata!(G);
+	@test GMT.isgeog(4326) == true
 
 	gdaldrivers(:vec, out=true);
 end
