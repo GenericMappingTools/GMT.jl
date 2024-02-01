@@ -1414,6 +1414,12 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 		GDALClose(ds.ptr)
 		return (!proj4) ? prj : startswith(prj, "PROJCS") ? toPROJ4(importWKT(prj)) : prj
 	end
+	function getproj(epsg::Int; proj4::Bool=false, wkt::Bool=false)
+		epsg == 0 && return ""
+		(wkt)   && return epsg2wkt(epsg)
+		(proj4) && return epsg2proj(epsg)
+		return ""
+	end
 	function _getproj(G_I, proj4::Bool, wkt::Bool, epsg::Bool)
 		prj::String, _prj::Int = "", 0
 		if (proj4)
