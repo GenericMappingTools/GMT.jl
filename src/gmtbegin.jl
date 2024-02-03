@@ -17,6 +17,7 @@ function gmtbegin(name::String=""; fmt=nothing, verbose=nothing)
 	IamModern[1], IamSubplot[1] = false, false
 	FirstModern[1] = true			# To know if we need to compute -R in plot. Due to a GMT6.0 BUG
 	isJupyter[1] = isdefined(Main, :IJulia)		# show fig relies on this
+	!isJupyter[1] && (isJupyter[1] = (isdefined(Main, :VSCodeServer) && get(ENV, "DISPLAY_IN_VSC", "") != ""))
 	gmt(cmd)
 	return nothing
 end
