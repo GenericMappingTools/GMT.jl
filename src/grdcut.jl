@@ -168,9 +168,9 @@ function axes2pix(xy, dims, x, y, reg=0, layout::String="TC")
 	row_dim, col_dim = (layout == "" || layout[2] == 'C') ? (1,2) : (2,1)	# If RowMajor the array is transposed 
 	#row_dim, col_dim = 1,2
 	one_or_zero = (reg == 0) ? 1.0 : 0.0
-	slope = (dims[col_dim] - one_or_zero) / (x[end] - x[1])
+	slope = (dims[col_dim] - one_or_zero) / (x[end] - x[1]);	isnan(slope) && (slope = 1.0)	# Vertical slices of a cube
 	pix_x = round.(Int, slope .* (xy[:,1] .- x[1]) .+ [1.0, one_or_zero])
-	slope = (dims[row_dim] - one_or_zero) / (y[end] - y[1])
+	slope = (dims[row_dim] - one_or_zero) / (y[end] - y[1]);	isnan(slope) && (slope = 1.0)
 	pix_y = round.(Int, slope .* (xy[:,2] .- y[1]) .+ [1.0, one_or_zero])
 
 	#=

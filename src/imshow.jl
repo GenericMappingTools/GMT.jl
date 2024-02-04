@@ -93,6 +93,11 @@ function imshow(arg1, x::AbstractVector{Float64}=Float64[], y::AbstractVector{Fl
 	end
 end
 
+# If arg1 is a cube:
+# - `col cols columns`: set the number of columns in the mosaic
+# - `slice`: set the single slice to be plotted. `slice` is the same option as in cubeslice.
+# - `titles`: A string vector with pannel titles. Default is the layer names.
+# - `cmap=:same`: uses the same CPT (computed from cube's min/max) for all layers.
 function imshow(arg1::GMTgrid; kw...)
 	# Here the default is to show, but if a 'show' was used let it rule
 	d = KW(kw)
@@ -154,6 +159,9 @@ function imshow(arg1::GMTgrid; kw...)
 				t3 = scan_opt(tv[1], "-B")
 				d[:colorbar] = (D = t2, B = t3)
 				margin = "0.6c/0"
+			end
+			if (((sym = is_in_dict(d, CPTaliases)) !== nothing) && (d[sym] == :same || d[sym] == "same"))
+				d[sym] = makecpt(arg1.range[5], arg1.range[6])		# Use the same CPT for all layers
 			end
 
 			row_axes = (rt !== nothing) ? (left=true, row_title=true) : (left=true, )
