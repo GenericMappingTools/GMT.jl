@@ -90,6 +90,9 @@ function subplot(fim=nothing; stop=false, kwargs...)
 		cmd = guess_panels_size(cmd, val_grid)					# For limitted grid dims, guess panel sizes if not provided
 		(dbg_print_cmd(d, cmd) !== nothing) && return cmd		# Vd=2 cause this return
 
+		isJupyter[1] = isdefined(Main, :IJulia)					# show fig relies on this and at time of "gmt begin" this must be known.
+		!isJupyter[1] && (isJupyter[1] = (isdefined(Main, :VSCodeServer) && get(ENV, "DISPLAY_IN_VSC", "") != ""))
+
 		if (!IamModern[1])			# If we are not in modern mode, issue a gmt("begin") first
 			# Default name (GMTplot.ps) is set in gmt_main()
 			fname = ((val_ = find_in_dict(d, [:fmt])[1]) !== nothing) ? string("GMTplot ", val_) : ""
@@ -109,8 +112,6 @@ function subplot(fim=nothing; stop=false, kwargs...)
 		catch; resetGMT()
 		end
 		IamSubplot[1], IamModern[1] = true, true
-		isJupyter[1] = isdefined(Main, :IJulia)		# show fig relies on this
-		!isJupyter[1] && (isJupyter[1] = (isdefined(Main, :VSCodeServer) && get(ENV, "DISPLAY_IN_VSC", "") != ""))
 	elseif (do_set)
 		(!IamSubplot[1]) && error("Cannot call subplot(set, ...) before setting dimensions")
 		_, pane = parse_c(d, cmd)
