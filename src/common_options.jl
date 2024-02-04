@@ -4216,7 +4216,14 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 		is_pscoast = (startswith(cmd[k], "pscoast") || startswith(cmd[k], "coast"))
 		is_basemap = (startswith(cmd[k], "psbasemap") || startswith(cmd[k], "basemap"))
 		is_plot    = (startswith(cmd[k], "psxy"))
-		if (k >= 1+fi && is_psscale && !isa(args[1], GMTcpt))	# Ex: imshow(I, cmap=C, colorbar=true)
+		args1_is_G, args1_is_I, args1_isnot_C = false, false, false
+		if (k >= 1+fi)		# Using the supposed solution of @isdefined F. doesn't work. "if @isdefined(args)" is not respected.
+			try
+				args1_is_G, args1_is_I, args1_isnot_C = isa(args[1], GMTgrid), isa(args[1], GMTimage), !isa(args[1], GMTcpt)
+			catch
+			end
+		end
+		if (k >= 1+fi && is_psscale && args1_isnot_C)		# Ex: imshow(I, cmap=C, colorbar=true)
 			arg1  = add_opt_cpt(d, cmd[k], CPTaliases, 'C', 0, nothing, nothing, false, false, "", true)[2]
 			(arg1 === nothing && haskey(d, :this_cpt)) && (arg1 = gmt("makecpt -C" * d[:this_cpt]::String))	# May bite back.
 			(arg1 === nothing && isa(args[1], GMTimage) && !isempty(args[1].colormap)) && (arg1 = cmap2cpt(args[1]))
@@ -4224,7 +4231,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 			(arg1.label[1] != "") && (cmd[k] = replace(cmd[k], "-Baf" => "-L0.1c"))	# If it has labels, use them. The gap should be calculated.
 			P = gmt(cmd[k], arg1)
 			continue
-		elseif (k >= 1+fi && (is_pscoast || is_basemap || is_plot) && (isa(args[1], GMTimage) || isa(args[1], GMTgrid)))
+		elseif (k >= 1+fi && (is_pscoast || is_basemap || is_plot) && (args1_is_I || args1_is_G))
 			proj4::String = args[1].proj4
 			(proj4 == "" && args[1].wkt != "") && (proj4 = toPROJ4(importWKT(args[1].wkt)))
 			if (proj4 != "")
