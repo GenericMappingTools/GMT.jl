@@ -19,7 +19,7 @@
 	I1 = mat2img(rand(UInt8,8,8,3));
 	I2 = mat2img(rand(UInt8,8,8,3));
 	I3 = mat2img(rand(UInt8,8,8,3));
-	cubeplot(I1, I2, I3, inset=((I1,I2), .5)
+	cubeplot(I1, I2, I3, inset=((I1,I2), .5))
 
 	cl = coastlinesproj(proj="fouc");
 	grid = graticules(cl);
