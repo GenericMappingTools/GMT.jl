@@ -4692,16 +4692,23 @@ end
 
 # --------------------------------------------------------------------------------------------------
 """
-    frac = interp_vec(x, val)
+    frac = interp_vec(x, val) -> Float64
 
 Returns the positional fraction that `val` ocupies in the `x` vector 
 """
-function interp_vec(x, val)
+function interp_vec(x::AbstractVecOrMat{<:Real}, val::Real)::Float64
 	(val < x[1] || val > x[end]) && error("Interpolating point ($val) is not inside the vector range [$(x[1]) $(x[end])].")
 	k = 0
 	while(val < x[k+=1]) end
 	frac = (val - x[k]) / (x[k+1] - x[k])
 	return k + frac
+end
+function interp_vec(x::AbstractVecOrMat{<:Real}, val::VecOrMat{<:Real})
+	out = Vector{Float64}(undef, length(val))
+	for k = 1:numel(val)
+		out[k] = interp_vec(x, val[k])
+	end
+	return out
 end
 
 # --------------------------------------------------------------------------------------------------
