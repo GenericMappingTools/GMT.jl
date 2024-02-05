@@ -614,6 +614,11 @@ const numel = length
 dec2bin(n::Integer, mindigits::Int=0) = string(n, base=2, pad=mindigits)
 bin2dec(b::Union{AbstractString, Char}) = parse(Int, b, base=2)
 
+function sub2ind(sz, args...)
+	linidx = LinearIndices(sz)
+	getindex.([linidx], args...)
+end
+
 function fileparts(fn::String)
 	pato, ext = splitext(fn)
 	pato, fname = splitdir(pato)

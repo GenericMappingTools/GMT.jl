@@ -1238,7 +1238,7 @@ function slicecube(I::GMTimage, layer::Union{Int, AbstractVector{<:Int}})
 	GMTimage(I.proj4, I.wkt, I.epsg, I.geog, range, copy(I.inc), I.registration, I.nodata, "Gray", I.metadata, names, copy(I.x), copy(I.y), [0.], mat, zeros(Int32,3), String[], 0, Array{UInt8,2}(undef,1,1), I.layout, I.pad)
 end
 
-function slicecube(G::GMTgrid, slice::Union{Int, AbstractVector{<:Int}}; axis="z")
+function slicecube(G::GMTgrid, slice::Union{Int, AbstractVector{<:Int}}; x::VecOrMat{<:Real}=Float64[], y::VecOrMat{<:Real}=Float64[], axis="z")
 	# Method that slices grid cubes. SLICE is the row|col|layer number. AXIS picks the axis to be sliced
 	(ndims(G) < 3 || size(G,3) < 2) && error("This is not a cube grid.")
 	_axis = lowercase(string(axis))
@@ -1251,57 +1251,66 @@ function slicecube(G::GMTgrid, slice::Union{Int, AbstractVector{<:Int}}; axis="z
 	(!isvec && slice[end] > this_size) && error("Last slice number ($(slice[end])) is larger than grid size ($this_size)") 
 
 	isempty(G.v) && (G.v = collect(1:size(G,3)))
+	rng = isvec ? slice : slice:slice
+	colmajor = (G.layout[2] == 'C')
 	if (_axis == "z")
-		G_ = mat2grid(G[:,:,slice], G.x, G.y, isvec ? G.v[slice] : [G.v[slice]], reg=G.registration, is_transposed=(G.layout[2] == 'R'))
+		G_ = mat2grid(G[:,:,slice], G.x, G.y, isvec ? G.v[slice] : [G.v[slice]], reg=G.registration, is_transposed=!colmajor)
 		G_.names = (!isempty(G.names) && !all(G.names .== "")) ? (isvec ? G.names[slice] : [G.names[slice]]) : G.names
 		G_.proj4, G_.wkt, G_.epsg, G_.geog, G_.layout = G.proj4, G.wkt, G.epsg, G.geog, G.layout
 	elseif (_axis == "y")
-		if (G.layout[2] == 'C')  G_ = mat2grid(G[slice,:,:], G.v, G.x, reg=G.registration, names=G.names)
-		else                     G_ = mat2grid(G[:,slice,:], G.x, G.v, reg=G.registration, is_transposed=true, names=G.names)
+		yv = isvec ? G.y[slice] : [G.y[slice]]
+		t = isempty(x) ? [1 colmajor ? size(G,2) : size(G,1)] : round.(Int,interp_vec(G.x, x))
+		ix = t[1]:t[2]
+		if (colmajor)  G_ = mat2grid(G[rng,ix,:], G.x[ix], yv, G.v, reg=G.registration, names=G.names)
+		else           G_ = mat2grid(G[ix,rng,:], G.x[ix], yv, G.v, reg=G.registration, is_transposed=true, names=G.names)
 		end
-		G_.proj4, G_.wkt, G_.epsg, G_.geog, G_.layout = "", "", 0, 0, G.layout
-		G_.v = G_.y;	G_.y = isvec ? G.y[slice] : [G.y[slice]];	# Shift coords vectors since mat2grid doesn't know how-to.
+		G_.proj4, G_.wkt, G_.epsg, G_.geog, G_.layout = "", "", 0, 0, "TRB"
 	else
-		if (G.layout[2] == 'C')  G_ = mat2grid(G[:,slice,:], G.v, G.y, reg=G.registration, names=G.names)
-		else                     G_ = mat2grid(G[slice,:,:], G.y, G.v, reg=G.registration, is_transposed=true, names=G.names)
+		xv = isvec ? G.x[slice] : [G.x[slice]]
+		t = isempty(y) ? [1 colmajor ? size(G,1) : size(G,2)] : round.(Int,interp_vec(G.y, y))
+		iy = t[1]:t[2]
+		if (colmajor)  G_ = mat2grid(G[iy,rng,:], xv, G.y[iy], G.v, reg=G.registration, names=G.names)
+		else           G_ = mat2grid(G[rng,iy,:], xv, G.y[iy], G.v, reg=G.registration, is_transposed=true, names=G.names)
 		end
-		G_.proj4, G_.wkt, G_.epsg, G_.geog, G_.layout = "", "", 0, 0, G.layout
-		G_.v = G_.y;	G_.y = G_.x;	G_.x = isvec ? G.x[slice] : [G.x[slice]];
+		G_.proj4, G_.wkt, G_.epsg, G_.geog, G_.layout = "", "", 0, 0, "TRB"
 	end
 	return G_
 end
 
-function slicecube(G::GMTgrid, slice::AbstractFloat; axis="z")
+function slicecube(G::GMTgrid, slice::AbstractFloat; x::VecOrMat{<:Real}=Float64[], y::VecOrMat{<:Real}=Float64[], axis="z")
 	# Method that slices grid cubes. SLICE is the x|y|z coordinate where to slice. AXIS picks the axis to be sliced
 	(ndims(G) < 3 || size(G,3) < 2) && error("This is not a cube grid.")
 	_axis = lowercase(string(axis))
 
 	which_coord_vec = (_axis == "z") ? G.v : (_axis == "y" ? G.y : G.x)
-	isempty(which_coord_vec) && (which_coord_vec = 1.0:size(G,3))	# To at least have something.
-	x = interp_vec(which_coord_vec, slice)
-	layer = trunc(Int, x)
-	frac = x - layer			# Used for layer interpolation.
-	(frac < 0.1) && return slicecube(G, layer)		# If 'slice' is within 10% of lower or upper layer just
-	(frac > 0.9) && return slicecube(G, layer+1)	# return that layer and do no interpolation between layers.
+	isempty(which_coord_vec) && (which_coord_vec = collect(1.0:size(G,3)))	# To at least have something.
+	xf = interp_vec(which_coord_vec, slice)
+	layer = trunc.(Int, xf)
+	frac = xf .- layer			# Used for layer interpolation.
+	all(frac .< 0.1) && return slicecube(G, layer, axis=_axis, x=x, y=y)	# If 'slice' is within 10% of lower or upper layer just
+	all(frac .> 0.9) && return slicecube(G, layer.+1, axis=_axis, x=x, y=y)	# return that layer and do not interpolation between layers.
 
 	nxy = size(G,1)*size(G,2)
+	l = layer
+	colmajor = (G.layout[2] == 'C')
 	if (_axis == "z")
 		mat = [G[k] + (G[k+nxy] - G[k]) * frac for k = (layer-1)*nxy+1 : layer*nxy]
-		G_ = mat2grid(reshape(mat,size(G,1),size(G,2)), G.x, G.y, [Float64(slice)], reg=G.registration, is_transposed=(G.layout[2] == 'R'))
+		G_ = mat2grid(reshape(mat,size(G,1),size(G,2)), G.x, G.y, [Float64(slice)], reg=G.registration, is_transposed=!colmajor, layout=G.layout)
 	elseif (_axis == "y")
-		if (G.layout[2] == 'C')  mat = G[layer,:,:] .+ (G[layer+1,:,:] .- G[layer,:,:]) .* frac
-		else                     mat = G[:,layer,:] .+ (G[:,layer+1,:] .- G[:,layer,:]) .* frac		# from GDAL
+		t = isempty(x) ? [1 colmajor ? size(G,2) : size(G,1)] : round.(Int,interp_vec(G.x, x))
+		ix = t[1]:t[2]
+		if (colmajor)  mat = G[l:l,ix,:] .+ (G[l+1:l+1,ix,:] .- G[l:l,ix,:]) .* frac
+		else           mat = G[ix,l:l,:] .+ (G[ix,l+1:l+1,:] .- G[ix,l:l,:]) .* frac
 		end
-		G_ = mat2grid(mat, G.x, G.v, reg=G.registration, is_transposed=(G.layout[2] == 'R'))
-		G_.v = G_.y;	G_.y = [Float64(slice)]		# Shift coords vectors since mat2grid doesn't know how-to.
+		G_ = mat2grid(mat, G.x[ix], [G.y[l]], G.v, reg=G.registration, is_transposed=!colmajor, layout="TRB")
 	else
-		if (G.layout[2] == 'C')  mat = G[:,layer,:] .+ (G[:,layer+1,:] .- G[:,layer,:]) .* frac
-		else                     mat = G[layer,:,:] .+ (G[layer+1,:,:] .- G[layer,:,:]) .* frac		# from GDAL
+		t = isempty(y) ? [1 colmajor ? size(G,1) : size(G,2)] : round.(Int,interp_vec(G.y, y))
+		iy = t[1]:t[2]
+		if (colmajor)  mat = G[iy,l:l,:] .+ (G[iy,l+1:l+1,:] .- G[iy,l:l,:]) .* frac
+		else           mat = G[l:l,iy,:] .+ (G[l+1:l+1,iy,:] .- G[l:l,iy,:]) .* frac
 		end
-		G_ = mat2grid(mat, G.y, G.v, reg=G.registration, is_transposed=(G.layout[2] == 'R'))
-		G_.v = G_.y;	G_.y = G_.x;	G_.x = [Float64(slice)]	
+		G_ = mat2grid(mat, [G.x[l]], G.y[iy], G.v, reg=G.registration, is_transposed=!colmajor, layout="TRB")
 	end
-	G_.layout = G.layout
 	return G_
 end
 
@@ -1353,6 +1362,18 @@ function slicecube(GI::GItype; slice::Int=0, α=0.0, angle=0.0, axis="x", cmap=G
 end
 
 const cubeslice = slicecube		# I'm incapable of remembering which one it is.
+
+# ---------------------------------------------------------------------------------------------------
+"""
+"""
+function squeeze(G::GMTgrid)
+	dims = size(G)
+	if ((ind = findfirst(dims .== 1)) !== nothing)
+		(ind == 1) && return mat2grid(reshape(G.z, dims[2], dims[3]), x=G.x, y=G.v, layout="TRB", is_transposed=true)
+		(ind == 2) && return mat2grid(reshape(G.z, dims[1], dims[3]), x=G.y, y=G.v, layout="TRB", is_transposed=true)
+	end
+end
+
 # ---------------------------------------------------------------------------------------------------
 """
     xyzw2cube(fname::AbstractString; zcol::Int=4, datatype::DataType=Float32, proj4::String="", wkt::String="",
@@ -1865,8 +1886,8 @@ function grdimg_hdr_xy(mat, reg, hdr, x=Float64[], y=Float64[], is_transposed=fa
 			x = collect(range(x[1], stop=x[2], length=nx+reg))
 			y = collect(range(y[1], stop=y[2], length=ny+reg))
 		end
-		x_inc = (x[end] - x[1]) / (nx - one_or_zero)
-		y_inc = (y[end] - y[1]) / (ny - one_or_zero)
+		x_inc = (x[end] - x[1]) / (nx - one_or_zero);	isnan(x_inc) && (x_inc = 0.0)	# When vertical slices
+		y_inc = (y[end] - y[1]) / (ny - one_or_zero);	isnan(y_inc) && (y_inc = 0.0)
 		zmin::Float64, zmax::Float64 = extrema_nan(mat)
 		hdr = Float64.([x[1], x[end], y[1], y[end], zmin, zmax])
 	elseif (isempty(hdr))

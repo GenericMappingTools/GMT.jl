@@ -253,7 +253,7 @@ For displaying data frame we do not want string representation of type to be
 longer than `maxwidth`. This function implements rules how type names are
 cropped if they are longer than `maxwidth`.
 """
-function compacttype(T::Type, maxwidth::Int)
+function compacttype(@nospecialize(T::Type), maxwidth::Int)
 	maxwidth = max(8, maxwidth)
 
 	T === Any && return "Any"

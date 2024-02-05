@@ -16,7 +16,10 @@
 	end
 
 	cubeplot(mat2img(rand(UInt8,8,8,3)), p=(145,30), front=false, zsize=10, notop=true, back=true)
-	cubeplot(mat2img(rand(UInt8,8,8,3)), mat2img(rand(UInt8,8,8,3)))
+	I1 = mat2img(rand(UInt8,8,8,3));
+	I2 = mat2img(rand(UInt8,8,8,3));
+	I3 = mat2img(rand(UInt8,8,8,3));
+	cubeplot(I1, I2, I3, inset=((I1,I2), .5))
 
 	cl = coastlinesproj(proj="fouc");
 	grid = graticules(cl);

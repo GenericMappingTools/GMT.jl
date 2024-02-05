@@ -51,6 +51,7 @@
 	GMT.resetGMT()
 	@test GMT.bin2dec("10111") == 23
 	@test GMT.dec2bin(23) == "10111"
+	@test GMT.sub2ind((3,3), [1 2 3 1], [2 2 2 3]) == [4  5  6  7]
 
 	A = [3 1; 3 3; 1 3; 3 2; 2 3; 1 1; 1 2; 2 3; 3 3; 3 3];
 	C, ia, ic = GMT.uniq(A; dims=1);
