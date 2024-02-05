@@ -429,14 +429,14 @@ end
 
 # -----------------------------------------------------------------------------------------------
 """
-    cubeplot(img1::Union{GMTimage, String}, img12::Union{GMTimage, String}="", img1e3::Union{GMTimage, String}="";
+    cubeplot(img1::Union{GMTimage, String}, img2::Union{GMTimage, String}="", img3::Union{GMTimage, String}="";
              back::Bool=false, show=false, notop::Bool=false, kw...)
 
 Plot images on the sides of a cube. Those images can be provided as file names, or GMTimage objects.
 
-- `img1,2,3`: File names or GMTimages of the images to be plotted on the three cube sides. Of those three, only
-  `img1` is mandatory, case in which it will be repeated in the thre visible sides of the cube. If `img1` and
-  `img2`, this second image is plotted on the two vertical sides. When the three images are provided, the first
+- `img1,2,3`: File names or GMTimages of the images to be plotted on the three sides of a cube. Of those three, only
+  `img1` is mandatory, case in which it will be repeated on the three visible sides of the cube. If `img1` and
+  `img2`, the second image is plotted on the two vertical sides. When the three images are provided, the first
   goes to top (or bottom if `back=true`) the second to the *xz* and third to *yz* planes. 
 - `back`: Boolean that defaults to false, meaning that images are printed on the front sides of the cube. If `false`,
   the images are printed in the back sides. Use this option when wanting to plot on the walls of a 3D lines/scatter
@@ -447,16 +447,21 @@ Plot images on the sides of a cube. Those images can be provided as file names, 
 The `kw...` keyword/value options may be used to pass:
 
 - `region`: The limits extents that will be used to annotate the *x,y,z* axes. It uses the same syntax as all
-  other modules that accept this option (*e.g.* ``coast``). It defaults to "0/9/0/9/0/9"
+  other modules that accept this option (*e.g.* ``coast``). It defaults to "0/9/0/9/-9/0"
 - `figsize`: Select the horizontal size(s). Defaults to 15x15 cm.
 - `zsize`: Sets the size of *z* axis in cm. The default is 15.
 - `view`: The view point. Default is `(135,30)`. WARNING: only azimute views from the 4rth quadrant are implemented.
 - `transparency`: Sets the image's transparency level in the [0,1] or [0 100] intervals. Default is opaque.
+- `inset` or `hole`: Draws an inset hole in the cube's Southern wall. This option is a tuple with the form:
+  ``((img1,img2[,img3]), width=?, [depth=?])`` where ``(img1,img2[,img3])`` are the images of the `west`, `north`
+  and, optionally, `bottom` sides of the inset. The `width` and `depth` are the width and depth of the the inset.
+  If `depth` is not provided it defauls to `width`. These values **must** be given in percentage of the cube's width
+  and can be given in the [0-1] or [0-100] interval.
 """
 function cubeplot(fname1::Union{GMTimage, String}, fname2::Union{GMTimage, String}="", fname3::Union{GMTimage, String}=""; back::Bool=false, notop::Bool=false, show=false, kw...)
 	# ...
 	d = KW(kw)
-	opt_R = ((txt::String = parse_R(d, "")[2]) != "") ? txt[4:end] : "0/9/0/9/0/9"
+	opt_R = ((txt::String = parse_R(d, "")[2]) != "") ? txt[4:end] : "0/9/0/9/-9/0"
 	opt_J = ((txt = parse_J(d, "", " ")[2]) != "") ? txt[4:end] : "X15/0";	txt = ""
 	opt_JZ = ((txt = parse_JZ(d, "")[2]) != "") ? txt[5:end] : "15";
 	txt == "" && (CTRL.pocket_J[3] = " -JZ15")
@@ -480,6 +485,27 @@ function cubeplot(fname1::Union{GMTimage, String}, fname2::Union{GMTimage, Strin
 	image!(f2, compact=sideplot(plane=SN, vsize=vsz), t=opt_t)
 	R = image!(f3, compact=sideplot(plane=EW, vsize=vsz), t=opt_t)
 	CTRL.pocket_J[3] = bak
+
+	if ((val = find_in_dict(d, [:hole :inset])[1]) !== nothing)
+		(!isa(val, Tuple) || (!isa(val[1], Tuple) && 2 <= length(val) <= 3)) &&
+			error("The 'inset' option must be a tuple with the form ((img1,img2[,img3]), width=?, [depth=?])")
+		hole_width::Float64 = val[2]
+		hole_depth::Float64 = 0.0
+		(length(val) == 3) && (hole_depth = val[3]; (hole_depth > 1) && (hole_depth /= 100))
+		(hole_width > 1) && (hole_width /= 100)
+		(hole_width > 0.95) && (hole_width = 0.5)	# Must be a funny user
+		f1 = (length(val[1]) == 3) ? val[1][3] : mat2img(fill(UInt8(255), 4, 4, 3))
+
+		azim  = parse(Float64, split(opt_p, '/')[1])
+		width = parse(Float64, split(opt_J[2:end], '/')[1])
+		hole_width, hole_depth = hole_width * width, hole_depth * width
+		xoff  = (width - hole_width) * cosd(azim -90)
+		td = (hole_depth > 0.0) ? "$hole_depth" : "0"		# Found that "/0.0" screws up
+		basemap!(R=opt_R, J="X$(hole_width)/"*td, JZ=opt_JZ, p=opt_p, X=xoff, B=0)
+		image!(f1, compact=sideplot(plane=:B, vsize=vsz), t=opt_t)
+		image!(val[1][1], compact=sideplot(plane=:N, vsize=vsz), t=opt_t)
+		R = image!(val[1][2], compact=sideplot(plane=:W, vsize=vsz), t=opt_t)
+	end
 	see && showfig(d...)
 	return R
 end
