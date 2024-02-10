@@ -20,7 +20,7 @@ Parameters
 - **F** | **box** :: [Type => Str | Number]   `Arg=[+cclearances][+gfill][+i[[gap/]pen]][+p[pen]][+r[radius]][+s[[dx/dy/][shade]]]`
 
     Without further options, draws a rectangular border around the legend using *MAP_FRAME_PEN*.
-- **M** :: [Type => Bool]
+- **M** | **source** :: [Type => Bool]
 
     Modern mode only:
 - **S** | **scale** :: [Type => Number]
@@ -55,7 +55,7 @@ function legend(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	opt_D = parse_type_anchor(d, "", [:D :pos :position],
 	                         (map=("g", arg2str, 1), outside=("J", arg2str, 1), inside=("j", arg2str, 1), norm=("n", arg2str, 1), paper=("x", arg2str, 1), anchor=("", arg2str, 2), width=("+w", arg2str), justify="+j", spacing="+l", offset=("+o", arg2str)), 'j')
-	cmd  = parse_these_opts(cmd, d, [[:C :clearance], [:M], [:S :scale], [:T :leg_file]])
+	cmd  = parse_these_opts(cmd, d, [[:C :clearance], [:M :source], [:S :scale], [:T :leg_file]])
 
 	SHOW_KWARGS[1] && legend_help()
 	(opt_D == "") && error("The `position` argument is mandatory.")

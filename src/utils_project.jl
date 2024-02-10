@@ -343,10 +343,10 @@ Plot grid lines on top of an image created with the `worldrectangular` function.
 
 - `GI`: A GMTgrid or GMTimage data type.
 - `grid`: A vector of GMTdatset with meridians and parallels to be plotted. This is normaly produced
-    by the `graticules()` or `worldrectgrid()` functions.
+   by the `graticules()` or `worldrectgrid()` functions.
 - `annot`: Wether to plot coordinate annotations or not (`annot=false`).
 - `sides`: Which sides of plot to annotate. `W` or `L` means annotate the left side and so on for any
-    combination of "WESNLRBT". To not annotate a particular side just omit that character. *e.g.*
+   combination of "WESNLRBT". To not annotate a particular side just omit that character. *e.g.*
    `sides="WS"` will annotate only the left and bottom axes.
 - `figname`: To create a figure in local directory and with a name `figname`. If `figname` has an extension
    that is used to select the fig format. *e.g.* `figname=fig.pdf` creates a PDF file localy called 'fig.pdf' 
@@ -430,7 +430,7 @@ end
 # -----------------------------------------------------------------------------------------------
 """
     cubeplot(img1::Union{GMTimage, String}, img2::Union{GMTimage, String}="", img3::Union{GMTimage, String}="";
-             back::Bool=false, show=false, notop::Bool=false, kw...)
+             back::Bool=false, show=false, notop::Bool=false, xlabel="", ylabel="", zlabel="", title="", kw...)
 
 Plot images on the sides of a cube. Those images can be provided as file names, or GMTimage objects.
 
@@ -446,19 +446,25 @@ Plot images on the sides of a cube. Those images can be provided as file names, 
 
 The `kw...` keyword/value options may be used to pass:
 
-- `region`: The limits extents that will be used to annotate the *x,y,z* axes. It uses the same syntax as all
+- `region, limits`: The limits extents that will be used to annotate the *x,y,z* axes. It uses the same syntax as all
   other modules that accept this option (*e.g.* ``coast``). It defaults to "0/9/0/9/-9/0"
 - `figsize`: Select the horizontal size(s). Defaults to 15x15 cm.
 - `zsize`: Sets the size of *z* axis in cm. The default is 15.
 - `view`: The view point. Default is `(135,30)`. WARNING: only azimute views from the 4rth quadrant are implemented.
 - `transparency`: Sets the image's transparency level in the [0,1] or [0 100] intervals. Default is opaque.
 - `inset` or `hole`: Draws an inset hole in the cube's Southern wall. This option is a tuple with the form:
-  ``((img1,img2[,img3]), width=?, [depth=?])`` where ``(img1,img2[,img3])`` are the images of the `west`, `north`
+  ``((img1,img2[,img3]), width=?, [depth=?])`` where ``(img1,img2[,img3])`` are the images of the `north`
+  (that is, the plane whose normal is `y`) and `west` (that is, the plane whose normal is `x`)
   and, optionally, `bottom` sides of the inset. The `width` and `depth` are the width and depth of the the inset.
   If `depth` is not provided it defauls to `width`. These values **must** be given in percentage of the cube's width
   and can be given in the [0-1] or [0-100] interval.
+- `xlabel, ylabel, zlabel, title`: Optional axes labels and title. Each one of these must be a string.
+- `cmap, colormap, cpt, colorscale`: Add a colorbar at the bottom of the figure. The colormap can be passed as a
+  single argument or as a tuple of arguments, where first must be the colormap and second [and optional a third]
+  are the axes colorbar labels taking the form: `cmap=(C, "xlabel=Blabla1"[, "ylabel=Blabla2"])`.
 """
-function cubeplot(fname1::Union{GMTimage, String}, fname2::Union{GMTimage, String}="", fname3::Union{GMTimage, String}=""; back::Bool=false, notop::Bool=false, show=false, kw...)
+function cubeplot(fname1::Union{GMTimage, String}, fname2::Union{GMTimage, String}="", fname3::Union{GMTimage, String}="";
+                  back::Bool=false, notop::Bool=false, xlabel="", ylabel="", zlabel="", title="", show=false, kw...)
 	# ...
 	d = KW(kw)
 	opt_R = ((txt::String = parse_R(d, "")[2]) != "") ? txt[4:end] : "0/9/0/9/-9/0"
@@ -475,18 +481,32 @@ function cubeplot(fname1::Union{GMTimage, String}, fname2::Union{GMTimage, Strin
 	else                                           f2, f3 = fname2, fname2	# Two images, repeat second on the vert sides
 	end
 
-	basemap(R=opt_R, J=opt_J, JZ=opt_JZ, p=opt_p)
+	basemap(R=opt_R, J=opt_J, JZ=opt_JZ, p=opt_p, xlabel=xlabel, ylabel=ylabel, zlabel=zlabel, title=title)
+	if ((val = find_in_dict(d, CPTaliases)[1]) !== nothing)		# See if want to plot a colorbar.
+		if isa(val, GMTcpt)
+			colorbar!(val, position=(outside=true, anchor=:BC, offset="0.9c"), B=:af)
+		elseif isa(val, Tuple)
+			len::Int = length(val)
+			C::GMTcpt = val[1]			# If first arg is not a CPT, an error occurs here.
+			xlabel = startswith(val[2], "xlabel=") ? val[2][8:end] : ""		# These 4 lines are to allow both combinations
+			ylabel = startswith(val[2], "ylabel=") ? val[2][8:end] : ""
+			(xlabel == "" && len == 3) && (xlabel = startswith(val[3], "xlabel=") ? val[3][8:end] : "")
+			(ylabel == "" && len == 3) && (ylabel = startswith(val[3], "ylabel=") ? val[3][8:end] : "")
+			colorbar!(C, position=(outside=true, anchor=:BC, offset="0.9c"), B=:af, xlabel=xlabel, ylabel=ylabel)
+		end
+	end
+
 	vsz = parse(Float64, opt_JZ)
 	TB = front ? :T : :B
 	SN = front ? :S : :N
 	EW = front ? :E : :W
 	bak = CTRL.pocket_J[3]		# Save this because sideplot() calls parse_JZ with too few info to preserve it in case of need.
-	!notop && image!(f1, compact=sideplot(plane=TB, vsize=vsz), t=opt_t)	# 'compact' is that option that lets pass a GMT str
+	!notop && image!(f1, compact=sideplot(plane=TB, vsize=abs(vsz)), t=opt_t)	# 'compact' is that option that lets pass a GMT str
 	image!(f2, compact=sideplot(plane=SN, vsize=vsz), t=opt_t)
 	R = image!(f3, compact=sideplot(plane=EW, vsize=vsz), t=opt_t)
 	CTRL.pocket_J[3] = bak
 
-	if ((val = find_in_dict(d, [:hole :inset])[1]) !== nothing)
+	if ((val = find_in_dict(d, [:hole :inset])[1]) !== nothing)			# If we have an inset (hole) request
 		(!isa(val, Tuple) || (!isa(val[1], Tuple) && 2 <= length(val) <= 3)) &&
 			error("The 'inset' option must be a tuple with the form ((img1,img2[,img3]), width=?, [depth=?])")
 		hole_width::Float64 = val[2]
@@ -498,7 +518,9 @@ function cubeplot(fname1::Union{GMTimage, String}, fname2::Union{GMTimage, Strin
 
 		azim  = parse(Float64, split(opt_p, '/')[1])
 		width = parse(Float64, split(opt_J[2:end], '/')[1])
-		hole_width, hole_depth = hole_width * width, hole_depth * width
+		spliR = parse.(Float64,split(opt_R, '/'))
+		height = width * (spliR[4] - spliR[3]) / (spliR[2] - spliR[1])
+		hole_width, hole_depth = hole_width * width, hole_depth * height
 		xoff  = (width - hole_width) * cosd(azim -90)
 		td = (hole_depth > 0.0) ? "$hole_depth" : "0"		# Found that "/0.0" screws up
 		basemap!(R=opt_R, J="X$(hole_width)/"*td, JZ=opt_JZ, p=opt_p, X=xoff, B=0)
@@ -570,4 +592,184 @@ function sideplot(; plane=:xz, vsize=8, depth=NaN, kw...)
 	end
 	_W, _H = (p == 'x') ? (H, zsize) : (p == 'y') ? (W, zsize) : (W, H)
 	@sprintf(" -Dg%.12g/%.12g+w%.12g/%.12g -p%c%.0f/%.0f %s %s", lims[1], lims[3], _W, _H, p, azim, elev, opt_X, opt_Y)
+end
+
+# -----------------------------------------------------------------------------------------------
+"""
+    cubeplot(G::GMTgrid; top=nothing, topshade=false, zdown::Bool=false, xlabel="", ylabel="", zlabel="", title="",
+             show=false, interp::Float64=0.0, kw...)
+
+Make a 3D plot of a 3D GMTgrid (a cube) with a top view perspective from the 4rth quadrant (only one implemented).
+There are several options to control the paintinf of the cube walls but off course not all possibilities are covered.
+For ultimate control, users cab create the side wall images separately and feed them to the cubeplot method that
+accepts only images as input. 
+
+- `cmap, colormap, cpt, colorscale`: Pass in a GMTcpt colormap to be used to paint the vertical walls and
+  optionally, the top wall. The default is to compute this from the cube's min/max values with the `turbo` colormap.
+
+- `colorbar`: Add a colorbar at the bottom of the figure. The plotted colormap is either the auto-generated colormap
+  (from the cube's min/max and the `turbo` colormap) or the one passed via the `cmap` option. The optional syntax of
+  this option is either: `colorbar=true` or `colorbar=(C, "xlabel=Blabla1"[, "ylabel=Blabla2"])`. Attention that when
+  the labels request are passed, thy MUST conform with the `xlabel=...` and `ylabel=...` prefix part.
+
+- `inset`: Add an inset to the figure. This inset takes the form of a _hole_ located in the lower right corner of
+  the cube in which its inner walls are painted with partial vertical slices of the cube. The `inset` option
+  may be passed as a two elements array or tuple where first element is the satrting longitude (end is cube's eastermost
+  coordinate) and second the ending latitude (start is southernmost lat): an alternative syntax is to use
+  `inset=(lon=?, lat=?)`.
+
+- `interp`: When the cube layers are not equi-distant, the vertical side walls are not regular gris. This option,
+  that is called by default, takes care of obtaining a regular grid by linear interpolation along the columns.
+  This automatic interpolation uses the smallest increment in the vertical direction, but that may be overridden
+  by the `interp` increment option (a float value).
+
+- `region, limits`: A 4 elements array or Tuple (`x_min, x_max, y_min, y_max`) with the limits of a sub-region to display.
+  Default uses the entire cube.
+
+- `show`: If `true` display the figure. Default is `false`, _i.e._ it lets append further elements latter if wished.
+
+- `top`: An optional GMTgrid or the file name of a GMTgrid to be used to create the top wall of the cube. If, instead,
+  a GMTimage is passed we plot it directly (grids are converted to images using default colormaps or one passed via `topcmap`).
+  The default is to use the cube's first slice as the top wall.
+
+- `topshade`: Only used when the `top` option was used to pass a GMTgrid (or the name of one). When `true`, the top wall
+  image is created with the cube's first slice and a shaded effect computed with `grdgradient` on the `top` grid
+  (normally a topography grid). This creates a nice effect that shows both the cube's first layer and the topography where it lies. 
+  Optionally, the `topshade` option may be used with a `grdgradient` grid computed with any other grid.
+
+- `topcmap`: An alternative colormap for the top wall. Default is the same as the `turbo` computed with cube `G` itself.
+
+- `xlabel, ylabel, zlabel, title`: Optional axes labels and title. Each one of these must be a string.
+
+- `zdown`: When `true`, the z-axis is positive down. Default is `false` (positive up).
+
+- `zsize`: Vertical size of the plotted cube. Default is 6 cm. Use a negative value if the z-axis is positive down, but
+  see also the alternative `zdown` option.
+
+### Example:
+```julia
+C = xyzw2cube("USTClitho2.0.wrst.sea_level.txt");
+cubeplot(C, top="@earth_relief", inset=(lon=110,y=40), topshade=true, zdown=true, title="Vp model",
+         colorbar=("xlabel=P-wave velocity","ylabel=km/s"), show=true)
+```
+"""
+function cubeplot(G::GMTgrid; top=nothing, topshade=false, zdown::Bool=false, xlabel="", ylabel="", zlabel="", title="",
+                  show=false, interp::Float64=0.0, kw...)
+	(size(G,3) < 2) && error("First input must be a 3D grid.")
+	d = KW(kw)
+	if ((opt_R = parse_R(d, "", false)[2]) != "")
+		x_min, x_max, y_min, y_max, = opt_R2num(opt_R)
+	else
+		x_min, x_max, y_min, y_max = G.range[1], G.range[2], G.range[3], G.range[4]
+	end
+	zsize = ((opt_JZ = parse_JZ(d, "")[2]) != "") ? parse(Float64, opt_JZ[5:end]) : 6.0
+	(zdown && zsize > 0) && (zsize *= -1)			# This way we can use a negative size directly or use the zdown opt
+	((C    = find_in_dict(d, CPTaliases)[1]) === nothing) && (C = makecpt(G.range[5],G.range[6]))
+	((Ctop = find_in_dict(d, [:topcmap])[1]) === nothing) && (Ctop = C)
+	showcpt, cbar_label = false, ""
+	if ((val = find_in_dict(d, [:colorbar])[1]) !== nothing)
+		showcpt = true
+		(isa(val, String) || isa(val, Tuple)) ? (cbar_label = val) : (!isa(val, Integer) &&
+			error("The 'colorbar' option must be a string or a tuple with two strings."))
+	end
+
+	# See about the inset option
+	inset::Vector{Float64}=Float64[]
+	if ((val = find_in_dict(d, [:inset])[1]) !== nothing)
+		(isa(val, VecOrMat) || isa(val, Tuple)) && (inset = [val[1], val[2]])
+		if (isa(val, NamedTuple))
+			ks::Tuple{Symbol, Symbol} = keys(val)
+			(:lon in ks) ? append!(inset, val[:lon]) : ((:x in ks) ? append!(inset, val[:x]) : nothing)
+			(:lat in ks) ? append!(inset, val[:lat]) : ((:y in ks) ? append!(inset, val[:y]) : nothing)
+			(length(inset) != 2) && error("The 'inset' option must have to elements. The lon and lat limits of the inset.")
+		end
+	end
+
+	# Decide what to put at the top of the pile
+	if (isa(top, String) || isa(top, GMTgrid))
+		R = (x_min,x_max,y_min,y_max)
+		Gt = (isa(top, String)) ? ((top[1] == '@') ? grdcut(top, R=R, J="Q15") : gmtread(top, R=R)) : crop(top, R=R)
+		if (topshade == 1)
+			It = grdimage(grdsample(slicecube(G,1), R=Gt), A=true, B=:none, C=C, shade=grdgradient(Gt,A=-45,N=:t), layout="BRP")
+		else
+			It = grdimage(Gt, A=true, B=:none, C=:topo, shade=true, layout="BRP")
+		end
+	elseif (isa(top, GMTimage))
+		It = crop(top, region=(x_min,x_max,y_min,y_max))
+	else
+		It = grdimage(slicecube(G,1), A=true, B=:none, layout="BRP", C=C)
+	end
+
+	Gs = interp_vslice(squeeze(slicecube(G, G.range[3], axis="y")), inc=interp)	# The South wall
+	Is = grdimage(Gs, A=true, B=:none, layout="BRP", C=C)
+	Ge = interp_vslice(squeeze(slicecube(G, G.range[2], axis="x")), inc=interp)	# The East wall
+	Ie = grdimage(Ge, A=true, B=:none, layout="BRP", C=C)
+
+	# This is to know if plot a colorbar with optional labels
+	opt_cbar = nothing
+	if (showcpt)
+		if     (cbar_label == "")        opt_cbar = C
+		elseif (isa(cbar_label, String)) opt_cbar = (C, cbar_label)
+		elseif (isa(cbar_label, Tuple) && isa(cbar_label[1], String)) opt_cbar = (C, cbar_label...)
+		end
+		isa(cbar_label, String) && !(startswith(cbar_label, "xlabel=") || startswith(cbar_label, "ylabel=")) &&
+			error("The labels in 'colorbar' option must start with 'xlabel=...' or 'ylabel=...'.")
+		isa(cbar_label, Tuple) && !((startswith(cbar_label[1], "xlabel=") || startswith(cbar_label[1], "ylabel=")) &&
+			(startswith(cbar_label[2], "xlabel=") || startswith(cbar_label[2], "ylabel="))) &&
+			@warn("colorbar labels MUST start with a `xlabel=` and/or `ylabel=` prefix.")
+	end
+
+	if (!isempty(inset))
+		Gs = interp_vslice(squeeze(slicecube(G, inset[2], x=[inset[1] G.range[2]], axis="y")), inc=interp)	# inset South wall
+		Ge = interp_vslice(squeeze(slicecube(G, inset[1], y=[G.range[3] inset[2]], axis="x")), inc=interp)	# inset East wall
+		pct_x = (G.range[2] - inset[1]) / (G.range[2] - G.range[1])
+		pct_y = (inset[2] - G.range[3]) / (G.range[4] - G.range[3])
+		resetGMT()				# To remove "rememberings" left by the grdimage calls (they make annotations on West side??)
+		cubeplot(It, Is, Ie, R=@sprintf("%.12g/%.12g/%.12g/%.12g/%.12g/%.12g", G.range[1:4]..., G.range[7], G.range[8]),
+		         hole=((grdimage(Gs, A=true, B=:none, layout="BRP", C=C), grdimage(Ge, A=true, B=:none, layout="BRP", C=C)), pct_x, pct_y), zsize=zsize, xlabel=xlabel, ylabel=ylabel, zlabel=zlabel, title=title, C=opt_cbar, show=show)
+	else
+		resetGMT()
+		cubeplot(It, Is, Ie, R=@sprintf("%.12g/%.12g/%.12g/%.12g/%.12g/%.12g", G.range[1:4]..., G.range[7], G.range[8]),
+		         zsize=zsize, xlabel=xlabel, ylabel=ylabel, zlabel=zlabel, title=title, C=opt_cbar, show=show)
+	end
+end
+
+# From https://stackoverflow.com/questions/54879412/get-the-mapping-from-each-element-of-input-to-the-bin-of-the-histogram-in-julia
+# get the second output as in Matlab's histc
+binindices(edges, data) = searchsortedlast.(Ref(edges), data)
+# -------------------------------------------------------------------------------------------------
+"""
+    Gi = interp_vslice(G::GMTgrid; inc=0.0) -> GMTgrid
+
+Linearly interpolated the grid `G` along the "columns" (y coordinates). Normally `G` is a grid resulting
+from a cube vertical slice where not uncomonly the resulting grid is not regular (cube layers are not equi-spaced).
+
+- `G`: A GMTgrid object with the grid to be interpolated
+- `inc`: The interpolation increment. If == 0.0 and `G.y` is a constant spacing vector, nothing is done.
+  Otherwise, but still in the == 0.0 case, the grid interpolated with a pace equal to the minimum `G.y` spacing.
+  A `inc > 0.0` means the grid is interpolated at that increment.
+"""
+function interp_vslice(G::GMTgrid; inc=0.0)
+	# Do a linear interpolation along the "columns" (y coordinates) of the G grid
+	y = G.y
+	diff_y = diff(y)
+	if (inc == 0.0)
+		mi, ma = extrema(diff_y)
+		mi == ma && return G					# No inc set and y has regular spacing, nothing to interpolate.
+		inc = min(mi, ma)
+	end
+	np = round(Int, (y[end] - y[1]) / inc + 1)
+	vk = linspace(y[1], y[end], np)				# Vector of knots
+	ind = binindices(y, vk)						# -> Vector{Int64}
+	append!(diff_y, 1)			# Because we need an extra element at the end to make it same size as vk. That width of that extra bin is not used
+	f = (vk .- y[ind]) ./ diff_y[ind]
+	ff = (1.0 .- f)
+	mat = Matrix{eltype(G.z)}(undef, size(G,1), np)
+	@inbounds for k = 1:size(G,1)
+		@inbounds for n = 1:np-1
+			mat[k,n] = G.z[k,ind[n]] * ff[n] + G.z[k,ind[n+1]] * f[n]
+		end
+		mat[k,np] = G.z[k,end]
+	end
+	mat2grid(mat, x=G.x, y=vk, layout=G.layout, is_transposed=true)
 end

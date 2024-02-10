@@ -991,11 +991,12 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 	# Let the :title and x|y_label be given on main kwarg list. Risky if used with NamedTuples way.
 	t::String = ""		# Use the trick to replace blanks by Char(127) (invisible) and undo it in extra_parse
 	extra_par::String, tt::String, ep::String = "", "", ""
-	if (haskey(d, :title))    tt, extra_par = titlices(d, d[:title], title); t *= "+t" * tt  end
-	if (haskey(d, :subtitle)) tt, ep = titlices(d, d[:subtitle], subtitle);	 t *= "+s" * tt;   extra_par *= ep  end
-	if (haskey(d, :xlabel))   tt, ep = titlices(d, d[:xlabel], xlabel);      t *= " x+l" * tt; extra_par *= ep  end
-	if (haskey(d, :ylabel))   tt, ep = titlices(d, d[:ylabel], ylabel);      t *= " y+l" * tt; extra_par *= ep  end
-	if (haskey(d, :zlabel))   tt, ep = titlices(d, d[:zlabel], zlabel);      t *= " z+l" * tt; extra_par *= ep  end
+	if (haskey(d, :title) && d[:title] != "")     tt, extra_par = titlices(d, d[:title], title); t *= "+t" * tt  end
+	if (haskey(d, :subtitle) && d[:subtitle] != "") tt, ep = titlices(d, d[:subtitle], subtitle);t *= "+s" * tt;   extra_par *= ep  end
+	if (haskey(d, :xlabel) && d[:xlabel] != "")   tt, ep = titlices(d, d[:xlabel], xlabel);      t *= " x+l" * tt; extra_par *= ep  end
+	if (haskey(d, :ylabel) && d[:ylabel] != "")   tt, ep = titlices(d, d[:ylabel], ylabel);      t *= " y+l" * tt; extra_par *= ep  end
+	if (haskey(d, :zlabel) && d[:zlabel] != "")   tt, ep = titlices(d, d[:zlabel], zlabel);      t *= " z+l" * tt; extra_par *= ep  end
+	delete!(d, :title); delete!(d, :subtitle); delete!(d, :xlabel); delete!(d, :ylabel); delete!(d, :zlabel)# If == "" they were still there
 
 	if (t != "")
 		if (opt_B == "" && (val = find_in_dict(d, [:xaxis :yaxis :zaxis :xticks :yticks :zticks], false)[1] === nothing))
@@ -4703,7 +4704,7 @@ function interp_vec(x::AbstractVecOrMat{<:Real}, val::Real)::Float64
 	frac = (val - x[k]) / (x[k+1] - x[k])
 	return k + frac
 end
-function interp_vec(x::AbstractVecOrMat{<:Real}, val::VecOrMat{<:Real})
+function interp_vec(x::AbstractVecOrMat{<:Real}, val::Union{VecOrMat{<:Real}, Tuple})
 	out = Vector{Float64}(undef, length(val))
 	for k = 1:numel(val)
 		out[k] = interp_vec(x, val[k])
