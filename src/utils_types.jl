@@ -1196,7 +1196,7 @@ Extract a slice from a GMTgrid cube.
   neighboring layers. For example, `slice=2.5` on a cube were layers are one unit apart will interpolate
   between layers 2 and 3 where each layer weights 50% in the end result. NOTE: the return type is
   still a cube but with one layer only (and the corresponding axis coordinate).
-  slice` Can also be a vector of integers representing the slices we want to extract. The output is another cube.
+  `slice` Can also be a vector of integers representing the slices we want to extract. The output is another cube.
 
 - `axis`: denotes the dimension being sliced. The default, "z", means the slices are taken from the
   vertical axis. `axis="x"` means slice along a column, and `axis="y"` slice along a row.
@@ -1238,8 +1238,10 @@ function slicecube(I::GMTimage, layer::Union{Int, AbstractVector{<:Int}})
 	GMTimage(I.proj4, I.wkt, I.epsg, I.geog, range, copy(I.inc), I.registration, I.nodata, "Gray", I.metadata, names, copy(I.x), copy(I.y), [0.], mat, zeros(Int32,3), String[], 0, Array{UInt8,2}(undef,1,1), I.layout, I.pad)
 end
 
-function slicecube(G::GMTgrid, slice::Union{Int, AbstractVector{<:Int}}; x::VecOrMat{<:Real}=Float64[], y::VecOrMat{<:Real}=Float64[], axis="z")
+function slicecube(G::GMTgrid, slice::Union{Int, AbstractVector{<:Int}}; axis="z",
+                   x::Union{VecOrMat{<:Real}, Tuple}=Float64[], y::Union{VecOrMat{<:Real}, Tuple}=Float64[])
 	# Method that slices grid cubes. SLICE is the row|col|layer number. AXIS picks the axis to be sliced
+	# This method lets us slice a cube along any or all of the x|y|z axis
 	(ndims(G) < 3 || size(G,3) < 2) && error("This is not a cube grid.")
 	_axis = lowercase(string(axis))
 
@@ -1252,33 +1254,48 @@ function slicecube(G::GMTgrid, slice::Union{Int, AbstractVector{<:Int}}; x::VecO
 
 	isempty(G.v) && (G.v = collect(1:size(G,3)))
 	rng = isvec ? slice : slice:slice
-	colmajor = (G.layout[2] == 'C')
-	if (_axis == "z")
-		G_ = mat2grid(G[:,:,slice], G.x, G.y, isvec ? G.v[slice] : [G.v[slice]], reg=G.registration, is_transposed=!colmajor)
+	colmajor, ix, iy, ixp, iyp = helper_slicecube(G, x, y)
+
+	if (_axis == "z")				# A horizontal slice (plane xy)
+		_ix, _iy = colmajor ? (ix, iy) : (iy, ix)
+		G_ = mat2grid(G[_iy,_ix,slice], G.x[ixp], G.y[iyp], isvec ? G.v[slice] : [G.v[slice]], reg=G.registration, is_transposed=!colmajor)
 		G_.names = (!isempty(G.names) && !all(G.names .== "")) ? (isvec ? G.names[slice] : [G.names[slice]]) : G.names
 		G_.proj4, G_.wkt, G_.epsg, G_.geog, G_.layout = G.proj4, G.wkt, G.epsg, G.geog, G.layout
-	elseif (_axis == "y")
+	elseif (_axis == "y")			# A slice in xz plane
+		(!colmajor && G.layout[1] == 'T') && (rng = (size(G,2)+1 - rng[end]):(size(G,2)+1 - rng[1]))	# Believe that (10 - rng) errors but (10 - 1:1) NOT!!!!!
 		yv = isvec ? G.y[slice] : [G.y[slice]]
-		t = isempty(x) ? [1 colmajor ? size(G,2) : size(G,1)] : round.(Int,interp_vec(G.x, x))
-		ix = t[1]:t[2]
-		if (colmajor)  G_ = mat2grid(G[rng,ix,:], G.x[ix], yv, G.v, reg=G.registration, names=G.names)
-		else           G_ = mat2grid(G[ix,rng,:], G.x[ix], yv, G.v, reg=G.registration, is_transposed=true, names=G.names)
+		if (colmajor)  G_ = mat2grid(G[rng,ix,:], G.x[ixp], yv, G.v, reg=G.registration, names=G.names)
+		else           G_ = mat2grid(G[ix,rng,:], G.x[ixp], yv, G.v, reg=G.registration, is_transposed=true, names=G.names)
 		end
 		G_.proj4, G_.wkt, G_.epsg, G_.geog, G_.layout = "", "", 0, 0, "TRB"
-	else
+	else							# A slice in yz plane
+		_iy = (!colmajor && G.layout[1] == 'T') ? ((size(G,2)+1 - iy[end]):(size(G,2)+1 - iy[1])) : iy
 		xv = isvec ? G.x[slice] : [G.x[slice]]
-		t = isempty(y) ? [1 colmajor ? size(G,1) : size(G,2)] : round.(Int,interp_vec(G.y, y))
-		iy = t[1]:t[2]
-		if (colmajor)  G_ = mat2grid(G[iy,rng,:], xv, G.y[iy], G.v, reg=G.registration, names=G.names)
-		else           G_ = mat2grid(G[rng,iy,:], xv, G.y[iy], G.v, reg=G.registration, is_transposed=true, names=G.names)
+		if (colmajor)  G_ = mat2grid(G[iy,rng,:],  xv, G.y[iyp], G.v, reg=G.registration, names=G.names)
+		else           G_ = mat2grid(G[rng,_iy,:], xv, G.y[iyp], G.v, reg=G.registration, is_transposed=true, names=G.names)
+		               (G.layout[1] == 'T') && (G_.z = fliplr(G_.z))	# The debugger told me to do this.
 		end
 		G_.proj4, G_.wkt, G_.epsg, G_.geog, G_.layout = "", "", 0, 0, "TRB"
 	end
 	return G_
 end
 
-function slicecube(G::GMTgrid, slice::AbstractFloat; x::VecOrMat{<:Real}=Float64[], y::VecOrMat{<:Real}=Float64[], axis="z")
+function helper_slicecube(G, x, y)
+	# Shared between two methods of slicecube.
+	colmajor = (G.layout[2] == 'C')
+	tx = isempty(x) ? [1 colmajor ? size(G,2) : size(G,1)] : round.(Int,interp_vec(G.x, x))
+	ix = tx[1]:tx[2]
+	ty = isempty(y) ? [1 colmajor ? size(G,1) : size(G,2)] : round.(Int,interp_vec(G.y, y))
+	iy = ty[1]:ty[2]
+	# The pixel registration case is more complicated. Not sure that the following is the right way to do it.
+	ixp, iyp = (G.registration == 0) ? (ix, iy) : (ix[1]:ix[end]+1, iy[1]:iy[end]+1)
+	return colmajor, ix, iy, ixp, iyp
+end
+
+function slicecube(G::GMTgrid, slice::AbstractFloat; axis="z",
+                   x::Union{VecOrMat{<:Real}, Tuple}=Float64[], y::Union{VecOrMat{<:Real}, Tuple}=Float64[])
 	# Method that slices grid cubes. SLICE is the x|y|z coordinate where to slice. AXIS picks the axis to be sliced
+	# So far horizontal slices are unique (single slice) but vertical slices can slice sub-cubes.
 	(ndims(G) < 3 || size(G,3) < 2) && error("This is not a cube grid.")
 	_axis = lowercase(string(axis))
 
@@ -1290,26 +1307,28 @@ function slicecube(G::GMTgrid, slice::AbstractFloat; x::VecOrMat{<:Real}=Float64
 	all(frac .< 0.1) && return slicecube(G, layer, axis=_axis, x=x, y=y)	# If 'slice' is within 10% of lower or upper layer just
 	all(frac .> 0.9) && return slicecube(G, layer.+1, axis=_axis, x=x, y=y)	# return that layer and do not interpolation between layers.
 
-	nxy = size(G,1)*size(G,2)
+	nxy = size(G,1) * size(G,2)
 	l = layer
-	colmajor = (G.layout[2] == 'C')
-	if (_axis == "z")
+	colmajor, ix, iy, ixp, iyp = helper_slicecube(G, x, y)
+
+	if (_axis == "z")				# A horizontal slice (plane xy)
 		mat = [G[k] + (G[k+nxy] - G[k]) * frac for k = (layer-1)*nxy+1 : layer*nxy]
 		G_ = mat2grid(reshape(mat,size(G,1),size(G,2)), G.x, G.y, [Float64(slice)], reg=G.registration, is_transposed=!colmajor, layout=G.layout)
-	elseif (_axis == "y")
-		t = isempty(x) ? [1 colmajor ? size(G,2) : size(G,1)] : round.(Int,interp_vec(G.x, x))
-		ix = t[1]:t[2]
+		if (!isempty(x) || !isempty(y))		# It would have been too complicated to do this with the "mat = ..." above
+			isempty(x) && (x = [G.range[1], G.range[2]])
+			isempty(y) && (y = [G.range[3], G.range[4]])
+			G_ = crop(G_, region=(x[1], x[2], y[1], y[2]))
+		end
+	elseif (_axis == "y")			# A slice in xz plane
 		if (colmajor)  mat = G[l:l,ix,:] .+ (G[l+1:l+1,ix,:] .- G[l:l,ix,:]) .* frac
 		else           mat = G[ix,l:l,:] .+ (G[ix,l+1:l+1,:] .- G[ix,l:l,:]) .* frac
 		end
-		G_ = mat2grid(mat, G.x[ix], [G.y[l]], G.v, reg=G.registration, is_transposed=!colmajor, layout="TRB")
-	else
-		t = isempty(y) ? [1 colmajor ? size(G,1) : size(G,2)] : round.(Int,interp_vec(G.y, y))
-		iy = t[1]:t[2]
+		G_ = mat2grid(mat, G.x[ixp], [G.y[l]], G.v, reg=G.registration, is_transposed=!colmajor, layout="TRB")
+	else							# A slice in yz plane
 		if (colmajor)  mat = G[iy,l:l,:] .+ (G[iy,l+1:l+1,:] .- G[iy,l:l,:]) .* frac
 		else           mat = G[l:l,iy,:] .+ (G[l+1:l+1,iy,:] .- G[l:l,iy,:]) .* frac
 		end
-		G_ = mat2grid(mat, [G.x[l]], G.y[iy], G.v, reg=G.registration, is_transposed=!colmajor, layout="TRB")
+		G_ = mat2grid(mat, [G.x[l]], G.y[iyp], G.v, reg=G.registration, is_transposed=!colmajor, layout="TRB")
 	end
 	return G_
 end
@@ -1365,12 +1384,16 @@ const cubeslice = slicecube		# I'm incapable of remembering which one it is.
 
 # ---------------------------------------------------------------------------------------------------
 """
+    Gs = squeeze(G::GMTgrid) -> GMTgrid
+
+Remove singleton dimension from a grid. So far only for vertical slices of 3D grids.
 """
 function squeeze(G::GMTgrid)
 	dims = size(G)
 	if ((ind = findfirst(dims .== 1)) !== nothing)
-		(ind == 1) && return mat2grid(reshape(G.z, dims[2], dims[3]), x=G.x, y=G.v, layout="TRB", is_transposed=true)
-		(ind == 2) && return mat2grid(reshape(G.z, dims[1], dims[3]), x=G.y, y=G.v, layout="TRB", is_transposed=true)
+		which_x = (length(G.x) > 1) ? G.x : G.y		# Rather than relying in mem_layout, pick the non-singleton vector
+		(ind == 1) && return mat2grid(reshape(G.z, dims[2], dims[3]), x=which_x, y=G.v, layout="TRB", is_transposed=true)
+		(ind == 2) && return mat2grid(reshape(G.z, dims[1], dims[3]), x=which_x, y=G.v, layout="TRB", is_transposed=true)
 	end
 end
 
