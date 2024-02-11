@@ -109,9 +109,18 @@ function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int
 	(prj != "" && !startswith(prj, "+proj")) && (prj = toPROJ4(importWKT(prj)))
 	(prj == "") && (prj = seek_wkt_in_gdalinfo(gdalinfo(dataset)))
 	is_tp = (layout == "")				# if == "" array is rowmajor and hence transposed
+	vname, vvalues = "", Float64[]
+	if (n_dsbands > 1 && ((meta = Gdal.getmetadata(dataset)) != String[]))	# For cubes, try to find the v coordinates
+		if ((ind = findfirst(startswith.(meta, "NETCDF_DIM_EXTRA="))) !== nothing)
+			vname = meta[ind][19:end-1]		# The variable name is wrapped in {}
+			if ((ind = findfirst(startswith.(meta, "NETCDF_DIM_" * vname * "_VALUES="))) !== nothing)
+				vvalues = parse.(Float64, split(meta[ind][length(vname)+21:end-1], ","))	# for ex: NETCDF_DIM_Depth_VALUES={
+			end
+		end
+	end
 	if (is_grid)
 		#(eltype(mat) == Float64) && (mat = Float32.(mat))
-		O = mat2grid(mat; hdr=hdr, proj4=prj, names=desc, is_transposed=is_tp)
+		O = mat2grid(mat; hdr=hdr, v=vvalues, v_unit=vname, proj4=prj, names=desc, is_transposed=is_tp)
 		O.layout = (layout == "") ? "TRB" : layout
 		isa(mat, Matrix{<:Complex}) && (append!(O.range, [z_im_min, z_im_max]))	# Stick the imaginary part limits in the range
 	else

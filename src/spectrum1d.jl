@@ -21,7 +21,7 @@ Parameters
 - **L** | **leave_trend** :: [Type => Str | []]     ``Arg = [h|m]``
 
     Leave trend alone. By default, a linear trend will be removed prior to the transform.
-- **N** | **time_col** :: [Type => Int]      ``Arg = t_col``
+- **N** | **name** :: [Type => Int]      ``Arg = t_col``
 
     Indicates which
 - **T** :: [Type => Bool]
@@ -52,7 +52,7 @@ function spectrum1d_helper(cmd0::String, arg1; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd = parse_common_opts(d, "", [:V_params :b :d :e :g :h :i :yx])[1]
-	cmd = parse_these_opts(cmd, d, [[:D :sample_dist], [:L :leave_trend], [:N :time_col], [:S :size], [:T :multifiles], [:W :wavelength]])
+	cmd = parse_these_opts(cmd, d, [[:D :sample_dist], [:L :leave_trend], [:N :name], [:S :size], [:T :multifiles], [:W :wavelength]])
 	opt_C = add_opt(d, "", "C", [:C :components :outputs :response_fun],
 	                (xpower="_x", ypower="_y", cpower="_c", npower="_n", phase="_p", admit="_a", gain="_g", coh="_o"))
     if (!contains(cmd, " -T"))                  # Return vars, otherwise it saves them in disk files
