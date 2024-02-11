@@ -293,6 +293,7 @@ function file_has_time!(fname::String, D::GDtype, corder::Vector{Int}=Int[])
 	# We do that by scanning the first valid line in file.
 	# 'corder' is a vector of ints filled with column orders specified by -i. If no -i that it is empty
 
+	startswith(fname, "http") && return nothing			# We can't "open(fname)" beloow
 	#line1 = split(collect(Iterators.take(eachline(fname), 1))[1])	# Read first line and cut it in tokens
 	isone = isa(D, GMTdataset) ? true : false
 	if (isone && isempty(D.colnames)) || (!isone && isempty(D[1].colnames))		# If no colnames set yet

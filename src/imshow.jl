@@ -96,8 +96,11 @@ end
 # If arg1 is a cube:
 # - `col cols columns`: set the number of columns in the mosaic
 # - `slice`: set the single slice to be plotted. `slice` is the same option as in cubeslice.
+# - `title`: The subplot title 
 # - `titles`: A string vector with pannel titles. Default is the layer names.
 # - `cmap=:same`: uses the same CPT (computed from cube's min/max) for all layers.
+# - `T, no_interp, tiles`: -T option for grdview
+# - `facades, cubeplot`: Call cubeplot.
 function imshow(arg1::GMTgrid; kw...)
 	# Here the default is to show, but if a 'show' was used let it rule
 	d = KW(kw)

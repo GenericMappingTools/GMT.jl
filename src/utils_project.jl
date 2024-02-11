@@ -464,7 +464,7 @@ The `kw...` keyword/value options may be used to pass:
   are the axes colorbar labels taking the form: `cmap=(C, "xlabel=Blabla1"[, "ylabel=Blabla2"])`.
 """
 function cubeplot(fname1::Union{GMTimage, String}, fname2::Union{GMTimage, String}="", fname3::Union{GMTimage, String}="";
-                  back::Bool=false, notop::Bool=false, xlabel="", ylabel="", zlabel="", title="", show=false, kw...)
+                  back::Bool=false, notop::Bool=false, xlabel="", ylabel="", zlabel="", title="", first=true, show=false, kw...)
 	# ...
 	d = KW(kw)
 	opt_R = ((txt::String = parse_R(d, "")[2]) != "") ? txt[4:end] : "0/9/0/9/-9/0"
@@ -481,7 +481,9 @@ function cubeplot(fname1::Union{GMTimage, String}, fname2::Union{GMTimage, Strin
 	else                                           f2, f3 = fname2, fname2	# Two images, repeat second on the vert sides
 	end
 
-	basemap(R=opt_R, J=opt_J, JZ=opt_JZ, p=opt_p, xlabel=xlabel, ylabel=ylabel, zlabel=zlabel, title=title)
+	opt_UVXY = parse_UVXY(d, "")
+	first ? basemap(R=opt_R, J=opt_J, JZ=opt_JZ, p=opt_p, xlabel=xlabel, ylabel=ylabel, zlabel=zlabel, title=title, compact=opt_UVXY) :
+		basemap!(R=opt_R, J=opt_J, JZ=opt_JZ, p=opt_p, xlabel=xlabel, ylabel=ylabel, zlabel=zlabel, title=title, compact=opt_UVXY, B=:autoXYZ)
 	if ((val = find_in_dict(d, CPTaliases)[1]) !== nothing)		# See if want to plot a colorbar.
 		if isa(val, GMTcpt)
 			colorbar!(val, position=(outside=true, anchor=:BC, offset="0.9c"), B=:af)
@@ -523,7 +525,7 @@ function cubeplot(fname1::Union{GMTimage, String}, fname2::Union{GMTimage, Strin
 		hole_width, hole_depth = hole_width * width, hole_depth * height
 		xoff  = (width - hole_width) * cosd(azim -90)
 		td = (hole_depth > 0.0) ? "$hole_depth" : "0"		# Found that "/0.0" screws up
-		basemap!(R=opt_R, J="X$(hole_width)/"*td, JZ=opt_JZ, p=opt_p, X=xoff, B=0)
+		basemap!(R=opt_R, J="X$(hole_width)/"*td, JZ=opt_JZ, p=opt_p, X=xoff, B=:none, title=".") # Need that "." so -B0 plots no axes.
 		image!(f1, compact=sideplot(plane=:B, vsize=vsz), t=opt_t)
 		image!(val[1][1], compact=sideplot(plane=:N, vsize=vsz), t=opt_t)
 		R = image!(val[1][2], compact=sideplot(plane=:W, vsize=vsz), t=opt_t)
@@ -531,6 +533,9 @@ function cubeplot(fname1::Union{GMTimage, String}, fname2::Union{GMTimage, Strin
 	see && showfig(d...)
 	return R
 end
+cubeplot!(fname1::Union{GMTimage, String}, fname2::Union{GMTimage, String}="", fname3::Union{GMTimage, String}="";
+          back::Bool=false, notop::Bool=false, xlabel="", ylabel="", zlabel="", title="", show=false, kw...) =
+	cubeplot(fname1, fname2, fname3; back=back, notop=notop, xlabel=xlabel, ylabel=ylabel, zlabel=zlabel, title=title, first=false, show=show, kw...)
 
 # -----------------------------------------------------------------------------------------------
 """
@@ -654,7 +659,7 @@ cubeplot(C, top="@earth_relief", inset=(lon=110,y=40), topshade=true, zdown=true
 ```
 """
 function cubeplot(G::GMTgrid; top=nothing, topshade=false, zdown::Bool=false, xlabel="", ylabel="", zlabel="", title="",
-                  show=false, interp::Float64=0.0, kw...)
+                  show=false, interp::Float64=0.0, first=true, kw...)
 	(size(G,3) < 2) && error("First input must be a 3D grid.")
 	d = KW(kw)
 	if ((opt_R = parse_R(d, "", false)[2]) != "")
@@ -724,15 +729,19 @@ function cubeplot(G::GMTgrid; top=nothing, topshade=false, zdown::Bool=false, xl
 		Ge = interp_vslice(squeeze(slicecube(G, inset[1], y=[G.range[3] inset[2]], axis="x")), inc=interp)	# inset East wall
 		pct_x = (G.range[2] - inset[1]) / (G.range[2] - G.range[1])
 		pct_y = (inset[2] - G.range[3]) / (G.range[4] - G.range[3])
-		resetGMT()				# To remove "rememberings" left by the grdimage calls (they make annotations on West side??)
+		gmt_restart()				# To remove "rememberings" left by the grdimage calls (they make annotations on West side??)
 		cubeplot(It, Is, Ie, R=@sprintf("%.12g/%.12g/%.12g/%.12g/%.12g/%.12g", G.range[1:4]..., G.range[7], G.range[8]),
-		         hole=((grdimage(Gs, A=true, B=:none, layout="BRP", C=C), grdimage(Ge, A=true, B=:none, layout="BRP", C=C)), pct_x, pct_y), zsize=zsize, xlabel=xlabel, ylabel=ylabel, zlabel=zlabel, title=title, C=opt_cbar, show=show)
+		         hole=((grdimage(Gs, A=true, B=:none, layout="BRP", C=C), grdimage(Ge, A=true, B=:none, layout="BRP", C=C)), pct_x, pct_y), zsize=zsize, xlabel=xlabel, ylabel=ylabel, zlabel=zlabel, title=title, C=opt_cbar, first=first, show=show; d...)
 	else
-		resetGMT()
+		gmt_restart()
 		cubeplot(It, Is, Ie, R=@sprintf("%.12g/%.12g/%.12g/%.12g/%.12g/%.12g", G.range[1:4]..., G.range[7], G.range[8]),
-		         zsize=zsize, xlabel=xlabel, ylabel=ylabel, zlabel=zlabel, title=title, C=opt_cbar, show=show)
+		         zsize=zsize, xlabel=xlabel, ylabel=ylabel, zlabel=zlabel, title=title, C=opt_cbar, first=first, show=show; d...)
 	end
 end
+cubeplot!(G::GMTgrid; top=nothing, topshade=false, zdown::Bool=false, xlabel="", ylabel="", zlabel="", title="",
+          interp::Float64=0.0, show=false, kw...) =
+	cubeplot(G; top=top, topshade=topshade, zdown=zdown, xlabel=xlabel, ylabel=ylabel, zlabel=zlabel, title=title,
+	         interp=interp, first=false, show=show, kw...)
 
 # From https://stackoverflow.com/questions/54879412/get-the-mapping-from-each-element-of-input-to-the-bin-of-the-histogram-in-julia
 # get the second output as in Matlab's histc
