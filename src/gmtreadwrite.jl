@@ -358,7 +358,7 @@ function guess_T_from_ext(fname::String, write::Bool=false)::String
 	elseif (ext == "cpt")  out = " -Tc";
 	elseif (ext == "ps" || ext == "eps")  out = " -Tp";
 	elseif (startswith(ext, "tif"))
-		write && return " -To"			# This forces writting with GDAL, that does not need a -Ti or -Tg
+		write && return " -Ti"			# Back to the caller must desambiguate if -Ti or -Tg
 		ressurectGDAL();
 		gdinfo = gdalinfo(fname)
 		(gdinfo === nothing) && error("gdalinfo failed - unable to open $fname")
