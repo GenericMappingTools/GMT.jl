@@ -455,8 +455,8 @@ The `kw...` keyword/value options may be used to pass:
 - `inset` or `hole`: Draws an inset hole in the cube's Southern wall. This option is a tuple with the form:
   ``((img1,img2[,img3]), width=?, [depth=?])`` where ``(img1,img2[,img3])`` are the images of the `north`
   (that is, the plane whose normal is `y`) and `west` (that is, the plane whose normal is `x`)
-  and, optionally, `bottom` sides of the inset. The `width` and `depth` are the width and depth of the the inset.
-  If `depth` is not provided it defauls to `width`. These values **must** be given in percentage of the cube's width
+  and, optionally, `bottom` sides of the inset. The `width` and `depth` are the width and depth of the inset.
+  If `depth` is not provided it defaults to `width`. These values **must** be given in percentage of the cube's width
   and can be given in the [0-1] or [0-100] interval.
 - `xlabel, ylabel, zlabel, title`: Optional axes labels and title. Each one of these must be a string.
 - `cmap, colormap, cpt, colorscale`: Add a colorbar at the bottom of the figure. The colormap can be passed as a
@@ -605,8 +605,8 @@ end
              show=false, interp::Float64=0.0, kw...)
 
 Make a 3D plot of a 3D GMTgrid (a cube) with a top view perspective from the 4rth quadrant (only one implemented).
-There are several options to control the paintinf of the cube walls but off course not all possibilities are covered.
-For ultimate control, users cab create the side wall images separately and feed them to the cubeplot method that
+There are several options to control the painting of the cube walls but off course not all possibilities are covered.
+For ultimate control, users can create the side wall images separately and feed them to the cubeplot method that
 accepts only images as input. 
 
 - `cmap, colormap, cpt, colorscale`: Pass in a GMTcpt colormap to be used to paint the vertical walls and
@@ -619,7 +619,7 @@ accepts only images as input.
 
 - `inset`: Add an inset to the figure. This inset takes the form of a _hole_ located in the lower right corner of
   the cube in which its inner walls are painted with partial vertical slices of the cube. The `inset` option
-  may be passed as a two elements array or tuple where first element is the satrting longitude (end is cube's eastermost
+  may be passed as a two elements array or tuple where first element is the starting longitude (end is cube's easternmost
   coordinate) and second the ending latitude (start is southernmost lat): an alternative syntax is to use
   `inset=(lon=?, lat=?)`.
 

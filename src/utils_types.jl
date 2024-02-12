@@ -781,14 +781,14 @@ function rasters2grid(arg; scale::Real=1f0, offset::Real=0f0)::GMTgrid
 	dic = arg.metadata.val
 	(scale  == 1) && (scale  = get(dic, "scale", 1.0f0))
 	(offset == 0) && (offset = get(dic, "offset", 0.0f0))
-	z_units = get(dic, "units", "")
+	z_unit  = get(dic, "units", "")
 
 	(data === nothing) && (data = collect(arg.data))
 	(scale != 1 || offset != 0) && (data = muladd.(data, convert(eltype(data), scale), convert(eltype(data), offset)))
 	(eltype(data) == Int16) && (data = convert(Array{Float32, ndims(data)}, data))	# And what about UInt16, UInt8, etc ...?
 
 	(is_transp && Yorder == 'B') && (reverse!(data, dims=2); layout = "TRB")	# GMT expects grids to be scanline and Top->Bot
-	mat2grid(data, x=collect(arg.dims[1]), y=_y, v=_v, names=names, tit=string(arg.name), rem="Converted from a Rasters object.", is_transposed=is_transp, layout=layout, proj4=proj, wkt=wkt, epsg=epsg, z_units=z_units)
+	mat2grid(data, x=collect(arg.dims[1]), y=_y, v=_v, names=names, tit=string(arg.name), rem="Converted from a Rasters object.", is_transposed=is_transp, layout=layout, proj4=proj, wkt=wkt, epsg=epsg, z_unit=z_unit)
 end
 
 # ---------------------------------------------------------------------------------------------------
