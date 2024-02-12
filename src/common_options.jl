@@ -4278,12 +4278,13 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 		# If we had a double frame to plot Geog on a Cartesian plot we must reset memory to original -J & -R so
 		# that appending other plots to same fig can continue to work and not fail because proj had become Geog.
 		apenda = ((orig_J != "") && !CTRL.returnPS[1]) ? " >> " : ""
+		IamModern[1] && (orig_J = "")	# setting orig_J to "" is a way of avoiding next line that is not for modern mode.
 		(orig_J != "") && (gmt("psxy -T -J" * orig_J * " -R" * orig_R * " -O -K" * apenda * output);  orig_J = "")
 	end
 
 	leave_paper_mode()				# See if we were in an intermediate state of paper coordinates
 	if (usedConfPar[1])				# Hacky shit to force start over when --PAR options were use
-		usedConfPar[1] = false;		#gmt_restart()
+		usedConfPar[1] = false;
 		theme_modern()
 	end
 
