@@ -4235,7 +4235,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 		elseif (k >= 1+fi && (is_pscoast || is_basemap || is_plot) && (args1_is_I || args1_is_G))
 			proj4::String = args[1].proj4
 			(proj4 == "" && args[1].wkt != "") && (proj4 = toPROJ4(importWKT(args[1].wkt)))
-			if (proj4 != "")
+			if (proj4 != "")					# This section tries to deal with the double axes case (2 different projections).
 				WESN = get_geoglimits(args[1])
 				J1 = scan_opt(cmd[1], "-J")
 				if (!isgeog(proj4))
@@ -4246,15 +4246,18 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 					(size_ == "") && @warn("Could not find the right fig size used. Result will be wrong")  
 					cmd[k] = replace(cmd[k], " -J" => " -J" * opt_J * size_)
 				else
-					@warn("If $J1 is a cylindrical projection, second set of coordinates will likely be wrong.")
 					J2 = replace(scan_opt(cmd[2], "-J"), " " => "")
-					D = mapproject([WESN[1] WESN[3]; WESN[1] WESN[4]; WESN[2] WESN[4]; WESN[2] WESN[3]], J=J2)
-					opt_R = sprintf(" -R%.12g/%.12g/%.12g/%.12g", D.ds_bbox...)
-					W = (CTRL.pocket_J[2] != "") ? CTRL.pocket_J[2] : string(split(DEF_FIG_SIZE, "/")[1])
-					fig_size = W * "/" * string(mapproject([WESN[1] WESN[4]], R=[WESN...], J=J1).data[2])::String
-					cmd[k] = replace(cmd[k], J2 => islowercase(J2[1]) ? "x" * fig_size : "X" * fig_size)	# Fails for scales
+					opt_R = ""
+					if (J2 != "")					# Case where J2 wasn't simply "-J"
+						@warn("If $J1 is a cylindrical projection, second set of coordinates will likely be wrong.")
+						D = mapproject([WESN[1] WESN[3]; WESN[1] WESN[4]; WESN[2] WESN[4]; WESN[2] WESN[3]], J=J2)
+						opt_R = sprintf(" -R%.12g/%.12g/%.12g/%.12g", D.ds_bbox...)
+						W = (CTRL.pocket_J[2] != "") ? CTRL.pocket_J[2] : string(split(DEF_FIG_SIZE, "/")[1])
+						fig_size = W * "/" * string(mapproject([WESN[1] WESN[4]], R=[WESN...], J=J1).data[2])::String
+						cmd[k] = replace(cmd[k], J2 => islowercase(J2[1]) ? "x" * fig_size : "X" * fig_size)	# Fails for scales
+					end
 				end
-				cmd[k] = replace(cmd[k], " -R" => opt_R)
+				(opt_R != "") && (cmd[k] = replace(cmd[k], " -R" => opt_R))
 				have_Vd && println("\t",cmd[k])		# Useful to know what command was actually executed.
 				orig_J, orig_R = J1, scan_opt(cmd[1], "-R")
 			end

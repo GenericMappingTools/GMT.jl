@@ -347,7 +347,7 @@ function guess_T_from_ext(fname::String, write::Bool=false)::String
 
 	(length(ext) > 8 || occursin("?", ext)) && return (occursin("?", ext)) ? " -Tg" : "" # A SUBDATASET encoded fname?
 	ext = lowercase(ext[2:end])
-	((ext == "jp2" || ext == "tif" || ext == "tiff") && (!isfile(fname) && !startswith(fname, "/vsi") &&
+	(!write && (ext == "jp2" || ext == "tif" || ext == "tiff") && (!isfile(fname) && !startswith(fname, "/vsi") &&
 		!occursin("https:", fname) && !occursin("http:", fname) && !occursin("ftps:", fname) && !occursin("ftp:", fname))) &&
 		error("File $fname does not exist.")
 	if     (findfirst(isequal(ext), ["grd", "nc", "nc=gd"])  !== nothing)  out = " -Tg";
@@ -358,6 +358,7 @@ function guess_T_from_ext(fname::String, write::Bool=false)::String
 	elseif (ext == "cpt")  out = " -Tc";
 	elseif (ext == "ps" || ext == "eps")  out = " -Tp";
 	elseif (startswith(ext, "tif"))
+		write && return " -To"			# This forces writting with GDAL, that does not need a -Ti or -Tg
 		ressurectGDAL();
 		gdinfo = gdalinfo(fname)
 		(gdinfo === nothing) && error("gdalinfo failed - unable to open $fname")
