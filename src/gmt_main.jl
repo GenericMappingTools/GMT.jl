@@ -1218,7 +1218,7 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)::Union{GMTdat
 
 	n = 1
 	attrib = DictSvS();	# For the case there are no attribs at all.
-	have_Feature_ID = (GMTdevdate > Date("2023-12-10"))		# Feature_ID is available only in >= GMT6.5.0
+	have_Feature_ID = (GMTver >= v"6.5.0")		# Feature_ID is available only in >= GMT6.5.0
 	for k = 1:n_max
 		OGR_F = unsafe_load(in, k)
 		if (k == 1)
