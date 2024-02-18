@@ -98,6 +98,31 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
+    D = polygonize(data::GItype; kwargs...) -> Vector{GMTdataset}
+
+This method, which uses the GDAL GDALPolygonize function, creates vector polygons for all connected regions
+of pixels in the raster sharing a common pixel/cell value. The input may be a grid or an image. This function can
+be rather slow as it picks lots of polygons in pixels with slightly different values at transitions between colors.
+"""
+function polygonize(data::GMT.GItype; gdataset=nothing, kwargs...)
+	d = GMT.KW(kwargs)
+	(gdataset === nothing) && (d[:gdataset] = true)
+	#(eltype(data) <: AbstractFloat)) && (d[:float] = true)	# To know which GDAL function to use.
+	o = helper_run_GDAL_fun(gdalpolygonize, data, "", String[], "", d...)
+	if (gdataset === nothing)		# Should be doing this for GDAL objects too but need to learn how to.
+		prj = getproj(data)
+		D = gd2gmt(o);		isa(D, Vector) ? (D[1].proj4 = prj) : (D.proj4 = prj)
+		return D
+	end
+	o
+end
+function polygonize(data::String; kwargs...)
+	data = gmtread(data, layout="TRB")
+	polygonize(data; kwargs...)
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
     gdaldem(dataset, method, options=String[]; dest="/vsimem/tmp", colorfile=name|GMTcpt, kw...)
 
 Tools to analyze and visualize DEMs.
