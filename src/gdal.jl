@@ -652,6 +652,11 @@ GDALRasterize(pszDest, hDstDS, hSrcDS, pOpts, pUError) =
     acare(ccall((:GDALRasterize, libgdal), pVoid, (Cstring, pVoid, pVoid, pVoid, Ptr{Cint}), pszDest, hDstDS, hSrcDS, pOpts, pUError))
 GDALRasterizeOptionsFree(pOpts) = acare(ccall((:GDALRasterizeOptionsFree, libgdal), Cvoid, (pVoid,), pOpts))
 
+GDALPolygonize(hSrcBand, hMaskBand, hOutLayer, iPixValField, pOpts, pfnProgress, pProgressArg) =
+    acare(ccall((:GDALPolygonize, libgdal), UInt32, (pVoid, pVoid, pVoid, Cint, Ptr{Cstring}, pVoid, Any), hSrcBand, hMaskBand, hOutLayer, iPixValField, pOpts, pfnProgress, pProgressArg))
+#GDALFPolygonize(hSrcBand, hMaskBand, hOutLayer, iPixValField, pOpts, pfnProgress, pProgressArg) =
+    #acare(ccall((:GDALFPolygonize, libgdal), UInt32, (pVoid, pVoid, pVoid, Cint, Ptr{Cstring}, pVoid, Any), hSrcBand, hMaskBand, hOutLayer, iPixValField, pOpts, pfnProgress, pProgressArg))
+
 GDALBuildVRTOptionsNew(papszArgv, psOFB) =
 	acare(ccall((:GDALBuildVRTOptionsNew, libgdal), pVoid, (Ptr{Cstring}, pVoid), papszArgv, psOFB))
 GDALBuildVRT(pszDest, nSrcCount, pahSrcDS, pSrcDSNames, pOpts, pUError) =
@@ -1421,6 +1426,7 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 		return ""
 	end
 	function _getproj(G_I, proj4::Bool, wkt::Bool, epsg::Bool)
+		(!proj4 && !wkt && !epsg) && (proj4 = true)
 		prj::String, _prj::Int = "", 0
 		if (proj4)
 			(G_I.proj4 != "") && (prj = G_I.proj4)
@@ -1643,6 +1649,21 @@ end
 	gdalfillnodata!(ds::IDataset; nodata=NaN, mask::pVoid=C_NULL, maxdist=0, nsmooth=0, progress::pVoid=C_NULL, kw...) =
 		gdalfillnodata!(Dataset(ds.ptr); nodata=nodata, mask=mask, maxdist=maxdist, nsmooth=nsmooth, progress=progress, kw...)
 
+	function gdalpolygonize(dataset::Dataset, opts=String[]; mask::pVoid=C_NULL, options::Vector{String}=String[], progress::pVoid=C_NULL, kw...)
+		#isfloat = (GMT.find_in_kwargs(kw, [:float])[1] !== nothing) ? true : false		# Float Didnt't look convincing
+		nbd = (GMT.find_in_kwargs(kw, [:band])[1] !== nothing) ? kw[:band] : 1
+		bd = getband(dataset, nbd)
+		ds = Gdal.create(Gdal.getdriver("MEMORY"))
+		layer = createlayer(name = "poligonized", dataset=ds, geom=Gdal.wkbPolygon)
+		addfielddefn!(layer, "Px", OFTString, nwidth = 32)
+		#isfloat ? GDALPolygonize(bd.ptr, mask, layer.ptr, 0, options, progress, C_NULL) :
+		          #GDALPolygonize( bd.ptr, mask, layer.ptr, 0, options, progress, C_NULL)	
+		GDALPolygonize(bd.ptr, mask, layer.ptr, 0, ["8CONNECTED=8"], progress, C_NULL)
+		return ds
+	end
+	gdalpolygonize(dataset::IDataset, opts=String[]; mask::pVoid=C_NULL, options::Vector{String}=String[], progress::pVoid=C_NULL, kw...) =
+		gdalpolygonize(Dataset(dataset.ptr); mask=mask, options=options, progress=progress, kw...)
+
 #=
 	for gdalfunc in (:boundary, :buffer, :centroid, :clone, :convexhull, :create, :createcolortable,
 		:createcoordtrans, :copy, :createfeaturedefn, :createfielddefn, :creategeom, :creategeomcollection,
@@ -1857,6 +1878,10 @@ end
 		return item === nothing ? "" : item
 	end
 
+	function setconfigoption(option::Dict{AbstractString,AbstractString})::Nothing
+		for key in keys(option) CPLSetConfigOption(key, option[key]) end
+		return nothing
+	end
 	function setconfigoption(option::AbstractString, value)::Nothing
 		CPLSetConfigOption(option, value)
 		return nothing

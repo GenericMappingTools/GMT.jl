@@ -18,6 +18,7 @@
 	D = geocoder("Universidade do Algarve, Gambelas");
 	mosaic(D, zoom=2, quadonly=1);
 	mosaic(D, zoom=2, bb=1, quadonly=1);
+	mosaic(-90,25, zoom=1, provider="nimb",key="0", quadonly=1);
 
 	struct Provider
 		url::String

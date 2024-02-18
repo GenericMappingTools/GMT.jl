@@ -66,7 +66,7 @@ Get image tiles from a web map tiles provider for given longitude, latitude coor
 - `pt_radius`: The planetary radius. Defaults to Earth's WGS84 authalic radius (6371007 m).
 - `provider`: Tile provider name. Currently available options are (but for more details see the docs of the
   `getprovider` function, *i.e.* ``? getprovider``):
-  - "Bing" (the default), "OSM", "Esri" or a custom provider.
+  - "Bing" (the default), "Google", "OSM", "Esri" or a custom provider.
   - A `Provider` type from the ``TileProviders.jl`` package. You must consult the documentation of that package
 	for more details on how to choose a *provider*.
 - `zoom`: Zoom level (0 for automatic). A number between 0 and ~19. The maximum is provider and area dependent.
@@ -116,7 +116,7 @@ function mosaic(D::GMTdataset; pt_radius=6371007.0, provider="", zoom::Int=0, ca
 end
 
 function mosaic(lon, lat; pt_radius=6371007.0, provider="", zoom::Int=0, cache::String="",
-                mapwidth=15, dpi=96, verbose::Int=0, kw...)
+                mapwidth=15, dpi=96, verbose::Int=0, key::String="", kw...)
 	(size(lon) != size(lat)) && throw(error("lon & lat must be of the same size"))
 	d = Dict{Symbol,Any}(kw)
 	flatness = 0.0		# Not needed because the tile servers serve data in spherical Mercator, but some funs expect flatness
@@ -125,7 +125,7 @@ function mosaic(lon, lat; pt_radius=6371007.0, provider="", zoom::Int=0, cache::
 	(length(lon) == 1 && zoom == 0) && error("Need to specify zoom level for single point query")
 	(zoom == 0) && (zoom = guessZoomLevel(mapwidth, (lon[2]-lon[1]), dpi))
 
-	provider_url, zoom, ext, isZXY, isZYX, provider_code, variant = getprovider(provider, zoom)
+	provider_url, zoom, ext, isZXY, isZYX, provider_code, variant, sitekey = getprovider(provider, zoom, key=key)
 	isXeYeZ = contains(provider_url, "lyrs=")
 	isBing  = contains(provider_url, "virtualearth")
 
@@ -215,6 +215,7 @@ function mosaic(lon, lat; pt_radius=6371007.0, provider="", zoom::Int=0, cache::
 			for j in nn[1]:nn[2]
 				quad_[i+mc, j+nc] = getNext(quadtree, quadkey, i, j)
 				decAdr::Vector{Int} = getQuadLims(quad_[i+mc, j+nc], quadkey, 1)[1]
+				(provider_code == "nimbo") && (decAdr[2] = 2^zoom - decAdr[2])		# Because Nimbus count y from top (shit)
 				(isZYX) && (decAdr = [decAdr[2], decAdr[1]])		# Swap x and y because Esri uses z,y,x instead of z,x,y
 				if (isXeYeZ)
 					tile_url[i+mc, j+nc] = string(provider_url, decAdr[1], "&y=", decAdr[2], "&z=$(zoom)")
@@ -223,6 +224,7 @@ function mosaic(lon, lat; pt_radius=6371007.0, provider="", zoom::Int=0, cache::
 				else
 					tile_url[i+mc, j+nc] = provider_url * quad_[i+mc, j+nc]
 				end
+				(sitekey != "") && (tile_url[i+mc, j+nc] *= sitekey)
 			end
 		end
 	end
@@ -271,25 +273,35 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    getprovider(name, zoom::Int; variant="")
+    getprovider(name, zoom::Int; variant="", date::String="", key::String="")
 
 Get information about a tile provider given its name and zoom level. The returned information
 is only relevant for internal use and is an implementation detail not documented here.
 
 ### Arguments
-- `name`: Name of the tile provider. Currently available are "Bing" (the default), "OSM", "Esri".
+- `name`: Name of the tile provider. Currently available are "Bing" (the default), "Google", "OSM", "Esri", "Nimbo".
   Optionally, the `name` can be a tuple of two strings, where the first string is the provider name
   and the second string is the variant name (see the `variant` bellow).
+
 - The `name` argument can also be a `Provider` type from the TileProviders.jl package. For example,
   after importing TileProviders.jl, ``provider = NASAGIBSTimeseries()`` and next pass it to `getprovider`.
+
+- `date`: Currently only used with the 'Nimbo' provider. Pass date in 'YYYY_MM' or 'YYYY,MM' format.
+
+- `key`: Currently only used with the 'Nimbo' provider. Pass your https://nimbo.earth/ API key.
+
 - `zoom`: Requested zoom level. Will be capped at the provider's maximum.
+
 - `variant`: Optional variant for providers with multiple map layers.
   - `Bing`: variants => "Aerial" (default), "Road", or "Hybrid".
+  - `Google`: variants => "Satellite", "Road", "Terrain", or "Hybrid".
   - `Esri`: variants => "World\\_Street\\_Map" (default), "Elevation/World\\_Hillshade", or "World\\_Imagery".
+  - `Nimbo`: variants => "RGB" (default), "NIR", "NDVI", or "RADAR".
 """
-getprovider(name::Tuple{String,String}, zoom::Int) = getprovider(name[1], zoom; variant=name[2])
-function getprovider(name::StrSymb, zoom::Int; variant="", format="", ZYX::Bool=false, dir_code="")
+getprovider(name::Tuple{String,String}, zoom::Int; date::String="", key="") = getprovider(name[1], zoom; variant=name[2], date=date, key=key)
+function getprovider(name::StrSymb, zoom::Int; variant="", format="", ZYX::Bool=false, dir_code="", date::String="", key::String="")
 	# The 'format', 'dir_code' and 'ZYX' kwargs are of internal use only and passed in when using a TileProviders type
+	sitekey = ""
 	isZXY, ext = false, "jpg"
 	isZYX = ZYX ? true : false
 	(format != "") && (ext = format)
@@ -316,12 +328,22 @@ function getprovider(name::StrSymb, zoom::Int; variant="", format="", ZYX::Bool=
 		t = (v == 's') ? "s" : (v == 'r') ? "m" : (v == 't') ? "p" : (v == 'h') ? "y" : error("Supported variants: 'Satellite', 'Road' 'Terrain' or 'Hybrid'")
 		url = "https://mt1.google.com/vt/lyrs=" * t * "&x=";
 		max_zoom = 22;	isZXY = true; code = "g" * t;	variant = t
+	elseif (startswith(_name, "nimb"))
+		(key == "") && error("Nimbo provider requires a key. You can get one from https://www.nimbo.earth/ by opening a free account.")
+		vv = lowercase(variant)
+		v = (vv == "" || vv == "rgb") ? '1' : vv == "nir" ? '2' : vv == "ndvi" ? '3' : '4'
+		(length(date) == 0 || (length(date) != 6 && length(date) == 7)) || date[5] != '_' || date[5] != ',' &&
+			error("Date must be in 'YYYY_MM' or 'YYYY,MM' format")
+		d = (date == "") ? "2023_12" : date[5] == ',' ? replace(date, ",", "_") : date
+		url = "https://prod-data.nimbo.earth/mapcache/tms/1.0.0/" * d * "_" * v * "@kermap/"
+		max_zoom = 13;	isZXY = true; code = "nimbo";	ext = "png";	sitekey = "?kermap_token=" * key
 	else
+		!startswith(_name, "http") && @warn("Unrecognized provider: $name. Quite likely this is not a valid name.")
 		url, isZXY, max_zoom, code = name, true, 22, dir_code == "" ? "unknown" : dir_code
 	end
 	zoom += 1
 	(zoom > max_zoom+1) && (zoom = max_zoom+1; @warn("Zoom level $zoom is too high for the '$code' provider. Zoom level set to $max_zoom"))
-	return url, zoom, ext, isZXY, isZYX, code, variant
+	return url, zoom, ext, isZXY, isZYX, code, variant, sitekey
 end
 
 # ---------------------------------------------------------------------------------------------------
