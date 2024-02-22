@@ -109,7 +109,7 @@ histogram!(randn(1000),T=0.1,center=true,N=(mode=1,pen=(1,:red)), Vd=dbg2)
 I = mat2img(rand(UInt8,4,4));
 histogram(I, Vd=dbg2);
 histogram(I, I=:o);
-histogray(I);
+GMT.histogray(I);
 #I16 = mat2img(UInt16.([0 1 3 4; 5 6 7 8; 0 1 10 11]),noconv=1);
 I16 = mat2img(rand(UInt16,8,8),noconv=1);
 histogram(I16, auto=true);
