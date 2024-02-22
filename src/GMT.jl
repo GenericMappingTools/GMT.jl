@@ -360,6 +360,7 @@ include("get_enums.jl")
 	#pca(mat2img(rand(UInt8, 64,64,4)));
 	#kmeans(rand(100,3), 3, maxiter=10);
 	#rm(joinpath(tempdir(), "GMTjl_custom_p_x.txt"))		# This one gets created before username is set.
+	theme()
 	resetGMT()
 end
 
