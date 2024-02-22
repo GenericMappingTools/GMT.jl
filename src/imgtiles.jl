@@ -105,18 +105,18 @@ viz(I, coast=true)
 ```
 """
 function mosaic(D::GMTdataset; pt_radius=6371007.0, provider="", zoom::Int=0, cache::String="",
-                mapwidth=15, dpi=96, verbose::Int=0, kw...)
+                mapwidth=15, dpi=96, date::String="", verbose::Int=0, kw...)
 	if (find_in_kwargs(kw, [:bb :BB :bbox :BoundingBox])[1] !== nothing)
 		lon = D.ds_bbox[1:2];	lat = D.ds_bbox[3:4]
 	else
 		lon, lat = D.data[1,1], D.data[1,2]
 	end
 	mosaic(lon, lat; pt_radius=pt_radius, provider=provider, zoom=zoom, cache=cache, mapwidth=mapwidth,
-           dpi=dpi, verbose=verbose, kw...)
+           dpi=dpi, date=date, verbose=verbose, kw...)
 end
 
 function mosaic(lon, lat; pt_radius=6371007.0, provider="", zoom::Int=0, cache::String="",
-                mapwidth=15, dpi=96, verbose::Int=0, key::String="", kw...)
+                mapwidth=15, dpi=96, verbose::Int=0, date::String="", key::String="", kw...)
 	(size(lon) != size(lat)) && throw(error("lon & lat must be of the same size"))
 	d = Dict{Symbol,Any}(kw)
 	flatness = 0.0		# Not needed because the tile servers serve data in spherical Mercator, but some funs expect flatness
@@ -125,7 +125,7 @@ function mosaic(lon, lat; pt_radius=6371007.0, provider="", zoom::Int=0, cache::
 	(length(lon) == 1 && zoom == 0) && error("Need to specify zoom level for single point query")
 	(zoom == 0) && (zoom = guessZoomLevel(mapwidth, (lon[2]-lon[1]), dpi))
 
-	provider_url, zoom, ext, isZXY, isZYX, provider_code, variant, sitekey = getprovider(provider, zoom, key=key)
+	provider_url, zoom, ext, isZXY, isZYX, provider_code, variant, sitekey = getprovider(provider, zoom, date=date, key=key)
 	isXeYeZ = contains(provider_url, "lyrs=")
 	isBing  = contains(provider_url, "virtualearth")
 
@@ -330,11 +330,14 @@ function getprovider(name::StrSymb, zoom::Int; variant="", format="", ZYX::Bool=
 		max_zoom = 22;	isZXY = true; code = "g" * t;	variant = t
 	elseif (startswith(_name, "nimb"))
 		(key == "") && error("Nimbo provider requires a key. You can get one from https://www.nimbo.earth/ by opening a free account.")
+		(variant == "") && (variant = "RGB")
 		vv = lowercase(variant)
-		v = (vv == "" || vv == "rgb") ? '1' : vv == "nir" ? '2' : vv == "ndvi" ? '3' : '4'
-		(length(date) == 0 || (length(date) != 6 && length(date) == 7)) || date[5] != '_' || date[5] != ',' &&
+		v = (vv == "rgb") ? '1' : vv == "nir" ? '2' : vv == "ndvi" ? '3' : '4'
+		(v == '4') && (variant = "RADAR")				# To play safe
+		(length(date) == 0 || (length(date) != 6 && length(date) == 7)) || (date[5] != '_' && date[5] != ',') &&
 			error("Date must be in 'YYYY_MM' or 'YYYY,MM' format")
 		d = (date == "") ? "2023_12" : date[5] == ',' ? replace(date, ",", "_") : date
+		variant = d * "_" * v * filesep * variant		# Need to carry also the dates (this will be used in cache name)
 		url = "https://prod-data.nimbo.earth/mapcache/tms/1.0.0/" * d * "_" * v * "@kermap/"
 		max_zoom = 13;	isZXY = true; code = "nimbo";	ext = "png";	sitekey = "?kermap_token=" * key
 	else

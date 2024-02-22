@@ -373,5 +373,16 @@ function binmethod(d::Dict, cmd::String, X, is_datetime::Bool)
 end
 
 # ---------------------------------------------------------------------------------------------------
+# This version computes the histogram for a UInt8 image band with a bin width of 1
+histogray(img::GMTimage{<:UInt8}; band=1) = histogray(view(img.image, :, :, band))
+function histogray(img::AbstractMatrix{UInt8})
+	edges, counts = 0:255, fill(0, 256)
+	Threads.@threads for v in img
+		@inbounds counts[v+1] += 1
+	end
+	return counts, edges
+end
+
+# ---------------------------------------------------------------------------------------------------
 const pshistogram  = histogram			# Alias
 const pshistogram! = histogram!			# Alias

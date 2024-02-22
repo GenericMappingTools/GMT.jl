@@ -936,7 +936,7 @@ If `stretch` is a scalar, scale the values > `stretch` to [0 255]
 
 The `kw...` kwargs search for [:layout :mem_layout], [:names] and [:metadata]
 """
-function mat2img(mat::AbstractArray{<:Unsigned}; x=Float64[], y=Float64[], v=Float64[], hdr=Float64[],
+function mat2img(mat::Union{AbstractArray{<:Unsigned}, BitMatrix}; x=Float64[], y=Float64[], v=Float64[], hdr=Float64[],
                  proj4::String="", wkt::String="", cmap=nothing, is_transposed::Bool=false, kw...)
 	# Take a 2D array of uint8 and turn it into a GMTimage.
 	# Note: if HDR is empty we guess the registration from the sizes of MAT & X,Y
@@ -951,6 +951,7 @@ end
 function helper_mat2img(mat; x=Float64[], y=Float64[], v=Float64[], hdr=Float64[],
                    proj4::String="", wkt::String="", cmap=nothing, is_transposed::Bool=false, kw...)
 	color_interp = "";		n_colors = 0;
+	isa(mat, BitMatrix) && (mat = UInt8.(mat)*UInt8(255))	# Tried but can't find a way to make GMTimage accept also BitMatrix
 	if (cmap !== nothing)
 		colormap, labels, n_colors = cpt2cmap(cmap)
 	else
