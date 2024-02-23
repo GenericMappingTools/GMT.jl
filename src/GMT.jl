@@ -169,6 +169,8 @@ export
 	qqplot, qqplot!, qqnorm, qqnorm!, seismicity, sealand, squeeze, terramar, violin, violin!, viz, weather, windbarbs, whereami,
 
 	VSdisp, info, kmeans, pca, mosaic, quadbounds, quadkey, geocoder,
+
+	binarize, isodata, rgb2gray,
 	
 	Ginnerjoin, Gouterjoin, Gleftjoin, Grightjoin, Gcrossjoin, Gsemijoin, Gantijoin, spatialjoin,
 
@@ -243,8 +245,9 @@ include("grdview.jl")
 include("grdvolume.jl")
 include("greenspline.jl")
 include("gridit.jl")
-include("imshow.jl")
+include("img_funs.jl")
 include("imgtiles.jl")
+include("imshow.jl")
 include("kml2gmt.jl")
 include("linefit.jl")
 include("loxodromics.jl")
