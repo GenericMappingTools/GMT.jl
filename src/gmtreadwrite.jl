@@ -173,6 +173,7 @@ function gmtread(_fname::String; kwargs...)
 		o = (proggy == "gdalread") ? gdalread(fname, gdopts) : gmt(proggy * fname * cmd)
 		(isempty(o)) && (@warn("\tfile \"$fname\" is empty or has no data after the header.\n"); return GMTdataset())
 
+		((cptname = check_remote_cpt(fname)) != "") && (o.cpt = cptname)	# Seek for default CPT names
 		(isa(o, GMTimage)) && (o.range[5:6] .= extrema(o.image))	# It's ugly to see those floatmin/max in there.
 		(isa(o, GMTimage) && size(o.image, 3) < 3) && (o.layout = o.layout[1:2] * "B" * (length(o.layout) == 4 ? o.layout[4] : "a"))
 
@@ -227,6 +228,7 @@ function gmtread(_fname::String; kwargs...)
 	return O
 end
 
+# ---------------------------------------------------------------------------------
 function sneak_in_SUBDASETS(fname, varname)
 	# Create a new filename with the SUBDATASET_ name. Need this when GDAL is reading per SUBDASET and not whole file
 	# 'fname' is the file name and 'varname' the name of the subdataset.
