@@ -424,7 +424,7 @@ function plotgrid!(GI::GItype, Dgrat::Vector{<:GMTdataset}; annot=true, sides::S
 	end
 	_fmt = (fmt == "") ? FMT[1] : string(fmt)
 	_name = (name != "") ? string(name) : figname != "" ? string(figname) : savefig != "" ? string(savefig) : ""
-	(show == 1) ? showfig(fmt=_fmt, name=_name) : nothing
+	(show == 1) ? showfig(; fmt=_fmt, name=_name) : nothing
 end
 
 # -----------------------------------------------------------------------------------------------
@@ -530,7 +530,7 @@ function cubeplot(fname1::Union{GMTimage, String}, fname2::Union{GMTimage, Strin
 		image!(val[1][1], compact=sideplot(plane=:N, vsize=vsz), t=opt_t)
 		R = image!(val[1][2], compact=sideplot(plane=:W, vsize=vsz), t=opt_t)
 	end
-	see && showfig(d...)
+	see && showfig(; d...)
 	return R
 end
 cubeplot!(fname1::Union{GMTimage, String}, fname2::Union{GMTimage, String}="", fname3::Union{GMTimage, String}="";
@@ -696,18 +696,22 @@ function cubeplot(G::GMTgrid; top=nothing, topshade=false, zdown::Bool=false, xl
 		Gt = (isa(top, String)) ? ((top[1] == '@') ? grdcut(top, R=R, J="Q15") : gmtread(top, R=R)) : crop(top, R=R)
 		if (topshade == 1)
 			It = grdimage(grdsample(slicecube(G,1), R=Gt), A=true, B=:none, C=C, shade=grdgradient(Gt,A=-45,N=:t), layout="BRP")
+			topshade = false
 		else
 			It = grdimage(Gt, A=true, B=:none, C=:topo, shade=true, layout="BRP")
 		end
 	elseif (isa(top, GMTimage))
 		It = crop(top, region=(x_min,x_max,y_min,y_max))
 	else
-		It = grdimage(slicecube(G,1), A=true, B=:none, layout="BRP", C=C)
+		It = grdimage(slicecube(G, zdown ? 1 : size(G,3)), A=true, B=:none, layout="BRP", C=C)	# Use first or last slice at top.
 	end
+	(topshade == 1) && @warn("Ignoring the 'topshade' option since no 'top' grid was passed in.")
 
-	Gs = interp_vslice(squeeze(slicecube(G, G.range[3], axis="y")), inc=interp)	# The South wall
+	Gs = interp_vslice(squeeze(slicecube(G, G.range[3], axis="y")), inc=interp)		# The South wall
+	!zdown && (Gs.z = (Gs.layout[2] == 'R') ? fliplr(Gs.z) : flipud(Gs.z))			# UD flip South wall if zdown is false
 	Is = grdimage(Gs, A=true, B=:none, layout="BRP", C=C)
-	Ge = interp_vslice(squeeze(slicecube(G, G.range[2], axis="x")), inc=interp)	# The East wall
+	Ge = interp_vslice(squeeze(slicecube(G, G.range[2], axis="x")), inc=interp)		# The East wall
+	!zdown && (Ge.z = (Ge.layout[2] == 'R') ? fliplr(Ge.z) : flipud(Ge.z))			# UD flip East wall if zdown is false
 	Ie = grdimage(Ge, A=true, B=:none, layout="BRP", C=C)
 
 	# This is to know if plot a colorbar with optional labels
@@ -717,7 +721,7 @@ function cubeplot(G::GMTgrid; top=nothing, topshade=false, zdown::Bool=false, xl
 		elseif (isa(cbar_label, String)) opt_cbar = (C, cbar_label)
 		elseif (isa(cbar_label, Tuple) && isa(cbar_label[1], String)) opt_cbar = (C, cbar_label...)
 		end
-		isa(cbar_label, String) && !(startswith(cbar_label, "xlabel=") || startswith(cbar_label, "ylabel=")) &&
+		isa(cbar_label, String) && cbar_label != "" && !(startswith(cbar_label, "xlabel=") || startswith(cbar_label, "ylabel=")) &&
 			error("The labels in 'colorbar' option must start with 'xlabel=...' or 'ylabel=...'.")
 		isa(cbar_label, Tuple) && !((startswith(cbar_label[1], "xlabel=") || startswith(cbar_label[1], "ylabel=")) &&
 			(startswith(cbar_label[2], "xlabel=") || startswith(cbar_label[2], "ylabel="))) &&
