@@ -688,6 +688,8 @@ function cubeplot(G::GMTgrid; top=nothing, topshade=false, zdown::Bool=false, xl
 			(:lat in ks) ? append!(inset, val[:lat]) : ((:y in ks) ? append!(inset, val[:y]) : nothing)
 			(length(inset) != 2) && error("The 'inset' option must have to elements. The lon and lat limits of the inset.")
 		end
+		inset[1] < x_min && error("Inset starting longitude must be >= $x_min")
+		inset[2] < y_min && error("Inset ending latitude must be >= $y_min")
 	end
 
 	# Decide what to put at the top of the pile
@@ -703,16 +705,21 @@ function cubeplot(G::GMTgrid; top=nothing, topshade=false, zdown::Bool=false, xl
 	elseif (isa(top, GMTimage))
 		It = crop(top, region=(x_min,x_max,y_min,y_max))
 	else
-		It = grdimage(slicecube(G, zdown ? 1 : size(G,3)), A=true, B=:none, layout="BRP", C=C)	# Use first or last slice at top.
+		_opt_R = (opt_R != "") ? opt_R[4:end] : nothing
+		It = grdimage(slicecube(G, zdown ? 1 : size(G,3)), A=true, B=:none, layout="BRP", C=C, R=_opt_R)	# Use first or last slice at top.
 	end
 	(topshade == 1) && @warn("Ignoring the 'topshade' option since no 'top' grid was passed in.")
 
-	Gs = interp_vslice(squeeze(slicecube(G, G.range[3], axis="y")), inc=interp)		# The South wall
-	!zdown && (Gs.z = (Gs.layout[2] == 'R') ? fliplr(Gs.z) : flipud(Gs.z))			# UD flip South wall if zdown is false
+	x_lims = (opt_R != "") ? [x_min, x_max] : Float64[]			# Empty if using the grid's full range
+	y_lims = (opt_R != "") ? [y_min, y_max] : Float64[]
+	Gs = interp_vslice(squeeze(slicecube(G, y_min, axis="y", x=x_lims)), inc=interp)	# The South wall
+	!zdown && (Gs.z = (Gs.layout[2] == 'R') ? fliplr(Gs.z) : flipud(Gs.z))				# UD flip South wall if zdown is false
 	Is = grdimage(Gs, A=true, B=:none, layout="BRP", C=C)
-	Ge = interp_vslice(squeeze(slicecube(G, G.range[2], axis="x")), inc=interp)		# The East wall
-	!zdown && (Ge.z = (Ge.layout[2] == 'R') ? fliplr(Ge.z) : flipud(Ge.z))			# UD flip East wall if zdown is false
+	Ge = interp_vslice(squeeze(slicecube(G, x_max, axis="x", y=y_lims)), inc=interp)	# The East wall
+	!zdown && (Ge.z = (Ge.layout[2] == 'R') ? fliplr(Ge.z) : flipud(Ge.z))				# UD flip East wall if zdown is false
 	Ie = grdimage(Ge, A=true, B=:none, layout="BRP", C=C)
+	isempty(x_lims) && (x_lims = [G.range[1], G.range[2]])								# While at it, set the figure x|y_lims 
+	isempty(y_lims) && (y_lims = [G.range[3], G.range[4]])
 
 	# This is to know if plot a colorbar with optional labels
 	opt_cbar = nothing
@@ -734,11 +741,11 @@ function cubeplot(G::GMTgrid; top=nothing, topshade=false, zdown::Bool=false, xl
 		pct_x = (G.range[2] - inset[1]) / (G.range[2] - G.range[1])
 		pct_y = (inset[2] - G.range[3]) / (G.range[4] - G.range[3])
 		gmt_restart()				# To remove "rememberings" left by the grdimage calls (they make annotations on West side??)
-		cubeplot(It, Is, Ie, R=@sprintf("%.12g/%.12g/%.12g/%.12g/%.12g/%.12g", G.range[1:4]..., G.range[7], G.range[8]),
+		cubeplot(It, Is, Ie, R=@sprintf("%.12g/%.12g/%.12g/%.12g/%.12g/%.12g", x_lims..., y_lims..., G.range[7], G.range[8]),
 		         hole=((grdimage(Gs, A=true, B=:none, layout="BRP", C=C), grdimage(Ge, A=true, B=:none, layout="BRP", C=C)), pct_x, pct_y), zsize=zsize, xlabel=xlabel, ylabel=ylabel, zlabel=zlabel, title=title, C=opt_cbar, first=first, show=show; d...)
 	else
 		gmt_restart()
-		cubeplot(It, Is, Ie, R=@sprintf("%.12g/%.12g/%.12g/%.12g/%.12g/%.12g", G.range[1:4]..., G.range[7], G.range[8]),
+		cubeplot(It, Is, Ie, R=@sprintf("%.12g/%.12g/%.12g/%.12g/%.12g/%.12g", x_lims..., y_lims..., G.range[7], G.range[8]),
 		         zsize=zsize, xlabel=xlabel, ylabel=ylabel, zlabel=zlabel, title=title, C=opt_cbar, first=first, show=show; d...)
 	end
 end
@@ -768,7 +775,7 @@ function interp_vslice(G::GMTgrid; inc=0.0)
 	diff_y = diff(y)
 	if (inc == 0.0)
 		mi, ma = extrema(diff_y)
-		mi == ma && return G					# No inc set and y has regular spacing, nothing to interpolate.
+		(abs(mi - ma) < 1e-10) && return G		# No inc set and y has regular spacing, nothing to interpolate.
 		inc = min(mi, ma)
 	end
 	np = round(Int, (y[end] - y[1]) / inc + 1)
