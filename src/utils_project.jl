@@ -689,7 +689,7 @@ function cubeplot(G::GMTgrid; top=nothing, topshade=false, zdown::Bool=false, xl
 			(length(inset) != 2) && error("The 'inset' option must have to elements. The lon and lat limits of the inset.")
 		end
 		inset[1] < x_min && error("Inset starting longitude must be >= $x_min")
-		inset[2] > y_min && error("Inset ending latitude must be >= $y_min")
+		inset[2] < y_min && error("Inset ending latitude must be >= $y_min")
 	end
 
 	# Decide what to put at the top of the pile
