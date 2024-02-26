@@ -4704,6 +4704,8 @@ end
 Returns the positional fraction that `val` ocupies in the `x` vector 
 """
 function interp_vec(x::AbstractVecOrMat{<:Real}, val::Real)::Float64
+	(abs(val - x[end]) < 1e-12) && (val = x[end])		# Round these to not trigger ~eps errors
+	(abs(val - x[1])   < 1e-12) && (val = x[1])
 	(val < x[1] || val > x[end]) && error("Interpolating point ($val) is not inside the vector range [$(x[1]) $(x[end])].")
 	k = 0
 	while(val < x[k+=1]) end
