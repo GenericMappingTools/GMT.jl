@@ -50,5 +50,5 @@ xyzw2cube(gmtread("test_cube_ascii_rowmaj.dat"))[:,:,1] == [10.0  10.0  10.0; 10
 
 cubeplot(cube, title="T annual", colorbar=("xlabel=bbb","ylabel=yy"))
 cubeplot(cube, inset=(3,3))
-cubeplot(cube, top="@earth_relief_05m", inset=(3,3))
+cubeplot(cube, top="@earth_relief_05m", coast=true, inset=(3,3))
 cubeplot(cube, top="@earth_relief_05m", topshade=true)
