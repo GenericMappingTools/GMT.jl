@@ -446,6 +446,8 @@ Plot images on the sides of a cube. Those images can be provided as file names, 
 
 The `kw...` keyword/value options may be used to pass:
 
+- `coast`: If true, plot a coastline basemap on the top or bottom side. Use ``coast=(options..)`` to pass options
+  to the coast module. This option can only be used with cubes of geographical coordinates.
 - `region, limits`: The limits extents that will be used to annotate the *x,y,z* axes. It uses the same syntax as all
   other modules that accept this option (*e.g.* ``coast``). It defaults to "0/9/0/9/-9/0"
 - `figsize`: Select the horizontal size(s). Defaults to 15x15 cm.
@@ -464,7 +466,7 @@ The `kw...` keyword/value options may be used to pass:
   are the axes colorbar labels taking the form: `cmap=(C, "xlabel=Blabla1"[, "ylabel=Blabla2"])`.
 """
 function cubeplot(fname1::Union{GMTimage, String}, fname2::Union{GMTimage, String}="", fname3::Union{GMTimage, String}="";
-                  back::Bool=false, notop::Bool=false, xlabel="", ylabel="", zlabel="", title="", first=true, show=false, kw...)
+                  back::Bool=false, notop::Bool=false, xlabel="", ylabel="", zlabel="", title="", first=true, show=false, coast=nothing, kw...)
 	# ...
 	d = KW(kw)
 	opt_R = ((txt::String = parse_R(d, "")[2]) != "") ? txt[4:end] : "0/9/0/9/-9/0"
@@ -503,7 +505,14 @@ function cubeplot(fname1::Union{GMTimage, String}, fname2::Union{GMTimage, Strin
 	SN = front ? :S : :N
 	EW = front ? :E : :W
 	bak = CTRL.pocket_J[3]		# Save this because sideplot() calls parse_JZ with too few info to preserve it in case of need.
-	!notop && image!(f1, compact=sideplot(plane=TB, vsize=abs(vsz)), t=opt_t)	# 'compact' is that option that lets pass a GMT str
+	if (!notop)
+		opts_img = sideplot(plane=TB, vsize=abs(vsz))
+		image!(f1, compact=opts_img, t=opt_t)
+		if (coast !== nothing)
+			opt_Y = ((t = scan_opt(opts_img, "-Y")) != "") ? t : nothing
+			(coast == 1) ? coast!(shore=true, Y=opt_Y, Vd=1) : coast!(; Y=opt_Y, coast...)
+		end
+	end
 	image!(f2, compact=sideplot(plane=SN, vsize=vsz), t=opt_t)
 	R = image!(f3, compact=sideplot(plane=EW, vsize=vsz), t=opt_t)
 	CTRL.pocket_J[3] = bak
@@ -659,7 +668,7 @@ cubeplot(C, top="@earth_relief", inset=(lon=110,y=40), topshade=true, zdown=true
 ```
 """
 function cubeplot(G::GMTgrid; top=nothing, topshade=false, zdown::Bool=false, xlabel="", ylabel="", zlabel="", title="",
-                  show=false, interp::Float64=0.0, first=true, kw...)
+                  show=false, interp::Float64=0.0, first=true, coast=nothing, kw...)
 	(size(G,3) < 2) && error("First input must be a 3D grid.")
 	d = KW(kw)
 	if ((opt_R = parse_R(d, "", false)[2]) != "")
@@ -736,23 +745,25 @@ function cubeplot(G::GMTgrid; top=nothing, topshade=false, zdown::Bool=false, xl
 	end
 
 	if (!isempty(inset))
-		Gs = interp_vslice(squeeze(slicecube(G, inset[2], x=[inset[1] G.range[2]], axis="y")), inc=interp)	# inset South wall
-		Ge = interp_vslice(squeeze(slicecube(G, inset[1], y=[G.range[3] inset[2]], axis="x")), inc=interp)	# inset East wall
-		pct_x = (G.range[2] - inset[1]) / (G.range[2] - G.range[1])
-		pct_y = (inset[2] - G.range[3]) / (G.range[4] - G.range[3])
+		Gs = interp_vslice(squeeze(slicecube(G, inset[2], x=[inset[1] x_max], axis="y")), inc=interp)	# inset South wall
+		!zdown && (Gs.z = (Gs.layout[2] == 'R') ? fliplr(Gs.z) : flipud(Gs.z))				# UD flip South wall if zdown is false
+		Ge = interp_vslice(squeeze(slicecube(G, inset[1], y=[y_min inset[2]], axis="x")), inc=interp)	# inset East wall
+		!zdown && (Ge.z = (Ge.layout[2] == 'R') ? fliplr(Ge.z) : flipud(Ge.z))				# UD flip East wall if zdown is false
+		pct_x = (x_max - inset[1]) / (x_max - x_min)
+		pct_y = (inset[2] - y_min) / (y_max - y_min)
 		gmt_restart()				# To remove "rememberings" left by the grdimage calls (they make annotations on West side??)
 		cubeplot(It, Is, Ie, R=@sprintf("%.12g/%.12g/%.12g/%.12g/%.12g/%.12g", x_lims..., y_lims..., G.range[7], G.range[8]),
 		         hole=((grdimage(Gs, A=true, B=:none, layout="BRP", C=C), grdimage(Ge, A=true, B=:none, layout="BRP", C=C)), pct_x, pct_y), zsize=zsize, xlabel=xlabel, ylabel=ylabel, zlabel=zlabel, title=title, C=opt_cbar, first=first, show=show; d...)
 	else
 		gmt_restart()
 		cubeplot(It, Is, Ie, R=@sprintf("%.12g/%.12g/%.12g/%.12g/%.12g/%.12g", x_lims..., y_lims..., G.range[7], G.range[8]),
-		         zsize=zsize, xlabel=xlabel, ylabel=ylabel, zlabel=zlabel, title=title, C=opt_cbar, first=first, show=show; d...)
+		         zsize=zsize, xlabel=xlabel, ylabel=ylabel, zlabel=zlabel, title=title, C=opt_cbar, first=first, coast=coast, show=show; d...)
 	end
 end
 cubeplot!(G::GMTgrid; top=nothing, topshade=false, zdown::Bool=false, xlabel="", ylabel="", zlabel="", title="",
-          interp::Float64=0.0, show=false, kw...) =
+          interp::Float64=0.0, show=false, coast=nothing, kw...) =
 	cubeplot(G; top=top, topshade=topshade, zdown=zdown, xlabel=xlabel, ylabel=ylabel, zlabel=zlabel, title=title,
-	         interp=interp, first=false, show=show, kw...)
+	         interp=interp, first=false, coast=coast, show=show, kw...)
 
 # From https://stackoverflow.com/questions/54879412/get-the-mapping-from-each-element-of-input-to-the-bin-of-the-histogram-in-julia
 # get the second output as in Matlab's histc
