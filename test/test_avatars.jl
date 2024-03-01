@@ -85,6 +85,9 @@
 	r = psxy!(D, C=C, Z=(data=[1,4], nofill=true), Vd=2)
 	@test contains(r, " -W0.5+z -K")
 
+	D = [mat2ds(rand(5,2), attrib=Dict("a"=>"1")), mat2ds(rand(5,2), attrib=Dict("a"=>"3"))];
+	@test contains(plot(D, Z="att=a", Vd=2), " -Z -C -G+z")
+
 	println("	LINES")
 	lines([0 0; 10 20], R="-2/12/-2/22", J="M2.5", W=1, G=:red, decorated=(dist=(1,0.25), symbol=:box))
 	lines([-50 40; 50 -40],  R="-60/60/-50/50", J="X10", W=0.25, B=:af, box_pos="+p0.5", leg_pos=(offset=0.5,), leg=:TL)
