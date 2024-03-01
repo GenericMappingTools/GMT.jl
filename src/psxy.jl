@@ -165,6 +165,15 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	# Look for color request. Do it after error bars because they may add a column
 	len_cmd = length(cmd);	n_prev = N_args;
 	opt_Z, args, n, got_Zvars = add_opt(d, "", "Z", [:Z :level :levels], :data, Any[arg1, arg2], (outline="_o", nofill="_f"))
+	if (isa(arg1, Vector{<:GMTdataset}) && ((ind_att = findfirst('=', opt_Z)) !== nothing))
+		# Here we deal with the case where the -Z option refers to a particular attribute.
+		# Allow to use "Z=(data="att=XXXX", nofill=true)" when the Di are polygons.
+		last_ind, got_extra = length(opt_Z), false
+		(opt_Z[end] == 'f' || opt_Z[end] == 'o') && (last_ind -= 1; got_extra = true)
+		arg2 = parse.(Float64, make_attrtbl(arg1, att=opt_Z[ind_att+1:last_ind]))
+		opt_Z = (got_extra) ? " -Z" * opt_Z[end] : ((arg1[1].geom == wkbLineString || arg1[1].geom == wkbLineString) ? " -Zf" : " -Z")
+		N_args = 2
+	end
 	if (contains(opt_Z, "f") && !contains(opt_Z, "o"))	# Short version. If no fill it must outline otherwise nothing
 		do_Z_fill, do_Z_outline = false, true;		opt_Z = replace(opt_Z, "f" => "")
 	else
