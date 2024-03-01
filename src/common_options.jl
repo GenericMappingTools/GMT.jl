@@ -887,8 +887,9 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 
 	extra_parse = true;		have_a_none = false
 	if ((val = find_in_dict(d, [:B :frame :axes :axis], del)[1]) !== nothing)		# These four are aliases
+		_val::String = ""
 		if (isa(val, String) || isa(val, Symbol))
-			_val::String = string(val)			# In case it was a symbol
+			_val = string(val)					# In case it was a symbol
 			if (_val == "none")					# User explicitly said NO AXES
 				if     (haskey(d, :xlabel))  _val = "-BS";	have_a_none = true		# Unless labels are wanted, but
 				elseif (haskey(d, :ylabel))  _val = "-BW";	have_a_none = true		# GMT Bug forces using tricks
@@ -4241,7 +4242,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 				if !(is_plot && J2 == "")		# plot nested calls with no explicit proj are not modified.
 					if (!isgeog(proj4))
 						opt_J = replace(proj4, " " => "")
-						isoblique = contains(opt_J, "=utm")		# <== ADD OTHER OBLIQUES HERE
+						isoblique = any(contains.(opt_J, ["=utm", "=lcc", "=omerc", "=tmerc"]))	# <== ADD OTHER OBLIQUES HERE
 						opt_R::String = isoblique ? sprintf(" -R%f/%f/%f/%f+r", WESN[1],WESN[3],WESN[2],WESN[4]) : sprintf(" -R%f/%f/%f/%f", WESN...)
 						size_::String = (J1[1] == 'x') ? "+scale=" * J1[2:end] : (J1[1] == 'X') ? "+width=" * J1[2:end] : ""
 						(size_ == "") && @warn("Could not find the right fig size used. Result will be wrong")  
