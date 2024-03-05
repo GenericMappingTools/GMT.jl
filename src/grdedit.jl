@@ -17,7 +17,7 @@ Parameters
 - **C** | **adjust_inc** :: [Type => Bool]
 
     Clear the command history from the grid header.
-- **D** | **header** :: [Type => Str]    ``Arg = [+xxname][+yyname][+zzname][+sscale][+ooffset][+ninvalid][+ttitle][+rremark``
+- **D** | **header** | **metadata** :: [Type => Str]    ``Arg = [+xxname][+yyname][+zzname][+sscale][+ooffset][+ninvalid][+ttitle][+rremark``
 
     Change these header parameters.
 - **E** | **flip** :: [Type => Str]    ``Arg = [a|h|l|r|t|v]``
@@ -60,7 +60,7 @@ function grdedit_helper(cmd0::String, arg1; kwargs...)
 
 	cmd, = parse_common_opts(d, "", [:G :R :V_params :bi :di :e :f :w :yx])
 	cmd = parse_J(d, cmd, " ")[1]       # No default J here.
-	cmd  = parse_these_opts(cmd, d, [[:A :adjust_inc], [:C :clear_history], [:D :header], [:E :flip],
+	cmd  = parse_these_opts(cmd, d, [[:A :adjust_inc], [:C :clear_history], [:D :header :metadata], [:E :flip],
 	                                 [:L :adust_lon], [:S :wrap], [:T :toggle :toggle_reg]])
 	cmd, args, n, = add_opt(d, cmd, "N", [:N :replace], :data, Array{Any,1}([arg1, arg2]), (x="",))
 	if (n > 0)  arg1, arg2 = args[:]  end
