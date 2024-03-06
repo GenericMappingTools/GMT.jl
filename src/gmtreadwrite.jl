@@ -178,7 +178,7 @@ function gmtread(_fname::String; kwargs...)
 		(isa(o, GMTimage) && size(o.image, 3) < 3) && (o.layout = o.layout[1:2] * "B" * (length(o.layout) == 4 ? o.layout[4] : "a"))
 
 		# If loading a cube, see also if there are layers descriptions to fetch.
-		if ((isa(o, GMTgrid) && size(o,3) > 1)) || (isa(o, GMTimage) && !(eltype(o) <: UInt8))
+		if ((isa(o, GMTgrid) && size(o,3) > 1)) || (isa(o, GMTimage) && !(eltype(o) <: UInt8) && size(o,3) > 1)
 			desc = get_cube_layers_desc(fname)
 			!all(desc .== "") && (o.names = desc)
 		end

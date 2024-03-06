@@ -27,7 +27,7 @@ Parameters
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = greenspline(....) form.
-- **D** | **mode** :: [Type => Number]
+- **D** | **metadata** | **mode** :: [Type => Number]
 
     Sets the distance flag that determines how we calculate distances between data points.
 - **E** :|**misfit** :: [Type => Str | []]		``Arg = [misfitfile]``
@@ -80,7 +80,7 @@ function greenspline_helper(cmd0::String, arg1; kwargs...)
 	arg2 = nothing;     arg3 = nothing
 
 	cmd, = parse_common_opts(d, "", [:I :R :V_params :bi :d :e :f :h :i :o :r :x :w :yx])
-	cmd  = parse_these_opts(cmd, d, [[:C :approx :approximate], [:D :mode], [:E :misfit],
+	cmd  = parse_these_opts(cmd, d, [[:C :approx :approximate], [:D :mode :metadata], [:E :misfit],
 	                                 [:G :grid], [:L :leave_trend], [:Q :dir_derivative], [:S :splines], [:T :mask], [:W :uncertainties]])
 	cmd, args, n, = add_opt(d, cmd, "A", [:A :gradient], :data, Array{Any,1}([arg1, arg2]), (format="+f",))
 	if (n > 0)  arg1, arg2 = args[:]  end
