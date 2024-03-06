@@ -231,7 +231,7 @@ function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::St
 	# For gdaldem color-relief we need a further arg that is the name of a cpt. So save one on disk
 	_cmap = C_NULL
 	if (f == gdaldem && ((cmap = GMT.find_in_dict(d, GMT.CPTaliases)[1])) !== nothing)
-		_cmap = GMT.tmpdir_usr[1] * "/GMTjl_cpt_" * GMT.tmpdir_usr[2] * ".cpt"
+		_cmap = GMT.tmpdir_usr[1] * "/GMTjl_cpt_" * GMT.tmpdir_usr[2] * GMT.tmpdir_usr[3] * ".cpt"
 		if ((isa(cmap, String) && (lowercase(splitext(cmap)[2][2:end]) == "cpt")) || isa(cmap, GMT.GMTcpt))
 			save_cpt4gdal(cmap, _cmap)	# GDAL pretend to recognise CPTs but it almost doesn't
 		else

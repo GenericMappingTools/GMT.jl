@@ -64,7 +64,7 @@ end
 
 const global G_API = [C_NULL]
 const global PSname = [""]					# The PS file (filled in __init__) where, in classic mode, all lands.
-const global tmpdir_usr = [tempdir(), ""]	# Save the tmp dir and user name (also filled in __init__)
+const global tmpdir_usr = [tempdir(), "", ""]	# Save the tmp dir and user name (also filled in __init__)
 const global TESTSDIR = joinpath(dirname(pathof(GMT))[1:end-4], "test", "")	# To have easy access to test files
 const global IMG_MEM_LAYOUT = [""]			# "TCP"	 For Images.jl. The default is "TRBa"
 const global GRD_MEM_LAYOUT = [""]			# "BRP" is the default for GMT PS images.
@@ -385,7 +385,8 @@ function __init__(test::Bool=false)
 	(isfile(f)) && (theme(readline(f));	ThemeIsOn[1] = false)	# False because we don't want it reset in showfig()
 	user = (Sys.isunix() || Sys.isapple()) ? Libc.getpwuid(Libc.getuid(), true).username : Sys.iswindows() ? ENV["USERNAME"] : ""
 	tmpdir_usr[2] = replace(user, " " => "_")
-	PSname[1] = tmpdir_usr[1] * "/" * "GMTjl_" * tmpdir_usr[2] * ".ps"
+	haskey(ENV, "JULIA_GMT_MULTIFILE") && (tmpdir_usr[3] = string("_", getpid()))
+	PSname[1] = tmpdir_usr[1] * "/" * "GMTjl_" * tmpdir_usr[2] * tmpdir_usr[3] * ".ps"
 end
 
 """
