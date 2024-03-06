@@ -229,6 +229,7 @@ function histogram_helper(cmd0::String, arg1; first=true, kwargs...)
 	else
 		(opt_T != "") && (opt_T = " -T" * opt_T)		# It lacked the -T so that it could be used in loc_histo()
 		cmd *= opt_T * opt_Z
+		(cmd0 != "" && !occursin(" -T", cmd)) && error("When input is a file name it is mandatory to set the bin width the 'range' option.")
 	end
 
 	# The following looks a bit messy but it's needed to auto plotting verical lines with the limits

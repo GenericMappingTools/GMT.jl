@@ -3107,7 +3107,7 @@ function helper3_axes(arg, primo::String, axe::String)::String
 		@warn("Argument of the custom annotations must be an N-array or a NamedTuple");		return ""
 	end
 
-	temp::String = "GMTjl_custom_" * primo * "_" * tmpdir_usr[2]
+	temp::String = "GMTjl_custom_" * primo * "_" * tmpdir_usr[2] * tmpdir_usr[3]
 	(axe != "") && (temp *= axe)
 	fname = joinpath(tmpdir_usr[1], temp * ".txt")
 	fid = open(fname, "w")
@@ -3360,7 +3360,7 @@ function helper_decorated(d::Dict, compose=false)
 	elseif ((val = find_in_dict(d, [:locations])[1]) !== nothing)
 		if (isa(val, AbstractString))  cmd = val
 		elseif (GMTver < v"6.4.0" && (isa(val, Matrix) || isa(val, GDtype)))
-			cmd = joinpath(tmpdir_usr[1], "GMTjl_decorated_loc_" * tmpdir_usr[2] * ".dat")
+			cmd = joinpath(tmpdir_usr[1], "GMTjl_decorated_loc_" * tmpdir_usr[2] * tmpdir_usr[3] * ".dat")
 			gmtwrite(cmd, val)
 		end
 		optD = "f"
