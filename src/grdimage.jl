@@ -180,50 +180,6 @@ function common_shade(d::Dict, cmd::String, arg1, arg2, arg3, arg4, prog)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function common_get_R_cpt(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fname::Int, arg1, arg2, arg3, prog::String)
-	# Used by several proggys
-	if (CONVERT_SYNTAX[1])		# Here we cannot risk to execute any code. Just parsing. Movie stuff
-		cmd, = add_opt_cpt(d, cmd, CPTaliases, 'C')
-		N_used = !isempty_(arg1) + !isempty_(arg2) + !isempty_(arg3)
-	else
-		cmd, N_used, arg1, arg2, arg3 = get_cpt_set_R(d, cmd0, cmd, opt_R, got_fname, arg1, arg2, arg3, prog)
-	end
-	return cmd, N_used, arg1, arg2, arg3
-end
-
-# ---------------------------------------------------------------------------------------------------
-function set_defcpt!(d::Dict, cmd0::String)
-	# When dealing with remote grids (those that start with a @), assign them a default CPT
-	cptname = check_remote_cpt(cmd0)
-	cptname != "" && (d[:this_cpt] = cptname)
-	return nothing
-end
-
-# ---------------------------------------------------------------------------------------------------
-"""
-    cpt = check_remote_cpt(cmd0::String) -> String
-
-Check if `cmd0` is a remote grid or a OceanColor one and return the default CPT if it is.
-"""
-function check_remote_cpt(cmd0::String)
-	(cmd0 == "") && return ""
-	cpt_path = joinpath(dirname(pathof(GMT)), "..", "share", "cpt")
-	if     (occursin("SST.sst", cmd0))     return cpt_path * "/sst_oc.cpt"
-	elseif (occursin("CHL.chlor_a", cmd0)) return cpt_path * "/chlor_oc.cpt"
-	end
-	(cmd0[1] != '@') && return ""
-	out = ""
-	if (any(occursin.(["earth_relief_", "earth_gebco_", "earth_gebcosi_", "earth_synbath_"], cmd0))) out = "geo"
-	elseif (any(occursin.(["earth_mag4km_", "earth_mag_"], cmd0)))  out = cpt_path * "/earth_mag.cpt"
-	elseif (occursin("earth_wdmam_", cmd0))  out = cpt_path * "/earth_wdmam.cpt"
-	elseif (occursin("earth_age_", cmd0))    out = cpt_path * "/earth_age.cpt"
-	elseif (occursin("earth_faa_", cmd0))    out = cpt_path * "/earth_faa.cpt"
-	elseif (occursin("earth_vgg_", cmd0))    out = cpt_path * "/earth_vgg.cpt"
-	end
-	return out
-end
-
-# ---------------------------------------------------------------------------------------------------
 grdimage!(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; kw...) =
 	grdimage(cmd0, arg1, arg2, arg3; first=false, kw...) 
 
