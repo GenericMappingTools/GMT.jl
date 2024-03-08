@@ -2526,6 +2526,11 @@ end
 
 	const DRIVER_MANAGER = Ref{DriverManager}()
 	const GDALVERSION = Ref{VersionNumber}()
+	if (GMT.isJLL)
+		const GDAL_DATA_DIR = dirname(GMT.libgdal) * "/../share/gdal"
+	else				# When using the GMT installer
+		const GDAL_DATA_DIR = dirname(GMT.libgdal) * "/../share/GDAL_DATA"
+	end
 
 	function __init__()
 
@@ -2534,6 +2539,7 @@ end
 
 		DRIVER_MANAGER[] = DriverManager()
 		CPLSetConfigOption("GDAL_HTTP_UNSAFESSL", "YES")
+		isdir(GDAL_DATA_DIR) && CPLSetConfigOption("GDAL_DATA", GDAL_DATA_DIR)
 	end
 
 """
