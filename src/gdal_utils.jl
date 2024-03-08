@@ -21,7 +21,7 @@ or
 
    G = gd2gmt("NETCDF:AQUA_MODIS.20210228.L3m.DAY.NSST.sst.4km.NRT.nc:sst");
 """
-function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int=0, layout::String="")
+function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int=0, layout::String="")::Union{GItype, GDtype}
 
 	(isa(_dataset, GMTgrid) || isa(_dataset, GMTimage) || isGMTdataset(_dataset)) && return _dataset
 
@@ -675,7 +675,7 @@ gdalwrite(fname::AbstractString, data, optsP=String[]; opts=String[], kw...) = g
 function gdalwrite(data, fname::AbstractString, optsP=String[], pickme::Bool=true; opts=String[], kw...)
 	(fname == "") && error("Output file name is missing.")
 	(isempty(optsP) && !isempty(opts)) && (optsP = opts)		# Accept either Positional or KW argument
-	ds, = Gdal.get_gdaldataset(data, optsP)
+	ds = Gdal.get_gdaldataset(data, optsP)[1]
 	if (Gdal.OGRGetDriverByName(Gdal.shortname(getdriver(ds))) == C_NULL)
 		gdaltranslate(ds, optsP; dest=fname, kw...)
 	else
