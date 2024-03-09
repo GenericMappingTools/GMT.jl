@@ -66,9 +66,9 @@ Fill selected raster regions by interpolation from the edges.
 ### Returns
 The modified input `data`
 """
-function fillnodata!(indata::GMT.GItype; nodata=nothing, kwargs...)
+function fillnodata!(indata::GItype; nodata=nothing, kwargs...)
 	d = GMT.KW(kwargs)
-	d[:nodata] = (nodata !== nothing) ? nodata : isa(indata, GMT.GItype) ? indata.nodata : NaN
+	d[:nodata] = (nodata !== nothing) ? nodata : isa(indata, GItype) ? indata.nodata : NaN
 	helper_run_GDAL_fun(gdalfillnodata!, indata, "", String[], "", d...)
 end
 
@@ -104,7 +104,7 @@ This method, which uses the GDAL GDALPolygonize function, creates vector polygon
 of pixels in the raster sharing a common pixel/cell value. The input may be a grid or an image. This function can
 be rather slow as it picks lots of polygons in pixels with slightly different values at transitions between colors.
 """
-function polygonize(data::GMT.GItype; gdataset=nothing, kwargs...)
+function polygonize(data::GItype; gdataset=nothing, kwargs...)
 	d = GMT.KW(kwargs)
 	(gdataset === nothing) && (d[:gdataset] = true)
 	#(eltype(data) <: AbstractFloat)) && (d[:float] = true)	# To know which GDAL function to use.
@@ -145,25 +145,25 @@ function gdaldem(indata, method::String, opts::Vector{String}=String[]; dest="/v
 	opts = gdal_opts2vec(opts)		# Guarantied to return a Vector{String}
 	if (method == "hillshade")		# So far the only method that accept kwarg options
 		d = GMT.KW(kwargs)
-		band = ((val = GMT.find_in_dict(d, [:band])[1]) !== nothing) ? string(val)::String : "1"
+		band = ((val = find_in_dict(d, [:band])[1]) !== nothing) ? string(val)::String : "1"
 		append!(opts, ["-compute_edges", "-b", band])
-		if ((val = GMT.find_in_dict(d, [:scale])[1]) === nothing)
-			if (isa(indata, GMT.GMTgrid) && (occursin("longlat", indata.proj4) || occursin("latlong", indata.proj4)) ||
-			                                 grdinfo(indata, C="n").data[end] == 1)
+		if ((val = find_in_dict(d, [:scale])[1]) === nothing)
+			if (isa(indata, GMTgrid) && (occursin("longlat", indata.proj4) || occursin("latlong", indata.proj4)) ||
+			                             grdinfo(indata, C="n").data[end] == 1)
 				append!(opts, ["-s", "111120"])
 			end
 		else
 			append!(opts, ["-s", string(val)])
 		end
-		((val = GMT.find_in_dict(d, [:zfactor :zFactor])[1]) !== nothing) && append!(opts, ["-z", string(val)])
-		((val = GMT.find_in_dict(d, [:azim :azimuth])[1]) !== nothing) && append!(opts, ["-az", string(val)])
-		((val = GMT.find_in_dict(d, [:elev :altitude])[1]) !== nothing) && append!(opts, ["-alt", string(val)])
-		((val = GMT.find_in_dict(d, [:combined :combine])[1]) !== nothing) && append!(opts, ["-combined"])
-		((val = GMT.find_in_dict(d, [:multi :multidir :multiDirectional])[1]) !== nothing) && append!(opts, ["-multidirectional"])
-		((val = GMT.find_in_dict(d, [:igor])[1]) !== nothing) && append!(opts, ["-igor"])
-		((val = GMT.find_in_dict(d, [:alg])[1]) !== nothing) && append!(opts, ["-alg", string(val)])
-		((val = GMT.find_in_dict(d, [:Horn])[1]) !== nothing) && append!(opts, ["-alg", "Horn"])
-		((val = GMT.find_in_dict(d, [:Zeven :Zevenbergen])[1]) !== nothing) && append!(opts, ["-alg", "ZevenbergenThorne"])
+		((val = find_in_dict(d, [:zfactor :zFactor])[1]) !== nothing) && append!(opts, ["-z", string(val)])
+		((val = find_in_dict(d, [:azim :azimuth])[1]) !== nothing) && append!(opts, ["-az", string(val)])
+		((val = find_in_dict(d, [:elev :altitude])[1]) !== nothing) && append!(opts, ["-alt", string(val)])
+		((val = find_in_dict(d, [:combined :combine])[1]) !== nothing) && append!(opts, ["-combined"])
+		((val = find_in_dict(d, [:multi :multidir :multiDirectional])[1]) !== nothing) && append!(opts, ["-multidirectional"])
+		((val = find_in_dict(d, [:igor])[1]) !== nothing) && append!(opts, ["-igor"])
+		((val = find_in_dict(d, [:alg])[1]) !== nothing) && append!(opts, ["-alg", string(val)])
+		((val = find_in_dict(d, [:Horn])[1]) !== nothing) && append!(opts, ["-alg", "Horn"])
+		((val = find_in_dict(d, [:Zeven :Zevenbergen])[1]) !== nothing) && append!(opts, ["-alg", "ZevenbergenThorne"])
 		helper_run_GDAL_fun(gdaldem, indata, dest, opts, method, d...)
 	else
 		helper_run_GDAL_fun(gdaldem, indata, dest, opts, method, kwargs...)
@@ -186,7 +186,7 @@ end
 A GMTgrid or a GDAL dataset (or nothing if file was writen on disk). To force the return of a GDAL
 dataset use the option `gdataset=true`.
 """
-function gdalgrid(indata, opts::Union{String, Vector{String}}=""; dest="/vsimem/tmp", method::GMT.StrSymb="", kwargs...)
+function gdalgrid(indata, opts::Union{String, Vector{String}}=""; dest="/vsimem/tmp", method::Union{AbstractString, Symbol}="", kwargs...)
 	if (method == "")
 		_mtd = "-a invdist:nodata=NaN"
 	else
@@ -219,20 +219,20 @@ function gdalvectortranslate(indata, opts=String[]; dest="/vsimem/tmp", kwargs..
 end
 
 # ---------------------------------------------------------------------------------------------------
-function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::String="", kwargs...)::Union{GMT.GItype, GMT.GDtype, Gdal.AbstractDataset, Nothing}
+function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::String="", kwargs...)::Union{GItype, GDtype, Gdal.AbstractDataset, Nothing}
 	# Helper function to run the GDAL function under 'some protection' and returning obj or saving in file
 
 	GMT.ressurectGDAL()				# Another black-hole plug attempt.
 	opts = gdal_opts2vec(opts)		# Guarantied to return a Vector{String}
 	d, opts, got_GMT_opts = GMT_opts_to_GDAL(f, opts, kwargs...)
-	Vd::Int = ((val = GMT.find_in_dict(d, [:Vd])[1]) !== nothing) ? val : 0		# More gymns to avoid Anys
+	Vd::Int = ((val = find_in_dict(d, [:Vd])[1]) !== nothing) ? val : 0		# More gymns to avoid Anys
 	(Vd > 0) && println(opts)
 
 	# For gdaldem color-relief we need a further arg that is the name of a cpt. So save one on disk
 	_cmap = C_NULL
-	if (f == gdaldem && ((cmap = GMT.find_in_dict(d, GMT.CPTaliases)[1])) !== nothing)
-		_cmap = GMT.tmpdir_usr[1] * "/GMTjl_cpt_" * GMT.tmpdir_usr[2] * GMT.tmpdir_usr[3] * ".cpt"
-		if ((isa(cmap, String) && (lowercase(splitext(cmap)[2][2:end]) == "cpt")) || isa(cmap, GMT.GMTcpt))
+	if (f == gdaldem && ((cmap = find_in_dict(d, GMT.CPTaliases)[1])) !== nothing)
+		_cmap = TMPDIR_USR[1] * "/GMTjl_cpt_" * TMPDIR_USR[2] * TMPDIR_USR[3] * ".cpt"
+		if ((isa(cmap, String) && (lowercase(splitext(cmap)[2][2:end]) == "cpt")) || isa(cmap, GMTcpt))
 			save_cpt4gdal(cmap, _cmap)	# GDAL pretend to recognise CPTs but it almost doesn't
 		else
 			_cmap = cmap				# Risky, assume it's something GDAL can read
@@ -242,7 +242,7 @@ function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::St
 	dataset, needclose = get_gdaldataset(indata, opts, f == gdalvectortranslate || f == gdalgrid)
 	((outname = GMT.add_opt(d, "", "", [:outgrid :outfile :save])) != "") && (dest = outname)
 	default_gdopts!(f, dataset, opts, dest)	# Assign some default options in function of the driver and data type
-	((val = GMT.find_in_dict(d, [:meta])[1]) !== nothing && isa(val,Vector{String})) &&
+	((val = find_in_dict(d, [:meta])[1]) !== nothing && isa(val,Vector{String})) &&
 		Gdal.GDALSetMetadata(dataset.ptr, val, C_NULL)		# Metadata must be in the form NAME=.....
 
 	CPLPushErrorHandler(@cfunction(CPLQuietErrorHandler, Cvoid, (UInt32, Cint, Cstring)))
@@ -288,8 +288,8 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 # Because the GDAL reconnaissance of GMT cpts is very very weak, we must re-write CPTs in a way that it can swallow
-save_cpt4gdal(cpt::String, outname::String) = save_cpt4gdal(GMT.gmtread(cpt), outname)
-function save_cpt4gdal(cpt::GMT.GMTcpt, outname::String)
+save_cpt4gdal(cpt::String, outname::String) = save_cpt4gdal(gmtread(cpt), outname)
+function save_cpt4gdal(cpt::GMTcpt, outname::String)
 	fid = open(outname, "w")
 	try
 		println(fid, "#COLOR_MODEL = RGB\n#")
@@ -397,7 +397,7 @@ function get_gdaldataset(data, opts, isVec::Bool=false)::Tuple{Gdal.AbstractData
 			ds = Gdal.unsafe_read(name, flags=flags)
 			needclose = true
 		end
-	elseif (isa(data, GMTgrid) || isa(data, GMTimage) || GMT.isGMTdataset(data) || isa(data, Matrix{<:Real}))
+	elseif (isa(data, GMTgrid) || isa(data, GMTimage) || isa(data, GDtype) || isa(data, Matrix{<:Real}))
 		ds = gmt2gd(data)
 	elseif (isa(data, AbstractGeometry))	# VERY UNSATISFACTORY. SHOULD BE ABLE TO GETPARENT (POSSIBLE?)
 		ds = wrapgeom(data)

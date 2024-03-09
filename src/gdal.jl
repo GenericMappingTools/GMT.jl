@@ -1446,10 +1446,10 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 		#(prj == "") && (prj = G_I.wkt)
 		#return (!proj4) ? prj : startswith(prj, "PROJCS") ? toPROJ4(importWKT(prj)) : prj
 	end
-	getproj(G::GMT.GMTgrid;  proj4::Bool=false, wkt::Bool=false, epsg::Bool=false) = _getproj(G, proj4, wkt, epsg)
-	getproj(I::GMT.GMTimage; proj4::Bool=false, wkt::Bool=false, epsg::Bool=false) = _getproj(I, proj4, wkt, epsg)
-	getproj(D::GMT.GMTdataset; proj4::Bool=false, wkt::Bool=false, epsg::Bool=false) = _getproj(D, proj4, wkt, epsg)
-	getproj(D::Vector{<:GMT.GMTdataset}; proj4::Bool=false, wkt::Bool=false, epsg::Bool=false) = _getproj(D[1], proj4, wkt, epsg)
+	getproj(G::GMTgrid;  proj4::Bool=false, wkt::Bool=false, epsg::Bool=false) = _getproj(G, proj4, wkt, epsg)
+	getproj(I::GMTimage; proj4::Bool=false, wkt::Bool=false, epsg::Bool=false) = _getproj(I, proj4, wkt, epsg)
+	getproj(D::GMTdataset; proj4::Bool=false, wkt::Bool=false, epsg::Bool=false) = _getproj(D, proj4, wkt, epsg)
+	getproj(D::Vector{<:GMTdataset}; proj4::Bool=false, wkt::Bool=false, epsg::Bool=false) = _getproj(D[1], proj4, wkt, epsg)
 
 	getmetadata(ds::AbstractDataset) = GDALGetMetadata(ds.ptr, C_NULL)
 	function getmetadata(name::AbstractString)
@@ -1613,7 +1613,7 @@ end
 	gdalgrid(ds::IDataset, opts::Vector{String}=String[]; dest="/vsimem/tmp", gdataset=false) =
 		gdalgrid(Dataset(ds.ptr), opts; dest=dest, gdataset=gdataset)
 
-	gdalrasterize(dataset::GMT.GDtype, options::Vector{String}=String[]; dest = "/vsimem/tmp", gdataset=false, save::AbstractString="", layout::String="") =
+	gdalrasterize(dataset::GDtype, options::Vector{String}=String[]; dest = "/vsimem/tmp", gdataset=false, save::AbstractString="", layout::String="") =
 		gdalrasterize(gmt2gd(dataset), options; dest=dest, gdataset=gdataset, save=save, layout=layout)
 	function gdalrasterize(dataset::AbstractDataset, options::Vector{String}=String[]; dest = "/vsimem/tmp", gdataset=false, save::AbstractString="", layout::String="")
 		(save != "") && (dest = save)
@@ -1640,7 +1640,7 @@ end
 	end
 
 	function gdalfillnodata!(dataset::Dataset; nodata=NaN, mask::pVoid=C_NULL, maxdist=0, nsmooth=0, progress::pVoid=C_NULL, kw...)
-		nbd = (GMT.find_in_kwargs(kw, [:band])[1] !== nothing) ? kw[:band] : 1
+		nbd = (find_in_kwargs(kw, [:band])[1] !== nothing) ? kw[:band] : 1
 		bd = getband(dataset, nbd)
 		(getnodatavalue(bd) === nothing) && setnodatavalue!(bd, nodata)
 		(GDALFillNodata(bd.ptr, mask, maxdist, 0, nsmooth, String[], progress, C_NULL) != 0) && error("Failed to fill nodata")
@@ -1650,8 +1650,8 @@ end
 		gdalfillnodata!(Dataset(ds.ptr); nodata=nodata, mask=mask, maxdist=maxdist, nsmooth=nsmooth, progress=progress, kw...)
 
 	function gdalpolygonize(dataset::Dataset, opts=String[]; mask::pVoid=C_NULL, options::Vector{String}=String[], progress::pVoid=C_NULL, kw...)
-		#isfloat = (GMT.find_in_kwargs(kw, [:float])[1] !== nothing) ? true : false		# Float Didnt't look convincing
-		nbd = (GMT.find_in_kwargs(kw, [:band])[1] !== nothing) ? kw[:band] : 1
+		#isfloat = (find_in_kwargs(kw, [:float])[1] !== nothing) ? true : false		# Float Didnt't look convincing
+		nbd = (find_in_kwargs(kw, [:band])[1] !== nothing) ? kw[:band] : 1
 		bd = getband(dataset, nbd)
 		ds = Gdal.create(Gdal.getdriver("MEMORY"))
 		layer = createlayer(name = "poligonized", dataset=ds, geom=Gdal.wkbPolygon)
@@ -1706,10 +1706,10 @@ end
 		gdalvectortranslate([ds], opts; dest=dest, gdataset=gdataset, save=save)
 	gdalvectortranslate(ds::IDataset, opts::Vector{String}=String[]; dest="/vsimem/tmp", gdataset=false, save="") =
 		gdalvectortranslate([Dataset(ds.ptr)], opts; dest=dest, gdataset=gdataset, save=save)
-	gdalvectortranslate(ds::GMT.GMTdataset, opts::Vector{String}=String[]; dest="/vsimem/tmp", gdataset=false, save="") = 				gdalvectortranslate([ds], opts; dest=dest, gdataset=gdataset, save=save)
-	function gdalvectortranslate(ds::Vector{GMT.GMTdataset}, opts::Vector{String}=String[]; dest="/vsimem/tmp", gdataset=false, save="")
-		o = gdalvectortranslate(GMT.gmt2gd(ds), opts; dest=dest, gdataset=gdataset, save=save)
-		(!isa(o, GMT.GDtype) && dest == "/vsimem/tmp") && deletedatasource(o, "/vsimem/tmp")	# WTF do I need to do this?
+	gdalvectortranslate(ds::GMTdataset, opts::Vector{String}=String[]; dest="/vsimem/tmp", gdataset=false, save="") = 				gdalvectortranslate([ds], opts; dest=dest, gdataset=gdataset, save=save)
+	function gdalvectortranslate(ds::Vector{GMTdataset}, opts::Vector{String}=String[]; dest="/vsimem/tmp", gdataset=false, save="")
+		o = gdalvectortranslate(gmt2gd(ds), opts; dest=dest, gdataset=gdataset, save=save)
+		(!isa(o, GDtype) && dest == "/vsimem/tmp") && deletedatasource(o, "/vsimem/tmp")	# WTF do I need to do this?
 		o
 	end
 
@@ -2527,9 +2527,9 @@ end
 	const DRIVER_MANAGER = Ref{DriverManager}()
 	const GDALVERSION = Ref{VersionNumber}()
 	if (GMT.isJLL)
-		const GDAL_DATA_DIR = dirname(GMT.libgdal) * "/../share/gdal"
+		const GDAL_DATA_DIR = dirname(libgdal) * "/../share/gdal"
 	else				# When using the GMT installer
-		const GDAL_DATA_DIR = dirname(GMT.libgdal) * "/../share/GDAL_DATA"
+		const GDAL_DATA_DIR = dirname(libgdal) * "/../share/GDAL_DATA"
 	end
 
 	function __init__()

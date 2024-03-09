@@ -11,18 +11,18 @@ a `GMTdataset` or an `AbstractDataset`.
          type, in which case its referencing system is copied into `type`
 """
 function setproj!(tipo::AbstractArray, proj::String="")
-	(!isa(tipo, GMTgrid) && !isa(tipo, GMTimage) && !isa(tipo, GMT.GMTdataset) && !isa(tipo, Vector{GMT.GMTdataset})) &&
+	(!isa(tipo, GMTgrid) && !isa(tipo, GMTimage) && !isa(tipo, GMTdataset) && !isa(tipo, Vector{GMTdataset})) &&
 		error("Wrong data type for this function. Must be a grid, image or dataset")
 	(proj == "") && error("the projection string cannot obviously be empty")
 	isproj4 = (startswith(proj, "+proj") !== nothing)
-	obj = (isa(tipo, Vector{GMT.GMTdataset})) ? tipo[1] : tipo
+	obj = (isa(tipo, Vector{GMTdataset})) ? tipo[1] : tipo
 	(isproj4) ? (obj.proj4 = proj) : (obj.wkt = proj)
 	return nothing
 end
 function setproj!(tipo::AbstractArray, ref)
-	(!isa(ref, GMTgrid) && !isa(ref, GMTimage) && !isa(ref, GMT.GMTdataset) && !isa(ref, Vector{GMT.GMTdataset})) &&
+	(!isa(ref, GMTgrid) && !isa(ref, GMTimage) && !isa(ref, GMTdataset) && !isa(ref, Vector{GMTdataset})) &&
 		error("Wrong REFERENCE data type for this function. Must be a grid, image or dataset")
-	obj = (isa(ref, Vector{GMT.GMTdataset})) ? ref[1] : ref
+	obj = (isa(ref, Vector{GMTdataset})) ? ref[1] : ref
 	((prj = obj.proj4) == "") && (prj = obj.wkt)
 	(prj == "") && error("The REFERENCE type is not referenced with either PROJ4 or WKT string")
 	setproj!(tipo, prj)
@@ -374,7 +374,7 @@ within(D1, D2) = helper_geoms_run_fun(within, D1, D2, false)
 Returns `true` if g1 contains g2.
 """
 Base.:contains(g1::AbstractGeometry, g2::AbstractGeometry) = Bool(OGR_G_Contains(g1.ptr, g2.ptr))
-Base.:contains(D1::Union{Matrix{<:Real}, GMT.GDtype}, D2::Union{Matrix{<:Real}, GMT.GDtype}) = helper_geoms_run_fun(contains, D1, D2, false)
+Base.:contains(D1::Union{Matrix{<:Real}, GDtype}, D2::Union{Matrix{<:Real}, GDtype}) = helper_geoms_run_fun(contains, D1, D2, false)
 
 # ---------------------------------------------------------------------------------------------------
 """
@@ -549,7 +549,7 @@ function helper_geoms_run_fun(f::Function, D, retds::Bool=true; gdataset=false)
 		# Don't know if due to bad implementation or it's the way it is, the centroid function only Computes
 		# that of first polygon, so we have to loop over D[k]. Restrictred so far to the centroid function.
 		mat = Array{Float64,2}(undef, length(D), 2)
-		for k = 1:GMT.numel(D)
+		for k = 1:lastindex(D)
 			geom = helper_1geom(D[k])
 			ig = f(geom)
 			mat[k,1], mat[k,2] = Gdal.getx(ig, 0), Gdal.gety(ig, 0)
@@ -569,7 +569,7 @@ function helper_geoms_run_fun(f::Function, D, ratio::Float64, holes::Bool=true; 
 	return (gdataset) ? ig : gd2gmt(ig)
 end
 
-function helper_2geoms(D1::Union{Matrix{<:Real}, GMT.GDtype}, D2::Union{Matrix{<:Real}, GMT.GDtype})
+function helper_2geoms(D1::Union{Matrix{<:Real}, GDtype}, D2::Union{Matrix{<:Real}, GDtype})
 	# Helpr function that deals with arg checking and data type conversions, This is common to several funs here
 	ds1 = gmt2gd(D1)
 	ds2 = gmt2gd(D2)
@@ -578,7 +578,7 @@ function helper_2geoms(D1::Union{Matrix{<:Real}, GMT.GDtype}, D2::Union{Matrix{<
 	return g1, g2
 end
 
-function helper_1geom(D::Union{Matrix{<:Real}, GMT.GDtype})
+function helper_1geom(D::Union{Matrix{<:Real}, GDtype})
 	ds = gmt2gd(D)
 	getgeom(unsafe_getfeature(getlayer(ds, 0),0))
 end

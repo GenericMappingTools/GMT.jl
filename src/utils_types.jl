@@ -875,7 +875,7 @@ function line2multiseg(M::Matrix{<:Real}; is3D::Bool=false, color::GMTcpt=GMTcpt
 	if (!isempty(color))
 		z_col = color_col
 		rgb = [0.0, 0.0, 0.0];
-		P::Ptr{GMT.GMT_PALETTE} = palette_init(G_API[1], color);		# A pointer to a GMT CPT
+		P::Ptr{GMT_PALETTE} = palette_init(G_API[1], color);		# A pointer to a GMT CPT
 		for k = 1:n_ds
 			z = (use_row_number) ? z4color[k] : M[k, z_col]
 			@GC.preserve color gmt_get_rgb_from_z(G_API[1], P, z, rgb)
@@ -1555,7 +1555,7 @@ function stackgrids(names::Vector{String}, v=nothing; zcoord=nothing, zdim_name:
 		_z_unit = lowercase(z_unit)
 		(mirone && z_unit == "") && (_z_unit = "decimalyear")		# For Mirone the default is DecimalYear
 		if (_z_unit == "decimalyear" || _z_unit == "yeardecimal")
-			v = GMT.yeardecimal.(v);				z_unit = "Decimal year"
+			v = yeardecimal.(v);					z_unit = "Decimal year"
 		elseif (startswith(_z_unit, "mil"))
 			v = Dates.datetime2epochms.(v);	z_unit = "Milliseconds since 0000-01-01T00:00:00"
 		elseif (_z_unit == "seconds")

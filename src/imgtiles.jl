@@ -133,7 +133,7 @@ function mosaic(lon, lat; pt_radius=6371007.0, provider="", zoom::Int=0, cache::
 	f = joinpath(GMTuserdir[1], "tiles_cache_dir.txt")
 	if (cache == "")
 		(isfile(f)) && (cache = readline(f))
-		length(cache) < 3 && (cache = joinpath(tmpdir_usr[1], "cache_" * tmpdir_usr[2] * tmpdir_usr[3]))
+		length(cache) < 3 && (cache = joinpath(TMPDIR_USR[1], "cache_" * TMPDIR_USR[2] * TMPDIR_USR[3]))
 	else
 		(cache == "gmt") && (cache = joinpath(GMTuserdir[1], "cache_tileserver"))	# cache it in ~/.gmt
 		(isfile(f)) && rm(f)			# Remove old cache location
