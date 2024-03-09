@@ -370,7 +370,7 @@ function default_gdopts!(f::Function, ds, opts::Vector{String}, dest::String)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function get_gdaldataset(data, opts, isVec::Bool=false)
+function get_gdaldataset(data, opts, isVec::Bool=false)::Tuple{Gdal.AbstractDataset, Bool}
 	# Get a GDAL dataset from either a file name, a GMT grid or image, or a dataset itself
 	# In case of a file name we must be careful and deal with possible "+b" band requests from GMT.
 	# isVec tells us if the filename 'data' is to be opened as a Vector or a Raster.
@@ -392,7 +392,7 @@ function get_gdaldataset(data, opts, isVec::Bool=false)
 		flags = isVec ? GDAL_OF_VECTOR | GDAL_OF_VERBOSE_ERROR : GDAL_OF_READONLY | GDAL_OF_VERBOSE_ERROR
 		_ext = lowercase(ext[2:end])		# Drop the leading dot too
 		if ((name[1] == '@') || (findfirst(isequal(_ext), ["dat", "txt", "csv"]) !== nothing))
-			ds = gmt2gd(gmtread(name))
+			ds::Gdal.AbstractDataset = gmt2gd(gmtread(name))
 		else
 			ds = Gdal.unsafe_read(name, flags=flags)
 			needclose = true

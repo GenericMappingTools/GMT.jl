@@ -75,7 +75,7 @@ function gmtread(_fname::String; kwargs...)
 	# Process these first so they may take precedence over defaults set below
 	opt_T = add_opt(d, "", "Tg", [:grd :grid])
 	if (opt_T != "")		# Force read via GDAL
-		((val = find_in_dict(d, [:gdal])[1]) !== nothing) && (fname *= "=gd")
+		((find_in_dict(d, [:gdal])[1]) !== nothing) && (fname *= "=gd")
 	else
 		opt_T = add_opt(d, "", "Ti", [:img :image])
 	end
@@ -88,19 +88,19 @@ function gmtread(_fname::String; kwargs...)
 	if ((varname = find_in_dict(d, [:varname])[1]) !== nothing) # See if we have a nc varname / layer request
 		varname = string(varname)::String
 		(opt_T == "") && (opt_T = " -Tg")		# Though not used in if 'gdal', it still avoids going into needless tests below
-		if ((val = find_in_dict(d, [:gdal])[1]) !== nothing)	# This branch is fragile
+		if (find_in_dict(d, [:gdal])[1] !== nothing)	# This branch is fragile
 			fname = sneak_in_SUBDASETS(fname, varname)	# Get the composed name (fname + subdaset and driver)
 			proggy = "gdalread"
 			gdopts = ""
-			if ((val = find_in_dict(d, [:layer :layers :band :bands])[1]) !== nothing)
-				if (isa(val, Real))               gdopts = @sprintf(" -b %d", val)
-				elseif (isa(val, AbstractArray))  gdopts = join([@sprintf(" -b %d", val[i]) for i in 1:numel(val)])
+			if ((val1 = find_in_dict(d, [:layer :layers :band :bands])[1]) !== nothing)
+				if (isa(val1, Real))               gdopts = string(" -b ", val1)
+				elseif (isa(val1, AbstractArray))  gdopts = join([string(" -b ", val1[i]) for i in 1:numel(val1)])
 				end
 			end
 		else
 			fname *= "?" * varname
 			if ((val = find_in_dict(d, [:layer :layers :band :bands])[1]) !== nothing)
-				if (isa(val, Real))       fname *= @sprintf("[%d]", val-1)
+				if     (isa(val, Real))           fname *= @sprintf("[%d]", val-1)
 				elseif (isa(val, AbstractArray))  fname *= @sprintf("[%d,%d]", val[1]-1, val[2]-1)	# A 4D array
 				elseif ((isa(val, String) || isa(val, Symbol)) && (string(val) == "all")) proggy = "grdinterpolate "
 				end
@@ -217,7 +217,7 @@ function gmtread(_fname::String; kwargs...)
 	(Sys.iswindows()) && run(`cmd /c set GDAL_HTTP_UNSAFESSL=YES`)
 	API2 = GMT_Create_Session("GMT", 2, GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_NOGDALCLOSE + GMT_SESSION_COLMAJOR);
 
-	drop_islands = ((val = find_in_dict(d, [:no_islands :no_holes])[1]) !== nothing) ? true : false
+	drop_islands = (find_in_dict(d, [:no_islands :no_holes])[1] !== nothing) ? true : false
 	x = (opt_R == "") ? [0.0, 0, 0, 0] : opt_R2num(opt_R)		# See if we have a limits request
 	lims = tuple(vcat(x,[0.0, 0.0])...)
 	ctrl = OGRREAD_CTRL(Int32(0), ogr_layer, pointer(fname), lims)

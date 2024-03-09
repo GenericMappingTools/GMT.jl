@@ -339,7 +339,6 @@ function opt_R2num(opt_R::String)::Vector{Float64}
 		rs = split(opt_R, '/')
 		limits::Vector{Float64} = zeros(length(rs))
 		fst = ((ind = findfirst("R", rs[1])) !== nothing) ? ind[1] : 0
-		#contains(rs[2], "T") || contains(rs[2], "t")
 		limits[1] = parse(Float64, rs[1][fst+1:end])
 		for k = 2:lastindex(rs)  limits[k] = parse(Float64, rs[k])  end
 		#if (isdiag)  limits[2], limits[4] = limits[4], limits[2]  end
@@ -347,8 +346,8 @@ function opt_R2num(opt_R::String)::Vector{Float64}
 	elseif (opt_R != " -R" && opt_R != " -Rtight")	# One of those complicated -R forms. Ask GMT the limits (but slow. It takes 0.2 s)
 
 		# If opt_R is not a grid's name, we are f.
-		((ind = findfirst("-R@", opt_R)) !== nothing) && return grdinfo(opt_R[ind[3]:end], C=true)[1:4]	# should be a cache file
-		(((f = guess_T_from_ext(opt_R)) == " -Tg") || f == " -Ti") && return grdinfo(opt_R[4:end], C=true)[1:4]	# any local file
+		((ind = findfirst("-R@", opt_R)) !== nothing) && return gmt("grdinfo " * opt_R[ind[3]:end] * " -C")[1:4]	# should be a cache file
+		(((f = guess_T_from_ext(opt_R)) == " -Tg") || f == " -Ti") && return gmt("grdinfo " * opt_R * " -C")[1:4]	# any local file
 
 		kml::GMTdataset = gmt("gmt2kml " * opt_R, [0 0])		# for example, opt_R = " -RPT"
 		limits = zeros(4)
@@ -4657,6 +4656,50 @@ function digests_legend_bag(d::Dict, del::Bool=true)
 	return nothing
 end
 
+# ---------------------------------------------------------------------------------------------------
+function set_defcpt!(d::Dict, cmd0::String)
+	# When dealing with remote grids (those that start with a @), assign them a default CPT
+	cptname = check_remote_cpt(cmd0)
+	cptname != "" && (d[:this_cpt] = cptname)
+	return nothing
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    cpt = check_remote_cpt(cmd0::String) -> String
+
+Check if `cmd0` is a remote grid or a OceanColor one and return the default CPT if it is.
+"""
+function check_remote_cpt(cmd0::String)
+	(cmd0 == "") && return ""
+	cpt_path = joinpath(dirname(pathof(GMT)), "..", "share", "cpt")
+	if     (occursin("SST.sst", cmd0))     return cpt_path * "/sst_oc.cpt"
+	elseif (occursin("CHL.chlor_a", cmd0)) return cpt_path * "/chlor_oc.cpt"
+	end
+	(cmd0[1] != '@') && return ""
+	out = ""
+	if (any(occursin.(["earth_relief_", "earth_gebco_", "earth_gebcosi_", "earth_synbath_"], cmd0))) out = "geo"
+	elseif (any(occursin.(["earth_mag4km_", "earth_mag_"], cmd0)))  out = cpt_path * "/earth_mag.cpt"
+	elseif (occursin("earth_wdmam_", cmd0))  out = cpt_path * "/earth_wdmam.cpt"
+	elseif (occursin("earth_age_", cmd0))    out = cpt_path * "/earth_age.cpt"
+	elseif (occursin("earth_faa_", cmd0))    out = cpt_path * "/earth_faa.cpt"
+	elseif (occursin("earth_vgg_", cmd0))    out = cpt_path * "/earth_vgg.cpt"
+	end
+	return out
+end
+
+# ---------------------------------------------------------------------------------------------------
+function common_get_R_cpt(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fname::Int, arg1, arg2, arg3, prog::String)
+	# Used by several proggys
+	if (CONVERT_SYNTAX[1])		# Here we cannot risk to execute any code. Just parsing. Movie stuff
+		cmd, = add_opt_cpt(d, cmd, CPTaliases, 'C')
+		N_used = !isempty_(arg1) + !isempty_(arg2) + !isempty_(arg3)
+	else
+		cmd, N_used, arg1, arg2, arg3 = get_cpt_set_R(d, cmd0, cmd, opt_R, got_fname, arg1, arg2, arg3, prog)
+	end
+	return cmd, N_used, arg1, arg2, arg3
+end
+
 # --------------------------------------------------------------------------------------------------
 """
     str = scan_opt(cmd::AbstractString, opt::String, keepX=false)
@@ -4729,7 +4772,7 @@ end
 # --------------------------------------------------------------------------------------------------
 function print_kwarg_opts(symbs::VMs, mapa=nothing)::String
 	# Print the kwargs options
-	opt::String = "Option: " * join([@sprintf("%s, or ",x) for x in symbs])[1:end-5]::String
+	opt::String = "Option: " * join([string(x, ", or ") for x in symbs])[1:end-5]::String
 	if (isa(mapa, NamedTuple))
 		keys_ = keys(mapa)
 		vals = Vector{String}(undef, length(keys_))
