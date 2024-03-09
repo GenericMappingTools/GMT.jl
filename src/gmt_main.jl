@@ -33,7 +33,7 @@ function gmt(cmd::String, args...)
 	isPSclosed[1] = false				# Only a gmtend() call sets this to true
 	if (g_module == "begin")			# Use this default fig name instead of "gmtsession"
 		fig_ext = (isFranklin[1]) ? " png" : (isJupyter[1]) ? " ps" : FMT[1]::String
-		(r == "") && (r = (isFranklin[1] || isJupyter[1]) ? (tmpdir_usr[1] * "/" * "GMTjl_" * tmpdir_usr[2] * tmpdir_usr[3] * fig_ext) : "GMTplot " * fig_ext)
+		(r == "") && (r = (isFranklin[1] || isJupyter[1]) ? (TMPDIR_USR[1] * "/" * "GMTjl_" * TMPDIR_USR[2] * TMPDIR_USR[3] * fig_ext) : "GMTplot " * fig_ext)
 		IamModern[1] = true
 		gmtlib_setparameter(G_API[1], "MAP_ORIGIN_X", "0")	# Workarround GMT bug.
 		gmtlib_setparameter(G_API[1], "MAP_ORIGIN_Y", "0")
@@ -134,7 +134,7 @@ function gmt(cmd::String, args...)
 	end
 
 	if (LL == NULL)		# The no-options case. Must get the LL that was created in GMT_Encode_Options
-		LL = convert(Ptr{GMT.GMT_OPTION}, unsafe_load(pLL))
+		LL = convert(Ptr{GMT_OPTION}, unsafe_load(pLL))
 		pLL = Ref([LL], 1)		# Need this because GMT_Destroy_Options() wants a Ref
 	end
 
@@ -322,7 +322,7 @@ end
 #= ---------------------------------------------------------------------------------------------------
 function GMT_IJP(hdr::GMT_GRID_HEADER, row, col)
 # Function for indecing into a GMT grid [with pad]
-# padTop (hdr.pad[GMT.GMT_YHI]) and padLeft (hdr.pad[GMT.GMT_XLO]) are normally equal
+# padTop (hdr.pad[GMT_YHI]) and padLeft (hdr.pad[GMT_XLO]) are normally equal
 	#ij = (row + hdr.pad[4]) * hdr.mx + col + hdr.pad[1]		# in C
 	ij = ((row-1) + hdr.pad[4]) * hdr.mx + col + hdr.pad[1]
 end
@@ -331,7 +331,7 @@ end
 #= ---------------------------------------------------------------------------------------------------
 function GMT_IJP(row::Integer, col::Integer, mx, padTop, padLeft)
 # Function for indecing into a GMT grid [with pad]
-# padTop (hdr.pad[GMT.GMT_YHI]) and padLeft (hdr.pad[GMT.GMT_XLO]) are normally equal
+# padTop (hdr.pad[GMT_YHI]) and padLeft (hdr.pad[GMT_XLO]) are normally equal
 	#ij = (row + padTop) * mx + col + padLeft		# in C
 	ij = ((row-1) + padTop) * mx + col + padLeft
 end
@@ -614,11 +614,11 @@ function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})::GDtype
 	(DCWnames) && delete!(POSTMAN, "DCWnames")
 
 	seg_out = 0;
-	T::Vector{Ptr{GMT.GMT_DATATABLE}} = unsafe_wrap(Array, D.table, D.n_tables)
+	T::Vector{Ptr{GMT_DATATABLE}} = unsafe_wrap(Array, D.table, D.n_tables)
 	for tbl = 1:D.n_tables
 		DT::GMT_DATATABLE = unsafe_load(T[tbl])
 		for seg = 1:DT.n_segments
-			S::Vector{Ptr{GMT.GMT_DATASEGMENT}} = unsafe_wrap(Array, DT.segment, seg)
+			S::Vector{Ptr{GMT_DATASEGMENT}} = unsafe_wrap(Array, DT.segment, seg)
 			DS::GMT_DATASEGMENT = unsafe_load(S[seg])
 			if (DS.n_rows > min_pts)
 				seg_out += 1
@@ -629,12 +629,12 @@ function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})::GDtype
 	Darr = [GMTdataset() for i = 1:seg_out]					# Create the array of DATASETS
 
 	seg_out = 1
-	T = unsafe_wrap(Array, D.table, D.n_tables)				# D.n_tables-element Array{Ptr{GMT.GMT_DATATABLE},1}
+	T = unsafe_wrap(Array, D.table, D.n_tables)				# D.n_tables-element Array{Ptr{GMT_DATATABLE},1}
 	for tbl = 1:D.n_tables
-		DT = unsafe_load(T[tbl])							# GMT.GMT_DATATABLE
-		S = unsafe_wrap(Array, DT.segment, DT.n_segments)	# n_segments-element Array{Ptr{GMT.GMT_DATASEGMENT},1}
+		DT = unsafe_load(T[tbl])							# GMT_DATATABLE
+		S = unsafe_wrap(Array, DT.segment, DT.n_segments)	# n_segments-element Array{Ptr{GMT_DATASEGMENT},1}
 		for seg = 1:DT.n_segments
-			DS = unsafe_load(S[seg])						# GMT.GMT_DATASEGMENT
+			DS = unsafe_load(S[seg])						# GMT_DATASEGMENT
 			(DS.n_rows <= min_pts) && continue 				# Skip empty/small segments
 
 			C = unsafe_wrap(Array, DS.data, DS.n_columns)	# DS.data = Ptr{Ptr{Float64}}; C = Array{Ptr{Float64},1}
@@ -992,9 +992,9 @@ function dataset_init(API::Ptr{Nothing}, Darr::Vector{<:GMTdataset}, direction::
 
 	# We come here if we did not receive a matrix
 	dim = [1, 0, 0, 0]
-	dim[GMT.GMT_SEG+1] = length(Darr)				# Number of segments
-	(dim[GMT.GMT_SEG+1] == 0) && error("Input has zero segments where it can't be")
-	dim[GMT.GMT_COL+1] = size(Darr[1].data, 2)		# Number of columns
+	dim[GMT_SEG+1] = length(Darr)				# Number of segments
+	(dim[GMT_SEG+1] == 0) && error("Input has zero segments where it can't be")
+	dim[GMT_COL+1] = size(Darr[1].data, 2)		# Number of columns
 
 	mode = (length(Darr[1].text) != 0) ? GMT_WITH_STRINGS : GMT_NO_STRINGS
 
@@ -1002,20 +1002,20 @@ function dataset_init(API::Ptr{Nothing}, Darr::Vector{<:GMTdataset}, direction::
 	D = convert(Ptr{GMT_DATASET}, GMT_Create_Data(API, GMT_IS_DATASET, GMT_IS_PLP, mode, pdim, NULL, NULL, 0, 0, NULL))
 	DS::GMT_DATASET = unsafe_load(D)
 
-	DT = unsafe_load(unsafe_load(DS.table))				# GMT.GMT_DATATABLE
+	DT = unsafe_load(unsafe_load(DS.table))				# GMT_DATATABLE
 
 	n_records = 0
-	for seg = 1:dim[GMT.GMT_SEG+1] 						# Each incoming structure is a new data segment
-		dim[GMT.GMT_ROW+1] = size(Darr[seg].data, 1)	# Number of rows in matrix
-		if (dim[GMT.GMT_ROW+1] == 0)					# When we have only text
-			dim[GMT.GMT_ROW+1] = size(Darr[seg].text, 1)
+	for seg = 1:dim[GMT_SEG+1] 						# Each incoming structure is a new data segment
+		dim[GMT_ROW+1] = size(Darr[seg].data, 1)	# Number of rows in matrix
+		if (dim[GMT_ROW+1] == 0)					# When we have only text
+			dim[GMT_ROW+1] = size(Darr[seg].text, 1)
 		end
 
 		# This segment also has a cell array of strings?
 		mode = (length(Darr[seg].text) != 0) ? GMT_WITH_STRINGS : GMT_NO_STRINGS
 
-		DSv = convert(Ptr{Nothing}, unsafe_load(DT.segment, seg))		# DT.segment = Ptr{Ptr{GMT.GMT_DATASEGMENT}}
-		S = GMT_Alloc_Segment(API, mode, dim[GMT.GMT_ROW+1], dim[GMT.GMT_COL+1], Darr[seg].header, DSv) # Ptr{GMT_DATASEGMENT}
+		DSv = convert(Ptr{Nothing}, unsafe_load(DT.segment, seg))		# DT.segment = Ptr{Ptr{GMT_DATASEGMENT}}
+		S = GMT_Alloc_Segment(API, mode, dim[GMT_ROW+1], dim[GMT_COL+1], Darr[seg].header, DSv) # Ptr{GMT_DATASEGMENT}
 		Sb = unsafe_load(S)								# GMT_DATASEGMENT;		Sb.data -> Ptr{Ptr{Float64}}
 		for col = 1:Sb.n_columns						# Copy the data columns
 			#unsafe_store!(Sb.data, pointer(Darr[seg].data[:,col]), col)	# This would allow shared mem
@@ -1073,29 +1073,29 @@ function dataset_init(API::Ptr{Nothing}, ptr, actual_family::Vector{<:Integer}):
 	Mb.n_rows    = size(ptr,1)
 	Mb.n_columns = size(ptr,2)
 
-	if (eltype(ptr)     == Float64)		Mb.type = UInt32(GMT.GMT_DOUBLE)
-	elseif (eltype(ptr) == Float32)		Mb.type = UInt32(GMT.GMT_FLOAT)
-	elseif (eltype(ptr) == UInt64)		Mb.type = UInt32(GMT.GMT_ULONG)
-	elseif (eltype(ptr) == Int64)		Mb.type = UInt32(GMT.GMT_LONG)
-	elseif (eltype(ptr) == UInt32)		Mb.type = UInt32(GMT.GMT_UINT)
-	elseif (eltype(ptr) == Int32)		Mb.type = UInt32(GMT.GMT_INT)
-	elseif (eltype(ptr) == UInt16)		Mb.type = UInt32(GMT.GMT_USHORT)
-	elseif (eltype(ptr) == Int16)		Mb.type = UInt32(GMT.GMT_SHORT)
-	elseif (eltype(ptr) == UInt8)		Mb.type = UInt32(GMT.GMT_UCHAR)
-	elseif (eltype(ptr) == Int8)		Mb.type = UInt32(GMT.GMT_CHAR)
+	if (eltype(ptr)     == Float64)		Mb.type = UInt32(GMT_DOUBLE)
+	elseif (eltype(ptr) == Float32)		Mb.type = UInt32(GMT_FLOAT)
+	elseif (eltype(ptr) == UInt64)		Mb.type = UInt32(GMT_ULONG)
+	elseif (eltype(ptr) == Int64)		Mb.type = UInt32(GMT_LONG)
+	elseif (eltype(ptr) == UInt32)		Mb.type = UInt32(GMT_UINT)
+	elseif (eltype(ptr) == Int32)		Mb.type = UInt32(GMT_INT)
+	elseif (eltype(ptr) == UInt16)		Mb.type = UInt32(GMT_USHORT)
+	elseif (eltype(ptr) == Int16)		Mb.type = UInt32(GMT_SHORT)
+	elseif (eltype(ptr) == UInt8)		Mb.type = UInt32(GMT_UCHAR)
+	elseif (eltype(ptr) == Int8)		Mb.type = UInt32(GMT_CHAR)
 	else
 		error("Only integer or floating point types allowed in input. Not this: $(typeof(ptr))")
 	end
 	Mb.data = pointer(ptr)
 	Mb.dim  = Mb.n_rows		# Data from Julia is in column major
 	ret::Cint = GMT_Set_AllocMode(API, GMT_IS_MATRIX, M)
-	Mb.shape = GMT.GMT_IS_COL_FORMAT;			# Julia order is column major
+	Mb.shape = GMT_IS_COL_FORMAT;			# Julia order is column major
 	unsafe_store!(M, Mb)
 	return M
 end
 
 # ---------------------------------------------------------------------------------------------------
-function palette_init(API::Ptr{Nothing}, cpt::GMTcpt)::Ptr{GMT.GMT_PALETTE}
+function palette_init(API::Ptr{Nothing}, cpt::GMTcpt)::Ptr{GMT_PALETTE}
 	# Create and fill a GMT CPT.
 	# A CPT is categorical when the 'keys' are not empty, and is of type 2 when 'keys' are non-numeric
 	# 'labels' can be present in both normal and categorical CPTs so they can't be used to indentify categoricals
@@ -1109,11 +1109,11 @@ function palette_init(API::Ptr{Nothing}, cpt::GMTcpt)::Ptr{GMT.GMT_PALETTE}
 		n_colors = n_colors - 1;		# Number of CPT slices
 	end
 
-	P = convert(Ptr{GMT.GMT_PALETTE}, GMT_Create_Data(API, GMT_IS_PALETTE, GMT_IS_NONE, 0, pointer([n_colors]),
-	                                                  NULL, NULL, 0, 0, NULL))
+	P = convert(Ptr{GMT_PALETTE}, GMT_Create_Data(API, GMT_IS_PALETTE, GMT_IS_NONE, 0, pointer([n_colors]),
+	                                              NULL, NULL, 0, 0, NULL))
 	(n_colors > 100000) && @warn("Que exagero de cores")	# Just to protect n_colors to be GC'ed before here
 
-	Pb::GMT_PALETTE = unsafe_load(P)	# We now have a GMT.GMT_PALETTE
+	Pb::GMT_PALETTE = unsafe_load(P)	# We now have a GMT_PALETTE
 
 	(one != 0) && (Pb.is_continuous = UInt32(1))
 	if (cpt.depth == 1)      Pb.is_bw   = UInt32(1) 
@@ -1123,7 +1123,7 @@ function palette_init(API::Ptr{Nothing}, cpt::GMTcpt)::Ptr{GMT.GMT_PALETTE}
 
 	if (!isnan(cpt.hinge))				# If we have a hinge pass it in to the GMT owned struct
 		Pb.hinge = cpt.hinge
-		Pb.mode = Pb.mode & GMT.GMT_CPT_HINGED
+		Pb.mode = Pb.mode & GMT_CPT_HINGED
 	end
 
 	Pb.model = (cpt.model == "rgb") ? GMT_RGB : ((cpt.model == "hsv") ? GMT_HSV : GMT_CMYK)
@@ -1132,9 +1132,9 @@ function palette_init(API::Ptr{Nothing}, cpt::GMTcpt)::Ptr{GMT.GMT_PALETTE}
 	(cpt.key[1] != "") && (Pb.categorical = (tryparse(Float64, cpt.key[1]) === nothing) ? 2 : 1)
 
 	if (Pb.categorical == 0)			# Categorical CPTs have no BFN
-		b = (GMT.GMT_BFN((cpt.bfn[1,1], cpt.bfn[1,2], cpt.bfn[1,3],0), Pb.bfn[1].hsv, Pb.bfn[1].skip, Pb.bfn[1].fill),
-			GMT.GMT_BFN((cpt.bfn[2,1], cpt.bfn[2,2], cpt.bfn[2,3],0), Pb.bfn[1].hsv, Pb.bfn[1].skip, Pb.bfn[1].fill),
-			GMT.GMT_BFN((cpt.bfn[3,1], cpt.bfn[3,2], cpt.bfn[3,3],0), Pb.bfn[1].hsv, Pb.bfn[1].skip, Pb.bfn[1].fill))
+		b = (GMT_BFN((cpt.bfn[1,1], cpt.bfn[1,2], cpt.bfn[1,3],0), Pb.bfn[1].hsv, Pb.bfn[1].skip, Pb.bfn[1].fill),
+			GMT_BFN((cpt.bfn[2,1], cpt.bfn[2,2], cpt.bfn[2,3],0), Pb.bfn[1].hsv, Pb.bfn[1].skip, Pb.bfn[1].fill),
+			GMT_BFN((cpt.bfn[3,1], cpt.bfn[3,2], cpt.bfn[3,3],0), Pb.bfn[1].hsv, Pb.bfn[1].skip, Pb.bfn[1].fill))
 		Pb.bfn = b
 	end
 	
@@ -1183,7 +1183,7 @@ function ps_init(API::Ptr{Nothing}, ps, dir::Integer)::Ptr{GMT_POSTSCRIPT}
 	pdim = pointer([0])
 	P = convert(Ptr{GMT_POSTSCRIPT}, GMT_Create_Data(API, GMT_IS_POSTSCRIPT, GMT_IS_NONE, 0, pdim, NULL, NULL, 0, 0, NULL))
 
-	P0::GMT_POSTSCRIPT = unsafe_load(P)		# GMT.GMT_POSTSCRIPT
+	P0::GMT_POSTSCRIPT = unsafe_load(P)		# GMT_POSTSCRIPT
 
 	P0.n_bytes = ps.length
 	P0.mode = ps.mode

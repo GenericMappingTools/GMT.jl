@@ -1692,7 +1692,7 @@ function ternary(cmd0::String="", arg1=nothing; first::Bool=true, image::Bool=fa
 	(G_API[1] == C_NULL) && gmt_restart()	# Force having a valid API. We can't afford otherwise here.
 	r = common_plot_xyz("", mat2ds(arg1), "ternary", first, false, d...)
 	# With the following trick we leave the -R history in 0/1/0/1 and so we can append with plot, text, etc
-	gmt("psxy -Scp -R0/1/0/1 -JX -O -Vq > " * joinpath(tempdir(), "lixo_" * tmpdir_usr[2] * tmpdir_usr[3] * ".ps"), [0. 0.])
+	gmt("psxy -Scp -R0/1/0/1 -JX -O -Vq > " * joinpath(TMPDIR_USR[1], "lixo_" * TMPDIR_USR[2] * TMPDIR_USR[3] * ".ps"), [0. 0.])
 	return r
 end
 

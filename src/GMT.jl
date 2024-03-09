@@ -64,7 +64,7 @@ end
 
 const global G_API = [C_NULL]
 const global PSname = [""]					# The PS file (filled in __init__) where, in classic mode, all lands.
-const global tmpdir_usr = [tempdir(), "", ""]	# Save the tmp dir and user name (also filled in __init__)
+const global TMPDIR_USR = [tempdir(), "", ""]	# Save the tmp dir and user name (also filled in __init__)
 const global TESTSDIR = joinpath(dirname(pathof(GMT))[1:end-4], "test", "")	# To have easy access to test files
 const global IMG_MEM_LAYOUT = [""]			# "TCP"	 For Images.jl. The default is "TRBa"
 const global GRD_MEM_LAYOUT = [""]			# "BRP" is the default for GMT PS images.
@@ -113,7 +113,7 @@ if isdefined(Base, :Experimental) && isdefined(Base.Experimental, Symbol("@optle
 end
 
 export
-	GMTgrid, GMTimage, GMTdataset, GMTver, FMT, gmt, libgdal,
+	GMTgrid, GMTimage, GMTdataset, GMTcpt, GItype, GDtype, GMTver, FMT, TMPDIR_USR, gmt, libgdal,
 	arrows, arrows!, bar, bar!, bar3, bar3!, band, band!, bubblechart, bubblechart!, feather, feather!, hband, hband!,
 	hlines, hlines!, lines, lines!, legend, legend!, quiver, quiver!, radar, radar!, stairs, stairs!, stem, stem!,vlines,
 	vlines!, vband, vband!, hspan, hspan!, vspan, vspan!,
@@ -137,6 +137,7 @@ export
 	meca, meca!, psvelo, psvelo!, velo, velo!, getbyattrib, inwhichpolygon, pcolor, pcolor!, triplot, triplot!,
 	trisurf, trisurf!, grdrotater, imagesc, upGMT, boxes,
 
+	find_in_dict, find_in_kwargs,
 	mbimport, mbgetdata, mbsvplist, mblevitus,
 
 	blendimg!, lonlat2xy, xy2lonlat, df2ds, mat2ds, mat2grid, mat2img, slicecube, cubeslice, linspace, logspace, fileparts,
@@ -384,9 +385,9 @@ function __init__(test::Bool=false)
 	f = joinpath(GMTuserdir[1], "theme_jl.txt")
 	(isfile(f)) && (theme(readline(f));	ThemeIsOn[1] = false)	# False because we don't want it reset in showfig()
 	user = (Sys.isunix() || Sys.isapple()) ? Libc.getpwuid(Libc.getuid(), true).username : Sys.iswindows() ? ENV["USERNAME"] : ""
-	tmpdir_usr[2] = replace(user, " " => "_")
-	haskey(ENV, "JULIA_GMT_MULTIFILE") && (tmpdir_usr[3] = string("_", getpid()))
-	PSname[1] = tmpdir_usr[1] * "/" * "GMTjl_" * tmpdir_usr[2] * tmpdir_usr[3] * ".ps"
+	TMPDIR_USR[2] = replace(user, " " => "_")
+	haskey(ENV, "JULIA_GMT_MULTIFILE") && (TMPDIR_USR[3] = string("_", getpid()))
+	PSname[1] = TMPDIR_USR[1] * "/" * "GMTjl_" * TMPDIR_USR[2] * TMPDIR_USR[3] * ".ps"
 end
 
 """

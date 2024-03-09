@@ -304,7 +304,7 @@ function file_has_time!(fname::String, D::GDtype, corder::Vector{Int}=Int[])
 	end
 	n_cols = (isone) ? size(D,2) : size(D[1],2)
 	Tc, f1, n_it = "", 1, 0
-	(fname[1] == '@') && (gmt("gmtwhich -Gc $fname"); fname = joinpath(GMT.GMTuserdir[1], "cache", fname[2:end]))
+	(fname[1] == '@') && (gmt("gmtwhich -Gc $fname"); fname = joinpath(GMTuserdir[1], "cache", fname[2:end]))
 	fid = open(fname)
 	iter = eachline(fid)
 	try
