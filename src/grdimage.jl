@@ -12,9 +12,9 @@ Parameters
 - **A** | **img_out** | **image_out** :: [Type => Str]
 
     Save an image in a raster format instead of PostScript.
-- $(GMT._opt_J)
-- $(GMT._opt_B)
-- $(GMT.opt_C)
+- $(_opt_J)
+- $(_opt_B)
+- $(opt_C)
 - **D** | **img_in** | **image_in** :: [Type => Str]
 
     Specifies that the grid supplied is an image file to be read via GDAL.
@@ -33,20 +33,20 @@ Parameters
 - **N** | **noclip** :: [Type => Bool]
 
     Do not clip the image at the map boundary.
-- $(GMT.opt_P)
+- $(opt_P)
 - **Q** | **alpha_color** | **nan_alpha** :: [Type => Bool | Tuple | Str]	``Q = true | Q = (r,g,b)``
 
     Make grid nodes with z = NaN transparent, or pick a color for transparency in a image.
-- $(GMT._opt_R)
-- $(GMT.opt_U)
-- $(GMT.opt_V)
-- $(GMT.opt_X)
-- $(GMT.opt_Y)
-- $(GMT._opt_f)
-- $(GMT.opt_n)
-- $(GMT._opt_p)
-- $(GMT._opt_t)
-- $(GMT.opt_savefig)
+- $(_opt_R)
+- $(opt_U)
+- $(opt_V)
+- $(opt_X)
+- $(opt_Y)
+- $(_opt_f)
+- $(opt_n)
+- $(_opt_p)
+- $(_opt_t)
+- $(opt_savefig)
 
 To see the full documentation type: ``@? grdimage``
 """
