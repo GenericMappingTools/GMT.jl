@@ -55,7 +55,11 @@ function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int
 	in_bands = (!isempty(bands)) ? bands : ((band == 0) ? collect(1:n_dsbands) : [band])
 	(maximum(in_bands) > n_dsbands) && error("One selected band is larger then number of bands in this dataset")
 	ncol, nrow = xSize+2pad, ySize+2pad
-	(scale_factor != 1 || add_offset != 0) && (dType = Float32)
+	orig_is_UInt16 = (dType == UInt16)
+	if ((scale_factor != 1 || add_offset != 0))
+		!orig_is_UInt16 && (dType = Float32)	# Crazzy VIIRS data come in UInt16 AND scale factors. For them keep type ans store sc in header
+		is_grid = true
+	end
 	mat = (dataset isa Gdal.AbstractRasterBand) ? zeros(dType, ncol, nrow) : zeros(dType, ncol, nrow, length(in_bands))
 	n_colors = 0
 	desc = String[]
@@ -85,7 +89,8 @@ function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int
 	end
 
 	# If we found a scale_factor above, apply it
-	(scale_factor != 1 || got_fill_val) && (mat = gd2gmt_helper_scalefac(mat, scale_factor, add_offset, got_fill_val, fill_val))
+	((scale_factor != 1 || got_fill_val) && !orig_is_UInt16) &&
+		(mat = gd2gmt_helper_scalefac(mat, scale_factor, add_offset, got_fill_val, fill_val))
 
 	local gt
 	try
@@ -101,6 +106,7 @@ function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int
 	y_min = y_max - (ySize - 1*is_grid - 2pad) * y_inc
 	if !(eltype(mat) <: Complex)
 		z_min::Float64, z_max::Float64 = (is_grid) ? extrema_nan(mat) : extrema(mat)
+		isnan(z_min) && (z_min, z_max = extrema_nan(mat))	# Convoluted nc UInt16 layers with scalefactors can result in NaNs
 	else
 		z_min, z_max, z_im_min, z_im_max = extrema(mat)
 	end
@@ -123,8 +129,18 @@ function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int
 		O = mat2grid(mat; hdr=hdr, v=vvalues, v_unit=vname, proj4=prj, names=desc, is_transposed=is_tp)
 		O.layout = (layout == "") ? "TRB" : layout
 		isa(mat, Matrix{<:Complex}) && (append!(O.range, [z_im_min, z_im_max]))	# Stick the imaginary part limits in the range
+		if (orig_is_UInt16)
+			got_fill_val && (O.nodata = fill_val)
+			O.scale, O.offset = scale_factor, add_offset
+			if (got_fill_val && O.nodata == typemax(UInt16))	# More shits, z_max here was computed to be O.nodata
+				ma = UInt16(0)
+				@inbounds for k in eachindex(mat) ma = ifelse(mat[k] != O.nodata, max(ma, mat[k]), ma)  end
+				O.range[6] = ma
+			end
+		end
 	else
 		O = mat2img(mat; hdr=hdr, proj4=prj, noconv=true, names=desc, is_transposed=is_tp)
+		got_fill_val && (O.nodata = fill_val)
 		O.layout = (layout == "") ? "TRBa" : layout * "a"
 		if (n_colors > 0)
 			O.colormap = colormap;	O.n_colors = n_colors
@@ -186,13 +202,14 @@ function gd2gmt_helper(input, sds)
 	info = gdalinfo(dataset)
 	@assert info !== nothing "\tGDAL failed to read " * (isa(input, AbstractString) ? sds_name : "input dataset\n")
 	if (occursin("Metadata:", info))
-		if ((ind = findfirst("scale_factor=", info)) !== nothing)	# OK, found one
+		if ((ind = findlast("Scale:", info)) !== nothing)	# OK, found one
+			# These guys come in the form: "Offset: 0,   Scale:1.999175765377e-05"
 			ind2 = findfirst('\n', info[ind[1]:end])
-			scale_factor = tryparse(Float32, info[ind[1]+13 : ind[1] + ind2[1]-2])
+			scale_factor = tryparse(Float32, info[ind[1]+6 : ind[1] + ind2[1]-2])
 			add_offset = Float32(0)
-			if ((ind = findfirst("add_offset=", info)) !== nothing)
-				ind2 = findfirst('\n', info[ind[1]:end])
-				add_offset = tryparse(Float32, info[ind[1]+11 : ind[1] + ind2[1]-2])
+			if ((ind = findfirst("Offset:", info)) !== nothing)
+				ind2 = findfirst(',', info[ind[1]:end])
+				add_offset = tryparse(Float32, info[ind[1]+7 : ind[1] + ind2[1]-2])
 			end
 		end
 		fill_val, got_fill_val = get_FillValue(info)
