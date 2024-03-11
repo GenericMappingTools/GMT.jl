@@ -967,6 +967,7 @@ function helper_mat2img(mat; x=Float64[], y=Float64[], v=Float64[], hdr=Float64[
 	end
 
 	nx = size(mat, 2);		ny = size(mat, 1);
+	if (is_transposed)  nx, ny = ny, nx  end
 	reg::Int = (!isempty(hdr)) ? Int(hdr[7]) : (nx == length(x) && ny == length(y)) ? 0 : 1
 	hdr::Vector{Float64} = vec(hdr);	x::Vector{Float64} = vec(x);	y::Vector{Float64} = vec(y)	# Otherwis JET screammmms
 	x, y, hdr, x_inc, y_inc = grdimg_hdr_xy(mat, reg, hdr, x, y, is_transposed)
@@ -1136,15 +1137,16 @@ function mat2img(mat::Union{GMTgrid,Matrix{<:AbstractFloat}}; x=Float64[], y=Flo
 	if (clim[2] < 255 && clim[2] > 0)
 		for k in eachindex(img)  if (img[k] > clim[2])  img[k] = clim[2]  end  end
 	end
+	is_transp = isa(mat, GItype) ? ((mat.layout[2] == 'R') ? true : false) : false
 	if (!isa(mat, GMTgrid) && GI !== nothing)
 		I = mat2img(img, GI)
 		if (cmap !== nothing)  I.colormap, I.labels, I.n_colors = cpt2cmap(cmap)
 		else                   I.colormap, I.labels, I.n_colors = zeros(Int32,3), String[], 0	# Do not inherit this from GI
 		end
 	elseif (isa(mat, GMTgrid))
-		I = mat2img(img; x=mat.x, y=mat.y, hdr=hdr, proj4=mat.proj4, wkt=mat.wkt, cmap=cmap, kw...)
+		I = mat2img(img; x=mat.x, y=mat.y, hdr=hdr, proj4=mat.proj4, wkt=mat.wkt, cmap=cmap, is_transposed=is_transp, kw...)
 	else
-		I = mat2img(img; x=x, y=y, hdr=hdr, proj4=proj4, wkt=wkt, cmap=cmap, kw...)
+		I = mat2img(img; x=x, y=y, hdr=hdr, proj4=proj4, wkt=wkt, cmap=cmap, is_transposed=is_transp, kw...)
 	end
 	isa(mat,GMTgrid) && (I.layout = mat.layout[1:3] * "a")
 	return I

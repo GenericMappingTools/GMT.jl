@@ -23,22 +23,22 @@ Parameters
 - **img** | **usegdal** | **gdal** :: [Type => Any]
 
     Force the cut operation to be done by GDAL. Works for images where GMT fails or even crash.
-- $(GMT._opt_J)
+- $(_opt_J)
 - **N** | **extend** :: [Type => Str or []]
 
     Allow grid to be extended if new region exceeds existing boundaries. Append nodata value
     to initialize nodes outside current region [Default is NaN].
-- $(GMT._opt_R)
+- $(_opt_R)
 - **S** | **circ_subregion** :: [Type => Str]    ``Arg = [n]lon/lat/radius[unit]``
 
     Specify an origin and radius; append a distance unit and we determine the corresponding
     rectangular region so that all grid nodes on or inside the circle are contained in the subset.
-- $(GMT.opt_V)
+- $(opt_V)
 - **Z** | **range** :: [Type => Str]       ``Arg = [n|N |r][min/max]``
 
     Determine a new rectangular region so that all nodes outside this region are also outside
     the given z-range.
-- $(GMT._opt_f)
+- $(_opt_f)
 """
 grdcut(cmd0::String; kwargs...) = grdcut_helper(cmd0, nothing; kwargs...)
 grdcut(arg1; kwargs...)         = grdcut_helper("", arg1; kwargs...)

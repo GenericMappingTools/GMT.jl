@@ -13,10 +13,10 @@ Parameters
 
 	By default, geographic line segments are drawn as great circle arcs.
 	To draw them as straight lines, use this option.
-- $(GMT._opt_J)
-- $(GMT._opt_R)
-- $(GMT._opt_B)
-- $(GMT.opt_C)
+- $(_opt_J)
+- $(_opt_R)
+- $(_opt_B)
+- $(opt_C)
 - **D** | **shift** | **offset** :: [Type => Str]
 
     Offset the plot symbol or line locations by the given amounts dx/dy in cm, inch or points.
@@ -40,7 +40,7 @@ Parameters
 - **N** | **no_clip** | **noclip** :: [Type => Str or []]
 
     Do NOT clip symbols that fall outside map border 
-- $(GMT.opt_P)
+- $(opt_P)
 - **S** | **symbol** | **marker** | **Marker** :: [Type => Str]
 
     Plot symbols (including vectors, pie slices, fronts, decorated or quoted lines). 
@@ -72,10 +72,10 @@ Parameters
     WARNING: the pen attributes will set the pen of polygons OR symbols but not the two together.
     If your plot has polygons and symbols, use **W** or **pen** for the polygons and
     **markeredgecolor** for filling the symbols. Similar to S above.
-- $(GMT.opt_U)
-- $(GMT.opt_V)
-- $(GMT.opt_X)
-- $(GMT.opt_Y)
+- $(opt_U)
+- $(opt_V)
+- $(opt_X)
+- $(opt_Y)
 
 - **Z** | **level** :: [Type => Str | NamedTuple]	`Arg = value|file[+f|+l] | (data=Array|Number, outline=_, fill=_)`
 
@@ -84,19 +84,19 @@ Parameters
 - **aspect** :: [Type => Str]
 
     When equal to "equal" makes a square plot.
-- $(GMT.opt_a)
-- $(GMT._opt_bi)
-- $(GMT._opt_di)
-- $(GMT.opt_e)
-- $(GMT._opt_f)
-- $(GMT.opt_g)
-- $(GMT._opt_h)
-- $(GMT._opt_i)
-- $(GMT._opt_p)
-- $(GMT._opt_t)
-- $(GMT.opt_w)
-- $(GMT.opt_swap_xy)
-- $(GMT.opt_savefig)
+- $(opt_a)
+- $(_opt_bi)
+- $(_opt_di)
+- $(opt_e)
+- $(_opt_f)
+- $(opt_g)
+- $(_opt_h)
+- $(_opt_i)
+- $(_opt_p)
+- $(_opt_t)
+- $(opt_w)
+- $(opt_swap_xy)
+- $(opt_savefig)
 """
 function plot(arg1; first=true, kw...)
 	# First check if arg1 is a GMTds of a linear fit and if yes, call the plotlinefit() fun
@@ -215,10 +215,10 @@ Parameters
 - **A** | **steps** | **straight_lines** :: [Type => Str]  
 
     By default, geographic line segments are drawn as great circle arcs. To draw them as straight lines, use this option.
-- $(GMT._opt_J)
-- $(GMT.opt_Jz)
-- $(GMT._opt_R)
-- $(GMT._opt_B)
+- $(_opt_J)
+- $(opt_Jz)
+- $(_opt_R)
+- $(_opt_B)
 - **C** | **color** :: [Type => Str]
 
     Give a CPT or specify -Ccolor1,color2[,color3,...] to build a linear continuous CPT from those colors automatically.
@@ -245,7 +245,7 @@ Parameters
 - **N** | **no_clip** :: [Type => Str | []]
 
     Do NOT clip symbols that fall outside map border 
-- $(GMT.opt_P)
+- $(opt_P)
 - **S** | **symbol** | **marker** | **Marker** :: [Type => Str]
 
     Plot symbols (including vectors, pie slices, fronts, decorated or quoted lines). 
@@ -271,26 +271,26 @@ Parameters
     WARNING: the pen attributes will set the pen of polygons OR symbols but not the two together.
     If your plot has polygons and symbols, use **W** or **line_attribs** for the polygons and
     **markeredgecolor** or **MarkerEdgeColor** for filling the symbols. Similar to S above.
-- $(GMT.opt_U)
-- $(GMT.opt_V)
-- $(GMT.opt_X)
-- $(GMT.opt_Y)
+- $(opt_U)
+- $(opt_V)
+- $(opt_X)
+- $(opt_Y)
 
 - **Z** | **level** :: [Type => Str | NamedTuple]	`Arg = value|file[+f|+l] | (data=Array|Number, outline=_, fill=_)`
 
     Paint polygons after the level given as a cte or a vector with same size of number of polygons. Needs a color map.
-- $(GMT.opt_a)
-- $(GMT._opt_bi)
-- $(GMT._opt_di)
-- $(GMT.opt_e)
-- $(GMT._opt_f)
-- $(GMT.opt_g)
-- $(GMT._opt_h)
-- $(GMT._opt_i)
-- $(GMT._opt_p)
-- $(GMT._opt_t)
-- $(GMT.opt_w)
-- $(GMT.opt_savefig)
+- $(opt_a)
+- $(_opt_bi)
+- $(_opt_di)
+- $(opt_e)
+- $(_opt_f)
+- $(opt_g)
+- $(_opt_h)
+- $(_opt_i)
+- $(_opt_p)
+- $(_opt_t)
+- $(opt_w)
+- $(opt_savefig)
 
 ### Example:
 
@@ -339,7 +339,7 @@ Parameters
 - **N** | **noclip** | **no_clip** :: [Type => Str | []]
 
     Do NOT clip symbols that fall outside map border 
-- $(GMT.opt_P)
+- $(opt_P)
 - **S** :: [Type => Str]
 
     Plot symbols (including vectors, pie slices, fronts, decorated or quoted lines). 
@@ -368,7 +368,7 @@ Parameters
 - **W** | **pen** | **markeredgecolor** | **mec** :: [Type => Str]
 
     Set pen attributes for lines or the outline of symbols
-- $(GMT.opt_savefig)
+- $(opt_savefig)
 
 [`GMT man page`]($(GMTdoc)plot.html)
 """
@@ -429,9 +429,9 @@ const scatter3d! = scatter3!
 
 Reads a file or (x,y) pairs and plots vertical bars extending from base to y.
 
-- $(GMT._opt_J)
-- $(GMT._opt_R)
-- $(GMT._opt_B)
+- $(_opt_J)
+- $(_opt_R)
+- $(_opt_B)
 - **fill** :: [Type => Str --
 
     Select color or pattern for filling the bars
@@ -442,7 +442,7 @@ Reads a file or (x,y) pairs and plots vertical bars extending from base to y.
 - **size** | **width** :: [Type => Str | Num]		``key=value``
 
     The size or width is the bar width. Append u if size is in x-units. When *width* is used the default is plot-distance units.
-- $(GMT.opt_savefig)
+- $(opt_savefig)
 
 Example:
 
@@ -487,17 +487,17 @@ bar!(arg; kw...) = common_plot_xyz("", cat_1_arg(arg, true), "bar", false, false
 
 Read a grid file, a grid or a MxN matrix and plots vertical bars extending from base to z.
 
-- $(GMT._opt_J)
-- $(GMT._opt_R)
-- $(GMT._opt_B)
+- $(_opt_J)
+- $(_opt_R)
+- $(_opt_B)
 - **fill** :: [Type => Str]		``key=color``
 
     Select color or pattern for filling the bars
 - **base** :: [Type => Str | Num]		``key=value``
 
     By default, base = ymin. Use this option to change that value. If base is not appended then we read it.
-- $(GMT._opt_p)
-- $(GMT.opt_savefig)
+- $(_opt_p)
+- $(opt_savefig)
 
 Example:
 
@@ -595,13 +595,13 @@ bar3!(arg1; kw...) = bar3("", arg1; first=false, kw...)
 
 Reads a file or (x,y) pairs and plots a collection of different line with decorations
 
-- $(GMT._opt_B)
-- $(GMT._opt_J)
-- $(GMT._opt_R)
+- $(_opt_B)
+- $(_opt_J)
+- $(_opt_R)
 - **W** | **pen** | **line_attrib** :: [Type => Str]
 
     Set pen attributes for lines or the outline of symbols
-- $(GMT.opt_savefig)
+- $(opt_savefig)
 
 Examples:
 
@@ -969,13 +969,13 @@ the `units=()` option.
 
 The full `arrow` options list can be consulted at [Vector Attributes](@ref)
 
-- $(GMT._opt_B)
-- $(GMT._opt_J)
-- $(GMT._opt_R)
+- $(_opt_B)
+- $(_opt_J)
+- $(_opt_R)
 - **W** | **pen** | **line_attrib** :: [Type => Str]
 
     Set pen attributes for lines or the outline of symbols
-- $(GMT.opt_savefig)
+- $(opt_savefig)
 
 Example:
 
@@ -1429,9 +1429,9 @@ Plots one or a collection of horizontal lines with eventual decorations
 - `xmin` & `xmax`: Limit the horizontal lines to start a `xmin` and/or end at `xmax`
 - `percent`: If true the `xmin` & `xmax` are interpreted as fractions of the figure height.
 
-- $(GMT._opt_B)
-- $(GMT._opt_J)
-- $(GMT._opt_R)
+- $(_opt_B)
+- $(_opt_J)
+- $(_opt_R)
 - **W** | **pen** | **line_attrib** :: [Type => Str]
 
     Set pen attributes for the horizontal lines
@@ -1457,9 +1457,9 @@ Plots one or a collection of vertical lines with eventual decorations
 - `ymin` & `ymax`: Limit the vertical lines to start a `ymin` and/or end at `ymax`
 - `percent`: If true the `xmin` & `xmax` are interpreted as fractions of the figure width.
 
-- $(GMT._opt_B)
-- $(GMT._opt_J)
-- $(GMT._opt_R)
+- $(_opt_B)
+- $(_opt_J)
+- $(_opt_R)
 - **W** | **pen** | **line_attrib** :: [Type => Str]
 
     Set pen attributes for the horizontal lines
@@ -1572,7 +1572,7 @@ Reads (a,b,c[,z]) records from table [or file] and plots image and symbols at th
     control on annotations and grid spacing (on/off) is achieved by using the `frame=(annot=?, grid=?, alabel=?, blabel=?,
     clabel=?, suffix=?)` form. Note that not all options of the general `frame` options are accepted in this module and for more
     elaborated frame option selection you will have to resort to the pure GMT syntax in the form `frame="<arg> <arg> <arg>"`
-- $(GMT.opt_C)
+- $(opt_C)
 - **G** | **fill** :: [Type => Str] --
 
     Select color or pattern for filling the bars
@@ -1615,24 +1615,24 @@ Reads (a,b,c[,z]) records from table [or file] and plots image and symbols at th
     and select their sizes with the **markersize** or **size** keyword [default is 8p].
     The marker size can be a scalar or a vector with same size numeber of rows of data. Units are
     points unless specified otherwise with (for example for cm) *par=(PROJ_LENGTH_UNIT=:c,)*	
-- $(GMT.opt_U)
-- $(GMT.opt_V)
+- $(opt_U)
+- $(opt_V)
 - **W** | **pen** :: [Type => Str | Number]
 
     Sets the attributes for the particular line.
-- $(GMT.opt_X)
-- $(GMT.opt_Y)
-- $(GMT._opt_bi)
-- $(GMT._opt_di)
-- $(GMT.opt_e)
-- $(GMT._opt_f)
-- $(GMT.opt_g)
-- $(GMT._opt_h)
-- $(GMT._opt_i)
-- $(GMT._opt_p)
-- $(GMT.opt_q)
-- $(GMT._opt_t)
-- $(GMT.opt_savefig)
+- $(opt_X)
+- $(opt_Y)
+- $(_opt_bi)
+- $(_opt_di)
+- $(opt_e)
+- $(_opt_f)
+- $(opt_g)
+- $(_opt_h)
+- $(_opt_i)
+- $(_opt_p)
+- $(opt_q)
+- $(_opt_t)
+- $(opt_savefig)
 
 Other than the above options, the `kwargs` input accepts still the following options
 - `image`: - Fills the ternary plot with an image computed automatically with `grdimage` from a grid interpolated with `surface`
@@ -1767,8 +1767,8 @@ Parameters
 - **T** | **now** :: [Type => Int | Str]
 
     Set the current plot time. If absolute times are used you must also use -fT.
-- $(GMT._opt_B)
-- $(GMT.opt_C)
+- $(_opt_B)
+- $(opt_C)
 - **D** | **shift** | **offset** :: [Type => Str]	``Arg = [j|J]dx[/dy][+v[pen]]``
 
     Offset the text from the projected (x,y) point by dx,dy [0/0].
@@ -1778,7 +1778,7 @@ Parameters
 - **G** | **fill** :: [Type => Str | Int | Touple]
 
     Set constant shade or color for all symbols.
-- $(GMT._opt_J)
+- $(_opt_J)
 - **L** | **duration** :: [Type => Bool | Number | Str]		``Arg = [length|t]``
 
     Specify the length (i.e., duration) of the event.
@@ -1788,23 +1788,23 @@ Parameters
 - **Q** | **save** :: [Type => Number]
 
     Save the intermediate event symbols and labels to permanent files instead of removing them when done.
-- $(GMT._opt_R)
+- $(_opt_R)
 - **W** | **pen** | **markeredgecolor** | **mec** :: [Type => Str]
 
     Specify symbol outline pen attributes [Default is no outline].
-- $(GMT.opt_U)
-- $(GMT.opt_V)
-- $(GMT.opt_X)
-- $(GMT.opt_Y)
-- $(GMT._opt_bi)
-- $(GMT._opt_di)
-- $(GMT.opt_e)
-- $(GMT._opt_f)
-- $(GMT._opt_h)
-- $(GMT._opt_i)
-- $(GMT._opt_p)
-- $(GMT.opt_swap_xy)
-- $(GMT.opt_savefig)
+- $(opt_U)
+- $(opt_V)
+- $(opt_X)
+- $(opt_Y)
+- $(_opt_bi)
+- $(_opt_di)
+- $(opt_e)
+- $(_opt_f)
+- $(_opt_h)
+- $(_opt_i)
+- $(_opt_p)
+- $(opt_swap_xy)
+- $(opt_savefig)
 """
 # ------------------------------------------------------------------------------------------------------
 function events(cmd0::String="", arg1=nothing; kwargs...)
@@ -1947,7 +1947,7 @@ https://earthquake.usgs.gov
 - `circle`: A 3 elements Tuple or Array with ``lon,lat,radius``, where ``radius`` is in km, to perform a circle search.
 - `data`: The default is to make a seismicity map but if the `data` option is used (containing whatever)
     we return the data in a ``GMTdataset`` 
-- `figname`: $(GMT.opt_savefig)
+- `figname`: $(opt_savefig)
 - `land`: By default we paint the continents with the "burlywood" color. Like in the ``coast`` module, use
    `land=`"othercolor" to replace it.
 - `layers`: By default we divide depth into three layers; 1-100, 100-300 and > 300 km, Use `layers=4` to subdivide
@@ -2194,7 +2194,7 @@ that inspired this function, that is much smaller (~25 LOC) and has no further d
 - `debug`: Print the url of the requested data and return.
 - `data`: The default is to make a seismicity map but if the `data` option is used (containing whatever)
     we return the data in a ``GMTdataset`` 
-- `figname`: $(GMT.opt_savefig)
+- `figname`: $(opt_savefig)
 - `show`: By default this function just returns the data in a `GMTdataset` but if `show=true` it shows the plot.
    Use `data=true` to also return the data even when `show=true`.
 

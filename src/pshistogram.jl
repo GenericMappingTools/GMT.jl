@@ -152,6 +152,7 @@ function histogram_helper(cmd0::String, arg1; first=true, kwargs...)
 	got_min_max = false
 	is_subarray_float = (typeof(arg1) <: SubArray{Float32})		# This is to allow @subviews that can't go into GMTgrid|image
 	is_subarray_uint  = (typeof(arg1) <: SubArray{Unsigned})
+	!is_subarray_uint && (is_subarray_uint = eltype(arg1) <: Unsigned)	# For those grids with UInt16 (the VIIRS data)
 	issub = (is_subarray_float || is_subarray_uint)
 	if (opt_T == "" && !occursin(" -E", cmd) && (arg1 !== nothing) && !isa(arg1, GMTimage) && !isa(arg1, GMTgrid) && !issub)
 		opt_T, min_max = binmethod(d, cmd, arg1, is_datetime)	# This comes without the " -T"
@@ -207,7 +208,7 @@ function histogram_helper(cmd0::String, arg1; first=true, kwargs...)
 			n_bins = Int(ceil((_min_max[2] - _min_max[1]) / inc))
 		else
 			n_bins = Int(ceil(sqrt(length(arg1))))
-			inc = (_min_max[2] - _min_max[1]) / n_bins + eps()
+			inc = (_min_max[2] - _min_max[1]) / (n_bins - (arg1.registration == 0 ? 1 : 0)) + eps()
 		end
 		(!isa(inc, Real) || inc <= 0) && error("Bin width must be a > 0 number and no min/max")
 		hst = zeros(n_bins, 2)
@@ -282,6 +283,9 @@ function find_histo_limits(In, thresholds=nothing, width=20, hst_::Matrix{Float6
 		all(hst[2:5,2] .== 0) && (hst[1,2] = 0)	# Here we always check for high counts in zero bin
 		# Some processed bands leave garbage on the low DNs and that fouls our detecting algo. So check more
 		((hst[1,2] != 0) && hst[1,2] > 100 * mean(hst[2:10,2])) && (hst[1,2] = 0)	# Ad-hoc numbers
+		# Next is for the case of VIIRS bands that have nodata = 65535 but when called from 'truecolor'
+		# it only passes a band view (the array) and we have access to image's header here.
+		(width == 20 && eltype(In) == UInt16 && size(hst,1) == 3277) && (hst[end, 2] = 0)
 	end
 	max_ = maximum(hst, dims=1)[2]
 	(max_ == 0) && error("This histogram had nothing but countings ONLY in first bin. No point to proceed.")
@@ -326,6 +330,7 @@ function pshst_wall!(in, hst, inc, n_bins::Int)
     else
 		@inbounds Threads.@threads for k = 1:numel(in)  hst[Int(floor(in[k] / inc) + 1), 2] += 1  end
 	end
+	(isa(in, GItype) && in.nodata == typemax(eltype(in))) && (hst[end] = 0)
 	@inbounds Threads.@threads for k = 1:n_bins  hst[k,1] = inc * (k - 1)  end
 	return nothing
 end
