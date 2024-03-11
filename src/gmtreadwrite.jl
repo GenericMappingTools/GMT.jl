@@ -88,7 +88,7 @@ function gmtread(_fname::String; kwargs...)
 	if ((varname = find_in_dict(d, [:varname])[1]) !== nothing) # See if we have a nc varname / layer request
 		varname = string(varname)::String
 		(opt_T == "") && (opt_T = " -Tg")		# Though not used in if 'gdal', it still avoids going into needless tests below
-		if (find_in_dict(d, [:gdal])[1] !== nothing)	# This branch is fragile
+		if (find_in_dict(d, [:gdal])[1] !== nothing || contains(varname, '/'))	# This branch is fragile
 			fname = sneak_in_SUBDASETS(fname, varname)	# Get the composed name (fname + subdaset and driver)
 			proggy = "gdalread"
 			gdopts = ""
