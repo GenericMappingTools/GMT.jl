@@ -142,7 +142,7 @@ end
 
 # --------------------------------------------------------------------------------------------------
 # Incredibly Julia ignores the NaN nature and incredibly min(1,NaN) = NaN, so need to ... fck
-extrema_nan(A::Array{<:AbstractFloat}) = minimum_nan(A), maximum_nan(A)
+extrema_nan(A::AbstractArray{<:AbstractFloat}) = minimum_nan(A), maximum_nan(A)
 extrema_nan(A) = extrema(A)
 
 """
@@ -160,7 +160,7 @@ function extrema_cols(A; col=1)
 	return mi, ma
 end
 
-function minimum_nan(A::Array{<:AbstractFloat})
+function minimum_nan(A::AbstractArray{<:AbstractFloat})
 	mi = minimum(A);	!isnan(mi) && return mi		# The noNaNs version is a order of magnitude faster
 	mi = typemax(eltype(A))
 	@inbounds for k in eachindex(A) mi = ifelse(!isnan(A[k]), min(mi, A[k]), mi)  end
@@ -169,7 +169,7 @@ function minimum_nan(A::Array{<:AbstractFloat})
 end
 minimum_nan(A) = minimum(A)
 
-function maximum_nan(A::Array{<:AbstractFloat})
+function maximum_nan(A::AbstractArray{<:AbstractFloat})
 	ma = maximum(A);	!isnan(ma) && return ma		# The noNaNs version is a order of magnitude faster
 	ma = typemin(eltype(A))
 	@inbounds for k in eachindex(A) ma = ifelse(!isnan(A[k]), max(ma, A[k]), ma)  end
@@ -433,30 +433,57 @@ function rescale(A::AbstractArray, low=0.0, up=1.0; inputmin=nothing, inputmax=n
 	d1 = _inmax - _inmin
 	d2 = up - low
 	sc::Float64 = d2 / d1
+	have_nans = false
+	if (eltype(A) <: AbstractFloat)		# Float arrays can have NaNs
+		have_nans = !(isa(A, GMTgrid) && A.hasnans == 1)
+		have_nans && (have_nans = any(!isfinite, A))
+	end
 	if (type !== nothing)
 		(low != 0.0 || up != 1.0) && (@warn("When converting to Unsigned must have a=0, b=1"); low=0.0; up=1.0)
 		o = Array{type}(undef, size(A))
-		sc *= typemax(type)
+		sc  *= typemax(type)
 		low *= typemax(type)
-		if (inputmin === nothing && inputmax === nothing)	# Faster case. No IFs in loop
-			@inbounds Threads.@threads for k = 1:numel(A)  o[k] = round(type, low + (A[k] -_inmin) * sc)  end
+		if (have_nans)
+			if (inputmin === nothing && inputmax === nothing)	# Faster case. No IFs in loop
+				@inbounds for k = 1:numel(A)  isnan(A[k]) && (o[k] = 0; continue); o[k] = round(type, low + (A[k] -_inmin) * sc)  end
+			else
+				low_i, up_i = round(type, low), round(type, up*typemax(type))
+				@inbounds for k = 1:numel(A)
+					isnan(A[k]) && (o[k] = 0; continue)
+					o[k] = (A[k] < _inmin) ? low_i : ((A[k] > _inmax) ? up_i : round(type, low + (A[k] -_inmin) * sc))
+				end
+			end
 		else
-			low_i, up_i = round(type, low), round(type, up*typemax(type))
-			@inbounds Threads.@threads for k = 1:numel(A)
-				o[k] = (A[k] < _inmin) ? low_i : ((A[k] > _inmax) ? up_i : round(type, low + (A[k] -_inmin) * sc))
+			if (inputmin === nothing && inputmax === nothing)	# Faster case. No IFs in loop
+				@inbounds for k = 1:numel(A)  o[k] = round(type, low + (A[k] -_inmin) * sc)  end
+			else
+				low_i, up_i = round(type, low), round(type, up*typemax(type))
+				@inbounds for k = 1:numel(A)
+					o[k] = (A[k] < _inmin) ? low_i : ((A[k] > _inmax) ? up_i : round(type, low + (A[k] -_inmin) * sc))
+				end
 			end
 		end
 		return isa(A, GItype) ? mat2img(o, A) : o
 	else
 		oType = isa(eltype(A), AbstractFloat) ? eltype(A) : Float64
 		o = Array{oType}(undef, size(A))
-		if (inputmin === nothing && inputmax === nothing)	# Faster case. No IFs in loop
-			@inbounds Threads.@threads for k = 1:numel(A)  o[k] = low + (A[k] -_inmin) * sc  end
-		else
-			@inbounds Threads.@threads for k = 1:numel(A)
-				o[k] = (A[k] < _inmin) ? low : ((A[k] > _inmax) ? up : low + (A[k] -_inmin) * sc)
+		if (oType <: Integer && have_nans)						# Shitty case
+			if (inputmin === nothing && inputmax === nothing)	# Faster case. No IFs in loop
+				@inbounds for k = 1:numel(A)  isnan(A[k]) && (o[k] = 0; continue); o[k] = low + (A[k] -_inmin) * sc  end
+			else
+				@inbounds for k = 1:numel(A)
+					isnan(A[k]) && (o[k] = 0; continue)
+					o[k] = (A[k] < _inmin) ? low : ((A[k] > _inmax) ? up : low + (A[k] -_inmin) * sc)
+				end
 			end
-		end
+		else
+			if (inputmin === nothing && inputmax === nothing)	# Faster case. No IFs in loop
+				@inbounds for k = 1:numel(A)  o[k] = low + (A[k] -_inmin) * sc  end
+			else
+				@inbounds for k = 1:numel(A)
+					o[k] = (A[k] < _inmin) ? low : ((A[k] > _inmax) ? up : low + (A[k] -_inmin) * sc)
+				end
+			end		end
 		return isa(A, GItype) ? mat2grid(o, A) : o
 	end
 end
@@ -754,7 +781,8 @@ function whereami()
 	lon = parse(Float64, split(s[i_lon],":")[2])
 	lat = parse(Float64, split(s[i_lat],":")[2])
 	country = string(split(s[i_country],":")[2][2:end-1])		# The [2:end-1] removes the quotes
-	city = string(split(s[i_city],":")[2][2:end-1])
+	s_city = split(s[i_city],":")[2]
+	city = string(s_city[2:length(s_city)-1])		# Something changed and now it may be a unicode, case in which :end-1 errors
 	zip = string(split(s[i_zip],":")[2][2:end-1])
 	timezone = string(split(s[i_tz],":")[2][2:end-1])
 	region = string(split(s[i_region],":")[2][2:end-1])
