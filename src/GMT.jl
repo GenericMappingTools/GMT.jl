@@ -162,14 +162,14 @@ export
 	colorzones!, rasterzones!, rasterzones, lelandshade, texture_img, crop, doy2date, date2doy, yeardecimal,
 	median, mean, quantile, std, nanmean, nanstd, skipnan, zonal_statistics, zonal_stats,
 
-	add2PSfile, append2fig, linearfitxy, regiongeog, streamlines, wmsinfo, wmstest, wmsread, polygonlevels,
+	add2PSfile, append2fig, linearfitxy, regiongeog, streamlines, wmsinfo, wmstest, wmsread, peaks, polygonlevels,
 	randinpolygon,
 
 	ablines, ablines!, density, density!, boxplot, boxplot!, cornerplot, cornerplot!, cubeplot, cubeplot!, ecdfplot, ecdfplot!,
 	fill_between, fill_between!, marginalhist, marginalhist!, parallelplot, parallelplot!, plotlinefit, plotlinefit!,
 	qqplot, qqplot!, qqnorm, qqnorm!, seismicity, sealand, squeeze, terramar, violin, violin!, viz, weather, windbarbs, whereami,
 
-	VSdisp, info, kmeans, pca, mosaic, quadbounds, quadkey, geocoder,
+	VSdisp, info, kmeans, pca, mosaic, quadbounds, quadkey, geocoder, getprovider,
 
 	binarize, isodata, rgb2gray,
 	
