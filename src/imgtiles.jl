@@ -94,6 +94,7 @@ Get image tiles from a web map tiles provider for given longitude, latitude coor
 - `quadonly`: Return only the quadtree string. A string or a matrix of strings when number of tiles > 1.
   Other from the quadtree string this option return also the `decimal_adress, lon, lat, x, y` that are:
   the XYZ tiles coordinates, the longitude, latitude , mercator X and Y coordinates in meters of first tile.
+- `tilesmesh` or `meshtiles` or `mesh`: Return a `GMTdataset` with the mesh of tiles.
 
 ### Returns
 - `I`: A GMTimage element or the output of the `quadonly` option explained above.
@@ -102,6 +103,12 @@ Get image tiles from a web map tiles provider for given longitude, latitude coor
 ```jldoctest
 julia> I = mosaic(0.1,0.1,zoom=1)
 viz(I, coast=true)
+```
+
+```jldoctest
+# Return a GMTdataset with the mesh of tiles and viz it.
+D = mosaic(region=(-10, -8, 37, 39), zoom=9, mesh=true);
+viz(D, coast=true)
 ```
 """
 function mosaic(D::GMTdataset; pt_radius=6371007.0, provider="", zoom::Int=0, cache::String="",
@@ -113,6 +120,47 @@ function mosaic(D::GMTdataset; pt_radius=6371007.0, provider="", zoom::Int=0, ca
 	end
 	mosaic(lon, lat; pt_radius=pt_radius, provider=provider, zoom=zoom, cache=cache, mapwidth=mapwidth,
            dpi=dpi, date=date, verbose=verbose, kw...)
+end
+
+"""
+I = mosaic(GI::Union{GMTgrid, GMTimage}; ...)
+
+Same as above but the `lon` & `lat` are extracted from the `GI` header. The grid or image `GI` must have set a valid
+projection, and it doesn't need to be in geographic coordinates. Coordinates in other reference systems will be converted to geogs.
+"""
+function mosaic(GI::GItype; pt_radius=6371007.0, provider="", zoom::Int=0, cache::String="",
+                mapwidth=15, dpi=96, date::String="", verbose::Int=0, kw...)
+	((prj = getproj(GI, proj4=true)) == "") && error("To use the 'mosaic' function with a grid or image this has to have a valid projection")
+	if isgeog(prj)
+		lon, lat = GI.range[1:2], GI.range[3:4]
+	else
+		ll = xy2lonlat([GI.range[1] GI.range[3]; GI.range[2] GI.range[4]], s_srs=prj)
+		lon, lat = ll[:,1], ll[:,2]
+	end
+	mosaic(lon, lat; pt_radius=pt_radius, provider=provider, zoom=zoom, cache=cache, mapwidth=mapwidth,
+           dpi=dpi, date=date, verbose=verbose, kw...)
+end
+
+"""
+I = mosaic(; region=??, ...)
+
+Same as above but this time the BoundingBox is extracted from the `region` option. Note that this option is the same as
+in, for example, the `coast` module.
+
+# Example
+```jldoctest
+julia> I = mosaic(region=(91,110,6,22))		# zoom level is computed automatically
+viz(I, coast=true)
+```
+"""
+function mosaic(; pt_radius=6371007.0, provider="", zoom::Int=0, cache::String="",
+                mapwidth=15, dpi=96, date::String="", verbose::Int=0, kw...)
+	d = KW(kw)
+	((opt_R = parse_R(d, "")[1]) == "") && error("To use the 'mosaic' function without the 'lon & lat' arguments you need to specify the 'region' option.")
+	ll = opt_R2num(opt_R)
+	lon, lat = ll[1:2], ll[3:4]
+	mosaic(lon, lat; pt_radius=pt_radius, provider=provider, zoom=zoom, cache=cache, mapwidth=mapwidth,
+           dpi=dpi, date=date, verbose=verbose, d...)
 end
 
 function mosaic(lon, lat; pt_radius=6371007.0, provider="", zoom::Int=0, cache::String="",
@@ -141,9 +189,10 @@ function mosaic(lon, lat; pt_radius=6371007.0, provider="", zoom::Int=0, cache::
 	end
 
 	quadkey::Matrix{Char} = ['0' '1'; '2' '3']
-	quadonly = ((val = find_in_dict(d, [:quadonly])[1]) !== nothing) ? true : false
-	inMerc   = ((val = find_in_dict(d, [:merc :mercator])[1]) !== nothing) ? true : false
-	isExact  = ((val = find_in_dict(d, [:loose :loose_bounds])[1]) === nothing) ? true : false
+	quadonly  = ((val = find_in_dict(d, [:quadonly])[1]) !== nothing) ? true : false
+	quadTiles = ((val = find_in_dict(d, [:tilesmesh :meshtiles :mesh])[1]) !== nothing) ? true : false
+	inMerc    = ((val = find_in_dict(d, [:merc :mercator])[1]) !== nothing) ? true : false
+	isExact   = ((val = find_in_dict(d, [:loose :loose_bounds])[1]) === nothing) ? true : false
 	(isExact && length(lon) == 1) && (isExact = false)
 	neighbors::Matrix{Float64} = ((val = find_in_dict(d, [:N :neighbors :mosaic])[1]) === nothing) ? [1.0;;] : isa(val, Int) ? ones(Int64(val),Int64(val)) : ones(size(val))
 	(length(neighbors) > 1 && length(lon) > 1) && error("The 'neighbor' option is only for single point queries.")
@@ -239,36 +288,40 @@ function mosaic(lon, lat; pt_radius=6371007.0, provider="", zoom::Int=0, cache::
 
 	x, y = geog2merc(lon_mm, (flatness == 0) ? lat_mm : latiso_mm, pt_radius)
 
-	if (!quadonly)
-		cache, cache_supp = completeCacheName(cache, zoom, provider_code; variant=variant)
-		if !isa(tile_url, Matrix)
-			img = getImgTile(quadkey, quad_[1], tile_url, cache, cache_supp, ext, isZXY, verbose)
-		else
-			img = zeros(UInt8, (256 * nMo, 256 * mMo, 3))
-			for row = 1:mMo					# Rows
-				for col = 1:nMo				# Cols
-					img[(col-1)*256+1:col*256, (row-1)*256+1:row*256, :] =
-						getImgTile(quadkey, quad_[row, col], tile_url[row, col], cache, cache_supp, ext, isZXY, verbose)
-				end
+	# -------- Return here if only the quadtree is needed ---------
+	quadonly && return quad_, decimal_adress, lon_mm, lat_mm, x, y
+
+	# Return here if user wants a GMTdataset with the coordinates of the tiles
+	quadTiles && return quadbounds(quad_)[1]
+
+	# ------------------ Get the tiles and build up the image --------------------
+	cache, cache_supp = completeCacheName(cache, zoom, provider_code; variant=variant)
+	if !isa(tile_url, Matrix)
+		img = getImgTile(quadkey, quad_[1], tile_url, cache, cache_supp, ext, isZXY, verbose)
+	else
+		img = zeros(UInt8, (256 * nMo, 256 * mMo, 3))
+		for row = 1:mMo					# Rows
+			for col = 1:nMo				# Cols
+				img[(col-1)*256+1:col*256, (row-1)*256+1:row*256, :] =
+					getImgTile(quadkey, quad_[row, col], tile_url[row, col], cache, cache_supp, ext, isZXY, verbose)
 			end
 		end
-
-		xx = collect(linspace(x[1], x[2], size(img,1)+1))
-		yy = collect(linspace(y[1], y[2], size(img,2)+1))
-		I = mat2img(img, x=xx, y=yy, proj4="+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +a=$pt_radius +b=$pt_radius +units=m +no_defs", layout="TRBa", is_transposed=true)
-
-		if (inMerc && isExact)		# Cut to the exact required limits
-			mat::Matrix{Float64} = mapproject([lon[1] lat_orig[1]; lon[2] lat_orig[2]], J=I.proj4).data
-			I = grdcut(I, R=(mat[1,1], mat[2,1], mat[1,2], mat[2,2]))
-		elseif (!inMerc)			# That is, if project to Geogs
-			gdwopts = ["-t_srs","+proj=latlong +datum=WGS84", "-r","cubic"]
-			isExact && append!(gdwopts, ["-te"], ["$(lon[1])"], ["$(lat_orig[1])"], ["$(lon[2])"], ["$(lat_orig[2]))"])
-			I = gdalwarp(I, gdwopts)
-		end
-
-		return I
 	end
-	return quad_, decimal_adress, lon_mm, lat_mm, x, y
+
+	xx = collect(linspace(x[1], x[2], size(img,1)+1))
+	yy = collect(linspace(y[1], y[2], size(img,2)+1))
+	I = mat2img(img, x=xx, y=yy, proj4="+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +a=$pt_radius +b=$pt_radius +units=m +no_defs", layout="TRBa", is_transposed=true)
+
+	if (inMerc && isExact)		# Cut to the exact required limits
+		mat::Matrix{Float64} = mapproject([lon[1] lat_orig[1]; lon[2] lat_orig[2]], J=I.proj4).data
+		I = grdcut(I, R=(mat[1,1], mat[2,1], mat[1,2], mat[2,2]))
+	elseif (!inMerc)			# That is, if project to Geogs
+		gdwopts = ["-t_srs","+proj=latlong +datum=WGS84", "-r","cubic"]
+		isExact && append!(gdwopts, ["-te"], ["$(lon[1])"], ["$(lat_orig[1])"], ["$(lon[2])"], ["$(lat_orig[2]))"])
+		I = gdalwarp(I, gdwopts)
+	end
+
+	return I
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -379,7 +432,6 @@ function getprovider(arg, zoom::Int)
 	getprovider(url[1:ind[1]-1], zoom; format=arg.options[:format], ZYX=contains(arg.url, "{z}/{y}/{x}"), dir_code=code)
 end
 
-
 # ---------------------------------------------------------------------------------------------------
 function completeCacheName(cache, zoomL, provider_code; variant="")
 	cache_supp = ""
@@ -395,7 +447,7 @@ end
 
 # -------------------------------------------------------------------------------------------------
 """
-    limits, Dtiles, zoomL = quadbounds(quadtree; flatness=0.0, geog=true)
+    Dtiles, zoomL = quadbounds(quadtree; flatness=0.0, geog=true)
 
 Compute the coordinates of the `quadtree` quadtree. Either a single quadtree string or an array
 of quadtree strings.
@@ -406,14 +458,15 @@ of quadtree strings.
 - `flaness`: Flatness of the ellipsoid.
 
 ### Returns
-- `limits`: The BoundingBox coords in geogs in [lonMin lonMax latMin latMax] format.
 - `Dtiles`: A GMTdataset vector with the corner coordinates of each tile.
 - `zoomL`: Zoom level of the tiles.
 
 ### Example
-  quadtree = mosaic([-10. -8],[37. 39.], zoom=8, quadonly=1)[1]
-
-  D = quadbounds(quadtree)[2]
+```jldoctest
+  quadtree = mosaic([-10. -8],[37. 39.], zoom=8, quadonly=1)[1];
+  D = quadbounds(quadtree)[1];
+  viz(D)
+```
 """
 quadbounds(quadtree::String; geog=true) = quadbounds([quadtree;;]; geog=geog)
 function quadbounds(quadtree::Matrix{String}; geog=true)
@@ -425,28 +478,26 @@ function quadbounds(quadtree::Matrix{String}; geog=true)
 		tiles_bb = lims[[1, 2, 4, 3]]		# In case idiot choice of 2 argouts
 	else									# Several in a cell array
 		tiles_bb = zeros(length(quadtree), 4)
-		lims = [361 -361 -361 361]
 		for k = 1:length(quadtree)
 			lim, zoomL = getQuadLims(quadtree[k], quadkey, "")		# Remember that lim(3) = y_max
-			lims = [min(lims[1], lim[1]), max(lims[2], lim[2]), max(lims[3], lim[3]), min(lims[4], lim[4])]
 			tiles_bb[k, :] .= lim
 		end
 	end
 	
-	lims[3:4] = isometric2geod(reverse(lims[3:4]), flatness)		# Convert to geodetic lats
 	tiles_bb[:, 3:4] .= isometric2geod(tiles_bb[:, 4:-1:3], flatness)
 	v = Vector{Matrix{Float64}}(undef, size(tiles_bb, 1))
 	for k = 1:size(tiles_bb, 1)
 		v[k] = [tiles_bb[k,1] tiles_bb[k,3];
 		        tiles_bb[k,1] tiles_bb[k,4];
 				tiles_bb[k,2] tiles_bb[k,4];
-				tiles_bb[k,2] tiles_bb[k,3]; tiles_bb[k,1] tiles_bb[k,3]]
+				tiles_bb[k,2] tiles_bb[k,3];
+				tiles_bb[k,1] tiles_bb[k,3]]
 		if (!geog)  xm, ym = geog2merc(v[k][:,1], v[k][:,2], 6378137.0);	v[k] = [xm ym]	end
 	end
 	proj = geog ? prj4WGS84 : "+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +a=6378137 +b=6378137 +units=m +no_defs"
 	D = mat2ds(v, proj=proj, geom=wkbPolygon)
 	set_dsBB!(D)
-	return lims, D, zoomL
+	return D, zoomL
 end
 
 # -------------------------------------------------------------------------------------------------
