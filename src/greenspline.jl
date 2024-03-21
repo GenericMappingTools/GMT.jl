@@ -56,6 +56,9 @@ Parameters
 
 	Data one-sigma uncertainties are provided in the last column. We then compute weights that
 	are inversely proportional to the uncertainties squared.
+- **Z** | **mode** | **distmode** :: [Type => Str | number]
+
+    Sets the distance mode that determines how we calculate distances between data points.
 - $(GMT.opt_b)
 - $(GMT.opt_d)
 - $(GMT.opt_e)
@@ -80,8 +83,8 @@ function greenspline_helper(cmd0::String, arg1; kwargs...)
 	arg2 = nothing;     arg3 = nothing
 
 	cmd, = parse_common_opts(d, "", [:I :R :V_params :bi :d :e :f :h :i :o :r :x :w :yx])
-	cmd  = parse_these_opts(cmd, d, [[:C :approx :approximate], [:D :mode :metadata], [:E :misfit],
-	                                 [:G :grid], [:L :leave_trend], [:Q :dir_derivative], [:S :splines], [:T :mask], [:W :uncertainties]])
+	cmd  = parse_these_opts(cmd, d, [[:C :approx :approximate], [:D :meta :metadata], [:E :misfit],
+	                                 [:G :grid], [:L :leave_trend], [:Q :dir_derivative], [:S :splines], [:T :mask], [:W :uncertainties], [:Z :mode :distmode]])
 	cmd, args, n, = add_opt(d, cmd, "A", [:A :gradient], :data, Array{Any,1}([arg1, arg2]), (format="+f",))
 	if (n > 0)  arg1, arg2 = args[:]  end
 	cmd, args, n, = add_opt(d, cmd, "N", [:N :nodes], :data, Array{Any,1}([arg1, arg2, arg3]), (x="",))

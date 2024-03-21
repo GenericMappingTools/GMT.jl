@@ -11,7 +11,7 @@ Parameters
 - **A** | **alpha** | **transparency** :: [Type => Str]
 
     Sets a constant level of transparency (0-100) for all color slices.
-- $(GMT.opt_C)
+- $(opt_C)
 - **D** | **bg** | **background** :: [Type => Str | []]			`Arg = [i|o]`
 
     Select the back- and foreground colors to match the colors for lowest and highest
@@ -43,7 +43,7 @@ Parameters
 - **Q** | **log** :: [Type => Bool]
 
     Selects a logarithmic interpolation scheme [Default is linear].
-- $(GMT._opt_R)
+- $(_opt_R)
 - **S** | **symmetric** :: [Type => Str]			`Arg = h|l|m|u`
 
     Force the color table to be symmetric about zero (from -R to +R).
@@ -52,7 +52,7 @@ Parameters
 
     Set steps in CPT. Calculate entries in CPT from zstart to zstop in steps of (zinc). Default
     chooses arbitrary values by a crazy scheme based on equidistant values for a Gaussian CDF.
-- $(GMT.opt_V)
+- $(opt_V)
 - **W** | **categorical** :: [Type => Bool | Str | []]      `Arg = [w]`
 
     Do not interpolate the input color table but pick the output colors starting at the
@@ -60,8 +60,8 @@ Parameters
 - **Z** | **continuous** :: [Type => Bool]
 
     Creates a continuous CPT [Default is discontinuous, i.e., constant colors for each interval].
-- $(GMT.opt_V)
-- $(GMT.opt_write)
+- $(opt_V)
+- $(opt_write)
 """
 grd2cpt(cmd0::String; kwargs...) = grd2cpt_helper(cmd0, nothing; kwargs...)
 grd2cpt(arg1; kwargs...)         = grd2cpt_helper("", arg1; kwargs...)

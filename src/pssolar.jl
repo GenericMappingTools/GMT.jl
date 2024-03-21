@@ -8,34 +8,34 @@ See full GMT (not the `GMT.jl` one) docs at [`solar`]($(GMTdoc)solar.html)
 Parameters
 ----------
 
-- $(GMT._opt_J)
-- $(GMT._opt_B)
+- $(_opt_J)
+- $(_opt_B)
 - **C** | **format** :: [Type => Bool]
 
 - **G** | **fill** :: [Type => Str | Number]
 
 - **I** | **sun** :: [Type => Bool | Tuple | NamedTuple]
 
-- $(GMT.opt_P)
+- $(opt_P)
 - **M** | **dump** :: [Type => Bool]
 
-- $(GMT._opt_R)
+- $(_opt_R)
 - **N** | **invert** :: [Type => Bool]
 
 - **T** | **terminators** :: [Type => Bool | Tuple | NamedTuple]
 
 - **W** | **pen** :: [Type => Str | Tuple]
 
-- $(GMT.opt_U)
-- $(GMT.opt_V)
-- $(GMT.opt_X)
-- $(GMT.opt_Y)
-- $(GMT.opt_bo)
-- $(GMT._opt_h)
-- $(GMT.opt_o)
-- $(GMT._opt_p)
-- $(GMT._opt_t)
-- $(GMT.opt_savefig)
+- $(opt_U)
+- $(opt_V)
+- $(opt_X)
+- $(opt_Y)
+- $(opt_bo)
+- $(_opt_h)
+- $(opt_o)
+- $(_opt_p)
+- $(_opt_t)
+- $(opt_savefig)
 
 To see the full documentation type: ``@? solar``
 """
