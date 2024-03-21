@@ -2070,7 +2070,9 @@ end
 function finish_PS_nested(d::Dict, cmd::Vector{String})::Vector{String}
 	# Finish the PS creating command, but check also if we have any nested module calls like 'coast', 'colorbar', etc
 	!has_opt_module(d) && return cmd
+	proj_linear_bak = CTRL.proj_linear[1]
 	cmd2::Vector{String} = add_opt_module(d)
+	CTRL.proj_linear[1]  = proj_linear_bak		# Because add_opt_module may change it (coast does that)
 
 	if (!isempty(cmd2) && startswith(cmd2[1], "clip"))		# Deal with the particular psclip case (Tricky)
 		if (isa(CTRL.pocket_call[1], Symbol) || isa(CTRL.pocket_call[1], String))	# Assume it's a clip=end

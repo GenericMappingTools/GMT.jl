@@ -8,18 +8,18 @@ See full GMT (not the `GMT.jl` one) docs at [`grd2xyz`]($(GMTdoc)grd2xyz.html)
 Parameters
 ----------
 
-- $(GMT._opt_J)
+- $(_opt_J)
 - **C** | **row_col** | **rowcol** :: [Type => Bool]
 
     Replace the x- and y-coordinates on output with the corresponding column and row numbers.
 - **L** | **hvline** :: [Type => String]
 
     Limit the output of records to a single row or column.
-- $(GMT._opt_R)
+- $(_opt_R)
 - **T** | **stl** | **STL** :: [Type => String]
 
     Compute a STL triangulation for 3-D printing.
-- $(GMT.opt_V)
+- $(opt_V)
 - **W** | **weight** :: [Type => Str]           `Arg = [a|weight]`
 
     Write out x,y,z,w, where w is the supplied weight (or 1 if not supplied) [Default writes x,y,z only].
@@ -27,14 +27,14 @@ Parameters
 
     Write a 1-column table. Output will be organized according to the specified ordering
     convention contained in ``flags``.
-- $(GMT.opt_write)
-- $(GMT.opt_append)
-- $(GMT.opt_bo)
-- $(GMT.opt_d)
-- $(GMT._opt_f)
-- $(GMT._opt_h)
-- $(GMT.opt_o)
-- $(GMT.opt_s)
+- $(opt_write)
+- $(opt_append)
+- $(opt_bo)
+- $(opt_d)
+- $(_opt_f)
+- $(_opt_h)
+- $(opt_o)
+- $(opt_s)
 """
 grd2xyz(cmd0::String; kwargs...) = grd2xyz_helper(cmd0, nothing; kwargs...)
 grd2xyz(arg1; kwargs...)         = grd2xyz_helper("", arg1; kwargs...)

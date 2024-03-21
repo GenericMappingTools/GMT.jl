@@ -11,7 +11,7 @@ See full GMT (not the `GMT.jl` one) docs at [`makecpt`]($(GMTdoc)makecpt.html)
 - **A** | **alpha** | **transparency** :: [Type => Str]
 
     Sets a constant level of transparency (0-100) for all color slices.
-- $(GMT.opt_C)
+- $(opt_C)
 - **D** | **bg** | **background** :: [Type => Str | []]			`Arg = [i|o]`
 
     Select the back- and foreground colors to match the colors for lowest and highest
@@ -52,10 +52,10 @@ See full GMT (not the `GMT.jl` one) docs at [`makecpt`]($(GMTdoc)makecpt.html)
 - **Z** | **continuous** :: [Type => Bool]
 
     Creates a continuous CPT [Default is discontinuous, i.e., constant colors for each interval].
-- $(GMT._opt_bi)
-- $(GMT._opt_di)
-- $(GMT._opt_h)
-- $(GMT._opt_i)
+- $(_opt_bi)
+- $(_opt_di)
+- $(_opt_h)
+- $(_opt_i)
 
 To see the full documentation type: ``@? makecpt``
 """

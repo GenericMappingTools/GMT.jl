@@ -9,11 +9,11 @@ See full GMT (not the `GMT.jl` one) docs at [`grdcontour`]($(GMTdoc)grdcontour.h
 Parameters
 ----------
 
-- $(GMT._opt_J)
+- $(_opt_J)
 - **A** | **annot** | **annotation** :: [Type => Str or Number]       ``Arg = [-|[+]annot_int][labelinfo]``
 
     *annot_int* is annotation interval in data units; it is ignored if contour levels are given in a file.
-- $(GMT._opt_B)
+- $(_opt_B)
 - **C** | **cont** | **contour** | **contours** | **levels** :: [Type => Str | Number | GMTcpt]  ``Arg = [+]cont_int``
 
     Contours to be drawn may be specified in one of three possible ways.
@@ -26,14 +26,14 @@ Parameters
 - **G** | **labels** :: [Type => Str]
 
     Controls the placement of labels along the quoted lines.
-- $(GMT.opt_Jz)
+- $(opt_Jz)
 - **L** | **range** :: [Type => Str]
 
     Limit range: Do not draw contours for data values below low or above high.
 - **N** | **fill** | **colorize** :: [Type => Bool]
 
     Fill the area between contours using the discrete color table given by cpt.
-- $(GMT.opt_P)
+- $(opt_P)
 - **Q** | **cut** :: [Type => Str | Number]
 
     Do not draw contours with less than cut number of points.
@@ -43,25 +43,25 @@ Parameters
 - **T** | **ticks** :: [Type => Str]
 
     Draw tick marks pointing in the downward direction every *gap* along the innermost closed contours.
-- $(GMT._opt_R)
-- $(GMT.opt_U)
-- $(GMT.opt_V)
+- $(_opt_R)
+- $(opt_U)
+- $(opt_V)
 - **W** | **pen** :: [Type => Str | Number]
 
     Sets the attributes for the particular line.
-- $(GMT.opt_X)
-- $(GMT.opt_Y)
+- $(opt_X)
+- $(opt_Y)
 - **Z** | **muladd** | **scale** :: [Type => Str]
 
     Use to subtract shift from the data and multiply the results by factor before contouring starts.
-- $(GMT.opt_bo)
-- $(GMT.opt_do)
-- $(GMT.opt_e)
-- $(GMT._opt_f)
-- $(GMT._opt_h)
-- $(GMT._opt_p)
-- $(GMT._opt_t)
-- $(GMT.opt_savefig)
+- $(opt_bo)
+- $(opt_do)
+- $(opt_e)
+- $(_opt_f)
+- $(_opt_h)
+- $(_opt_p)
+- $(_opt_t)
+- $(opt_savefig)
 
 To see the full documentation type: ``@? grdcontour``
 """

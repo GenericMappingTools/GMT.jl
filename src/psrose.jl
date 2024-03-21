@@ -8,11 +8,11 @@ See full GMT (not the `GMT.jl` one) docs at [`psrose`]($(GMTdoc)rose.html)
 Parameters
 ----------
 
-- $(GMT._opt_J)
+- $(_opt_J)
 - **A** | **sector** | **sectors** :: [Type => Str | Number]
 
 	Gives the sector width in degrees for sector and rose diagram.
-- $(GMT._opt_B)
+- $(_opt_B)
 - **C** | **color** :: [Type => Str | GMTcpt]
 
 	Give a CPT. The mid x-value for each bar is used to look-up the bar color.
@@ -37,11 +37,11 @@ Parameters
 - **M** | **vector_params** :: [Type => Str]
 
 	Used with -C to modify vector parameters.
-- $(GMT.opt_P)
+- $(opt_P)
 - **Q** | **alpha** :: [Type => Str | []]
 
 	Sets the confidence level used to determine if the mean resultant is significant.
-- $(GMT._opt_R)
+- $(_opt_R)
 - **S** | **norm** | **normalize** :: [Type => Bool]
 
 	Specifies radius of plotted circle (append a unit from c|i|p).
@@ -55,20 +55,20 @@ Parameters
 - **Z** | **scale** :: [Type => Str]
 
 	Multiply the data radii by scale.
-- $(GMT.opt_U)
-- $(GMT.opt_V)
-- $(GMT.opt_X)
-- $(GMT.opt_Y)
-- $(GMT._opt_bi)
-- $(GMT._opt_di)
-- $(GMT.opt_e)
-- $(GMT._opt_h)
-- $(GMT._opt_i)
-- $(GMT._opt_p)
-- $(GMT._opt_t)
-- $(GMT.opt_w)
-- $(GMT.opt_swap_xy)
-- $(GMT.opt_savefig)
+- $(opt_U)
+- $(opt_V)
+- $(opt_X)
+- $(opt_Y)
+- $(_opt_bi)
+- $(_opt_di)
+- $(opt_e)
+- $(_opt_h)
+- $(_opt_i)
+- $(_opt_p)
+- $(_opt_t)
+- $(opt_w)
+- $(opt_swap_xy)
+- $(opt_savefig)
 
 To see the full documentation type: ``@? rose``
 """

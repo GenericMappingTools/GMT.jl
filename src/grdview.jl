@@ -7,11 +7,11 @@ to a raster image.
 
 See full GMT (not the `GMT.jl` one) docs at [`grdview`]($(GMTdoc)grdview.html)
 
-- $(GMT._opt_J)
-- $(GMT.opt_Jz)
-- $(GMT._opt_R)
-- $(GMT._opt_B)
-- $(GMT.opt_C)
+- $(_opt_J)
+- $(opt_Jz)
+- $(_opt_R)
+- $(_opt_B)
+- $(opt_C)
 - **G** | **drape** | **drapefile** :: [Type => Str | GMTgrid | a Tuple with 3 GMTgrid types]
 
     Drape the image in drapefile on top of the relief provided by relief_file.
@@ -22,7 +22,7 @@ See full GMT (not the `GMT.jl` one) docs at [`grdview`]($(GMTdoc)grdview.html)
 - **N** | **plane** :: [Type => Str | Int]		``Arg = (level [,fill])``
 
     Draws a plane at this z-level.
-- $(GMT.opt_P)
+- $(opt_P)
 - **Q** | **surftype** | **surf** :: [Type => Str | Int] ``Arg = mesh=Bool, surface=Bool, image=Bool, wterfall=(:rows|cols,[fill])``
 
     Specify **m** for mesh plot, **s** for surface, **i** for image.
@@ -40,15 +40,15 @@ See full GMT (not the `GMT.jl` one) docs at [`grdview`]($(GMTdoc)grdview.html)
 
     When drapping an image that has projection info over a grid that is in geographics but does not carry any
     information about this fact we may need to use this option to help the program finding the common BoundingBox.
-- $(GMT.opt_U)
-- $(GMT.opt_V)
-- $(GMT.opt_X)
-- $(GMT.opt_Y)
-- $(GMT._opt_f)
-- $(GMT.opt_n)
-- $(GMT._opt_p)
-- $(GMT._opt_t)
-- $(GMT.opt_savefig)
+- $(opt_U)
+- $(opt_V)
+- $(opt_X)
+- $(opt_Y)
+- $(_opt_f)
+- $(opt_n)
+- $(_opt_p)
+- $(_opt_t)
+- $(opt_savefig)
 
 To see the full documentation type: ``@? grdview``
 """
