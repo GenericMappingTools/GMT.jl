@@ -13,12 +13,12 @@ See full GMT (not the `GMT.jl` one) docs at [`pshistogram`]($(GMTdoc)histogram.h
 Parameters
 ----------
 
-- $(GMT._opt_J)
+- $(_opt_J)
 - **A** | **horizontal** :: [Type => Bool]
 
     Plot the histogram horizontally from x = 0 [Default is vertically from y = 0].
-- $(GMT.opt_Jz)
-- $(GMT._opt_B)
+- $(opt_Jz)
+- $(_opt_B)
 - **C** | **color** | **cmap** :: [Type => Str | GMTcpt]
 
     Give a CPT. The mid x-value for each bar is used to look-up the bar color.
@@ -47,7 +47,7 @@ Parameters
 - **N** | **distribution** | **normal** :: [Type => Str]
 
     Draw the equivalent normal distribution; append desired pen [0.5p,black].
-- $(GMT.opt_P)
+- $(opt_P)
 - **Q** | **cumulative** :: [Type => Bool | "r"]
 
     Draw a cumulative histogram. Append r to instead compute the reverse cumulative histogram.
@@ -67,21 +67,21 @@ Parameters
 - **Z** | **kind** :: [Type => Number | Str]
 
     Choose between 6 types of histograms.
-- $(GMT.opt_U)
-- $(GMT.opt_V)
-- $(GMT.opt_X)
-- $(GMT.opt_Y)
-- $(GMT._opt_bi)
-- $(GMT._opt_di)
-- $(GMT.opt_e)
-- $(GMT._opt_f)
-- $(GMT._opt_h)
-- $(GMT._opt_i)
-- $(GMT._opt_p)
-- $(GMT._opt_t)
-- $(GMT.opt_w)
-- $(GMT.opt_swap_xy)
-- $(GMT.opt_savefig)
+- $(opt_U)
+- $(opt_V)
+- $(opt_X)
+- $(opt_Y)
+- $(_opt_bi)
+- $(_opt_di)
+- $(opt_e)
+- $(_opt_f)
+- $(_opt_h)
+- $(_opt_i)
+- $(_opt_p)
+- $(_opt_t)
+- $(opt_w)
+- $(opt_swap_xy)
+- $(opt_savefig)
 
 To see the full documentation type: ``@? histogram``
 """

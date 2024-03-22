@@ -99,8 +99,8 @@ Parameters
 
     Erase the entire **name** directory after assembling the final movie [Default leaves directory with all images.
     ($(GMTdoc)movie.html#z)
-- $(GMT.opt_V)
-- $(GMT.opt_x)
+- $(opt_V)
+- $(opt_x)
 """
 function movie(main; pre=nothing, post=nothing, kwargs...)
 

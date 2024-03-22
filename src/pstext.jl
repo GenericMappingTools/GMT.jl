@@ -9,9 +9,9 @@ See full GMT (not the `GMT.jl` one) docs at [`pstext`]($(GMTdoc)pstext.html)
 Parameters
 ----------
 
-- $(GMT._opt_J)
-- $(GMT._opt_R)
-- $(GMT._opt_B)
+- $(_opt_J)
+- $(_opt_R)
+- $(_opt_B)
 - **A** | **azimuth** | **azim** :: [Type => Bool]
 
     Angles are given as azimuths; convert them to directions using the current projection.
@@ -27,7 +27,7 @@ Parameters
 - **G** | **fill** :: [Type => Str | Number]
 
     Sets the shade or color used for filling the text box [Default is no fill].
-- $(GMT.opt_Jz)
+- $(opt_Jz)
 - **L** | **list** :: [Type => Bool]
 
     Lists the font-numbers and font-names available, then exits.
@@ -37,7 +37,7 @@ Parameters
 - **N** | **no_clip** | **noclip** :: [Type => Str | []]
 
     Do NOT clip text at map boundaries.
-- $(GMT.opt_P)
+- $(opt_P)
 - **Q** | **change_case** :: [Type => Str]
 
     Change all text to either lower or upper case.
@@ -53,21 +53,21 @@ Parameters
 - **Z** | **threeD** :: [Type => Str]
 
     For 3-D projections: expect each item to have its own level given in the 3rd column.
-- $(GMT.opt_U)
-- $(GMT.opt_V)
-- $(GMT.opt_X)
-- $(GMT.opt_Y)
-- $(GMT.opt_a)
-- $(GMT._opt_bi)
-- $(GMT._opt_di)
-- $(GMT.opt_e)
-- $(GMT._opt_f)
-- $(GMT.opt_g)
-- $(GMT._opt_h)
-- $(GMT._opt_p)
-- $(GMT._opt_t)
-- $(GMT.opt_swap_xy)
-- $(GMT.opt_savefig)
+- $(opt_U)
+- $(opt_V)
+- $(opt_X)
+- $(opt_Y)
+- $(opt_a)
+- $(_opt_bi)
+- $(_opt_di)
+- $(opt_e)
+- $(_opt_f)
+- $(opt_g)
+- $(_opt_h)
+- $(_opt_p)
+- $(_opt_t)
+- $(opt_swap_xy)
+- $(opt_savefig)
 
 To see the full documentation type: ``@? pstext``
 """

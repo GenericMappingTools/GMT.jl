@@ -33,19 +33,19 @@ Parameters
 
     Both d and h are supplied. In this case, input contains x,y,z,d,h. [Default expects (x,y,z) input,
     and d,h are computed from delta x, delta y.
-- $(GMT.opt_V)
-- $(GMT.opt_write)
-- $(GMT.opt_append)
-- $(GMT._opt_bi)
-- $(GMT.opt_bo)
-- $(GMT._opt_di)
-- $(GMT.opt_do)
-- $(GMT.opt_e)
-- $(GMT._opt_f)
-- $(GMT.opt_g)
-- $(GMT._opt_h)
-- $(GMT._opt_i)
-- $(GMT.opt_swap_xy)
+- $(opt_V)
+- $(opt_write)
+- $(opt_append)
+- $(_opt_bi)
+- $(opt_bo)
+- $(_opt_di)
+- $(opt_do)
+- $(opt_e)
+- $(_opt_f)
+- $(opt_g)
+- $(_opt_h)
+- $(_opt_i)
+- $(opt_swap_xy)
 
 To see the full documentation type: ``@? splitxyz``
 """

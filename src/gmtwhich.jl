@@ -22,7 +22,7 @@ Parameters
 	If a file argument is a downloadable file (either a full URL, a @file for downloading from
 	the GMT Site Cache, or @earth_relief_*.grd) we will try to download the file if it is not
 	found in your local data or cache dirs.
-- $(GMT.opt_V)
+- $(opt_V)
 """
 function gmtwhich(cmd0::String; kwargs...)
 

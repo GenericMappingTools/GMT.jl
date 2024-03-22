@@ -24,9 +24,9 @@ Parameters
 - **N** | **nodata** :: [Type => Str]	``Arg = nodata``
 
     Sets the node value that identifies a point as a member of a hole [Default is NaN].
-- $(GMT._opt_R)
-- $(GMT.opt_V)
-- $(GMT._opt_f)
+- $(_opt_R)
+- $(opt_V)
+- $(_opt_f)
 """
 grdfill(cmd0::String; kwargs...) = grdfill_helper(cmd0, nothing; kwargs...)
 grdfill(arg1; kwargs...)         = grdfill_helper("", arg1; kwargs...)

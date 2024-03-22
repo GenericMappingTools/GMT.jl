@@ -8,7 +8,7 @@ See full GMT (not the `GMT.jl` one) docs at [`grdproject`]($(GMTdoc)grdproject.h
 Parameters
 ----------
 
-- $(GMT._opt_J)
+- $(_opt_J)
 - **C** | **center** :: [Type => Str | []]      ``Arg = [dx/dy]``
 
     Let projected coordinates be relative to projection center [Default is relative to lower left corner].
@@ -31,10 +31,10 @@ Parameters
 - **M** | **projected_unit** :: [Type => Str]    ``Arg = c|i|p``
 
     Append c, i, or p to indicate that cm, inch, or point should be the projected measure unit.
-- $(GMT._opt_R)
-- $(GMT.opt_V)
-- $(GMT.opt_n)
-- $(GMT.opt_r)
+- $(_opt_R)
+- $(opt_V)
+- $(opt_n)
+- $(opt_r)
 
 To see the full documentation type: ``@? grdproject``
 """

@@ -25,23 +25,23 @@ Parameters
 - **H** | **mag_params** :: [Type => Number]
 
     Sets parameters for computation of magnetic anomaly. Alternatively, provide a magnetic intensity grid. 
-- $(GMT.opt_I)
+- $(opt_I)
 - **L** | **z_obs** | **observation_level** :: [Type => Number]
 
     Sets level of observation [Default = 0]. That is the height (z) at which anomalies are computed.
 - **Q** | **pad** :: [Type => Number]
 
     Extend the domain of computation with respect to output `region`.
-- $(GMT._opt_R)
+- $(_opt_R)
 - **S** | **radius** :: [Type => Number]
 
     Set search radius in km (valid only in the two grids mode OR when `thickness`) [Default = 30 km].
 - **Z** | **z_level** | **reference_level** :: [Type => Number]
 
     Level of reference plane [Default = 0].
-- $(GMT.opt_V)
-- $(GMT._opt_f)
-- $(GMT.opt_x)
+- $(opt_V)
+- $(_opt_f)
+- $(opt_x)
 
 ### Example. Compute the gravity effect of the Gorringe bank.
 ```julia

@@ -8,11 +8,11 @@ See full GMT (not the `GMT.jl` one) docs at [`contour`]($(GMTdoc)contour.html)
 Parameters
 ----------
 
-- $(GMT._opt_J)
+- $(_opt_J)
 - **A** | **annot** | **annotation** :: [Type => Str | Number]       ``Arg = [-|[+]annot_int][labelinfo]``
 
     *annot_int* is annotation interval in data units; it is ignored if contour levels are given in a file.
-- $(GMT._opt_B)
+- $(_opt_B)
 - **C** | **cont** | **contour** | **contours** | **levels** :: [Type => Str | Number | GMTcpt]  ``Arg = [+]cont_int``
 
     Contours to be drawn may be specified in one of three possible ways.
@@ -29,14 +29,14 @@ Parameters
 - **I** | **fill** | **colorize** :: [Type => Bool]
 
     Color the triangles using the color scale provided via **C**.
-- $(GMT.opt_Jz)
+- $(opt_Jz)
 - **L** | **mesh** :: [Type => Str | Number]
 
     Draw the underlying triangular mesh using the specified pen attributes (if not provided, use default pen)
 - **N** | **no_clip** :: [Type => Bool]
 
     Do NOT clip contours or image at the boundaries [Default will clip to fit inside region].
-- $(GMT.opt_P)
+- $(opt_P)
 - **Q** | **cut** :: [Type => Str | Number]         ``Arg = [cut[unit]][+z]]``
 
     Do not draw contours with less than cut number of points.
@@ -46,29 +46,29 @@ Parameters
 - **T** | **ticks** :: [Type => Str]                 ``Arg = [+|-][+a][+dgap[/length]][+l[labels]]``
 
     Draw tick marks pointing in the downward direction every *gap* along the innermost closed contours.
-- $(GMT._opt_R)
-- $(GMT.opt_U)
-- $(GMT.opt_V)
+- $(_opt_R)
+- $(opt_U)
+- $(opt_V)
 - **W** | **pen** :: [Type => Str | Number]
 
     Sets the attributes for the particular line.
-- $(GMT.opt_X)
-- $(GMT.opt_Y)
+- $(opt_X)
+- $(opt_Y)
 - **Z** | **scale** :: [Type => Str]
 
     Use to subtract shift from the data and multiply the results by factor before contouring starts.
-- $(GMT._opt_bi)
-- $(GMT.opt_bo)
-- $(GMT.opt_d)
-- $(GMT._opt_di)
-- $(GMT.opt_do)
-- $(GMT.opt_e)
-- $(GMT._opt_h)
-- $(GMT._opt_i)
-- $(GMT._opt_p)
-- $(GMT._opt_t)
-- $(GMT.opt_swap_xy)
-- $(GMT.opt_savefig)
+- $(_opt_bi)
+- $(opt_bo)
+- $(opt_d)
+- $(_opt_di)
+- $(opt_do)
+- $(opt_e)
+- $(_opt_h)
+- $(_opt_i)
+- $(_opt_p)
+- $(_opt_t)
+- $(opt_swap_xy)
+- $(opt_savefig)
 
 To see the full documentation type: ``@? contour``
 """

@@ -25,18 +25,18 @@ Parameters
 
     Specifies the separation tolerance in the data coordinate units [0]; append distance unit.
     If two lines has end-points that are closer than this cutoff they will be joined.
-- $(GMT.opt_V)
-- $(GMT.opt_write)
-- $(GMT.opt_append)
-- $(GMT.opt_b)
-- $(GMT.opt_d)
-- $(GMT.opt_e)
-- $(GMT._opt_f)
-- $(GMT.opt_g)
-- $(GMT._opt_h)
-- $(GMT._opt_i)
-- $(GMT.opt_o)
-- $(GMT.opt_swap_xy)
+- $(opt_V)
+- $(opt_write)
+- $(opt_append)
+- $(opt_b)
+- $(opt_d)
+- $(opt_e)
+- $(_opt_f)
+- $(opt_g)
+- $(_opt_h)
+- $(_opt_i)
+- $(opt_o)
+- $(opt_swap_xy)
 """
 function gmtconnect(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 

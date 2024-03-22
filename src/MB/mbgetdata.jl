@@ -9,7 +9,7 @@ Parameters
 - **A** | **flagged** :: [Type => Number]	``Arg = value``
 
     Replace flagged beans with NaN. Use -A<val> to assign a constant value to the flagged beans.
-- $(GMT._opt_J)
+- $(_opt_J)
 - **C** | **datatype** | **data_type** :: [Type => Number | Str | Tuple]	``Arg = 0 or "a"``
 
     Output SideScan, or amplitude, instead of bathymetry. This case ignores **A**
@@ -25,10 +25,10 @@ Parameters
 - **T** | **timegap** :: [Type => number]
 
     Sets the maximum time gap in minutes between adjacent pings before being considered a gap.
-- $(GMT._opt_R)
-- $(GMT.opt_V)
-- $(GMT.opt_n)
-- $(GMT._opt_t)
+- $(_opt_R)
+- $(opt_V)
+- $(opt_n)
+- $(_opt_t)
 """
 function mbgetdata(cmd0::String=""; kwargs...)
 

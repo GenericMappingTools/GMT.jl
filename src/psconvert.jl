@@ -66,7 +66,7 @@ Parameters
 - **Z** | **del_input_ps** :: [Type => Bool]
 
     Remove the input PostScript file(s) after the conversion.
-- $(GMT.opt_V)
+- $(opt_V)
 
 To see the full documentation type: ``@? psconvert``
 """

@@ -30,13 +30,13 @@ Parameters
 
     Write the unique arcs of the construction [Default writes fillable triangles or polygons].
     When used with -A we store arc length in the segment header in chosen unit.
-- $(GMT.opt_V)
-- $(GMT.opt_b)
-- $(GMT.opt_d)
-- $(GMT.opt_e)
-- $(GMT._opt_h)
-- $(GMT._opt_i)
-- $(GMT.opt_swap_xy)
+- $(opt_V)
+- $(opt_b)
+- $(opt_d)
+- $(opt_e)
+- $(_opt_h)
+- $(_opt_i)
+- $(opt_swap_xy)
 
 To see the full documentation type: ``@? sphtriangulate``
 """

@@ -14,7 +14,7 @@ Parameters
 - **C** | **stats** | **statistic** :: [Type => String | NamedTuple]
 
     Choose the statistic that will be computed per node based on the points that are within radius distance of the node.
-- $(GMT.opt_I)
+- $(opt_I)
 - **E** | **empty** :: [Type => Number]
 
     Set the value assigned to empty nodes [NaN].
@@ -28,27 +28,27 @@ Parameters
 - **S** | **search_radius** :: [Type => Number]
 
     Sets the search_radius that determines which data points are considered close to a node. Not compatible with `tiling`
-- $(GMT._opt_R)
+- $(_opt_R)
 - **T** | **tiling** | **bins** :: [Type => String | NamedTuple]
 
     Instead of circular, possibly overlapping areas, select non-overlapping tiling. Choose between
     rectangular hexagonal binning.
-- $(GMT.opt_V)
+- $(opt_V)
 - **W** | **weights** :: [Type => Bool | String]
 
     Input data have a 4th column containing observation point weights.
-- $(GMT.opt_a)
-- $(GMT._opt_bi)
-- $(GMT._opt_di)
-- $(GMT.opt_e)
-- $(GMT._opt_f)
-- $(GMT.opt_g)
-- $(GMT._opt_h)
-- $(GMT._opt_i)
-- $(GMT.opt_q)
-- $(GMT.opt_r)
-- $(GMT.opt_w)
-- $(GMT.opt_swap_xy)
+- $(opt_a)
+- $(_opt_bi)
+- $(_opt_di)
+- $(opt_e)
+- $(_opt_f)
+- $(opt_g)
+- $(_opt_h)
+- $(_opt_i)
+- $(opt_q)
+- $(opt_r)
+- $(opt_w)
+- $(opt_swap_xy)
 
 To see the full documentation type: ``@? gmtbinstats``
 """

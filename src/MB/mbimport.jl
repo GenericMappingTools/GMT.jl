@@ -9,8 +9,8 @@ Parameters
 - **A** | **footprint** :: [Type => Str | Tuple]	``Arg = factor/mode/depth``
 
     Determines how the along-track dimension of the beam or pixel footprints is calculated.
-- $(GMT._opt_J)
-- $(GMT.opt_C)
+- $(_opt_J)
+- $(opt_C)
 - **D** | **scaling** :: [Type => Str | Tuple]	``Arg = mode/scale/min/max``
 
     Sets scaling of beam amplitude or sidescan pixel values which can be applied before plotting.
@@ -29,13 +29,13 @@ Parameters
 - **Z** | **type_plot** :: [Type => Str | Number]
 
     Sets the style of the plot.
-- $(GMT._opt_R)
-- $(GMT.opt_U)
-- $(GMT.opt_V)
-- $(GMT.opt_X)
-- $(GMT.opt_Y)
-- $(GMT.opt_n)
-- $(GMT._opt_t)
+- $(_opt_R)
+- $(opt_U)
+- $(opt_V)
+- $(opt_X)
+- $(opt_Y)
+- $(opt_n)
+- $(_opt_t)
 """
 function mbimport(cmd0::String=""; kwargs...)
 

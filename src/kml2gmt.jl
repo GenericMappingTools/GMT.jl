@@ -16,10 +16,10 @@ Parameters
 
     Output the altitude coordinates as GMT z coordinates [Default will output just longitude and latitude].
     ($(GMTdoc)kml2gmt.html#z)
-- $(GMT.opt_V)
-- $(GMT.opt_bo)
-- $(GMT.opt_do)
-- $(GMT.opt_swap_xy)
+- $(opt_V)
+- $(opt_bo)
+- $(opt_do)
+- $(opt_swap_xy)
 
 To see the full documentation type: ``@? kml2gmt``
 """

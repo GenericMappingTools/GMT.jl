@@ -42,8 +42,8 @@ Parameters
 - **S** | **scale** :: [Type => Number]			``Arg = scale``
 
     Multiply each element by scale in the space domain (after the frequency domain operations).
-- $(GMT.opt_V)
-- $(GMT._opt_f)
+- $(opt_V)
+- $(_opt_f)
 """
 function grdfft(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 

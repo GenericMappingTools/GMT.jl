@@ -10,8 +10,8 @@
 Parameters
 ----------
 
-- $(GMT._opt_R)
-- $(GMT.opt_I)
+- $(_opt_R)
+- $(opt_I)
 - **A** | **steps** :: [Type => Str | Number]		``Arg = m|p|x|y``
 
     If the input data are geographic then the sides in the polygons will be approximated by great circle arcs.
@@ -30,20 +30,20 @@ Parameters
 - **S** | **search_radius** :: [Type => Str | List]    ``Arg = search_radius[unit] |xlim/ylim``
 
     Set nodes to inside, on edge, or outside depending on their distance to the nearest data point.
-- $(GMT.opt_V)
-- $(GMT._opt_bi)
-- $(GMT._opt_di)
-- $(GMT.opt_e)
-- $(GMT._opt_f)
-- $(GMT.opt_g)
-- $(GMT._opt_h)
-- $(GMT._opt_i)
-- $(GMT.opt_j)
-- $(GMT.opt_n)
-- $(GMT.opt_r)
-- $(GMT.opt_x)
-- $(GMT.opt_w)
-- $(GMT.opt_swap_xy)
+- $(opt_V)
+- $(_opt_bi)
+- $(_opt_di)
+- $(opt_e)
+- $(_opt_f)
+- $(opt_g)
+- $(_opt_h)
+- $(_opt_i)
+- $(opt_j)
+- $(opt_n)
+- $(opt_r)
+- $(opt_x)
+- $(opt_w)
+- $(opt_swap_xy)
 
 To see the full documentation type: ``@? grdmask``
 """

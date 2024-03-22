@@ -15,7 +15,7 @@ Parameters
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = sphinterpolate(....) form.
-- $(GMT.opt_I)
+- $(opt_I)
 - **Q** | **tension** :: [Type => Number | Str]     ``Arg = mode[/options]``
 
     Specify one of four ways to calculate tension factors to preserve local shape properties or satisfy arc constraints.
@@ -25,15 +25,15 @@ Parameters
 - **Z** | **scale** :: [Type => Bool | Str]
 
     Before interpolation, scale data by the maximum data range [no scaling].
-- $(GMT._opt_R)
-- $(GMT.opt_V)
-- $(GMT._opt_bi)
-- $(GMT._opt_di)
-- $(GMT.opt_e)
-- $(GMT._opt_h)
-- $(GMT._opt_i)
-- $(GMT.opt_r)
-- $(GMT.opt_swap_xy)
+- $(_opt_R)
+- $(opt_V)
+- $(_opt_bi)
+- $(_opt_di)
+- $(opt_e)
+- $(_opt_h)
+- $(_opt_i)
+- $(opt_r)
+- $(opt_swap_xy)
 
 To see the full documentation type: ``@? sphinterpolate``
 """

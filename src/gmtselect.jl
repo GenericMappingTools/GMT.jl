@@ -8,7 +8,7 @@ See full GMT (not the `GMT.jl` one) docs at [`gmtselect`]($(GMTdoc)gmtselect.htm
 Parameters
 ----------
 
-- $(GMT._opt_R)
+- $(_opt_R)
 - **A** | **area** :: [Type => Str | Number]
 
     Features with an area smaller than min_area in km^2 or of hierarchical level that is
@@ -35,7 +35,7 @@ Parameters
 - **I** | **invert** | **reverse** :: [Type => Str | []]    `Arg = [cflrsz]`
 
     Reverses the sense of the test for each of the criteria specified.
-- $(GMT._opt_J)
+- $(_opt_J)
 - **L** | **dist2line** :: [Type => Str | NamedTuple]    `Arg = linefile+ddist[unit][+p] | (pts=Array, dist=xx, ortho=_)`
 
     Pass all records whose location is within dist of any of the line segments in the ASCII
@@ -46,19 +46,19 @@ Parameters
 - **Z** | **in_range** :: [Type => Str | List]     `Arg = min[/max][+a][+ccol][+i]`
 
     Pass all records whose 3rd column (z; col = 2) lies within the given range or is NaN.
-- $(GMT.opt_V)
-- $(GMT.opt_write)
-- $(GMT.opt_append)
-- $(GMT.opt_b)
-- $(GMT.opt_d)
-- $(GMT.opt_e)
-- $(GMT._opt_f)
-- $(GMT.opt_g)
-- $(GMT._opt_h)
-- $(GMT._opt_i)
-- $(GMT.opt_o)
-- $(GMT.opt_w)
-- $(GMT.opt_swap_xy)
+- $(opt_V)
+- $(opt_write)
+- $(opt_append)
+- $(opt_b)
+- $(opt_d)
+- $(opt_e)
+- $(_opt_f)
+- $(opt_g)
+- $(_opt_h)
+- $(_opt_i)
+- $(opt_o)
+- $(opt_w)
+- $(opt_swap_xy)
 """
 function gmtselect(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing, arg4=nothing; kwargs...)
 

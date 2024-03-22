@@ -14,19 +14,19 @@ Parameters
 - **L** | **base_level** :: [Type => Number]          ``Arg = base``
 
     Also add in the volume from the level of the contour down to base [Default base is contour].
-- $(GMT._opt_R)
+- $(_opt_R)
 - **S** | **unit** :: [Type => Str]              ``Arg = e|f|k|M|n|u``
 
     For geographical grids, append a unit from e|f|k|M|n|u [Default is meter (e)].
 - **T** :: [Type => Str]                        ``Arg = [c|h]``
 
     Determine the single contour that maximized the average height (= volume/area).
-- $(GMT.opt_V)
+- $(opt_V)
 - **Z** | **scale** :: [Type => Str or List]     ``Arg = fact[/shift]``
 
     Optionally subtract shift before scaling data by fact. [Default is no scaling].
-- $(GMT._opt_f)
-- $(GMT.opt_o)
+- $(_opt_f)
+- $(opt_o)
 
 To see the full documentation type: ``@? grdvolume``
 """

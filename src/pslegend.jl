@@ -8,9 +8,9 @@ See full GMT (not the `GMT.jl` one) docs at [`legend`]($(GMTdoc)legend.html)
 Parameters
 ----------
 
-- $(GMT._opt_B)
-- $(GMT._opt_J)
-- $(GMT._opt_R)
+- $(_opt_B)
+- $(_opt_J)
+- $(_opt_R)
 - **C** | **clearance** :: [Type => Str]
 
     Sets the clearance between the legend frame and the internal items [4p/4p].
@@ -29,16 +29,16 @@ Parameters
 - **T** | **leg_file** :: [Type => Str]
 
     Modern mode only: Write hidden legend specification file to fname.
-- $(GMT.opt_Jz)
-- $(GMT.opt_P)
-- $(GMT.opt_U)
-- $(GMT.opt_V)
-- $(GMT.opt_X)
-- $(GMT.opt_Y)
-- $(GMT._opt_p)
-- $(GMT.opt_q)
-- $(GMT._opt_t)
-- $(GMT.opt_savefig)
+- $(opt_Jz)
+- $(opt_P)
+- $(opt_U)
+- $(opt_V)
+- $(opt_X)
+- $(opt_Y)
+- $(_opt_p)
+- $(opt_q)
+- $(_opt_t)
+- $(opt_savefig)
 
 To see the full documentation type: ``@? legend``
 """

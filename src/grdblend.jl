@@ -9,9 +9,9 @@ See full GMT (not the `GMT.jl` one) docs at [`grdblend`]($(GMTdoc)grdblend.html)
 Parameters
 ----------
 
-- $(GMT.opt_I)
+- $(opt_I)
     ($(GMTdoc)grdblend.html#i)
-- $(GMT._opt_R)
+- $(_opt_R)
 - **G** | **save** | **outgrid** | **outfile** :: [Type => Str]
 
     Output grid file name. Note that this is optional and to be used only when saving
@@ -34,10 +34,10 @@ Parameters
 - **Z** | **scale** :: [Type => Number]
 
     Scale output values by scale before writing to file.
-- $(GMT.opt_V)
-- $(GMT._opt_f)
-- $(GMT.opt_n)
-- $(GMT.opt_r)
+- $(opt_V)
+- $(_opt_f)
+- $(opt_n)
+- $(opt_r)
 """
 function grdblend(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 

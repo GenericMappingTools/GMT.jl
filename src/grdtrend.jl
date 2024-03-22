@@ -21,8 +21,8 @@ Parameters
 - **W** | **weights** :: [Type => Str]
 
     If weight.nc exists, it will be read and used to solve a weighted least-squares problem.
-- $(GMT._opt_R)
-- $(GMT.opt_V)
+- $(_opt_R)
+- $(opt_V)
 
 To see the full documentation type: ``@? grdtrend``
 """

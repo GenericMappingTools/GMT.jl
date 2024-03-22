@@ -25,15 +25,15 @@ Parameters
 
     Weights are supplied in input column 3. Do a weighted least squares fit [or start with
     these weights when doing the iterative robust fit].
-- $(GMT.opt_V)
-- $(GMT.opt_b)
-- $(GMT.opt_d)
-- $(GMT.opt_e)
-- $(GMT._opt_f)
-- $(GMT._opt_h)
-- $(GMT._opt_i)
-- $(GMT.opt_w)
-- $(GMT.opt_swap_xy)
+- $(opt_V)
+- $(opt_b)
+- $(opt_d)
+- $(opt_e)
+- $(_opt_f)
+- $(_opt_h)
+- $(_opt_i)
+- $(opt_w)
+- $(opt_swap_xy)
 
 To see the full documentation type: ``@? trend1d``
 """

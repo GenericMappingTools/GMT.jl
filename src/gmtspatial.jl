@@ -36,29 +36,29 @@ Parameters
 - **Q** | **centroid** or **area** or **length** :: [Type => Str]      `Arg = [[unit][+cmin[/max]][+h][+l][+p][+s[a|d]]`
 
     Measure the area of all polygons or length of line segments.
-- $(GMT._opt_R)
+- $(_opt_R)
 - **S** | **polygons** :: [Type => Str]     `Arg = h|i|j|s|u`
 
     Spatial processing of polygons.
 - **T** | **truncate** :: [Type => Str | []]     `Arg = [clippolygon]`
 
     Truncate polygons against the specified polygon given, possibly resulting in open polygons.
-- $(GMT.opt_V)
+- $(opt_V)
 - **W** | **extend** :: [Type => Str | Tuple]     `Arg = <dist>[<unit>][+f|l]`
 
     Extend all segments with extra first and last points that are <dist> units away from the original
     end points in the directions implied by the line ends.
-- $(GMT.opt_write)
-- $(GMT.opt_append)
-- $(GMT.opt_b)
-- $(GMT.opt_d)
-- $(GMT.opt_e)
-- $(GMT._opt_f)
-- $(GMT.opt_g)
-- $(GMT._opt_h)
-- $(GMT._opt_i)
-- $(GMT.opt_o)
-- $(GMT.opt_swap_xy)
+- $(opt_write)
+- $(opt_append)
+- $(opt_b)
+- $(opt_d)
+- $(opt_e)
+- $(_opt_f)
+- $(opt_g)
+- $(_opt_h)
+- $(_opt_i)
+- $(opt_o)
+- $(opt_swap_xy)
 """
 function gmtspatial(cmd0::String="", arg1=nothing, arg2 = nothing; kwargs...)
 

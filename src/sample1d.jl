@@ -30,22 +30,22 @@ Parameters
 
     Compute the cumulative distance along the input line. Note that for this the first two columns
     must contain the spatial coordinates.
-- $(GMT.opt_V)
+- $(opt_V)
 - **W** | **weights** :: [Type => Int]     ``Arg = w_col``
 
     Sets the column number of the weights to be used with a smoothing cubic spline. Requires Fs.
-- $(GMT.opt_write)
-- $(GMT.opt_append)
-- $(GMT.opt_b)
-- $(GMT.opt_d)
-- $(GMT.opt_e)
-- $(GMT._opt_f)
-- $(GMT.opt_g)
-- $(GMT._opt_h)
-- $(GMT._opt_i)
-- $(GMT.opt_o)
-- $(GMT.opt_w)
-- $(GMT.opt_swap_xy)
+- $(opt_write)
+- $(opt_append)
+- $(opt_b)
+- $(opt_d)
+- $(opt_e)
+- $(_opt_f)
+- $(opt_g)
+- $(_opt_h)
+- $(_opt_i)
+- $(opt_o)
+- $(opt_w)
+- $(opt_swap_xy)
 
 To see the full documentation type: ``@? sample1d``
 """

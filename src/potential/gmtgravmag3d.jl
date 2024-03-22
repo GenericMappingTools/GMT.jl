@@ -21,14 +21,14 @@ Parameters
 - **H** | **mag_params** :: [Type => Number]
 
     Sets parameters for computation of magnetic anomaly. Alternatively, provide a magnetic intensity grid. 
-- $(GMT.opt_I)
+- $(opt_I)
 - **L** | **z_obs** | **observation_level** :: [Type => Number]
 
     Sets level of observation [Default = 0]. That is the height (z) at which anomalies are computed.
 - **M** | **body** :: [Type => Str | Tuple]
 
     Create geometric bodies and compute their grav/mag effect.
-- $(GMT._opt_R)
+- $(_opt_R)
 - **S** | **radius** :: [Type => Number]
 
     Set search radius in km (valid only in the two grids mode OR when `thickness`) [Default = 30 km].

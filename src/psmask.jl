@@ -8,10 +8,10 @@ See full GMT (not the `GMT.jl` one) docs at [`psmask`]($(GMTdoc)mask.html)
 Parameters
 ----------
 
-- $(GMT.opt_I)
-- $(GMT._opt_R)
+- $(opt_I)
+- $(_opt_R)
 
-- $(GMT._opt_B)
+- $(_opt_B)
 - **C** | **endclip** | **end_clip_path** :: [Type => Bool]
 
     Mark end of existing clip path. No input file is needed.
@@ -25,15 +25,15 @@ Parameters
 - **G** | **fill** :: [Type => Number | Str]
 
     Set fill shade, color or pattern for positive and/or negative masks [Default is no fill].
-- $(GMT._opt_J)
-- $(GMT.opt_Jz)
+- $(_opt_J)
+- $(opt_Jz)
 - **L** | **nodegrid** :: [Type => Str]
 
     Save the internal grid with ones (data constraint) and zeros (no data) to the named nodegrid.
 - **N** | **invert** | **inverse** :: [Type => Bool]
 
     Invert the sense of the test, i.e., clip regions where there is data coverage.
-- $(GMT.opt_P)
+- $(opt_P)
 - **Q** | **cut** | **cut_number** :: [Type => Number | Str]
 
     Do not dump polygons with less than cut number of points [Dumps all polygons].
@@ -43,20 +43,20 @@ Parameters
 - **T** | **tiles** :: [Type => Bool]
 
     Plot tiles instead of clip polygons. Use -G to set tile color or pattern. Cannot be used with -D.
-- $(GMT.opt_U)
-- $(GMT.opt_V)
-- $(GMT.opt_X)
-- $(GMT.opt_Y)
-- $(GMT._opt_bi)
-- $(GMT._opt_di)
-- $(GMT.opt_e)
-- $(GMT._opt_h)
-- $(GMT._opt_i)
-- $(GMT._opt_p)
-- $(GMT.opt_r)
-- $(GMT._opt_t)
-- $(GMT.opt_w)
-- $(GMT.opt_swap_xy)
+- $(opt_U)
+- $(opt_V)
+- $(opt_X)
+- $(opt_Y)
+- $(_opt_bi)
+- $(_opt_di)
+- $(opt_e)
+- $(_opt_h)
+- $(_opt_i)
+- $(_opt_p)
+- $(opt_r)
+- $(_opt_t)
+- $(opt_w)
+- $(opt_swap_xy)
 
 To see the full documentation type: ``@? mask``
 """

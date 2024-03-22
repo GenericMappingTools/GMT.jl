@@ -8,8 +8,8 @@ See full GMT (not the `GMT.jl` one) docs at [`blockmean`]($(GMTdoc)blockmean.htm
 Parameters
 ----------
 
-- $(GMT._opt_R)
-- $(GMT.opt_I)
+- $(_opt_R)
+- $(opt_I)
 - **A** | **field** | **fields** :: [Type => Str]
 
     Select which fields to write to individual grids. Append comma-separated codes for available
@@ -52,18 +52,18 @@ Parameters
 
     Unweighted input and output have 3 columns x,y,z; Weighted i/o has 4 columns x,y,z,w. Weights can
     be used in input to construct weighted mean values for each block.
-- $(GMT.opt_V)
-- $(GMT._opt_bi)
-- $(GMT._opt_di)
-- $(GMT.opt_e)
-- $(GMT._opt_f)
-- $(GMT._opt_h)
-- $(GMT._opt_i)
-- $(GMT.opt_o)
-- $(GMT.opt_q)
-- $(GMT.opt_r)
-- $(GMT.opt_w)
-- $(GMT.opt_swap_xy)
+- $(opt_V)
+- $(_opt_bi)
+- $(_opt_di)
+- $(opt_e)
+- $(_opt_f)
+- $(_opt_h)
+- $(_opt_i)
+- $(opt_o)
+- $(opt_q)
+- $(opt_r)
+- $(opt_w)
+- $(opt_swap_xy)
 """
 blockmean(cmd0::String; kwargs...) = blockmean_helper(cmd0, nothing; kwargs...)
 blockmean(arg1; kwargs...)         = blockmean_helper("", arg1; kwargs...)

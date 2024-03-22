@@ -27,8 +27,8 @@ Parameters
 
     Use triangulation to grid the data onto an even grid (specified with R I).
     Append the name of the output grid file.
-- $(GMT.opt_I)
-- $(GMT._opt_J)
+- $(opt_I)
+- $(_opt_J)
 - **L** | **index** :: [Type => Bool]
 
     Give name of file with previously computed Delaunay information. If the indexfile is binary and can be read
@@ -42,26 +42,26 @@ Parameters
 - **Q** | **voronoi** :: [Type => Str | []]
 
     Output the edges of the Voronoi cells instead [Default is Delaunay triangle edges]
-- $(GMT._opt_R)
+- $(_opt_R)
 - **S** | **triangles** :: [Type => Bool]  
 
     Output triangles as polygon segments separated by a segment header record. Requires Delaunay triangulation.
 - **T** | **edges** :: [Type => Bool]
 
     Output edges or polygons even if gridding has been selected with the G option
-- $(GMT.opt_V)
+- $(opt_V)
 - **Z** | **xyz** | **triplets** :: [Type => Bool]
 
-- $(GMT._opt_bi)
-- $(GMT.opt_bo)
-- $(GMT._opt_di)
-- $(GMT.opt_e)
-- $(GMT._opt_f)
-- $(GMT._opt_h)
-- $(GMT._opt_i)
-- $(GMT.opt_r)
-- $(GMT.opt_w)
-- $(GMT.opt_swap_xy)
+- $(_opt_bi)
+- $(opt_bo)
+- $(_opt_di)
+- $(opt_e)
+- $(_opt_f)
+- $(_opt_h)
+- $(_opt_i)
+- $(opt_r)
+- $(opt_w)
+- $(opt_swap_xy)
 
 To see the full documentation type: ``@? triangulate``
 """

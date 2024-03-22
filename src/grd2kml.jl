@@ -12,7 +12,7 @@ Parameters
 - **A** | **mode** :: [Type => Str]		`Arg = url`
 
     Select one of three altitude modes recognized by Google Earth that determines the altitude (in m) of the tile layer.
-- $(GMT.opt_C)
+- $(opt_C)
 - **E** | **url** :: [Type => Str]		`Arg = url`
 
     Instead of hosting the files locally, prepend a site URL. The top-level prefix.kml file
@@ -48,11 +48,11 @@ Parameters
 - **W** | **contours** :: [Type => Str]		        `Arg = title`
 
     Supply a file with records each holding a contour value and a contour pen.
-- $(GMT.opt_V)
-- $(GMT.opt_write)
-- $(GMT.opt_append)
-- $(GMT._opt_f)
-- $(GMT.opt_n)
+- $(opt_V)
+- $(opt_write)
+- $(opt_append)
+- $(_opt_f)
+- $(opt_n)
 """
 function grd2kml(cmd0::String="", arg1=nothing; kwargs...)
 

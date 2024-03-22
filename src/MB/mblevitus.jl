@@ -22,7 +22,7 @@ Parameters
 - **z** | **z_down** :: [Type => Bool]
 
     Makes Z axes positive down (default here is Z-up).
-- $(GMT.opt_V)
+- $(opt_V)
 """
 function mblevitus(cmd0::String=""; kwargs...)
 
