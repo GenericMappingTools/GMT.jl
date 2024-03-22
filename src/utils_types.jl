@@ -143,6 +143,9 @@ function mat2ds(mat::Vector{<:AbstractMatrix}; hdr=String[], kwargs...)
 	front = find_in_dict(d, [:front])[1]
 	fill  = find_in_dict(d, [:fill :fillcolor])[1]
 	alpha = find_in_dict(d, [:fillalpha])[1]
+	coln  = find_in_dict(d, [:colnames])[1]
+	geom::Int  = ((val = find_in_dict(d, [:geom])[1]) === nothing) ? 0 : val
+	proj4, wkt, epsg, _, _ = helper_set_crs(d)	# Fish the eventual CRS options.
 	for k = 1:length(mat)
 		_hdr = length(hdr) <= 1 ? hdr : hdr[k]
 		_pen   = (pen   !== nothing) ? (isa(pen, Vector)   ? (length(pen)   == 1 ? pen   : pen[k])   : [pen]) : pen
@@ -152,10 +155,13 @@ function mat2ds(mat::Vector{<:AbstractMatrix}; hdr=String[], kwargs...)
 		_color = (color !== nothing) ? (isa(color, Vector) ? (length(color) == 1 ? color : color[k]) : [color]) : color
 		_fill  = (fill  !== nothing) ? (isa(fill, Vector)  ? (length(fill)  == 1 ? fill  : fill[k])  : [fill]) : fill
 		_alpha = (alpha !== nothing) ? (isa(alpha, Vector) ? (length(alpha) == 1 ? alpha : alpha[k]) : [alpha]) : alpha
-		D[k] = mat2ds(mat[k], hdr=_hdr, color=_color, fill=_fill, fillalpha=_alpha, pen=_pen, lt=_lt, ls=_ls, front=_front)
+		if (k == 1)
+			D[k] = mat2ds(mat[k], hdr=_hdr, color=_color, fill=_fill, fillalpha=_alpha, pen=_pen, lt=_lt, ls=_ls, front=_front, geom=geom, colnames=coln, proj4=proj4, wkt=wkt, epsg=epsg)
+		else
+			D[k] = mat2ds(mat[k], hdr=_hdr, color=_color, fill=_fill, fillalpha=_alpha, pen=_pen, lt=_lt, ls=_ls, front=_front, geom=geom)
+		end
 	end
 	set_dsBB!(D, false)
-	D[1].proj4, D[1].wkt, D[1].epsg, _, _ = helper_set_crs(d)	# Fish the eventual CRS options.
 	return D
 end
 

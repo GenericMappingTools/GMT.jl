@@ -4,8 +4,6 @@
 Produces a gray-shaded (or colored) map by plotting rectangles centered on each grid node and assigning
 them a gray-shade (or color) based on the z-value.
 
-See full GMT (not the `GMT.jl` one) docs at [`grdimage`]($(GMTdoc)grdimage.html)
-
 Parameters
 ----------
 
