@@ -63,6 +63,13 @@ Get image tiles from a web map tiles provider for given longitude, latitude coor
     Example: ``mosaic(D, ...)`` or, if the search with ``geocoder`` was sufficiently generic (see its docs),
     ``mosaic(D, bbox=true)`` to use the BoundingBox returned by the query. `bbox` supports `bb`, `BB` or
     `BoundingBox` as aliases.
+  - Yet another alternative is to pass either a GMTgrid or a GMTimage with a valid projection, and it doesn't
+    need to be in geographic coordinates. Coordinates in other reference systems will be converted to geogs.
+  - Finaly, all of the above options can be skipped if the keyword `region` is used. Note that this option is
+    the same as in, for example, the ``coast`` module. And that means we can use it with
+    ``earthregions`` arguments. _e.g._ ``region="IT"`` is a valid option and will get the tiles
+    needed to build an image of Italy.
+
 - `pt_radius`: The planetary radius. Defaults to Earth's WGS84 authalic radius (6371007 m).
 - `provider`: Tile provider name. Currently available options are (but for more details see the docs of the
   `getprovider` function, *i.e.* ``? getprovider``):
@@ -194,7 +201,7 @@ function mosaic(lon, lat; pt_radius=6371007.0, provider="", zoom::Int=0, cache::
 	inMerc    = ((val = find_in_dict(d, [:merc :mercator])[1]) !== nothing) ? true : false
 	isExact   = ((val = find_in_dict(d, [:loose :loose_bounds])[1]) === nothing) ? true : false
 	(isExact && length(lon) == 1) && (isExact = false)
-	neighbors::Matrix{Float64} = ((val = find_in_dict(d, [:N :neighbors :mosaic])[1]) === nothing) ? [1.0;;] : isa(val, Int) ? ones(Int64(val),Int64(val)) : ones(size(val))
+	neighbors::Matrix{Float64} = ((val = find_in_dict(d, [:N :neighbors :mosaic])[1]) === nothing) ? [1.0;;] : isa(val, Int) ? ones(Int64(val),Int64(val)) : ones(val[1],val[2])
 	(length(neighbors) > 1 && length(lon) > 1) && error("The 'neighbor' option is only for single point queries.")
 	delete!(d, [[:bb], [:BB], [:bbox], [:BoundingBox]])		# Remove this valid ones befor checking for mistakes.
 	(length(d) > 0) && println("\n\tWarning: the following options were not consumed in mosaic => ", keys(d),"\n")
@@ -496,6 +503,7 @@ function quadbounds(quadtree::Matrix{String}; geog=true)
 	end
 	proj = geog ? prj4WGS84 : "+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +a=6378137 +b=6378137 +units=m +no_defs"
 	D = mat2ds(v, proj=proj, geom=wkbPolygon)
+	D[1].comment = ["Zoom level = $zoomL"]
 	set_dsBB!(D)
 	return D, zoomL
 end
@@ -536,7 +544,7 @@ function getNext(quadtree, quadkey, v, h)::String
 	(v != 0) &&	(V = dec2bin(bin2dec(join(V)) + v, N))	# Up-Down
 
 	# Test if we are getting out of +180. If yes, wrap the exccess it to -180
-	(length(H) > N) && (H = dec2bin(h - 1))
+	(length(H) > N) && (H = dec2bin(h - 1, N))
 
 	new_tile_bin = join.(eachrow([collect(V) collect(H)]))		# So f. complicated. In Matlab is just [V(:) H(:)]
 	quad_num = bin2dec.(new_tile_bin)
