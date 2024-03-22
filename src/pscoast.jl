@@ -255,9 +255,9 @@ boundaries and a code to access them. Users pick a region by its code(s) and cho
 of that region or download topo/bathymetric data (a grid or image) of that area.
 
 ### Parameters
-- `name`: It can be either the name of one collection or the code of one geographic region. If it is the
-    a collection name (one of: ``"DCW", "NatEarth", "UN", "Mainlands", "IHO", "Wiki", "Lakes"``) the regions
-    of that collection are printed displaying the region's boundaries, code and name. If, instead, a code
+- `name`: It can be either the name of one collection or the code of one geographic region. If it is a
+    collection name (one of: ``"DCW", "NatEarth", "UN", "Mainlands", "IHO", "Wiki", "Lakes"``) the regions
+    of that collection are printed, displaying the region's boundaries, code and name. If, instead, a code
     is passed (codes are unique) then depending on the values of `grid` or `dataset` we either produce a
     map of that region (the default) or extract grid/image over it.
 - `proj`: In case a map is requested, pass the desired projection in form of a proj4 string or use the GMT
@@ -288,19 +288,21 @@ of that region or download topo/bathymetric data (a grid or image) of that area.
     (winc,einc,sinc,ninc). Aditionally, `round` can be a string but in that case it must strictly follow the
     hard core GMT syntax explained at https://docs.generic-mapping-tools.org/dev/coast.html#r
 
-See also: `coast`
+See also: `coast`, `mosaic`
 
 ### Returns
 A ``GMTgrid`` or a ``GMTimage`` if `dataset` is used or ``nothing`` otherwise.
 
 ## Examples
-   earthregions("IHO")		# List the ocean regions as named by the IHO
+```jldoctest
+   earthregions("IHO")                      # List the ocean regions as named by the IHO
 
-   earthregions("PT,ES,FR", country=true)	# Make a map of Portugal, Spain and France regions.
+   earthregions("PT,ES,FR", country=true)   # Make a map of Portugal, Spain and France regions.
 
-   G = earthregions("IHO31", grid=true);	# Get a grid of the "Sea of Azov"
+   G = earthregions("IHO31", grid=true);    # Get a grid of the "Sea of Azov"
 
-   viz(G, shade=true, coast=true)			# and make a nice map.
+   viz(G, shade=true, coast=true)           # and make a nice map.
+```
 
 To see the plots produced by these examples type: ``@? earthregions``
 """
