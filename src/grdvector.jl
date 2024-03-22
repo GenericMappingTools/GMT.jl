@@ -13,8 +13,8 @@ Parameters
 - **A** | **polar** :: [Type => Bool]  
 
     The grid contain polar (r, theta) components instead of Cartesian (x, y) [Default is Cartesian components].
-- $(GMT._opt_B)
-- $(GMT.opt_C)
+- $(_opt_B)
+- $(opt_C)
 - **G** | **fill** :: [Type => Str | Number]
 
     Sets color or shade for vector interiors [Default is no fill].
@@ -31,8 +31,8 @@ Parameters
 - **Q** | **vec** | **vector** | **arrow** :: [Type => Str]
 
     Modify vector parameters. For vector heads, append vector head size [Default is 0, i.e., stick-plot].
-- $(GMT.opt_P)
-- $(GMT._opt_R)
+- $(opt_P)
+- $(_opt_R)
 - **S** | **vscale** | **vec_scale** :: [Type => Str | Number]		``Arg = [i|l]scale[unit]``
 
     Sets scale for vector plot length in data units per plot distance measurement unit [1].
@@ -40,18 +40,18 @@ Parameters
 
     Means the azimuths of Cartesian data sets should be adjusted according to the signs of the
     scales in the x- and y-directions [Leave alone].
-- $(GMT.opt_U)
-- $(GMT.opt_V)
+- $(opt_U)
+- $(opt_V)
 - **W** | **pen** :: [Type => Str | Number]
 
     Sets the attributes for the particular line.
-- $(GMT.opt_X)
-- $(GMT.opt_Y)
+- $(opt_X)
+- $(opt_Y)
 - **Z** | **azimuth** :: [Type => Bool]
 
     The theta grid provided contains azimuths rather than directions (implies -A).
-- $(GMT.opt_V)
-- $(GMT._opt_f)
+- $(opt_V)
+- $(_opt_f)
 
 To see the full documentation type: ``@? grdvector``
 """

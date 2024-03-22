@@ -8,8 +8,8 @@ See full GMT (not the `GMT.jl` one) docs at [`psscale`]($(GMTdoc)psscale.html)
 - **D** | **pos** | **position** :: [Type => Str]
 
     Defines the reference point on the map for the color scale using one of four coordinate systems.
-- $(GMT._opt_B)
-- $(GMT.opt_C)
+- $(_opt_B)
+- $(opt_C)
 - **F** | **box** :: [Type => Str]
 
     Draws a rectangular border around the scale.
@@ -19,8 +19,8 @@ See full GMT (not the `GMT.jl` one) docs at [`psscale`]($(GMTdoc)psscale.html)
 - **I** | **shade** :: [Type => Number | Str]
 
     Add illumination effects.
-- $(GMT._opt_J)
-- $(GMT.opt_Jz)
+- $(_opt_J)
+- $(opt_Jz)
 - **L** | **equal** | **equal_size** :: [Type => Str | Bool]		`Arg = [i][gap]`
 
     Gives equal-sized color rectangles. Default scales rectangles according to the z-range in the CPT.
@@ -33,19 +33,19 @@ See full GMT (not the `GMT.jl` one) docs at [`psscale`]($(GMTdoc)psscale.html)
 - **Q** | **log** :: [Type => Str]
 
     Selects a logarithmic interpolation scheme [Default is linear].
-- $(GMT._opt_R)
+- $(_opt_R)
 - **S** | **appearance** | **nolines** :: [Type => Bool | []]
 
     Do not separate different color intervals with black grid lines.
-- $(GMT.opt_U)
-- $(GMT.opt_V)
+- $(opt_U)
+- $(opt_V)
 - **W** | **scale** :: [Type => Number]
 
     Multiply all z-values in the CPT by the provided scale.
 - **Z** | **zfile** :: [Type => Str]
 
     File with colorbar-width per color entry.
-- $(GMT.opt_savefig)
+- $(opt_savefig)
 
 To see the full documentation type: ``@? colorbar``
 """

@@ -38,12 +38,12 @@ Parameters
 - **Q** | **cube** :: [Type => Bool]
 
     Input files must be data 3-D netCDF data cube. Not compatible with **D**, **E**, **F**, and **Ib** (GMT6.2)
-- $(GMT._opt_R)
+- $(_opt_R)
 - **T** | **minmax** :: [Type => Number | Str]
     Determine min and max z-value.
-- $(GMT.opt_V)
-- $(GMT._opt_f)
-- $(GMT.opt_o)
+- $(opt_V)
+- $(_opt_f)
+- $(opt_o)
 
 To see the full documentation type: ``@? grdinfo``
 """

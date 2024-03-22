@@ -10,7 +10,7 @@ See full GMT (not the `GMT.jl` one) docs at [`greenspline`]($(GMTdoc)greenspline
 Parameters
 ----------
 
-- $(GMT._opt_R)
+- $(_opt_R)
 - **I** | **inc** :: [Type => Str | Number]
 
     *x_inc* [and optionally *y_inc*] is the grid spacing.
@@ -51,7 +51,7 @@ Parameters
 
     For 2-D interpolation only. Only evaluate the solution at the nodes in the maskgrid that are
     not equal to NaN.
-- $(GMT.opt_V)
+- $(opt_V)
 - **W** | **uncertainties** :: [Type => Str | []]	``Arg = [w]``
 
 	Data one-sigma uncertainties are provided in the last column. We then compute weights that
@@ -59,17 +59,17 @@ Parameters
 - **Z** | **mode** | **distmode** :: [Type => Str | number]
 
     Sets the distance mode that determines how we calculate distances between data points.
-- $(GMT.opt_b)
-- $(GMT.opt_d)
-- $(GMT.opt_e)
-- $(GMT._opt_f)
-- $(GMT._opt_h)
-- $(GMT._opt_i)
-- $(GMT.opt_o)
-- $(GMT.opt_r)
-- $(GMT.opt_x)
-- $(GMT.opt_w)
-- $(GMT.opt_swap_xy)
+- $(opt_b)
+- $(opt_d)
+- $(opt_e)
+- $(_opt_f)
+- $(_opt_h)
+- $(_opt_i)
+- $(opt_o)
+- $(opt_r)
+- $(opt_x)
+- $(opt_w)
+- $(opt_swap_xy)
 
 To see the full documentation type: ``@? greenspline``
 """

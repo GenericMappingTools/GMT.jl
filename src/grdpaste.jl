@@ -13,8 +13,8 @@ Parameters
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = grdpaste(....) form.
-- $(GMT.opt_V)
-- $(GMT._opt_f)
+- $(opt_V)
+- $(_opt_f)
 
 To see the full documentation type: ``@? grdpaste``
 """

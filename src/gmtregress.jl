@@ -34,18 +34,18 @@ Parameters
 
     Specifies weighted regression and which weights will be provided.
 
-- $(GMT.opt_write)
-- $(GMT.opt_append)
-- $(GMT.opt_b)
-- $(GMT.opt_d)
-- $(GMT.opt_e)
-- $(GMT._opt_f)
-- $(GMT.opt_g)
-- $(GMT._opt_h)
-- $(GMT._opt_i)
-- $(GMT.opt_o)
-- $(GMT.opt_w)
-- $(GMT.opt_swap_xy)
+- $(opt_write)
+- $(opt_append)
+- $(opt_b)
+- $(opt_d)
+- $(opt_e)
+- $(_opt_f)
+- $(opt_g)
+- $(_opt_h)
+- $(_opt_i)
+- $(opt_o)
+- $(opt_w)
+- $(opt_swap_xy)
 """
 function regress(cmd0::String="", arg1=nothing; kwargs...)
 

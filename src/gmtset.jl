@@ -14,8 +14,8 @@ Parameters
 - **G** | **defaultsfile** :: [Type => Str]
 
     Name of specific gmt.conf file to read and modify. 
-- $(GMT.opt_V)
-- $(GMT.opt_write)
+- $(opt_V)
+- $(opt_write)
 
 ### Example:
 

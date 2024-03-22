@@ -8,8 +8,8 @@ See full GMT (not the `GMT.jl` one) docs at [`xyz2grd`]($(GMTdoc)xyz2grd.html)
 Parameters
 ----------
 
-- $(GMT.opt_I)
-- $(GMT._opt_R)
+- $(opt_I)
+- $(_opt_R)
 - **A** | **multiple_nodes** :: [Type => Str]      `Arg = [d|f|l|m|n|r|S|s|u|z]`
 
     By default we will calculate mean values if multiple entries fall on the same node.
@@ -21,23 +21,23 @@ Parameters
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = grdclip(....) form.
-- $(GMT._opt_J)
+- $(_opt_J)
 - **S** | **swap** :: [Type => Str | []]        `Arg = [zfile]`
 
     Swap the byte-order of the input only. No grid file is produced.
-- $(GMT.opt_V)
+- $(opt_V)
 - **Z** | **flags** :: [Type => Str]
 
     Read a 1-column table. This assumes that all the nodes are present and sorted according to specified ordering convention contained in. ``flags``.
-- $(GMT._opt_bi)
-- $(GMT._opt_di)
-- $(GMT.opt_e)
-- $(GMT._opt_f)
-- $(GMT._opt_h)
-- $(GMT._opt_i)
-- $(GMT.opt_r)
-- $(GMT.opt_w)
-- $(GMT.opt_swap_xy)
+- $(_opt_bi)
+- $(_opt_di)
+- $(opt_e)
+- $(_opt_f)
+- $(_opt_h)
+- $(_opt_i)
+- $(opt_r)
+- $(opt_w)
+- $(opt_swap_xy)
 
 To see the full documentation type: ``@? xyz2grd``
 """

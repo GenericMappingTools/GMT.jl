@@ -47,19 +47,19 @@ Parameters
     azimuth of the major axis in degrees; used in conjunction with **origin** (sets its center) and **step**
     (sets the distance increment).
 
-- $(GMT.opt_write)
-- $(GMT.opt_append)
-- $(GMT.opt_V)
-- $(GMT.opt_b)
-- $(GMT.opt_d)
-- $(GMT.opt_e)
-- $(GMT._opt_f)
-- $(GMT.opt_g)
-- $(GMT._opt_h)
-- $(GMT._opt_i)
-- $(GMT.opt_o)
-- $(GMT.opt_s)
-- $(GMT.opt_swap_xy)
+- $(opt_write)
+- $(opt_append)
+- $(opt_V)
+- $(opt_b)
+- $(opt_d)
+- $(opt_e)
+- $(_opt_f)
+- $(opt_g)
+- $(_opt_h)
+- $(_opt_i)
+- $(opt_o)
+- $(opt_s)
+- $(opt_swap_xy)
 
 To see the full documentation type: ``@? project``
 """

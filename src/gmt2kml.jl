@@ -13,7 +13,7 @@ Parameters
     Select one of three altitude modes recognized by Google Earth that determines the altitude (in m)
     of the feature: ``a`` absolute altitude, ``g`` altitude relative to sea surface or ground,
     ``s`` altitude relative to seafloor or ground.
-- $(GMT.opt_C)
+- $(opt_C)
 - **D** | **descript** :: [Type => Str]   ``Arg = descriptfile``
 
     File with HTML snippets that will be included as part of the main description content for the KML file.
@@ -49,7 +49,7 @@ Parameters
 
     Required setting for wiggle plots (i.e., it requires F=:w). Sets a wiggle scale
     in z-data units per the user’s units
-- $(GMT._opt_R)
+- $(_opt_R)
 - **S** | **ilscale** :: [Type => Str]      ``Arg =  c|nscale``
 
     Scale icons or labels. Here, S=:c sets a scale for the symbol icon, whereas S=:n sets
@@ -63,16 +63,16 @@ Parameters
 - **Z** | **attrib** :: [Type => Str]      ``Arg =  args``
 
     Set one or more attributes of the Document and Region tags.
-- $(GMT.opt_V)
-- $(GMT.opt_write)
-- $(GMT.opt_append)
-- $(GMT._opt_bi)
-- $(GMT._opt_di)
-- $(GMT.opt_e)
-- $(GMT._opt_f)
-- $(GMT._opt_h)
-- $(GMT._opt_i)
-- $(GMT.opt_swap_xy)
+- $(opt_V)
+- $(opt_write)
+- $(opt_append)
+- $(_opt_bi)
+- $(_opt_di)
+- $(opt_e)
+- $(_opt_f)
+- $(_opt_h)
+- $(_opt_i)
+- $(opt_swap_xy)
 
 To see the full documentation type: ``@? gmt2kiml``
 """

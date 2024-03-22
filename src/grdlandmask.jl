@@ -13,8 +13,8 @@ See full GMT (not the `GMT.jl` one) docs at [`grdlandmask`]($(GMTdoc)grdlandmask
 Parameters
 ----------
 
-- $(GMT._opt_R)
-- $(GMT.opt_I)
+- $(_opt_R)
+- $(opt_I)
 - **A** | **area** :: [Type => Str | Number]
 
     Features with an area smaller than min_area in km^2 or of hierarchical level that is lower than min_level
@@ -33,9 +33,9 @@ Parameters
 - **N** | **maskvalues** | **mask** :: [Type => Str | List]    ``Arg = wet/dry or ocean/land/lake/island/pond``
 
     Sets the values that will be assigned to nodes. Values can be any number, including the textstring NaN
-- $(GMT.opt_V)
-- $(GMT.opt_r)
-- $(GMT.opt_x)
+- $(opt_V)
+- $(opt_r)
+- $(opt_x)
 
 To see the full documentation type: ``@? grdlandmask``
 """

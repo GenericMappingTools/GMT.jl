@@ -30,27 +30,27 @@ Parameters
 
 - **N** | **no_skip** | **noskip** :: [Type => Bool]
 
-- $(GMT._opt_R)
+- $(_opt_R)
 - **S** | **stack** :: [Type => Str]
 
 - **T** | **radius** :: [Type => Number, Str | []]
 
 - **Z** | **z_only** :: [Type => Bool]
 
-- $(GMT.opt_V)
-- $(GMT._opt_bi)
-- $(GMT.opt_bo)
-- $(GMT._opt_di)
-- $(GMT.opt_e)
-- $(GMT._opt_f)
-- $(GMT.opt_g)
-- $(GMT._opt_h)
-- $(GMT._opt_i)
-- $(GMT.opt_n)
-- $(GMT.opt_o)
-- $(GMT.opt_s)
-- $(GMT.opt_w)
-- $(GMT.opt_swap_xy)
+- $(opt_V)
+- $(_opt_bi)
+- $(opt_bo)
+- $(_opt_di)
+- $(opt_e)
+- $(_opt_f)
+- $(opt_g)
+- $(_opt_h)
+- $(_opt_i)
+- $(opt_n)
+- $(opt_o)
+- $(opt_s)
+- $(opt_w)
+- $(opt_swap_xy)
 
 When using two numeric inputs and no G option, the order of the x,y and grid is not important.
 That is, both of this will work: ``D = grdtrack([0 0], G);``  or  ``D = grdtrack(G, [0 0]);`` 

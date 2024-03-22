@@ -11,35 +11,35 @@ Parameters
 - **C** | **endclip** :: [Type => Bool]
 
     Mark end of existing clip path. No input file is needed.
-- $(GMT._opt_J)
+- $(_opt_J)
 
 - **A** | **steps** :: [Type => Str or []]
 
     By default, geographic line segments are connected as great circle arcs. To connect them as straight lines, use **A** 
-- $(GMT._opt_B)
-- $(GMT.opt_Jz)
+- $(_opt_B)
+- $(opt_Jz)
 - **N** | **invert** :: [Type => Bool]
 
     Invert the sense of the test, i.e., clip regions where there is data coverage.
-- $(GMT.opt_P)
-- $(GMT._opt_R)
+- $(opt_P)
+- $(_opt_R)
 - **T** | **clipregion** :: [Type => Bool]
 
     Rather than read any input files, simply turn on clipping for the current map region.
-- $(GMT.opt_U)
-- $(GMT.opt_V)
-- $(GMT.opt_X)
-- $(GMT.opt_Y)
-- $(GMT._opt_bi)
-- $(GMT._opt_di)
-- $(GMT.opt_e)
-- $(GMT._opt_f)
-- $(GMT.opt_g)
-- $(GMT._opt_h)
-- $(GMT._opt_i)
-- $(GMT._opt_p)
-- $(GMT._opt_t)
-- $(GMT.opt_swap_xy)
+- $(opt_U)
+- $(opt_V)
+- $(opt_X)
+- $(opt_Y)
+- $(_opt_bi)
+- $(_opt_di)
+- $(opt_e)
+- $(_opt_f)
+- $(opt_g)
+- $(_opt_h)
+- $(_opt_i)
+- $(_opt_p)
+- $(_opt_t)
+- $(opt_swap_xy)
 
 To see the full documentation type: ``@? clip``
 """

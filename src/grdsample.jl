@@ -14,16 +14,16 @@ Parameters
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = grdsample(....) form.
-- $(GMT.opt_I)
-- $(GMT._opt_R)
+- $(opt_I)
+- $(_opt_R)
 - **T** | **toggle** :: [Type => Bool]
 
     Toggle the node registration for the output grid so as to become the opposite of the input grid
-- $(GMT.opt_V)
-- $(GMT._opt_f)
-- $(GMT.opt_n)
-- $(GMT.opt_r)
-- $(GMT.opt_x)
+- $(opt_V)
+- $(_opt_f)
+- $(opt_n)
+- $(opt_r)
+- $(opt_x)
 
 To see the full documentation type: ``@? grdsample``
 """

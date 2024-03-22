@@ -12,11 +12,11 @@ See full GMT (not the `GMT.jl` one) docs at [`nearneighbor`]($(GMTdoc)nearneighb
 Parameters
 ----------
 
-- $(GMT.opt_I)
+- $(opt_I)
 - **N** | **sectors** | **nn** | **nearest** :: [Type => Number | Str | Bool (for nn or nearest)]
 
     The circular area centered on each node is divided into `sectors` sectors.
-- $(GMT._opt_R)
+- $(_opt_R)
 - **S** | **search_radius** :: [Type => Number]
 
     Sets the search_radius that determines which data points are considered close to a node.
@@ -28,20 +28,20 @@ Parameters
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = nearneighbor(....) form.
-- $(GMT.opt_V)
+- $(opt_V)
 - **W** | **weights** :: [Type => Bool]
 
     Input data have a 4th column containing observation point weights.
-- $(GMT._opt_bi)
-- $(GMT._opt_di)
-- $(GMT.opt_e)
-- $(GMT._opt_f)
-- $(GMT._opt_h)
-- $(GMT._opt_i)
-- $(GMT.opt_n)
-- $(GMT.opt_r)
-- $(GMT.opt_w)
-- $(GMT.opt_swap_xy)
+- $(_opt_bi)
+- $(_opt_di)
+- $(opt_e)
+- $(_opt_f)
+- $(_opt_h)
+- $(_opt_i)
+- $(opt_n)
+- $(opt_r)
+- $(opt_w)
+- $(opt_swap_xy)
 
 To see the full documentation type: ``@? nearneighbor``
 """

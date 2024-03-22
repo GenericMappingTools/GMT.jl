@@ -30,17 +30,17 @@ Parameters
 - **W** | **wavelength** :: [Type => Bool | Str]
 
     Write Wavelength rather than frequency in column 1 of the output file[s] [Default = frequency, (cycles / dt)].
-- $(GMT.opt_V)
-- $(GMT.opt_write)
-- $(GMT.opt_append)
-- $(GMT.opt_b)
-- $(GMT.opt_d)
-- $(GMT.opt_e)
-- $(GMT._opt_f)
-- $(GMT.opt_g)
-- $(GMT._opt_h)
-- $(GMT._opt_i)
-- $(GMT.opt_swap_xy)
+- $(opt_V)
+- $(opt_write)
+- $(opt_append)
+- $(opt_b)
+- $(opt_d)
+- $(opt_e)
+- $(_opt_f)
+- $(opt_g)
+- $(_opt_h)
+- $(_opt_i)
+- $(opt_swap_xy)
 
 To see the full documentation type: ``@? spectrum1d``
 """

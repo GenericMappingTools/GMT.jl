@@ -11,7 +11,7 @@ Parameters
 - **A** | **annot** :: [Type => Str | Number]       ``Arg = [-|[+]annot_int][labelinfo]``
 
     *annot_int* is annotation interval in data units; it is ignored if contour levels are given in a file.
-- $(GMT._opt_B)
+- $(_opt_B)
 - **C** | **cont** | **contour** | **contours** | **levels** :: [Type => Str | Number | GMTcpt]  ``Arg = [+]cont_int``
 
     Contours to be drawn may be specified in one of three possible ways.
@@ -22,12 +22,12 @@ Parameters
 - **G** | **labels** :: [Type => Str]
 
     Controls the placement of labels along the quoted lines.
-- $(GMT._opt_J)
-- $(GMT.opt_P)
+- $(_opt_J)
+- $(opt_P)
 - **Q** | **cut** :: [Type => Str | Number]         ``Arg = [cut[unit]][+z]]``
 
     Do not draw contours with less than cut number of points.
-- $(GMT._opt_R)
+- $(_opt_R)
 - **S** | **skip** :: [Type => Str | []]            ``Arg = [p|t]``
 
     Skip all input xyz points that fall outside the region (Used when input data is a table).
@@ -38,23 +38,23 @@ Parameters
 - **T** | **ticks** :: [Type => Str]                 ``Arg = [+|-][+a][+dgap[/length]][+l[labels]]``
 
     Draw tick marks pointing in the downward direction every *gap* along the innermost closed contours.
-- $(GMT.opt_U)
-- $(GMT.opt_V)
+- $(opt_U)
+- $(opt_V)
 - **W** | **pen** :: [Type => Str | Number]
 
     Sets the attributes for the particular line.
 - **Z** | **xyz** | **triplets** :: [Type => Bool]
 
-- $(GMT._opt_bi)
-- $(GMT.opt_bo)
-- $(GMT._opt_di)
-- $(GMT.opt_e)
-- $(GMT._opt_f)
-- $(GMT._opt_h)
-- $(GMT._opt_i)
-- $(GMT._opt_p)
-- $(GMT._opt_t)
-- $(GMT.opt_swap_xy)
+- $(_opt_bi)
+- $(opt_bo)
+- $(_opt_di)
+- $(opt_e)
+- $(_opt_f)
+- $(_opt_h)
+- $(_opt_i)
+- $(_opt_p)
+- $(_opt_t)
+- $(opt_swap_xy)
 
 Examples
 --------

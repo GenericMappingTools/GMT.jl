@@ -11,14 +11,14 @@ See full GMT (not the `GMT.jl` one) docs at [`coast`]($(GMTdoc)coast.html)
 Parameters
 ----------
 
-- $(GMT._opt_J)
-- $(GMT._opt_R)
+- $(_opt_J)
+- $(_opt_R)
 - **A** | **area** :: [Type => Str or Number]
 
     Features with an area smaller than min_area in km^2 or of
     hierarchical level that is lower than min_level or higher than
     max_level will not be plotted.
-- $(GMT._opt_B)
+- $(_opt_B)
 - **C** | **river_fill** :: [Type => Str]
 
     Set the shade, color, or pattern for lakes and river-lakes.
@@ -53,7 +53,7 @@ Parameters
 - **N** | **borders** :: [Type => Str]
 
     Draw political boundaries. Specify the type of boundary and [optionally] append pen attributes
-- $(GMT.opt_P)
+- $(opt_P)
 - **clip** :: [Type => Str]		``Arg = land|water|end``
 
     To clip land do *clip=:land*, *clip=:water* clips water. Use *end* to mark end of existing clip path.
@@ -67,16 +67,16 @@ Parameters
 - **Tm** | **compass** :: [Type => Str]
 
     Draws a map magnetic rose on the map at the location defined by the reference and anchor points.
-- $(GMT.opt_U)
-- $(GMT.opt_V)
+- $(opt_U)
+- $(opt_V)
 - **W** | **shore** | **shorelines** | **coast** | **coastlines** :: [Type => Str]
     Draw shorelines [Default is no shorelines]. Append pen attributes.
-- $(GMT.opt_X)
-- $(GMT.opt_Y)
-- $(GMT.opt_bo)
-- $(GMT._opt_p)
-- $(GMT._opt_t)
-- $(GMT.opt_savefig)
+- $(opt_X)
+- $(opt_Y)
+- $(opt_bo)
+- $(_opt_p)
+- $(_opt_t)
+- $(opt_savefig)
 
 To see the full documentation type: ``@? coast``
 """

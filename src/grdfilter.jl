@@ -19,16 +19,16 @@ Parameters
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = grdfilter(....) form.
-- $(GMT.opt_I)
+- $(opt_I)
 - **N** | **nans** :: [Type => Str]
 
     Determine how NaN-values in the input grid affects the filtered output. Values are i|p|r
-- $(GMT._opt_R)
+- $(_opt_R)
 - **T** | **toggle** :: [Type => Bool]
 
     Toggle the node registration for the output grid so as to become the opposite of the input grid
-- $(GMT.opt_V)
-- $(GMT._opt_f)
+- $(opt_V)
+- $(_opt_f)
 
 To see the full documentation type: ``@? grdfilter``
 """

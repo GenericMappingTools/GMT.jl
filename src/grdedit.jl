@@ -27,12 +27,12 @@ Parameters
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = grdedit(....) form.
-- $(GMT._opt_J)
+- $(_opt_J)
 - **N** | **replace** :: [Type => Str | Mx3 array]      ``Arg = replace=fname | replace=Array``
 
     Read the ASCII (or binary) file table and replace the corresponding nodal values in the
     grid with these x,y,z values. Alternatively, provide a Mx3 matrix with values to be changed. 
-- $(GMT._opt_R)
+- $(_opt_R)
 - **S** | **wrap** :: [Type => Bool]
 
     For global, geographical grids only. Grid values will be shifted longitudinally according to
@@ -41,12 +41,12 @@ Parameters
 
     Make necessary changes in the header to convert a gridline-registered grid to a pixel-registered
     grid, or vice-versa.
-- $(GMT.opt_V)
-- $(GMT._opt_bi)
-- $(GMT._opt_di)
-- $(GMT.opt_e)
-- $(GMT._opt_f)
-- $(GMT.opt_swap_xy)
+- $(opt_V)
+- $(_opt_bi)
+- $(_opt_di)
+- $(opt_e)
+- $(_opt_f)
+- $(opt_swap_xy)
 """
 grdedit(cmd0::String; kwargs...) = grdedit_helper(cmd0, nothing; kwargs...)
 grdedit(arg1; kwargs...)         = grdedit_helper("", arg1; kwargs...)

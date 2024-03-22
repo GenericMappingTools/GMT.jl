@@ -49,10 +49,10 @@ Specify data type (with *type*=true, e.g. `img=true`).  Choose among:
 
   Use ``layers=:all`` to read all levels of a 3D cube netCDF file.
 
-- $(GMT._opt_R)
-- $(GMT.opt_V)
-- $(GMT._opt_bi)
-- $(GMT._opt_f)
+- $(_opt_R)
+- $(opt_V)
+- $(_opt_bi)
+- $(_opt_f)
 
 Example: to read a nc called 'lixo.grd'
 
@@ -412,10 +412,10 @@ Parameters
 
     When saving with GDAL we can specify the data type from u8|u16|i16|u32|i32|float32 where ‘i’ and ‘u’ denote
     signed and unsigned integers respectively.
-- $(GMT._opt_R)
-- $(GMT.opt_V)
-- $(GMT.opt_bo)
-- $(GMT._opt_f)
+- $(_opt_R)
+- $(opt_V)
+- $(opt_bo)
+- $(_opt_f)
 
 Example: write the GMTgrid 'G' object into a nc file called 'lixo.grd'
 
@@ -554,3 +554,33 @@ function transpcmap!(I::GMTimage, toGMT::Bool=true)
 	end
 	return nothing
 end
+
+#=
+function ncd_read_ghrsst(; year::Int=0, month=nothing, day=nothing, doy=nothing, lon=nothing, lat=nothing)
+
+	(doy === nothing && (month === nothing || day === nothing)) && error("Must specify at least the 'doy', OR 'month and day'")
+	_year = (year == 0) ? Dates.year(now())-1 : year     # -1 because current year is not complete
+	the_date = ""
+	(doy !== nothing) && (the_date = replace(string(doy2date(doy, _year)), "-" => ""))
+	(doy === nothing) && (the_date = @sprintf("%d%02d%02d", _year, month, day))
+	#the_day = (day !== nothing) ? @sprintf("%03d", day) : @sprintf("%03d", Dates.month(doy2date(doy, _year)))
+	the_doy = (doy !== nothing) ? @sprintf("%03d", doy) : @sprintf("%03d", Dates.day(doy2date(doy, _year)))
+
+	#url = string("https://www.ncei.noaa.gov/thredds-ocean/dodsC/ghrsst/L4/GLOB/JPL/MUR/", _year, '/', the_doy, '/', the_date,"090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc")
+	url = "https://www.ncei.noaa.gov/thredds-ocean/dodsC/ghrsst/L4/GLOB/JPL/MUR/2023/060/20230301090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc"
+
+	#url = "https://opendap.earthdata.nasa.gov/providers/POCLOUD/collections/GHRSST%20Level%204%20MUR%20Global%20Foundation%20Sea%20Surface%20Temperature%20Analysis%20(v4.1)/granules/" * the_date * "090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1"
+
+	ds = NCDataset(url)
+	lonr, latr = lon, lat
+	ds_subset = NCDatasets.@select(ds["analysed_sst"], $lonr[1] <= lon <= $lonr[2] && $latr[1] <= lat <= $latr[2])
+
+	ncvar = ds_subset["analysed_sst"]
+	lon = ds_subset["lon"][:]
+	lat = ds_subset["lat"][:]
+	time = ds_subset["time"][1]
+	SST = ncvar[:,:,1]
+
+	return SST, lon, lat
+end
+=#

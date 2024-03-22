@@ -28,7 +28,7 @@ Parameters
 - **H** | **radial_rho** :: [Type => Str | Tuple]
 
     Set reference seamount parameters for an ad-hoc variable radial density function with depth.
-- $(GMT.opt_I)
+- $(opt_I)
 - **L** | **base** :: [Type => Number ! Grid]
 
     Give name of the base surface grid for a layer we wish to approximate with prisms, or give a constant z-level [0].
@@ -38,7 +38,7 @@ Parameters
 - **N** | **track** :: [Type => Str | Matrix | GMTdataset]
 
     Specifies individual (x, y[, z]) locations where we wish to compute the predicted value.
-- $(GMT._opt_R)
+- $(_opt_R)
 - **S** | **topography** :: [Type => Number]
 
     Give name of grid with the full seamount heights, either for making prisms or as required by H.

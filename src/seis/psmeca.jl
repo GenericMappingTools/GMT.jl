@@ -8,10 +8,10 @@ See full GMT (not the `GMT.jl` one) docs at [`meca`]($(GMTdoc)supplements/seis/m
 Parameters
 ----------
 
-- $(GMT._opt_J)
-- $(GMT._opt_R)
+- $(_opt_J)
+- $(_opt_R)
 
-- $(GMT._opt_B)
+- $(_opt_B)
 - **A** | **offset** :: [Type => Bool | Str | GMTcpt]
 
     Offsets focal mechanisms to the longitude, latitude specified in the last two columns of the input
@@ -30,7 +30,7 @@ Parameters
 - **G** | **fill** | **compressionfill** :: [Type => Str | Number]
 
     Selects shade, color or pattern for filling the sectors [Default is no fill].
-- $(GMT.opt_P)
+- $(opt_P)
 - **L** | **outline_pen** | **pen_outline** :: [Type => Str | Number | Tuple]
 
     Draws the “beach ball” outline with pen attributes instead of with the default pen set by **pen**
@@ -52,17 +52,17 @@ Parameters
 - **W** | **pen** :: [Type => Str | Tuple]
 
     Set pen attributes for all lines and the outline of symbols.
-- $(GMT.opt_U)
-- $(GMT.opt_V)
-- $(GMT.opt_X)
-- $(GMT.opt_Y)
-- $(GMT._opt_di)
-- $(GMT.opt_e)
-- $(GMT._opt_h)
-- $(GMT._opt_i)
-- $(GMT._opt_p)
-- $(GMT._opt_t)
-- $(GMT.opt_swap_xy)
+- $(opt_U)
+- $(opt_V)
+- $(opt_X)
+- $(opt_Y)
+- $(_opt_di)
+- $(opt_e)
+- $(_opt_h)
+- $(_opt_i)
+- $(_opt_p)
+- $(_opt_t)
+- $(opt_swap_xy)
 
 Example: Plot a focal mechanism using the Aki & Richards convention 
 

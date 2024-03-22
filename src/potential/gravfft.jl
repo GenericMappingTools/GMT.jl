@@ -38,8 +38,8 @@ Parameters
 - **Z** | **moho_depth** :: [Type => Number]
 
     Moho [and swell] average compensation depths (in meters positive down).
-- $(GMT.opt_V)
-- $(GMT._opt_f)
+- $(opt_V)
+- $(_opt_f)
 
 ### Example. Compute the gravity effect of the Gorringe bank.
 ```julia

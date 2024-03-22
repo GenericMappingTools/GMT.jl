@@ -4814,8 +4814,20 @@ macro var"?"(name)
 	# For other functions that are exported but do not have individual pages we get a 404
 	quote
 		try
-			getfield(Main, Symbol($name))
-			s = string("https://www.generic-mapping-tools.org/GMTjl_doc/documentation/modules/", $name,"/")
+			sym = Symbol($name)
+			getfield(Main, sym)
+			dir = "modules/"
+			if sym in [:ablines, :append2fig, :blendimg, :cart2pol, :cart2sph, :colorzones, :cpt4dcw, :crop, :cubeplot,
+			         :coastlinesproj,:cubeslice,:date2doy,:delrows!,:doy2date,:gadm,:geocoder,:geodetic2enu,:getbyattrib,
+					 :gmtread,:gmtwrite,:graticules,:gridit,:gunique,:imagesc,:inwhichpolygon,:image_alpha!,:image_cpt!,
+					 :imshow,:ind2rgb,:info,:isnodata,:lelandshade,:linearfitxy,:magic,:mat2ds,:mat2grid,:mat2img,:mosaic,
+					 :ODE2ds,:orbits,:pca,:plotgrid!,:plotyy,:pol2cart,:polygonlevels,:rasterzones!,:regiongeog,:rescale,
+					 :slicecube,:sph2cart,:stackgrids,:ter2cart,:theme,:uniqueind,:vecangles,:weather,:whereami,:wmsinfo,
+					 :wmsread,:wmstest,:worldrectgrid,:worldrectcoast,:worldrectangular,:xyzw2cube,:yeardecimal,:zonal_stats
+					]
+					dir = "utilities/"
+			end
+			s = string("https://www.generic-mapping-tools.org/GMTjl_doc/documentation/", dir, $name,"/")
 			display_file(s)
 		catch err
 			println(err)

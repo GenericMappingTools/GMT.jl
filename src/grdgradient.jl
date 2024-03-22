@@ -29,12 +29,12 @@ Parameters
 - **Q** | **save_stats** :: [Type => Str]		``Arg = c|r|R``
 
     Controls how normalization via N is carried out.
-- $(GMT._opt_R)
+- $(_opt_R)
 - **S** | **slopegrid** :: [Type => Str]
 
     Name of output grid file with scalar magnitudes of gradient vectors. Requires D but makes G optional.
-- $(GMT.opt_V)
-- $(GMT._opt_f)
+- $(opt_V)
+- $(_opt_f)
 
 To see the full documentation type: ``@? grdgradient``
 """

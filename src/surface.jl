@@ -10,8 +10,8 @@ See full GMT (not the `GMT.jl` one) docs at [`surface`]($(GMTdoc)surface.html)
 Parameters
 ----------
 
-- $(GMT._opt_R)
-- $(GMT.opt_I)
+- $(_opt_R)
+- $(opt_I)
 - **A** | **aspect_ratio** :: [Type => Number]
 
     Aspect ratio. If desired, grid anisotropy can be added to the equations.
@@ -49,7 +49,7 @@ Parameters
 - **T** | **tension** :: [Type => Number | Str]
 
     Tension factor[s]. These must be between 0 and 1.
-- $(GMT.opt_V)
+- $(opt_V)
 - **W** | **log** :: [Type => Str]
 
     Write convergence information to a log file [surface_log.txt].
@@ -62,16 +62,16 @@ Parameters
     This option means that the data is previously passed through one of ``block*`` modules to decimate the data
     in each cell as strongly advised. `preproc=true` will use ``blockmean``. To use any of the other two,
     pass its name as value. *e.g.* `preproc="blockmedian"`.
-- $(GMT.opt_a)
-- $(GMT._opt_bi)
-- $(GMT._opt_di)
-- $(GMT.opt_e)
-- $(GMT._opt_f)
-- $(GMT._opt_h)
-- $(GMT._opt_i)
-- $(GMT.opt_r)
-- $(GMT.opt_w)
-- $(GMT.opt_swap_xy)
+- $(opt_a)
+- $(_opt_bi)
+- $(_opt_di)
+- $(opt_e)
+- $(_opt_f)
+- $(_opt_h)
+- $(_opt_i)
+- $(opt_r)
+- $(opt_w)
+- $(opt_swap_xy)
 
 To see the full documentation type: ``@? surface``
 """

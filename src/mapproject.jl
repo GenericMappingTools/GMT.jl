@@ -8,8 +8,8 @@ See full GMT (not the `GMT.jl` one) docs at [`mapproject`]($(GMTdoc)mapproject.h
 Parameters
 ----------
 
-- $(GMT._opt_R)
-- $(GMT._opt_J)
+- $(_opt_R)
+- $(_opt_J)
 
 - **A** | **azim**  | **azimuth**:: [Type => Str]    ``Arg = b|B|f|F|o|O[lon0/lat0][+v]``
 
@@ -55,18 +55,18 @@ Parameters
 
     Calculate travel times along track as specified with -G.
 
-- $(GMT.opt_V)
-- $(GMT.opt_b)
-- $(GMT.opt_d)
-- $(GMT.opt_e)
-- $(GMT._opt_f)
-- $(GMT.opt_g)
-- $(GMT._opt_h)
-- $(GMT._opt_i)
-- $(GMT.opt_o)
-- $(GMT._opt_p)
-- $(GMT.opt_s)
-- $(GMT.opt_swap_xy)
+- $(opt_V)
+- $(opt_b)
+- $(opt_d)
+- $(opt_e)
+- $(_opt_f)
+- $(opt_g)
+- $(_opt_h)
+- $(_opt_i)
+- $(opt_o)
+- $(_opt_p)
+- $(opt_s)
+- $(opt_swap_xy)
 
 To see the full documentation type: ``@? mapproject``
 """

@@ -23,7 +23,7 @@ Parameters
 - **G** | **outfile** | **outgrid** :: [Type => Str]
 
     Output file name. If `range` only selects a single layer then the data cube collapses to a regular 2-D grid file
-- $(GMT._opt_R)
+- $(_opt_R)
 - **S** | **pt** | **track** :: [Type => Str | Tuple | Dataset]	`Arg = x/y|pointfile[+hheader]`
 
     Rather than compute gridded output, create tile/spatial series through the stacked grids at the given point (x/y)
@@ -35,20 +35,20 @@ Parameters
 
     The `levels` may be specified the same way as in `range`. If not given then we default to an integer
     levels array starting at 0.
-- $(GMT.opt_V)
-- $(GMT._opt_bi)
-- $(GMT.opt_bo)
-- $(GMT._opt_di)
-- $(GMT.opt_e)
-- $(GMT._opt_f)
-- $(GMT.opt_g)
-- $(GMT._opt_h)
-- $(GMT._opt_i)
-- $(GMT.opt_n)
-- $(GMT.opt_o)
-- $(GMT.opt_q)
-- $(GMT.opt_s)
-- $(GMT.opt_swap_xy)
+- $(opt_V)
+- $(_opt_bi)
+- $(opt_bo)
+- $(_opt_di)
+- $(opt_e)
+- $(_opt_f)
+- $(opt_g)
+- $(_opt_h)
+- $(_opt_i)
+- $(opt_n)
+- $(opt_o)
+- $(opt_q)
+- $(opt_s)
+- $(opt_swap_xy)
 
 When using two numeric inputs and no `outfile` option, the order of the x,y and grid is not important.
 That is, both of this will work: ``D = grdinterpolate([0 0], G);``  or  ``D = grdinterpolate(G, [0 0]);``

@@ -8,14 +8,14 @@ See full GMT (not the `GMT.jl` one) docs at [`pswiggle`]($(GMTdoc)wiggle.html)
 Parameters
 ----------
 
-- $(GMT._opt_R)
+- $(_opt_R)
 - **Z** | **ampscale** | **amp_scale** :: [Type => Number | Str]
 
     Gives anomaly scale in data-units/distance-unit.
 - **A** | **azimuth** :: [Type => Str | number]
 
     Sets the preferred positive azimuth. Positive wiggles will “gravitate” towards that direction.
-- $(GMT._opt_B)
+- $(_opt_B)
 - **C** | **center** :: [Type => Number]
 
     Subtract center from the data set before plotting [0].
@@ -31,8 +31,8 @@ Parameters
 - **I** | **fixed_azim** :: [Type => Number]
 
     Set a fixed azimuth projection for wiggles [Default uses track azimuth, but see -A].
-- $(GMT._opt_J)
-- $(GMT.opt_P)
+- $(_opt_J)
+- $(opt_P)
 - **T** | **track** :: [Type => Number or Str | Tuple | []]
 
     Draw track [Default is no track]. Append pen attributes to use [Defaults: width = 0.25p, color =
@@ -40,20 +40,20 @@ Parameters
 - **W** | **pen** :: [Type => Number | Str | tuple | []]
 
     Specify outline pen attributes [Default is no outline].
-- $(GMT.opt_U)
-- $(GMT.opt_V)
-- $(GMT.opt_X)
-- $(GMT.opt_Y)
-- $(GMT._opt_bi)
-- $(GMT._opt_di)
-- $(GMT.opt_e)
-- $(GMT._opt_h)
-- $(GMT._opt_i)
-- $(GMT._opt_p)
-- $(GMT._opt_t)
-- $(GMT.opt_w)
-- $(GMT.opt_swap_xy)
-- $(GMT.opt_savefig)
+- $(opt_U)
+- $(opt_V)
+- $(opt_X)
+- $(opt_Y)
+- $(_opt_bi)
+- $(_opt_di)
+- $(opt_e)
+- $(_opt_h)
+- $(_opt_i)
+- $(_opt_p)
+- $(_opt_t)
+- $(opt_w)
+- $(opt_swap_xy)
+- $(opt_savefig)
 
 To see the full documentation type: ``@? pswiggle``
 """

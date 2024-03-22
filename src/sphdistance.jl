@@ -21,7 +21,7 @@ Parameters
 
     Output grid file name. Note that this is optional and to be used only when saving
     the result directly on disk. Otherwise, just use the G = sphdistance(....) form.
-- $(GMT.opt_I)
+- $(opt_I)
 - **L** | **dist_unit** :: [Type => Str]      ``Arg = d|e|f|k|M|n|u``
 
     Specify the unit used for distance calculations.
@@ -32,15 +32,15 @@ Parameters
 - **Q** | **voronoi** :: [Type => Str]     ``Arg = voronoifile``
 
     Append the name of a file with pre-calculated Voronoi polygons.
-- $(GMT._opt_R)
-- $(GMT.opt_V)
-- $(GMT.opt_b)
-- $(GMT.opt_d)
-- $(GMT.opt_e)
-- $(GMT._opt_h)
-- $(GMT._opt_i)
-- $(GMT.opt_r)
-- $(GMT.opt_swap_xy)
+- $(_opt_R)
+- $(opt_V)
+- $(opt_b)
+- $(opt_d)
+- $(opt_e)
+- $(_opt_h)
+- $(_opt_i)
+- $(opt_r)
+- $(opt_swap_xy)
 
 To see the full documentation type: ``@? sphdistance``
 """

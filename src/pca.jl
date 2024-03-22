@@ -199,9 +199,10 @@ rows the `d`-dimensional data point.
     in that cluster in second column.
 
 ### Example
+```jldoctest
     D = gmtread(GMT.TESTSDIR * "iris.dat");
-
 	Dk = kmeans(D, k=3)		# Unsupervised segment data into 3 clusters.
+```
 """
 function kmeans(I::GMTimage, k=5; seeds=nothing, maxiter=100, tol=1e-7, V=false)
 	X = GI2vectors(I, eltype(I))

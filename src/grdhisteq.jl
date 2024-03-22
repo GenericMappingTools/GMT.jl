@@ -25,8 +25,8 @@ Parameters
 - **Q** | **quadratic** :: [Type => Bool]
 
     Quadratic output. Selects quadratic histogram equalization. [Default is linear].
-- $(GMT._opt_R)
-- $(GMT.opt_V)
+- $(_opt_R)
+- $(opt_V)
 
 To see the full documentation type: ``@? grdhisteq``
 """

@@ -17,24 +17,24 @@ Parameters
 - **A** | **autolabel** | **fixedlabel** :: [Type => Str | number]
 
     Specify automatic tagging of each subplot. This sets the tag of the first, top-left subplot and others follow sequentially.
-- $(GMT._opt_B)
+- $(_opt_B)
 - **C** | **clearance** :: [Type => Str | number]
 
     Reserve a space of dimension clearance between the margin and the subplot on the specified side. Settings specified under **begin** directive apply to all panels.
-- $(GMT._opt_J)
+- $(_opt_J)
 - **M** | **margin** | **margins** :: [Type => Str]
 
     The margin space that is added around each subplot beyond the automatic space allocated for tick marks, annotations, and labels.
-- $(GMT._opt_R)
+- $(_opt_R)
 - **SC** | **SR** | **col_axes** | **row_axes** :: [Type => Str | NamedTuple]
 
     Set subplot layout for shared axes. Set separately for rows (SR) and columns (SC).
 - **T** | **title** :: [Type => Str]
 
     While individual subplots can have titles, the entire figure may also have a overarching title.
-- $(GMT.opt_V)
-- $(GMT.opt_X)
-- $(GMT.opt_Y)
+- $(opt_V)
+- $(opt_X)
+- $(opt_Y)
 """
 function subplot(fim=nothing; stop=false, kwargs...)
 
