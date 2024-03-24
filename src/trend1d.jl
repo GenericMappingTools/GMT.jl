@@ -19,7 +19,7 @@ Parameters
     Set the maximum allowed condition number for the matrix solution.
 - **I** | **conf_level** :: [Type => Number | []]   ``Arg = [confe_level]``
 
-    Iteratively increase the number of model parameters, starting at one, until n_model is reachedx
+    Iteratively increase the number of model parameters, starting at one, until n_model is reached
     or the reduction in variance of the model is not significant at the conf_level level.
 - **W** | **weights** :: [Type => Str | []]     ``Arg = [+s]``
 
@@ -42,8 +42,32 @@ function trend1d(cmd0::String="", arg1=nothing; kwargs...)
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
 	cmd, = parse_common_opts(d, "", [:V_params :b :d :e :f :h :i :w :yx])
-	cmd  = parse_these_opts(cmd, d, [[:C :condition_number], [:I :conf_level :confidence_level], [:F :out :output],
-	                                 [:N :model :n_model], [:W :weights]])
+	cmd  = parse_these_opts(cmd, d, [[:C :condition_number], [:I :conf_level :confidence_level], [:F :out :output], [:W :weights]])
+	((val = find_in_dict(d, [:N :model], false)[1]) === nothing) && error("The option 'model' must be specified")
+	if (isa(val, Tuple) && isa(val[1], NamedTuple))
+		# Complicated case here -- A mixed model ---. So input must be a Tuple of NamedTuples, and the +l+o+r options
+		# can only be used once and in the last NT element. Hence, we must split execution in two parts.
+		opt_N = " -N"
+		for k = 1:length(val)-1
+			t = add_opt(Dict(:N => val[k]), "", "N", [:N],
+			            (polynome=("p", arg2str, 1), polynomal=("p", arg2str, 1), fourier=("f", arg2str, 1), cosine=("c", arg2str, 1), sine=("s", arg2str, 1), single="_!"))
+			contains(t, "!") && (t = replace(t, "!" => ""); t = replace(t, t[4] => uppercase(t[4])))
+			opt_N *= t[4:end] * ","
+		end
+		t = add_opt(Dict(:N => val[end]), "", "N", [:N],
+		            (polynome=("p", arg2str, 1), polynomal=("p", arg2str, 1), fourier=("f", arg2str, 1), cosine=("c", arg2str, 1), sine=("s", arg2str, 1), length="+l", origin="+o", robust="+r", single="_!"))
+		contains(t, "!") && (t = replace(t, "!" => ""); t = replace(t, t[4] => uppercase(t[4])))
+		opt_N *= t[4:end]
+		delete!(d, [:N :model])
+	else
+		opt_N = add_opt(d, "", "N", [:N :model],
+		                (polynome=("p", arg2str, 1), polynomal=("p", arg2str, 1), fourier=("f", arg2str, 1), cosine=("c", arg2str, 1), sine=("s", arg2str, 1), length="+l", origin="+o", robust="+r", single="_!"))
+		# If we have a '!' it means we are doing a single term version. Need to replace model code to an upper letter.
+		contains(opt_N, "!") && (opt_N = replace(opt_N, "!" => ""); opt_N = replace(opt_N, opt_N[4] => uppercase(opt_N[4])))
+	end
+	(tryparse(Int, opt_N[4:end]) !== nothing) && (opt_N = " -Np" * opt_N[4:end])	# -N2 is old syntax and will error GMT
+	cmd *= opt_N
+
 	common_grd(d, cmd0, cmd, "trend1d ", arg1)		# Finish build cmd and run it
 end
 

@@ -77,6 +77,8 @@ xyz2grd(x=[0,1,2], y=[0,1,2], z=[0,1,2], R="0/2/0/2", I=1);
 println("	TREND1D")
 D = gmt("gmtmath -T10/110/1 T 50 DIV 2 POW 2 MUL T 60 DIV ADD 4 ADD 0 0.25 NRAND ADD T 25 DIV 2 MUL PI MUL COS 2 MUL 2 ADD ADD");
 trend1d(D, N="p2,F1+o0+l25", F=:xm);
+trend1d(D, model=((polynome=2,),(fourier=1, single=true, origin=0, length=25)), F=:xm, Vd=dbg2);
+trend1d(D, model=(polynome=2,single=1), F=:xm, Vd=dbg2);
 
 println("	TREND2D")
 trend2d(D, F=:xyr, N=3);
