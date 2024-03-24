@@ -800,3 +800,18 @@ function Grightjoin end
 function Gcrossjoin end
 function Gsemijoin end
 function Gantijoin end
+
+#=
+function harmfit(x, y, n::Int=1)
+	@assert length(x) == length(y) "x and y must have the same length"
+	c = [mean(y .* exp.(-k * x*im)) for k = 1:n]
+	h = [2*abs.(c) angle.(c)]
+
+	yy = fill(mean(y), length(x))
+	for k = 1:n
+		yy .+= h[k,1] * cos.(k * x .+ h[k,2])
+	end
+
+	return h, yy
+end
+=#
