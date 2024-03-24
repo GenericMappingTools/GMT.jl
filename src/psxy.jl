@@ -323,14 +323,16 @@ end
 # ---------------------------------------------------------------------------------------------------
 function if_multicols(d, arg1, is3D::Bool)
 	# If the input is a GMTdataset and 'multicol' is asked, split the DS into a vector of DS's
-	(find_in_dict(d, [:multi :multicol :multicols], false)[1] === nothing)  && return arg1
+	(!MULTI_COL[1] && find_in_dict(d, [:multi :multicol :multicols], false)[1] === nothing)  && return arg1
 	is3D && (delete!(d, [:multi, :multicol, :multicols]); @warn("'multile coluns' in 3D plots are not allowed. Ignoring."))
 	(isdataframe(arg1) || isODE(arg1)) && return arg1
 	(isa(arg1, Vector{<:GMTdataset}) && (size(arg1,2) > 2+is3D)) && return arg1		# Play safe
 	d2 = copy(d)
 	!haskey(d, :color) && (d2[:color] = true)	# Default to lines color cycling
-	arg1 = ds2ds(arg1; is3D=is3D, d2...)		# Pass a 'd' copy and remove possible kw that are also parse in psxy
+	MULTI_COL[1] && (d2[:multi] = true)			# MULTI_COL was set in cat_2_arg2() when 2nd arg had 2 or more cols.
+	arg1 = ds2ds(arg1; is3D=is3D, d2...)		# Pass a 'd' copy and remove possible kw that are also parsed in psxy
 	delete!(d, [[:multi, :multicol, :multicols], [:lt, :linethick], [:ls, :linestyle], [:fill], [:fillalpha], [:color]])
+	MULTI_COL[1] = false							# If it was true, its jobe is done.
 	return arg1
 end
 
