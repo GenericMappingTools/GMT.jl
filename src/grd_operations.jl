@@ -134,6 +134,42 @@ function Base.:log10(G1::GMTgrid)
 end
 
 # ---------------------------------------------------------------------------------------------------
+function Base.:<(G1::GMTgrid, val::Number)
+	epsg, geog, range, inc, registration, nodata, x, y, v, pad = dup_G_meta(G1)
+	G2 = GMTgrid(G1.proj4, G1.wkt, epsg, geog, range, inc, registration, nodata, "", "", "", "", G1.names, x, y, v,
+	             Int8.(G1.z .< val), G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, G1.hasnans)
+	setgrdminmax!(G2)
+	return G2
+end
+
+# ---------------------------------------------------------------------------------------------------
+function Base.:<=(G1::GMTgrid, val::Number)
+	epsg, geog, range, inc, registration, nodata, x, y, v, pad = dup_G_meta(G1)
+	G2 = GMTgrid(G1.proj4, G1.wkt, epsg, geog, range, inc, registration, nodata, "", "", "", "", G1.names, x, y, v,
+	             Int8.(G1.z .<= val), G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, G1.hasnans)
+	setgrdminmax!(G2)
+	return G2
+end
+
+# ---------------------------------------------------------------------------------------------------
+function Base.:>(G1::GMTgrid, val::Number)
+	epsg, geog, range, inc, registration, nodata, x, y, v, pad = dup_G_meta(G1)
+	G2 = GMTgrid(G1.proj4, G1.wkt, epsg, geog, range, inc, registration, nodata, "", "", "", "", G1.names, x, y, v,
+	             Int8.(G1.z .> val), G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, G1.hasnans)
+	setgrdminmax!(G2)
+	return G2
+end
+
+# ---------------------------------------------------------------------------------------------------
+function Base.:>=(G1::GMTgrid, val::Number)
+	epsg, geog, range, inc, registration, nodata, x, y, v, pad = dup_G_meta(G1)
+	G2 = GMTgrid(G1.proj4, G1.wkt, epsg, geog, range, inc, registration, nodata, "", "", "", "", G1.names, x, y, v,
+	             Int8.(G1.z .>= val), G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, G1.hasnans)
+	setgrdminmax!(G2)
+	return G2
+end
+
+# ---------------------------------------------------------------------------------------------------
 Base.:+(add::T, D1::GMTdataset) where T<:AbstractArray = Base.:+(D1::GMTdataset, add)
 Base.:+(add::Real, D1::GMTdataset) = Base.:+(D1::GMTdataset, [add;;])
 Base.:+(D1::GMTdataset, add::Real) = Base.:+(D1::GMTdataset, [add;;])

@@ -9,7 +9,7 @@ See full GMT (not the `GMT.jl` one) docs at [`grdgradient`]($(GMTdoc)grdgradient
 Parameters
 ----------
 
-- **A** | **azim** :: [Type => Str | Number]    ``Arg = azim[/azim2]``
+- **A** | **azim** | **azimuth** :: [Type => Str | Number]    ``Arg = azim[/azim2]``
 
     Azimuthal direction for a directional derivative. 
 - **D** | **find_dir** :: [Type => Str]      ``Arg = [a][c][o][n]``
@@ -63,7 +63,7 @@ end
 function grdgrad_helper(;kw...)
 	d = init_module(false, kw...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:G :R :V_params :f :n])
-	cmd  = parse_these_opts(cmd, d, [[:A :azim], [:D :find_dir], [:S :slopegrid]])
+	cmd  = parse_these_opts(cmd, d, [[:A :azim :azimuth], [:D :find_dir], [:S :slopegrid]])
 	cmd  = add_opt(d, cmd, "E", [:E :lambert], 
 	       (manip=("m", nothing, 1), simple=("s", nothing, 1), peucker=("p", nothing, 1), view=("", arg2str), ambient="+a", difuse="+d", specular="+p", shine="+s") )
 	cmd  = add_opt(d, cmd, "N", [:N :norm :normalize],
