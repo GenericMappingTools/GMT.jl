@@ -20,6 +20,10 @@
 	G3 = -G1;
 	G3 = G1 / G2;
 	G3 = G1 / 2;
+	G1 >  1;
+	G1 >= 1;
+	G1 <  1;
+	G1 <= 1;
 	G1 = mat2grid([0.0 1; 2 3]);
 	G2 = mat2grid([4 5; 6 7; 8 9]);
 	@test_throws ErrorException("The HDR array must have 9 elements") mat2grid(rand(4,4), reg=0, hdr=[0. 1 0 1 0 1]);
