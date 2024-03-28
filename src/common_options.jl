@@ -1421,7 +1421,7 @@ parse_j(d::Dict,  cmd::String) = parse_helper(cmd, d, [:j :metric :spherical :sp
 function parse_f(d::Dict, cmd::String)
 	# For plotting time (-ft) in X one must add 'T' to -JX but that is boring and difficult to automatize
 	# GMT6.3 now has it internal but previous versions no. So do that job here.
-	cmd, opt_f = parse_helper(cmd, d, [:f :colinfo :coltypes :coltype], " -f")
+	cmd, opt_f = parse_helper(cmd, d, [:f :geog :colinfo :coltypes :coltype], " -f")
 	return cmd, opt_f
 end
 
@@ -4833,4 +4833,13 @@ macro var"?"(name)
 			println(err)
 		end
 	end
+end
+
+# --------------------------------------------------------------------------------------------------
+# Minimalist version of a dir command. Only list all files in the current dir or dir=arg, or files with a given extension
+macro dir(arg::AbstractString="")
+	ext = (arg != "" && startswith(arg, "*.")) ? arg[2:end] : ""
+	(ext != "") && (arg = "")
+	list = (arg == "") ? readdir() : readdir(arg)
+	list = (ext == "") ? list : filter(x -> endswith(x, ext), list)
 end

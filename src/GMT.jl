@@ -172,12 +172,12 @@ export
 	VSdisp, info, kmeans, pca, mosaic, quadbounds, quadkey, geocoder, getprovider,
 
 	binarize, isodata, rgb2gray,
-	
+
 	Ginnerjoin, Gouterjoin, Gleftjoin, Grightjoin, Gcrossjoin, Gsemijoin, Gantijoin, spatialjoin,
 
 	df2ds, ODE2ds,
 	sprintf,
-	@?
+	@?, @dir
 
 include("common_docs.jl")
 include("libgmt_h.jl")
