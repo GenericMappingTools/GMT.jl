@@ -191,7 +191,7 @@ function getbyattrib(D::Vector{<:GMTdataset}, ind_::Bool; kw...)::Vector{Int}
 		#Keys[1] => Internal Error: MethodError: no method matching getindex(::Base.KeySet{Symbol, Dict{Symbol, Any}}, ::Int64)
 		count, kk = 0, 1
 		v = values(kw)
-		for k = 1:numel(kw)  count += (isa(values(v[k]), Tuple)) ? length(values(v[k])) : 1  end
+		for k = 1:numel(kw)  count += (isa(values(v[k]), Tuple) || isa(values(v[k]), Vector{String})) ? length(values(v[k])) : 1  end
 		atts, vals = Vector{String}(undef, count), Vector{String}(undef, count)
 
 		_keys = string.(keys(kw))
@@ -200,6 +200,10 @@ function getbyattrib(D::Vector{<:GMTdataset}, ind_::Bool; kw...)::Vector{Int}
 			if (isa(vv, Tuple))
 				atts[kk:kk+length(vv)-1] .= _keys[k]
 				vals[kk:kk+length(vv)-1] .= string.(vv)
+				kk += length(vv) 
+			elseif (isa(vv, Vector{String}))
+				atts[kk:kk+length(vv)-1] .= _keys[k]
+				vals[kk:kk+length(vv)-1] .= vv
 				kk += length(vv) 
 			else
 				atts[kk], vals[kk] = _keys[k], string(vv)
@@ -231,6 +235,7 @@ function getbyattrib(D::Vector{<:GMTdataset}; indices=false, kw...)::Union{Nothi
 	(indices == 1) && return ind
 	o = D[ind]
 	set_dsBB!(o, false)
+	o[1].proj4, o[1].wkt, o[1].epsg = D[1].proj4, D[1].wkt, D[1].epsg
 	return o
 end
 
