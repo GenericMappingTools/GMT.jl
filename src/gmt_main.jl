@@ -1225,7 +1225,7 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)::Union{GMTdat
 			proj4 = OGR_F.proj4 != C_NULL ? unsafe_string(OGR_F.proj4) : ""
 			wkt   = OGR_F.wkt != C_NULL ? unsafe_string(OGR_F.wkt) : ""
 			(proj4 == "" && wkt != "") && (proj4 = wkt2proj(wkt))
-			is_geog = (contains(proj4, "=longlat") || contains(proj4, "=latlong")) ? true : false
+			is_geog = (contains(proj4, "=longlat") || contains(proj4, "=lonlat") || contains(proj4, "=latlon")) ? true : false
 			(coln = (is_geog) ? ["Lon", "Lat"] : ["X", "Y"])
 		else
 			proj4, wkt, coln = "", "", String[]
