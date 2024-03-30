@@ -31,9 +31,9 @@ function get_de_libnames()
 			if Sys.iswindows()
 				println("\nDowloading and installing from the Windows installer\n")
 				try
-					fn = Downloads.download("http://fct-gmt.ualg.pt/gmt/data/wininstallers/gmt-win64.exe", "GMTinstaller.exe")
+					fn = download("http://fct-gmt.ualg.pt/gmt/data/wininstallers/gmt-win64.exe", "GMTinstaller.exe")
 				catch		# Resort to latest official installer in Github
-					fn = Downloads.download("https://github.com/GenericMappingTools/gmt/releases/download/6.4.0/gmt-6.4.0-win64.exe", "GMTinstaller.exe")
+					fn = download("https://github.com/GenericMappingTools/gmt/releases/download/6.5.0/gmt-6.5.0-win64.exe", "GMTinstaller.exe")
 				end
 				run(`cmd /k GMTinstaller.exe /S`)
 				rm(fn, force=true)
