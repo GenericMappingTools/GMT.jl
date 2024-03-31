@@ -7,7 +7,7 @@ const psxyz! = plot3d!
 function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::Bool, kwargs...)#::Union{Nothing, String, Vector{String}, GMTimage, GMTps}
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 	(cmd0 != "" && arg1 === nothing && is_in_dict(d, [:groupvar :hue]) !== nothing) && (arg1 = gmtread(cmd0); cmd0 = "")
-	arg1 = if_multicols(d, arg1, is3D)			# Check if it was asked to split a GMTdataset in its columns 
+	(caller != "bar") && (arg1 = if_multicols(d, arg1, is3D))	# Check if it was asked to split a GMTdataset in its columns 
 
 	arg2, arg3, arg4 = nothing, nothing, nothing
 	N_args = (arg1 === nothing) ? 0 : 1
@@ -18,7 +18,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	end
 
 	(arg1 !== nothing && !isa(arg1, GDtype) && !isa(arg1, Matrix{<:Real})) && (arg1 = tabletypes2ds(arg1, ((val = find_in_dict(d, [:interp])[1]) !== nothing) ? interp=val : interp=0))
-	arg1 = if_multicols(d, arg1, is3D)			# Repeat because DataFranes or ODE's have skipped first round
+	(caller != "bar") && (arg1 = if_multicols(d, arg1, is3D))	# Repeat because DataFrames or ODE's have skipped first round
 	(!O) && (LEGEND_TYPE[1] = legend_bag())		# Make sure that we always start with an empty one
 
 	cmd::String = "";	sub_module::String = ""	# Will change to "scatter", etc... if called by sub-modules
