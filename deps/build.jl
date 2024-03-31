@@ -7,7 +7,7 @@ function get_de_libnames()
 		(Sys.iswindows() && get(ENV, "UPDATE_GMTWIN", "") != "") && error("Forcing automatic Win install")
 		out = readlines(`gmt --version`)[1]		# If it errors here, jump to the catch branch
 		ver = ((ind = findfirst('_', out)) === nothing) ? VersionNumber(out) : VersionNumber(out[1:ind-1])
-		(ver < v"6.1") && error("Need at least GMT6.1. The one you have ($ver) is not supported.")	# GOTO DOWNLOAD
+		(ver < v"6.4") && error("Need at least GMT6.4.0 The one you have ($ver) is not supported.")	# GOTO DOWNLOAD
 
 		libgmt = haskey(ENV, "GMT_LIBRARY") ? ENV["GMT_LIBRARY"] : string(chop(read(`gmt --show-library`, String)))
 
@@ -31,9 +31,9 @@ function get_de_libnames()
 			if Sys.iswindows()
 				println("\nDowloading and installing from the Windows installer\n")
 				try
-					fn = download("http://fct-gmt.ualg.pt/gmt/data/wininstallers/gmt-win64.exe", "GMTinstaller.exe")
+					fn = Downloads.download("http://fct-gmt.ualg.pt/gmt/data/wininstallers/gmt-win64.exe", "GMTinstaller.exe")
 				catch		# Resort to latest official installer in Github
-					fn = download("https://github.com/GenericMappingTools/gmt/releases/download/6.5.0/gmt-6.5.0-win64.exe", "GMTinstaller.exe")
+					fn = Downloads.download("https://github.com/GenericMappingTools/gmt/releases/download/6.5.0/gmt-6.5.0-win64.exe", "GMTinstaller.exe")
 				end
 				run(`cmd /k GMTinstaller.exe /S`)
 				rm(fn, force=true)
@@ -57,7 +57,7 @@ function get_de_libnames()
 
 		catch err2;		println(err2)
 			return true, ver, libgmt, libgdal, libproj, GMT_bindir, userdir, devdate
-		end
+		en0Downloads.d
 	end
 	userdir    = readlines(`gmt --show-userdir`)[1]
 	out = readlines(`gmt --version`)[1]
