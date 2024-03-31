@@ -57,7 +57,7 @@ function get_de_libnames()
 
 		catch err2;		println(err2)
 			return true, ver, libgmt, libgdal, libproj, GMT_bindir, userdir, devdate
-		en0Downloads.d
+		end
 	end
 	userdir    = readlines(`gmt --show-userdir`)[1]
 	out = readlines(`gmt --version`)[1]
