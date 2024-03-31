@@ -30,13 +30,12 @@ Ends a GMT session in modern mode and optionaly shows the figure
 function gmtend(arg=nothing; show=false, verbose=nothing)
 	# To show either do gmtend(whatever) or gmt(show=true)
 	cmd = "end"
-	((arg !== nothing || show != 0) && !isFranklin[1]) && (cmd *= " show")
 	(verbose !== nothing) && (cmd *= " -V" * string(verbose))
 	if (IamSubplot[1])		# This should never happen. Unless user error of calling gmtend() before time.
 		@warn("ERROR USING SUBPLOT. You should not call gmtend() before subplot(:end)")
 		gmt("subplot end")
 	end
-	gmt(cmd)
+	((arg !== nothing || show != 0) && !isFranklin[1]) ? (helper_showfig4modern("show")) : gmt(cmd)
 	resetGMT()
 	isPSclosed[1] = true
 	return nothing

@@ -4037,7 +4037,7 @@ function helper_showfig4modern(show::String="show")::Bool
 	# Use show="" in modern when only wanting to finish plot but NOT display it.
 	!IamModern[1] && return false		# Only subplot() calls go beyond this point
 	try
-		gmt("subplot end");		IamSubplot[1] = false
+		IamSubplot[1] &&gmt("subplot end");		IamSubplot[1] = false
 	catch erro;		println(erro)
 	end
 	IamModern[1] = false
