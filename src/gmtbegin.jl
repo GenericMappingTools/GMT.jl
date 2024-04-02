@@ -14,7 +14,7 @@ function gmtbegin(name::String=""; fmt=nothing, verbose=nothing)
 	cmd = "begin"       # Default name (GMTplot.ps) is set in gmt_main()
 	(name != "") && (cmd *= " " * get_format(name, fmt))
 	(verbose !== nothing) && (cmd *= " -V" * string(verbose))
-	IamModern[1], IamSubplot[1] = false, false
+	IamSubplot[1] = false
 	FirstModern[1] = true			# To know if we need to compute -R in plot. Due to a GMT6.0 BUG
 	isJupyter[1] = isdefined(Main, :IJulia)		# show fig relies on this
 	!isJupyter[1] && (isJupyter[1] = (isdefined(Main, :VSCodeServer) && get(ENV, "DISPLAY_IN_VSC", "") != ""))

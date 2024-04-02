@@ -42,15 +42,36 @@ Parameters
 
 To see the full documentation type: ``@? legend``
 """
-function legend(cmd0::String="", arg1=nothing; first=true, kwargs...)
+function legend(cmd0::String="", arg1=nothing; first::Bool=true, kwargs...)
 
     gmt_proggy = (IamModern[1]) ? "legend "  : "pslegend "
 
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
+	if (cmd0 == "" && arg1 === nothing && !IamModern[1])
+		first && error("Need input data or file for legend")
+		# Here we have a bit of a convoluted case. This section is for the case where 'legend' is called without
+		# input data and relies on the data stored in previous commands by using the 'legend' keyword. That is,
+		# we use the keyword option 'position', 'fontsize', etc args as kwargs to 'legend'. As said, convoluted. 
+		#
+		# The call to digests_legend_bag(d) will call 'legend' again, making
+		# this a recursive call. On that recursive call 'arg1 !== nothing' and it not pass in this code chunk, but
+		# upon return from the digests_legend_bag() we'll return here again and either show, save or return quietly.
+		do_show = ((val = find_in_dict(d, [:show])[1]) !== nothing && val != 0)
+		figname::String = ((val = find_in_dict(d, [:savefig :figname :name])[1]) !== nothing) ? val : ""
+		digests_legend_bag(d)	# It's over now, let's lets show up (or not) and return
+		return (do_show || figname != "") ? showfig(show=do_show, savefig=figname) : nothing
+	end
+
 	def_J = " -JX" * split(DEF_FIG_SIZE, '/')[1] * "/0"
 	cmd, _, _, opt_R = parse_BJR(d, "", "", O, def_J)
 	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R)	# If called from classic without input it hangs here.
+	
+	# Trouble here is that 'legend' may be called from modern mode (inside gmtbegin()), case in which so far we want to
+	# maintain the GMT default of using the gmt.conf font settings (and scalings), or from the GMT.jl classic-but-modern
+	# where the default is 8 pts. This allows for the user to set options 'fontsize' or 'font' to override the defaults.
+	((fnt = get_legend_font(d, IamModern[1] ? 0 : 8; modern=IamModern[1])) != "") && (cmd *= " --FONT_ANNOT_PRIMARY=" * fnt)
+
 	cmd, = parse_common_opts(d, cmd, [:F :c :p :q :t :JZ :UVXY :params], first)
 
 	opt_D = parse_type_anchor(d, "", [:D :pos :position],

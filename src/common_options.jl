@@ -4583,14 +4583,7 @@ function digests_legend_bag(d::Dict, del::Bool=true)
 	end
 	(count_no > 0) && (resize!(leg, nl-count_no))
 
-	(haskey(dd, :fontsize)) && (fs = dd[:fontsize])
-	
-	fnt::String = (haskey(dd, :font)) ? font(dd[:font]) : string(fs)
-	if (fnt != string(fs))
-		s = split(fnt, ',')
-		(length(s) == 1) &&  (fnt = string(fs, ',', s[1]))				# s[1] must be font name
-		(length(s) == 2) &&  (fnt = string(fs, ',', s[1], ',', s[2]))	# s[1] font name, s[2] font color
-	end
+	fnt = get_legend_font(dd, fs)	# Parse the eventual 'font' or 'fontsize' options
 
 	# Because we accept extended settings either from first or last legend() commands we must seek which
 	# one may have the desired keyword. First command is stored in 'LEGEND_TYPE[1].optsDict' and last in 'dd'
@@ -4652,6 +4645,26 @@ function digests_legend_bag(d::Dict, del::Bool=true)
 	LEGEND_TYPE[1] = legend_bag()			# Job done, now empty the bag
 
 	return nothing
+end
+
+# ---------------------------------------------------------------------------------------------------
+function get_legend_font(d::Dict, fs=0; modern::Bool=false)::String
+	# This fun gets the font size to be used in legends, but it serves two masters. On one side we want to keep the
+	# legend defaults in modern mode (inside gmtbegin()) using the gmt.conf setings. For that pass FS=0 and MODERN=TRUE
+	# On the other hand, from the GMT.jl classic-but-modern, the default (on calling this) is FS=8.
+	# This allows for the user to set options 'fontsize' or 'font' to override the defaults for both modes.
+	(haskey(d, :fontsize)) && (fs = d[:fontsize])
+	
+	fnt::String = (haskey(d, :font)) ? font(d[:font]) : string(fs)
+	delete!(d, [:font :fontsize])
+	(modern && fnt == "0") && return ""	# gmtbegin calls this fun with fs=0 and we don't want to change the defaults in gmt.conf
+
+	if (fnt != string(fs))
+		s = split(fnt, ',')
+		(length(s) == 1) &&  (fnt = string(fs, ',', s[1]))				# s[1] must be font name
+		(length(s) == 2) &&  (fnt = string(fs, ',', s[1], ',', s[2]))	# s[1] font name, s[2] font color
+	end
+	return fnt
 end
 
 # ---------------------------------------------------------------------------------------------------

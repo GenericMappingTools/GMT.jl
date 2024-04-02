@@ -205,7 +205,7 @@ function gmt(cmd::String, args...)
 	GMT_Destroy_Options(G_API[1], pLL)
 
 	#if (IamModern[1])  gmt_put_history(G_API[1]);	end	# Needed, otherwise history is not updated
-	(IamModern[1]) && gmt_restart()		# Needed, otherwise history is not updated
+	(IamModern[1] && g_module != "begin") && gmt_restart()		# Needed, otherwise history is not updated
 
 	IMG_MEM_LAYOUT[1] = "";		GRD_MEM_LAYOUT[1] = ""		# Reset to not afect next readings
 
