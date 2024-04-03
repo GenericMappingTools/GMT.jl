@@ -104,10 +104,16 @@ function pcolor(X_::VMr, Y_::VMr, C::Union{Nothing, AbstractMatrix{<:Real}}=noth
 	Z = istransposed(C) ? vec(copy(C)) : vec(C)
 	kwargs, do_show, got_labels, ndigit, opt_F = helper_pcolor(kwargs, Z)
 
+	d = KW(kwargs)
+	got_fn = ((fname = find_in_dict(d, [:name :figname :savefig])[1]) !== nothing)
+	d[:show] = got_labels ? false : do_show
+	(!got_labels && got_fn) && (d[:name] = fname)
+
+
 	if (find_in_kwargs(kwargs, [:R :region :limits :region_llur :limits_llur :limits_diag :region_diag], false)[1] === nothing)
-		plot(D; first=first, Z=Z, R=@sprintf("%.12g/%.12g/%.12g/%.12g", D[1].ds_bbox...), kwargs...)
+		plot(D; first=first, Z=Z, R=@sprintf("%.12g/%.12g/%.12g/%.12g", D[1].ds_bbox...), d...)
 	else
-		plot(D; first=first, Z=Z, kwargs...)
+		plot(D; first=first, Z=Z, d...)
 	end
 
 	if (got_labels)
@@ -116,7 +122,7 @@ function pcolor(X_::VMr, Y_::VMr, C::Union{Nothing, AbstractMatrix{<:Real}}=noth
 			mat[k,1], mat[k,2] = mean(D[k].bbox[1:2]), mean(D[k].bbox[3:4])
 		end
 		Dt = mat2ds(mat, string.(round.(Z,digits=ndigit)))
-		text!(Dt, F=opt_F, show=do_show)
+		text!(Dt, F=opt_F, name=fname, show=do_show)
 	end
 
 end
@@ -184,13 +190,14 @@ function helper_pcolor(kwargs, Z)
 			opt_F = add_opt(KW(kwargs), "", "F", [:font], (angle="+a", font=("+f", font)), false, true)
 		end
 
-		if (haskey(kwargs, :show))
-			isa(kwargs[:show], Bool) && (do_show = kwargs[:show])
-			(!do_show && isa(kwargs[:show], Int)) && (do_show = (kwargs[:show] != 0))
+		if (is_in_kwargs(kwargs, [:show]))
+			do_show = (kwargs[:show] != 0)
 			kwargs = pairs(Base.structdiff(NamedTuple(kwargs), NamedTuple{(:show,:labels,:font)}))	# All this to remove keywords...
 		else
 			kwargs = pairs(Base.structdiff(NamedTuple(kwargs), NamedTuple{(:labels,:font)}))	# Still have to remove the keyword
 		end
+	else
+		is_in_kwargs(kwargs, [:show]) && (do_show = (kwargs[:show] != 0))
 	end
 	return kwargs, do_show, got_labels, ndigit, opt_F
 end
