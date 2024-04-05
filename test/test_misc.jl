@@ -201,7 +201,6 @@
 	img = mat2img(rand(UInt8, 6, 6, 3));
 	mask = fill(UInt8(0), 6, 6);
 	mask[3:4,3:4] .= 255;
-	image_mask!(img, mask);
 	image_alpha!(img, alpha_band=mask, burn=:red)
 	mask[1] = 100;		# Force variable mask
 	image_alpha!(img, alpha_band=mask, burn=(0,255,0))
