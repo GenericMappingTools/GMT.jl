@@ -198,6 +198,14 @@
 	image_alpha!(I, alpha_ind=5);
 	image_alpha!(I, alpha_vec=round.(UInt32,rand(6).*255));
 	image_alpha!(I, alpha_band=round.(UInt8,rand(27,27).*255))
+	img = mat2img(rand(UInt8, 6, 6, 3));
+	mask = fill(UInt8(0), 6, 6);
+	mask[3:4,3:4] .= 255;
+	image_mask!(img, mask);
+	image_alpha!(img, alpha_band=mask, burn=:red)
+	mask[1] = 100;		# Force variable mask
+	image_alpha!(img, alpha_band=mask, burn=(0,255,0))
+
 	GMT.resetGMT()
 	try
 		upGMT()
