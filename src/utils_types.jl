@@ -1613,20 +1613,33 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    I = image_alpha!(img::GMTimage; alpha_ind::Integer, alpha_vec::Vector{Integer}, alpha_band::UInt8)
+    I = image_alpha!(img::GMTimage; alpha_ind::Integer, alpha_vec::Vector{Integer}, alpha_band::UInt8, burn=false)
 
 Change the alpha transparency of the GMTimage object `img`. If the image is indexed, one can either
 change just the color index that will be made transparent by using `alpha_ind=n` or provide a vector
 of transaparency values in the range [0 255]; This vector can be shorter than the orginal number of colors.
 Use `alpha_band` to change, or add, the alpha of true color images (RGB).
 
-    Example1: change to the third color in cmap to represent the new transparent color
-        image_alpha!(img, alpha_ind=3)
+- `burn`: The background color to be used in the compositing. It can be a 3-tuple of integers in the range [0 255]
+   or a symbol or string that will a color name. _e.g._, `bg=:blue`. The default is `:white`. This option
+   is only usable for true color images and `alpha_band`. Then instead of adding the alpha band, that band is
+   used to replace or compose (when the alpha_band values are variable to other than 0 or 255) the background color.
 
-    Example2: change to the first 6 colors in cmap by assigning them random values
-        image_alpha!(img, alpha_vec=round.(Int32,rand(6).*255))
+### Examples
+```jldoctest
+# Example1: change to the third color in cmap to represent the new transparent color
+julia> image_alpha!(img, alpha_ind=3)
+
+#Example2: change to the first 6 colors in cmap by assigning them random values
+julia> image_alpha!(img, alpha_vec=round.(Int32,rand(6).*255))
+
+# Burn the red color in a random image
+julia> img = mat2img(rand(UInt8, 750, 750, 3));
+julia> mask = rand(Bool, 750, 750);
+julia> image_alpha!(img, alpha_band=mask, burn=:red);
+```
 """
-function image_alpha!(img::GMTimage; alpha_ind=nothing, alpha_vec::Vector{<:Integer}=Int[], alpha_band=nothing)
+function image_alpha!(img::GMTimage; alpha_ind=nothing, alpha_vec::Vector{<:Integer}=Int[], alpha_band=nothing, burn=false)
 	# Change the alpha transparency of an image
 	n_colors = img.n_colors
 	if (n_colors > 100000)  n_colors = Int(floor(n_colors / 1000))  end
@@ -1645,13 +1658,68 @@ function image_alpha!(img::GMTimage; alpha_ind=nothing, alpha_vec::Vector{<:Inte
 		end
 		img.n_colors = n_colors * 1000
 	elseif (alpha_band !== nothing)		# Replace the entire alpha band
-		@assert(eltype(alpha_band) == UInt8)
-		ny1, nx1, = size(img.image)
-		ny2, nx2  = size(alpha_band)
-		(ny1 != ny2 || nx1 != nx2) && error("alpha channel has wrong dimensions")
+		@assert (eltype(alpha_band) == UInt8 || eltype(alpha_band) == Bool) "Alpha band must be a UInt8 or Bool array"
+		helper_alpha!(img, alpha_band)
 		(size(img.image, 3) != 3) && (@warn("Adding alpha band is restricted to true color images (RGB)"); return nothing)
-		img.alpha = (isa(alpha_band, GMTimage)) ? alpha_band.image : alpha_band
+		alfa = (isa(alpha_band, GMTimage)) ? alpha_band.image : alpha_band
+		bg = (burn == 1) ? (255.0, 255.0, 255.0) : burn
+		(burn != 0) ? burn_alpha!(img, alfa, bg=bg) : (img.alpha = (eltype(alfa) == UInt8) ? alfa : reinterpret(UInt8, alfa))
 	end
+	return nothing
+end
+
+"""
+    burn_alpha!(img::GMTimage{<:UInt8, 3}, alpha; bg=:white)
+
+Burn the alpha channel into the image by compositing the image values with the background color at locations where alpha is non-zero.
+
+- `img`: The RGB image to be modified by the alpha channel.
+- `alpha`: A GMTimage or a matrix of uint8/boolean values indicating the locations where the corresponding locations
+   in the image should be burned. All non-zero values will be used to composite the image with the background color.
+   For example, a value of 255 will replace a pixel by the background color, a value of 127 will compose the image
+   and background witha weight of 50% each.
+- `bg`: The background color to be used in the compositing. It can be a 3-tuple of integers in the range [0 255]
+   or a symbol or string that will a color name. _e.g._, `bg=:blue`. The default is `:white`.
+
+"""
+burn_alpha!(img::GMTimage{<:UInt8, 3}, alpha::Matrix{Bool}; bg=:white) = burn_alpha!(img, reinterpret(UInt8, alpha); bg=bg)
+function burn_alpha!(img::GMTimage{<:UInt8, 3}, alpha::Matrix{UInt8}; bg=:white)
+	helper_alpha!(img, alpha)			# Error if sizes of img and alpha do not match.
+	!(isa(bg, Symbol) || isa(bg, String) || isa(bg, Tuple{Real,Real,Real})) && error("Invalid background color specification")
+
+	bg_r, bg_g, bg_b = 255.0, 255.0, 255.0		# Background color
+	if (isa(bg, Symbol) || isa(bg, String))
+		rgb = [0.0, 0.0, 0.0]
+		(gmt_getrgb(G_API[1], string(bg), rgb) != 0) && return nothing		# A GMT error was printed already
+		bg_r, bg_g, bg_b = rgb[1]*255, rgb[2]*255, rgb[3]*255
+	elseif isa(bg, Tuple)
+		bg_r, bg_g, bg_b = Float64(bg[1]), Float64(bg[2]), Float64(bg[3])
+	end
+
+	u255 = UInt8(255)
+	nm = numel(alpha)
+	un = unique(alpha)
+	if (numel(un) == 2 && un[2] == 255)
+		u_r, u_g, u_b = round(UInt8, bg_r), round(UInt8, bg_g), round(UInt8, bg_b)
+		@inbounds for k = 1:nm
+			alpha[k] == u255 && continue
+			img.image[k], img.image[k+=nm], img.image[k+=nm] = u_r, u_g, u_b
+		end
+	else
+		@inbounds for k = 1:nm
+			alpha[k] == u255 && continue
+			o = alpha[k] / 255;		t = 1.0 - o;
+			img.image[k] = round(UInt8, o * img.image[k] + t * bg_r)
+			img.image[k+=nm] = round(UInt8, o * img.image[k] + t * bg_g)
+			img.image[k+=nm] = round(UInt8, o * img.image[k] + t * bg_b)
+		end
+	end
+end
+
+function helper_alpha!(img, alpha_band)
+	ny1, nx1, = size(img.image)
+	ny2, nx2  = size(alpha_band)
+	(ny1 != ny2 || nx1 != nx2) && error("alpha channel has wrong dimensions ($(size(alpha_band)) != $(size(img.image)))")
 	return nothing
 end
 

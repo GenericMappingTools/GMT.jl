@@ -418,6 +418,10 @@ function gmt_get_rgb_from_z(API::Ptr{Cvoid}, P::Ptr{GMT_PALETTE}, value::Cdouble
 	ccall((:gmt_get_rgb_from_z, libgmt), Cint, (Cstring, Ptr{Cvoid}, Cdouble, Ptr{Cdouble}), GMT_Get_Ctrl(API), P, value, rgb)
 end
 
+function gmt_getrgb(API::Ptr{Cvoid}, colorname::String, rgb::Vector{Float64})
+	ccall((:gmt_getrgb, libgmt), Cuchar, (Cstring, Ptr{UInt8}, Ptr{Cdouble}), GMT_Get_Ctrl(API), colorname, rgb)
+end
+
 function gmt_free_mem(API::Ptr{Cvoid}, mem)
 	GMT_ = GMT_Get_Ctrl(API)
 	ccall((:gmt_free_func, libgmt), Cvoid, (Cstring, Ptr{Cvoid}, Bool, Cstring), GMT_, mem, true, "Julia")
