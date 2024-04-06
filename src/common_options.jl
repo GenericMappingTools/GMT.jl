@@ -4522,6 +4522,8 @@ function put_in_legend_bag(d::Dict, cmd, arg, O::Bool=false, opt_l::String="")
 		append!(LEGEND_TYPE[1].cmd, [cmd_[1]])
 		append!(LEGEND_TYPE[1].cmd2, (length(cmd_) > 1) ? [cmd_[2]] : [""])
 		append!(LEGEND_TYPE[1].label, lab)
+		# If font, pos, etc are only given at end and no show() is used, they would get lost and not visible by showfig()
+		isempty(LEGEND_TYPE[1].optsDict) && (LEGEND_TYPE[1].optsDict = dd)
 	end
 
 	return nothing
