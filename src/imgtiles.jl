@@ -410,9 +410,10 @@ function getprovider(name::StrSymb, zoom::Int; variant="", format="", ZYX::Bool=
 end
 
 # ---------------------------------------------------------------------------------------------------
-function getprovider(arg, zoom::Int)
+function getprovider(arg, zoom::Int; date::String="", key="")
 	# This method uses as input a TileProviders type. Note that we don't have TileProviders as a dependency
-	# but make a dummy guess about it. Example usage: (night lights)
+	# but make a dummy guess about it. NOTE: the 'date and key' keywords are ignored here but needed for a signature match
+	# Example usage: (night lights)
 	# provider = NASAGIBSTimeseries()
 	# I = mosaic(geocoder("Iberia"), bbox=true, provider=provider, verbose=2)
 	fs = fields(arg)
