@@ -3,6 +3,7 @@ const global GMT_SESSION_NORMAL   = 0   # Typical mode to GMT_Create_Session
 const global GMT_SESSION_NOEXIT   = 1   # Call return and not exit when error
 const global GMT_SESSION_EXTERNAL = 2   # Called by an external API
 const global GMT_SESSION_COLMAJOR = 4   # External API uses column-major formats. [Row-major format]
+const global GMT_SESSION_RUNMODE  = 16  # If set enable GMT's modern runmode. [Classic]
 const global GMT_SESSION_NOGDALCLOSE = 64   # External API tells GMT to not call GDALDestroyDriverManager()
 
 const global GMT_SESSION_BITFLAGS = GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_NOGDALCLOSE + GMT_SESSION_COLMAJOR

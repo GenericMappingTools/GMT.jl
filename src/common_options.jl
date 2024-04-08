@@ -3962,10 +3962,14 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K:
 
 	digests_legend_bag(d)						# Plot the legend if requested
 
-	if (fname == "" && (isdefined(Main, :IJulia) && Main.IJulia.inited) ||
-	                    isdefined(Main, :PlutoRunner) && Main.PlutoRunner isa Module)
+	isPluto = isdefined(Main, :PlutoRunner) && Main.PlutoRunner isa Module
+	if (fname == "" && (isdefined(Main, :IJulia) && Main.IJulia.inited) || isPluto)
 		opt_T = " -Tg"; fname_ext = "png"		# In Jupyter or Pluto, png only
 	end
+
+	# When we are in Jupyter or Pluto, the image is already in a raster format by a previous call to 'gmt end'
+	(isJupyter[1] || isPluto) && (fname_ps = TMPDIR_USR[1] * "/" * "GMTjl_" * TMPDIR_USR[2] * TMPDIR_USR[3] * "." * FMT[1];	opt_T = "")
+	
 	if (opt_T != "")
 		(K) && close_PS_file(fname_ps)			# Close the PS file first
 		((val = find_in_dict(d, [:dpi :DPI])[1]) !== nothing) && (opt_T *= string(" -E", val))
@@ -3983,7 +3987,7 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K:
 		if ((isdefined(Main, :IJulia) && Main.IJulia.inited) || (isdefined(Main, :VSCodeServer) && get(ENV, "DISPLAY_IN_VSC", "") != ""))
 			#https://stackoverflow.com/questions/70620607/how-can-i-programmatically-check-that-i-am-running-code-in-a-notebook-in-julia
 			(fname == "") ? display("image/png", read(out)) : @warn("In Jupyter you can only visualize png files. File $fname was saved in disk though.")
-		elseif isdefined(Main, :PlutoRunner) && Main.PlutoRunner isa Module
+		elseif (isPluto)
 			retPluto = true
 		elseif (!isFranklin[1])			# !isFranklin is true when building the docs and there we don't want displays.
 			display_file(out)

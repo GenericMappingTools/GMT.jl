@@ -32,7 +32,7 @@ function gmt(cmd::String, args...)
 
 	isPSclosed[1] = false				# Only a gmtend() call sets this to true
 	if (g_module == "begin")			# Use this default fig name instead of "gmtsession"
-		fig_ext = (isFranklin[1]) ? " png" : (isJupyter[1]) ? " ps" : FMT[1]::String
+		fig_ext::String = (isFranklin[1]) ? " png" : (isJupyter[1]) ? " " * FMT[1] : FMT[1]
 		(r == "") && (r = (isFranklin[1] || isJupyter[1]) ? (TMPDIR_USR[1] * "/" * "GMTjl_" * TMPDIR_USR[2] * TMPDIR_USR[3] * fig_ext) : "GMTplot " * fig_ext)
 		IamModern[1] = true
 		gmtlib_setparameter(G_API[1], "MAP_ORIGIN_X", "0")	# Workarround GMT bug.
