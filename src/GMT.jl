@@ -169,7 +169,7 @@ export
 	fill_between, fill_between!, marginalhist, marginalhist!, parallelplot, parallelplot!, plotlinefit, plotlinefit!,
 	qqplot, qqplot!, qqnorm, qqnorm!, seismicity, sealand, squeeze, terramar, violin, violin!, viz, weather, windbarbs, whereami,
 
-	VSdisp, info, kmeans, pca, mosaic, quadbounds, quadkey, geocoder, getprovider,
+	VSdisp, mad, info, kmeans, pca, mosaic, quadbounds, quadkey, geocoder, getprovider,
 
 	binarize, isodata, rgb2gray,
 
