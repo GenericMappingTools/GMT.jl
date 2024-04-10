@@ -433,7 +433,7 @@ function get_grid(API::Ptr{Nothing}, object, cube::Bool)::GMTgrid
 	out.command = String([gmt_hdr.command...])
 
 	# The following is uggly is a consequence of the clag.jl translation of fixed size arrays
-	out.range[1:end] = (gmt_hdr.n_bands > 1) ? [gmt_hdr.wesn[1:4]..., G.z_range[:]..., gmt_hdr.z_min, gmt_hdr.z_max] :
+	out.range[1:end] = (gmt_hdr.n_bands > 1) ? [gmt_hdr.wesn[1:4]..., gmt_hdr.z_min, gmt_hdr.z_max, G.z_range[:]...] :
 	                                           [gmt_hdr.wesn[1:4]..., gmt_hdr.z_min, gmt_hdr.z_max]
 	out.inc[1:end]   = (gmt_hdr.n_bands > 1) ? [gmt_hdr.inc[1], gmt_hdr.inc[2], G.z_inc] : [gmt_hdr.inc[1], gmt_hdr.inc[2]]
 	out.nodata       = gmt_hdr.nan_value
