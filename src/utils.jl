@@ -289,6 +289,29 @@ function peaks(; N=49, grid::Bool=true, pixreg::Bool=false)
 	end
 end
 
+# -------------------------------------------------------------------------------------------------
+# Median absolute deviation. This function is a trimmed version from the StatsBase package
+# https://github.com/JuliaStats/StatsBase.jl/blob/60fb5cd400c31d75efd5cdb7e4edd5088d4b1229/src/scalarstats.jl#L527-L536
+"""
+    mad(x)
+
+Compute the median absolute deviation (MAD) of collection `x` around the median
+
+The MAD is multiplied by `1 / quantile(Normal(), 3/4) ≈ 1.4826`, in order to obtain a consistent estimator
+of the standard deviation under the assumption that the data is normally distributed.
+"""
+mad(x) = mad!(Base.copymutable(x))
+function mad!(x::AbstractArray)
+	mad_constant = 1.4826022185056018
+	isempty(x) && throw(ArgumentError("mad is not defined for empty arrays"))
+	c = median!(x)
+	T = promote_type(typeof(c), eltype(x))
+	U = eltype(x)
+	x2 = U == T ? x : isconcretetype(U) && isconcretetype(T) && sizeof(U) == sizeof(T) ? reinterpret(T, x) : similar(x, T)
+	x2 .= abs.(x .- c)
+	return median!(x2)  * mad_constant
+end
+
 meshgrid(v::AbstractVector) = meshgrid(v, v)
 function meshgrid(vx::AbstractVector{T}, vy::AbstractVector{T}) where T
 	X = [x for _ in vy, x in vx]

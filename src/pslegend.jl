@@ -54,12 +54,19 @@ function legend(cmd0::String="", arg1=nothing; first::Bool=true, kwargs...)
 		# input data and relies on the data stored in previous commands by using the 'legend' keyword. That is,
 		# we use the keyword option 'position', 'fontsize', etc args as kwargs to 'legend'. As said, convoluted. 
 		#
-		# The call to digests_legend_bag(d) will call 'legend' again, making
-		# this a recursive call. On that recursive call 'arg1 !== nothing' and it not pass in this code chunk, but
-		# upon return from the digests_legend_bag() we'll return here again and either show, save or return quietly.
+		# The call to digests_legend_bag(d) will call 'legend' again, making this a recursive call.
+		# On that recursive call 'arg1 !== nothing' and it not pass in this code chunk, but upon return
+		# from the digests_legend_bag() we'll return here again and either show, save or return quietly.
 		do_show = ((val = find_in_dict(d, [:show])[1]) !== nothing && val != 0)
 		figname::String = ((val = find_in_dict(d, [:savefig :figname :name])[1]) !== nothing) ? val : ""
-		digests_legend_bag(d)	# It's over now, let's lets show up (or not) and return
+
+		# Need to save the legend options in the global variable 'LEGEND_TYPE'
+		# Must also recreate a NT if any of 'fontsize' or 'font' is present in 'd' (because of how digests_legend_bag works)
+		((val = find_in_dict(d, [:fontsize])[1]) !== nothing) && (d[:leg] = (fontsize=val,))
+		((val = find_in_dict(d, [:font])[1]) !== nothing) && (haskey(d, :leg) ? d[:leg] = (fontsize=d[:leg], font=val) : d[:leg] = (font=val,))
+		((val = find_in_dict(d, [:pos :position])[1]) !== nothing) && (LEGEND_TYPE[1].optsDict = Dict(:pos => val))
+
+		digests_legend_bag(d)	# It's over now, lets show up (or not) and return
 		return (do_show || figname != "") ? showfig(show=do_show, savefig=figname) : nothing
 	end
 
