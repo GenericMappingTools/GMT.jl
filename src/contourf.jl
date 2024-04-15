@@ -79,21 +79,22 @@ function contourf(cmd0::String="", arg1=nothing, arg2=nothing; first=true, kwarg
 
 	d = KW(kwargs)
 	dict_auto_add!(d)					# The ternary module may send options via another channel
-	CPT_arg = (isa(arg1, GMTcpt)) ? arg1 : (isa(arg2, GMTcpt) ? arg2 : nothing)		# Fish a CPT, if any.
+	CPT_arg::GMTcpt = (isa(arg1, GMTcpt)) ? arg1 : (isa(arg2, GMTcpt) ? arg2 : GMTcpt())	# Fish a CPT, if any.
 
-	CPT = nothing;		C_contours = "";	C_int = 0;
+	CPT::GMTcpt = GMTcpt();		C_contours = "";	C_int = 0;
 	if ((val = find_in_dict(d, [:C :cont :contour :contours :levels])[1]) !== nothing)
 		if (isa(val, GMTcpt))
 			CPT = val
-		elseif (isa(val, Array{<:Number}))
-			if (CPT_arg === nothing)	# No CPT yet, compute one
-				CPT = makecpt(T=arg2str(val,','), M=true, par=(COLOR_BACKGROUND="white", COLOR_FOREGROUND="white"))
+		elseif (isa(val, VecOrMat{<:Number}) || isa(val, Tuple))
+			st::String = arg2str(val,',')
+			if (isempty(CPT_arg))		# No CPT yet, compute one
+				CPT = makecpt(T=st, M=true, par=(COLOR_BACKGROUND="white", COLOR_FOREGROUND="white"))
 			else						# We already have one CPT so VAL is interpreted as contours values
-				C_contours = arg2str(val,',')
+				C_contours = st
 				if (!occursin(",", C_contours))  C_contours *= ","  end
 			end
 		else
-			t = string(val)
+			t::String = string(val)
 			if     (occursin(".cpt", t)) CPT = gmtread(t)
 			elseif ((x = parse(Float64, t)) != NaN)  C_int = x
 			else   error("Bad levels option")
@@ -127,7 +128,7 @@ function contourf(cmd0::String="", arg1=nothing, arg2=nothing; first=true, kwarg
 
 	if (isa(arg1, GMTgrid) || cmd0 != "")
 		#isa(arg2, GMTcpt) ? d[:N] = arg2 : (isa(arg1, GMTcpt) ? d[:N] = arg1 : d[:N] = true)
-		if (CPT === nothing && CPT_arg === nothing)
+		if (isempty(CPT) && isempty(CPT_arg))
 			if (cmd0 != "")
 				info = grdinfo(cmd0 * " -C")
 				C_inc, min, max = gen_contour_vals(info.data[5:6], C_int)
@@ -135,7 +136,7 @@ function contourf(cmd0::String="", arg1=nothing, arg2=nothing; first=true, kwarg
 				C_inc, min, max = gen_contour_vals(arg1, C_int)
 			end
 			CPT = makecpt(T=(min, max, C_inc))
-		elseif (CPT === nothing && CPT_arg !== nothing)
+		elseif (isempty(CPT) && !isempty(CPT_arg))
 			CPT = CPT_arg
 		end
 
@@ -177,9 +178,9 @@ function contourf(cmd0::String="", arg1=nothing, arg2=nothing; first=true, kwarg
 		#grdcontour(cmd0, arg1; first=false, d...)
 		grdcontour_helper(cmd0, arg1; first=false, d...)
 	else
-		if (isa(CPT_arg, GMTcpt))
+		if (!isempty(CPT_arg))
 			d[:C] = CPT_arg;
-		elseif (isa(CPT, GMTcpt))
+		elseif (!isempty(CPT))
 			d[:C] = CPT;
 		else
 			D = gmtinfo(arg1, C=true)
