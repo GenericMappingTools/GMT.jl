@@ -106,7 +106,7 @@ The fields of this struct are:
 - `layout::String`:             A four character string describing the image memory layout
 - `pad::Int`:                   When != 0 means that the array is placed in a padded array of PAD rows/cols
 """
-mutable struct GMTimage{T<:Unsigned, N} <: AbstractArray{T,N}
+mutable struct GMTimage{T<:Union{Unsigned, Bool}, N} <: AbstractArray{T,N}
 	proj4::String
 	wkt::String
 	epsg::Int
