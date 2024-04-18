@@ -942,10 +942,11 @@ If `stretch` is a scalar, scale the values > `stretch` to [0 255]
 
 The `kw...` kwargs search for [:layout :mem_layout], [:names] and [:metadata]
 """
-function mat2img(mat::Union{AbstractArray{<:Unsigned}, BitMatrix}; x=Float64[], y=Float64[], v=Float64[], hdr=Float64[],
+function mat2img(mat::Union{AbstractArray{<:Unsigned}, AbstractArray{<:Bool}, BitMatrix}; x=Float64[], y=Float64[], v=Float64[], hdr=Float64[],
                  proj4::String="", wkt::String="", cmap=nothing, is_transposed::Bool=false, kw...)
 	# Take a 2D array of uint8 and turn it into a GMTimage.
 	# Note: if HDR is empty we guess the registration from the sizes of MAT & X,Y
+	(cmap === nothing && eltype(mat) == Bool) && (cmap = makecpt(T=(0,1), cmap=:gray))
 	helper_mat2img(mat; x=x, y=y, v=v, hdr=hdr, proj4=proj4, wkt=wkt, cmap=cmap, is_transposed=is_transposed, kw...)
 end
 

@@ -172,7 +172,7 @@ end
 
 function mosaic(lon, lat; pt_radius=6371007.0, provider="", zoom::Int=0, cache::String="",
                 mapwidth=15, dpi=96, verbose::Int=0, date::String="", key::String="", kw...)
-	(size(lon) != size(lat)) && throw(error("lon & lat must be of the same size"))
+	(length(lon) != length(lat)) && throw(error("lon & lat must be of the same size"))
 	d = Dict{Symbol,Any}(kw)
 	flatness = 0.0		# Not needed because the tile servers serve data in spherical Mercator, but some funs expect flatness
 

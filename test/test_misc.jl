@@ -53,6 +53,24 @@
 	flipdim(G.z,1)
 	fileparts("C:/a/b/c.d");
 	GMT.resetGMT()
+
+	I1 = mat2img(fill(UInt8(255), 3, 3));
+	I2 = mat2img(fill(UInt8(0), 3, 3)); I2[2,2] = 255;
+	I1 - I2;
+	I1 + I2;
+	I1 | I2;
+	I1 & I2;
+	xor(I1, I2);
+	I1 ⊻ I2;
+	I1 = mat2img(fill(true, 3, 3));
+	I2 = mat2img(fill(false, 3, 3)); I2[2,2] = true;
+	I1 - I2;
+	I1 + I2;
+	I1 | I2;
+	I1 & I2;
+	xor(I1, I2);
+	I1 ⊻ I2;
+
 	@test GMT.bin2dec("10111") == 23
 	@test GMT.dec2bin(23) == "10111"
 	@test GMT.sub2ind((3,3), [1 2 3 1], [2 2 2 3]) == [4  5  6  7]
