@@ -432,28 +432,32 @@ end
 - `rescale(..., inputmax=imax)` sets the lower bound `imax` for the input range. Input values greater
    than `imax` will be replaced with `imax`. The default is max(A).
 - `rescale(..., stretch=true)` automatically determines [inputmin inputmax] via a call to histogram that
-   will (try to) find good limits for histogram stretching. 
+   will (try to) find good limits for histogram stretching. The form `stretch=(imin,imax)` allows specifying
+   the input limits directly.
 - `type`: Converts the scaled array to this data type. Valid options are all Unsigned types (e.g. `UInt8`).
    Default returns the same data type as `A` if it's an AbstractFloat, or Flot64 if `A` is an integer.
 
 Returns a GMTgrid if `A` is a GMTgrid of floats, a GMTimage if `A` is a GMTimage and `type` is used or
 an array of Float32|64 otherwise.
 """
-function rescale(A::String, low=0.0, up=1.0; inputmin=nothing, inputmax=nothing, stretch::Bool=false, type=nothing)
+function rescale(A::String, low=0.0, up=1.0; inputmin=nothing, inputmax=nothing, stretch=false, type=nothing)
 	GI = gmtread(A)
 	rescale(GI, low, up, inputmin=inputmin, inputmax=inputmax, stretch=stretch, type=type)
 end
-function rescale(A::AbstractArray, low=0.0, up=1.0; inputmin=nothing, inputmax=nothing, stretch::Bool=false, type=nothing)
+function rescale(A::AbstractArray, low=0.0, up=1.0; inputmin=nothing, inputmax=nothing, stretch=false, type=nothing)
 	(type !== nothing && (!isa(type, DataType) || !(type <: Unsigned))) && error("The 'type' variable must be an Unsigned DataType")
-	((inputmin !== nothing || inputmax !== nothing) && stretch) && @warn("The `stretch` option overrules `inputmin|max`.")
-	if (stretch)
+	((inputmin !== nothing || inputmax !== nothing) && stretch == 1) && @warn("The `stretch` option overrules `inputmin|max`.")
+	if (stretch == 1)
 		inputmin, inputmax = histogram(A, getauto=true)
+	elseif (isa(stretch, Tuple) || (isvector(stretch) && length(stretch) == 2))
+		inputmin, inputmax = stretch[1], stretch[2]
 	end
 	(inputmin === nothing) && (mi = (isa(A, GItype)) ? A.range[5] : minimum_nan(A))
 	(inputmax === nothing) && (ma = (isa(A, GItype)) ? A.range[6] : maximum_nan(A))
 	_inmin = convert(Float64, (inputmin === nothing) ? mi : inputmin)
 	_inmax = convert(Float64, (inputmax === nothing) ? ma : inputmax)
 	d1 = _inmax - _inmin
+	(d1 <= 0.0) && error("Stretch range has inputmin > inputmax.")
 	d2 = up - low
 	sc::Float64 = d2 / d1
 	have_nans = false
