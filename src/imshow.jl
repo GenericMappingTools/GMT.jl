@@ -47,21 +47,22 @@ function imshow(arg1, x::AbstractVector{Float64}=Float64[], y::AbstractVector{Fl
 		return call_plot3
 	end
 
-	is_image = false
-	if (isa(arg1, String))		# If it's string it has to be a file name. Check extension to see if is an image
+	is_image, call_img, call_grd = false, false, false
+	if (isa(arg1, String))		# If it's string it has to be a file name. Check extension to see if it is an image
 		ext = splitext(arg1)[2]
-		if (ext == "" && arg1[1] != '@' && !isfile(arg1))
-			G = mat2grid(arg1, x, y)
+		if (ext == "" && arg1[1] != '@' && !isfile(arg1))			# A remote file, assumed to be a grid.
+			Gg = mat2grid(arg1, x, y)
+			call_grd = true
 		else
-			G = arg1
 			ext = lowercase(ext)
 			(ext == ".jpg" || ext == ".tif" || ext == ".tiff" || ext == ".png" || ext == ".bmp" || ext == ".gif") && (is_image = true)
 			#snif_GI_set_CTRLlimits(arg1)			# Set CTRL.limits to be eventually used by J=:guess
 		end
 	elseif (isa(arg1, Array{UInt8}) || isa(arg1, Array{UInt16,3}))
-		G = mat2img(arg1; kw...)
+		Gi = mat2img(arg1; kw...)
+		call_img = true
 	elseif (isGMTdataset(arg1) || (isa(arg1, Matrix{<:Real}) && size(arg1,2) <= 4))
-		ginfo = gmt("gmtinfo -C", arg1)
+		ginfo::GMTdataset{<:Float64} = gmt("gmtinfo -C", arg1)
 		CTRL.limits[1:4] = ginfo.data[1:4];		CTRL.limits[7:10] = ginfo.data[1:4]
 		call_plot3 = ((isa(arg1, GMTdataset) && arg1.geom == Gdal.wkbLineStringZ) || (isa(arg1, Vector{<:GMTdataset}) && arg1[1].geom == Gdal.wkbLineStringZ)) ? true : false		# Should evolve into a fun that detects the several plot3d cases.
 		!call_plot3 && (call_plot3 = isplot3(kw))
@@ -72,23 +73,25 @@ function imshow(arg1, x::AbstractVector{Float64}=Float64[], y::AbstractVector{Fl
 	elseif (isdataframe(arg1) || isODE(arg1))
 		return isplot3(kw) ? plot3(arg1; show=see, kw...) :  plot(arg1; show=see, kw...)
 	else
-		G = mat2grid(arg1, x, y, reg=1)						# For displaying, pixel registration is more appropriate
+		Gg = mat2grid(arg1, x, y, reg=1)					# For displaying, pixel registration is more appropriate
+		call_grd = true
 	end
 
-	isa(G, GItype) && snif_GI_set_CTRLlimits(G)				# Set CTRL.limits to be eventually used by J=:guess
+	call_img && snif_GI_set_CTRLlimits(Gi)					# Set CTRL.limits to be eventually used by J=:guess
+	call_grd && snif_GI_set_CTRLlimits(Gg)
 
 	if (is_image)
-		grdimage(G; show=see, kw...)
+		grdimage(arg1; show=see, kw...)
 	else
 		if (isa(G, String))		# Guess also if call grdview or grdimage 
 			if (get(kw, :JZ, 0) != 0 || get(kw, :Jz, 0) != 0 || get(kw, :zscale, 0) != 0 || get(kw, :zsize, 0) != 0)
 				(get(kw, :Q, "") == "" && get(kw, :surf, "") == "" && get(kw, :surftype, "") == "") && (kw = (kw..., Q="s"))
-				grdview(G; show=see, kw...)			# String when fname is @xxxx
+				grdview(arg1; show=see, kw...)				# String when fname is @xxxx
 			else
-				grdimage(G; show=see, kw...)
+				grdimage(arg1; show=see, kw...)
 			end
 		else
-			imshow(G; kw...)					# Call the specialized method
+			imshow(call_img ? Gi : Gg; kw...)				# Call the specialized method
 		end
 	end
 end
@@ -101,13 +104,18 @@ end
 # - `cmap=:same`: uses the same CPT (computed from cube's min/max) for all layers.
 # - `T, no_interp, tiles`: -T option for grdview
 # - `facades, cubeplot`: Call cubeplot.
-function imshow(arg1::GMTgrid; kw...)
+function imshow(arg1::GItype; kw...)
 	# Here the default is to show, but if a 'show' was used let it rule
 	d = KW(kw)
 	see::Bool = (!haskey(d, :show)) ? true : (d[:show] != 0)	# No explicit 'show' keyword means show=true
+
+	if (isa(arg1, GMTimage) && size(arg1, 3) <= 3)				# Rest of the work is done in grdiamge
+		return grdimage("", arg1; show=see, kw...)
+	end
+
 	if ((cont_opts = find_in_dict(d, [:contour])[1]) !== nothing)
 		new_see = see
-		see = false			# because here we know that 'see' has to wait till last command
+		see = false				# because here we know that 'see' has to wait till last command
 	end
 	opt_p, = parse_common_opts(d, "", [:p :view :perspective], true)
 	have_tilles::Bool = ((til = find_in_dict(d, [:T :no_interp :tiles])[1]) !== nothing)
@@ -146,7 +154,7 @@ function imshow(arg1::GMTgrid; kw...)
 			rt = !isempty(tits) ? tits : nothing
 
 			tit::Union{String, Nothing} = nothing
-			if ((val = find_in_dict(d, [:title])[1]) === nothing)
+			if (!isa(arg1, GMTimage) && (val = find_in_dict(d, [:title])[1]) === nothing)
 				!isempty(arg1.title) && (tit = arg1.title)
 			elseif (val !== nothing && val != false && val != :no)	# To allow title=:no or title=false
 				tit = string(val)::String
@@ -170,11 +178,12 @@ function imshow(arg1::GMTgrid; kw...)
 			row_axes = (rt !== nothing) ? (left=true, row_title=true) : (left=true, )
 			subplot(grid=grid, dims=(panels=(_w, _h),), row_axes=row_axes, col_axes=(bott=true,), T=tit, margins = margin)
 				(rt !== nothing) && (d[:par] = (MAP_TITLE_OFFSET="0p",); d[:title] = rt[1])
-				grdimage("", mat2grid(arg1[:,:,1], arg1); d...)
+				fun = isa(arg1, GMTgrid) ? mat2grid : mat2img
+				grdimage("", fun(arg1[:,:,1], arg1); d...)
 				for k = 2:n_levels
 					!isempty(tits) && (d[:title] = rt[k])
 					CURRENT_CPT[1] = GMTcpt()	# Force creating a new CPT for next layer
-					grdimage("", mat2grid(arg1[:,:,k], arg1); panel=:next, d...)
+					grdimage("", fun(arg1[:,:,k], arg1); panel=:next, d...)
 				end
 			subplot(see ? :show : :end)
 			R = nothing
@@ -202,19 +211,6 @@ function imshow(arg1::GMTgrid; kw...)
 		R = grdcontour!(arg1; J="", show=new_see, cont_opts...)
 	end
 	return R
-end
-
-function imshow(arg1::GMTimage; kw...)
-	# Here the default is to show, but if a 'show' was used let it rule
-	see::Bool = (!haskey(kw, :show)) ? true : kw[:show]		# No explicit 'show' keyword means show=true
-	if (isa(arg1.image, Array{UInt16}))
-		I::GMTimage = mat2img(arg1; kw...)
-		d = KW(kw)			# Needed because we can't delete from kwargs
-		(haskey(kw, :stretch) || haskey(kw, :histo_bounds)) && delete!(d, [:histo_bounds, :stretch])
-		grdimage("", I; show=see, d...)
-	else
-		grdimage("", arg1; show=see, kw...)
-	end
 end
 
 # Simple method to show CPTs. (May grow)

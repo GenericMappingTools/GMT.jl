@@ -955,7 +955,7 @@ function mat2img16(mat::AbstractArray{<:Unsigned}; x=Float64[], y=Float64[], v=F
 	helper_mat2img(mat; x=x, y=y, v=v, hdr=hdr, proj4=proj4, wkt=wkt, cmap=cmap, is_transposed=is_transposed, kw...)
 end
 function helper_mat2img(mat; x=Float64[], y=Float64[], v=Float64[], hdr=Float64[],
-                   proj4::String="", wkt::String="", cmap=nothing, is_transposed::Bool=false, kw...)
+                        proj4::String="", wkt::String="", cmap=nothing, is_transposed::Bool=false, kw...)
 	color_interp = "";		n_colors = 0;
 	isa(mat, BitMatrix) && (mat = UInt8.(mat)*UInt8(255))	# Tried but can't find a way to make GMTimage accept also BitMatrix
 	if (cmap !== nothing)
@@ -1172,11 +1172,22 @@ result (that we easily do with `imshow(mat)`) but return instead a GMTimage obje
   - `GI`: This can be either a GMTgrid or a GMTimage and its contents is used to set spatial contents
      (x,y coordinates) and projection info that one may attach to the created image result. This is
      a handy alterative to the `x=, y=, proj4=...` options.
+
+If 'mat' is instead a UInt16 GMTimage type we call `rescale(I, stretch=true, type=UInt8)` instead of
+issuing an error. In this case `clim` can be a two elements vector to specify the desired stretch range.
+The default is to let `histogram` guess these values.
 """
 function imagesc(mat::Union{GMTgrid,Matrix{<:AbstractFloat}}; x=Float64[], y=Float64[], hdr=Float64[],
 	             proj4::String="", wkt::String="", GI::Union{GItype,Nothing}=nothing, clim=[0,255], cmap=nothing, kw...)
 	mat2img(mat; x=x, y=y, hdr=hdr, proj4=proj4, wkt=wkt, GI=GI, clim=clim, cmap=cmap, kw...)
 end
+
+function imagesc(I::GMTimage{<:UInt16}; clim=0)
+	# User probably meant to use 'rescale(I,stretch=1,type=UInt8)' instead of 'imagesc(I)' for scaling a
+	# UInt16 GMTimage directly, so do it instead of erroring as we used to do.
+	return clim == 0 ? rescale(I, stretch=1, type=UInt8) : rescale(I, stretch=[clim[1],clim[2]], type=UInt8)
+end
+
 # ---------------------------------------------------------------------------------------------------
 # This method creates a new GMTimage but retains all the header data from the IMG object
 function mat2img(mat, I::GMTimage; names::Vector{String}=String[], metadata::Vector{String}=String[])

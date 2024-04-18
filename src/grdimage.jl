@@ -95,6 +95,9 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 			(isa(arg2, Matrix{<:Real})) && (arg2 = mat2grid(arg2))
 			(isa(arg3, Matrix{<:Real})) && (arg3 = mat2grid(arg3))
 		end
+	elseif (isa(arg1, GMTimage) && size(arg1, 3) <= 3 && eltype(arg1.image) <: UInt16)
+		arg1 = mat2img(arg1; kwargs...)
+		(haskey(kwargs, :stretch) || haskey(kwargs, :histo_bounds)) && delete!(d, [:histo_bounds, :stretch])
 	end
 
 	set_defcpt!(d, cmd0)	# When dealing with a remote grid assign it a default CPT
