@@ -170,6 +170,76 @@ function Base.:>=(G1::GMTgrid, val::Number)
 end
 
 # ---------------------------------------------------------------------------------------------------
+"""
+Subtract two boolean/uint8 mask images. It applies the logical `I1 && !I2` operation. Inherit header parameters from I1 image
+"""
+Base.:-(I1::GMTimage{<:Bool},  I2::GMTimage{<:Bool})  = helper_bool_img(I1, collect(I1.image .& .!I2.image))
+Base.:-(I1::GMTimage{<:UInt8}, I2::GMTimage{<:UInt8}) =
+	helper_bool_img(I1, collect(reinterpret(Bool, I1.image) .& .!reinterpret(Bool, I2.image)))
+
+# ---------------------------------------------------------------------------------------------------
+"""
+Add two boolean mask/uint8 images. It applies the logical `I1 || I2` operation. Inherit header parameters from I1 image
+
+The infix operation `I1 | I2` is a synonym for `+(I1,I2)`.
+"""
+Base.:+(I1::GMTimage{<:Bool},  I2::GMTimage{<:Bool})  = helper_bool_img(I1, collect(I1.image .| I2.image))
+Base.:|(I1::GMTimage{<:Bool},  I2::GMTimage{<:Bool})  = +(I1, I2)
+Base.:|(I1::GMTimage{<:UInt8}, I2::GMTimage{<:UInt8}) = +(I1, I2)
+Base.:+(I1::GMTimage{<:UInt8}, I2::GMTimage{<:UInt8}) =
+	helper_bool_img(I1, collect(reinterpret(Bool, I1.image) .| reinterpret(Bool, I2.image)))
+
+# ---------------------------------------------------------------------------------------------------
+"""
+Intersect two boolean/uint8 mask images. It applies the logical `I1 && I2` operation. Inherit header parameters from I1 image
+"""
+Base.:&(I1::GMTimage{<:Bool},  I2::GMTimage{<:Bool})  = helper_bool_img(I1, collect(I1.image .& I2.image))
+Base.:&(I1::GMTimage{<:UInt8}, I2::GMTimage{<:UInt8}) =
+	helper_bool_img(I1, collect(reinterpret(Bool, I1.image) .& reinterpret(Bool, I2.image)))
+
+# ---------------------------------------------------------------------------------------------------
+"""
+Bitwise exclusive or of `I1` and `I2` boolean images. Inherits metadata from `I1`.
+
+The infix operation `I1 ⊻ I2` is a synonym for `xor(I1,I2)`, and
+	`⊻` can be typed by tab-completing `\\xor` or `\\veebar` in the Julia REPL.
+"""
+Base.:xor(I1::GMTimage{<:Bool}, I2::GMTimage{<:Bool}) = helper_bool_img(I1, collect(xor.(I1.image, I2.image)))
+⊻(I1::GMTimage{<:Bool},  I2::GMTimage{<:Bool})  = xor(I1, I2)
+⊻(I1::GMTimage{<:UInt8}, I2::GMTimage{<:UInt8}) = xor(I1, I2)
+Base.:xor(I1::GMTimage{<:UInt8}, I2::GMTimage{<:UInt8}) =
+	helper_bool_img(I1, collect(xor.(reinterpret(Bool, I1.image), reinterpret(Bool, I2.image))))
+
+# ---------------------------------------------------------------------------------------------------
+function helper_bool_img(I, z)
+	# Helper function with common code all image boolean operations
+	epsg, geog, range, inc, registration, nodata, x, y, v, pad = dup_G_meta(I)
+	
+	if (eltype(I.image) <: Bool)
+		colormap, n_colors, color_interp = cpt2cmap(makecpt(T=(0,1), cmap=:gray))[1], 2, "Gray"
+	else
+		colormap, n_colors, color_interp = zeros(Int32,3), 0, ""
+	end
+
+	(eltype(I.image) <: UInt8) && (z = reinterpret(UInt8, z) .* UInt8(255))
+	Io = GMTimage(I.proj4, I.wkt, epsg, geog, range, inc, registration, nodata, color_interp, String[], String[], x, y, v,
+	              z, colormap, String[], n_colors, Array{UInt8,2}(undef,1,1), I.layout, pad)
+	Io.range[5:6] .= extrema(z)
+	return Io
+end
+# ---------------------------------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------------------------------
+"""
+Compute the logical complement of a boolean GMTimage. Inherits metadata from input image.
+"""
+function Base.:!(I::GMTimage{<:Bool})
+	Io = deepcopy(I)
+	Io.image .= .!Io.image
+	return Io
+end
+
+# ---------------------------------------------------------------------------------------------------
 Base.:+(add::T, D1::GMTdataset) where T<:AbstractArray = Base.:+(D1::GMTdataset, add)
 Base.:+(add::Real, D1::GMTdataset) = Base.:+(D1::GMTdataset, [add;;])
 Base.:+(D1::GMTdataset, add::Real) = Base.:+(D1::GMTdataset, [add;;])
