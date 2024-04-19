@@ -62,6 +62,7 @@
 	I1 & I2;
 	xor(I1, I2);
 	I1 ⊻ I2;
+	!I1;
 	I1 = mat2img(fill(true, 3, 3));
 	I2 = mat2img(fill(false, 3, 3)); I2[2,2] = true;
 	I1 - I2;
@@ -70,6 +71,7 @@
 	I1 & I2;
 	xor(I1, I2);
 	I1 ⊻ I2;
+	!I1;
 
 	@test GMT.bin2dec("10111") == 23
 	@test GMT.dec2bin(23) == "10111"

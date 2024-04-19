@@ -238,6 +238,11 @@ function Base.:!(I::GMTimage{<:Bool})
 	Io.image .= .!Io.image
 	return Io
 end
+function Base.:!(I::GMTimage{<:UInt8})
+	Io = deepcopy(I)
+	Io.image .= reinterpret(UInt8, .!reinterpret(Bool, Io.image)) * UInt8(255)
+	return Io
+end
 
 # ---------------------------------------------------------------------------------------------------
 Base.:+(add::T, D1::GMTdataset) where T<:AbstractArray = Base.:+(D1::GMTdataset, add)
