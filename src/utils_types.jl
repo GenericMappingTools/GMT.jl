@@ -1173,6 +1173,11 @@ result (that we easily do with `imshow(mat)`) but return instead a GMTimage obje
   - `GI`: This can be either a GMTgrid or a GMTimage and its contents is used to set spatial contents
      (x,y coordinates) and projection info that one may attach to the created image result. This is
      a handy alterative to the `x=, y=, proj4=...` options.
+  - `stretch`: This option is indicated to select an interval of the range of the `z` values and use only
+     those to scale to the [0 255] interval. A `stretch=true` automatically determines good values for
+     histogram stretching via a call to `histogram`. The form `stretch=(zmin,zmax)` allows specifying the
+     input limits directly. A previous plot of ``histogram(mat, show=true)`` can help determine good values.
+     Note that when this option `stretch` is used, ALL OTHER options are ignored. See also the ``rescale`` function.
 
 If 'mat' is instead a UInt16 GMTimage type we call `rescale(I, stretch=true, type=UInt8)` instead of
 issuing an error. In this case `clim` can be a two elements vector to specify the desired stretch range.
@@ -1180,6 +1185,9 @@ The default is to let `histogram` guess these values.
 """
 function imagesc(mat::Union{GMTgrid,Matrix{<:AbstractFloat}}; x=Float64[], y=Float64[], hdr=Float64[],
 	             proj4::String="", wkt::String="", GI::Union{GItype,Nothing}=nothing, clim=[0,255], cmap=nothing, kw...)
+	
+	# Call 'rescale' and return if the kw 'stretch' is used
+	((stretch = find_in_kwargs(kw, [:stretch])[1]) !== nothing) && return rescale(mat, stretch=stretch, type=UInt8)
 	mat2img(mat; x=x, y=y, hdr=hdr, proj4=proj4, wkt=wkt, GI=GI, clim=clim, cmap=cmap, kw...)
 end
 
@@ -1273,7 +1281,7 @@ function slicecube(G::GMTgrid, slice::Union{Int, AbstractVector{<:Int}}; axis="z
 	(!isvec && slice > this_size) && error("Slice number ($slice) is larger than grid size ($this_size)")
 	(!isvec && slice[end] > this_size) && error("Last slice number ($(slice[end])) is larger than grid size ($this_size)") 
 
-	isempty(G.v) && (G.v = collect(1:size(G,3)))
+	(isempty(G.v) || length(G.v) == 1) && (G.v = collect(1:size(G,3)))
 	rng = isvec ? slice : slice:slice
 	colmajor, ix, iy, ixp, iyp = helper_slicecube(G, x, y)
 
