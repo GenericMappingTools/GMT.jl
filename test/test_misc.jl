@@ -55,6 +55,7 @@
 	GMT.resetGMT()
 
 	I1 = mat2img(fill(UInt8(255), 3, 3));
+	grid2img(img2grid(I1))
 	I2 = mat2img(fill(UInt8(0), 3, 3)); I2[2,2] = 255;
 	I1 - I2;
 	I1 + I2;

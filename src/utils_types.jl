@@ -1986,6 +1986,27 @@ function mat2grid(f::String; x::AbstractVector{<:Float64}=Float64[], y::Abstract
 end
 
 # ---------------------------------------------------------------------------------------------------
+"""
+    G = img2grid(I::GMTimage; type=eltype(I.image))
+
+Converts an GMTimage object to a grid. If the `type` option is not set the image data type is preserved
+and the array in NOT copied. Otherwise the image data is converted to the specified type and a copy is made.
+"""
+function img2grid(I::GMTimage; type=eltype(I.image))
+	z = (type == eltype(I.image)) ? I.image : convert(Array{type}, I.image)
+	GMTgrid(I.proj4, I.wkt, I.epsg, I.geog, copy(I.range), copy(I.inc), I.registration, NaN, "", "", "", "", String[], copy(I.x), copy(I.y), [0.], z, "", "", "", "", I.layout, 1f0, 0f0, I.pad, 1)
+end
+
+"""
+    I = grid2img(G::GMTgrid{<:Unsigned})
+
+Converts a GMTgrid of type Unsigned into a GMTimage. Data array is not copied nor its type is changed.
+"""
+function grid2img(G::GMTgrid{<:Unsigned})
+	GMTimage(G.proj4, G.wkt, G.epsg, G.geog, copy(G.range), copy(G.inc), G.registration, NaN32, "", String[], String[], copy(G.x), copy(G.y), [0.], G.z, zeros(Int32,3), String[], 0, Array{UInt8,2}(undef,1,1), G.layout, 0)
+end
+
+# ---------------------------------------------------------------------------------------------------
 function grdimg_hdr_xy(mat, reg, hdr, x=Float64[], y=Float64[], is_transposed=false)
 # Generate x,y coords array and compute/update header plus increments for grids/images
 # Arrays coming from GDAL are often scanline so they are transposed. In that case is_transposed should be true

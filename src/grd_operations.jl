@@ -10,22 +10,31 @@ function Base.:+(G1::GMTgrid, G2::GMTgrid)
 	(size(G1.z) != size(G2.z)) && error("Grids have different sizes, so they cannot be added.")
 	epsg, geog, range, inc, registration, nodata, x, y, v, pad = dup_G_meta(G1)
 	hasnans = (G1.hasnans == 0 && G2.hasnans == 0) ? 0 : ((G1.hasnans + G2.hasnans) == 2) ? 1 : 2
+	(eltype(G1.z) <: AbstractFloat && eltype(G2.z) <: AbstractFloat) ? (z = G1.z .+ G2.z) :
+		(z = Matrix{Float32}(undef, size(G1.z)); @inbounds for k = 1:numel(G1.z)  z[k] = G1.z[k] + G2.z[k]  end)
 	G3 = GMTgrid(G1.proj4, G1.wkt, epsg, geog, range, inc, registration, nodata, "", "", "", "", G1.names, x, y, v,
-	             G1.z .+ G2.z, G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, hasnans)
+	             z, G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, hasnans)
 	setgrdminmax!(G3)		# Also take care of NaNs
 	return G3
 end
+# Now for images
+Base.:+(G1::GMTimage{T}, G2::GMTimage{T}) where T <: Unsigned = img2grid(G1) + img2grid(G2)
 
 # ---------------------------------------------------------------------------------------------------
 Base.:+(shift::Real, G1::GMTgrid) = Base.:+(G1::GMTgrid, shift::Real)
 function Base.:+(G1::GMTgrid, shift::Real)
 	epsg, geog, range, inc, registration, nodata, x, y, v, pad = dup_G_meta(G1)
 	_shift = convert(eltype(G1.z), shift)
+	(eltype(G1.z) <: AbstractFloat) ? (z = G1.z .+ _shift) :
+		(z = Matrix{Float32}(undef, size(G1.z)); @inbounds for k = 1:numel(G1.z)  z[k] = G1.z[k] + _shift  end)
 	G2 = GMTgrid(G1.proj4, G1.wkt, epsg, geog, range, inc, registration, nodata, "", "", "", "", G1.names, x, y, v,
-	             G1.z .+ _shift, G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, G1.hasnans)
+	            z, G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, G1.hasnans)
 	G2.range[5:6] .+= shift
 	return G2
 end
+# Now for images
+Base.:+(G1::GMTimage{T}, shift::Real) where T <: Unsigned = img2grid(G1) + shift
+Base.:+(shift::Real, G1::GMTimage{T}) where T <: Unsigned = img2grid(G1) + shift
 
 # ---------------------------------------------------------------------------------------------------
 function Base.:-(G1::GMTgrid, G2::GMTgrid)
@@ -33,21 +42,30 @@ function Base.:-(G1::GMTgrid, G2::GMTgrid)
 	(size(G1.z) != size(G2.z)) && error("Grids have different sizes, so they cannot be subtracted.")
 	epsg, geog, range, inc, registration, nodata, x, y, v, pad = dup_G_meta(G1)
 	hasnans = (G1.hasnans == 0 && G2.hasnans == 0) ? 0 : ((G1.hasnans + G2.hasnans) == 2) ? 1 : 2
+	(eltype(G1.z) <: AbstractFloat && eltype(G2.z) <: AbstractFloat) ? (z = G1.z .- G2.z) :
+		(z = Matrix{Float32}(undef, size(G1.z)); @inbounds for k = 1:numel(G1.z)  z[k] = G1.z[k] - G2.z[k]  end)
 	G3 = GMTgrid(G1.proj4, G1.wkt, epsg, geog, range, inc, registration, nodata, "", "", "", "", G1.names, x, y, v,
-	             G1.z .- G2.z, G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, hasnans)
+	             z, G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, hasnans)
 	setgrdminmax!(G3)		# Also take care of NaNs
 	return G3
 end
+# Now for images
+Base.:-(G1::GMTimage{T}, G2::GMTimage{T}) where T <: Unsigned = img2grid(G1) - img2grid(G2)
 
 # ---------------------------------------------------------------------------------------------------
 function Base.:-(G1::GMTgrid, shift::Real)
 	_shift = convert(eltype(G1.z), shift)
 	epsg, geog, range, inc, registration, nodata, x, y, v, pad = dup_G_meta(G1)
+	(eltype(G1.z) <: AbstractFloat) ? (z = G1.z .- _shift) :
+		(z = Matrix{Float32}(undef, size(G1.z)); @inbounds for k = 1:numel(G1.z)  z[k] = G1.z[k] - _shift  end)
 	G2 = GMTgrid(G1.proj4, G1.wkt, epsg, geog, range, inc, registration, nodata, "", "", "", "", G1.names, x, y, v,
-	             G1.z .- _shift, G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, G1.hasnans)
+	             z, G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, G1.hasnans)
 	G2.range[5:6] .-= shift
 	return G2
 end
+# Now for images
+Base.:-(G1::GMTimage{T}, shift::Real) where T <: Unsigned = img2grid(G1) - shift
+Base.:-(shift::Real, G1::GMTimage{T}) where T <: Unsigned = img2grid(G1) - shift
 
 # ---------------------------------------------------------------------------------------------------
 function Base.:*(G1::GMTgrid, G2::GMTgrid)
@@ -55,11 +73,15 @@ function Base.:*(G1::GMTgrid, G2::GMTgrid)
 	(size(G1.z) != size(G2.z)) && error("Grids have different sizes, so they cannot be multiplied.")
 	epsg, geog, range, inc, registration, nodata, x, y, v, pad = dup_G_meta(G1)
 	hasnans = (G1.hasnans == 0 && G2.hasnans == 0) ? 0 : ((G1.hasnans + G2.hasnans) == 2) ? 1 : 2
+	(eltype(G1.z) <: AbstractFloat && eltype(G2.z) <: AbstractFloat) ? (z = G1.z .* G2.z) :
+		(z = Matrix{Float32}(undef, size(G1.z)); @inbounds for k = 1:numel(G1.z)  z[k] = G1.z[k] * G2.z[k]  end)
 	G3 = GMTgrid(G1.proj4, G1.wkt, epsg, geog, range, inc, registration, nodata, "", "", "", "", G1.names, x, y, v,
-	             G1.z .* G2.z, G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, hasnans)
+	             z, G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, hasnans)
 	setgrdminmax!(G3)		# Also take care of NaNs
 	return G3
 end
+# Now for images
+Base.:*(G1::GMTimage{T}, G2::GMTimage{T}) where T <: Unsigned = img2grid(G1) * img2grid(G2)
 
 # ---------------------------------------------------------------------------------------------------
 Base.:-(G1::GMTgrid) = -1 * G1
@@ -67,19 +89,26 @@ Base.:*(scale::Real, G1::GMTgrid) = Base.:*(G1::GMTgrid, scale::Real)
 function Base.:*(G1::GMTgrid, scale::Real)
 	_scale = convert(eltype(G1.z), scale)
 	epsg, geog, range, inc, registration, nodata, x, y, v, pad = dup_G_meta(G1)
+	(eltype(G1.z) <: AbstractFloat) ? (z = G1.z .* _scale) :
+		(z = Matrix{Float32}(undef, size(G1.z)); @inbounds for k = 1:numel(G1.z)  z[k] = G1.z[k] * _scale  end)
 	G2 = GMTgrid(G1.proj4, G1.wkt, epsg, geog, range, inc, registration, nodata, "", "", "", "", G1.names, x, y, v,
-	             G1.z .* _scale, G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, G1.hasnans)
+	             z, G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, G1.hasnans)
 	G2.range[5:6] .*= scale
 	return G2
 end
+# For images
+Base.:*(G1::GMTimage{T}, scale::Real) where T <: Unsigned = img2grid(G1) * scale
+Base.:*(scale::Real, G1::GMTimage{T}) where T <: Unsigned = img2grid(G1) * scale
 
 # ---------------------------------------------------------------------------------------------------
 Base.:^(G1::GMTgrid, scale::Integer) = Base.:^(G1::GMTgrid, Float64(scale))
 function Base.:^(G1::GMTgrid, scale::AbstractFloat)
 	_scale = convert(eltype(G1.z), scale)
 	epsg, geog, range, inc, registration, nodata, x, y, v, pad = dup_G_meta(G1)
+	(eltype(G1.z) <: AbstractFloat) ? (z = G1.z .^ _scale) :
+		(z = Matrix{Float32}(undef, size(G1.z)); @inbounds for k = 1:numel(G1.z)  z[k] = G1.z[k] ^ _scale  end)
 	G2 = GMTgrid(G1.proj4, G1.wkt, epsg, geog, range, inc, registration, nodata, "", "", "", "", G1.names, x, y, v,
-	             G1.z.^_scale, G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, G1.hasnans)
+	            z, G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, G1.hasnans)
 	G2.range[5:6] .^= scale
 	return G2
 end
@@ -89,22 +118,30 @@ function Base.:/(G1::GMTgrid, G2::GMTgrid)
 # Divide two grids, element by element. Inherit header parameters from G1 grid
 	if (size(G1.z) != size(G2.z))  error("Grids have different sizes, so they cannot be divided.")  end
 	epsg, geog, range, inc, registration, nodata, x, y, v, pad = dup_G_meta(G1)
-	hasnans = (G1.hasnans == 0 && G2.hasnans == 0) ? 0 : ((G1.hasnans + G2.hasnans) == 2) ? 1 : 2
+	(eltype(G1.z) <: AbstractFloat && eltype(G2.z) <: AbstractFloat) ? (z = G1.z ./ G2.z) :
+		(z = Matrix{Float32}(undef, size(G1.z)); @inbounds for k = 1:numel(G1.z)  z[k] = G1.z[k] / G2.z[k]  end)
+	hasnans = any(isnan, z) ? 2 : 1
 	G3 = GMTgrid(G1.proj4, G1.wkt, epsg, geog, range, inc, registration, nodata, "", "", "", "", G1.names, x, y, v,
-	             G1.z ./ G2.z, G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, hasnans)
+	             z, G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, hasnans)
 	setgrdminmax!(G3)		# Also take care of NaNs
 	return G3
 end
+# For images
+Base.:/(G1::GMTimage{T}, G2::GMTimage{T}) where T <: Unsigned = img2grid(G1) / img2grid(G2)
 
 # ---------------------------------------------------------------------------------------------------
 function Base.:/(G1::GMTgrid, scale::Real)
 	_scale = convert(eltype(G1.z), scale)
 	epsg, geog, range, inc, registration, nodata, x, y, v, pad = dup_G_meta(G1)
+	(eltype(G1.z) <: AbstractFloat) ? (z = G1.z ./ _scale) :
+		(z = Matrix{Float32}(undef, size(G1.z)); @inbounds for k = 1:numel(G1.z)  z[k] = G1.z[k] / _scale  end)
 	G2 = GMTgrid(G1.proj4, G1.wkt, epsg, geog, range, inc, registration, nodata, "", "", "", "", G1.names, x, y, v,
-	             G1.z ./ _scale, G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, G1.hasnans)
+	             z, G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, G1.hasnans)
 	G2.range[5:6] ./= scale
 	return G2
 end
+# For images
+Base.:/(G1::GMTimage{T}, scale::Real) where T <: Unsigned = img2grid(G1) / scale
 
 # ---------------------------------------------------------------------------------------------------
 function Base.:sqrt(G1::GMTgrid)
@@ -137,37 +174,45 @@ end
 function Base.:<(G1::GMTgrid, val::Number)
 	epsg, geog, range, inc, registration, nodata, x, y, v, pad = dup_G_meta(G1)
 	G2 = GMTgrid(G1.proj4, G1.wkt, epsg, geog, range, inc, registration, nodata, "", "", "", "", G1.names, x, y, v,
-	             Int8.(G1.z .< val), G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, G1.hasnans)
+	             UInt8.(G1.z .< val), G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, G1.hasnans)
 	setgrdminmax!(G2)
 	return G2
 end
+# For images
+Base.:<(I::GMTimage{T}, val::Real) where T <: Unsigned = mat2img(collect(I.image .< val), I)
 
 # ---------------------------------------------------------------------------------------------------
 function Base.:<=(G1::GMTgrid, val::Number)
 	epsg, geog, range, inc, registration, nodata, x, y, v, pad = dup_G_meta(G1)
 	G2 = GMTgrid(G1.proj4, G1.wkt, epsg, geog, range, inc, registration, nodata, "", "", "", "", G1.names, x, y, v,
-	             Int8.(G1.z .<= val), G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, G1.hasnans)
+	             UInt8.(G1.z .<= val), G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, G1.hasnans)
 	setgrdminmax!(G2)
 	return G2
 end
+# For images
+Base.:<=(I::GMTimage{T}, val::Real) where T <: Unsigned = mat2img(collect(I.image .<= val), I)
 
 # ---------------------------------------------------------------------------------------------------
 function Base.:>(G1::GMTgrid, val::Number)
 	epsg, geog, range, inc, registration, nodata, x, y, v, pad = dup_G_meta(G1)
 	G2 = GMTgrid(G1.proj4, G1.wkt, epsg, geog, range, inc, registration, nodata, "", "", "", "", G1.names, x, y, v,
-	             Int8.(G1.z .> val), G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, G1.hasnans)
+	             UInt8.(G1.z .> val), G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, G1.hasnans)
 	setgrdminmax!(G2)
 	return G2
 end
+# For images
+Base.:>(I::GMTimage{T}, val::Real) where T <: Unsigned = mat2img(collect(I.image .> val), I)
 
 # ---------------------------------------------------------------------------------------------------
 function Base.:>=(G1::GMTgrid, val::Number)
 	epsg, geog, range, inc, registration, nodata, x, y, v, pad = dup_G_meta(G1)
 	G2 = GMTgrid(G1.proj4, G1.wkt, epsg, geog, range, inc, registration, nodata, "", "", "", "", G1.names, x, y, v,
-	             Int8.(G1.z .>= val), G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, G1.hasnans)
+	             UInt8.(G1.z .>= val), G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, G1.hasnans)
 	setgrdminmax!(G2)
 	return G2
 end
+# For images
+Base.:>=(I::GMTimage{T}, val::Real) where T <: Unsigned = mat2img(collect(I.image .>= val), I)
 
 # ---------------------------------------------------------------------------------------------------
 """
