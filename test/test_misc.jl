@@ -227,6 +227,10 @@
 	mask[1] = 100;		# Force variable mask
 	image_alpha!(img, alpha_band=mask, burn=(0,255,0))
 
+	I1 = mat2img(rand(UInt8, 16,16)); I2 = mat2img(rand(UInt8, 16,16)); I3 = mat2img(rand(UInt8, 16,16));
+	grays2rgb(I1,I2,I3);
+	grays2rgb(I1.image,I2.image,I3.image);
+
 	GMT.resetGMT()
 	try
 		upGMT()
