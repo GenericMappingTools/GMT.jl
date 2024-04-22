@@ -1813,6 +1813,37 @@ function ind2rgb(I::GMTimage, cmap::GMTcpt=GMTcpt(), layout="BRPa")
 	mat2img(imgRGB, x=I.x, y=I.y, proj4=I.proj4, wkt=I.wkt, mem_layout=layout, is_transposed=istransposed)
 end
 
+# ----------------------------------------------------------------------------------------------------------
+"""
+    I = grays2rgb(bandR, bandG, bandB, GI=nothing) -> GMTimage
+
+Take three grayscale images as UInt8 matrices or GMTimages and compose an RGB image by simply copying
+the values of each band into the respective color channel of the output image. When the inputs are UInt8
+matrices optionally provide a GMTgrid or GMTimage as fourth argument to set georeferencing info on output.
+The output is always a GMTimage object.
+
+Note, do not confuse this function with `ind2rgb` that takes a single indexed image and creates a RGB
+using the image's colormap.
+
+### Example
+```juliadoc
+I1 = mat2img(rand(UInt8, 16,16)); I2 = mat2img(rand(UInt8, 16,16)); I3 = mat2img(rand(UInt8, 16,16));
+Irgb = grays2rgb(I1,I2,I3)
+```
+"""
+function grays2rgb(bandR::GMTimage{UInt8,2}, bandG::GMTimage{UInt8,2}, bandB::GMTimage{UInt8,2})
+	@assert size(bandR) == size(bandG) == size(bandB)
+	img = Array{UInt8}(undef, size(bandR,1), size(bandR,2), 3)
+	img[:,:,1] .= bandR.image;		img[:,:,2] .= bandG.image;		img[:,:,3] .= bandB.image
+	mat2img(img, bandR)
+end
+function grays2rgb(bandR::Matrix{UInt8}, bandG::Matrix{UInt8}, bandB::Matrix{UInt8}, GI::Union{GItype, Nothing}=nothing)
+	@assert size(bandR) == size(bandG) == size(bandB)
+	img = Array{UInt8}(undef, size(bandR,1), size(bandR,2), 3)
+	img[:,:,1] .= bandR;		img[:,:,2] .= bandG;		img[:,:,3] .= bandB
+	return GI !== nothing ? mat2img(img, GI) : mat2img(img)
+end
+
 # ---------------------------------------------------------------------------------------------------
 """
     G = mat2grid(mat; reg=nothing, x=[], y=[], v=[], hdr=[], proj4::String="", wkt::String="",

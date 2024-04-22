@@ -171,7 +171,7 @@ export
 
 	VSdisp, mad, info, kmeans, pca, mosaic, quadbounds, quadkey, geocoder, getprovider,
 
-	binarize, isodata, rgb2gray, grid2img, img2grid,
+	binarize, isodata, rgb2gray, grid2img, img2grid, grays2rgb,
 
 	Ginnerjoin, Gouterjoin, Gleftjoin, Grightjoin, Gcrossjoin, Gsemijoin, Gantijoin, spatialjoin,
 
