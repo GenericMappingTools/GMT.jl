@@ -483,10 +483,10 @@ function get_image(API::Ptr{Nothing}, object)::GMTimage
 			o = (nz == 1) ? (ny, nx) : (ny, nx, nz)
 			isBRP = startswith(layout, "BRP")
 			(nz == 1 && isBRP) && (layout = "BRPa")	# For 1 layer "BRBa" and "BRPa" is actualy the same.
-			(!isBRP) && @warn("Only 'I' for Images.jl and 'BRP' MEM layouts are allowed.")
+			(!isBRP && nz > 1) && @warn("Only 'I' for Images.jl and 'BRP' MEM layouts are allowed.")
 			
 			# OK, the above is not always true. Image cubes are not pixel interleaved. But how to detect them?
-			(I.type > 1 || (nz == 2 || nz > 4)) && (layout = layout[1:2] * "B")	# Stil leaves out cases of uint8 cubes.
+			(I.type > 1 || (nz == 2 || nz > 4)) && (layout = layout[1:2] * "B" * layout[4])	# Stil leaves out cases of uint8 cubes.
 		end
 		t = reshape(unsafe_wrap(Array, data, ny * nx * nz), o)	# Apparently the reshape() creates a copy
 	end
@@ -923,7 +923,8 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage)::Ptr{GMT_IMAGE}
 		toRP_pad(Img, img_padded, n_rows, n_cols, pad)
 		already_converted = true
 	else
-		Ib.data = pointer(Img.image)
+		isa(Img.image, BitMatrix) && (copy_data = collect(Img.image))		# BitMatrx cannot be sent to C and we may need a copy bellow
+		Ib.data = (!isa(Img.image, BitMatrix)) ? pointer(Img.image) : pointer(copy_data)
 		mem_owned_by_gmt = (pad == 0) ? false : true
 	end
 
@@ -946,9 +947,9 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage)::Ptr{GMT_IMAGE}
 	unsafe_store!(I, Ib)
 
 	if (!already_converted && !startswith(Img.layout, "BRP"))
-		img = (mem_owned_by_gmt) ? img_padded : copy(Img.image)
+		img = (mem_owned_by_gmt) ? img_padded : copy(Img.image)		# This copy is a waste when not Change_layout. Needs revisit.
 		(size(img,3) > 2) && GMT_Change_Layout(API, GMT_IS_IMAGE, "BRP", 0, I, img);	# Convert to BRP. Not 100% on the > 2 though.
-		Ib.data = pointer(img)
+		Ib.data = !isa(Img.image, BitMatrix) ? pointer(img) : pointer(copy_data)
 		unsafe_store!(I, Ib)
 	end
 
@@ -1414,6 +1415,7 @@ Shows information about the `D` GMTdataset (or vector of them).
 Runs ``show(stdout, "text/plain", any)`` which prints all elements of `any`. Good for printing the entire vector or matrix.
 """
 function info(GI::GItype, showdata::Bool=true; data=true, full=false, crs::Bool=false)
+	isempty(GI) && return println("Empty object")
 	crs && return print_crs(GI)
 	(data != 1) && (showdata = false)
 	isa(GI, GMTimage) ? println("A GMTimage object with $(size(GI,3)) bands of type $(eltype(GI))") :
