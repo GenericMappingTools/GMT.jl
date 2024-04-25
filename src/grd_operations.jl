@@ -11,7 +11,7 @@ function Base.:+(G1::GMTgrid, G2::GMTgrid)
 	epsg, geog, range, inc, registration, nodata, x, y, v, pad = dup_G_meta(G1)
 	hasnans = (G1.hasnans == 0 && G2.hasnans == 0) ? 0 : ((G1.hasnans + G2.hasnans) == 2) ? 1 : 2
 	(eltype(G1.z) <: AbstractFloat && eltype(G2.z) <: AbstractFloat) ? (z = G1.z .+ G2.z) :
-		(z = Matrix{Float32}(undef, size(G1.z)); @inbounds for k = 1:numel(G1.z)  z[k] = G1.z[k] + G2.z[k]  end)
+		(z = Matrix{Float32}(undef, size(G1.z)); @inbounds for k = 1:numel(G1.z)  z[k] = Float32(G1.z[k]) + Float32(G2.z[k])  end)
 	G3 = GMTgrid(G1.proj4, G1.wkt, epsg, geog, range, inc, registration, nodata, "", "", "", "", G1.names, x, y, v,
 	             z, G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, hasnans)
 	setgrdminmax!(G3)		# Also take care of NaNs
@@ -26,7 +26,7 @@ function Base.:+(G1::GMTgrid, shift::Real)
 	epsg, geog, range, inc, registration, nodata, x, y, v, pad = dup_G_meta(G1)
 	_shift = convert(eltype(G1.z), shift)
 	(eltype(G1.z) <: AbstractFloat) ? (z = G1.z .+ _shift) :
-		(z = Matrix{Float32}(undef, size(G1.z)); @inbounds for k = 1:numel(G1.z)  z[k] = G1.z[k] + _shift  end)
+		(z = Matrix{Float32}(undef, size(G1.z)); @inbounds for k = 1:numel(G1.z)  z[k] = Float32(G1.z[k]) + _shift  end)
 	G2 = GMTgrid(G1.proj4, G1.wkt, epsg, geog, range, inc, registration, nodata, "", "", "", "", G1.names, x, y, v,
 	            z, G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, G1.hasnans)
 	G2.range[5:6] .+= shift
@@ -43,7 +43,7 @@ function Base.:-(G1::GMTgrid, G2::GMTgrid)
 	epsg, geog, range, inc, registration, nodata, x, y, v, pad = dup_G_meta(G1)
 	hasnans = (G1.hasnans == 0 && G2.hasnans == 0) ? 0 : ((G1.hasnans + G2.hasnans) == 2) ? 1 : 2
 	(eltype(G1.z) <: AbstractFloat && eltype(G2.z) <: AbstractFloat) ? (z = G1.z .- G2.z) :
-		(z = Matrix{Float32}(undef, size(G1.z)); @inbounds for k = 1:numel(G1.z)  z[k] = G1.z[k] - G2.z[k]  end)
+		(z = Matrix{Float32}(undef, size(G1.z)); @inbounds for k = 1:numel(G1.z)  z[k] = Float32(G1.z[k]) - Float32(G2.z[k])  end)
 	G3 = GMTgrid(G1.proj4, G1.wkt, epsg, geog, range, inc, registration, nodata, "", "", "", "", G1.names, x, y, v,
 	             z, G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, hasnans)
 	setgrdminmax!(G3)		# Also take care of NaNs
@@ -57,7 +57,7 @@ function Base.:-(G1::GMTgrid, shift::Real)
 	_shift = convert(eltype(G1.z), shift)
 	epsg, geog, range, inc, registration, nodata, x, y, v, pad = dup_G_meta(G1)
 	(eltype(G1.z) <: AbstractFloat) ? (z = G1.z .- _shift) :
-		(z = Matrix{Float32}(undef, size(G1.z)); @inbounds for k = 1:numel(G1.z)  z[k] = G1.z[k] - _shift  end)
+		(z = Matrix{Float32}(undef, size(G1.z)); @inbounds for k = 1:numel(G1.z)  z[k] = Float32(G1.z[k]) - _shift  end)
 	G2 = GMTgrid(G1.proj4, G1.wkt, epsg, geog, range, inc, registration, nodata, "", "", "", "", G1.names, x, y, v,
 	             z, G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, G1.hasnans)
 	G2.range[5:6] .-= shift
@@ -74,7 +74,7 @@ function Base.:*(G1::GMTgrid, G2::GMTgrid)
 	epsg, geog, range, inc, registration, nodata, x, y, v, pad = dup_G_meta(G1)
 	hasnans = (G1.hasnans == 0 && G2.hasnans == 0) ? 0 : ((G1.hasnans + G2.hasnans) == 2) ? 1 : 2
 	(eltype(G1.z) <: AbstractFloat && eltype(G2.z) <: AbstractFloat) ? (z = G1.z .* G2.z) :
-		(z = Matrix{Float32}(undef, size(G1.z)); @inbounds for k = 1:numel(G1.z)  z[k] = G1.z[k] * G2.z[k]  end)
+		(z = Matrix{Float32}(undef, size(G1.z)); @inbounds for k = 1:numel(G1.z)  z[k] = Float32(G1.z[k]) * Float32(G2.z[k])  end)
 	G3 = GMTgrid(G1.proj4, G1.wkt, epsg, geog, range, inc, registration, nodata, "", "", "", "", G1.names, x, y, v,
 	             z, G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, hasnans)
 	setgrdminmax!(G3)		# Also take care of NaNs
@@ -90,7 +90,7 @@ function Base.:*(G1::GMTgrid, scale::Real)
 	_scale = convert(eltype(G1.z), scale)
 	epsg, geog, range, inc, registration, nodata, x, y, v, pad = dup_G_meta(G1)
 	(eltype(G1.z) <: AbstractFloat) ? (z = G1.z .* _scale) :
-		(z = Matrix{Float32}(undef, size(G1.z)); @inbounds for k = 1:numel(G1.z)  z[k] = G1.z[k] * _scale  end)
+		(z = Matrix{Float32}(undef, size(G1.z)); @inbounds for k = 1:numel(G1.z)  z[k] = Float32(G1.z[k]) * _scale  end)
 	G2 = GMTgrid(G1.proj4, G1.wkt, epsg, geog, range, inc, registration, nodata, "", "", "", "", G1.names, x, y, v,
 	             z, G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, G1.hasnans)
 	G2.range[5:6] .*= scale
@@ -106,7 +106,7 @@ function Base.:^(G1::GMTgrid, scale::AbstractFloat)
 	_scale = convert(eltype(G1.z), scale)
 	epsg, geog, range, inc, registration, nodata, x, y, v, pad = dup_G_meta(G1)
 	(eltype(G1.z) <: AbstractFloat) ? (z = G1.z .^ _scale) :
-		(z = Matrix{Float32}(undef, size(G1.z)); @inbounds for k = 1:numel(G1.z)  z[k] = G1.z[k] ^ _scale  end)
+		(z = Matrix{Float32}(undef, size(G1.z)); @inbounds for k = 1:numel(G1.z)  z[k] = Float32(G1.z[k]) ^ _scale  end)
 	G2 = GMTgrid(G1.proj4, G1.wkt, epsg, geog, range, inc, registration, nodata, "", "", "", "", G1.names, x, y, v,
 	            z, G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, G1.hasnans)
 	G2.range[5:6] .^= scale
@@ -119,7 +119,7 @@ function Base.:/(G1::GMTgrid, G2::GMTgrid)
 	if (size(G1.z) != size(G2.z))  error("Grids have different sizes, so they cannot be divided.")  end
 	epsg, geog, range, inc, registration, nodata, x, y, v, pad = dup_G_meta(G1)
 	(eltype(G1.z) <: AbstractFloat && eltype(G2.z) <: AbstractFloat) ? (z = G1.z ./ G2.z) :
-		(z = Matrix{Float32}(undef, size(G1.z)); @inbounds for k = 1:numel(G1.z)  z[k] = G1.z[k] / G2.z[k]  end)
+		(z = Matrix{Float32}(undef, size(G1.z)); @inbounds for k = 1:numel(G1.z)  z[k] = Float32(G1.z[k]) / Float32(G2.z[k])  end)
 	hasnans = any(isnan, z) ? 2 : 1
 	G3 = GMTgrid(G1.proj4, G1.wkt, epsg, geog, range, inc, registration, nodata, "", "", "", "", G1.names, x, y, v,
 	             z, G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, hasnans)
@@ -134,7 +134,7 @@ function Base.:/(G1::GMTgrid, scale::Real)
 	_scale = convert(eltype(G1.z), scale)
 	epsg, geog, range, inc, registration, nodata, x, y, v, pad = dup_G_meta(G1)
 	(eltype(G1.z) <: AbstractFloat) ? (z = G1.z ./ _scale) :
-		(z = Matrix{Float32}(undef, size(G1.z)); @inbounds for k = 1:numel(G1.z)  z[k] = G1.z[k] / _scale  end)
+		(z = Matrix{Float32}(undef, size(G1.z)); @inbounds for k = 1:numel(G1.z)  z[k] = Float32(G1.z[k]) / _scale  end)
 	G2 = GMTgrid(G1.proj4, G1.wkt, epsg, geog, range, inc, registration, nodata, "", "", "", "", G1.names, x, y, v,
 	             z, G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, G1.hasnans)
 	G2.range[5:6] ./= scale
@@ -218,9 +218,22 @@ Base.:>=(I::GMTimage{T}, val::Real) where T <: Unsigned = mat2img(collect(I.imag
 """
 Subtract two boolean/uint8 mask images. It applies the logical `I1 && !I2` operation. Inherit header parameters from I1 image
 """
+#=
 Base.:-(I1::GMTimage{<:Bool},  I2::GMTimage{<:Bool})  = helper_bool_img(I1, collect(I1.image .& .!I2.image))
 Base.:-(I1::GMTimage{<:UInt8}, I2::GMTimage{<:UInt8}) =
 	helper_bool_img(I1, collect(reinterpret(Bool, I1.image) .& .!reinterpret(Bool, I2.image)))
+=#
+
+Base.:-(I1::GMTimage{<:Bool},  I2::GMTimage{<:Bool})  = helper_bool_img(I1, sub8_layout(I1, I2))
+Base.:-(I1::GMTimage{<:UInt8}, I2::GMTimage{<:UInt8}) = helper_bool_img(I1, sub8_layout(I1, I2))
+function sub8_layout(I1, I2)
+	I1.layout[2] == I2.layout[2] &&
+		return eltype(I1) <: Bool ? collect(I1.image .& .!I2.image) : collect(reinterpret(Bool, I1.image) .& .!reinterpret(Bool, I2.image))
+	
+	z1 = (eltype(I1) <: Bool) ? I1.image  : reinterpret(Bool, I1.image)
+	z2 = (eltype(I2) <: Bool) ? I2.image' : reinterpret(Bool, I2.image)'
+	return collect(z1 .& .!z2)
+end
 
 # ---------------------------------------------------------------------------------------------------
 """
@@ -288,6 +301,15 @@ function Base.:!(I::GMTimage{<:UInt8})
 	Io.image .= reinterpret(UInt8, .!reinterpret(Bool, Io.image)) * UInt8(255)
 	return Io
 end
+
+"""
+    I = togglemask(I::Union{GMTimage{<:Bool, 2}, GMTimage{<:UInt8, 2}}) -> GMTimage
+
+Convert between UInt8 and Boolean representations of the mask images. A new object is returned but
+the underlying mask matrix is kept unchanged, that is, not copied, but reinterpred in the other type.
+"""
+togglemask(I::GMTimage{<:Bool, 2}) = return mat2img(reinterpret(UInt8, I.image), I)
+togglemask(I::GMTimage{<:UInt8, 2}) = return mat2img(reinterpret(Bool, I.image), I)
 
 # ---------------------------------------------------------------------------------------------------
 Base.:+(add::T, D1::GMTdataset) where T<:AbstractArray = Base.:+(D1::GMTdataset, add)
