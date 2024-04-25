@@ -33,28 +33,28 @@ The fields of this struct are:
 - `hasnans::Int=0`:                     0 -> "don't know"; 1 -> confirmed, "have no NaNs"; 2 -> confirmed, "have NaNs"
 """
 Base.@kwdef mutable struct GMTgrid{T<:Number,N} <: AbstractArray{T,N}
-	proj4::String
-	wkt::String
-	epsg::Int
-	geog::Int
-	range::Union{Vector{Float64}, Vector{Any}}
-	inc::Union{Vector{Float64}, Vector{Any}}
-	registration::Int
-	nodata::Union{Float64, Float32}
-	title::String
-	remark::String
-	command::String
-	cpt::String
-	names::Vector{String}
-	x::Array{Float64,1}
-	y::Array{Float64,1}
-	v::Union{Vector{<:Real}, Vector{String}, Vector{<:TimeType}}
-	z::Array{T,N}
-	x_unit::String
-	y_unit::String
-	v_unit::String
-	z_unit::String
-	layout::String
+	proj4::String=""
+	wkt::String=""
+	epsg::Int=0
+	geog::Int=0
+	range::Union{Vector{Float64}, Vector{Any}}=Float64[]
+	inc::Union{Vector{Float64}, Vector{Any}}=Float64[]
+	registration::Int=0
+	nodata::Union{Float64, Float32}=0.0
+	title::String=""
+	remark::String=""
+	command::String=""
+	cpt::String=""
+	names::Vector{String}=String[]
+	x::Array{Float64,1}=Float64[]
+	y::Array{Float64,1}=Float64[]
+	v::Union{Vector{<:Real}, Vector{String}, Vector{<:TimeType}}=String[]
+	z::Array{T,N}=Array{Float64,2}(undef,0,0)
+	x_unit::String=""
+	y_unit::String=""
+	v_unit::String=""
+	z_unit::String=""
+	layout::String=""
 	scale::Union{Float64, Float32}=1f0
 	offset::Union{Float64, Float32}=0f0
 	pad::Int=0
@@ -106,28 +106,28 @@ The fields of this struct are:
 - `layout::String`:             A four character string describing the image memory layout
 - `pad::Int`:                   When != 0 means that the array is placed in a padded array of PAD rows/cols
 """
-mutable struct GMTimage{T<:Union{Unsigned, Bool}, N} <: AbstractArray{T,N}
-	proj4::String
-	wkt::String
-	epsg::Int
-	geog::Int
-	range::Vector{Float64}
-	inc::Vector{Float64}
-	registration::Int
-	nodata::Float32
-	color_interp::String
-	metadata::Vector{String}
-	names::Vector{String}
-	x::Vector{Float64}
-	y::Vector{Float64}
-	v::Vector{Float64}
-	image::Array{T,N}
-	colormap::Vector{Int32}
-	labels::Vector{String}		# Labels of a Categorical CPT
-	n_colors::Int
-	alpha::Matrix{UInt8}
-	layout::String
-	pad::Int
+Base.@kwdef mutable struct GMTimage{T<:Union{Unsigned, Bool, BitMatrix}, N} <: AbstractArray{T,N}
+	proj4::String=""
+	wkt::String=""
+	epsg::Int=0
+	geog::Int=0
+	range::Vector{Float64}=Float64[]
+	inc::Vector{Float64}=Float64[]
+	registration::Int=0
+	nodata::Float32=0f0
+	color_interp::String=""
+	metadata::Vector{String}=String[]
+	names::Vector{String}=String[]
+	x::Vector{Float64}=Float64[]
+	y::Vector{Float64}=Float64[]
+	v::Vector{Float64}=Float64[]
+	image::AbstractArray{T,N}=Array{UInt8,2}(undef,0,0)
+	colormap::Vector{Int32}=Int32[]
+	labels::Vector{String}=String[]		# Labels of a Categorical CPT
+	n_colors::Int=0
+	alpha::Matrix{UInt8}=Array{UInt8,2}(undef,0,0)
+	layout::String=""
+	pad::Int=0
 end
 Base.size(I::GMTimage) = size(I.image)
 Base.getindex(I::GMTimage{T,N}, inds::Vararg{Int,N}) where {T,N} = I.image[inds...]
@@ -216,19 +216,19 @@ The fields of this struct are:
 - `epsg::Int`:                    EPSG projection code (Optional)
 - `geom::Integer`:                Geometry type. One of the GDAL's enum (wkbPoint, wkbPolygon, etc...)
 """
-mutable struct GMTdataset{T<:Real, N} <: AbstractArray{T,N}
-	data::Array{T,N}
-	ds_bbox::Vector{Float64}
-	bbox::Vector{Float64}
-	attrib::DictSvS
-	colnames::Vector{String}
-	text::Vector{String}
-	header::String
-	comment::Vector{String}
-	proj4::String
-	wkt::String
-	epsg::Int
-	geom::Union{UInt32, Int}	# 0->Unknown, 1->Point, 2->Line, 3->Polygon, 4->MultiPoint, 5->MultiLine, 6->MultiPolyg
+Base.@kwdef mutable struct GMTdataset{T<:Real, N} <: AbstractArray{T,N}
+	data::Array{T,N}=Array{Float64,2}(undef,0,0)
+	ds_bbox::Vector{Float64}=Float64[]
+	bbox::Vector{Float64}=Float64[]
+	attrib::DictSvS=DictSvS()
+	colnames::Vector{String}=String[]
+	text::Vector{String}=String[]
+	header::String=""
+	comment::Vector{String}=String[]
+	proj4::String=""
+	wkt::String=""
+	epsg::Int=0
+	geom::Union{UInt32, Int}=0	# 0->Unknown, 1->Point, 2->Line, 3->Polygon, 4->MultiPoint, 5->MultiLine, 6->MultiPolyg
 end
 Base.size(D::GMTdataset) = size(D.data)
 Base.getindex(D::GMTdataset{T,N}, inds::Vararg{Int,N}) where {T,N} = D.data[inds...]
@@ -286,8 +286,8 @@ GMTdataset(data::Array{Float32,2}, text::String) =
 	GMTdataset(data, Float64[], Float64[], DictSvS(), String[], [text], "", String[], "", "", 0, 0)
 GMTdataset(data::Array{Float32,2}) =
 	GMTdataset(data, Float64[], Float64[], DictSvS(), String[], String[], "", String[], "", "", 0, 0)
-GMTdataset() =
-	GMTdataset(Array{Float64,2}(undef,0,0), Float64[], Float64[], DictSvS(), String[], String[], "", String[], "", "", 0, 0)
+#GMTdataset() =
+	#GMTdataset(Array{Float64,2}(undef,0,0), Float64[], Float64[], DictSvS(), String[], String[], "", String[], "", "", 0, 0)
 
 struct WrapperPluto fname::String end
 
