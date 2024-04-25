@@ -921,7 +921,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    I = mat2img(mat::Array{<:Unsigned}; x=[], y=[], hdr=[], proj4="", wkt="", cmap=nothing, kw...)
+    I = mat2img(mat::Array{<:Unsigned}; x=[], y=[], hdr=[], proj4="", wkt="", cmap=GMTcpt(), kw...)
 
 Take a 2D 'mat' array and a `hdr` 1x9 [xmin xmax ymin ymax zmin zmax reg xinc yinc] header descriptor
 and return a GMTimage type.
@@ -943,23 +943,23 @@ If `stretch` is a scalar, scale the values > `stretch` to [0 255]
 The `kw...` kwargs search for [:layout :mem_layout], [:names] and [:metadata]
 """
 function mat2img(mat::Union{AbstractArray{<:Unsigned}, AbstractArray{<:Bool}, BitMatrix}; x=Float64[], y=Float64[], v=Float64[], hdr=Float64[],
-                 proj4::String="", wkt::String="", cmap=nothing, is_transposed::Bool=false, kw...)
+                 proj4::String="", wkt::String="", cmap=GMTcpt(), is_transposed::Bool=false, kw...)
 	# Take a 2D array of uint8 and turn it into a GMTimage.
 	# Note: if HDR is empty we guess the registration from the sizes of MAT & X,Y
-	(cmap === nothing && eltype(mat) == Bool) && (cmap = makecpt(T=(0,1), cmap=:gray))
+	(cmap === nothing && (eltype(mat) == Bool || eltype(mat) == BitMatrix)) && (cmap = makecpt(T=(0,1), cmap=:gray))
 	helper_mat2img(mat; x=x, y=y, v=v, hdr=hdr, proj4=proj4, wkt=wkt, cmap=cmap, is_transposed=is_transposed, kw...)
 end
 
 # Special version to desambiguate between UInt8 and UInt16
 function mat2img16(mat::AbstractArray{<:Unsigned}; x=Float64[], y=Float64[], v=Float64[], hdr=Float64[],
-                   proj4::String="", wkt::String="", cmap=nothing, is_transposed::Bool=false, kw...)
+                   proj4::String="", wkt::String="", cmap=GMTcpt(), is_transposed::Bool=false, kw...)
 	helper_mat2img(mat; x=x, y=y, v=v, hdr=hdr, proj4=proj4, wkt=wkt, cmap=cmap, is_transposed=is_transposed, kw...)
 end
 function helper_mat2img(mat; x=Float64[], y=Float64[], v=Float64[], hdr=Float64[],
-                        proj4::String="", wkt::String="", cmap=nothing, is_transposed::Bool=false, kw...)
+                        proj4::String="", wkt::String="", cmap=GMTcpt(), is_transposed::Bool=false, kw...)
 	color_interp = "";		n_colors = 0;
-	isa(mat, BitMatrix) && (mat = UInt8.(mat)*UInt8(255))	# Tried but can't find a way to make GMTimage accept also BitMatrix
-	if (cmap !== nothing)
+	#isa(mat, BitMatrix) && (mat = collect(mat))
+	if (!isempty(cmap))
 		colormap, labels, n_colors = cpt2cmap(cmap)
 	else
 		(size(mat,3) == 1) && (color_interp = "Gray")
@@ -999,9 +999,10 @@ function cpt2cmap(cpt::GMTcpt, start::Float32=NaN32, force_alpha::Bool=true)
 	cmap = zeros(Int32, 256 * nc)
 	(s == 1) && (cmap[1] = 255; cmap[257] = 255; cmap[513] = 255)	# nodata pixel color = white
 	n_colors = 256;			# Because for GDAL we always send 256 even if they are not all filled
+	gray_max = (cpt.minmax[2] == 1) ? 1 : 255		# First, carefull, change. Probably should be 'gray_max = cpt.minmax[2]'
 	for n = 1:3				# Write 'cmap' col-wise
 		for m = 1:size(cpt.colormap, 1)
-			@inbounds cmap[m+s + (n-1)*n_colors] = round(Int32, cpt.colormap[m,n] * 255);
+			@inbounds cmap[m+s + (n-1)*n_colors] = round(Int32, cpt.colormap[m,n] * gray_max);
 		end
 	end
 	if (have_alpha)						# Have alpha color(s)
@@ -1125,7 +1126,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function mat2img(mat::Union{GMTgrid,Matrix{<:AbstractFloat}}; x=Float64[], y=Float64[], hdr=Float64[],
-	             proj4::String="", wkt::String="", GI::Union{GItype,Nothing}=nothing, clim=[0,255], cmap=nothing, kw...)
+	             proj4::String="", wkt::String="", GI::Union{GItype,Nothing}=nothing, clim=[0,255], cmap=GMTcpt(), kw...)
 	# This is the same as Matlab's imagesc() ... plus some extras.
 	mi, ma = (isa(mat,GMTgrid)) ? mat.range[5:6] : extrema(mat)
 	(isa(mat,GMTgrid) && mat.hasnans == 2) && (mi = NaN)		# Don't know yet so force checking
@@ -1147,8 +1148,8 @@ function mat2img(mat::Union{GMTgrid,Matrix{<:AbstractFloat}}; x=Float64[], y=Flo
 	is_transp = isa(mat, GItype) ? ((mat.layout[2] == 'R') ? true : false) : false
 	if (!isa(mat, GMTgrid) && GI !== nothing)
 		I = mat2img(img, GI)
-		if (cmap !== nothing)  I.colormap, I.labels, I.n_colors = cpt2cmap(cmap)
-		else                   I.colormap, I.labels, I.n_colors = zeros(Int32,3), String[], 0	# Do not inherit this from GI
+		if (!isempty(cmap))  I.colormap, I.labels, I.n_colors = cpt2cmap(cmap)
+		else                 I.colormap, I.labels, I.n_colors = zeros(Int32,3), String[], 0	# Do not inherit this from GI
 		end
 	elseif (isa(mat, GMTgrid))
 		I = mat2img(img; x=mat.x, y=mat.y, hdr=hdr, proj4=mat.proj4, wkt=mat.wkt, cmap=cmap, is_transposed=is_transp, kw...)
@@ -1184,7 +1185,7 @@ issuing an error. In this case `clim` can be a two elements vector to specify th
 The default is to let `histogram` guess these values.
 """
 function imagesc(mat::Union{GMTgrid,Matrix{<:AbstractFloat}}; x=Float64[], y=Float64[], hdr=Float64[],
-	             proj4::String="", wkt::String="", GI::Union{GItype,Nothing}=nothing, clim=[0,255], cmap=nothing, kw...)
+	             proj4::String="", wkt::String="", GI::Union{GItype,Nothing}=nothing, clim=[0,255], cmap=GMTcpt(), kw...)
 	
 	# Call 'rescale' and return if the kw 'stretch' is used
 	((stretch = find_in_kwargs(kw, [:stretch])[1]) !== nothing) && return rescale(mat, stretch=stretch, type=UInt8)
@@ -1390,8 +1391,8 @@ function slicecube(GI::GItype; slice::Int=0, α=0.0, angle=0.0, axis="x", cmap=G
 			end
 		end
 		I = mat2img(sc, GI)
-		if (cmap !== nothing)  I.colormap, I.labels, I.n_colors = cpt2cmap(cmap)
-		else                   I.colormap, I.labels, I.n_colors = zeros(Int32,3), String[], 0	# Do not inherit this from GI
+		if (!isempty(cmap))  I.colormap, I.labels, I.n_colors = cpt2cmap(cmap)
+		else                 I.colormap, I.labels, I.n_colors = zeros(Int32,3), String[], 0	# Do not inherit this from GI
 		end
 		return mat2grid(z, GI), I
 	else
@@ -2101,6 +2102,18 @@ function grid2pix(hdr::Vector{Float64}; pix=true)
 	else      hdr[1] += hdr[8]/2; hdr[2] -= hdr[8]/2; hdr[3] += hdr[9]/2; hdr[4] -= hdr[9]/2;	hdr[7] = 0.
 	end
 	return hdr
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    is_stored_transposed(GI::GItype) -> Bool
+
+Return true if the data in the GMTgrid or GMTimage `GI` is stored transposed or false otherwise.
+See more details in the comments of the `gmt2gd` function.
+"""
+function is_stored_transposed(GI::GItype)
+	width, height = (length(GI.x), length(GI.y)) .- GI.registration
+	return width == size(GI, 1) && height == size(GI, 2)
 end
 
 #= ---------------------------------------------------------------------------------------------------
