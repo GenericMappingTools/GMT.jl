@@ -366,8 +366,8 @@ function gmt2gd(GI)
 	# Julia show methods. A further problem is that if we use 'GI = gmtread("file", layout="TRB")', GI's
 	# array still has a visible mem layout equal to a column major array. AS an example of this, see:
 	# gmtwrite("z.grd", mat2grid(reshape(1:20, 4,5))); Gr = gmtread("z.grd", layout="TRB"); Gc = gmtread("z.grd");
-	# Now both Gr.z and Gc.r are 4x5 matrices, but Gr can't be passed as is to 'gmt2gd(...)' because its
-	# memory layout is wrong when seen from the GDAL wrapper functions.  To disambiguate this, we are not
+	# Now both Gr.z and Gc.z are 4x5 matrices, but Gr can't be passed as is to 'gmt2gd(...)' because its
+	# memory layout is wrong when seen from the GDAL wrapper functions. To disambiguate this, we are not
 	# relying in 'size(GI)' but on the length of the x,y coordinates vectors, that are assumed to always be correct. 
 
 	width, height = (GI.layout != "" && GI.layout[2] == 'C') ? (size(GI,2), size(GI,1)) : (length(GI.x), length(GI.y)) .- GI.registration
