@@ -240,6 +240,13 @@ function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::St
 	end
 
 	dataset, needclose = get_gdaldataset(indata, opts, f == gdalvectortranslate || f == gdalgrid)
+	if ((ind = findfirst("-projwin" .== opts)) !== nothing && !("-projwin_srs" in opts))
+		x_min, x_max, y_min, y_max, = getregion(dataset)
+		x_min > parse(Float64, opts[ind+1]) && error("Requested x_min " * opts[ind+1] * " is outside dataset extent")
+		x_max < parse(Float64, opts[ind+3]) && error("Requested x_max " * opts[ind+3] * " is outside dataset extent")
+		y_min > parse(Float64, opts[ind+4]) && error("Requested y_min " * opts[ind+4] * " is outside dataset extent")
+		y_max < parse(Float64, opts[ind+2]) && error("Requested y_max " * opts[ind+2] * " is outside dataset extent")
+	end
 	((outname = GMT.add_opt(d, "", "", [:outgrid :outfile :save])) != "") && (dest = outname)
 	default_gdopts!(f, dataset, opts, dest)	# Assign some default options in function of the driver and data type
 	((val = find_in_dict(d, [:meta])[1]) !== nothing && isa(val,Vector{String})) &&
