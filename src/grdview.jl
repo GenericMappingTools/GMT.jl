@@ -128,28 +128,31 @@ function parse_G_grdview(d::Dict, symbs::Array{<:Symbol}, cmd0::String, cmd::Str
 			return cmd, arg1, arg2, arg3, arg4
 		end
 		if (isa(val, String) || isa(val, GMTimage))
-			#if (isa(val, String) && (val[1] == '@' || guess_T_from_ext(val) != " -Ti"))
-			if (isa(val, String))
+			val_str::String = isa(val, String) ? val : ""
+			val_I::GMTimage = (val_str == "") ? val : GMTimage()
+			if (val_str != "")
 				cmd *= " -G" * val
 			else
 				if (cmd0 != "")  prj = (startswith(cmd0, "@earth_r")) ? prj4WGS84 : getproj(cmd0, proj4=true)
 				else             prj = (isa(arg1, GItype)) ? getproj(arg1, proj4=true) : ""
 				end
 				if ((prj_img = getproj(val, proj4=true)) == "" && GMTver > v"6.4")	# This only works in >= GMT6.5
-					cmd, arg1, arg2, arg3, arg4 = intern!(cmd, val, arg1, arg2, arg3, arg4)
-				#elseif (GMTver > v"6.4")
-				#if (GMTver > v"6.4")
-					#cmd, arg1, arg2, arg3, arg4 = intern!(cmd, val, arg1, arg2, arg3, arg4)
+					cmd, arg1, arg2, arg3, arg4 = intern!(cmd, val_I, arg1, arg2, arg3, arg4)
 				else
 					if (prj_img == "")
-						val.x = arg1.x;		val.y = arg1.y;		val.inc = arg1.inc
-						val.registration = arg1.registration;	val.range = arg1.range
+						val_I.x = arg1.x;		val_I.y = arg1.y;		val_I.inc = arg1.inc
+						val_I.registration = arg1.registration;	val_I.range = arg1.range
 						Iname = "/vsimem/GMTjl_2grdview.tiff"	# I'm amazed that this works
-						gdalwrite(Iname, val)
+						gdalwrite(Iname, val_I)
 						ressurectGDAL()
 					else
 						t = split(scan_opt(cmd, "-R"), '/')
-						Iname = drape_prepare(d, val, ["-projwin", t[1], t[4], t[2], t[3]], prj)
+						tf = parse.(Float64, t)
+						tf[1] < val_I.range[1] && (t[1] = "$(val_I.range[1])")
+						tf[2] > val_I.range[2] && (t[2] = "$(val_I.range[2])")
+						tf[3] < val_I.range[3] && (t[3] = "$(val_I.range[3])")
+						tf[4] > val_I.range[4] && (t[4] = "$(val_I.range[4])")
+						Iname = drape_prepare(d, val_I, ["-projwin", t[1], t[4], t[2], t[3]], prj)
 					end
 					cmd *= " -G" * Iname
 				end

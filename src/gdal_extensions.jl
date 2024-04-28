@@ -570,7 +570,7 @@ function helper_geoms_run_fun(f::Function, D, ratio::Float64, holes::Bool=true; 
 end
 
 function helper_2geoms(D1::Union{Matrix{<:Real}, GDtype}, D2::Union{Matrix{<:Real}, GDtype})
-	# Helpr function that deals with arg checking and data type conversions, This is common to several funs here
+	# Helper function that deals with arg checking and data type conversions, This is common to several funs here
 	ds1 = gmt2gd(D1)
 	ds2 = gmt2gd(D2)
 	g1  = getgeom(unsafe_getfeature(getlayer(ds1, 0),0))

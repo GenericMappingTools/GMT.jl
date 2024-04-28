@@ -995,25 +995,6 @@ end
 arrows!(cmd0::String="", arg1=nothing; kw...) = arrows(cmd0, arg1; first=false, kw...)
 arrows(arg1; kw...)  = arrows("", arg1; first=true, kw...)
 arrows!(arg1; kw...) = arrows("", arg1; first=false, kw...)
-# ------------------------------------------------------------------------------------------------------
-
-function helper_arrows(d::Dict, del::Bool=true)::String
-	# Helper function to set the vector head attributes
-	(SHOW_KWARGS[1]) && return print_kwarg_opts([:arrow :vector :arrow4 :vector4 :vecmap :geovec :geovector], "NamedTuple | String")
-
-	val, symb = find_in_dict(d, [:arrow :vector :arrow4 :vector4 :vecmap :geovec :geovector], del)
-	(val === nothing) && return ""
-
-	code::String = (symb == :geovec || symb == :geovector) ? "=" : (symb == :vecmap ? "V" : "v")
-
-	if (isa(val, String))		# An hard core GMT string directly with options
-		cmd = (val[1] != code) ? code * val : val	# In last case the GMT string already has vector flag char
-	elseif (isa(val, Real))                       cmd = code * "$val"::String
-	elseif (symb == :arrow4 || symb == :vector4)  cmd = code * vector4_attrib(val)
-	else                                          cmd = code * vector_attrib(val)
-	end
-	return cmd
-end
 
 # ------------------------------------------------------------------------------------------------------
 function helper_vecZscale!(d::Dict, arg1, first::Bool, typevec::Int, opt_R::String="", fancy_arrow::Bool=false)
