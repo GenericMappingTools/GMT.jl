@@ -1791,6 +1791,25 @@ function add_opt_pen(d::Dict, symbs::Union{Nothing, VMs}, opt::String="", del::B
 	return out
 end
 
+# ------------------------------------------------------------------------------------------------------
+function helper_arrows(d::Dict, del::Bool=true)::String
+	# Helper function to set the vector head attributes
+	(SHOW_KWARGS[1]) && return print_kwarg_opts([:arrow :vector :arrow4 :vector4 :vecmap :geovec :geovector], "NamedTuple | String")
+
+	val, symb = find_in_dict(d, [:arrow :vector :arrow4 :vector4 :vecmap :geovec :geovector], del)
+	(val === nothing) && return ""
+
+	code::String = (symb == :geovec || symb == :geovector) ? "=" : (symb == :vecmap ? "V" : "v")
+
+	if (isa(val, String))		# An hard core GMT string directly with options
+		cmd = (val[1] != code) ? code * val : val	# In last case the GMT string already has vector flag char
+	elseif (isa(val, Real))                       cmd = code * "$val"::String
+	elseif (symb == :arrow4 || symb == :vector4)  cmd = code * vector4_attrib(val)
+	else                                          cmd = code * vector_attrib(val)
+	end
+	return cmd
+end
+
 # ---------------------------------------------------------------------------------------------------
 function opt_pen(d::Dict, opt::Char, symbs::VMs)::String
 	# Create an option string of the type -Wpen
@@ -2417,7 +2436,7 @@ function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, need_symb::Symbo
 	# Example where this is used (plot -Z):  Z=(outline=true, data=[1, 4])
 	(SHOW_KWARGS[1]) && print_kwarg_opts(symbs)		# Just print the kwargs of this option call
 
-	N_used = 0;		got_one = false
+	N_used::Int = 0;		got_one = false
 	val, symb = find_in_dict(d, symbs, false)
 	if (val !== nothing)
 		to_slot = true
