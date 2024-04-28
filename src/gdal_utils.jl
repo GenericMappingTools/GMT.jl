@@ -92,18 +92,8 @@ function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int
 	((scale_factor != 1 || got_fill_val) && !orig_is_UInt16) &&
 		(mat = gd2gmt_helper_scalefac(mat, scale_factor, add_offset, got_fill_val, fill_val))
 
-	local gt
-	try
-		gt = getgeotransform(dataset)
-	catch
-		gt = [0.5, 1.0, 0.0, ySize+0.5, 0.0, 1.0]	# Resort to no coords
-	end
+	x_min, x_max, y_min, y_max, x_inc, y_inc = getregion(dataset, pad=pad, xSize=xSize, ySize=ySize, gridreg=is_grid, sds=sds)
 
-	x_inc, y_inc = gt[2], abs(gt[6])
-	x_min, y_max = gt[1], gt[4]
-	(is_grid) && (x_min += x_inc/2;	 y_max -= y_inc/2)	# Maitain the GMT default that grids are gridline reg.
-	x_max = x_min + (xSize - 1*is_grid - 2pad) * x_inc
-	y_min = y_max - (ySize - 1*is_grid - 2pad) * y_inc
 	if !(eltype(mat) <: Complex)
 		z_min::Float64, z_max::Float64 = (is_grid) ? extrema_nan(mat) : extrema(mat)
 		isnan(z_min) && (z_min, z_max = extrema_nan(mat))	# Convoluted nc UInt16 layers with scalefactors can result in NaNs
@@ -169,9 +159,10 @@ function gd2gmt_helper_scalefac(mat::Array{<:Real}, scale_factor, add_offset, go
 end
 
 # ---------------------------------------------------------------------------------------------------
-function gd2gmt_helper(input, sds)
+function gd2gmt_helper(input, sds; short::Bool=false)
 	# Deal with datasets as file names. Extract SUBDATASETS if wished.
 	# But `input` can also be gdal dataset, case in which the `sds` option will probably not work.
+	# If SHORT == TRUE we only return the dataset and stop before calling 'gdalinfo'
 	scale_factor, add_offset, got_fill_val, fill_val = Float32(1), Float32(0), false, Float32(0)
 	if (sds > 0)					# Must fish the SUBDATASET name in in gdalinfo
 		# Let's fish the SDS 1 name in: SUBDATASET_1_NAME=NETCDF:"AQUA_MODIS.20210228.L3m.DAY.NSST.sst.4km.NRT.nc":sst
@@ -197,6 +188,8 @@ function gd2gmt_helper(input, sds)
 	else
 		dataset = input
 	end
+
+	short && return dataset, scale_factor, add_offset, got_fill_val, fill_val
 
 	# Hmmm, check also for scale_factor, add_offset, _FillValue
 	info = gdalinfo(dataset)
@@ -301,6 +294,41 @@ function gd2gmt(dataset::Gdal.AbstractDataset)
 	                ["x","y", ["z$i" for i=1:size(D[1].data,2)-2]...]	
 	set_dsBB!(D)				# Compute and set the global BoundingBox for this dataset
 	return (length(D) == 1) ? D[1] : D
+end
+
+# ---------------------------------------------------------------------------------------------------
+getregion(GI::GItype)::Vector{Float64} = GI.range[1:6]
+getregion(GD::GDtype)::Vector{Float64} = return isa(GD, Vector) ? GD[1].ds_bbox : GD.ds_bbox
+"""
+    x_min, x_max, y_min, y_max, x_inc_or_z_min, y_inc_or_z_max = getregion(dataset; gridreg=false, sds=0, GMT=false)
+
+Inquire the region extents of a file or GMTgrid, GMTimage, GMTdataset or GDAL dataset.
+
+Options `gridreg` and `sds` are only for GDAL datasets. When `input` is a string (a file name) the
+default is to use GDAL and the region comes in 'pixel registration' by default. Use `gridreg=true` to
+force 'grid registration'. Still for `input` as string, use `GMT=true` to force the result to be given
+by `grdinfo`. An unfortunate consequence of using either GMT or GDAL to inquire a file/object is that the
+5th and 6th outputs (only 4 when `input` is a GMTdataset) have different contents. It will be either
+`x_inc, y_inc` when reading with GDAL, and `z_min, z_max` when reading with GMT.
+"""
+function getregion(input; pad=0, xSize=0, ySize=0, gridreg::Bool=false, sds::Int=0, GMT=false)::NTuple{6, Float64}
+	(GMT == 1 && isa(input, String)) && return vec(grdinfo(input, C=:n).data)
+	dataset = gd2gmt_helper(input, sds; short=true)[1]
+	(xSize == 0) && (xSize = Gdal.width(dataset))
+	(ySize == 0) && (ySize = Gdal.height(dataset))
+	local gt
+	try
+		gt = getgeotransform(dataset)
+	catch
+		gt = [0.5, 1.0, 0.0, ySize+0.5, 0.0, 1.0]	# Resort to no coords
+	end
+
+	x_inc, y_inc = gt[2], abs(gt[6])
+	x_min, y_max = gt[1], gt[4]
+	(gridreg) && (x_min += x_inc/2;	 y_max -= y_inc/2)	# Maitain the GMT default that grids are gridline reg.
+	x_max = x_min + (xSize - 1*gridreg - 2pad) * x_inc
+	y_min = y_max - (ySize - 1*gridreg - 2pad) * y_inc
+	return x_min, x_max, y_min, y_max, x_inc, y_inc
 end
 
 # ---------------------------------------------------------------------------------------------------
