@@ -318,10 +318,10 @@ include("get_enums.jl")
 
 @setup_workload begin
 	G_API[1] = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS)
-	GMT.parse_B(Dict(:frame => (annot=10, title="Ai Ai"), :grid => (pen=2, x=10, y=20)), "", " -Baf -BWSen")
-	GMT.parse_R(Dict(:xlim => (1,2), :ylim => (3,4), :zlim => (5,6)), "")
-	GMT.parse_J(Dict(:J => "X", :scale => "1:10"), "")
-	GMT.build_opt_J(:X5)
+	GMT.parse_B(Dict(:frame => (annot=10, title="Ai Ai"), :grid => (pen=2, x=10, y=20)), "", " -Baf -BWSen");
+	GMT.parse_R(Dict(:xlim => (1,2), :ylim => (3,4), :zlim => (5,6)), "");
+	GMT.parse_J(Dict(:J => "X", :scale => "1:10"), "");
+	GMT.build_opt_J(:X5);
 	GMT.theme("dark")
 	GMT.theme_modern()
 	mat2ds([9 8; 9 8], x=[0 7], pen=["5p,black", "4p,white,20p_20p"], multi=true);
@@ -336,7 +336,7 @@ include("get_enums.jl")
 	rm(t)
 	D = mat2ds(rand(3,3), colnames=["Time","b","c"]); D.attrib = Dict("Timecol" => "1");
 	D[:Time];	D["Time", "b"];
-	grdimage(rand(Float32,32,32), Vd=2);
+	grdimage(rand(Float32,32,32));
 	grdview(rand(Float32,32,32), Vd=2);
 	grdinfo(mat2grid(rand(Float32,4,4)));
 	G=gmt("grdmath", "-R0/10/0/10 -I2 X");
