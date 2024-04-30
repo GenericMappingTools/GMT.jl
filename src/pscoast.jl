@@ -162,7 +162,7 @@ function parse_INW_coast(d::Dict, symbs::Vector{Matrix{Symbol}}, cmd::String, fl
 	(length(symbs) != length(flags)) && error("Length of symbs must be equal to number of chars in FLAGS")
 	for k = 1:length(symbs)
 		if ((val = find_in_dict(d, symbs[k], false)[1]) !== nothing)
-			if (isa(val, NamedTuple) || isa(val, Dict) || (isa(val, Tuple) && isa(val[1], NamedTuple)))  
+			if (isa(val, NamedTuple) || isa(val, AbstractDict) || (isa(val, Tuple) && isa(val[1], NamedTuple)))  
 				cmd::String = add_opt(d, cmd, string(flags[k]), symbs[k], (type="/#", level="/#", mode="+p#", pen=("", add_opt_pen)))
 			elseif (isa(val, Tuple))
 				if (flags[k] == 'W')	# The shore case is ambiguous, this shore=(1,:red) could mean -W1/red or -W1,red 
@@ -187,7 +187,7 @@ function parse_E_coast(d::Dict, symbs::Vector{Symbol}, cmd::String)
 			(t == " -E") && (delete!(d, [:E, :DCW]); return cmd)	# This lets use E="" like earthregions may do
 			!contains(t, "+") && (t *= "+p0.5")		# If only code(s), append pen
 			cmd *= t
-		elseif (isa(val, NamedTuple) || isa(val, Dict))
+		elseif (isa(val, NamedTuple) || isa(val, AbstractDict))
 			cmd = add_opt(d, cmd, "E", [:DCW :E], (country="", name="", continent="=",
 			                                       pen=("+p", add_opt_pen), fill=("+g", add_opt_fill)))
 		elseif (isa(val, Tuple))
@@ -209,7 +209,7 @@ function parse_dcw(cmd::String, val::Tuple)::String
 
 	for k = 1:numel(val)
 		if (isa(val[k], NamedTuple) || isa(val[k], Dict))
-			isa(val[k], Dict) && (val[k] = Base.invokelatest(dict2nt, val[k]))
+			isa(val[k], AbstractDict) && (val[k] = Base.invokelatest(dict2nt, val[k]))
 			cmd *= add_opt(Dict(:DCW => val[k]), "", "E", [:DCW],
 			               (country="", name="", continent="=", pen=("+p", add_opt_pen), fill=("+g", add_opt_fill)))::String
 		elseif (isa(val[k], Tuple))
