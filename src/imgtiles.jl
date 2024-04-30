@@ -170,7 +170,27 @@ function mosaic(; pt_radius=6371007.0, provider="", zoom::Int=0, cache::String="
            dpi=dpi, date=date, verbose=verbose, d...)
 end
 
-function mosaic(lon, lat; pt_radius=6371007.0, provider="", zoom::Int=0, cache::String="",
+# This methos is mostly for calls from python's juliacall that used PyList (because dumb Py consider this a list: [1.0, 2.6])
+function mosaic(lon::AbstractVecOrMat, lat::AbstractVecOrMat; pt_radius=6371007.0, provider="", zoom::Int=0, cache::String="",
+                mapwidth=15, dpi=96, verbose::Int=0, date::String="", key::String="", kw...)
+	_lon::Vector{Float64}, _lat::Vector{Float64} = vec(Float64.(lon)), vec(Float64.(lat))
+	mosaic(_lon, _lat; pt_radius=pt_radius, provider=provider, zoom=zoom, cache=cache, mapwidth=mapwidth,
+           dpi=dpi, date=date, verbose=verbose, key=key, kw...)
+end
+function mosaic(lon::Tuple{<:Real, <:Real}, lat::Tuple{<:Real, <:Real}; pt_radius=6371007.0, provider="", zoom::Int=0, cache::String="",
+                mapwidth=15, dpi=96, verbose::Int=0, date::String="", key::String="", kw...)
+	_lon::Vector{Float64}, _lat::Vector{Float64} = Float64.([lon...]), Float64.([lat...])
+	mosaic(_lon, _lat; pt_radius=pt_radius, provider=provider, zoom=zoom, cache=cache, mapwidth=mapwidth,
+           dpi=dpi, date=date, verbose=verbose, key=key, kw...)
+end
+function mosaic(lon::Real, lat::Real; pt_radius=6371007.0, provider="", zoom::Int=0, cache::String="",
+                mapwidth=15, dpi=96, verbose::Int=0, date::String="", key::String="", kw...)
+	mosaic([Float64(lon)], [Float64(lat)]; pt_radius=pt_radius, provider=provider, zoom=zoom,
+           cache=cache, mapwidth=mapwidth, dpi=dpi, date=date, verbose=verbose, key=key, kw...)
+end
+
+# All methods above will land here and guarantied to have a unique input type for lon, lat.
+function mosaic(lon::Vector{<:Float64}, lat::Vector{<:Float64}; pt_radius=6371007.0, provider="", zoom::Int=0, cache::String="",
                 mapwidth=15, dpi=96, verbose::Int=0, date::String="", key::String="", kw...)
 	(length(lon) != length(lat)) && throw(error("lon & lat must be of the same size"))
 	d = Dict{Symbol,Any}(kw)
@@ -232,15 +252,17 @@ function mosaic(lon, lat; pt_radius=6371007.0, provider="", zoom::Int=0, cache::
 		latiso_mm = [minimum(latiso_mm), maximum(latiso_mm)]
 
 		# Calculate center so that the below MxN neighbors code case can be reused
-		x = div((x[1] + x[2]), 2)
-		y = div((y[1] + y[2]), 2)
+		_x = div((x[1] + x[2]), 2)
+		_y = div((y[1] + y[2]), 2)
+	else
+		_x, _y = x[1], y[1]
 	end
 
 	# ---------------------- CORE THING ---- Calculate the quadtree string
 	quadtree = ""
 	for i in 1:zoom-1
-		x, _rx = divrem(x, 2);		rx = Int(_rx) + 1
-		y, _ry = divrem(y, 2);		ry = Int(_ry) + 1
+		_x, _rx = divrem(_x, 2);		rx = Int(_rx) + 1
+		_y, _ry = divrem(_y, 2);		ry = Int(_ry) + 1
 		quadtree *= quadkey[ry, rx]
 	end
 	quadtree = quadtree[end:-1:1]
@@ -293,10 +315,10 @@ function mosaic(lon, lat; pt_radius=6371007.0, provider="", zoom::Int=0, cache::
 
 	(flatness != 0) && (pt_radius *= pt_radius / meridionalRad(pt_radius, flatness))
 
-	x, y = geog2merc(lon_mm, (flatness == 0) ? lat_mm : latiso_mm, pt_radius)
+	xm, ym = geog2merc(lon_mm, (flatness == 0) ? lat_mm : latiso_mm, pt_radius)
 
 	# -------- Return here if only the quadtree is needed ---------
-	quadonly && return quad_, decimal_adress, lon_mm, lat_mm, x, y
+	quadonly && return quad_, decimal_adress, lon_mm, lat_mm, xm, ym
 
 	# Return here if user wants a GMTdataset with the coordinates of the tiles
 	quadTiles && return quadbounds(quad_)[1]
@@ -315,8 +337,8 @@ function mosaic(lon, lat; pt_radius=6371007.0, provider="", zoom::Int=0, cache::
 		end
 	end
 
-	xx = collect(linspace(x[1], x[2], size(img,1)+1))
-	yy = collect(linspace(y[1], y[2], size(img,2)+1))
+	xx = collect(linspace(xm[1], xm[2], size(img,1)+1))
+	yy = collect(linspace(ym[1], ym[2], size(img,2)+1))
 	I = mat2img(img, x=xx, y=yy, proj4="+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +a=$pt_radius +b=$pt_radius +units=m +no_defs", layout="TRBa", is_transposed=true)
 
 	if (inMerc && isExact)		# Cut to the exact required limits
@@ -604,8 +626,8 @@ function getPixel(lon, lat, zoomL)
 	isa(y, VecOrMat) && (y = y[end:-1:1])			# WHY ?????
 	
 	if length(lon) == 1
-		xmm = [floor(x) floor(x) + 1] * 256			# [x_min x_max] pixel coords of the rectangle
-		ymm = [floor(y) floor(y) + 1] * 256
+		xmm = [floor.(x) floor.(x) .+ 1] * 256			# [x_min x_max] pixel coords of the rectangle
+		ymm = [floor.(y) floor.(y) .+ 1] * 256
 	else #(length(lon) == 2)						# lon, lat contain a rectangle limits
 		xmm = [floor(x[1]) floor(x[1]) + 1; floor(x[2]) floor(x[2]) + 1] * 256
 		ymm = [floor.(y) floor.(y) .+ 1] * 256

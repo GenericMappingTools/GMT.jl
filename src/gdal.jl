@@ -241,7 +241,7 @@ end
 
 function acare(ptr::Cstring, free::Bool)	# For string pointers, load them to String, and free them if we should.
 	maybe_throw()
-	(ptr == C_NULL) && return nothing
+	(ptr == C_NULL) && return ""
 	s = unsafe_string(ptr)
 	free && VSIFree(convert(pVoid, ptr))
 	return s

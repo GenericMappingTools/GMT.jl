@@ -64,6 +64,10 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 		cmd0 = ""
 	end
 
+	# Prevent that J=guess is applied to a non-geog grid/image
+	(arg1 !== nothing && (symb = is_in_dict(d, [:proj :projection])) !== nothing && (d[symb] == "guess" || d[symb] == :guess) && !isgeog(arg1)) &&
+		delete!(d, symb)
+
 	has_opt_B = (is_in_dict(d, [:B :frame :axis :axes]) !== nothing)
 	cmd::String, opt_B::String, opt_J::String, opt_R::String = parse_BJR(d, "", "", O, " -JX" * split(DEF_FIG_SIZE, '/')[1] * "/0")
 	(startswith(opt_J, " -JX") && !contains(opt_J, "/")) && (cmd = replace(cmd, opt_J => opt_J * "/0")) # When sub-regions
@@ -164,8 +168,8 @@ function common_shade(d::Dict, cmd::String, arg1, arg2, arg3, arg4, prog)
 	if ((val = find_in_dict(d, symbs, false)[1]) !== nothing)
 		if (!isa(val, GMTgrid))			# Uff, simple. Either a file name or a -A type modifier
 			if (isa(val, String) || isa(val, Symbol) || isa(val, Bool))
-				val = arg2str(val)
-				(val == "" || val == "default" || val == "auto") ? cmd *= " -I+a-45+nt1" : cmd *= " -I" * val
+				val_str::String = arg2str(val)
+				(val_str == "" || val_str == "default" || val_str == "auto") ? cmd *= " -I+a-45+nt1" : cmd *= " -I" * val_str
     		else
 				cmd = add_opt(d, cmd, "I", [:I :shading :shade :intensity],
 							  (auto = "_+", azim = "+a", azimuth = "+a", norm = "+n", default = "_+d+a-45+nt1"))

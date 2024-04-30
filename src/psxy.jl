@@ -550,8 +550,9 @@ function _helper_psxy_line(d::Dict, cmd::String, opt_W::String, is3D::Bool, args
 			arg1 = line2multiseg(args[1], is3D=true, color=cpt)
 		end
 	elseif (got_variable_lt)	# Otherwise just return without doing anything
-		if (got_color_line_grad)  arg1 = line2multiseg(args[1], is3D=is3D, lt=vec(val), color=cpt)
-		else                      arg1 = line2multiseg(args[1], is3D=is3D, lt=vec(val))
+		lt::Vector{Float64} = vec(Float64.(val))
+		if (got_color_line_grad)  arg1 = line2multiseg(args[1], is3D=is3D, lt=lt, color=cpt)
+		else                      arg1 = line2multiseg(args[1], is3D=is3D, lt=lt)
 		end
 	else
 		arg1 = args[1]			# Means this function call did nothing
@@ -606,7 +607,7 @@ function parse_opt_S(d::Dict, arg1, is3D::Bool=false)
 				# size=([3 10],[1 2])  => All numbers in arg1 <= 1 get size 3; >= 2 get size 10; in between interpolate
 				# size(fun,[]); size(fun,[],[])  => Same but using scaling function 'fun' instead of linear.
 				if (is1D)
-					n_args::Int = length(val)::Int
+					n_args::Int = length(val)
 					fun = isa(val[1], Function) ? val[1] : isa(val[1], Tuple) && isa(val[1][1], Function) ? val[1][1] : nothing
 					(fun == pow) && (exponent = val[1][2])
 					(n_args == 1 && fun !== nothing) && error("Cannot pass a Function and no size limits.")
@@ -667,7 +668,7 @@ end
 function parse_markerline(d::Dict, opt_ML::String, opt_Wmarker::String)::Tuple{String, String}
 	# Make this code into a function so that it can also be called from mk_styled_line!()
 	if ((val = find_in_dict(d, [:ml :markerline :MarkerLine])[1]) !== nothing)
-		if (isa(val, Tuple))           opt_ML = " -W" * parse_pen(val) # This can hold the pen, not extended atts
+		if (isa(val, Tuple))           opt_ML::String = " -W" * parse_pen(val) # This can hold the pen, not extended atts
 		elseif (isa(val, NamedTuple))  opt_ML = add_opt_pen(nt2dict(val), [:pen], "W")
 		else                           opt_ML = " -W" * arg2str(val)
 		end

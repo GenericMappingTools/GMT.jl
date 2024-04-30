@@ -5,7 +5,7 @@ nt2dict(nt::NamedTuple) = nt2dict(; nt...)
 nt2dict(; kw...) = Dict(kw)
 # Need the Symbol.() below in oder to work from PyCall
 # A darker an probably more efficient way is: ((; kw...) -> kw.data)(; d...) but breaks in PyCall
-dict2nt(d::Dict)::NamedTuple = NamedTuple{Tuple(Symbol.(keys(d)))}(values(d))
+dict2nt(d::AbstractDict)::NamedTuple = NamedTuple{Tuple(Symbol.(keys(d)))}(values(d))
 
 function find_in_dict(d::Dict, symbs::VMs, del::Bool=true, help_str::String="")
 	# See if D contains any of the symbols in SYMBS. If yes, return corresponding value
@@ -205,14 +205,24 @@ function merge_R_and_xyzlims(d::Dict, opt_R::String)::String
 	end
 	xlim, ylim, zlim = parse_lims(d, 'x'), parse_lims(d, 'y'), parse_lims(d, 'z')
 =#
+	function fetch_xyz_lims(d::Dict, symbs)::String
+		return ((val = find_in_dict(d, symbs, false)[1]) !== nothing) ? sprintf("%.15g/%.15g", val[1], val[2]) : ""
+	end
 
+	xlim::String = fetch_xyz_lims(d, [:xlim :xlims :xlimits])
+	ylim::String = fetch_xyz_lims(d, [:ylim :ylims :ylimits])
+	zlim::String = fetch_xyz_lims(d, [:zlim :zlims :zlimits])
+
+#=
 	xlim::String = ((val = find_in_dict(d, [:xlim :xlims :xlimits], false)[1]) !== nothing) ?
 	                sprintf("%.15g/%.15g", val[1], val[2]) : ""
 	ylim::String = ((val = find_in_dict(d, [:ylim :ylims :ylimits], false)[1]) !== nothing) ?
 	                sprintf("%.15g/%.15g", val[1], val[2]) : ""
 	zlim::String = ((val = find_in_dict(d, [:zlim :zlims :zlimits], false)[1]) !== nothing) ?
 	                sprintf("%.15g/%.15g", val[1], val[2]) : ""
+=#
 	(xlim == "" && ylim == "" && zlim == "") && return opt_R
+
 	function clear_xyzlims(d::Dict, xlim, ylim, zlim)
 		# When calling this fun, if they exist they were used too so must remove them
 		# In the other case - they exist but were not used - we keep them to be eventually used in read_data()
@@ -351,14 +361,14 @@ function opt_R2num(opt_R::String)::Vector{Float64}
 
 		kml::GMTdataset = gmt("gmt2kml " * opt_R, [0 0])		# for example, opt_R = " -RPT"
 		limits = zeros(4)
-		t::String = kml.text[28][12:end];	ind = findfirst("<", t)		# north
-		limits[4] = parse(Float64, t[1:(ind[1]-1)])
-		t = kml.text[29][12:end];	ind = findfirst("<", t)		# south
-		limits[3] = parse(Float64, t[1:(ind[1]-1)])
-		t = kml.text[30][11:end];	ind = findfirst("<", t)		# east
-		limits[2] = parse(Float64, t[1:(ind[1]-1)])
-		t = kml.text[31][11:end];	ind = findfirst("<", t)		# east
-		limits[1] = parse(Float64, t[1:(ind[1]-1)])
+		t::String = kml.text[28][12:end];	_ind::Int = findfirst("<", t)[1]		# north
+		limits[4] = parse(Float64, t[1:(_ind-1)])
+		t = kml.text[29][12:end];	_ind = findfirst("<", t)[1]		# south
+		limits[3] = parse(Float64, t[1:(_ind-1)])
+		t = kml.text[30][11:end];	_ind = findfirst("<", t)[1]		# east
+		limits[2] = parse(Float64, t[1:(_ind-1)])
+		t = kml.text[31][11:end];	_ind = findfirst("<", t)[1]		# east
+		limits[1] = parse(Float64, t[1:(_ind-1)])
 	else
 		limits = zeros(4)
 	end
@@ -401,7 +411,7 @@ function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bo
 
 	opt_J::String = "";		mnemo::Bool = false
 	if ((val = find_in_dict(d, [:J :proj :projection], del)[1]) !== nothing)
-		isa(val, Dict) && (val = Base.invokelatest(dict2nt,val))
+		isa(val, AbstractDict) && (val = Base.invokelatest(dict2nt,val))
 		opt_J, mnemo = build_opt_J(val)		# mnemo = true when the projection name used a mnemonic for the projection
 	elseif (IamModern[1] && ((val = is_in_dict(d, [:figscale :fig_scale :scale :figsize :fig_size])) === nothing))
 		# Subplots do not rely in the classic default mechanism
@@ -630,7 +640,7 @@ function check_flipaxes(d::Dict, width::AbstractString)
 	(width == "" || (val = find_in_dict(d, [:flipaxes :flip_axes])[1]) === nothing) && return width
 
 	swap_x = false;		swap_y = false;
-	isa(val, Dict) && (val = Base.invokelatest(dict2nt,val))
+	isa(val, AbstractDict) && (val = Base.invokelatest(dict2nt,val))
 	if (isa(val, NamedTuple))
 		for k in keys(val)
 			if     (k == :x)  swap_x = true
@@ -925,7 +935,7 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 		elseif (isa(val, Real))				# for example, B=0
 			_val = string(val)
 		end
-		isa(val, Dict) && (val = Base.invokelatest(dict2nt,val))
+		isa(val, AbstractDict) && (val = Base.invokelatest(dict2nt,val))
 		if (isa(val, NamedTuple))
 			_opt_B::String, what_B::Vector{Bool} = axis(val, d);	extra_parse = false
 			have_Bframe = what_B[2]
@@ -1659,7 +1669,7 @@ function parse_I(d::Dict, cmd::String, symbs, opt::String, del::Bool=true)::Stri
 	cmd::String = cmd
 
 	if ((val = find_in_dict(d, symbs, del)[1]) !== nothing)
-		isa(val, Dict) && (val = Base.invokelatest(dict2nt,val))
+		isa(val, AbstractDict) && (val = Base.invokelatest(dict2nt,val))
 		if (isa(val, NamedTuple))
 			x::String = "";	y::String = "";	u::String = "";	e = false
 			fn = fieldnames(typeof(val))
@@ -1697,7 +1707,7 @@ function parse_params(d::Dict, cmd::String, del::Bool=true)::String
 
 	((val = find_in_dict(d, [:conf :par :params], del)[1]) === nothing) && return cmd
 	_cmd::String = deepcopy(cmd)
-	isa(val, Dict) && (val = Base.invokelatest(dict2nt,val))
+	isa(val, AbstractDict) && (val = Base.invokelatest(dict2nt,val))
 	(!isa(val, NamedTuple) && !isa(val, Tuple)) && @warn("BAD usage: Parameter is neither a Tuple or a NamedTuple")
 	if (isa(val, NamedTuple))
 		fn = fieldnames(typeof(val))
@@ -1724,7 +1734,9 @@ function add_opt_pen(d::Dict, symbs::Union{Nothing, VMs}, opt::String="", del::B
 		out = opt * pen
 	else
 		if ((val = find_in_dict(d, symbs, del)[1]) !== nothing)
-			isa(val, Dict) && (val = Base.invokelatest(dict2nt, val))
+			val_str::String = isa(val, String) ? val : ""
+			val_smb::Symbol = isa(val, Symbol) ? val : Symbol()
+			isa(val, AbstractDict) && (val = Base.invokelatest(dict2nt, val))
 			if (isa(val, Tuple))				# Like this it can hold the pen, not extended atts
 				if (isa(val[1], NamedTuple))	# Then assume they are all NTs
 					for v in val
@@ -1755,7 +1767,7 @@ function add_opt_pen(d::Dict, symbs::Union{Nothing, VMs}, opt::String="", del::B
 					end
 				end
 			else
-				(val != :none && val != "none") && (out = opt * arg2str(val)::String)
+				(val_smb != :none && val_str != "none") && (out = opt * arg2str(val)::String)
 			end
 		end
 	end
@@ -2074,7 +2086,7 @@ function arg2str(arg::AbstractString, sep = '/')::String
 		return arg
 	end
 end
-function arg2str(arg, sep = '/')
+function arg2str(arg, sep = '/')::String
     isempty_(arg) && return ""
 	error("arg2str: argument 'arg' can only be a String, Symbol, Number, Array or a Tuple.")
 end
@@ -2185,9 +2197,9 @@ function prepare2geotif(d::Dict, cmd::Vector{String}, opt_T::String, O::Bool)::T
 			if (startswith(string(val)::String, "trans"))  opt_T = " -TG -W+k"
 			else                                           opt_T = string(" -TG -W+k", val)		# Whatever 'val' is
 			end
-		elseif (isa(val, NamedTuple) || isa(val, Dict))
+		elseif (isa(val, NamedTuple) || isa(val, AbstractDict))
 			# [+tdocname][+nlayername][+ofoldername][+aaltmode[alt]][+lminLOD/maxLOD][+fminfade/maxfade][+uURL]
-			isa(val, Dict) && (val = Base.invokelatest(dict2nt, val))
+			isa(val, AbstractDict) && (val = Base.invokelatest(dict2nt, val))
 			opt_T = add_opt(Base.invokelatest(Dict,:kml => val), " -TG -W+k", "", [:kml],
 							(title="+t", layer="+n", layername="+n", folder="+o", foldername="+o", altmode="+a", LOD=("+l", arg2str), fade=("+f", arg2str), URL="+u"))
 		end
@@ -2259,7 +2271,7 @@ function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, mapa=nothing, de
 	end
 
 	args::Vector{String} = Vector{String}(undef,1)
-	isa(val, Dict) && (val = Base.invokelatest(dict2nt, val))
+	isa(val, AbstractDict) && (val = Base.invokelatest(dict2nt, val))
 	if (isa(val, NamedTuple) && isa(mapa, NamedTuple))
 		args[1] = Base.invokelatest(add_opt, val, mapa, arg)
 	elseif (isa(val, Tuple) && length(val) > 1 && isa(val[1], NamedTuple))	# In fact, all val[i] -> NT
@@ -2276,7 +2288,7 @@ function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, mapa=nothing, de
 		elseif (isa(val, String))  args[1] = val
 		end
 	else
-		args[1] = arg2str(val)
+		args[1] = arg2str(val)::String
 		if isa(mapa, NamedTuple)		# Let aa=(bb=true,...) be addressed as aa=:bb
 			s = Symbol(args[1])
 			for k in keys(mapa)
@@ -2440,7 +2452,7 @@ function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, need_symb::Symbo
 	val, symb = find_in_dict(d, symbs, false)
 	if (val !== nothing)
 		to_slot = true
-		isa(val, Dict) && (val = Base.invokelatest(dict2nt, val))
+		isa(val, AbstractDict) && (val = Base.invokelatest(dict2nt, val))
 		if (isa(val, Tuple) && length(val) == 2)
 			# This is crazzy trickery to accept also (e.g) C=(pratt,"200k") instead of C=(pts=pratt,dist="200k")
 			d[symb] = Base.invokelatest(dict2nt, Dict(need_symb => val[1], keys(nt_opts)[1] => val[2]))	# Need to patch also the input option
@@ -2570,7 +2582,7 @@ function add_opt_fill(cmd::String, d::Dict, symbs::VMs, opt="", del::Bool=true):
 	# Deal with the area fill attributes option. Normally, -G
 	(SHOW_KWARGS[1]) && return print_kwarg_opts(symbs, "NamedTuple | Tuple | Array | String | Number")
 	((val = find_in_dict(d, symbs, del)[1]) === nothing) && return cmd
-	isa(val, Dict) && (val = Base.invokelatest(dict2nt, val))
+	isa(val, AbstractDict) && (val = Base.invokelatest(dict2nt, val))
 	(val == true && symbs == [:G :fill]) && (val="#0072BD")		# Let fill=true mean a default color
 	(val == "" && symbs == [:G :fill]) && return cmd			# Let fill="" mean no fill (handy for proggy reasons)
 	(opt != "") && (opt = string(" -", opt))
@@ -2699,7 +2711,7 @@ function add_opt_module(d::Dict)::Vector{String}
 		r::String = ""
 		if (haskey(d, symb))
 			val = d[symb]
-			isa(val, Dict) && (val = Base.invokelatest(dict2nt, val))
+			isa(val, AbstractDict) && (val = Base.invokelatest(dict2nt, val))
 			if (isa(val, NamedTuple))
 				nt::NamedTuple = val
 				if     (symb == :coast)     r = coast!(; Vd=2, nt...)
@@ -2861,7 +2873,7 @@ function axis(D::Dict=Dict(); x::Bool=false, y::Bool=false, z::Bool=false, secon
 	opt::String = " -B"
 	is3D = (is_in_dict(D, [:JZ :Jz :zscale :zsize]) !== nothing) ? true : false
 	if ((val = find_in_dict(d, [:axes :frame])[1]) !== nothing)
-		isa(val, Dict) && (val = Base.invokelatest(dict2nt, val))
+		isa(val, AbstractDict) && (val = Base.invokelatest(dict2nt, val))
 		o::String = helper0_axes(val)
 		opt = (o == "full") ? opt * "WSEN" : (o == "none") ? opt : opt * o
 	end
@@ -3230,8 +3242,9 @@ function vector_attrib(; kwargs...)::String
 			else	error("Shape string can be only: 'triang', 'arrow' or 'V'")
 			end
 		elseif (isa(d[:shape], Real))
-			(d[:shape] < -2 || d[:shape] > 2) && error("Numeric shape code must be in the [-2 2] interval.")
-			cmd = string(cmd, "+h", d[:shape])
+			shp::Float64 = d[:shape]
+			(shp < -2 || shp > 2) && error("Numeric shape code must be in the [-2 2] interval.")
+			cmd = string(cmd, "+h", shp)
 		else
 			error("Bad data type for the 'shape' option")
 		end
@@ -3264,7 +3277,7 @@ function vector4_attrib(; kwargs...)::String
 	(haskey(d, :norm)) && (cmd = string(cmd, "n", d[:norm]))
 
 	if ((val = find_in_dict(d, [:head])[1]) !== nothing)
-		if (isa(val, NamedTuple) || isa(val, Dict))
+		if (isa(val, NamedTuple) || isa(val, AbstractDict))
 			ha::String = "0.075c";	hl::String = "0.3c";	hw::String = "0.25c"
 			dh = isa(val, NamedTuple) ? nt2dict(val) : val
 			haskey(dh, :arrowwidth) && (ha = string(dh[:arrowwidth]))
@@ -4334,15 +4347,6 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 	#(GMTver < v"6.5" && isa(P, GMTps)) && gmt_restart()
 	return P
 end
-
-#= --------------------------------------------------------------------------------------------------
-function do_the_plot(cmd::String, O::Bool, args...)
-	P = gmt(cmd, args...)
-	(CTRL.limits[4] == 0 && CTRL.limits[5] == 0 && CTRL.limits[6] == 0) && return P
-	if (CTRL.limits[4] != 0)
-	end
-end
-=#
 
 # --------------------------------------------------------------------------------------------------
 function reverse_plot_axes!(cmd::Vector{String})
