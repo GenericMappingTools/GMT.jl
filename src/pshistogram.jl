@@ -189,6 +189,12 @@ function histogram_helper(cmd0::String, arg1; first=true, kwargs...)
 		return cmd, opt_R_					# opt_R_ will be needed further down in vline
 	end
 
+	# If we have a RGB image, plot 3 histograms and end right now
+	if (isa(arg1, GMTimage{UInt8, 3}))
+		(arg1.layout != "" && arg1.layout[3] == 'B') && return three_histos(d, arg1, cmd, gmt_proggy, O, opt_T, opt_Z, opt_B, opt_R, opt_J)
+		@warn("Three histograms of pixel interleaving of RGB images not yet implemented.")
+	end
+
 	if (isa(arg1, GMTimage) || is_subarray_uint)				# If it's an image with no bin option, default to bin=1
 		do_clip = (isa(arg1[1], UInt16) && (val = find_in_dict(d, [:full_histo])[1]) === nothing) ? true : false
 		(do_zoom && !do_auto) && (val_auto = nothing)			# I.e. 'zoom' sets also the auto mode
@@ -274,6 +280,36 @@ function histogram_helper(cmd0::String, arg1; first=true, kwargs...)
 	end
 	out = (out1 !== nothing && out2 !== nothing) ? [out1;out2] : ((out1 !== nothing) ? out1 : out2)
 
+end
+
+# ---------------------------------------------------------------------------------------------------
+function three_histos(d::Dict, I::GMTimage{UInt8, 3}, cmd, gmt_proggy, O, opt_T, opt_Z, opt_B, opt_R, opt_J)
+	fmt_ = FMT[1];		show_ = false;	savefig_ = nothing
+	haskey(d, :show) && (show_ = (d[:show] != 0))				# Backup the :show val
+	d[:show] = false
+	haskey(d, :fmt) && (fmt_ = d[:fmt]; delete!(d, :fmt))		# Backup the :fmt val
+	((val = find_in_dict(d, [:savefig :figname :name])[1]) !== nothing) && (savefig_ = val)
+
+	s = split(opt_J, '/')
+	H = (CTRL.limits[8] == 0.0) ? 5.0 : (parse(Float64, isletter(s[2][end]) ? s[2][1:end-1] : s[2]) / 3.0)
+	cmd = replace(cmd, opt_J => s[1] * "/$H")
+	_cmd = gmt_proggy * cmd				# In any case we need this
+	(length(opt_R) > 5) && (_cmd = frame_opaque(_cmd, opt_B, opt_R, opt_J))		# No -t in frame
+	_cmd = fish_bg(d, [_cmd])[1]					# See if we have a "pre-command" (background img)
+
+	hst, _cmd = loc_histo(view(I, :, :, 1), _cmd, opt_T, opt_Z)
+	_cmd = replace(_cmd, "-G#0072BD" => "-Gred")
+	finish_PS_module(d, [_cmd], "", true, O, true, hst);
+	O = true
+	hst, = loc_histo(view(I, :, :, 2), _cmd, "", "")
+	_cmd = replace(_cmd, "-Gred" => "-Ggreen")
+	(opt_B == DEF_FIG_AXES_BAK) && (_cmd = replace(_cmd, opt_B => " -Baf -BWsen"))
+	finish_PS_module(d, [_cmd * " -Y$(H)c"], "", true, O, true, hst)
+	hst, = loc_histo(view(I, :, :, 3), _cmd, "", "")
+	_cmd = replace(_cmd, "-Ggreen" => "-Gblue")
+
+	(d[:show] = show_; d[:fmt] = fmt_; d[:savefig] = savefig_)		# 
+	out = finish_PS_module(d, [_cmd * " -Y$(H)c"], "", true, O, true, hst)
 end
 
 # ---------------------------------------------------------------------------------------------------
