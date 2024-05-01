@@ -116,6 +116,7 @@ histogram(I16, auto=true);
 histogram(I16, zoom=true, Vd=dbg2);
 histogram(I16, S=1, Vd=dbg2);
 histogram(I16, I=:O);
+histogram(rand(UInt8, 4,4,3))
 G = GMT.peaks();
 histogram(G, zoom=true, Vd=dbg2);
 histogram(G, T=0.3, Vd=dbg2);
