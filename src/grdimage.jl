@@ -53,6 +53,10 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 	arg4 = nothing		# For the r,g,b + intensity case
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 	common_insert_R!(d, O, cmd0, arg1)			# Set -R in 'd' out of grid/images (with coords) if limits was not used
+	
+	# Remote files with no -R are all global. Set CTRL.limits so we can guess the projection.
+	(!haskey(d, :R) && any(startswith.(cmd0, ["@earth_", "@mars_", "@pluto_", "@moon_", "@venus_"]))) &&
+		(CTRL.limits[1:4] = CTRL.limits[7:10] = [-180, 180, -90, 90])
 
 	if (arg1 === nothing && haskey(d, :R) && guess_T_from_ext(cmd0) == " -Ti")
 		_opt_R = d[:R]
