@@ -137,8 +137,10 @@ function gmtread(_fname::String; kwargs...)
 
 	# These are tricky gals, but we know who they are so use that knowledge.
 	if (opt_T == "")
-		if (startswith(fname, "@earth_day") || startswith(fname, "@earth_night"))                opt_T = " -Ti"
-		elseif ((fname[1] == '@' && contains(fname, "_relief")) || startswith(fname, "@srtm_"))  opt_T = " -Tg"
+		if (startswith(fname, "@earth_day") || startswith(fname, "@earth_night"))
+			opt_T = " -Ti"
+		elseif ((fname[1] == '@' && any(contains.(fname, ["_relief", "_age", "_dist", "_faa", "_gebco", "_geoid", "_mag", "_mask", "_mdt", "_mss", "_synbath", "_wdmam"]))) || startswith(fname, "@srtm_"))
+			opt_T = " -Tg"
 		end
 		# To shut up a f annoying GMT warning.
 		(opt_T == " -Tg") && startswith(fname, "@earth_") && !endswith(fname, "_g") && !endswith(fname, "_p") && (fname *= "_g")

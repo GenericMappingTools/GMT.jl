@@ -4724,6 +4724,8 @@ function check_remote_cpt(cmd0::String)
 	elseif (occursin("earth_age_", cmd0))    out = cpt_path * "/earth_age.cpt"
 	elseif (occursin("earth_faa_", cmd0))    out = cpt_path * "/earth_faa.cpt"
 	elseif (occursin("earth_vgg_", cmd0))    out = cpt_path * "/earth_vgg.cpt"
+	elseif (occursin("earth_mdt_", cmd0))    out = cpt_path * "/earth_mdt.cpt"
+	elseif (occursin("earth_mss_", cmd0))    out = cpt_path * "/earth_mss.cpt"
 	end
 	return out
 end

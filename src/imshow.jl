@@ -48,11 +48,14 @@ function imshow(arg1, x::AbstractVector{Float64}=Float64[], y::AbstractVector{Fl
 	end
 
 	is_image, call_img, call_grd = false, false, false
+	Gg = nothing
 	if (isa(arg1, String))		# If it's string it has to be a file name. Check extension to see if it is an image
 		ext = splitext(arg1)[2]
 		if (ext == "" && arg1[1] != '@' && !isfile(arg1))			# A remote file, assumed to be a grid.
 			Gg = mat2grid(arg1, x, y)
 			call_grd = true
+		elseif ((arg1[1] == '@' && any(contains.(arg1, ["_relief", "_age", "_dist", "_faa", "_gebco", "_geoid", "_mag", "_mask", "_mdt", "_mss", "_synbath", "_wdmam"]))) || startswith(arg1, "@srtm_"))
+			Gg = arg1
 		else
 			ext = lowercase(ext)
 			(ext == ".jpg" || ext == ".tif" || ext == ".tiff" || ext == ".png" || ext == ".bmp" || ext == ".gif") && (is_image = true)
@@ -83,7 +86,7 @@ function imshow(arg1, x::AbstractVector{Float64}=Float64[], y::AbstractVector{Fl
 	if (is_image)
 		grdimage(arg1; show=see, kw...)
 	else
-		if (isa(G, String))		# Guess also if call grdview or grdimage 
+		if (isa(Gg, String))		# Guess also if call grdview or grdimage 
 			if (get(kw, :JZ, 0) != 0 || get(kw, :Jz, 0) != 0 || get(kw, :zscale, 0) != 0 || get(kw, :zsize, 0) != 0)
 				(get(kw, :Q, "") == "" && get(kw, :surf, "") == "" && get(kw, :surftype, "") == "") && (kw = (kw..., Q="s"))
 				grdview(arg1; show=see, kw...)				# String when fname is @xxxx
