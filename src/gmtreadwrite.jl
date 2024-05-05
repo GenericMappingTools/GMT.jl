@@ -270,24 +270,20 @@ end
 # ---------------------------------------------------------------------------------
 function helper_set_colnames!(o::GDtype, corder::Vector{Int}=Int[])
 	# This is used both by gmtread() and inside read_data()
-	if (isa(o, GMTdataset))
-		isempty(o.comment) && return nothing
-		ncs = size(o,2)			# Next line checks if the comment is comma separated
-		hfs = (count(i->(i == ','), o.comment[1]) >= ncs-1) ? strip.(split(o.comment[1], ',')) : split(o.comment[1])
-		col_text = (!isempty(o.text) && length(hfs) > ncs) ? hfs[ncs+1] : ""
+	function inside_worker(D, corder)
+		isempty(D.comment) && return nothing
+		ncs = size(D,2)			# Next line checks if the comment is comma separated
+		for k = 1:numel(D.comment)		# We may have many empty entries in the 'comment' field. So search beyond the first too.
+			hfs = (count(i->(i == ','), D.comment[k]) >= ncs-1) ? strip.(split(D.comment[k], ',')) : split(D.comment[k])
+			!isempty(hfs) && break
+		end
+		col_text = (!isempty(D.text) && length(hfs) > ncs) ? hfs[ncs+1] : ""
 		(!isempty(corder)) && (hfs = hfs[corder])
-		o.colnames = (length(hfs) > ncs) ? string.(hfs)[1:ncs] : string.(hfs)
-		(col_text != "") && (append!(o.colnames, [col_text]))
-	else
-		isempty(o[1].comment) && return nothing
-		hfs, ncs = split(o[1].comment[1]), size(o[1],2)
-		(length(hfs) == 1) && (hfs = split(o[1].comment[1], ','))	# Try also the comma separator
-		col_text = (!isempty(o[1].text) && length(hfs) > ncs) ? hfs[ncs+1] : ""
-		(!isempty(corder)) && (hfs = hfs[corder])
-		o[1].colnames = (length(hfs) > ncs) ? string.(hfs)[1:ncs] : string.(hfs)
-		#(!isempty(corder)) && (o[1].colnames = o[1].colnames[corder])
-		(col_text != "") && (append!(o[1].colnames, [col_text]))
+		D.colnames = (length(hfs) > ncs) ? string.(hfs)[1:ncs] : string.(hfs)
+		(col_text != "") && (append!(D.colnames, [col_text]))
 	end
+
+	(isa(o, GMTdataset)) ? inside_worker(o, corder) : inside_worker(o[1], corder)
 	return nothing
 end
 
@@ -298,6 +294,20 @@ function file_has_time!(fname::String, D::GDtype, corder::Vector{Int}=Int[])
 	# 'corder' is a vector of ints filled with column orders specified by -i. If no -i that it is empty
 
 	startswith(fname, "http") && return nothing			# We can't "open(fname)" beloow
+	
+	# When col n has date and col n+1 has time, change the col date to a date-time column
+	function join_date_time_cols!(D::GMTdataset, n)
+		nada = zero(eltype(D))
+		@inbounds for k = 1:size(D,1)
+			D[k,n-1] += D[k,n] * 3600.0		# Multiply only by 60*60 because GMT 'thinks' hh:mm:ss is an angle and not a time
+			D[k,n] = nada
+		end
+		return nothing
+	end
+	function join_date_time_cols!(D::Vector{<:GMTdataset}, n)
+		for i = 1:numel(D)  join_date_time_cols!(D[i], n)  end 
+	end
+
 	#line1 = split(collect(Iterators.take(eachline(fname), 1))[1])	# Read first line and cut it in tokens
 	isone = isa(D, GMTdataset) ? true : false
 	if (isone && isempty(D.colnames)) || (!isone && isempty(D[1].colnames))		# If no colnames set yet
@@ -311,13 +321,14 @@ function file_has_time!(fname::String, D::GDtype, corder::Vector{Int}=Int[])
 	iter = eachline(fid)
 	try
 		for it in iter
-			(n_it > 10 || Tc != "") && break			# Means that previous iteration found it.
+			(n_it > 30 || Tc != "") && break			# Means that previous iteration found it.
 			n_commas = count_chars(it)
 			use_commas = (n_cols > 1) && (n_commas >= n_cols-1)		# To see if we split on spaces or on commas.
 			line1 = (use_commas) ? split(it, ',') : split(it)
 			n_it += 1			# Counter to not let this go on infinetely
 			(isempty(line1) || contains(">#!%;", line1[1][1])) && continue
 			loop_inds = isempty(corder) ? (1:n_cols) : corder
+			(length(line1) != length(loop_inds)) && continue
 			for k in loop_inds
 				# Time cols may come in forms like [-]yyyy-mm-dd[T| [hh:mm:ss.sss]], so to find them we seek for
 				# '-' chars in the middle of strings that we KNOW have been converted to numbers. The shit that is
@@ -327,6 +338,9 @@ function file_has_time!(fname::String, D::GDtype, corder::Vector{Int}=Int[])
 					ind_t = (!isempty(corder)) ? findfirst(k .== corder) : k	# When -i was used 'corder' has new col order
 					Tc = (Tc == "") ? "$ind_t" : Tc * ",$ind_t"			# Accept more than one time columns
 					(isone) ? (D.colnames[ind_t] = Ts) : (D[1].colnames[ind_t] = Ts)
+					if (Tc != "" && k < loop_inds[end] && length(findall(":", line1[k+1])) == 2)
+						join_date_time_cols!(D, k+1)
+					end
 				end
 			end
 			(Tc != "") && ((isone) ? (D.attrib["Timecol"] = Tc) : (D[1].attrib["Timecol"] = Tc))
@@ -335,6 +349,7 @@ function file_has_time!(fname::String, D::GDtype, corder::Vector{Int}=Int[])
 		isone ? (D.colnames = String[]) : [D[k].colnames = String[] for k = 1:lastindex(D)]
 		@warn("Failed to parse file '$fname' for file_has_time!(). Error was:\n $err")
 	end
+	isone ? (length(D.colnames) < n_cols && (D.colnames = String[])) : (length(D[1].colnames) < n_cols && (D[1].colnames = String[]))
 	close(fid)
 	return nothing
 end

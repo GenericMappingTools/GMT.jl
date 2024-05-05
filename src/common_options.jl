@@ -2726,6 +2726,7 @@ function add_opt_module(d::Dict)::Vector{String}
 					r = r[1:findfirst(" -K", r)[1]];	# Remove the "-K -O >> ..."
 					r = replace(r, " -R -J" => "")
 					r = "clip " * strtok(r)[2]			# Make sure the prog name is 'clip' and not 'psclip'
+				#elseif (symb == :inset)		# 
 				else
 					!(symb in CTRL.callable) && error("Nested Fun call $symb not in the callable nested functions list")
 					_d = nt2dict(nt)
@@ -2743,7 +2744,7 @@ function add_opt_module(d::Dict)::Vector{String}
 				elseif (symb == :colorbar) r = colorbar!(pos=(anchor="MR",), B="af", Vd=2)
 				elseif (symb == :logo)     r = logo!(Vd=2)
 				end
-			elseif (symb == :colorbar && (isa(val, String) || isa(val, Symbol)))
+			elseif (symb == :colorbar && (isa(val, StrSymb)))
 				t::Char = lowercase(string(val)[1])		# Accept "Top, Bot, Left" but default to Right
 				anc = (t == 't') ? "TC" : (t == 'b' ? "BC" : (t == 'l' ? "ML" : "MR"))
 				r = colorbar!(pos=(anchor=anc,), B="af", Vd=2)
@@ -2756,6 +2757,21 @@ function add_opt_module(d::Dict)::Vector{String}
 	end
 	return out
 end
+
+# ---------------------------------------------------------------------------------------------------
+#=
+function fake_inset(cmd; kw...)
+	gmtbegin()
+	gmt("basemap " * CTRL.pocket_R[1] * CTRL.pocket_J[1] * " -Blrbt")
+	API = unsafe_load(convert(Ptr{GMTAPI_CTRL}, G_API[1]))
+	session_dir = unsafe_string(API.gwf_dir)
+	rm(session_dir * filesep * "gmt_0.ps-")
+	touch(session_dir * filesep * "gmt_0.ps-")
+	inset(kw...)
+	inset(:end)
+	gmtend()
+end
+=#
 
 # ---------------------------------------------------------------------------------------------------
 function get_color(val)::String
