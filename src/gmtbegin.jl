@@ -42,7 +42,7 @@ function gmtend(arg=nothing; show=false, verbose=nothing)
 end
  
 """
-	function gmtfig(name::String; fmt=nothing, opts="")
+	gmtfig(name::String; fmt=nothing, opts="")
 
 Set attributes for the current modern mode session figure.
 - 'name' name of the new (or resumed) figure. It may contain an extension.
