@@ -74,30 +74,6 @@ does not need explicit coordinates to place the text.
   - `ref:` Pass in a reference GMTdataset from which we'll take the georeference info as well as `attrib` and `colnames`
   - `txtcol` or `textcol`: Vector{String} with text to add into the .text field. Warning: no testing is done
      to check if ``length(txtcol) == size(mat,1)`` as it must.
-
-###   D = mat2ds(mat::Vector{<:AbstractMatrix}; hdr=String[], kwargs...)::Vector{GMTdataset}
-
-Create a multi-segment GMTdataset (a vector of GMTdataset) from matrices passed in a vector-of-matrices `mat`.
-The matrices elements of `mat` do not need to have the same number of rows. Think on this as specifying groups
-of lines/points each sharing the same settings. KWarg options of this form are more limited in number than
-in the general case, but can take the form of a Vector{Vector}, Vector or scalars.
-In the former case (Vector{Vector}) the length of each Vector[i] must equal to the number of rows of each mat[i].
-
-  - `hdr`: optional String vector with either one or `length(mat)` multi-segment headers.
-  - `pen`:  A full pen setting. A string or an array of strings with `length = length(mat)` with pen settings.
-  - `lc` or `linecolor` or `color`: optional color or array of strings/symbols with color names/values.
-  - `linethick` or `lt`: for selecting different line thicknesses. Works like `color`, but should be 
-     a vector of numbers, or just a single number that is then applied to all lines.
-  - `ls` or `linestyle`:  Line style. A string or an array of strings with `length = length(mat)` with line styles.
-  - `front`:  Front Line style. A string or an array of strings with `length = length(mat)` with front line styles.
-  - `fill`:  Optional string array (or a String of comma separated color names, or a Tuple of color names)
-             with color names or array of "patterns".
-  - `fillalpha`: When `fill` option is used, we can set the transparency of filled polygons or symbols with this
-     option that takes in an array (vec or 1-row matrix) with numeric values between [0-1] or ]1-100],
-     where 100 (or 1) means full transparency.
-
-### Example:
-  D = mat2ds([rand(6,3), rand(4,3), rand(3,3)], fill=[[:red], [:green], [:blue]], fillalpha=[0.5,0.7,0.8])
 """
 mat2ds(mat::Nothing) = mat		# Method to simplify life and let call mat2ds on a nothing
 mat2ds(mat::GDtype)  = mat		# Method to simplify life and let call mat2ds on a already GMTdataset
@@ -133,6 +109,31 @@ end
 mat2ds(X; kw...) = tabletypes2ds(X, ((val = find_in_dict(KW(kw), [:interp])[1]) !== nothing) ? interp=val : interp=0)
 
 # ---------------------------------------------------------------------------------------------------
+"""
+    D = mat2ds(mat::Vector{<:AbstractMatrix}; hdr=String[], kwargs...)::Vector{GMTdataset}
+
+Create a multi-segment GMTdataset (a vector of GMTdataset) from matrices passed in a vector-of-matrices `mat`.
+The matrices elements of `mat` do not need to have the same number of rows. Think on this as specifying groups
+of lines/points each sharing the same settings. KWarg options of this form are more limited in number than
+in the general case, but can take the form of a Vector{Vector}, Vector or scalars.
+In the former case (Vector{Vector}) the length of each Vector[i] must equal to the number of rows of each mat[i].
+
+  - `hdr`: optional String vector with either one or `length(mat)` multi-segment headers.
+  - `pen`:  A full pen setting. A string or an array of strings with `length = length(mat)` with pen settings.
+  - `lc` or `linecolor` or `color`: optional color or array of strings/symbols with color names/values.
+  - `linethick` or `lt`: for selecting different line thicknesses. Works like `color`, but should be 
+     a vector of numbers, or just a single number that is then applied to all lines.
+  - `ls` or `linestyle`:  Line style. A string or an array of strings with `length = length(mat)` with line styles.
+  - `front`:  Front Line style. A string or an array of strings with `length = length(mat)` with front line styles.
+  - `fill`:  Optional string array (or a String of comma separated color names, or a Tuple of color names)
+             with color names or array of "patterns".
+  - `fillalpha`: When `fill` option is used, we can set the transparency of filled polygons or symbols with this
+     option that takes in an array (vec or 1-row matrix) with numeric values between [0-1] or ]1-100],
+     where 100 (or 1) means full transparency.
+
+### Example:
+  D = mat2ds([rand(6,3), rand(4,3), rand(3,3)], fill=[[:red], [:green], [:blue]], fillalpha=[0.5,0.7,0.8])
+"""
 function mat2ds(mat::Vector{<:AbstractMatrix}; hdr=String[], kwargs...)
 	d = KW(kwargs)
 	D::Vector{GMTdataset} = Vector{GMTdataset}(undef, length(mat))
@@ -184,6 +185,15 @@ function helper_set_crs(d)
 	(prj == "" && wkt == "" && epsg != 0) && (prj = epsg2proj(epsg))
 	return prj, wkt, epsg, ref_attrib, ref_coln
 end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    D = mat2ds(mat::Array{T,N}, D::GMTdataset)
+
+Take a 2D `mat` array and convert it into a GMTdataset. Pass in a reference GMTdataset from which we'll take
+the georeference info as well as `attrib` and `colnames`.
+"""
+mat2ds(mat::Array{T,N}, ref::GMTdataset) where {T,N} = mat2ds(mat; ref=ref)
 
 # ---------------------------------------------------------------------------------------------------
 function mat2ds(mat::Array{T,N}, txt::Union{String,Vector{String}}=String[]; hdr=String[], geom=0, kwargs...) where {T,N}
@@ -397,10 +407,14 @@ function mat2ds(mat::Array{T,N}, txt::Union{String,Vector{String}}=String[]; hdr
 end
 
 # ---------------------------------------------------------------------------------------------------
+"""
+    D = mat2ds(D::GMTdataset, inds::Tuple) -> GMTdataset
+
+Cut a GMTdataset D with the indices in INDS but updating the colnames and the Timecol info.
+INDS is a Tuple of 2 with ranges in rows and columns. Ex: (:, 1:3) or (:, [1,4,7]), etc...
+Attention, if original had attributes other than 'Timeinfo' there is no guarentie that they remain correct. 
+"""
 function mat2ds(D::GMTdataset, inds)::GMTdataset
-	# Cut a GMTdataset D with the indices in INDS but updating the colnames and the Timecol info.
-	# INDS is a Tuple of 2 with ranges in rows and columns. Ex: (:, 1:3) or (:, [1,4,7]), etc...
-	# Attention, if original had attributes other than 'Timeinfo' there is no guarentie that they remain correct. 
 	(length(inds) != ndims(D)) && error("\tNumber of GMTdataset dimensions and indices components must be the same.\n")
 	_coln = !isempty(D.colnames) ? D.colnames[inds[2]] : String[]
 	(!isempty(_coln) && (typeof(inds[1]) == Colon) && length(D.colnames) > size(D,2)) && append!(_coln, [D.colnames[end]])	# Append text colname if exists
@@ -560,9 +574,11 @@ function ds2ds(D::GMTdataset; is3D::Bool=false, kwargs...)::Vector{<:GMTdataset}
 	# So far only for internal use but may grow in function of needs
 	d = KW(kwargs)
 
-	multi = 'r'		# Default split by rows
-	if ((val = find_in_dict(d, [:multi :multicol], false)[1]) !== nothing)  multi = 'c'  end		# Then by columns
-	_fill = (multi == 'r') ? helper_ds_fill(d) : String[]	# In the columns case all is dealt in mat2ds.
+	#multi = 'r'		# Default split by rows
+	#if ((val = find_in_dict(d, [:multi :multicol], false)[1]) !== nothing)  multi = 'c'  end		# Then by columns
+	# Split by rows or columns
+	multi = ((find_in_dict(d, [:multi :multicol], false)[1]) !== nothing) ? 'c' : 'r'
+	_fill = (multi == 'r') ? helper_ds_fill(d) : String[]		# In the columns case all is dealt in mat2ds.
 
 	n_colors = length(_fill)
 	if ((val = find_in_dict(d, [:color_wrap])[1]) !== nothing)	# color_wrap is a kind of private option for bar-stack
