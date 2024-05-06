@@ -38,6 +38,9 @@ Specify data type (with *type*=true, e.g. `img=true`).  Choose among:
   outputs and 3D array in row major order. Remember that the ``layout`` member of the GMTgrid type informs
   about memory layout.
 
+- `stride`: When reading table data via GMT (but not GDAL), this option allows subsampling the data. Provide a
+  number to be used as stride for the rows. A `stride=2` will read every other row.
+
 - `layer`| `layers` | `band` | `bands`: A string, a number or an Array. When files are multiband or nc
   files with 3D or 4D arrays, we access them via these keywords. `layer=4` reads the fourth layer (or band)
   of the file. The file can be a grid or an image. If it is a grid, layer can be a scalar (to read 3D arrays)
@@ -170,7 +173,12 @@ function gmtread(_fname::String; kwargs...)
 	end
 
 	if (opt_T != " -To")			# All others but OGR
-		(proggy == "read ") && (cmd *= opt_T)
+		#(proggy == "read ") && (cmd *= opt_T)
+		if (proggy == "read ")
+			((val = find_in_dict(d, [:stride])[1]) !== nothing) && (cmd *= " -Em" * arg2str(val)::String; proggy = "gmtconvert ")
+			cmd *= opt_T
+		end
+
 		(dbg_print_cmd(d, cmd) !== nothing) && return proggy * fname * cmd
 		o = (proggy == "gdalread") ? gdalread(fname, gdopts) : gmt(proggy * fname * cmd)
 		(isempty(o)) && (@warn("\tfile \"$fname\" is empty or has no data after the header.\n"); return GMTdataset())
