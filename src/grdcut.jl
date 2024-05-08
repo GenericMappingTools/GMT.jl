@@ -113,6 +113,13 @@ function crop(arg::GItype; kw...)
 	lims[3], lims[4] = max(lims[3], arg.range[3]), min(lims[4], arg.range[4])
 	row_dim, col_dim = (arg.layout == "" || arg.layout[2] == 'C') ? (1,2) : (2,1)	# If RowMajor the array is disguised 
 
+	function rearrange_ranges(pix_x, pix_y)
+		# Rearrange the cropping limits if the layout is Rowmajor and/or Topdown
+		if (arg.layout[1] == 'T')  pix_y = [size(arg, row_dim)-pix_y[2]+1, size(arg, row_dim)-pix_y[1]+1]	end
+		if (arg.layout[2] == 'R')  pix_x, pix_y = pix_y, pix_x  end
+		pix_x, pix_y
+	end
+
 	# So far we are not able to crop row-wise array disguised as a column-wise one. So resort to GDAL
 	if (arg.layout != "" && arg.layout[2] == 'R')
 		proj, wkt, epsg = deepcopy(arg.proj4), deepcopy(arg.wkt), copy(arg.epsg)	# Save these because gdaltranslate may f change them
@@ -124,17 +131,13 @@ function crop(arg::GItype; kw...)
 		end
 		G === nothing && return nothing, Int[], Int[]		# Happened with the colorzones!
 		G.proj4, G.wkt, G.epsg = proj, wkt, epsg
-		return G, Int[], Int[]
+		lims = G.range[1:4]					# Because the gdaltranslate above adjusted the input limits (opt_R)
+		pix_x, pix_y = axes2pix([lims[1] lims[3]; lims[2] lims[4]], size(arg), [arg.x[1], arg.x[end]], [arg.y[1], arg.y[end]], arg.registration, arg.layout)
+		pix_x, pix_y = rearrange_ranges(pix_x, pix_y)
+		return G, pix_x, pix_y
 	end
 
 	pix_x, pix_y = axes2pix([lims[1] lims[3]; lims[2] lims[4]], size(arg), [arg.x[1], arg.x[end]], [arg.y[1], arg.y[end]], arg.registration, arg.layout)
-
-	function rearrange_ranges(pix_x, pix_y)
-		# Rearrange the cropping limits if the layout is Rowmajor and/or Topdown
-		if (arg.layout[1] == 'T')  pix_y = [size(arg, row_dim)-pix_y[2]+1, size(arg, row_dim)-pix_y[1]+1]	end
-		if (arg.layout[2] == 'R')  pix_x, pix_y = pix_y, pix_x  end
-		pix_x, pix_y
-	end
 
 	x, y = arg.x[pix_x[1]:pix_x[2]+arg.registration], arg.y[pix_y[1]:pix_y[2]+arg.registration]
 	#x, y = arg.x[pix_x[1]:pix_x[2]], arg.y[pix_y[1]:pix_y[2]]
