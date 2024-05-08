@@ -939,7 +939,7 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage)::Ptr{GMT_IMAGE}
 	GMT_Set_AllocMode(API, GMT_IS_IMAGE, I)		# Tell GMT that memory is external
 	h.z_min = Img.range[5]						# Set the z_min, z_max
 	h.z_max = Img.range[6]
-	im_layout = (length(Img.layout) == 4) ? Img.layout : Img.layout * "a"
+	im_layout = (length(Img.layout) == 4) ? Img.layout : (length(Img.layout) == 3) ? Img.layout * "a" : Img.layout
 	h.mem_layout = map(UInt8, (im_layout...,))
 	if (Img.proj4 != "")    h.ProjRefPROJ4 = pointer(Img.proj4)  end
 	if (Img.wkt != "")      h.ProjRefWKT   = pointer(Img.wkt)    end

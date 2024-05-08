@@ -55,7 +55,7 @@ function rasterzones!(GI::GItype, shapes::GDtype, fun::Function; isRaster=true, 
 		t = (band > 0) ? skipnan(GI_[mask, band]) : skipnan(GI_[mask])
 		return (eltype(GI_) <: Integer) ? round(eltype(GI_), fun(t)) : fun(t)
 	end
-	function mask_GI(_GI, pix_x, pix_y, mask, n_layers) # Apply the mask to a Grid/Image
+	function mask_GI!(GI, _GI, pix_x, pix_y, mask, n_layers) # Apply the mask to a Grid/Image
 		if (n_layers == 1)
 			_GI[mask] .= maskit(_GI, mask, 0)
 			GI[pix_y[1]:pix_y[2], pix_x[1]:pix_x[2]] = _GI
@@ -83,7 +83,7 @@ function rasterzones!(GI::GItype, shapes::GDtype, fun::Function; isRaster=true, 
 			_GI, pix_x, pix_y = GMT.crop(GI, region=Dt[1].ds_bbox)
 			((mask = maskgdal(Dt, size(_GI, col_dim), size(_GI, row_dim), touches=touches, layout=layout)) === nothing) && continue
 
-			if (isRaster)  GI = mask_GI(_GI, pix_x, pix_y, mask, n_layers)
+			if (isRaster)  mask_GI!(GI, _GI, pix_x, pix_y, mask, n_layers)
 			else           for n = 1:n_layers   mat[k,n] = maskit(_GI, mask, n-1)   end
 			end
 		end
@@ -93,15 +93,16 @@ function rasterzones!(GI::GItype, shapes::GDtype, fun::Function; isRaster=true, 
 		for k = 1:numel(shapes)
 			!within(shapes[k].bbox, GI.range) && continue		# Catch any exterior polygon before it errors
 			_GI, pix_x, pix_y = GMT.crop(GI, region=shapes[k].bbox)
+			_GI === nothing && continue  	# Skip this polygon if it's completely outside the grid or just too small
 			((mask = maskgdal(shapes[k], size(_GI, col_dim), size(_GI, row_dim), touches=touches, layout=layout)) === nothing) && continue
 
-			if (isRaster)  GI = mask_GI(_GI, pix_x, pix_y, mask, n_layers)
+			if (isRaster)  mask_GI!(GI, _GI, pix_x, pix_y, mask, n_layers)
 			else           for n = 1:n_layers   mat[k,n] = maskit(_GI, mask, n-1)   end
 			end
 		end
 		names = String[]					# We need something to return
 	end
-	return isRaster ? nothing : mat, names
+	return isRaster ? nothing : (mat, names)
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -197,7 +198,7 @@ is large (think Russia size) because even at a moderately resultion it can imply
    the polygon area in question.
 - `img`: the image from which the stats (`fun`) of each color for each polygon will be computed.
 - `url`: In case the `img` option is not used, pass the Web Map Server URL (see the `wmsinfo` and `wmsread` functions)
-   from where the the images covering the BoundingBox of each polygon will be downloaded. Warning, this is a much slower
+   from where the images covering the BoundingBox of each polygon will be downloaded. Warning, this is a much slower
    method but potentially useful when the images to download risk to be very big. 
 - `layer`: When the `url` option is used this one becomes mandatory and represents the layer number or layer name of
    interest from those provided by the WMS service. That is, both forms are allowed: `layer=3` or
@@ -259,7 +260,7 @@ function colorzones!(shapes::GDtype, fun::Function; img::GMTimage=nothing, url::
 		shapes[k].header = (append) ? shapes[k].header * opt_G : opt_G
 		(url != "" && rem(k, 10) == 0) && (println("Done ",k, " of ", length(shapes)); print(stdout, "\e[", 1, "A", "\e[1G"))
 	end
-	shapes
+	return nothing
 end
 
 """
