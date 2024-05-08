@@ -131,7 +131,7 @@ function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int
 	else
 		O = mat2img(mat; hdr=hdr, proj4=prj, noconv=true, names=desc, is_transposed=is_tp)
 		got_fill_val && (O.nodata = fill_val)
-		O.layout = (layout == "") ? "TRBa" : layout * "a"
+		O.layout = (layout == "") ? "TRBa" : (layout[end] != 'a' ? layout * "a" : layout)
 		if (n_colors > 0)
 			O.colormap = colormap;	O.n_colors = n_colors
 			((nodata = Gdal.getnodatavalue(Gdal.getband(dataset))) !== nothing) && (O.nodata = nodata)
