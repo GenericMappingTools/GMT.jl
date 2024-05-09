@@ -304,8 +304,8 @@ Gdal.GDALDestroyDriverManager()
 	fillnodata!(G);
 	@test GMT.isgeog(4326) == true
 
-	gmtwrite("9px.tif", mat2img(rand(UInt8, 3,3)))
-	polygonize("9px.tif");
+	gmtwrite("9px.tif", mat2img(round.(UInt8,round.(rand(6,6))*255)))
+	polygonize("9px.tif", nmin=2, sort=true);
 
 	gdaldrivers(:vec, out=true);
 end

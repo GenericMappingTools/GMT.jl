@@ -609,10 +609,10 @@ function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})::GDtype
 	D::GMT_DATASET = unsafe_load(convert(Ptr{GMT_DATASET}, object))
 
 	# This is for the particular case of the DCW countries that have a myriad of small segments and no Attributes
-	min_pts = (get(POSTMAN, "minpts", "") != "") ? parse(Int, POSTMAN["minpts"]) - 1 : 0
-	(min_pts > 0) && delete!(POSTMAN, "minpts")
-	DCWnames = (get(POSTMAN, "DCWnames", "") != "") ? true : false		# If DCW country names will turn into attribs
-	(DCWnames) && delete!(POSTMAN, "DCWnames")
+	min_pts = (get(POSTMAN[1], "minpts", "") != "") ? parse(Int, POSTMAN[1]["minpts"]) - 1 : 0
+	(min_pts > 0) && delete!(POSTMAN[1], "minpts")
+	DCWnames = (get(POSTMAN[1], "DCWnames", "") != "") ? true : false		# If DCW country names will turn into attribs
+	(DCWnames) && delete!(POSTMAN[1], "DCWnames")
 
 	seg_out = 0;
 	T::Vector{Ptr{GMT_DATATABLE}} = unsafe_wrap(Array, D.table, D.n_tables)
