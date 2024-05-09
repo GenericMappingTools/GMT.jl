@@ -49,14 +49,14 @@ end
 # These functions root in a translation of the Matlab code "url2image" written by me (Joaquim Luis)
 # back in 2008 and included in Mirone.
 """
-    I = mosaic(lon, lat; pt_radius=6371007.0, provider="", zoom::Int=0, cache::String="",
+    I = mosaic(lon, lat; pt_radius=6378137.0, provider="", zoom::Int=0, cache::String="",
                mapwidth=15, dpi=96, verbose::Int=0, kw...)
 
 Get image tiles from a web map tiles provider for given longitude, latitude coordinates.
 
 ### Arguments
 - `lon` & `lat`:
-  - `lon, lat` two scalars with the coordinates of region of interest center. To completly define
+  - `lon, lat`: two scalars with the coordinates of region of interest center. To completly define
     the image area see the `neighbors` or `mosaic` option below.
   - `lon, lat` are two elements vector or matrix with the region's [lon\\_min, lon\\_max], [lat\\_min, lat\\_max].
   - Instead of two arguments, pass just one containing a GMTdataset obtained with the ``geocoder`` function.
@@ -70,12 +70,12 @@ Get image tiles from a web map tiles provider for given longitude, latitude coor
     ``earthregions`` arguments. _e.g._ ``region="IT"`` is a valid option and will get the tiles
     needed to build an image of Italy.
 
-- `pt_radius`: The planetary radius. Defaults to Earth's WGS84 authalic radius (6371007 m).
+- `pt_radius`: The planetary radius. Defaults to Earth's WGS84 equatorial radius (6378137 m).
 - `provider`: Tile provider name. Currently available options are (but for more details see the docs of the
   `getprovider` function, *i.e.* ``? getprovider``):
   - "Bing" (the default), "Google", "OSM", "Esri" or a custom provider.
   - A `Provider` type from the ``TileProviders.jl`` package. You must consult the documentation of that package
-	for more details on how to choose a *provider*.
+    for more details on how to choose a *provider*.
 - `zoom`: Zoom level (0 for automatic). A number between 0 and ~19. The maximum is provider and area dependent.
   If `zoom=0`, the zoom level is computed automatically based on the `mapwidth` and `dpi` options.
 - `cache`: Full name of the the cache directory where to save the downloaded tiles. If empty, a cache
@@ -118,7 +118,7 @@ D = mosaic(region=(-10, -8, 37, 39), zoom=9, mesh=true);
 viz(D, coast=true)
 ```
 """
-function mosaic(D::GMTdataset; pt_radius=6371007.0, provider="", zoom::Int=0, cache::String="",
+function mosaic(D::GMTdataset; pt_radius=6378137.0, provider="", zoom::Int=0, cache::String="",
                 mapwidth=15, dpi=96, date::String="", verbose::Int=0, kw...)
 	if (find_in_kwargs(kw, [:bb :BB :bbox :BoundingBox])[1] !== nothing)
 		lon = D.ds_bbox[1:2];	lat = D.ds_bbox[3:4]
@@ -135,7 +135,7 @@ I = mosaic(GI::Union{GMTgrid, GMTimage}; ...)
 Same as above but the `lon` & `lat` are extracted from the `GI` header. The grid or image `GI` must have set a valid
 projection, and it doesn't need to be in geographic coordinates. Coordinates in other reference systems will be converted to geogs.
 """
-function mosaic(GI::GItype; pt_radius=6371007.0, provider="", zoom::Int=0, cache::String="",
+function mosaic(GI::GItype; pt_radius=6378137.0, provider="", zoom::Int=0, cache::String="",
                 mapwidth=15, dpi=96, date::String="", verbose::Int=0, kw...)
 	((prj = getproj(GI, proj4=true)) == "") && error("To use the 'mosaic' function with a grid or image this has to have a valid projection")
 	if isgeog(prj)
@@ -160,7 +160,7 @@ julia> I = mosaic(region=(91,110,6,22))		# zoom level is computed automatically
 viz(I, coast=true)
 ```
 """
-function mosaic(; pt_radius=6371007.0, provider="", zoom::Int=0, cache::String="",
+function mosaic(; pt_radius=6378137.0, provider="", zoom::Int=0, cache::String="",
                 mapwidth=15, dpi=96, date::String="", verbose::Int=0, kw...)
 	d = KW(kw)
 	((opt_R = parse_R(d, "")[1]) == "") && error("To use the 'mosaic' function without the 'lon & lat' arguments you need to specify the 'region' option.")
@@ -171,26 +171,26 @@ function mosaic(; pt_radius=6371007.0, provider="", zoom::Int=0, cache::String="
 end
 
 # This methos is mostly for calls from python's juliacall that used PyList (because dumb Py consider this a list: [1.0, 2.6])
-function mosaic(lon::AbstractVecOrMat, lat::AbstractVecOrMat; pt_radius=6371007.0, provider="", zoom::Int=0, cache::String="",
+function mosaic(lon::AbstractVecOrMat, lat::AbstractVecOrMat; pt_radius=6378137.0, provider="", zoom::Int=0, cache::String="",
                 mapwidth=15, dpi=96, verbose::Int=0, date::String="", key::String="", kw...)
 	_lon::Vector{Float64}, _lat::Vector{Float64} = vec(Float64.(lon)), vec(Float64.(lat))
 	mosaic(_lon, _lat; pt_radius=pt_radius, provider=provider, zoom=zoom, cache=cache, mapwidth=mapwidth,
            dpi=dpi, date=date, verbose=verbose, key=key, kw...)
 end
-function mosaic(lon::Tuple{<:Real, <:Real}, lat::Tuple{<:Real, <:Real}; pt_radius=6371007.0, provider="", zoom::Int=0, cache::String="",
+function mosaic(lon::Tuple{<:Real, <:Real}, lat::Tuple{<:Real, <:Real}; pt_radius=6378137.0, provider="", zoom::Int=0, cache::String="",
                 mapwidth=15, dpi=96, verbose::Int=0, date::String="", key::String="", kw...)
 	_lon::Vector{Float64}, _lat::Vector{Float64} = Float64.([lon...]), Float64.([lat...])
 	mosaic(_lon, _lat; pt_radius=pt_radius, provider=provider, zoom=zoom, cache=cache, mapwidth=mapwidth,
            dpi=dpi, date=date, verbose=verbose, key=key, kw...)
 end
-function mosaic(lon::Real, lat::Real; pt_radius=6371007.0, provider="", zoom::Int=0, cache::String="",
+function mosaic(lon::Real, lat::Real; pt_radius=6378137.0, provider="", zoom::Int=0, cache::String="",
                 mapwidth=15, dpi=96, verbose::Int=0, date::String="", key::String="", kw...)
 	mosaic([Float64(lon)], [Float64(lat)]; pt_radius=pt_radius, provider=provider, zoom=zoom,
            cache=cache, mapwidth=mapwidth, dpi=dpi, date=date, verbose=verbose, key=key, kw...)
 end
 
 # All methods above will land here and guarantied to have a unique input type for lon, lat.
-function mosaic(lon::Vector{<:Float64}, lat::Vector{<:Float64}; pt_radius=6371007.0, provider="", zoom::Int=0, cache::String="",
+function mosaic(lon::Vector{<:Float64}, lat::Vector{<:Float64}; pt_radius=6378137.0, provider="", zoom::Int=0, cache::String="",
                 mapwidth=15, dpi=96, verbose::Int=0, date::String="", key::String="", kw...)
 	(length(lon) != length(lat)) && throw(error("lon & lat must be of the same size"))
 	d = Dict{Symbol,Any}(kw)
@@ -346,7 +346,7 @@ function mosaic(lon::Vector{<:Float64}, lat::Vector{<:Float64}; pt_radius=637100
 		I = grdcut(I, R=(mat[1,1], mat[2,1], mat[1,2], mat[2,2]))
 	elseif (!inMerc)			# That is, if project to Geogs
 		gdwopts = ["-t_srs","+proj=latlong +datum=WGS84", "-r","cubic"]
-		isExact && append!(gdwopts, ["-te"], ["$(lon[1])"], ["$(lat_orig[1])"], ["$(lon[2])"], ["$(lat_orig[2]))"])
+		isExact && append!(gdwopts, ["-te"], ["$(lon[1])"], ["$(lat_orig[1])"], ["$(lon[2])"], ["$(lat_orig[2])"])
 		I = gdalwarp(I, gdwopts)
 	end
 
