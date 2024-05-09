@@ -94,10 +94,12 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 
 	cmd = parse_E_coast(d, [:E, :DCW], "")		# Process first to avoid warning about "guess"
 	if (cmd != "")								# Check for a minimum of points that segments must have
-		((val = find_in_dict(d, [:minpts])[1]) !== nothing) && (POSTMAN["minpts"] = string(val)::String)
+		if ((val = find_in_dict(d, [:minpts])[1]) !== nothing)  POSTMAN[1]["minpts"] = string(val)::String
+		elseif (get(POSTMAN[1], "minpts", "") != "")            delete!(POSTMAN[1], "minpts")
+		end
 	end
 	cmd = add_opt(d, cmd, "M", [:M :dump])
-	contains(cmd, " -M") && (POSTMAN["DCWnames"] = "s")		# When dumping, we want to add the country name as attribute
+	contains(cmd, " -M") && (POSTMAN[1]["DCWnames"] = "s")		# When dumping, we want to add the country name as attribute
 	if (!occursin("-E+l", cmd) && !occursin("-E+L", cmd))
 		cmd, = parse_R(d, cmd, O)
 		if (!contains(cmd, " -M"))				# If Dump no -R & -B

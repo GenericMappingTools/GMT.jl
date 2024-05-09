@@ -55,7 +55,7 @@ end
 Fill selected raster regions by interpolation from the edges.
 
 ### Parameters
-- `indata`:  Input data. It can be a file name, a GMTgrid or GMTimage object.
+- `data`:  Input data. It can be a file name, a GMTgrid or GMTimage object.
 - `nodata`: The nodata value that will be used to fill the regions. Otherwise use the `nodata` attribute of `indata`
    if it exists, or NaN if none of the above were set.
 - `kwargs`:
@@ -79,7 +79,7 @@ end
 Fill selected raster regions by interpolation from the edges.
 
 ### Parameters
-- `indata`:  Input data. The file name of a grid or image that can be read with `gmtread`.
+- `data`:  Input data. The file name of a grid or image that can be read with `gmtread`.
 - `nodata`: The nodata value that will be used to fill the regions. Otherwise use the `nodata` attribute of `indata`
    if it exists, or NaN if none of the above were set.
 - `kwargs`:
@@ -103,17 +103,33 @@ end
 This method, which uses the GDAL GDALPolygonize function, creates vector polygons for all connected regions
 of pixels in the raster sharing a common pixel/cell value. The input may be a grid or an image. This function can
 be rather slow as it picks lots of polygons in pixels with slightly different values at transitions between colors.
+Its natural use is to digitize masks images.
+
+### Parameters
+- `data`: Input data. It can be a GMTgrid or GMTimage object.
+- `kwargs`:
+  - `min, nmin, npixels or ncells`: The minimum number of cells/pixels for a polygon to be retained.
+    Default is 1. This can be set to filter out small polygons.
+  - `sort`: If true, will sort polygons by pixel count. Default is the order that GDAL decides internally.
 """
 function polygonize(data::GItype; gdataset=nothing, kwargs...)
 	d = GMT.KW(kwargs)
 	(gdataset === nothing) && (d[:gdataset] = true)
-	#(eltype(data) <: AbstractFloat)) && (d[:float] = true)	# To know which GDAL function to use.
+	if ((val = find_in_dict(d, [:min :nmin :npixels :ncells])[1]) !== nothing)
+		# Compute the cell area but ignoring eventual projection of if data is in geogs.
+		cell_area = Float64(val)::Float64 * data.inc[1] * data.inc[2];		s_area = string(cell_area)
+		isempty(GMT.POSTMAN[1]) ? (GMT.POSTMAN[1] = Dict("min_polygon_area" => s_area)) : GMT.POSTMAN[1]["min_polygon_area"] = s_area
+	end
 	o = helper_run_GDAL_fun(gdalpolygonize, data, "", String[], "", d...)
-	if (gdataset === nothing)		# Should be doing this for GDAL objects too but need to learn how to.
+	if (gdataset === nothing)						# Should be doing this for GDAL objects too but need to learn how to.
+		GMT.POSTMAN[1]["polygonize"] = "y"			# To inform gd2gmt() that it should check if last Di is the whole area.
+		(find_in_dict(d, [:sort])[1] !== nothing) && (GMT.POSTMAN[1]["sort_polygons"] = "y")
 		prj = getproj(data)
 		D = gd2gmt(o);		isa(D, Vector) ? (D[1].proj4 = prj) : (D.proj4 = prj)
+		delete!(GMT.POSTMAN[1], "min_polygon_area")		# In case it was set above
 		return D
 	end
+	delete!(GMT.POSTMAN[1], "min_polygon_area")
 	o
 end
 function polygonize(data::String; kwargs...)

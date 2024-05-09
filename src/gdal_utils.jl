@@ -254,7 +254,9 @@ function gd2gmt(dataset::Gdal.AbstractDataset)
 	# This method is for OGR formats only
 	(Gdal.OGRGetDriverByName(Gdal.shortname(getdriver(dataset))) == C_NULL) && return gd2gmt(dataset; pad=0)
 
-	D, ds = Vector{GMTdataset}(undef, Gdal.ngeom(dataset)), 1
+	min_area = (get(POSTMAN[1], "min_polygon_area", "") != "") ? parse(Float64, POSTMAN[1]["min_polygon_area"]) : 0.0
+	D, ds, get_area = Vector{GMTdataset}(undef, Gdal.ngeom(dataset)), 1, false
+	(get(POSTMAN[1], "sort_polygons", "") != "") && (polyg_area = zeros(length(D));		get_area = true)
 	proj = ""		# Fk local vars inside for 
 	for k = 1:Gdal.nlayer(dataset)
 		layer = getlayer(dataset, k-1)
@@ -267,8 +269,10 @@ function gd2gmt(dataset::Gdal.AbstractDataset)
 
 			for j = 0:Gdal.ngeom(feature)-1
 				geom = Gdal.getgeom(feature, j)
+				(min_area > 0.0 && geomarea(geom) < min_area) && continue
 				_D::GDtype = gd2gmt(geom, proj)
 				gt = Gdal.getgeomtype(geom)
+				get_area && (polyg_area[ds] = geomarea(geom))	# This area will NOT be what is expected if geom is known to be geog
 				# Maybe when there nlayers > 1 or other cases, starting allocated size is not enough
 				len_D = isa(_D, GMTdataset) ? 1 : length(_D)
 				(len_D + ds >= length(D)) && append!(D, Vector{GMTdataset}(undef, round(Int, 0.5 * length(D))))
@@ -293,6 +297,17 @@ function gd2gmt(dataset::Gdal.AbstractDataset)
 	D[1].colnames = startswith(proj, "+proj=longlat") ? ["lon","lat", ["z$i" for i=1:size(D[1].data,2)-2]...] :
 	                ["x","y", ["z$i" for i=1:size(D[1].data,2)-2]...]	
 	set_dsBB!(D)				# Compute and set the global BoundingBox for this dataset
+	if (get(POSTMAN[1], "polygonize", "") != "") && isapprox(D[1].ds_bbox, D[end].bbox)	# Last one is often an error (the whole area)
+		pop!(D)
+		delete!(GMT.POSTMAN[1], "polygonize")
+		ds -= 1
+	end
+	if (get(POSTMAN[1], "sort_polygons", "") != "")		# polygonize requested that the polygons go out in growing order
+		(polyg_area = deleteat!(polyg_area, ds:length(polyg_area)))
+		ind = sortperm(polyg_area, rev=true)
+		D = D[ind]
+		delete!(GMT.POSTMAN[1], "sort_polygons")
+	end
 	return (length(D) == 1) ? D[1] : D
 end
 

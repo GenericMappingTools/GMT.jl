@@ -363,14 +363,14 @@ function file_has_time!(fname::String, D::GDtype, corder::Vector{Int}=Int[])
 end
 	
 # ---------------------------------------------------------------------------------
-function guess_T_from_ext(fname::String, write::Bool=false)::String
+function guess_T_from_ext(fname::String; write::Bool=false, text_only::Bool=false)::String
 	# Guess the -T option from a couple of known extensions
 	fn, ext = splitext(fname)
 	if (ext == ".zip")			# Accept ogr zipped files, e.g., *.shp.zip
 		((out = guess_T_from_ext(fn)) == " -To") && return " -Toz"
 	end
 
-	_kml = (!write) ? "kml" : "*"	# This because on write we dont want to check for kml (let it be written as text)
+	_kml = (!write || !text_only) ? "kml" : "*"		# When it's text_only, we are writting an output gmt2kml
 
 	(length(ext) > 8 || occursin("?", ext)) && return (occursin("?", ext)) ? " -Tg" : "" # A SUBDATASET encoded fname?
 	ext = lowercase(ext[2:end])
@@ -380,7 +380,7 @@ function guess_T_from_ext(fname::String, write::Bool=false)::String
 	if     (findfirst(isequal(ext), ["grd", "nc", "nc=gd"])  !== nothing)  out = " -Tg";
 	elseif (findfirst(isequal(ext), ["dat", "txt", "csv"])   !== nothing)  out = " -Td";
 	elseif (findfirst(isequal(ext), ["jpg", "jpeg", "png", "bmp", "webp"]) 	!== nothing)  out = " -Ti";
-	elseif (findfirst(isequal(ext), ["arrow", "shp", _kml, "json", "feather", "geojson", "gmt", "gpkg", "gpx", "gml", "parquet"]) !== nothing)  out = " -To";
+	elseif (findfirst(isequal(ext), ["arrow", "shp", _kml, "kmz", "json", "feather", "geojson", "gmt", "gpkg", "gpx", "gml", "parquet"]) !== nothing)  out = " -To";
 	elseif (ext == "jp2") ressurectGDAL(); out = (findfirst("Type=UInt", gdalinfo(fname)) !== nothing) ? " -Ti" : " -Tg"
 	elseif (ext == "cpt")  out = " -Tc";
 	elseif (ext == "ps" || ext == "eps")  out = " -Tp";
@@ -524,8 +524,11 @@ function gmtwrite(fname::AbstractString, data; kwargs...)
 	(dbg_print_cmd(d, cmd) !== nothing) && return "gmtwrite " * fname * cmd
 
 	(opt_T == " -Tg" && isa(data, GMTgrid) && (data.scale != 1 || data.offset != 0)) && (fname *= "+s$(data.scale)+o$(data.offset)")
-	if (guess_T_from_ext(fname, true) == " -To")  gdalwrite(fname, data)		# Write OGR data
-	else                                          gmt("write " * fname * cmd, data)
+	text_only = isa(data, GMTdataset) && isempty(data.data)
+	if (guess_T_from_ext(fname, write=true, text_only=text_only) == " -To")
+		gdalwrite(fname, data)		# Write OGR data
+	else
+		gmt("write " * fname * cmd, data)
 	end
 	(opt_T == " -Ti") && transpcmap!(data, false)		# Reset original cmap (in case it was changed)
 	return nothing
