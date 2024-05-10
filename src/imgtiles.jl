@@ -118,12 +118,12 @@ D = mosaic(region=(-10, -8, 37, 39), zoom=9, mesh=true);
 viz(D, coast=true)
 ```
 """
-function mosaic(D::GMTdataset; pt_radius=6378137.0, provider="", zoom::Int=0, cache::String="",
+function mosaic(D::GDtype; pt_radius=6378137.0, provider="", zoom::Int=0, cache::String="",
                 mapwidth=15, dpi=96, date::String="", verbose::Int=0, kw...)
 	if (find_in_kwargs(kw, [:bb :BB :bbox :BoundingBox])[1] !== nothing)
-		lon = D.ds_bbox[1:2];	lat = D.ds_bbox[3:4]
+		lon, lat = isa(D, GMTdataset) ? (D.ds_bbox[1:2], D.ds_bbox[3:4]) : (D[1].ds_bbox[1:2], D[1].ds_bbox[3:4])
 	else
-		lon, lat = D.data[1,1], D.data[1,2]
+		lon, lat = isa(D, GMTdataset) ? (D.data[1,1], D.data[1,2]) : (D[1].data[1,1], D[1].data[1,2])
 	end
 	mosaic(lon, lat; pt_radius=pt_radius, provider=provider, zoom=zoom, cache=cache, mapwidth=mapwidth,
            dpi=dpi, date=date, verbose=verbose, kw...)
@@ -221,7 +221,7 @@ function mosaic(lon::Vector{<:Float64}, lat::Vector{<:Float64}; pt_radius=637813
 	inMerc    = ((val = find_in_dict(d, [:merc :mercator])[1]) !== nothing) ? true : false
 	isExact   = ((val = find_in_dict(d, [:loose :loose_bounds])[1]) === nothing) ? true : false
 	(isExact && length(lon) == 1) && (isExact = false)
-	neighbors::Matrix{Float64} = ((val = find_in_dict(d, [:N :neighbors :mosaic])[1]) === nothing) ? [1.0;;] : isa(val, Int) ? ones(Int64(val),Int64(val)) : ones(val[1],val[2])
+	neighbors::Matrix{Float64} = ((val = find_in_dict(d, [:N :neighbors :neighbours :mosaic])[1]) === nothing) ? [1.0;;] : isa(val, Int) ? ones(Int64(val),Int64(val)) : ones(val[1],val[2])
 	(length(neighbors) > 1 && length(lon) > 1) && error("The 'neighbor' option is only for single point queries.")
 	delete!(d, [[:bb], [:BB], [:bbox], [:BoundingBox]])		# Remove this valid ones befor checking for mistakes.
 	(length(d) > 0) && println("\n\tWarning: the following options were not consumed in mosaic => ", keys(d),"\n")
