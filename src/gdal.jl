@@ -461,6 +461,7 @@ OGR_Fld_Set(a1, a2, a3, a4, a5, a6) =
 	acare(ccall((:OGR_Fld_Set, libgdal), Cvoid, (pVoid, Cstring, UInt32, Cint, Cint, UInt32), a1, a2, a3, a4, a5, a6))
 
 OGR_G_Area(a1) = acare(ccall((:OGR_G_Area, libgdal), Cdouble, (pVoid,), a1))
+OGR_G_GeodesicArea(a1) = acare(ccall((:OGR_G_GeodesicArea, libgdal), Cdouble, (pVoid,), a1))
 OGR_G_ApproximateArcAngles(x0, y0, z0, r1, r2, rot, a1, a2, inc) = 
 	acare(ccall((:OGR_G_ApproximateArcAngles, libgdal), pVoid, (Cdouble,Cdouble,Cdouble,Cdouble,Cdouble,Cdouble,Cdouble,Cdouble,Cdouble), x0,y0,z0,r1,r2,rot,a1,a2,inc))
 OGR_G_AddGeometry(a1, a2) = acare(ccall((:OGR_G_AddGeometry, libgdal), Cint, (pVoid, pVoid), a1, a2))
@@ -2517,8 +2518,8 @@ end
 		importWKT, importEPSG, gdalinfo, gdalwarp, gdaldem, gdaltranslate, gdalgrid, gdalvectortranslate, ogr2ogr,
 		gdalrasterize, gdalbuildvrt, readraster, setgeotransform!, setproj!, destroy, arcellipse, arccircle,
 		delaunay, dither, buffer, centroid, intersection, intersects, polyunion, fromWKT, fillnodata!, fillnodata,
-		concavehull, convexhull, difference, symdifference, distance, geomarea, pointalongline, polygonize, simplify,
-		boundary, crosses, disjoint, equals, envelope, envelope3d, geomlength, overlaps, touches, within,
+		concavehull, convexhull, difference, symdifference, distance, geomarea, geodesicarea, pointalongline, polygonize,
+		simplify, boundary, crosses, disjoint, equals, envelope, envelope3d, geomlength, overlaps, touches, within,
 		wkbUnknown, wkbPoint, wkbPointZ, wkbLineString, wkbPolygon, wkbMultiPoint, wkbMultiPointZ, wkbMultiLineString,
 		wkbMultiPolygon, wkbGeometryCollection, wkbPoint25D, wkbLineString25D, wkbPolygon25D, wkbMultiPoint25D,
 		wkbMultiLineString25D, wkbMultiPolygon25D, wkbGeometryCollection25D
