@@ -444,18 +444,19 @@ function rescale(A::String, low=0.0, up=1.0; inputmin=nothing, inputmax=nothing,
 	GI = gmtread(A)
 	rescale(GI, low, up, inputmin=inputmin, inputmax=inputmax, stretch=stretch, type=type)
 end
-function rescale(A::AbstractArray, low=0.0, up=1.0; inputmin=nothing, inputmax=nothing, stretch=false, type=nothing)
+function rescale(A::AbstractArray, _low=0.0, _up=1.0; inputmin=nothing, inputmax=nothing, stretch=false, type=nothing)
 	(type !== nothing && (!isa(type, DataType) || !(type <: Unsigned))) && error("The 'type' variable must be an Unsigned DataType")
 	((inputmin !== nothing || inputmax !== nothing) && stretch == 1) && @warn("The `stretch` option overrules `inputmin|max`.")
+	low::Float64, up::Float64 = _low, _up
 	if (stretch == 1)
 		inputmin, inputmax = histogram(A, getauto=true)
 	elseif (isa(stretch, Tuple) || (isvector(stretch) && length(stretch) == 2))
 		inputmin, inputmax = stretch[1], stretch[2]
 	end
-	(inputmin === nothing) && (mi = (isa(A, GItype)) ? A.range[5] : minimum_nan(A))
-	(inputmax === nothing) && (ma = (isa(A, GItype)) ? A.range[6] : maximum_nan(A))
-	_inmin = convert(Float64, (inputmin === nothing) ? mi : inputmin)
-	_inmax = convert(Float64, (inputmax === nothing) ? ma : inputmax)
+	(inputmin === nothing) && (mi::Float64 = (isa(A, GItype)) ? A.range[5] : minimum_nan(A))
+	(inputmax === nothing) && (ma::Float64 = (isa(A, GItype)) ? A.range[6] : maximum_nan(A))
+	_inmin::Float64 = convert(Float64, (inputmin === nothing) ? mi : inputmin)
+	_inmax::Float64 = convert(Float64, (inputmax === nothing) ? ma : inputmax)
 	d1 = _inmax - _inmin
 	(d1 <= 0.0) && error("Stretch range has inputmin > inputmax.")
 	d2 = up - low
@@ -467,12 +468,17 @@ function rescale(A::AbstractArray, low=0.0, up=1.0; inputmin=nothing, inputmax=n
 	end
 	if (type !== nothing)
 		(low != 0.0 || up != 1.0) && (@warn("When converting to Unsigned must have a=0, b=1"); low=0.0; up=1.0)
-		o = Array{type}(undef, size(A))
-		sc  *= typemax(type)
-		low *= typemax(type)
+		o = (type == UInt8) ? Array{UInt8}(undef, size(A)) : Array{UInt16}(undef, size(A))
+		_tmax::Float64 = (type == UInt8) ? typemax(UInt8) : typemax(UInt16)
+		sc  *= _tmax
+		low *= _tmax
 		if (have_nans)
 			if (inputmin === nothing && inputmax === nothing)	# Faster case. No IFs in loop
-				@inbounds for k = 1:numel(A)  isnan(A[k]) && (o[k] = 0; continue); o[k] = round(type, low + (A[k] -_inmin) * sc)  end
+				if (type == UInt8)
+					@inbounds for k = 1:numel(A)  isnan(A[k]) && (o[k] = 0; continue); o[k] = round(UInt8,  low + (A[k] -_inmin) * sc)  end
+				else
+					@inbounds for k = 1:numel(A)  isnan(A[k]) && (o[k] = 0; continue); o[k] = round(UInt16, low + (A[k] -_inmin) * sc)  end
+				end
 			else
 				low_i, up_i = round(type, low), round(type, up*typemax(type))
 				@inbounds for k = 1:numel(A)
@@ -482,7 +488,11 @@ function rescale(A::AbstractArray, low=0.0, up=1.0; inputmin=nothing, inputmax=n
 			end
 		else
 			if (inputmin === nothing && inputmax === nothing)	# Faster case. No IFs in loop
-				@inbounds for k = 1:numel(A)  o[k] = round(type, low + (A[k] -_inmin) * sc)  end
+				if (type == UInt8)
+					@inbounds for k = 1:numel(A)  o[k] = round(UInt8,  low + (A[k] -_inmin) * sc)  end
+				else
+					@inbounds for k = 1:numel(A)  o[k] = round(UInt16, low + (A[k] -_inmin) * sc)  end
+				end
 			else
 				low_i, up_i = round(type, low), round(type, up*typemax(type))
 				@inbounds for k = 1:numel(A)

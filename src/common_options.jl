@@ -392,7 +392,7 @@ function parse_JZ(d::Dict, cmd::String, del::Bool=true; O::Bool=false, is3D::Boo
 	if (seek_JZ)
 		val, symb = find_in_dict(d, symbs, del)
 		if (val !== nothing)
-			opt_J = (symb == :JZ || symb == :zsize) ? " -JZ" * arg2str(val) : " -Jz" * arg2str(val)
+			opt_J = (symb == :JZ || symb == :zsize) ? " -JZ" * arg2str(val)::String : " -Jz" * arg2str(val)::String
 			cmd *= opt_J
 		end
 	end
@@ -2759,21 +2759,6 @@ function add_opt_module(d::Dict)::Vector{String}
 end
 
 # ---------------------------------------------------------------------------------------------------
-#=
-function fake_inset(cmd; kw...)
-	gmtbegin()
-	gmt("basemap " * CTRL.pocket_R[1] * CTRL.pocket_J[1] * " -Blrbt")
-	API = unsafe_load(convert(Ptr{GMTAPI_CTRL}, G_API[1]))
-	session_dir = unsafe_string(API.gwf_dir)
-	rm(session_dir * filesep * "gmt_0.ps-")
-	touch(session_dir * filesep * "gmt_0.ps-")
-	inset(kw...)
-	inset(:end)
-	gmtend()
-end
-=#
-
-# ---------------------------------------------------------------------------------------------------
 function get_color(val)::String
 	# Parse a color input. Always return a string
 	# color1,color2[,color3,…] colorn can be a r/g/b triplet, a color name, or an HTML hexadecimal color (e.g. #aabbcc
@@ -4127,8 +4112,9 @@ Add commands to the GMT PostScript file while it is not yet finished.
 
 This option is for PostScript gurus that want/need to mess with the PS plot file in the middle of its construction.
 """
-function add2PSfile(txt::Union{String, Vector{String}})
+function add2PSfile(txt::Union{String, Vector{String}}; isfile::Bool=false)
 	fid = open(PSname[1], "a")
+	isfile && (write(fid, read(txt)); close(fid);	return nothing)
 	if (isa(txt, String))
 		write(fid, "\n$txt\n")
 	else
