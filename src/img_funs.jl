@@ -166,3 +166,76 @@ function padarray(a, p)
 	return a[y, x]
 end
 =#
+function gamma_correction(r255, g255, b255)
+	r = r255 / 255;		g = g255 / 255;		b = b255 / 255
+	r = (r > 0.04045) ? ((r + 0.055) / 1.055)^2.4 : r / 12.92
+	g = (g > 0.04045) ? ((g + 0.055) / 1.055)^2.4 : g / 12.92
+	b = (b > 0.04045) ? ((b + 0.055) / 1.055)^2.4 : b / 12.92
+	return r, g, b
+end
+
+function rgb2xyz(r, g, b)
+	r, g, b = gamma_correction(r, g, b)
+	X = r * 41.24 + g * 35.76 + b * 18.05
+	Y = r * 21.26 + g * 71.52 + b *  7.22
+	Z = r *  1.93 + g * 11.92 + b * 95.05
+	return X, Y, Z
+end
+
+function xyz2lab(x, y, z)
+	x /= 95.047;	y /= 100.0;		z /= 108.883;	f = 16 / 116
+	x = (x > 0.008856) ? x^(1/3) : (7.787 * x) + f
+	y = (y > 0.008856) ? y^(1/3) : (7.787 * y) + f
+	z = (z > 0.008856) ? z^(1/3) : (7.787 * z) + f
+
+	L = (116 * y) - 16
+	a = 500 * (x - y)
+	b = 200 * (y - z)
+	return L, a, b
+end
+
+function rgb2lab(r, g, b)
+	x, y, z = rgb2xyz(r, g, b)
+	L, a, b = xyz2lab(x, y, z)
+	return L, a, b
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    img = rgb2lab(I::GMTimage{UInt8, 3})
+or
+
+    L, a, b = rgb2lab(I::GMTimage{UInt8, 3}, L=true)
+
+Convert RGB to CIE 1976 L*a*b*
+
+Optionally, return three images with the L, a* and b* components. For that use the option `L=true`
+"""
+function rgb2lab(I::GMTimage{UInt8, 3}; L=false, a=false, b=false)
+	_Img::Array{UInt8,3} = I.image			# If we don't do this it F insists I.image is Any and slows down 1000 times
+	composite = (L != 0 || a != 0 || b != 0) ? false : true
+	nxy::Int = size(_Img, 1) * size(_Img, 2)
+	imgL = zeros(UInt8, size(_Img, 1), size(_Img, 2))
+	t1  = Matrix{Float32}(undef, size(imgL))
+	t2  = Matrix{Float32}(undef, size(imgL))
+
+	if (I.layout[3] == 'B')				# Band interleaved
+		@inbounds for ij = 1:nxy
+			L,a,b = rgb2lab(_Img[ij], _Img[ij+nxy], _Img[ij+2nxy])
+			imgL[ij] = round(UInt8, L * 2.55)		# L -> [0 100]
+			t1[ij], t2[ij] = Float32(b), Float32(b) 
+		end
+	else								# Pixel interleaved
+		i = 0
+		@inbounds for ij = 1:3:3nxy
+			L,a,b = rgb2lab(_Img[ij], _Img[ij+1], _Img[ij+2])
+			imgL[i+=1] = round(UInt8, L * 2.55)		# L -> [0 100]
+			t1[i], t2[i] = Float32(b), Float32(b) 
+		end
+	end
+
+	imga = rescale(t1; type=UInt8)
+	imgb = rescale(t2; type=UInt8)
+	(composite) && return mat2img(cat(imgL, imga, imgb, dims=3), I)
+	return mat2img(imgL, I), mat2img(imga, I), mat2img(imgb, I)
+end
