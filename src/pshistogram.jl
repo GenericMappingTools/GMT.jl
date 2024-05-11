@@ -207,8 +207,8 @@ function histogram_helper(cmd0::String, arg1; first=true, kwargs...)
 			if (do_zoom)  cmd, opt_R = if_zoom(cmd, opt_R, limit_L, hst)  end
 		end
 		arg1 = hst		# We want to send the histogram, not the GMTimage
-    elseif (isa(arg1, GMTgrid) || is_subarray_float)
-		_min_max = (isa(arg1, GMTgrid)) ? (arg1.range[5], arg1.range[6]) : (got_min_max ? min_max : Float64.(extrema_nan(arg1))) 
+	elseif (isa(arg1, GMTgrid) || is_subarray_float)
+		_min_max::Tuple{Float64,Float64} = (isa(arg1, GMTgrid)) ? (arg1.range[5], arg1.range[6]) : (got_min_max ? min_max : Float64.(extrema_nan(arg1))) 
 		if (opt_T != "")
 			inc = parse(Float64, opt_T) + eps()		# + EPS to avoid the extra last bin at right with 1 count only
 			n_bins = Int(ceil((_min_max[2] - _min_max[1]) / inc))
