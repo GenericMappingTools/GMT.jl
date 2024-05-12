@@ -958,11 +958,11 @@ If `stretch` is a scalar, scale the values > `stretch` to [0 255]
 
 The `kw...` kwargs search for [:layout :mem_layout], [:names] and [:metadata]
 """
-function mat2img(mat::Union{AbstractArray{<:Unsigned}, AbstractArray{<:Bool}, BitMatrix}; x=Float64[], y=Float64[], v=Float64[], hdr=Float64[],
+function mat2img(mat::Union{AbstractArray{<:Unsigned}, AbstractArray{<:Bool}}; x=Float64[], y=Float64[], v=Float64[], hdr=Float64[],
                  proj4::String="", wkt::String="", cmap=GMTcpt(), is_transposed::Bool=false, kw...)
 	# Take a 2D array of uint8 and turn it into a GMTimage.
 	# Note: if HDR is empty we guess the registration from the sizes of MAT & X,Y
-	(cmap === nothing && (eltype(mat) == Bool || eltype(mat) == BitMatrix)) && (cmap = makecpt(T=(0,1), cmap=:gray))
+	(cmap === nothing && eltype(mat) == Bool) && (cmap = makecpt(T=(0,1), cmap=:gray))
 	helper_mat2img(mat; x=x, y=y, v=v, hdr=hdr, proj4=proj4, wkt=wkt, cmap=cmap, is_transposed=is_transposed, kw...)
 end
 
@@ -974,7 +974,6 @@ end
 function helper_mat2img(mat; x=Float64[], y=Float64[], v=Float64[], hdr=Float64[],
                         proj4::String="", wkt::String="", cmap=GMTcpt(), is_transposed::Bool=false, kw...)
 	color_interp = "";		n_colors = 0;
-	#isa(mat, BitMatrix) && (mat = collect(mat))
 	if (!isempty(cmap))
 		colormap, labels, n_colors = cpt2cmap(cmap)
 	else
