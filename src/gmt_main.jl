@@ -961,21 +961,37 @@ function toRP_pad(img, o, n_rows, n_cols, pad)
 	# Convert to a B(?T)RP padded array. The shit is that TRB images were read by GDAL and are
 	# stored transposed so that we can pass them back to GDAL without any copy. But B(?)RP were
 	# read through GMT and are not transposed. This makes a hell to deal with and not messing. 
-	m, i = (n_cols * pad + 5pad) * 3, 0	# 5pad!!!!!!! WTF is this coming from? But other numbers create a black stripe on E
+	n_bands = size(img.image, 3)
+	m, i = (n_cols * pad + 5pad) * n_bands, 0	# 5pad!!!!!!! WTF is this coming from? But other numbers create a black stripe on E
 	if (img.layout[3] == 'B')			# TRB. Read directly by GDAL and sored transposed.
-		@inbounds for n = 1:n_rows
-			r, g, b = view(img.image, :,n,1), view(img.image, :,n,2), view(img.image, :,n,3)
-			@inbounds for k = 1:n_cols
-				o[m+=1], o[m+=1], o[m+=1] = r[k], g[k], b[k]
+		if (n_bands == 1)
+			@inbounds for n = 1:n_rows
+				r = view(img.image, :,n,1)
+				@inbounds for k = 1:n_cols  o[m+=1] = r[k]  end
+				m += 2pad
 			end
-			m += 2pad * 3
+		else
+			@inbounds for n = 1:n_rows
+				r, g, b = view(img.image, :,n,1), view(img.image, :,n,2), view(img.image, :,n,3)
+				@inbounds for k = 1:n_cols
+					o[m+=1], o[m+=1], o[m+=1] = r[k], g[k], b[k]
+				end
+				m += 2pad * 3
+			end
 		end
 	else								# B(T?)RP. Read through GMT and NOT stored transposed.
-		@inbounds for n = 1:n_rows
-			@inbounds for k = 1:n_cols
-				o[m+=1], o[m+=1], o[m+=1] = img.image[i+=1], img.image[i+=1], img.image[i+=1]
+		if (n_bands == 1)
+			@inbounds for n = 1:n_rows
+				@inbounds for k = 1:n_cols  o[m+=1] = img.image[i+=1]  end
+				m += 2pad
 			end
-			m += 2pad * 3
+		else
+			@inbounds for n = 1:n_rows
+				@inbounds for k = 1:n_cols
+					o[m+=1], o[m+=1], o[m+=1] = img.image[i+=1], img.image[i+=1], img.image[i+=1]
+				end
+				m += 2pad * 3
+			end
 		end
 	end
 	nothing
