@@ -166,7 +166,7 @@ function padarray(a, p)
 	return a[y, x]
 end
 =#
-function gamma_correction(r255, g255, b255)
+@inline function gamma_correction(r255, g255, b255)
 	r = r255 / 255;		g = g255 / 255;		b = b255 / 255
 	r = (r > 0.04045) ? ((r + 0.055) / 1.055)^2.4 : r / 12.92
 	g = (g > 0.04045) ? ((g + 0.055) / 1.055)^2.4 : g / 12.92
@@ -174,7 +174,7 @@ function gamma_correction(r255, g255, b255)
 	return r, g, b
 end
 
-function rgb2xyz(r, g, b)
+@inline function rgb2xyz(r, g, b)
 	r, g, b = gamma_correction(r, g, b)
 	X = r * 41.24 + g * 35.76 + b * 18.05
 	Y = r * 21.26 + g * 71.52 + b *  7.22
@@ -182,7 +182,7 @@ function rgb2xyz(r, g, b)
 	return X, Y, Z
 end
 
-function xyz2lab(x, y, z)
+@inline function xyz2lab(x, y, z)
 	x /= 95.047;	y /= 100.0;		z /= 108.883;	f = 16 / 116
 	x = (x > 0.008856) ? x^(1/3) : (7.787 * x) + f
 	y = (y > 0.008856) ? y^(1/3) : (7.787 * y) + f
@@ -223,14 +223,14 @@ function rgb2lab(I::GMTimage{UInt8, 3}; L=false, a=false, b=false)
 		@inbounds for ij = 1:nxy
 			L,a,b = rgb2lab(_Img[ij], _Img[ij+nxy], _Img[ij+2nxy])
 			imgL[ij] = round(UInt8, L * 2.55)		# L -> [0 100]
-			t1[ij], t2[ij] = Float32(b), Float32(b) 
+			t1[ij], t2[ij] = Float32(a), Float32(b) 
 		end
 	else								# Pixel interleaved
 		i = 0
 		@inbounds for ij = 1:3:3nxy
 			L,a,b = rgb2lab(_Img[ij], _Img[ij+1], _Img[ij+2])
 			imgL[i+=1] = round(UInt8, L * 2.55)		# L -> [0 100]
-			t1[i], t2[i] = Float32(b), Float32(b) 
+			t1[i], t2[i] = Float32(a), Float32(b) 
 		end
 	end
 
