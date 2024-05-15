@@ -1862,6 +1862,34 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
+    [I =] grays2cube(layers::GMTimage{UInt8,2}...; names::Vector{String}=String[], save::String="") -> GMTimage
+
+Take N grayscale UInt8 GMTimages and agregate them into an image cube. Optionally provide a vector of names for each layer.
+If the `save` option is provided, we save the cube as a GeoTIFF file. Note, no need to provide an extension as the
+output name will always be '*.tiff'.
+
+### Example
+```juliadoc
+# Make a cube with the Cb, Cr, a* and b* comonents of YCbCR & La*b* color spaces of an RGB image
+I = mat2image(rand(UInt8,128, 128, 3))		# Create sample RGB image
+_,Cb,Cr = rgb2YCbCr(I, Cb=true, Cr=true);	# Extract Cb and Cr components
+L,a,b   = rgb2lab(I, L=true);				# Extract La*b* components
+Icube = grays2cube(Cb, Cr, a, b; names=["Cb", "Cr", "a", "b"]);
+```
+"""
+function grays2cube(layers::GMTimage{UInt8,2}...; names::Vector{String}=String[], save::String="")
+	I = mat2grid(cat(layers..., dims=3), layers[1])
+	length(names) == size(I,3) && (I.names = names)
+	length(names) != 0 && length(names) != size(I,3) && @warn("Number of names must match number of layers. Ignoring names request.")
+	if (save != "")
+		save = splitext(save)[1]			# Drop extension if provided to make it always be .tiff
+		return gdaltranslate(cube, dest=save * "tiff")
+	end
+	I
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
     G = mat2grid(mat; reg=nothing, x=[], y=[], v=[], hdr=[], proj4::String="", wkt::String="",
                  title::String="", rem::String="", cmd::String="", names::Vector{String}=String[],
                  scale::Float32=1f0, offset::Float32=0f0)

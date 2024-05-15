@@ -211,6 +211,24 @@ function gmtread(_fname::String; kwargs...)
 			helper_set_colnames!(o, corder)		# Set colnames if file has a comment line supporting it
 		end
 
+		# This section searches for Attrib(name,value[,name,value,...]) in the header lines and parses them out as attributes
+		if (isa(o, Vector{<:GMTdataset}) && isempty(o[1].attrib) && contains(o[1].header, "Attrib("))
+			class_ids = String[]		# We may have multiple classes in the file and need to count number of occurences of each
+			last_ind = 0
+			for k = 1:numel(o)
+				atts = split(o[k].header, "Attrib(")[2][1:end-1]
+				at2 = split(atts, ",")
+				for n = 1:numel(at2)
+					name, s_val = split(at2[n], "=")
+					o[k].attrib[name] =  string(s_val)
+					if (name == "class")	# "class" attributes are special for assisted classification
+						((ind_id = findfirst(s_val .== class_ids)) !== nothing) ? (o[k].attrib["id"] = string(ind_id)) :
+						           (o[k].attrib["id"] = "$(last_ind+=1)"; append!(class_ids,  [s_val]))
+					end
+				end
+			end
+		end
+
 		# Try guess if ascii file has time columns and if yes leave trace of it in GMTdadaset metadata.
 		(opt_bi == "" && isa(o, GDtype)) && file_has_time!(fname, o, corder)
 
