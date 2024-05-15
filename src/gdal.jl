@@ -834,6 +834,7 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 
 	const _GDALTYPE = Dict{DataType, Int32}(
 		Any     => GDT_Unknown,
+		Bool    => GDT_Byte,
 		UInt8   => GDT_Byte,
 		UInt16  => GDT_UInt16,
 		Int16   => GDT_Int16,
