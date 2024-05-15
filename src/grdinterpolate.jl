@@ -162,6 +162,7 @@ function grdinterp_local_opt_S(arg1::GItype, pts::Vector{<:GMTdataset}, no_coord
 	startcol = no_coords ? 0 : 2
 	D = Vector{GMTdataset}(undef, length(pts))
 	DT = no_coords ? eltype(arg1) : eltype(pts[1])		# When we have coordinates, their type dominates.
+	(DT <: Integer) && (DT = eltype(pts[1]))			# We don't want conversions to integers that are a pain. Specially if UInt8.
 	for n = 1:length(pts)					# Loop over number of segments and initialize the output dataset vector
 		n_pts = size(pts[n],1)
 		D[n] = no_coords ? mat2ds(Matrix{DT}(undef, n_pts, n_layers)) : mat2ds([pts[n].data zeros(DT, n_pts, n_layers)])
@@ -173,7 +174,7 @@ function grdinterp_local_opt_S(arg1::GItype, pts::Vector{<:GMTdataset}, no_coord
 			D[n][:, k+startcol] .= convert.(DT, t[n].data)
 		end
 	end
-	set_dsBB!(D)	
+	set_dsBB!(D)
 
 	grdinterp_opt_S_colnames!(arg1, D, pts, n_layers, startcol)		# Add colnames from band names in D if possible
 	return D
@@ -198,31 +199,3 @@ function grdinterp_opt_S_colnames!(arg1, D, pts, n_layers, startcol)
 	end
 	return nothing
 end
-
-# ----
-#=
-samp = gmtread("samples.shp.zip");
-pts = randinpolygon(samp, density=0.02);
-C = gdalread("LC08_L1TP_20210525_02_cube.tiff");
-LCsamp = grdinterpolate(C, S=pts, nocoords=true);
-features = GMT.ds2ds(LCsamp);
-#labels = vcat([fill(LCsamp[k].attrib["class"], size(LCsamp[k],1)) for k=1:length(LCsamp)]...);
-labels = parse.(UInt8, vcat([fill(LCsamp[k].attrib["id"], size(LCsamp[k],1)) for k=1:length(LCsamp)]...));
-
-using DecisionTree
-model = DecisionTreeClassifier(max_depth=3);
-fit!(model, features, labels)
-nr, nc = size(C)[1:2];
-mat = Array{UInt8}(undef, nr*nc);
-t = permutedims(C.z, (1,3,2));
-i1 = 1;	i2 = nr;
-for k = 1:nc			# Loop over columns
-	mat[i1:i2] = predict(model, t[:,:,k])
-	i1 = i2 + 1
-	i2 = i1 + nr - 1
-end
-I = mat2img(reshape(mat, nc,nr), C);
-cpt = makecpt(cmap=:categorical, range="cropland,water,fallow,built,open");
-image_cpt!(I, cpt)
-viz(I, colorbar=true)
-=#
