@@ -832,7 +832,7 @@ function grid_init(API::Ptr{Nothing}, X::GMT_RESOURCE, Grid::GMTgrid, pad::Int=2
 			end
 		end
 	else
-		Gb.data = pointer(Grid.z)
+		Gb.data = (eltype(Grid.z) == Float32) ? pointer(Grid.z) : pointer(Float32.(Grid.z))		# Horrible wasting if input is not float32
 		GMT_Set_AllocMode(API, GMT_IS_GRID, G)	# Otherwise memory already belongs to GMT
 		#GMT_Set_Default(API, "API_GRID_LAYOUT", "TR");
 	end
