@@ -370,9 +370,29 @@ function Base.:cat(D1::Vector{<:GMTdataset}, D2::Vector{<:GMTdataset})
 end
 
 # ---------------------------------------------------------------------------------------------------
+"""
+    setnodata!(G::GMTgrid, nodata) -> nothing
+
+Replace all grid values with `nodata` in a GMTgrid by NaN. Operates only on float grids. It doesn't
+return anything but will change the underlying array. Useful to fix grids that have been read from sources
+that didn't care to set up a nodata value (for example nc/hdf grids with no _FillValue).
+"""
+function setnodata!(G::GMTgrid, nodata)
+	!(eltype(G.z) <: AbstractFloat) && (@warn("Can only (re)set nodata for Float grids."); return nothing)
+	isnan(nodata) && (@warn("Nothing to do here, passed 'nodata' is already NaN");	return nothing)
+	_nodata = (eltype(G.z) == Float32) ? NaN32 : NaN
+	@inbounds for k = 1:length(G.z)
+		G.z[k] == nodata && (G.z[k] = _nodata)
+	end
+	setgrdminmax!(G)
+	return nothing
+end
+
+# ---------------------------------------------------------------------------------------------------
 function setgrdminmax!(G::GMTgrid)
 	# The non-nan version is way faster so use it as a proxy of NaNs and recompute if needed.
 	min = minimum(G.z);
+	G.hasnans = isnan(min) ? 2 : 1
 	!isnan(min) ? (G.range[5:6] = [min, maximum(G.z)]) : (G.range[5:6] = [minimum_nan(G.z), maximum_nan(G.z)])
 	return nothing
 	#=
