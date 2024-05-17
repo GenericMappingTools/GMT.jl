@@ -63,6 +63,7 @@ Parameters
 - $(_opt_h)
 - $(_opt_i)
 - $(opt_o)
+- $(opt_q)
 - $(opt_s)
 - $(opt_w)
 - $(opt_swap_xy)
@@ -71,7 +72,7 @@ function gmtconvert(cmd0::String="", arg1=nothing; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
-	cmd, = parse_common_opts(d, "", [:V_params :write :append :a :b :bo :d :e :f :g :h :i :o :s :w :yx])
+	cmd, = parse_common_opts(d, "", [:V_params :write :append :a :b :bo :d :e :f :g :h :i :o :q :s :w :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :hcat], [:C :n_records], [:D :dump], [:E :first_last], [:F :conn_method],
 	                                 [:I :invert :reverse], [:L :list_only], [:N :sort], [:Q :segments], [:S :select_hdr], [:T :suppress :skip], [:W :word2num], [:Z :transpose]])
 

@@ -176,6 +176,7 @@ function gmtread(_fname::String; kwargs...)
 		#(proggy == "read ") && (cmd *= opt_T)
 		if (proggy == "read ")
 			((val = find_in_dict(d, [:stride])[1]) !== nothing) && (cmd *= " -Em" * arg2str(val)::String; proggy = "gmtconvert ")
+			((val = find_in_dict(d, [:q :inrows :inrow])[1]) !== nothing) && (cmd *= " -q" * arg2str(val)::String; proggy = "gmtconvert ")
 			cmd *= opt_T
 		end
 
