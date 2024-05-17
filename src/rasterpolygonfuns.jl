@@ -96,6 +96,7 @@ function rasterzones!(GI::GItype, shapes::GDtype, fun::Function; isRaster=true, 
 			_GI === nothing && continue  	# Skip this polygon if it's completely outside the grid or just too small
 			((mask = maskgdal(shapes[k], size(_GI, col_dim), size(_GI, row_dim), touches=touches, layout=layout)) === nothing) && continue
 
+			(_GI.layout != "" && _GI.layout[2] == 'C') && (mask = mask')	# mask is always TRB
 			if (isRaster)  mask_GI!(GI, _GI, pix_x, pix_y, mask, n_layers)
 			else           for n = 1:n_layers   mat[k,n] = maskit(_GI, mask, n-1)   end
 			end

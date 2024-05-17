@@ -143,7 +143,8 @@ isvalidcode(str) = match(r"\b[A-Z]{3}\b", str) !== nothing
 # ------------------------------------------------------------------------------------------------------
 function _download(country)
 	# Downloads data (for the first call) for `country` and returns its full name.
-	ID, name_zip = "gadm36_$(country).gpkg", "gadm36_$(country)_gpkg.zip"
+	ID, name_zip = "gadm41_$(country).gpkg", "gadm41_$(country)_gpkg.zip"
+	#https://biogeo.ucdavis.edu/data/gadm3.6/gpkg/gadm36_PRT_gpkg.zip
 	cache = joinpath(GMTuserdir[1], "cache")
 	if !isdir(cache)
 		((pato = mkdir(cache)) == "") && error("Failed to create the 'cache' dir where download file would be stored")
@@ -153,10 +154,10 @@ function _download(country)
 
 	println("Downloading geographic data for country $country provided by the https://gadm.org project. It may take a while.")
 	println("The file $ID (after uncompressing) will be stored in $cache")
-	dlfile = Downloads.download("https://biogeo.ucdavis.edu/data/gadm3.6/gpkg/$(name_zip)", joinpath(cache, name_zip))
-	curr_pato = pwd();	cd(cache)
-	@static Sys.iswindows() ? run(`tar -xf $dlfile`) : run(`unzip $dlfile`)
-	rm(dlfile)
-	cd(curr_pato)
+	Downloads.download("https://geodata.ucdavis.edu/gadm/gadm4.1/gpkg/$(ID)", joinpath(cache, ID))
+	#curr_pato = pwd();	cd(cache)
+	#@static Sys.iswindows() ? run(`tar -xf $dlfile`) : run(`unzip $dlfile`)
+	#rm(dlfile)
+	#cd(curr_pato)
 	return fname
 end
