@@ -149,7 +149,7 @@ export
 
 	arcellipse, arccircle, getband, getdriver, getlayer, getproj, getgeom, getgeotransform, gdaldrivers, toPROJ4, toWKT,
 	importPROJ4, importWKT, importEPSG, gdalinfo, gdalwarp, gdaldem, gdaltranslate, gdalgrid, gdalvectortranslate,
-	ogr2ogr, gdalrasterize, gdalbuildvrt, readraster, setgeotransform!, setproj!, destroy,
+	ogr2ogr, gdalrasterize, gdalbuildvrt, readraster, setgeotransform!, setnodata!, setproj!, destroy,
 	delaunay, dither, buffer, centroid, intersection, intersects, polyunion, overlaps, fromWKT, fillnodata!, fillnodata,
 	concavehull, convexhull, difference, symdifference, distance, geomarea, pointalongline, polygonize, simplify,
 	wkbUnknown, wkbPoint, wkbPointZ, wkbLineString, wkbPolygon, wkbMultiPoint, wkbMultiPointZ, wkbMultiLineString,

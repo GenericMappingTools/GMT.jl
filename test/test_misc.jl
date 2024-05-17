@@ -41,6 +41,7 @@
 	G2 = GMT.mat2grid(rand(4,4));
 	G1 .* G2;
 	G = mat2grid(ones(Float32, 4,4))
+	setnodata!(G, 50)		# Actually this does nothing in this case
 	sqrt(G);
 	log(G);
 	log10(G);
