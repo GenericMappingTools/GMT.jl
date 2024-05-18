@@ -110,28 +110,57 @@ Its natural use is to digitize masks images.
 - `kwargs`:
   - `min, nmin, npixels or ncells`: The minimum number of cells/pixels for a polygon to be retained.
     Default is 1. This can be set to filter out small polygons.
+  - `min_area`: Minimum area in m2 for a polygon to be retained. This option takes precedence over the one
+    above that is based in the counting of cells. Note also that this is an approximate value because at this
+    point we still don't know exactly the latitudes of the polygons.
+  - `simplify`: Apply the Douglas-Peucker line simplification algorithm to the poligons. Provide a tolerence
+    in meters. For example: `simplify=0.5`. But be warned that this is a risky option since a too large tolerance
+	can lead to loss of otherwise good polygons. A good rule of thumb is to use the cell size for the tolerance.
+	And in fact that is what we do when using `simplify=:auto`.
   - `sort`: If true, will sort polygons by pixel count. Default is the order that GDAL decides internally.
 """
 function polygonize(data::GItype; gdataset=nothing, kwargs...)
 	d = GMT.KW(kwargs)
 	(gdataset === nothing) && (d[:gdataset] = true)
-	if ((val = find_in_dict(d, [:min :nmin :npixels :ncells])[1]) !== nothing)
-		# Compute the cell area but ignoring eventual projection of if data is in geogs.
-		cell_area = Float64(val)::Float64 * data.inc[1] * data.inc[2];		s_area = string(cell_area)
+	m_per_deg = 2pi * 6371000 / 360;	m_per_deg_2 = m_per_deg^2
+	_isgeog = GMT.isgeog(data)
+	min_area::Float64 = ((val = find_in_dict(d, [:min_area :minarea])[1]) !== nothing) ? Float64(val) : 0.0
+
+	if ((val = find_in_dict(d, [:min :nmin :npixels :ncells])[1]) !== nothing || min_area > 0.0)
+		# Compute the cell area. We have to do the (approximate) calculation here because in gd2gmt it often knows not if GEOG.
+		if (_isgeog && min_area > 0.0)
+			mean_lat = (data.range[3] + data.range[4]) / 2
+			cell_area = min_area / m_per_deg_2 / cosd(mean_lat)		# Approximate area in deg^2. At this time we don't know polygs lat
+			(val !== nothing) && @warn("'min_area' takes precedence over 'min', 'nmin', 'npixels' or 'ncells'")
+		else
+			cell_area = Float64(val)::Float64 * data.inc[1] * data.inc[2]
+		end
+		s_area = string(cell_area)
 		isempty(GMT.POSTMAN[1]) ? (GMT.POSTMAN[1] = Dict("min_polygon_area" => s_area)) : GMT.POSTMAN[1]["min_polygon_area"] = s_area
+		_isgeog && (GMT.POSTMAN[1]["polygon_isgeog"] = "1")
 	end
+
 	o = helper_run_GDAL_fun(gdalpolygonize, data, "", String[], "", d...)
+
 	if (gdataset === nothing)						# Should be doing this for GDAL objects too but need to learn how to.
 		GMT.POSTMAN[1]["polygonize"] = "y"			# To inform gd2gmt() that it should check if last Di is the whole area.
 		(find_in_dict(d, [:sort])[1] !== nothing) && (GMT.POSTMAN[1]["sort_polygons"] = "y")
+		if ((val = find_in_dict(d, [:simplify])[1]) !== nothing)
+			s_val::String = string(val)
+			# If simplify=auto, then use the cell side to estimate the simplification tolerance.
+			s_val[1] == 'a' && (s_val = _isgeog ? string(data.inc[1] * m_per_deg) : string(data.inc[1]))
+			GMT.POSTMAN[1]["simplify"] = s_val
+		end
 		prj = getproj(data)
 		D = gd2gmt(o);		isa(D, Vector) ? (D[1].proj4 = prj) : (D.proj4 = prj)
-		delete!(GMT.POSTMAN[1], "min_polygon_area")		# In case it was set above
+		delete!(GMT.POSTMAN[1], "min_polygon_area")	# In case it was set above
+		delete!(GMT.POSTMAN[1], "polygon_isgeog")
 		return D
 	end
 	delete!(GMT.POSTMAN[1], "min_polygon_area")
 	o
 end
+
 function polygonize(data::String; kwargs...)
 	data = gmtread(data, layout="TRB")
 	polygonize(data; kwargs...)

@@ -255,6 +255,7 @@ function gd2gmt(dataset::Gdal.AbstractDataset)
 	(Gdal.OGRGetDriverByName(Gdal.shortname(getdriver(dataset))) == C_NULL) && return gd2gmt(dataset; pad=0)
 
 	min_area = (get(POSTMAN[1], "min_polygon_area", "") != "") ? parse(Float64, POSTMAN[1]["min_polygon_area"]) : 0.0
+	p_isgeog = (get(POSTMAN[1], "polygon_isgeog", "") != "") ? true : false
 	D, ds, get_area = Vector{GMTdataset}(undef, Gdal.ngeom(dataset)), 1, false
 	(get(POSTMAN[1], "sort_polygons", "") != "") && (polyg_area = zeros(length(D));		get_area = true)
 	proj = ""		# Fk local vars inside for 
@@ -273,7 +274,7 @@ function gd2gmt(dataset::Gdal.AbstractDataset)
 				_D::GDtype = gd2gmt(geom, proj)
 				gt = Gdal.getgeomtype(geom)
 				get_area && (polyg_area[ds] = geomarea(geom))	# This area will NOT be what is expected if geom is known to be geog
-				# Maybe when there nlayers > 1 or other cases, starting allocated size is not enough
+				# Maybe when nlayers > 1 or other cases, starting allocated size is not enough
 				len_D = isa(_D, GMTdataset) ? 1 : length(_D)
 				(len_D + ds >= length(D)) && append!(D, Vector{GMTdataset}(undef, round(Int, 0.5 * length(D))))
 				if isa(_D, GMTdataset)
@@ -306,7 +307,22 @@ function gd2gmt(dataset::Gdal.AbstractDataset)
 		(polyg_area = deleteat!(polyg_area, ds:length(polyg_area)))
 		ind = sortperm(polyg_area, rev=true)
 		D = D[ind]
+		n_polys = length(D)
+		att_area_name = "area_cart"
+		if (p_isgeog)					# Can't rely on info stored in D at this time
+			m_per_deg = 2pi * 6371000 / 360;	m_per_deg_2 = m_per_deg^2
+			att_area_name = "area_m2"
+			for k = 1:n_polys
+				polyg_area[k] = round(polyg_area[k] * m_per_deg_2 * (cosd((D[k].bbox[3] + D[k].bbox[4])/2)), digits=2)
+			end
+			(maximum(polyg_area) > 100000) && (polyg_area ./= 1e6; att_area_name = "area_km2")	# If large, convert to km^2
+		end
+		for k = 1:n_polys  D[k].attrib[att_area_name] = string(polyg_area[ind[k]])  end
 		delete!(GMT.POSTMAN[1], "sort_polygons")
+	end
+	if ((tol = get(POSTMAN[1], "simplify", "")) != "")		# The caller requested a line simplification step
+		D = gmtsimplify(D, T=tol, f = p_isgeog ? "g" : "c")
+		delete!(GMT.POSTMAN[1], "simplify")					# Used, so clean it.
 	end
 	return (length(D) == 1) ? D[1] : D
 end
