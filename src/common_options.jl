@@ -4009,7 +4009,7 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K:
 		((val = find_in_dict(d, [:dpi :DPI])[1]) !== nothing) && (opt_T *= string(" -E", val))
 		gmt("psconvert -A2p -Qg4 -Qt4 " * fname_ps * opt_T * " *")
 		reset_theme()
-		out::AbstractString = fname_ps[1:end-2] * fname_ext
+		out::String = fname_ps[1:end-2] * fname_ext
 		(fname != "") && (out = mv(out, fname, force=true))
 	elseif (fname_ps != "")
 		(K) && close_PS_file(fname_ps)			# Close the PS file first

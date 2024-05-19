@@ -1052,7 +1052,7 @@ function cmap2cpt(I::GMTimage)
 	else                  s, nn, f = 1, n,   0.0
 	end
 	cm = cmap[s:n,1:3]/255
-	alpha = length(I.alpha) == n_colors ? I.alpha[s:n]/255 : (nc == 4) ? cmap[s:n,4]/255 : zeros(nn)
+	alpha = length(I.alpha) == n_colors ? I.alpha[s:n]/255 : (nc == 4) ? cmap[s:n,4] * 0.0 : zeros(nn)
 	lab = !isempty(I.labels) ? I.labels : fill("",nn)
 	key = !isempty(I.labels) ? string.(f:nn) : fill("",nn)
 	GMTcpt(cm, alpha, [f:nn f+1.0:nn+1], [f, nn], ones(3,3), 24, NaN, [cm cm], 0, lab, key, "rgb", ["Converted from GDAL cmap"])
