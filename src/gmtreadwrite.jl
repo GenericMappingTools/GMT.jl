@@ -77,11 +77,15 @@ function gmtread(_fname::String; kwargs...)
 
 	# Process these first so they may take precedence over defaults set below
 	opt_T = add_opt(d, "", "Tg", [:grd :grid])
-	if (opt_T != "")		# Force read via GDAL
-		((find_in_dict(d, [:gdal])[1]) !== nothing) && (fname *= "=gd")
+	via_gdal = ((find_in_dict(d, [:gdal])[1]) !== nothing)
+	if (via_gdal)		# Force read via GDAL
+		if (opt_T != "")                                      fname *= "=gd"
+		elseif ((opt_T = guess_T_from_ext(fname)) == " -Tg")  fname *= "=gd"
+		end
 	else
 		opt_T = add_opt(d, "", "Ti", [:img :image])
 	end
+
 	if (opt_T == "")  opt_T = add_opt(d, "", "Td", [:data :dataset :table])  end
 	if (opt_T == "")  opt_T = add_opt(d, "", "Tc", [:cpt :cmap])  end
 	if (opt_T == "")  opt_T = add_opt(d, "", "Tp", [:ps])   end
@@ -91,7 +95,7 @@ function gmtread(_fname::String; kwargs...)
 	if ((varname = find_in_dict(d, [:varname])[1]) !== nothing) # See if we have a nc varname / layer request
 		varname = string(varname)::String
 		(opt_T == "") && (opt_T = " -Tg")		# Though not used in if 'gdal', it still avoids going into needless tests below
-		if (find_in_dict(d, [:gdal])[1] !== nothing || contains(varname, '/'))	# This branch is fragile
+		if (via_gdal || contains(varname, '/'))	# This branch is fragile
 			fname = sneak_in_SUBDASETS(fname, varname)	# Get the composed name (fname + subdaset and driver)
 			proggy = "gdalread"
 			gdopts = ""
@@ -261,6 +265,7 @@ end
 function sneak_in_SUBDASETS(fname, varname)
 	# Create a new filename with the SUBDATASET_ name. Need this when GDAL is reading per SUBDASET and not whole file
 	# 'fname' is the file name and 'varname' the name of the subdataset.
+	endswith(fname, "=gd") && (fname = fname[1:end-3])		# A previous check may have added the "=gd". If yes, remove it.
 	gdinfo = gdalinfo(fname)
 	((ind1 = findfirst("SUBDATASET_", gdinfo)) === nothing) && error("The $varname SUBDATASET does not exist in $fname")
 	tmp_s  = gdinfo[ind1[end]:ind1[end]+20]		# 20 should be enough to include the format name. e.g. "HDF"
