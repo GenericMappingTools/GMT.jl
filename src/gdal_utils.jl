@@ -799,6 +799,7 @@ A Matrix if input is a Matrix or a GMTdadaset if input had that type
 function lonlat2xy(xy::Vector{<:Real}, t_srs_=nothing; t_srs=nothing, s_srs=prj4WGS84)
 	vec(lonlat2xy(reshape(xy[:],1,length(xy)), t_srs_; t_srs=t_srs, s_srs=s_srs))
 end
+lonlat2xy(x::Real, y::Real, t_srs_=nothing; t_srs=nothing, s_srs=prj4WGS84) = lonlat2xy([x y], t_srs_; t_srs=t_srs, s_srs=s_srs)
 
 function lonlat2xy(xy::Matrix{<:Real}, t_srs_=nothing; t_srs=nothing, s_srs=prj4WGS84)
 	(t_srs_ !== nothing) && (t_srs = t_srs_)
@@ -846,6 +847,7 @@ A Matrix if input is a Matrix or a GMTdadaset if input had that type
 function xy2lonlat(xy::Vector{<:Real}, s_srs_=""; s_srs="", t_srs=prj4WGS84)
 	vec(xy2lonlat(reshape(xy[:],1,length(xy)), s_srs_; s_srs=s_srs, t_srs=t_srs))
 end
+xy2lonlat(x::Real, y::Real, s_srs_=""; s_srs="", t_srs=prj4WGS84) = xy2lonlat([x y], s_srs_; s_srs=s_srs, t_srs=t_srs)
 
 function xy2lonlat(xy::Matrix{<:Real}, s_srs_=""; s_srs="", t_srs=prj4WGS84)
 	(s_srs_ != "") && (s_srs = s_srs_)

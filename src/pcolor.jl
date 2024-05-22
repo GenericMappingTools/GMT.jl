@@ -14,7 +14,7 @@ compute a default one.
   drop the last row and column from `C`
 - `C`: A matrix with the values that will be used to color the cells.
 - `kwargs`: This form of `pcolor` is in fact a wrap up of ``plot`` so any option of that module can be used here.
-- `labels`: If this ``keyword`` is used then plot the value of each node in the corresponding cell. Use `label=n`,
+- `labels`: If this ``keyword`` is used then we plot the value of each node in the corresponding cell. Use `label=n`,
   where ``n`` is integer and represents the number of printed decimals. Any other value like ``true``, ``"y"``
   or ``:y`` tells the program to guess the number of decimals.
 - `font`: When `label` is used one may also control text font settings. Options are a subset of the ``text`` `attrib`
