@@ -295,6 +295,21 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	_cmd = finish_PS_nested(d, _cmd)
 	_cmd = fish_bg(d, _cmd)					# See if we have a "pre-command"
 
+	if (isa(arg1, GDtype) && (((val = find_in_dict(d, [:labels])[1])) !== nothing) && startswith(val, "att:"))
+		ts::String = val[5:end]
+		ct = centroid(arg1)					# Texts will be plotted at the polygons centroids
+		ct.text = info(arg1, att=ts)
+		CTRL.pocket_call[1] = ct
+		if ((fnt = add_opt(d, "", "", [:font], (angle="+a", font=("+f", font)), false, true)) != "")
+			(fnt[1] != '+') && (fnt = "+f" * fnt)
+			delete!(d, :font)
+		else
+			nc = round(Int, sqrt(length(arg1)))			# A crude guess of the number of columns
+			fnt = (nc < 5) ? "+f7p" : (nc < 9 ? "+f5p" : "+f4p")	# A simple heuristic
+		end
+		append!(_cmd, ["pstext -R -J -F" * fnt * "+jMC"])
+	end
+
 	finish = (is_ternary && occursin(" -M",_cmd[1])) ? false : true		# But this case (-M) is bugged still in 6.2.0
 	r = finish_PS_module(d, _cmd, "", K, O, finish, arg1, arg2, arg3, arg4)
 	CTRL.pocket_d[1] = d					# Store d that may be not empty with members to use in other modules
