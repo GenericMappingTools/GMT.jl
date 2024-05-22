@@ -42,7 +42,8 @@ function quadkey(xyz::VecOrMat{<:Int}; bounds=true, geog=true)
 	# Returns the x,y,z bounds unless quadtree=true
 	lon, lat_iso = getLonLat(xyz[1], xyz[2], xyz[3]+1)
 	lat = isometric2geod(lat_iso, 0.0)
-	quadkey(lon, lat, xyz[3]; bounds=bounds, geog=geog)[2][1]
+	r = quadkey(lon, lat, xyz[3]; bounds=bounds, geog=geog)
+	return bounds ? r : r[2][1]		# In the bounds=true case we want to return the 2x2 Matrix
 end
 
 # ----------------------------------------------------------------------------------------------------------
@@ -177,19 +178,67 @@ function mosaic(lon::AbstractVecOrMat, lat::AbstractVecOrMat; pt_radius=6378137.
 	mosaic(_lon, _lat; pt_radius=pt_radius, provider=provider, zoom=zoom, cache=cache, mapwidth=mapwidth,
            dpi=dpi, date=date, verbose=verbose, key=key, kw...)
 end
+
 function mosaic(lon::Tuple{<:Real, <:Real}, lat::Tuple{<:Real, <:Real}; pt_radius=6378137.0, provider="", zoom::Int=0, cache::String="",
                 mapwidth=15, dpi=96, verbose::Int=0, date::String="", key::String="", kw...)
 	_lon::Vector{Float64}, _lat::Vector{Float64} = Float64.([lon...]), Float64.([lat...])
 	mosaic(_lon, _lat; pt_radius=pt_radius, provider=provider, zoom=zoom, cache=cache, mapwidth=mapwidth,
            dpi=dpi, date=date, verbose=verbose, key=key, kw...)
 end
+
 function mosaic(lon::Real, lat::Real; pt_radius=6378137.0, provider="", zoom::Int=0, cache::String="",
                 mapwidth=15, dpi=96, verbose::Int=0, date::String="", key::String="", kw...)
 	mosaic([Float64(lon)], [Float64(lat)]; pt_radius=pt_radius, provider=provider, zoom=zoom,
            cache=cache, mapwidth=mapwidth, dpi=dpi, date=date, verbose=verbose, key=key, kw...)
 end
 
-# All methods above will land here and guarantied to have a unique input type for lon, lat.
+"""
+I = mosaic(address::String; ...)
+
+Same as above but the `lon` & `lat` are extracted from the `address` code. The code can be a ``quadtree`` or a ``XYZ``
+tile address. This is a more specialized usage that relies on users knowledge on tile code names based on quadtrees
+or XYZ encoding. An example of these codes is provided by the attributes of when we use the `mesh=true` option.
+
+An important difference between the `address` option and the `lon & lat` option is that the `address` option also
+set the zoom level, so here the ``zoom`` option means the extra zoom level added to that implied by ``address``.
+A number highr than 3 is suspiciously large.
+
+# Example
+```jldoctest
+julia> I = mosaic("033110322", zoom=2)
+viz(I, coast=true)
+```
+"""
+function mosaic(address::String; pt_radius=6378137.0, provider="", zoom::Int=0, cache::String="",
+                verbose::Int=0, date::String="", key::String="", kw...)
+	s = split(address, ",")
+	(length(s) != 3 && length(s) != 1) && throw(error("Wrong type of tile address: $address"))
+	if (length(s) == 3)
+		xyz = parse.(Int, s)
+		lims, zoomL = quadkey(xyz), xyz[3]
+	else
+		Dlims, zoomL = quadbounds(address)
+		lims = Dlims.bbox
+		zoomL -= 1						# Also because in getQuadLims() we add 1 to zoom.
+	end
+	mosaic(lims[1:2], lims[3:4]; pt_radius=pt_radius, provider=provider, zoom=zoomL+zoom, cache=cache,
+           date=date, verbose=verbose, key=key, kw...)
+end
+
+"""
+I = mosaic(address::VecOrMat{<:Real}; ...)
+
+Very similar to above but where `address` is a ``XYZ`` tile address given as a vector of 3 integers.
+"""
+function mosaic(address::VecOrMat{<:Real}; pt_radius=6378137.0, provider="", zoom::Int=0, cache::String="",
+                verbose::Int=0, date::String="", key::String="", kw...)
+	(length(address) != 3) && throw(error("Wrong type of tile XYZ address ... must have X, Y and Z"))
+	s_addr = join(string.(address), ",")
+	mosaic(s_addr; pt_radius=pt_radius, provider=provider, zoom=zoom, cache=cache, verbose=verbose, date=date, key=key, kw...)
+end
+
+# ----------------------------------------------------------------------------------------------------------
+# All methods above will land here and are guarantied to have a unique input type for lon, lat.
 function mosaic(lon::Vector{<:Float64}, lat::Vector{<:Float64}; pt_radius=6378137.0, provider="", zoom::Int=0, cache::String="",
                 mapwidth=15, dpi=96, verbose::Int=0, date::String="", key::String="", kw...)
 	(length(lon) != length(lat)) && throw(error("lon & lat must be of the same size"))
@@ -231,6 +280,8 @@ function mosaic(lon::Vector{<:Float64}, lat::Vector{<:Float64}; pt_radius=637813
 	lon = wraplon180!(lon)		# Make sure that longitudes are in the range -180 to 180 (for scalars need a return value)
 
 	lat_orig = lat				# Save original lat for eventual use in the exact region option
+	lon[end] -= 1e2eps()		# To avoid the last tile being beyond the limits when it was original AT the limts (exact limits match)
+	lat[1]   += 1e3eps()		# 1e2 eps seems not enough for the purpose of exact region. 
 	lat = geod2isometric(lat, flatness)
 	x, y, xmm, ymm = getPixel(lon, lat, zoom)		# x,y are the fractional number of the 256 bins counting from origin
 	x, y = floor.(x), floor.(y)
@@ -321,7 +372,7 @@ function mosaic(lon::Vector{<:Float64}, lat::Vector{<:Float64}; pt_radius=637813
 	quadonly && return quad_, decimal_adress, lon_mm, lat_mm, xm, ym
 
 	# Return here if user wants a GMTdataset with the coordinates of the tiles
-	quadTiles && return quadbounds(quad_)[1]
+	quadTiles && return quadbounds(quad_, quadkey)[1]
 
 	# ------------------ Get the tiles and build up the image --------------------
 	cache, cache_supp = completeCacheName(cache, zoom, provider_code; variant=variant)
@@ -498,9 +549,8 @@ of quadtree strings.
   viz(D)
 ```
 """
-quadbounds(quadtree::String; geog=true) = quadbounds([quadtree;;]; geog=geog)
-function quadbounds(quadtree::Matrix{String}; geog=true)
-	quadkey = ['0' '1'; '2' '3']			# Only one used now.
+quadbounds(quadtree::String, quadkey=['0' '1'; '2' '3']; geog=true) = quadbounds([quadtree;;], quadkey; geog=geog)
+function quadbounds(quadtree::Matrix{String}, quadkey=['0' '1'; '2' '3']; geog=true)
 	flatness = 0.0
 	
 	if isa(quadtree, AbstractString)		# A single quadtree
@@ -527,6 +577,12 @@ function quadbounds(quadtree::Matrix{String}; geog=true)
 	proj = geog ? prj4WGS84 : "+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +a=6378137 +b=6378137 +units=m +no_defs"
 	D = mat2ds(v, proj=proj, geom=wkbPolygon)
 	D[1].comment = ["Zoom level = $zoomL"]
+	for k = 1:numel(D)						# Add tile addresses as attributes
+		D[k].attrib["quadtree"] = quadtree[k]
+		XY = getQuadLims(quadtree[k], quadkey, 1)[1]
+		D[k].attrib["XYZ"] = join(string.(XY), ",") * ",$(zoomL-1)"
+	end
+	(length(D) == 1) && (D = D[1])
 	set_dsBB!(D)
 	return D, zoomL
 end
@@ -584,7 +640,7 @@ end
 function getQuadLims(quadtree, quadkey, opt)
 	# Compute the limits of a quadtree string.
 	# OPT == [] => lims = [lon1 lon2 lat1 lat2];	ELSE,	lims = [pixelX pixelY];
-	pato, quadtree, = fileparts(quadtree)		# If quadtree is a filename, retain only what matters
+	_, quadtree, = fileparts(quadtree)		# If quadtree is a filename, retain only what matters
 	
 	zoomL = length(quadtree) + 1
 	quad_x = zeros(Int, zoomL)
@@ -622,11 +678,11 @@ function getPixel(lon, lat, zoomL)
 	# In fact x,y are the fractional number of the 256 bins counting from origin
 	pixPerDeg = 2^(zoomL - 1) / 360
 	x = (lon .+ 180) * pixPerDeg
-	y = (180 .- lat) * pixPerDeg
+	y = (180 .- lat) * pixPerDeg .+ 1000eps()	# Don't know why I use floor instead of round but floor may "floor" to the wrong side.
 	isa(y, VecOrMat) && (y = y[end:-1:1])			# WHY ?????
 	
 	if length(lon) == 1
-		xmm = [floor.(x) floor.(x) .+ 1] * 256			# [x_min x_max] pixel coords of the rectangle
+		xmm = [floor.(x) floor.(x) .+ 1] * 256		# [x_min x_max] pixel coords of the rectangle
 		ymm = [floor.(y) floor.(y) .+ 1] * 256
 	else #(length(lon) == 2)						# lon, lat contain a rectangle limits
 		xmm = [floor(x[1]) floor(x[1]) + 1; floor(x[2]) floor(x[2]) + 1] * 256
