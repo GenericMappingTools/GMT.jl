@@ -295,17 +295,20 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	_cmd = finish_PS_nested(d, _cmd)
 	_cmd = fish_bg(d, _cmd)					# See if we have a "pre-command"
 
-	if (isa(arg1, GDtype) && (((val = find_in_dict(d, [:labels])[1])) !== nothing) && startswith(val, "att:"))
-		ts::String = val[5:end]
+	if (isa(arg1, GDtype) && (((val = find_in_dict(d, [:labels])[1])) !== nothing))
+		s_val::String = string(val)
+		(!startswith(s_val, "att") || ((ind = findfirst("=", s_val)) === nothing) && (ind = findfirst(":", s_val)) === nothing) &&
+			error("The labels option must be 'labels=att=???' or 'labels=attrib=???'")
+		ts::String = s_val[ind[1]+1:end]
 		ct = centroid(arg1)					# Texts will be plotted at the polygons centroids
 		ct.text = info(arg1, att=ts)
-		CTRL.pocket_call[1] = ct
+		(CTRL.pocket_call[1] === nothing) ? (CTRL.pocket_call[1] = ct) : (CTRL.pocket_call[2] = ct)
 		if ((fnt = add_opt(d, "", "", [:font], (angle="+a", font=("+f", font)), false, true)) != "")
 			(fnt[1] != '+') && (fnt = "+f" * fnt)
 			delete!(d, :font)
 		else
 			nc = round(Int, sqrt(length(arg1)))			# A crude guess of the number of columns
-			fnt = (nc < 5) ? "+f7p" : (nc < 9 ? "+f5p" : "+f4p")	# A simple heuristic
+			fnt = (nc < 5) ? "+f8p" : (nc < 9 ? "+f6p" : "+f5p")	# A simple heuristic
 		end
 		append!(_cmd, ["pstext -R -J -F" * fnt * "+jMC"])
 	end
