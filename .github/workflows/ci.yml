@@ -33,6 +33,7 @@ jobs:
           - ubuntu-latest
           #- ubuntu-20.04
           - macos-latest
+          - windows-latest
         arch:
           - x64
         include:
@@ -44,6 +45,8 @@ jobs:
           - name: macOS
             os: macos-latest
             run_in_pr : true
+          - name: Windows
+            os: windows-latest
 
     steps:
       - name: Cancel Previous Runs
@@ -87,12 +90,12 @@ jobs:
           gmt begin testmap; gmt basemap -R0/9/0/5 -Jx1 -Bf1a2 -Bx+lDistance -By+l"No of samples" -BWeS; gmt end
         if: matrix.run_in_pr == true || github.event_name != 'pull_request'
 
-      - uses: actions/checkout@v2
-      - uses: julia-actions/setup-julia@v1
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
         with:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
-      - uses: actions/cache@v1
+      - uses: actions/cache@v4
         env:
           cache-name: cache-artifacts
         with:
@@ -105,7 +108,7 @@ jobs:
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
       - uses: julia-actions/julia-processcoverage@v1
-      - uses: codecov/codecov-action@v1
+      - uses: codecov/codecov-action@v4
         with:
           file: lcov.info
   
