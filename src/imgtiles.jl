@@ -213,16 +213,49 @@ function mosaic(address::String; pt_radius=6378137.0, provider="", zoom::Int=0, 
                 verbose::Int=0, date::String="", key::String="", kw...)
 	s = split(address, ",")
 	(length(s) != 3 && length(s) != 1) && throw(error("Wrong type of tile address: $address"))
+
+	# Functions for parsing the tiles XYZ code when given as ranges. E.g. "317-9" means 317 to 319 or 317+2 -> 315 to 319
+	function parse_LL(s_ind)			# This version is for the form: 317-9 or 319-21
+		base, add = s_ind[1:ind[1]-1], s_ind[ind[1]+1:end]
+		first = parse(Int, base)
+		t = (length(add) == 1) ? base[1:end-1] * add : base[1:end-2] * add
+		last  = parse(Int, t)
+		return first, last
+	end
+	function parse_CC(s_ind)			# This version is for the form: 317+2
+		base, add = parse(Int, s_ind[1:ind[1]-1]), parse(Int, s_ind[ind[1]+1:end])
+		return base-add, base+add
+	end
+
 	if (length(s) == 3)
-		xyz = parse.(Int, s)
-		lims, zoomL = quadkey(xyz), xyz[3]
+		if     ((ind = findfirst("-", s[1])) !== nothing)  xf, xl = parse_LL(s[1])
+		elseif ((ind = findfirst("+", s[1])) !== nothing)  xf, xl = parse_CC(s[1])
+		else                                               xf = parse(Int, s[1]);	xl = xf
+		end
+
+		if     ((ind = findfirst("-", s[2])) !== nothing)  yf, yl = parse_LL(s[2]) .+ 1
+		elseif ((ind = findfirst("+", s[2])) !== nothing)  yf, yl = parse_CC(s[2]) .+ 1
+		else                                               yf = parse(Int, s[2]) + 1;	yl = yf
+		end
+		zoomL = parse(Int, s[3])
+		if (xf != xl || yf != yl)
+			limsLL = quadkey([xf, yf, zoomL])			# Each comes as 2x2 with [xmin ymin; xmax ymax]
+			limsUR = quadkey([xl, yl, zoomL])
+			lims = [min(limsLL[1], limsUR[1]), max(limsLL[2], limsUR[2]), min(limsLL[3], limsUR[3]), max(limsLL[4], limsUR[4])]
+		else
+			lims   = quadkey([xf, yf, zoomL])
+		end
+
+		#xyz = parse.(Int, s)
+		#xyz[2] += 1						# For some unknown reason we need to add 1 to play with the zoom
+		#lims, zoomL = quadkey(xyz), xyz[3]
 	else
 		Dlims, zoomL = quadbounds(address)
 		lims = Dlims.bbox
 		zoomL -= 1						# Also because in getQuadLims() we add 1 to zoom.
 	end
 	mosaic(lims[1:2], lims[3:4]; pt_radius=pt_radius, provider=provider, zoom=zoomL+zoom, cache=cache,
-           date=date, verbose=verbose, key=key, kw...)
+	       date=date, verbose=verbose, key=key, kw...)
 end
 
 """
@@ -249,6 +282,8 @@ function mosaic(lon::Vector{<:Float64}, lat::Vector{<:Float64}; pt_radius=637813
 	(length(lon) == 1 && zoom == 0) && error("Need to specify zoom level for single point query")
 	(zoom == 0) && (zoom = guessZoomLevel(mapwidth, (lon[2]-lon[1]), dpi))
 
+	quadTiles = (find_in_dict(d, [:tilesmesh :meshtiles :mesh])[1] !== nothing) ? true : false
+	quadTiles && (provider = "mesh")
 	provider_url, zoom, ext, isZXY, isZYX, provider_code, variant, sitekey = getprovider(provider, zoom, date=date, key=key)
 	isXeYeZ = contains(provider_url, "lyrs=")
 	isBing  = contains(provider_url, "virtualearth")
@@ -266,7 +301,6 @@ function mosaic(lon::Vector{<:Float64}, lat::Vector{<:Float64}; pt_radius=637813
 
 	quadkey::Matrix{Char} = ['0' '1'; '2' '3']
 	quadonly  = ((val = find_in_dict(d, [:quadonly])[1]) !== nothing) ? true : false
-	quadTiles = ((val = find_in_dict(d, [:tilesmesh :meshtiles :mesh])[1]) !== nothing) ? true : false
 	inMerc    = ((val = find_in_dict(d, [:merc :mercator])[1]) !== nothing) ? true : false
 	isExact   = ((val = find_in_dict(d, [:loose :loose_bounds])[1]) === nothing) ? true : false
 	(isExact && length(lon) == 1) && (isExact = false)
@@ -280,8 +314,12 @@ function mosaic(lon::Vector{<:Float64}, lat::Vector{<:Float64}; pt_radius=637813
 	lon = wraplon180!(lon)		# Make sure that longitudes are in the range -180 to 180 (for scalars need a return value)
 
 	lat_orig = lat				# Save original lat for eventual use in the exact region option
-	lon[end] -= 1e2eps()		# To avoid the last tile being beyond the limits when it was original AT the limts (exact limits match)
-	lat[1]   += 1e3eps()		# 1e2 eps seems not enough for the purpose of exact region. 
+	lon[1]   += 1e3eps()		# To avoid the last tile being beyond the limits when it was original AT the limts (exact limits match)
+	lat[1]   += 1e3eps()
+	if (length(lon) > 1)
+		lon[end] -= 1e3eps()
+		lat[end] -= 1e3eps()
+	end
 	lat = geod2isometric(lat, flatness)
 	x, y, xmm, ymm = getPixel(lon, lat, zoom)		# x,y are the fractional number of the 256 bins counting from origin
 	x, y = floor.(x), floor.(y)
@@ -438,11 +476,11 @@ function getprovider(name::StrSymb, zoom::Int; variant="", format="", ZYX::Bool=
 	isZXY, ext = false, "jpg"
 	isZYX = ZYX ? true : false
 	(format != "") && (ext = format)
-	_name = lowercase(string(name))
+	_name::String = lowercase(string(name))
 	if (_name == "" || _name == "bing")
 		t::String = (variant == "") ? "a" : string(lowercase(variant)[1])
 		(t != "a" && t != "r" && t != "h") && error("Bing only supports 'a' (Aerial), 'r' (Road) or 'h' (Hybrid)")
-		url = "http://" * t * "0.ortho.tiles.virtualearth.net/tiles/" * t;
+		url::String = "http://" * t * "0.ortho.tiles.virtualearth.net/tiles/" * t;
 		max_zoom = 19;	code = "bing";	variant = t
 		(t == 'r' || t == 'h') && (ext = "png")
 	elseif (_name == "osm" || _name == "openstreetmap")
@@ -469,13 +507,15 @@ function getprovider(name::StrSymb, zoom::Int; variant="", format="", ZYX::Bool=
 		(v == '4') && (variant = "RADAR")				# To play safe
 		(length(date) == 0 || (length(date) != 6 && length(date) == 7)) || (date[5] != '_' && date[5] != ',') &&
 			error("Date must be in 'YYYY_MM' or 'YYYY,MM' format")
-		d = (date == "") ? "2023_12" : date[5] == ',' ? replace(date, ",", "_") : date
+		d = (date == "") ? "2023_12" : date[5] == ',' ? replace(date, "," => "_") : date
 		variant = d * "_" * v * filesep * variant		# Need to carry also the dates (this will be used in cache name)
 		url = "https://prod-data.nimbo.earth/mapcache/tms/1.0.0/" * d * "_" * v * "@kermap/"
 		max_zoom = 13;	isZXY = true; code = "nimbo";	ext = "png";	sitekey = "?kermap_token=" * key
+	elseif (_name == "mesh")							# For mesh we don't care the provider and max zoom is ilimitted
+		url, isZXY, max_zoom, code = string(name), true, 50, "unknown"
 	else
 		!startswith(_name, "http") && @warn("Unrecognized provider: $name. Quite likely this is not a valid name.")
-		url, isZXY, max_zoom, code = name, true, 22, dir_code == "" ? "unknown" : dir_code
+		url, isZXY, max_zoom, code = string(name), true, 22, dir_code == "" ? "unknown" : dir_code
 	end
 	zoom += 1
 	(zoom > max_zoom+1) && (zoom = max_zoom+1; @warn("Zoom level $zoom is too high for the '$code' provider. Zoom level set to $max_zoom"))
