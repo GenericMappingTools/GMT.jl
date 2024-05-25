@@ -225,8 +225,8 @@ function gmtread(_fname::String; kwargs...)
 				at2 = split(atts, ",")
 				for n = 1:numel(at2)
 					name, s_val = split(at2[n], "=")
-					o[k].attrib[name] =  string(s_val)
-					if (name == "class")	# "class" attributes are special for assisted classification
+					o[k].attrib[name] = string(s_val)
+					if (lowercase(name) == "class")	# "class" attributes are special for assisted classification
 						((ind_id = findfirst(s_val .== class_ids)) !== nothing) ? (o[k].attrib["id"] = string(ind_id)) :
 						           (o[k].attrib["id"] = "$(last_ind+=1)"; append!(class_ids,  [s_val]))
 					end

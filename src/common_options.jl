@@ -2709,7 +2709,7 @@ function add_opt_module(d::Dict)::Vector{String}
 	out = Vector{String}()
 
 	for symb in CTRL.callable			# Loop over modules list that can be called inside other modules
-		r::String = ""
+		r::Union{String, Vector{String}} = ""
 		if (haskey(d, symb))
 			val = d[symb]
 			isa(val, AbstractDict) && (val = Base.invokelatest(dict2nt, val))
@@ -2720,22 +2720,22 @@ function add_opt_module(d::Dict)::Vector{String}
 				elseif (symb == :basemap)   r = basemap!(; Vd=2, nt...)
 				elseif (symb == :logo)      r = logo!(; Vd=2, nt...)
 				elseif (symb == :clip)		# Need lots of little shits to parse the clip options
-					CTRL.pocket_call[1] = val[1];
+					(CTRL.pocket_call[1] === nothing) ? (CTRL.pocket_call[1] = val[1]) : (CTRL.pocket_call[2] = val[1])
 					k,v = keys(nt), values(nt)
 					nt = NamedTuple{Tuple(Symbol.(k[2:end]))}(v[2:end])		# Fck, what a craziness to remove 1 el from a nt
 					r = clip!(""; Vd=2, nt...)
 					r = r[1:findfirst(" -K", r)[1]];	# Remove the "-K -O >> ..."
 					r = replace(r, " -R -J" => "")
 					r = "clip " * strtok(r)[2]			# Make sure the prog name is 'clip' and not 'psclip'
-				#elseif (symb == :inset)		# 
 				else
 					!(symb in CTRL.callable) && error("Nested Fun call $symb not in the callable nested functions list")
 					_d = nt2dict(nt)
-					(haskey(_d, :data)) && (CTRL.pocket_call[1] = _d[:data]; delete!(d, [:data]))
+					ind_pocket = (CTRL.pocket_call[1] === nothing) ? 1 : 2
+					(haskey(_d, :data)) && (CTRL.pocket_call[ind_pocket] = _d[:data]; delete!(d, [:data]))
 					this_symb = CTRL.callable[findfirst(symb .== CTRL.callable)]
 					fn = getfield(GMT, Symbol(string(this_symb, "!")))
 					if (this_symb in [:vband, :hband, :vspan, :hspan])
-						r = fn(CTRL.pocket_call[1]; nested=true, Vd=2, nt...)
+						r = fn(CTRL.pocket_call[ind_pocket]; nested=true, Vd=2, nt...)
 					else
 						r = fn(; Vd=2, nt...)
 					end
@@ -2750,11 +2750,16 @@ function add_opt_module(d::Dict)::Vector{String}
 				anc = (t == 't') ? "TC" : (t == 'b' ? "BC" : (t == 'l' ? "ML" : "MR"))
 				r = colorbar!(pos=(anchor=anc,), B="af", Vd=2)
 			elseif (symb == :clip)
-				CTRL.pocket_call[1] = val;	r = "clip"
+				(CTRL.pocket_call[1] === nothing) ? (CTRL.pocket_call[1] = val) : (CTRL.pocket_call[2] = val)
+				r = "clip"
+			#elseif (symb == :inset)
+				#isa(val, GItype) && inset_cm(val, inset_box=(anchor=:TR, width=6, offset=0.5))
 			end
 			delete!(d, symb)
 		end
-		(r != "") && append!(out, [r])
+		#(r != "") && append!(out, [r])
+		(isa(r, Vector) && !isempty(r)) && append!(out, r)
+		(isa(r, String) && (r != "")) && append!(out, [r])
 	end
 	return out
 end
@@ -3601,8 +3606,13 @@ function _read_data(d::Dict, cmd::String, arg, opt_R::String="", is3D::Bool=fals
 	have_info = false
 	no_R = (opt_R == "" || opt_R[1] == '/' || opt_R == " -Rtight")
 	prj::String = (isGMTdataset(arg)) ? getproj(arg, proj4=true) : ""
-	is_geo = contains(prj, "longlat") || contains(prj, "latlong")
+	is_geo = isgeog(prj)
 	ds_bbox = isGMTdataset(arg) ? (isa(arg, GMTdataset) ? arg.ds_bbox : arg[1].ds_bbox) : Float64[]
+	
+	if (no_R && !isempty(ds_bbox))			# If arg is a GMTdataset of polygons, use the ds_bbox directly
+		geom = isa(arg, Vector) ? arg[1].geom : arg.geom
+		(geom == 3) && (opt_R = " -Rtight")
+	end
 
 	if (!CONVERT_SYNTAX[1] && !IamModern[1] && no_R)	# Here 'arg' can no longer be a file name (string)
 		if (opt_i == "" && opt_di == "" && opt_yx == "" && !isempty(ds_bbox))
@@ -4253,6 +4263,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 		is_psscale = (startswith(cmd[k], "psscale") || startswith(cmd[k], "colorbar"))
 		is_pscoast = (startswith(cmd[k], "pscoast") || startswith(cmd[k], "coast"))
 		is_basemap = (startswith(cmd[k], "psbasemap") || startswith(cmd[k], "basemap"))
+		is_text    = (startswith(cmd[k], "pstext") || startswith(cmd[k], "text"))
 		is_plot    = (startswith(cmd[k], "psxy"))
 		args1_is_G, args1_is_I, args1_isnot_C = false, false, false
 		if (k >= 1+fi)		# Using the supposed solution of @isdefined F. doesn't work. "if @isdefined(args)" is not respected.
@@ -4300,19 +4311,20 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 				have_Vd && println("\t",cmd[k])		# Useful to know what command was actually executed.
 				orig_J, orig_R = J1, scan_opt(cmd[1], "-R")
 			end
-		elseif (k >= 1+fi && !is_psscale && !is_pscoast && !is_basemap && CTRL.pocket_call[1] !== nothing)
+		elseif (k >= 1+fi && !is_psscale && !is_pscoast && !is_basemap && !is_text && CTRL.pocket_call[1] !== nothing)
 			# For nested calls that need to pass data
 			P = gmt(cmd[k], CTRL.pocket_call[1])
-			CTRL.pocket_call[1] = nothing			# Clear it right away
+			CTRL.pocket_call[1] = CTRL.pocket_call[2];	CTRL.pocket_call[2] = nothing	# Allow 2 nested calls requiring data
 			continue
-		elseif (startswith(cmd[k], "psclip"))		# Shitty case. Pure (unique) psclip requires args. Compose cmd not
+		elseif (startswith(cmd[k], "psclip") || is_text)		# Pure (unique) psclip requires args. Compose cmd not
 			P = (CTRL.pocket_call[1] !== nothing) ? gmt(cmd[k], CTRL.pocket_call[1]) :
 			                                        (length(cmd) > 1) ? gmt(cmd[k]) : gmt(cmd[k], args...)
-			CTRL.pocket_call[1] = nothing					# For the case it was not yet empty
+			CTRL.pocket_call[1] = CTRL.pocket_call[2];	CTRL.pocket_call[2] = nothing
 			continue
 		end
 		# Allow also plot data from a nested call to plot
-		P = !(k > fi && is_plot && (CTRL.pocket_call[1] !== nothing)) ? gmt(cmd[k], args...) : gmt(cmd[k], CTRL.pocket_call...)
+		P = !(k > fi && is_plot && (CTRL.pocket_call[1] !== nothing)) ? gmt(cmd[k], args...) : gmt(cmd[k], CTRL.pocket_call[1])
+		is_plot && (CTRL.pocket_call[1] = CTRL.pocket_call[2];	CTRL.pocket_call[2] = nothing)
 
 		# If we had a double frame to plot Geog on a Cartesian plot we must reset memory to original -J & -R so
 		# that appending other plots to same fig can continue to work and not fail because proj had become Geog.
@@ -4320,6 +4332,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 		IamModern[1] && (orig_J = "")	# setting orig_J to "" is a way of avoiding next line that is not for modern mode.
 		(orig_J != "") && (gmt("psxy -T -J" * orig_J * " -R" * orig_R * " -O -K" * apenda * output);  orig_J = "")
 	end
+	CTRL.pocket_call[1] = nothing;	CTRL.pocket_call[2] = nothing		# For the case it was not yet empty
 
 	leave_paper_mode()				# See if we were in an intermediate state of paper coordinates
 	if (usedConfPar[1])				# Hacky shit to force start over when --PAR options were use
