@@ -827,6 +827,10 @@ function whereami()
 	mat2ds([lon lat], colnames=["Lon","Lat"], attrib=Dict("Country" => country, "City" => city, "Region" => region, "Zip" => zip, "Timezone" => timezone, "IP" => ip))
 end
 
+# ------------------------------------------------------------------------------------------------------
+# From this old SO post https://stackoverflow.com/questions/20484581/search-for-files-in-a-folder
+searchdir(path,key) = filter(x->occursin(key,x), readdir(path))
+
 isdefined(Main, :VSCodeServer) && (const VSdisp = Main.VSCodeServer.vscodedisplay)
 
 function ds2df end

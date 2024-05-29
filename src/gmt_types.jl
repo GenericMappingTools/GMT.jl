@@ -238,7 +238,7 @@ function Base.getindex(D::GMTdataset{T,N}, ind::String) where {T,N}
 	mat = Tables.getcolumn(D, Symbol(ind))
 	D2 = mat2ds(mat, colnames=[ind], proj4=D.proj4, wkt=D.wkt)::GMTdataset
 	if ((Tc = get(D.attrib, "Timecol", "")) != "")		# If original has one, try to keep it but may need to recalculate
-		Tcn = Tables.columnnames(D)[parse(Int,Tc)]		# The Timecol name in input D
+		Tcn = Tables.columnnames(D)[parse.(Int,Tc)]		# The Timecol name in input D
 		i = findfirst(Tables.columnnames(D) .== Tcn)
 		c = findfirst(Tables.columnnames(D) .== ind)
 		(i == c) && (D2.attrib = Dict("Timecol" => "$i"))	# The selected column was the Time one.
@@ -253,7 +253,7 @@ function Base.getindex(D::GMTdataset{T,N}, inds::Vararg{Symbol}) where {T,N}
 	colnames_inds = [string.(inds)...]		# Because string.(inds) returns a Tuple of strings
 	D2 = mat2ds(mat, colnames=colnames_inds, proj4=D.proj4, wkt=D.wkt)::GMTdataset
 	if ((Tc = get(D.attrib, "Timecol", "")) != "")		# If original has one, try to keep it but may need to recalculate
-		Tcn = Tables.columnnames(D)[parse(Int,Tc)]		# The Timecol name in input D
+		Tcn = Tables.columnnames(D)[parse.(Int,Tc)]		# The Timecol name in input D
 		idx = [findfirst(Tables.columnnames(D) .== ind) for ind in colnames_inds]	# Find the column numbers of inds
 		i = findfirst(Tables.columnnames(D) .== Tcn)
 		itc = (i !== nothing) ? intersect(idx, i) : Int[]
