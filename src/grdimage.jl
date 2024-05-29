@@ -95,8 +95,8 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 		end
 	end
 
-	if (isa(arg1, Matrix{<:Real}))
-		if (isa(arg1, Matrix{UInt8}) || isa(arg1, Matrix{UInt16}))
+	if (isa(arg1, Matrix{<:Real}) || isa(arg1, Array{<:Real,3}))
+		if (isa(arg1, Matrix{UInt8}) || isa(arg1, Matrix{UInt16}) || isa(arg1, Array{UInt8,3}))
 			arg1 = mat2img(arg1; d...)
 		else
 			arg1 = mat2grid(arg1)

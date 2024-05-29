@@ -552,6 +552,7 @@ function gmtwrite(fname::AbstractString, data; kwargs...)
 	if (guess_T_from_ext(fname, write=true, text_only=text_only) == " -To")
 		gdalwrite(fname, data)		# Write OGR data
 	else
+		(isa(data, GItype) && startswith(data.layout, "TRB") && ndims(data) == 2) && (data.layout = "TRPa")	# Just a patch. NEED full fix
 		gmt("write " * fname * cmd, data)
 	end
 	(opt_T == " -Ti") && transpcmap!(data, false)		# Reset original cmap (in case it was changed)
