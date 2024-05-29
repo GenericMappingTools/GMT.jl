@@ -722,9 +722,6 @@ const ncType = Dict(
 	Char    => 2,
 	String  => 12)
 """
-    gdalwrite(data, fname::AbstractString, opts=String[]; kwargs...)
-or
-
     gdalwrite(fname::AbstractString, data, opts=String[]; kwargs...)
 
 Write a raster or a vector file to disk
@@ -747,8 +744,7 @@ Write a MxNxP `cube` object to disk as a multilayered file.
 - `dim_name`: The name of the variable of the ``vertical`` dimension.
 - `dim_units`: The units of the `v` vector. If not provided, use the `cube.z_units` if exist (GMTgrid only)
 """
-gdalwrite(fname::AbstractString, data, optsP=String[]; opts=String[], kw...) = gdalwrite(data, fname, optsP, true; opts=opts, kw...)
-function gdalwrite(data, fname::AbstractString, optsP=String[], pickme::Bool=true; opts=String[], kw...)
+function gdalwrite(fname::AbstractString, data, optsP=String[]; opts=String[], kw...)
 	(fname == "") && error("Output file name is missing.")
 	(isempty(optsP) && !isempty(opts)) && (optsP = opts)		# Accept either Positional or KW argument
 	ds = Gdal.get_gdaldataset(data, optsP)[1]
