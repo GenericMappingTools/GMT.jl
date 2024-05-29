@@ -450,6 +450,8 @@ OGR_FD_GetName(a1) = acare(ccall((:OGR_FD_GetName, libgdal), Cstring, (pVoid,), 
 OGR_FD_GetGeomType(a1)    = acare(ccall((:OGR_FD_GetGeomType, libgdal), UInt32, (pVoid,), a1))
 OGR_FD_GetGeomFieldCount(hFDefn) = acare(ccall((:OGR_FD_GetGeomFieldCount, libgdal), Cint, (pVoid,), hFDefn))
 OGR_FD_GetGeomFieldDefn(hFDefn, i) = acare(ccall((:OGR_FD_GetGeomFieldDefn, libgdal), pVoid, (pVoid, Cint), hFDefn, i))
+OGR_FD_Reference(a1) = acare(ccall((:OGR_FD_Reference, libgdal), Cint, (pVoid,), a1))
+OGR_FD_Dereference(a1) = acare(ccall((:OGR_FD_Dereference, libgdal), Cint, (pVoid,), a1))
 OGR_Fld_Create(a1, a2) = acare(ccall((:OGR_Fld_Create, libgdal), pVoid, (Cstring, UInt32), a1, a2))
 OGR_Fld_Destroy(a1) = acare(ccall((:OGR_Fld_Destroy, libgdal), Cvoid, (pVoid,), a1))
 OGR_Fld_GetDefault(hDefn) = acare(ccall((:OGR_Fld_GetDefault, libgdal), Cstring, (pVoid,), hDefn), false)
@@ -598,9 +600,9 @@ GDALInfoOptionsNew(pArgv, psOFB) =
 GDALInfoOptionsFree(psO) = acare(ccall((:GDALInfoOptionsFree, libgdal), Cvoid, (pVoid,), psO))
 GDALInfo(hDataset, psO) = acare(ccall((:GDALInfo, libgdal), Cstring, (pVoid, pVoid), hDataset, psO), true)
 
-#function GDALIdentifyDriver(pFname, pFList)
-	#acare(ccall((:GDALIdentifyDriver, libgdal), pVoid, (Cstring, Ptr{Cstring}), pFname, pFList))
-#end
+function GDALIdentifyDriver(pFname, pFList)
+	acare(ccall((:GDALIdentifyDriver, libgdal), pVoid, (Cstring, Ptr{Cstring}), pFname, pFList))
+end
 
 GDALTranslateOptionsNew(pArgv, psOFB) =
 	acare(ccall((:GDALTranslateOptionsNew, libgdal), pVoid, (Ptr{Cstring}, pVoid), pArgv, psOFB))
@@ -987,6 +989,9 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 		end
 	end
 
+	reference(featuredefn::FeatureDefn)::Integer = OGR_FD_Reference(featuredefn)
+	dereference(featuredefn::FeatureDefn)::Integer = OGR_FD_Dereference(featuredefn)
+
 	unsafe_createfeature(layer::AbstractFeatureLayer) = unsafe_createfeature(layerdefn(layer))
 	unsafe_createfeature(featuredefn::AbstractFeatureDefn) = Feature(pVoid(OGR_F_Create(featuredefn.ptr)))
 
@@ -1162,7 +1167,7 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 
 	copy(dataset::AbstractDataset; filename::AbstractString=string("/vsimem/$(gensym())"), driver::Driver=getdriver(dataset),
 		strict::Bool=false, options=Ptr{Cstring}(C_NULL), progressfunc::Function=GDALDummyProgress, progressdata=C_NULL)::IDataset =
-		IDataset(DALCreateCopy(driver.ptr, filename, dataset.ptr, strict, options, C_NULL, progressdata))
+		IDataset(GDALCreateCopy(driver.ptr, filename, dataset.ptr, strict, options, C_NULL, progressdata))
 
 	unsafe_copy(dataset::AbstractDataset; filename::AbstractString=string("/vsimem/$(gensym())"),
 		driver::Driver=getdriver(dataset), strict::Bool=false, options=Ptr{Cstring}(C_NULL),
@@ -1432,16 +1437,17 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 		prj::String, _prj::Int = "", 0
 		if (proj4)
 			(G_I.proj4 != "") && (prj = G_I.proj4)
-			(prj == "" && G_I.wkt  != "") && (prj = toPROJ4(importWKT(G_I.wkt)))
-			(prj == "" && G_I.epsg != 0)  && (prj = toPROJ4(importEPSG(G_I.epsg)))
+			(prj == "" && G_I.wkt  != "") && (prj = wkt2proj(G_I.wkt))
+			(prj == "" && G_I.epsg != 0)  && (prj = epsg2proj(G_I.epsg))
 		elseif (wkt)
 			(G_I.wkt != "") && (prj = G_I.wkt)
-			(prj == "" && G_I.proj4 != "") && (prj = toWKT(importPROJ4(G_I.proj4)))
-			(prj == "" && G_I.epsg  != 0)  && (prj = toWKT(importEPSG(G_I.epsg)))
+			(prj == "" && G_I.proj4 != "") && (prj = proj2wkt(G_I.proj4))
+			(prj == "" && G_I.epsg  != 0)  && (prj = epsg2wkt(G_I.epsg))
 		elseif (epsg)
 			(G_I.epsg != 0) && (_prj = G_I.epsg)
-			(_prj == 0 && G_I.wkt   != "") && (_prj = toEPSG(importWKT(G_I.wkt)))
-			(_prj == 0 && G_I.proj4 != "") && (_prj = toEPSG(importPROJ4(G_I.proj4)))
+			#(_prj == 0 && G_I.wkt   != "") && (_prj = wkt2epsg(G_I.wkt))
+			#(_prj == 0 && G_I.proj4 != "") && (_prj = proj2epsg(G_I.proj4))
+			@warn("Sorry, conversion to EPSG is not yet implemented.")
 		end
 		return (_prj != 0) ? _prj : prj
 		#prj = G_I.proj4
@@ -1927,7 +1933,7 @@ end
 		phr = Ref{Cint}(); pmin = Ref{Cint}(); psec = Ref{Cint}(); ptz=Ref{Cint}()
 		result = Bool(OGR_F_GetFieldAsDateTime(feature.ptr, i, pyr, pmth, pday, phr, pmin, psec, ptz))
 		(result == false) && error("Failed to fetch datetime at index $i")
-		return DateTime(pyr[], pmth[], pday[], phr[], pmin[], psec[])
+		return GMT.DateTime(pyr[], pmth[], pday[], phr[], pmin[], psec[])
 	end
 
 	layerdefn(layer::AbstractFeatureLayer) = IFeatureDefnView(OGR_L_GetLayerDefn(layer.ptr))
