@@ -2275,6 +2275,9 @@ function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, mapa=nothing, de
 	isa(val, AbstractDict) && (val = Base.invokelatest(dict2nt, val))
 	if (isa(val, NamedTuple) && isa(mapa, NamedTuple))
 		args[1] = Base.invokelatest(add_opt, val, mapa, arg)
+	elseif (isa(val, NamedTuple) && mapa === nothing)
+		# Happens when the inline 'inset' passed a NT with options for inset itself and not the module it called
+		return cmd
 	elseif (isa(val, Tuple) && length(val) > 1 && isa(val[1], NamedTuple))	# In fact, all val[i] -> NT
 		# Used in recursive calls for options like -I, -N , -W of pscoast. Here we assume that opt != ""
 		_args::String = ""
@@ -2707,57 +2710,61 @@ function add_opt_module(d::Dict)::Vector{String}
 	#  SYMBS should contain a module name (e.g. 'coast' or 'colorbar'), and if present in D,
 	# 'val' can be a NamedTuple with the module's arguments or a 'true'.
 	out = Vector{String}()
+	n_inset = 0							# To count "inset" calls
 
 	for symb in CTRL.callable			# Loop over modules list that can be called inside other modules
+		!(haskey(d, symb)) && continue
 		r::Union{String, Vector{String}} = ""
-		if (haskey(d, symb))
-			val = d[symb]
-			isa(val, AbstractDict) && (val = Base.invokelatest(dict2nt, val))
-			if (isa(val, NamedTuple))
-				nt::NamedTuple = val
-				if     (symb == :coast)     r = coast!(; Vd=2, nt...)
-				elseif (symb == :colorbar)  r = colorbar!(; Vd=2, nt...)
-				elseif (symb == :basemap)   r = basemap!(; Vd=2, nt...)
-				elseif (symb == :logo)      r = logo!(; Vd=2, nt...)
-				elseif (symb == :clip)		# Need lots of little shits to parse the clip options
-					(CTRL.pocket_call[1] === nothing) ? (CTRL.pocket_call[1] = val[1]) : (CTRL.pocket_call[2] = val[1])
-					k,v = keys(nt), values(nt)
-					nt = NamedTuple{Tuple(Symbol.(k[2:end]))}(v[2:end])		# Fck, what a craziness to remove 1 el from a nt
-					r = clip!(""; Vd=2, nt...)
-					r = r[1:findfirst(" -K", r)[1]];	# Remove the "-K -O >> ..."
-					r = replace(r, " -R -J" => "")
-					r = "clip " * strtok(r)[2]			# Make sure the prog name is 'clip' and not 'psclip'
+		
+		val = d[symb]
+		isa(val, AbstractDict) && (val = Base.invokelatest(dict2nt, val))
+		if (symb == :inset)				# The inset case must come first because it is a special case
+			#Ex: viz(I15, proj=:guess, inset=(I14, inset_box=(anchor=:BR, width=5, offset=0.1), F=true, C="5p"))
+			n_inset += 1
+			inset_cm(val, n_inset)
+			r = "inset_$(n_inset)"
+		elseif (isa(val, NamedTuple))
+			nt::NamedTuple = val
+			if     (symb == :coast)     r = coast!(; Vd=2, nt...)
+			elseif (symb == :colorbar)  r = colorbar!(; Vd=2, nt...)
+			elseif (symb == :basemap)   r = basemap!(; Vd=2, nt...)
+			elseif (symb == :logo)      r = logo!(; Vd=2, nt...)
+			elseif (symb == :clip)		# Need lots of little shits to parse the clip options
+				(CTRL.pocket_call[1] === nothing) ? (CTRL.pocket_call[1] = val[1]) : (CTRL.pocket_call[2] = val[1])
+				k,v = keys(nt), values(nt)
+				nt = NamedTuple{Tuple(Symbol.(k[2:end]))}(v[2:end])		# Fck, what a craziness to remove 1 el from a nt
+				r = clip!(""; Vd=2, nt...)
+				r = r[1:findfirst(" -K", r)[1]];	# Remove the "-K -O >> ..."
+				r = replace(r, " -R -J" => "")
+				r = "clip " * strtok(r)[2]			# Make sure the prog name is 'clip' and not 'psclip'
+			else
+				!(symb in CTRL.callable) && error("Nested Fun call $symb not in the callable nested functions list")
+				_d = nt2dict(nt)
+				ind_pocket = (CTRL.pocket_call[1] === nothing) ? 1 : 2
+				(haskey(_d, :data)) && (CTRL.pocket_call[ind_pocket] = _d[:data]; delete!(d, [:data]))
+				this_symb = CTRL.callable[findfirst(symb .== CTRL.callable)]
+				fn = getfield(GMT, Symbol(string(this_symb, "!")))
+				if (this_symb in [:vband, :hband, :vspan, :hspan])
+					r = fn(CTRL.pocket_call[ind_pocket]; nested=true, Vd=2, nt...)
 				else
-					!(symb in CTRL.callable) && error("Nested Fun call $symb not in the callable nested functions list")
-					_d = nt2dict(nt)
-					ind_pocket = (CTRL.pocket_call[1] === nothing) ? 1 : 2
-					(haskey(_d, :data)) && (CTRL.pocket_call[ind_pocket] = _d[:data]; delete!(d, [:data]))
-					this_symb = CTRL.callable[findfirst(symb .== CTRL.callable)]
-					fn = getfield(GMT, Symbol(string(this_symb, "!")))
-					if (this_symb in [:vband, :hband, :vspan, :hspan])
-						r = fn(CTRL.pocket_call[ind_pocket]; nested=true, Vd=2, nt...)
-					else
-						r = fn(; Vd=2, nt...)
-					end
+					r = fn(; Vd=2, nt...)
 				end
-			elseif (isa(val, Real) && (val != 0))		# Allow setting coast=true || colorbar=true
-				if     (symb == :coast)    r = coast!(W=0.5, A="200/0/2", Vd=2)
-				elseif (symb == :colorbar) r = colorbar!(pos=(anchor="MR",), B="af", Vd=2)
-				elseif (symb == :logo)     r = logo!(Vd=2)
-				end
-			elseif (symb == :colorbar && (isa(val, StrSymb)))
-				t::Char = lowercase(string(val)[1])		# Accept "Top, Bot, Left" but default to Right
-				anc = (t == 't') ? "TC" : (t == 'b' ? "BC" : (t == 'l' ? "ML" : "MR"))
-				r = colorbar!(pos=(anchor=anc,), B="af", Vd=2)
-			elseif (symb == :clip)
-				(CTRL.pocket_call[1] === nothing) ? (CTRL.pocket_call[1] = val) : (CTRL.pocket_call[2] = val)
-				r = "clip"
-			#elseif (symb == :inset)
-				#isa(val, GItype) && inset_cm(val, inset_box=(anchor=:TR, width=6, offset=0.5))
 			end
-			delete!(d, symb)
+		elseif (isa(val, Real) && (val != 0))		# Allow setting coast=true || colorbar=true
+			if     (symb == :coast)    r = coast!(W=0.5, A="200/0/2", Vd=2)
+			elseif (symb == :colorbar) r = colorbar!(pos=(anchor="MR",), B="af", Vd=2)
+			elseif (symb == :logo)     r = logo!(Vd=2)
+			end
+		elseif (symb == :colorbar && (isa(val, StrSymb)))
+			t::Char = lowercase(string(val)[1])		# Accept "Top, Bot, Left" but default to Right
+			anc = (t == 't') ? "TC" : (t == 'b' ? "BC" : (t == 'l' ? "ML" : "MR"))
+			r = colorbar!(pos=(anchor=anc,), B="af", Vd=2)
+		elseif (symb == :clip)
+			(CTRL.pocket_call[1] === nothing) ? (CTRL.pocket_call[1] = val) : (CTRL.pocket_call[2] = val)
+			r = "clip"
 		end
-		#(r != "") && append!(out, [r])
+		delete!(d, symb)
+
 		(isa(r, Vector) && !isempty(r)) && append!(out, r)
 		(isa(r, String) && (r != "")) && append!(out, [r])
 	end
@@ -4320,6 +4327,11 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 			P = (CTRL.pocket_call[1] !== nothing) ? gmt(cmd[k], CTRL.pocket_call[1]) :
 			                                        (length(cmd) > 1) ? gmt(cmd[k]) : gmt(cmd[k], args...)
 			CTRL.pocket_call[1] = CTRL.pocket_call[2];	CTRL.pocket_call[2] = nothing
+			continue
+		elseif (startswith(cmd[k], "inset"))		# Here we have an already made inset ps file waiting to be included
+			finset = searchdir(TMPDIR_USR[1], "GMTjl__inset__")[1]	# Even if there are more we only want the first
+			add2PSfile(TMPDIR_USR[1] * "/" * finset, isfile=true)	# Add the partial inset ps in main ps file.
+			rm(TMPDIR_USR[1] * "/" * finset)						# Crutial to delete after use to not be picked in a eventual next round
 			continue
 		end
 		# Allow also plot data from a nested call to plot

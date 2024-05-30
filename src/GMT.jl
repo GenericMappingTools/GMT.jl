@@ -93,7 +93,7 @@ const DEF_FIG_AXES3_BAK    = " -Baf -Bza"          # 		"" but for 3D views
 const global DEF_FIG_AXES  = [DEF_FIG_AXES_BAK]    # This one may be be changed by theme()
 const global DEF_FIG_AXES3 = [DEF_FIG_AXES3_BAK]   #		""
 const global CTRL = CTRLstruct(zeros(13), zeros(6), [true], [false],
-                               [:arrows, :bubblechart, :basemap, :band, :clip, :coast, :colorbar, :hband, :hlines, :logo, :lines, :grdvector, :plot, :plot3, :quiver, :scatter, :scatter3, :stairs, :text, :vlines, :vband],
+                               [:arrows, :bubblechart, :basemap, :band, :clip, :coast, :colorbar, :hband, :hlines, :inset, :logo, :lines, :grdvector, :plot, :plot3, :quiver, :scatter, :scatter3, :stairs, :text, :vlines, :vband],
 							   [nothing, nothing, nothing], ["","",""], ["","", "", "   "], [""], ["",""], [false,true], [C_NULL], [Dict()])
 const global CTRLshapes = CTRLstruct2([true], [true], [""])			# Used in sub-module Drawing
 const prj4WGS84 = "+proj=longlat +datum=WGS84 +units=m +no_defs"	# This is used in many places
@@ -336,21 +336,21 @@ include("get_enums.jl")
 	rm(t)
 	D = mat2ds(rand(3,3), colnames=["Time","b","c"]); D.attrib = Dict("Timecol" => "1");
 	D[:Time];	D["Time", "b"];
-	grdimage(rand(Float32,32,32));
-	grdview(rand(Float32,32,32), Vd=2);
-	grdinfo(mat2grid(rand(Float32,4,4)));
-	Glix=gmt("grdmath", "-R0/10/0/10 -I2 X");
-	grdcontour(Glix);
-	grd2cpt(Glix);
-	grd2xyz(Glix);
-	grdlandmask(R="-10/4/37/45", res=:c, inc=0.1);
-	grdmask([10 20; 40 40; 70 20; 10 20], R="0/100/0/100", out_edge_in=[100 0 0], I=2);
-	grdsample(Glix, inc=0.5);
-	grdtrend(Glix, model=3);
-	grdtrack(Glix, [1 1]);
-	mat2img(rand(UInt8, 32, 32, 3));
-	coast(R=:g, proj=:guess, W=(level=1,pen=(2,:green)), Vd=2);
-	gridit(rand(10,3), preproc=true, I=0.1);
+	I = mat2img(rand(UInt8, 32, 32, 3));
+	#grdimage(I, V=:q);
+	#grdview(rand(Float32,32,32), Vd=2);
+	#grdinfo(mat2grid(rand(Float32,4,4)));
+	#Glix=gmt("grdmath", "-R0/10/0/10 -I2 X");
+	#grdcontour(Glix);
+	#grd2cpt(Glix);
+	#grd2xyz(Glix);
+	#grdlandmask(R="-10/4/37/45", res=:c, inc=0.1);
+	#grdmask([10 20; 40 40; 70 20; 10 20], R="0/100/0/100", out_edge_in=[100 0 0], I=2);
+	#grdsample(Glix, inc=0.5);
+	#grdtrend(Glix, model=3);
+	#grdtrack(Glix, [1 1]);
+	#coast(R=:g, proj=:guess, W=(level=1,pen=(2,:green)), Vd=2);
+	#gridit(rand(10,3), preproc=true, I=0.1);
 	#earthregions("PT", Vd=2);
 	#violin(rand(50), fmt=:ps);
 	#boxplot(rand(50), fmt=:ps);
