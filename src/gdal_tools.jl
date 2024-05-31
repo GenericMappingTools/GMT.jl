@@ -152,7 +152,8 @@ function polygonize(data::GItype; gdataset=nothing, kwargs...)
 			GMT.POSTMAN[1]["simplify"] = s_val
 		end
 		prj = getproj(data)
-		D = gd2gmt(o);		isa(D, Vector) ? (D[1].proj4 = prj) : (D.proj4 = prj)
+		D = gd2gmt(o);
+		!isempty(D) && (isa(D, Vector) ? (D[1].proj4 = prj) : (D.proj4 = prj))
 		delete!(GMT.POSTMAN[1], "min_polygon_area")	# In case it was set above
 		delete!(GMT.POSTMAN[1], "polygon_isgeog")
 		return D

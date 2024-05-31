@@ -223,12 +223,14 @@ function histogram_helper(cmd0::String, arg1; first=true, kwargs...)
 			have_nans = !(isa(arg1, GMTgrid) && arg1.hasnans == 1)
 			have_nans && (have_nans = any(!isfinite, arg1))
 		end
+
+		_inc = inc + 10eps()					# To avoid cases when index computing fall of by 1
 		if (have_nans)							# If we have NaNs in the grid, we need to take a slower branch
 			@inbounds for k = 1:numel(arg1)
-				!isnan(arg1[k]) && (hst[Int(floor((arg1[k] - _min_max[1]) / inc) + 1), 2] += 1)
+				!isnan(arg1[k]) && (hst[Int(floor((arg1[k] - _min_max[1]) / _inc) + 1), 2] += 1)
 			end
 		else
-			@inbounds for k = 1:numel(arg1)  hst[Int(floor((arg1[k] - _min_max[1]) / inc) + 1), 2] += 1  end
+			@inbounds for k = 1:numel(arg1)  hst[Int(floor((arg1[k] - _min_max[1]) / _inc) + 1), 2] += 1  end
 		end
 		@inbounds for k = 1:n_bins  hst[k,1] = _min_max[1] + inc * (k - 1)  end
 

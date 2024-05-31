@@ -51,7 +51,14 @@ function xyz2grd(cmd0::String="", arg1=nothing; kwargs...)
 		(haskey(d, :x) && haskey(d, :y) && haskey(d, :z)) && (arg1 = hcat(d[:x], d[:y], d[:z]))
 		(arg1 !== nothing) && (delete!(d, :x); delete!(d, :y); delete!(d, :z))
 	end
-	common_grd(d, cmd0, cmd, "xyz2grd ", arg1)		# Finish build cmd and run it
+	G = common_grd(d, cmd0, cmd, "xyz2grd ", arg1)		# Finish build cmd and run it
+	if (isa(G, GMTgrid) && G.proj4 == "+xy")
+		contains(cmd, " -fg") && (G.proj4 = prj4WGS84)
+		if (contains(cmd, " -J+proj="))					# The shit here is that it also contains the "+width=..."
+			G.proj4 = split(string(split(cmd, " -J")[2]), "+width")[1]	# First split isolates the -J argument, second strips the width
+		end
+	end
+	return G
 end
 
 # ---------------------------------------------------------------------------------------------------
