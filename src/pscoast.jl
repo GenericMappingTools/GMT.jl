@@ -92,15 +92,15 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 		return gmt(t).text[1]::String
 	end
 
-	cmd = parse_E_coast(d, [:E, :DCW], "")		# Process first to avoid warning about "guess"
+	cmd = add_opt(d, "", "M", [:M :dump])
+	cmd = parse_E_coast(d, [:E, :DCW], cmd)		# Process first to avoid warning about "guess"
 	if (cmd != "")								# Check for a minimum of points that segments must have
 		if ((val = find_in_dict(d, [:minpts])[1]) !== nothing)  POSTMAN[1]["minpts"] = string(val)::String
 		elseif (get(POSTMAN[1], "minpts", "") != "")            delete!(POSTMAN[1], "minpts")
 		end
 	end
-	cmd = add_opt(d, cmd, "M", [:M :dump])
 	contains(cmd, " -M") && (POSTMAN[1]["DCWnames"] = "s")		# When dumping, we want to add the country name as attribute
-	if (!occursin("-E+l", cmd) && !occursin("-E+L", cmd))
+	if (!occursin("-E+l", cmd) && !occursin("-E+L", cmd))		# I.e., no listings only
 		cmd, = parse_R(d, cmd, O)
 		if (!contains(cmd, " -M"))				# If Dump no -R & -B
 			cmd = parse_J(d, cmd, "guess", true, O)[1]
@@ -187,6 +187,8 @@ function parse_E_coast(d::Dict, symbs::Vector{Symbol}, cmd::String)
 		if (isa(val, String) || isa(val, Symbol))	# Simple case, ex E="PT,+gblue" or E=:PT
 			t::String = string(" -E", val)
 			(t == " -E") && (delete!(d, [:E, :DCW]); return cmd)	# This lets use E="" like earthregions may do
+			(!contains(cmd, " -M") && is_in_dict(d, [:R :region :limits :region_llur :limits_llur :limits_diag :region_diag]) === nothing) &&
+				(d[:R] = t[4:end])					# Must also see what to do for the other elseif branches
 			!contains(t, "+") && (t *= "+p0.5")		# If only code(s), append pen
 			cmd *= t
 		elseif (isa(val, NamedTuple) || isa(val, AbstractDict))
