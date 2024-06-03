@@ -113,6 +113,7 @@ Its natural use is to digitize masks images.
   - `min_area`: Minimum area in m2 for a polygon to be retained. This option takes precedence over the one
     above that is based in the counting of cells. Note also that this is an approximate value because at this
     point we still don't know exactly the latitudes of the polygons.
+  - `max_area`: Maximum area in m2 for a polygon to be retained.
   - `simplify`: Apply the Douglas-Peucker line simplification algorithm to the poligons. Provide a tolerence
     in meters. For example: `simplify=0.5`. But be warned that this is a risky option since a too large tolerance
 	can lead to loss of otherwise good polygons. A good rule of thumb is to use the cell size for the tolerance.
@@ -125,18 +126,21 @@ function polygonize(data::GItype; gdataset=nothing, kwargs...)
 	m_per_deg = 2pi * 6371000 / 360;	m_per_deg_2 = m_per_deg^2
 	_isgeog = GMT.isgeog(data)
 	min_area::Float64 = ((val = find_in_dict(d, [:min_area :minarea])[1]) !== nothing) ? Float64(val) : 0.0
+	max_area::Float64 = ((val = find_in_dict(d, [:max_area :maxarea])[1]) !== nothing) ? Float64(val) : 0.0
 
-	if ((val = find_in_dict(d, [:min :nmin :npixels :ncells])[1]) !== nothing || min_area > 0.0)
+	if ((val = find_in_dict(d, [:min :nmin :npixels :ncells])[1]) !== nothing || min_area > 0.0 || max_area > 0.0)
 		# Compute the cell area. We have to do the (approximate) calculation here because in gd2gmt it often knows not if GEOG.
-		if (_isgeog && min_area > 0.0)
+		if (_isgeog && min_area > 0.0 || max_area > 0.0)
 			mean_lat = (data.range[3] + data.range[4]) / 2
-			cell_area = min_area / m_per_deg_2 / cosd(mean_lat)		# Approximate area in deg^2. At this time we don't know polygs lat
+			cell_area  = min_area / m_per_deg_2 / cosd(mean_lat)		# Approximate area in deg^2. At this time we don't know polygs lat
+			cell_area2 = max_area / m_per_deg_2 / cosd(mean_lat)
 			(val !== nothing) && @warn("'min_area' takes precedence over 'min', 'nmin', 'npixels' or 'ncells'")
 		else
 			cell_area = Float64(val)::Float64 * data.inc[1] * data.inc[2]
 		end
 		s_area = string(cell_area)
 		isempty(GMT.POSTMAN[1]) ? (GMT.POSTMAN[1] = Dict("min_polygon_area" => s_area)) : GMT.POSTMAN[1]["min_polygon_area"] = s_area
+		(max_area > 0.0) && (GMT.POSTMAN[1]["max_polygon_area"] = string(cell_area2))
 		_isgeog && (GMT.POSTMAN[1]["polygon_isgeog"] = "1")
 	end
 
