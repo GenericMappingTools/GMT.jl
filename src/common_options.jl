@@ -2721,7 +2721,7 @@ function add_opt_module(d::Dict)::Vector{String}
 		if (symb == :inset)				# The inset case must come first because it is a special case
 			#Ex: viz(I15, proj=:guess, inset=(I14, inset_box=(anchor=:BR, width=5, offset=0.1), F=true, C="5p"))
 			n_inset += 1
-			inset_cm(val, n_inset)
+			inset_nested(val, n_inset)
 			r = "inset_$(n_inset)"
 		elseif (isa(val, NamedTuple))
 			nt::NamedTuple = val
@@ -2769,6 +2769,26 @@ function add_opt_module(d::Dict)::Vector{String}
 		(isa(r, String) && (r != "")) && append!(out, [r])
 	end
 	return out
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    put_pocket_call(val)
+
+Put VAL in the next empty slot in the pocket_call vector. So far only 2 slots
+"""
+function put_pocket_call(val)
+	(CTRL.pocket_call[1] === nothing) ? (CTRL.pocket_call[1] = val) : (CTRL.pocket_call[2] = val)
+end
+"""
+    val get_pocket_call() -> Any
+
+Pop the contents of the first non-empty slot in the pocket_call vector stack 
+"""
+function get_pocket_call()
+	val = CTRL.pocket_call[1]		# Should error if val is nothing or are there concievable correct cases?
+	CTRL.pocket_call[1] = CTRL.pocket_call[2];		CTRL.pocket_call[2] = nothing
+	return val
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -4320,13 +4340,13 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 			end
 		elseif (k >= 1+fi && !is_psscale && !is_pscoast && !is_basemap && !is_text && CTRL.pocket_call[1] !== nothing)
 			# For nested calls that need to pass data
-			P = gmt(cmd[k], CTRL.pocket_call[1])
-			CTRL.pocket_call[1] = CTRL.pocket_call[2];	CTRL.pocket_call[2] = nothing	# Allow 2 nested calls requiring data
+			P = gmt(cmd[k], get_pocket_call())
 			continue
-		elseif (startswith(cmd[k], "psclip") || is_text)		# Pure (unique) psclip requires args. Compose cmd not
-			P = (CTRL.pocket_call[1] !== nothing) ? gmt(cmd[k], CTRL.pocket_call[1]) :
+		elseif (startswith(cmd[k], "psclip") || is_text)			# Pure (unique) psclip requires args. Compose cmd not
+			#P = (CTRL.pocket_call[1] !== nothing) ? gmt(cmd[k], CTRL.pocket_call[1]) :
+			P = (CTRL.pocket_call[1] !== nothing) ? gmt(cmd[k], get_pocket_call()) :
 			                                        (length(cmd) > 1) ? gmt(cmd[k]) : gmt(cmd[k], args...)
-			CTRL.pocket_call[1] = CTRL.pocket_call[2];	CTRL.pocket_call[2] = nothing
+			#CTRL.pocket_call[1] = CTRL.pocket_call[2];	CTRL.pocket_call[2] = nothing
 			continue
 		elseif (startswith(cmd[k], "inset"))		# Here we have an already made inset ps file waiting to be included
 			finset = searchdir(TMPDIR_USR[1], "GMTjl__inset__")[1]	# Even if there are more we only want the first
@@ -4335,8 +4355,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 			continue
 		end
 		# Allow also plot data from a nested call to plot
-		P = !(k > fi && is_plot && (CTRL.pocket_call[1] !== nothing)) ? gmt(cmd[k], args...) : gmt(cmd[k], CTRL.pocket_call[1])
-		is_plot && (CTRL.pocket_call[1] = CTRL.pocket_call[2];	CTRL.pocket_call[2] = nothing)
+		P = !(k > fi && is_plot && (CTRL.pocket_call[1] !== nothing)) ? gmt(cmd[k], args...) : gmt(cmd[k], get_pocket_call())
 
 		# If we had a double frame to plot Geog on a Cartesian plot we must reset memory to original -J & -R so
 		# that appending other plots to same fig can continue to work and not fail because proj had become Geog.
