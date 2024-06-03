@@ -829,8 +829,22 @@ end
 
 # ------------------------------------------------------------------------------------------------------
 # From this old SO post https://stackoverflow.com/questions/20484581/search-for-files-in-a-folder
-searchdir(path,key) = filter(x->occursin(key,x), readdir(path))
+"""
+    names = searchdir(path, template_name) -> Vector{String}
 
+Search in directory `path` for files starting with `template_name`. Returns a vector with the names.
+"""
+searchdir(path, key) = filter(x->occursin(key,x), readdir(path))
+
+# ------------------------------------------------------------------------------------------------------
+"""
+	bb = getbb(D::GDtype) -> Vector{Float64}
+
+Get the bounding box of a dataset (or vector of them)
+"""
+getbb(D::GDtype) = isa(D, Vector) ? D[1].ds_bbox : D.ds_bbox
+
+# ------------------------------------------------------------------------------------------------------
 isdefined(Main, :VSCodeServer) && (const VSdisp = Main.VSCodeServer.vscodedisplay)
 
 function ds2df end

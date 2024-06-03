@@ -34,9 +34,15 @@ function gmt(cmd::String, args...)
 	if (g_module == "begin")			# Use this default fig name instead of "gmtsession"
 		fig_ext::String = (isFranklin[1]) ? " png" : (isJupyter[1]) ? " " * FMT[1] : FMT[1]
 		(r == "") && (r = (isFranklin[1] || isJupyter[1]) ? (TMPDIR_USR[1] * "/" * "GMTjl_" * TMPDIR_USR[2] * TMPDIR_USR[3] * fig_ext) : "GMTplot " * fig_ext)
-		IamModern[1] = true
+		# Here we must account for the fact that we may have started from a CLASSIC session. Then, the session dir does
+		# not exist yet and in consequence when GMT_begin calls gmt_manage_workflow it will wrongly assume we are in CLASSIC
+		# mode and write a gmt.conf in the session dir with classic instead of modern defaults. Solution is to create it now.
+		API = unsafe_load(convert(Ptr{GMTAPI_CTRL}, G_API[1]))
+		sess = joinpath(unsafe_string(API.session_dir), "gmt_session." * unsafe_string(API.session_name))
+		!isfile(sess) && mkdir(sess)
 		gmtlib_setparameter(G_API[1], "MAP_ORIGIN_X", "0")	# Workarround GMT bug.
 		gmtlib_setparameter(G_API[1], "MAP_ORIGIN_Y", "0")
+		IamModern[1] = true
 	elseif (g_module == "end")			# Last command of a MODERN session
 		(r == "") && (r = "-Vq")		# Cannot have a no-args for this case otherwise it prints help
 		gmtlib_setparameter(G_API[1], "MAP_ORIGIN_X", "20c")

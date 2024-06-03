@@ -255,6 +255,7 @@ function gd2gmt(dataset::Gdal.AbstractDataset)
 	(Gdal.OGRGetDriverByName(Gdal.shortname(getdriver(dataset))) == C_NULL) && return gd2gmt(dataset; pad=0)
 
 	min_area = (get(POSTMAN[1], "min_polygon_area", "") != "") ? parse(Float64, POSTMAN[1]["min_polygon_area"]) : 0.0
+	max_area = (get(POSTMAN[1], "max_polygon_area", "") != "") ? parse(Float64, POSTMAN[1]["max_polygon_area"]) : 0.0
 	p_isgeog = (get(POSTMAN[1], "polygon_isgeog", "") != "") ? true : false
 	D, ds, get_area = Vector{GMTdataset}(undef, Gdal.ngeom(dataset)), 1, false
 	(get(POSTMAN[1], "sort_polygons", "") != "") && (polyg_area = zeros(length(D));		get_area = true)
@@ -270,7 +271,8 @@ function gd2gmt(dataset::Gdal.AbstractDataset)
 
 			for j = 0:Gdal.ngeom(feature)-1
 				geom = Gdal.getgeom(feature, j)
-				(min_area > 0.0 && geomarea(geom) < min_area) && continue
+				this_area = geomarea(geom)
+				((min_area > 0.0 && this_area < min_area) || max_area > 0.0 && this_area > max_area) && continue
 				_D::GDtype = gd2gmt(geom, proj)
 				gt = Gdal.getgeomtype(geom)
 				get_area && (polyg_area[ds] = geomarea(geom))	# This area will NOT be what is expected if geom is known to be geog
@@ -297,7 +299,7 @@ function gd2gmt(dataset::Gdal.AbstractDataset)
 	(length(D) != ds-1) && (D = deleteat!(D,ds:length(D)))
 	D[1].colnames = startswith(proj, "+proj=longlat") ? ["lon","lat", ["z$i" for i=1:size(D[1].data,2)-2]...] :
 	                ["x","y", ["z$i" for i=1:size(D[1].data,2)-2]...]	
-	set_dsBB!(D)				# Compute and set the global BoundingBox for this dataset
+	set_dsBB!(D, false)					# Compute and set the global BoundingBox for this dataset
 	if (get(POSTMAN[1], "polygonize", "") != "") && isapprox(D[1].ds_bbox, D[end].bbox)	# Last one is often an error (the whole area)
 		pop!(D)
 		delete!(GMT.POSTMAN[1], "polygonize")
@@ -305,8 +307,23 @@ function gd2gmt(dataset::Gdal.AbstractDataset)
 	end
 	if (get(POSTMAN[1], "sort_polygons", "") != "")		# polygonize requested that the polygons go out in growing order
 		(polyg_area = deleteat!(polyg_area, ds:length(polyg_area)))
+		if (isempty(polyg_area))
+			delete!(GMT.POSTMAN[1], "sort_polygons");	delete!(GMT.POSTMAN[1], "simplify")
+			return GMTdataset()
+		end
+
 		ind = sortperm(polyg_area, rev=true)
+		isapprox(D[1].ds_bbox, D[ind[1]].bbox) && (popat!(ind, 1))	# Some times the almost full area polygon was not cought yet.
+		n_polys = length(ind)
+		if (n_polys == 0)
+			delete!(GMT.POSTMAN[1], "sort_polygons");	delete!(GMT.POSTMAN[1], "simplify")
+			return GMTdataset()
+		end
+
+		colnames = D[1].colnames
 		D = D[ind]
+		set_dsBB!(D, false)				# Recompute the global BoundingBox because we changed the order
+		D[1].colnames = colnames
 		n_polys = length(D)
 		att_area_name = "area_cart"
 		if (p_isgeog)					# Can't rely on info stored in D at this time

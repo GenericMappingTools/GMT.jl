@@ -292,7 +292,18 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 
 	_cmd = gmt_proggy .* _cmd				# In any case we need this
 	_cmd = frame_opaque(_cmd, opt_B, opt_R, opt_J, opt_JZ) # No -t in -B
+	(is_in_dict(d, [:inset]) !== nothing) && (CTRL.pocket_call[4] = arg1)	# If 'inset', it may be needed from next call
 	_cmd = finish_PS_nested(d, _cmd)
+
+	# ...
+	if (startswith(_cmd[end], "inset_") && isa(CTRL.pocket_call[4], String))
+		Rs::String = CTRL.pocket_call[4]	# Don't use it directly because it's a Any
+		R = parse.(Float64, split(Rs, "/"))
+		put_pocket_call([R[1] R[3]; R[1] R[4]; R[2] R[4]; R[2] R[3]; R[1] R[3]])	# Store it in CTRL.pocket_call
+		ins = pop!(_cmd)
+		append!(_cmd, ["psxy -R -J -W0.4p"])
+		append!(_cmd, [ins])
+	end
 	_cmd = fish_bg(d, _cmd)					# See if we have a "pre-command"
 
 	if (isa(arg1, GDtype) && (((val = find_in_dict(d, [:labels])[1])) !== nothing))
