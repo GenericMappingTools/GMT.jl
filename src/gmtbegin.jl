@@ -111,15 +111,25 @@ function get_format(name, fmt=nothing, d=nothing)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function inset_cm(nt::NamedTuple, n)		# With this method, the first el of NT contains the data
+function inset_nested(nt::NamedTuple, n)	# With this method, the first el of NT contains the data
+	# N is the number of the inset. Used only to name the temporary inset PS file
 	k,v = keys(nt), values(nt)
 	d = Dict{Symbol,Any}(k[2:end] .=> v[2:end])			# Drop first el because it contains the input data
-	(!(:inset_box in k) && !(:insetbox in k) && !(:D in k)) && (d[:D] = (anchor=:TR, width=5, offset=0.1))
-	inset_cm(nt[1], n; d...)
+	(!(:inset_box in k) && !(:insetbox in k) && !(:D in k)) && (d[:D] = "jTR")		# Make sure -D is set
+	if (k[1] == :zoom)						# Make a zoom window centered on the coords passed in the zoom tuple
+		zoom(d, v[1])						# Set the -R for the requested zoom
+		inset_nested(CTRL.pocket_call[4], n; d...)
+		((opt_R = get(d, :R, "")) != "") && (CTRL.pocket_call[4] = opt_R)	# Save for drawing rect in the main fig
+		CTRL.pocket_call[4] = ((opt_R = get(d, :R, "")) != "") ? opt_R : nothing
+	else
+		inset_nested(nt[1], n; d...)
+	end
 end
-function inset_cm(GI::GItype, n; kwargs...)
+
+# ---------------------------------------------------------------------------------------------------
+function inset_nested(GI::GItype, n; kwargs...)
 	d = KW(kwargs)
-	d, fname, opt_B, opt_J, opt_R = helper1_inset_cm(d)			# fname is gmt_0.ps- file in modern session
+	d, fname, opt_B, opt_J, opt_R = helper1_inset_nested(d)			# fname is gmt_0.ps- file in modern session
 
 	if (opt_J == "")
 		opt_J = isgeog(GI) ? guess_proj(GI.range[1:2], GI.range[3:4]) : " -JX"
@@ -133,30 +143,32 @@ function inset_cm(GI::GItype, n; kwargs...)
 	(opt_B == "") && (CTRL.pocket_d[1][:B] = opt_B[4:end])
 
 	grdimage(GI; CTRL.pocket_d[1]...)
-	helper2_inset_cm(fname, n)			# end's inset(), moves fname to TMP and calls gmtend()
+	helper2_inset_nested(fname, n)			# end's inset(), moves fname to TMP and calls gmtend()
 end
 
 # ---------------------------------------------------------------------------------------------------
-function inset_cm(D::GDtype, n; kwargs...)
+function inset_nested(D::GDtype, n; kwargs...)
 	d = KW(kwargs)
-	d, fname, opt_B, opt_J, opt_R = helper1_inset_cm(d; isplot=true)	# Calls inset(). fname is gmt_0.ps- file in modern session
+	d, fname, opt_B, opt_J, opt_R = helper1_inset_nested(d; isplot=true)	# Calls inset(). fname is gmt_0.ps- file in modern session
 
 	(opt_J == "") && (d[:J] = "X?/?")
 	if (opt_R == "")
 		bb = getbb(D)
-		opt_R = sprintf("%.12g/%.12g/%.12g/%.12g", bb...)
-		d[:R] = opt_R
+		opt_R = sprintf(" -R%.12g/%.12g/%.12g/%.12g", bb...)
 	end
+	d[:R] = opt_R[4:end]
 	(opt_B != "") && (d[:B] = opt_B[4:end])
+	d[:par] = ("MAP_FRAME_PEN", "0.75")	# For some reason it lost the theme set value (this) and went back to the GMT default.
 
-	plot(D; Vd=1, d...)
-	helper2_inset_cm(fname, n)			# end's inset(), moves fname to TMP and calls gmtend()
+	plot(D; d...)
+	helper2_inset_nested(fname, n)		# end's inset(), moves fname to TMP and calls gmtend()
 end
 
 # ---------------------------------------------------------------------------------------------------
-function inset_cm(f::Function, n; kwargs...)
+function inset_nested(f::Function, n; kwargs...)
+	# This method is only called from the firs inset_nested(nt::NamedTuple, n) when nt[1] is a function
 	d = KW(kwargs)
-	d, fname, opt_B, opt_J, opt_R = helper1_inset_cm(d; iscoast=true)	# fname is gmt_0.ps- file in modern session
+	d, fname, opt_B, opt_J, opt_R = helper1_inset_nested(d; iscoast=(f == coast))	# fname is gmt_0.ps- file in modern session
 
 	# J option, if provided, comes out with the size too but we don't want it. Ex: pocket_J[1] = [" -JG0/0/15c", "15c"]
 	(opt_J != "") && (opt_J = replace(opt_J[4:end], CTRL.pocket_J[2] => "?"))	#  becomes "G0/0/?"
@@ -165,28 +177,67 @@ function inset_cm(f::Function, n; kwargs...)
 	(opt_R != "") && (d[:R] = opt_R[4:end])
 
 	f(; d...)
-	helper2_inset_cm(fname, n)			# end's inset(), moves fname to TMP and calls gmtend()
+	helper2_inset_nested(fname, n)			# end's inset(), moves fname to TMP and calls gmtend()
 end
 
-function helper1_inset_cm(d; iscoast=false, isplot=false)
-	# All inset_cm methods start with this. Also sets some defaults.
+# ---------------------------------------------------------------------------------------------------
+function helper1_inset_nested(d; iscoast=false, isplot=false)
+	# All inset_nested methods start with this. Also sets some defaults.
 	fig_opt_R, fig_opt_J = CTRL.pocket_R[1], CTRL.pocket_J[1]	# Main fig region and proj. Need these to cheat the modern session
 	_, opt_B::String, opt_J::String, opt_R::String = parse_BJR(d, "", "", false, " ")
 	fname = hack_modern_session(fig_opt_R, fig_opt_J)	# Start a modern session and return the full name of the gmt_0.ps- file
 	!haskey(d, :box) && (d[:F] = iscoast ? "+c1p+p0.5+gwhite" : isplot ? "+gwhite" : "+c1p+p0.5")
-	if (isplot)
-		(is_in_dict(d, [:D :inset_box :insetbox]) === nothing) && (d[:D] = "jTR+w6/5+o0.1")
-		(is_in_dict(d, [:N :no_clip :noclip]) === nothing) && (d[:N] = true)
+	(is_in_dict(d, [:D :inset_box :insetbox]) === nothing) && (d[:D] = isplot ? "jTR+w6/4+o0.1" : "jTR+w5+o0.1")
+
+	t::String = get(d, :D, "")				# Don't use d[:D] directly because it's a Any
+	(t == "") && (t = parse_type_anchor(d, "", [:D :inset :inset_box :insetbox],
+	              (map=("g", arg2str, 1), outside=("J", arg2str, 1), inside=("j", arg2str, 1), norm=("n", arg2str, 1), paper=("x", arg2str, 1), anchor=("", arg2str, 2), width="+w", size="+w", justify="+j", offset=("+o", arg2str)), 'j'))
+	if     (contains(t, "TR") || contains(t, "RT")) opt_B = replace(opt_B, "WSen" => "WSrt")
+	elseif (contains(t, "BR") || contains(t, "RB")) opt_B = replace(opt_B, "WSen" => "WNbr")
+	elseif (contains(t, "TL") || contains(t, "LT")) opt_B = replace(opt_B, "WSen" => "SEtl")
+	elseif (contains(t, "BL") || contains(t, "LB")) opt_B = replace(opt_B, "WSen" => "ENlb")
 	end
+	(t[1] == ' ') && (t = t[4:end])			# When a -D was provided and parse_type_anchor was called.
+	!contains(t, "+o") && (t *= "+o0.1")	# Use a little margin by default
+	!contains(t, "+w") && (t *= isplot ? "+w6/4" : "+w5")	# If no size was provided, default is 6/4 or 5
+	d[:D] = t
+
+	if (isplot)
+		(is_in_dict(d, [:N :no_clip :noclip]) === nothing) && (d[:N] = true)	# Otherwise we loose the annotations
+	end
+	(opt_R != "") && (d[:R] = opt_R[4:end])
 	inset(; d...)
 	delete!(d, [[:D :inset_box :insetbox], [:F :box]])	# Some of these exist in module called in inset, so must remove them now
+	#corners = sniff_inset_coords(fname, fig_opt_R, fig_opt_J)
 	return d, fname, opt_B, opt_J, opt_R
 end
-function helper2_inset_cm(fname, n)
-	# All inset_cm methods end with this
+
+function helper2_inset_nested(fname, n)
+	# All inset_nested methods end with this
 	inset(:end)
 	mv(fname, TMPDIR_USR[1] * "/" * "GMTjl__inset__$(n).ps", force=true)
 	gmtend()		# hack_modern_session() issued the opening gmtbegin() call
+	return nothing
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    corners = sniff_inset_coords(fname, opt_R, opt_J) -> Matrix(4x4)
+
+Sniff in the session's gmt.inset.0 file and extract the inset corners coordinates in data units.
+"""
+function sniff_inset_coords(psname, fig_opt_R, fig_opt_J)
+	name = split(psname, "gmt_0.ps-")[1] * "gmt.inset.0"
+	fid = open(name, "r")
+	iter = eachline(fid)
+	local o, d
+	for it in iter
+		startswith(it, "# ORIGIN: ")    && (o = parse.(Float64, string.(split(it[11:end])))*2.54)
+		startswith(it, "# DIMENSION: ") && (d = parse.(Float64, string.(split(it[14:end])))*2.54; break)
+	end
+	close(fid)
+	corners = gmt("mapproject -I" * fig_opt_R * fig_opt_J, [o[1] o[2]; o[1] o[2]+d[2]; o[1]+d[1] o[2]+d[2]; o[1]+d[1] o[2]])
+	return corners
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -200,8 +251,23 @@ function hack_modern_session(opt_R, opt_J)
 	touch(fname)			# Create a new empty one that is needed to later code be appended.
 	return fname
 end
-##
 
 # ---------------------------------------------------------------------------------------------------
-# To have to do this every time we need to get the bounding box of a dataset (or vector of them)
-getbb(D::GDtype) = isa(D, Vector) ? D[1].ds_bbox : D.ds_bbox
+function zoom(d, center)
+	data::Union{GDtype, GItype} = CTRL.pocket_call[4]
+	if (isa(data, GItype))
+		zoom_lims = [max(center[1] - center[3], data.range[1]), min(center[1] + center[3], data.range[2]), max(center[1] + center[3], data.range[3]), min(center[2] + center[3], data.range[4])]
+	else
+		if (isa(data, GDtype))
+			xmima::Vector{Float64} = [max(center[1] - center[2], data.bbox[1]), min(center[1] + center[2], data.bbox[2])]
+			n1, n2 = 0, 0
+			while(data[n1+=1,1] < xmima[1]) end			# When it finish data[n1] >= xmima[1]
+			while(data[n2+=1,1] < xmima[2]) end			# When it finish data[n2] >= xmima[2]
+			#ymima::Vector{Float64} = [extrema(data[n1:n2,2])...]
+		end
+		CTRL.pocket_call[4] = mat2ds(data.data[n1:n2, 1:2], data)	# WTF do I have to do this? -R should be enough.
+		zoom_lims = round_wesn(CTRL.pocket_call[4].bbox)
+	end
+	d[:R] = sprintf("%.12g/%.12g/%.12g/%.12g", zoom_lims...)
+	return nothing
+end
