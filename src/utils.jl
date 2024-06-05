@@ -845,6 +845,40 @@ Get the bounding box of a dataset (or vector of them)
 getbb(D::GDtype) = isa(D, Vector) ? D[1].ds_bbox : D.ds_bbox
 
 # ------------------------------------------------------------------------------------------------------
+"""
+    l1, l2 = connect_rectangles(R1, R2) -> Tuple{Matrix{Float64}, Matrix{Float64}}
+
+Find the lines that connect two rectangles and do not intersect any of them (for zoom windows).
+
+- `R1` and `R2` are the [xmin, xmax, ymin, ymax] coordinates of the two rectangles:
+
+### Example:
+```julia
+R1 = [0.0, 3, 0, 2]; R2 = [5., 10, 5, 8];
+l1, l2 = connect_rectangles(R1, R2)
+```
+"""
+function connect_rectangles(R1, R2)
+	# Create lines that connect the corresponding vertices starting clock-wise at LL corner
+	# The idea is to find the lines that do not cross neither of the two rectangles
+	lines = [[R1[1] R1[3]; R2[1] R2[3]], [R1[1] R1[4]; R2[1] R2[4]], [R1[2] R1[4]; R2[2] R2[4]], [R1[2] R1[3]; R2[2] R2[3]]]
+	rec1 = [R1[1] R1[3]; R1[1] R1[4]; R1[2] R1[4]; R1[2] R1[3]; R1[1] R1[3]];
+	rec2 = [R2[1] R2[3]; R2[1] R2[4]; R2[2] R2[4]; R2[2] R2[3]; R2[1] R2[3]];
+	auto_cross = [false, false, false, false]
+	for k = 1:4			# Find the line that crosses the first rectangle (there is only one)
+		size(intersection(lines[k], rec1), 1) > 1 && (auto_cross[k] = true; break)	# Once found one, we are done.
+	end
+
+	c, nf = [false, false, false, false], 0
+	!auto_cross[1] && (size(intersection(lines[1], rec2),1) == 1) && (nf += 1; c[1] = true)
+	!auto_cross[2] && (size(intersection(lines[2], rec2),1) == 1) && (nf += 1; c[2] = true)
+	(nf < 2 && !auto_cross[3] && size(intersection(lines[3], rec2),1) == 1) && (nf += 1; c[3] = true)
+	(nf < 2 && !auto_cross[4] && size(intersection(lines[4], rec2),1) == 1) && (nf += 1; c[4] = true)
+	ind = findall(c)
+	return lines[ind[1]], lines[ind[2]] 
+end
+
+# ------------------------------------------------------------------------------------------------------
 isdefined(Main, :VSCodeServer) && (const VSdisp = Main.VSCodeServer.vscodedisplay)
 
 function ds2df end

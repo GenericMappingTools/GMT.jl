@@ -140,7 +140,7 @@ function mat2ds(mat::Vector{<:AbstractMatrix}; hdr=String[], kwargs...)
 	pen   = find_in_dict(d, [:pen])[1]
 	color = find_in_dict(d, [:lc :linecolor :color])[1]
 	ls    = find_in_dict(d, [:ls :linestyle])[1]
-	lt    = find_in_dict(d, [:lt :linethick])[1]
+	lt    = find_in_dict(d, [:lt :linethick :lw])[1]
 	front = find_in_dict(d, [:front])[1]
 	fill  = find_in_dict(d, [:fill :fillcolor])[1]
 	alpha = find_in_dict(d, [:fillalpha])[1]
@@ -228,7 +228,7 @@ function mat2ds(mat::Array{T,N}, txt::Union{String,Vector{String}}=String[]; hdr
 
 	color_cycle = false
 	if ((color = find_in_dict(d, [:lc :linecolor :color])[1]) !== nothing && color != false)
-		_color::Vector{String} = (isa(color, VecOrMat{String}) && !isempty(color)) ? vec(color) : matlab_cycle_colors
+		_color::Vector{String} = (isa(color, VecOrMat{String}) && !isempty(color)) ? vec(string.(color)) : !isa(color, Vector) ? [string(color)] : matlab_cycle_colors
 		color_cycle = true
 	end
 	_fill::Vector{String} = helper_ds_fill(d)
@@ -268,6 +268,7 @@ function mat2ds(mat::Array{T,N}, txt::Union{String,Vector{String}}=String[]; hdr
 	# ----------------------------------------
 
 	if ((ls = find_in_dict(d, [:ls :linestyle])[1]) !== nothing && ls != "")
+		(_hdr[1] == " -W") && (for k = 1:n_ds  _hdr[k] *= ","  end)	# If here we have no color ser mst make it -W,,ls
 		if (isa(ls, AbstractString) || isa(ls, Symbol))
 			for k = 1:n_ds  _hdr[k] = string(_hdr[k], ',', ls)  end
 		else
