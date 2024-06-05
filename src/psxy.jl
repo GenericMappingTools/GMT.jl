@@ -295,15 +295,18 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	(is_in_dict(d, [:inset]) !== nothing) && (CTRL.pocket_call[4] = arg1)	# If 'inset', it may be needed from next call
 	_cmd = finish_PS_nested(d, _cmd)
 
-	# ...
+	# If we have a zoom inset call must plot the zoom rectangle and lines connecting it to the inset window.
 	if (startswith(_cmd[end], "inset_") && isa(CTRL.pocket_call[4], String))
 		Rs::String = CTRL.pocket_call[4]	# Don't use it directly because it's a Any
 		R = parse.(Float64, split(Rs, "/"))
-		put_pocket_call([R[1] R[3]; R[1] R[4]; R[2] R[4]; R[2] R[3]; R[1] R[3]])	# Store it in CTRL.pocket_call
-		ins = pop!(_cmd)
+		l1, l2 = connect_rectangles(R, CTRL.pocket_call[5])
+		Drec = mat2ds([[R[1] R[3]; R[1] R[4]; R[2] R[4]; R[2] R[3]; R[1] R[3]], l1, l2], lc="gray", ls=["","dash","dash"], lw=[0.5, 0.75, 0.75])
+		put_pocket_call(Drec)				# Store it in CTRL.pocket_call
+		ins = pop!(_cmd)					# Remove the inset call
 		append!(_cmd, ["psxy -R -J -W0.4p"])
-		append!(_cmd, [ins])
+		append!(_cmd, [ins])				# Add the inset call again
 	end
+
 	_cmd = fish_bg(d, _cmd)					# See if we have a "pre-command"
 
 	if (isa(arg1, GDtype) && (((val = find_in_dict(d, [:labels])[1])) !== nothing))
