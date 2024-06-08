@@ -91,6 +91,11 @@
 	t = 0:0.1:2pi;
 	si = mat2ds([t sin.(t)]);
 	plot(t, cos.(t), inset=(zoom=(pi,pi/4),))
+	plot(t, cos.(t), inset=(zoom=(1,pi/6),))
+	plot(t, cos.(t), inset=(zoom=(2,pi/6),))
+	plot(t, cos.(t), inset=(zoom=(4,pi/6),))
+	plot(t, cos.(t), inset=(zoom=(5,pi/6),))
+	plot(t, cos.(t), inset=(zoom=(6,pi/6),))
 
 	println("	LINES")
 	lines([0 0; 10 20], R="-2/12/-2/22", J="M2.5", W=1, G=:red, decorated=(dist=(1,0.25), symbol=:box))
