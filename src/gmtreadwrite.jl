@@ -305,10 +305,11 @@ function helper_set_colnames!(o::GDtype, corder::Vector{Int}=Int[])
 	function inside_worker(D, corder)
 		isempty(D.comment) && return nothing
 		ncs = size(D,2)			# Next line checks if the comment is comma separated
-		for k = 1:numel(D.comment)		# We may have many empty entries in the 'comment' field. So search beyond the first too.
+		for k = numel(D.comment):-1:1		# We may have many empty entries in the 'comment' field.
 			hfs = (count(i->(i == ','), D.comment[k]) >= ncs-1) ? strip.(split(D.comment[k], ',')) : split(D.comment[k])
 			!isempty(hfs) && break
 		end
+		(length(hfs) < ncs) && return	# Junk in comments does not let guessing column names.
 		col_text = (!isempty(D.text) && length(hfs) > ncs) ? hfs[ncs+1] : ""
 		(!isempty(corder)) && (hfs = hfs[corder])
 		D.colnames = (length(hfs) > ncs) ? string.(hfs)[1:ncs] : string.(hfs)
@@ -360,18 +361,17 @@ function file_has_time!(fname::String, D::GDtype, corder::Vector{Int}=Int[])
 			n_it += 1			# Counter to not let this go on infinetely
 			(isempty(line1) || contains(">#!%;", line1[1][1])) && continue
 			loop_inds = isempty(corder) ? (1:n_cols) : corder
-			(length(line1) != length(loop_inds)) && continue
+			(length(line1) < length(loop_inds)) && continue			# Sometimes CSV files ends with a colon, and that adds a col to lines
 			for k in loop_inds
 				# Time cols may come in forms like [-]yyyy-mm-dd[T| [hh:mm:ss.sss]], so to find them we seek for
-				# '-' chars in the middle of strings that we KNOW have been converted to numbers. The shit that is
-				# left to be solved is that we can have TWO strings, 'yyyy-mm-dd hh:mm:ss.sss' to mean a single time.
+				# '-' chars in the middle of strings that we KNOW have been converted to numbers.
 				if ((i = findlast("-", line1[k])) !== nothing && i[1] > 1 && lowercase(line1[k][i[1]-1]) != 'e')
 					Ts = (f1 == 1) ? "Time" : "Time$(f1)";		f1 += 1
 					ind_t = (!isempty(corder)) ? findfirst(k .== corder) : k	# When -i was used 'corder' has new col order
 					Tc = (Tc == "") ? "$ind_t" : Tc * ",$ind_t"			# Accept more than one time columns
 					(isone) ? (D.colnames[ind_t] = Ts) : (D[1].colnames[ind_t] = Ts)
 					if (Tc != "" && k < loop_inds[end] && length(findall(":", line1[k+1])) == 2)
-						join_date_time_cols!(D, k+1)
+						join_date_time_cols!(D, k+1)	# To solve the TWO strings, 'yyyy-mm-dd hh:mm:ss.sss' to mean a single time.
 					end
 				end
 			end
