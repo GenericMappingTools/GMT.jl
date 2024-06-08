@@ -117,7 +117,7 @@ function inset_nested(nt::NamedTuple, n)	# In this method, the first el of NT co
 	d = Dict{Symbol,Any}(k[2:end] .=> v[2:end])			# Drop first el because it contains the input data
 	#(!(:inset_box in k) && !(:insetbox in k) && !(:D in k)) && (d[:D] = "jTR")		# Make sure -D is set
 	if (k[1] == :zoom)						# Make a zoom window centered on the coords passed in the zoom tuple
-		zoom(d, v[1])						# Set the -R for the requested zoom
+		zoom2inset(d, v[1])					# Set the -R for the requested zoom
 		inset_nested(CTRL.pocket_call[4], n; d...)
 		((opt_R = get(d, :R, "")) != "") && (CTRL.pocket_call[4] = opt_R)	# Save for drawing rect in the main fig
 		CTRL.pocket_call[4] = ((opt_R = get(d, :R, "")) != "") ? opt_R : nothing
@@ -185,9 +185,9 @@ end
 function helper1_inset_nested(d; iscoast=false, isplot=false)
 	# All inset_nested methods start with this. Also sets some defaults.
 	fig_opt_R, fig_opt_J = CTRL.pocket_R[1], CTRL.pocket_J[1]	# Main fig region and proj. Need these to cheat the modern session
-	bak = CTRL.limits[7:end]						# Backup these because parse_R will change them
+	bak = CTRL.limits[7:end]							# Backup these because parse_R will change them
 	_, opt_B::String, opt_J::String, opt_R::String = parse_BJR(d, "", "", false, " ")
-	CTRL.limits[7:end] = bak						# and we don't want that change to be stored
+	CTRL.limits[7:end] = bak							# and we don't want that change to be stored
 	fname = hack_modern_session(fig_opt_R, fig_opt_J)	# Start a modern session and return the full name of the gmt_0.ps- file
 	!haskey(d, :box) && (d[:F] = iscoast ? "+c1p+p0.5+gwhite" : isplot ? "+gwhite" : "+c1p+p0.5")
 
@@ -197,19 +197,9 @@ function helper1_inset_nested(d; iscoast=false, isplot=false)
 	inset_W = W / 2.5						# Default to 1/2.5 of the fig width
 	inset_H = inset_W / aspect_fig
 	anchor = "TR"							# The default anchor location is top right (TR). Bellow we may change this.
-	if ((val = find_in_dict(d, [:Rzoom_num])[1]) !== nothing)	# Get zoom limits in numeric
-		Rnum::Vector{Float64} = val			# F Anys
-		lims_zoom = gmt("mapproject" * fig_opt_R * fig_opt_J, [Rnum[1] Rnum[3]; Rnum[2] Rnum[4]])
-		center_zoom = ((Rnum[1] + Rnum[2]) / 2, (Rnum[3] + Rnum[4]) / 2)
-		center_fig  = ((CTRL.limits[8] + CTRL.limits[7]) / 2, (CTRL.limits[10] + CTRL.limits[9]) / 2)
-
-		if (center_zoom[1] <= center_fig[1])
-			quad = (center_zoom[2] <= center_fig[2]) ? 3 : 2
-		else
-			quad = (center_zoom[2] <= center_fig[2]) ? 4 : 1
-		end
-		anchor = (quad == 1) ? "BL" : (quad == 2) ? "BR" : (quad == 3) ? "TR" : "TL"	# Put inset in the opposite quadrant of the zoom window
-
+	if ((val = find_in_dict(d, [:Rzoom_num])[1]) !== nothing)	# Get zoom limits in numeric (in data units)
+		Rnum::Vector{Float64} = val			# F Anys. In data units
+		lims_zoom = gmt("mapproject" * fig_opt_R * fig_opt_J, [Rnum[1] Rnum[3]; Rnum[2] Rnum[4]])	# in paper units (cm)
 		aspect_zoom = (lims_zoom[4] - lims_zoom[3]) / (lims_zoom[2] - lims_zoom[1])		# Aspect ratio of the zoom window: Y/X
 		inset_H = inset_W * aspect_zoom
 		if (inset_H > H - 0.75)				# The 0.75 intends to account for the labels and def offset
@@ -217,6 +207,7 @@ function helper1_inset_nested(d; iscoast=false, isplot=false)
 			inset_W *= f;	inset_H *= f
 		end
 		delete!(d, :Rzoom_num)
+		anchor = floating_window(W, H, inset_W, inset_H, lims_zoom)
 	end
 
 	(is_in_dict(d, [:D :inset_box :insetbox]) === nothing) &&
@@ -255,6 +246,95 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
+    code = floating_window(fig_W, fig_H, float_W, float_H, lims_zoom) -> String
+
+Given the size of the figure, the size of the inset and the zoom limits, compute the anchor location
+of the inset such that it doesn't overlap with the zoom window. All inputs are in paper units.
+
+It works like this: The figure window is divided in a 3x3 cells matrix. We compute in which cell falls the
+center of the zoom window. Next, we try to place the inset either above or below the zoom window.
+The rational for this is that if those positions are good it si almost sure that the inset will not overlap
+the data being displayed. If it doesn't fit, we try the next position to the right along the top or bottom
+rows of the 3x3 matrix. In each test, we always check if zoom and inset windows overlap.
+
+- `fig_W` and `fig_H` are the size of the figure in paper units:
+- `float_W` and `float_H` are the size of the inset in paper units:
+- `lims_zoom`: is a vector of 4 numbers: [xmin xmax ymin ymax] in paper units with limits of the zoom window.
+"""
+function floating_window(fig_W, fig_H, float_W, float_H, lims_zoom)
+
+	zoom_W, zoom_H = lims_zoom[2] - lims_zoom[1], lims_zoom[4] - lims_zoom[3]
+	zoom_c  = ((lims_zoom[1] + lims_zoom[2]) / 2, (lims_zoom[3] + lims_zoom[4]) / 2)
+	col = div(zoom_c[1], fig_W / 3) + 1		# Column index
+	row = div(zoom_c[2], fig_H / 3) + 1		# Row index
+	float_W2, float_H2, fig_W3 = float_W / 2, float_H / 2, fig_W / 3
+
+	if (row == 1)
+		if (col == 1)
+			xc_2, yc_2 = float_W2, fig_H - float_H2
+			anchor = "TR"			# When the other positions fail resort to this
+			if     (!rect_overlap(zoom_c[1], zoom_c[2], xc_2, yc_2, zoom_W, zoom_H, float_W, float_H)[1])        anchor = "TL"
+			elseif (!rect_overlap(zoom_c[1], zoom_c[2], xc_2+fig_W3, yc_2, zoom_W, zoom_H, float_W, float_H)[1]) anchor = "TC"
+			end
+		elseif (col == 2)
+			xc_2, yc_2 = fig_W3 + float_W2, fig_H - float_H2
+			anchor = "TL"			# When the other positions fail resort to this
+			if     (!rect_overlap(zoom_c[1], zoom_c[2], xc_2, yc_2, zoom_W, zoom_H, float_W, float_H)[1])        anchor = "TC"
+			elseif (!rect_overlap(zoom_c[1], zoom_c[2], xc_2+fig_W3, yc_2, zoom_W, zoom_H, float_W, float_H)[1]) anchor = "TR"
+			end
+		else						# col = 3
+			xc_2, yc_2 = 2fig_W3 + float_W2, fig_H - float_H2
+			anchor = "TL"			# When the other positions fail resort to this
+			if     (!rect_overlap(zoom_c[1], zoom_c[2], xc_2, yc_2, zoom_W, zoom_H, float_W, float_H)[1])        anchor = "TR"
+			elseif (!rect_overlap(zoom_c[1], zoom_c[2], xc_2-fig_W3, yc_2, zoom_W, zoom_H, float_W, float_H)[1]) anchor = "TC"
+			end
+		end
+	elseif (row == 2)
+		if (col == 1)
+			xc_2, yc_2 = float_W2, fig_H - float_H2
+			anchor = "TR"			# When the other positions fail resort to this
+			if     (!rect_overlap(zoom_c[1], zoom_c[2], xc_2, yc_2, zoom_W, zoom_H, float_W, float_H)[1])     anchor = "TL"
+			elseif (!rect_overlap(zoom_c[1], zoom_c[2], xc_2, float_H2, zoom_W, zoom_H, float_W, float_H)[1]) anchor = "BL"
+			end
+		elseif (col == 2)
+			xc_2, yc_2 = fig_W3 + float_W2, fig_H - float_H2
+			anchor = "TR"			# When the other positions fail resort to this
+			if     (!rect_overlap(zoom_c[1], zoom_c[2], xc_2, yc_2, zoom_W, zoom_H, float_W, float_H)[1])      anchor = "TC"
+			elseif (!rect_overlap(zoom_c[1], zoom_c[2], xc_2, float_H2, zoom_W, zoom_H, float_W, float_H)[1])  anchor = "BC"
+			end
+		else						# col = 3
+			xc_2, yc_2 = 2fig_W3 + float_W2, fig_H - float_H2
+			anchor = "TL"			# When the other positions fail resort to this
+			if     (!rect_overlap(zoom_c[1], zoom_c[2], xc_2, yc_2, zoom_W, zoom_H, float_W, float_H)[1])      anchor = "TR"
+			elseif (!rect_overlap(zoom_c[1], zoom_c[2], xc_2, float_H2, zoom_W, zoom_H, float_W, float_H)[1])  anchor = "BR"
+			end
+		end
+	else							# row = 3
+		if (col == 1)
+			xc_2, yc_2 = float_W2, float_H2
+			anchor = "BR"			# When the other positions fail resort to this
+			if     (!rect_overlap(zoom_c[1], zoom_c[2], xc_2, yc_2, zoom_W, zoom_H, float_W, float_H)[1])         anchor = "BL"
+			elseif (!rect_overlap(zoom_c[1], zoom_c[2], xc_2+fig_W3, yc_2, zoom_W, zoom_H, float_W, float_H)[1])  anchor = "BC"
+			end
+		elseif (col == 2)
+			xc_2, yc_2 = fig_W3 + float_W2, float_H2
+			anchor = "BL"			# When the other positions fail resort to this
+			if     (!rect_overlap(zoom_c[1], zoom_c[2], xc_2, yc_2, zoom_W, zoom_H, float_W, float_H)[1])         anchor = "BC"
+			elseif (!rect_overlap(zoom_c[1], zoom_c[2], xc_2+fig_W3, yc_2, zoom_W, zoom_H, float_W, float_H)[1])  anchor = "BR"
+			end
+		else						# col = 3
+			xc_2, yc_2 = 2fig_W3 + float_W2, float_H2
+			anchor = "BL"			# When the other positions fail resort to this
+			if     (!rect_overlap(zoom_c[1], zoom_c[2], xc_2, yc_2, zoom_W, zoom_H, float_W, float_H)[1])         anchor = "BR"
+			elseif (!rect_overlap(zoom_c[1], zoom_c[2], xc_2-fig_W3, yc_2, zoom_W, zoom_H, float_W, float_H)[1])  anchor = "BC"
+			end
+		end
+	end
+	return anchor
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
     limits = sniff_inset_coords(fname, opt_R, opt_J) -> Matrix(4x4)
 
 Sniff in the session's gmt.inset.0 file and extract the inset limits in data units.
@@ -286,18 +366,35 @@ function hack_modern_session(opt_R, opt_J)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function zoom(d, center)
+function zoom2inset(d, center)
 	# Compute the -R for the requested rectangle and set in 'd'.
 	data::Union{GDtype, GItype} = CTRL.pocket_call[4]
+
+	function helper(D, center)
+		isincreasing = (sum(diff(D.data[1:5])) > 0) ? true : false
+		if (eltype(center) <: AbstractString || eltype(center) == Date || eltype(center) == DateTime)
+			t1, t2 = parse_zoom_window(center)
+			xmima::Vector{Float64} = [max(t1, D.bbox[1]), min(t2, D.bbox[2])]
+		else
+			xmima = [max(center[1] - center[2], D.bbox[1]), min(center[1] + center[2], D.bbox[2])]
+		end
+		n1, n2 = 0, 0
+		if (isincreasing)
+			while(D[n1+=1,1] < xmima[1]) end			# When it finish data[n1] >= xmima[1]
+			while(D[n2+=1,1] < xmima[2]) end			# When it finish data[n2] >= xmima[2]
+		else
+			while(D[n1+=1,1] > xmima[1]) end
+			while(D[n2+=1,1] > xmima[2]) end
+		end
+		if !isincreasing  n1, n2 = n2, n1  end
+		return n1, n2
+	end
+
 	if (isa(data, GItype))
 		zoom_lims = [max(center[1] - center[3], data.range[1]), min(center[1] + center[3], data.range[2]), max(center[1] + center[3], data.range[3]), min(center[2] + center[3], data.range[4])]
 	else
 		if (isa(data, GDtype))
-			xmima::Vector{Float64} = [max(center[1] - center[2], data.bbox[1]), min(center[1] + center[2], data.bbox[2])]
-			n1, n2 = 0, 0
-			while(data[n1+=1,1] < xmima[1]) end			# When it finish data[n1] >= xmima[1]
-			while(data[n2+=1,1] < xmima[2]) end			# When it finish data[n2] >= xmima[2]
-			#ymima::Vector{Float64} = [extrema(data[n1:n2,2])...]
+			n1, n2 = helper(data, center)
 		end
 		D = mat2ds(data.data[n1:n2, 1:2], data)			# WTF do I have to do this? -R should be enough.
 		DYpct = (D.ds_bbox[4] - D.ds_bbox[3]) * 0.01	# 1% of the Y data limits
@@ -311,4 +408,60 @@ function zoom(d, center)
 	d[:R] = sprintf("%.15g/%.15g/%.15g/%.15g", zoom_lims...)
 	d[:Rzoom_num] = zoom_lims
 	return nothing
+end
+
+# ---------------------------------------------------------------------------------------------------
+function parse_zoom_window(window::Tuple{<:AbstractString, <:AbstractString})
+	# Parse time strings in the form "YYYY-mm-dd", "YYYY-mm-ddThh", "YYYY-mm-ddThh:mm", "YYYY-mm-ddThh:mm:ss"
+	# or "dd-Jan-YY" or "dd-Jan-YYYY"
+	t1, t2 = ISOtime2unix(window[1]), ISOtime2unix(window[2])
+	t2 <= t1 && error("The end time must be greater than the start time.")
+	return t1, t2
+end
+
+# ---------------------------------------------------------------------------------------------------
+function parse_zoom_window(window::Tuple{<:Union{Date, DateTime}, <:Union{Date, DateTime}})
+	t1, t2 = datetime2unix(DateTime(window[1])), datetime2unix(DateTime(window[2]))
+	t2 <= t1 && error("The end time must be greater than the start time.")
+	return t1, t2
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    t = ISOtime2unix(ts::AbstractString) -> Float64
+
+Take a string representing a time and return the equivalent Unix time. The `ts` string may take one of these forms:
+- "YYYY-mm-dd", or "YYYY-mm-ddThh", or "YYYY-mm-ddThh:mm", or "YYYY-mm-ddThh:mm:ss", or "dd-Jan-YY" or "dd-Jan-YYYY"
+
+### Examples
+```julia
+using Dates
+t = ISOtime2unix("2019-01-01T12")
+1.546344e9
+
+t = ISOtime2unix("25-Apr-1974")
+1.3608e8
+```
+"""
+function ISOtime2unix(ts::AbstractString)
+	dash_pos = findall('-', ts)
+	if (length(ts) >= 10 && length(dash_pos) == 2 && (dash_pos[2]-dash_pos[1]) == 3)
+		if     (length(ts) == 10)  ts *= "T00:00:00"
+		elseif (ts[11] != 'T')     error("The time string $ts is not following the ISO YYYY-mm-ddThh:mm:ss format.")
+		elseif (length(ts) == 13)  ts *= ":00:00"
+		elseif (length(ts) == 16 && contains(ts, ":"))  ts *= ":00"
+		elseif (length(ts) != 19 && length(findall(':', ts)) != 2)  error("The time string $ts is not following the ISO YYYY-mm-ddThh:mm:ss format.")
+		end
+	elseif ((length(ts) == 8 || length(ts) == 9 || length(ts) == 11) && length(dash_pos) == 2 && (dash_pos[2]-dash_pos[1]) == 4)
+		spli = split(ts, '-')
+		ano = parse(Int, spli[3])
+		(ano < 100) && (ano >= 50 ? ano += 1900 : ano += 2000)
+		ind = findfirst(lowercase(string(spli[2])) .== ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"])
+		(ind === nothing) && error("The month string $(spli[2]) is not a valid month.")
+		dd = (length(spli[1]) == 1) ? "0$(spli[1])" : string(spli[1])
+		ts = @sprintf("%.4d-%.2d-%sT00:00:00", ano, ind, dd)
+	else
+		error("Unrecognized time string $ts format.")
+	end
+	return datetime2unix(DateTime(ts, dateformat"yyyy-mm-ddTHH:MM:SSs"))
 end
