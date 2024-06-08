@@ -76,7 +76,9 @@ function gmtconvert(cmd0::String="", arg1=nothing; kwargs...)
 	cmd  = parse_these_opts(cmd, d, [[:A :hcat], [:C :n_records], [:D :dump], [:E :first_last], [:F :conn_method],
 	                                 [:I :invert :reverse], [:L :list_only], [:N :sort], [:Q :segments], [:S :select_hdr], [:T :suppress :skip], [:W :word2num], [:Z :transpose]])
 
-	common_grd(d, cmd0, cmd, "gmtconvert ", arg1)		# Finish build cmd and run it
+	out = common_grd(d, cmd0, cmd, "gmtconvert ", arg1)		# Finish build cmd and run it
+	(!contains(cmd, " -b") && isa(out, GDtype) && cmd0 != "") && file_has_time!(cmd0, out)  # Try to guess if time columns
+	return out
 end
 
 # ---------------------------------------------------------------------------------------------------

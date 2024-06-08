@@ -846,6 +846,17 @@ getbb(D::GDtype) = isa(D, Vector) ? D[1].ds_bbox : D.ds_bbox
 
 # ------------------------------------------------------------------------------------------------------
 """
+    settimecol!(D::GDtype, Tcol)
+
+Set the time column in the dataset D (or vector of them). `Tcol` is either an Int scalar or vector
+of Ints with the column number(s) that hold the time columns.
+"""
+settimecol!(D::GDtype, Tc::Int) = isa(D, Vector) ? (D[1].attrib["Timecol"] = string(Tc)) : (D.attrib["Timecol"] = string(Tc))
+settimecol!(D::GDtype, Tc::VecOrMat{<:Int}) = isa(D, Vector) ? (D[1].attrib["Timecol"] = join(Tc, ",")) : (D.attrib["Timecol"] = join(Tc, ","))
+const set_timecol! = settimecol!
+
+# ------------------------------------------------------------------------------------------------------
+"""
     l1, l2 = connect_rectangles(R1, R2) -> Tuple{Matrix{Float64}, Matrix{Float64}}
 
 Find the lines that connect two rectangles and do not intersect any of them (for zoom windows).
@@ -858,7 +869,8 @@ R1 = [0.0, 3, 0, 2]; R2 = [5., 10, 5, 8];
 l1, l2 = connect_rectangles(R1, R2)
 ```
 """
-function connect_rectangles(R1, R2)
+connect_rectangles(R1, R2) = connect_rectangles(vec(Float64.(R1)), vec(Float64.(R2)))
+function connect_rectangles(R1::Vector{Float64}, R2::Vector{Float64})
 	# Create lines that connect the corresponding vertices starting clock-wise at LL corner
 	# The idea is to find the lines that do not cross neither of the two rectangles
 	lines = [[R1[1] R1[3]; R2[1] R2[3]], [R1[1] R1[4]; R2[1] R2[4]], [R1[2] R1[4]; R2[2] R2[4]], [R1[2] R1[3]; R2[2] R2[3]]]
@@ -878,6 +890,32 @@ function connect_rectangles(R1, R2)
 	return lines[ind[1]], lines[ind[2]] 
 end
 
+# ---------------------------------------------------------------------------------------------------
+"""
+    overlap, value = rect_overlap(xc_1, yc_1, xc_2, yc_2, width1, height1, width2, height2) -> Bool, Float64
+
+Checks if two rectangles, aligned with the axes, overlap.
+
+- `xc_1, yc_1`: Center of the first rectangle
+- `xc_2, yc_2`: Center of the second rectangle
+- `width1, height1`: Width and height of the first rectangle
+- `width2, height2`: Width and height of the second rectangle
+
+Returns:
+- `overlap`: True if there is overlap, false if there is no overlap
+- `value`: The degree of overlap or non-overlap
+"""
+function rect_overlap(xc_1, yc_1, xc_2, yc_2, width1, height1, width2, height2)
+	# https://stackoverflow.com/questions/30009808/what-algorithm-or-approach-for-placing-rectangles-without-overlapp#comment48138654_30010022
+
+	pix = max((xc_2 - xc_1 -(width1/2)-(width2/2)),   (xc_1 - xc_2 -(width2/2)-(width1/2)))
+	piy = max((yc_2 - yc_1 -(height1/2)-(height2/2)), (yc_1 - yc_2 -(height2/2)-(height1/2)))
+	pivalue = max(pix, piy)
+	
+	overlap = (pivalue < 0) ? true : false
+	return overlap, pivalue
+end
+	
 # ------------------------------------------------------------------------------------------------------
 isdefined(Main, :VSCodeServer) && (const VSdisp = Main.VSCodeServer.vscodedisplay)
 
