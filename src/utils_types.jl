@@ -222,8 +222,10 @@ function mat2ds(mat::Array{T,N}, txt::Union{String,Vector{String}}=String[]; hdr
 		_hdr::Vector{String} = Base.fill("", n_ds);	_hdr[1] = hdr
 	elseif (!isempty(hdr) && length(hdr) != n_ds)
 		error("The header vector can only have length = 1 or same number of MAT Y columns")
-	else
+	elseif (!isempty(hdr))
 		_hdr = vec(hdr)
+	else
+		_hdr = String[]
 	end
 
 	color_cycle = false
