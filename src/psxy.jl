@@ -309,7 +309,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 
 	_cmd = fish_bg(d, _cmd)					# See if we have a "pre-command"
 
-	if (isa(arg1, GDtype) && (((val = find_in_dict(d, [:labels])[1])) !== nothing))
+	if (isa(arg1, GDtype) && (((val = find_in_dict(d, [:labels])[1])) !== nothing))		# Plot TEXT attributed labels
 		s_val::String = string(val)
 		(!startswith(s_val, "att") || ((ind = findfirst("=", s_val)) === nothing) && (ind = findfirst(":", s_val)) === nothing) &&
 			error("The labels option must be 'labels=att=???' or 'labels=attrib=???'")
