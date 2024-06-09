@@ -368,7 +368,6 @@ end
 # ---------------------------------------------------------------------------------------------------
 function zoom2inset(d, center)
 	# Compute the -R for the requested rectangle and set in 'd'.
-	data::Union{GDtype, GItype} = CTRL.pocket_call[4]
 
 	function helper(D, center)
 		isincreasing = (sum(diff(D.data[1:5])) > 0) ? true : false
@@ -390,20 +389,32 @@ function zoom2inset(d, center)
 		return n1, n2
 	end
 
+	data::Union{GDtype, GItype} = CTRL.pocket_call[4]
+
 	if (isa(data, GItype))
 		zoom_lims = [max(center[1] - center[3], data.range[1]), min(center[1] + center[3], data.range[2]), max(center[1] + center[3], data.range[3]), min(center[2] + center[3], data.range[4])]
 	else
-		if (isa(data, GDtype))
-			n1, n2 = helper(data, center)
-		end
-		D = mat2ds(data.data[n1:n2, 1:2], data)			# WTF do I have to do this? -R should be enough.
-		DYpct = (D.ds_bbox[4] - D.ds_bbox[3]) * 0.01	# 1% of the Y data limits
-		D.ds_bbox[3] -= DYpct
-		D.ds_bbox[4] += DYpct
 		bak = CTRL.limits[7:end]						# Backup these because round_wesn will change them
-		zoom_lims::Vector{Float64} = round_wesn(D.ds_bbox)
-		CTRL.limits[7:end] = bak						# and we don't want that change to be stored
-		CTRL.pocket_call[4] = D
+		nDS = (isa(data, Vector)) ? length(data) : 1
+		D = Vector{GMTdataset}(undef, nDS)
+		zoom_lims::Vector{Float64} = [Inf, -Inf, Inf, -Inf]
+		for k = 1:nDS
+			if (nDS == 1)
+				n1, n2 = helper(data, center)
+				D[1] = mat2ds(data, (n1:n2, 1:2))
+			else
+				n1, n2 = helper(data[k], center)
+				D[k] = mat2ds(data[k], (n1:n2, 1:2))
+			end
+			DYpct = (D[k].ds_bbox[4] - D[k].ds_bbox[3]) * 0.01	# 1% of the Y data limits
+			D[k].ds_bbox[3] -= DYpct
+			D[k].ds_bbox[4] += DYpct
+			t_lims = round_wesn(D[k].ds_bbox)
+			zoom_lims[1] = min(zoom_lims[1], t_lims[1]);	zoom_lims[2] = max(zoom_lims[2], t_lims[2])
+			zoom_lims[3] = min(zoom_lims[3], t_lims[3]);	zoom_lims[4] = max(zoom_lims[4], t_lims[4])
+		end
+		CTRL.pocket_call[4] = (nDS == 1) ? D[1] : D
+		CTRL.limits[7:end] = bak						# Reset the backed up values
 	end
 	d[:R] = sprintf("%.15g/%.15g/%.15g/%.15g", zoom_lims...)
 	d[:Rzoom_num] = zoom_lims
