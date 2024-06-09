@@ -228,7 +228,7 @@ function mat2ds(mat::Array{T,N}, txt::Union{String,Vector{String}}=String[]; hdr
 
 	color_cycle = false
 	if ((color = find_in_dict(d, [:lc :linecolor :color])[1]) !== nothing && color != false)
-		_color::Vector{String} = (isa(color, VecOrMat{String}) && !isempty(color)) ? vec(string.(color)) : !isa(color, Vector) ? [string(color)] : matlab_cycle_colors
+		_color::Vector{String} = (isa(color, VecOrMat{String}) && !isempty(color)) ? vec(string.(color)) : (!isa(color, Vector) && !isa(color, Bool)) ? [string(color)] : matlab_cycle_colors
 		color_cycle = true
 	end
 	_fill::Vector{String} = helper_ds_fill(d)
@@ -419,7 +419,7 @@ function mat2ds(D::GMTdataset, inds)::GMTdataset
 	(length(inds) != ndims(D)) && error("\tNumber of GMTdataset dimensions and indices components must be the same.\n")
 	_coln = !isempty(D.colnames) ? D.colnames[inds[2]] : String[]
 	(!isempty(_coln) && (typeof(inds[1]) == Colon) && length(D.colnames) > size(D,2)) && append!(_coln, [D.colnames[end]])	# Append text colname if exists
-	_D = mat2ds(D.data[inds...], proj4=D.proj4, wkt=D.wkt, epsg=D.epsg, geom=D.geom, colnames=_coln, attrib=D.attrib)
+	_D = mat2ds(D.data[inds...], proj4=D.proj4, wkt=D.wkt, epsg=D.epsg, geom=D.geom, colnames=_coln, attrib=D.attrib, hdr=D.header)
 	(!isempty(D.text)) && (_D.text = D.text[inds[1]])
 	(typeof(inds[2]) == Colon) && return _D		# We are done here
 
