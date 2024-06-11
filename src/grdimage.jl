@@ -52,6 +52,7 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 
 	arg4 = nothing		# For the r,g,b + intensity case
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
+	(cmd0 != "" && arg1 === nothing && haskey(d, :inset)) && (arg1 = gmtread(cmd0); cmd0 = "")
 	common_insert_R!(d, O, cmd0, arg1)			# Set -R in 'd' out of grid/images (with coords) if limits was not used
 	
 	# Remote files with no -R are all global. Set CTRL.limits so we can guess the projection.
@@ -125,7 +126,11 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 	_cmd = ["grdimage " * cmd]
 	_cmd = frame_opaque(_cmd, opt_B, opt_R, opt_J; bot=false)		# No -t in frame
 	if (!occursin("-A", cmd))			# -A means that we are requesting the image directly
+		(haskey(d, :inset)) && (CTRL.pocket_call[4] = arg1)			# If 'inset', it may be needed from next call
 		_cmd = finish_PS_nested(d, _cmd)
+		if (startswith(_cmd[end], "inset_") && isa(CTRL.pocket_call[4], String))
+			_cmd = zoom_reactangle(_cmd, false)
+		end
 		do_finish = true
 	end
 
@@ -140,14 +145,17 @@ function common_insert_R!(d::Dict, O::Bool, cmd0, I_G)
 	# Set -R in 'd' under several conditions. We may need this to make -J=:guess to work
 	O && return
 	CTRL.limits .= 0.0			# Have to play safe on this because some eventual show calls may have left this non-empty
+	opt_R::String = ""
 	if ((val = find_in_dict(d, [:R :region :limits], false)[1]) === nothing && (isa(I_G, GItype)))
+		opt_R = @sprintf("%.15g/%.15g/%.15g/%.15g", I_G.range[1], I_G.range[2], I_G.range[3], I_G.range[4])	# auto inset-zoom needs it
 		if (isa(I_G, GMTgrid) || !isimgsize(I_G))
-			d[:R] = @sprintf("%.15g/%.15g/%.15g/%.15g", I_G.range[1], I_G.range[2], I_G.range[3], I_G.range[4])
+			d[:R] = opt_R
 		end
 	elseif (val === nothing && IamModern[1] && CTRL.limits[13] == 1.0)
 		# Should it apply also to classic? And should the -R be rebuilt here?
 	elseif (val === nothing && (isa(cmd0, String) && cmd0 != "") && !CONVERT_SYNTAX[1] && snif_GI_set_CTRLlimits(cmd0))
-		d[:R] = @sprintf("%.15g/%.15g/%.15g/%.15g", CTRL.limits[1], CTRL.limits[2], CTRL.limits[3], CTRL.limits[4])
+		opt_R = @sprintf("%.15g/%.15g/%.15g/%.15g", CTRL.limits[1], CTRL.limits[2], CTRL.limits[3], CTRL.limits[4])
+		d[:R] = opt_R
 	elseif (val !== nothing)
 		if (isa(val, StrSymb))
 			s = string(val)::String
@@ -155,8 +163,13 @@ function common_insert_R!(d::Dict, O::Bool, cmd0, I_G)
 		elseif (isa(val, Tuple) || isa(val, VMr))
 			d[:R] = val
 		end
+		try			# Can't risk to error here
+			opt_R = sprintf("%.15g/%.15g/%.15g/%.15g", d[:R][1], d[:R][2], d[:R][3], d[:R][4])
+		catch
+		end
 		delete!(d, [:region, :limits])
 	end
+	(opt_R != "") && (CTRL.pocket_R[1] = " -R" * opt_R)
 end
 function isimgsize(GI)
 	width, height = (GI.layout != "" && GI.layout[2] == 'C') ? (size(GI,2), size(GI,1)) : (length(GI.x), length(GI.y)) .- GI.registration

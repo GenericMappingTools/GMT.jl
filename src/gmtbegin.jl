@@ -66,7 +66,7 @@ function inset(fim::StrSymb=""; stop=false, kwargs...)
 	d = KW(kwargs)
 	cmd, = parse_common_opts(d, "", [:c :F :V_params], true)
 	cmd  = parse_these_opts(cmd, d, [[:M :margins], [:N :no_clip :noclip]])
-	cmd  = parse_type_anchor(d, cmd, [:D :inset :inset_box :insetbox],
+	cmd  = parse_type_anchor(d, cmd, [:D :pos :position :inset :inset_box :insetbox],
 	                        (map=("g", arg2str, 1), outside=("J", arg2str, 1), inside=("j", arg2str, 1), norm=("n", arg2str, 1), paper=("x", arg2str, 1), anchor=("", arg2str, 2), width="+w", size="+w", justify="+j", offset=("+o", arg2str)), 'j')
 	cmd = add_opt(d, cmd, "C", [:C :clearance],
 				  (left=(" -Cw", arg2str), right=(" -Ce", arg2str), bott=(" -Cs", arg2str), bottom=(" -Cs", arg2str), top=(" -Cn", arg2str), lr=(" -Cx", arg2str), tb=(" -Cy", arg2str)))
@@ -110,27 +110,39 @@ function get_format(name, fmt=nothing, d=nothing)
 	return fname
 end
 
+#Ex: viz(I15, proj=:guess, inset=(I14, pos=(anchor=:BR, width=5, offset=0.1), F=true, C="5p"))
+#im = gmtread("NGC_3372a-full.jpg");
+#viz(im, inset=(zoom=(1070,440,50), pos=(width=3,)))
+#viz(im, inset=(zoom=(1030,1110,380,500),))
+#viz("NGC_3372a-full.jpg", inset=(name="dedo_hr.jpg", pos=(anchor=:BL,)))
+#gdal_translate -srcwin 10580 9410 780 860 NGC_3372a-full__.jpg dedo_hr.jpg
+#t = 0:0.1:2pi;
+#plot(t, cos.(t), inset=(zoom=(pi,pi/4), box=(fill=:gray,)), show=1)
 # ---------------------------------------------------------------------------------------------------
 function inset_nested(nt::NamedTuple, n)	# In this method, the first el of NT contains the data or a zoom
 	# N is the number of the inset. Used only to name the temporary inset PS file
 	k,v = keys(nt), values(nt)
 	d = Dict{Symbol,Any}(k[2:end] .=> v[2:end])			# Drop first el because it contains the input data
-	#(!(:inset_box in k) && !(:insetbox in k) && !(:D in k)) && (d[:D] = "jTR")		# Make sure -D is set
 	if (k[1] == :zoom)						# Make a zoom window centered on the coords passed in the zoom tuple
 		zoom2inset(d, v[1])					# Set the -R for the requested zoom
 		inset_nested(CTRL.pocket_call[4], n; d...)
-		((opt_R = get(d, :R, "")) != "") && (CTRL.pocket_call[4] = opt_R)	# Save for drawing rect in the main fig
-		CTRL.pocket_call[4] = ((opt_R = get(d, :R, "")) != "") ? opt_R : nothing
+		#((opt_R = get(d, :R, "")) != "") && (CTRL.pocket_call[4] = opt_R)	# Save for drawing rect in the main fig
+		CTRL.pocket_call[4] = ((opt_R = get(d, :R, "")) != "") ? opt_R : nothing	# Save for drawing rect in the main fig
 		# And the helper1_inset_nested() has saved the zoomed rectangle limits in CTRL.pocket_call[5]
 	else
 		inset_nested(nt[1], n; d...)
 	end
+	return nothing
 end
+
+# ---------------------------------------------------------------------------------------------------
+inset_nested(fname::String, n; kwargs...) = inset_nested(gmtread(fname), n; kwargs...)
 
 # ---------------------------------------------------------------------------------------------------
 function inset_nested(GI::GItype, n; kwargs...)
 	d = KW(kwargs)
-	d, fname, opt_B, opt_J, opt_R = helper1_inset_nested(d)			# fname is gmt_0.ps- file in modern session
+	dims = (size(GI, 1), size(GI, 2)) 
+	d, fname, opt_B, opt_J, opt_R = helper1_inset_nested(d, imgdims=dims)	# fname is gmt_0.ps- file in modern session
 
 	if (opt_J == "")
 		opt_J = isgeog(GI) ? guess_proj(GI.range[1:2], GI.range[3:4]) : " -JX"
@@ -141,10 +153,13 @@ function inset_nested(GI::GItype, n; kwargs...)
 		opt_R = sprintf(" -R%.12g/%.12g/%.12g/%.12g", GI.range[1], GI.range[2], GI.range[3], GI.range[4])	# Get the current GI
 		CTRL.pocket_d[1][:R] = opt_R[4:end]
 	end
-	(opt_B == "") && (CTRL.pocket_d[1][:B] = opt_B[4:end])
+	(opt_B == " -B0") && (opt_B = " -Bnone")	# No frame border so that the inset box pen (-F) may take effect.
+	(opt_B != "") && (CTRL.pocket_d[1][:B] = opt_B[4:end])
 
 	grdimage(GI; CTRL.pocket_d[1]...)
-	helper2_inset_nested(fname, n)			# end's inset(), moves fname to TMP and calls gmtend()
+	helper2_inset_nested(fname, n)				# end's inset(), moves fname to TMP and calls gmtend()
+	CTRL.pocket_call[4] = ((opt_R = get(d, :R, "")) != "") ? opt_R : nothing
+	return nothing
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -167,7 +182,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function inset_nested(f::Function, n; kwargs...)
-	# This method is only called from the firs inset_nested(nt::NamedTuple, n) when nt[1] is a function
+	# This method is only called from the first inset_nested(nt::NamedTuple, n) when nt[1] is a function
 	d = KW(kwargs)
 	d, fname, opt_B, opt_J, opt_R = helper1_inset_nested(d; iscoast=(f == coast))	# fname is gmt_0.ps- file in modern session
 
@@ -182,22 +197,28 @@ function inset_nested(f::Function, n; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function helper1_inset_nested(d; iscoast=false, isplot=false)
+function helper1_inset_nested(d; iscoast=false, isplot=false, imgdims=tuple())
 	# All inset_nested methods start with this. Also sets some defaults.
 	fig_opt_R, fig_opt_J = CTRL.pocket_R[1], CTRL.pocket_J[1]	# Main fig region and proj. Need these to cheat the modern session
 	bak = CTRL.limits[7:end]							# Backup these because parse_R will change them
 	_, opt_B::String, opt_J::String, opt_R::String = parse_BJR(d, "", "", false, " ")
 	CTRL.limits[7:end] = bak							# and we don't want that change to be stored
 	fname = hack_modern_session(fig_opt_R, fig_opt_J)	# Start a modern session and return the full name of the gmt_0.ps- file
-	!haskey(d, :box) && (d[:F] = iscoast ? "+c1p+p0.5+gwhite" : isplot ? "+gwhite" : "+c1p+p0.5")
+	!haskey(d, :box) && (d[:F] = iscoast ? "+c1p+p0.5+gwhite" : isplot ? "+gwhite" : "+p0.5")
 
 	fish_size_from_J(fig_opt_J)				# Get fig size in numeric so we can compute aspect ratio and default inset size
 	W, H = CTRL.figsize[1:2]
+	if (H == 0)								# Happens when we have a -JX15/0
+		fig_R = parse.(Float64, string.(split(fig_opt_R[4:end], '/')))	# Het H from the fig's aspect ratio
+		H = (fig_R[4] - fig_R[3]) / (fig_R[2] - fig_R[1]) * W			# Hope this is always correct.
+		CTRL.figsize[2] = H
+	end
 	aspect_fig = W / H
-	inset_W = W / 2.5						# Default to 1/2.5 of the fig width
+	inset_W = W / (isplot ? 3.0 : 4.0)		# Default to 1/3 or 1/4 of the fig width
 	inset_H = inset_W / aspect_fig
 	anchor = "TR"							# The default anchor location is top right (TR). Bellow we may change this.
-	if ((val = find_in_dict(d, [:Rzoom_num])[1]) !== nothing)	# Get zoom limits in numeric (in data units)
+	aspect_zoom = 0.0						# Also useful to know if we are zooming.
+	if ((val = find_in_dict(d, [:Rzoom_num])[1]) !== nothing)	# The ZOOM case. Get zoom limits in numeric (in data units)
 		Rnum::Vector{Float64} = val			# F Anys. In data units
 		lims_zoom = gmt("mapproject" * fig_opt_R * fig_opt_J, [Rnum[1] Rnum[3]; Rnum[2] Rnum[4]])	# in paper units (cm)
 		aspect_zoom = (lims_zoom[4] - lims_zoom[3]) / (lims_zoom[2] - lims_zoom[1])		# Aspect ratio of the zoom window: Y/X
@@ -208,13 +229,22 @@ function helper1_inset_nested(d; iscoast=false, isplot=false)
 		end
 		delete!(d, :Rzoom_num)
 		anchor = floating_window(W, H, inset_W, inset_H, lims_zoom)
+	elseif (!isempty(imgdims))				# The IMAGE case. Use the image dimensions to compute the aspect ratio. -JX only?
+		aspect_zoom = imgdims[1] / imgdims[2]		# Aspect ratio of the image: Y/X
+		inset_H = inset_W * aspect_zoom
+		if ((val = find_in_dict(d, [:pzoom])[1]) !== nothing)		# A pseudo-zoom from a single point.
+			val_f::Vector{Float64} = [Float64(val[1]), Float64(val[2])]
+			d[:R] = sprintf("%.15g/%.15g/%.15g/%.15g", val_f[1], val_f[1]*1.001, val_f[2], val_f[2]*1.001)
+			delete!(d, :pzoom)
+		end
 	end
 
-	(is_in_dict(d, [:D :inset_box :insetbox]) === nothing) &&
-		(d[:D] = isplot ? "j$(anchor)+o0.15+w$(inset_W)/$(inset_H)" : "j$(anchor)+o0.15+w$inset_W")
+	(!isplot && opt_B == DEF_FIG_AXES_BAK) && (opt_B = " -B0")		# For images e coast the default is no annots.
+
+	(is_in_dict(d, [:D :pos :position :inset_box :insetbox]) === nothing) && (d[:D] = "j$(anchor)+o0.15+w$(inset_W)/$(inset_H)")
 
 	t::String = get(d, :D, "")				# Don't use d[:D] directly because it's a Any
-	(t == "") && (t = parse_type_anchor(d, "", [:D :inset :inset_box :insetbox],
+	(t == "") && (t = parse_type_anchor(d, "", [:D :pos :position :inset_box :insetbox],
 	              (map=("g", arg2str, 1), outside=("J", arg2str, 1), inside=("j", arg2str, 1), norm=("n", arg2str, 1), paper=("x", arg2str, 1), anchor=("", arg2str, 2), width="+w", size="+w", justify="+j", offset=("+o", arg2str)), 'j'))
 	if     (contains(t, "TR") || contains(t, "RT")) opt_B = replace(opt_B, "WSen" => "WSrt")
 	elseif (contains(t, "BR") || contains(t, "RB")) opt_B = replace(opt_B, "WSen" => "WNbr")
@@ -222,16 +252,23 @@ function helper1_inset_nested(d; iscoast=false, isplot=false)
 	elseif (contains(t, "BL") || contains(t, "LB")) opt_B = replace(opt_B, "WSen" => "ENlb")
 	end
 	(t[1] == ' ') && (t = t[4:end])			# When a -D was provided and parse_type_anchor was called.
+	t[2] == '+' && (t = t[1] * anchor * t[2:end])	# No anchor was provided but we need to have one.
 	!contains(t, "+o") && (t *= "+o0.15")	# Use a little margin by default
-	!contains(t, "+w") && (t *= isplot ? "+w$(inset_W)/$(inset_H)" : "+w$inset_W")	# If no size was provided
+	if (!contains(t, "+w"))					# If no size was provided
+		t *= "+w$(inset_W)/$(inset_H)"
+	else
+		siz = split(split(t, "+w")[2], '+')[1]	# "jTR+w5+o0.15" becomes "5"
+		if (!contains(siz, "/"))				# If both width and height were provided, we don't touch users choice
+			inset_H = (aspect_zoom != 0.0) ? parse(Float64, siz) * aspect_zoom : parse(Float64, siz) / aspect_fig
+			t = replace(t, "+w$siz" => "+w$siz/$inset_H")
+		end
+	end
 	d[:D] = t
 
-	if (isplot)
-		(is_in_dict(d, [:N :no_clip :noclip]) === nothing) && (d[:N] = true)	# Otherwise we loose the annotations
-	end
+	(is_in_dict(d, [:N :no_clip :noclip]) === nothing) && (d[:N] = true)	# Otherwise we loose the annotations
 	(opt_R != "") && (d[:R] = opt_R[4:end])
 	inset(; d...)
-	delete!(d, [[:D :inset_box :insetbox], [:F :box]])	# Some of these exist in module called in inset, so must remove them now
+	delete!(d, [[:D :pos :position :inset_box :insetbox], [:F :box]])	# Some of these exist in module called in inset, must remove them now
 	CTRL.pocket_call[5] = sniff_inset_coords(fname, fig_opt_R, fig_opt_J)		# inset limts in data units
 	return d, fname, opt_B, opt_J, opt_R
 end
@@ -355,6 +392,8 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function hack_modern_session(opt_R, opt_J)
+	opt_R == "" && throw(ArgumentError("The 'limits' option cannot be empty in hack_modern_session()"))
+	opt_J == "" && throw(ArgumentError("The 'proj' option cannot be empty in hack_modern_session()"))
 	gmt("begin")
 	gmt("basemap " * opt_R * opt_J * " -Blrbt")
 	API = unsafe_load(convert(Ptr{GMTAPI_CTRL}, G_API[1]))
@@ -392,7 +431,11 @@ function zoom2inset(d, center)
 	data::Union{GDtype, GItype} = CTRL.pocket_call[4]
 
 	if (isa(data, GItype))
-		zoom_lims = [max(center[1] - center[3], data.range[1]), min(center[1] + center[3], data.range[2]), max(center[1] + center[3], data.range[3]), min(center[2] + center[3], data.range[4])]
+		if (length(center) == 4)
+			zoom_lims = [center...]
+		else
+			zoom_lims = [max(center[1] - center[3], data.range[1]), min(center[1] + center[3], data.range[2]), max(center[2] - center[3], data.range[3]), min(center[2] + center[3], data.range[4])]
+		end
 	else
 		bak = CTRL.limits[7:end]						# Backup these because round_wesn will change them
 		nDS = (isa(data, Vector)) ? length(data) : 1

@@ -442,7 +442,7 @@ function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bo
 			if (!IamSubplot[1])
 				if (((val = find_in_dict(d, [:aspect], del)[1]) !== nothing) || haskey(d, :aspect3))
 					opt_J *= set_aspect_ratio(val, "", true, haskey(d, :aspect3))::String
-				else
+				elseif (!occursin("?", opt_J))
 					opt_J = (!startswith(opt_J, " -JX")) ? append_figsize(d, opt_J) :
 					         opt_J * DEF_FIG_SIZE::String; CTRL.pocket_J[2] = DEF_FIG_SIZE
 				end
@@ -486,6 +486,7 @@ function fish_size_from_J(opt_J)
 
 	fact(c::Char) = (c == 'c') ? 1.0 : (c == 'i' ? 2.54 : (c == 'p' ? 2.54/72 : 1.0))
 	ws = opt_J[5:end]
+	ws[1] == '?' && return nothing			# No size info
 	dim = split(ws, '/')
 	isscale = occursin(':', ws)				# Compliction. A scale in form 1:xxxx
 	try
@@ -2719,7 +2720,6 @@ function add_opt_module(d::Dict)::Vector{String}
 		val = d[symb]
 		isa(val, AbstractDict) && (val = Base.invokelatest(dict2nt, val))
 		if (symb == :inset)				# The inset case must come first because it is a special case
-			#Ex: viz(I15, proj=:guess, inset=(I14, inset_box=(anchor=:BR, width=5, offset=0.1), F=true, C="5p"))
 			n_inset += 1
 			inset_nested(val, n_inset)
 			r = "inset_$(n_inset)"
