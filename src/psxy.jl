@@ -291,20 +291,13 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	(!IamModern[1]) && put_in_legend_bag(d, _cmd, arg1, O, opt_l)
 
 	_cmd = gmt_proggy .* _cmd				# In any case we need this
-	_cmd = frame_opaque(_cmd, opt_B, opt_R, opt_J, opt_JZ) # No -t in -B
-	(is_in_dict(d, [:inset]) !== nothing) && (CTRL.pocket_call[4] = arg1)	# If 'inset', it may be needed from next call
+	_cmd = frame_opaque(_cmd, opt_B, opt_R, opt_J, opt_JZ)	# No -t in -B
+	(haskey(d, :inset)) && (CTRL.pocket_call[4] = arg1)		# If 'inset', it may be needed from next call
 	_cmd = finish_PS_nested(d, _cmd)
 
 	# If we have a zoom inset call must plot the zoom rectangle and lines connecting it to the inset window.
 	if (startswith(_cmd[end], "inset_") && isa(CTRL.pocket_call[4], String))
-		Rs::String = CTRL.pocket_call[4]	# Don't use it directly because it's a Any
-		R = parse.(Float64, split(Rs, "/"))
-		l1, l2 = connect_rectangles(R, CTRL.pocket_call[5])
-		Drec = mat2ds([[R[1] R[3]; R[1] R[4]; R[2] R[4]; R[2] R[3]; R[1] R[3]], l1, l2], lc="gray", ls=["","dash","dash"], lw=[0.5, 0.75, 0.75])
-		put_pocket_call(Drec)				# Store it in CTRL.pocket_call
-		ins = pop!(_cmd)					# Remove the inset call
-		append!(_cmd, ["psxy -R -J -W0.4p"])
-		append!(_cmd, [ins])				# Add the inset call again
+		_cmd = zoom_reactangle(_cmd, true)
 	end
 
 	_cmd = fish_bg(d, _cmd)					# See if we have a "pre-command"
@@ -1311,4 +1304,22 @@ function parse_bar_cmd(d::Dict, key::Symbol, cmd::String, optS::String, no_u::Bo
 		cmd *= opt
 	end
 	return cmd, opt
+end
+
+# ---------------------------------------------------------------------------------------------------
+function zoom_reactangle(_cmd, isplot::Bool)
+	# Generate a rectangle delimiting the zoom on a region of interest plus the connection lines
+	# to the inset window. This is used only (so far) from nested inset() call with auto-zoom.
+	Rs::String = CTRL.pocket_call[4]	# Don't use it directly because it's a Any
+	R = parse.(Float64, split(Rs, "/"))
+	l1, l2 = connect_rectangles(R, CTRL.pocket_call[5])
+	lc = (isplot) ? "gray" : "black"
+	lw = (isplot) ? [0.5, 0.75, 0.75] : [0.5, 0.5, 0.5]
+	Drec = mat2ds([[R[1] R[3]; R[1] R[4]; R[2] R[4]; R[2] R[3]; R[1] R[3]], l1, l2], lc=lc,
+	              ls=["","dash","dash"], lw=lw)
+	put_pocket_call(Drec)				# Store it in CTRL.pocket_call
+	ins = pop!(_cmd)					# Remove the inset call
+	append!(_cmd, ["psxy -R -J -W0.4p"])
+	append!(_cmd, [ins])				# Add the inset call again
+	return _cmd
 end
