@@ -490,10 +490,10 @@ function fish_size_from_J(opt_J; onlylinear::Bool=true, opt_R::String="")
 	ws[1] == '?' && return nothing			# No size info
 	dim = split(ws, '/')
 	isscale = occursin(':', ws)				# Complication. A scale in form 1:xxxx
-	islinear = (opt_J[4] == 'X' && opt_J[4] == 'x')
+	islinear = (opt_J[4] == 'X' || opt_J[4] == 'x' || contains(opt_J, "l/") || opt_J[end] == 'l')
 	try
 	if (!isscale)
-		if (islinear)
+		if (islinear)						# Actually, this includes also the log scales	
 			for k = 1:lastindex(dim)
 				CTRL.figsize[k] = isletter(dim[k][end]) ? parse(Float64, dim[k][1:end-1]) * fact(dim[k][end]) : parse(Float64, dim[k])
 			end
