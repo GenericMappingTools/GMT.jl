@@ -39,7 +39,7 @@ function gmt(cmd::String, args...)
 		# mode and write a gmt.conf in the session dir with classic instead of modern defaults. Solution is to create it now.
 		API = unsafe_load(convert(Ptr{GMTAPI_CTRL}, G_API[1]))
 		sess = joinpath(unsafe_string(API.session_dir), "gmt_session." * unsafe_string(API.session_name))
-		!isfile(sess) && mkdir(sess)
+		!isdir(sess) && mkdir(sess)
 		gmtlib_setparameter(G_API[1], "MAP_ORIGIN_X", "0")	# Workarround GMT bug.
 		gmtlib_setparameter(G_API[1], "MAP_ORIGIN_Y", "0")
 		IamModern[1] = true
@@ -1353,7 +1353,7 @@ function resetGMT(dorestart::Bool=true)
 	DEF_FIG_AXES[1] = DEF_FIG_AXES_BAK;		DEF_FIG_AXES3[1] = DEF_FIG_AXES3_BAK;
 	CTRL.pocket_J[1], CTRL.pocket_J[2], CTRL.pocket_J[3], CTRL.pocket_J[4] = "", "", "", "   ";
 	CTRL.IamInPaperMode[:] = [false, true];	IamInset[1] = false
-	CTRL.pocket_call[1] = CTRL.pocket_call[3] = nothing;	CTRL.pocket_R[1] = "";	CTRL.figsize .= 0.0
+	CTRL.pocket_call[1:3] .= nothing;	CTRL.pocket_R[1] = "";	CTRL.figsize .= 0.0
 	CTRL.XYlabels[1] = "";	CTRL.XYlabels[2] = "";	CTRL.returnPS[1] = false
 	(dorestart) && (gmt_restart(); clear_sessions())
 end
