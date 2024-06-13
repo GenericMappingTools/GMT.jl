@@ -296,6 +296,10 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	_cmd = finish_PS_nested(d, _cmd)
 
 	# If we have a zoom inset call must plot the zoom rectangle and lines connecting it to the inset window.
+	if ((ind = findfirst(startswith.(_cmd, "inset_"))) !== nothing)	# inset commands must be the last ones
+		ins = popat!(_cmd, ind)		# Remove the 'inset' command
+		append!(_cmd, [ins])		# and add it at the end
+	end
 	if (startswith(_cmd[end], "inset_") && isa(CTRL.pocket_call[4], String))
 		_cmd = zoom_reactangle(_cmd, true)
 	end
