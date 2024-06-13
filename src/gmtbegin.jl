@@ -118,6 +118,8 @@ end
 #gdal_translate -srcwin 10580 9410 780 860 NGC_3372a-full__.jpg dedo_hr.jpg
 #t = 0:0.1:2pi;
 #plot(t, cos.(t), inset=(zoom=(pi,pi/4), box=(fill=:gray,)), show=1)
+#viz(G, J=:merc, inset=(coast, R="-80/-28/-43/10", J=:merc, shore=true, pos=(anchor=:TR,), plot=(data=[-45.5 -23], marker=:circ, fill=:red) ))
+#viz(G, J=:merc, inset=(coast, R="-80/-28/-43/10", J=:merc, shore=true, rect=(2,:red)))
 # ---------------------------------------------------------------------------------------------------
 function inset_nested(nt::NamedTuple, n)	# In this method, the first el of NT contains the data or a zoom
 	# N is the number of the inset. Used only to name the temporary inset PS file
@@ -126,7 +128,6 @@ function inset_nested(nt::NamedTuple, n)	# In this method, the first el of NT co
 	if (k[1] == :zoom)						# Make a zoom window centered on the coords passed in the zoom tuple
 		zoom2inset(d, v[1])					# Set the -R for the requested zoom
 		inset_nested(CTRL.pocket_call[4], n; d...)
-		#((opt_R = get(d, :R, "")) != "") && (CTRL.pocket_call[4] = opt_R)	# Save for drawing rect in the main fig
 		CTRL.pocket_call[4] = ((opt_R = get(d, :R, "")) != "") ? opt_R : nothing	# Save for drawing rect in the main fig
 		# And the helper1_inset_nested() has saved the zoomed rectangle limits in CTRL.pocket_call[5]
 	else
@@ -147,8 +148,9 @@ function inset_nested(GI::GItype, n; kwargs...)
 	if (opt_J == "")
 		opt_J = isgeog(GI) ? guess_proj(GI.range[1:2], GI.range[3:4]) : " -JX"
 		opt_J = contains(opt_J, "/") ? opt_J * "/?" : opt_J * "?"
-		CTRL.pocket_d[1][:J] = opt_J[4:end]
 	end
+	CTRL.pocket_d[1][:J] = opt_J[4:end]
+
 	if (opt_R == "")
 		opt_R = sprintf(" -R%.12g/%.12g/%.12g/%.12g", GI.range[1], GI.range[2], GI.range[3], GI.range[4])	# Get the current GI
 		CTRL.pocket_d[1][:R] = opt_R[4:end]
@@ -192,6 +194,26 @@ function inset_nested(f::Function, n; kwargs...)
 	(opt_B == "") && (d[:B] = opt_B[4:end])
 	(opt_R != "") && (d[:R] = opt_R[4:end])
 
+	if (f == coast && (val = find_in_dict(d, [:rect :rectangle])[1]) !== nothing)
+		# To draw a rectangle we accept: a Bool, a symbol or a string, or a Tuple of string/symbol and a number
+		# If a string or symbol is provided, it is used as the line color. If a number is provided, it is used as the thickness.
+		# To set both color and thickness, provide a tuple (lc, lt) or (lt, lc).
+		R = CTRL.limits[7:end]
+		lc::String, lt::String = "blue", "0.75"				# Defaults (corresponding to rect=true)
+		if (isa(val, StrSymb))
+			lc = string(val)::String
+		elseif (isa(val, Real))
+			!isa(val, Bool) && (lt = string(val)::String)
+		elseif (isa(val, Tuple))			# (lc, lt) or (lt, lc), where color is a string or a symbol and thickness is a real
+			t = string.(val)
+			if isa(val[1], StrSymb)  lc,lt = t
+			else                     lt,lc = t
+			end
+		end
+		D = mat2ds([R[1] R[3]; R[1] R[4]; R[2] R[4]; R[2] R[3]; R[1] R[3]], lc=lc, lt=lt)
+		d[:plot] = (data=D,)				# Draw a box in the inset with the limits of the main fig
+	end
+	(f == coast && get(d, :N, "") != "") && delete!(d, :N)	# That N was for no-clip
 	f(; d...)
 	helper2_inset_nested(fname, n)			# end's inset(), moves fname to TMP and calls gmtend()
 end
@@ -203,10 +225,14 @@ function helper1_inset_nested(d; iscoast=false, isplot=false, imgdims=tuple())
 	bak = CTRL.limits[7:end]							# Backup these because parse_R will change them
 	_, opt_B::String, opt_J::String, opt_R::String = parse_BJR(d, "", "", false, " ")
 	CTRL.limits[7:end] = bak							# and we don't want that change to be stored
+	islinear = (opt_J == "" || opt_J[4] == 'X' || opt_J[4] == 'x');
 	fname = hack_modern_session(fig_opt_R, fig_opt_J)	# Start a modern session and return the full name of the gmt_0.ps- file
-	!haskey(d, :box) && (d[:F] = iscoast ? "+c1p+p0.5+gwhite" : isplot ? "+gwhite" : "+p0.5")
+	!haskey(d, :box) && (d[:F] = iscoast ? "+c1p+p0.5+gwhite" : isplot ? "+gwhite" : "+p0.5+c1p+gwhite")
 
-	fish_size_from_J(fig_opt_J)				# Get fig size in numeric so we can compute aspect ratio and default inset size
+	# Something is not right in API. If we call this after fish_size_from_J() (that also calls mapproject) the inset location is wrong.
+	if (iscoast || !islinear)  cW, cH = gmt("mapproject -W " * opt_R * opt_J).data  end
+
+	fish_size_from_J(fig_opt_J, onlylinear=false, opt_R=fig_opt_R)		# Get fig size in numeric so we can compute default inset size
 	W, H = CTRL.figsize[1:2]
 	if (H == 0)								# Happens when we have a -JX15/0
 		fig_R = parse.(Float64, string.(split(fig_opt_R[4:end], '/')))	# Het H from the fig's aspect ratio
@@ -230,13 +256,17 @@ function helper1_inset_nested(d; iscoast=false, isplot=false, imgdims=tuple())
 		delete!(d, :Rzoom_num)
 		anchor = floating_window(W, H, inset_W, inset_H, lims_zoom)
 	elseif (!isempty(imgdims))				# The IMAGE case. Use the image dimensions to compute the aspect ratio. -JX only?
-		aspect_zoom = imgdims[1] / imgdims[2]		# Aspect ratio of the image: Y/X
+		aspect_zoom = (islinear) ? imgdims[1] / imgdims[2] : cH / cW		# image's aspect ratio: Y/X
 		inset_H = inset_W * aspect_zoom
 		if ((val = find_in_dict(d, [:pzoom])[1]) !== nothing)		# A pseudo-zoom from a single point.
 			val_f::Vector{Float64} = [Float64(val[1]), Float64(val[2])]
 			d[:R] = sprintf("%.15g/%.15g/%.15g/%.15g", val_f[1], val_f[1]*1.001, val_f[2], val_f[2]*1.001)
 			delete!(d, :pzoom)
 		end
+		(opt_J != "" && !contains(opt_J, '?')) && (opt_J = replace(opt_J, CTRL.pocket_J[2] => "?"))	# Replace the fig's default size
+		(opt_J == "") && (opt_J = " -JX?")
+	elseif (iscoast)
+		inset_H = inset_W * cH / cW
 	end
 
 	(!isplot && opt_B == DEF_FIG_AXES_BAK) && (opt_B = " -B0")		# For images e coast the default is no annots.
@@ -263,7 +293,7 @@ function helper1_inset_nested(d; iscoast=false, isplot=false, imgdims=tuple())
 			t = replace(t, "+w$siz" => "+w$siz/$inset_H")
 		end
 	end
-	d[:D] = t
+	d[:D] = t									# In case :D got default values above t = d[:D]
 
 	(is_in_dict(d, [:N :no_clip :noclip]) === nothing) && (d[:N] = true)	# Otherwise we loose the annotations
 	(opt_R != "") && (d[:R] = opt_R[4:end])
@@ -273,6 +303,7 @@ function helper1_inset_nested(d; iscoast=false, isplot=false, imgdims=tuple())
 	return d, fname, opt_B, opt_J, opt_R
 end
 
+# ---------------------------------------------------------------------------------------------------
 function helper2_inset_nested(fname, n)
 	# All inset_nested methods end with this
 	inset(:end)
