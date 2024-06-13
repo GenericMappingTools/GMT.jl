@@ -478,21 +478,27 @@ function size_unit(dim::AbstractString)
 end
 size_unit(dim::Vector{<:AbstractString})::Vector{Float64} = [size_unit(t) for t in dim]
 
-function fish_size_from_J(opt_J)
+function fish_size_from_J(opt_J; onlylinear::Bool=true, opt_R::String="")
 	# There are many ways by which a fig size ends up in the -J string. So lets try here to fish the fig
 	# dimensions, at least the fig width, from opt_J. Ofc, several things can go wrong.
-	(length(opt_J) < 5 || (opt_J[4] != 'X' && opt_J[4] != 'x')) && return nothing	# Up to " -JX" and only linear
-	(occursin('d', opt_J) || occursin('p', opt_J)) && return nothing	# if it has a 'd' it means it's a geog. 
+	(length(opt_J) < 5 || (onlylinear && (opt_J[4] != 'X' && opt_J[4] != 'x'))) && return nothing
+	(occursin('d', opt_J) || occursin('p', opt_J)) && return nothing	# if it has a 'd' it means it's a geog. Not sure of this return
 
-	fact(c::Char) = (c == 'c') ? 1.0 : (c == 'i' ? 2.54 : (c == 'p' ? 2.54/72 : 1.0))
+	fact(c::Char) = (c == 'c') ? 1.0 : (c == 'i' ? 2.54 : (c == 'p' ? 2.54/72 : 1.0))	# Nested function
+
 	ws = opt_J[5:end]
 	ws[1] == '?' && return nothing			# No size info
 	dim = split(ws, '/')
-	isscale = occursin(':', ws)				# Compliction. A scale in form 1:xxxx
+	isscale = occursin(':', ws)				# Complication. A scale in form 1:xxxx
+	islinear = (opt_J[4] == 'X' && opt_J[4] == 'x')
 	try
 	if (!isscale)
-		for k = 1:lastindex(dim)
-			CTRL.figsize[k] = isletter(dim[k][end]) ? parse(Float64, dim[k][1:end-1]) * fact(dim[k][end]) : parse(Float64, dim[k])
+		if (islinear)
+			for k = 1:lastindex(dim)
+				CTRL.figsize[k] = isletter(dim[k][end]) ? parse(Float64, dim[k][1:end-1]) * fact(dim[k][end]) : parse(Float64, dim[k])
+			end
+		else
+			CTRL.figsize[1], CTRL.figsize[2] = gmt("mapproject -W " * opt_R * opt_J).data
 		end
 	end
 	if (!isuppercase(opt_J[4]) || isscale)		# Shit, a scale. Hopefuly, -R was already parsed and CTRL.limits is known
@@ -4067,7 +4073,7 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K:
 	end
 	CTRL.limits .= 0.0;		CTRL.figsize .= 0.0;	CTRL.proj_linear[1] = true;		# Reset these for safety
 	CTRL.pocket_J[1], CTRL.pocket_J[2], CTRL.pocket_J[3], CTRL.pocket_J[4] = "", "", "", "   ";
-	CTRL.pocket_R[1] = "";	isJupyter[1] = false
+	CTRL.pocket_R[1] = "";	isJupyter[1] = false;	CTRL.pocket_call .= nothing
 	return retPluto ? WrapperPluto(out) : nothing	# retPluto should make it all way down to base so that Plut displays it
 end
 
@@ -4291,7 +4297,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 		is_pscoast = (startswith(cmd[k], "pscoast") || startswith(cmd[k], "coast"))
 		is_basemap = (startswith(cmd[k], "psbasemap") || startswith(cmd[k], "basemap"))
 		is_text    = (startswith(cmd[k], "pstext") || startswith(cmd[k], "text"))
-		is_plot    = (startswith(cmd[k], "psxy"))
+		is_plot    = (startswith(cmd[k], "psxy")   || startswith(cmd[k], "plot"))
 		args1_is_G, args1_is_I, args1_isnot_C = false, false, false
 		if (k >= 1+fi)		# Using the supposed solution of @isdefined F. doesn't work. "if @isdefined(args)" is not respected.
 			try
@@ -4338,7 +4344,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 				have_Vd && println("\t",cmd[k])		# Useful to know what command was actually executed.
 				orig_J, orig_R = J1, scan_opt(cmd[1], "-R")
 			end
-		elseif (k >= 1+fi && !is_psscale && !is_pscoast && !is_basemap && !is_text && CTRL.pocket_call[1] !== nothing)
+		elseif (k >= 1+fi && !is_psscale && !is_pscoast && !is_basemap && !is_text && (CTRL.pocket_call[1] !== nothing))
 			# For nested calls that need to pass data
 			P = gmt(cmd[k], get_pocket_call())
 			continue
