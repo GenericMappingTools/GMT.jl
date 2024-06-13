@@ -145,6 +145,14 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 	get_largest = (!finish && occursin(" -E", cmd) && (find_in_dict(d, [:biggest :largest])[1] !== nothing))
 	_cmd = (finish) ? finish_PS_nested(d, [gmt_proggy * cmd]) : [gmt_proggy * cmd]
 
+	# This bit is for insets that call coast and this one further down calls another module (e.g. plot)
+	if (IamModern[1] && length(_cmd) > 1 && contains(_cmd[1], "? "))
+		spli = split(_cmd[2], " -J")
+		if (length(spli) > 1)
+			_cmd[2] = replace(_cmd[2], " -J" * split(spli[2])[1] => "")
+		end
+	end
+
 	R = finish_PS_module(d, _cmd, "", K, O, finish)
 	if (get_largest)
 		ind = argmax(size.(R))

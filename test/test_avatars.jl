@@ -96,6 +96,7 @@
 	plot(t, cos.(t), inset=(zoom=(4,pi/6),))
 	plot(t, cos.(t), inset=(zoom=(5,pi/6),))
 	plot(t, cos.(t), inset=(zoom=(6,pi/6),))
+	basemap(R="-48/-43/-26/-20", J=:merc, inset=(coast, R="-80/-28/-43/10", J=:merc, shore=true, rect=(2,:red)));
 
 	println("	LINES")
 	lines([0 0; 10 20], R="-2/12/-2/22", J="M2.5", W=1, G=:red, decorated=(dist=(1,0.25), symbol=:box))
