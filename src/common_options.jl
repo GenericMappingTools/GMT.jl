@@ -503,8 +503,12 @@ function fish_size_from_J(opt_J; onlylinear::Bool=true, opt_R::String="")
 	end
 	if (!isuppercase(opt_J[4]) || isscale)		# Shit, a scale. Hopefuly, -R was already parsed and CTRL.limits is known
 		if (isscale)
-			t = parse.(Float64, split(dim[1], ':'))
-			CTRL.figsize[1] = t[2] / t[1]
+			if (islinear)						# Actually, this includes also the log scales	
+				t = parse.(Float64, split(dim[1], ':'))
+				CTRL.figsize[1] = t[2] / t[1]
+			else
+				CTRL.figsize[1], CTRL.figsize[2] = gmt("mapproject -W " * opt_R * opt_J).data
+			end
 		end
 		CTRL.figsize[1] *= (CTRL.limits[8] - CTRL.limits[7])	# Prey
 	end
@@ -1986,6 +1990,7 @@ function mk_styled_line!(d::Dict, code)
 	if     (startswith(_code, "line"))        ls = "";     symbol = (length(_code) == 4)  ? "" : code[5 + is1line : end-inv]
 	elseif (startswith(_code, "dashdot"))     ls = "-.";   symbol = (length(_code) == 7)  ? "" : code[8 + is1line : end-inv]
 	elseif (startswith(_code, "dashdashdot")) ls = "--.";  symbol = (length(_code) == 11) ? "" : code[12+ is1line : end-inv]
+	elseif (startswith(_code, "dashed"))      ls = "-";    symbol = (length(_code) == 6)  ? "" : code[7 + is1line : end-inv]
 	elseif (startswith(_code, "dash"))        ls = "-";    symbol = (length(_code) == 4)  ? "" : code[5 + is1line : end-inv]
 	elseif (startswith(_code, "dotdotdash"))  ls = "..-";  symbol = (length(_code) == 10) ? "" : code[11+ is1line : end-inv]
 	elseif (startswith(_code, "dot"))         ls = ".";    symbol = (length(_code) == 3)  ? "" : code[4 + is1line : end-inv]
@@ -2727,7 +2732,7 @@ function add_opt_module(d::Dict)::Vector{String}
 		isa(val, AbstractDict) && (val = Base.invokelatest(dict2nt, val))
 		if (symb == :inset)				# The inset case must come first because it is a special case
 			n_inset += 1
-			inset_nested(val, n_inset)
+			inset_nested(isa(val, Matrix{<:Real}) ? mat2ds(val) : val, n_inset)
 			r = "inset_$(n_inset)"
 		elseif (isa(val, NamedTuple))
 			nt::NamedTuple = val
