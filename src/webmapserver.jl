@@ -214,7 +214,7 @@ function wms_helper(wms::WMS; layer=0, kw...)
 	end
 	(wms.layer[layer_n].bbox[1] > lims[1] || wms.layer[layer_n].bbox[2] < lims[2] || wms.layer[layer_n].bbox[3] > lims[3] || wms.layer[layer_n].bbox[4] < lims[4]) && @warn("Requested region overflows this layer BoundingBox")
 
-	function getsize(res::Float64, lims::Vector{<:Real})::Tuple{Int, Int}
+	function loc_getsize(res::Float64, lims::Vector{<:Real})::Tuple{Int, Int}
 		_dim_x = round(Int, (lims[2] - lims[1]) / res)		# Assume data has pixel registration
 		_dim_y = round(Int, (lims[4] - lims[3]) / res)
 		return _dim_x, _dim_y
@@ -225,11 +225,11 @@ function wms_helper(wms::WMS; layer=0, kw...)
 			error("The 'size' option must be a Tuple or Array with TWO elements")
 		dim_x::Int, dim_y::Int = dim[2], dim[1]
 	elseif ((res = find_in_dict(d, [:res :cellsize :pixelsize :resolution])[1]) !== nothing)
-		if (isa(res, String) && res[end] == 'd')	# Got resolution in degrees (a string ending with a 'd')
+		if (isa(res, String) && res[end] == 'd')		# Got resolution in degrees (a string ending with a 'd')
 			(!contains(wms.layer[layer_n].srs, "4326") && !contains(wms.layer[layer_n].crs, ":84")) &&
 				error("This is not a Geographical dataset so you cannot set the resolution in degrees")
 			_res::Float64 = parse(Float64, res[1:end-1])
-			dim_x, dim_y = getsize(_res, lims)
+			dim_x, dim_y = loc_getsize(_res, lims)
 		else
 			if (!contains(wms.layer[layer_n].srs, "4326") && !contains(wms.layer[layer_n].crs, ":84"))	# Easy case
 				_res = res
@@ -237,7 +237,7 @@ function wms_helper(wms::WMS; layer=0, kw...)
 				deg_per_m = 360 / (6371000 * 2pi)		# Use spherical authalic radius
 				_res = res * deg_per_m
 			end
-			dim_x, dim_y = getsize(_res, lims)
+			dim_x, dim_y = loc_getsize(_res, lims)
 		end
 	else
 		error("Must provide either the 'size' or the 'resolution' option")
