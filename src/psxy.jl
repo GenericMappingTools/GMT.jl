@@ -83,7 +83,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	cmd, opt_JZ = parse_JZ(d, cmd; O=O, is3D=is3D)
 	#(is3D && O && opt_JZ == "" && CTRL.pocket_J[3] != "") && (cmd *= CTRL.pocket_J[3])
 	cmd, = parse_common_opts(d, cmd, [:a :e :f :g :p :t :w :params], first)
-	cmd, opt_l = parse_l(d, cmd)	# Parse this one (legend) aside so we can use it in classic mode
+	cmd, opt_l = parse_l(d, cmd)		# Parse this one (legend) aside so we can use it in classic mode
 	cmd, opt_f = parse_f(d, cmd)		# Parse this one (-f) aside so we can check against D.attrib
 	cmd  = parse_these_opts(cmd, d, [[:D :shift :offset], [:I :intens], [:N :no_clip :noclip]])
 	parse_ls_code!(d::Dict)				# Check for linestyle codes (must be before the GMTsyntax_opt() call)
@@ -102,6 +102,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		end
 		return cmd
 	end
+
 	if (isa(arg1, GDtype) && !contains(opt_f, "T") && !contains(opt_f, "t") && !contains(opt_R, "T") && !contains(opt_R, "t"))
 		isa(arg1, GMTdataset) && (cmd = set_fT(arg1, cmd, opt_f))
 		isa(arg1, Vector{<:GMTdataset}) && (cmd = set_fT(arg1[1], cmd, opt_f))
