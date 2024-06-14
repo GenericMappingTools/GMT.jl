@@ -131,7 +131,7 @@ function inset_nested(nt::NamedTuple, n)	# In this method, the first el of NT co
 		CTRL.pocket_call[4] = ((opt_R = get(d, :R, "")) != "") ? opt_R : nothing	# Save for drawing rect in the main fig
 		# And the helper1_inset_nested() has saved the zoomed rectangle limits in CTRL.pocket_call[5]
 	else
-		inset_nested(nt[1], n; d...)
+		inset_nested(isa(nt[1], Matrix{<:Real}) ? mat2ds(nt[1]) : nt[1], n; d...)
 	end
 	return nothing
 end
@@ -142,8 +142,8 @@ inset_nested(fname::String, n; kwargs...) = inset_nested(gmtread(fname), n; kwar
 # ---------------------------------------------------------------------------------------------------
 function inset_nested(GI::GItype, n; kwargs...)
 	d = KW(kwargs)
-	dims = (size(GI, 1), size(GI, 2)) 
-	d, fname, opt_B, opt_J, opt_R = helper1_inset_nested(d, imgdims=dims)	# fname is gmt_0.ps- file in modern session
+	W, H = getsize(GI)			# width (columns) and height (rows)
+	d, fname, opt_B, opt_J, opt_R = helper1_inset_nested(d, imgdims=(H, W))	# fname is gmt_0.ps- file in modern session
 
 	if (opt_J == "")
 		opt_J = isgeog(GI) ? guess_proj(GI.range[1:2], GI.range[3:4]) : " -JX"
