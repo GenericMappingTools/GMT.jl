@@ -365,7 +365,16 @@ function GMT_opts_to_GDAL(f::Function, opts::Vector{String}, kwargs...)
 	d = GMT.init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	if ((opt_R = GMT.parse_R(d, "")[1]) != "")
 		s = split(opt_R[4:end], '/')
-		f == gdalgrid ? append!(opts, ["-txe", s[1], s[2], "-tye", s[3], s[4]]) : append!(opts, ["-projwin", split(opt_R[4:end], '/')[[1,4,2,3]]...])	# Ugly
+		if (f != gdalgrid)
+			if haskey(d, :srcwin)					# projwin & srcwin have different syntax
+				R = parse.(Float64, s)
+				op = ["-srcwin", "$(R[1])", "$(R[3])", "$(R[2]-R[1])", "$(R[4]-R[3])"]
+			else
+				op = ["-projwin", s[1], s[4], s[2], s[3]]
+			end
+		end
+		f == gdalgrid ? append!(opts, ["-txe", s[1], s[2], "-tye", s[3], s[4]]) : append!(opts, op)
+		#f == gdalgrid ? append!(opts, ["-txe", s[1], s[2], "-tye", s[3], s[4]]) : append!(opts, ["-projwin", split(opt_R[4:end], '/')[[1,4,2,3]]...])	# Ugly
 	end
 	((opt_J = GMT.parse_J(d, "", " ")[1]) != "") && append!(opts, ["-a_srs", opt_J[4:end]])
 	if ((opt_I = GMT.parse_I(d, "", [:I :inc :increment :spacing], "I")) != "")	# Need the 'I' to not fall into parse_I() exceptions
