@@ -846,6 +846,18 @@ getbb(D::GDtype) = isa(D, Vector) ? D[1].ds_bbox : D.ds_bbox
 
 # ------------------------------------------------------------------------------------------------------
 """
+    width, height = getsize(GI::GItype) -> Tuple(Int, Int)
+
+Return the width and height of the grid or image. The grid case is simple but images are more complicated
+due to the memory layout. To disambiguate this, we are not relying in 'size(GI)' but on the length of the
+x,y coordinates vectors, that are assumed to always be correct. 
+"""
+function getsize(GI::GItype)
+	(GI.layout != "" && GI.layout[2] == 'C') ? (size(GI,2), size(GI,1)) : (length(GI.x), length(GI.y)) .- GI.registration
+end
+
+# ------------------------------------------------------------------------------------------------------
+"""
     settimecol!(D::GDtype, Tcol)
 
 Set the time column in the dataset D (or vector of them). `Tcol` is either an Int scalar or vector
