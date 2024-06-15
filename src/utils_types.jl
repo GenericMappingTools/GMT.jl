@@ -230,7 +230,7 @@ function mat2ds(mat::Array{T,N}, txt::Union{String,Vector{String}}=String[]; hdr
 
 	color_cycle = false
 	if ((color = find_in_dict(d, [:lc :linecolor :color])[1]) !== nothing && color != false)
-		_color::Vector{String} = (isa(color, VecOrMat{String}) && !isempty(color)) ? vec(string.(color)) : (!isa(color, Vector) && !isa(color, Bool)) ? [string(color)] : matlab_cycle_colors
+		_color::Vector{String} = (isa(color, VecOrMat{String}) && !isempty(color)) ? vec(string.(color)) : (!isa(color, Vector) && !isa(color, Bool) && color != :cycle) ? [string(color)] : matlab_cycle_colors
 		color_cycle = true
 	end
 	_fill::Vector{String} = helper_ds_fill(d)
