@@ -555,13 +555,16 @@ function get_palette(API::Ptr{Nothing}, object::Ptr{Nothing})::GMTcpt
 	             zeros(C.n_colors,6), C.categorical, Vector{String}(undef,C.n_colors), Vector{String}(undef,C.n_colors), model, String[])
 
 	gmt_lut = unsafe_load(C.data, 1)
-	for j = 1:C.n_colors       # Copy r/g/b from palette to Julia array
+	is_gray = true				# Because of a GMT bug we must check it here
+	for j = 1:C.n_colors		# Copy r/g/b from palette to Julia array
 		gmt_lut = unsafe_load(C.data, j)
 		for k = 1:3 	out.colormap[j, k] = gmt_lut.rgb_low[k]		end
 		for k = 1:3
 			out.cpt[j, k]   = gmt_lut.rgb_low[k]
 			out.cpt[j, k+3] = gmt_lut.rgb_high[k]		# Not sure this is equal to the ML MEX case
 		end
+		is_gray && (is_gray = (out.cpt[j, 1] == out.cpt[j, 2] == out.cpt[j, 3]))
+		is_gray && (is_gray = (out.cpt[j, 4] == out.cpt[j, 5] == out.cpt[j, 6]))
 		out.alpha[j]    = gmt_lut.rgb_low[4]
 		out.range[j, 1] = gmt_lut.z_low
 		out.range[j, 2] = gmt_lut.z_high
@@ -577,6 +580,7 @@ function get_palette(API::Ptr{Nothing}, object::Ptr{Nothing})::GMTcpt
 	end
 
 	out.depth = (C.is_bw != 0) ? 1 : ((C.is_gray != 0) ? 8 : 24)
+	(out.depth == 1 && is_gray) && (out.depth = 8)		# To workaround a GMT bug
 	out.hinge = (C.has_hinge != 0) ? C.hinge : NaN;
 	gmt_lut = unsafe_load(C.data, 1)
 	out.minmax[1] = gmt_lut.z_low
