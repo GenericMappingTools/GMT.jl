@@ -922,3 +922,37 @@ function gdaldrivers(type="raster"; out::Bool=false)
 	!out && pretty_table([list1 list2 list3 list4]; header=["Short Name", "Long Name", "Type(s)", "File extension(s)"], alignment=:l, crop=:none)
 	return out ? (list1, list2, list3, list4) : nothing
 end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    readgeom(wkt::String; gdataset::Bool=false)
+
+- `wkt`: A string with the a geometry encoded as a WKT string	
+- `gdataset`: If set to `true` forces the return of a GDAL dataset instead of a GMT type.
+
+### Returns
+A GMTdataset or a GDAL dataset
+
+### Examples
+```julia
+D = readgeom("POLYGON ((0 0, 0 10, 10 10, 10 0, 0 0))")
+```
+"""
+function readgeom(wkt::String; gdataset::Bool=false)
+	return gdataset ? fromWKT(wkt) : gd2gmt(fromWKT(wkt))
+end
+
+"""
+    D = readgeom(wkt::Vector{String})
+
+Return a vector of GMTdatasets from a vector of WKT strings.
+"""
+function readgeom(wkt::Vector{String})
+	n_ds = length(wkt)
+	D::Vector{GMTdataset} = Vector{GMTdataset}(undef, n_ds)
+	for k = 1:n_ds
+		D[k] = gd2gmt(fromWKT(wkt[k]))
+	end
+	set_dsBB!(D, false)
+	return D
+end
