@@ -712,6 +712,7 @@ function tabletypes2ds(arg, interp=0)
 	#(arg === nothing || isa(arg, GDtype) || isa(arg, Matrix{<:Real})) && return arg
 	isdataframe(arg) && return df2ds(arg)				# DataFrames are(?) easier to deal with.
 	isODE(arg) && return ODE2ds(arg, interp=interp)		# DifferentialEquations type is a complex beast.
+	(isa(arg, GMT.Gdal.AbstractDataset) || isa(arg, GMT.Gdal.AbstractGeometry)) && return gd2gmt(arg)
 
 	# Guesswork, it may easily screw.
 	colnames = [i for i in fields(arg) if Base.nonmissingtype(eltype(getproperty(arg, i))) <: AbstractFloat]

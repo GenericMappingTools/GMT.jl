@@ -64,9 +64,11 @@ function imshow(arg1, x::AbstractVector{Float64}=Float64[], y::AbstractVector{Fl
 	elseif (isa(arg1, Array{UInt8}) || isa(arg1, Array{UInt16,3}))
 		Gi = mat2img(arg1; kw...)
 		call_img = true
-	elseif (isGMTdataset(arg1) || (isa(arg1, Matrix{<:Real}) && size(arg1,2) <= 4))
-		ginfo::GMTdataset{<:Float64} = gmt("gmtinfo -C", arg1)
-		CTRL.limits[1:4] = ginfo.data[1:4];		CTRL.limits[7:10] = ginfo.data[1:4]
+	elseif (isGMTdataset(arg1) || (isa(arg1, Matrix{<:Real}) && size(arg1,2) <= 4) || (isa(arg1, Gdal.AbstractDataset) || isa(arg1, Gdal.AbstractGeometry)))
+		(isa(arg1, Gdal.AbstractDataset) || isa(arg1, Gdal.AbstractGeometry)) && (arg1 = gd2gmt(arg1))
+		isa(arg1, Matrix{<:Real}) && (arg1 = mat2ds(arg1))
+		ginfo = isa(arg1, GMTdataset) ? arg1.bbox : arg1[1].ds_bbox
+		CTRL.limits[1:4] = ginfo[1:4];		CTRL.limits[7:10] = ginfo[1:4]
 		call_plot3 = ((isa(arg1, GMTdataset) && arg1.geom == Gdal.wkbLineStringZ) || (isa(arg1, Vector{<:GMTdataset}) && arg1[1].geom == Gdal.wkbLineStringZ)) ? true : false		# Should evolve into a fun that detects the several plot3d cases.
 		!call_plot3 && (call_plot3 = isplot3(kw))
 		return (call_plot3) ? plot3d(arg1; show=see, kw...) : plot(arg1; show=see, kw...)

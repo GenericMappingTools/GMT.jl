@@ -141,7 +141,7 @@ function grdinterp_local_opt_S(arg1::GItype, pts::GMTdataset, no_coords::Bool; r
 		t = grdtrack(slicecube(arg1, k), pts, o=2)		# Want only the third column
 		if (rowlayers)  D[:, k+startcol] .= convert.(DT, t.data)
 		else
-			for i = 1:n_pts  D.data[k,2:end] .= t.data[i,:]  end
+			for i = 1:n_pts  D.data[k,i+1] = t.data[i]  end
 			D.data[k,1] = layer_vals[k]
 		end
 	end
