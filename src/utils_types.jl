@@ -1896,7 +1896,7 @@ end
 """
     G = mat2grid(mat; reg=nothing, x=[], y=[], v=[], hdr=[], proj4::String="", wkt::String="",
                  title::String="", rem::String="", cmd::String="", names::Vector{String}=String[],
-                 scale::Float32=1f0, offset::Float32=0f0)
+                 scale::Float32=1f0, offset::Float32=0f0, eqc=false)
 
 Take a 2/3D `mat` array and a HDR 1x9 [xmin xmax ymin ymax zmin zmax reg xinc yinc] header descriptor and 
 return a grid GMTgrid type. Alternatively to HDR, provide a pair of vectors, `x` & `y`, with the X and Y coordinates.
@@ -1905,13 +1905,18 @@ Optionally, the HDR arg may be omitted and it will computed from `mat` alone, bu
 When HDR is not used, REG == nothing [default] means create a gridline registration grid and REG = 1,
 or REG="pixel" a pixel registered grid.
 
+- `eqc`: If true, it means we got a matrix representing a Equidistant Cylindrical projection but with no coords.
+  The output grid will have global coordinates between [-180 180] and [-90 90]. The xinc and yinc will be computed
+  from the `mat` size and and a guess of the registration type based on the if dims are even (pixel) or odd (grid).
+  Override the registration guessing with the `reg` option. For non Earth bodies user must specify a `proj4` option.
+
 For 3D arrays the `names` option is used to give a description for each layer (also saved to file when using a GDAL function).
 
 The `scale` and `offset` options are used when `mat` is an Integer type and we want to save the grid with a scale/offset.  
 
 Other methods of this function do:
 
-    G = mat2grid([val]; hdr=hdr_vec, reg=nothing, proj4::String="", wkt::String="", title::String="", rem::String="")
+    G = mat2grid(val=0.0f; hdr=hdr_vec, reg=0, proj4::String="", wkt::String="", title::String="", rem::String="")
 
 Create Float GMTgrid with size, coordinates and increment determined by the contents of the HDR var. This
 array, which is now MANDATORY, has either the same meaning as above OR, alternatively, containing only
@@ -1961,12 +1966,10 @@ mat2grid(mat, xx, yy, zz=Float64[];
 	mat2grid(mat; x=xx, y=yy, v=zz, reg=reg, hdr=hdr, proj4=proj4, proj=proj, wkt=wkt, epsg=epsg, geog=geog,
 	         title=title, tit=tit, rem=rem, cmd=cmd, names=names, scale=scale, offset=offset, layout=layout, is_transposed=is_transposed, x_unit=x_unit, y_unit=y_unit, v_unit=v_unit, z_unit=z_unit)
 
-#function mat2grid(mat, xx=Float64[], yy=Float64[], zz=Float64[]; reg=nothing,
 function mat2grid(mat; reg=nothing, x=Float64[], y=Float64[], v=Float64[], hdr=Float64[], proj4::String="", proj::String="",
                   wkt::String="", epsg::Int=0, geog::Int=-1, title::String="", tit::String="", rem::String="", cmd::String="",
                   names::Vector{String}=String[], scale::Real=1f0, offset::Real=0f0, layout::String="", is_transposed::Bool=false,
-                  x_unit::String="x", y_unit::String="y", v_unit::String="v", z_unit::String="z")
-	# Take a 2/3D array and turn it into a GMTgrid
+                  x_unit::String="x", y_unit::String="y", v_unit::String="v", z_unit::String="z", eqc=false)
 
 	israsters(mat) && return rasters2grid(mat, scale=scale, offset=offset)
 	(fields(mat) == (:x, :y, :density)) && return kde2grid(mat)		# A KernelDensity type
@@ -1980,6 +1983,19 @@ function mat2grid(mat; reg=nothing, x=Float64[], y=Float64[], v=Float64[], hdr=F
 		reg_ = (t != "pixel") ? 0 : 1
 	elseif (isa(reg, Real))
 		reg_ = (reg == 0) ? 0 : 1
+	end
+
+	# Check case where we got a matrix representing a Equidistant Cylindrical projection but no coords
+	(eqc != 0 && (!isempty(x) || !isempty(hdr))) && @warn "eqc=true but x or hdr are not empty. Ignoring eqc=true"
+	if (eqc != 0 && isempty(x) && isempty(hdr))
+		n_rows, n_cols, = size(mat)
+		# The default here is pixel registration when the matrix is of even size, or grid reg otherwise
+		(reg === nothing) && (iseven(n_rows) && iseven(n_cols) ? (reg_ = 1) : (reg_ = 0))
+		x_inc = 360.0 / (n_cols - (reg_ == 1));		y_inc = 180.0 / (n_rows - (reg_ == 1))
+		mima = extrema_nan(mat)
+		hdr = [-180.0, 180.0, -90.0, 90.0, mima[1], mima[2], reg_, x_inc, y_inc]
+		geog = 1
+		(proj4 == "") && (proj4 = prj4WGS84)
 	end
 	x, y, hdr, x_inc, y_inc = grdimg_hdr_xy(mat, reg_, hdr, x, y, is_transposed)
 
