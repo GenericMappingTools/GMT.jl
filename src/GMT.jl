@@ -312,6 +312,7 @@ include("potential/gravprisms.jl")
 include("potential/gravfft.jl")
 include("spotter/grdrotater.jl")
 include("windbarbs/windbarbs.jl")
+include("zscale.jl")
 include("drawing.jl")
 include("get_enums.jl")
 
@@ -335,7 +336,7 @@ include("get_enums.jl")
 	rm(t)
 	D = mat2ds(rand(3,3), colnames=["Time","b","c"]); D.attrib = Dict("Timecol" => "1");
 	D[:Time];	D["Time", "b"];
-	I = mat2img(rand(UInt8, 32, 32, 3));
+	I = mat2img(rand(UInt8, 32, 32, 3), clim=:zscale);
 	#grdimage(I, V=:q);
 	#grdview(rand(Float32,32,32), Vd=2);
 	#grdinfo(mat2grid(rand(Float32,4,4)));
