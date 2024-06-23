@@ -59,6 +59,7 @@ function imshow(arg1, x::AbstractVector{Float64}=Float64[], y::AbstractVector{Fl
 		else
 			ext = lowercase(ext)
 			(ext == ".jpg" || ext == ".tif" || ext == ".tiff" || ext == ".png" || ext == ".bmp" || ext == ".gif") && (is_image = true)
+			!is_image && (Gg = arg1)
 			#snif_GI_set_CTRLlimits(arg1)			# Set CTRL.limits to be eventually used by J=:guess
 		end
 	elseif (isa(arg1, Array{UInt8}) || isa(arg1, Array{UInt16,3}))
