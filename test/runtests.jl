@@ -51,6 +51,8 @@ using Dates, Printf#, Logging
 	include("test_avatars.jl")
 	println("		Entering: test_misc.jl")
 	include("test_misc.jl")
+	println("		Entering: test_utils.jl")
+	include("test_utils.jl")
 	println("		Entering: test_tables.jl")
 	include("test_tables.jl")
 	println("		Entering: test_common_opts.jl")

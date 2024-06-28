@@ -415,7 +415,7 @@ function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bo
 		opt_J, mnemo = build_opt_J(val)		# mnemo = true when the projection name used a mnemonic for the projection
 	elseif (IamModern[1] && ((val = is_in_dict(d, [:figscale :fig_scale :scale :figsize :fig_size])) === nothing))
 		# Subplots do not rely in the classic default mechanism
-		(IamInset[1] && !contains(cmd, " -J")) && (cmd *= CTRL.pocket_J[1]::String) 	# Workaround GMT bug (#7005)
+		(IamInset[1] && !IamInset[2] && !contains(cmd, " -J")) && (cmd *= CTRL.pocket_J[1]::String) 	# Workaround GMT bug (#7005)
 		return cmd, ""
 	end
 	CTRL.proj_linear[1] = (length(opt_J) >= 4 && opt_J[4] != 'X' && opt_J[4] != 'x' && opt_J[4] != 'Q' && opt_J[4] != 'q') ? false : true
@@ -2753,7 +2753,7 @@ function add_opt_module(d::Dict)::Vector{String}
 				!(symb in CTRL.callable) && error("Nested Fun call $symb not in the callable nested functions list")
 				_d = nt2dict(nt)
 				ind_pocket = (CTRL.pocket_call[1] === nothing) ? 1 : 2
-				(haskey(_d, :data)) && (CTRL.pocket_call[ind_pocket] = _d[:data]; delete!(d, [:data]))
+				(haskey(_d, :data)) && (CTRL.pocket_call[ind_pocket] = _d[:data]; delete!(_d, :data))
 				this_symb = CTRL.callable[findfirst(symb .== CTRL.callable)]
 				fn = getfield(GMT, Symbol(string(this_symb, "!")))
 				if (this_symb in [:vband, :hband, :vspan, :hspan])
@@ -4031,7 +4031,7 @@ end
 Finish the PostScript file and convert&display the figure.
 
 - `fmt`: Create the raster figure in format `format`. Default is `fmt=:png`. To get it in PDF do `fmt=:pdf`
-- `figname`: To create a figure in local directory and with a name `figname`. If `figname` has an extension
+- `figname`: To create a figure in local directory and with a name `figname`. If `figname` has an extension,
    that is used to select the fig format. *e.g.* `figname=fig.pdf` creates a PDF file localy called 'fig.pdf' 
 """
 function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K::Bool=false, fname::String="")
@@ -4109,12 +4109,12 @@ end
 # ---------------------------------------------------------------------------------------------------
 # Use only to close PS fig and optionally convert/show
 function showfig(; kwargs...)
-	helper_showfig4modern() && return nothing		# If called from modern mode we are done here.
+	helper_showfig4modern() && return nothing				# If called from modern mode we are done here.
 	d = KW(kwargs)
-	(!haskey(d, :show)) && (d[:show] = true)		# The default is to show
+	(!haskey(d, :show)) && (d[:show] = true)				# The default is to show
 	CTRL.limits .= 0.0;		CTRL.proj_linear[1] = true;		# Reset these for safety
 	!isempty(LEGEND_TYPE[1].optsDict) && (d[:legend] = dict2nt(LEGEND_TYPE[1].optsDict))	# Recover opt settings
-	digests_legend_bag(d)							# Plot the legend if requested
+	digests_legend_bag(d)									# Plot the legend if requested
 	arg = (isPSclosed[1]) ? "" : "psxy -R0/1/0/1 -JX0.001c -T -O"		# In Modern the PS is already closed
 	finish_PS_module(d, arg, "", false, true, true)
 end

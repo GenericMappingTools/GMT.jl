@@ -705,6 +705,44 @@ function uniq(A; dims=1)
 	C, ia, ic
 end
 
+"""
+    p = polyfit(x, y, n=length(x)-1; xscale=1)
+
+Returns the coefficients for a polynomial p(x) of degree `n` that is the least-squares best fit for the data in y.
+The coefficients in p are in ascending powers, and the length of p is n+1.
+
+The `xscale` parameter is useful when needing to get coeeficients in different x units. For example when converting
+months or seconds into years.
+"""
+polyfit(D::GMTdataset, n::Int=size(x,1)-1; xscale=1) = polyfit(view(D.data, :,1), view(D.data, :,2), n, xscale=xscale)
+function polyfit(x, y, n::Int=length(x)-1; xscale=1)
+	@assert length(x) == length(y) "X,Y sizes mismatch"
+	@assert 1 <= n <= length(x) - 1  "Order of polynome must be between 1 and length(x)-1"
+
+	# Construct the Vandermonde matrix V = [1 x ... x.^n]
+	V = fill(1.0, length(x), n+1)
+	[V[:,k+1] .= V[:,k] .* (x * xscale) for k = 1:n]
+	p = V \ vec(y)
+end
+
+"""
+    y = polyval(p::AbstractArray, x::Union{AbstractArray, Number})
+
+Evaluates the polynomial p at each point in x. The argument p is a vector of length n+1 whose elements are the
+coefficients (in ascending order of powers) of an nth-degree polynomial:
+"""
+function polyval(p::AbstractArray, x::Union{AbstractArray, Number})
+	pt = promote_type(eltype(p), eltype(x))
+
+	length(p) == 0 && return fill(zero(eltype(x)), length(x))
+	y = fill(convert(pt, p[end]), length(x))
+	for k = (length(p)-1):-1:1
+		y .= p[k] .+ x .* y
+	end
+	return length(x) == 1 ? y[1] : y
+end
+
+
 #=
 function range(x)
     min = typemax(eltype(x))
@@ -840,7 +878,8 @@ searchdir(path, key) = filter(x->occursin(key,x), readdir(path))
 """
 	bb = getbb(D::GDtype) -> Vector{Float64}
 
-Get the bounding box of a dataset (or vector of them)
+Get the bounding box of a dataset (or vector of them). Note: the returned data is based on information
+in `D`metadata, not in rescanning the actual data.
 """
 getbb(D::GDtype) = isa(D, Vector) ? D[1].ds_bbox : D.ds_bbox
 
