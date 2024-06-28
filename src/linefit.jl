@@ -164,6 +164,8 @@ meaning of the parameters mentioned below.
 - `ellipses`: optionaly plot error ellipses when the `σX, `σY` errors are known.
 - `legend`: By default we do not plot the legend boxes with line fit info. Set `legend=rue` to plot them. For the time
    being the legend locations are determine automaticaly and can't be manually controlled.``
+- `lc or linecolor`: By default the fitted line is plotted with `red` color. Use `lc=*color*` to change it.
+- `lt, lw or linethickness`: By default the fitted line thickness is set to `0.5`. Use `lt=*thickness*` to change it.
 
 Other than the above options you can use most of the `plot` options that control line and marker symbol.
 
@@ -191,11 +193,12 @@ function plotlinefit(D::Vector{<:GMTdataset}; first::Bool=true, kw...)
 	legend = ((val = find_in_dict(d, [:legend :label], false)[1]) !== nothing) ? val : ""
 	d[:legend] = legend
 
+	_figname = find_in_dict(d, [:name :figname :savefig])[1]	# We can't let it go before last plot command
+
 	plotlinefit(D[1]; first=first, grp=true, d...)
 	d = CTRL.pocket_d[1]
 	d[:band_ab], d[:band_CI], d[:legend] = band_ab, band_CI, legend
 	for k = 2:N_clusters
-		(k == N_clusters) && (d[:show] = do_show; d[:savefig] = figname)
 		do_band_CI && (d[:band_CI] = (bc = edit_segment_headers!(D[k], 'G', :get)) != "" ? bc*"@85" : cycle_colors[k]*"@85")
 		do_band_ab && (d[:band_ab] = (bc = edit_segment_headers!(D[k], 'G', :get)) != "" ? bc*"@85" : cycle_colors[k]*"@85")
 		plotlinefit(D[k]; first=false, grp=true, d...)
@@ -204,11 +207,17 @@ function plotlinefit(D::Vector{<:GMTdataset}; first::Bool=true, kw...)
 			d[:band_ab], d[:band_CI], d[:legend] = band_ab, band_CI, legend
 		end
 	end
+	showfig(show=do_show, figname=figname)		# Only show if requested but also sets the figname if requested.
+	(do_show || _figname !== nothing) && showfig(show=do_show, figname=_figname)	# Only show if requested and also sets the figname if requested.
 end
 
+# --------------------------------------------------------------------------------------------------
+plotlinefit(m::Matrix{<:Real}; first::Bool=true, grp::Bool=false, kw...) = plotlinefit(linearfitxy(m); first=first, grp=grp, kw...)
 function plotlinefit(D::GMTdataset; first::Bool=true, grp::Bool=false, kw...)
 	# Plot fit line, data points and confidence intervals (some optional) from GMTds created by linearfitxy.
+	# `grp=true` only when originally called from plotlinefit(D::Vector{<:GMTdataset})
 	
+	(get(D.attrib, "a", "") == "" || get(D.attrib, "b", "") == "") && (@warn("Input must be the result of linearfitxy"); return nothing)
 	d = KW(kw)
 	
 	function do_ribs(d, symbs, def_color::String)
@@ -235,7 +244,7 @@ function plotlinefit(D::GMTdataset; first::Bool=true, grp::Bool=false, kw...)
 	ρ, S, ci = parse(Float64, D.attrib["Pearson"]), parse(Float64, D.attrib["Goodness_of_fit"]), parse(Int, D.attrib["ci"])
 	
 	tl, bl = (a - σa) .+ (b + σb)*X,  (a + σa) .+ (b - σb)*X
-	recta = a .+ b*X
+	recta = a .+ b * X
 	if (do_rib_ab)
 		σp, σm = vec(maximum([tl bl], dims=2)) .- recta, recta .- vec(minimum([tl bl], dims=2))
 	end
@@ -254,6 +263,8 @@ function plotlinefit(D::GMTdataset; first::Bool=true, grp::Bool=false, kw...)
 
 	leg_off = "0.15"		# Default legend offset
 	_figname = find_in_dict(d, [:name :figname :savefig])[1]	# We can't let it go before last plot command (no use when grp)
+	inset = find_in_dict(d, [:inset])[1]
+
 	if (first)
 		mi, ma = min(mi, D.ds_bbox[3]), max(ma, D.ds_bbox[4])
 		wesn::Vector{Float64} = round_wesn([D.ds_bbox[1], D.ds_bbox[2], mi, ma], false, [0.01, 0.01])
@@ -267,6 +278,8 @@ function plotlinefit(D::GMTdataset; first::Bool=true, grp::Bool=false, kw...)
 		(haskey(d, :ylabel) && string(d[:ylabel]) == "auto") && (d[:ylabel] = D.colnames[2])
 		basemap(; R=opt_R, Vd=-1, d...)		# START THE PLOT
 		d = CTRL.pocket_d[1]				# Get back what was not consumemd in basemap
+	else
+		opt_R = CTRL.pocket_R[1][4:end]
 	end
 
 	if (do_rib_CI)							# Plot a Ribbon with the % Cofidence limit
@@ -282,16 +295,39 @@ function plotlinefit(D::GMTdataset; first::Bool=true, grp::Bool=false, kw...)
 	mc = ((val = find_in_dict(d, [:mc :markercolor :markerfacecolor :MarkerFaceColor])[1]) !== nothing) ? string(val)::String : "#0072BD"
 	(grp) && (mc = ((mc = edit_segment_headers!(D, 'G', :get)) != "" ? mc : "#0072BD"))
 	mk = ((val = find_in_dict(d, [:marker])[1]) !== nothing) ? arg2str(val)::String : "circ"
+	
+	if ((opt_W = edit_segment_headers!(D, 'W', :get)) == "")
+		lc = ((val = find_in_dict(d, [:lc :linecolor])[1]) !== nothing) ? string(val)::String : "red"
+		lt = ((val = find_in_dict(d, [:lt :lw :linethickness])[1]) !== nothing) ? string(val)::String : "0.5"
+		ls = ((val = find_in_dict(d, [:ls :linestyle])[1]) !== nothing) ? string(val)::String : ""
+		opt_W = lt * "," * lc * "," * ls
+	end
+
+	(do_legends && grp) && (d[:legend] = D.attrib["group_name"])
+	# Plot the data points by default as small filled blue [if default] circles.
+	if (inset !== nothing)
+		CTRL.pocket_call[4] = D			# Don't know what happens if multi-segments
+		kk = keys(inset)
+		if (kk[1] == :zoom)				# If not set by user, replicate the scatter options (NOT TEST THE ALIAS)
+			_mk = (:marker in kk) ? NamedTuple() : (marker=mk,)
+			_mc = (:mc in kk) ? NamedTuple() : (mc=mc,)
+			_ms = (:ms in kk) ? NamedTuple() : (ms="0.075",)
+			inset = merge(inset, _mk, _ms, _mc, (plot=(data=[X[1] recta[1]; X[end]], W=opt_W),))
+		end
+		d[:inset] = inset				# Somehow this screws -R -J and that's why we repeat them in the plot! cmd below.
+	end
+	scatter!(D; marker=mk, ms=ms, mc=mc, R=opt_R, J=CTRL.pocket_J[1][4:end], d...)	# If inset this also triggers the inset plot
+	(inset !== nothing) && (delete!(d, :inset))
 
 	pos = (b > 0) ? "TL" : "TR"
-	(is_in_dict(d, [:lc :linecolor]) === nothing) &&
-		(d[:lc] = ((lc = edit_segment_headers!(D, 'W', :get)) != "" ? lc : "#0072BD"))		# Set line color
+	d[:W] = opt_W
+
 	if (do_rib_ab)						# Plot a Ribbon with the errors in a & b parameters
 		d[:legend] = (do_legends && !grp) ? (label=@sprintf("r = %.2f",ρ), ribbon="(a\\261@~s@~a)+(b\\261@~s@~b)X`14", pos=pos) : ""
-		plot!([X recta]; fill=rib_ab_cor, ribbon=(σp,σm), d...)
+		plot!([X recta]; R=opt_R, J=CTRL.pocket_J[1][4:end], fill=rib_ab_cor, ribbon=(σp,σm), d...)
 	else
 		d[:legend] = (do_legends && !grp) ? (label=@sprintf("r = %.2f",ρ), pos=pos) : ""
-		plot!([X recta]; d...)
+		plot!([X recta]; R=opt_R, J=CTRL.pocket_J[1][4:end], d...)
 	end
 	d = CTRL.pocket_d[1]				# Get back what was not consumemd in basemap
 
@@ -299,12 +335,6 @@ function plotlinefit(D::GMTdataset; first::Bool=true, grp::Bool=false, kw...)
 		covXY = view(D, :, 3) .* view(D, :, 4) .* view(D, :, 5)		# covXY = σX .* σY .* r
 		plot_covariance_ellipses!(X, Y, view(D, :, 3).^2,  covXY, view(D, :, 4).^2, lc=:darkgray)
 	end
-
-	# Plot the data points by default as small filled blue [if default] circles.
-	(do_legends && grp) && (d[:legend] = D.attrib["group_name"])
-	grp && (d[:show] = do_show)
-	(grp && figname != "") && (d[:savefig] = figname)
-	scatter!(D; marker=mk, ms=ms, mc=mc, show=(do_show && !do_legends), d...)
 
 	if (!grp && do_legends)
 		fs = 7		# Font size
@@ -314,9 +344,9 @@ function plotlinefit(D::GMTdataset; first::Bool=true, grp::Bool=false, kw...)
 		                text=@sprintf("[\\261@~s@~ab] Y = (%.3f \\261 %.3f) + (%.3f \\261 %.3f)*X", a, σa, b, σb)),
 		         symbol2=(marker=:point, size=0, dx_right=0.0,
 		                text=@sprintf("[%d%%]  Y = (%.3f \\261 %.3f) + (%.3f \\261 %.3f)*X", ci, a, σa95, b, σb95))),
-		         F="+p0.5+gwhite", D="j$(pos)+w$(lab_width)+o$(leg_off)", par=(:FONT_ANNOT_PRIMARY, fs), show=do_show,
-				 name=(_figname !== nothing) ? _figname : "")
+		         F="+p0.5+gwhite", D="j$(pos)+w$(lab_width)+o$(leg_off)", par=(:FONT_ANNOT_PRIMARY, fs))
 	end
+	(!grp && (do_show || _figname !== nothing)) && showfig(show=do_show, figname=_figname)		# Only show if requested but also sets the figname if requested.
 end
 plotlinefit!(D; kw...) = plotlinefit(D; first=false, kw...)
 
