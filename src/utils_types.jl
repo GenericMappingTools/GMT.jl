@@ -432,6 +432,18 @@ function mat2ds(D::GMTdataset, inds)::GMTdataset
 	isempty(i) && return _D						# No TIME columns. We are done
 	(length(i) == 1) ? (Tc::String = "$(i[1])") : _i = i[2:end]
 	_D.attrib["Timecol"] = (length(i) == 1) ? Tc : [Tc *= ",$k" for k in _i]
+	(get(D.attrib, "linearfit", "") != "") && (		# A linefit, keep the attribs.
+		_D.attrib["Goodness_of_fit"] = D.attrib["Goodness_of_fit"];
+		_D.attrib["sigma95_b"] = D.attrib["sigma95_b"];
+		_D.attrib["ci"] = D.attrib["ci"];
+		_D.attrib["b"] = D.attrib["b"];
+		_D.attrib["linearfit"] = D.attrib["linearfit"];
+		_D.attrib["sigma_b"] = D.attrib["sigma_b"];
+		_D.attrib["sigma95_a"] = D.attrib["sigma95_a"];
+		_D.attrib["Pearson"] = D.attrib["Pearson"];
+		_D.attrib["a"] = D.attrib["a"];
+		)
+
 	return _D
 end
 
