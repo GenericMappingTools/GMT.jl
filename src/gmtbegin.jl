@@ -79,13 +79,14 @@ function inset(fim::StrSymb=""; stop=false, kwargs...)
 	end
 
 	if (!stop)
-		(dbg_print_cmd(d, cmd) !== nothing) && return cmd		# Vd=2 cause this return
+		(dbg_print_cmd(d, cmd) !== nothing) && return cmd	# Vd=2 cause this return
 		(!IamModern[1]) && error("Not in modern mode. Must run 'gmtbegin' first")
 		IamInset[1] = true
+		contains(cmd, " -J") && (IamInset[2] = true)		# 'true' means we don't fetch the CTRL.pocket_J[1] to prevent GMT bug #7005
 		gmt("inset begin " * cmd);
 	else
 		(!IamModern[1]) && error("Not in modern mode. Must run 'gmtbegin' first")
-		IamInset[1] = false
+		IamInset[1], IamInset[2] = false, false
 		gmt("inset end");
 		(do_show || haskey(d, :show)) && gmt("end" * show)
 	end
@@ -124,11 +125,11 @@ end
 function inset_nested(nt::NamedTuple, n)	# In this method, the first el of NT contains the data or a zoom
 	# N is the number of the inset. Used only to name the temporary inset PS file
 	k,v = keys(nt), values(nt)
-	d = Dict{Symbol,Any}(k[2:end] .=> v[2:end])			# Drop first el because it contains the input data
-	if (k[1] == :zoom)						# Make a zoom window centered on the coords passed in the zoom tuple
-		zoom2inset(d, v[1])					# Set the -R for the requested zoom
-		inset_nested(CTRL.pocket_call[4], n; d...)
-		CTRL.pocket_call[4] = ((opt_R = get(d, :R, "")) != "") ? opt_R : nothing	# Save for drawing rect in the main fig
+	d = Dict{Symbol,Any}(k[2:end] .=> v[2:end])		# Drop first el because it contains the input data
+	if (k[1] == :zoom)								# Make a zoom window centered on the coords passed in the zoom tuple
+		zoom2inset(d, v[1])							# Compute the -R for the requested rectangle and set in 'd'
+		inset_nested(CTRL.pocket_call[4], n; d...)	# Do the plotting in a modern mode session, of the inset contents.
+		CTRL.pocket_call[4] = ((opt_R = get(d, :R, "")) != "") ? opt_R : nothing	# Save for drawing zoom rect in the main fig
 		# And the helper1_inset_nested() has saved the zoomed rectangle limits in CTRL.pocket_call[5]
 	else
 		inset_nested(isa(nt[1], Matrix{<:Real}) ? mat2ds(nt[1]) : nt[1], n; d...)
@@ -148,6 +149,7 @@ function inset_nested(GI::GItype, n; kwargs...)
 	if (opt_J == "")
 		opt_J = isgeog(GI) ? guess_proj(GI.range[1:2], GI.range[3:4]) : " -JX"
 		opt_J = contains(opt_J, "/") ? opt_J * "/?" : opt_J * "?"
+		contains(opt_J, '?') && (IamInset[2] = true)	# To help avoid GMT bug #7005
 	end
 	CTRL.pocket_d[1][:J] = opt_J[4:end]
 
@@ -169,7 +171,7 @@ function inset_nested(D::GDtype, n; kwargs...)
 	d = KW(kwargs)
 	d, fname, opt_B, opt_J, opt_R = helper1_inset_nested(d; isplot=true)	# Calls inset(). fname is gmt_0.ps- file in modern session
 
-	(opt_J == "") && (d[:J] = "X?/?")
+	(opt_J == "") && (d[:J] = "X?/?"; IamInset[2] = true)	# IamInset[2] is to help avoid GMT bug #7005
 	if (opt_R == "")
 		bb = getbb(D)
 		opt_R = sprintf(" -R%.12g/%.12g/%.12g/%.12g", bb...)
@@ -178,7 +180,7 @@ function inset_nested(D::GDtype, n; kwargs...)
 	(opt_B != "") && (d[:B] = opt_B[4:end])
 	d[:par] = ("MAP_FRAME_PEN", "0.75")	# For some reason it lost the theme set value (this) and went back to the GMT default.
 
-	plot(D; d...)
+	plot(D; d...)						# Do the plotting.
 	helper2_inset_nested(fname, n)		# end's inset(), moves fname to TMP and calls gmtend()
 end
 
@@ -253,8 +255,7 @@ function helper1_inset_nested(d; iscoast=false, isplot=false, imgdims=tuple())
 			f = (H - 0.75) / inset_H * 0.95
 			inset_W *= f;	inset_H *= f
 		end
-		delete!(d, :Rzoom_num)
-		anchor = floating_window(W, H, inset_W, inset_H, lims_zoom)
+		anchor = floating_window(W, H, inset_W, inset_H, lims_zoom)			# Get the anchor location of the inset
 	elseif (!isempty(imgdims))				# The IMAGE case. Use the image dimensions to compute the aspect ratio. -JX only?
 		aspect_zoom = (islinear) ? imgdims[1] / imgdims[2] : cH / cW		# image's aspect ratio: Y/X
 		inset_H = inset_W * aspect_zoom
@@ -297,9 +298,9 @@ function helper1_inset_nested(d; iscoast=false, isplot=false, imgdims=tuple())
 
 	(is_in_dict(d, [:N :no_clip :noclip]) === nothing) && (d[:N] = true)	# Otherwise we loose the annotations
 	(opt_R != "") && (d[:R] = opt_R[4:end])
-	inset(; d...)
+	inset(; d...)								# Initialize the inset but doesn't plot anything yet.
 	delete!(d, [[:D :pos :position :inset_box :insetbox], [:F :box]])	# Some of these exist in module called in inset, must remove them now
-	CTRL.pocket_call[5] = sniff_inset_coords(fname, fig_opt_R, fig_opt_J)		# inset limts in data units
+	CTRL.pocket_call[5] = sniff_inset_coords(fname, fig_opt_R, fig_opt_J)	# inset limts in data units
 	return d, fname, opt_B, opt_J, opt_R
 end
 
