@@ -74,7 +74,7 @@ const global IamModern   = Vector{Bool}(undef, 1);IamModern[1] = false		# To kno
 const global FirstModern = Vector{Bool}(undef, 1);FirstModern[1] = false	# To know
 const global IamModernBySubplot = Vector{Bool}(undef, 1);	IamModernBySubplot[1] = false	# To know if set in subpot
 const global IamSubplot  = Vector{Bool}(undef, 1);IamSubplot[1]  = false	# To know if we are in subplot mode
-const global IamInset    = Vector{Bool}(undef, 1);IamInset[1]    = false	# To know if we are in Inset mode
+const global IamInset    = [false, false]#Vector{Bool}(undef, 1);IamInset[1]    = false	# To know if we are in Inset mode
 const global usedConfPar = Vector{Bool}(undef, 1);usedConfPar[1] = false	# Hacky solution for the session's memory trouble
 const global ThemeIsOn   = Vector{Bool}(undef, 1);ThemeIsOn[1] = false		# To know if we have an active plot theme
 const global CONVERT_SYNTAX = Vector{Bool}(undef, 1);CONVERT_SYNTAX[1] = false	# To only convert to hard core GMT syntax (like Vd=2)
@@ -162,7 +162,7 @@ export
 	median, mean, quantile, std, nanmean, nanstd, skipnan, zonal_statistics, zonal_stats,
 
 	add2PSfile, append2fig, linearfitxy, regiongeog, streamlines, wmsinfo, wmstest, wmsread, peaks, polygonlevels,
-	randinpolygon,
+	randinpolygon, polyfit, polyval,
 
 	ablines, ablines!, density, density!, boxplot, boxplot!, cornerplot, cornerplot!, cubeplot, cubeplot!, ecdfplot, ecdfplot!,
 	fill_between, fill_between!, marginalhist, marginalhist!, parallelplot, parallelplot!, plotlinefit, plotlinefit!,
