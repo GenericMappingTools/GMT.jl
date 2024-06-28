@@ -294,7 +294,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	_cmd = gmt_proggy .* _cmd				# In any case we need this
 	_cmd = frame_opaque(_cmd, opt_B, opt_R, opt_J, opt_JZ)	# No -t in -B
 	(haskey(d, :inset)) && (CTRL.pocket_call[4] = arg1)		# If 'inset', it may be needed from next call
-	_cmd = finish_PS_nested(d, _cmd)
+	_cmd = finish_PS_nested(d, _cmd)						# If we have an 'inset', this makes a long tour plotting that inset.
 
 	# If we have a zoom inset call must plot the zoom rectangle and lines connecting it to the inset window.
 	if ((ind = findfirst(startswith.(_cmd, "inset_"))) !== nothing)	# inset commands must be the last ones
