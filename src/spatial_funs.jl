@@ -109,7 +109,7 @@ function edit_segment_headers!(D, vals::Array, opt::String)
 	return nothing
 end
 function edit_segment_headers!(D::GMTdataset, opt::Char, op::Symbol=:get, txt::String="")::String
-	# This method either apply changes to header or get the ccontents of the specifyied option passed in 'opt'
+	# This method either apply changes to header or get the contents of the specifyied option passed in 'opt'
 	# Used only for gettting/setting GMT options, not general text.
 	(op == :get) && return scan_opt(D.header, "-"*opt)
 	if (op == :set || op == :add)
