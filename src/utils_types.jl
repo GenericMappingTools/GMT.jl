@@ -849,7 +849,7 @@ end
 # Try to guess if ARG is a DataFrame type. Note, we do this without having DataFrames as a dependency (even indirect)
 isdataframe(arg) = (fs = fields(arg); return (isempty(fs) || fs[1] != :columns || fs[end] != :allnotemetadata) ? false : true)
 # Check if it is a DifferentialEquations type
-isODE(arg) = (fs = fields(arg); return (!isempty(fs) && (fs[1] == :u && any(fs .== :t) && fs[end] == :retcode)) ? true : false)
+isODE(arg) = (fs = fields(arg); return (!isempty(fs) && (fs[1] == :u && any(fs .== :t) && any(fs .== :retcode))) ? true : false)
 # See if it is a Rasters type
 israsters(arg) = (fs = fields(arg); return (length(fs) >= 6 && (fs[1] == :data && fs[end] == :missingval)) ? true : false)
 
