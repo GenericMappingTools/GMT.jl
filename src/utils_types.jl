@@ -325,7 +325,7 @@ function mat2ds(mat::Array{T,N}, txt::Union{String,Vector{String}}=String[]; hdr
 	prj, wkt, epsg, ref_attrib, ref_coln = helper_set_crs(d)
 
 	is_geog::Bool = isgeog(prj)
-	coln::Vector{String} = ((val = find_in_dict(d, [:colnames])[1]) === nothing) ? String[] : val
+	coln::Vector{String} = ((val = find_in_dict(d, [:colnames])[1]) === nothing) ? String[] : (isa(val, String) ? [val] : val)
 
 	function fill_colnames(coln::Vector{String}, nc::Int, is_geog::Bool)	# Fill the column names vector
 		if isempty(coln)
@@ -425,7 +425,7 @@ function mat2ds(D::GMTdataset, inds)::GMTdataset
 	(!isempty(D.text)) && (_D.text = D.text[inds[1]])
 	(typeof(inds[2]) == Colon) && return _D		# We are done here
 
-	if (inds[2][1] != 1 || inds[2][2] != 2)		# If any of the first or second columns has gone we know no more about CRS
+	if (size(_D,2) < 2 || inds[2][1] != 1 || inds[2][2] != 2)	# If any of the first or second columns has gone we know no more about CRS
 		_D.proj4 = "";	_D.wkt = "";	_D.epsg = 0
 	end
 	i = findall(startswith.(_D.colnames, "Time"))
