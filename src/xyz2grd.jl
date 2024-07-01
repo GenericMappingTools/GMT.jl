@@ -45,6 +45,8 @@ function xyz2grd(cmd0::String="", arg1=nothing; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
+	_prj = ((val = find_in_dict(d, [:J :proj :projection])[1]) !== nothing) ? val : ""
+	prj::String = isa(_prj, Integer) ? epsg2proj(_prj) : _prj		# Accept also EPSGs
 	cmd, = parse_common_opts(d, "", [:G :RIr :J :V_params :bi :di :e :f :h :i :w :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :multiple_nodes], [:D :header], [:S :swap], [:Z :flags]])
 	if (cmd0 == "" && arg1 === nothing)
@@ -52,6 +54,7 @@ function xyz2grd(cmd0::String="", arg1=nothing; kwargs...)
 		(arg1 !== nothing) && (delete!(d, :x); delete!(d, :y); delete!(d, :z))
 	end
 	G = common_grd(d, cmd0, cmd, "xyz2grd ", arg1)		# Finish build cmd and run it
+	(prj != "") && (setproj!(G, prj))
 	if (isa(G, GMTgrid) && G.proj4 == "+xy")
 		contains(cmd, " -fg") && (G.proj4 = prj4WGS84)
 		if (contains(cmd, " -J+proj="))					# The shit here is that it also contains the "+width=..."
