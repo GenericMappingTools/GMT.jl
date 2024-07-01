@@ -4328,7 +4328,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 				if !(is_plot && J2 == "")		# plot nested calls with no explicit proj are not modified.
 					if (!isgeog(proj4))
 						opt_J = replace(proj4, " " => "")
-						isoblique = any(contains.(opt_J, ["=utm", "=lcc", "=omerc", "=tmerc"]))	# <== ADD OTHER OBLIQUES HERE
+						isoblique = any(contains.(opt_J, ["=utm", "=lcc", "=omerc", "=tmerc", "=laea"]))	# <== ADD OTHER OBLIQUES HERE
 						opt_R::String = isoblique ? sprintf(" -R%f/%f/%f/%f+r", WESN[1],WESN[3],WESN[2],WESN[4]) : sprintf(" -R%f/%f/%f/%f", WESN...)
 						size_::String = (J1[1] == 'x') ? "+scale=" * J1[2:end] : (J1[1] == 'X') ? "+width=" * J1[2:end] : ""
 						(size_ == "") && @warn("Could not find the right fig size used. Result will be wrong")  
