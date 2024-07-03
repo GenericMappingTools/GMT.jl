@@ -1,7 +1,7 @@
 name = "GMT"
 uuid = "5752ebe1-31b9-557e-87aa-f909b540aa54"
 authors = ["Joaquim Luis <jluis@ualg.pt>"]
-version = "1.15.1"
+version = "1.15.2"
 
 [deps]
 PrettyTables = "08abe8d2-0d0c-5749-adfa-8a2ac140af0d"
@@ -29,6 +29,7 @@ GMTDataFramesExt = "DataFrames"
 Tables = "1"
 PrettyTables = "1, 2"
 PrecompileTools = "1.0"
+GDAL_jll = "301.700 - 301.900.0"
 DataFrames = "1.6.0"
 #ImageMorphology = "0.4.5"
 julia = "1.7"
