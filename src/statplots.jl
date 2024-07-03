@@ -262,7 +262,7 @@ function boxplot(data::Union{Vector{Vector{T}}, AbstractMatrix{T}}; pos::Vector{
 		c = true
 	end
 
-	helper3_boxplot(d, c ? Dv : D, Dol, first, isVert, showOL, OLcmd, num4ticks(D[:, isVert ? 1 : 2]), false, isa(data, Vector))
+	helper3_boxplot(d, c ? Dv : D, Dol, first, isVert, showOL, OLcmd, num4ticks(D.data[:, isVert ? 1 : 2]), false, isa(data, Vector))
 end
 
 # ------------ For groups ----------------------------------------------------------------------------------
