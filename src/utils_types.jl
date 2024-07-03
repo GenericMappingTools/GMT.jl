@@ -419,7 +419,7 @@ Attention, if original had attributes other than 'Timeinfo' there is no guarenti
 """
 function mat2ds(D::GMTdataset, inds)::GMTdataset
 	(length(inds) != ndims(D)) && error("\tNumber of GMTdataset dimensions and indices components must be the same.\n")
-	_coln = !isempty(D.colnames) ? D.colnames[inds[2]] : String[]
+	_coln = isempty(D.colnames) ? String[] : (inds[2] === Colon() || last(inds[2]) <= length(D.colnames) ? D.colnames[inds[2]] : String[])
 	(!isempty(_coln) && (typeof(inds[1]) == Colon) && length(D.colnames) > size(D,2)) && append!(_coln, [D.colnames[end]])	# Append text colname if exists
 	_D = mat2ds(D.data[inds...], proj4=D.proj4, wkt=D.wkt, epsg=D.epsg, geom=D.geom, colnames=_coln, attrib=D.attrib, hdr=D.header)
 	(!isempty(D.text)) && (_D.text = D.text[inds[1]])
