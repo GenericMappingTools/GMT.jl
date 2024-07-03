@@ -779,8 +779,8 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill::Vector{Strin
 		((n_cols - n_xy_bars) == 2) && return cmd, arg1			# Only one-bar groups
 		(iseven(n_cols)) && error("Wrong number of columns in error bars array (or prog error)")
 		n = Int((n_cols - 1) / 2)
-		_arg = Float64.(arg1[:, 1:(n+1)])	# No need to care with GMTdatasets because case was dealt in 'got_Ebars'
-		bars_cols = arg1[:,(n + 2):end]		# We'll use this to append to the multi-segments
+		_arg = Float64.(arg1.data[:, 1:(n+1)])	# No need to care with GMTdatasets because case was dealt in 'got_Ebars'
+		bars_cols = arg1.data[:,(n + 2):end]	# We'll use this to append to the multi-segments
 	else
 		_arg = isa(arg1, GMTdataset) ? Float64.(copy(arg1.data)) : Float64.(copy(arg1[1].data))
 		bars_cols = missing

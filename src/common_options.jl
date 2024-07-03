@@ -2542,16 +2542,16 @@ function add_opt_cpt(d::Dict, cmd::String, symbs::VMs, opt::Char, N_args::Int=0,
 			cmd, arg1, arg2, N_args = helper_add_cpt(cmd, opt, N_args, arg1, arg2, val, store)
 		else
 			if (opt_T != "")
-				cpt::GMTcpt = makecpt(opt_T * " -C" * get_color(val)::String)
+				cpt::GMTcpt = makecpt(opt_T * " -C" * get_color(val))
 				cmd, arg1, arg2, N_args = helper_add_cpt(cmd, opt, N_args, arg1, arg2, cpt, store)
 			else
-				c = get_color(val)::String
+				c = get_color(val)
 				opt_C = " -" * opt * c		# This is pre-made GMT cpt
 				cmd *= opt_C
 				if (store && c != "" && tryparse(Float32, c) === nothing)	# Because if !== nothing then it's a number and -Cn is not valid
 					try			# Wrap in try because not always (e.g. grdcontour -C) this is a makecpt callable
-						r = makecpt(opt_C * " -Vq")
-						global CURRENT_CPT[1] = (r !== nothing) ? r : GMTcpt()
+						r = isa(arg1, GMTgrid) ?  makecpt(arg1, C=c) : makecpt(opt_C * " -Vq")
+						CURRENT_CPT[1] = (r !== nothing) ? r : GMTcpt()
 					catch
 					end
 				elseif (in_bag && !isempty(CURRENT_CPT[1]))	# If we have something in Bag, return it
@@ -2584,7 +2584,7 @@ function helper_add_cpt(cmd::String, opt, N_args::Int, arg1, arg2, val::GMTcpt, 
 	# Helper function to avoid repeating 3 times the same code in add_opt_cpt
 	(N_args == 0) ? arg1 = val : arg2 = val;	N_args += 1
 	if (store)  global CURRENT_CPT[1] = val  end
-	(isa(opt, Char) || (isa(opt, String) && opt != "")) && (cmd *= " -" * opt)
+	((isa(opt, Char) || (isa(opt, String) && opt != "")) && !contains(cmd, " -"*opt)) && (cmd *= " -" * opt)
 	return cmd, arg1, arg2, N_args
 end
 
@@ -2738,9 +2738,11 @@ function add_opt_module(d::Dict)::Vector{String}
 		elseif (isa(val, NamedTuple))
 			nt::NamedTuple = val
 			if     (symb == :coast)     r = coast!(; Vd=2, nt...)
-			elseif (symb == :colorbar)  r = colorbar!(; Vd=2, nt...)
 			elseif (symb == :basemap)   r = basemap!(; Vd=2, nt...)
 			elseif (symb == :logo)      r = logo!(; Vd=2, nt...)
+			elseif (symb == :colorbar)
+				r = colorbar!(; Vd=2, nt...)
+				!contains(r, " -B") && (r = replace(r, "psscale" => "psscale -Baf"))		# Add -B if not present
 			elseif (symb == :clip)		# Need lots of little shits to parse the clip options
 				(CTRL.pocket_call[1] === nothing) ? (CTRL.pocket_call[1] = val[1]) : (CTRL.pocket_call[2] = val[1])
 				k,v = keys(nt), values(nt)

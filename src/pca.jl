@@ -241,7 +241,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function helper_kmeans(X, k=5; seeds=nothing, maxiter=100, tol=1e-7, V=false)
-	(seeds === nothing) && (seeds = X[round.(Int, rand(k) * (size(X,1) - 1) .+ 1), :])
+	(seeds === nothing) && (seeds = isa(X, GMTdataset) ? X.data[round.(Int, rand(k) * (size(X,1) - 1) .+ 1), :] : X[round.(Int, rand(k) * (size(X,1) - 1) .+ 1), :])
 	k = size(seeds, 1)				# Needed when seeds != nothing
 	centers = Float32.(seeds)
 	OldCenters = copy(centers)

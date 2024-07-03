@@ -65,6 +65,10 @@ function makecpt(cmd0::String="", arg1=nothing; kwargs...)::Union{String, GMTcpt
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:V_params])
 
+	# This deals with the special case of, for example, "makecpt(G, cmap=:gray"). Here, we recieve (makecpt(G,...) is comp)
+	# a (C=nothing, cmap=:gray) and because 'C' is searched first we would loose the cmap=:gray. Solution is to delete :C
+	((get(kwargs, :C, nothing)) === nothing && is_in_kwargs(kwargs, [:color :cmap :colormap :colorscale])) && delete!(d, :C)
+
     # If file name sent in, read it and compute a tight -R if this was not provided 
     cmd, arg1, = read_data(d, cmd0, cmd, arg1, " ")
 	cmd, arg1, = add_opt_cpt(d, cmd, CPTaliases, 'C', 0, arg1)
@@ -82,12 +86,13 @@ function makecpt(cmd0::String="", arg1=nothing; kwargs...)::Union{String, GMTcpt
 	CURRENT_CPT[1] = r
 	return r
 end
+
 function makecpt(G::GMTgrid; equalize=false, kw...)		# A version that works on grids.
 	# equalize = true uses default grd2cpt. equalize=n uses grd2cpt -Tn
 	# The kw... are those of makecpt or grd2cpt depending on 'equalize'.
 	
 	val, symb = find_in_kwargs(kw, CPTaliases)
-	cpt = (val === nothing) ? (G.cpt != "") ? G.cpt : :turbo : nothing
+	cpt = (val === nothing) ? ((G.cpt != "") ? G.cpt : :turbo) : nothing
 	d = Dict{Symbol, Any}()
 	if (equalize == 0 && symb != Symbol() && val === nothing && cpt !== nothing)
 		# It means kw have a -C, but it can be a C=nothing. Remove the duplicate  that was in kw.
