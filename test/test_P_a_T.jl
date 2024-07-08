@@ -58,11 +58,14 @@ triplot!(xy, lc=:red)
 pts = [[1 2 3;1 2 3;1 2 3][:] [1 1 1;2 2 2; 3 3 3][:]]
 D = triplot(pts, noplot=true);
 @test inwhichpolygon(D, [2.4 1.2; 1.4 1.4]) == [5,1]
-@test inwhichpolygon(D, [2.4, 1.2], [1.4, 1.4]) == [5,1]
+@test inwhichpolygon([2.4, 1.2], [1.4, 1.4], D) == [5,1]
 @test in(D, mat2ds([2.4 1.2; 1.4 1.4], geom=wkbPoint)) == [5,1]
 @test in(mat2ds([2.4 1.2; 1.4 1.4], geom=wkbPoint), D) == [5,1]
 in(mat2ds([0. 0; 1 1; 2 0; 0 0], geom=wkbPolygon), mat2ds([0.5 0; 1.5 1; 2.5 0; 0.5 0], geom=wkbPolygon));
 #@test_throws ErrorException("One of the input arguments must have a Point and the other a Polygon geometries, or both be Polygons.") in(mat2ds([2.4 1.2; 1.4 1.4]), D)
+@test inpolygon([0. 0; 0.5 0.5], mat2ds([-1. -1; -1 1; 1 1; 1 -1; -1 -1])) == [1,1]
+@test inpolygon(0., 0., mat2ds([-1. -1; -1 1; 1 1; 1 -1; -1 -1])) == 1
+@test inpolygon(0., 0., [-1. -1; -1 1; 1 1; 1 -1; -1 -1]) == 1
 GMT.spatialjoin(mat2ds([2.4 1.2; 1.4 1.4; 50 50], geom=wkbPoint), D, predicate=GMT.overlaps);
 
 println("	NEARNEIGHBOR")
