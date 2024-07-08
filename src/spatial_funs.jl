@@ -245,48 +245,153 @@ Base.:findall(D::Vector{<:GMTdataset}; kw...) = getbyattrib(D, true; kw...)
 
 # ---------------------------------------------------------------------------------------------------
 """
-    inwhichpolygon(D::Vector{GMTdataset}, point::Matrix{Real})
+    in = pip(x, y, polygon::Matrix)
 or
 
-    inwhichpolygon(D::Vector{GMTdataset}, x, y)
+    in = pip(point::VecOrMat, polygon::Matrix)
+
+Returns `in` indicating if the query points specified by `x` and `y` are inside of the polygon area defined by
+`polygon` where `polygon` is an Mx2 matrix of reals that should have the first and last elements equal.
+
+## Returns:
+- in = 1
+- on = 0
+- out = -1
+
+## Reference
+
+* Hao et al. 2018. [Optimal Reliable Point-in-Polygon Test and Differential Coding Boolean Operations on Polygons]
+  (https://www.mdpi.com/2073-8994/10/10/477)
+"""
+pip(point::VecOrMat, polygon) = pip(point[1], point[2], polygon)
+function pip(x, y, polygon)
+	# From https://github.com/JuliaGeometry/PolygonOps.jl/blob/master/src/inpolygon.jl
+
+	OUT, ON, IN = -1, 0, 1
+	n = size(polygon, 1)
+	k = 0
+
+	@inbounds for i = 1:n-1
+
+		xi, yi = polygon[i,1],   polygon[i,2]
+		xj, yj = polygon[i+1,1], polygon[i+1,2]
+		v1, v2 = yi - y, yj - y
+
+		((v1 < 0 && v2 < 0) || (v1 > 0 && v2 > 0))	&& continue		# case 11, 26
+
+		u1, u2 = xi - x, xj - x
+		f = u1 * v2 - u2 * v1
+
+		if (v2 > 0 && v1 ≤ 0)			# case 3, 9, 16, 21, 13, 24
+			(f == 0) && return ON		# case 16, 21
+			(f  > 0) && (k += 1)		# Case 3 or 9
+		elseif (v1 > 0 && v2 ≤ 0)		# case 4, 10, 19, 20, 12, 25
+			(f == 0) && return ON		# case 19, 20
+			(f  < 0) && (k += 1)		# Case 4, 10
+		elseif (v2 == 0 && v1 < 0)		# case 7, 14, 17
+			(f == 0) && return ON		# case 17
+		elseif (v1 == 0 && v2 < 0)		# case 8, 15, 18
+			(f == 0) && return ON		# case 18
+		elseif (v1 == 0 && v2 == 0)		# case 1, 2, 5, 6, 22, 23
+			((u2 ≤ 0 && u1 ≥ 0) || (u1 ≤ 0 && u2 ≥ 0)) && return ON	# case 1, 2
+		end
+	end
+
+	return iseven(k) ? OUT : IN
+end
+
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    inwhichpolygon(D::Vector{GMTdataset}, point::Matrix{Real}; on_is_in=false)
+or
+
+    inwhichpolygon(D::Vector{GMTdataset}, x, y; on_is_in=false)
 
 Finds the IDs of the polygons enclosing the query points in `point`. Each row in the matrix `point` contains
 the coordinates of a query point. Query points that don't fall in any polygon get an ID = 0.
-Returns either an ``Int`` or a ``Vector{Int}`` depending on the number of input quiery points.
+Returns either an ``Int`` or a ``Vector{Int}`` depending on the number of input query points.
 
 - `D`: A Vector of GMTdadaset defining the polygons.
 - `point`: A Mx2 matrix or a two elements vector with the x and y point coordinates.
 - `x, y`:  Specifies the x-coordinates and y-coordinates of 2-D query points as separate vectors (or two scalars).
+- `on_is_in`: If `on_is_in=true` then points exactly on the border are considered inside. Default is `false`.
 
 ### Example:
     pts = [[1 2 3;1 2 3;1 2 3][:] [1 1 1;2 2 2; 3 3 3][:]];
     D = triplot(pts, noplot=true);
     points = [2.4 1.2; 1.4 1.4];
-    ids = inwhichpolygon(D, points);
+    ids = inwhichpolygon(points, D);
     # Plot the triangulation and the query points.
     plot(D)
     plot!(D[ids[1]], fill=:grey)
     plot!(D[ids[2]], fill=:green)
     plot!(points, marker=:star, ms="12p", fill=:blue, show=true)
 """
-inwhichpolygon(D::Vector{<:GMTdataset}, x, y) = inwhichpolygon(D, [x y])
-function inwhichpolygon(D::Vector{<:GMTdataset}, point::VMr)::Union{Int, Vector{Int}}
-	pt::Matrix{<:Real} = isa(point, Vector) ? [point[1] point[2]] : point
+inwhichpolygon(D::Vector{<:GMTdataset}, x, y; on_is_in=false) = inwhichpolygon([x y], D; on_is_in=on_is_in)
+inwhichpolygon(x, y, D::Vector{<:GMTdataset}; on_is_in=false) = inwhichpolygon([x y], D; on_is_in=on_is_in)
+inwhichpolygon(D::Vector{<:GMTdataset}, point::VecOrMat{<:Real}; on_is_in=false) = inwhichpolygon(point, D; on_is_in=on_is_in)
+function inwhichpolygon(point::VecOrMat{<:Real}, D::Vector{<:GMTdataset}; on_is_in=false)::Union{Int, Vector{Int}}
+	pt = isa(point, Vector) ? [point[1] point[2]] : point
 
 	iswithin(bbox, x, y) = (x >= bbox[1] && x <= bbox[2] && y >= bbox[3] && y <= bbox[4])
 
 	npts = size(pt,1);		ind_pol = zeros(Int, npts)
+	fun = on_is_in ? ≥(x,y)=y<=x : >(x,y)=y<x	# To choose if points exactly on border are in or out.
 	for n = 1:npts
 		for k = 1:length(D)
 			!iswithin(D[k].bbox, pt[n,1], pt[n,2]) && continue
-			r = gmtselect(pt[n:n, :], polygon=D[k])
-			if (!isempty(r))
+			#if (!isempty((r = gmtselect(pt[n:n, :], polygon=D[k]))))
+			r = pip(pt[n, 1], pt[n, 2], D[k].data)
+			if fun(r, 0)
 				ind_pol[n] = k
 				break
 			end
 		end
 	end
 	return (npts == 1) ? ind_pol[1] : ind_pol
+end
+
+# This method takes a vector of GMTdatsets with point geometry and another vector of polygons.
+function inwhichpolygon(Dpt::Vector{<:GMTdataset}, Dpol::Vector{<:GMTdataset})
+	(Dpt[1].geom != wkbPoint && Dpt[1].geom != wkbPointZ) &&
+		throw(DomainError("First argument, being a vector of GMTdatasets, must contain a point dataset"))
+	n_pts = length(Dpt)
+	ind = zeros(Int, n_pts)
+	[ind[k] = inwhichpolygon(Dpol, Dpt[k].data) for k = 1:n_pts]
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    in = inpolygon(x, y, polygon)
+or
+
+    in = inpolygon(point, polygon)
+
+Returns `in` indicating if the query points specified by `x` and `y` are inside of the polygon area defined by:
+- `polygon`: a GMTdatset defining the polygon or a Mx2 matrix of reals that should have the
+  first and last elements equal.
+- `point`: a Mx2 matrix or a two elements vector with the x and y point coordinates. Depending on the number of
+  query points in `point`, we return either an ``Int`` or a ``Vector{Int}``.
+
+## Returns:
+- in = 1
+- on = 0
+- out = -1
+
+## Reference
+
+* Hao et al. 2018. [Optimal Reliable Point-in-Polygon Test and Differential Coding Boolean Operations on Polygons]
+  (https://www.mdpi.com/2073-8994/10/10/477)
+"""
+inpolygon(x, y, D::GMTdataset) = pip(x, y, D.data)
+inpolygon(x, y, poly::Matrix{T}) where T = pip(x, y, poly)
+inpolygon(pt::VecOrMat, D::GMTdataset) = inpolygon(pt, D.data)
+function inpolygon(pt::VecOrMat, poly::Matrix{T}) where T
+	isvector(pt) && return pip(pt[1], pt[2], poly)
+	n_pts = size(pt, 1)
+	ind = zeros(Int, n_pts)
+	[ind[k] = pip(pt[k,1], pt[k,2], poly) for k = 1:n_pts]
 end
 
 # ---------------------------------------------------------------------------------------------------
