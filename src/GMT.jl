@@ -133,7 +133,7 @@ export
 	sphtriangulate, surface, ternary, ternary!, text, text!, text_record, trend1d, trend2d, triangulate, gmtsplit,
 	decorated, vector_attrib, wiggle, wiggle!, xyz2grd, gmtbegin, gmtend, gmthelp, subplot, gmtfig, inset, showfig,
 	earthtide, gravfft, gmtgravmag3d, grdgravmag3d, gravprisms, pscoupe, pscoupe!, coupe, coupe!, psmeca, psmeca!,
-	meca, meca!, psvelo, psvelo!, velo, velo!, getbyattrib, inwhichpolygon, pcolor, pcolor!, triplot, triplot!,
+	meca, meca!, psvelo, psvelo!, velo, velo!, getbyattrib, inpolygon, inwhichpolygon, pcolor, pcolor!, triplot, triplot!,
 	trisurf, trisurf!, grdrotater, imagesc, upGMT, boxes,
 
 	find_in_dict, find_in_kwargs,
