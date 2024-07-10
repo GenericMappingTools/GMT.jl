@@ -1821,6 +1821,8 @@ function cat_1_arg(arg, toDS::Bool=false)
 		end
 	elseif (isvector(arg) && length(arg) > 4)		# 4 because we want to leave the possibiloty of a 3D point + color
 		arg = hcat(collect(eltype(arg), 1:length(arg)), vec(arg))
+	elseif (isa(arg, Tuple{Vector{<:Real}, Vector{<:Real}}))	# This must come before next one
+		arg = hcat(arg[1], arg[2])
 	elseif (isa(arg, NTuple))
 		arg = hcat(collect(eltype(arg), 1:length(arg)), collect(arg))
 	elseif (isdataframe(arg) || isODE(arg))
