@@ -605,7 +605,7 @@ function parse_opt_S(d::Dict, arg1, is3D::Bool=false)
 		marca_fullname::String, marca_name::String = seek_custom_symb(marca)
 		(marca_fullname != "") && (opt_S = " -Sk" * marca_fullname)
 	else
-		opt_S = add_opt(d, "", "S", [:S :symbol], (symb="1", size="", unit="1"))
+		opt_S = add_opt(d, "", "S", [:S :symb :symbol], (symb="1", size="", unit="1"))
 	end
 				
 	_scale(isInt::Bool) = (isInt) ? 2.54/72 : 1.0
