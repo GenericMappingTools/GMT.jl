@@ -582,6 +582,8 @@ function ds2ds(D::Vector{<:GMTdataset})::GMTdataset
 	mat2ds(data, proj=D[1].proj4, wkt=D[1].wkt, epsg=D[1].epsg, geom=D[1].geom, colnames=D[1].colnames, attrib=D[1].attrib)
 end
 
+Base.:stack(D::Vector{<:GMTdataset}) = ds2ds(D)
+
 # ---------------------------------------------------------------------------------------------------
 function ds2ds(D::GMTdataset; is3D::Bool=false, kwargs...)::Vector{<:GMTdataset}
 	# Take one DS and split it into an array of DS's, one for each row and optionally add -G<fill>
