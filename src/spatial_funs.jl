@@ -300,13 +300,12 @@ function pip(x, y, polygon)
 	return iseven(k) ? OUT : IN
 end
 
-
 # ---------------------------------------------------------------------------------------------------
 """
-    inwhichpolygon(D::Vector{GMTdataset}, point::Matrix{Real}; on_is_in=false)
+    ids = inwhichpolygon(D::Vector{GMTdataset}, point::Matrix{Real}; on_is_in=false, pack=false)
 or
 
-    inwhichpolygon(D::Vector{GMTdataset}, x, y; on_is_in=false)
+    ids = inwhichpolygon(D::Vector{GMTdataset}, x, y; on_is_in=false, pack=false)
 
 Finds the IDs of the polygons enclosing the query points in `point`. Each row in the matrix `point` contains
 the coordinates of a query point. Query points that don't fall in any polygon get an ID = 0.
@@ -316,6 +315,9 @@ Returns either an ``Int`` or a ``Vector{Int}`` depending on the number of input 
 - `point`: A Mx2 matrix or a two elements vector with the x and y point coordinates.
 - `x, y`:  Specifies the x-coordinates and y-coordinates of 2-D query points as separate vectors (or two scalars).
 - `on_is_in`: If `on_is_in=true` then points exactly on the border are considered inside. Default is `false`.
+- `pack`: If `pack=true` then a vector of vectors is returned with the IDs of the hit polygons and the indices
+  of the query points that hit each polygon. That is: ids[1] contains indices of `D` that recieved at least a hit;
+  ids[2] contains the indices of the query `point` that hit the polygon D[ids[1]], etc.
 
 ### Example:
     pts = [[1 2 3;1 2 3;1 2 3][:] [1 1 1;2 2 2; 3 3 3][:]];
@@ -328,19 +330,20 @@ Returns either an ``Int`` or a ``Vector{Int}`` depending on the number of input 
     plot!(D[ids[2]], fill=:green)
     plot!(points, marker=:star, ms="12p", fill=:blue, show=true)
 """
-inwhichpolygon(D::Vector{<:GMTdataset}, x, y; on_is_in=false) = inwhichpolygon([x y], D; on_is_in=on_is_in)
-inwhichpolygon(x, y, D::Vector{<:GMTdataset}; on_is_in=false) = inwhichpolygon([x y], D; on_is_in=on_is_in)
-inwhichpolygon(D::Vector{<:GMTdataset}, point::VecOrMat{<:Real}; on_is_in=false) = inwhichpolygon(point, D; on_is_in=on_is_in)
-function inwhichpolygon(point::VecOrMat{<:Real}, D::Vector{<:GMTdataset}; on_is_in=false)::Union{Int, Vector{Int}}
+inwhichpolygon(D::Vector{<:GMTdataset}, x, y; on_is_in=false, pack=false) = inwhichpolygon([x y], D; on_is_in=on_is_in, pack=pack)
+inwhichpolygon(x, y, D::Vector{<:GMTdataset}; on_is_in=false, pack=false) = inwhichpolygon([x y], D; on_is_in=on_is_in, pack=pack)
+inwhichpolygon(D::Vector{<:GMTdataset}, point::VecOrMat{<:Real}; on_is_in=false, pack=false) = inwhichpolygon(point, D; on_is_in=on_is_in, pack=pack)
+function inwhichpolygon(point::VecOrMat{<:Real}, D::Vector{<:GMTdataset}; on_is_in=false, pack=false)::Union{Int, Vector{Int}, Vector{Vector{Int}}}
 	pt = isa(point, Vector) ? [point[1] point[2]] : point
 
-	iswithin(bbox, x, y) = (x >= bbox[1] && x <= bbox[2] && y >= bbox[3] && y <= bbox[4])
+	#iswithin(x, y, bbox) = (x >= bbox[1] && x <= bbox[2] && y >= bbox[3] && y <= bbox[4])
 
-	npts = size(pt,1);		ind_pol = zeros(Int, npts)
+	npts::Int = size(pt,1);		ind_pol = zeros(Int, npts)
 	fun = on_is_in ? ≥(x,y)=y<=x : >(x,y)=y<x	# To choose if points exactly on border are in or out.
 	for n = 1:npts
 		for k = 1:length(D)
-			!iswithin(D[k].bbox, pt[n,1], pt[n,2]) && continue
+			#!iswithin(pt[n,1], pt[n,2], D[k].bbox) && continue
+			!inbbox(pt[n,1], pt[n,2], D[k].bbox) && continue
 			#if (!isempty((r = gmtselect(pt[n:n, :], polygon=D[k]))))
 			r = pip(pt[n, 1], pt[n, 2], D[k].data)
 			if fun(r, 0)
@@ -349,16 +352,30 @@ function inwhichpolygon(point::VecOrMat{<:Real}, D::Vector{<:GMTdataset}; on_is_
 			end
 		end
 	end
-	return (npts == 1) ? ind_pol[1] : ind_pol
+
+	(pack != 1) && return (npts == 1) ? ind_pol[1] : ind_pol
+	helper_pack_inwhichpolygon(ind_pol)
 end
 
 # This method takes a vector of GMTdatsets with point geometry and another vector of polygons.
-function inwhichpolygon(Dpt::Vector{<:GMTdataset}, Dpol::Vector{<:GMTdataset})
+function inwhichpolygon(Dpt::Vector{<:GMTdataset}, Dpol::Vector{<:GMTdataset}; on_is_in=false, pack=false)
 	(Dpt[1].geom != wkbPoint && Dpt[1].geom != wkbPointZ) &&
 		throw(DomainError("First argument, being a vector of GMTdatasets, must contain a point dataset"))
 	n_pts = length(Dpt)
 	ind = zeros(Int, n_pts)
-	[ind[k] = inwhichpolygon(Dpol, Dpt[k].data) for k = 1:n_pts]
+	[ind[k] = inwhichpolygon(Dpt[k].data, Dpol, on_is_in=on_is_in) for k = 1:n_pts]
+	(pack != 1) && return ind
+	helper_pack_inwhichpolygon(ind)
+end
+
+function helper_pack_inwhichpolygon(ind_pol)
+	# Pack the output of inwhichpolygon in a vector of vectors
+	u = unique(ind_pol)
+	out = [u]					# First element contains the indices of hit polygons.
+	for k = 1:numel(u)
+		push!(out, findall(ind_pol .== u[k]))
+	end
+	return out
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -458,6 +475,46 @@ function randinpolygon(Din::GDtype; density=0.1, np::Int=0)
 	set_dsBB!(D, false)
 	return length(D) == 1 ? D[1] : D
 end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    lon, lat = randgeo(n; rad=false, limits=nothing, do360=false)
+
+Generate random longitude and latitude coordinates.
+"""
+function randgeo(n; rad=false, limits=nothing, do360=false)
+	(n <= 0) && error("Funny isn't it?. Zero or less number of points?")
+	(limits !== nothing && length(limits) != 4) && throw(DomainError("limits must be a 4-element array or tuple"))
+	R2D = (rad != 1) ? 180.0 / pi : 1.0
+	shift180 = (do360 == 1) ? 0.0 : 180.0
+	shift_lon = 0.0
+	d_lon = 2pi
+	fact1_lat, fact2_lat = 1.0, 1.0
+	if (limits !== nothing)						# WRONG. NOT WORKING.
+		d_lon *= (limits[2] - limits[1]) / 360.
+		shift_lon = limits[1] - 180.0
+		fact1_lat = sind(limits[4])
+		fact2_lat = (sind(limits[4]) - sind(limits[3])) / 2
+	end
+	lon = d_lon * rand(n) * R2D .- shift180 .- shift_lon
+	lat = -(acos.(fact1_lat .- 2 * fact2_lat * rand(n)) .- pi/2) * R2D
+	return lon, lat
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    inout = inbbox(x::Real, y::Real, bbox) -> Bool
+
+Find out if points `x,y` are inside a bounding box.
+
+- `x, y`: point coordinates.
+- `bbox` is a 4-element array (vector, matrix or tuple) with xmin, xmax, ymin, ymax.
+
+### Returns
+`true` for points inside the bounding box and `false` for those outside
+
+"""
+inbbox(x::Real, y::Real, bbox) = (x >= bbox[1] && x <= bbox[2] && y >= bbox[3] && y <= bbox[4])
 
 # ---------------------------------------------------------------------------------------------------
 function Base.:in(D1::GMTdataset, D2::GMTdataset)::Union{Bool, Int, Vector{Int}}
