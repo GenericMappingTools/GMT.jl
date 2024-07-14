@@ -302,10 +302,10 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    ids = inwhichpolygon(D::Vector{GMTdataset}, point::Matrix{Real}; on_is_in=false, pack=false)
+    ids = inwhichpolygon(point::Matrix{Real}, D::Vector{GMTdataset}; on_is_in=false, pack=false)
 or
 
-    ids = inwhichpolygon(D::Vector{GMTdataset}, x, y; on_is_in=false, pack=false)
+    ids = inwhichpolygon(x, y, D::Vector{GMTdataset}; on_is_in=false, pack=false)
 
 Finds the IDs of the polygons enclosing the query points in `point`. Each row in the matrix `point` contains
 the coordinates of a query point. Query points that don't fall in any polygon get an ID = 0.
@@ -332,17 +332,17 @@ Returns either an ``Int`` or a ``Vector{Int}`` depending on the number of input 
 """
 inwhichpolygon(D::Vector{<:GMTdataset}, x, y; on_is_in=false, pack=false) = inwhichpolygon([x y], D; on_is_in=on_is_in, pack=pack)
 inwhichpolygon(x, y, D::Vector{<:GMTdataset}; on_is_in=false, pack=false) = inwhichpolygon([x y], D; on_is_in=on_is_in, pack=pack)
-inwhichpolygon(D::Vector{<:GMTdataset}, point::VecOrMat{<:Real}; on_is_in=false, pack=false) = inwhichpolygon(point, D; on_is_in=on_is_in, pack=pack)
+inwhichpolygon(D::Vector{<:GMTdataset}, point::VecOrMat{<:Real}; on_is_in=false, pack=false) =
+	inwhichpolygon(point, D; on_is_in=on_is_in, pack=pack)
+inwhichpolygon(point::Tuple{Vector{<:Real}, Vector{<:Real}}, D::Vector{<:GMTdataset}; on_is_in=false, pack=false) =
+	inwhichpolygon([point[1] point[2]], D; on_is_in=on_is_in, pack=pack)
 function inwhichpolygon(point::VecOrMat{<:Real}, D::Vector{<:GMTdataset}; on_is_in=false, pack=false)::Union{Int, Vector{Int}, Vector{Vector{Int}}}
 	pt = isa(point, Vector) ? [point[1] point[2]] : point
-
-	#iswithin(x, y, bbox) = (x >= bbox[1] && x <= bbox[2] && y >= bbox[3] && y <= bbox[4])
-
 	npts::Int = size(pt,1);		ind_pol = zeros(Int, npts)
 	fun = on_is_in ? ≥(x,y)=y<=x : >(x,y)=y<x	# To choose if points exactly on border are in or out.
+
 	for n = 1:npts
 		for k = 1:length(D)
-			#!iswithin(pt[n,1], pt[n,2], D[k].bbox) && continue
 			!inbbox(pt[n,1], pt[n,2], D[k].bbox) && continue
 			#if (!isempty((r = gmtselect(pt[n:n, :], polygon=D[k]))))
 			r = pip(pt[n, 1], pt[n, 2], D[k].data)
@@ -481,6 +481,12 @@ end
     lon, lat = randgeo(n; rad=false, limits=nothing, do360=false)
 
 Generate random longitude and latitude coordinates.
+
+By default the coordinates are in degrees and in the [-180 180] range. Set `do360` to `true` to get the
+coordinates in the [0 360] range. Set `rad` to `true` to get the coordinates in radians instead of degrees.
+
+Optionally, you can pass a 4-element array or tuple with the limits of the coordinates. `limits` must then
+contain the lon_min, lon_max, lat_min, lat_max of the region where you want to generate random points.
 """
 function randgeo(n; rad=false, limits=nothing, do360=false)
 	(n <= 0) && error("Funny isn't it?. Zero or less number of points?")
