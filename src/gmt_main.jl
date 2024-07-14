@@ -1507,8 +1507,8 @@ Base.:display(I::GMTimage) = show(I)
 """
     att_tbl, att_names = make_attrtbl(D::GDtype, names::Bool=false; att::StrSymb="")
 
-Create a string matrix with the dataset attributes. 'names', if true, returns also a string
-vector with attribute names. 'att', if == to one atribute, returns only that column of the att table.
+Create a string matrix with the dataset attributes. 'names', if true, returns also a string vector
+with attribute names. 'att', if == to one atribute, returns only that column of the att table.
 """
 function make_attrtbl(D::GDtype, names::Bool=false; att::StrSymb="")
 	!isa(D, Vector) && (att_tbl = reshape(vec(string.(values(D.attrib))),1,length(D.attrib)))

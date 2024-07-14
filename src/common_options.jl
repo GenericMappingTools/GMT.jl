@@ -1456,7 +1456,7 @@ function parse_l(d::Dict, cmd::String, del::Bool=false)
 	elseif (cmd_ != "")
 		cmd_ = " -l" * str_with_blancs(cmd_[4:end])
 	end
-	(IamModern[1]) && (cmd *= cmd_)			# l option is only available in modern mode
+	(IamModern[1]) && (cmd *= cmd_; delete!(d, [:l :legend]))	# Otherwise we still need it in legend bag
 	return cmd, cmd_
 end
 
@@ -4492,8 +4492,8 @@ legend_bag() = legend_bag(Vector{String}(), Vector{String}(), Vector{String}(), 
 function put_in_legend_bag(d::Dict, cmd, arg, O::Bool=false, opt_l::String="")
 	# So far this fun is only called from plot() and stores line/symbol info in a const global var LEGEND_TYPE
 
-	_valLegend = find_in_dict(d, [:legend], false)[1]	# false because we must keep it alive till digests_legend_bag()
-	_valLabel  = find_in_dict(d, [:label])[1]			# These guys are always Any
+	_valLegend = find_in_dict(d, [:legend :l], false)[1]	# false because we must keep it alive till digests_legend_bag()
+	_valLabel  = find_in_dict(d, [:label])[1]				# These guys are always Any
 	((_valLegend === nothing || _valLegend == "") && _valLabel === nothing) && return # Nothing to do here
 
 	function assign_colnames(arg)

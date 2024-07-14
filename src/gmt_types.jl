@@ -265,6 +265,11 @@ function Base.getindex(D::GMTdataset{T,N}, inds::Vararg{Symbol}) where {T,N}
 	D2
 end
 
+#function Base.getindex(D::GMTdataset{T,N}, inds::Vararg) where {T,N}
+	#length(inds) == 1 && return D.data[inds[1]]
+	#mat2ds(D, (inds[1],inds[2]))
+#end
+
 Base.setindex!(D::GMTdataset{T,N}, val, inds::Vararg{Int}) where {T,N} = D.data[inds...] = val
 
 Base.BroadcastStyle(::Type{<:GMTdataset}) = Broadcast.ArrayStyle{GMTdataset}()
