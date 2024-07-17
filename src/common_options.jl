@@ -359,7 +359,8 @@ function opt_R2num(opt_R::String)::Vector{Float64}
 		((ind = findfirst("-R@", opt_R)) !== nothing) && return gmt("grdinfo " * opt_R[ind[3]:end] * " -C")[1:4]	# should be a cache file
 		(((f = guess_T_from_ext(opt_R)) == " -Tg") || f == " -Ti") && return gmt("grdinfo " * opt_R * " -C")[1:4]	# any local file
 
-		kml::GMTdataset = gmt("gmt2kml " * opt_R, [0 0])		# for example, opt_R = " -RPT"
+		(opt_R == " -R=WD") && return [-180.0, 180., -90., 90.]		# World map. Shit is if [0 360] is wanted.
+		kml::GMTdataset = gmt("gmt2kml " * opt_R, [0 0])			# for example, opt_R = " -RPT"
 		limits = zeros(4)
 		t::String = kml.text[28][12:end];	_ind::Int = findfirst("<", t)[1]		# north
 		limits[4] = parse(Float64, t[1:(_ind-1)])
