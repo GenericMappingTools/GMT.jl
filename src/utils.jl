@@ -966,6 +966,9 @@ function rect_overlap(xc_1, yc_1, xc_2, yc_2, width1, height1, width2, height2)
 	overlap = (pivalue < 0) ? true : false
 	return overlap, pivalue
 end
+
+# ---------------------------------------------------------------------------------------------------
+include("makeDCWs.jl")
 	
 # ------------------------------------------------------------------------------------------------------
 isdefined(Main, :VSCodeServer) && (const VSdisp = Main.VSCodeServer.vscodedisplay)
