@@ -178,7 +178,7 @@ function parse_INW_coast(d::Dict, symbs::Vector{Matrix{Symbol}}, cmd::String, fl
 				if (flags[k] == 'W')	# The shore case is ambiguous, this shore=(1,:red) could mean -W1/red or -W1,red 
 					cmd *= " -W" * parse_pen(val)	# We take it to mean pen only. Levels must use the NT form
 				else
-					cmd *= " -" * flags[k] * string(val[1])::String * "/" * parse_pen(val[2])::String
+					cmd *= " -" * flags[k] * string(val[1]) * "/" * parse_pen(val[2])
 				end
 			else    cmd *= " -" * flags[k] * arg2str(val)	# Includes Str, Number or Symb
 			end
@@ -194,6 +194,7 @@ function parse_E_coast(d::Dict, symbs::Vector{Symbol}, cmd::String)
 	if ((val = find_in_dict(d, symbs, false)[1]) !== nothing)
 		if (isa(val, String) || isa(val, Symbol))	# Simple case, ex E="PT,+gblue" or E=:PT
 			t::String = string(" -E", val)
+			startswith(t, " -EWD") && (t = " -E=" * t[4:end])		# Let E="WD" work
 			(t == " -E") && (delete!(d, [:E, :DCW]); return cmd)	# This lets use E="" like earthregions may do
 			(!contains(cmd, " -M") && is_in_dict(d, [:R :region :limits :region_llur :limits_llur :limits_diag :region_diag]) === nothing) &&
 				(d[:R] = t[4:end])					# Must also see what to do for the other elseif branches
@@ -201,7 +202,7 @@ function parse_E_coast(d::Dict, symbs::Vector{Symbol}, cmd::String)
 			cmd *= t
 		elseif (isa(val, NamedTuple) || isa(val, AbstractDict))
 			cmd = add_opt(d, cmd, "E", [:DCW :E], (country="", name="", continent="=",
-			                                       pen=("+p", add_opt_pen), fill=("+g", add_opt_fill)))
+			                                       pen=("+p", add_opt_pen), fill=("+g", add_opt_fill), file=("+f")))
 		elseif (isa(val, Tuple))
 			cmd = parse_dcw(cmd, val)
 		end
@@ -223,7 +224,7 @@ function parse_dcw(cmd::String, val::Tuple)::String
 		if (isa(val[k], NamedTuple) || isa(val[k], Dict))
 			isa(val[k], AbstractDict) && (val[k] = Base.invokelatest(dict2nt, val[k]))
 			cmd *= add_opt(Dict(:DCW => val[k]), "", "E", [:DCW],
-			               (country="", name="", continent="=", pen=("+p", add_opt_pen), fill=("+g", add_opt_fill)))::String
+			               (country="", name="", continent="=", pen=("+p", add_opt_pen), fill=("+g", add_opt_fill), file=("+f")))
 		elseif (isa(val[k], Tuple))
 			cmd *= parse_dcw(val[k])
 		else
@@ -237,12 +238,12 @@ end
 function parse_dcw(val::Tuple)::String
     t::String = string("", " -E", val[1])
 	if (length(val) > 1)
-		if (isa(val[2], Tuple))  t *= "+p" * parse_pen(val[2])::String
-		else                     t *= string(val[2])::String
+		if (isa(val[2], Tuple))  t *= "+p" * parse_pen(val[2])
+		else                     t *= string(val[2])
 		end
 		if (length(val) > 2)
-			if (isa(val[3], Tuple))  t *= add_opt_fill("+g", Dict(fill => val[3]), [:fill])::String
-			else                     t *= string(val[3])::String
+			if (isa(val[3], Tuple))  t *= add_opt_fill("+g", Dict(fill => val[3]), [:fill])
+			else                     t *= string(val[3])
 			end
 		end
 	end
