@@ -7,7 +7,11 @@ So far, only administrative level 0 polygons (the country borders) are supported
 
 ### Parameters
 - `fname`: The name of the file to be converted. It needs to be an OGR readable file with polygons
-  and metadata containing codes in ISO 3166-1 Alpha-3 or Alpha-2.
+  and metadata containing codes in ISO 3166-1 Alpha-3 or Alpha-2. Note: if the file being converted
+  is the "world-administrative-boundaries" from OpenDataSoft (see full link below), it lacks the
+  Anctartica polygons. A trick to get it is to extract the Antractica polygons from a Natural Earth
+  file. Specifically, if a file named "ne_10m_admin_0_countries.shp.zip" exists in the same directory
+  as the one being converted, it will be used to extract the missing Antractica polygons.
 
 ### Keywords
 - `attrib`: The name of the attribute field in the OGR file that contains the country codes.
@@ -18,17 +22,23 @@ So far, only administrative level 0 polygons (the country borders) are supported
   (`attrib="iso3"`) and 'Open Street Maps' (`attrib="iso2"`). For other products, you will need to first
   load the file with `gmtread` and then check the attributes to find out the attribute name that holds the country codes.
   Something like: ``o = gmtread("the_file"); info(o[1].attrib)``
+
 - `float`: If true, save the coordinates in float 32 bits. The default is to use a scheme that scales the
   coordinates to fit in a UInt16 variable. GMT knows how to read both UInt16 and Float32 files.
+
 - `name_cdl`: The name of the CDL file (default: "xxxx.cdl"). This file gets deleted if `deltmp` = true.
+
 - `name_nc`: Name of the final netCDF file. WARNING: for this operation to work it is MANDATORY that the
   executable `ncgen` is in the path.
+
 - `compress`: If true, compress the nc file with level 9 (default: true). Only used if `name_nc` is not empty
   and needs that the executable `nccopy` is in the path.
+
 - `fix_RU`: The Russia polygon is often split at the dateline. If we find this is be true and this option is `true`,
   then it try to merge the two parts of Siberia in a single big Russia polygon. The default is `false` because
   probability that this operation goes wrong is not that low.
-  this attempt fails set it to `false` and live with the split polygons. 
+  this attempt fails set it to `false` and live with the split polygons.
+
 - `deltmp`: Delete temporary files (default: true). Only used if `name_nc` is not empty
 
 ### Example
@@ -59,6 +69,22 @@ function makeDCWs(fname="ne_10m_admin_0_countries_iso.shp.zip"; float=false, nam
 	ct = gmtread(fname, ogr=true)
 	o = unique(info(ct, att=string(attrib)))		# Get the unique country codes
 	d_iso = countries_iso3to2()
+
+	if (contains(fname, "world-administrative-boundaries"))	# opendatasoft poygons miss Antarctica. Cheat with the NE one.
+		pato = fileparts(fname)[1]
+		f2 = (pato != "") ? pato * "/ne_10m_admin_0_countries.shp.zip" : "ne_10m_admin_0_countries_iso.shp.zip"
+		if (isfile(f2))		# If the NE 10m file exists in same directory, get Antarctica from there.
+			NE = gmtread(f2, ogr=true)
+			ATA = filter(NE, ADM0_A3="ATA");			# Fish Antarctica polygons
+			ind_ant = sortperm(length.(ATA), rev=true)[1:50];	# Pick only the 50 largest polygons
+			ATA = ATA[ind_ant]
+			for k = 1:20
+				ATA[k].attrib["iso3"] = "ATA"			# Add iso3 code so it can pretend is a ODS polygon
+			end
+			ct = vcat(ct, ATA)
+			append!(o, ["ATA"])
+		end
+	end
 
 	dat1, dat2, dat3 = UInt8[], UInt8[], UInt8[]	# Temp vars to hold parts of the CDL file
 	append!(dat1, "netcdf DCW {    // DCW netCDF specification in CDL\n")
