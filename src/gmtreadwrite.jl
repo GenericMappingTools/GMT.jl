@@ -404,7 +404,7 @@ function guess_T_from_ext(fname::String; write::Bool=false, text_only::Bool=fals
 	if     (findfirst(isequal(ext), ["grd", "nc", "nc=gd"])  !== nothing)  out = " -Tg";
 	elseif (findfirst(isequal(ext), ["dat", "txt", "csv"])   !== nothing)  out = " -Td";
 	elseif (findfirst(isequal(ext), ["jpg", "jpeg", "png", "bmp", "webp"]) 	!== nothing)  out = " -Ti";
-	elseif (findfirst(isequal(ext), ["arrow", "shp", _kml, "kmz", "json", "feather", "geojson", "gmt", "gpkg", "gpx", "gml", "parquet"]) !== nothing)  out = " -To";
+	elseif (findfirst(isequal(ext), ["arrow", "shp", _kml, "kmz", "json", "feather", "fgb", "geojson", "gmt", "gpkg", "gpx", "gml", "parquet"]) !== nothing)  out = " -To";
 	elseif (ext == "jp2") ressurectGDAL(); out = (findfirst("Type=UInt", gdalinfo(fname)) !== nothing) ? " -Ti" : " -Tg"
 	elseif (ext == "cpt")  out = " -Tc";
 	elseif (ext == "ps" || ext == "eps")  out = " -Tp";
