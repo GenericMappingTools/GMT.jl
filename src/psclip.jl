@@ -48,6 +48,7 @@ clip(arg1; kwargs...)          = clip_helper("", arg1; kwargs...)
 clip!(cmd0::String; kwargs...) = clip_helper(cmd0, nothing; first=false, kwargs...)
 clip!(arg1; kwargs...)         = clip_helper("", arg1; first=false, kwargs...)
 clip!(; kwargs...)             = clip_helper("", nothing; first=false, kwargs...)
+clip(; kwargs...)              = clip_helper("", nothing; first=false, kwargs...)	# For when user forgot to use clip! instead of clip
 
 # ---------------------------------------------------------------------------------------------------
 function clip_helper(cmd0::String, arg1; first=true, kwargs...)

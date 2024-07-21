@@ -116,10 +116,10 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 	cmd  = add_opt_fill(cmd, d, [:S :water :ocean], 'S')
 
 	if (clip !== nothing)
-		clip = string(clip)
-		if     (clip == "land")    cmd *= " -Gc"
-		elseif (clip == "water" || clip == "ocean") cmd *= " -Sc"
-		elseif (clip == "end")     cmd *= " -Q"
+		_clip::String = string(clip)
+		if     (_clip == "land")    cmd *= " -Gc"
+		elseif (_clip == "water" || _clip == "ocean") cmd *= " -Sc"
+		elseif (_clip == "end")     cmd = " -Q";	O = true		# clip = end can never be a first command
 		else
 			@warn("The 'clip' argument can only be a string with 'land', 'water' or 'end'. Ignoring it.")
 		end
@@ -135,7 +135,7 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 		!occursin(" -M",cmd) && !occursin(" -N",cmd) && !occursin(" -Q",cmd) && !occursin(" -S",cmd) && !occursin(" -W",cmd))
 		cmd *= " -W0.5p"
 	end
-	(!occursin("-D",cmd)) && (cmd *= " -Da")			# Then pick automatic
+	(!occursin("-D",cmd) && !contains(cmd, " -Q")) && (cmd *= " -Da")		# Then pick automatic
 	finish = !occursin(" -M",cmd) && !occursin("-E+l", cmd) && !occursin("-E+L", cmd) ? true : false	# Otherwise the dump would be redirected to GMT_user.ps
 
 	# Just let D = coast(R=:PT, dump=true) work without any furthers shits (plain GMT doesn't let it)
@@ -201,8 +201,8 @@ function parse_E_coast(d::Dict, symbs::Vector{Symbol}, cmd::String)
 			!contains(t, "+") && (t *= "+p0.5")		# If only code(s), append pen
 			cmd *= t
 		elseif (isa(val, NamedTuple) || isa(val, AbstractDict))
-			cmd = add_opt(d, cmd, "E", [:DCW :E], (country="", name="", continent="=",
-			                                       pen=("+p", add_opt_pen), fill=("+g", add_opt_fill), file=("+f")))
+			cmd = add_opt(d, cmd, "E", [:DCW :E], (country="", name="", continent="=", pen=("+p", add_opt_pen),
+			                                       fill=("+g", add_opt_fill), file=("+f"), inside=("_+c"), outside=("_+C"), adjust_r=("+r", arg2str), adjust_R=("+R", arg2str), adjust_e=("+e", arg2str), headers=("_+z")))
 		elseif (isa(val, Tuple))
 			cmd = parse_dcw(cmd, val)
 		end
@@ -223,8 +223,8 @@ function parse_dcw(cmd::String, val::Tuple)::String
 	for k = 1:numel(val)
 		if (isa(val[k], NamedTuple) || isa(val[k], Dict))
 			isa(val[k], AbstractDict) && (val[k] = Base.invokelatest(dict2nt, val[k]))
-			cmd *= add_opt(Dict(:DCW => val[k]), "", "E", [:DCW],
-			               (country="", name="", continent="=", pen=("+p", add_opt_pen), fill=("+g", add_opt_fill), file=("+f")))
+			cmd *= add_opt(Dict(:DCW => val[k]), "", "E", [:DCW], (country="", name="", continent="=", pen=("+p", add_opt_pen),
+			                                                       fill=("+g", add_opt_fill), file=("+f"), inside=("_+c"), outside=("_+C"), adjust_r=("+r", arg2str), adjust_R=("+R", arg2str), adjust_e=("+e", arg2str), headers=("_+z")))
 		elseif (isa(val[k], Tuple))
 			cmd *= parse_dcw(val[k])
 		else

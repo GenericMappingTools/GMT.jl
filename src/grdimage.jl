@@ -128,7 +128,7 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 	if (!occursin("-A", cmd))			# -A means that we are requesting the image directly
 		(haskey(d, :inset)) && (CTRL.pocket_call[4] = arg1)			# If 'inset', it may be needed from next call
 		_cmd = finish_PS_nested(d, _cmd)
-		if ((ind = findfirst(startswith.(_cmd, "inset_"))) !== nothing)	# inset commands must the last ones
+		if ((ind = findfirst(startswith.(_cmd, "inset_"))) !== nothing)	# inset commands must be the last ones
 			ins = popat!(_cmd, ind)		# Remove the 'inset' command
 			append!(_cmd, [ins])		# and add it at the end
 		end

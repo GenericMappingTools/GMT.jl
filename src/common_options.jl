@@ -419,7 +419,9 @@ function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bo
 		(IamInset[1] && !IamInset[2] && !contains(cmd, " -J")) && (cmd *= CTRL.pocket_J[1]::String) 	# Workaround GMT bug (#7005)
 		return cmd, ""
 	end
-	CTRL.proj_linear[1] = (length(opt_J) >= 4 && opt_J[4] != 'X' && opt_J[4] != 'x' && opt_J[4] != 'Q' && opt_J[4] != 'q') ? false : true
+	if (CTRL.proj_linear[1])				# Otherwise (CTRL.proj_linear[1] == false), trust it
+		CTRL.proj_linear[1] = (length(opt_J) >= 4 && opt_J[4] != 'X' && opt_J[4] != 'x' && opt_J[4] != 'Q' && opt_J[4] != 'q') ? false : true
+	end
 	(!map && opt_J != "") && return cmd * opt_J, opt_J
 
 	(O && opt_J == "") && (opt_J = " -J")
@@ -463,7 +465,9 @@ function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bo
 			end
 		end
 	end
-	CTRL.proj_linear[1] = (length(opt_J) >= 4 && opt_J[4] != 'X' && opt_J[4] != 'x' && opt_J[4] != 'Q' && opt_J[4] != 'q') ? false : true
+	if (CTRL.proj_linear[1])			# If CTRL.proj_linear[1] == false, trust it
+		CTRL.proj_linear[1] = (length(opt_J) >= 4 && opt_J[4] != 'X' && opt_J[4] != 'x' && opt_J[4] != 'Q' && opt_J[4] != 'q') ? false : true
+	end
 
 	(opt_J == " ") && (opt_J = "")		# We use " " when wanting to prevent the default -J
 	fish_size_from_J(opt_J)				# So far we only need this in plot(hexbin)
@@ -1002,6 +1006,8 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 					(farg == "") && (farg = "auto")		# Can't take the risk of letting go a "". GMT would (Ghrr) error
 				end
 				_tt, a_par = replace(str_with_blancs(farg), ' '=>'\x7f'), ""
+				_tt = replace(_tt, ">" => "\\076")		# Avoid the shit of the shells taking precedence in parsing the > and < symbols
+				_tt = replace(_tt, "<" => "\\074")
 			else
 				_tt, a_par = fun(;arg...)
 			end
@@ -2119,34 +2125,32 @@ function finish_PS_nested(d::Dict, cmd::Vector{String})::Vector{String}
 	cmd2::Vector{String} = add_opt_module(d)
 	CTRL.proj_linear[1]  = proj_linear_bak		# Because add_opt_module may change it (coast does that)
 
-	if (!isempty(cmd2) && startswith(cmd2[1], "clip"))		# Deal with the particular psclip case (Tricky)
-		if (isa(CTRL.pocket_call[1], Symbol) || isa(CTRL.pocket_call[1], String))	# Assume it's a clip=end
-			cmd::Vector{String}, CTRL.pocket_call[1] = [cmd; "psclip -C"], nothing
-		else
-			ind = findfirst(" -R", cmd[1]);		opt_R::String = strtok(cmd[1][ind[1]:end])[1]
-			ind = findfirst(" -J", cmd[1]);		opt_J::String = strtok(cmd[1][ind[1]:end])[1]
-			extra::String = strtok(cmd2[1])[2] * " "	# When psclip recieved extra arguments
-			t::String, opt_B::String, opt_B1::String = "psclip " * extra * opt_R * " " * opt_J, "", ""
-			ind = findall(" -B", cmd[1])
-			if (!isempty(ind) && (findfirst("-N", extra) === nothing))
-				for k = 1:lastindex(ind)
-					opt_B *= " " * strtok(cmd[1][ind[k][1]:end])[1]
-				end
-				# Here we need to reset any -B parts that do NOT include the plotting area and which were clipped.
-				if (CTRL.pocket_B[1] == "" && CTRL.pocket_B[2] == "")
-					opt_B1 = opt_B * " -R -J"
-				else
-					(CTRL.pocket_B[1] != "") && (opt_B1 = replace(opt_B,  CTRL.pocket_B[1] => ""))	# grid
-					(CTRL.pocket_B[2] != "") && (opt_B1 = replace(opt_B1, CTRL.pocket_B[2] => ""))	# Fill
-					(occursin("-Bp ", opt_B1)) && (opt_B1 = replace(opt_B1, "-Bp " => ""))		# Delete stray -Bp 
-					opt_B1 = replace(opt_B1, "-B " => "")		#			""
-					(endswith(opt_B1, " -B")) && (opt_B1 = opt_B1[1:end-2])
-					(opt_B1 != "") && (opt_B1 *= " -R -J")		# When not-empty it needs the -R -J
-					CTRL.pocket_B[1] = CTRL.pocket_B[2] = ""	# Empty these guys
-				end
+	if (!isempty(cmd2) && startswith(cmd2[1], "clip"))	# Deal with the particular psclip case (Tricky)
+		opt_R = scan_opt(cmd[1], "-R", true)
+		opt_J = scan_opt(cmd[1], "-J", true)
+		extra::String = strtok(cmd2[1])[2] * " "		# When psclip recieved extra arguments
+		t::String =  extra * opt_R * " " * opt_J
+		(!contains(cmd2[1], "pscoast")) && (t = "psclip " * t)
+		opt_B::String, opt_B1::String = "", ""
+		ind = findall(" -B", cmd[1])
+		if (!isempty(ind))
+			for k = 1:lastindex(ind)
+				opt_B *= " " * strtok(cmd[1][ind[k][1]:end])[1]
 			end
-			cmd = [t; cmd; "psclip -C" * opt_B1]
+			# Here we need to reset any -B parts that do NOT include the plotting area and which were clipped.
+			if (CTRL.pocket_B[1] == "" && CTRL.pocket_B[2] == "")
+				opt_B1 = opt_B * " -R -J"
+			else
+				(CTRL.pocket_B[1] != "") && (opt_B1 = replace(opt_B,  CTRL.pocket_B[1] => ""))	# grid
+				(CTRL.pocket_B[2] != "") && (opt_B1 = replace(opt_B1, CTRL.pocket_B[2] => ""))	# Fill
+				(occursin("-Bp ", opt_B1)) && (opt_B1 = replace(opt_B1, "-Bp " => ""))		# Delete stray -Bp 
+				opt_B1 = replace(opt_B1, "-B " => "")		#			""
+				(endswith(opt_B1, " -B")) && (opt_B1 = opt_B1[1:end-2])
+				(opt_B1 != "") && (opt_B1 *= " -R -J")		# When not-empty it needs the -R -J
+				CTRL.pocket_B[1] = CTRL.pocket_B[2] = ""	# Empty these guys
+			end
 		end
+		cmd = [t; cmd; "psclip -C" * opt_B1]
 	else
 		append!(cmd, cmd2)
 	end
@@ -2745,13 +2749,19 @@ function add_opt_module(d::Dict)::Vector{String}
 				r = colorbar!(; Vd=2, nt...)
 				!contains(r, " -B") && (r = replace(r, "psscale" => "psscale -Baf"))		# Add -B if not present
 			elseif (symb == :clip)		# Need lots of little shits to parse the clip options
-				(CTRL.pocket_call[1] === nothing) ? (CTRL.pocket_call[1] = val[1]) : (CTRL.pocket_call[2] = val[1])
-				k,v = keys(nt), values(nt)
-				nt = NamedTuple{Tuple(Symbol.(k[2:end]))}(v[2:end])		# Fck, what a craziness to remove 1 el from a nt
-				r = clip!(""; Vd=2, nt...)
+				if ((isa(nt, NamedTuple) && isa(nt[1], String)) || isa(nt[1], NamedTuple))
+					r = (isa(nt, NamedTuple)) ? coast!(""; Vd=2, E=nt) : coast!(""; Vd=2, nt...)
+					is_coast = true
+				else
+					(CTRL.pocket_call[1] === nothing) ? (CTRL.pocket_call[1] = val[1]) : (CTRL.pocket_call[2] = val[1])
+					k,v = keys(nt), values(nt)
+					nt = NamedTuple{Tuple(Symbol.(k[2:end]))}(v[2:end])		# Fck, what a craziness to remove 1 el from a nt
+					r = clip!(""; Vd=2, nt...)
+					is_coast = false
+				end
 				r = r[1:findfirst(" -K", r)[1]];	# Remove the "-K -O >> ..."
 				r = replace(r, " -R -J" => "")
-				r = "clip " * strtok(r)[2]			# Make sure the prog name is 'clip' and not 'psclip'
+				r = (is_coast) ? "clip " * r : "clip " * strtok(r)[2]	# coast case returns a "clip pscoast ..." string that caller can parse 
 			else
 				!(symb in CTRL.callable) && error("Nested Fun call $symb not in the callable nested functions list")
 				_d = nt2dict(nt)
@@ -2775,8 +2785,18 @@ function add_opt_module(d::Dict)::Vector{String}
 			anc = (t == 't') ? "TC" : (t == 'b' ? "BC" : (t == 'l' ? "ML" : "MR"))
 			r = colorbar!(pos=(anchor=anc,), B="af", Vd=2)
 		elseif (symb == :clip)
-			(CTRL.pocket_call[1] === nothing) ? (CTRL.pocket_call[1] = val) : (CTRL.pocket_call[2] = val)
-			r = "clip"
+			if (isa(val, String))					# Accept also "land", "water" or "ocean" or DCW country codes(s) or a hard -E string
+				_str::String = val					# Shoot the Any
+				if     (_str == "land")                     r = "clip pscoast -Gc"
+				elseif (_str == "water" || _str == "ocean") r = "clip pscoast -Sc"
+				elseif (length(_str) == 2 || _str[1] == '=' || contains(_str, ','))
+					r = (_str[1] == '-') ? "clip pscoast " * _str : "clip pscoast -E" * _str * "+c"	# Accept also clip="-E..."
+				else   @error("Invalid string for clip option: $_str")
+				end
+			else
+				(CTRL.pocket_call[1] === nothing) ? (CTRL.pocket_call[1] = val) : (CTRL.pocket_call[2] = val)
+				r = "clip"
+			end
 		end
 		delete!(d, symb)
 
