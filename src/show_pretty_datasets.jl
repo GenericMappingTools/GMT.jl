@@ -127,7 +127,7 @@ function _show(io::IO,
 	end
 
 	# See if we have attribs as vector of strings to be displayed as columns in the table.
-	function add_att_cols(D, names_str, types_str)
+	function add_att_cols(D, Dt, names_str, types_str)
 		isempty(D.attrib) && return Dt, names_str, types_str
 		ky = collect(keys(D.attrib))
 		for k = 1:numel(ky)
@@ -171,7 +171,7 @@ function _show(io::IO,
 		Dt = D.data
 	end
 
-	Dt, names_str, types_str = add_att_cols(D, names_str, types_str)	# Check for string vector attributes
+	Dt, names_str, types_str = add_att_cols(D, Dt, names_str, types_str)	# Check for string vector attributes
 
 	if ((Tc = get(D.attrib, "Timecol", "")) != "")
 		Tcn = parse.(Int, split(Tc, ","))
