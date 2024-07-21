@@ -71,7 +71,8 @@ function gmtread(_fname::String; kwargs...)
 	d = init_module(false, kwargs...)[1]	# Also checks if the user wants ONLY the HELP mode
 	cmd::String, opt_R::String = parse_R(d, "")
 	cmd, opt_i = parse_i(d, cmd)
-	cmd = parse_common_opts(d, cmd, [:V_params :f :h])[1]
+	cmd, opt_h = parse_h(d, cmd)
+	cmd = parse_common_opts(d, cmd, [:V_params :f])[1]
 	cmd, opt_bi = parse_bi(d, cmd)
 	proggy = "read "						# When reading an entire grid cube, this will change to 'grdinterpolate'
 
@@ -177,7 +178,6 @@ function gmtread(_fname::String; kwargs...)
 	end
 
 	if (opt_T != " -To")			# All others but OGR
-		#(proggy == "read ") && (cmd *= opt_T)
 		if (proggy == "read ")
 			((val = find_in_dict(d, [:stride])[1]) !== nothing) && (cmd *= " -Em" * arg2str(val)::String; proggy = "gmtconvert ")
 			((val = find_in_dict(d, [:q :inrows :inrow])[1]) !== nothing) && (cmd *= " -q" * arg2str(val)::String; proggy = "gmtconvert ")
@@ -235,7 +235,7 @@ function gmtread(_fname::String; kwargs...)
 		end
 
 		# Try guess if ascii file has time columns and if yes leave trace of it in GMTdadaset metadata.
-		(opt_bi == "" && isa(o, GDtype)) && file_has_time!(fname, o, corder)
+		(opt_bi == "" && isa(o, GDtype)) && file_has_time!(fname, o, corder, opt_h)
 
 		if (isa(o, GMTgrid))
 			o.hasnans = any(!isfinite, o.z) ? 2 : 1
@@ -321,7 +321,7 @@ function helper_set_colnames!(o::GDtype, corder::Vector{Int}=Int[])
 end
 
 # ---------------------------------------------------------------------------------
-function file_has_time!(fname::String, D::GDtype, corder::Vector{Int}=Int[])
+function file_has_time!(fname::String, D::GDtype, corder::Vector{Int}=Int[], opt_h::String="")
 	# Try guess if 'fname' file has time columns and if yes leave trace of it in D's metadata.
 	# We do that by scanning the first valid line in file.
 	# 'corder' is a vector of ints filled with column orders specified by -i. If no -i that it is empty
@@ -353,8 +353,10 @@ function file_has_time!(fname::String, D::GDtype, corder::Vector{Int}=Int[])
 	fid = open(fname)
 	iter = eachline(fid)
 	try
+		n_hdr = (opt_h != "") ? parse(Int, opt_h[4:end]) : 0		# Number of declared header lines via -h option
 		for it in iter
-			(n_it > 30 || Tc != "") && break			# Means that previous iteration found it.
+			(n_it < n_hdr) && (n_it += 1; continue)
+			(n_it > (30 + n_hdr) || Tc != "") && break				# Means that previous iteration found it.
 			n_commas = count_chars(it)
 			use_commas = (n_cols > 1) && (n_commas >= n_cols-1)		# To see if we split on spaces or on commas.
 			line1 = (use_commas) ? split(it, ',') : split(it)
@@ -404,7 +406,7 @@ function guess_T_from_ext(fname::String; write::Bool=false, text_only::Bool=fals
 	if     (findfirst(isequal(ext), ["grd", "nc", "nc=gd"])  !== nothing)  out = " -Tg";
 	elseif (findfirst(isequal(ext), ["dat", "txt", "csv"])   !== nothing)  out = " -Td";
 	elseif (findfirst(isequal(ext), ["jpg", "jpeg", "png", "bmp", "webp"]) 	!== nothing)  out = " -Ti";
-	elseif (findfirst(isequal(ext), ["arrow", "shp", _kml, "kmz", "json", "feather", "fgb", "geojson", "gmt", "gpkg", "gpx", "gml", "parquet"]) !== nothing)  out = " -To";
+	elseif (findfirst(isequal(ext), ["arrow", "arrows", "shp", _kml, "kmz", "json", "feather", "fgb", "geojson", "gmt", "gpkg", "gpx", "gml", "ipc", "parquet", "sqlite"]) !== nothing)  out = " -To";
 	elseif (ext == "jp2") ressurectGDAL(); out = (findfirst("Type=UInt", gdalinfo(fname)) !== nothing) ? " -Ti" : " -Tg"
 	elseif (ext == "cpt")  out = " -Tc";
 	elseif (ext == "ps" || ext == "eps")  out = " -Tp";
