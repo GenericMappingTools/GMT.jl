@@ -2733,7 +2733,6 @@ function add_opt_module(d::Dict)::Vector{String}
 	for symb in CTRL.callable			# Loop over modules list that can be called inside other modules
 		!(haskey(d, symb)) && continue
 		r::Union{String, Vector{String}} = ""
-		
 		val = d[symb]
 		isa(val, AbstractDict) && (val = Base.invokelatest(dict2nt, val))
 		if (symb == :inset)				# The inset case must come first because it is a special case
@@ -2749,8 +2748,12 @@ function add_opt_module(d::Dict)::Vector{String}
 				r = colorbar!(; Vd=2, nt...)
 				!contains(r, " -B") && (r = replace(r, "psscale" => "psscale -Baf"))		# Add -B if not present
 			elseif (symb == :clip)		# Need lots of little shits to parse the clip options
-				if ((isa(nt, NamedTuple) && isa(nt[1], String)) || isa(nt[1], NamedTuple))
+				if ((isa(nt, NamedTuple) && (isa(nt[1], String) || isa(nt[1], Symbol))) || isa(nt[1], NamedTuple))
 					r = (isa(nt, NamedTuple)) ? coast!(""; Vd=2, E=nt) : coast!(""; Vd=2, nt...)
+					opt_E = scan_opt(r, "-E")	# We are clipping so opt_E must contain eith +c or +C. If not, add +c
+					startswith(opt_E, "=land")  && (r = replace(r, " -E"*opt_E => " -Gc"))	# Stupid user mistakes. Try to recover
+					startswith(opt_E, "=ocean") && (r = replace(r, " -E"*opt_E => " -Sc"))
+					(!contains(opt_E, "+c") && !contains(opt_E, "+C")) && (r = replace(r, opt_E => opt_E * "+c"))
 					is_coast = true
 				else
 					(CTRL.pocket_call[1] === nothing) ? (CTRL.pocket_call[1] = val[1]) : (CTRL.pocket_call[2] = val[1])
@@ -2785,11 +2788,11 @@ function add_opt_module(d::Dict)::Vector{String}
 			anc = (t == 't') ? "TC" : (t == 'b' ? "BC" : (t == 'l' ? "ML" : "MR"))
 			r = colorbar!(pos=(anchor=anc,), B="af", Vd=2)
 		elseif (symb == :clip)
-			if (isa(val, String))					# Accept also "land", "water" or "ocean" or DCW country codes(s) or a hard -E string
-				_str::String = val					# Shoot the Any
+			if (isa(val, String) || isa(val, Symbol))	# Accept also "land", "water" or "ocean" or DCW country codes(s) or a hard -E string
+				_str::String = string(val)					# Shoot the Any
 				if     (_str == "land")                     r = "clip pscoast -Gc"
 				elseif (_str == "water" || _str == "ocean") r = "clip pscoast -Sc"
-				elseif (length(_str) == 2 || _str[1] == '=' || contains(_str, ','))
+				elseif (length(_str) == 2 || _str[1] == '=' || contains(_str, ',') || contains(_str, "+f"))
 					r = (_str[1] == '-') ? "clip pscoast " * _str : "clip pscoast -E" * _str * "+c"	# Accept also clip="-E..."
 				else   @error("Invalid string for clip option: $_str")
 				end
