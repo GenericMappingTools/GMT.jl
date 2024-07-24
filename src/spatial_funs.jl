@@ -162,6 +162,7 @@ NOTE: Instead of ``getbyattrib`` one case use instead ``filter`` (...,`index=fal
   that attribute/value combination. `NAME=("Antioquia", "Caldas"), pick elements that have those `NAME` attributes.
   Add as many as wished. If using two `kwargs` the second works as a condition. ``(..., NAME=("Antioquia", "Caldas"), feature_id=0)``
   means select all elements from ``Antioquia`` and ``Caldas`` that have the attribute `feature_id` = 0.
+- `invert, or reverse, or not`: If `true` return all segments that do NOT match the query condition(s).
 - `attrib` or `att`: (OLD SYNTAX) A NamedTuple with the attribname, attribvalue as in `att=(NAME_2="value",)`.
   Use more elements if wishing to do a composite match. E.g. `att=(NAME_1="val1", NAME_2="val2")` in which
   case only segments matching the two conditions are returned.
@@ -180,6 +181,7 @@ function getbyattrib(D::Vector{<:GMTdataset}, ind_::Bool; kw...)::Vector{Int}
 	# It returns the indices of the selected segments.
 	(isempty(D[1].attrib)) && (@warn("This datset does not have an `attrib` field and is hence unusable here."); return Int[])
 	dounion = Int(1e9)		# Just a big number
+	invert = (find_in_kwargs(kw, [:invert :not :revert :reverse])[1] !== nothing)
 	if ((_att = find_in_kwargs(kw, [:att :attrib])[1]) !== nothing)		# For backward compat.
 		if !isa(_att, NamedTuple)
 			((val = find_in_kwargs(kw, [:val :value])[1])  === nothing) && error("Must provide the `attribute` VALUE.")
@@ -191,7 +193,9 @@ function getbyattrib(D::Vector{<:GMTdataset}, ind_::Bool; kw...)::Vector{Int}
 		#Keys[1] => Internal Error: MethodError: no method matching getindex(::Base.KeySet{Symbol, Dict{Symbol, Any}}, ::Int64)
 		count, kk = 0, 1
 		v = values(kw)
-		for k = 1:numel(kw)  count += (isa(values(v[k]), Tuple) || isa(values(v[k]), Vector{String})) ? length(values(v[k])) : 1  end
+		for k = 1:numel(kw)
+			count += (isa(values(v[k]), Tuple) || isa(values(v[k]), Vector{String})) ? length(values(v[k])) : 1
+		end
 		atts, vals = Vector{String}(undef, count), Vector{String}(undef, count)
 
 		_keys = string.(keys(kw))
@@ -221,6 +225,7 @@ function getbyattrib(D::Vector{<:GMTdataset}, ind_::Bool; kw...)::Vector{Int}
 		for k = 1:length(D)
 			(!isempty(D[k].attrib) && (D[k].attrib[atts[n]] == vals[n])) && (tf[k] = true)
 		end
+		(invert) && (tf .= .!tf)
 		if (n == 1)  indices = findall(tf)
 		else         indices = (dounion > n) ? union(indices, findall(tf)) : intersect(indices, findall(tf))
 		end
