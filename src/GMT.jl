@@ -133,8 +133,8 @@ export
 	sphtriangulate, surface, ternary, ternary!, text, text!, text_record, trend1d, trend2d, triangulate, gmtsplit,
 	decorated, vector_attrib, wiggle, wiggle!, xyz2grd, gmtbegin, gmtend, gmthelp, subplot, gmtfig, inset, showfig,
 	earthtide, gravfft, gmtgravmag3d, grdgravmag3d, gravprisms, pscoupe, pscoupe!, coupe, coupe!, psmeca, psmeca!,
-	meca, meca!, psvelo, psvelo!, velo, velo!, getbyattrib, inpolygon, inwhichpolygon, pcolor, pcolor!, triplot, triplot!,
-	trisurf, trisurf!, grdrotater, imagesc, upGMT, boxes,
+	meca, meca!, psvelo, psvelo!, velo, velo!, gmtisf, getbyattrib, inpolygon, inwhichpolygon, pcolor, pcolor!,
+	triplot, triplot!, trisurf, trisurf!, grdrotater, imagesc, upGMT, boxes,
 
 	find_in_dict, find_in_kwargs,
 	mbimport, mbgetdata, mbsvplist, mblevitus,
@@ -303,6 +303,7 @@ include("utils_project.jl")
 include("choropleth_utils.jl")
 include("webmapserver.jl")
 include("seis/psmeca.jl")
+include("seis/gmtisf.jl")
 include("geodesy/psvelo.jl")
 include("geodesy/earthtide.jl")
 include("MB/mbimport.jl")
