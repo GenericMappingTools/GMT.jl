@@ -1,45 +1,63 @@
 """
 	gmtisf(cmd0::String; kwargs...)
 
-Plot focal mechanisms.
+Read seismicity data in the a ISF formated file.
 
 Parameters
 ----------
 
 - $(_opt_R)
 
-- **G** | **fill** | **compressionfill** :: [Type => Str | Number]
+- **D** | **date** :: date="datestart[/dateend]"
 
-    Selects shade, color or pattern for filling the sectors [Default is no fill].
-- **L** | **outline_pen** | **pen_outline** :: [Type => Str | Number | Tuple]
+    Limit the output to data >= date1, or between date1 and date2. <date> must be in ISO format, e.g, 2000-04-25.
+- **F** | **focal** :: [Type => Bool or Str]
 
-    Draws the “beach ball” outline with pen attributes instead of with the default pen set by **pen**
-- **M** | **same_size** | **samesize** :: [Type => Bool]
+    Select only events that have focal mechanisms. The default is Global CMT convention. Use `focal=:a` for the AKI convention
+- **N** | **notime** :: [Type => Bool]
 
-    Use the same size for any magnitude. Size is given with **S**
-- **N** | **no_clip** | **noclip** :: [Type => Str | []]
+    Do NOT output time information.
 
-    Do NOT skip symbols that fall outside frame boundary.
+- `abstime or unixtime` :: [Type => Integer]
+
+    Convert the YYYY, MM, DD, HH, MM columns into a unixtime. Default puts it as first column,
+    use `abstime=2` to put it as last column.
+
+This module can also be called via `gmtread`. _I.,e._ `gmtread("file.isf", opts...)_
 
 - $(opt_swap_xy)
-
-Example: Plot a focal mechanism using the Aki & Richards convention 
-
-```julia
-    psmeca([0.0 3.0 0.0 0 45 90 5 0 0], aki=true, fill=:black, region=(-1,4,0,6), proj=:Merc, show=1)
-```
 """
-# ---------------------------------------------------------------------------------------------------
 function gmtisf(cmd0::String; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
 	cmd = parse_common_opts(d, "", [:R :V_params :yx])[1]
 	cmd = parse_these_opts(cmd, d, [[:F :focal], [:D :date], [:N :notime]])
+	abstime::Int = ((val = find_in_dict(d, [:abstime :unixtime])[1]) !== nothing) ? Int(val) : 0
+	(abstime != 0 && contains(cmd, " -N")) && error("'abstime' and 'notime' options are mutually exclusive.")
 	out = common_grd(d, cmd0, cmd, "gmtisf ", nothing)	# Finish build cmd and run it
 	nc = size(out,2)
 	colnames = (nc == 4 || nc == 9) ? ["lon", "lat", "depth", "mag"] : (nc == 7 || nc == 12) ? ["lon", "lat", "depth", "strike", "dip", "rake", "mag"] : ["lon", "lat", "depth", "strike1", "dip1", "rake1", "strike2", "dip2", "rake2", "mantissa", "exponent"]
 	(!contains(cmd, " -N")) && (append!(colnames, ["year", "month", "day", "hour", "minute"]))
 	out.colnames = colnames
+	(abstime != 0) && isf_unixtime!(out, abstime)
 	return out
+end
+
+# ---------------------------------------------------------------------------------------------------
+function isf_unixtime!(D, first_col=1)
+	# Convert the 5 last columns with YYYY MM DD HH MM to unix time.
+	# If first_col = 1, then the the abstime is in the first column, otherwise in the last
+	nc = size(D,2)
+	t = datetime2unix.((DateTime.(view(D,:,nc-4), view(D,:,nc-3), view(D,:,nc-2), view(D,:,nc-1), view(D,:,nc))))
+	if (first_col == 1)
+		D.data = hcat(t, D.data[:, 1:(nc-5)])
+		D.colnames = ["time", D.colnames[1:(nc-5)]...]
+		settimecol!(D, 1)
+	else
+		D.data = hcat(D.data[:, 1:(nc-5)], t)
+		D.colnames = [D.colnames[1:(nc-5)]..., "time"]
+		settimecol!(D, nc-4)
+	end
+	set_dsBB!(D)
 end
