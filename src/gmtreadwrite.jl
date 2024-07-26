@@ -9,7 +9,7 @@ the chance of letting the data type be guessed via the file extension. Known ext
 - Grids:      .grd, .jp2 .nc
 - Images:     .jpg, .jp2 .png, .tif, .tiff, .bmp, .webp
 - Datasets:   .dat, .txt, .csv
-- Datasets:   .shp, .kml, .json, .geojson, .gmt, .gpkg, .gpx, .gml
+- Datasets:   .arrow .arrows .shp, .kml, .kmz .json, .gmt, .feather .fgb .gpkg, .geojson, .gpx, .gml .ipc .parquet .sqlite
 - CPT:        .cpt
 - PostScript: .ps, .eps
 
@@ -37,6 +37,8 @@ Specify data type (with *type*=true, e.g. `img=true`).  Choose among:
   outputs and 3D array in column major order, later case (the one with `gdal`) uses GDAL to read the cube and
   outputs and 3D array in row major order. Remember that the ``layout`` member of the GMTgrid type informs
   about memory layout.
+
+- `inrows`: Select specific data rows to be read. Valid args include ranges or a string with an hard core GMT -q option.
 
 - `stride`: When reading table data via GMT (but not GDAL), this option allows subsampling the data. Provide a
   number to be used as stride for the rows. A `stride=2` will read every other row.
@@ -184,8 +186,14 @@ function gmtread(_fname::String; kwargs...)
 			cmd *= opt_T
 		end
 
+		# -----------------------  READ READ READ ------------------------
 		(dbg_print_cmd(d, cmd) !== nothing) && return proggy * fname * cmd
-		o = (proggy == "gdalread") ? gdalread(fname, gdopts) : gmt(proggy * fname * cmd)
+		isISF =	(endswith(fname, ".isf") || endswith(fname, ".ISF"))
+		if (isISF)
+			o = gmtisf(fname; d...)
+		else
+			o = (proggy == "gdalread") ? gdalread(fname, gdopts) : gmt(proggy * fname * cmd)
+		end
 		(isempty(o)) && (@warn("\tfile \"$fname\" is empty or has no data after the header.\n"); return GMTdataset())
 
 		((cptname = check_remote_cpt(fname)) != "") && (o.cpt = cptname)	# Seek for default CPT names
@@ -235,7 +243,7 @@ function gmtread(_fname::String; kwargs...)
 		end
 
 		# Try guess if ascii file has time columns and if yes leave trace of it in GMTdadaset metadata.
-		(opt_bi == "" && isa(o, GDtype)) && file_has_time!(fname, o, corder, opt_h)
+		(opt_bi == "" && !isISF && isa(o, GDtype)) && file_has_time!(fname, o, corder, opt_h)
 
 		if (isa(o, GMTgrid))
 			o.hasnans = any(!isfinite, o.z) ? 2 : 1
@@ -404,7 +412,7 @@ function guess_T_from_ext(fname::String; write::Bool=false, text_only::Bool=fals
 		!occursin("https:", fname) && !occursin("http:", fname) && !occursin("ftps:", fname) && !occursin("ftp:", fname))) &&
 		error("File $fname does not exist.")
 	if     (findfirst(isequal(ext), ["grd", "nc", "nc=gd"])  !== nothing)  out = " -Tg";
-	elseif (findfirst(isequal(ext), ["dat", "txt", "csv"])   !== nothing)  out = " -Td";
+	elseif (findfirst(isequal(ext), ["dat", "txt", "csv", "isf"])   !== nothing)  out = " -Td";
 	elseif (findfirst(isequal(ext), ["jpg", "jpeg", "png", "bmp", "webp"]) 	!== nothing)  out = " -Ti";
 	elseif (findfirst(isequal(ext), ["arrow", "arrows", "shp", _kml, "kmz", "json", "feather", "fgb", "geojson", "gmt", "gpkg", "gpx", "gml", "ipc", "parquet", "sqlite"]) !== nothing)  out = " -To";
 	elseif (ext == "jp2") ressurectGDAL(); out = (findfirst("Type=UInt", gdalinfo(fname)) !== nothing) ? " -Ti" : " -Tg"
