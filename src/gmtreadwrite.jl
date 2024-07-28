@@ -6,10 +6,10 @@ Read GMT object from file. The object is one of "grid" or "grd", "image" or "img
 Use a type specificatin to force a certain reading path (e.g. `grd=true` to read grids) or take
 the chance of letting the data type be guessed via the file extension. Known extensions are:
 
-- Grids:      .grd, .jp2 .nc
-- Images:     .jpg, .jp2 .png, .tif, .tiff, .bmp, .webp
-- Datasets:   .dat, .txt, .csv
-- Datasets:   .arrow .arrows .shp, .kml, .kmz .json, .gmt, .feather .fgb .gpkg, .geojson, .gpx, .gml .ipc .parquet .sqlite
+- Grids:      .grd .jp2 .nc
+- Images:     .jpg .jp2 .png, .tif, .tiff, .bmp, .webp
+- Datasets:   .dat .txt .csv .isf
+- Datasets:   .arrow .arrows .shp .kml .kmz .json .gmt .feather .fgb .gpkg .geojson .gpx .gml .ipc .parquet .sqlite
 - CPT:        .cpt
 - PostScript: .ps, .eps
 

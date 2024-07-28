@@ -173,7 +173,7 @@ export
 
 	binarize, isodata, rgb2gray, rgb2lab, rgb2YCbCr, rgb2ycbcr, grid2img, img2grid, grays2cube, grays2rgb,
 
-	makeDCWs,
+	makeDCWs, mksymbol,
 
 	Ginnerjoin, Gouterjoin, Gleftjoin, Grightjoin, Gcrossjoin, Gsemijoin, Gantijoin, spatialjoin,
 
@@ -197,6 +197,7 @@ include("utils_types.jl")
 include("grd_operations.jl")
 include("common_options.jl")
 const global LEGEND_TYPE = [legend_bag()]	# To store Legends info
+include("custom_symb_funs.jl")
 include("gmtbegin.jl")
 include("blendimg.jl")
 include("blocks.jl")

@@ -10,8 +10,8 @@ Parameters
 
 - **D** | **date** :: date="datestart[/dateend]"
 
-    Limit the output to data >= date1, or between date1 and date2. <date> must be in ISO format, e.g, 2000-04-25.
-- **F** | **focal** :: [Type => Bool or Str]
+    Limit the output to data >= datestart, or between datestart and dateend. <date> must be in ISO format, e.g, 2000-04-25.
+- **F** | **focal** :: [Type => Bool or Str or Symbol]
 
     Select only events that have focal mechanisms. The default is Global CMT convention. Use `focal=:a` for the AKI convention
 - **N** | **notime** :: [Type => Bool]
@@ -23,9 +23,9 @@ Parameters
     Convert the YYYY, MM, DD, HH, MM columns into a unixtime. Default puts it as first column,
     use `abstime=2` to put it as last column.
 
-This module can also be called via `gmtread`. _I.,e._ `gmtread("file.isf", opts...)_
-
 - $(opt_swap_xy)
+
+This module can also be called via `gmtread`. _I.,e._ `gmtread("file.isf", opts...)_
 """
 function gmtisf(cmd0::String; kwargs...)
 

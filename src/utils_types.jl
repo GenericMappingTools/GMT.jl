@@ -2193,13 +2193,21 @@ function is_stored_transposed(GI::GItype)
 	return width == size(GI, 1) && height == size(GI, 2)
 end
 
-#= ---------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------------
+"""
+    mksymbol(f::Function, cmd0::String="", arg1=nothing; kwargs...)
+"""
 function mksymbol(f::Function, cmd0::String="", arg1=nothing; kwargs...)
 	# Make a fig and convert it to EPS so it can be used as a custom symbol is plot(3)
 	d = KW(kwargs)
 	t = ((val = find_in_dict(d, [:symbname :symb_name :symbol])[1]) !== nothing) ? string(val) : "GMTsymbol"
-	d[:savefig] = t * ".eps"
-	f(cmd0, arg1; d...)
+	(t == "GMTsymbol" && (f == flower_minho || f == matchbox)) && (t = string(f))
+	!haskey(d, :name) && (d[:name] = t * ".eps")
+	if (f == flower_minho || f == matchbox)			# Special case for the Flower Minho symbol
+		f(; d...)			# If no name provided, use the default one (flower_minho)
+	else
+		f(cmd0, arg1; d...)
+	end
+	return nothing
 end
 mksymbol(f::Function, arg1; kw...) = mksymbol(f, "", arg1; kw...)
-=#

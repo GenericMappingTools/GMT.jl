@@ -168,7 +168,7 @@ The functions that are currently available are:
 - rotrectAz(x, y, azimuth, width, height; kw...)
 - roundrect(x, y, width, height, radius;  kw...)
 
-For all symbols, except `box`, `diameter` is the diametr of the circumscribing circle and `x,y`
+For all symbols, except `box`, `diameter` is the diameter of the circumscribing circle and `x,y`
 the coordinates of its center. `box` is the exception in that those are the coordinates of the
 lower left corner.
 
