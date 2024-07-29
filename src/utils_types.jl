@@ -2206,6 +2206,10 @@ function mksymbol(f::Function, cmd0::String="", arg1=nothing; kwargs...)
 	if (f == flower_minho || f == matchbox)			# Special case for the Flower Minho symbol
 		f(; d...)			# If no name provided, use the default one (flower_minho)
 	else
+		(t == "GMTsymbol") && error("Need to provide a name for the symbol")
+		_, name = helper_cusymb(true, t, ".eps", "")
+		d[:name] = name * ".eps"
+		(is_in_dict(d, [:B :frame :axes :axis :xaxis :yaxis :zaxis :axis2 :xaxis2 :yaxis2]) === nothing) && (d[:frame] = "none")
 		f(cmd0, arg1; d...)
 	end
 	return nothing

@@ -2,7 +2,7 @@
 """
 """
 function flower_minho(; name::String="flower_minho", width=14, fmt="", format="", dpi=200, angle=0, cache=true, show=false)
-	_fmt, name = helper_cusymb(cache, name, fmt, format)
+	_fmt, name = helper_cusymb(cache, name, fmt, format, "misc")
 
 	t = linspace(0,2pi,360);
 	x = cos.(4*t) .* cos.(t);
@@ -25,7 +25,7 @@ end
 """
 """
 function matchbox(; name::String="matchbox", width=14, fmt="", format="", angle=0, cache=true, show=false)
-	_fmt, name = helper_cusymb(cache, name, fmt, format)
+	_fmt, name = helper_cusymb(cache, name, fmt, format, "misc")
 
 	opt_p = (angle == 0) ? "180/90" : string(angle,"/90")
 	GMT.Drawing.ellipse(300,201,0, 200, 50, units=:points, first=true, fill=:purple, pen=1, p=opt_p)
@@ -40,10 +40,12 @@ function matchbox(; name::String="matchbox", width=14, fmt="", format="", angle=
 end
 
 # ---------------------------------------------------------------
-function helper_cusymb(cache, name, fmt, format)
-	# Helper function
+function helper_cusymb(cache, name, fmt, format, subdir="")
+	# Returns the format and the name of the file. If CACHE == true, the name is prefaced with
+	# ./gmt/cache_csymb/subdir and the format is .eps
 	if (cache == 1)
-		cus_path = joinpath(GMTuserdir[1], "cache_csymb/misc")
+		(subdir != "") && (subdir = filesep * subdir)
+		cus_path = joinpath(GMTuserdir[1], "cache_csymb" * subdir)
 		!isdir(cus_path) && mkpath(cus_path)
 		name = joinpath(cus_path, fileparts(name)[2])
 		fmt = ".eps"

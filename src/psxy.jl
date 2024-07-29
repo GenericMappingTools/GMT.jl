@@ -602,7 +602,7 @@ function parse_opt_S(d::Dict, arg1, is3D::Bool=false)
 	if ((symb = is_in_dict(d, [:csymbol :cmarker :custom_symbol :custom_marker])) !== nothing)
 		marca::String = add_opt(d, "", "", [symb], (name="", size="/", unit="1"))
 		have_custom, custom_no_size = true, !isdigit(marca[end])	# So that we can have custom symbs with sizes in arg1
-		marca_fullname::String = seek_custom_symb(marca)[1]
+		marca_fullname::String = seek_custom_symb(marca)
 		(marca_fullname != "") && (opt_S = " -Sk" * marca_fullname)
 	else
 		opt_S = add_opt(d, "", "S", [:S :symb :symbol], (symb="1", size="", unit="1"))
@@ -1209,38 +1209,38 @@ function helper2_markers(opt::String, alias::Vector{String})::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function seek_custom_symb(marca::AbstractString, with_k::Bool=false; path::String="")::Tuple{String, String}
+function seek_custom_symb(marca::AbstractString, with_k::Bool=false)::String
 	# If 'marca' is a custom symbol, seek it first in GMT.jl share/custom dir.
-	# Always return the marker name (modified or not) plus the marker symbol name with extension
-	# (but not its path) in the case the marker name was found in GMT.jl share/custom dir.
+	# Return the full name of the marker plus extension
 	# The WITH_K arg is to allow calling this fun with a sym name already prefaced with 'k', or not
-	(with_k && marca[1] != 'k') && return marca, ""		# Not a custom symbol, return what we got.
+	(with_k && marca[1] != 'k') && return marca		# Not a custom symbol, return what we got.
 
-	cus_path  = (path == "") ? joinpath(dirname(pathof(GMT))[1:end-4], "share", "custom") : path
-	cus_path2 = joinpath(GMTuserdir[1], "cache_csymb")
-	cus_path2 = replace(cus_path2, "/" => "\\")	# Otherwise it will produce currupted PS
-	cus = readdir(cus_path)						# Get the list of all custom symbols in this dir.
+	function find_this_file(pato, symbname)
+		for (root, dirs, files) in walkdir(pato)
+			ind = findfirst(startswith.(files, symbname))
+			if (ind !== nothing)  return joinpath(root, files[ind])  end
+		end
+		return ""
+	end
+
 	s = split(marca, '/')
 	ind_s = with_k ? 2 : 1
 	symbname = s[1][ind_s:end]
-	r = cus[contains.(cus, symbname)]			# If found, 'r' contains the symbol name including the extension.
-	if (!isempty(r))							# Means the requested symbol was found in GMT.jl share/custom
-		_mark = splitext(r[1])[1]				# Get the marker name but without extension
-		_siz  = split(marca, '/')[2]			# The custom symbol size
-		_marca = (with_k ? "k" : "")  * joinpath(cus_path, _mark) * "/" * _siz
-		(GMTver <= v"6.4" && (length(_marca) - length(_siz) -2) > 62) && warn("Due to a GMT <= 6.4 limitation the length of full (name+path) custom symbol name cannot be longer than 62 bytes.")
-		return _marca, r[1]
-	elseif (isdir(cus_path2))
-		for (root, dirs, files) in walkdir(cus_path2)
-			if (any(startswith.(files, symbname)))
-				_siz  = split(marca, '/')[2]			# The custom symbol size
-				_marca, r2 = seek_custom_symb(symbname * "/" * _siz, with_k; path=root)	# Kida silly. Split->glue->split again
-				return _marca, r2
-			end
-		end
-		error("Could not find the custom symbol '$symbname' in '$cus_path2'.")
+	cus_path = joinpath(dirname(pathof(GMT))[1:end-4], "share", "custom")
+
+	fullname = find_this_file(cus_path, symbname)
+	if (fullname == "")
+		cus_path2 = joinpath(GMTuserdir[1], "cache_csymb")
+		cus_path2 = replace(cus_path2, "/" => "\\")	# Otherwise it will produce currupted PS
+		fullname  = find_this_file(cus_path2, symbname)
 	end
-	return marca, ""							# A custom symbol from the official GMT collection.
+
+	(fullname == "") && return marca		# Assume it's a custom symbol from the official GMT collection.
+
+	_siz  = split(marca, '/')[2]			# The custom symbol size
+	_marca = (with_k ? "k" : "")  * fullname * "/" * _siz
+	(GMTver <= v"6.4" && (length(_marca) - length(_siz) -2) > 62) && warn("Due to a GMT <= 6.4 limitation the length of full (name+path) custom symbol name cannot be longer than 62 bytes.")
+	return _marca
 end
 
 # ---------------------------------------------------------------------------------------------------

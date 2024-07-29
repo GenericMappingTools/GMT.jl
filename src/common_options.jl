@@ -3396,7 +3396,7 @@ function decorated(;kwargs...)::String
 		if (marca == "")
 			cmd = "+sa0.5" * cmd
 		else
-			marca, marca_name = seek_custom_symb(marca, true)	# 'marca' may have been changed to a full name/size
+			marca = seek_custom_symb(marca, true)	# 'marca' may have been changed to a full name/size
 			cmd *= "+s" * marca
 			((val = find_in_dict(d, [:size :ms :markersize :symbolsize])[1]) !== nothing) && (cmd *= arg2str(val))
 		end
