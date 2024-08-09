@@ -173,7 +173,7 @@ export
 
 	binarize, isodata, rgb2gray, rgb2lab, rgb2YCbCr, rgb2ycbcr, grid2img, img2grid, grays2cube, grays2rgb,
 
-	makeDCWs, mksymbol,
+	makeDCWs, mksymbol, pastplates,
 
 	Ginnerjoin, Gouterjoin, Gleftjoin, Grightjoin, Gcrossjoin, Gsemijoin, Gantijoin, spatialjoin,
 
@@ -320,6 +320,7 @@ include("windbarbs/windbarbs.jl")
 include("zscale.jl")
 include("drawing.jl")
 include("get_enums.jl")
+include("pastplates.jl")
 
 @setup_workload let
 	G_API[1] = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS)
