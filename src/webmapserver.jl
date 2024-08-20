@@ -115,6 +115,9 @@ Read the `layer` number provided by the service from which the `wms` type was cr
    the image dimensions. Example, `size=(1200, 100)` to get an image with 1200 rows and 100 columns.
 - `time`: Some services provide data along time. Use this option to provide a time string as provided by DateTime.
    For example: `time=string(DateTime(2021,10,29))`
+- `geog | force_geog | forcegeog`: Force the requested layer to be in geographical coordinates. This is useful when the
+   data is in projected coordinates (check that by asking the contents of `wms.layer[layer].srs`) but want to pass a
+   `region` in geogs. Warning: there is no guarantee that this always works. 
 
 ### Returns
 A GMTimage
@@ -193,16 +196,18 @@ function wms_helper(wms::WMS; layer=0, kw...)
 	d = KW(kw)
 	((reg = find_in_dict(d, [:R :region :limits], false)[1]) === nothing) && error("Must provide the `region` option.")
 
+	SRS = find_in_dict(d, [:geog :force_geog :forcegeog])[1] !== nothing ? "EPSG:4326" : wms.layer[layer_n].srs
+
 	if (isa(reg, Tuple) || isa(reg, VMr))
 		len::Int = length(reg)				# reg is a damn Any
 		(len > 4 || len < 3) && error("The region array must have THREE or FOUR elements.")
 		if (len == 4)
 			lims::Vector{<:Real} = [reg[1], reg[2], reg[3], reg[4]]		# Make a copy to have the same name as in the other branch.
 		else
-			(contains(wms.layer[layer_n].srs, "4326") || contains(wms.layer[layer_n].crs, ":84")) &&
+			(contains(SRS, "4326") || contains(wms.layer[layer_n].crs, ":84")) &&
 				error("This is a Geographical layer so you cannot set the region with a center and a width.")
-			t_srs = epsg2proj(parse(Int, wms.layer[layer_n].srs[6:end]))	# Convert to proj4 because lonlat2xy() does not know EPSG
-			center::Matrix{Float64} = lonlat2xy([reg[1] reg[2]], t_srs)		# Box center in projected coordinates
+			t_srs = epsg2proj(parse(Int, SRS[6:end]))							# Convert to proj4 because lonlat2xy() does not know EPSG
+			center::Matrix{Float64} = lonlat2xy([reg[1] reg[2]], t_srs)	# Box center in projected coordinates
 			half_w::Float64 = reg[3] / 2
 			lims = [center[1]-half_w, center[1]+half_w, center[2]-half_w, center[2]+half_w]
 		end
@@ -225,16 +230,16 @@ function wms_helper(wms::WMS; layer=0, kw...)
 			error("The 'size' option must be a Tuple or Array with TWO elements")
 		dim_x::Int, dim_y::Int = dim[2], dim[1]
 	elseif ((res = find_in_dict(d, [:res :cellsize :pixelsize :resolution])[1]) !== nothing)
-		if (isa(res, String) && res[end] == 'd')		# Got resolution in degrees (a string ending with a 'd')
-			(!contains(wms.layer[layer_n].srs, "4326") && !contains(wms.layer[layer_n].crs, ":84")) &&
+		if (isa(res, String) && res[end] == 'd')			# Got resolution in degrees (a string ending with a 'd')
+			(!contains(SRS, "4326") && !contains(wms.layer[layer_n].crs, ":84")) &&
 				error("This is not a Geographical dataset so you cannot set the resolution in degrees")
 			_res::Float64 = parse(Float64, res[1:end-1])
 			dim_x, dim_y = loc_getsize(_res, lims)
 		else
-			if (!contains(wms.layer[layer_n].srs, "4326") && !contains(wms.layer[layer_n].crs, ":84"))	# Easy case
+			if (!contains(SRS, "4326") && !contains(wms.layer[layer_n].crs, ":84"))	# Easy case
 				_res = res
 			else				# Here BB is in degrees and resolution in meters
-				deg_per_m = 360 / (6371000 * 2pi)		# Use spherical authalic radius
+				deg_per_m = 360 / (6371000 * 2pi)			# Use spherical authalic radius
 				_res = res * deg_per_m
 			end
 			dim_x, dim_y = loc_getsize(_res, lims)
@@ -253,7 +258,7 @@ function wms_helper(wms::WMS; layer=0, kw...)
 	FMT   = (wms.layer[layer_n].imgformat != "") ? @sprintf("&FORMAT=%s", wms.layer[layer_n].imgformat) : "&FORMAT=image/png"
 	TIME::String  = ((val = find_in_dict(d, [:time])[1]) !== nothing && isa(val,String)) ? "&time=" * val * "Z" : ""
 	
-	str = @sprintf("WMS:%sSERVICE=WMS&VERSION=%s&REQUEST=GetMap&LAYERS=%s&SRS=%s&BBOX=%s%s%s%s%s%s%s%s", wms.OnlineResource, wms.version, wms.layer[layer_n].name, wms.layer[layer_n].srs, BB, FMT, TILSZ, OVCNT, MINRES, TILED, TRANS, TIME)
+	str = @sprintf("WMS:%sSERVICE=WMS&VERSION=%s&REQUEST=GetMap&LAYERS=%s&SRS=%s&BBOX=%s%s%s%s%s%s%s%s", wms.OnlineResource, wms.version, wms.layer[layer_n].name, SRS, BB, FMT, TILSZ, OVCNT, MINRES, TILED, TRANS, TIME)
 
 	return str, dim_x, dim_y
 end
