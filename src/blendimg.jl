@@ -1,27 +1,53 @@
 # ---------------------------------------------------------------------------------------------------
 """
-    blendimg!(color::GMTimage, shade::GMTimage; new=false)
+    blendimg!(color::GMTimage, shade::GMTimage; new=false, mode="", transparency=0.5, white=220, burn_up=180, screen_low=200)
 
-Blend the RGB `color` GMTimage with the `shade` intensity image (normally obtained with gdaldem)
-The `new` argument determines if we return a new RGB image or update the `color` argument.
+Blend `color` GMTimage that is normally a RGB image with the `shade` intensity image (normally obtained with
+gdaldem or Blender ray tracer). However, for certain blender modes both ``color`` or ``shade`` can be RGB
+or grayscale images. It is highly instructive to watch this YouTube video on how to combine the "LinearBurn"
+and the "Screen" modes to create stunning "Shaded relief" effects. https://somethingaboutmaps.wordpress.com/2014/10/26/adding-shaded-relief-in-photoshop/
 
-The blending method is the one explained in https://gis.stackexchange.com/questions/255537/merging-hillshade-dem-data-into-color-relief-single-geotiff-with-qgis-and-gdal/255574#255574
+- `mode`:
+  - `mode=""` or `mode="gcalc"`: The blending method is the one explained at
+    https://gis.stackexchange.com/questions/255537/merging-hillshade-dem-data-into-color-relief-single-geotiff-with-qgis-and-gdal/255574#255574
+  
+  - `mode="blend"`: Simple 50% (default) blend is performed. Set `transparency` to other value in the ]0 1[
+    range to weight more one of the images. 0.75 will make `img` weight 3/4 of the total sum, and so forth.
 
-### Returns
-A GMT RGB Image
+  - `mode="LinearBurn"`: (Same as Photoshop blender _LinearBurn_) Adds the pixel values of the upper and lower
+    layers and then subtracts 255. It tends to make the image darker. The `burn_up` option sets the threshold
+    value of ``shade`` above which the ``color`` image is not modified.
 
-    blendimg!(img1::GMTimage, img2::GMTimage; new=false, transparency=0.5)
+  - `mode="ColorBurn"`: (Same as Photoshop blender _ColorBurn_) It inverts the pixel value of ``color`` layer,
+    divides that by the pixel value of the ``shade``, then inverts the result. It tends to make the image darker.
 
-Blend two 2D UInt8 or 2 RGB images using transparency. 
-  - `transparency` The default value, 0.5, gives equal weight to both images. 0.75 will make
-    `img` weight 3/4 of the total sum, and so forth.
-  - `new` If true returns a new GMTimage object, otherwise it changes the `img1` content.
+  - `mode="Screen"`: (Same as Photoshop blender _Screen_) Inverts the values of each of the visible pixels in the
+    two images. (That is, it subtracts each of them from 255) Then it multiplies them together, and inverts this
+    value again. The resulting image is usually brighter, and sometimes “washed out” in appearance. To control this
+    washing effect, use the `screen_low` option that sets the threshold value of ``shade`` below which the ``color``
+    image is not modified. Note, this value is very case dependent and normally requires some trial and error to
+    find the right value. A second way of controlling the washing effect is to use the `white` option different
+    from 255. The default here is `white=220` which makes the added bright be less bright.
 
-### Returns
-A GMT intensity Image
+- `new`: If true returns a new GMTimage object, otherwise it changes the `color` content.
 """
-function blendimg!(color::GMTimage{UInt8, 3}, shade::GMTimage{UInt8, 2}; new=false)
+function blendimg!(color::GMTimage, shade::GMTimage; mode="", transparency=0.5, new=false,
+                   white=220, burn_up=180, screen_low=200)
+	
+	(length(color) == length(shade) || mode == "blend") &&		# The simple 50% (default) blend
+		return blend_blend(color, shade, transparency=transparency, new=new)
 
+	((size(color,3) == 3 && size(shade,3) == 1) && (mode == "gcalc" || mode == "")) &&	# The gdal_calc algorithm (for backward compat)
+		return blend_gcalc(color, shade, new=new)
+
+	(mode !== "") && return blend_PS(color, shade, mode=mode, new=new, white=white, burn_up=burn_up, screen_low=screen_low)
+	
+	error("Bad usage of blendimg! function.")
+end
+
+# ---------------------------------------------------------------------------------------------------
+function blend_gcalc(color::GMTimage{UInt8, 3}, shade::GMTimage{UInt8, 2}; new=false)
+	
 	blend = (new) ? Array{UInt8,3}(undef, size(shade,1), size(shade,2), 3) : color.image
 
 	n_pix = length(shade)
@@ -30,7 +56,8 @@ function blendimg!(color::GMTimage{UInt8, 3}, shade::GMTimage{UInt8, 2}; new=fal
 			off = (n - 1) * n_pix
 			@inbounds @simd for k = 1:n_pix
 				t = shade.image[k] / 255
-				blend[k+off] = (t < 0.5) ? round(UInt8, 2t * color.image[k+off]) : round(UInt8, (1 - 2*(1 - t) * (1 - color.image[k+off]/255)) * 255)
+				blend[k+off] = (t < 0.5) ? round(UInt8, 2t * color.image[k+off]) :
+				                           round(UInt8, (1 - 2*(1 - t) * (1 - color.image[k+off]/255)) * 255)
 			end
 		end
 	else								# Assume Pixel interleaved
@@ -51,19 +78,19 @@ function blendimg!(color::GMTimage{UInt8, 3}, shade::GMTimage{UInt8, 2}; new=fal
 	return (new) ? mat2img(blend, color) : color
 end
 
-function blendimg!(img1::GMTimage, img2::GMTimage; new=false, transparency=0.5)
+# ---------------------------------------------------------------------------------------------------
+function blend_blend(img1::GMTimage, img2::GMTimage; new=false, transparency=0.5)
 	# This method blends two UInt8 images with transparency
 	@assert eltype(img1) == eltype(img2)
 	@assert length(img1) == length(img2)
 	same_layout = (img1.layout[1:2] == img2.layout[1:2])
-	blend = (new) ? Array{eltype(img1), ndims(img1)}(undef, size(img1)) : img1.image
 	t, o = transparency, 1. - transparency
 	if (same_layout)
+		blend = (new) ? Array{eltype(img1), ndims(img1)}(undef, size(img1)) : img1.image
 		@inbounds @simd for k = 1:length(img1)
 			blend[k] = round(UInt8, t * img1.image[k] + o * img2.image[k])
 		end
 	else
-		#(size(img1,3) == 1) && error("Sorry, blending RGB images of different mem layouts is not yet implemented")
 		flip, transp = img1.layout[1] != img2.layout[1], img1.layout[2] != img2.layout[2]
 		if     (flip && !transp)  blend = reverse(img2.image, dims=1)
 		elseif (!flip && transp)  blend = collect(img2.image')
@@ -75,6 +102,92 @@ function blendimg!(img1::GMTimage, img2::GMTimage; new=false, transparency=0.5)
 		(!new) && (img1.image = blend)
 	end
 	return (new) ? mat2img(blend, img1) : img1
+end
+
+# ---------------------------------------------------------------------------------------------------
+function blend_PS(A::GMTimage{UInt8, 3}, B::GMTimage; mode="LinearBurn", new=false, white=220, burn_up=180, screen_low=220)
+	# PhotoShop blend modes (a few)
+
+	blend = (new) ? Array{UInt8,size(A,3)}(undef, size(A)) : A.image
+	_mode = lowercase(string(mode))
+	kt = 0
+	um_8, um_16 = UInt8(255), Int16(255)
+	if (startswith(_mode, "linear"))		# LinearBurn
+		if (size(B, 3) == 3)
+			@inbounds for k = 1:length(A)
+				t = Int16(A.image[k]) + Int16(B.image[k]) - um_16
+				blend[k] = (t < 0) ? UInt8(0) : UInt8(t)
+			end
+		else
+			if (A.layout[3] == 'B')			# Band interleaved
+				for n = 1:3
+					@inbounds for k = 1:length(A)
+						bk = Int16(B.image[k]);		bk > burn_up && (bk = um_16)
+						blend[kt+=1] = UInt8(Int16(A.image[kt]) + bk - um_16)
+					end
+				end
+			else							# Pixel interleaved
+				@inbounds for k = 1:length(B)
+					bk = Int16(B.image[k]);			bk > burn_up && (bk = um_16)
+					for n = 1:3
+						t = Int16(A.image[kt+=1]) + bk - um_16
+						blend[kt] = (t < 0) ? UInt8(0) : UInt8(t)
+					end
+				end
+			end
+		end
+	elseif (startswith(_mode, "colorb"))	# ColorBurn
+		if (size(B, 3) == 3)
+			@inbounds for k = 1:length(A)
+				t = 255 - (um_8 - B.image[k]) / A.image[k] * 255
+				blend[k] = (t > 255) ? UInt8(255) : (t < 0) ? UInt8(0) : round(UInt8, t)
+			end
+		else
+			if (A.layout[3] == 'B')			# Band interleaved
+				for n = 1:3
+					@inbounds for k = 1:length(A)
+						kt += 1
+						t = 255 - (um_8 - B.image[k]) / A.image[kt] * 255
+						blend[kt] = (t > 255) ? UInt8(255) : (t < 0) ? UInt8(0) : round(UInt8, t)
+					end
+				end
+			else							# Pixel interleaved
+				@inbounds for k = 1:length(B)
+					for n = 1:3
+						kt += 1
+						t = 255 - (um_8 - B.image[k]) / A.image[kt] * 255
+						blend[kt] = (t > 255) ? UInt8(255) : (t < 0) ? UInt8(0) : round(UInt8, t)
+					end
+				end
+			end
+		end
+	elseif (_mode == "screen")
+		if (size(B, 3) == 3)
+			@inbounds for k = 1:length(A)
+				blend[k] = round(UInt8, (1.0 - (1.0 - A.image[k]/255) * (1.0 - B.image[k]/255)) * 255)
+			end
+		else
+			if (A.layout[3] == 'B')			# Band interleaved
+				for n = 1:3
+					@inbounds for k = 1:length(A)
+						kt += 1
+						bk = B.image[k];	bk < screen_low && (bk = UInt8(0))
+						blend[kt] = round(UInt8, (1.0 - (1.0 - A.image[kt]/255) * (1.0 - bk/255)) * white)
+					end
+				end
+			else							# Pixel interleaved
+				@inbounds for k = 1:length(B)
+					bk = B.image[k];		bk < screen_low && (bk = UInt8(0))
+					for n = 1:3
+						kt += 1
+						blend[kt] = round(UInt8, (1.0 - (1.0 - A.image[kt]/255) * (1.0 - bk/255)) * white)
+					end
+				end
+			end
+		end
+	else error("Unknown blend mode: $_mode")
+	end
+	return (new) ? mat2img(blend, A) : A
 end
 
 # ---------------------------------------------------------------------------------------------------
