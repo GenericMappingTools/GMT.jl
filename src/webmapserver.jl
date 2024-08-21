@@ -136,6 +136,7 @@ function wmsread(wms::WMS; layer=0, time::String="", kw...)
 	layer_n = get_layer_number(wms, layer)
 	str, dim_x, dim_y = wms_helper(wms; layer=layer_n, time=time, kw...)
 	opts = ["-outsize", "$(dim_x)", "$(dim_y)"]
+	((Vd = find_in_kwargs(kw, [:Vd])[1]) !== nothing) && (println(str, "\n", opts); (Vd == 2) && return nothing) 
 	gdaltranslate(str, opts)
 end
 

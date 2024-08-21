@@ -113,7 +113,7 @@ function blend_PS(A::GMTimage{UInt8, 3}, B::GMTimage; mode="LinearBurn", new=fal
 	kt = 0
 	um_8, um_16 = UInt8(255), Int16(255)
 	if (startswith(_mode, "linear"))		# LinearBurn
-		if (size(B, 3) == 3)
+		if (size(B, 3) == 3)				# Both are 3-band images
 			@inbounds for k = 1:length(A)
 				t = Int16(A.image[k]) + Int16(B.image[k]) - um_16
 				blend[k] = (t < 0) ? UInt8(0) : UInt8(t)
@@ -121,9 +121,10 @@ function blend_PS(A::GMTimage{UInt8, 3}, B::GMTimage; mode="LinearBurn", new=fal
 		else
 			if (A.layout[3] == 'B')			# Band interleaved
 				for n = 1:3
-					@inbounds for k = 1:length(A)
+					@inbounds for k = 1:length(B)
 						bk = Int16(B.image[k]);		bk > burn_up && (bk = um_16)
-						blend[kt+=1] = UInt8(Int16(A.image[kt]) + bk - um_16)
+						t = Int16(A.image[kt+=1]) + bk - um_16
+						blend[kt] = (t < 0) ? UInt8(0) : UInt8(t)
 					end
 				end
 			else							# Pixel interleaved
@@ -137,7 +138,7 @@ function blend_PS(A::GMTimage{UInt8, 3}, B::GMTimage; mode="LinearBurn", new=fal
 			end
 		end
 	elseif (startswith(_mode, "colorb"))	# ColorBurn
-		if (size(B, 3) == 3)
+		if (size(B, 3) == 3)				# Both are 3-band images
 			@inbounds for k = 1:length(A)
 				t = 255 - (um_8 - B.image[k]) / A.image[k] * 255
 				blend[k] = (t > 255) ? UInt8(255) : (t < 0) ? UInt8(0) : round(UInt8, t)
@@ -145,7 +146,7 @@ function blend_PS(A::GMTimage{UInt8, 3}, B::GMTimage; mode="LinearBurn", new=fal
 		else
 			if (A.layout[3] == 'B')			# Band interleaved
 				for n = 1:3
-					@inbounds for k = 1:length(A)
+					@inbounds for k = 1:length(B)
 						kt += 1
 						t = 255 - (um_8 - B.image[k]) / A.image[kt] * 255
 						blend[kt] = (t > 255) ? UInt8(255) : (t < 0) ? UInt8(0) : round(UInt8, t)
@@ -161,15 +162,15 @@ function blend_PS(A::GMTimage{UInt8, 3}, B::GMTimage; mode="LinearBurn", new=fal
 				end
 			end
 		end
-	elseif (_mode == "screen")
-		if (size(B, 3) == 3)
+	elseif (_mode == "screen")				# Screen
+		if (size(B, 3) == 3)				# Both are 3-band imagesf (size(B, 3) == 3)
 			@inbounds for k = 1:length(A)
 				blend[k] = round(UInt8, (1.0 - (1.0 - A.image[k]/255) * (1.0 - B.image[k]/255)) * 255)
 			end
 		else
 			if (A.layout[3] == 'B')			# Band interleaved
 				for n = 1:3
-					@inbounds for k = 1:length(A)
+					@inbounds for k = 1:length(B)
 						kt += 1
 						bk = B.image[k];	bk < screen_low && (bk = UInt8(0))
 						blend[kt] = round(UInt8, (1.0 - (1.0 - A.image[kt]/255) * (1.0 - bk/255)) * white)

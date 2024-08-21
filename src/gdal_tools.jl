@@ -173,7 +173,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    gdaldem(dataset, method, options=String[]; dest="/vsimem/tmp", colorfile=name|GMTcpt, kw...)
+    gdaldem(dataset, method, options=String[]; dest="/vsimem/tmp", color=name|GMTcpt, kw...)
 
 Tools to analyze and visualize DEMs.
 
@@ -185,7 +185,9 @@ Tools to analyze and visualize DEMs.
     The accepted options are the ones of the gdaldem utility.
 
 # Keyword Arguments
-* `colorfile` color file (mandatory for "color-relief" processing, should be empty otherwise).
+* `color` color file (mandatory for "color-relief" processing, should be empty otherwise).
+   If `color` is just a CPT name we compute a CPT from it and the input grid.
+
 * `kw...` keyword=value arguments when `method` is hillshade.
 
 ### Returns
@@ -284,6 +286,8 @@ function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::St
 		_cmap = TMPDIR_USR[1] * "/GMTjl_cpt_" * TMPDIR_USR[2] * TMPDIR_USR[3] * ".cpt"
 		if ((isa(cmap, String) && (lowercase(splitext(cmap)[2][2:end]) == "cpt")) || isa(cmap, GMTcpt))
 			save_cpt4gdal(cmap, _cmap)	# GDAL pretend to recognise CPTs but it almost doesn't
+		elseif ((isa(cmap, String) || isa(cmap, Symbol)) && isa(indata, GMTgrid))
+			save_cpt4gdal(makecpt(indata, C=string(cmap)), _cmap)
 		else
 			_cmap = cmap				# Risky, assume it's something GDAL can read
 		end
