@@ -149,9 +149,13 @@ function parse_opt_range(d::Dict, cmd::String, opt::String="")::Tuple{String, Ve
 					else   @warn("Unkown option \"$_opt\" in range option")
 					end
 				end
+			elseif (n == 2)
+				out *= "/1"
 			end
 		elseif (isa(val, VMr) || isa(val, GMTdataset))
 			Tvec, out = vec(Float64.(val)), ""	# In 6.5, Tvec needs to be a GMTdataset with comment = LIST
+		elseif (isa(val, Integer))	# Accept an integer as the number of bins
+			out = "0/$(val)/1"
 		else
 			out = arg2str(val)		# Everything fits here if given as a string
 		end
