@@ -1185,6 +1185,7 @@ function mat2img(mat::Union{GMTgrid,Matrix{<:AbstractFloat}}; x=Float64[], y=Flo
 		else                 I.colormap, I.labels, I.n_colors = zeros(Int32,3), String[], 0	# Do not inherit this from GI
 		end
 	elseif (isa(mat, GMTgrid))
+		(isa(cmap, Symbol) || isa(cmap, String)) && (cmap = grd2cpt(mat, E=256, C=cmap))
 		I = mat2img(img; x=mat.x, y=mat.y, hdr=hdr, proj4=mat.proj4, wkt=mat.wkt, cmap=cmap, is_transposed=is_transp, kw...)
 	else
 		I = mat2img(img; x=x, y=y, hdr=hdr, proj4=proj4, wkt=wkt, cmap=cmap, is_transposed=is_transp, kw...)
@@ -1194,7 +1195,7 @@ function mat2img(mat::Union{GMTgrid,Matrix{<:AbstractFloat}}; x=Float64[], y=Flo
 end
 
 """
-    imagesc(mat; x=, y=, hdr=, proj4=, wkt=, GI=, clim=, cmap=, kw...)
+    I = imagesc(mat; x=, y=, hdr=, proj4=, wkt=, GI=, clim=, cmap=, kw...)
 
 imagesc takes a Float matrix or a GMTgrid type and scales it (by default) to the [0, 255] interval.
 In the process it creates a GMTimage type. Those types can account for coordinates and projection
@@ -1805,20 +1806,24 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    I = ind2rgb(I::GMTimage, cmap::GMTcpt=GMTcpt(), layout="BRPa")
+    I = ind2rgb(I::GMTimage, cpt::GMTcpt=GMTcpt(), layout="BRPa"; cmap=GMTcpt())
 
 Convert an indexed image I to RGB. If `cmap` is not provided, it uses the internal colormap to do the conversion.
 If neither them exists, the layer is replicated 3 times thus resulting in a gray scale image.
+
+Use the `cmap` keyword in alternative to the `cpt` positional variable. 
 """
-function ind2rgb(I::GMTimage, cmap::GMTcpt=GMTcpt(), layout="BRPa")
-	(size(I.image, 3) >= 3) && return I 	# Image is already RGB(A)
+function ind2rgb(I::GMTimage, cpt::GMTcpt=GMTcpt(), layout="BRPa"; cmap=GMTcpt())
+	(size(I.image, 3) >= 3) && return I 		# Image is already RGB(A)
+
+	(isempty(cpt) && isa(cmap, Symbol) || isa(cmap, String)) && (cpt = makecpt(I.range[6]-I.range[5]+1, C=cmap))
 
 	# If the CPT is shorter them maximum in I, reinterpolate the CPT
-	(!isempty(cmap) && (ma = maximum(I.image)) > size(cmap.colormap,1)) && (cmap = gmt("makecpt -T0/{$ma}/+n{$ma}", cmap))
-	_cmap = (!isempty(cmap)) ? cpt2cmap(cmap::GMTcpt, I.nodata)[1] : I.colormap
+	(!isempty(cpt) && (ma = maximum(I.image)) > size(cpt.colormap,1)) && (cpt = gmt("makecpt -T0/{$ma}/+n{$ma}", cpt))
+	_cmap = (!isempty(cpt)) ? cpt2cmap(cpt::GMTcpt, I.nodata)[1] : I.colormap
 
 	have_alpha = (length(I.colormap) / I.n_colors) == 4 && !all(I.colormap[end-Int(I.n_colors/4+1):end] .== 255)
-	if (I.n_colors == 0 && isempty(cmap))		# If no cmap just replicate the first layer.
+	if (I.n_colors == 0 && isempty(cpt))		# If no cmap just replicate the first layer.
 		imgRGB = repeat(I.image, 1, 1, 3)
 		layout = I.layout
 	else
