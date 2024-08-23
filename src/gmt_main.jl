@@ -488,7 +488,7 @@ function get_image(API::Ptr{Nothing}, object)::GMTimage
 			o = (nz == 1) ? (ny, nx) : (nz, ny, nx)
 		else
 			o = (nz == 1) ? (ny, nx) : (ny, nx, nz)
-			isBRP = startswith(layout, "BRP")
+			isBRP = startswith(layout, "BRP") || startswith(layout, "TRP")
 			(nz == 1 && isBRP) && (layout = "BRPa")	# For 1 layer "BRBa" and "BRPa" is actualy the same.
 			(!isBRP && nz > 1) && @warn("Only 'I' for Images.jl and 'BRP' MEM layouts are allowed.")
 			
