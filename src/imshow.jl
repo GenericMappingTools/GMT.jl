@@ -115,7 +115,7 @@ function imshow(arg1::GItype; kw...)
 	d = KW(kw)
 	see::Bool = (!haskey(d, :show)) ? true : (d[:show] != 0)	# No explicit 'show' keyword means show=true
 
-	if (isa(arg1, GMTimage) && size(arg1, 3) <= 3)				# Rest of the work is done in grdiamge
+	if (isa(arg1, GMTimage) && (size(arg1, 3) <= 3 || arg1.layout[4] == 'A'))	# Rest of the work is done in grdiamge
 		return grdimage("", arg1; show=see, kw...)
 	end
 
