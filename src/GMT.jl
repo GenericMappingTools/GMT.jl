@@ -175,6 +175,8 @@ export
 
 	makeDCWs, mksymbol, pastplates,
 
+	gunique, sortslicesperm,
+
 	Ginnerjoin, Gouterjoin, Gleftjoin, Grightjoin, Gcrossjoin, Gsemijoin, Gantijoin, spatialjoin,
 
 	df2ds, ODE2ds,
@@ -292,6 +294,7 @@ include("streamlines.jl")
 include("surface.jl")
 include("subplot.jl")
 include("show_pretty_datasets.jl")
+include("solids.jl")
 include("statplots.jl")
 include("tables_gmt.jl")
 include("themes.jl")
