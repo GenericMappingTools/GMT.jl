@@ -3896,6 +3896,16 @@ function isgeog(in)::Bool
 end
 
 # ---------------------------------------------------------------------------------------------------
+"""
+    isFV(D::Vector{<:GMTdataset})::Bool
+
+Check if D, a vector of GMTdataset, is a Face-Vertices ensemble.
+"""
+function isFV(D::Vector{<:GMTdataset})::Bool
+	length(D) == 2 && (D[1].geom == wkbPoint || D[1].geom == wkbPointZ) && eltype(D[2].data) <: Integer
+end
+
+# ---------------------------------------------------------------------------------------------------
 function find_data(d::Dict, cmd0::String, cmd::String, args...)
 	# ...
 
