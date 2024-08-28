@@ -62,7 +62,7 @@ Transform Cartesian coordinates to spherical. Angles are returned in radians by 
 Use `deg=true` to return the angles in degrees. Input can be scalar, vectors or matrices.
 """
 function cart2sph(x, y, z; deg::Bool=false)
-	h,  = hypot.(x, y)
+	h   = hypot.(x, y)
 	rho = hypot.(h, z)
 	elev = (deg) ? atand.(z, h) : atan.(z, h)
 	az   = (deg) ? atand.(y, x) : atan.(y, x)
@@ -92,6 +92,10 @@ uniqueind(x) = unique(i -> x[i], eachindex(x))
 
 Return an array containing only the unique elements of `x` and the indices `ind` such that `u = x[ind]`.
 If `sorted` is true the output is sorted (default is not)
+
+    u, ic, ia = gunique(x::AbstractMatrix; sorted::Bool=false, rows=true)
+
+Behaves like Matlab's unique(x, 'rows'), where u = x(ia,:) and x = u(ic,:). If `rows` is false then `ic` is empty.
 """
 function gunique(x::AbstractVector; sorted::Bool=false)
 
@@ -113,6 +117,60 @@ function gunique(x::AbstractVector; sorted::Bool=false)
 		uniquit(x)
 	end
 end
+
+# Method for matrices. The default is like Matalb's [C, ind] = unique(A, 'rows')
+function gunique(x::AbstractMatrix; sorted::Bool=false, rows=true)
+	!rows && return gunique(vec(x); sorted=sorted)
+
+	if (sorted)
+		#xx = view(x, ind,:)
+		#ind_ = sortslicesperm(xx, dims=1)
+		#ind = ind[ind_]
+
+		rows = size(x,1)
+		IC = sortslicesperm(x, dims=1)
+		C = x[IC, :]
+		d = view(C, 1:rows-1, :) .!= view(C, 2:rows, :)
+		d = any(d, dims=2)
+		d = vec([true; d])			# First row is always a member of unique list.
+		C = C[d, :]
+		IA = cumsum(d, dims=1)		# Lists position, starting at 1.
+		IA[IC] = IA		#Re-reference POS to indexing of SORT.
+		IC = IC[d]
+		return C, IC, IA
+	end
+
+	ind = first.(unique(last,pairs(eachrow(x))))
+	return x[ind, :], ind, Vector{Int}()
+end
+
+# ----------------------------------------------------------------------------------------------------------
+"""
+   p = sortslicesperm(A; dims=1, kws...)
+
+Like `sortslices` but return instead the indices `p` such that `A[p, :] == sortslices(A; dims=1, kws...)`
+"""
+function sortslicesperm(A::AbstractArray; dims::Union{Integer, Tuple{Vararg{Integer}}}=1, kws...)
+    itspace = compute_itspace(A, Val{dims}())
+    vecs = map(its->view(A, its...), itspace)
+    p = sortperm(vecs; kws...)
+end
+
+# Works around inference's lack of ability to recognize partial constness
+struct DimSelector{dims, T}
+    A::T
+end
+DimSelector{dims}(x::T) where {dims, T} = DimSelector{dims, T}(x)
+(ds::DimSelector{dims, T})(i) where {dims, T} = i in dims ? axes(ds.A, i) : (:,)
+
+_negdims(n, dims) = filter(i->!(i in dims), 1:n)
+
+function compute_itspace(A, ::Val{dims}) where {dims}
+    negdims = _negdims(ndims(A), dims)
+    axs = Iterators.product(ntuple(DimSelector{dims}(A), ndims(A))...)
+    vec(permutedims(collect(axs), (dims..., negdims...)))
+end
+
 
 #= ------------------------------------------------------------
 """
@@ -965,6 +1023,28 @@ function rect_overlap(xc_1, yc_1, xc_2, yc_2, width1, height1, width2, height2)
 	
 	overlap = (pivalue < 0) ? true : false
 	return overlap, pivalue
+end
+
+# ----------------------------------------------------------------------------
+"""
+    n = facenorm(M::Matrix{<:Real}; normalize=true)
+
+Calculates the normal vector of a polygon with vertices in `M`.
+
+- `normalize`: By default, it returns the unit vector. If `false`, it returns the non-normalized 
+  vector that represents the area of the polygon.
+
+### Returns
+A 3 elements vector with the components of the normal vector.
+"""
+function facenorm(M::Matrix{<:Real}; normalize=true)
+	# Must take care of the case when the first and last vertices are the same
+	last = (M[1,:] == M[end,:]) ? size(M,1)-1 : size(M,1)
+	c = cross(M[last,:], M[1,:])		# First edge
+	for k = 1:last-1					# Loop from first to end-1
+		c += cross(M[k,:], M[k+1,:])	# Sum the rest of edges
+	end
+	return normalize ? c / norm(c) : c	# The cross product gives us 2 * A(rea)
 end
 
 # ---------------------------------------------------------------------------------------------------

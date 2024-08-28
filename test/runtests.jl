@@ -71,6 +71,8 @@ using Dates, Printf#, Logging
 	include("test_modern.jl")
 	println("		Entering: test_P_a_T.jl")
 	include("test_P_a_T.jl")
+	println("		Entering: test_solidos.jl")
+	include("test_solidos.jl")
 	println("		Entering: test_statplots.jl")
 	include("test_statplots.jl")
 	println("		Entering: test_texture.jl")

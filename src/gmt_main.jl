@@ -1015,12 +1015,13 @@ function dataset_init(API::Ptr{Nothing}, Darr::Vector{<:GMTdataset}, direction::
 # If direction is GMT_IN then we are given a Julia struct and can determine dimension.
 # If output then we dont know size so we set dimensions to zero.
 
-	(Darr == C_NULL) && error("Input is empty where it can't be.")
+	(Darr == C_NULL || length(Darr) == 0) && error("Input is empty where it can't be.")
+
+	isFV(Darr) && return dataset_init_FV(API, Darr)			# Special case for Face-Vertices obj.
 
 	# We come here if we did not receive a matrix
 	dim = [1, 0, 0, 0]
 	dim[GMT_SEG+1] = length(Darr)				# Number of segments
-	(dim[GMT_SEG+1] == 0) && error("Input has zero segments where it can't be")
 	dim[GMT_COL+1] = size(Darr[1].data, 2)		# Number of columns
 
 	mode = (length(Darr[1].text) != 0) ? GMT_WITH_STRINGS : GMT_NO_STRINGS
@@ -1029,7 +1030,7 @@ function dataset_init(API::Ptr{Nothing}, Darr::Vector{<:GMTdataset}, direction::
 	D = convert(Ptr{GMT_DATASET}, GMT_Create_Data(API, GMT_IS_DATASET, GMT_IS_PLP, mode, pdim, NULL, NULL, 0, 0, NULL))
 	DS::GMT_DATASET = unsafe_load(D)
 
-	DT = unsafe_load(unsafe_load(DS.table))				# GMT_DATATABLE
+	DT = unsafe_load(unsafe_load(DS.table))			# GMT_DATATABLE
 
 	n_records = 0
 	for seg = 1:dim[GMT_SEG+1] 						# Each incoming structure is a new data segment
@@ -1046,7 +1047,7 @@ function dataset_init(API::Ptr{Nothing}, Darr::Vector{<:GMTdataset}, direction::
 		Sb = unsafe_load(S)								# GMT_DATASEGMENT;		Sb.data -> Ptr{Ptr{Float64}}
 		for col = 1:Sb.n_columns						# Copy the data columns
 			#unsafe_store!(Sb.data, pointer(Darr[seg].data[:,col]), col)	# This would allow shared mem
-			if (isa(Darr[seg].data, Float64))			# They must be Float64 because of the .data type in GMT_DATASEGMENT
+			if (eltype(Darr[seg].data) == Float64)		# They must be Float64 because of the .data type in GMT_DATASEGMENT
 				unsafe_copyto!(unsafe_load(Sb.data, col), pointer(Darr[seg].data[:,col]), Sb.n_rows)
 			else
 				unsafe_copyto!(unsafe_load(Sb.data, col), pointer(Float64.(Darr[seg].data[:,col])), Sb.n_rows)
@@ -1085,6 +1086,70 @@ function dataset_init(API::Ptr{Nothing}, Darr::Vector{<:GMTdataset}, direction::
 	unsafe_store!(D, DS)
 
 	return D
+end
+
+# ---------------------------------------------------------------------------------------------------
+function dataset_init_FV(API::Ptr{Nothing}, FV)::Ptr{GMT_MATRIX}
+	V::GMTdataset{Float64,2}, F::GMTdataset{Int,2} = FV[1], FV[2]
+	n_segs = size(F.data, 1)				# Number of segments or faces (polygons)
+	n_rows = size(F.data, 2)				# Number of rows (vertexes of the polygon)
+	n_cols = size(V.data, 2)				# Number of columns (2 for x,y; 3 for x,y,z)
+	view_vec = [sind(200) * cosd(30), cosd(200) * cosd(30), sind(30)]
+
+	view_proj = triage_faces(V, F, view_vec)
+	n_visible_faces = sum(view_proj .> 0)
+	dim = [1, n_visible_faces, n_rows, n_cols]		# [1, GMT_SEG+1, GMT_ROW+1, GMT_COL+1]
+
+	pdim = pointer(dim)
+	D = convert(Ptr{GMT_DATASET}, GMT_Create_Data(API, GMT_IS_DATASET, GMT_IS_PLP, GMT_NO_STRINGS, pdim, NULL, NULL, 0, 0, NULL))
+	DS::GMT_DATASET = unsafe_load(D)
+	DT = unsafe_load(unsafe_load(DS.table))			# GMT_DATATABLE
+
+	n_records, count_vis = 0, 0
+	tmp = zeros(n_rows, n_cols)
+
+	for seg = 1:n_segs 								# Each row in F (a face) is a new data segment (a polygon)
+		view_proj[seg] <= 0 && continue
+		count_vis += 1
+
+		DSv = convert(Ptr{Nothing}, unsafe_load(DT.segment, count_vis))		# DT.segment = Ptr{Ptr{GMT_DATASEGMENT}}
+		S = GMT_Alloc_Segment(API, GMT_NO_STRINGS, n_rows, n_cols, "", DSv) # Ptr{GMT_DATASEGMENT}
+		Sb = unsafe_load(S)							# GMT_DATASEGMENT;		Sb.data -> Ptr{Ptr{Float64}}
+		
+		for c = 1:n_cols, r = 1:n_rows
+			tmp[r,c] = V.data[F.data[seg, r], c]
+		end
+		for col = 1:n_cols							# Copy the data columns
+			unsafe_copyto!(unsafe_load(Sb.data, col), pointer(tmp[:,col]), n_rows)
+		end
+
+		n_records += n_rows							# Must manually keep track of totals
+		DS.type_ = GMT_READ_DATA
+		unsafe_store!(S, Sb)
+		unsafe_store!(DT.segment, S, count_vis)
+	end
+	DT.n_records, DS.n_records = n_records, n_records	# They are equal because our GMT_DATASET have only one table
+	Dt = unsafe_load(DS.table)
+	unsafe_store!(Dt, DT)
+	unsafe_store!(DS.table, Dt)
+	unsafe_store!(D, DS)
+
+	return D
+end
+
+function triage_faces(V, F, view_vec)
+	# Compute the dot product between the view vector and the normal of each face
+	n_faces = size(F.data, 1)		# Number of segments or faces (polygons)
+	n_rows = size(F.data, 2)		# Number of rows (vertexes of the polygon)
+	tmp = zeros(n_rows, 3)
+	proj = zeros(n_faces)
+	for face = 1:n_faces 			# Each row in F (a face) is a new data segment (a polygon)
+		for c = 1:3, r = 1:n_rows
+			tmp[r,c] = V.data[F.data[face,r], c]
+		end
+		proj[face] = dot(facenorm(tmp), view_vec)
+	end
+	return proj
 end
 
 # ---------------------------------------------------------------------------------------------------
