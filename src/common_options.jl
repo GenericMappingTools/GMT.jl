@@ -386,7 +386,18 @@ function parse_JZ(d::Dict, cmd::String, del::Bool=true; O::Bool=false, is3D::Boo
 		(o == "") && (o = " ")		# When scaning a string with only -J (i.e., no args), do not error
 		(o[1] != 'X' || o[end] == 'd') &&  @warn("aspect3 works only in linear projections (and no geog), ignoring it.") 
 		if (o[1] == 'X' && o[end] != 'd' && length(o) > 1)
-			opt_J = " -JZ" * split(o[2:end],'/')[1];		seek_JZ = false
+			s_val::String = string(val)
+			if (contains(s_val, ':'))						# An explicit aspect ratio, e.g. 3:2
+				dims = parse.(Float64, split(s_val, ':'))
+				t = split(o[2:end],'/')[1]
+				isletter(t[end]) && (t = t[1:end-1])		# Remove the letter 'x' which hopefully a 'c'
+				w = parse(Float64, t)
+				h = w * dims[2] / dims[1]					# Apply the aspect ratio
+				opt_J = string(" -JZ", h)
+			else
+				opt_J = " -JZ" * split(o[2:end],'/')[1];
+			end
+			seek_JZ = false
 			cmd *= opt_J
 		end
 	end
@@ -602,9 +613,12 @@ function append_figsize(d::Dict, opt_J::String, width::String="", scale::Bool=fa
 	return opt_J
 end
 
-set_aspect_ratio(aspect::Nothing, width::String, def_fig::Bool=false, is_aspect3::Bool=false)::String = set_aspect_ratio("", width, def_fig, is_aspect3)
-set_aspect_ratio(aspect::Symbol, width::String, def_fig::Bool=false, is_aspect3::Bool=false)::String = set_aspect_ratio(string(aspect), width, def_fig, is_aspect3)
-set_aspect_ratio(aspect::Real, width::String, def_fig::Bool=false, is_aspect3::Bool=false)::String = set_aspect_ratio(string(aspect, ":1"), width, def_fig, is_aspect3)
+set_aspect_ratio(aspect::Nothing, width::String, def_fig::Bool=false, is_aspect3::Bool=false)::String =
+	set_aspect_ratio("", width, def_fig, is_aspect3)
+set_aspect_ratio(aspect::Symbol, width::String, def_fig::Bool=false, is_aspect3::Bool=false)::String =
+	set_aspect_ratio(string(aspect), width, def_fig, is_aspect3)
+set_aspect_ratio(aspect::Real, width::String, def_fig::Bool=false, is_aspect3::Bool=false)::String =
+	set_aspect_ratio(string(aspect, ":1"), width, def_fig, is_aspect3)
 function set_aspect_ratio(aspect::String, width::String, def_fig::Bool=false, is_aspect3::Bool=false)::String
 	# Set the aspect ratio. ASPECT can be "equal", "eq"; "square", "sq" or a ratio in the form "4:3", "16:12", etc.
 	def_fig && (width = split(DEF_FIG_SIZE, '/')[1])
@@ -3711,6 +3725,7 @@ function _read_data(d::Dict, cmd::String, arg, opt_R::String="", is3D::Bool=fals
 			if (!occursin("?", opt_R) && !is_onecol)		# is_onecol is true for DateTime data
 				dx::Float64 = (wesn_f64[2] - wesn_f64[1]) * 0.005;	dy::Float64 = (wesn_f64[4] - wesn_f64[3]) * 0.005;
 				wesn_f64[1] -= dx;	wesn_f64[2] += dx;	wesn_f64[3] -= dy;	wesn_f64[4] += dy;
+				length(wesn_f64) == 6 && (dz::Float64 = (wesn_f64[6] - wesn_f64[5]) * 0.005; wesn_f64[5] -= dz;	wesn_f64[6] += dz;)
 				wesn_f64 = round_wesn(wesn_f64, is_geo)		# Add a pad if not-tight
 				if (isGMTdataset(arg))						# Needed for the guess_proj case
 					if ((wesn_f64[3] < -90 || wesn_f64[4] > 90) || ((wesn_f64[2] - wesn_f64[1]) > 360))
@@ -3779,8 +3794,10 @@ function round_wesn(_wesn::Vector{Float64}, geo::Bool=false, pad=zeros(2))::Vect
 		dy = (wesn[4] - wesn[3]) * pad[2]
 		wesn[1:4] = [wesn[1]-dx, wesn[2]+dx, wesn[3]-dy, wesn[4]+dy]
 	end
-	set::Vector{Bool} = zeros(Bool, 2)
-	range::Vector{Float64} = [0.0, 0.0]
+	set = zeros(Bool, 3)
+	range = [0.0, 0.0, 0.0]
+	n_axe = (length(wesn) == 6) ? 3 : 2
+
 	if (wesn[1] == wesn[2])
 		wesn[1] -= abs(wesn[1]) * 0.05;	wesn[2] += abs(wesn[2]) * 0.05
 		if (wesn[1] == wesn[2])  wesn[1] = -0.1;	wesn[2] = 0.1;	end		# x was = 0
@@ -3791,6 +3808,7 @@ function round_wesn(_wesn::Vector{Float64}, geo::Bool=false, pad=zeros(2))::Vect
 	end
 	range[1] = wesn[2] - wesn[1]
 	range[2] = wesn[4] - wesn[3]
+	(n_axe == 3) && (range[3] = wesn[6] - wesn[5])
 	if (geo) 					# Special checks due to periodicity
 		if (range[1] > 306.0) 	# If within 15% of a full 360 we promote to 360
 			if ((wesn[1] + wesn[2]) / 2 < 100)  wesn[1] = -180.;	wesn[2] = 180.
@@ -3806,14 +3824,14 @@ function round_wesn(_wesn::Vector{Float64}, geo::Bool=false, pad=zeros(2))::Vect
 
 	_log10(x) = log(x) / 2.30258509299	# Compute log10 with ln because JET & SnoopCompile acuse it of "failed to optimize"
 	item = 1
-	for side = 1:2
+	for side = 1:n_axe
 		set[side] && continue			# Done above */
 		mag::Float64 = round(_log10(range[side])) - 1.0
 		inc = exp10(mag)
 		if ((range[side] / inc) > 10.0) inc *= 2.0	end	# Factor of 2 in the rounding
 		if ((range[side] / inc) > 10.0) inc *= 2.5	end	# Factor of 5 in the rounding
 		s = 1.0
-		if (geo) 	# Use arc integer minutes or seconds if possible
+		if (geo && side < 3) 	# Use arc integer minutes or seconds if possible
 			if (inc < 1.0 && inc > 0.05) 				# Nearest arc minute
 				s, inc = 60.0, 1.0
 				if ((s * range[side] / inc) > 10.0) inc *= 2.0	end		# 2 arcmin
@@ -3897,12 +3915,13 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    isFV(D::Vector{<:GMTdataset})::Bool
+    isFV(D)::Bool
 
-Check if D, a vector of GMTdataset, is a Face-Vertices ensemble.
+Check if D is a Face-Vertices ensemble (a 2 elements vector of GMTdataset).
 """
-function isFV(D::Vector{<:GMTdataset})::Bool
-	length(D) == 2 && (D[1].geom == wkbPoint || D[1].geom == wkbPointZ) && eltype(D[2].data) <: Integer
+function isFV(D)::Bool
+	(isa(D, Vector{<:GMTdataset}) && length(D) > 1) &&
+		(D[1].geom == wkbPoint || D[1].geom == wkbPointZ) && eltype(D[2].data) <: Integer
 end
 
 # ---------------------------------------------------------------------------------------------------
