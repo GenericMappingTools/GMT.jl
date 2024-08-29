@@ -70,7 +70,9 @@ function imshow(arg1, x::AbstractVector{Float64}=Float64[], y::AbstractVector{Fl
 		isa(arg1, Matrix{<:Real}) && (arg1 = mat2ds(arg1))
 		ginfo = isa(arg1, GMTdataset) ? arg1.bbox : arg1[1].ds_bbox
 		CTRL.limits[1:4] = ginfo[1:4];		CTRL.limits[7:10] = ginfo[1:4]
-		call_plot3 = ((isa(arg1, GMTdataset) && arg1.geom == Gdal.wkbLineStringZ) || (isa(arg1, Vector{<:GMTdataset}) && arg1[1].geom == Gdal.wkbLineStringZ)) ? true : false		# Should evolve into a fun that detects the several plot3d cases.
+		call_plot3 = ((isa(arg1, GMTdataset) && arg1.geom == Gdal.wkbLineStringZ) ||
+		              (isa(arg1, Vector{<:GMTdataset}) && arg1[1].geom == Gdal.wkbLineStringZ) ||
+					  isFV(arg1)) ? true : false		# Should evolve into a fun that detects the several plot3d cases.
 		!call_plot3 && (call_plot3 = isplot3(kw))
 		return (call_plot3) ? plot3d(arg1; show=see, kw...) : plot(arg1; show=see, kw...)
 	elseif (isa(arg1, GMTcpt))
