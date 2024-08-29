@@ -44,7 +44,13 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	end
 
 	if (occursin('3', caller) && !haskey(d, :p) && !haskey(d, :view) && !haskey(d, :perspective))
-		d[:p] = "200/30"		# Need this before parse_BJR() so MAP_FRAME_AXES can be guessed.
+		d[:p] = "200/30"			# Need this before parse_BJR() so MAP_FRAME_AXES can be guessed.
+	end
+	cmd, opt_p = parse_p(d, cmd)	# Parse this one (view angle) aside so we can use it to remove invisible faces (3D)
+
+	if (is3D && isFV(arg1))			# case of 3D faces
+		arg1 = deal_faceverts(arg1, d, opt_p)
+		!haskey(d, :aspect3) && (d[:aspect3] = "equal")			# Needs thinking
 	end
 	
 	isa(arg1, GMTdataset) && (arg1 = with_xyvar(d, arg1))		# See if we have a column request based on column names
@@ -82,7 +88,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 
 	cmd, opt_JZ = parse_JZ(d, cmd; O=O, is3D=is3D)
 	#(is3D && O && opt_JZ == "" && CTRL.pocket_J[3] != "") && (cmd *= CTRL.pocket_J[3])
-	cmd, = parse_common_opts(d, cmd, [:a :e :f :g :p :t :w :params], first)
+	cmd, = parse_common_opts(d, cmd, [:a :e :f :g :t :w :params], first)
 	cmd, opt_l = parse_l(d, cmd)		# Parse this one (legend) aside so we can use it in classic mode
 	cmd, opt_f = parse_f(d, cmd)		# Parse this one (-f) aside so we can check against D.attrib
 	cmd  = parse_these_opts(cmd, d, [[:D :shift :offset], [:I :intens], [:N :no_clip :noclip]])
@@ -331,6 +337,20 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	#(occursin("-Sk", opt_S)) && gmt_restart()  # Apparently patterns & custom symbols are screwing the session
 	(opt_B == " -B") && gmt_restart()		# For some Fking mysterious reason (see Ex45)
 	return r
+end
+
+# ---------------------------------------------------------------------------------------------------
+function deal_faceverts(arg1, d, opt_p)
+	# Deal with the situation where we are plotting 3D FV's
+	spl = split(opt_p[4:end], '/')
+	az = parse(Float64, spl[1])
+	elev = length(spl) > 1 ? parse(Float64, spl[2]) : 90.0
+	arg1, dotprod = visible_faces(arg1, [sind(az) * cosd(elev), cosd(az) * cosd(elev), sind(elev)])
+	if (is_in_dict(d, [:G :fill]) === nothing)		# If fill not set we use the dotprod and a gray CPT to set the fill
+		d[:Z] = dotprod
+		(is_in_dict(d, CPTaliases) === nothing) && (d[:C] = gmt("makecpt -T0/1 -C150,210"))	# Users may still set a CPT
+	end
+	return arg1
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -1339,4 +1359,31 @@ function zoom_reactangle(_cmd, isplot::Bool)
 	append!(_cmd, ["psxy -R -J -W0.4p"])
 	append!(_cmd, [ins])				# Add the inset call again
 	return _cmd
+end
+
+# ---------------------------------------------------------------------------------------------------
+function faces_normals_view(V::GMTdataset{Float64,2}, F::GMTdataset{Int,2}, view_vec)
+	# Compute the dot product between the view vector and the normal of each face
+	# Faces hose dot product is <= 0 are not visible
+	n_faces = size(F.data, 1)		# Number of segments or faces (polygons)
+	n_rows  = size(F.data, 2)		# Number of rows (vertices of the polygon)
+	tmp  = zeros(n_rows, 3)
+	proj = zeros(n_faces)
+	for face = 1:n_faces 			# Each row in F (a face) is a new data segment (a polygon)
+		for c = 1:3, r = 1:n_rows
+			tmp[r,c] = V.data[F.data[face,r], c]
+		end
+		proj[face] = dot(facenorm(tmp), view_vec)
+	end
+	return proj
+end
+
+# ---------------------------------------------------------------------------------------------------
+function visible_faces(FV::Vector{<:GMTdataset}, view_vec)
+	# Remove the faces that are not visible from the normal view_vec
+	V::GMTdataset{Float64,2}, F::GMTdataset{Int,2} = FV[1], FV[2]
+	proj = faces_normals_view(V, F, view_vec)
+	is_vis = (proj .> 0)	# Visible faces
+	F2 = mat2ds(F.data[is_vis, :])
+	return [V,F2], proj[is_vis]
 end

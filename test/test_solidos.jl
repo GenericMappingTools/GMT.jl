@@ -2,6 +2,7 @@
 
 	GMT.icosahedron()
 	GMT.octahedron()
+	GMT.dodecahedron()
 	GMT.tetrahedron()
 	GMT.cube()
 	GMT.geosphere(2)

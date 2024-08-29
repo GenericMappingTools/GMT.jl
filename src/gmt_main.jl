@@ -1094,25 +1094,18 @@ function dataset_init_FV(API::Ptr{Nothing}, FV)::Ptr{GMT_MATRIX}
 	n_segs = size(F.data, 1)				# Number of segments or faces (polygons)
 	n_rows = size(F.data, 2)				# Number of rows (vertexes of the polygon)
 	n_cols = size(V.data, 2)				# Number of columns (2 for x,y; 3 for x,y,z)
-	view_vec = [sind(200) * cosd(30), cosd(200) * cosd(30), sind(30)]
-
-	view_proj = triage_faces(V, F, view_vec)
-	n_visible_faces = sum(view_proj .> 0)
-	dim = [1, n_visible_faces, n_rows, n_cols]		# [1, GMT_SEG+1, GMT_ROW+1, GMT_COL+1]
+	dim = [1, n_segs, n_rows, n_cols]		# [1, GMT_SEG+1, GMT_ROW+1, GMT_COL+1]
 
 	pdim = pointer(dim)
 	D = convert(Ptr{GMT_DATASET}, GMT_Create_Data(API, GMT_IS_DATASET, GMT_IS_PLP, GMT_NO_STRINGS, pdim, NULL, NULL, 0, 0, NULL))
 	DS::GMT_DATASET = unsafe_load(D)
 	DT = unsafe_load(unsafe_load(DS.table))			# GMT_DATATABLE
 
-	n_records, count_vis = 0, 0
+	n_records = 0
 	tmp = zeros(n_rows, n_cols)
 
 	for seg = 1:n_segs 								# Each row in F (a face) is a new data segment (a polygon)
-		view_proj[seg] <= 0 && continue
-		count_vis += 1
-
-		DSv = convert(Ptr{Nothing}, unsafe_load(DT.segment, count_vis))		# DT.segment = Ptr{Ptr{GMT_DATASEGMENT}}
+		DSv = convert(Ptr{Nothing}, unsafe_load(DT.segment, seg))		# DT.segment = Ptr{Ptr{GMT_DATASEGMENT}}
 		S = GMT_Alloc_Segment(API, GMT_NO_STRINGS, n_rows, n_cols, "", DSv) # Ptr{GMT_DATASEGMENT}
 		Sb = unsafe_load(S)							# GMT_DATASEGMENT;		Sb.data -> Ptr{Ptr{Float64}}
 		
@@ -1126,7 +1119,7 @@ function dataset_init_FV(API::Ptr{Nothing}, FV)::Ptr{GMT_MATRIX}
 		n_records += n_rows							# Must manually keep track of totals
 		DS.type_ = GMT_READ_DATA
 		unsafe_store!(S, Sb)
-		unsafe_store!(DT.segment, S, count_vis)
+		unsafe_store!(DT.segment, S, seg)
 	end
 	DT.n_records, DS.n_records = n_records, n_records	# They are equal because our GMT_DATASET have only one table
 	Dt = unsafe_load(DS.table)
@@ -1135,21 +1128,6 @@ function dataset_init_FV(API::Ptr{Nothing}, FV)::Ptr{GMT_MATRIX}
 	unsafe_store!(D, DS)
 
 	return D
-end
-
-function triage_faces(V, F, view_vec)
-	# Compute the dot product between the view vector and the normal of each face
-	n_faces = size(F.data, 1)		# Number of segments or faces (polygons)
-	n_rows = size(F.data, 2)		# Number of rows (vertexes of the polygon)
-	tmp = zeros(n_rows, 3)
-	proj = zeros(n_faces)
-	for face = 1:n_faces 			# Each row in F (a face) is a new data segment (a polygon)
-		for c = 1:3, r = 1:n_rows
-			tmp[r,c] = V.data[F.data[face,r], c]
-		end
-		proj[face] = dot(facenorm(tmp), view_vec)
-	end
-	return proj
 end
 
 # ---------------------------------------------------------------------------------------------------
