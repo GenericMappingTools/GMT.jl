@@ -79,6 +79,56 @@ end
 
 # ----------------------------------------------------------------------------
 """
+    FV = dodecahedron(r=1.0)
+
+Creates an dodecahedron mesh with radius `r`. 
+"""
+function dodecahedron(r=1.0)
+
+	ϕ = Base.MathConstants.golden # (1.0+sqrt(5.0))/2.0, Golden ratio
+	s = r/sqrt(3.0)
+	t = ϕ*s    
+	w = (ϕ-1.0)*s
+
+	V = [ s   s   s		# The Vertices
+		  w 0.0   t
+		 -t  -w 0.0
+		  t   w 0.0
+		 -s   s  -s
+		 0.0 -t  -w
+		 -t   w 0.0
+		  s  -s   s
+		 -s   s   s
+		 -s  -s   s
+		  s  -s  -s
+		  w 0.0  -t
+		 -s  -s  -s
+		 0.0 -t   w
+		 0.0  t  -w
+		 -w 0.0   t
+		  t  -w 0.0
+		 -w 0.0  -t
+		  s   s  -s
+		 0.0  t   w]
+
+	F = [20  9 16  2  1			# The Faces
+		  2 16 10 14  8
+		 16  9  7  3 10
+		  7  9 20 15  5
+		 18 13  3  7  5
+		  3 13  6 14 10
+		  6 13 18 12 11
+		  6 11 17  8 14
+		 11 12 19  4 17
+		  1  2  8 17  4
+		  1  4 19 15 20
+		 12 18  5 15 19]
+    
+	return [mat2ds(V, geom=wkbPointZ), mat2ds(F)]
+end
+
+# ----------------------------------------------------------------------------
+"""
     FV = tetrahedron(r=1.0)
 
 Creates a tetrahedron mesh with radius `r`. 
