@@ -166,6 +166,8 @@ function gmtread(_fname::String; kwargs...)
 			!isfile(fname) && error("File $fname does not exist in cache.")
 		elseif (opt_T == " -Toz")					# Means we got a zipped ogr file
 			fname, opt_T = "/vsizip/" * fname, " -To"
+		elseif (opt_T == "obj")						# Means we got a .obj file. Read it and leave
+			return read_obj(fname)
 		end
 	else
 		opt_T = opt_T[1:4]      					# Remove whatever was given as argument to type kwarg
@@ -400,14 +402,15 @@ end
 function guess_T_from_ext(fname::String; write::Bool=false, text_only::Bool=false)::String
 	# Guess the -T option from a couple of known extensions
 	fn, ext = splitext(fname)
-	if (ext == ".zip")			# Accept ogr zipped files, e.g., *.shp.zip
+	ext = lowercase(ext[2:end])
+	(ext == "obj") && return "obj"	# To be read by read_obj() internal function.
+	if (ext == "zip")				# Accept ogr zipped files, e.g., *.shp.zip
 		((out = guess_T_from_ext(fn)) == " -To") && return " -Toz"
 	end
 
 	_kml = (!write || !text_only) ? "kml" : "*"		# When it's text_only, we are writting an output gmt2kml
 
 	(length(ext) > 8 || occursin("?", ext)) && return (occursin("?", ext)) ? " -Tg" : "" # A SUBDATASET encoded fname?
-	ext = lowercase(ext[2:end])
 	(!write && (ext == "jp2" || ext == "tif" || ext == "tiff") && (!isfile(fname) && !startswith(fname, "/vsi") &&
 		!occursin("https:", fname) && !occursin("http:", fname) && !occursin("ftps:", fname) && !occursin("ftp:", fname))) &&
 		error("File $fname does not exist.")
@@ -647,3 +650,56 @@ function ncd_read_ghrsst(; year::Int=0, month=nothing, day=nothing, doy=nothing,
 	return SST, lon, lat
 end
 =#
+
+
+# --------------------------------------------------------------------------------------------------------
+"""
+    VF = read_obj(fname)
+
+Read a Wavefront .obj file and return the result in a FaceVertices object.
+"""
+function read_obj(fname)
+	n_vert, count_v, count_f, vr, fr = 0, 0, 0, 0, 0
+	first, has_slash = true, false
+
+	# Do a first round to find out how many vertices and faces there are as well as if indices are simple or with slashes
+	fid = open(fname)
+	iter = eachline(fid)
+	for it in iter
+		if (it[1] == 'v' && it[2] == ' ') count_v += 1
+		elseif (it[1] == 'f')
+			first && (has_slash = contains(it, '/'); n_vert = length(split(it))-1;	first = false)
+			count_f += 1
+		end
+	end
+	close(fid)		# Don't know how to rewind 'iter', so close file and open it again.
+
+	V = Matrix{Float64}(undef, count_v, 3)
+	F = Matrix{Int}(undef, count_f, n_vert)
+	fid = open(fname)
+	iter = eachline(fid)
+	for it in iter
+		isempty(it) && continue
+		line = split(it)
+		if (line[1] == "v")
+			vr += 1
+			V[vr, 1], V[vr, 2], V[vr, 3] = parse(Float64, line[2]), parse(Float64, line[3]), parse(Float64, line[4])
+		elseif (line[1] == "f")
+			fr += 1
+			if (has_slash)		# Vertex with texture/normals coordinate indices
+				for k = 1:n_vert
+					spli = split(line[k+1], "/")
+					F[fr, k] = parse(Int, spli[1])
+				end
+			else				# simple vertex indices
+				for k = 1:n_vert
+					F[fr, k] = parse(Int, line[k+1])
+				end
+			end
+		end
+	end
+	close(fid)
+	DV = GMTdataset(data=V, geom=wkbPointZ)
+	set_dsBB!(DV)
+	return [DV, GMTdataset(data=F)]
+end

@@ -91,3 +91,4 @@ GMT.mat2grid("ackley");
 GMT.mat2grid("egg");
 GMT.mat2grid("sombrero");
 GMT.mat2grid("rosenbrock");
+viz(GMT.cube(), show=false)
