@@ -802,13 +802,13 @@ function grid_init(API::Ptr{Nothing}, X::GMT_RESOURCE, Grid::GMTgrid, pad::Int=2
 	noGrdCopy[1] && (mode = GMT_CONTAINER_ONLY)
 	(mode == GMT_CONTAINER_ONLY) && (pad = Grid.pad)		# Here we must follow what the Grid says it has
 	n_bds = size(Grid.z, 3);
-	_cube = (cube || n_bds > 1) ? true : false
+	_cube = (cube || n_bds > 1)
 
 	if (_cube)
 		_inc = copy(Grid.inc)
 		(length(_inc) < 3) && (append!(_inc, 1.0))		# Shit this cube has no v_inc
 		# We need to make sure z_inc is correct because GMT allocates memory based on the n_bands computed it and z_range
-		if ((_nz = round(Int, (Grid.range[6] - Grid.range[5]) / _inc[3] + 1)) != size(Grid.z, 3))
+		if ((_nz = round(Int, (Grid.range[6] - Grid.range[5]) / (_inc[3]+eps()) + 1)) != size(Grid.z, 3))	# +eps() to avoid zero division
 			_inc[3] = (Grid.range[6] - Grid.range[5]) / (size(Grid.z, 3) - 1.0)
 			(length(Grid.inc) < 3) ? @warn("This cube doesn't even has a z_inc. Computing one to not error.") : @warn("The z_inc of this cube is wrong. It is $(Grid.inc[3]) but should be $(_inc[3])")
 		end
@@ -1583,10 +1583,10 @@ function Base.show(io::IO, C::GMTcpt)
 	isempty(C) && return
 	if (C.categorical > 0)
 		mat = (size(C.cpt,1) > 1) ? [C.range[:,1] round.([C.colormap*255 C.alpha[1:size(C.cpt,1)]*255], digits=0)] : [C.range[1] round.([C.colormap*255 C.alpha[1]*255], digits=0)]
-		D = mat2ds(mat, colnames=["z", "r", "g", "b", "alpha"])
+		D = GMTdataset(data=mat, colnames=["z", "r", "g", "b", "alpha"])
 	else
 		mat = (size(C.cpt,1) > 1) ? [round.([C.cpt.*255 C.alpha[1:size(C.cpt,1)].*255], digits=0) C.range] : [round.([C.cpt.*255 C.alpha[1].*255], digits=0) C.range]
-		D = mat2ds(mat, colnames=["r1", "g1", "b1", "r2", "g2", "b2", "alpha", "z1", "z2"])
+		D = GMTdataset(data=mat, colnames=["r1", "g1", "b1", "r2", "g2", "b2", "alpha", "z1", "z2"])
 	end
 	D.bbox = Float64[]
 	(!isempty(C.label) && length(C.label) == size(C.cpt,1) && any(C.label .!= "")) && (D.text = C.label)
