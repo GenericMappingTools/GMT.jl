@@ -109,6 +109,7 @@ function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int
 	if (n_dsbands > 1 && ((meta = Gdal.getmetadata(dataset)) != String[]))	# For cubes, try to find the v coordinates
 		if ((ind = findfirst(startswith.(meta, "NETCDF_DIM_EXTRA="))) !== nothing)
 			vname = meta[ind][19:end-1]		# The variable name is wrapped in {}
+			((ind = findfirst(',', vname)) !== nothing) && (vname = vname[ind+1:end])
 			if ((ind = findfirst(startswith.(meta, "NETCDF_DIM_" * vname * "_VALUES="))) !== nothing)
 				vvalues = parse.(Float64, split(meta[ind][length(vname)+21:end-1], ","))	# for ex: NETCDF_DIM_Depth_VALUES={
 			end
@@ -368,7 +369,12 @@ function getregion(input; pad=0, xSize=0, ySize=0, gridreg::Bool=false, sds::Int
 	try
 		gt = getgeotransform(dataset)
 	catch
-		gt = [0.5, 1.0, 0.0, ySize+0.5, 0.0, 1.0]	# Resort to no coords
+		try
+			x, y = coords_resque(dataset)				# Try luck in fishing the coordinates
+			gt = [x[1], (x[2] - x[1]) / (length(x)-1), 0.0, y[1], 0.0, (y[2] - y[1]) / (length(y)-1)]
+		catch
+			gt = [0.5, 1.0, 0.0, ySize+0.5, 0.0, 1.0]	# Resort to no coords
+		end
 	end
 
 	x_inc, y_inc = gt[2], abs(gt[6])
@@ -377,6 +383,31 @@ function getregion(input; pad=0, xSize=0, ySize=0, gridreg::Bool=false, sds::Int
 	x_max = x_min + (xSize - 1*gridreg - 2pad) * x_inc
 	y_min = y_max - (ySize - 1*gridreg - 2pad) * y_inc
 	return x_min, x_max, y_min, y_max, x_inc, y_inc
+end
+
+# ---------------------------------------------------------------------------------------------------
+function coords_resque(dataset)
+	# We come here when GDAL stuburnly finds a netcdf file indign and ignores its coordinates
+	# and does not assign it a geotransform. In such case we try to fish the coordinates from
+	# info obtained by gdalinfo.
+	# Shit is that here file name is lost (it's = /vsimem/tmp) so we must use a copy save in a global.
+	info = gdalinfo(POSTMAN[1]["nc_name"])		# We have saved the netcdf name in the POSTMAN dict
+	delete!(POSTMAN[1], "nc_name")				# Clean it
+
+	ind = findfirst("Files: ", info)[end]
+	k = ind + 1
+	while (info[k+=1] != '\n') end
+	fname = info[ind+1:k-1]
+	
+	ind = findfirst("_CoordinateAxes=", info)[end]
+	k = ind + 1
+	while (info[k+=1] != '\n') end
+	coords_str = info[ind+1:k-1]		# This can be for example "time depth lat lon"
+	spli = split(coords_str)
+	
+	x = Gdal.read(Gdal.read("NETCDF:" * "\"" * fname * "\":" * spli[end]))
+	y = Gdal.read(Gdal.read("NETCDF:" * "\"" * fname * "\":" * spli[end-1]))
+	return x, y
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -700,9 +731,10 @@ A GMT grid/image or a GDAL dataset
 """
 function gdalread(fname::AbstractString, optsP=String[]; opts=String[], gdataset=false, kw...)
 	(fname == "") && error("Input file name is missing.")
-	ind = findfirst(":", fname)
+	ind = findfirst(':', fname)
 	check = (ind === nothing || ind[1] < 3) ? true : false
 	(check && !isfile(fname)) && error("Input file '$fname' does not exist.")	# Breaks when passing a SUBDATASET
+	startswith(fname, "NETCDF:") && (POSTMAN[1] = Dict("nc_name" => fname))		# For cases where GDAL fcks and doest have a geotransform
 	(isempty(optsP) && !isempty(opts)) && (optsP = opts)		# Accept either Positional or KW argument
 	_optsP::Vector{String} = isa(optsP, String) ? string.(split(optsP)) : optsP
 	ressurectGDAL();
@@ -783,8 +815,11 @@ function gdalwrite(cube::GItype, fname::AbstractString, v=nothing; dim_name::Str
 	Gdal.setmetadataitem(ds, "NETCDF_DIM_" * dim_name * "_VALUES", "{" *_v[2:end-1] * "}")
 	Gdal.setmetadataitem(ds, dim_name * "#axis", string(dim_name[1]))
 	#Gdal.setmetadataitem(ds, "Band1#actual_range","{0,50000}")
-	if (dim_units != "")                              Gdal.setmetadataitem(ds, dim_name * "#units", dim_units)
-	elseif (isa(cube, GMTgrid) && cube.z_unit != "")  Gdal.setmetadataitem(ds, dim_name * "#units", cube.z_unit)
+	if (dim_units != "")
+		Gdal.setmetadataitem(ds, dim_name * "#units", dim_units)
+	elseif (isa(cube, GMTgrid) && cube.z_unit != "")	# Mind off the error "embedded NULs are not allowed in C strings"
+		dim_units = ((ind = findfirst('\0', cube.z_unit)) !== nothing) ? cube.z_unit[1:ind-1] : cube.z_unit
+		Gdal.setmetadataitem(ds, dim_name * "#units", dim_units)
 	end
 	crs = Gdal.getproj(cube, wkt=true)
 	(crs != "" ) && Gdal.setproj!(ds, crs)
