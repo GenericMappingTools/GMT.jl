@@ -45,7 +45,8 @@ function icosahedron(r=1.0)
 		 6 7 4
 		 6 4 9]
  
-	return [mat2ds(V, geom=wkbPointZ), mat2ds(F)]
+	DV = GMTdataset(data=V, geom=wkbPointZ);	set_dsBB!(DV)
+	return [DV, GMTdataset(data=F)]
 end
 
 # --------------------------------------------------------
@@ -74,7 +75,8 @@ function octahedron(r=1.0)
 		 6 3 4
 		 6 4 1]
 
-	return [mat2ds(V, geom=wkbPointZ), mat2ds(F)]
+	DV = GMTdataset(data=V, geom=wkbPointZ);	set_dsBB!(DV)
+	return [DV, GMTdataset(data=F)]
 end
 
 # ----------------------------------------------------------------------------
@@ -124,7 +126,8 @@ function dodecahedron(r=1.0)
 		  1  4 19 15 20
 		 12 18  5 15 19]
     
-	return [mat2ds(V, geom=wkbPointZ), mat2ds(F)]
+	DV = GMTdataset(data=V, geom=wkbPointZ);	set_dsBB!(DV)
+	return [DV, GMTdataset(data=F)]
 end
 
 # ----------------------------------------------------------------------------
@@ -149,7 +152,8 @@ function tetrahedron(r=1.0)
 		 4 3 2
 		 4 1 3]
 
-	return [mat2ds(V, geom=wkbPointZ), mat2ds(F)]
+	DV = GMTdataset(data=V, geom=wkbPointZ);	set_dsBB!(DV)
+	return [DV, GMTdataset(data=F)]
 end
 
 # ----------------------------------------------------------------------------
@@ -178,7 +182,8 @@ function cube(r=1.0)
 		 7 8 4 3
 		 8 5 1 4]
 
-    return [mat2ds(V, geom=wkbPointZ), mat2ds(F)]
+	DV = GMTdataset(data=V, geom=wkbPointZ);	set_dsBB!(DV)
+	return [DV, GMTdataset(data=F)]
 end
 
 # ----------------------------------------------------------------------------
@@ -211,7 +216,8 @@ function geosphere(n, r=1; radius=1.0)
 			Vn[:,1] .= x;	Vn[:,2] .= y;	Vn[:,3] .= z
 		end
 	end
-    return [mat2ds(Vn, geom=FV[1].geom), mat2ds(Fn)]
+	DV = GMTdataset(data=Vn, geom=wkbPointZ);	set_dsBB!(DV)
+	return [DV, GMTdataset(data=Fn)]
 end
 
 # ----------------------------------------------------------------------------
@@ -231,7 +237,8 @@ as two separate arrays (but it also accepts GMTdatasets) and returns two matrice
 """
 function subTriSplit(FV::Vector{<:GMTdataset}, n=1)
 	V, F = subTriSplit(FV[1].data, FV[2].data, n)
-	return [mat2ds(V, geom=FV[1].geom), mat2ds(F)]
+	DV = GMTdataset(data=V, geom=wkbPointZ);	set_dsBB!(DV)
+	return [DV, GMTdataset(data=F)]
 end
 subTriSplit(V::GMTdataset{Float64,2}, F::GMTdataset{Int,2}, n=1) = subTriSplit(V.data, F.data, n)
 function subTriSplit(V::Matrix{Float64}, F::Matrix{Int}, n=1)

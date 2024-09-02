@@ -46,7 +46,7 @@ Specify data type (with *type*=true, e.g. `img=true`).  Choose among:
 - `layer`| `layers` | `band` | `bands`: A string, a number or an Array. When files are multiband or nc
   files with 3D or 4D arrays, we access them via these keywords. `layer=4` reads the fourth layer (or band)
   of the file. The file can be a grid or an image. If it is a grid, layer can be a scalar (to read 3D arrays)
-  or an array of two elements (to read a 4D array). This option should not be used with the `gdal` option.
+  or an array of two elements (to read a 4D array). Use `layers=:all` to read all layers.
 
   If file is an image, `layer` can be a 1 or a 1x3 array (to read a RGB image). Note that in this later case
   bands do not need to be contiguous. A `band=[1,5,2]` composes an RGB out of those bands. See more at
@@ -297,6 +297,9 @@ end
 function get_cube_layers_desc(fname::String, layers::Vector{Int}=Int[])#::String[]
 	if ((ind = findfirst("?", fname)) !== nothing)
 		fname = sneak_in_SUBDASETS(fname[1:ind[1]-1], fname[ind[1]+1:end])
+	end
+	if ((ind = findfirst("[", fname)) !== nothing)	# 'fname' may have a ending layer number in the form [n]
+		fname = fname[1:ind[1]-1]
 	end
 	ds = Gdal.unsafe_read(fname)
 	n_bands, msg = Gdal.nraster(ds), ""

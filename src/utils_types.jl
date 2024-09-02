@@ -1327,14 +1327,14 @@ function slicecube(G::GMTgrid, slice::Union{Int, AbstractVector{<:Int}}; axis="z
 		G_.proj4, G_.wkt, G_.epsg, G_.geog, G_.layout = G.proj4, G.wkt, G.epsg, G.geog, G.layout
 	elseif (_axis == "y")			# A slice in xz plane
 		(!colmajor && G.layout[1] == 'T') && (rng = (size(G,2)+1 - rng[end]):(size(G,2)+1 - rng[1]))	# Believe that (10 - rng) errors but (10 - 1:1) NOT!!!!!
-		yv = isvec ? G.y[slice] : [G.y[slice]]
+		yv = G.y[slice:slice+G.registration]
 		if (colmajor)  G_ = mat2grid(G[rng,ix,:], G.x[ixp], yv, G.v, reg=G.registration, names=G.names)
 		else           G_ = mat2grid(G[ix,rng,:], G.x[ixp], yv, G.v, reg=G.registration, is_transposed=true, names=G.names)
 		end
 		G_.proj4, G_.wkt, G_.epsg, G_.geog, G_.layout = "", "", 0, 0, "TRB"
 	else							# A slice in yz plane
 		_iy = (!colmajor && G.layout[1] == 'T') ? ((size(G,2)+1 - iy[end]):(size(G,2)+1 - iy[1])) : iy
-		xv = isvec ? G.x[slice] : [G.x[slice]]
+		xv = G.x[slice:slice+G.registration]
 		if (colmajor)  G_ = mat2grid(G[iy,rng,:],  xv, G.y[iyp], G.v, reg=G.registration, names=G.names)
 		else           G_ = mat2grid(G[rng,_iy,:], xv, G.y[iyp], G.v, reg=G.registration, is_transposed=true, names=G.names)
 		               (G.layout[1] == 'T') && (G_.z = fliplr(G_.z))	# The debugger told me to do this.
@@ -1456,8 +1456,8 @@ function squeeze(G::GMTgrid)
 	dims = size(G)
 	if ((ind = findfirst(dims .== 1)) !== nothing)
 		which_x = (length(G.x) > 1) ? G.x : G.y		# Rather than relying in mem_layout, pick the non-singleton vector
-		(ind == 1) && return mat2grid(reshape(G.z, dims[2], dims[3]), x=which_x, y=G.v, layout="TRB", is_transposed=true)
-		(ind == 2) && return mat2grid(reshape(G.z, dims[1], dims[3]), x=which_x, y=G.v, layout="TRB", is_transposed=true)
+		(ind == 1) && return mat2grid(reshape(G.z, dims[2], dims[3]), x=which_x, y=G.v, reg=G.registration, layout="TRB", is_transposed=true)
+		(ind == 2) && return mat2grid(reshape(G.z, dims[1], dims[3]), x=which_x, y=G.v, reg=G.registration, layout="TRB", is_transposed=true)
 	end
 end
 

@@ -3624,15 +3624,15 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", i
 	(fname == "") && return _read_data(d, cmd, arg, opt_R, is3D, get_info, opt_i, opt_di, opt_yx)
 
 	if (((!IamModern[1] && opt_R == "") || get_info) && !CONVERT_SYNTAX[1])		# Must read file to find -R
-		if (!IamSubplot[1] || GMTver > v"6.1.1")	# Protect against a GMT bug
-			arg::GDtype = gmt("read -Td " * opt_i * opt_bi * opt_di * opt_h * opt_yx * " " * fname)
-			helper_set_colnames!(arg)				# Set colnames if file has a comment line supporting it
-			# Try guess if ascii file has time columns and if yes leave trace of it in GMTdadaset metadata.
-			(opt_bi == "") && file_has_time!(fname, arg)	# If fname is a .gmt file this does not make much sense.
-			# Remove the these options from cmd. Their job is done
-			if (opt_i != "")  cmd = replace(cmd, opt_i => "");	opt_i = ""  end
-			if (opt_h != "")  cmd = replace(cmd, opt_h => "");	opt_h = ""  end
-		end
+		arg::GDtype = gmt("read -Td " * opt_i * opt_bi * opt_di * opt_h * " " * fname)
+		helper_set_colnames!(arg)				# Set colnames if file has a comment line supporting it
+		# gmtread does not accept -: so we may need to swap the first two column names
+		if (opt_yx != "" && !isempty(arg.colnames))  arg.colnames[2], arg.colnames[1] = arg.colnames[1], arg.colnames[2]   end
+		# Try guess if ascii file has time columns and if yes leave trace of it in GMTdadaset metadata.
+		(opt_bi == "") && file_has_time!(fname, arg)	# If fname is a .gmt file this does not make much sense.
+		# Remove the these options from cmd. Their job is done
+		if (opt_i != "")  cmd = replace(cmd, opt_i => "");	opt_i = ""  end
+		if (opt_h != "")  cmd = replace(cmd, opt_h => "");	opt_h = ""  end
 	else							# No need to find -R so let the GMT module read the file
 		cmd = fname * " " * cmd
 	end
@@ -3664,7 +3664,7 @@ function _read_data(d::Dict, cmd::String, arg, opt_R::String="", is3D::Bool=fals
 			_arg = cat_2_arg2(d[:x], d[:y])
 			(haskey(d, :z)) && (_arg = hcat(_arg, d[:z][:]);	delete!(d, [:z]))
 			delete!(d, [[:x, :x], [:y]])		# [:x :x] to satisfy signature ::Vector{Vector{Symbol}} != ::Array{Array{Symbol}}
-			arg = mat2ds(_arg)
+			arg = GMTdataset(data=_arg)
 		elseif (haskey(d, :x) && length(d[:x]) > 1)	# Only this guy. I guess that histogram may use this
 			arg = mat2ds(d[:x]);		delete!(d, [:x])
 		end

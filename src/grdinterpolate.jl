@@ -15,7 +15,7 @@ Parameters
 - **E** | **crossection** :: [Type => Str | GMTdtaset | NamedTuple]
 
     Specify a crossectinonal profile via a file or from specified line coordinates and modifiers. If a file,
-    it must be contain a single segment with either lon lat or lon lat dist records. These must be equidistant. 
+    it must contain a single segment with either lon lat or lon lat dist records. These must be equidistant. 
 - **F** | **interp_type** | **interpolator** :: [Type => Str]   ``Arg = l|a|c|n[+1|+2]``
 
     Choose from l (Linear), a (Akima spline), c (natural cubic spline), and n (no interpolation:
@@ -78,10 +78,12 @@ function grdinterp_helper(cmd0::String, arg1; allcols::Bool=false, kwargs...)
 	cmd, _, arg1 = find_data(d, cmd0, cmd, arg1)
 
 	cmd, args, n1, = add_opt(d, cmd, "E", [:E :crossection], :line, Vector{Any}([arg1, arg2]), (azim="+a", great_circ="_+g", parallel="_+p", inc="+i", length="+l", npoints="+n", middpoint="+o", radius="+r", loxodrome="_+x"))
+	(n1 == 1) && (arg1 = args[1])
+	(n1 == 2) && (arg2 = args[2])
 
 	if ((val = find_in_dict(d, [:S :track :pt])[1]) !== nothing)
 		if (isa(val, String))
-			_fn = string(val)::String			# Damn Any's
+			_fn::String = string(val)			# Damn Any's
 			if (isnumeric(_fn[1]) && contains(_fn, '/') && (pts_num = tryparse.(Float64, split(_fn, '/'))) === nothing)
 				pts = mat2ds([pts_num[1] pts_num[2]])
 			else

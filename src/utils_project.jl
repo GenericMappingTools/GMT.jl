@@ -670,6 +670,15 @@ cubeplot(C, top="@earth_relief", inset=(lon=110,y=40), topshade=true, zdown=true
 function cubeplot(G::GMTgrid; top=nothing, topshade=false, zdown::Bool=false, xlabel="", ylabel="", zlabel="", title="",
                   show=false, interp::Float64=0.0, first=true, coast=nothing, kw...)
 	(size(G,3) < 2) && error("First input must be a 3D grid.")
+
+	if (G.registration == 1)
+		@warn("This cube is pixel registered in horizontal dims. That is not suported so we conveted it to grid registered.")
+		G.x = G.x[1:end-1] .+ (G.x[2] - G.x[1])/2;
+		G.y = G.y[1:end-1] .+ (G.y[2] - G.y[1])/2;
+		G.range[1], G.range[2], G.range[3], G.range[4] = G.x[1], G.x[end], G.y[1], G.y[end]
+		G.registration = 0
+	end
+
 	d = KW(kw)
 	if ((opt_R = parse_R(d, "", false)[2]) != "")
 		x_min, x_max, y_min, y_max, = opt_R2num(opt_R)
