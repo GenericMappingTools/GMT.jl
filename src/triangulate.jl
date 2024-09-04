@@ -81,7 +81,12 @@ function triangulate_helper(cmd0::String, arg1; kwargs...)
 	(occursin("-Q", cmd) && !occursin("-M", cmd)) && (cmd *= " -M")		# Otherwise kills Julia (GMT bug)
 	(!occursin("-G", cmd)) && (cmd = parse_J(d, cmd, " ")[1])
 
-	common_grd(d, cmd0, cmd, "triangulate ", arg1)		# Finish build cmd and run it
+	out = common_grd(d, cmd0, cmd, "triangulate ", arg1)		# Finish build cmd and run it
+	if isa(out, GDtype)
+		set_dsBB!(out, false)
+		(contains(cmd, " -S") && contains(cmd, " -Z")) && setgeom!(out, wkbPolygonZM)
+	end
+	return out
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -167,3 +172,22 @@ function trisurf(in::Union{Matrix, GDtype}; gdal=true, first::Bool=true, kw...)
 	common_plot_xyz("", D, "plot3d", first, true, d...)
 end
 trisurf!(in::Union{Matrix, GDtype}; gdal=true, kw...) = trisurf(in; gdal=gdal, first=false, kw...)
+
+# ---------------------------------------------------------------------------------------------------
+function grd2FV(G)
+	isa(G, String) && (G = gmtread(G))
+	#V = grd2xyz(G, s=true)
+	#V.geom = wkbPointZ
+	#F = Int.(triangulate(V, T=true).data) .+ 1
+	#return [V, GMTdataset(data=F)]
+	V = grd2xyz(G, s=true)
+	T = triangulate(V, S=true, Z=true)
+	C = gmtspatial(T, Q=true, o="0,1")
+	#C = centroid(T)
+	B = concavehull(V.data, 0.001)
+	ind = (C in B) .== 1
+	T = T[ind]
+	T[1].ds_bbox = T[1].bbox			# Because we may have deleted first T
+	set_dsBB!(T, false)
+	return T
+	end
