@@ -218,10 +218,27 @@ function extrema_cols(A; col=1)
 	return mi, ma
 end
 
+"""
+    extrema_cols_nan(A; col=1)
+
+Compute the minimum and maximum of a column of a matrix/vector `A` NOT ignoring NaNs or Infs
+"""
+function extrema_cols_nan(A; col=1)
+	(col > size(A,2)) && error("'col' ($col) larger than number of coluns in array ($(size(A,2)))")
+	mi, ma = typemax(eltype(A)), typemin(eltype(A))
+	@inbounds for n = 1:size(A,1)
+		if isfinite(A[n,col])
+			mi = ifelse(mi > A[n,col], A[n,col], mi)
+			ma = ifelse(ma < A[n,col], A[n,col], ma)
+		end
+	end
+	return mi, ma
+end
+
 function minimum_nan(A::AbstractArray{<:AbstractFloat})
 	mi = minimum(A);	!isnan(mi) && return mi		# The noNaNs version is a order of magnitude faster
 	mi = typemax(eltype(A))
-	@inbounds for k in eachindex(A) mi = ifelse(!isnan(A[k]), min(mi, A[k]), mi)  end
+	@inbounds for k in eachindex(A) mi = ifelse(isfinite(A[k]), min(mi, A[k]), mi)  end
 	mi == typemax(eltype(A)) && (mi = convert(eltype(A), NaN))	# Better to return NaN then +Inf
 	return mi
 end
@@ -230,7 +247,7 @@ minimum_nan(A) = minimum(A)
 function maximum_nan(A::AbstractArray{<:AbstractFloat})
 	ma = maximum(A);	!isnan(ma) && return ma		# The noNaNs version is a order of magnitude faster
 	ma = typemin(eltype(A))
-	@inbounds for k in eachindex(A) ma = ifelse(!isnan(A[k]), max(ma, A[k]), ma)  end
+	@inbounds for k in eachindex(A) ma = ifelse(isfinite(A[k]), max(ma, A[k]), ma)  end
 	ma == typemin(eltype(A)) && (ma = convert(eltype(A), NaN))	# Better to return NaN than -Inf
 	return ma
 end
@@ -955,6 +972,14 @@ end
 
 # ------------------------------------------------------------------------------------------------------
 """
+    nrows, ncols, nseg = getsize(D::GDtype) -> Tuple(Int, Int, Int)
+
+Return the number of rows, columns and segments in the dataset `D`.
+"""
+getsize(D::GDtype) = isa(D, GMTdataset) ? (size(D.data,1), size(D.data,2), 1) : (size(D[1].data,1), size(D[1].data,2), size(D,3))
+
+# ------------------------------------------------------------------------------------------------------
+"""
     settimecol!(D::GDtype, Tcol)
 
 Set the time column in the dataset D (or vector of them). `Tcol` is either an Int scalar or vector
@@ -963,6 +988,25 @@ of Ints with the column number(s) that hold the time columns.
 settimecol!(D::GDtype, Tc::Int) = isa(D, Vector) ? (D[1].attrib["Timecol"] = string(Tc)) : (D.attrib["Timecol"] = string(Tc))
 settimecol!(D::GDtype, Tc::VecOrMat{<:Int}) = isa(D, Vector) ? (D[1].attrib["Timecol"] = join(Tc, ",")) : (D.attrib["Timecol"] = join(Tc, ","))
 const set_timecol! = settimecol!
+	
+# ------------------------------------------------------------------------------------------------------
+"""
+    setgeom!(D::GDtype, gm::Integer=0; geom::Integer=0)
+
+Changes the geometry of the dataset `D` (or vector of them). The keyword version takes precedence.
+
+### Parameters
+- `D`: A GMTdataset, or a vector of them.
+- `geom` | `gm`: the new geometry to apply to D. These are alternatives ways of seting the geometry
+  but the keyword version takes precedence.
+"""
+function setgeom!(D::GMTdataset, gm::Integer=0; geom::Integer=0)
+	D.geom = (geom != 0) ? geom : gm	# The keyword version takes precedenceg
+end
+function setgeom!(D::Vector{<:GMTdataset}, gm::Integer=0; geom::Integer=0)
+	g = (geom != 0) ? geom : gm			# The keyword version takes precedence
+	for k = 1:length(D) D[k].geom = g end
+end
 
 # ------------------------------------------------------------------------------------------------------
 """
@@ -1076,3 +1120,5 @@ function harmfit(x, y, n::Int=1)
 	return h, yy
 end
 =#
+
+#GI.geometry[1].geoms[1].rings[1].vertices.data[1].coords.lat.val
