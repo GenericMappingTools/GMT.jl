@@ -97,7 +97,17 @@ function gmtspatial(cmd0::String="", arg1=nothing, arg2 = nothing; kwargs...)
 		D.data = D.data[ind, :]
 		!isempty(D.text) && (D.text = D.text[ind])
 	end
-	contains(cmd, "-N+i") && (D.colnames = ["x","y","polID"]; (!hasID && [D[k,3] += 1 for k = 1:size(D,1)]))
+	if contains(cmd, "-N+i")
+		D.colnames = ["x","y","polID"]; (!hasID && [D[k,3] += 1 for k = 1:size(D,1)])
+	elseif contains(cmd, " -Q")		# -Q -> centroids
+		setgeom!(D, wkbPoint)		# -Q+l is probably a different geom
+		D.colnames = getsize(D)[2] == 2 ? ["centroid_x","centroid_y"] : ["centroid_x","centroid_y","area"];
+		if isa(D, GMTdataset)
+			ind = findall(.!isfinite.(D.data[:,1]))
+			#!isempty(ind) && (D.data = delrows!(D.data, ind))		# Can't do this because it changes the number of output rows
+		end
+	end
+	set_dsBB!(D)
 	D
 end
 
