@@ -238,6 +238,7 @@ function gd2gmt(geom::Gdal.AbstractGeometry, proj::String="")::Union{GMTdataset,
 	end
 
 	n_dim, n_pts = Gdal.getcoorddim(geom), Gdal.ngeom(geom)
+	(n_dim == 0) && return GMTdataset()		# Should warn too?
 	n = (n_dim == 2) ? 2 : 3
 	mat = Array{Float64,2}(undef, n_pts, n)
 	for k = 1:n_pts  mat[k,1] = Gdal.getx(geom, k-1)  end
@@ -579,6 +580,9 @@ function gmt2gd(D::Vector{<:GMTdataset}; save::String="", geometry::String="")
 	elseif (D[1].geom == wkbPoint25D || D[1].geom == wkbMultiPoint25D)
 		geom_code, geom_cmd = (D[1].geom == wkbPoint25D) ? (wkbPoint25D, Gdal.createpoint()) :
 		                                                   (wkbMultiPoint25D, Gdal.createmultipoint())
+	elseif (D[1].geom == wkbPolygon25D || D[1].geom == wkbMultiPolygon25D)
+		geom_code, geom_cmd = (D[1].geom == wkbPolygon25D) ? (wkbPolygon25D, Gdal.createpolygon()) :
+		                                                     (wkbMultiPolygon25D, Gdal.createmultipolygon())
 	else
 		geom_code, geom_cmd = (!ismulti) ? (wkbPoint, Gdal.createpoint()) :
 		                                   (wkbMultiPoint, Gdal.createmultipoint())
@@ -588,7 +592,7 @@ function gmt2gd(D::Vector{<:GMTdataset}; save::String="", geometry::String="")
 	feature = Gdal.unsafe_createfeature(layer)
 	geom = geom_cmd
 
-	if (ispolyg || D[1].geom == wkbPolygon || D[1].geom == wkbMultiPolygon)
+	if (ispolyg || D[1].geom == wkbPolygon || D[1].geom == wkbMultiPolygon || D[1].geom == wkbPolygon25D)
 		if (ismulti)
 			for k = 1:length(D)
 				poly = Gdal.creategeom(wkbPolygon)
@@ -635,7 +639,7 @@ function gmt2gd(D::Vector{<:GMTdataset}; save::String="", geometry::String="")
 		end
 		Gdal.setgeom!(feature, geom)
 	else
-		@warn("Geometries with geometry code $(D[1].geom) are not yet implemented")
+		@error("Geometries with geometry code $(D[1].geom) are not yet implemented")
 	end
 
 	Gdal.setfeature!(layer, feature)

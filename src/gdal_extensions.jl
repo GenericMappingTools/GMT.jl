@@ -582,6 +582,7 @@ end
 function helper_geoms_run_fun(f::Function, D, ratio::Float64, holes::Bool=true; gdataset=false)
 	geom = helper_1geom(D)
 	ig = f(geom, ratio, holes)
+	(isa(ig, Gdal.IGeometry) && ig.ptr == C_NULL) && error("Error in $f. Output is NULL")
 	return (gdataset) ? ig : gd2gmt(ig)
 end
 
