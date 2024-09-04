@@ -569,7 +569,7 @@ function gmt2gd(D::Vector{<:GMTdataset}; save::String="", geometry::String="")
 	else                       sr = Gdal.ISpatialRef(C_NULL)
 	end
 
-	if (ispolyg || D[1].geom == wkbPolygon || D[1].geom == wkbMultiPolygon)	# If guessed or in Dataset
+	if (ispolyg || D[1].geom == wkbPolygon || D[1].geom == wkbMultiPolygon || D[1].geom == wkbPolygonZM)
 		geom_code, geom_cmd = (!ismulti) ? (wkbPolygon, Gdal.createpolygon()) :
 		                                   (wkbMultiPolygon, Gdal.createmultipolygon())
 	elseif (isline || D[1].geom == wkbLineString || D[1].geom == wkbMultiLineString)
@@ -592,7 +592,7 @@ function gmt2gd(D::Vector{<:GMTdataset}; save::String="", geometry::String="")
 	feature = Gdal.unsafe_createfeature(layer)
 	geom = geom_cmd
 
-	if (ispolyg || D[1].geom == wkbPolygon || D[1].geom == wkbMultiPolygon || D[1].geom == wkbPolygon25D)
+	if (ispolyg || D[1].geom == wkbPolygon || D[1].geom == wkbMultiPolygon || D[1].geom == wkbPolygon25D || D[1].geom == wkbPolygonZM)
 		if (ismulti)
 			for k = 1:length(D)
 				poly = Gdal.creategeom(wkbPolygon)
