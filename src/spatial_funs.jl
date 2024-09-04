@@ -409,6 +409,7 @@ Returns `in` indicating if the query points specified by `x` and `y` are inside 
 inpolygon(x, y, D::GMTdataset) = pip(x, y, D.data)
 inpolygon(x, y, poly::Matrix{T}) where T = pip(x, y, poly)
 inpolygon(pt::VecOrMat, D::GMTdataset) = inpolygon(pt, D.data)
+inpolygon(pt::GMTdataset, D::GMTdataset) = inpolygon(pt.data, D.data)
 function inpolygon(pt::VecOrMat, poly::Matrix{T}) where T
 	isvector(pt) && return pip(pt[1], pt[2], poly)
 	n_pts = size(pt, 1)
@@ -531,10 +532,10 @@ inbbox(x::Real, y::Real, bbox) = (x >= bbox[1] && x <= bbox[2] && y >= bbox[3] &
 function Base.:in(D1::GMTdataset, D2::GMTdataset)::Union{Bool, Int, Vector{Int}}
 	# Accepts D1 -> Point and D2 -> Polygon, or vice-versa, or both of them as Polygons
 	indPoint = (D1.geom == wkbPoint || D1.geom == wkbMultiPoint) ? 1 : 0
-	indPoint = (indPoint == 0 && (D2.geom == wkbPoint || D2.geom == wkbMultiPoint)) ? 2 : 0
-	indPol = (D1.geom == wkbPolygon) ? 1 : 0
-	indPol = (indPol == 0 && (D2.geom == wkbPolygon)) ? 2 : 0
-	is2Pol = (D2.geom == wkbPolygon && D1.geom == wkbPolygon)
+	indPoint = (indPoint == 0 && (D2.geom == wkbPoint || D2.geom == wkbMultiPoint)) ? 2 : indPoint
+	indPol = (D1.geom == wkbPolygon || D1.geom == wkbPolygon25D) ? 1 : 0
+	indPol = (indPol == 0 && (D2.geom == wkbPolygon || D2.geom == wkbPolygon25D)) ? 2 : indPol
+	is2Pol = ((D2.geom == wkbPolygon || D2.geom == wkbPolygon25D) && (D1.geom == wkbPolygon || D1.geom == wkbPolygon25D))
 	(!is2Pol && indPoint == 0 && indPol == 0) && error("Input arguments must have a Point and Polygon geometries, or both be Polygons.")
 	if     (indPoint == 1 && indPol == 2)  inwhichpolygon([D2], D1.data)
 	elseif (indPoint == 2 && indPol == 1)  inwhichpolygon([D1], D2.data)
