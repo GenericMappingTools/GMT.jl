@@ -1988,6 +1988,16 @@ end
 		end
 	end
 
+    """
+        setgeom!(feature::AbstractFeature, geom::AbstractGeometry)
+
+    Method that updates the features geometry, and operate exactly as SetGeometryDirectly(), except that
+    this method does not assume ownership of the passed geometry, but instead makes a copy of it.
+
+    ### Parameters
+    - `feature`: the feature on which new geometry is applied to.
+    - `geom`: the new geometry to apply to feature.
+    """
 	function setgeom!(feature::Feature, geom::AbstractGeometry)
 		result = OGR_F_SetGeometry(feature.ptr, geom.ptr)
 		@ogrerr result "OGRErr $result: Failed to set feature geometry."
@@ -2527,7 +2537,7 @@ end
 		delaunay, dither, buffer, centroid, intersection, intersects, polyunion, fromWKT, fillnodata!, fillnodata,
 		concavehull, convexhull, difference, symdifference, distance, geomarea, geodesicarea, pointalongline, polygonize,
 		simplify, boundary, crosses, disjoint, equals, envelope, envelope3d, geomlength, overlaps, touches, within,
-		wkbUnknown, wkbPoint, wkbPointZ, wkbLineString, wkbPolygon, wkbMultiPoint, wkbMultiPointZ, wkbMultiLineString,
+		wkbUnknown, wkbPoint, wkbPointZ, wkbLineString, wkbPolygon, wkbPolygonZM, wkbMultiPoint, wkbMultiPointZ, wkbMultiLineString,
 		wkbMultiPolygon, wkbGeometryCollection, wkbPoint25D, wkbLineString25D, wkbPolygon25D, wkbMultiPoint25D,
 		wkbMultiLineString25D, wkbMultiPolygon25D, wkbGeometryCollection25D
 
