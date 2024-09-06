@@ -36,7 +36,7 @@ grdview!(G, J="X6i", JZ=5, I=45, Q="s", C="topo", R="-15/15/-15/15/-1/1", view="
 grdview!(G, J="X6i", JZ=5,  I=45, Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", Vd=dbg2);
 grdview!(G, G=G, J="X6i", JZ=5,  I=45, Q="s", C="topo", R="-15/15/-15/15/-1/1", view="120/30", Vd=dbg2);
 r = grdview!(G, plane=(-6,:lightgray), surftype=(surf=true,mesh=:red), view="120/30", Vd=dbg2);
-@test startswith(r, "grdview  -R -J -n+a -p120/30 -N-6+glightgray -Qsmred")
+@test startswith(r, "grdview  -R-15.0/15.0/-15.0/15.0/-1.0/1.0 -J -n+a -p120/30 -N-6+glightgray -Qsmred")
 r = grdview(G, surf=(waterfall=(:rows,:red),surf=true, mesh=true, img=50), Vd=dbg2);
 @test startswith(r, "grdview  -R0/360/-90/90 -JX" * split(GMT.DEF_FIG_SIZE, '/')[1] * "/0" * " -Baf -Bza -n+a -Qmyredsmi50")
 @test startswith(grdview(G, surf=(waterfall=:rows,), Vd=dbg2), "grdview  -R0/360/-90/90 -JX" * split(GMT.DEF_FIG_SIZE, '/')[1] * "/0" * " -Baf -Bza -n+a -Qmy")
