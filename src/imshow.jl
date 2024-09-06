@@ -246,6 +246,7 @@ function snif_GI_set_CTRLlimits(G_I)::Bool
 	if ((isa(G_I, String) && range[2] != range[9] && range[4] != range[10]) ||
 		(!isa(G_I, String) && range[2] != size(G_I, 2) && range[4] != size(G_I, 1)))
 		CTRL.limits[1:4], CTRL.limits[7:10] = range[1:4], range[1:4]
+		(range[5] != 0.0 && range[6] != 0.0) && (CTRL.limits[5:6] .= range[5:6])
 		return true
 	else
 		CTRL.limits .= 0.0
