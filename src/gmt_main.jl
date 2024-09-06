@@ -1021,8 +1021,8 @@ function dataset_init(API::Ptr{Nothing}, Darr::Vector{<:GMTdataset}, direction::
 
 	# We come here if we did not receive a matrix
 	dim = [1, 0, 0, 0]
-	dim[GMT_SEG+1] = length(Darr)				# Number of segments
-	dim[GMT_COL+1] = size(Darr[1].data, 2)		# Number of columns
+	dim[GMT_SEG+1] = length(Darr)					# Number of segments
+	dim[GMT_COL+1] = size(Darr[1].data, 2)			# Number of columns
 
 	mode = (length(Darr[1].text) != 0) ? GMT_WITH_STRINGS : GMT_NO_STRINGS
 
