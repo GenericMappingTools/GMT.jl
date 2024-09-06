@@ -61,18 +61,23 @@ grdview!(arg1; kwargs...)         = grdview_helper("", arg1; first=false, kwargs
 function grdview_helper(cmd0::String, arg1; first=true, kwargs...)
 
 	arg2 = nothing;	arg3 = nothing;	arg4 = nothing;	arg5 = nothing;
-	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
+	d, K, O = init_module(first, kwargs...)			# Also checks if the user wants ONLY the HELP mode
 
-	haskey(d, :outline) && delete!(d, :outline)	# May come through `pcolor` where it was valid, but not here.
-	common_insert_R!(d, O, cmd0, arg1)			# Set -R in 'd' out of grid/images (with coords) if limits was not used
+	haskey(d, :outline) && delete!(d, :outline)		# May come through `pcolor` where it was valid, but not here.
+	have_opt_JZ = (is_in_dict(d, [:JZ :Jz :zsize :zscale]) !== nothing)
+	have_opt_p  = (is_in_dict(d, [:p :view :perspective])  !== nothing)
+	(first && have_opt_p && !have_opt_JZ) && (d[:JZ] = "4c")
+	have_opt_JZ && !have_opt_p && (d[:p] = "135/40";	CURRENT_VIEW[1] = " -p135/40")
+	common_insert_R!(d, O, cmd0, arg1; is3D=true)	# Set -R in 'd' out of grid/images (with coords) if limits was not used
 
-	has_opt_B = (find_in_dict(d, [:B :frame :axis :axes], false)[1] !== nothing)
+	have_opt_B = (find_in_dict(d, [:B :frame :axis :axes], false)[1] !== nothing)
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "grdview", O, " -JX" * split(DEF_FIG_SIZE, '/')[1] * "/0")
 	(startswith(opt_J, " -JX") && !contains(opt_J, "/")) && (cmd = replace(cmd, opt_J => opt_J * "/0")) # When sub-regions
-	(!has_opt_B && isa(arg1, GMTimage) && (isimgsize(arg1) || CTRL.limits[1:4] == zeros(4)) && opt_B == DEF_FIG_AXES_BAK) &&
-		(cmd = replace(cmd, opt_B => ""))	# Dont plot axes for plain images if that was not required
+	(!have_opt_B && isa(arg1, GMTimage) && (isimgsize(arg1) || CTRL.limits[1:4] == zeros(4)) && opt_B == DEF_FIG_AXES_BAK) &&
+		(cmd = replace(cmd, opt_B => ""))			# Dont plot axes for plain images if that was not required
 
 	cmd, = parse_common_opts(d, cmd, [:UVXY :c :f :n :p :t :params], first)
+	!first && !contains(cmd, " -p") && (cmd *= CURRENT_VIEW[1])		# Inherit current view
 	cmd  = add_opt(d, cmd, "S", [:S :smooth])
 	if ((val = find_in_dict(d, [:N :plane])[1]) !== nothing)
 		cmd *= " -N" * parse_arg_and_pen(val, "+g", false)

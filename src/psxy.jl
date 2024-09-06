@@ -43,10 +43,12 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		end
 	end
 
-	if (occursin('3', caller) && !haskey(d, :p) && !haskey(d, :view) && !haskey(d, :perspective))
+	if (first && occursin('3', caller) && is_in_dict(d, [:p :view :perspective]) === nothing)
 		d[:p] = "200/30"			# Need this before parse_BJR() so MAP_FRAME_AXES can be guessed.
+		CURRENT_VIEW[1] = " -p200/30"
 	end
 	cmd, opt_p = parse_p(d, cmd)	# Parse this one (view angle) aside so we can use it to remove invisible faces (3D)
+	(opt_p == "") ? (opt_p = CURRENT_VIEW[1]; cmd *= opt_p)	: (CURRENT_VIEW[1] = opt_p) # Save for eventual use in other modules.
 
 	if (is3D && isFV(arg1))			# case of 3D faces
 		arg1 = deal_faceverts(arg1, d, opt_p)

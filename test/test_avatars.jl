@@ -20,7 +20,7 @@
 	plot([0.0 0; 1.1 1], theme=(name=:dark, bg_color="gray"), lc=:white, Vd=dbg2)
 	#plot([0.0 0; 1.1 1], theme=(name=:modern,), Vd=dbg2)
 	plot(1:4, rand(4,4), theme=(name=:none, save=true), leg=true)	# Resets default conf and delete the theme_jl file
-	@test startswith(plot!([1 1], marker=(:r, [2 3]), Vd=dbg2), "psxy  -R -J -Sr")
+	@test contains(plot!([1 1], marker=(:r, [2 3]), Vd=dbg2), "-J -Sr")
 	xy = [0. 0.; 1 1; 2 1; 0 0];
 	plot(xy, region=(-1,3,-1,2), clip=(xy, N=true), frame=(axes=:WEsn, grid=0.2, fill=:darkgray), Vd=dbg2);
 	plot(x=[-1.0, -1.0], y=[-1.0, 1.0], pen="1p,black+ve0.2c")
@@ -29,11 +29,11 @@
 	@test occursin(" -Sr", plot!([1 1], marker=(:r, [2 3]), Vd=dbg2))
 	@test_throws ErrorException("Wrong number of extra columns for marker (r). Got 3 but expected 2") plot!([1 1], marker=(:r, [2 3 4]), Vd=dbg2)
 	@test_throws ErrorException("Unknown graphics file extension (.ppf)") plot(rand(5,2), savefig="la.ppf")
-	@test startswith(plot!([1 1], marker=(:Web, [2 3], (inner=5, arc=30,radial=45, pen=(2,:red))), Vd=dbg2), "psxy  -R -J -SW/5+a30+r45+p2,red")
-	@test startswith(plot!([1 1], marker=(Web=true, inner=5, arc=30,radial=45, pen=(2,:red)), Vd=dbg2), "psxy  -R -J -SW/5+a30+r45+p2,red")
-	@test startswith(plot!([1 1], marker="W/5+a30", Vd=dbg2), "psxy  -R -J -SW/5+a30")
-	@test startswith(plot!([1 1], marker=:Web, Vd=dbg2), "psxy  -R -J -SW")
-	@test startswith(plot!([1 1], marker=:W, Vd=dbg2), "psxy  -R -J -SW")
+	@test contains(plot!([1 1], marker=(:Web, [2 3], (inner=5, arc=30,radial=45, pen=(2,:red))), Vd=dbg2), "-SW/5+a30+r45+p2,red")
+	@test contains(plot!([1 1], marker=(Web=true, inner=5, arc=30,radial=45, pen=(2,:red)), Vd=dbg2), "-SW/5+a30+r45+p2,red")
+	@test contains(plot!([1 1], marker="W/5+a30", Vd=dbg2), "-J -SW/5+a30")
+	@test contains(plot!([1 1], marker=:Web, Vd=dbg2), "-J -SW")
+	@test contains(plot!([1 1], marker=:W, Vd=dbg2), "-J -SW")
 	@test startswith(plot([5 5], marker=(:E, 500), Vd=dbg2), "psxy  -JX" * GMT.DEF_FIG_SIZE * " -Baf -BWSen -R4.74/5.26/4.74/5.26 -SE-500")
 	@test startswith(plot(region=(0,10,0,10), marker=(letter="blaBla", size="16p"), Vd=dbg2), "psxy  -R0/10/0/10 -JX" * GMT.DEF_FIG_SIZE * " -Baf -BWSen -Sl16p+tblaBla")
 	@test startswith(plot([5 5], region=(0,10,0,10), marker=(bar=true, size=0.5, base=0,), Vd=dbg2), "psxy  -R0/10/0/10 -JX" * GMT.DEF_FIG_SIZE * " -Baf -BWSen -Sb0.5+b0")

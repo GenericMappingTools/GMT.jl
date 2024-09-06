@@ -146,7 +146,7 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 end
 
 # ---------------------------------------------------------------------------------------------------
-function common_insert_R!(d::Dict, O::Bool, cmd0, I_G)
+function common_insert_R!(d::Dict, O::Bool, cmd0, I_G; is3D=false)
 	# Set -R in 'd' under several conditions. We may need this to make -J=:guess to work
 	O && return
 	CTRL.limits .= 0.0			# Have to play safe on this because some eventual show calls may have left this non-empty
@@ -154,12 +154,21 @@ function common_insert_R!(d::Dict, O::Bool, cmd0, I_G)
 	if ((val = find_in_dict(d, [:R :region :limits], false)[1]) === nothing && (isa(I_G, GItype)))
 		opt_R = @sprintf("%.15g/%.15g/%.15g/%.15g", I_G.range[1], I_G.range[2], I_G.range[3], I_G.range[4])	# auto inset-zoom needs it
 		if (isa(I_G, GMTgrid) || !isimgsize(I_G))
+			# When grdview and -p is used we must set also Z lims in -R. If p does not have 'elev' that must be dealt later
+			if (is3D && is_in_dict(d, [:p :view :perspective]) !== nothing)
+				t = round_wesn([I_G.range[5] I_G.range[5] I_G.range[6] I_G.range[6]])	# Raw numbers gives uggly limits
+				opt_R = @sprintf("%s/%.15g/%.15g", opt_R, t[1], t[4])
+			end
 			d[:R] = opt_R
 		end
 	elseif (val === nothing && IamModern[1] && CTRL.limits[13] == 1.0)
 		# Should it apply also to classic? And should the -R be rebuilt here?
 	elseif (val === nothing && (isa(cmd0, String) && cmd0 != "") && !CONVERT_SYNTAX[1] && snif_GI_set_CTRLlimits(cmd0))
 		opt_R = @sprintf("%.15g/%.15g/%.15g/%.15g", CTRL.limits[1], CTRL.limits[2], CTRL.limits[3], CTRL.limits[4])
+		if (is3D && is_in_dict(d, [:p :view :perspective]) !== nothing)		# grdview with p
+			t = round_wesn([CTRL.limits[5] CTRL.limits[5] CTRL.limits[6] CTRL.limits[6]])	# Raw numbers gives uggly limits
+			opt_R = @sprintf("%s/%.15g/%.15g", opt_R, t[1], t[4])
+		end
 		d[:R] = opt_R
 	elseif (val !== nothing)
 		if (isa(val, StrSymb))
