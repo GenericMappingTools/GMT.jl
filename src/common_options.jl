@@ -180,6 +180,9 @@ function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=true, RIr::Bool=
 		end
 		(opt_R != " -R") && (CTRL.pocket_R[1] = opt_R)
 	end
+
+	# I've seen grdview! screwing with "-R" so we should probably always explicitly set -R. Let's try carefully.
+	(!IamModern[1] && opt_R == " -R" && CTRL.pocket_R[1] != "") && (opt_R = CTRL.pocket_R[1])
 	cmd = cmd * opt_R
 	return cmd, opt_R
 end
@@ -378,7 +381,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_JZ(d::Dict, cmd::String, del::Bool=true; O::Bool=false, is3D::Bool=false)
-	symbs = [:JZ :Jz :zscale :zsize]
+	symbs = [:JZ :Jz :zsize :zscale]
 	(SHOW_KWARGS[1]) && return (print_kwarg_opts(symbs, "String | Number"), "")
 	opt_J::String = "";		seek_JZ = true
 	if ((val = find_in_dict(d, [:aspect3])[1]) !== nothing)
@@ -4135,6 +4138,7 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K:
 	CTRL.limits .= 0.0;		CTRL.figsize .= 0.0;	CTRL.proj_linear[1] = true;		# Reset these for safety
 	CTRL.pocket_J[1], CTRL.pocket_J[2], CTRL.pocket_J[3], CTRL.pocket_J[4] = "", "", "", "   ";
 	CTRL.pocket_R[1] = "";	isJupyter[1] = false;	CTRL.pocket_call .= nothing
+	CURRENT_VIEW[1] = ""
 	return retPluto ? WrapperPluto(out) : nothing	# retPluto should make it all way down to base so that Plut displays it
 end
 
@@ -4400,7 +4404,11 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 							cmd[k] = replace(cmd[k], J2 => islowercase(J2[1]) ? "x" * fig_size : "X" * fig_size)	# Fails for scales
 						end
 					end
-					(opt_R != "") && (cmd[k] = replace(cmd[k], " -R" => opt_R))
+					if (opt_R == " -R")				# Should not happen anymore, but just in case
+						cmd[k] = replace(cmd[k], " -R" => opt_R)
+					else
+						cmd[k] = replace(cmd[k], scan_opt(cmd[k], "-R", true) => opt_R)
+					end
 				end
 				have_Vd && println("\t",cmd[k])		# Useful to know what command was actually executed.
 				orig_J, orig_R = J1, scan_opt(cmd[1], "-R")
