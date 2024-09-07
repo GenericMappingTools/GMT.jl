@@ -174,6 +174,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	# Look for color request. Do it after error bars because they may add a column
 	len_cmd = length(cmd);	n_prev = N_args;
 	opt_Z, args, n, got_Zvars = add_opt(d, "", "Z", [:Z :level :levels], :data, Any[arg1, arg2], (outline="_o", nofill="_f"))
+	(opt_Z == " -Z" && n == 0) && error("The 'level' option (Z) must be set a single value, a file name or a vector os reals.")
 	if (isa(arg1, Vector{<:GMTdataset}) && ((ind_att = findfirst('=', opt_Z)) !== nothing))
 		# Here we deal with the case where the -Z option refers to a particular attribute.
 		# Allow to use "Z=(data="att=XXXX", nofill=true)" when the Di are polygons.
