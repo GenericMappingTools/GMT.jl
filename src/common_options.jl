@@ -1594,7 +1594,7 @@ function parse_helper(cmd::String, d::Dict, symbs::VMs, opt::String, sep='/')
 	(SHOW_KWARGS[1]) && return (print_kwarg_opts(symbs, "(Common option not yet expanded)"),"")
 	opt_val::String = ""
 	if ((val = find_in_dict(d, symbs, true)[1]) !== nothing)
-		opt_val = opt * arg2str(val, sep)::String
+		opt_val = opt * arg2str(val, sep)
 		cmd *= opt_val
 	end
 	return cmd, opt_val
@@ -1658,7 +1658,7 @@ function parse_common_opts(d::Dict, cmd::String, opts::VMs, first::Bool=true)
 		if (opt_p != "")
 			if (opt_p == " -pnone")  CURRENT_VIEW[1] = "";	cmd = cmd[1:end-7];	opt_p = ""
 			elseif (startswith(opt_p, " -pa") || startswith(opt_p, " -pd"))
-				CURRENT_VIEW[1] = " -p210/30";
+				CURRENT_VIEW[1] = " -p217.5/30";
 				cmd = replace(cmd, opt_p => "") * CURRENT_VIEW[1]::String		# auto, def, 3d
 			else
 				CURRENT_VIEW[1] = opt_p
@@ -1669,7 +1669,6 @@ function parse_common_opts(d::Dict, cmd::String, opts::VMs, first::Bool=true)
 			CURRENT_VIEW[1] = ""		# Ensure we start empty
 		end
 	end
-	#cmd   = GMTsyntax_opt(d, cmd)		# See if an hardcore GMT syntax string has been passed
 	((val = find_in_dict(d, [:pagecolor])[1]) !== nothing) && (cmd *= string(" --PS_PAGE_COLOR=", val)::String)
 	return cmd, o
 end

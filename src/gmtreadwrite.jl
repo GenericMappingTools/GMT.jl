@@ -706,3 +706,42 @@ function read_obj(fname)
 	set_dsBB!(DV)
 	return [DV, GMTdataset(data=F)]
 end
+
+# --------------------------------------------------------------------------------------------------------
+"""
+    write_stl(D::Vector{<:GMTdataset}, fname; binary=true)
+
+Write a STL file. 
+"""
+# Inspired in MeshIO stl.jl
+function write_stl(fname::AbstractString, D::Vector{<:GMTdataset}; binary::Bool=true)
+	name = fileparts(fname)[2]
+	fid = open(fname, write=true)
+
+	if (binary)
+		foreach(k -> write(fid, 0x00), 1:80)	# header (empty)
+		write(fid, UInt32(length(D)))			# number of triangles
+    	for k = 1:length(D)
+			n = facenorm(D[k].data)
+			foreach(j-> write(fid, Float32(n[j])), 1:3)
+			for t = 1:3
+				write(fid, Float32(D[k][t,1]), Float32(D[k][t,2]), Float32(D[k][t,3]))
+			end
+			write(fid, 0x0000)		# write 16bit empty byte count
+		end
+	else
+    	write(fid, "solid $name\n")
+		for k = 1:length(D)
+			n = facenorm(D[k].data)
+			@printf fid "facet normal %.12g %.12g %.12g\n" n[1] n[2] n[3]
+			write(fid,"\touter loop\n")
+			@printf fid "\t\tvertex  %.12g %.12g %.12g\n" D[k][1,1] D[k][1,2] D[k][1,3]
+			@printf fid "\t\tvertex  %.12g %.12g %.12g\n" D[k][2,1] D[k][2,2] D[k][2,3]
+			@printf fid "\t\tvertex  %.12g %.12g %.12g\n" D[k][3,1] D[k][3,2] D[k][3,3]
+			write(fid,"\tendloop\n")
+			write(fid,"endfacet\n")
+		end
+		write(fid,"endsolid $name\n")
+	end
+	close(fid)
+end
