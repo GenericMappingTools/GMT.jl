@@ -37,14 +37,16 @@ end
 """
     buffer(geom, dist::Real, quadsegs::Integer=30; gdataset=false)
 
+Compute buffer of a geometry.
+
 ### Parameters
 * `geom`: the geometry. This can either be a GDAL AbstractGeometry or a GMTdataset (or vector of it), or a Matrix
 * `dist`: the buffer distance to be applied. Should be expressed into the
     same unit as the coordinates of the geometry.
 * `quadsegs`: the number of segments used to approximate a 90 degree (quadrant) of curvature.
-* `gdataset`: Returns a GDAL IGeometry even when input is a GMTdataset or Matrix
 
-Compute buffer of geometry.
+### Keywords
+* `gdataset`: Returns a GDAL IGeometry even when input is a GMTdataset or Matrix
 
 Builds a new geometry containing the buffer region around the geometry on which
 it is invoked. The buffer is a polygon containing the region within the buffer
@@ -73,6 +75,8 @@ end
 
 ### Parameters
 * `geom`: the geometry. This can either be a GDAL AbstractGeometry or a GMTdataset (or vector of them), or a Matrix
+
+### Keywords
 * `gdataset`: Returns a GDAL IGeometry even when input is a GMTdataset or Matrix
 
 Compute the geometry centroid.
@@ -107,6 +111,8 @@ end
 ### Parameters
 * `geom1`: the geometry. This can either be a GDAL AbstractGeometry or a GMTdataset (or vector of it), or a Matrix
 * `geom2`: Second geometry. AbstractGeometry if `geom1::AbstractGeometry` or a GMTdataset/Matrix if `geom1` is GMT type 
+
+### Keywords
 * `gdataset`: Returns a GDAL IGeometry even when input is GMTdataset or Matrix
 
 Returns a new geometry representing the intersection of the geometries, or NULL
@@ -125,12 +131,14 @@ intersection(D1, D2; gdataset=false) = helper_geoms_run_fun(intersection, D1, D2
 """
     polyunion(geom1, geom2; gdataset=false)
 
+Computes a new geometry representing the union of the geometries.
+
 ### Parameters
 * `geom1`: the geometry. This can either be a GDAL AbstractGeometry or a GMTdataset (or vector of it), or a Matrix
 * `geom2`: Second geometry. AbstractGeometry if `geom1::AbstractGeometry` or a GMTdataset/Matrix if `geom1` is GMT type 
-* `gdataset`: Returns a GDAL IGeometry even when input is GMTdataset or Matrix
 
-Computes a new geometry representing the union of the geometries.
+### Keywords
+* `gdataset`: Returns a GDAL IGeometry even when input is GMTdataset or Matrix
 
 ### Returns
 A GMT dataset when input is a Matrix or a GMT type (except if `gdaset=true`), or a GDAL IGeometry otherwise
@@ -145,6 +153,8 @@ polyunion(D1, D2; gdataset=false) = helper_geoms_run_fun(polyunion, D1, D2; gdat
 ### Parameters
 * `geom1`: the geometry. This can either be a GDAL AbstractGeometry or a GMTdataset (or vector of it), or a Matrix
 * `geom2`: Second geometry. AbstractGeometry if `geom1::AbstractGeometry` or a GMTdataset/Matrix if `geom1` is GMT type 
+
+### Keywords
 * `gdataset`: Returns a GDAL IGeometry even when input is GMTdataset or Matrix
 
 Generates a new geometry which is the region of this geometry with the region of the other geometry removed.
@@ -162,6 +172,8 @@ difference(D1, D2; gdataset=false) = helper_geoms_run_fun(difference, D1, D2; gd
 ### Parameters
 * `geom1`: the geometry. This can either be a GDAL AbstractGeometry or a GMTdataset (or vector of it), or a Matrix
 * `geom2`: Second geometry. AbstractGeometry if `geom1::AbstractGeometry` or a GMTdataset/Matrix if `geom1` is GMT type 
+
+### Keywords
 * `gdataset`: Returns a GDAL IGeometry even when input is GMTdataset or Matrix
 
 Generates a new geometry representing the symmetric difference of the geometries
@@ -267,6 +279,8 @@ Compute a simplified geometry.
 ### Parameters
 * `geom`: the geometry.
 * `tol`: the distance tolerance for the simplification.
+
+### Keywords
 * `gdataset`: Returns a GDAL IGeometry even when input is GMTdataset or Matrix
 """
 simplify(geom::AbstractGeometry, tol::Real) = IGeometry(OGR_G_Simplify(geom.ptr, tol))
@@ -486,6 +500,7 @@ end
 * `radius`: radius of the circle.
 * `start_angle`: angle to first point on arc (clockwise of X-positive) 
 * `end_angle`: angle to last point on arc (clockwise of X-positive) 
+
 ### Keywords
 * `z0`: center Z. Optional, if not provided the output is flat 2D
 * `inc`: the largest step in degrees along the arc. Default is 2 degree
