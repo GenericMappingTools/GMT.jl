@@ -227,8 +227,8 @@ function grid2tri(G, G2=nothing; thickness=0.0, level=false, downsample=0, ratio
 
 	(wall != 0) && (bottom = false)
 	Dbnd_t, Dpts = gridhull(G; downsample=downsample, ratio=ratio)	# Compute the top concave hull
+	Dt_t = triangulate(Dpts, S="+za", Z=true)			# Triangulation of top surface
 	if (wall != 0)										# If we only want the vertical wall no need to compute the others
-		Dt_t = triangulate(Dpts, S="+za", Z=true)		# Triangulation of top surface
 		Dc = gmtspatial(Dt_t, Q=true, o="0,1")			# Compute the polygon centroids
 		ind = (Dc in Dbnd_t) .== 1
 		Dt_t = Dt_t[ind]								# Delete the triangles outside the concave hull
