@@ -2168,6 +2168,7 @@ end
 
 	for (geom, wkbgeom) in ((:geomcollection,       wkbGeometryCollection),
 							(:linestring,           wkbLineString),
+							(:linestringZ,          wkbLineStringZ),
 							(:linearring,           wkbLinearRing),
 							(:multilinestring,      wkbMultiLineString),
 							(:multipoint,           wkbMultiPoint),
@@ -2537,9 +2538,9 @@ end
 		delaunay, dither, buffer, centroid, intersection, intersects, polyunion, fromWKT, fillnodata!, fillnodata,
 		concavehull, convexhull, difference, symdifference, distance, geomarea, geodesicarea, pointalongline, polygonize,
 		simplify, boundary, crosses, disjoint, equals, envelope, envelope3d, geomlength, overlaps, touches, within,
-		wkbUnknown, wkbPoint, wkbPointZ, wkbLineString, wkbPolygon, wkbPolygonZM, wkbMultiPoint, wkbMultiPointZ, wkbMultiLineString,
-		wkbMultiPolygon, wkbGeometryCollection, wkbPoint25D, wkbLineString25D, wkbPolygon25D, wkbMultiPoint25D,
-		wkbMultiLineString25D, wkbMultiPolygon25D, wkbGeometryCollection25D
+		wkbUnknown, wkbPoint, wkbPointZ, wkbLineString, wkbLineStringZ, wkbPolygon, wkbPolygonZM, wkbMultiPoint,
+		wkbMultiPointZ, wkbMultiLineString, wkbMultiPolygon, wkbGeometryCollection, wkbPoint25D, wkbLineString25D,
+		wkbPolygon25D, wkbMultiPoint25D, wkbMultiLineString25D, wkbMultiPolygon25D, wkbGeometryCollection25D
 
 
 	const DRIVER_MANAGER = Ref{DriverManager}()

@@ -370,7 +370,8 @@ end
 # ---------------------------------------------------------------------------------------------------
 function deal_gridtri!(arg1, d)
 	# Deal with the situation where we are plotting triangulated grids made by grid2tri()
-	(!isa(arg1, Vector{<:GMTdataset}) || arg1[1].geom != wkbPolygonZM) && return false
+	((!isa(arg1, Vector{<:GMTdataset}) || isempty(arg1[1].comment) || (arg1[1].comment[1] != "vwall" && arg1[1].comment[1] != "gridtri"))) &&
+		return false
 	is_in_dict(d, [:G :fill]) === nothing && (d[:G] = "+z")
 	if (is_in_dict(d, CPTaliases) === nothing)
 		C = gmt("makecpt -T$(arg1[1].ds_bbox[5]-1e-8)/$(arg1[1].ds_bbox[6]+1e-8)/+n255 -Cturbo")

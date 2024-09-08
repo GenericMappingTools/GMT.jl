@@ -1033,6 +1033,7 @@ function dataset_init(API::Ptr{Nothing}, Darr::Vector{<:GMTdataset}, direction::
 	DT = unsafe_load(unsafe_load(DS.table))			# GMT_DATATABLE
 
 	n_records = 0
+	isFloat4 = (eltype(Darr[1].data) == Float64)
 	for seg = 1:dim[GMT_SEG+1] 						# Each incoming structure is a new data segment
 		dim[GMT_ROW+1] = size(Darr[seg].data, 1)	# Number of rows in matrix
 		if (dim[GMT_ROW+1] == 0)					# When we have only text
@@ -1044,10 +1045,10 @@ function dataset_init(API::Ptr{Nothing}, Darr::Vector{<:GMTdataset}, direction::
 
 		DSv = convert(Ptr{Nothing}, unsafe_load(DT.segment, seg))		# DT.segment = Ptr{Ptr{GMT_DATASEGMENT}}
 		S = GMT_Alloc_Segment(API, mode, dim[GMT_ROW+1], dim[GMT_COL+1], Darr[seg].header, DSv) # Ptr{GMT_DATASEGMENT}
-		Sb = unsafe_load(S)								# GMT_DATASEGMENT;		Sb.data -> Ptr{Ptr{Float64}}
-		for col = 1:Sb.n_columns						# Copy the data columns
+		Sb = unsafe_load(S)							# GMT_DATASEGMENT;		Sb.data -> Ptr{Ptr{Float64}}
+		for col = 1:Sb.n_columns					# Copy the data columns
 			#unsafe_store!(Sb.data, pointer(Darr[seg].data[:,col]), col)	# This would allow shared mem
-			if (eltype(Darr[seg].data) == Float64)		# They must be Float64 because of the .data type in GMT_DATASEGMENT
+			if (isFloat4)							# They must be Float64 because of the .data type in GMT_DATASEGMENT
 				unsafe_copyto!(unsafe_load(Sb.data, col), pointer(Darr[seg].data[:,col]), Sb.n_rows)
 			else
 				unsafe_copyto!(unsafe_load(Sb.data, col), pointer(Float64.(Darr[seg].data[:,col])), Sb.n_rows)

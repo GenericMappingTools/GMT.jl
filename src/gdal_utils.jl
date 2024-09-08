@@ -556,8 +556,15 @@ function gmt2gd(D::Vector{<:GMTdataset}; save::String="", geometry::String="")
 	(geometry != "" && !isline && !ispoint && !ispolyg) && error("Geometry $(geometry) not yet implemented")
 	if (D[1].geom == 0 && !isline && !ispoint && !ispolyg)	# If all multi-segments are closed create a Polygon/MultiPolygon
 		ispolyg = true
-		for k = 1:length(D)
-			(D[k].data[1,1:2] != D[k].data[end,1:2]) && (ispolyg = false; break)
+		if (n_cols == 2)
+			for k = 1:length(D)
+				(D[k].data[1,1] != D[k].data[end,1]) && (D[k].data[1,2] != D[k].data[end,2]) && (ispolyg = false; break)
+			end
+		else
+			for k = 1:length(D)
+				(D[k].data[1,1] != D[k].data[end,1]) && (D[k].data[1,2] != D[k].data[end,2]) && (D[k].data[1,3] != D[k].data[end,3]) &&
+					(ispolyg = false; break)
+			end
 		end
 		isline = !ispolyg						# Otherwise make a Line/MultiLine
 	end
@@ -572,7 +579,7 @@ function gmt2gd(D::Vector{<:GMTdataset}; save::String="", geometry::String="")
 	if (ispolyg || D[1].geom == wkbPolygon || D[1].geom == wkbMultiPolygon || D[1].geom == wkbPolygonZM)
 		geom_code, geom_cmd = (!ismulti) ? (wkbPolygon, Gdal.createpolygon()) :
 		                                   (wkbMultiPolygon, Gdal.createmultipolygon())
-	elseif (isline || D[1].geom == wkbLineString || D[1].geom == wkbMultiLineString)
+	elseif (isline || D[1].geom == wkbLineString || D[1].geom == wkbMultiLineString || D[1].geom == wkbLineStringZ)
 		geom_code, geom_cmd = (!ismulti) ? (wkbLineString, Gdal.createlinestring()) :
 		                                   (wkbMultiLineString, Gdal.createmultilinestring())
 	elseif (D[1].geom == wkbMultiPoint || (ispoint && !ismulti))
@@ -602,7 +609,7 @@ function gmt2gd(D::Vector{<:GMTdataset}; save::String="", geometry::String="")
 			[Gdal.addgeom!(geom, makering(D[k].data)) for k = 1:length(D)]
 		end
 		Gdal.setgeom!(feature, geom)
-	elseif (isline || D[1].geom == wkbLineString || D[1].geom == wkbMultiLineString)
+	elseif (isline || D[1].geom == wkbLineString || D[1].geom == wkbMultiLineString || D[1].geom == wkbLineStringZ)
 		if (ismulti)
 			for k = 1:length(D)
 				line = Gdal.creategeom(wkbLineString)
@@ -858,7 +865,9 @@ function lonlat2xy(xy::Matrix{<:Real}, t_srs_=nothing; t_srs=nothing, s_srs=prj4
 	isa(s_srs, Int) && (s_srs = epsg2wkt(s_srs))
 	isa(t_srs, Int) && (t_srs = epsg2wkt(t_srs))
 	(t_srs === nothing) && error("Must specify at least the target referencing system.")
-	D = ogr2ogr(xy, ["-s_srs", s_srs, "-t_srs", t_srs, "-overwrite"])
+	opts = (size(xy,2) == 2) ? ["-s_srs", s_srs, "-t_srs", t_srs, "-overwrite"] :
+	                           ["-s_srs", s_srs, "-t_srs", t_srs, "-overwrite", "-dim", "XYZ"]
+	D = ogr2ogr(xy, opts)
 	return D.data		# Return only the array because that's what was sent in
 end
 
@@ -872,7 +881,9 @@ function lonlat2xy(D::Vector{<:GMTdataset}, t_srs_=nothing; t_srs=nothing, s_srs
 	if (t_srs != "") _t_srs = t_srs
 	else             _t_srs = (D[1].proj4 != "") ? D[1].proj4 : D[1].wkt
 	end
-	r = ogr2ogr(D, ["-s_srs", s_srs, "-t_srs", _t_srs, "-overwrite"])
+	opts = (size(D[1].data,2) == 2) ? ["-s_srs", s_srs, "-t_srs", t_srs, "-overwrite"] :
+	                                  ["-s_srs", s_srs, "-t_srs", t_srs, "-overwrite", "-dim", "XYZ"]
+	r = ogr2ogr(D, opts)
 	# For some bloody reason if we don't do this and call gdalwarp after, we get a "gdalwarp returned a NULL pointer." error 
 	(length(D) > 1) && ogr2ogr([0.0 0], ["-s_srs", "+proj=lonlat", "-t_srs", "+proj=lonlat", "-overwrite"])
 	return r

@@ -91,19 +91,21 @@ function mapproject(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 		arg1, arg2 = args[:]
 	end
 
+	opt_J = ""
 	if (!occursin("-G", cmd))
 		map = occursin(" -W", cmd) ? true : false
-		cmd, = parse_J(d, cmd, " ", map)		# Do not append a default fig size
+		cmd, opt_J = parse_J(d, cmd, " ", map)		# Do not append a default fig size
 	end
 
-	if (occursin(" -W", cmd))				    # No input data in this case
+	if (occursin(" -W", cmd))				    	# No input data in this case
 		(dbg_print_cmd(d, cmd) !== nothing) && return cmd
 		gmt("mapproject " * cmd)
 	else
 	    #cmd, got_fname, arg1, arg2 = find_data(d, cmd0, cmd, arg1, arg2)
         (isa(arg1, Vector{<:Real})) && (arg1 = reshape(arg1, 1, :))     # User may have send a vector but GMT expects matrix
 		R = common_grd(d, cmd0, cmd, "mapproject ", arg1, arg2)
-        (isa(R, Vector{GMTdataset}) && contains(cmd, " -I")) && (R[1].proj4 = prj4WGS84)
+		contains(cmd, " -I") && (isa(R, GMTdataset) ? (R.proj4 = prj4WGS84) : (R[1].proj4 = prj4WGS84))
+		contains(opt_J, "+proj") && (isa(R, GMTdataset) ? (R.proj4 = opt_J[4:end]) : (R[1].proj4 = opt_J[4:end]))
         R
 	end
 end

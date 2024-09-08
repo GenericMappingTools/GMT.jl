@@ -84,7 +84,7 @@ function triangulate_helper(cmd0::String, arg1; kwargs...)
 	out = common_grd(d, cmd0, cmd, "triangulate ", arg1)		# Finish build cmd and run it
 	if isa(out, GDtype)
 		set_dsBB!(out, false)
-		(contains(cmd, " -S") && contains(cmd, " -Z")) && setgeom!(out, wkbPolygonZM)
+		(contains(cmd, " -S") && contains(cmd, " -Z")) && setgeom!(out, wkbLineStringZ)
 	end
 	return out
 end
@@ -234,7 +234,8 @@ function grid2tri(G, G2=nothing; thickness=0.0, level=false, downsample=0, ratio
 		Dt_t = Dt_t[ind]								# Delete the triangles outside the concave hull
 		Dt_t[1].ds_bbox = Dt_t[1].bbox					# Because we may have deleted first Dt_t
 		Dt_t[1].proj4 = Dbnd_t.proj4
-		Dt_t[1].geom = wkbPolygonZM
+		Dt_t[1].geom = wkbLineStringZ
+		Dt_t[1].comment = ["gridtri"]					# To help recognize this type of DS
 		set_dsBB!(Dt_t, false)
 	end
 
@@ -244,7 +245,8 @@ function grid2tri(G, G2=nothing; thickness=0.0, level=false, downsample=0, ratio
 			Dt_b = triangulate(Dpts, S="+za", Z=true)	# Triangulation of bottom surface
 			Dt_b = Dt_b[ind]							# Delete the triangles outside the concave hull (reuse the same 'ind')
 			Dt_b[1].ds_bbox = Dt_b[1].bbox				# Because we may have deleted first Dt
-			Dt_b[1].geom = wkbPolygonZM
+			Dt_b[1].geom = wkbLineStringZ
+			Dt_b[1].comment = ["gridtri"]				# To help recognize this type of DS
 			for k = 1:numel(Dt_b)						# Must reverse the order of the vertices so normals point outward
 				Dt_b[k][3,1], Dt_b[k][2,1] = Dt_b[k][2,1], Dt_b[k][3,1]
 				Dt_b[k][3,2], Dt_b[k][2,2] = Dt_b[k][2,2], Dt_b[k][3,2]
@@ -323,7 +325,7 @@ function vwall(Bt::Union{Matrix{<:Real}, GMTdataset}, Bb::Union{Matrix{<:Real}, 
 	end
 	set_dsBB!(Twall)
 	isa(Bt, GMTdataset) && (Twall[1].proj4 = Bt.proj4)
-	Twall[1].geom = wkbPolygonZM
-	Twall[1].attrib["vwall"] = ""			# To help recognize this as a vertical wall.
+	Twall[1].geom = wkbLineStringZ
+	Twall[1].comment = ["vwall"]			# To help recognize this as a vertical wall.
 	return Twall
 end
