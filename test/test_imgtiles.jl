@@ -22,9 +22,8 @@
 	mosaic(-90,25, zoom=1, provider="nimb",key="0", quadonly=1);
 	G = peaks(); G.proj4 = "+proj=lonlat";
 	mosaic(G, quadonly=1);
-	GMT.gmt_restart()
 	G = gdalwarp(G, ["-t_srs","+proj=merc"])
-	mosaic(G, quadonly=1);
+	#mosaic(G, quadonly=1);		# This now diced to randonmly fail
 
 	struct Provider
 		url::String

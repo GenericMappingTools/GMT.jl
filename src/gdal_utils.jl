@@ -558,11 +558,11 @@ function gmt2gd(D::Vector{<:GMTdataset}; save::String="", geometry::String="")
 		ispolyg = true
 		if (n_cols == 2)
 			for k = 1:length(D)
-				(D[k].data[1,1] != D[k].data[end,1]) && (D[k].data[1,2] != D[k].data[end,2]) && (ispolyg = false; break)
+				((D[k].data[1,1] != D[k].data[end,1]) || (D[k].data[1,2] != D[k].data[end,2])) && (ispolyg = false; break)
 			end
 		else
 			for k = 1:length(D)
-				(D[k].data[1,1] != D[k].data[end,1]) && (D[k].data[1,2] != D[k].data[end,2]) && (D[k].data[1,3] != D[k].data[end,3]) &&
+				((D[k].data[1,1] != D[k].data[end,1]) || (D[k].data[1,2] != D[k].data[end,2]) || (D[k].data[1,3] != D[k].data[end,3])) &&
 					(ispolyg = false; break)
 			end
 		end
@@ -616,7 +616,7 @@ function gmt2gd(D::Vector{<:GMTdataset}; save::String="", geometry::String="")
 				x,y,z = helper_gmt2gd_xyz(D[k], n_cols)
 				(n_cols == 2) ? Gdal.OGR_G_SetPoints(line.ptr, size(D[k].data, 1), x, 8, y, 8, C_NULL, 8) :
 				                Gdal.OGR_G_SetPoints(line.ptr, size(D[k].data, 1), x, 8, y, 8, z, 8)
-        		Gdal.addgeom!(geom, line)
+				Gdal.addgeom!(geom, line)
 			end
 		else
 			x,y,z = helper_gmt2gd_xyz(D[1], n_cols)
