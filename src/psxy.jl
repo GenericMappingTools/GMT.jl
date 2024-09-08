@@ -378,7 +378,7 @@ function deal_gridtri!(arg1, d)
 		C.bfn[2, :] .= 0.7			# Set the foreground color used by the vertical wall
 		d[:C] = C
 	end
-	(is_in_dict(d, [:L :close :polygon]) === nothing && arg1[1].data[1,:] != arg1[1].data[end,:]) && (d[:L] = "")
+	(is_in_dict(d, [:L :close :polygon]) === nothing) && (d[:L] = "")
 	return true
 end
 

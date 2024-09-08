@@ -178,7 +178,8 @@ trisurf!(in::Union{Matrix, GDtype}; gdal=true, kw...) = trisurf(in; gdal=gdal, f
 # plot3(D,  zsize=3, G="+z", L=true, proj=:merc, show=1, pen=0)
 # plot3(D,  zsize=3,  proj=:merc,  G="+z", C="aa.cpt", show=1, Z=linspace(-7,-400,length(D)), Vd=1)
 """
-    grid2tri(G, G2=nothing; bottom=false, downsample=0, level=false, ratio=0.01, thickness=0.0, wall=false)
+    D = grid2tri(G, G2=nothing; bottom=false, downsample=0, level=false, ratio=0.01,
+                 thickness=0.0, wall_only=false, top_only=false)
 
 Triangulates the surface defined by the grid `G`, and optionally the bottom surface `G2`, plus the
 vertical wall between them, or between `G` and constant level or a constant thickness. Optionally
@@ -216,18 +217,21 @@ NOTE: The `G` grid should have a _out-skirt_ of NaNs, otherwise just use ``grdvi
 - `thickness`: A scalar representing the layer thickness in the same units as those of the input grid.
   NOTE: this option is ignored when two grids are passed in input.
 
-- `wall`: If true, only the vertical wall  between `G` and `G2`, or `G` + `thickness` is computed and returned.
+- `top_only`: If true, only the triangulation of `G`is returned.
+
+- `wall_only`: If true, only the vertical wall  between `G` and `G2`, or `G` + `thickness` is computed and returned.
 
 ### Returns
 A vector of GMTdataset with the triangulated surface and vertical wall, or just the wall or the full closed body.
 """
-function grid2tri(G, G2=nothing; thickness=0.0, level=false, downsample=0, ratio=0.01, bottom=false, wall=false)
-	(!isa(G2, GMTgrid) && !isa(G2, String) && thickness <= 0.0) &&
+function grid2tri(G, G2=nothing; thickness=0.0, level=false, downsample=0, ratio=0.01, bottom=false, wall_only=false, top_only=false)
+	(!isa(G2, GMTgrid) && !isa(G2, String) && thickness <= 0.0 && top_only == 0) &&
 		error("Must provide a bottom grid or a thickness for this layer.")
 
-	(wall != 0) && (bottom = false)
+	(wall_only != 0) && (bottom = false)
+	(top_only  != 0) && (G2 = nothing; bottom = false; wall_only = false)
 	Dbnd_t, Dpts = gridhull(G; downsample=downsample, ratio=ratio)	# Compute the top concave hull
-	if (wall == 0)										# If we only want the vertical wall no need to compute the others
+	if (wall_only == 0)									# (wall_only = 0 means we have to compute the top surface)
 		Dt_t = triangulate(Dpts, S="+za", Z=true)		# Triangulation of top surface
 		Dc = gmtspatial(Dt_t, Q=true, o="0,1")			# Compute the polygon centroids
 		ind = (Dc in Dbnd_t) .== 1
@@ -257,10 +261,11 @@ function grid2tri(G, G2=nothing; thickness=0.0, level=false, downsample=0, ratio
 		Dwall = vwall(Dbnd_t, view(Dbnd_b, :, 3))
 		(bottom == 1) && append!(Dt_b, Dwall)			# If including bottom too, start with it and add the wall.
 	else
+		(top_only != 0) && return Dt_t					# Get out now if only the top surface is requested
 		Dwall = vwall(Dbnd_t, thickness, level != 0)
 	end
 
-	(wall == 0) && append!(Dwall, Dt_t)
+	(wall_only == 0) && append!(Dwall, Dt_t)
 	return Dwall
 end
 
@@ -276,7 +281,7 @@ end
 """
 function gridhull(G; downsample::Int=0, ratio=0.01)
 	_G = isa(G, String) ? gmtread(G) : G
-	(downsample > 1) && (_G = grdsample(_G, I="$(div(size(_G.z,2),2)+1)+n/$(div(size(_G.z,1),2)+1)+n", V="q"))
+	(downsample > 1) && (_G = grdsample(_G, I="$(div(size(_G.z,2),downsample)+1)+n/$(div(size(_G.z,1),downsample)+1)+n", V="q"))
 	V = grd2xyz(_G, s=true)					# Convert to x,y,z while dropping the NaNs
 	B = concavehull(V.data, ratio, false)	# Compute the ~concave hull when excluding the outer NaNs (ignores holes)
 	B.proj4, B.wkt, B.epsg = _G.proj4, _G.wkt, _G.epsg
