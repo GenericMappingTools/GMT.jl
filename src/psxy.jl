@@ -43,6 +43,10 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		end
 	end
 
+	# --------------------- Check the grid2tri cases --------------------
+	is_gridtri = false
+	is3D && (is_gridtri = deal_gridtri!(arg1, d))
+
 	if (first && occursin('3', caller) && is_in_dict(d, [:p :view :perspective]) === nothing)
 		d[:p] = "217.5/30"			# Need this before parse_BJR() so MAP_FRAME_AXES can be guessed.
 		CURRENT_VIEW[1] = " -p217.5/30"
@@ -85,6 +89,12 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		isa(arg1, Vector{<:GMTdataset}) && !isempty(arg1[1].colnames) && (CTRL.XYlabels[1] = arg1[1].colnames[1]; CTRL.XYlabels[2] = arg1[1].colnames[2])
 		if (is_ternary)  cmd, opt_J = parse_J(d, cmd, def_J)
 		else             cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd, caller, O, def_J)
+		end
+		# Current parse_B does not add a default -Baz when 3D AND -J has a projection. More or less fix that.
+		if (is3D && opt_B != "" && !contains(opt_B, " -Bz"))
+			opt_B_copy = opt_B
+			opt_B = replace(opt_B, " -BWSen" => "") * " -Bza"	# Remove the " -BWSen" and add " -Bza"
+			cmd = replace(cmd, opt_B_copy => opt_B);
 		end
 	end
 
@@ -137,8 +147,8 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		cmd = replace(cmd, opt_J => " -JX" * split(DEF_FIG_SIZE, '/')[1] * "/0")	# If projected, it's a axis equal for sure
 	end
 	if (is3D && isempty(opt_JZ) && length(collect(eachmatch(r"/", opt_R))) == 5)
-		cmd *= " -JZ6c"		# Default -JZ
-		opt_JZ = CTRL.pocket_J[3] = " -JZ6c"		# Needed for eventual z-axis dir reversal.
+		opt_JZ = CTRL.pocket_J[3] = (is_gridtri) ? " -JZ3c" : " -JZ6c"		# Needed for eventual z-axis dir reversal.
+		cmd *= opt_JZ		# Default -JZ
 	end
 
 	# Here we check for a direct -A of and indirect via the stairs module.
@@ -213,10 +223,11 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	arg1, cmd = check_ribbon(d, arg1, cmd, opt_W)	# Do this check here, after -W is known and before parsing -G & -L
 
 	mcc, bar_ok = false, (sub_module == "bar" && !check_bar_group(arg1))
-	if (!got_color_line_grad && (arg1 !== nothing && !isa(arg1, GMTcpt)) && ((!got_Zvars && !is_ternary) || bar_ok))
+	if (!got_color_line_grad && !is_gridtri && (arg1 !== nothing && !isa(arg1, GMTcpt)) && ((!got_Zvars && !is_ternary) || bar_ok))
 		# If "bar" ONLY if not bar-group
 		# See if we got a CPT. If yes there may be some work to do if no color column provided in input data.
-		cmd, arg1, arg2, N_args, mcc = make_color_column(d, cmd, opt_i, len_cmd, N_args, n_prev, is3D, got_Ebars, bar_ok, g_bar_fill, arg1, arg2)
+		cmd, arg1, arg2, N_args, mcc = make_color_column(d, cmd, opt_i, len_cmd, N_args, n_prev, is3D,
+		                                                 got_Ebars, bar_ok, g_bar_fill, arg1, arg2)
 	end
 
 	opt_G::String = ""
@@ -354,6 +365,20 @@ function deal_faceverts(arg1, d, opt_p)
 		(is_in_dict(d, CPTaliases) === nothing) && (d[:C] = gmt("makecpt -T0/1 -C150,210"))	# Users may still set a CPT
 	end
 	return arg1
+end
+
+# ---------------------------------------------------------------------------------------------------
+function deal_gridtri!(arg1, d)
+	# Deal with the situation where we are plotting triangulated grids made by grid2tri()
+	(!isa(arg1, Vector{<:GMTdataset}) || arg1[1].geom != wkbPolygonZM) && return false
+	is_in_dict(d, [:G :fill]) === nothing && (d[:G] = "+z")
+	if (is_in_dict(d, CPTaliases) === nothing)
+		C = gmt("makecpt -T$(arg1[1].ds_bbox[5]-1e-8)/$(arg1[1].ds_bbox[6]+1e-8)/+n255 -Cturbo")
+		C.bfn[2, :] .= 0.7			# Set the foreground color used by the vertical wall
+		d[:C] = C
+	end
+	(is_in_dict(d, [:L :close :polygon]) === nothing && arg1[1].data[1,:] != arg1[1].data[end,:]) && (d[:L] = "")
+	return true
 end
 
 # ---------------------------------------------------------------------------------------------------
