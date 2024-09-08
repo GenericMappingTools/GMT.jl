@@ -58,8 +58,13 @@ function find_in_kwargs(p, symbs::VMs, del::Bool=true, primo::Bool=true, help_st
 	return nothing, Symbol()
 end
 
+"""
+    is_in_dict(d::Dict, symbs::VMs, help_str::String=""; del::Bool=false)
+
+See if `d` contains any of the symbols in `symbs`. If yes, return the used smb in symbs.
+If not, return nothing.
+"""
 function is_in_dict(d::Dict, symbs::VMs, help_str::String=""; del::Bool=false)
-	# See if D contains any of the symbols in SYMBS. If yes, return the used smb in symbs
 	(SHOW_KWARGS[1] && help_str != "") && return print_kwarg_opts(symbs, help_str)
 	for symb in symbs
 		if (haskey(d, symb))
