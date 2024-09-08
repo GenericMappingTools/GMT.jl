@@ -324,5 +324,6 @@ function vwall(Bt::Union{Matrix{<:Real}, GMTdataset}, Bb::Union{Matrix{<:Real}, 
 	set_dsBB!(Twall)
 	isa(Bt, GMTdataset) && (Twall[1].proj4 = Bt.proj4)
 	Twall[1].geom = wkbPolygonZM
+	Twall[1].attrib["vwall"] = ""			# To help recognize this as a vertical wall.
 	return Twall
 end
