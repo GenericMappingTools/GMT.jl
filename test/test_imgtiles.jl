@@ -22,7 +22,7 @@
 	mosaic(-90,25, zoom=1, provider="nimb",key="0", quadonly=1);
 	G = peaks(); G.proj4 = "+proj=lonlat";
 	mosaic(G, quadonly=1);
-	gmt_restart()
+	GMT.gmt_restart()
 	G = gdalwarp(G, ["-t_srs","+proj=merc"])
 	mosaic(G, quadonly=1);
 
