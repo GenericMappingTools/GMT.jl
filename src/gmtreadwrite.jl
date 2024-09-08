@@ -709,12 +709,12 @@ end
 
 # --------------------------------------------------------------------------------------------------------
 """
-    write_stl(D::Vector{<:GMTdataset}, fname; binary=true)
+    write_stl(D::Vector{<:GMTdataset}, fname; binary=true, scale=1.0)
 
 Write a STL file. 
 """
 # Inspired in MeshIO stl.jl
-function write_stl(fname::AbstractString, D::Vector{<:GMTdataset}; binary::Bool=true)
+function write_stl(fname::AbstractString, D::Vector{<:GMTdataset}; binary::Bool=true, scale=1.0)
 	name = fileparts(fname)[2]
 	fid = open(fname, write=true)
 
@@ -735,9 +735,9 @@ function write_stl(fname::AbstractString, D::Vector{<:GMTdataset}; binary::Bool=
 			n = facenorm(D[k].data)
 			@printf fid "facet normal %.12g %.12g %.12g\n" n[1] n[2] n[3]
 			write(fid,"\touter loop\n")
-			@printf fid "\t\tvertex  %.12g %.12g %.12g\n" D[k][1,1] D[k][1,2] D[k][1,3]
-			@printf fid "\t\tvertex  %.12g %.12g %.12g\n" D[k][2,1] D[k][2,2] D[k][2,3]
-			@printf fid "\t\tvertex  %.12g %.12g %.12g\n" D[k][3,1] D[k][3,2] D[k][3,3]
+			@printf fid "\t\tvertex  %.12g %.12g %.12g\n" D[k][1,1] D[k][1,2] D[k][1,3]*scale
+			@printf fid "\t\tvertex  %.12g %.12g %.12g\n" D[k][2,1] D[k][2,2] D[k][2,3]*scale
+			@printf fid "\t\tvertex  %.12g %.12g %.12g\n" D[k][3,1] D[k][3,2] D[k][3,3]*scale
 			write(fid,"\tendloop\n")
 			write(fid,"endfacet\n")
 		end
