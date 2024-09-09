@@ -2801,12 +2801,12 @@ function add_opt_module(d::Dict)::Vector{String}
 			end
 		elseif (isa(val, Real) && (val != 0))		# Allow setting coast=true || colorbar=true
 			if     (symb == :coast)    r = coast!(W=0.5, A="200/0/2", Vd=2)
-			elseif (symb == :colorbar) r = colorbar!(pos=(anchor="MR",), B="af", Vd=2)
+			elseif (symb == :colorbar) r = colorbar!(pos=(anchor="RM",), B="af", Vd=2)
 			elseif (symb == :logo)     r = logo!(Vd=2)
 			end
 		elseif (symb == :colorbar && (isa(val, StrSymb)))
 			t::Char = lowercase(string(val)[1])		# Accept "Top, Bot, Left" but default to Right
-			anc = (t == 't') ? "TC" : (t == 'b' ? "BC" : (t == 'l' ? "ML" : "MR"))
+			anc = (t == 't') ? "TC" : (t == 'b' ? "BC" : (t == 'l' ? "LM" : "RM"))
 			r = colorbar!(pos=(anchor=anc,), B="af", Vd=2)
 		elseif (symb == :clip)
 			if (isa(val, String) || isa(val, Symbol))	# Accept also "land", "water" or "ocean" or DCW country codes(s) or a hard -E string
