@@ -84,7 +84,7 @@ function triangulate_helper(cmd0::String, arg1; kwargs...)
 	out = common_grd(d, cmd0, cmd, "triangulate ", arg1)		# Finish build cmd and run it
 	if isa(out, GDtype)
 		set_dsBB!(out, false)
-		(contains(cmd, " -S") && contains(cmd, " -Z")) && setgeom!(out, wkbLineStringZ)
+		(contains(cmd, " -S") && contains(cmd, " -Z")) && setgeom!(out, wkbPolygonZM)
 	end
 	return out
 end
@@ -161,17 +161,24 @@ function trisurf(in::Union{Matrix, GDtype}; gdal=true, first::Bool=true, kw...)
 	first && (d[:aspect] = get(d, :aspect, "equal"))
 	d[:p] = get(d, :p, "135/30")
 	D = gdal ? delaunay(in, 0.0, false) : triangulate(in, S=true, Z=true)
-	Zs = Vector{Float64}(undef, size(D,1))
+	D, Zs = sort_by_depth(D)	# Sort the triangles by depth. Deepest first. Otherwise the plot is always a mess
+	d[:Z] = Zs
+	common_plot_xyz("", D, "plot3d", first, true, d...)
+end
+trisurf!(in::Union{Matrix, GDtype}; gdal=true, kw...) = trisurf(in; gdal=gdal, first=false, kw...)
+
+# ---------------------------------------------------------------------------------------------------
+function sort_by_depth(D::Vector{<:GMTdataset})
+	# Sort the triangulation `D` by depth (Z). Deepest first.
+	Zs = Vector{Float64}(undef, length(D))
 	for k = 1:numel(Zs)
 		Zs[k] = (D[k].bbox[5] + D[k].bbox[6]) / 2
 	end
 	ind = sortperm(Zs)			# Sort in groing z. Needed to sort the triangles too otherwise is a mess.
 	ds_bbox = D[1].ds_bbox
 	D = D[ind];		D[1].ds_bbox = ds_bbox
-	d[:Z] = Zs[ind]
-	common_plot_xyz("", D, "plot3d", first, true, d...)
+	return D, Zs[ind]
 end
-trisurf!(in::Union{Matrix, GDtype}; gdal=true, kw...) = trisurf(in; gdal=gdal, first=false, kw...)
 
 # ---------------------------------------------------------------------------------------------------
 # D = grid2tri("cam_slab2_dep_02.24.18.grd", "cam_slab2_thk_02.24.18.grd")
@@ -236,9 +243,10 @@ function grid2tri(G, G2=nothing; thickness=0.0, level=false, downsample=0, ratio
 		Dc = gmtspatial(Dt_t, Q=true, o="0,1")			# Compute the polygon centroids
 		ind = (Dc in Dbnd_t) .== 1
 		Dt_t = Dt_t[ind]								# Delete the triangles outside the concave hull
+		Dt_t = sort_by_depth(Dt_t)[1]					# Sort the triangles by depth. Deepest first.
 		Dt_t[1].ds_bbox = Dt_t[1].bbox					# Because we may have deleted first Dt_t
 		Dt_t[1].proj4 = Dbnd_t.proj4
-		Dt_t[1].geom = wkbLineStringZ
+		Dt_t[1].geom = wkbPolygonZM
 		Dt_t[1].comment = ["gridtri"]					# To help recognize this type of DS
 		set_dsBB!(Dt_t, false)
 	end
@@ -249,7 +257,7 @@ function grid2tri(G, G2=nothing; thickness=0.0, level=false, downsample=0, ratio
 			Dt_b = triangulate(Dpts, S="+za", Z=true)	# Triangulation of bottom surface
 			Dt_b = Dt_b[ind]							# Delete the triangles outside the concave hull (reuse the same 'ind')
 			Dt_b[1].ds_bbox = Dt_b[1].bbox				# Because we may have deleted first Dt
-			Dt_b[1].geom = wkbLineStringZ
+			Dt_b[1].geom = wkbPolygonZM
 			Dt_b[1].comment = ["gridtri"]				# To help recognize this type of DS
 			for k = 1:numel(Dt_b)						# Must reverse the order of the vertices so normals point outward
 				Dt_b[k][3,1], Dt_b[k][2,1] = Dt_b[k][2,1], Dt_b[k][3,1]
@@ -324,13 +332,13 @@ function vwall(Bt::Union{Matrix{<:Real}, GMTdataset}, Bb::Union{Matrix{<:Real}, 
 	Twall = Vector{GMTdataset}(undef, 2 * n_sideT)
 	for k = 1:n_sideT
 		kk = 2 * k -1
-		Twall[kk]   = GMTdataset(data=[Bt[k,1]   Bt[k,2]   Bt[k,3];   Bt[k+1,1] Bt[k+1,2] Bt[k+1,3]; Bb[k,1] Bb[k,2] Bb[k,3]])
-		Twall[kk+1] = GMTdataset(data=[Bt[k+1,1] Bt[k+1,2] Bt[k+1,3]; Bb[k+1,1] Bb[k+1,2] Bb[k+1,3]; Bb[k,1] Bb[k,2] Bb[k,3]])
+		Twall[kk]   = GMTdataset(data=[Bt[k,1]   Bt[k,2]   Bt[k,3];   Bt[k+1,1] Bt[k+1,2] Bt[k+1,3]; Bb[k,1] Bb[k,2] Bb[k,3]; Bt[k,1]   Bt[k,2]   Bt[k,3]])
+		Twall[kk+1] = GMTdataset(data=[Bt[k+1,1] Bt[k+1,2] Bt[k+1,3]; Bb[k+1,1] Bb[k+1,2] Bb[k+1,3]; Bb[k,1] Bb[k,2] Bb[k,3]; Bt[k+1,1] Bt[k+1,2] Bt[k+1,3]])
 		Twall[kk].header = Twall[kk+1].header = "-Z$(Bt[k,3]+1e6)"		# Can be used, e.g., with the foreground color of a CPT 
 	end
 	set_dsBB!(Twall)
 	isa(Bt, GMTdataset) && (Twall[1].proj4 = Bt.proj4)
-	Twall[1].geom = wkbLineStringZ
+	Twall[1].geom = wkbPolygonZM
 	Twall[1].comment = ["vwall"]			# To help recognize this as a vertical wall.
 	return Twall
 end
