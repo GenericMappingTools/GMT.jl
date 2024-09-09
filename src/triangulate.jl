@@ -186,7 +186,7 @@ end
 # plot3(D,  zsize=3,  proj=:merc,  G="+z", C="aa.cpt", show=1, Z=linspace(-7,-400,length(D)), Vd=1)
 """
     D = grid2tri(G, G2=nothing; bottom=false, downsample=0, level=false, ratio=0.01,
-                 thickness=0.0, wall_only=false, top_only=false)
+                 thickness=0.0, wall_only=false, top_only=false, geog=false)
 
 Triangulates the surface defined by the grid `G`, and optionally the bottom surface `G2`, plus the
 vertical wall between them, or between `G` and constant level or a constant thickness. Optionally
@@ -215,6 +215,9 @@ NOTE: The `G` grid should have a _out-skirt_ of NaNs, otherwise just use ``grdvi
   `downsample` option accepts an integer reduction factor. `downsample=2` will shrink the grid by a factor two
   in each dimention, `downsample=3` will shrink it by a factor three etc.
 
+- `geog`: If the `G` grid has no referencing information but you know that it is in geographical coordinates
+  set `geog=true`. This information will be added to the triangulation output and is usefull for plotting purposes.
+
 - `ratio`: A slightly tricky parameter that determines how close the computed concave hull is to the true
   concave hull. A value smaller to 0.005 seems to do it but we normally don't want that close because the
   vertical wall obtained from this will be too jagged. The default value of 0.01 seems to work well to get
@@ -231,7 +234,8 @@ NOTE: The `G` grid should have a _out-skirt_ of NaNs, otherwise just use ``grdvi
 ### Returns
 A vector of GMTdataset with the triangulated surface and vertical wall, or just the wall or the full closed body.
 """
-function grid2tri(G, G2=nothing; thickness=0.0, level=false, downsample=0, ratio=0.01, bottom=false, wall_only=false, top_only=false)
+function grid2tri(G, G2=nothing; thickness=0.0, level=false, downsample=0, ratio=0.01, bottom=false,
+                  wall_only=false, top_only=false, geog=false)
 	(!isa(G2, GMTgrid) && !isa(G2, String) && thickness <= 0.0 && top_only == 0) &&
 		error("Must provide a bottom grid or a thickness for this layer.")
 
@@ -256,6 +260,7 @@ function grid2tri(G, G2=nothing; thickness=0.0, level=false, downsample=0, ratio
 		if (bottom == 1)
 			Dt_b = triangulate(Dpts, S="+za", Z=true)	# Triangulation of bottom surface
 			Dt_b = Dt_b[ind]							# Delete the triangles outside the concave hull (reuse the same 'ind')
+			Dt_b = sort_by_depth(Dt_b)[1]				# Sort the triangles by depth. Deepest first.
 			Dt_b[1].ds_bbox = Dt_b[1].bbox				# Because we may have deleted first Dt
 			Dt_b[1].geom = wkbPolygonZM
 			Dt_b[1].comment = ["gridtri"]				# To help recognize this type of DS
@@ -267,13 +272,21 @@ function grid2tri(G, G2=nothing; thickness=0.0, level=false, downsample=0, ratio
 			set_dsBB!(Dt_b, false)
 		end
 		Dwall = vwall(Dbnd_t, view(Dbnd_b, :, 3))
-		(bottom == 1) && append!(Dt_b, Dwall)			# If including bottom too, start with it and add the wall.
+		if (bottom == 1)
+			append!(Dt_b, Dwall, Dt_t)					# If including bottom too, start with it and add the wall and top.
+			(geog == 0) ? refsystem_A2B!(Dbnd_t, Dt_b) : (Dt_b[1].proj4 = prj4WGS84)		# Set ref sys
+			return Dt_b
+		end
 	else
-		(top_only != 0) && return Dt_t					# Get out now if only the top surface is requested
+		if (top_only == 1)								# Get out now if only the top surface is requested
+			(geog == 0) ? refsystem_A2B!(Dbnd_t, Dt_t) : (Dt_t[1].proj4 = prj4WGS84)	# Set ref sys
+			return Dt_t
+		end
 		Dwall = vwall(Dbnd_t, thickness, level != 0)
 	end
 
 	(wall_only == 0) && append!(Dwall, Dt_t)
+	(geog == 0) ? refsystem_A2B!(Dbnd_t, Dwall) : (Dwall[1].proj4 = prj4WGS84)			# Set ref sys
 	return Dwall
 end
 
@@ -289,10 +302,11 @@ end
 """
 function gridhull(G; downsample::Int=0, ratio=0.01)
 	_G = isa(G, String) ? gmtread(G) : G
+	prj4, wkt, epsg = _G.proj4, _G.wkt, _G.epsg		# Save the original projection because currently grdsample looses them
 	(downsample > 1) && (_G = grdsample(_G, I="$(div(size(_G.z,2),downsample)+1)+n/$(div(size(_G.z,1),downsample)+1)+n", V="q"))
 	V = grd2xyz(_G, s=true)					# Convert to x,y,z while dropping the NaNs
 	B = concavehull(V.data, ratio, false)	# Compute the ~concave hull when excluding the outer NaNs (ignores holes)
-	B.proj4, B.wkt, B.epsg = _G.proj4, _G.wkt, _G.epsg
+	B.proj4, B.wkt, B.epsg = prj4, wkt, epsg
 	return B, V
 end
 
@@ -332,8 +346,10 @@ function vwall(Bt::Union{Matrix{<:Real}, GMTdataset}, Bb::Union{Matrix{<:Real}, 
 	Twall = Vector{GMTdataset}(undef, 2 * n_sideT)
 	for k = 1:n_sideT
 		kk = 2 * k -1
-		Twall[kk]   = GMTdataset(data=[Bt[k,1]   Bt[k,2]   Bt[k,3];   Bt[k+1,1] Bt[k+1,2] Bt[k+1,3]; Bb[k,1] Bb[k,2] Bb[k,3]; Bt[k,1]   Bt[k,2]   Bt[k,3]])
-		Twall[kk+1] = GMTdataset(data=[Bt[k+1,1] Bt[k+1,2] Bt[k+1,3]; Bb[k+1,1] Bb[k+1,2] Bb[k+1,3]; Bb[k,1] Bb[k,2] Bb[k,3]; Bt[k+1,1] Bt[k+1,2] Bt[k+1,3]])
+		Twall[kk]   = GMTdataset(data=[Bt[k,1]   Bt[k,2]   Bt[k,3];   Bt[k+1,1] Bt[k+1,2] Bt[k+1,3];
+		                               Bb[k,1]   Bb[k,2]   Bb[k,3];   Bt[k,1]   Bt[k,2]   Bt[k,3]])
+		Twall[kk+1] = GMTdataset(data=[Bt[k+1,1] Bt[k+1,2] Bt[k+1,3]; Bb[k+1,1] Bb[k+1,2] Bb[k+1,3];
+		                               Bb[k,1]   Bb[k,2]   Bb[k,3];   Bt[k+1,1] Bt[k+1,2] Bt[k+1,3]])
 		Twall[kk].header = Twall[kk+1].header = "-Z$(Bt[k,3]+1e6)"		# Can be used, e.g., with the foreground color of a CPT 
 	end
 	set_dsBB!(Twall)
