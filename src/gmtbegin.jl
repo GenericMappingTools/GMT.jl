@@ -27,7 +27,7 @@ end
 
 Ends a GMT session in modern mode and optionaly shows the figure
 """
-function gmtend(arg=nothing; show=false, verbose=nothing)
+function gmtend(arg=nothing; show=false, verbose=nothing, reset::Bool=true)
 	# To show either do gmtend(whatever) or gmt(show=true)
 	cmd = "end"
 	(verbose !== nothing) && (cmd *= " -V" * string(verbose))
@@ -36,7 +36,8 @@ function gmtend(arg=nothing; show=false, verbose=nothing)
 		gmt("subplot end")
 	end
 	((arg !== nothing || show != 0) && !isFranklin[1]) ? (helper_showfig4modern("show")) : gmt(cmd)
-	resetGMT()
+	reset && resetGMT()
+	!reset && (IamModern[1] = false;	FirstModern[1] = false)
 	isPSclosed[1] = true
 	return nothing
 end
@@ -423,16 +424,17 @@ function sniff_inset_coords(psname, fig_opt_R, fig_opt_J)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function hack_modern_session(opt_R, opt_J)
+function hack_modern_session(opt_R, opt_J, opt_B=" -Blrbt"; fullremove=false)
+	# This function is now used in more places than just 'inset nested', but the defaults are still for it 
 	opt_R == "" && throw(ArgumentError("The 'limits' option cannot be empty in hack_modern_session()"))
 	opt_J == "" && throw(ArgumentError("The 'proj' option cannot be empty in hack_modern_session()"))
 	gmt("begin")
-	gmt("basemap " * opt_R * opt_J * " -Blrbt")
+	gmt("basemap " * opt_R * opt_J * opt_B)
 	API = unsafe_load(convert(Ptr{GMTAPI_CTRL}, G_API[1]))
 	session_dir = unsafe_string(API.gwf_dir)
 	fname = session_dir * filesep * "gmt_0.ps-"
-	rm(fname)				# To remove PS headers and such
-	touch(fname)			# Create a new empty one that is needed to later code be appended.
+	rm(fname)						# To remove PS headers and such
+	!fullremove && touch(fname)		# Create a new empty one that is needed to later code be appended.
 	return fname
 end
 
