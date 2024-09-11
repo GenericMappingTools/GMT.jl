@@ -2807,6 +2807,7 @@ function add_opt_module(d::Dict)::Vector{String}
 		elseif (symb == :colorbar && (isa(val, StrSymb)))
 			t::Char = lowercase(string(val)[1])		# Accept "Top, Bot, Left" but default to Right
 			anc = (t == 't') ? "TC" : (t == 'b' ? "BC" : (t == 'l' ? "LM" : "RM"))
+			#offsets = get_colorbar_pos(anc)
 			r = colorbar!(pos=(anchor=anc,), B="af", Vd=2)
 		elseif (symb == :clip)
 			if (isa(val, String) || isa(val, Symbol))	# Accept also "land", "water" or "ocean" or DCW country codes(s) or a hard -E string
@@ -2829,6 +2830,18 @@ function add_opt_module(d::Dict)::Vector{String}
 	end
 	return out
 end
+
+#=
+function get_colorbar_pos(anchor)
+	hack_modern_session(GMT.CTRL.pocket_R[1], GMT.CTRL.pocket_J[1] * GMT.CTRL.pocket_J[3], " -Baf -Bza", fullremove=true)	# Start a modern session
+	justify = anchor == "TC" ? 10 : (anchor == "BC" ? 2 : (anchor == "LM" ? 5 : 7))
+	p_offset = pointer([0.0, 0.0])
+	GMT_ = GMT_Get_Ctrl(G_API[1])
+	ccall((:gmt_auto_offsets_for_colorbar, libgmt), Cvoid, (Cstring, Ptr{Cdouble}, Int32, Ptr{Cvoid}), GMT_, p_offset, justify, pointer([NULL]))
+	gmtend(reset=false)									# hack_modern_session() issued the opening gmtbegin() call
+	offset = [unsafe_load(p_offset,1), unsafe_load(p_offset,2)]
+end
+=#
 
 # ---------------------------------------------------------------------------------------------------
 """
@@ -3031,7 +3044,7 @@ function axis(D::Dict=Dict(); x::Bool=false, y::Bool=false, z::Bool=false, secon
 		else                            gri_d = "g" * helper1_axes(d[:grid], is3D, 'g')
 		end
 		contains(gri_d, ' ') && (spli = split(gri_d); gri_d = string(spli[1]); gri_2 = string(spli[2]); gri_3 = string(spli[3]))
-		ints *= gri_d;	CTRL.pocket_B[1] = gri_d	# If gri_d has a space in it a guess some shit will happen later
+		ints *= gri_d;	CTRL.pocket_B[1] = gri_d	# If gri_d has a space in it I guess some shit will happen later
 	end
 
 	# Time to join the afg pieces (if that's the case)
@@ -4410,7 +4423,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 					end
 					if (opt_R == " -R")				# Should not happen anymore, but just in case
 						cmd[k] = replace(cmd[k], " -R" => opt_R)
-					else
+					elseif (opt_R != "")			# opt_R is "" when J2 == "". Hmmm, has a sniff
 						cmd[k] = replace(cmd[k], scan_opt(cmd[k], "-R", true) => opt_R)
 					end
 				end
