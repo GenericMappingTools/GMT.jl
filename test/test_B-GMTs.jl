@@ -197,6 +197,9 @@
 	gmt("gmtwrite lixo.cpt", cpt)		# Same but tests other code chunk in gmt_main.jl
 	gmt("gmtwrite lixo.dat", D)
 	gmt("write lixo.tif=gd:GTiff", mat2img(rand(UInt8,32,32,3)))
+	gmtwrite("lixo.stl", [mat2ds(rand(3,3)), mat2ds(rand(3,3))])
+	gmtwrite("lixo.stl", [mat2ds(rand(3,3)), mat2ds(rand(3,3))], binary=false)
+	rm("lixo.stl")
 	gmt("grdinfo lixo.tif");
 	@test_throws ErrorException("Output file name cannot be empty.") gmtwrite("",[1 2]);
 

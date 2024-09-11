@@ -450,6 +450,8 @@ dataset in that OGR vector format. The .kml is treated as a special case because
 Parameters
 ----------
 
+- `binary`: Applyes only when saving a `stl` file. By default it is true. Use `binary=false` to save in ascii.
+
 - `id`:  [Type => Str] 
 
     Use an ``id`` code when not not saving a grid into a standard COARDS-compliant netCDF grid. This ``id``
@@ -461,7 +463,8 @@ Parameters
 
     You may optionally ask to scale the data and then offset them with the specified amounts.
     These modifiers are particularly practical when storing the data as integers, by first removing an offset
-    and then scaling down the values.
+    and then scaling down the values. The `scale` factor can also be applied when saving to stl (scales the z values).
+
 - `nan` | `novalue` | `invalid` | `missing`: [Type => Number]
 
     Lets you supply a value that represents an invalid grid entry, i.e., ‘Not-a-Number’.
@@ -524,6 +527,7 @@ function gmtwrite(fname::AbstractString, data; kwargs...)
 		CTRL.proj_linear[1] = true				# To force pad=0 and julia memory (no dup) in image_init()
 		transpcmap!(data, true)
 	elseif (isa(data, GDtype))
+		isa(data, Vector) && (endswith(fname, ".stl") || endswith(fname, ".STL")) && return write_stl(fname, data; kwargs...)	# STL
 		opt_T = " -Td"
 		cmd, = parse_bo(d, cmd)					# Write to binary file
 	elseif (isa(data, GMTcpt))
