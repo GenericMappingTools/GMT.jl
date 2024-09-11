@@ -261,3 +261,12 @@ imshow(x::AbstractVector{Float64}, y::AbstractVector{Float64}, f::String; kw...)
 imshow(x::AbstractVector{Float64}, f::String; kw...) = imshow(f::String, x, x; kw...) 
 
 const viz = imshow			# Alias
+
+# --------------------------------------------------------------------------------
+function vizpdf(args...; kwargs...)
+	fmt_bak = FMT[1]
+	FMT[1] = "pdf"
+	R = imshow(args...; kwargs...)
+	FMT[1] = fmt_bak
+	return R
+end
