@@ -187,7 +187,7 @@ function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=true, RIr::Bool=
 	end
 
 	# I've seen grdview! screwing with "-R" so we should probably always explicitly set -R. Let's try carefully.
-	(!IamModern[1] && opt_R == " -R" && CTRL.pocket_R[1] != "") && (opt_R = CTRL.pocket_R[1])
+	(!IamModern[1] && !CTRL.IamInPaperMode[1] && opt_R == " -R" && CTRL.pocket_R[1] != "") && (opt_R = CTRL.pocket_R[1])
 	cmd = cmd * opt_R
 	return cmd, opt_R
 end
@@ -4421,13 +4421,11 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 							cmd[k] = replace(cmd[k], J2 => islowercase(J2[1]) ? "x" * fig_size : "X" * fig_size)	# Fails for scales
 						end
 					end
-					if (opt_R == " -R")				# Should not happen anymore, but just in case
-						cmd[k] = replace(cmd[k], " -R" => opt_R)
-					elseif (opt_R != "")			# opt_R is "" when J2 == "". Hmmm, has a sniff
+					if (opt_R != "")					# opt_R is "" when J2 == "". Hmmm, has a sniff
 						cmd[k] = replace(cmd[k], scan_opt(cmd[k], "-R", true) => opt_R)
 					end
 				end
-				have_Vd && println("\t",cmd[k])		# Useful to know what command was actually executed.
+				have_Vd && println("\t",cmd[k])			# Useful to know what command was actually executed.
 				orig_J, orig_R = J1, scan_opt(cmd[1], "-R")
 			end
 		elseif (k >= 1+fi && !is_psscale && !is_pscoast && !is_basemap && !is_text && (CTRL.pocket_call[1] !== nothing))
