@@ -70,12 +70,14 @@ function grdcut_helper(cmd0::String, arg1; kwargs...)
 		(dbg_print_cmd(d, cmd) !== nothing) && return "grdcut $cmd0 " * cmd		# Vd=2 cause this return
 		t = split(scan_opt(cmd, "-R"), '/')
 		opts = ["-projwin", t[1], t[4], t[2], t[3]]		# -projwin <ulx> <uly> <lrx> <lry>
-		cut_with_gdal(cmd0, opts, outname)
+		R = cut_with_gdal(cmd0, opts, outname)
 	else
 		# If only cut, call crop directly
-		(cmd == opt_R && arg1 !== nothing && arg2 === nothing) ? crop(arg1; R=opt_R2num(opt_R))[1] :
+		R = (cmd == opt_R && arg1 !== nothing && arg2 === nothing) ? crop(arg1; R=opt_R2num(opt_R))[1] :
 			common_grd(d, cmd0, cmd, "grdcut ", arg1, arg2)	# Finish build cmd and run it
 	end
+	((prj = planets_prj4(cmd0)) != "") && (R.proj4 = prj)	# Get cached (@moon_..., etc) planets proj4
+	return R
 end
 
 function cut_with_gdal(fname::String, opts::Vector{<:AbstractString}, outname::String="")
