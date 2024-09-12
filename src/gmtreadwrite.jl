@@ -197,6 +197,7 @@ function gmtread(_fname::String; kwargs...)
 			o = (proggy == "gdalread") ? gdalread(fname, gdopts) : gmt(proggy * fname * cmd)
 		end
 		(isempty(o)) && (@warn("\tfile \"$fname\" is empty or has no data after the header.\n"); return GMTdataset())
+		((prj = planets_prj4(fname)) != "") && (o.proj4 = prj)		# Get cached (@moon_..., etc) planets proj4
 
 		((cptname = check_remote_cpt(fname)) != "") && (o.cpt = cptname)	# Seek for default CPT names
 		(isa(o, GMTimage)) && (o.range[5:6] .= extrema(o.image))	# It's ugly to see those floatmin/max in there.
@@ -269,6 +270,14 @@ function gmtread(_fname::String; kwargs...)
 	ressurectGDAL()				# Because GMT called GDALDestroyDriverManager()
 	GMT_Destroy_Session(API2)
 	return O
+end
+
+# ---------------------------------------------------------------------------------
+function planets_prj4(fname)
+	# If fname refers to a (cached) planet other than Earth, return the proj4 string for it.
+	((ind = findfirst(startswith.(fname, ["@moon", "@mars", "@merc", "@venu", "@plut"]))) === nothing) && return ""
+	rs = ("+R=1737400", "+R=3396190", "+R=2439400", "+R=6051800", "+R=1188300")
+	return "+proj=longlat " * rs[ind] * " +no_defs"
 end
 
 # ---------------------------------------------------------------------------------
