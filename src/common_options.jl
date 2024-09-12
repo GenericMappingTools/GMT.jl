@@ -4834,10 +4834,14 @@ function get_legend_font(d::Dict, fs=0; modern::Bool=false)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function set_defcpt!(d::Dict, cmd0::String)
+function set_defcpt!(d::Dict, cmd0::String, G)
 	# When dealing with remote grids (those that start with a @), assign them a default CPT
-	cptname = check_remote_cpt(cmd0)
-	cptname != "" && (d[:this_cpt] = cptname)
+	if (cmd0 != "")
+		cptname = check_remote_cpt(cmd0)
+		cptname != "" && (d[:this_cpt] = cptname)
+	elseif (isa(G, GMTgrid) && G.cpt != "")
+		d[:this_cpt] = G.cpt
+	end
 	return nothing
 end
 
@@ -4863,6 +4867,7 @@ function check_remote_cpt(cmd0::String)
 	elseif (occursin("earth_vgg_", cmd0))    out = cpt_path * "/earth_vgg.cpt"
 	elseif (occursin("earth_mdt_", cmd0))    out = cpt_path * "/earth_mdt.cpt"
 	elseif (occursin("earth_mss_", cmd0))    out = cpt_path * "/earth_mss.cpt"
+	elseif (occursin("moon_relief_", cmd0))  out = cpt_path * "/moon.cpt"
 	end
 	return out
 end

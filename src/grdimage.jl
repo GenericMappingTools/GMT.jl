@@ -110,7 +110,7 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 		(haskey(kwargs, :stretch) || haskey(kwargs, :histo_bounds)) && delete!(d, [:histo_bounds, :stretch])
 	end
 
-	set_defcpt!(d, cmd0)	# When dealing with a remote grid assign it a default CPT
+	set_defcpt!(d, cmd0, arg1)	# When dealing with a remote grid assign it a default CPT
 	(isa(arg1, GMTgrid) && arg1.cpt != "") && (d[:this_cpt] = arg1.cpt)
 	(haskey(d, :this_cpt) && isfile(d[:this_cpt])) && (CURRENT_CPT[1] = gmtread(d[:this_cpt]))
 
