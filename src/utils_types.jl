@@ -196,7 +196,7 @@ the georeference info as well as `attrib` and `colnames`.
 mat2ds(mat::Array{T,N}, ref::GMTdataset) where {T,N} = mat2ds(mat; ref=ref)
 
 # ---------------------------------------------------------------------------------------------------
-function mat2ds(mat::Array{T,N}, txt::Union{String,Vector{String}}=String[]; hdr=String[], geom=0, kwargs...) where {T,N}
+function mat2ds(mat::Array{T,N}, txt::Union{String,Vector{String}}=String[]; hdr=String[], geom=0, kwargs...)::GDtype where {T,N}
 	d = KW(kwargs)
 
 	(!isempty(txt)) && return text_record(mat, txt,  hdr)
@@ -210,7 +210,7 @@ function mat2ds(mat::Array{T,N}, txt::Union{String,Vector{String}}=String[]; hdr
 	segnan && (multi = true)
 
 	if ((x = find_in_dict(d, [:x])[1]) !== nothing)
-		n_ds::Int = segnan ? 1 : ((multi) ? size(mat, 2) : 1)
+		n_ds::Int = segnan ? 1 : ((multi) ? Int(size(mat, 2)) : 1)
 		xx::Vector{Float64} = (x == :ny || x == "ny") ? collect(1.0:size(mat, 1)) : vec(x)
 		(length(xx) != size(mat, 1)) && error("Number of X coordinates and MAT number of rows are not equal")
 	else
@@ -351,7 +351,8 @@ function mat2ds(mat::Array{T,N}, txt::Union{String,Vector{String}}=String[]; hdr
 		s = 1
 		for k = 1+off:n_cols
 			e = s + n_rows - 1
-			segN[s:e, :] = [_xx mat[:,k]]
+			#segN[s:e, :] = [_xx mat[:,k]]
+			segN[s:e, :] = vcat(_xx, mat[:, k])
 			if (k < n_cols)
 				segN[e+1, :] = [NaN NaN]
 				s += n_rows+1

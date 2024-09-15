@@ -27,7 +27,7 @@ Parameters
 
 This module can also be called via `gmtread`. _I.,e._ `gmtread("file.isf", opts...)_
 """
-function gmtisf(cmd0::String; kwargs...)
+function gmtisf(cmd0::String; kwargs...)::GMTdataset
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
