@@ -132,9 +132,10 @@ function gmt(cmd::String, args...)
 	# is a Ref, so I'm forced to use 'pointer', which goes against the documents recommendation.
 	pLL = (LL != NULL) ? Ref([LL], 1) : pointer([NULL])
 
-	n_itemsP = pointer([0])
+	zero = 0
+	n_itemsP = pointer([zero])
 	XX = GMT_Encode_Options(G_API[1], g_module, n_argin, pLL, n_itemsP)	# This call also changes LL
-	n_items = unsafe_load(n_itemsP)
+	@GC.preserve zero n_items = unsafe_load(n_itemsP)
 	if (XX == NULL && n_items > 65000)		# Just got usage/synopsis option (if (n_items == UINT_MAX)) in C
 		(n_items > 65000) ? n_items = 0 : error("Failure to encode Julia command options") 
 	end
@@ -154,10 +155,10 @@ function gmt(cmd::String, args...)
 
 	# 5. Assign input sources (from Julia to GMT) and output destinations (from GMT to Julia)
 	(g_module == "grdpaste") && (noGrdCopy[1] = true)	# Signal grid_init() that it should not make a grid copy
-	for k = 1:n_items					# Number of GMT containers involved in this module call */
+	for k = 1:n_items									# Number of GMT containers involved in this module call */
 		if (X[k].direction == GMT_IN && n_argin == 0) error("GMT: Expects a Matrix for input") end
 		ptr = (X[k].direction == GMT_IN) ? args[X[k].pos+1] : nothing
-		GMTJL_Set_Object(G_API[1], X[k], ptr, pad)	# Set object pointer
+		GMTJL_Set_Object(G_API[1], X[k], ptr, pad)		# Set object pointer
 	end
 	(g_module == "grdpaste") && (noGrdCopy[1] = false)
 
@@ -1233,8 +1234,8 @@ function palette_init(API::Ptr{Nothing}, cpt::GMTcpt)::Ptr{GMT_PALETTE}
 		GMT_Put_Strings(API, GMT_IS_PALETTE | GMT_IS_PALETTE_LABEL, convert(Ptr{Cvoid}, P), cpt.label)
 	end
 
-	GMT_Set_AllocMode(API, GMT_IS_PALETTE, P)		# Tell GMT that memory is external (IS IT REALY NEEDED?)
-	unsafe_store!(P, Pb)
+	@GC.preserve P  GMT_Set_AllocMode(API, GMT_IS_PALETTE, P)		# Tell GMT that memory is external (IS IT REALY NEEDED?)
+	@GC.preserve Pb unsafe_store!(P, Pb)
 
 	return P
 end
