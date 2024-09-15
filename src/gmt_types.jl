@@ -291,8 +291,18 @@ GMTdataset(data::Array{Float32,2}, text::String) =
 	GMTdataset(data, Float64[], Float64[], DictSvS(), String[], [text], "", String[], "", "", 0, 0)
 GMTdataset(data::Array{Float32,2}) =
 	GMTdataset(data, Float64[], Float64[], DictSvS(), String[], String[], "", String[], "", "", 0, 0)
-#GMTdataset() =
-	#GMTdataset(Array{Float64,2}(undef,0,0), Float64[], Float64[], DictSvS(), String[], String[], "", String[], "", "", 0, 0)
+
+#=
+Base.@kwdef struct GMTtypes
+	stored::Int = 0
+	grd::GMTgrid = GMTgrid()
+	img::GMTimage = GMTimage()
+	ds::GMTdataset = GMTdataset()
+	dsv::Vector{GMTdataset} = [GMTdataset()]
+	cpt::GMTcpt = GMTcpt()
+	ps::GMTps = GMTps()
+end
+=#
 
 struct WrapperPluto fname::String end
 
