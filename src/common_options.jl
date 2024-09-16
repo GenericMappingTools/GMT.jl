@@ -356,7 +356,7 @@ function opt_R2num(opt_R::String)::Vector{Float64}
 		end
 		rs = split(opt_R, '/')
 		limits::Vector{Float64} = zeros(length(rs))
-		fst = ((ind = findfirst("R", rs[1])) !== nothing) ? ind[1] : 0
+		fst::Int = ((ind = findfirst("R", rs[1])) !== nothing) ? ind[1] : 0
 		limits[1] = parse(Float64, rs[1][fst+1:end])
 		for k = 2:lastindex(rs)  limits[k] = parse(Float64, rs[k])  end
 		#if (isdiag)  limits[2], limits[4] = limits[4], limits[2]  end
@@ -4896,7 +4896,7 @@ Scans the CMD string for the OPT option. Note, OPT must be a 2 chars -X GMT opti
 	" -Baf"
 """
 function scan_opt(cmd::AbstractString, opt::String, keepX::Bool=false)::String
-	out = ((ind = findfirst(opt, cmd)) !== nothing) ? (ind[end] == length(cmd)) ? "" : strtok(cmd[ind[1]+2:end])[1] : ""
+	out::String = ((ind = findfirst(opt, cmd)) !== nothing) ? (ind[end] == length(cmd)) ? "" : strtok(cmd[ind[1]+2:end])[1] : ""
 	(out != "" && cmd[ind[1]+2] == ' ') && (out = "")		# Because seeking -R in a " -R -JX" would ret "-JX"
 	(keepX && out != "") && (out = string(' ', opt, out))	# Keep the option flag in output
 	return out

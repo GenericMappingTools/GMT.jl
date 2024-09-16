@@ -45,7 +45,7 @@ grdcut(arg1; kwargs...)         = grdcut_helper("", arg1; kwargs...)
 grdcut(; kwargs...)             = grdcut_helper("", nothing; kwargs...)		# To allow grdcut(data=..., ...)
 
 # ---------------------------------------------------------------------------------------------------
-function grdcut_helper(cmd0::String, arg1; kwargs...)
+function grdcut_helper(cmd0::String, arg1; kwargs...)::Union{Nothing, GMTgrid, GMTimage}
 
 	arg2 = nothing
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
@@ -76,7 +76,7 @@ function grdcut_helper(cmd0::String, arg1; kwargs...)
 		R = (cmd == opt_R && arg1 !== nothing && arg2 === nothing) ? crop(arg1; R=opt_R2num(opt_R))[1] :
 			common_grd(d, cmd0, cmd, "grdcut ", arg1, arg2)	# Finish build cmd and run it
 	end
-	((prj = planets_prj4(cmd0)) != "") && (R.proj4 = prj)	# Get cached (@moon_..., etc) planets proj4
+	(R !== nothing && ((prj = planets_prj4(cmd0)) != "")) && (R.proj4 = prj)	# Get cached (@moon_..., etc) planets proj4
 	return R
 end
 

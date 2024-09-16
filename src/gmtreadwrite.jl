@@ -95,17 +95,17 @@ function gmtread(_fname::String; kwargs...)
 	if (opt_T == "")  opt_T = add_opt(d, "", "To", [:ogr])  end
 
 	ogr_layer::Int32 = Int32(0)			# Used only with ogrread. Means by default read only the first layer
-	if ((varname = find_in_dict(d, [:varname])[1]) !== nothing) # See if we have a nc varname / layer request
-		varname = string(varname)::String
+	if ((_varname = find_in_dict(d, [:varname])[1]) !== nothing) # See if we have a nc varname / layer request
+		varname::String = string(_varname)
 		(opt_T == "") && (opt_T = " -Tg")		# Though not used in if 'gdal', it still avoids going into needless tests below
 		if (via_gdal || contains(varname, '/'))	# This branch is fragile
 			fname = sneak_in_SUBDASETS(fname, varname)	# Get the composed name (fname + subdaset and driver)
 			proggy = "gdalread"
-			gdopts = ""
+			gdopts::String = ""
 			if ((val1 = find_in_dict(d, [:layer :layers :band :bands])[1]) !== nothing)
 				if (isa(val1, Real))               gdopts = string(" -b ", val1)
 				elseif (isa(val1, AbstractArray))  gdopts = join([string(" -b ", val1[i]) for i in 1:numel(val1)])
-				end
+			end
 			end
 		else
 			fname *= "?" * varname
@@ -199,7 +199,6 @@ function gmtread(_fname::String; kwargs...)
 		(isempty(o)) && (@warn("\tfile \"$fname\" is empty or has no data after the header.\n"); return GMTdataset())
 		((prj = planets_prj4(fname)) != "") && (o.proj4 = prj)		# Get cached (@moon_..., etc) planets proj4
 
-		((cptname = check_remote_cpt(fname)) != "") && (o.cpt = cptname)	# Seek for default CPT names
 		(isa(o, GMTimage)) && (o.range[5:6] .= extrema(o.image))	# It's ugly to see those floatmin/max in there.
 		(isa(o, GMTimage) && size(o.image, 3) < 3) && (o.layout = o.layout[1:2] * "B" * (length(o.layout) == 4 ? o.layout[4] : "a"))
 
@@ -227,32 +226,39 @@ function gmtread(_fname::String; kwargs...)
 			helper_set_colnames!(o, corder)		# Set colnames if file has a comment line supporting it
 		end
 
-		# This section searches for Attrib(name,value[,name,value,...]) in the header lines and parses them out as attributes
-		if (isa(o, Vector{<:GMTdataset}) && isempty(o[1].attrib) && contains(o[1].header, "Attrib("))
+		# This function barrier searches for Attrib(name,value[,name,value,...]) in the header lines and parses them as attributes
+		function fish_attrib_in_header!(D::Vector{<:GMTdataset})
+			!isempty(D[1].attrib) || !contains(D[1].header, "Attrib(") && return
 			class_ids = String[]		# We may have multiple classes in the file and need to count number of occurences of each
 			last_ind = 0
-			for k = 1:numel(o)
-				atts = split(o[k].header, "Attrib(")[2][1:end-1]
+			for k = 1:numel(D)
+				@inbounds atts = split(D[k].header, "Attrib(")[2][1:end-1]
 				at2 = split(atts, ",")
 				for n = 1:numel(at2)
 					name, s_val = split(at2[n], "=")
-					o[k].attrib[name] = string(s_val)
-					if (lowercase(name) == "class")	# "class" attributes are special for assisted classification
-						((ind_id = findfirst(s_val .== class_ids)) !== nothing) ? (o[k].attrib["id"] = string(ind_id)) :
-						           (o[k].attrib["id"] = "$(last_ind+=1)"; append!(class_ids,  [s_val]))
+					D[k].attrib[name] = string(s_val)
+					if (lowercase(name) == "class")			# "class" attributes are special for assisted classification
+						((ind_id = findfirst(s_val .== class_ids)) !== nothing) ? (D[k].attrib["id"] = string(ind_id)) :
+						           (D[k].attrib["id"] = "$(last_ind+=1)"; append!(class_ids,  [s_val]))
 					end
 				end
 			end
+			return nothing
 		end
+
+		isa(o, Vector{<:GMTdataset}) && fish_attrib_in_header!(o)
 
 		# Try guess if ascii file has time columns and if yes leave trace of it in GMTdadaset metadata.
 		(opt_bi == "" && !isISF && isa(o, GDtype)) && file_has_time!(fname, o, corder, opt_h)
 
-		if (isa(o, GMTgrid))
-			o.hasnans = any(!isfinite, o.z) ? 2 : 1
-			# Check if we should assign a default CPT to this grid
-			((fname[1] == '@') && (cptname = check_remote_cpt(fname)) != "") && (o.cpt = cptname)
+		# Function barrier to check if we should assign a default CPT to this grid and set the 'hasnans' field
+		function check_set_default_cpt!(G::GMTgrid, fname::String)
+			G.hasnans = any(!isfinite, G.z) ? 2 : 1
+			((fname[1] == '@') && (cptname = check_remote_cpt(fname)) != "") && (G.cpt = cptname)
+			return nothing
 		end
+		isa(o, GMTgrid) && check_set_default_cpt!(o, fname)
+
 		return o
 	end
 
@@ -276,12 +282,12 @@ end
 function planets_prj4(fname)
 	# If fname refers to a (cached) planet other than Earth, return the proj4 string for it.
 	((ind = findfirst(startswith.(fname, ["@moon", "@mars", "@merc", "@venu", "@plut"]))) === nothing) && return ""
-	rs = ("+R=1737400", "+R=3396190", "+R=2439400", "+R=6051800", "+R=1188300")
-	return "+proj=longlat " * rs[ind] * " +no_defs"
+	rs = ["+R=1737400", "+R=3396190", "+R=2439400", "+R=6051800", "+R=1188300"]
+	return string("+proj=longlat ", rs[ind], " +no_defs")
 end
 
 # ---------------------------------------------------------------------------------
-function sneak_in_SUBDASETS(fname, varname)
+function sneak_in_SUBDASETS(fname, varname)::String
 	# Create a new filename with the SUBDATASET_ name. Need this when GDAL is reading per SUBDASET and not whole file
 	# 'fname' is the file name and 'varname' the name of the subdataset.
 	endswith(fname, "=gd") && (fname = fname[1:end-3])		# A previous check may have added the "=gd". If yes, remove it.
@@ -291,8 +297,8 @@ function sneak_in_SUBDASETS(fname, varname)
 	ind2   = findfirst("=", tmp_s)				# For example, tmp_s = "_1_NAME=NETCDF:\"woa18"
 	ind3   = findfirst(":", tmp_s)
 	fmt    = tmp_s[ind2[1]+1:ind3[1]]			# e.g. fmt = "NETCDF:"
-	fname  = fmt * fname * ":" * string(varname)::String
-	return fname
+	_fname::String = fmt * fname * ":" * string(varname)
+	return _fname
 end
 
 # ---------------------------------------------------------------------------------
