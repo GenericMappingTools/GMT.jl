@@ -73,7 +73,7 @@ function blockmean_helper(cmd0::String, arg1; kwargs...)
 
 	d = KW(kwargs)
 	help_show_options(d)		# Check if user wants ONLY the HELP mode
-	cmd = parse_these_opts("", d, [[:S :statistic]])
+	cmd = parse_these_opts("", d, [[:E :extend :extended], [:S :statistic]])
 	if     (find_in_dict(d, [:npts :count])[1] !== nothing)  cmd = " -Sn"
 	elseif (find_in_dict(d, [:mean])[1] !== nothing)         cmd = " -Sm"
 	elseif (find_in_dict(d, [:sum])[1] !== nothing)          cmd = " -Ss"
@@ -102,7 +102,7 @@ function blockmedian_helper(cmd0::String, arg1; kwargs...)
 
 	d = KW(kwargs)
 	help_show_options(d)		# Check if user wants ONLY the HELP mode
-	cmd = parse_these_opts("", d, [[:Q :quick], [:T :quantile]])
+	cmd = parse_these_opts("", d, [[:E :extend :extended], [:Q :quick], [:T :quantile]])
 	opt_A = add_opt(d, "", "A", [:A :field :fields], (median="_z", scale="_s", highest="_h", lowest="_l", weight="_w", weights="_w"))
 	(!occursin(" -E", cmd) && (occursin("s", opt_A) || occursin("h", opt_A) || occursin("l", opt_A))) && (opt_A *= " -E")
 	cmd *= opt_A
@@ -124,7 +124,7 @@ blockmode(arg1; kwargs...)         = blockmode_helper("", arg1; kwargs...)
 function blockmode_helper(cmd0::String, arg1; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
-	cmd = parse_these_opts("", d, [[:D :histogram_binning], [:Q :quick]])
+	cmd = parse_these_opts("", d, [[:D :histogram_binning], [:E :extend :extended], [:Q :quick]])
 	opt_A = add_opt(d, "", "A", [:A :field :fields], (mode="_z", scale="_s", highest="_h", lowest="_l", weight="_w", weights="_w"))
 	(!occursin(" -E", cmd) && (occursin("s", opt_A) || occursin("h", opt_A) || occursin("l", opt_A))) && (opt_A *= " -E")
 	cmd *= opt_A
@@ -135,7 +135,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function common_blocks(cmd0, arg1, d, cmd, proggy, kwargs...)
 
-	cmd = parse_these_opts(cmd, d, [[:C :center], [:E :extend :extended], [:W :weights]])
+	cmd = parse_these_opts(cmd, d, [[:C :center], [:W :weights]])
 	opt_G = parse_G(d, "")[1]
 
 	if (opt_G != "" && !occursin("-A", cmd))
