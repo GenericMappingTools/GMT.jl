@@ -14,4 +14,6 @@
 	B = GMTdataset(data=[1. 2; 3 4]);
 	GMT.refsystem_A2B!(A, B)
 	@test A.proj4 == B.proj4
+	
+	@test wrap2pi(2π) < eps()
 end
