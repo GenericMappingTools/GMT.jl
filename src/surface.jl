@@ -75,7 +75,7 @@ Parameters
 
 To see the full documentation type: ``@? surface``
 """
-function surface(cmd0::String="", arg1::Union{Nothing, MatGDsGd}=nothing; kwargs...)::Union{Nothing, GMTgrid, Sting}
+function surface(cmd0::String="", arg1::Union{Nothing, MatGDsGd}=nothing; kwargs...)::Union{Nothing, GMTgrid, String}
 
 	arg2 = nothing
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode

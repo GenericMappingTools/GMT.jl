@@ -15,5 +15,5 @@
 	GMT.refsystem_A2B!(A, B)
 	@test A.proj4 == B.proj4
 	
-	@test wrap2pi(2π) < eps()
+	@test GMT.wrap2pi(2π) < eps()
 end
