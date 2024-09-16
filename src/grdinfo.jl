@@ -51,7 +51,7 @@ grdinfo(cmd0::String; kwargs...) = grdinfo_helper(cmd0, nothing; kwargs...)
 grdinfo(arg1; kwargs...)         = grdinfo_helper("", arg1; kwargs...)
 
 # ---------------------------------------------------------------------------------------------------
-function grdinfo_helper(cmd0::String, arg1; kwargs...)
+function grdinfo_helper(cmd0::String, arg1; kwargs...)::Union{GMTdataset, String}
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:R :V_params :f :o])
@@ -73,6 +73,11 @@ function grdinfo_helper(cmd0::String, arg1; kwargs...)
 		elseif (opt_M != "" && opt_L == "")
 			(length(R.data) == 17) &&    # It can be 19 for cubes (not implemented yet)
 				(R.colnames = append!(hdims, ["z_min","z_max","dx","dy","n_cols","n_rows","xmin_pos","ymin_pos","xmax_pos","ymax_pos","n_NaNs","reg","isgeog"]))
+		end
+		# -o changes it all so we parse just the simplest case. If it fails we remove colnames
+		if ((t = scan_opt(cmd, "-o")) != "")
+			cn = tryparse(Int, t) !== nothing
+			(cn !== nothing) ? (R.colnames = [R.colnames[cn+1]]) : (R.colnames = String[])
 		end
 	end
 	return R

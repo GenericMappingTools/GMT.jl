@@ -75,16 +75,16 @@ Parameters
 
 To see the full documentation type: ``@? surface``
 """
-function surface(cmd0::String="", arg1::Union{Nothing, MatGDsGd}=nothing; kwargs...)
+function surface(cmd0::String="", arg1::Union{Nothing, MatGDsGd}=nothing; kwargs...)::Union{Nothing, GMTgrid, Sting}
 
 	arg2 = nothing
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	d = seek_auto_RI(d, cmd0, arg1)				# If -R -I (or one of them) not set, guess.
 
 	if ((val = find_in_dict(d, [:preproc :preprocess])[1]) !== nothing)
-		_val = string(val)::String
+		_val::String = string(val)
 		fun = (_val == "blockmedian") ? blockmedian : (_val == "blockmode") ? blockmode : blockmean
-		r = ((val = find_in_dict(d, [:r :reg :registration])[1]) !== nothing) ? string(val)::String : "g"
+		r::String = ((val = find_in_dict(d, [:r :reg :registration])[1]) !== nothing) ? string(val) : "g"
 		Vd::Int = ((val = find_in_dict(d, [:Vd], false)[1]) !== nothing) ? val : 0
 		if (Vd == 2)
 			println(string(fun, " -R",d[:R], " -I",d[:I], " -r",r))
