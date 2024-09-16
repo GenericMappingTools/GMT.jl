@@ -780,6 +780,7 @@ function uniq(A; dims=1)
 	C, ia, ic
 end
 
+# ---------------------------------------------------------------------------------------------------
 """
     p = polyfit(x, y, n=length(x)-1; xscale=1)
 
@@ -800,6 +801,7 @@ function polyfit(x, y, n::Int=length(x)-1; xscale=1)
 	p = V \ vec(y)
 end
 
+# ---------------------------------------------------------------------------------------------------
 """
     y = polyval(p::AbstractArray, x::Union{AbstractArray, Number})
 
@@ -817,6 +819,15 @@ function polyval(p::AbstractArray, x::Union{AbstractArray, Number})
 	return length(x) == 1 ? y[1] : y
 end
 
+# ---------------------------------------------------------------------------------------------------
+# https://discourse.julialang.org/t/wrap2pi-what-should-it-do/119441/23
+"""
+    wrap2pi(angle)
+
+Limit the angle to the range -π .. π .
+"""
+wrap2pi(x::typeof(π)) = rem2pi(float(x), RoundNearest)
+wrap2pi(x) = rem2pi(x, RoundNearest)
 
 #=
 function range(x)
@@ -835,6 +846,7 @@ end
 # From https://gist.github.com/jmert/4e1061bb42be80a4e517fc815b83f1bc
 """
 	y, ind = lttb(v::AbstractVector, decfactor=10)
+
 	D, ind = lttb(D::GMTdataset, decfactor=10)
 
 The largest triangle, three-buckets reduction of the vector `v` over points `1:N` to a
