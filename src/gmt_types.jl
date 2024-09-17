@@ -294,13 +294,17 @@ GMTdataset(data::Array{Float32,2}) =
 
 #=
 Base.@kwdef struct GMTtypes
-	stored::Int = 0
+	stored::String = ""
 	grd::GMTgrid = GMTgrid()
 	img::GMTimage = GMTimage()
 	ds::GMTdataset = GMTdataset()
 	dsv::Vector{GMTdataset} = [GMTdataset()]
 	cpt::GMTcpt = GMTcpt()
 	ps::GMTps = GMTps()
+	function GMTtypes(stored, grd, img, ds, dsv, cpt, ps)
+		stored = (!isempty(grd)) ? "grd" : (!isempty(img)) ? "img" : (!isempty(ds)) ? "ds" : (!isempty(dsv)) ? "dsv" : (!isempty(cpt)) ? "cpt" : (!isempty(ps)) ? "ps" : ""
+		new(stored, grd, img, ds, dsv, cpt, ps)
+	end
 end
 =#
 

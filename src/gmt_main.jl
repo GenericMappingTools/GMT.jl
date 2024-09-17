@@ -1608,7 +1608,10 @@ info(C::GMTcpt) = show(C)
 # ---------- For Pluto ------------------------------------------------------------------------------
 Base.:show(io::IO, mime::MIME"image/png", wp::WrapperPluto) = write(io, read(wp.fname))
 
+# ---------- For Tables -----------------------------------------------------------------------------
 Base.:names(D::GDtype) = isa(D, Vector) ? D[1].colnames : D.colnames
+#Base.:names(D::GMTdataset) = D.colnames
+#Base.:names(D::Vector{GMTdataset}) = D[1].colnames
 
 # ---------- For fck stop printing UInts in hexadecinal ---------------------------------------------
 #Base.show(io::IO, x::T) where {T<:Union{UInt, UInt128, UInt64, UInt32, UInt16, UInt8}} = Base.print(io, x)

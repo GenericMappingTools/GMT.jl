@@ -328,23 +328,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 
 	_cmd = fish_bg(d, _cmd)					# See if we have a "pre-command"
 
-	if (isa(arg1, GDtype) && (((val = find_in_dict(d, [:labels])[1])) !== nothing))		# Plot TEXT attributed labels
-		s_val::String = string(val)::String
-		(!startswith(s_val, "att") || ((ind = findfirst("=", s_val)) === nothing) && (ind = findfirst(':', s_val)) === nothing) &&
-			error("The labels option must be 'labels=att=???' or 'labels=attrib=???'")
-		ts::String = s_val[ind+1:end]
-		ct::GMTdataset = centroid(arg1)							# Texts will be plotted at the polygons centroids
-		ct.text = info(arg1, att=ts)
-		(CTRL.pocket_call[1] === nothing) ? (CTRL.pocket_call[1] = ct) : (CTRL.pocket_call[2] = ct)
-		if ((fnt = add_opt(d, "", "", [:font], (angle="+a", font=("+f", font)), false, true)) != "")
-			(fnt[1] != '+') && (fnt = "+f" * fnt)
-			delete!(d, :font)
-		else
-			nc::Int = round(Int, sqrt(length(arg1)))			# A crude guess of the number of columns
-			fnt = (nc < 5) ? "+f8p" : (nc < 9 ? "+f6p" : "+f5p")	# A simple heuristic
-		end
-		append!(_cmd, ["pstext -R -J -F" * fnt * "+jMC"])
-	end
+	isa(arg1, GDtype) && plt_txt_attrib!(arg1, d, _cmd)			# Function barrier to plot TEXT attributed labels (in case)
 
 	finish = (is_ternary && occursin(" -M",_cmd[1])) ? false : true		# But this case (-M) is bugged still in 6.2.0
 	r = finish_PS_module(d, _cmd, "", K, O, finish, arg1, arg2, arg3, arg4)
@@ -352,6 +336,30 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	#(occursin("-Sk", opt_S)) && gmt_restart()  # Apparently patterns & custom symbols are screwing the session
 	(opt_B == " -B") && gmt_restart()		# For some Fking mysterious reason (see Ex45)
 	return r
+end
+
+# ---------------------------------------------------------------------------------------------------
+function plt_txt_attrib!(D::GDtype, d::Dict, _cmd::Vector{String})
+	# Plot TEXT attributed labels and serve as function barrier agains to f Anys
+	((val = find_in_dict(d, [:labels])[1]) === nothing) && return nothing
+
+	s_val::String = string(val)
+	(!startswith(s_val, "att") || ((ind = findfirst("=", s_val)) === nothing) && (_ind = findfirst(':', s_val)) === nothing) &&
+		error("The labels option must be 'labels=att=???' or 'labels=attrib=???'")
+	ind::Int = _ind											# Because it fck insists _ind is a Any
+	ts::String = s_val[ind+1:end]
+	ct::GMTdataset = centroid(D)							# Texts will be plotted at the polygons centroids
+	ct.text = info(D, att=ts)
+	(CTRL.pocket_call[1] === nothing) ? (CTRL.pocket_call[1] = ct) : (CTRL.pocket_call[2] = ct)
+	if ((fnt = add_opt(d, "", "", [:font], (angle="+a", font=("+f", font)), false, true)) != "")
+		(fnt[1] != '+') && (fnt = "+f" * fnt)
+		delete!(d, :font)
+	else
+		nc::Int = round(Int, sqrt(length(D)))				# A crude guess of the number of columns
+		fnt = (nc < 5) ? "+f8p" : (nc < 9 ? "+f6p" : "+f5p")# A simple heuristic
+	end
+	append!(_cmd, ["pstext -R -J -F" * fnt * "+jMC"])
+	return nothing
 end
 
 # ---------------------------------------------------------------------------------------------------
