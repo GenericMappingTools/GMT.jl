@@ -1828,7 +1828,7 @@ function cat_1_arg(arg, toDS::Bool=false)
 	elseif (isdataframe(arg) || isODE(arg))
 		return arg
 	end
-	return toDS ? mat2ds(arg)::GMTdataset : arg
+	return toDS ? mat2ds(arg) : arg
 end
 
 # ------------------------------------------------------------------------------------------------------
