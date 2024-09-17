@@ -44,7 +44,7 @@ A GMTgrid or nothing if file was writen on disk.
     G = gridit("@ship_15.txt", method=:surface, mask=0.3, preproc=true);
 """
 function gridit(fname::String="", arg1::Union{Nothing, MatGDsGd}=nothing; method::StrSymb="surface",
-                gdopts::String="", proj::String="", epsg::Int=0, kw...)
+                gdopts::String="", proj::String="", epsg::Int=0, kw...)::Union{Nothing, GMTgrid, String}
 
 	d = KW(kw)
 	len_d = length(d)
@@ -53,7 +53,7 @@ function gridit(fname::String="", arg1::Union{Nothing, MatGDsGd}=nothing; method
 	_proj::String = proj		# If I don't do this JET fck insists '_proj' is a Any. So irritating.
 	(_proj == "") && (_proj = isa(arg1, GDtype) ? getproj(arg1, proj4=true) : "")
 	(_proj == "" && epsg != 0) && (_proj = epsg2proj(epsg))
-	_mtd = string(method)::String
+	_mtd::String = string(method)
 	fun::Function = (_mtd == "surface" || contains(_mtd, "curvature")) ? surface : startswith(_mtd, "tri") ? triangulate : startswith(_mtd, "nearne") ? nearneighbor : startswith(_mtd, "sph") ? sphtriangulate : startswith(_mtd, "green") ? greenspline : sin
 	if (fun == sin)			# sin was just a fallback function to keep type stability
 		(_mtd == "mean" || _mtd == "std" || _mtd == "highest" || _mtd == "lowest") && (fun = blockmean)
@@ -83,7 +83,7 @@ function gridit(fname::String="", arg1::Union{Nothing, MatGDsGd}=nothing; method
 			G = (length(d) == len_d) ? fun(arg1; kw...) : fun(arg1; d...)
 		end
 	end
-	(_proj != "") && (G.proj4 = _proj)
+	(isa(G, GMTgrid) && _proj != "") && (G.proj4 = _proj)
 	G
 end
 
