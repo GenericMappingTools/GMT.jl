@@ -3684,7 +3684,7 @@ function _read_data(d::Dict, cmd::String, arg, opt_R::String="", is3D::Bool=fals
 			_arg = cat_2_arg2(d[:x], d[:y])
 			(haskey(d, :z)) && (_arg = hcat(_arg, d[:z][:]);	delete!(d, [:z]))
 			delete!(d, [[:x, :x], [:y]])		# [:x :x] to satisfy signature ::Vector{Vector{Symbol}} != ::Array{Array{Symbol}}
-			arg = GMTdataset(data=_arg)
+			arg = set_dsBB(GMTdataset(data=_arg))
 		elseif (haskey(d, :x) && length(d[:x]) > 1)	# Only this guy. I guess that histogram may use this
 			arg = mat2ds(d[:x]);		delete!(d, [:x])
 		end
