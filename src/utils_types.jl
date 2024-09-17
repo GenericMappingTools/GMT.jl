@@ -80,7 +80,7 @@ mat2ds(mat::GDtype)  = mat		# Method to simplify life and let call mat2ds on a a
 mat2ds(text::Union{AbstractString, Vector{<:AbstractString}}) = text_record(text)	# Now we can hide text_record
 mat2ds(text::Vector{String}; hdr::String="") = text_record(fill(NaN,length(text),2), text, [hdr])
 #function mat2ds(mat::Matrix{Any}; hdr=String[], geom=0, kwargs...)
-function mat2ds(mat::AbstractMatrix; hdr=String[], geom=0, kwargs...)
+function mat2ds(mat::AbstractMatrix; hdr=String[], geom=0, kwargs...)::GMTdataset
 	# Here we are expecting that Any-ness results from columns with DateTime. If not returm 'mat' as is
 	# DateTime columns are converted to seconds and a regular GMTdatset with appropriate column names and attribs is return 
 	c = zeros(Bool, size(mat, 2))
@@ -92,7 +92,7 @@ function mat2ds(mat::AbstractMatrix; hdr=String[], geom=0, kwargs...)
 	end
 	#!any(c) && return mat		# Oops, no DateTime? Ok, go to your life and probably blow somewhere.
 
-	D = mat2ds(convert(Matrix{Float64}, mat); hdr=hdr, geom=geom, kwargs...)::GMTdataset
+	D::GMTdataset = mat2ds(convert(Matrix{Float64}, mat); hdr=hdr, geom=geom, kwargs...)
 	ind = findall(c)
 	if (!isempty(ind))
 		Tc = ""
@@ -521,6 +521,13 @@ function add2ds!(D::GMTdataset; name::AbstractString="", names::Vector{<:Abstrac
 		D.colnames = [D.colnames..., _names...]
 	end
 	(length(D.bbox) != 2 * size(D,2)) && set_dsBB!(D)
+end
+
+# ---------------------------------------------------------------------------------------------------
+function set_dsBB(D, all_bbs::Bool=true)
+	# This method returns the modified 'D'
+	set_dsBB!(D, all_bbs)
+	return D
 end
 
 # ---------------------------------------------------------------------------------------------------

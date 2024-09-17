@@ -289,7 +289,7 @@ function Base.extrema(A::Array{<:Complex{<:Integer}})		# Returns real_min, real_
 	mi_r, mi_i = minimum(A), maximum(A)
 	return mi_r[1], mi_i[1], mi_r[2], mi_i[2]
 end
-function Base.extrema(A::Array{<:Complex{<:AbstractFloat}})
+function Base.extrema(A::Array{<:Complex{<:Real}})
 	mi_r, mi_i = minimum_nan(A), maximum_nan(A)
 	return mi_r[1], mi_i[1], mi_r[2], mi_i[2]
 end

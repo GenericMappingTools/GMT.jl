@@ -10,7 +10,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	(caller != "bar") && (arg1 = if_multicols(d, arg1, is3D))	# Check if it was asked to split a GMTdataset in its columns 
 
 	arg2, arg3, arg4 = nothing, nothing, nothing
-	N_args = (arg1 === nothing) ? 0 : 1
+	N_args::Int = (arg1 === nothing) ? 0 : 1
 	is_ternary = (caller == "ternary") ? true : false
 	if     (is3D)       gmt_proggy = (IamModern[1]) ? "plot3d "  : "psxyz "
 	elseif (is_ternary) gmt_proggy = (IamModern[1]) ? "ternary " : "psternary "
@@ -26,9 +26,10 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	g_bar_fill = Vector{String}()				# May hold a sequence of colors for gtroup Bar plots
 	if (caller != "")
 		if (occursin(" -", caller))				# some sub-modues use this piggy-backed call to send a cmd
-			if ((ind = findfirst("|", caller)) !== nothing)	# A mixed case with "caler|partiall_command"
-				sub_module = caller[1:ind[1]-1]
-				cmd = caller[ind[1]+1:end]
+			if ((ind = findfirst('|', caller)) !== nothing)	# A mixed case with "caler|partiall_command"
+				_ind::Int = Int(ind)			# Because it still F. insists that 'ind' is a Any
+				sub_module = caller[1:_ind-1]
+				cmd = caller[_ind+1:end]
 				caller = sub_module				# Because of parse_BJR()
 				(caller == "events") && (gmt_proggy = "events ")
 			else
@@ -39,12 +40,12 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 			sub_module = caller
 			# Needs to be processed here to distinguish from the more general 'fill'
 			(caller == "bar") && (g_bar_fill = helper_gbar_fill(d))
-			opt_A = (caller == "lines" && ((val = find_in_dict(d, [:stairs_step])[1]) !== nothing)) ? string(val)::String : ""
+			opt_A = (caller == "lines" && ((val = find_in_dict(d, [:stairs_step])[1]) !== nothing)) ? string(val) : ""
 		end
 	end
 
 	# --------------------- Check the grid2tri cases --------------------
-	is_gridtri = false
+	is_gridtri::Bool = false
 	is3D && (is_gridtri = deal_gridtri!(arg1, d))
 
 	if (first && occursin('3', caller) && is_in_dict(d, [:p :view :perspective]) === nothing)
@@ -70,7 +71,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	if (is_ternary)
 		opt_B::String = ""
 		if (haskey(d, :B))						# Not necessarely the case when ternary!
-			cmd, opt_B = cmd * d[:B], d[:B]		# B option was parsed in plot/ternary
+			cmd, opt_B = string(cmd, d[:B]), d[:B]		# B option was parsed in plot/ternary
 			delete!(d, :B)
 		end
 		cmd, opt_R = parse_R(d, cmd, O)
@@ -81,8 +82,8 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		cmd, opt_J::String = parse_J(d, cmd, def_J)
 	else
 		def_J = (is_ternary) ? " -JX" * split(DEF_FIG_SIZE, '/')[1] : ""		# Gives "-JX14c" 
-		(!is_ternary && isa(arg1, GMTdataset) && length(arg1.ds_bbox) >= 4) && (CTRL.limits[1:4] = arg1.ds_bbox[1:4])
-		(!is_ternary && isa(arg1, Vector{<:GMTdataset}) && length(arg1[1].ds_bbox) >= 4) && (CTRL.limits[1:4] = arg1[1].ds_bbox[1:4])
+		@inbounds (!is_ternary && isa(arg1, GMTdataset) && length(arg1.ds_bbox) >= 4) && (CTRL.limits[1:4] = arg1.ds_bbox[1:4])
+		@inbounds (!is_ternary && isa(arg1, Vector{<:GMTdataset}) && length(arg1[1].ds_bbox) >= 4) && (CTRL.limits[1:4] = arg1[1].ds_bbox[1:4])
 		(!is_ternary && CTRL.limits[7:10] == [0,0,0,0]) && (CTRL.limits[7:10] = CTRL.limits[1:4])	# Start with plot=data limits
 		(!IamModern[1] && haskey(d, :hexbin) && !haskey(d, :aspect)) && (d[:aspect] = :equal)	# Otherwise ... gaps between hexagons
 		(isa(arg1, GMTdataset) && size(arg1,2) > 1 && !isempty(arg1.colnames)) && (CTRL.XYlabels[1] = arg1.colnames[1]; CTRL.XYlabels[2] = arg1.colnames[2])
@@ -113,7 +114,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	# If the input is a GMTdataset and one of its columns is a Time column, automatically set the -fT
 	function set_fT(D::GMTdataset, cmd::String, opt_f::String)
 		if ((Tc = get(D.attrib, "Timecol", "")) != "")
-			tc = parse(Int, Tc) - 1
+			tc::Int = parse(Int, Tc) - 1
 			_opt_f = (opt_f == "") ? " -f$(tc)T" : opt_f * ",$(tc)T"
 			((Tc = get(D.attrib, "Time_epoch", "")) != "") && (_opt_f *= Tc)	# If other than Unix time
 			return (opt_f == "") ? cmd * _opt_f : replace(cmd, opt_f => _opt_f)
@@ -328,18 +329,18 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	_cmd = fish_bg(d, _cmd)					# See if we have a "pre-command"
 
 	if (isa(arg1, GDtype) && (((val = find_in_dict(d, [:labels])[1])) !== nothing))		# Plot TEXT attributed labels
-		s_val::String = string(val)
-		(!startswith(s_val, "att") || ((ind = findfirst("=", s_val)) === nothing) && (ind = findfirst(":", s_val)) === nothing) &&
+		s_val::String = string(val)::String
+		(!startswith(s_val, "att") || ((ind = findfirst("=", s_val)) === nothing) && (ind = findfirst(':', s_val)) === nothing) &&
 			error("The labels option must be 'labels=att=???' or 'labels=attrib=???'")
-		ts::String = s_val[ind[1]+1:end]
-		ct = centroid(arg1)					# Texts will be plotted at the polygons centroids
+		ts::String = s_val[ind+1:end]
+		ct::GMTdataset = centroid(arg1)							# Texts will be plotted at the polygons centroids
 		ct.text = info(arg1, att=ts)
 		(CTRL.pocket_call[1] === nothing) ? (CTRL.pocket_call[1] = ct) : (CTRL.pocket_call[2] = ct)
 		if ((fnt = add_opt(d, "", "", [:font], (angle="+a", font=("+f", font)), false, true)) != "")
 			(fnt[1] != '+') && (fnt = "+f" * fnt)
 			delete!(d, :font)
 		else
-			nc = round(Int, sqrt(length(arg1)))			# A crude guess of the number of columns
+			nc::Int = round(Int, sqrt(length(arg1)))			# A crude guess of the number of columns
 			fnt = (nc < 5) ? "+f8p" : (nc < 9 ? "+f6p" : "+f5p")	# A simple heuristic
 		end
 		append!(_cmd, ["pstext -R -J -F" * fnt * "+jMC"])
@@ -368,7 +369,7 @@ function deal_faceverts(arg1, d, opt_p)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function deal_gridtri!(arg1, d)
+function deal_gridtri!(arg1, d)::Bool
 	# Deal with the situation where we are plotting triangulated grids made by grid2tri()
 	((!isa(arg1, Vector{<:GMTdataset}) || isempty(arg1[1].comment) || (arg1[1].comment[1] != "vwall" && arg1[1].comment[1] != "gridtri"))) &&
 		return false
