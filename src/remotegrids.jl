@@ -133,8 +133,8 @@ data but generates and returns the full grid name that can be used in other GMT 
 ### Parameters
 - `name`: The grid name. One of:
 
-  - `earth_age`, `earth_geoid`, `earth_mag``, `earth_gebco`, `earth_gebcosi`, `earth_mask`, `earth_dist`, `earth_faa`, `earth_edefl`, `earth_ndefl`, `earth_mss`, `earth_mdt`, `earth_relief`, `earth_synbath`, `earth_vgg`, `earth_wdmam`, `earth_day`, `earth_night`, 
-  `mars_relief`, `mercury_relief`, `moon_relief`, `pluto_relief`, `venus_relief`.
+  - `earth_age`, `earth_geoid`, `earth_mag`, `earth_gebco`, `earth_gebcosi`, `earth_mask`, `earth_dist`, `earth_faa`, `earth_edefl`, `earth_ndefl`, `earth_mss`, `earth_mdt`, `earth_relief`, `earth_synbath`, `earth_vgg`, `earth_wdmam`, `earth_day`, `earth_night`, 
+  - `mars_relief`, `mercury_relief`, `moon_relief`, `pluto_relief`, `venus_relief`.
 
 ### Keyword Arguments
 - `rest_p` or `res`: Grid resolution. One of "01d", "30m", "20m", "15m", "10m", "06m", "05m", "04m", "03m" or higher
@@ -143,11 +143,36 @@ data but generates and returns the full grid name that can be used in other GMT 
 - `reg`: Grid registration. Choose between 'g'rid or 'p'ixel registration or leave blank modules picking the best one.
 	
 - `info`: Print grid information (true) or just the full grid name (false). Cannot be used with the option `res`.
+
+To get only the list of available grid names, type ``remotegrid()``.
+
+As sated above this function does not download any data but is a convenient helper for those who do. However, one need
+to be very carefull with the grid sizes. For example, the ``earth_relief`` at "15s" weights 2.6 GB ... and 45 GB at "01s".
+So, for those high resolution grids you should use the the ``region`` option provided by the ``grdcut`` or ``gmtread``.
+
+### Examples
+
+See the Moon grid at "6m" resolution
+```julia
+G = gmtread(remotegrid("moon", res="6m"))
+viz(G, shade=true)
+```
+
+See a region over Oman of the "earth_relief" at "15s" resolution
+```julia
+G = gmtread(remotegrid("earth_relief", res="15s"), region=(55,60,23,28))
+viz(G, shade=true, coast=true)
+```
+
+See all details of the "earth_relief" grid
+```julia
+@? remotegrid("earth_relief", info=true)
+```
 	
 """
 function remotegrid(name, res_p::String=""; res::String="", reg::String="", info=false)::String
 	earth_names = ["earth_age", "earth_geoid", "earth_mag", "earth_gebco", "earth_gebcosi", "earth_mask", "earth_dist", "earth_faa", "earth_edefl", "earth_ndefl", "earth_mss", "earth_mdt", "earth_relief", "earth_synbath", "earth_vgg", "earth_wdmam", "earth_day", "earth_night"]
-	planet_names = ["mercury", "venus", "mars", "moon"]
+	planet_names = ["mercury_relief", "venus_relief", "mars_relief", "moon_relief"]
 	(res == "") && (res = res_p)	# Accept both positional and kwarg but later takes precedence
 	
 	n_under = count_chars(name, '_')
@@ -205,4 +230,14 @@ function remotegrid(name, res_p::String=""; res::String="", reg::String="", info
 	end
 
 	return "@" * name
+end
+
+function remotegrid()
+	# A method just for help
+	println("Available Remote Grids:")
+	println("    ",["earth_age", "earth_geoid", "earth_mag", "earth_gebco", "earth_gebcosi", "earth_mask", "earth_dist", "earth_faa", "earth_edefl", "earth_ndefl", "earth_mss", "earth_mdt", "earth_relief", "earth_synbath", "earth_vgg", "earth_wdmam", "earth_day", "earth_night"])
+	println("    ",["mercury_relief", "venus_relief", "mars_relief", "moon_relief"])
+	println("To get information about resolutions and registrations of grid \"name\", type:")
+	printstyled("    remotegrid(\"name\", info=true)\n"; color = :yellow)
+	return nothing
 end
