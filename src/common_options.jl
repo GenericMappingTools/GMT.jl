@@ -5016,7 +5016,11 @@ macro var"?"(name)
 			s = string("https://www.generic-mapping-tools.org/GMTjl_doc/documentation/", dir, $name,"/")
 			display_file(s)
 		catch err
-			println(err)
+			try 
+				(startswith($name, "http")) && display_file($name)
+			catch err
+				println(err)
+			end
 		end
 	end
 end
