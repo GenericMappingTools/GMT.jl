@@ -169,7 +169,7 @@ export
 
 	ablines, ablines!, density, density!, boxplot, boxplot!, cornerplot, cornerplot!, cubeplot, cubeplot!, ecdfplot, ecdfplot!,
 	fill_between, fill_between!, marginalhist, marginalhist!, parallelplot, parallelplot!, plotlinefit, plotlinefit!,
-	qqplot, qqplot!, qqnorm, qqnorm!, seismicity, sealand, squeeze, terramar, violin, violin!, viz, vizpdf,
+	qqplot, qqplot!, qqnorm, qqnorm!, remotegrid, seismicity, sealand, squeeze, terramar, violin, violin!, viz, vizpdf,
 	weather, windbarbs, whereami,
 
 	VSdisp, mad, info, kmeans, pca, mosaic, quadbounds, quadkey, geocoder, getprovider,
@@ -285,6 +285,7 @@ include("pstext.jl")
 include("psxy.jl")
 include("pswiggle.jl")
 include("rasterpolygonfuns.jl")
+include("remotegrids.jl")
 include("sample1d.jl")
 include("sealand.jl")
 include("spatial_funs.jl")
