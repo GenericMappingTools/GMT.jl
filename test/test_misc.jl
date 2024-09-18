@@ -344,4 +344,12 @@
 	roundrect(0,0, 1, 1, 1,Vd=dbg2);
 	ellipse(300,201,0, 200, 50, first=true, units=:points, fill=:purple, pen=1, X=0, Y=0);
 	circle(305,185,56, fill=:black, figname="lixo.ps");
+
+	println("	REMOTEGRID")
+	remotegrid("venus", "3m") == "@venus_relief_03m"
+	remotegrid("moon", "3m", reg="pi") == "@moon_relief_03m_p"
+	remotegrid("relief", "5m") == "@earth_relief_05m"
+	remotegrid("earth_relief", "5m") == "@earth_relief_05m"
+	remotegrid("mag", "1d", reg="p") == "@earth_mag_01d_p"
+
 end

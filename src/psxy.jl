@@ -123,8 +123,9 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	end
 
 	if (isa(arg1, GDtype) && !contains(opt_f, "T") && !contains(opt_f, "t") && !contains(opt_R, "T") && !contains(opt_R, "t"))
-		isa(arg1, GMTdataset) && (cmd = set_fT(arg1, cmd, opt_f))
-		isa(arg1, Vector{<:GMTdataset}) && (cmd = set_fT(arg1[1], cmd, opt_f))
+		#isa(arg1, GMTdataset) && (cmd = set_fT(arg1, cmd, opt_f))
+		#isa(arg1, Vector{<:GMTdataset}) && (cmd = set_fT(arg1[1], cmd, opt_f))
+		cmd = isa(arg1, GMTdataset) ? set_fT(arg1, cmd, opt_f) : set_fT(arg1[1], cmd, opt_f)
 	end
 
 	# If a file name sent in, read it and compute a tight -R if this was not provided
