@@ -153,7 +153,7 @@ function gmtread(_fname::String; kwargs...)
 			opt_T = " -Tg"
 		end
 		# To shut up a f annoying GMT warning.
-		(opt_T == " -Tg") && startswith(fname, "@earth_") && !endswith(fname, "_g") && !endswith(fname, "_p") && (fname *= "_g")
+		#(opt_T == " -Tg") && startswith(fname, "@earth_") && !endswith(fname, "_g") && !endswith(fname, "_p") && (fname *= "_g")
 	end
 
 	(opt_T == "" && opt_bi != "") && (opt_T = " -Td")	# If asked to read binary, must be a 'data' file.
