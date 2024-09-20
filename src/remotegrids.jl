@@ -39,6 +39,11 @@ Base.@kwdef struct earth_faa
 	reg::Vector{String} = ["gp",  "gp",  "gp",  "gp",  "gp",  "gp",  "gp",  "gp",  "gp",  "gp",  "p"]
 end
 
+Base.@kwdef struct earth_faaerror
+	res::Vector{String} = ["01d", "30m", "20m", "15m", "10m", "06m", "05m", "04m", "03m", "02m", "01m"]
+	reg::Vector{String} = ["gp",  "gp",  "gp",  "gp",  "gp",  "gp",  "gp",  "gp",  "gp",  "gp",  "p"]
+end
+
 Base.@kwdef struct earth_edefl
 	res::Vector{String} = ["01d", "30m", "20m", "15m", "10m", "06m", "05m", "04m", "03m", "02m", "01m"]
 	reg::Vector{String} = ["gp",  "gp",  "gp",  "gp",  "gp",  "gp",  "gp",  "gp",  "gp",  "gp",  "p"]
@@ -133,14 +138,16 @@ data but generates and returns the full grid name that can be used in other GMT 
 ### Parameters
 - `name`: The grid name. One of:
 
-  - `earth_age`, `earth_geoid`, `earth_mag`, `earth_gebco`, `earth_gebcosi`, `earth_mask`, `earth_dist`, `earth_faa`, `earth_edefl`, `earth_ndefl`, `earth_mss`, `earth_mdt`, `earth_relief`, `earth_synbath`, `earth_vgg`, `earth_wdmam`, `earth_day`, `earth_night`, 
+  - `earth_age`, `earth_geoid`, `earth_mag`, `earth_gebco`, `earth_gebcosi`, `earth_mask`, `earth_dist`, `earth_faa`, `earth_faaerror`, `earth_edefl`, `earth_ndefl`, `earth_mss`, `earth_mdt`, `earth_relief`, `earth_synbath`, `earth_vgg`, `earth_wdmam`, `earth_day`, `earth_night`, 
   - `mars_relief`, `mercury_relief`, `moon_relief`, `pluto_relief`, `venus_relief`.
 
 ### Keyword Arguments
 - `rest_p` or `res`: Grid resolution. One of "01d", "30m", "20m", "15m", "10m", "06m", "05m", "04m", "03m" or higher
   for the grids that have finer resolution. Use the `info` option to inquiry all available resolutions of a grid.
+  The suffix ``d``, ``m``, and ``s`` stand for arc-degrees, arc-minutes, and arc-seconds, respectively.
 	
-- `reg`: Grid registration. Choose between 'g'rid or 'p'ixel registration or leave blank modules picking the best one.
+- `reg`: Grid registration. Choose between 'g'rid or 'p'ixel registration or leave blank for modules to picking the indicated one.
+  By default, a gridline-registered grid is selected unless only the pixel-registered grid is available.
 	
 - `info`: Print grid information (true) or just the full grid name (false). Cannot be used with the option `res`.
 
@@ -171,7 +178,7 @@ See all details of the "earth_relief" grid
 	
 """
 function remotegrid(name, res_p::String=""; res::String="", reg::String="", info=false)::String
-	earth_names = ["earth_age", "earth_geoid", "earth_mag", "earth_gebco", "earth_gebcosi", "earth_mask", "earth_dist", "earth_faa", "earth_edefl", "earth_ndefl", "earth_mss", "earth_mdt", "earth_relief", "earth_synbath", "earth_vgg", "earth_wdmam", "earth_day", "earth_night"]
+	earth_names = ["earth_age", "earth_geoid", "earth_mag", "earth_gebco", "earth_gebcosi", "earth_mask", "earth_dist", "earth_faa", "earth_faaerror", "earth_edefl", "earth_ndefl", "earth_mss", "earth_mdt", "earth_relief", "earth_synbath", "earth_vgg", "earth_wdmam", "earth_day", "earth_night"]
 	planet_names = ["mercury_relief", "venus_relief", "mars_relief", "moon_relief"]
 	(res == "") && (res = res_p)	# Accept both positional and kwarg but later takes precedence
 	
