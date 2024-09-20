@@ -416,6 +416,6 @@ function earthregions(name::String=""; proj="guess", grid::Bool=false, dataset="
 			isempty(D2) && (gmtwhich(fname, G=:a); D2 = gmtwhich(fname, V=:q))	# If not, download it
 			return grdcut(D2.text[1]::String, R=lim)::GMTimage			# This grdcut call will lower to use gdaltranslate
 		end 
-		gmt("grdcut @"*dataset * res * regist * opt_J * " -R" * lim)::GMTgrid
+		gmt("grdcut @"*dataset * res * regist * opt_J * " -R" * lim * " -Vq")::GMTgrid
 	end
 end

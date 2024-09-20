@@ -2784,7 +2784,8 @@ function add_opt_module(d::Dict)::Vector{String}
 					is_coast = false
 				end
 				r = r[1:findfirst(" -K", r)[1]];	# Remove the "-K -O >> ..."
-				r = replace(r, " -R -J" => "")
+				opt_R = scan_opt(r, "-R", true)
+				r = replace(r, opt_R * " -J" => "")	# Mus fish -R first because now all -R are complete (not just -R)
 				r = (is_coast) ? "clip " * r : "clip " * strtok(r)[2]	# coast case returns a "clip pscoast ..." string that caller can parse 
 			else
 				!(symb in CTRL.callable) && error("Nested Fun call $symb not in the callable nested functions list")
