@@ -1148,3 +1148,5 @@ end
 =#
 
 #GI.geometry[1].geoms[1].rings[1].vertices.data[1].coords.lat.val
+
+include("circfit.jl")

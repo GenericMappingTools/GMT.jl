@@ -176,7 +176,7 @@ export
 
 	binarize, isodata, rgb2gray, rgb2lab, rgb2YCbCr, rgb2ycbcr, grid2img, img2grid, grays2cube, grays2rgb,
 
-	makeDCWs, mksymbol, pastplates,
+	makeDCWs, mksymbol, pastplates, circfit,
 
 	gunique, sortslicesperm,
 
