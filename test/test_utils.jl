@@ -16,4 +16,20 @@
 	@test A.proj4 == B.proj4
 	
 	@test GMT.wrap2pi(2π) < eps()
+
+	function test_circfit()
+		#Random.seed!(123)
+		radius = 3
+		theta = linspace(0, 2*pi, 200)
+		theta = theta[rand(1:length(theta), 20)]	# Retain only a few points
+		x = radius * cos.(theta)
+		y = radius * sin.(theta)
+		x .+= (rand(length(x)) .- 0.5) * radius/4	# Add noise
+		y .+= (rand(length(y)) .- 0.5) * radius/4
+	
+		x1, y1, R1, err1 = circfit([x y])
+		x2, y2, R2, err2 = circfit(x, y, taubin=true)
+		return [x y], x1, y1, R1, err1, x2, y2, R2, err2
+	end
+	test_circfit();	
 end
