@@ -182,6 +182,8 @@ export
 
 	Ginnerjoin, Gouterjoin, Gleftjoin, Grightjoin, Gcrossjoin, Gsemijoin, Gantijoin, spatialjoin,
 
+	xyz2laz, laz2xyz, las2dat, dat2las,
+
 	df2ds, ODE2ds,
 	sprintf,
 	@?, @dir
@@ -264,6 +266,7 @@ include("makecpt.jl")
 include("mapproject.jl")
 include("movie.jl")
 include("nearneighbor.jl")
+include("pastplates.jl")
 include("pca.jl")
 include("pcolor.jl")
 include("orbits.jl")
@@ -327,7 +330,9 @@ include("windbarbs/windbarbs.jl")
 include("zscale.jl")
 include("drawing.jl")
 include("get_enums.jl")
-include("pastplates.jl")
+
+include("laszip/laszip.jl")
+using GMT.Laszip
 
 @setup_workload let
 	G_API[1] = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS)
