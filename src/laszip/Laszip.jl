@@ -1,0 +1,33 @@
+module Laszip
+
+using Printf, Dates, LASzip_jll
+
+export
+	xyz2laz, laz2xyz, las2dat, dat2las
+
+include("laszip_h.jl")
+include("laszip_dll.jl")
+include("las2dat.jl")
+include("dat2las.jl")
+
+"""
+	Prints an laszip error message and error out
+
+	msgerror(lzobj::Ptr{Void}, extramsg::AbstractString="")
+
+	Where:
+		"lzobj" is a pointer to laszip_readert|writer created by unsafe_load(laszip_create(arg))
+		"extramsg" is an optional extra message to be printed before the laszip error message.
+"""
+function msgerror(lzobj::Ptr{Cvoid}, extramsg::AbstractString="")
+	pStr = pointer([pointer(lpad("",128,"        "))])		# Create a 1024 bytes string and get its pointer
+	laszip_get_error(lzobj, pStr)
+	Str = unsafe_string(unsafe_load(pStr))
+	isempty(extramsg) ? error(Str) : error(extramsg * "\n\t" * Str)
+end
+function msgerror(lzobj::Ptr{Ptr{Cvoid}}, extramsg::AbstractString="")
+	lzobj = unsafe_load(lzobj)
+	msgerror(lzobj, extramsg)
+end
+
+end # module
