@@ -749,7 +749,7 @@ fliplr(A) = reverse(A, dims=2)
 flipdim(A,dim)  = reverse(A, dims=dim)
 flipdim!(A,dim) = reverse!(A, dims=dim)
 #feval(fn_str, args...) = eval(Symbol(fn_str))(args...)
-const numel = length
+numel(args...)::Int = length(args...)
 dec2bin(n::Integer, mindigits::Int=0) = string(n, base=2, pad=mindigits)
 bin2dec(b::Union{AbstractString, Char}) = parse(Int, b, base=2)
 
