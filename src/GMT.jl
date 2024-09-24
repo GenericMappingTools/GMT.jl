@@ -331,7 +331,7 @@ include("zscale.jl")
 include("drawing.jl")
 include("get_enums.jl")
 
-include("laszip/laszip.jl")
+include("laszip/Laszip.jl")
 using GMT.Laszip
 
 @setup_workload let
