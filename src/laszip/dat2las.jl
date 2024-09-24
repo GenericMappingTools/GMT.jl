@@ -1,30 +1,39 @@
 """
-Write XYZ data to a LIDAR laz (laszip compressed) or las format file. Usage:
+    dat2las(FileName::AbstractString, xyz; grd_hdr=[], scaleX=nothing, scaleY=nothing, scaleZ=nothing, offX=nothing, offY=nothing, offZ=nothing)
 
-	dat2las(FileName::AbstractString, xyz, hdr_vec=[]; scaleX=[], scaleY=[], scaleZ=[], offX=[], offY=[], offZ=[])
+Write XYZ data to a LIDAR laz (laszip compressed) or las format file.
 
 	Where:
 		"FileName" Name of the output LIDAR file
 		xyz  A Mx3 array with the point coordinates
 
-Example. To write the x,y,z data to file "lixo.laz" do:
+### Example
 
+To write the x,y,z data to file "lixo.laz" do:
+
+```julia
 	dat2las("lixo.laz", xyz)
+```
 """
-function dat2las(fname::AbstractString, xyz, hdr_vec=[]; scaleX=[], scaleY=[], scaleZ=[], offX=[], offY=[], offZ=[])
+function dat2las(fname::AbstractString, G::GMTgrid; scaleX=nothing, scaleY=nothing, scaleZ=nothing, offX=nothing, offY=nothing, offZ=nothing)
+	if     (startswith(G.layout, "BC"))  z = vec(G.z[:])
+	elseif (startswith(G.layout, "TR"))  z = grd2xyz(G, Z="TLf")
+	end
+	hdr = [G.range[1:6]..., 0.0, G.inc[1:2]...]
+	dat2las(fname, z, grd_hdr=hdr, scaleX=scaleX, scaleY=scaleY, scaleZ=scaleZ, offX=offX, offY=offY, offZ=offZ)
+end
 
-	parse_inputs_dat2las(xyz, hdr_vec)
-	n_rows, n_cols = size(xyz)
+function dat2las(fname::AbstractString, xyz; grd_hdr=Float64[], scaleX=nothing, scaleY=nothing, scaleZ=nothing, offX=nothing, offY=nothing, offZ=nothing)
 
-	if (!isempty(hdr_vec))
-		min_x, max_x, min_y, max_y, min_z, max_z = hdr_vec[1:6]
+	n_rows, n_cols = parse_inputs_dat2las(xyz, grd_hdr)
+
+	if (!isempty(grd_hdr))
+		min_x, max_x, min_y, max_y, min_z, max_z = grd_hdr[1:6]
 	end
 
 	#  Create the writer
 	laszip_writer = convert(Ptr{Ptr{Cvoid}},pointer([pointer([0])]))
-	if (laszip_create(laszip_writer) != 0)
-		msgerror(laszip_writer, "creating laszip writer")
-	end
+	(laszip_create(laszip_writer) != 0) && msgerror(laszip_writer, "creating laszip writer")
 
 	header = pointer([pointer([laszip_header()])])    # Get an empty header directly from C
 	laszip_writer = unsafe_load(laszip_writer)
@@ -43,7 +52,7 @@ function dat2las(fname::AbstractString, xyz, hdr_vec=[]; scaleX=[], scaleY=[], s
 	hdr.x_scale_factor = 1.0
 	hdr.y_scale_factor = 1.0
 	hdr.z_scale_factor = 1.0
-	if (n_cols == 3 && isempty(hdr_vec))		# The 'regular' situation
+	if (n_cols == 3 && isempty(grd_hdr))		# The 'regular' situation
 		min_x, min_y, min_z = minimum(xyz, dims=1)
 		max_x, max_y, max_z = maximum(xyz, dims=1)
 	end
@@ -56,31 +65,31 @@ function dat2las(fname::AbstractString, xyz, hdr_vec=[]; scaleX=[], scaleY=[], s
 
 	# ----------------- Find reasonable scale_factor and offset -----------------------------------------
 	if (hdr.min_x >= -360 && hdr.max_x <= 360 && hdr.min_y >= -90 && hdr.max_y <= 90)	# Assume geogs
-		hdr.x_scale_factor = isempty(scaleX) ? 1e-7 : scaleX
-		hdr.y_scale_factor = isempty(scaleY) ? 1e-7 : scaleY
+		hdr.x_scale_factor = (scaleX === nothing) ? 1e-7 : scaleX
+		hdr.y_scale_factor = (scaleY === nothing) ? 1e-7 : scaleY
 	else
-		hdr.x_scale_factor = isempty(scaleX) ? 1e-3 : scaleX
-		hdr.y_scale_factor = isempty(scaleY) ? 1e-3 : scaleY
+		hdr.x_scale_factor = (scaleX === nothing) ? 1e-3 : scaleX
+		hdr.y_scale_factor = (scaleY === nothing) ? 1e-3 : scaleY
 	end
-	hdr.z_scale_factor = isempty(scaleZ) ? 1e-2 : scaleZ
+	hdr.z_scale_factor = (scaleZ === nothing) ? 1e-2 : scaleZ
 
 	if (!isnan(hdr.min_x) && !isnan(hdr.max_x))
-		if (isempty(offX))
-			hdr.x_offset = (floor((hdr.min_x + hdr.max_x)/hdr.x_scale_factor/20000000)) * 10000000 * hdr.x_scale_factor
+		if (offX === nothing)
+			hdr.x_offset = (floor((hdr.min_x + hdr.max_x) / hdr.x_scale_factor / 20000000)) * 10000000 * hdr.x_scale_factor
 		else
 			hdr.x_offset = offX
 		end
 	end
 	if (!isnan(hdr.min_y) && !isnan(hdr.max_y))
-		if (isempty(offY))
-			hdr.y_offset = (floor((hdr.min_y + hdr.max_y)/hdr.y_scale_factor/20000000)) * 10000000 * hdr.y_scale_factor
+		if (offY === nothing)
+			hdr.y_offset = (floor((hdr.min_y + hdr.max_y) / hdr.y_scale_factor / 20000000)) * 10000000 * hdr.y_scale_factor
 		else
 			hdr.y_offset = offY
 		end
 	end
 	if (!isnan(hdr.min_z) && !isnan(hdr.max_z))
-		if (isempty(offZ))
-			hdr.z_offset = (floor((hdr.min_z + hdr.max_z)/hdr.z_scale_factor/20000000)) * 10000000 * hdr.z_scale_factor
+		if (offZ === nothing)
+			hdr.z_offset = (floor((hdr.min_z + hdr.max_z) / hdr.z_scale_factor / 20000000)) * 10000000 * hdr.z_scale_factor
 		else
 			hdr.z_offset = offZ
 		end
@@ -88,7 +97,7 @@ function dat2las(fname::AbstractString, xyz, hdr_vec=[]; scaleX=[], scaleY=[], s
 	# ---------------------------------------------------------------------------------------------------
 
 	# This is the case where we are storing a grid pretending it's a regular LAZ file. Must hijack some header members
-	if (!isempty(hdr_vec))
+	if (!isempty(grd_hdr))
 		hdr.x_scale_factor = hdr.z_scale_factor		# Because in fact we only have zz's
 		hdr.y_scale_factor = hdr.z_scale_factor
 		hdr.x_offset = hdr.z_offset
@@ -96,10 +105,10 @@ function dat2las(fname::AbstractString, xyz, hdr_vec=[]; scaleX=[], scaleY=[], s
 		hdr.number_of_point_records = UInt32(ceil(n_rows / 3))
 		hdr.global_encoding = 32768;	# Use this number to codify as GRID. bin(UInt16(32768)) = "1000000000000000"
 
-		one = (hdr_vec[7] == 0 ? 1 : 0)
-		hdr.project_ID_GUID_data_1 = hdr_vec[7]
-		hdr.project_ID_GUID_data_2 = round(UInt16, (hdr.max_y - hdr.min_y) / hdr_vec[8]) + one 	# n_rows in 2D array
-		hdr.project_ID_GUID_data_3 = round(UInt16, (hdr.max_x - hdr.min_x) / hdr_vec[9]) + one 	# n_cols in 2D array
+		one = (grd_hdr[7] == 0 ? 1 : 0)
+		hdr.project_ID_GUID_data_1 = UInt32(grd_hdr[7])
+		hdr.project_ID_GUID_data_2 = round(UInt16, (hdr.max_y - hdr.min_y) / grd_hdr[8]) + one 	# n_rows in 2D array
+		hdr.project_ID_GUID_data_3 = round(UInt16, (hdr.max_x - hdr.min_x) / grd_hdr[9]) + one 	# n_cols in 2D array
 	end
 
 	# Save back the header to its C pointer
@@ -167,25 +176,22 @@ function dat2las(fname::AbstractString, xyz, hdr_vec=[]; scaleX=[], scaleY=[], s
 	end
 
 	# Close the writer
-	if (laszip_close_writer(laszip_writer) != 0)
-		msgerror(laszip_writer, "closing laszip writer")
-	end
-	# Destroy the writer
-	if (laszip_destroy(laszip_writer) != 0)
-		msgerror(laszip_writer, "destroying laszip writer")
-	end
+	(laszip_close_writer(laszip_writer) != 0) && msgerror(laszip_writer, "closing laszip writer")
 
+	# Destroy the writer
+	(laszip_destroy(laszip_writer) != 0) && msgerror(laszip_writer, "destroying laszip writer")
+
+	return nothing
 end
 
 # --------------------------------------------------------------------------
-function parse_inputs_dat2las(xyz, hdr_vec)
+function parse_inputs_dat2las(xyz, grd_hdr)
 # Check validity of input and in future will parse string options
 
-	n_rows, n_cols = size(xyz)
+	(!isempty(grd_hdr) && length(grd_hdr) < 7) && error("HDR argument does not have at least 7 elements")
+	n_rows, n_cols = isa(xyz, Matrix) ? size(xyz) : (length(xyz), 1)
 	((n_cols != 3 && n_cols != 1)) && error("Input array can only have 1 or 3 columns OR be a 2D array")
-	if (!isempty(hdr_vec))
-		(length(hdr_vec) < 7) && error("HDR argument does not have at least 7 elements")
-	end
+	return n_rows, n_cols
 end
 
 const xyz2laz  = dat2las			# Alias

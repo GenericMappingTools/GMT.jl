@@ -1,17 +1,28 @@
+Base.@kwdef struct lasout_types
+	stored::String = ""
+	grd::GMTgrid = GMTgrid()
+	ds::GMTdataset = GMTdataset()
+	dsv::Vector{GMTdataset} = [GMTdataset()]
+	function lasout_types(stored, grd, ds, dsv)
+		stored = !isempty(grd) ? "grd" : (!isempty(ds) ? "ds" : (!isempty(dsv) ? "dsv" : ""))
+		new(stored, grd, ds, dsv)
+	end
+end
+
 """
-    argsout = las2dat(FileName::AbstractString, whatout::String="xyz"; outType::DataType=Float64, class=0, startstop="1:end")
+    argsout = las2dat(FileName::AbstractString; out::String="xyz", type::DataType=Float64, class=0, startstop="1:end")
 
 Read data from a LIDAR laz (laszip compressed) or las format file.
 
 - `FileName`: Name of the input LIDAR file.
 
-- `whatout`: Select what data to output. The default is "xyz" meaning that only these three are sent out.
+### Keyword Arguments
+
+- `out`: Select what data to output. The default is "xyz" meaning that only these three are sent out.
    Examples include: "xyz", "xy", "yx", "z", "xyzi", "xyzt", "xyzit", "xyzti", "xyzic" "xyzc", "RGB", "RGBI"
    where 'i' stands for intensity (UInt16), 'c' for classification (Int8) and 't' for GPS time (Float64)
 
-### Keyword Arguments
-
-- `outType`: The float components (xyz) may be required in Float32. The default is Float64.
+- `type`: The float components (xyz) may be required in Float32. The default is Float64.
 
 - `startstop="start:stop"`: A string that restricts the output to the points from start to stop.
 
@@ -29,9 +40,9 @@ To read the x,y,z,t data from file "lixo.laz" do:
 	xyz, t = las2dat("lixo.laz", "xyzt")
 ```
 """
-function las2dat(fname::AbstractString, whatout::String="xyz"; outType::DataType=Float64, class=0, startstop="1:end")
+function las2dat(fname::AbstractString; out::String="xyz", type::DataType=Float64, class=0, startstop="1:end")
 
-	(isempty(whatout)) && error("Empty output vars string is BIG ERROR. Bye, Bye.")
+	(isempty(out)) && error("Empty output vars string is BIG ERROR. Bye, Bye.")
 
 	laszip_reader = convert(Ptr{Ptr{Cvoid}},pointer([pointer([0])]))
 	(laszip_create(laszip_reader) != 0) && msgerror(laszip_reader, "creating laszip reader")
@@ -59,34 +70,33 @@ function las2dat(fname::AbstractString, whatout::String="xyz"; outType::DataType
 	header = unsafe_load(unsafe_load(header))
 
 	# Input parsing -------------------------------------------------------------------------------------
-	argout, firstPT, lastPT = parse_inputs_las2dat(header, point, laszip_reader, whatout, class, startstop)
-	totalNP = lastPT - firstPT + 1
+	argout, firstPT, lastPT = parse_inputs_las2dat(header, point, laszip_reader, out, class, startstop)
+	totalNP::Int = lastPT - firstPT + 1
 	# ---------------------------------------------------------------------------------------------------
 
 	# ------------- Check if we are reading a GRID pretendind to be a regular las file -------------
 	#if (header.system_identifier.d1 == UInt8('G') && header.system_identifier.d2 == UInt8('R') &&
 	#    header.system_identifier.d3 == UInt8('D'))
 	fType = Float64
-	(outType == Float32) && (fType = Float32)
+	(!occursin('t', argout) && type == Float32) && (fType = Float32)	# A time selection implies Float64
 
 	if (header.global_encoding == 32768)
 		argout = "g"
-		xyz = zeros(fType, lastPT * 3, 1)
+		just_z = Vector{Float32}(undef, lastPT * 3)		# Grids are always in Float32
 	else
 		# ------ Pre-allocations ---------------------------------------------------------------------
-		if (occursin("xyz", argout) || occursin("yxz", argout))
-			xyz = zeros(fType, totalNP, 3)
-		elseif (occursin("xy", argout) || occursin("yx", argout))
-			xyz = zeros(fType, totalNP, 2)
-		elseif (occursin("x", argout) || occursin("y", argout) || occursin("z", argout))
-			xyz = zeros(fType, totalNP, 1)
+		if (startswith(argout, "xyz") || startswith(argout, "xyt"))  n_col = 3
+		elseif (startswith(argout, "xyzt"))  n_col = 4
+		elseif (startswith(argout, "xy"))    n_col = 2
+		elseif (startswith(argout, "z"))     n_col = 1
 		end
-		if (occursin('i', argout) != 0)	intens = zeros(UInt16,  totalNP, 1)	end
-		if (occursin('t', argout) != 0)	tempo  = zeros(Float64, totalNP, 1)	end
-		if (occursin('c', argout) != 0)	class  = zeros(Int8,    totalNP, 1)	end
-		if (occursin('n', argout) != 0)	n_ret  = zeros(Int8,    totalNP, 1)	end
-		if (occursin('R', argout) != 0 || occursin('G', argout) != 0 || occursin('B', argout) != 0)
-			RGB = (occursin('I', argout) != 0) ? zeros(UInt16, totalNP, 4) : zeros(UInt16, totalNP, 3)
+		xyz = zeros(fType, totalNP, n_col)
+		(occursin('i', argout))	&& (intens = zeros(UInt16,  totalNP, 1))
+		#(occursin('t', argout))	&& (tempo  = zeros(Float64, totalNP, 1))
+		(occursin('c', argout))	&& (class  = zeros(Int8,    totalNP, 1))
+		(occursin('n', argout))	&& (n_ret  = zeros(Int8,    totalNP, 1))
+		if (occursin('R', argout) || occursin('G', argout) || occursin('B', argout))
+			RGB = occursin('I', argout) ? zeros(UInt16, totalNP, 4) : zeros(UInt16, totalNP, 3)
 		end
 	end
 	#-------------------------------------------------------------------------------------------------
@@ -95,61 +105,49 @@ function las2dat(fname::AbstractString, whatout::String="xyz"; outType::DataType
 	# if firstPT != 1 MUST SEEK FORWARD TILL IT
 	#------------------------------------------
 
-	coords = 1:3					# Default for whatout == "xyz" --- BUT NOT YET USED
+	coords = 1:3					# Default for out == "xyz"
 	if (argout == "xyz")
-		for k = 1:totalNP
+		@inbounds for k = 1:totalNP
 			laszip_read_point(laszip_reader)
 			pt = unsafe_load(unsafe_load(point))
-			xyz[k,1]  = pt.X;	xyz[k,2]  = pt.Y;	xyz[k,3]  = pt.Z
+			xyz[k,1] = pt.X;	xyz[k,2] = pt.Y;	xyz[k,3] = pt.Z
 		end
-	elseif (argout == "xy" || argout == "yx")
-		x = 1;	y = 2
-		if (argout == "yx") x = 2;	y = 1	end
-		for k = 1:totalNP
+	elseif (argout == "xy")
+		@inbounds for k = 1:totalNP
 			laszip_read_point(laszip_reader)
 			pt = unsafe_load(unsafe_load(point))
-			xyz[k,x] = pt.X
-			xyz[k,y] = pt.Y
+			xyz[k,1] = pt.X;	xyz[k,2] = pt.Y
 		end
 		coords = 1:2
-	elseif (argout == "x")
-		for k = 1:totalNP
-			laszip_read_point(laszip_reader)
-			pt = unsafe_load(unsafe_load(point))
-			xyz[k,1] = pt.X
-		end
-		coords = 1:1
-	elseif (argout == "y")
-		for k = 1:totalNP
-			laszip_read_point(laszip_reader)
-			pt = unsafe_load(unsafe_load(point))
-			xyz[k,1] = pt.Y
-		end
-		coords = 2:2
 	elseif (argout == "z")
-		for k = 1:totalNP
+		@inbounds for k = 1:totalNP
 			laszip_read_point(laszip_reader)
 			pt = unsafe_load(unsafe_load(point))
 			xyz[k,1] = pt.Z
 		end
 		coords = 3:3
-	elseif (argout == "xyzi")
-		for k = 1:totalNP
+	elseif (argout == "xyzt")
+		@inbounds for k = 1:totalNP
 			laszip_read_point(laszip_reader)
 			pt = unsafe_load(unsafe_load(point))
-			xyz[k,1]  = pt.X;	xyz[k,2]  = pt.Y;	xyz[k,3]  = pt.Z
+			xyz[k,1] = pt.X;	xyz[k,2] = pt.Y;	xyz[k,3] = pt.Z;	xyz[k,4] = pt.gps_time
+		end
+	elseif (argout == "xyzti")
+		@inbounds for k = 1:totalNP
+			laszip_read_point(laszip_reader)
+			pt = unsafe_load(unsafe_load(point))
+			xyz[k,1] = pt.X;	xyz[k,2] = pt.Y;	xyz[k,3] = pt.Z;	xyz[k,4] = pt.gps_time
 			intens[k] = pt.intensity
 		end
-	elseif (argout == "xyzit")
-		for k = 1:totalNP
+	elseif (argout == "xyzi")
+		@inbounds for k = 1:totalNP
 			laszip_read_point(laszip_reader)
 			pt = unsafe_load(unsafe_load(point))
 			xyz[k,1]  = pt.X;	xyz[k,2]  = pt.Y;	xyz[k,3]  = pt.Z
 			intens[k] = pt.intensity
-			tempo[k]  = pt.gps_time
 		end
 	elseif (argout == "xyzic")
-		for k = 1:totalNP
+		@inbounds for k = 1:totalNP
 			laszip_read_point(laszip_reader)
 			pt = unsafe_load(unsafe_load(point))
 			xyz[k,1]  = pt.X;	xyz[k,2]  = pt.Y;	xyz[k,3]  = pt.Z
@@ -161,7 +159,7 @@ function las2dat(fname::AbstractString, whatout::String="xyz"; outType::DataType
 			end
 		end
 	elseif (argout == "xyzc")
-		for k = 1:totalNP
+		@inbounds for k = 1:totalNP
 			laszip_read_point(laszip_reader)
 			pt = unsafe_load(unsafe_load(point))
 			xyz[k,1]  = pt.X;	xyz[k,2]  = pt.Y;	xyz[k,3]  = pt.Z
@@ -171,22 +169,15 @@ function las2dat(fname::AbstractString, whatout::String="xyz"; outType::DataType
 				class[k]  = pt.classification
 			end
 		end
-	elseif (argout == "xyzt")
-		for k = 1:totalNP
-			laszip_read_point(laszip_reader)
-			pt = unsafe_load(unsafe_load(point))
-			xyz[k,1]  = pt.X;	xyz[k,2]  = pt.Y;	xyz[k,3]  = pt.Z
-			tempo[k] = pt.gps_time
-		end
 	elseif (argout == "RGB")
-		for k = firstPT:lastPT
+		@inbounds for k = firstPT:lastPT
 			laszip_read_point(laszip_reader)
 			pt = unsafe_load(unsafe_load(point))
 			RGB[k,1] = pt.rgb.d1;	RGB[k,2] = pt.rgb.d2;	RGB[k,3] = pt.rgb.d3
 		end
 		coords = 1:0
 	elseif (argout == "RGBI")
-		for k = 1:totalNP
+		@inbounds for k = 1:totalNP
 			laszip_read_point(laszip_reader)
 			pt = unsafe_load(unsafe_load(point))
 			RGB[k,1] = pt.rgb.d1;	RGB[k,2] = pt.rgb.d2;	RGB[k,3] = pt.rgb.d3
@@ -196,10 +187,11 @@ function las2dat(fname::AbstractString, whatout::String="xyz"; outType::DataType
 	elseif (argout != "g")
 		# OK, here we have the generic but less efficient code (lots of IFs inside loops)
 		# AND THIS IS STILL NOT TAKEN INTO ACOUNT ON OUTPUT. SO BASICALLY IS A NON-WORKING CODE
+		#=
 		for k = 1:totalNP
 			laszip_read_point(laszip_reader)
 			pt = unsafe_load(unsafe_load(point))
-			for n = 1:length(argout)
+			for n = 1:GMT.numel(argout)
 				if (argout[n] == 'x')
 					xyz[k,1] = pt.X
 				elseif (argout[n] == 'y')
@@ -226,10 +218,11 @@ function las2dat(fname::AbstractString, whatout::String="xyz"; outType::DataType
 				end
 			end
 		end
+		=#
 	end
 
 	if (argout == "g")
-		xyz,h = rebuild_grid(header, laszip_reader, point, xyz)
+		G::GMTgrid = rebuild_grid(header, laszip_reader, point, just_z)
 	else
 		xyz = apply_scale_offset(header, xyz, coords, totalNP)
 	end
@@ -240,18 +233,18 @@ function las2dat(fname::AbstractString, whatout::String="xyz"; outType::DataType
 	# Destroy the reader
 	(laszip_destroy(laszip_reader) != 0) && msgerror(laszip_reader, "destroying laszip reader")
 
-	if (argout == "xyz" || argout == "xy" || argout == "yx" || argout == "x" || argout == "y" || argout == "z")
-		return xyz
+	if (argout == "xyz" || argout == "xy" || argout == "z" || argout == "xyzt")
+		lasout_types(ds=mat2ds(xyz))
 	elseif (argout == "xyzi")
-		return xyz, intens
-	elseif (argout == "xyzt")
-		return xyz, tempo
-	elseif (argout == "xyzit")
-		return xyz, intens, tempo
+		lasout_types(dsv = [mat2ds(xyz), mat2ds(intens)])	
+	elseif (argout == "xyzti")
+		lasout_types(dsv = [mat2ds(xyz), mat2ds(intens)])	
 	elseif (argout == "RGB" || argout == "RGBI")
-		return RGB
+		lasout_types(ds=mat2ds(RGB))
 	elseif (argout == "g")			# The disgised GRID case
-		return xyz,h
+		lasout_types(grd=G)
+	else
+		error("Unknown argout type")
 	end
 end
 
@@ -259,7 +252,7 @@ end
 function rebuild_grid(header, laszip_reader, point, z)
 # Recreate a 2D array plus a 1x9 header vector as used by GMT
 	n = 1
-	for k = 1:header.number_of_point_records
+	@inbounds for k = 1:header.number_of_point_records
 		laszip_read_point(laszip_reader)
 		pt = unsafe_load(unsafe_load(point))
 		z[n]    = pt.X
@@ -269,11 +262,11 @@ function rebuild_grid(header, laszip_reader, point, z)
 	end
 
 	if (header.z_scale_factor != 1 && header.z_offset != 0)
-		for k = 1:3*header.number_of_point_records
+		@inbounds Threads.@threads for k = 1:3*header.number_of_point_records
 			z[k] = z[k] * header.z_scale_factor + header.z_offset
 		end
 	elseif (header.z_scale_factor != 1 && header.z_offset == 0)
-		for k = 1:3*header.number_of_point_records
+		@inbounds Threads.@threads for k = 1:3*header.number_of_point_records
 			z[k] *= header.z_scale_factor
 		end
 	end
@@ -297,13 +290,14 @@ function rebuild_grid(header, laszip_reader, point, z)
 	end
 
 	z = reshape(z, n_rows, n_cols)
-	h = [header.min_x header.max_x header.min_y header.max_y header.min_z header.max_z header.project_ID_GUID_data_1 x_inc y_inc]
-	return z, h
+	mima = GMT.extrema_nan(z)
+	h = [header.min_x header.max_x header.min_y header.max_y mima[1] mima[2] header.project_ID_GUID_data_1 x_inc y_inc]
+	return mat2grid(z, hdr=h)
 end
 
 # --------------------------------------------------------------------------------
 function apply_scale_offset(header, xyz, coords, totalNP)
-# COORDS is a range of xyz (1:1 for "x", 1:2 for "xy", 3:3 for "z")
+# COORDS is a range of xyz (1:2 for "xy", 3:3 for "z")
 
 	scale  = [header.x_scale_factor header.y_scale_factor header.z_scale_factor]
 	offset = [header.x_offset header.y_offset header.z_offset]
@@ -314,15 +308,12 @@ function apply_scale_offset(header, xyz, coords, totalNP)
 		for k = 1:totalNP			# Loop over number of points
 			for j = 1:ncoord		# Loop over number of output coords
 				@inbounds xyz[k,j] = xyz[k,j] * scale[coords[j]] + offset[coords[j]]
-				#xyz[k,1] = xyz[k,1] * header.x_scale_factor + header.x_offset
-				#xyz[k,2] = xyz[k,2] * header.y_scale_factor + header.y_offset
-				#xyz[k,3] = xyz[k,3] * header.z_scale_factor + header.z_offset
 			end
 		end
 	elseif (header.x_scale_factor != 1 && header.x_offset == 0 && header.y_offset == 0 && header.z_offset == 0)
 		# Scale only (assume that if scale_x != 1 so are the other scales)
 		for k = 1:totalNP
-			for j = 1:ncoord		# Loop over number of output coords
+			for j = 1:ncoord
 				@inbounds xyz[k,j] *= scale[coords[j]]
 			end
 		end
@@ -330,7 +321,7 @@ function apply_scale_offset(header, xyz, coords, totalNP)
 			header.x_offset != 0 || header.y_offset != 0 || header.z_offset != 0)
 		# Probably an unforeseen case above. Just do Scale and offset
 		for k = 1:totalNP
-			for j = 1:ncoord		# Loop over number of output coords
+			for j = 1:ncoord
 				@inbounds xyz[k,j] = xyz[k,j] * scale[coords[j]] + offset[coords[j]]
 			end
 		end
@@ -345,12 +336,12 @@ function parse_inputs_las2dat(header, point, reader, outpar, class, startstop)
 	# Defaults
 	out = zeros(Int8,11)
 	n_inClass = 0
-	firstPT = 1
-	lastPT  = header.number_of_point_records
+	firstPT::Int = 1
+	lastPT::Int  = header.number_of_point_records
 
 	i = 1
-	for k = 1:length(outpar)
-		if (outpar[k] == 'x')     out[i] = 'x';		i += 1
+	for k in eachindex(outpar)
+		if     (outpar[k] == 'x') out[i] = 'x';		i += 1
 		elseif (outpar[k] == 'y') out[i] = 'y';		i += 1
 		elseif (outpar[k] == 'z') out[i] = 'z';		i += 1
 		elseif (outpar[k] == 'i') out[i] = 'i';		i += 1
@@ -395,12 +386,12 @@ function parse_inputs_las2dat(header, point, reader, outpar, class, startstop)
 
 	# ------------------------------------ PARSE THE KEYWORD OPTIONS -----------------------------------------
 	if (class != 0)
-		# And now check how many of this class we have
+		# And now check how many of these class we have
 		n_inClass = 0		# Again so no funny plays with more than one -C
 		for n = 1:header.number_of_point_records
 			laszip_read_point(reader)
 			pt = unsafe_load(unsafe_load(point))
-			if (class == pt.classification) n_inClass = n_inClass + 1		end
+			(class == pt.classification) && (n_inClass += 1)
 		end
 		# Here we must rewind the file, no?
 		laszip_seek_point(reader, 0)	# Is it this?
@@ -427,5 +418,8 @@ function parse_inputs_las2dat(header, point, reader, outpar, class, startstop)
 	argout = unsafe_string(pointer(out))
 	return argout, firstPT, lastPT
 end
+
+# --------------------------------------------------------------------------------------------
+las2dat(s::lasout_types) = getproperty(s, Symbol(s.stored))
 
 const laz2xyz  = las2dat			# Alias

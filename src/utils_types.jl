@@ -270,7 +270,7 @@ function mat2ds(mat::Array{T,N}, txt::Union{String,Vector{String}}=String[]; hdr
 	# ----------------------------------------
 
 	if ((ls = find_in_dict(d, [:ls :linestyle])[1]) !== nothing && ls != "")
-		(_hdr[1] == " -W") && (for k = 1:n_ds  _hdr[k] *= ","  end)	# If here we have no color ser mst make it -W,,ls
+		(_hdr[1] == " -W") && (for k = 1:n_ds  _hdr[k] *= ","  end)	# If here we have no color set must make it -W,,ls
 		if (isa(ls, AbstractString) || isa(ls, Symbol))
 			for k = 1:n_ds  _hdr[k] = string(_hdr[k], ',', ls)  end
 		else
