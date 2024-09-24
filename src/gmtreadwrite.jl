@@ -169,7 +169,7 @@ function gmtread(_fname::String; kwargs...)
 		elseif (opt_T == "obj")						# Means we got a .obj file. Read it and leave
 			return read_obj(fname)
 		elseif (opt_T == "las")						# Means we got a .laz or .las file. Read it and leave
-			o_las = las2dat(fname; kwargs...)
+			o_las = lazread(fname; kwargs...)
 			return getproperty(o_las, Symbol(o_las.stored))
 		end
 	else
@@ -425,7 +425,7 @@ function guess_T_from_ext(fname::String; write::Bool=false, text_only::Bool=fals
 	fn, ext = splitext(fname)
 	ext = lowercase(ext[2:end])
 	(ext == "obj") && return "obj"	# To be read by read_obj() internal function.
-	(ext == "laz" || ext == "las") && return "las"	# To be read by las2dat()
+	(ext == "laz" || ext == "las") && return "las"	# To be read by lazwrite()
 	if (ext == "zip")				# Accept ogr zipped files, e.g., *.shp.zip
 		((out = guess_T_from_ext(fn)) == " -To") && return " -Toz"
 	end
@@ -521,7 +521,7 @@ function gmtwrite(fname::AbstractString, data; kwargs...)
 	(fname == "") && error("Output file name cannot be empty.")
 
 	if (isa(data, GMTgrid))
-		(endswith(fname, ".laz") || endswith(fname, ".LAZ")) && return dat2las(fname, data; kwargs...)		# Lasz
+		(endswith(fname, ".laz") || endswith(fname, ".LAZ")) && return lazwrite(fname, data; kwargs...)		# Lasz
 
 		# GMT doesn't write correct CF nc grids that are referenced but non-geographic. So, use GDAL in those cases
 		fmt = parse_grd_format(d)				# See if we have format requests
@@ -544,7 +544,7 @@ function gmtwrite(fname::AbstractString, data; kwargs...)
 		transpcmap!(data, true)
 	elseif (isa(data, GDtype))
 		isa(data, Vector) && (endswith(fname, ".stl") || endswith(fname, ".STL")) && return write_stl(fname, data; kwargs...)	# STL
-		(endswith(fname, ".laz") || endswith(fname, ".LAZ")) && return dat2las(fname, data; kwargs...)		# Lasz
+		(endswith(fname, ".laz") || endswith(fname, ".LAZ")) && return lazwrite(fname, data; kwargs...)		# Lasz
 		opt_T = " -Td"
 		cmd, = parse_bo(d, cmd)					# Write to binary file
 	elseif (isa(data, GMTcpt))

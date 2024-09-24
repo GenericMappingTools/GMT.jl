@@ -1,5 +1,5 @@
 """
-    dat2las(FileName::AbstractString, xyz; grd_hdr=[], scaleX=nothing, scaleY=nothing, scaleZ=nothing, offX=nothing, offY=nothing, offZ=nothing)
+    lazwrite(FileName::AbstractString, xyz; grd_hdr=[], scaleX=nothing, scaleY=nothing, scaleZ=nothing, offX=nothing, offY=nothing, offZ=nothing)
 
 Write XYZ data to a LIDAR laz (laszip compressed) or las format file.
 
@@ -12,18 +12,18 @@ Write XYZ data to a LIDAR laz (laszip compressed) or las format file.
 To write the x,y,z data to file "lixo.laz" do:
 
 ```julia
-	dat2las("lixo.laz", xyz)
+	lazwrite("lixo.laz", xyz)
 ```
 """
-function dat2las(fname::AbstractString, G::GMTgrid; scaleX=nothing, scaleY=nothing, scaleZ=nothing, offX=nothing, offY=nothing, offZ=nothing)
+function lazwrite(fname::AbstractString, G::GMTgrid; scaleX=nothing, scaleY=nothing, scaleZ=nothing, offX=nothing, offY=nothing, offZ=nothing)
 	if     (startswith(G.layout, "BC"))  z = vec(G.z[:])
 	elseif (startswith(G.layout, "TR"))  z = grd2xyz(G, Z="TLf")
 	end
 	hdr = [G.range[1:6]..., 0.0, G.inc[1:2]...]
-	dat2las(fname, z, grd_hdr=hdr, scaleX=scaleX, scaleY=scaleY, scaleZ=scaleZ, offX=offX, offY=offY, offZ=offZ)
+	lazwrite(fname, z, grd_hdr=hdr, scaleX=scaleX, scaleY=scaleY, scaleZ=scaleZ, offX=offX, offY=offY, offZ=offZ)
 end
 
-function dat2las(fname::AbstractString, xyz; grd_hdr=Float64[], scaleX=nothing, scaleY=nothing, scaleZ=nothing, offX=nothing, offY=nothing, offZ=nothing)
+function lazwrite(fname::AbstractString, xyz; grd_hdr=Float64[], scaleX=nothing, scaleY=nothing, scaleZ=nothing, offX=nothing, offY=nothing, offZ=nothing)
 
 	n_rows, n_cols = parse_inputs_dat2las(xyz, grd_hdr)
 
@@ -194,4 +194,4 @@ function parse_inputs_dat2las(xyz, grd_hdr)
 	return n_rows, n_cols
 end
 
-const xyz2laz  = dat2las			# Alias
+const laswrite = lazwrite
