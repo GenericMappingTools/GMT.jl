@@ -182,7 +182,7 @@ export
 
 	Ginnerjoin, Gouterjoin, Gleftjoin, Grightjoin, Gcrossjoin, Gsemijoin, Gantijoin, spatialjoin,
 
-	xyz2laz, laz2xyz, las2dat, dat2las,
+	lazread, lazwrite, lasread, laswrite,
 
 	df2ds, ODE2ds,
 	sprintf,

@@ -10,7 +10,7 @@ Base.@kwdef struct lasout_types
 end
 
 """
-    argsout = las2dat(FileName::AbstractString; out::String="xyz", type::DataType=Float64, class=0, startstop="1:end")
+    argsout = lazread(FileName::AbstractString; out::String="xyz", type::DataType=Float64, class=0, startstop="1:end")
 
 Read data from a LIDAR laz (laszip compressed) or las format file.
 
@@ -37,10 +37,10 @@ Read data from a LIDAR laz (laszip compressed) or las format file.
 
 To read the x,y,z,t data from file "lixo.laz" do:
 ```julia
-	xyz, t = las2dat("lixo.laz", "xyzt")
+	xyz, t = lazread("lixo.laz", "xyzt")
 ```
 """
-function las2dat(fname::AbstractString; out::String="xyz", type::DataType=Float64, class=0, startstop="1:end")
+function lazread(fname::AbstractString; out::String="xyz", type::DataType=Float64, class=0, startstop="1:end")
 
 	(isempty(out)) && error("Empty output vars string is BIG ERROR. Bye, Bye.")
 
@@ -420,6 +420,6 @@ function parse_inputs_las2dat(header, point, reader, outpar, class, startstop)
 end
 
 # --------------------------------------------------------------------------------------------
-las2dat(s::lasout_types) = getproperty(s, Symbol(s.stored))
+lazread(s::lasout_types) = getproperty(s, Symbol(s.stored))
 
-const laz2xyz  = las2dat			# Alias
+const lasread = lazread

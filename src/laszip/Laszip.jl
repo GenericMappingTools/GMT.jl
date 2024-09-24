@@ -3,12 +3,12 @@ module Laszip
 using GMT, Printf, Dates, LASzip_jll
 
 export
-	xyz2laz, laz2xyz, las2dat, dat2las
+	lazread, lazwrite, lasread, laswrite
 
 include("laszip_h.jl")
 include("laszip_dll.jl")
-include("las2dat.jl")
-include("dat2las.jl")
+include("lazread.jl")
+include("lazwrite.jl")
 
 """
 	Prints an laszip error message and error out
