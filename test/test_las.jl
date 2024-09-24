@@ -4,8 +4,9 @@
 	dat2las("lixo.laz", out);
 	
 	in = las2dat("lixo.laz");
+	t = getproperty(in, Symbol(in.stored))
 	
-	@test in == out
+	@test t == out
 	
 	# Remove garbage
 	rm("lixo.laz")
