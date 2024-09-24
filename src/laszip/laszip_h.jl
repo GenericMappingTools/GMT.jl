@@ -36,18 +36,18 @@ Base.@kwdef mutable struct laszip_header
 	point_data_record_length::UInt16 = UInt16(0)
 	number_of_point_records::UInt32 = UInt32(0)
 	number_of_points_by_return::NTuple{5,UInt32} = ntuple(i -> UInt32(0), 5)
-	x_scale_factor::Float64 = Float64(1.0)
-	y_scale_factor::Float64 = Float64(1.0)
-	z_scale_factor::Float64 = Float64(1.0)
-	x_offset::Float64 = Float64(0.0)
-	y_offset::Float64 = Float64(0.0)
-	z_offset::Float64 = Float64(0.0)
-	max_x::Float64 = Float64(0.0)
-	min_x::Float64 = Float64(0.0)
-	max_y::Float64 = Float64(0.0)
-	min_y::Float64 = Float64(0.0)
-	max_z::Float64 = Float64(0.0)
-	min_z::Float64 = Float64(0.0)
+	x_scale_factor::Float64 = 1.0
+	y_scale_factor::Float64 = 1.0
+	z_scale_factor::Float64 = 1.0
+	x_offset::Float64 = 0.0
+	y_offset::Float64 = 0.0
+	z_offset::Float64 = 0.0
+	max_x::Float64 = 0.0
+	min_x::Float64 = 0.0
+	max_y::Float64 = 0.0
+	min_y::Float64 = 0.0
+	max_z::Float64 = 0.0
+	min_z::Float64 = 0.0
 # LAS 1.3 and higher only
 	start_of_waveform_data_packet_record::UInt64  = UInt64(0)
 

@@ -1,6 +1,6 @@
 module Laszip
 
-using Printf, Dates, LASzip_jll
+using GMT, Printf, Dates, LASzip_jll
 
 export
 	xyz2laz, laz2xyz, las2dat, dat2las
