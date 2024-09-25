@@ -3,7 +3,7 @@ module Laszip
 using GMT, Printf, Dates, LASzip_jll
 
 export
-	lazread, lazwrite, lasread, laswrite
+	lazinfo, lazread, lazwrite, lasread, laswrite
 
 include("laszip_h.jl")
 include("laszip_dll.jl")
