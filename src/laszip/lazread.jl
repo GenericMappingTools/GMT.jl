@@ -44,39 +44,19 @@ function lazread(fname::AbstractString; out::String="xyz", type::DataType=Float6
 
 	(isempty(out)) && error("Empty output vars string is BIG ERROR. Bye, Bye.")
 
-	laszip_reader = convert(Ptr{Ptr{Cvoid}},pointer([pointer([0])]))
-	(laszip_create(laszip_reader) != 0) && msgerror(laszip_reader, "creating laszip reader")
-
-	is_compressed = pointer([Cint(0)]);
-	if ((laszip_open_reader(unsafe_load(laszip_reader), fname, is_compressed)) != 0)
-		msgerror(laszip_reader, "opening laszip reader for file $fname")
-	end
-
-	#is_compressed = unsafe_load(is_compressed)		# If equal 1 file is compressed
-
-	header = pointer([pointer([laszip_header()])])
-	laszip_reader = unsafe_load(laszip_reader)
-
-	if (laszip_get_header_pointer(laszip_reader, header) != 0)		# Get header pointer
-		msgerror(laszip_reader, "getting header pointer from laszip reader")
-	end
+	header, reader, = get_header_and_reader(fname)
 
 	# Get a pointer to the points that will be read
-	point = pointer([pointer([laszip_point()])])
-	if (laszip_get_point_pointer(laszip_reader, point) != 0)
-		msgerror(laszip_reader, "getting point pointer from laszip reader")
+	point = Ref{Ptr{laszip_point}}()
+	if (laszip_get_point_pointer(reader[], point) != 0)
+		msgerror(reader[], "getting point pointer from laszip reader")
 	end
 
-	header = unsafe_load(unsafe_load(header))
-
 	# Input parsing -------------------------------------------------------------------------------------
-	argout, firstPT, lastPT = parse_inputs_las2dat(header, point, laszip_reader, out, class, startstop)
+	argout, firstPT, lastPT = parse_inputs_las2dat(header, point, reader, out, class, startstop)
 	totalNP::Int = lastPT - firstPT + 1
 	# ---------------------------------------------------------------------------------------------------
 
-	# ------------- Check if we are reading a GRID pretendind to be a regular las file -------------
-	#if (header.system_identifier.d1 == UInt8('G') && header.system_identifier.d2 == UInt8('R') &&
-	#    header.system_identifier.d3 == UInt8('D'))
 	fType = Float64
 	(!occursin('t', argout) && type == Float32) && (fType = Float32)	# A time selection implies Float64
 
@@ -108,48 +88,48 @@ function lazread(fname::AbstractString; out::String="xyz", type::DataType=Float6
 	coords = 1:3					# Default for out == "xyz"
 	if (argout == "xyz")
 		@inbounds for k = 1:totalNP
-			laszip_read_point(laszip_reader)
-			pt = unsafe_load(unsafe_load(point))
+			laszip_read_point(reader[])
+			pt = unsafe_load(point[])
 			xyz[k,1] = pt.X;	xyz[k,2] = pt.Y;	xyz[k,3] = pt.Z
 		end
 	elseif (argout == "xy")
 		@inbounds for k = 1:totalNP
-			laszip_read_point(laszip_reader)
-			pt = unsafe_load(unsafe_load(point))
+			laszip_read_point(reader[])
+			pt = unsafe_load(point[])
 			xyz[k,1] = pt.X;	xyz[k,2] = pt.Y
 		end
 		coords = 1:2
 	elseif (argout == "z")
 		@inbounds for k = 1:totalNP
-			laszip_read_point(laszip_reader)
-			pt = unsafe_load(unsafe_load(point))
+			laszip_read_point(reader[])
+			pt = unsafe_load(point[])
 			xyz[k,1] = pt.Z
 		end
 		coords = 3:3
 	elseif (argout == "xyzt")
 		@inbounds for k = 1:totalNP
-			laszip_read_point(laszip_reader)
-			pt = unsafe_load(unsafe_load(point))
+			laszip_read_point(reader[])
+			pt = unsafe_load(point[])
 			xyz[k,1] = pt.X;	xyz[k,2] = pt.Y;	xyz[k,3] = pt.Z;	xyz[k,4] = pt.gps_time
 		end
 	elseif (argout == "xyzti")
 		@inbounds for k = 1:totalNP
-			laszip_read_point(laszip_reader)
-			pt = unsafe_load(unsafe_load(point))
+			laszip_read_point(reader[])
+			pt = unsafe_load(point[])
 			xyz[k,1] = pt.X;	xyz[k,2] = pt.Y;	xyz[k,3] = pt.Z;	xyz[k,4] = pt.gps_time
 			intens[k] = pt.intensity
 		end
 	elseif (argout == "xyzi")
 		@inbounds for k = 1:totalNP
-			laszip_read_point(laszip_reader)
-			pt = unsafe_load(unsafe_load(point))
+			laszip_read_point(reader[])
+			pt = unsafe_load(point[])
 			xyz[k,1]  = pt.X;	xyz[k,2]  = pt.Y;	xyz[k,3]  = pt.Z
 			intens[k] = pt.intensity
 		end
 	elseif (argout == "xyzic")
 		@inbounds for k = 1:totalNP
-			laszip_read_point(laszip_reader)
-			pt = unsafe_load(unsafe_load(point))
+			laszip_read_point(reader[])
+			pt = unsafe_load(point[])
 			xyz[k,1]  = pt.X;	xyz[k,2]  = pt.Y;	xyz[k,3]  = pt.Z
 			intens[k] = pt.intensity
 			if (header->point_data_format > 5)
@@ -160,8 +140,8 @@ function lazread(fname::AbstractString; out::String="xyz", type::DataType=Float6
 		end
 	elseif (argout == "xyzc")
 		@inbounds for k = 1:totalNP
-			laszip_read_point(laszip_reader)
-			pt = unsafe_load(unsafe_load(point))
+			laszip_read_point(reader[])
+			pt = unsafe_load(point[])
 			xyz[k,1]  = pt.X;	xyz[k,2]  = pt.Y;	xyz[k,3]  = pt.Z
 			if (header->point_data_format > 5)
 				class[k] = (pt.extended_classification != 0) ? pt.extended_classification : pt.classification
@@ -171,15 +151,15 @@ function lazread(fname::AbstractString; out::String="xyz", type::DataType=Float6
 		end
 	elseif (argout == "RGB")
 		@inbounds for k = firstPT:lastPT
-			laszip_read_point(laszip_reader)
-			pt = unsafe_load(unsafe_load(point))
+			laszip_read_point(reader[])
+			pt = unsafe_load(point[])
 			RGB[k,1] = pt.rgb.d1;	RGB[k,2] = pt.rgb.d2;	RGB[k,3] = pt.rgb.d3
 		end
 		coords = 1:0
 	elseif (argout == "RGBI")
 		@inbounds for k = 1:totalNP
-			laszip_read_point(laszip_reader)
-			pt = unsafe_load(unsafe_load(point))
+			laszip_read_point(reader[])
+			pt = unsafe_load(point[])
 			RGB[k,1] = pt.rgb.d1;	RGB[k,2] = pt.rgb.d2;	RGB[k,3] = pt.rgb.d3
 			RGB[k,4] = pt.rgb.d4
 		end
@@ -189,8 +169,8 @@ function lazread(fname::AbstractString; out::String="xyz", type::DataType=Float6
 		# AND THIS IS STILL NOT TAKEN INTO ACOUNT ON OUTPUT. SO BASICALLY IS A NON-WORKING CODE
 		#=
 		for k = 1:totalNP
-			laszip_read_point(laszip_reader)
-			pt = unsafe_load(unsafe_load(point))
+			laszip_read_point(reader[])
+			pt = unsafe_load(point[])
 			for n = 1:GMT.numel(argout)
 				if (argout[n] == 'x')
 					xyz[k,1] = pt.X
@@ -222,16 +202,16 @@ function lazread(fname::AbstractString; out::String="xyz", type::DataType=Float6
 	end
 
 	if (argout == "g")
-		G::GMTgrid = rebuild_grid(header, laszip_reader, point, just_z)
+		G::GMTgrid = rebuild_grid(header, reader, point, just_z)
 	else
 		xyz = apply_scale_offset(header, xyz, coords, totalNP)
 	end
 
 	# Close the reader
-	(laszip_close_reader(laszip_reader) != 0) && msgerror(laszip_reader, "closing laszip reader")
+	(laszip_close_reader(reader[]) != 0) && msgerror(reader[], "closing laszip reader")
 
 	# Destroy the reader
-	(laszip_destroy(laszip_reader) != 0) && msgerror(laszip_reader, "destroying laszip reader")
+	(laszip_destroy(reader[]) != 0) && msgerror(reader[], "destroying laszip reader")
 
 	if (argout == "xyz" || argout == "xy" || argout == "z" || argout == "xyzt")
 		lasout_types(ds=mat2ds(xyz))
@@ -249,12 +229,32 @@ function lazread(fname::AbstractString; out::String="xyz", type::DataType=Float6
 end
 
 # --------------------------------------------------------------------------------
-function rebuild_grid(header, laszip_reader, point, z)
+function get_header_and_reader(fname::AbstractString)
+	# Used by lazread and lazinfo
+    reader = Ref{Ptr{Cvoid}}()
+	(laszip_create(reader) != 0) && msgerror(reader[], "creating laszip reader")
+
+	is_compressed = Ref{Cint}(0)
+	if ((laszip_open_reader(reader[], fname, is_compressed)) != 0)
+		msgerror(reader[], "opening laszip reader for file $fname")
+	end
+
+    header_ptr = Ref{Ptr{laszip_header}}()
+	laszip_get_header_pointer(reader[], header_ptr)
+	if (laszip_get_header_pointer(reader[], header_ptr) != 0)		# Get header pointer
+		msgerror(reader, "getting header pointer from laszip reader")
+	end
+	header = unsafe_load(header_ptr[])
+	return header, reader, is_compressed[] == 1
+end
+
+# --------------------------------------------------------------------------------
+function rebuild_grid(header, reader, point, z)
 # Recreate a 2D array plus a 1x9 header vector as used by GMT
 	n = 1
 	@inbounds for k = 1:header.number_of_point_records
-		laszip_read_point(laszip_reader)
-		pt = unsafe_load(unsafe_load(point))
+		laszip_read_point(reader[])
+		pt = unsafe_load(point[])
 		z[n]    = pt.X
 		z[n+1]  = pt.Y
 		z[n+2]  = pt.Z
@@ -271,28 +271,40 @@ function rebuild_grid(header, laszip_reader, point, z)
 		end
 	end
 
-	# Remember that this case used hijacked members of the header structure
-	one = (header.project_ID_GUID_data_1 == 0 ? 1 : 0)
-	#n_rows = round(Int, (header.max_x - header.min_x) / header.y_scale_factor) + one
-	#n_cols = round(Int, (header.max_y - header.min_y) / header.z_scale_factor) + one
-	n_rows = Int(header.project_ID_GUID_data_2)
-	n_cols = Int(header.project_ID_GUID_data_3)
-	x_inc  = (header.max_x - header.min_x) / (n_cols - one)
-	y_inc  = (header.max_y - header.min_y) / (n_rows - one)
+	h, n_rows, n_cols, layout = helper_lazgrid(header)		# Get grid header info
 
 	# Now we have to find and throw away eventual extra values of the z vector
 	r = 3*header.number_of_point_records - n_rows * n_cols
 	if (r == 1)
 		pop!(z)
 	elseif (r == 2)
-		pop!(z)
-		pop!(z)
+		pop!(z);	pop!(z)
 	end
 
 	z = reshape(z, n_rows, n_cols)
 	mima = GMT.extrema_nan(z)
-	h = [header.min_x header.max_x header.min_y header.max_y mima[1] mima[2] header.project_ID_GUID_data_1 x_inc y_inc]
-	return mat2grid(z, hdr=h)
+	h[5:6] .= mima
+
+	return mat2grid(z, hdr=h, layout=layout)
+end
+
+# --------------------------------------------------------------------------------
+function helper_lazgrid(header)
+	# Common code to rebuild_grid & lazinfo
+
+	# Remember that this case used hijacked members of the header structure
+	one = (header.project_ID_GUID_data_1 == 0 ? 1 : 0)
+	n_rows = Int(header.project_ID_GUID_data_2)
+	n_cols = Int(header.project_ID_GUID_data_3)
+	x_inc  = (header.max_x - header.min_x) / (n_cols - one)
+	y_inc  = (header.max_y - header.min_y) / (n_rows - one)
+	h = [header.min_x header.max_x header.min_y header.max_y header.min_z header.max_z header.project_ID_GUID_data_1 x_inc y_inc]
+
+	# Here we have to undo the trick used in lazwrite to store the first 2 chars of the layout in the UINT16 variable
+	layout = string(header.file_source_ID)			# First convert it to a string number
+	layout = Char(parse(Int, layout[1:2])) * Char(parse(Int, layout[3:4])) * 'B'	# Then conv to char and add the 'B'
+
+	return h, n_rows, n_cols, layout
 end
 
 # --------------------------------------------------------------------------------
@@ -390,7 +402,7 @@ function parse_inputs_las2dat(header, point, reader, outpar, class, startstop)
 		n_inClass = 0		# Again so no funny plays with more than one -C
 		for n = 1:header.number_of_point_records
 			laszip_read_point(reader)
-			pt = unsafe_load(unsafe_load(point))
+			pt = unsafe_load(point[])
 			(class == pt.classification) && (n_inClass += 1)
 		end
 		# Here we must rewind the file, no?
@@ -417,6 +429,40 @@ function parse_inputs_las2dat(header, point, reader, outpar, class, startstop)
 
 	argout = unsafe_string(pointer(out))
 	return argout, firstPT, lastPT
+end
+
+# --------------------------------------------------------------------------------------------
+"""
+    lazinfo(fname::AbstractString; veronly=false)
+
+Prints information about the LAS file `fname`. If that file is a grid, report the usual grid header info.
+
+- `veronly`: If true, prints only the laszip library version number.
+"""
+function lazinfo(fname::AbstractString; veronly=false)
+	if (veronly == 1)
+		major, minor, revision, build = Ref{UInt8}(0), Ref{UInt8}(0), Ref{UInt16}(0), Ref{UInt32}(0)
+		laszip_get_version(major, minor, revision, build)
+		println("LASzip $(major[]).$(minor[]).$(revision[]) (build $(build[]))")
+		return
+	end
+
+	header, reader, is_compressed = get_header_and_reader(fname)
+	(laszip_close_reader(reader[]) != 0) && msgerror(reader[], "closing laszip reader")		# Close reader
+	(laszip_destroy(reader[]) != 0) && msgerror(reader[], "destroying laszip reader")		# Destroy reader
+
+	if (header.global_encoding == 32768)
+		h, n_rows, n_cols, layout = helper_lazgrid(header)		# Get grid header info
+		println("A GMTgrid stored in LASzip format with type Float32")
+		println((h[7] == 0) ? "Gridline " : "Pixel ", "node registration used")
+		println("x_min: ", h[1], "\tx_max :", h[2], "\tx_inc :", h[8], "\tn_columns :", n_cols)
+		println("y_min: ", h[3], "\ty_max :", h[4], "\ty_inc :", h[9], "\tn_rows :", n_rows)
+		println("z_min: ", h[5], "\tz_max :", h[6])
+		println("Mem layout:\t", layout)
+		return
+	end
+
+	return header
 end
 
 # --------------------------------------------------------------------------------------------

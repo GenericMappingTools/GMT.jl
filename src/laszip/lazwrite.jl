@@ -16,14 +16,12 @@ To write the x,y,z data to file "lixo.laz" do:
 ```
 """
 function lazwrite(fname::AbstractString, G::GMTgrid; scaleX=nothing, scaleY=nothing, scaleZ=nothing, offX=nothing, offY=nothing, offZ=nothing)
-	if     (startswith(G.layout, "BC"))  z = vec(G.z[:])
-	elseif (startswith(G.layout, "TR"))  z = grd2xyz(G, Z="TLf")
-	end
 	hdr = [G.range[1:6]..., 0.0, G.inc[1:2]...]
-	lazwrite(fname, z, grd_hdr=hdr, scaleX=scaleX, scaleY=scaleY, scaleZ=scaleZ, offX=offX, offY=offY, offZ=offZ)
+	lazwrite(fname, vec(G.z[:]), grd_hdr=hdr, scaleX=scaleX, scaleY=scaleY, scaleZ=scaleZ, offX=offX, offY=offY, offZ=offZ, layout=G.layout)
 end
 
-function lazwrite(fname::AbstractString, xyz; grd_hdr=Float64[], scaleX=nothing, scaleY=nothing, scaleZ=nothing, offX=nothing, offY=nothing, offZ=nothing)
+function lazwrite(fname::AbstractString, xyz; grd_hdr=Float64[], scaleX=nothing, scaleY=nothing, scaleZ=nothing,
+                  offX=nothing, offY=nothing, offZ=nothing, layout::String="")
 
 	n_rows, n_cols = parse_inputs_dat2las(xyz, grd_hdr)
 
@@ -32,21 +30,20 @@ function lazwrite(fname::AbstractString, xyz; grd_hdr=Float64[], scaleX=nothing,
 	end
 
 	#  Create the writer
-	laszip_writer = convert(Ptr{Ptr{Cvoid}},pointer([pointer([0])]))
-	(laszip_create(laszip_writer) != 0) && msgerror(laszip_writer, "creating laszip writer")
+	writer = Ref{Ptr{Cvoid}}()
+	(laszip_create(writer) != 0) && msgerror(writer[], "creating laszip writer")
 
-	header = pointer([pointer([laszip_header()])])    # Get an empty header directly from C
-	laszip_writer = unsafe_load(laszip_writer)
-
-	if (laszip_get_header_pointer(laszip_writer, header) != 0)      # Get the header pointer
-		msgerror(laszip_writer, "getting header pointer from laszip writer")
+	# Get the header
+    header_ptr = Ref{Ptr{laszip_header}}()
+	if (laszip_get_header_pointer(writer[], header_ptr) != 0)      # Get the header pointer
+		msgerror(writer[], "getting header pointer from laszip writer")
 	end
-
-	hdr = unsafe_load(unsafe_load(header))      # Get back the straight type
+	# NOTE. The C code always returns us a default 1.2 header, so defaults set in laszip_header are ignored.
+	hdr = unsafe_load(header_ptr[])
 
 	# Populate the header
 	hdr.version_major = 1
-	hdr.version_minor = 2
+	hdr.version_minor = 3
 	hdr.point_data_format = 1
 	hdr.number_of_point_records = n_rows
 	hdr.x_scale_factor = 1.0
@@ -62,6 +59,10 @@ function lazwrite(fname::AbstractString, xyz; grd_hdr=Float64[], scaleX=nothing,
 	hdr.min_y = min_y
 	hdr.max_z = max_z
 	hdr.min_z = min_z
+	hdr.file_creation_day = UInt16((today() - Date(year(today()))).value)
+	hdr.file_creation_year = UInt16(year(today()))
+	hdr.header_size = UInt16(235)				# Needed for minor version == 3
+	hdr.offset_to_point_data = UInt32(235)
 
 	# ----------------- Find reasonable scale_factor and offset -----------------------------------------
 	if (hdr.min_x >= -360 && hdr.max_x <= 360 && hdr.min_y >= -90 && hdr.max_y <= 90)	# Assume geogs
@@ -74,25 +75,13 @@ function lazwrite(fname::AbstractString, xyz; grd_hdr=Float64[], scaleX=nothing,
 	hdr.z_scale_factor = (scaleZ === nothing) ? 1e-2 : scaleZ
 
 	if (!isnan(hdr.min_x) && !isnan(hdr.max_x))
-		if (offX === nothing)
-			hdr.x_offset = (floor((hdr.min_x + hdr.max_x) / hdr.x_scale_factor / 20000000)) * 10000000 * hdr.x_scale_factor
-		else
-			hdr.x_offset = offX
-		end
+		hdr.x_offset = (offX === nothing) ? (floor((hdr.min_x + hdr.max_x) / hdr.x_scale_factor / 2e7)) * 1e7 * hdr.x_scale_factor : offX
 	end
 	if (!isnan(hdr.min_y) && !isnan(hdr.max_y))
-		if (offY === nothing)
-			hdr.y_offset = (floor((hdr.min_y + hdr.max_y) / hdr.y_scale_factor / 20000000)) * 10000000 * hdr.y_scale_factor
-		else
-			hdr.y_offset = offY
-		end
+		hdr.y_offset = (offY === nothing) ? (floor((hdr.min_y + hdr.max_y) / hdr.y_scale_factor / 2e7)) * 1e7 * hdr.y_scale_factor : offY
 	end
 	if (!isnan(hdr.min_z) && !isnan(hdr.max_z))
-		if (offZ === nothing)
-			hdr.z_offset = (floor((hdr.min_z + hdr.max_z) / hdr.z_scale_factor / 20000000)) * 10000000 * hdr.z_scale_factor
-		else
-			hdr.z_offset = offZ
-		end
+		hdr.z_offset = (offZ === nothing) ? (floor((hdr.min_z + hdr.max_z) / hdr.z_scale_factor / 2e7)) * 1e7 * hdr.z_scale_factor : offZ
 	end
 	# ---------------------------------------------------------------------------------------------------
 
@@ -109,77 +98,58 @@ function lazwrite(fname::AbstractString, xyz; grd_hdr=Float64[], scaleX=nothing,
 		hdr.project_ID_GUID_data_1 = UInt32(grd_hdr[7])
 		hdr.project_ID_GUID_data_2 = round(UInt16, (hdr.max_y - hdr.min_y) / grd_hdr[8]) + one 	# n_rows in 2D array
 		hdr.project_ID_GUID_data_3 = round(UInt16, (hdr.max_x - hdr.min_x) / grd_hdr[9]) + one 	# n_cols in 2D array
+		# Big shit for finding a way to store the grid's layout. Can't use pointers to strings because they are
+		# Julia objects and the laszip destructor will free them ... and crash Julia. So, I found this UInt16 header
+		# variable that apparently can be hijacked to store two chars with a little gymnastics (3rd char is alwas a 'B')
+		hdr.file_source_ID = UInt16(layout[1]) * 100 + UInt16(layout[2])
 	end
 
 	# Save back the header to its C pointer
-	unsafe_store!(unsafe_load(header), hdr)
+	unsafe_store!(header_ptr[], hdr)
 
-	if (laszip_open_writer(laszip_writer, fname, 1) != 0)
-		msgerror(laszip_writer, @sprintf("opening laszip writer for %s", fname))
-	end
+	(laszip_open_writer(writer[], fname, 1) != 0) && msgerror(writer[], "opening laszip writer for $fname")
 
 	# Get a pointer to the points that will be written
-	point = pointer([pointer([laszip_point()])])
-	if (laszip_get_point_pointer(laszip_writer, point) != 0)
-		msgerror(laszip_writer, "getting point pointer from laszip writer")
-	end
-	point = unsafe_load(point)
+	point_ptr = Ref{Ptr{laszip_point}}()
+	(laszip_get_point_pointer(writer[], point_ptr) != 0) && msgerror(writer[], "getting point pointer from laszip writer")
 
 	coordinates = zeros(3)
 	if (n_cols == 3)
-		for n = 1:n_rows
-			#=
-			pt = unsafe_load(point)
-			pt.X = round(Int32, (xyz[n,1]-hdr.x_offset) * hdr.x_scale_factor)
-			pt.Y = round(Int32, (xyz[n,2]-hdr.y_offset) * hdr.y_scale_factor)
-			pt.Z = round(Int32, (xyz[n,3]-hdr.z_offset) * hdr.z_scale_factor)
-			unsafe_store!(point, pt)
-			=#
+		@inbounds for n = 1:n_rows
 			coordinates[1] = xyz[n,1]
 			coordinates[2] = xyz[n,2]
 			coordinates[3] = xyz[n,3]
-			laszip_set_coordinates(laszip_writer, convert(Ptr{Cdouble}, pointer(coordinates)))
-			laszip_write_point(laszip_writer)
+			laszip_set_coordinates(writer[], convert(Ptr{Cdouble}, pointer(coordinates)))
+			laszip_write_point(writer[])
 		end
 	else
 		# Deal with special case of a Z column only where we will cheat by splitting trhough the XYZ
 		r = rem(n_rows, 3)
 		last_ind = (r == 0 ? n_rows : n_rows - 1)
-		for n = 1:3:last_ind
-			#pt = unsafe_load(point)
-			#pt.X = round(Int32, (xyz[n,1]-hdr.z_offset)   * hdr.z_scale_factor)
-			#pt.Y = round(Int32, (xyz[n+1,1]-hdr.z_offset) * hdr.z_scale_factor)
-			#pt.Z = round(Int32, (xyz[n+2,1]-hdr.z_offset) * hdr.z_scale_factor)
+		@inbounds for n = 1:3:last_ind
 			coordinates[1] = xyz[n]
 			coordinates[2] = xyz[n+1]
 			coordinates[3] = xyz[n+2]
-			laszip_set_coordinates(laszip_writer, convert(Ptr{Cdouble}, pointer(coordinates)))
-			laszip_write_point(laszip_writer)
+			laszip_set_coordinates(writer[], convert(Ptr{Cdouble}, pointer(coordinates)))
+			laszip_write_point(writer[])
 		end
-		#pt = unsafe_load(point)
 		if (r == 1)
-			#pt.X = round(Int32, (xyz[last_ind+1,1]-hdr.z_offset) * hdr.z_scale_factor)
-			#pt.Y = pt.X
-			#pt.Z = pt.X
 			coordinates[1] = xyz[last_ind+1]
-			laszip_set_coordinates(laszip_writer, convert(Ptr{Cdouble}, pointer(coordinates)))
-			laszip_write_point(laszip_writer)
+			laszip_set_coordinates(writer[], convert(Ptr{Cdouble}, pointer(coordinates)))
+			laszip_write_point(writer[])
 		elseif (r == 2)
-			#pt.X = round(Int32, (xyz[last_ind+1,1]-hdr.z_offset) * hdr.z_scale_factor)
-			#pt.Y = round(Int32, (xyz[last_ind+2,1]-hdr.z_offset) * hdr.z_scale_factor)
-			#pt.Z = pt.Y
 			coordinates[1] = xyz[last_ind+1]
 			coordinates[2] = xyz[last_ind+2]
-			laszip_set_coordinates(laszip_writer, convert(Ptr{Cdouble}, pointer(coordinates)))
-			laszip_write_point(laszip_writer)
+			laszip_set_coordinates(writer[], convert(Ptr{Cdouble}, pointer(coordinates)))
+			laszip_write_point(writer[])
 		end
 	end
 
 	# Close the writer
-	(laszip_close_writer(laszip_writer) != 0) && msgerror(laszip_writer, "closing laszip writer")
+	(laszip_close_writer(writer[]) != 0) && msgerror(writer[], "closing laszip writer")
 
 	# Destroy the writer
-	(laszip_destroy(laszip_writer) != 0) && msgerror(laszip_writer, "destroying laszip writer")
+	(laszip_destroy(writer[]) != 0) && msgerror(writer[], "destroying laszip writer")
 
 	return nothing
 end

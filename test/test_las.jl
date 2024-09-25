@@ -5,6 +5,8 @@
 	
 	in = lazread("lixo.laz");
 	t = getproperty(in, Symbol(in.stored))
+	lazinfo("lixo.laz", veronly=1);
+	lazinfo("lixo.laz");
 	
 	@test t == out
 	
