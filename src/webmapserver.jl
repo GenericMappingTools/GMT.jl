@@ -197,13 +197,13 @@ function wms_helper(wms::WMS; layer=0, kw...)
 	d = KW(kw)
 	((reg = find_in_dict(d, [:R :region :limits], false)[1]) === nothing) && error("Must provide the `region` option.")
 
-	SRS = find_in_dict(d, [:geog :force_geog :forcegeog])[1] !== nothing ? "EPSG:4326" : wms.layer[layer_n].srs
+	SRS::String = find_in_dict(d, [:geog :force_geog :forcegeog])[1] !== nothing ? "EPSG:4326" : wms.layer[layer_n].srs
 
 	if (isa(reg, Tuple) || isa(reg, VMr))
 		len::Int = length(reg)				# reg is a damn Any
 		(len > 4 || len < 3) && error("The region array must have THREE or FOUR elements.")
 		if (len == 4)
-			lims::Vector{<:Real} = [reg[1], reg[2], reg[3], reg[4]]		# Make a copy to have the same name as in the other branch.
+			lims::Vector{Float64} = Float64.([reg[1], reg[2], reg[3], reg[4]])	# Make a copy to have the same name as in the other branch.
 		else
 			(contains(SRS, "4326") || contains(wms.layer[layer_n].crs, ":84")) &&
 				error("This is a Geographical layer so you cannot set the region with a center and a width.")

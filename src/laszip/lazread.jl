@@ -249,7 +249,7 @@ function get_header_and_reader(fname::AbstractString)
 end
 
 # --------------------------------------------------------------------------------
-function rebuild_grid(header, reader, point, z)
+function rebuild_grid(header, reader, point, z)::GMTgrid
 # Recreate a 2D array plus a 1x9 header vector as used by GMT
 	n = 1
 	@inbounds for k = 1:header.number_of_point_records
@@ -262,11 +262,11 @@ function rebuild_grid(header, reader, point, z)
 	end
 
 	if (header.z_scale_factor != 1 && header.z_offset != 0)
-		@inbounds Threads.@threads for k = 1:3*header.number_of_point_records
+		@inbounds for k = 1:3*header.number_of_point_records
 			z[k] = z[k] * header.z_scale_factor + header.z_offset
 		end
 	elseif (header.z_scale_factor != 1 && header.z_offset == 0)
-		@inbounds Threads.@threads for k = 1:3*header.number_of_point_records
+		@inbounds for k = 1:3*header.number_of_point_records
 			z[k] *= header.z_scale_factor
 		end
 	end
@@ -281,11 +281,11 @@ function rebuild_grid(header, reader, point, z)
 		pop!(z);	pop!(z)
 	end
 
-	z = reshape(z, n_rows, n_cols)
 	mima = GMT.extrema_nan(z)
+	z_ = reshape(z, n_rows, n_cols)
 	h[5:6] .= mima
 
-	return mat2grid(z, hdr=h, layout=layout)
+	return mat2grid(z_, hdr=h, layout=layout)
 end
 
 # --------------------------------------------------------------------------------
