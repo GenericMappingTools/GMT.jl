@@ -201,7 +201,7 @@ or XYZ encoding. An example of these codes is provided by the attributes of when
 
 An important difference between the `address` option and the `lon & lat` option is that the `address` option also
 set the zoom level, so here the ``zoom`` option means the extra zoom level added to that implied by ``address``.
-A number highr than 3 is suspiciously large.
+A number higher than 3 is suspiciously large.
 
 # Example
 ```jldoctest
@@ -215,35 +215,35 @@ function mosaic(address::String; pt_radius=6378137.0, provider="", zoom::Int=0, 
 	(length(s) != 3 && length(s) != 1) && throw(error("Wrong type of tile address: $address"))
 
 	# Functions for parsing the tiles XYZ code when given as ranges. E.g. "317-9" means 317 to 319 or 317+2 -> 315 to 319
-	function parse_LL(s_ind)			# This version is for the form: 317-9 or 319-21
-		base, add = s_ind[1:ind[1]-1], s_ind[ind[1]+1:end]
+	function parse_LL(s_ind, ind)			# This version is for the form: 317-9 or 319-21
+		base, add = s_ind[1:ind-1], s_ind[ind+1:end]
 		first = parse(Int, base)
 		t = (length(add) == 1) ? base[1:end-1] * add : base[1:end-2] * add
 		last  = parse(Int, t)
 		return first, last
 	end
-	function parse_CC(s_ind)			# This version is for the form: 317+2
-		base, add = parse(Int, s_ind[1:ind[1]-1]), parse(Int, s_ind[ind[1]+1:end])
+	function parse_CC(s_ind, ind)			# This version is for the form: 317+2
+		base, add = parse(Int, s_ind[1:ind-1]), parse(Int, s_ind[ind+1:end])
 		return base-add, base+add
 	end
 
 	if (length(s) == 3)
-		if     ((ind = findfirst("-", s[1])) !== nothing)  xf, xl = parse_LL(s[1])
-		elseif ((ind = findfirst("+", s[1])) !== nothing)  xf, xl = parse_CC(s[1])
+		if     ((ind = findfirst('-', s[1])) !== nothing)  xf, xl = parse_LL(s[1], ind)
+		elseif ((ind = findfirst('+', s[1])) !== nothing)  xf, xl = parse_CC(s[1], ind)
 		else                                               xf = parse(Int, s[1]);	xl = xf
 		end
 
-		if     ((ind = findfirst("-", s[2])) !== nothing)  yf, yl = parse_LL(s[2]) .+ 1
-		elseif ((ind = findfirst("+", s[2])) !== nothing)  yf, yl = parse_CC(s[2]) .+ 1
+		if     ((ind = findfirst('-', s[2])) !== nothing)  yf, yl = parse_LL(s[2], ind) .+ 1
+		elseif ((ind = findfirst('+', s[2])) !== nothing)  yf, yl = parse_CC(s[2], ind) .+ 1
 		else                                               yf = parse(Int, s[2]) + 1;	yl = yf
 		end
 		zoomL = parse(Int, s[3])
 		if (xf != xl || yf != yl)
 			limsLL = quadkey([xf, yf, zoomL])			# Each comes as 2x2 with [xmin ymin; xmax ymax]
 			limsUR = quadkey([xl, yl, zoomL])
-			lims = [min(limsLL[1], limsUR[1]), max(limsLL[2], limsUR[2]), min(limsLL[3], limsUR[3]), max(limsLL[4], limsUR[4])]
+			lims::Vector{Float64} = [min(limsLL[1], limsUR[1]), max(limsLL[2], limsUR[2]), min(limsLL[3], limsUR[3]), max(limsLL[4], limsUR[4])]
 		else
-			lims   = quadkey([xf, yf, zoomL])
+			lims = vec(quadkey([xf, yf, zoomL]))
 		end
 
 		#xyz = parse.(Int, s)
@@ -428,15 +428,16 @@ function mosaic(lon::Vector{<:Float64}, lat::Vector{<:Float64}; pt_radius=637813
 
 	xx = collect(linspace(xm[1], xm[2], size(img,1)+1))
 	yy = collect(linspace(ym[1], ym[2], size(img,2)+1))
-	I = mat2img(img, x=xx, y=yy, proj4="+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +a=$pt_radius +b=$pt_radius +units=m +no_defs", layout="TRBa", is_transposed=true)
+	I::GMTimage = mat2img(img, x=xx, y=yy, proj4="+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +a=$pt_radius +b=$pt_radius +units=m +no_defs", layout="TRBa", is_transposed=true)
+	@assert typeof(I) === GMTimage{UInt8, 3}	# Fck compiler. Only this convinced it to make I type stable
 
 	if (inMerc && isExact)		# Cut to the exact required limits
 		mat::Matrix{Float64} = mapproject([lon[1] lat_orig[1]; lon[2] lat_orig[2]], J=I.proj4).data
-		I = grdcut(I, R=(mat[1,1], mat[2,1], mat[1,2], mat[2,2]))
+		I = grdcut(I, R=(mat[1,1], mat[2,1], mat[1,2], mat[2,2]))::GMTimage
 	elseif (!inMerc)			# That is, if project to Geogs
 		gdwopts = ["-t_srs","+proj=latlong +datum=WGS84", "-r","cubic"]
 		isExact && append!(gdwopts, ["-te"], ["$(lon[1])"], ["$(lat_orig[1])"], ["$(lon[2])"], ["$(lat_orig[2])"])
-		I = gdalwarp(I, gdwopts)
+		I = gdalwarp(I, gdwopts)::GMTimage
 	end
 
 	return I
@@ -594,7 +595,7 @@ function quadbounds(quadtree::Matrix{String}, quadkey=['0' '1'; '2' '3']; geog=t
 	flatness = 0.0
 	
 	if isa(quadtree, AbstractString)		# A single quadtree
-		lims, zoomL = getQuadLims(quadtree, quadkey, "")
+		lims, zoomL = getQuadLims(quadtree, quaEdkey, "")
 		tiles_bb = lims[[1, 2, 4, 3]]		# In case idiot choice of 2 argouts
 	else									# Several in a cell array
 		tiles_bb = zeros(length(quadtree), 4)
