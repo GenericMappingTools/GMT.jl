@@ -223,11 +223,11 @@ function GMT_Report(API, vlevel::Integer, txt)
 	ccall((:GMT_Report, libgmt), Cvoid, (Cstring, Cint, Ptr{UInt8}), API, vlevel, txt)
 end =#
 
-function GMT_Encode_Options(V_API::Ptr{Cvoid}, _module, n_argin::Int, head::Ref{Ptr{GMT_OPTION}}, n::Ptr{Int})
+function GMT_Encode_Options(V_API::Ptr{Cvoid}, _module, n_argin::Int, head::Ref{Ptr{GMT_OPTION}}, n)
 	ccall((:GMT_Encode_Options, libgmt), Ptr{GMT_RESOURCE}, (Cstring, Ptr{UInt8}, Int32, Ref{Ptr{GMT_OPTION}},
 					Ptr{UInt32}), V_API, _module, n_argin, head, n)
 end
-function GMT_Encode_Options(V_API::Ptr{Cvoid}, _module, n_argin::Int, head, n::Ptr{Int})
+function GMT_Encode_Options(V_API::Ptr{Cvoid}, _module, n_argin::Int, head, n)
 	ccall((:GMT_Encode_Options, libgmt), Ptr{GMT_RESOURCE}, (Cstring, Ptr{UInt8}, Int32, Ptr{Ptr{Cvoid}}, Ptr{UInt32}),
 					V_API, _module, n_argin, head, n)
 end
