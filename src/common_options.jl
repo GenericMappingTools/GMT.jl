@@ -150,11 +150,9 @@ function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=true, RIr::Bool=
 
 	opt_R::String = ""
 	val, symb = find_in_dict(d, [:R :region :limits :region_llur :limits_llur :limits_diag :region_diag], del)
-	if (val !== nothing)
-		opt_R = build_opt_R(val, symb)
-	elseif (IamModern[1] && !RIr)
-		return cmd, ""
-	end
+
+	(val === nothing && IamModern[1] && !RIr) && return cmd, ""
+	opt_R = build_opt_R(val, symb)
 
 	opt_R = merge_R_and_xyzlims(d, opt_R)	# Let a -R be partially changed by the use of optional xyzlim
 
@@ -178,7 +176,11 @@ function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=true, RIr::Bool=
 			CTRL.limits[7:7+length(limits)-1] = limits		# The plot limits
 			(opt_R != " -Rtight" && opt_R !== nothing && limits != zeros(4) && all(CTRL.limits[1:4] .== 0)) &&
 				(CTRL.limits[1:length(limits)] = limits)	# And this makes data = plot limits, IF data is empty.
-			contains(opt_R, "+r") && (CTRL.limits[13] = 1.0)# To know that -R...+r was used.
+			if (count_chars(opt_R, ',') == 2)				# A XYZ tile address (like "7829,6374,14")
+				opt_R = sprintf(" -R%.12g/%.12g/%.12g/%.12g", limits[1], limits[2], limits[3], limits[4])
+			elseif contains(opt_R, "+r")
+				CTRL.limits[13] = 1.0						# To know that -R...+r was used.
+			end
 		catch
 			CTRL.limits .= 0.0
 			IamModern[1] = bak
@@ -361,6 +363,8 @@ function opt_R2num(opt_R::String)::Vector{Float64}
 		for k = 2:lastindex(rs)  limits[k] = parse(Float64, rs[k])  end
 		#if (isdiag)  limits[2], limits[4] = limits[4], limits[2]  end
 		# Don't know anymore how -R...+r limits should be stored in CTRL.limits
+	elseif (count_chars(opt_R, ',') == 2)		# A XYZ tile address
+		limits = mosaic(scan_opt(opt_R, "-R"), mesh=true).bbox
 	elseif (opt_R != " -R" && opt_R != " -Rtight")	# One of those complicated -R forms. Ask GMT the limits (but slow. It takes 0.2 s)
 
 		# If opt_R is not a grid's name, we are f.

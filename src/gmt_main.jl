@@ -132,10 +132,9 @@ function gmt(cmd::String, args...)
 	# is a Ref, so I'm forced to use 'pointer', which goes against the documents recommendation.
 	pLL = (LL != NULL) ? Ref([LL], 1) : pointer([NULL])
 
-	zero = 0
-	n_itemsP = pointer([zero])
+	n_itemsP = Ref{UInt32}(0)
 	XX = GMT_Encode_Options(G_API[1], g_module, n_argin, pLL, n_itemsP)	# This call also changes LL
-	@GC.preserve zero n_items = unsafe_load(n_itemsP)
+	n_items = n_itemsP[]
 	if (XX == NULL && n_items > 65000)		# Just got usage/synopsis option (if (n_items == UINT_MAX)) in C
 		(n_items > 65000) ? n_items = 0 : error("Failure to encode Julia command options") 
 	end
