@@ -163,6 +163,7 @@ viz(I, coast=true)
 """
 function mosaic(; pt_radius=6378137.0, provider="", zoom::Int=0, cache::String="",
                 mapwidth=15, dpi=96, date::String="", verbose::Int=0, kw...)
+	isempty(kw) && return mosaic(zoom)		# Call the method that only prints the zoom levels table.
 	d = KW(kw)
 	((opt_R = parse_R(d, "")[1]) == "") && error("To use the 'mosaic' function without the 'lon & lat' arguments you need to specify the 'region' option.")
 	ll = opt_R2num(opt_R)
@@ -445,7 +446,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    mosaic(; zoom::Int=0)
+    mosaic([zoom::Int=??])
 
 Print a table with the zoom level characteristics in terms of tile sizes, resolutions, typical use.
 
@@ -462,7 +463,7 @@ julia> mosaic(zoom=10)
 └───────┴────────────────┴────────────┴────────────────┴────────────────────┘
 ```
 """
-function mosaic(; zoom::Int=0)
+function mosaic(zoom)
 	(zoom < 1 || zoom > 22) && (zoom = 0)
 	hdr = (["Level", "Tile width", "m / pixel", "~Scale", "Examples of"], ["", "° of longitude", "on Equator", "", "areas to represent"])
 	data = Any[
