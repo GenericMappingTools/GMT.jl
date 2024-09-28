@@ -38,6 +38,7 @@ using Dates, Printf#, Logging
 		GMT.wmstest(wms, layer=33, region=(iso="PT"), res=100);
 		GMT.wmstest(wms, layer=37, region=(-8,-7,38,39), res="0.001d")
 		GMT.wmstest(wms, layer=37, region=(-8,-7,38,39), res=100)
+		@test GMT.wmstest(wms, layer=37, region="7829,6374,14", zoom=3, size=true) == (1635, 2048)
 	catch
 	end
 
