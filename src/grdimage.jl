@@ -180,7 +180,7 @@ function common_insert_R!(d::Dict, O::Bool, cmd0, I_G; is3D=false)
 			d[:R] = val
 		end
 		try			# Can't risk to error here
-			opt_R = sprintf("%.15g/%.15g/%.15g/%.15g", d[:R][1], d[:R][2], d[:R][3], d[:R][4])
+			opt_R = @sprintf("%.15g/%.15g/%.15g/%.15g", d[:R][1], d[:R][2], d[:R][3], d[:R][4])
 		catch
 		end
 		delete!(d, [:region, :limits])

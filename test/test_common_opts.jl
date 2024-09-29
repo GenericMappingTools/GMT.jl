@@ -432,8 +432,4 @@
 	GMT.parse_opt_S(Dict(:size => (exp, [1 2])), rand(4))
 	GMT.parse_opt_S(Dict(:size => ((pow,2), [1 2])), rand(4))
 
-	GMT.sprintf("%f", 0.1)
-	GMT.sprintf("%f,%f", 0.1, 0.2)
-	GMT.sprintf("%f/%f/%f", 0.1, 0.2, 0.3)
-	GMT.sprintf("%f/%f/%f/%f", 0.1, 0.2, 0.3, 0.4)
 end

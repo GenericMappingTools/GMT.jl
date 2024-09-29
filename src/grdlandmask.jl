@@ -52,11 +52,11 @@ function grdlandmask_helper(cmd0::String, arg1; kwargs...)
 		prj = getproj(arg1, proj4=true)
 		(contains(prj, "=lon") || contains(prj, "=lat")) && (prj = "")  # Cool, it's geog, no proj needed.
 		if (prj == "")
-			d[:R] = sprintf("%.12g/%.12g/%.12g/%.12g", arg1.range[1:4]...)
-			d[:I] = sprintf("%.12g/%.12g", arg1.inc[1:2]...)
+			d[:R] = @sprintf("%.12g/%.12g/%.12g/%.12g", arg1.range[1:4]...)
+			d[:I] = @sprintf("%.12g/%.12g", arg1.inc[1:2]...)
 		else
 			t = xy2lonlat([arg1.range[1] 0; arg1.range[2] 0; 0 arg1.range[3]; 0 arg1.range[4]], s_srs=prj, t_srs="+proj=longlat +datum=WGS84")
-			d[:R] = sprintf("%.12g/%.12g/%.12g/%.12g", t[1, 1], t[2, 1], t[3, 2], t[4, 2])
+			d[:R] = @sprintf("%.12g/%.12g/%.12g/%.12g", t[1, 1], t[2, 1], t[3, 2], t[4, 2])
 			height, width = dims(arg1)
 			d[:I] = "$(width)" * "+n/" * "$(height)" * "+n"
 		end
@@ -69,7 +69,7 @@ function grdlandmask_helper(cmd0::String, arg1; kwargs...)
 	r = common_grd(d, "grdlandmask " * cmd, nothing)		# Finish build cmd and run it
 	if (arg1 !== nothing && prj != "")			# project the mask grid to be compatible with the original grid.
 		r.z = reshape(r.z, width, height)
-		r = gdalwarp(r, ["-of","MEM","-t_srs",prj,"-ts","$(width)", "$(height)", "-te", sprintf("%.12g", arg1.range[1]), sprintf("%.12g", arg1.range[3]), sprintf("%.12g", arg1.range[2]), sprintf("%.12g", arg1.range[4])], layout=r.layout)	# Many things can go wrong here.
+		r = gdalwarp(r, ["-of","MEM","-t_srs",prj,"-ts","$(width)", "$(height)", "-te", @sprintf("%.12g", arg1.range[1]), @sprintf("%.12g", arg1.range[3]), @sprintf("%.12g", arg1.range[2]), @sprintf("%.12g", arg1.range[4])], layout=r.layout)	# Many things can go wrong here.
 	end
 	if (isa(arg1, GMTgrid))
 		if (r.hasnans == 2 || opt_N == "")  r *= arg1	# If clipping val is NaN or 0

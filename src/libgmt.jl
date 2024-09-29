@@ -427,22 +427,6 @@ function gmt_free_mem(API::Ptr{Cvoid}, mem)
 	ccall((:gmt_free_func, libgmt), Cvoid, (Cstring, Ptr{Cvoid}, Bool, Cstring), GMT_, mem, true, "Julia")
 end
 
-function sprintf(format::String, x...)
-	strp = Ref{Ptr{Cchar}}(0)
-	if (length(x) == 1)
-		len = ccall(:asprintf, Cint, (Ptr{Ptr{Cchar}}, Cstring, Cdouble...), strp, format, x[1])
-	elseif (length(x) == 2)
-		len = ccall(:asprintf, Cint, (Ptr{Ptr{Cchar}}, Cstring, Cdouble, Cdouble...), strp, format, x[1], x[2])
-	elseif (length(x) == 3)
-		len = ccall(:asprintf, Cint, (Ptr{Ptr{Cchar}}, Cstring, Cdouble, Cdouble, Cdouble...), strp, format, x[1], x[2], x[3])
-	elseif (length(x) == 4)
-		len = ccall(:asprintf, Cint, (Ptr{Ptr{Cchar}}, Cstring, Cdouble, Cdouble, Cdouble, Cdouble...), strp, format, x[1], x[2], x[3], x[4])
-	end
-	str = unsafe_string(strp[],len)
-	Libc.free(strp[])
-	return str
-end
-
 #=
 function get_common_R(API::Ptr{Cvoid})
 	R = COMMON_R((false,false,false,false), false, 0, 0, 0, (0., 0., 0., 0., 0., 0.), (0., 0., 0., 0.), (0., 0.), map(UInt8, (string(repeat(" ",256))...,)))
