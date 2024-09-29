@@ -274,7 +274,7 @@ function maskgdal(D::GDtype, nx, ny; region=Float64[], touches=false, layout::St
 	local mask
 	opts = ["-of", "MEM", "-ts","$(nx)","$(ny)", "-burn", "1", "-ot", "Byte"]
 	(touches == 1) && append!(opts, ["-at"])
-	!isempty(region) && append!(opts, ["-te", sprintf("%.12g", region[1]), sprintf("%.12g", region[3]), sprintf("%.12g", region[2]), sprintf("%.12g", region[4])])
+	!isempty(region) && append!(opts, ["-te", @sprintf("%.12g", region[1]), @sprintf("%.12g", region[3]), @sprintf("%.12g", region[2]), @sprintf("%.12g", region[4])])
 	try
 		mk = gdalrasterize(D, opts, layout=layout)	# This may fail if the polygon is degenerated.
 		mask = reinterpret(Bool, mk.image)

@@ -177,7 +177,7 @@ function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=true, RIr::Bool=
 			(opt_R != " -Rtight" && opt_R !== nothing && limits != zeros(4) && all(CTRL.limits[1:4] .== 0)) &&
 				(CTRL.limits[1:length(limits)] = limits)	# And this makes data = plot limits, IF data is empty.
 			if (istilename(opt_R))							# A XYZ or quadtree tile address (like "7829,6374,14")
-				opt_R = sprintf(" -R%.12g/%.12g/%.12g/%.12g", limits[1], limits[2], limits[3], limits[4])
+				opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g", limits[1], limits[2], limits[3], limits[4])
 			elseif contains(opt_R, "+r")
 				CTRL.limits[13] = 1.0						# To know that -R...+r was used.
 			end
@@ -217,7 +217,7 @@ function merge_R_and_xyzlims(d::Dict, opt_R::String)::String
 	xlim, ylim, zlim = parse_lims(d, 'x'), parse_lims(d, 'y'), parse_lims(d, 'z')
 =#
 	function fetch_xyz_lims(d::Dict, symbs)::String
-		return ((val = find_in_dict(d, symbs, false)[1]) !== nothing) ? sprintf("%.15g/%.15g", val[1], val[2]) : ""
+		return ((val = find_in_dict(d, symbs, false)[1]) !== nothing) ? @sprintf("%.15g/%.15g", val[1], val[2]) : ""
 	end
 
 	xlim::String = fetch_xyz_lims(d, [:xlim :xlims :xlimits])
@@ -282,7 +282,7 @@ function build_opt_R(val, symb::Symbol=Symbol())::String		# Generic function tha
 			R = " -R" * arg2str(val)
 		end
 	elseif (isa(val, GItype))
-		R = sprintf(" -R%.15g/%.15g/%.15g/%.15g", val.range[1], val.range[2], val.range[3], val.range[4])
+		R = @sprintf(" -R%.15g/%.15g/%.15g/%.15g", val.range[1], val.range[2], val.range[3], val.range[4])
 	elseif (isa(val, GDtype))
 		bb::Vector{<:Float64} = isa(val, GMTdataset) ? val.bbox : val[1].ds_bbox
 		R = (symb ∈ (:region_llur, :limits_llur, :limits_diag, :region_diag)) ?
@@ -332,7 +332,7 @@ function build_opt_R(arg::NamedTuple, symb::Symbol=Symbol())::String
 		if (isa(val, String) || isa(val, Real))
 			t::String = string(val)
 		elseif (isa(val, VecOrMat{<:Real}) || isa(val, Tuple))
-			t = join([sprintf("%.15g/", Float64(x)) for x in val])
+			t = join([@sprintf("%.15g/", Float64(x)) for x in val])
 			t = rstrip(t, '/')		# and remove last '/'
 		else
 			error("Increments for limits must be a String, a Number, Array or Tuple")
@@ -819,12 +819,12 @@ function parse_proj(p::NamedTuple)::Tuple{String, Bool}
 	center::String = ""
 	if ((val = find_in_dict(d, [:center])[1]) !== nothing)
 		if     (isa(val, String))  center = val
-		elseif (isa(val, Real))    center = sprintf("%.12g", val)
+		elseif (isa(val, Real))    center = @sprintf("%.12g", val)
 		elseif (isa(val, Array) || isa(val, Tuple) && length(val) == 2)
-			if (isa(val, Array))   center = sprintf("%.12g/%.12g", val[1], val[2])
+			if (isa(val, Array))   center = @sprintf("%.12g/%.12g", val[1], val[2])
 			else		# Accept also strings in tuple (Needed for movie)
-				center  = (isa(val[1], String)) ? val[1]::String * "/" : sprintf("%.12g/", val[1])
-				center *= (isa(val[2], String)) ? val[2]::String : sprintf("%.12g", val[2])
+				center  = (isa(val[1], String)) ? val[1]::String * "/" : @sprintf("%.12g/", val[1])
+				center *= (isa(val[2], String)) ? val[2]::String : @sprintf("%.12g", val[2])
 			end
 		end
 	end
@@ -834,9 +834,9 @@ function parse_proj(p::NamedTuple)::Tuple{String, Bool}
 	parallels::String = ""
 	if ((val = find_in_dict(d, [:parallel :parallels])[1]) !== nothing)
 		if     (isa(val, String))  parallels = "/" * val
-		elseif (isa(val, Real))    parallels = sprintf("/%.12g", val)
+		elseif (isa(val, Real))    parallels = @sprintf("/%.12g", val)
 		elseif (isa(val, Array) || isa(val, Tuple) && (length(val) <= 3 || length(val) == 6))
-			parallels = join([sprintf("/%.12g",x)::String for x in val])
+			parallels = join([@sprintf("/%.12g",x)::String for x in val])
 		end
 	end
 
@@ -2685,7 +2685,7 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 	cpt_opt_T = ""
 	if ((val = find_in_dict(d, [:clim])[1]) !== nothing)
 		(!isa(val, StrSymb) && length(val) != 2) && error("The clim option is neither = 'zscale' nor a two elements with z_min, z_max")
-		cpt_opt_T = (isa(val, StrSymb)) ? sprintf(" -T%.12g/%.12g/256+n -D", zscale(arg1)...) : sprintf(" -T%.12g/%.12g/256+n -D", val[1], val[2])
+		cpt_opt_T = (isa(val, StrSymb)) ? @sprintf(" -T%.12g/%.12g/256+n -D", zscale(arg1)...) : @sprintf(" -T%.12g/%.12g/256+n -D", val[1], val[2])
 	end
 
 	if (isa(arg1, GItype) || (cmd0 != "" && cmd0[1] != '@'))
@@ -2693,20 +2693,20 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 			# If no cpt name sent in, then compute (later) a default cpt
 			if (isa(arg1, GMTgrid) && ((val = find_in_dict(d, [:percent :pct])[1])) !== nothing)
 				lh = quantile(any(!isfinite, arg1) ? skipnan(vec(arg1)) : vec(arg1), [(100 - val)/200, (1 - (100 - val)/200)])
-				cpt_opt_T = sprintf(" -T%.12g/%.12g/256+n -D", lh[1], lh[2])	# Piggyback -D
+				cpt_opt_T = @sprintf(" -T%.12g/%.12g/256+n -D", lh[1], lh[2])	# Piggyback -D
 			elseif ((val = find_in_dict(d, [:percent :pct])[1]) !== nothing)	# Case of a grid file
 				range = vec(grdinfo(cmd0 * " -C -T+a$(100-val)"::String).data);
-				cpt_opt_T = sprintf(" -T%.12g/%.12g/256+n -D", range[5], range[6])
+				cpt_opt_T = @sprintf(" -T%.12g/%.12g/256+n -D", range[5], range[6])
 			elseif (cpt_opt_T == "")
 				drange = range[6] - range[5]
 				(drange > 1e6) && @warn("The z range expands to more then 6 orders of magnitude. Missed to replace the nodatavalues?\n\n")
 				loc_eps = (drange > 1e-8) ? 1e-8 : 1e-15		# Totally ad hoc condition
-				cpt_opt_T = sprintf(" -T%.12g/%.12g/256+n", range[5] - loc_eps, range[6] + loc_eps)
+				cpt_opt_T = @sprintf(" -T%.12g/%.12g/256+n", range[5] - loc_eps, range[6] + loc_eps)
 			end
 			(range[5] > 1e100) && (cpt_opt_T = "")	# cmd0 is an image name and now grdinfo does not compute its min/max
 		end
 		if (opt_R == "" && (!IamModern[1] || (IamModern[1] && FirstModern[1])) )	# No -R ovewrite by accident
-			cmd *= sprintf(" -R%.14g/%.14g/%.14g/%.14g", range[1], range[2], range[3], range[4])
+			cmd *= @sprintf(" -R%.14g/%.14g/%.14g/%.14g", range[1], range[2], range[3], range[4])
 		end
 	elseif (cmd0 != "" && cmd0[1] == '@')			# No reason not to let @grids use clim=[...]
 		if (any(contains.(cmd0, ["_01d", "_30m", "_20m", "_15m", "_10m", "_06m"])) && (val = find_in_dict(d, [:percent :pct])[1]) !== nothing)
@@ -2886,7 +2886,7 @@ function get_color(val::Tuple)::String
 		if (isa(val[k], Tuple) && (length(val[k]) == 3))
 			s = 1.0
 			if (val[k][1] <= 1 && val[k][2] <= 1 && val[k][3] <= 1)  s = 255.0  end	# colors in [0 1]
-			out *= sprintf("%.0f/%.0f/%.0f,", val[k][1]*s, val[k][2]*s, val[k][3]*s)
+			out *= @sprintf("%.0f/%.0f/%.0f,", val[k][1]*s, val[k][2]*s, val[k][3]*s)
 		elseif (isa(val[k], Symbol) || isa(val[k], String) || isa(val[k], Real))
 			out *= string(val[k],",")::String
 		else
@@ -4415,7 +4415,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 					if (!isgeog(proj4))
 						opt_J = replace(proj4, " " => "")
 						isoblique = any(contains.(opt_J, ["=utm", "=lcc", "=omerc", "=tmerc", "=laea"]))	# <== ADD OTHER OBLIQUES HERE
-						opt_R::String = isoblique ? sprintf(" -R%f/%f/%f/%f+r", WESN[1],WESN[3],WESN[2],WESN[4]) : sprintf(" -R%f/%f/%f/%f", WESN...)
+						opt_R::String = isoblique ? @sprintf(" -R%f/%f/%f/%f+r", WESN[1],WESN[3],WESN[2],WESN[4]) : @sprintf(" -R%f/%f/%f/%f", WESN...)
 						size_::String = (J1[1] == 'x') ? "+scale=" * J1[2:end] : (J1[1] == 'X') ? "+width=" * J1[2:end] : ""
 						(size_ == "") && @warn("Could not find the right fig size used. Result will be wrong")  
 						cmd[k] = replace(cmd[k], " -J" => " -J" * opt_J * size_)
@@ -4425,7 +4425,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 						if (J2 != "")					# Case where J2 wasn't simply "-J"
 							@warn("If $J1 is a cylindrical projection, second set of coordinates will likely be wrong.")
 							D = mapproject([WESN[1] WESN[3]; WESN[1] WESN[4]; WESN[2] WESN[4]; WESN[2] WESN[3]], J=J2)
-							opt_R = sprintf(" -R%.12g/%.12g/%.12g/%.12g", D.ds_bbox...)
+							opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g", D.ds_bbox...)
 							W = (CTRL.pocket_J[2] != "") ? CTRL.pocket_J[2] : string(split(DEF_FIG_SIZE, "/")[1])
 							fig_size = W * "/" * string(mapproject([WESN[1] WESN[4]], R=[WESN...], J=J1).data[2])::String
 							cmd[k] = replace(cmd[k], J2 => islowercase(J2[1]) ? "x" * fig_size : "X" * fig_size)	# Fails for scales

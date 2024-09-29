@@ -155,7 +155,7 @@ function inset_nested(GI::GItype, n; kwargs...)
 	CTRL.pocket_d[1][:J] = opt_J[4:end]
 
 	if (opt_R == "")
-		opt_R = sprintf(" -R%.12g/%.12g/%.12g/%.12g", GI.range[1], GI.range[2], GI.range[3], GI.range[4])	# Get the current GI
+		opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g", GI.range[1], GI.range[2], GI.range[3], GI.range[4])	# Get the current GI
 		CTRL.pocket_d[1][:R] = opt_R[4:end]
 	end
 	(opt_B == " -B0") && (opt_B = " -Bnone")	# No frame border so that the inset box pen (-F) may take effect.
@@ -175,7 +175,7 @@ function inset_nested(D::GDtype, n; kwargs...)
 	(opt_J == "") && (d[:J] = "X?/?"; IamInset[2] = true)	# IamInset[2] is to help avoid GMT bug #7005
 	if (opt_R == "")
 		bb = getbb(D)
-		opt_R = sprintf(" -R%.12g/%.12g/%.12g/%.12g", bb...)
+		opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g", bb...)
 	end
 	d[:R] = opt_R[4:end]
 	(opt_B != "") && (d[:B] = opt_B[4:end])
@@ -262,7 +262,7 @@ function helper1_inset_nested(d; iscoast=false, isplot=false, imgdims=tuple())
 		inset_H = inset_W * aspect_zoom
 		if ((val = find_in_dict(d, [:pzoom])[1]) !== nothing)		# A pseudo-zoom from a single point.
 			val_f::Vector{Float64} = [Float64(val[1]), Float64(val[2])]
-			d[:R] = sprintf("%.15g/%.15g/%.15g/%.15g", val_f[1], val_f[1]*1.001, val_f[2], val_f[2]*1.001)
+			d[:R] = @sprintf("%.15g/%.15g/%.15g/%.15g", val_f[1], val_f[1]*1.001, val_f[2], val_f[2]*1.001)
 			delete!(d, :pzoom)
 		end
 		(opt_J != "" && !contains(opt_J, '?')) && (opt_J = replace(opt_J, CTRL.pocket_J[2] => "?"))	# Replace the fig's default size
@@ -493,7 +493,7 @@ function zoom2inset(d, center)
 		CTRL.pocket_call[4] = (nDS == 1) ? D[1] : D
 		CTRL.limits[7:end] = bak						# Reset the backed up values
 	end
-	d[:R] = sprintf("%.15g/%.15g/%.15g/%.15g", zoom_lims...)
+	d[:R] = @sprintf("%.15g/%.15g/%.15g/%.15g", zoom_lims...)
 	d[:Rzoom_num] = zoom_lims
 	return nothing
 end
