@@ -1401,7 +1401,7 @@ function resetGMT(dorestart::Bool=true)
 	DEF_FIG_AXES[1] = DEF_FIG_AXES_BAK;		DEF_FIG_AXES3[1] = DEF_FIG_AXES3_BAK;
 	CTRL.pocket_J[1], CTRL.pocket_J[2], CTRL.pocket_J[3], CTRL.pocket_J[4] = "", "", "", "   ";
 	CTRL.IamInPaperMode[:] = [false, true];	IamInset[1], IamInset[2] = false, false
-	CTRL.pocket_call[1:3] .= nothing;	CTRL.pocket_R[1] = "";	CTRL.figsize .= 0.0
+	CTRL.pocket_call[1:3] .= nothing;	CTRL.pocket_R[1:2] .= "";	CTRL.figsize .= 0.0
 	CTRL.XYlabels[1] = "";	CTRL.XYlabels[2] = "";	CTRL.returnPS[1] = false
 	(dorestart) && (gmt_restart(); clear_sessions())
 end

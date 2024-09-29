@@ -105,12 +105,26 @@ Read the `layer` number provided by the service from which the `wms` type was cr
    both of these forms are allowed: `layer=3` or `layer="Invented layer name"`
 
 ### `kwargs` is the keywords/values pairs used to set
-- `region | limits`: The region limits. This can be a Tuple or Array with 4 elements defining the `(xmin, xmax, ymin, ymax)`
-   or a string defining the limits in all ways that GMT can recognize. When the layer has the data projected, we can
-   a Tuple or Array with 3 elements `(lon0, lat0, width)`, where first two set the center of a square in geographical
-   coordinates and the third (`width`) is the width of that box in meters.
+- `region | limits`: The region limits. Options are:
+   - A Tuple or Array with 4 elements defining the `(xmin, xmax, ymin, ymax)` or a string defining the
+     limits in all ways that GMT can recognize. 
+   - When the layer has the data projected, we can pass a Tuple or Array with 3 elements `(lon0, lat0, width)`,
+     where first two set the center of a square in geographical coordinates and the third (`width`) is the
+     width of that box in meters.
+   - A ``mosaic`` tile name in the form ``X,Y,Z`` or a quadtree. Example: ``region="7829,6374,14"``. See the ``mosaic``
+     function manual for more information. This form also sets the default cellsize for that tile. NOTE:
+     this is a geographical coordinates only that implicitly sets ``geog=true``. See below on how to change
+     the default resolution.
 - `cellsize | pixelsize | resolution | res`: Sets the requested cell size in meters [default]. Use a string appended with a 'd'
    (e.g. `resolution="0.001d"`) if the resolution is given in degrees. This way works only when the layer is in geogs.
+- `zoom or refine`: When the region is derived from a ``mosaic`` tile name, the default is to get an image with 256 columns
+   and _n_ rows where _n_ depends on latitude. So, either the area is large and consequently the resolution is low, or
+   the inverse (small area and resolution is high). To change this status, use the `zoom` or `refine` options.
+   - `zoom`: an integer >= 1 that for each increment duplicates the base resolution by 2. _e.g._, `zoom=2`
+      quadruplicates the default resolution. This option is almost redundant with the `refine`, but is offered
+      for consistency with the ``mosaic`` function.
+   - `refine`: an integer >= 2 multiplication factor that is used to increment the resolution by factor. _e.g._, `refine=2`
+      duplicates the image resolution.
 - `size`: Alternatively to the the `cellsize` use this option, a tuple or array with two elements, to specify
    the image dimensions. Example, `size=(1200, 100)` to get an image with 1200 rows and 100 columns.
 - `time`: Some services provide data along time. Use this option to provide a time string as provided by DateTime.
@@ -132,7 +146,7 @@ A GMTimage
     img = wmsread(wms, layer="MODIS_Terra_CorrectedReflectance_TrueColor", region=(9,22,32,43), time="2021-10-29T00:00:00", pixelsize=750);
     imshow(img, proj=:guess)
 """
-function wmsread(wms::WMS; layer=0, time::String="", kw...)
+function wmsread(wms::WMS; layer=0, time::String="", kw...)::GMTimage
 	layer_n = get_layer_number(wms, layer)
 	str, dim_x, dim_y = wms_helper(wms; layer=layer_n, time=time, kw...)
 	opts = ["-outsize", "$(dim_x)", "$(dim_y)"]
@@ -212,12 +226,11 @@ function wms_helper(wms::WMS; layer=0, kw...)
 			half_w::Float64 = reg[3] / 2
 			lims = [center[1]-half_w, center[1]+half_w, center[2]-half_w, center[2]+half_w]
 		end
-		BB = @sprintf("%.12g,%.12g,%.12g,%.12g", lims[1], lims[3], lims[2], lims[4])
 	else
-		_, opt_R = parse_R(d, "")
-		lims = opt_R2num(opt_R)
-		BB = @sprintf("%.12g,%.12g,%.12g,%.12g", lims[1], lims[3], lims[2], lims[4])
+		parse_R(d, "")			# This fills CTRL.limits, which is what we need here
+		lims = CTRL.limits[1:4]
 	end
+	BB = @sprintf("%.12g,%.12g,%.12g,%.12g", lims[1], lims[3], lims[2], lims[4])
 	(wms.layer[layer_n].bbox[1] > lims[1] || wms.layer[layer_n].bbox[2] < lims[2] || wms.layer[layer_n].bbox[3] > lims[3] || wms.layer[layer_n].bbox[4] < lims[4]) && @warn("Requested region overflows this layer BoundingBox")
 
 	function loc_getsize(res::Float64, lims::Vector{<:Real})::Tuple{Int, Int}
@@ -245,6 +258,19 @@ function wms_helper(wms::WMS; layer=0, kw...)
 			end
 			dim_x, dim_y = loc_getsize(_res, lims)
 		end
+	elseif (CTRL.limits[2] != "")		# Indirect check if -R was set via a mosaic tile name. A bit FRAGILE
+		try _res = tryparse(Float64, CTRL.pocket_R[2])
+		catch; error("Programming error. 'CTRL.pocket_R[2]' is empty")
+		end
+		if ((fact_ = find_in_dict(d, [:refine])[1]) !== nothing)
+			((fact = tryparse(Int, fact_)) === nothing) && error("The 'refine' option must be an integer")
+			_res /= fact
+		elseif ((zoom = find_in_dict(d, [:zoom])[1]) !== nothing)
+			@assert (isa(zoom, Int) && zoom > 0) "'zoom' is not an integer > 0"
+			_res /= 2 ^ zoom
+		end
+		dim_x, dim_y = loc_getsize(_res, lims)
+		SRS = "EPSG:4326"			# This is a geogs case only
 	else
 		error("Must provide either the 'size' or the 'resolution' option")
 	end

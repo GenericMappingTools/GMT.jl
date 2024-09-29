@@ -163,6 +163,7 @@ viz(I, coast=true)
 """
 function mosaic(; pt_radius=6378137.0, provider="", zoom::Int=0, cache::String="",
                 mapwidth=15, dpi=96, date::String="", verbose::Int=0, kw...)
+	isempty(kw) && return mosaic(zoom)		# Call the method that only prints the zoom levels table.
 	d = KW(kw)
 	((opt_R = parse_R(d, "")[1]) == "") && error("To use the 'mosaic' function without the 'lon & lat' arguments you need to specify the 'region' option.")
 	ll = opt_R2num(opt_R)
@@ -171,7 +172,7 @@ function mosaic(; pt_radius=6378137.0, provider="", zoom::Int=0, cache::String="
            dpi=dpi, date=date, verbose=verbose, d...)
 end
 
-# This methos is mostly for calls from python's juliacall that used PyList (because dumb Py consider this a list: [1.0, 2.6])
+# This method is mostly for calls from python's juliacall that used PyList (because dumb Py consider this a list: [1.0, 2.6])
 function mosaic(lon::AbstractVecOrMat, lat::AbstractVecOrMat; pt_radius=6378137.0, provider="", zoom::Int=0, cache::String="",
                 mapwidth=15, dpi=96, verbose::Int=0, date::String="", key::String="", kw...)
 	_lon::Vector{Float64}, _lat::Vector{Float64} = vec(Float64.(lon)), vec(Float64.(lat))
@@ -441,6 +442,55 @@ function mosaic(lon::Vector{<:Float64}, lat::Vector{<:Float64}; pt_radius=637813
 	end
 
 	return I
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    mosaic([zoom::Int=??])
+
+Print a table with the zoom level characteristics in terms of tile sizes, resolutions, typical use.
+
+If the `zoom` option is used then the table is printed with that zoom level only.
+
+# Example
+```jldoctest
+julia> mosaic(zoom=10)
+┌───────┬────────────────┬────────────┬────────────────┬────────────────────┐
+│ Level │     Tile width │  m / pixel │         ~Scale │        Examples of │
+│       │ ° of longitude │ on Equator │                │ areas to represent │
+├───────┼────────────────┼────────────┼────────────────┼────────────────────┤
+│    10 │          0.352 │    153.054 │ 1:500 thousand │  metropolitan area │
+└───────┴────────────────┴────────────┴────────────────┴────────────────────┘
+```
+"""
+function mosaic(zoom)
+	(zoom < 1 || zoom > 22) && (zoom = 0)
+	hdr = (["Level", "Tile width", "m / pixel", "~Scale", "Examples of"], ["", "° of longitude", "on Equator", "", "areas to represent"])
+	data = Any[
+			1  180 78_272 "1:250 million" ""
+			2   90 39_136 "1:150 million" "subcontinental area"
+			3   45 19_568 "1:70 million"  "largest country"
+			4   22.5  9_784 "1:35 million" ""
+			5 	11.25 4_892 "1:15 million" "large African country"
+			6 	5.625 2_446 "1:10 million" "large European country"
+			7 	2.813 1_223 "1:4 million" "small country, US state"
+			8 	1.406 611.388 "1:2 million" ""
+			9 	0.703 305.694 "1:1 million" "wide area, large metropolitan area"
+			10 	0.352 153.054 "1:500 thousand" "metropolitan area"
+			11 	0.176 76.532 "1:250 thousand" "city"
+			12 	0.088 38.266 "1:150 thousand" "town, or city district"
+			13 	0.044 19.133 "1:70 thousand" "village, or suburb"
+			14 	0.022 9.566 "1:35 thousand" ""
+			15 	0.011 4.783 "1:15 thousand" "small road"
+			16 	0.005 2.174 "1:8 thousand" "street"
+			17 	0.003 1.305 "1:4 thousand" "block, park, addresses"
+			18 	0.001 0.435 "1:2 thousand" "some buildings, trees"
+			19 	0.0005 0.217 "1:1 thousand" "local highway and crossing details"
+			20 	0.00025 0.109 "1:5 hundred" "A mid-sized building"
+			21 	0.000125 0.054 "1:250" ""
+		]
+	println("\t\t\t\tZoom levels")
+	(zoom == 0) ? pretty_table(data; header=hdr) : pretty_table(data[zoom:zoom, :]; header=hdr)
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -923,4 +973,18 @@ function geocoder(address::String; options=String[])
 	D = mat2ds([parse(Float64, dic["lon"]) parse(Float64, dic["lat"])], attrib=dic, proj4=prj4WGS84, geom=wkbPoint)
 	D.ds_bbox = [BB[3], BB[4], BB[1], BB[2]]
 	return D
+end
+
+# ------------------------------------------------------------------------------------------------
+"""
+    istilename(s::AbstractString)
+
+Check if the string `s` is a XYZ or quadtree tile name. Useful for parse_R() and others that can
+than extract the tile limits and associated resolution.
+"""
+function istilename(s::AbstractString)::Bool
+	(count_chars(s, ',') == 2) && return true
+	contains(s, "-R") && occursin(r"^[0-3]+$", s[findfirst('R', s)+1:end]) && return true	# Accepts also that 's' is an opt_R
+	occursin(r"^[0-3]+$", s) && return true
+	return false
 end

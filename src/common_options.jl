@@ -176,12 +176,13 @@ function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=true, RIr::Bool=
 			CTRL.limits[7:7+length(limits)-1] = limits		# The plot limits
 			(opt_R != " -Rtight" && opt_R !== nothing && limits != zeros(4) && all(CTRL.limits[1:4] .== 0)) &&
 				(CTRL.limits[1:length(limits)] = limits)	# And this makes data = plot limits, IF data is empty.
-			if (count_chars(opt_R, ',') == 2)				# A XYZ tile address (like "7829,6374,14")
+			if (istilename(opt_R))							# A XYZ or quadtree tile address (like "7829,6374,14")
 				opt_R = sprintf(" -R%.12g/%.12g/%.12g/%.12g", limits[1], limits[2], limits[3], limits[4])
 			elseif contains(opt_R, "+r")
 				CTRL.limits[13] = 1.0						# To know that -R...+r was used.
 			end
-		catch
+		catch err
+			@warn err
 			CTRL.limits .= 0.0
 			IamModern[1] = bak
 		end
@@ -363,8 +364,12 @@ function opt_R2num(opt_R::String)::Vector{Float64}
 		for k = 2:lastindex(rs)  limits[k] = parse(Float64, rs[k])  end
 		#if (isdiag)  limits[2], limits[4] = limits[4], limits[2]  end
 		# Don't know anymore how -R...+r limits should be stored in CTRL.limits
-	elseif (count_chars(opt_R, ',') == 2)		# A XYZ tile address
-		limits = mosaic(scan_opt(opt_R, "-R"), mesh=true).bbox
+	elseif (istilename(opt_R))						# A XYZ or quadtree tile address
+		t = scan_opt(opt_R, "-R")
+		limits = mosaic(t, mesh=true).bbox
+		zl::Int = contains(t, ",") ? parse(Int, t[findlast(',', t)+1:end]) : length(t)
+		inc = (360 / 2 ^ zl) / 256					# Increment in degrees at this zoom level
+		CTRL.pocket_R[2] = "$inc"
 	elseif (opt_R != " -R" && opt_R != " -Rtight")	# One of those complicated -R forms. Ask GMT the limits (but slow. It takes 0.2 s)
 
 		# If opt_R is not a grid's name, we are f.
@@ -4159,7 +4164,7 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K:
 	end
 	CTRL.limits .= 0.0;		CTRL.figsize .= 0.0;	CTRL.proj_linear[1] = true;		# Reset these for safety
 	CTRL.pocket_J[1], CTRL.pocket_J[2], CTRL.pocket_J[3], CTRL.pocket_J[4] = "", "", "", "   ";
-	CTRL.pocket_R[1] = "";	isJupyter[1] = false;	CTRL.pocket_call .= nothing
+	CTRL.pocket_R[1:2] .= "";	isJupyter[1] = false;	CTRL.pocket_call .= nothing
 	CURRENT_VIEW[1] = ""
 	return retPluto ? WrapperPluto(out) : nothing	# retPluto should make it all way down to base so that Plut displays it
 end
