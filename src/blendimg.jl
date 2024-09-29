@@ -349,7 +349,7 @@ function lelandshade(G::GMTgrid; detail=1.0, contrast=2.0, uint16=false, intensi
 			cpt = (equalize == 1) ? grd2cpt(G, C=_cpt, kw...) : grd2cpt(G, T="$equalize", C=_cpt, Vd=-1, kw...)
 		end
 		color = gdaldem(G, "color-relief"; color=cpt, kw...)
-		blendimg!(I1, Ihill)
+		blendimg!(I1, Ihill, transparency=transparency)
 		blendimg!(color, I1)
 		I1 = color			# To use the same name as in the gray branch
 	end
