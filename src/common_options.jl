@@ -3955,6 +3955,18 @@ function isFV(D)::Bool
 end
 
 # ---------------------------------------------------------------------------------------------------
+"""
+    is_gridtri(D)::Bool
+
+Check if D is a Vector{GMTdataset} produced by the gridtri() function.
+"""
+function is_gridtri(D)::Bool
+	(!isa(D, Vector{<:GMTdataset}) || isempty(D[1].comment)) && return false
+	(!contains(D[1].comment[1], "vwall") && !contains(D[1].comment[1], "gridtri")) && return false
+	return true
+end
+
+# ---------------------------------------------------------------------------------------------------
 function find_data(d::Dict, cmd0::String, cmd::String, args...)
 	# ...
 
