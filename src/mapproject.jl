@@ -101,12 +101,16 @@ function mapproject(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 		(dbg_print_cmd(d, cmd) !== nothing) && return cmd
 		gmt("mapproject " * cmd)
 	else
-	    #cmd, got_fname, arg1, arg2 = find_data(d, cmd0, cmd, arg1, arg2)
-        (isa(arg1, Vector{<:Real})) && (arg1 = reshape(arg1, 1, :))     # User may have send a vector but GMT expects matrix
+		#cmd, got_fname, arg1, arg2 = find_data(d, cmd0, cmd, arg1, arg2)
+		(isa(arg1, Vector{<:Real})) && (arg1 = reshape(arg1, 1, :))     # User may have send a vector but GMT expects matrix
 		R = common_grd(d, cmd0, cmd, "mapproject ", arg1, arg2)
 		contains(cmd, " -I") && (isa(R, GMTdataset) ? (R.proj4 = prj4WGS84) : (R[1].proj4 = prj4WGS84))
-		contains(opt_J, "+proj") && (isa(R, GMTdataset) ? (R.proj4 = opt_J[4:end]) : (R[1].proj4 = opt_J[4:end]))
-        R
+		if contains(opt_J, "+proj")
+			prj = opt_J[4:end]
+			contains(prj, '+') && !contains(prj, ' ') && (prj = replace(prj, "+" => " +"))	# Can't store a 'glued' -J
+			(isa(R, GMTdataset) ? (R.proj4 = prj) : (R[1].proj4 = prj))
+		end
+		R
 	end
 end
 
