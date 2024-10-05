@@ -370,9 +370,9 @@ end
 function deal_faceverts(arg1, d, opt_p)
 	# Deal with the situation where we are plotting 3D FV's
 	spl = split(opt_p[4:end], '/')
-	az = parse(Float64, spl[1])
+	azim = parse(Float64, spl[1])
 	elev = length(spl) > 1 ? parse(Float64, spl[2]) : 90.0
-	arg1, dotprod = visible_faces(arg1, [sind(az) * cosd(elev), cosd(az) * cosd(elev), sind(elev)])
+	arg1, dotprod = sort_visible_faces(arg1, azim, elev)
 	if (is_in_dict(d, [:G :fill]) === nothing)		# If fill not set we use the dotprod and a gray CPT to set the fill
 		is_in_dict(d, [:Z :level :levels]) === nothing && (d[:Z] = dotprod)
 		(is_in_dict(d, CPTaliases) === nothing) && (d[:C] = gmt("makecpt -T0/1 -C150,210"))	# Users may still set a CPT
@@ -387,7 +387,7 @@ function deal_gridtri!(arg1, d)::Bool
 	is_in_dict(d, [:G :fill]) === nothing && (d[:G] = "+z")
 	if (is_in_dict(d, CPTaliases) === nothing)
 		opt_T = (contains(arg1[1].comment[1], "vwall+gridtri_top")) ? "-T$(arg1[1].comment[2])/$(arg1[1].ds_bbox[6]+1e-8)/+n255" :
-			"-T$(arg1[1].ds_bbox[5]-1e-8)/$(arg1[1].ds_bbox[6]+1e-8)/+n255"
+		        "-T$(arg1[1].ds_bbox[5]-1e-8)/$(arg1[1].ds_bbox[6]+1e-8)/+n255"
 		C = gmt("makecpt -Cturbo " * opt_T)
 		C.bfn[2, :] .= 0.7			# Set the foreground color used by the vertical wall
 		d[:C] = C
@@ -1407,28 +1407,57 @@ end
 # ---------------------------------------------------------------------------------------------------
 function faces_normals_view(V::GMTdataset{Float64,2}, F::GMTdataset{Int,2}, view_vec)
 	# Compute the dot product between the view vector and the normal of each face
-	# Faces hose dot product is <= 0 are not visible
+	# Faces whose dot product is <= 0 are not visible
 	n_faces = size(F.data, 1)		# Number of segments or faces (polygons)
-	n_rows  = size(F.data, 2)		# Number of rows (vertices of the polygon)
-	tmp  = zeros(n_rows, 3)
-	proj = zeros(n_faces)
+	n_verts = size(F.data, 2)		# Number of vertices of the polygon
+	tmp     = zeros(n_verts, 3)
+	proj    = zeros(n_faces)
 	for face = 1:n_faces 			# Each row in F (a face) is a new data segment (a polygon)
-		for c = 1:3, r = 1:n_rows
-			tmp[r,c] = V.data[F.data[face,r], c]
+		for c = 1:3, v = 1:n_verts
+			tmp[v,c] = V.data[F.data[face,v], c]
 		end
-		proj[face] = dot(facenorm(tmp), view_vec)
+		proj[face] = dot(facenorm(tmp), view_vec, normalize=false)
 	end
 	return proj
 end
 
 # ---------------------------------------------------------------------------------------------------
-function visible_faces(FV::Vector{<:GMTdataset}, view_vec)
-	# Remove the faces that are not visible from the normal view_vec
+"""
+    FV = sort_visible_faces(FV::Vector{<:GMTdataset}, azim, elev) -> ::Vector{GMTdataset}
+
+Take a Faces-Vertices dataset and delete the invisible faces from view vector. Next sort them by distance so
+that the furthest faces are drawn on first and hence do not hide the others.
+
+- `FV`: The Faces-Vertices dataset.
+- `azim`: Azimuth angle in degrees. Positive clock-wise from North.
+- `elev`: Elevation angle in degrees above horizontal plane.
+"""
+function sort_visible_faces(FV::Vector{<:GMTdataset}, azim, elev)::Tuple{Vector{GMTdataset{T, 2} where T<:Real}, Vector{Float64}}
 	V::GMTdataset{Float64,2}, F::GMTdataset{Int,2} = FV[1], FV[2]
-	proj = faces_normals_view(V, F, view_vec)
-	is_vis = (proj .> 0)	# Visible faces
-	F2 = mat2ds(F.data[is_vis, :])
-	return [V,F2], proj[is_vis]
+	cos_az, cos_el, sin_az, sin_el = cosd(azim), cosd(elev), sind(azim), sind(elev)
+
+	view_vec = [sin_az * cos_el, cos_az * cos_el, sin_el]
+	n_faces, n_verts = size(F.data, 1), size(F.data, 2)	# Number of faces (polygons) and vertices of the polygons
+	tmp = zeros(n_verts, 3)
+	isVisible = fill(false, n_faces)
+	projs = Float64[]
+	dists = [(Inf, Inf)]		# F couldn't find a way to initialize an empty vector of tuple of floats. Had to use this shit
+	for face = 1:n_faces
+		for c = 1:3, v = 1:n_verts						# Build the polygon from the FV collection
+			tmp[v,c] = V.data[F.data[face,v], c]
+		end
+		this_proj = dot(facenorm(tmp), view_vec)
+		if ((isVisible[face] = this_proj > 0))
+			cx, cy, cz = sum(tmp[:,1]), sum(tmp[:,2]), sum(tmp[:,3])	# Pseudo-centroids. Good enough for the sorting purpose
+			push!(dists, (cx * sin_az + cy * cos_az, cz * sin_el))
+			push!(projs, this_proj)
+		end
+	end
+	data = F.data[isVisible, :]
+	ind = sortperm(dists) .- 1		# Because inds are all shifted by 1 due to fck first dist element
+	pop!(ind)						# Throw away the (Inf,Inf) pair that we fck had to use to initialize the dists vector.
+	data = data[ind, :]
+	return [V, GMTdataset(data=data)], projs[ind]
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -1442,9 +1471,7 @@ function sort_visible_triangles(Dv::Vector{<:GMTdataset}; del_hidden=false, zfac
 	if (del_hidden == 1)		# Remove the triangles that are not visible from the normal view_vec
 		t = isgeog(Dv) ? mapproject(Dv, J="t$((Dv[1].ds_bbox[1] + Dv[1].ds_bbox[2])/2)/1:1", C=true, F=true) : Dv
 		view_vec = [sin_az * cosd(elev), cos_az * cosd(elev), sin_el]
-		#zs_t = CTRL.pocket_J[3][5:end]			# Ex: CTRL.pocket_J[3] = " -JZ3"
 		is_vis = [dot(facenorm(t[k].data, zfact=zfact, normalize=false), view_vec) > 0 for k in eachindex(t)]
-		#@show(length(t),sum(is_vis))
 		Dv = Dv[is_vis]
 	end
 
