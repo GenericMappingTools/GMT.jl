@@ -1346,7 +1346,7 @@ function check_caller(d::Dict, cmd::String, opt_S::String, opt_W::String, caller
 	end
 
 	if (occursin('3', caller))
-		if (!occursin(" -B", cmd) && !O)  cmd *= DEF_FIG_AXES3[1]  end	# For overlays default is no axes
+		(!occursin(" -B", cmd) && !O && (get(POSTMAN[1], "noframe", "") == ""))  && (cmd *= DEF_FIG_AXES3[1])	# For overlays default is no axes
 	end
 
 	return cmd
