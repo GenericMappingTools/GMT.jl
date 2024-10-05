@@ -691,6 +691,7 @@ function read_obj(fname)
 	fid = open(fname)
 	iter = eachline(fid)
 	for it in iter
+		isempty(it) && continue
 		if (it[1] == 'v' && it[2] == ' ') count_v += 1
 		elseif (it[1] == 'f')
 			first && (has_slash = contains(it, '/'); n_vert = length(split(it))-1;	first = false)
