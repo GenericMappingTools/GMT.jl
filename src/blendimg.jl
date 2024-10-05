@@ -46,7 +46,7 @@ function blendimg!(color::GMTimage, shade::GMTimage; mode="", transparency=0.5, 
 end
 
 # ---------------------------------------------------------------------------------------------------
-function blend_gcalc(color::GMTimage{UInt8, 3}, shade::GMTimage{UInt8, 2}; new=false)
+function blend_gcalc(color::GMTimage{UInt8, 3}, shade::GMTimage{UInt8, 2}; new=false)::GMTimage
 	
 	blend = (new) ? Array{UInt8,3}(undef, size(shade,1), size(shade,2), 3) : color.image
 
@@ -79,7 +79,7 @@ function blend_gcalc(color::GMTimage{UInt8, 3}, shade::GMTimage{UInt8, 2}; new=f
 end
 
 # ---------------------------------------------------------------------------------------------------
-function blend_blend(img1::GMTimage, img2::GMTimage; new=false, transparency=0.5)
+function blend_blend(img1::GMTimage, img2::GMTimage; new=false, transparency=0.5)::GMTimage
 	# This method blends two UInt8 images with transparency
 	@assert eltype(img1) == eltype(img2)
 	@assert length(img1) == length(img2)
@@ -105,7 +105,7 @@ function blend_blend(img1::GMTimage, img2::GMTimage; new=false, transparency=0.5
 end
 
 # ---------------------------------------------------------------------------------------------------
-function blend_PS(A::GMTimage{UInt8, 3}, B::GMTimage; mode="LinearBurn", new=false, white=220, burn_up=180, screen_low=220)
+function blend_PS(A::GMTimage{UInt8, 3}, B::GMTimage; mode="LinearBurn", new=false, white=220, burn_up=180, screen_low=220)::GMTimage
 	# PhotoShop blend modes (a few)
 
 	blend = (new) ? Array{UInt8,size(A,3)}(undef, size(A)) : A.image
@@ -201,7 +201,7 @@ Optionally set also `contrast` and/or `brightness`
 ### Returns
 A GMT intensity Image
 """
-function gammacorrection(I::GMTimage, gamma; contrast=[0.0, 1.0], brightness=[0.0, 1.0])
+function gammacorrection(I::GMTimage, gamma; contrast=[0.0, 1.0], brightness=[0.0, 1.0])::GMTimage
 
 	@assert 0.0 <= contrast[1] < 1.0;	@assert 0.0 < contrast[2] <= 1.0;	@assert contrast[2] > contrast[1]
 	@assert 0.0 <= brightness[1] < 1.0;	@assert 0.0 < brightness[2] <= 1.0;	@assert brightness[2] > brightness[1]
@@ -255,7 +255,7 @@ http://www.textureshading.com/Home.html
 ### Returns
 A UInt8 (or 16) GMT Image
 """
-function texture_img(G::GMTgrid; detail=1.0, contrast=2.0, uint16=false, intensity=false)
+function texture_img(G::GMTgrid; detail=1.0, contrast=2.0, uint16=false, intensity=false)::GMTimage
 	# Here we have a similar problem with the memory layout as described in gmt2ds(). Specialy with the
 	# variants of the TRB layout. Other than that, it's strange (probably to dive in the C code to relearn)
 	# why the memory layout of the BCB mode needs to changed in the way we do below.

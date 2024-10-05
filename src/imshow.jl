@@ -40,11 +40,11 @@ function imshow(arg1, x::AbstractVector{Float64}=Float64[], y::AbstractVector{Fl
 	see = ((val = find_in_kwargs(kw, [:show])[2]) === nothing) ? true : (val != 0)	# No explicit 'show' keyword means show=true
 
 	function isplot3(kw)
-		call_plot3 = false
+		_call_plot3 = false
 		opt_p = find_in_kwargs(kw, [:p :view :perspective])[1]
-		(isa(opt_p, String) && contains(opt_p, '/')) && (call_plot3 = true)
-		((isa(opt_p, Tuple) || isa(opt_p, VMr)) && length(opt_p) > 1) && (call_plot3 = true)
-		return call_plot3
+		(isa(opt_p, String) && contains(opt_p, '/')) && (_call_plot3 = true)
+		((isa(opt_p, Tuple) || isa(opt_p, VMr)) && length(opt_p) > 1) && (_call_plot3 = true)
+		return _call_plot3
 	end
 
 	is_image, call_img, call_grd = false, false, false

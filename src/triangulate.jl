@@ -155,30 +155,37 @@ Since this is a `plot3d` _avatar_ all options in this function are those of the 
     x,y,z = GMT.peaks(N=45, grid=false);
 	trisurf([x[:] y[:] z[:]], pen=0.5, show=true)
 """
-function trisurf(in::Union{Matrix, GDtype}; gdal=true, first::Bool=true, kw...)
-	(size(in, 2) < 3) && error("'trisurf' needs at least 3 columns in input")
+function trisurf(in::Union{Matrix, GDtype}; first::Bool=true, gdal::Bool=false, kw...)
+	# Keep the 'gdal' kwarg for backward compatibility (no longer used)
 	d = KW(kw)
 	first && (d[:aspect] = get(d, :aspect, "equal"))
-	d[:p] = get(d, :p, "135/30")
-	D = gdal ? delaunay(in, 0.0, false) : triangulate(in, S=true, Z=true)
-	D, Zs = sort_by_depth(D)	# Sort the triangles by depth. Deepest first. Otherwise the plot is always a mess
-	d[:Z] = Zs
+	(!first && is_in_dict(d, [:p :projection]) === nothing ) && (d[:p] = "217.5/30")# This case is not tested in psxy
+	is_gridtri(in) && return common_plot_xyz("", in, "plot3d", first, true, d...)	# Also works for gridtri's
+
+	(size(in, 2) < 3) && error("This 'trisurf' call needs at least 3 columns in input")
+	D = triangulate(in, S=true, Z=true)
+	D[1].comment = ["gridtri_top"]
 	common_plot_xyz("", D, "plot3d", first, true, d...)
 end
-trisurf!(in::Union{Matrix, GDtype}; gdal=true, kw...) = trisurf(in; gdal=gdal, first=false, kw...)
+trisurf!(in::Union{Matrix, GDtype}; kw...) = trisurf(in; first=false, kw...)
 
-# ---------------------------------------------------------------------------------------------------
-function sort_by_depth(D::Vector{<:GMTdataset})
-	# Sort the triangulation `D` by depth (Z). Deepest first.
-	Zs = Vector{Float64}(undef, length(D))
-	for k = 1:numel(Zs)
-		Zs[k] = (D[k].bbox[5] + D[k].bbox[6]) / 2
-	end
-	ind = sortperm(Zs)			# Sort in groing z. Needed to sort the triangles too otherwise is a mess.
-	ds_bbox = D[1].ds_bbox
-	D = D[ind];		D[1].ds_bbox = ds_bbox
-	return D, Zs[ind]
+"""
+    trisurf(G, G2=nothing; bottom=false, downsample=0, level=false, ratio=0.01,
+            thickness=0.0, wall_only=false, top_only=false, geog=false, kw...)
+
+Short form for the sequence ``D = grid2tri(...)`` followed by ``viz(D)``. See the documentation of
+``grid2tri`` for more details.
+"""
+function trisurf(G::Union{GMTgrid, String}, G2=nothing; first::Bool=true, thickness=0.0, level=false, downsample=0,
+                 ratio=0.01, bottom=false, wall_only=false, top_only=false, geog=false, kw...)
+	D = grid2tri(G, G2, thickness=thickness, level=level, downsample=downsample, ratio=ratio, bottom=bottom,
+	            wall_only=wall_only, top_only=top_only, geog=geog)
+	trisurf(D; first=first, kw...)
 end
+trisurf!(G::Union{GMTgrid, String}, G2=nothing; thickness=0.0, level=false, downsample=0, ratio=0.01,
+         bottom=false, wall_only=false, top_only=false, geog=false, kw...) = 
+	trisurf(G, G2; first=false, thickness=thickness, level=level, downsample=downsample, ratio=ratio,
+	        bottom=bottom, wall_only=wall_only, top_only=top_only, geog=geog, kw...)
 
 # ---------------------------------------------------------------------------------------------------
 # D = grid2tri("cam_slab2_dep_02.24.18.grd", "cam_slab2_thk_02.24.18.grd")
@@ -199,13 +206,13 @@ NOTE: The `G` grid should have a _out-skirt_ of NaNs, otherwise just use ``grdvi
 ### Parameters
 - `G`: A GMTgrid object or a grid file name representing the surface to be triangulated.
 
-- `G2`: An optional second grid (ot file name) representing the bottom surface of the layer. Using this
+- `G2`: An optional second grid (or file name) representing the bottom surface of the layer. Using this
   option makes the `thickness` option be ignored.
 
 ### Keywords
 - `bottom`: If true, fully close the body with the bottom surface. By default we don't do this because that
-  surface is not visible whem elevation view angle is positive. But we may want this if later we want to save
-  this mesh in STL for importing in a 3D viewer software.
+  surface is often not visible whem elevation view angle is positive. But we may want this if later we want
+  to save this mesh in STL for importing in a 3D viewer software.
 
 - `layer`: If true, we interpret `thickness` option as meaning a contant level value. That is, the vertical
   wall is computed from the sides of `G` and a constant level provided via the `thickness` option.
@@ -234,47 +241,44 @@ NOTE: The `G` grid should have a _out-skirt_ of NaNs, otherwise just use ``grdvi
 ### Returns
 A vector of GMTdataset with the triangulated surface and vertical wall, or just the wall or the full closed body.
 """
-function grid2tri(G, G2=nothing; thickness=0.0, level=false, downsample=0, ratio=0.01, bottom=false,
+function grid2tri(G::Union{GMTgrid, String}, G2=nothing; thickness=0.0, level=false, downsample=0, ratio=0.01, bottom=false,
                   wall_only=false, top_only=false, geog=false)
-	(!isa(G2, GMTgrid) && !isa(G2, String) && thickness <= 0.0 && top_only == 0) &&
-		error("Must provide a bottom grid or a thickness for this layer.")
+	(!isa(G2, GMTgrid) && !isa(G2, String) && thickness <= 0.0 && top_only == 0) && (top_only = true)
 
 	(wall_only != 0) && (bottom = false)
 	(top_only  != 0) && (G2 = nothing; bottom = false; wall_only = false)
 	Dbnd_t, Dpts = gridhull(G; downsample=downsample, ratio=ratio)	# Compute the top concave hull
-	if (wall_only == 0)									# (wall_only = 0 means we have to compute the top surface)
-		Dt_t = triangulate(Dpts, S="+za", Z=true)		# Triangulation of top surface
+	if (wall_only == 0)									# (wall_only == 0 means we have to compute the top surface)
+		Dt_t = triangulate(Dpts, S=true, Z=true)		# Triangulation of top surface
 		Dc = gmtspatial(Dt_t, Q=true, o="0,1")			# Compute the polygon centroids
 		ind = (Dc in Dbnd_t) .== 1
 		Dt_t = Dt_t[ind]								# Delete the triangles outside the concave hull
-		Dt_t = sort_by_depth(Dt_t)[1]					# Sort the triangles by depth. Deepest first.
 		Dt_t[1].ds_bbox = Dt_t[1].bbox					# Because we may have deleted first Dt_t
 		Dt_t[1].proj4 = Dbnd_t.proj4
 		Dt_t[1].geom = wkbPolygonZM
-		Dt_t[1].comment = ["gridtri"]					# To help recognize this type of DS
+		Dt_t[1].comment = ["gridtri_top"]				# To help recognize this type of DS
 		set_dsBB!(Dt_t, false)
 	end
 
-	if (isa(G2, GMTgrid) || isa(G2, String))
+	if (isa(G2, GMTgrid) || isa(G2, String))			# Gave a bottom surface
 		Dbnd_b, Dpts = gridhull(G2; downsample=downsample, ratio=ratio)	# Compute the bottom concave hull
 		if (bottom == 1)
-			Dt_b = triangulate(Dpts, S="+za", Z=true)	# Triangulation of bottom surface
+			Dt_b = triangulate(Dpts, S=true, Z=true)	# Triangulation of bottom surface
 			Dt_b = Dt_b[ind]							# Delete the triangles outside the concave hull (reuse the same 'ind')
-			Dt_b = sort_by_depth(Dt_b)[1]				# Sort the triangles by depth. Deepest first.
 			Dt_b[1].ds_bbox = Dt_b[1].bbox				# Because we may have deleted first Dt
 			Dt_b[1].geom = wkbPolygonZM
-			Dt_b[1].comment = ["gridtri"]				# To help recognize this type of DS
+			Dt_b[1].comment = ["gridtri_bot"]			# To help recognize this type of DS
 			for k = 1:numel(Dt_b)						# Must reverse the order of the vertices so normals point outward
 				Dt_b[k][3,1], Dt_b[k][2,1] = Dt_b[k][2,1], Dt_b[k][3,1]
 				Dt_b[k][3,2], Dt_b[k][2,2] = Dt_b[k][2,2], Dt_b[k][3,2]
 				Dt_b[k][3,3], Dt_b[k][2,3] = Dt_b[k][2,3], Dt_b[k][3,3]
 			end
-			set_dsBB!(Dt_b, false)
 		end
 		Dwall = vwall(Dbnd_t, view(Dbnd_b, :, 3))
 		if (bottom == 1)
 			append!(Dt_b, Dwall, Dt_t)					# If including bottom too, start with it and add the wall and top.
-			(geog == 0) ? refsystem_A2B!(Dbnd_t, Dt_b) : (Dt_b[1].proj4 = prj4WGS84)		# Set ref sys
+			(geog == 0) ? refsystem_A2B!(Dbnd_t, Dt_b) : (Dt_b[1].proj4 = prj4WGS84)	# Set ref sys
+			set_dsBB!(Dt_b, false)
 			return Dt_b
 		end
 	else
@@ -285,8 +289,13 @@ function grid2tri(G, G2=nothing; thickness=0.0, level=false, downsample=0, ratio
 		Dwall = vwall(Dbnd_t, thickness, level != 0)
 	end
 
-	(wall_only == 0) && append!(Dwall, Dt_t)
+	if (wall_only == 0)					# That is vertical wall + top surface
+		append!(Dwall, Dt_t)
+		Dwall[1].comment[1] = "vwall+gridtri_top"
+		append!(Dwall[1].comment, ["$(Dt_t[1].ds_bbox[5])"])	# Save the top surface minimum to help making a default cpt.
+	end
 	(geog == 0) ? refsystem_A2B!(Dbnd_t, Dwall) : (Dwall[1].proj4 = prj4WGS84)			# Set ref sys
+	set_dsBB!(Dwall, false)
 	return Dwall
 end
 
@@ -300,8 +309,8 @@ end
 - `downsample`: Downsample the input grid by `downsample` times.
 - `ratio`: The ratio of the concave hull to the convex hull.
 """
-function gridhull(G; downsample::Int=0, ratio=0.01)
-	_G = isa(G, String) ? gmtread(G) : G
+function gridhull(G::Union{GMTgrid, String}; downsample::Int=0, ratio=0.01)
+	_G::GMTgrid = isa(G, String) ? gmtread(G) : G
 	prj4, wkt, epsg = _G.proj4, _G.wkt, _G.epsg		# Save the original projection because currently grdsample looses them
 	(downsample > 1) && (_G = grdsample(_G, I="$(div(size(_G.z,2),downsample)+1)+n/$(div(size(_G.z,1),downsample)+1)+n", V="q"))
 	V = grd2xyz(_G, s=true)					# Convert to x,y,z while dropping the NaNs
@@ -350,11 +359,36 @@ function vwall(Bt::Union{Matrix{<:Real}, GMTdataset}, Bb::Union{Matrix{<:Real}, 
 		                               Bb[k,1]   Bb[k,2]   Bb[k,3];   Bt[k,1]   Bt[k,2]   Bt[k,3]])
 		Twall[kk+1] = GMTdataset(data=[Bt[k+1,1] Bt[k+1,2] Bt[k+1,3]; Bb[k+1,1] Bb[k+1,2] Bb[k+1,3];
 		                               Bb[k,1]   Bb[k,2]   Bb[k,3];   Bt[k+1,1] Bt[k+1,2] Bt[k+1,3]])
-		Twall[kk].header = Twall[kk+1].header = "-Z$(Bt[k,3]+1e6)"		# Can be used, e.g., with the foreground color of a CPT 
+		Twall[kk].header = Twall[kk+1].header = "W "		# To allow identifying this as a vertical wall
 	end
 	set_dsBB!(Twall)
 	isa(Bt, GMTdataset) && (Twall[1].proj4 = Bt.proj4)
 	Twall[1].geom = wkbPolygonZM
 	Twall[1].comment = ["vwall"]			# To help recognize this as a vertical wall.
 	return Twall
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    Z = tri_z(D::Vector{<:GMTdataset})
+
+Get the half of the elevation for each 3D polygon in the vector of `D`. Note: this is NOT the average
+of vertices elevation, but the elevation at the midpoint of the polygon.
+
+In case the `D` is vector contains also a vertical wall, signaled by the comment starting with "vwall",
+we set the elevation to 1e6 so that we can send these triangles to the foreground color of a CPT.
+"""
+function tri_z(D::Vector{<:GMTdataset})::Vector{Float64}
+	Zs = Vector{Float64}(undef, length(D))
+	for k = 1:numel(Zs)
+		Zs[k] = (D[k].bbox[5] + D[k].bbox[6]) / 2
+	end
+	# But we need to check also if we have a vertical wall. In that case we set Zs[k] = 1e6 so that
+	# we can send these triangles to the foreground color of the CPT.
+	if (!isempty(D[1].comment) && contains(D[1].comment[1], "vwall"))
+		for k = 1:numel(Zs)
+			startswith(D[k].header, "W ") && (Zs[k] = 1e6)
+		end
+	end
+	return Zs
 end

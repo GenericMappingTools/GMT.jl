@@ -58,6 +58,9 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	if (is3D && isFV(arg1))			# case of 3D faces
 		arg1 = deal_faceverts(arg1, d, opt_p)
 		!haskey(d, :aspect3) && (d[:aspect3] = "equal")			# Needs thinking
+	elseif is_gridtri
+		arg1 = sort_visible_triangles(arg1)
+		is_in_dict(d, [:Z :level :levels]) === nothing && (d[:Z] = tri_z(arg1))
 	end
 	
 	isa(arg1, GMTdataset) && (arg1 = with_xyvar(d, arg1))		# See if we have a column request based on column names
@@ -371,7 +374,7 @@ function deal_faceverts(arg1, d, opt_p)
 	elev = length(spl) > 1 ? parse(Float64, spl[2]) : 90.0
 	arg1, dotprod = visible_faces(arg1, [sind(az) * cosd(elev), cosd(az) * cosd(elev), sind(elev)])
 	if (is_in_dict(d, [:G :fill]) === nothing)		# If fill not set we use the dotprod and a gray CPT to set the fill
-		d[:Z] = dotprod
+		is_in_dict(d, [:Z :level :levels]) === nothing && (d[:Z] = dotprod)
 		(is_in_dict(d, CPTaliases) === nothing) && (d[:C] = gmt("makecpt -T0/1 -C150,210"))	# Users may still set a CPT
 	end
 	return arg1
@@ -380,11 +383,12 @@ end
 # ---------------------------------------------------------------------------------------------------
 function deal_gridtri!(arg1, d)::Bool
 	# Deal with the situation where we are plotting triangulated grids made by grid2tri()
-	((!isa(arg1, Vector{<:GMTdataset}) || isempty(arg1[1].comment) || (arg1[1].comment[1] != "vwall" && arg1[1].comment[1] != "gridtri"))) &&
-		return false
+	!is_gridtri(arg1) && return false
 	is_in_dict(d, [:G :fill]) === nothing && (d[:G] = "+z")
 	if (is_in_dict(d, CPTaliases) === nothing)
-		C = gmt("makecpt -T$(arg1[1].ds_bbox[5]-1e-8)/$(arg1[1].ds_bbox[6]+1e-8)/+n255 -Cturbo")
+		opt_T = (contains(arg1[1].comment[1], "vwall+gridtri_top")) ? "-T$(arg1[1].comment[2])/$(arg1[1].ds_bbox[6]+1e-8)/+n255" :
+			"-T$(arg1[1].ds_bbox[5]-1e-8)/$(arg1[1].ds_bbox[6]+1e-8)/+n255"
+		C = gmt("makecpt -Cturbo " * opt_T)
 		C.bfn[2, :] .= 0.7			# Set the foreground color used by the vertical wall
 		d[:C] = C
 	end
@@ -1425,4 +1429,61 @@ function visible_faces(FV::Vector{<:GMTdataset}, view_vec)
 	is_vis = (proj .> 0)	# Visible faces
 	F2 = mat2ds(F.data[is_vis, :])
 	return [V,F2], proj[is_vis]
+end
+
+# ---------------------------------------------------------------------------------------------------
+function sort_visible_triangles(Dv::Vector{<:GMTdataset}; del_hidden=false, zfact=1.0)::Vector{GMTdataset}
+	azim, elev = parse.(Float64, split(CURRENT_VIEW[1][4:end], '/'))
+	sin_az, cos_az, sin_el = sind(azim), cosd(azim), sind(elev)
+	prj, wkt, epsg = Dv[1].proj4, Dv[1].wkt, Dv[1].epsg
+	top_comment = Dv[1].comment		# save this for later restore as it can be used by tri_z() to detect vertical walls
+
+	(del_hidden != 1 && contains(Dv[1].comment[1], "vwall")) && (del_hidden = true)	# If have vwalls, need to del invis
+	if (del_hidden == 1)		# Remove the triangles that are not visible from the normal view_vec
+		t = isgeog(Dv) ? mapproject(Dv, J="t$((Dv[1].ds_bbox[1] + Dv[1].ds_bbox[2])/2)/1:1", C=true, F=true) : Dv
+		view_vec = [sin_az * cosd(elev), cos_az * cosd(elev), sin_el]
+		#zs_t = CTRL.pocket_J[3][5:end]			# Ex: CTRL.pocket_J[3] = " -JZ3"
+		is_vis = [dot(facenorm(t[k].data, zfact=zfact, normalize=false), view_vec) > 0 for k in eachindex(t)]
+		#@show(length(t),sum(is_vis))
+		Dv = Dv[is_vis]
+	end
+
+	# ---------------------- Now sort by distance to the viewer ----------------------
+	Dc = gmtspatial(Dv, Q=true, o="0,1")
+	dists = [(Dc.data[1,1] * sin_az + Dc.data[1,2] * cos_az, (Dv[1].bbox[5] + Dv[1].bbox[6]) / 2 * sin_el)]
+	for k = 2:size(Dc, 1)
+		push!(dists, (Dc.data[k,1] * sin_az + Dc.data[k,2] * cos_az, (Dv[k].bbox[5] + Dv[k].bbox[6]) / 2 * sin_el))
+	end
+
+	ind = sortperm(dists)			# Sort in growing distances.
+	Dv = Dv[ind]
+	set_dsBB!(Dv)
+	Dv[1].proj4 = prj; Dv[1].wkt = wkt; Dv[1].epsg = epsg	# Because first triangle may have been deleted or reordered.
+	Dv[1].comment = top_comment		# Restore the original comment that holds info abot this gridtri dataset
+	return Dv
+end
+
+# ---------------------------------------------------------------------------------------------------
+function tri_normals(Dv::Vector{<:GMTdataset}; zfact=1.0)
+	t = isgeog(Dv) ? mapproject(Dv, J="t$((Dv[1].ds_bbox[1] + Dv[1].ds_bbox[2])/2)/1:1", C=true, F=true) : Dv
+	Dc = gmtspatial(Dv, Q=true)
+	nx = Vector{Float64}(undef, length(t)); ny = copy(nx); nz = copy(nx)
+	for k in eachindex(t)
+		nx[k], ny[k], nz[k] = facenorm(t[k].data; zfact=zfact)
+		Dc.data[k,3] = (t[k].bbox[5] + t[k].bbox[6]) / 2	# Reuse the area column to store the triangle mean height
+	end
+	return Dc, nx, ny, nz
+end
+
+# ---------------------------------------------------------------------------------------------------
+function quiver3(Dv::Vector{<:GMTdataset}; first=true, zfact=1.0, kwargs...)
+	Dc, nx, ny, nz = tri_normals(Dv, zfact=zfact)
+	mat = fill(NaN, size(Dc,1) * 3 - 1, 3)
+	for k in eachindex(Dv)
+		kk = (k-1) * 3
+		mat[kk+=1,1], mat[kk,2], mat[kk,3] = Dc.data[k,1], Dc.data[k,2], Dc.data[k,3]
+		mat[kk+=1,1], mat[kk,2], mat[kk,3] = Dc.data[k,1]+nx[k]/2, Dc.data[k,2]+ny[k]/2, Dc.data[k,3]+nz[k]/2
+	end
+	D = mat2ds(mat, geom=wkbLineStringZ)
+	common_plot_xyz("", D, "plot3d", first, true, kwargs...)
 end

@@ -1180,8 +1180,8 @@ function palette_init(API::Ptr{Nothing}, cpt::GMTcpt)::Ptr{GMT_PALETTE}
 		n_colors = n_colors - 1;		# Number of CPT slices
 	end
 
-	P = convert(Ptr{GMT_PALETTE}, GMT_Create_Data(API, GMT_IS_PALETTE, GMT_IS_NONE, 0, pointer([n_colors]),
-	                                              NULL, NULL, 0, 0, NULL))
+	ptr = Ref{UInt64}(n_colors)
+	P = convert(Ptr{GMT_PALETTE}, GMT_Create_Data(API, GMT_IS_PALETTE, GMT_IS_NONE, 0, ptr, NULL, NULL, 0, 0, NULL))
 	(n_colors > 100000) && @warn("Que exagero de cores")	# Just to protect n_colors to be GC'ed before here
 
 	Pb::GMT_PALETTE = unsafe_load(P)	# We now have a GMT_PALETTE
@@ -1251,7 +1251,7 @@ function ps_init(API::Ptr{Nothing}, ps, dir::Integer)::Ptr{GMT_POSTSCRIPT}
 	(!isa(ps, GMTps)) && error("Expected a PS structure for input")
 
 	# Passing dim[0] = 0 since we dont want any allocation of a PS string
-	pdim = pointer([0])
+	pdim = Ref{UInt64}(0)
 	P = convert(Ptr{GMT_POSTSCRIPT}, GMT_Create_Data(API, GMT_IS_POSTSCRIPT, GMT_IS_NONE, 0, pdim, NULL, NULL, 0, 0, NULL))
 
 	P0::GMT_POSTSCRIPT = unsafe_load(P)		# GMT_POSTSCRIPT

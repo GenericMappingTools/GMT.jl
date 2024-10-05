@@ -204,6 +204,7 @@ include("utils_types.jl")
 include("grd_operations.jl")
 include("common_options.jl")
 const global LEGEND_TYPE = [legend_bag()]	# To store Legends info
+include("circfit.jl")
 include("custom_symb_funs.jl")
 include("gmtbegin.jl")
 include("blendimg.jl")
@@ -387,7 +388,7 @@ using GMT.Laszip
 	resetGMT()
 end
 
-Base.precompile(Tuple{typeof(upGMT),Bool, Bool})		# Here it doesn't print anything.
+#Base.precompile(Tuple{typeof(upGMT),Bool, Bool})		# Here it doesn't print anything.
 
 function __init__(test::Bool=false)
 	if !isfile(libgmt) || (!Sys.iswindows() && (!isfile(libgdal) || !isfile(libproj)))

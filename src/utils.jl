@@ -1097,24 +1097,63 @@ end
 
 # ----------------------------------------------------------------------------
 """
-    n = facenorm(M::Matrix{<:Real}; normalize=true)
+    n = facenorm(M::Matrix{<:Real}; normalize=true, zfact=1.0)
 
 Calculates the normal vector of a polygon with vertices in `M`.
 
 - `normalize`: By default, it returns the unit vector. If `false`, it returns the non-normalized 
   vector that represents the area of the polygon.
 
+- `zfact`: If different from 1, the last dimension of `M` (normally, the Z variable)
+  is multiplied by `zfact`.
+
 ### Returns
 A 3 elements vector with the components of the normal vector.
 """
-function facenorm(M::Matrix{<:Real}; normalize=true)
+function facenorm(M::Matrix{<:Real}; zfact=1.0, normalize=true)
 	# Must take care of the case when the first and last vertices are the same
-	last = (M[1,:] == M[end,:]) ? size(M,1)-1 : size(M,1)
-	c = cross(M[last,:], M[1,:])		# First edge
-	for k = 1:last-1					# Loop from first to end-1
-		c += cross(M[k,:], M[k+1,:])	# Sum the rest of edges
+	p1 = M[1,:]
+	last = (p1 == M[end,:]) ? size(M,1)-1 : size(M,1)
+	if (zfact == 1.0)
+		c = cross(M[last,:], p1)			# First edge
+		for k = 1:last-1					# Loop from first to end-1
+			c += cross(M[k,:], M[k+1,:])	# Sum the rest of edges
+		end
+	else
+		p2 = M[last,:]
+		p1[end] *= zfact;	p2[end] *= zfact
+		c = cross(p2, p1)					# First edge
+		for k = 1:last-1					# Loop from first to end-1
+			p1, p2 = M[k,:], M[k+1,:]
+			p1[end] *= zfact;	p2[end] *= zfact
+			c += cross(p1, p2)				# Sum the rest of edges
+		end
 	end
 	return normalize ? c / norm(c) : c	# The cross product gives us 2 * A(rea)
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    A, B, C, D = eq_plane(azim, elev, dist)
+
+Calculate the equation of a plane (Eq: Ax + By + Cz + D = 0) given the azimuth,
+elevation and distance to the plane.
+
+- `azim`: Azimuth in degrees (clockwise from North)
+- `elev`: Elevation in degrees
+- `dist`: Distance to the plane
+
+To compute the distance fom a point to that plane, do:
+```julia
+	p = (0,0,0);
+	dist = abs(A * p[1] + B * p[2] + C * p[3] + D)
+```
+"""
+function eq_plane(azim, elev, dist)
+	nx, ny, nz = cosd(elev) * sind(azim), cosd(elev) * cosd(azim), sind(elev)
+	Px, Py, Pz = dist * nx, dist * ny, dist * nz
+	D = Px * nx + Py * ny + Pz * nz
+	return nx, ny, nz, D		# Eq of plane: Ax + By + Cz + D = 0
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -1148,5 +1187,3 @@ end
 =#
 
 #GI.geometry[1].geoms[1].rings[1].vertices.data[1].coords.lat.val
-
-include("circfit.jl")

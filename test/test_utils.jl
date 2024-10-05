@@ -31,5 +31,7 @@
 		x2, y2, R2, err2 = circfit(x, y, taubin=true)
 		return [x y], x1, y1, R1, err1, x2, y2, R2, err2
 	end
-	test_circfit();	
+	test_circfit();
+
+	A, B, C, D = GMT.eq_plane(0, 45, 10);
 end
