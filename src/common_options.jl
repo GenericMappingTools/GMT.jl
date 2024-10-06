@@ -401,7 +401,7 @@ function parse_JZ(d::Dict, cmd::String, del::Bool=true; O::Bool=false, is3D::Boo
 	if ((val = find_in_dict(d, [:aspect3])[1]) !== nothing)
 		o = scan_opt(cmd, "-J")
 		(o == "") && (o = " ")		# When scaning a string with only -J (i.e., no args), do not error
-		(o[1] != 'X' || o[end] == 'd') &&  @warn("aspect3 works only in linear projections (and no geog), ignoring it.") 
+		(o != " " && o[1] != 'X' || o[end] == 'd') &&  @warn("aspect3 works only in linear projections (and no geog), ignoring it.") 
 		if (o[1] == 'X' && o[end] != 'd' && length(o) > 1)
 			s_val::String = string(val)
 			if (contains(s_val, ':'))						# An explicit aspect ratio, e.g. 3:2
@@ -950,7 +950,7 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 				if     (haskey(d, :xlabel))  _val = "-BS";	have_a_none = true		# Unless labels are wanted, but
 				elseif (haskey(d, :ylabel))  _val = "-BW";	have_a_none = true		# GMT Bug forces using tricks
 				elseif (haskey(d, :title))   _val = "";		have_a_none = true
-				else   return cmd, ""
+				else   POSTMAN[1]["noframe"] = "y"; return cmd, ""
 				end
 			elseif (_val == "noannot" || _val == "bare")
 				return cmd * " -B0", " -B0"
