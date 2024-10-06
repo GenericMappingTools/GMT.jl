@@ -339,7 +339,7 @@ function gd2gmt(dataset::Gdal.AbstractDataset)
 		for k = 1:n_polys  D[k].attrib[att_area_name] = string(polyg_area[ind[k]])  end
 		delete!(GMT.POSTMAN[1], "sort_polygons")
 	end
-	if ((tol = get(POSTMAN[1], "simplify", "")) != "")		# The caller requested a line simplification step
+	if ((tol = get(GMT.POSTMAN[1], "simplify", "")) != "")		# The caller requested a line simplification step
 		D = gmtsimplify(D, T=tol, f = p_isgeog ? "g" : "c")
 		delete!(GMT.POSTMAN[1], "simplify")					# Used, so clean it.
 	end
