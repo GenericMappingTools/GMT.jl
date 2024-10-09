@@ -5,5 +5,5 @@
 	GMT.dodecahedron()
 	GMT.tetrahedron()
 	GMT.cube()
-	GMT.geosphere(2)
+	GMT.sphere()
 end
