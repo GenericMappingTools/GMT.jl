@@ -2219,9 +2219,9 @@ end
     mksymbol(f::Function, cmd0::String="", arg1=nothing; kwargs...)
 """
 function mksymbol(f::Function, cmd0::String="", arg1=nothing; kwargs...)
-	# Make a fig and convert it to EPS so it can be used as a custom symbol is plot(3)
+	# Make a fig and convert it to EPS so it can be used as a custom symbol in plot(3)
 	d = KW(kwargs)
-	t = ((val = find_in_dict(d, [:symbname :symb_name :symbol])[1]) !== nothing) ? string(val) : "GMTsymbol"
+	t::String = ((val = find_in_dict(d, [:symbname :symb_name :symbol])[1]) !== nothing) ? string(val) : "GMTsymbol"
 	(t == "GMTsymbol" && (f == flower_minho || f == matchbox)) && (t = string(f))
 	!haskey(d, :name) && (d[:name] = t * ".eps")
 	if (f == flower_minho || f == matchbox)			# Special case for the Flower Minho symbol
