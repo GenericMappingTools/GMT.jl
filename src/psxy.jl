@@ -1424,7 +1424,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    FV = sort_visible_faces(FV::Vector{<:GMTdataset}, azim, elev) -> ::Vector{GMTdataset}
+    FV, projs = sort_visible_faces(FV::Vector{<:GMTdataset}, azim, elev) -> Tuple{Vector{GMTdataset}, Vector{Float64}}
 
 Take a Faces-Vertices dataset and delete the invisible faces from view vector. Next sort them by distance so
 that the furthest faces are drawn on first and hence do not hide the others.
@@ -1462,6 +1462,17 @@ function sort_visible_faces(FV::Vector{<:GMTdataset}, azim, elev)::Tuple{Vector{
 end
 
 # ---------------------------------------------------------------------------------------------------
+"""
+	Dv = sort_visible_triangles(Dv::Vector{<:GMTdataset}; del_hidden=false, zfact=1.0) -> Vector{GMTdataset}
+
+Take a Faces-Vertices dataset produced by grid2tri() and sort them by distance so that the furthest faces are
+drawn on first and hence do not hide others. Optionally remove the invisible triangles. This not true by default
+because we may want to see the inside of a top surface.
+
+`zfact` is a factor use to bring the z units to the same of the x,y units as for example when `z` is in km
+and `x` and `y` are in degrees, case in which an automatic projection takes place, or in meters. We need this
+if we want that the normal compuations makes sense.
+"""
 function sort_visible_triangles(Dv::Vector{<:GMTdataset}; del_hidden=false, zfact=1.0)::Vector{GMTdataset}
 	azim, elev = parse.(Float64, split(CURRENT_VIEW[1][4:end], '/'))
 	sin_az, cos_az, sin_el = sind(azim), cosd(azim), sind(elev)
@@ -1477,7 +1488,7 @@ function sort_visible_triangles(Dv::Vector{<:GMTdataset}; del_hidden=false, zfac
 	end
 
 	# ---------------------- Now sort by distance to the viewer ----------------------
-	Dc = gmtspatial(Dv, Q=true, o="0,1")
+	Dc = gmtspatial(Dv, Q=true, o="0,1")	# Should this directly in Julia and avoid calling GMT (=> a copy of Dv)
 	dists = [(Dc.data[1,1] * sin_az + Dc.data[1,2] * cos_az, (Dv[1].bbox[5] + Dv[1].bbox[6]) / 2 * sin_el)]
 	for k = 2:size(Dc, 1)
 		push!(dists, (Dc.data[k,1] * sin_az + Dc.data[k,2] * cos_az, (Dv[k].bbox[5] + Dv[k].bbox[6]) / 2 * sin_el))
@@ -1491,7 +1502,7 @@ function sort_visible_triangles(Dv::Vector{<:GMTdataset}; del_hidden=false, zfac
 	return Dv
 end
 
-# ---------------------------------------------------------------------------------------------------
+#= ---------------------------------------------------------------------------------------------------
 function tri_normals(Dv::Vector{<:GMTdataset}; zfact=1.0)
 	t = isgeog(Dv) ? mapproject(Dv, J="t$((Dv[1].ds_bbox[1] + Dv[1].ds_bbox[2])/2)/1:1", C=true, F=true) : Dv
 	Dc = gmtspatial(Dv, Q=true)
@@ -1514,4 +1525,40 @@ function quiver3(Dv::Vector{<:GMTdataset}; first=true, zfact=1.0, kwargs...)
 	end
 	D = mat2ds(mat, geom=wkbLineStringZ)
 	common_plot_xyz("", D, "plot3d", first, true, kwargs...)
+end
+=#
+
+# ---------------------------------------------------------------------------------------------------
+function replicant(FV::Vector{<:GMTdataset}, xyz::Matrix{<:Real}, cval, cpt::GMTcpt, azim, elev; scales=nothing)
+	@assert length(cval) == size(xyz, 1)
+	FV, normals = sort_visible_faces(FV::Vector{<:GMTdataset}, azim, elev)
+	V::GMTdataset{Float64,2}, F::GMTdataset{Int,2} = FV[1], FV[2]
+
+	n_rows = size(F.data, 2)				# Number of rows (vertexes of the polygon)
+	n_cols = size(V.data, 2)				# Number of columns (2 for x,y; 3 for x,y,z)
+	n_faces = size(F.data, 1)				# Number of faces of base body
+
+	D1 = Vector{GMTdataset}(undef, n_faces)
+	t = zeros(n_rows, n_cols)
+	for face = 1:n_faces					# Loop over faces
+		#t = [V.data[F.data[face, r], c] for c = 1:n_cols, r = 1:n_rows]
+		for c = 1:n_cols, r = 1:n_rows
+			t[r,c] = V.data[F.data[face, r], c]
+		end
+		D1[face] = GMTdataset(data=copy(t))
+	end
+
+	P::Ptr{GMT_PALETTE} = palette_init(G_API[1], cpt);		# A pointer to a GMT CPT
+	rgb = [0.0, 0.0, 0.0];
+	D2 = Vector{GMTdataset}(undef, size(xyz, 1) * n_faces)
+
+	for k = 1:size(xyz, 1)					# Loop over number of positions. For each of these we have a new body
+		gmt_get_rgb_from_z(G_API[1], P, cval[k], rgb)
+		for face = 1:n_faces				# Loop over number of faces of the base body
+			cor = copy(rgb)
+			gmt_illuminate(G_API[1], normals[face], cor)
+			D2[(k-1)*n_faces+face] = GMTdataset(data=D1[face].data .+ xyz[k:k,1:3], header=@sprintf("-G%.0f/%.0f/%.0f", cor[1]*255, cor[2]*255, cor[3]*255))
+		end
+	end
+	return set_dsBB(D2)
 end
