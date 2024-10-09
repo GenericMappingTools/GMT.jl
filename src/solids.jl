@@ -1,28 +1,34 @@
 # This file contains modified versions of some functions from the Comodo.jl package (Apache 2.0 license).
 # https://github.com/COMODO-research/Comodo.jl
 """
-    FV = icosahedron(r=1.0)
+    FV = icosahedron(r=1.0; radius=1.0, origin=(0.0, 0.0, 0.0))
 
-Creates an icosahedron mesh with radius `r. 
+Creates an icosahedron mesh with radius `r`. 
+
+- `radius`: the keyword `radius` is an alternative to the positional argument `r`.
+- `origin`: A tuple of three numbers defining the origin of the body. Default is `(0.0, 0.0, 0.0)`.
 """
-function icosahedron(r=1.0)
+function icosahedron(r=1.0; radius=1.0, origin=(0.0, 0.0, 0.0))
+
+	_r::Float64 = (radius != 1.0) ? radius : r		# If spelled, the `radius` kwarg take precedence
+	o::Matrix{Float64} = [origin[1] origin[2] origin[3]]
 
 	ϕ = Base.MathConstants.golden # (1.0+sqrt(5.0))/2.0, Golden ratio
-	s = r / sqrt(ϕ + 2.0)
+	s = _r / sqrt(ϕ + 2.0)
 	t = ϕ * s
 
-	V = [0.0  -s  -t				# The Vertices
-		 0.0  -s   t
-		 0.0   s   t
-		 0.0   s  -t
-		 -s   -t  0.0
-		 -s    t  0.0
-		  s    t  0.0
-		  s   -t  0.0
-		 -t  0.0  -s
-		  t  0.0  -s
-		  t  0.0   s
-		 -t  0.0   s]
+	V =[0  -s -t				# The Vertices
+		 0 -s  t
+		 0  s  t
+		 0  s -t
+		-s -t  0
+		-s  t  0
+		 s  t  0
+		 s -t  0
+		-t  0 -s
+		 t  0 -s
+		 t  0  s
+		-t  0  s]
 
 	F = [9 4 1					# The Faces
 		 1 5 9
@@ -45,26 +51,32 @@ function icosahedron(r=1.0)
 		 6 7 4
 		 6 4 9]
  
+	(o[1] != 0 || o[2] != 0 || o[3] != 0) && (V .+= o)
 	DV = GMTdataset(data=V, geom=wkbPointZ);	set_dsBB!(DV)
 	return [DV, GMTdataset(data=F)]
 end
 
 # --------------------------------------------------------
 """
-    FV = octahedron(r=1.0)
+    FV = octahedron(r=1.0; radius=1.0, origin=(0.0, 0.0, 0.0))
 
 Creates an octahedron mesh with radius `r`. 
-"""
-function octahedron(r=1.0)
 
-	s = r/sqrt(2.0)
+- `radius`: the keyword `radius` is an alternative to the positional argument `r`.
+- `origin`: A tuple of three numbers defining the origin of the body. Default is `(0.0, 0.0, 0.0)`.
+"""
+function octahedron(r=1.0; radius=0.0, origin=(0.0, 0.0, 0.0))
+
+	_r::Float64 = (radius != 1.0) ? radius : r		# If spelled, the `radius` kwarg take precedence
+	o::Matrix{Float64} = [origin[1] origin[2] origin[3]]
+	s = _r / sqrt(2.0)
 
 	V = [-s  -s  0.0			# The Vertices
 		  s  -s  0.0
 		  s   s  0.0
 		 -s   s  0.0
-		 0.0 0.0 -r
-		 0.0 0.0  r]
+		 0.0 0.0 -_r
+		 0.0 0.0  _r]
  
 	F = [5 2 1					# The Faces
 		 5 3 2
@@ -75,20 +87,27 @@ function octahedron(r=1.0)
 		 6 3 4
 		 6 4 1]
 
+	(o[1] != 0 || o[2] != 0 || o[3] != 0) && (V .+= o)
 	DV = GMTdataset(data=V, geom=wkbPointZ);	set_dsBB!(DV)
 	return [DV, GMTdataset(data=F)]
 end
 
 # ----------------------------------------------------------------------------
 """
-    FV = dodecahedron(r=1.0)
+    FV = dodecahedron(r=1.0; radius=1.0, origin=(0.0, 0.0, 0.0))
 
 Creates an dodecahedron mesh with radius `r`. 
+
+- `radius`: the keyword `radius` is an alternative to the positional argument `r`.
+- `origin`: A tuple of three numbers defining the origin of the body. Default is `(0.0, 0.0, 0.0)`.
 """
-function dodecahedron(r=1.0)
+function dodecahedron(r=1.0; radius=1.0, origin=(0.0, 0.0, 0.0))
+
+	_r::Float64 = (radius != 1.0) ? radius : r		# If spelled, the `radius` kwarg take precedence
+	o::Matrix{Float64} = [origin[1] origin[2] origin[3]]
 
 	ϕ = Base.MathConstants.golden # (1.0+sqrt(5.0))/2.0, Golden ratio
-	s = r/sqrt(3.0)
+	s = _r / sqrt(3.0)
 	t = ϕ*s    
 	w = (ϕ-1.0)*s
 
@@ -125,26 +144,33 @@ function dodecahedron(r=1.0)
 		  1  2  8 17  4
 		  1  4 19 15 20
 		 12 18  5 15 19]
-    
+
+	(o[1] != 0 || o[2] != 0 || o[3] != 0) && (V .+= o)
 	DV = GMTdataset(data=V, geom=wkbPointZ);	set_dsBB!(DV)
 	return [DV, GMTdataset(data=F)]
 end
 
 # ----------------------------------------------------------------------------
 """
-    FV = tetrahedron(r=1.0)
+    FV = tetrahedron(r=1.0; radius=1.0, origin=(0.0, 0.0, 0.0))
 
 Creates a tetrahedron mesh with radius `r`. 
+
+- `radius`: the keyword `radius` is an alternative to the positional argument `r`.
+- `origin`: A tuple of three numbers defining the origin of the body. Default is `(0.0, 0.0, 0.0)`.
 """
-function tetrahedron(r=1.0)
+function tetrahedron(r=1.0; radius=1.0, origin=(0.0, 0.0, 0.0))
+
+	_r::Float64 = (radius != 1.0) ? radius : r		# If spelled, the `radius` kwarg take precedence
+	o::Matrix{Float64} = [origin[1] origin[2] origin[3]]
 
 	a = r*sqrt(2.0)/sqrt(3.0)
-	b = -r*sqrt(2.0)/3.0
-	c = -r/3.0       
+	b = -_r * sqrt(2.0)/3.0
+	c = -_r / 3.0       
 
 	V = [-a    b     c	# The Vertices
 		  a    b     c
-		  0.0  0.0   r
+		  0.0  0.0  _r
 		  0.0 -2.0*b c]
 
 	F = [1 2 3			# The Faces
@@ -152,19 +178,26 @@ function tetrahedron(r=1.0)
 		 4 3 2
 		 4 1 3]
 
+	(o[1] != 0 || o[2] != 0 || o[3] != 0) && (V .+= o)
 	DV = GMTdataset(data=V, geom=wkbPointZ);	set_dsBB!(DV)
 	return [DV, GMTdataset(data=F)]
 end
 
 # ----------------------------------------------------------------------------
 """
-    FV = cube(r=1.0)
+    FV = cube(r=1.0; radius=1.0, origin=(0.0, 0.0, 0.0))
 
 Creates a cube mesh with radius `r`. 
-"""
-function cube(r=1.0)
 
-	s = r/sqrt(3.0)
+- `radius`: the keyword `radius` is an alternative to the positional argument `r`.
+- `origin`: A tuple of three numbers defining the origin of the body. Default is `(0.0, 0.0, 0.0)`.
+"""
+function cube(r=1.0; radius=1.0, origin=(0.0, 0.0, 0.0))
+
+	_r::Float64 = (radius != 1.0) ? radius : r		# If spelled, the `radius` kwarg take precedence
+	o::Matrix{Float64} = [origin[1] origin[2] origin[3]]
+
+	s = _r / sqrt(3.0)
 
 	V = [-s -s -s			# The Vertices
 		 -s  s -s
@@ -182,13 +215,14 @@ function cube(r=1.0)
 		 7 8 4 3
 		 8 5 1 4]
 
+	(o[1] != 0 || o[2] != 0 || o[3] != 0) && (V .+= o)
 	DV = GMTdataset(data=V, geom=wkbPointZ);	set_dsBB!(DV)
 	return [DV, GMTdataset(data=F)]
 end
 
 # ----------------------------------------------------------------------------
 """
-    FV = geosphere(n, r=1; radius=1.0)
+    FV = sphere(r=1; n=1, radius=1.0, center=(0.0, 0.0, 0.0))
 
 Generate a geodesic sphere triangulation based on the number of refinement iterations `n`
 and the radius `r`. Geodesic spheres (aka Buckminster-Fuller spheres) are triangulations
@@ -197,25 +231,29 @@ icosahedron. Next this icosahedron is refined `n` times, while nodes are pushed 
 surface with radius `r` at each iteration.
 
 - `radius`: the keyword `radius` is an alternative to the positional argument `r`.
-- `n`: is the number of times of iterations used to obtain the sphere from the icosahedron.
+- `n`: is the number of iterations used to obtain the sphere from the icosahedron.
+- `center`: A tuple of three numbers defining the center of the sphere.
 
 ### Returns
 A two elements vector of GMTdataset where first contains the vertices and the second
 the indices that define the faces.
 """
-function geosphere(n, r=1; radius=1.0)
-	(radius != 1 && r == 1) && (r = radius)
-	FV = icosahedron(r)
+function sphere(r=1; n=1, radius=1.0, center=(0.0, 0.0, 0.0))
+	_r::Float64 = (radius != 1.0) ? radius : r		# If spelled, the `radius` kwarg take precedence
+	o::Matrix{Float64} = [center[1] center[2] center[3]]
+
+	FV = icosahedron(_r)	# Can't use the center here because subTriSplit() screws it up
 	# Sub-triangulate the icosahedron for geodesic sphere triangulation
 	if (n > 0)				# If refinement is requested
 		Fn::Matrix{Int} = FV[2].data;	Vn::Matrix{Float64} = FV[1].data;		# Initialise Fn, Vn as input F and V
 		for q = 1:n			# iteratively refine triangulation and push back radii to be r        
 			Vn, Fn  = subTriSplit(Vn, Fn, 1)			# Sub-triangulate      
 			T, P, R = cart2sph(view(Vn,:,1),view(Vn,:,2),view(Vn,:,3))			# Convert to spherical coordinates
-			x, y, z = sph2cart(T, P, r.*ones(size(R)))	# Push back radii
+			x, y, z = sph2cart(T, P, _r .* ones(size(R)))	# Push back radii
 			Vn[:,1] .= x;	Vn[:,2] .= y;	Vn[:,3] .= z
 		end
 	end
+	(o[1] != 0 || o[2] != 0 || o[3] != 0) && (Vn .+= o)
 	DV = GMTdataset(data=Vn, geom=wkbPointZ);	set_dsBB!(DV)
 	return [DV, GMTdataset(data=Fn)]
 end
