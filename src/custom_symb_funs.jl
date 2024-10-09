@@ -51,7 +51,7 @@ function helper_cusymb(cache, name, fmt, format, subdir="")
 		fmt = ".eps"
 	end
 	(fmt == "" && format != "") && (fmt = format)
-	_fmt = (fmt == "" && format == "") ? ".eps" : string(fmt)
+	_fmt::String = (fmt == "" && format == "") ? ".eps" : string(fmt)
 	_fmt[1] != '.' && (_fmt = "." * _fmt)
 	return _fmt, name
 end
