@@ -56,7 +56,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	(opt_p == "") ? (opt_p = CURRENT_VIEW[1]; cmd *= opt_p)	: (CURRENT_VIEW[1] = opt_p) # Save for eventual use in other modules.
 
 	if (is3D && isFV(arg1))			# case of 3D faces
-		arg1 = deal_faceverts(arg1, d, opt_p)
+		arg1 = deal_faceverts(arg1, d)
 		!haskey(d, :aspect3) && (d[:aspect3] = "equal")			# Needs thinking
 	elseif is_gridtri
 		arg1 = sort_visible_triangles(arg1)
@@ -126,8 +126,6 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	end
 
 	if (isa(arg1, GDtype) && !contains(opt_f, "T") && !contains(opt_f, "t") && !contains(opt_R, "T") && !contains(opt_R, "t"))
-		#isa(arg1, GMTdataset) && (cmd = set_fT(arg1, cmd, opt_f))
-		#isa(arg1, Vector{<:GMTdataset}) && (cmd = set_fT(arg1[1], cmd, opt_f))
 		cmd = isa(arg1, GMTdataset) ? set_fT(arg1, cmd, opt_f) : set_fT(arg1[1], cmd, opt_f)
 	end
 
@@ -367,12 +365,34 @@ function plt_txt_attrib!(D::GDtype, d::Dict, _cmd::Vector{String})
 end
 
 # ---------------------------------------------------------------------------------------------------
-function deal_faceverts(arg1, d, opt_p)
-	# Deal with the situation where we are plotting 3D FV's
-	spl = split(opt_p[4:end], '/')
+# replicate=(centers=[], zcolor=[], cmap=..., scales=..., )
+function deal_replicants(arg1, d)
+	(val = find_in_dict(d, [:replicate])[1]) === nothing && return arg1
+	((xyz = get(val, :centers, nothing)) === nothing) && error("Can't replicate without centers")
+	_xyz = (promote_type(eltype(arg1[1].data), eltype(xyz))).(xyz)
+	((zcolor = get(val, :zcolor, nothing)) === nothing) && (zcolor = collect(1.0:size(xyz, 1)))
+	cpt::GMTcpt = get(val, :cmap, GMTcpt())
+	(isempty(cpt)) && (cpt = gmt("makecpt -T1/$(length(zcolor))"))
+	scales = get(val, :scales, nothing)
+	spl = split(CURRENT_VIEW[1][4:end], '/')
 	azim = parse(Float64, spl[1])
 	elev = length(spl) > 1 ? parse(Float64, spl[2]) : 90.0
-	arg1, dotprod = sort_visible_faces(arg1, azim, elev)
+	arg1, = sort_visible_faces(arg1, azim, elev)		# Sort & kill invisible
+	replicant(arg1, _xyz, azim, elev, zcolor, cpt; scales=scales)
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    deal_faceverts(arg1, d)
+"""
+function deal_faceverts(arg1, d)
+	# Deal with the situation where we are plotting 3D FV's
+	(is_in_dict(d, [:replicate]) !== nothing) && return deal_replicants(arg1, d)
+
+	spl = split(CURRENT_VIEW[1][4:end], '/')
+	azim = parse(Float64, spl[1])
+	elev = length(spl) > 1 ? parse(Float64, spl[2]) : 90.0
+	arg1, dotprod = sort_visible_faces(arg1, azim, elev)		# Sort & kill invisible
 	if (is_in_dict(d, [:G :fill]) === nothing)		# If fill not set we use the dotprod and a gray CPT to set the fill
 		is_in_dict(d, [:Z :level :levels]) === nothing && (d[:Z] = dotprod)
 		(is_in_dict(d, CPTaliases) === nothing) && (d[:C] = gmt("makecpt -T0/1 -C150,210"))	# Users may still set a CPT
@@ -1529,8 +1549,14 @@ end
 =#
 
 # ---------------------------------------------------------------------------------------------------
-function replicant(FV::Vector{<:GMTdataset}, xyz::Matrix{<:Real}, cval, cpt::GMTcpt, azim, elev; scales=nothing)
+function replicant(FV::Vector{<:GMTdataset}, xyz::Matrix{<:Real}, azim, elev, cval=1:size(xyz, 1),
+                   cpt::GMTcpt=GMTcpt(); scales=nothing)
+
 	@assert length(cval) == size(xyz, 1)
+	if (scales !== nothing)
+		(length(scales) == 1) && (scales = fill(scales, length(cval)))
+		@assert length(scales) == length(cval)
+	end
 	FV, normals = sort_visible_faces(FV::Vector{<:GMTdataset}, azim, elev)
 	V::GMTdataset{Float64,2}, F::GMTdataset{Int,2} = FV[1], FV[2]
 
@@ -1539,25 +1565,30 @@ function replicant(FV::Vector{<:GMTdataset}, xyz::Matrix{<:Real}, cval, cpt::GMT
 	n_faces = size(F.data, 1)				# Number of faces of base body
 
 	D1 = Vector{GMTdataset}(undef, n_faces)
-	t = zeros(n_rows, n_cols)
+	t = zeros(eltype(V.data), n_rows, n_cols)
 	for face = 1:n_faces					# Loop over faces
-		#t = [V.data[F.data[face, r], c] for c = 1:n_cols, r = 1:n_rows]
 		for c = 1:n_cols, r = 1:n_rows
 			t[r,c] = V.data[F.data[face, r], c]
 		end
 		D1[face] = GMTdataset(data=copy(t))
 	end
 
-	P::Ptr{GMT_PALETTE} = palette_init(G_API[1], cpt);		# A pointer to a GMT CPT
-	rgb = [0.0, 0.0, 0.0];
+	cpt::GMTcpt = (isempty(cpt)) ? gmt(T="1/$(length(cval))") : cpt
+	P::Ptr{GMT_PALETTE} = palette_init(G_API[1], cpt)		# A pointer to a GMT CPT
+	rgb = [0.0, 0.0, 0.0, 0.0]
+	cor = [0.0, 0.0, 0.0]
 	D2 = Vector{GMTdataset}(undef, size(xyz, 1) * n_faces)
+
+	_scales = (scales === nothing) ? fill(one(eltype(V.data)), length(cval)) :		# Try to make _scales the same type as the V points
+	          (eltype(scales) == Float64 && eltype(V.data) == Float32) ? Float32.(scales) : scales
 
 	for k = 1:size(xyz, 1)					# Loop over number of positions. For each of these we have a new body
 		gmt_get_rgb_from_z(G_API[1], P, cval[k], rgb)
 		for face = 1:n_faces				# Loop over number of faces of the base body
-			cor = copy(rgb)
+			cor[1], cor[2], cor[3] = rgb[1], rgb[2], rgb[3]
 			gmt_illuminate(G_API[1], normals[face], cor)
-			D2[(k-1)*n_faces+face] = GMTdataset(data=D1[face].data .+ xyz[k:k,1:3], header=@sprintf("-G%.0f/%.0f/%.0f", cor[1]*255, cor[2]*255, cor[3]*255))
+			txt = @sprintf("-G%.0f/%.0f/%.0f", cor[1]*255, cor[2]*255, cor[3]*255)
+			D2[(k-1)*n_faces+face] = GMTdataset(data=(D1[face].data .+ xyz[k:k,1:3]) * _scales[k], header=txt)
 		end
 	end
 	return set_dsBB(D2)

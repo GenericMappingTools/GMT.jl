@@ -930,11 +930,11 @@ function line2multiseg(M::Matrix{<:Real}; is3D::Bool=false, color::GMTcpt=GMTcpt
 
 	if (!isempty(color))
 		z_col = color_col
-		rgb = [0.0, 0.0, 0.0];
+		rgb = [0.0, 0.0, 0.0, 0.0]
 		P::Ptr{GMT_PALETTE} = palette_init(G_API[1], color);		# A pointer to a GMT CPT
 		for k = 1:n_ds
 			z = (use_row_number) ? z4color[k] : M[k, z_col]
-			@GC.preserve color gmt_get_rgb_from_z(G_API[1], P, z, rgb)
+			gmt_get_rgb_from_z(G_API[1], P, z, rgb)
 			t = @sprintf(",%.0f/%.0f/%.0f", rgb[1]*255, rgb[2]*255, rgb[3]*255)
 			_hdr[k] = (first) ? " -W"*t : _hdr[k] * t
 		end
