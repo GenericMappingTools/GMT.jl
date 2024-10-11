@@ -4664,13 +4664,13 @@ function put_in_legend_bag(d::Dict, cmd, arg, O::Bool=false, opt_l::String="")
 		extra_opt *= ((t = scan_opt(cmd_[1], "-G", true)) != "") ? t : ""
 		for k = 1:numel(pens)  pens[k] *= extra_opt  end
 		if ((ind = findfirst(arg.colnames .== "Zcolor")) !== nothing)
-			rgb = [0.0, 0.0, 0.0]
+			rgb = [0.0, 0.0, 0.0, 0.0]
 			P::Ptr{GMT_PALETTE} = palette_init(G_API[1], CURRENT_CPT[1])	# A pointer to a GMT CPT
 			gmt_get_rgb_from_z(G_API[1], P, arg[gindex[1],ind], rgb)
 			cmd_[1] *= " -G" * arg2str(rgb.*255)
 			for k = 1:numel(pens)
 				gmt_get_rgb_from_z(G_API[1], P, arg[gindex[k+1],ind]+10eps(), rgb)
-				pens[k] *= " -G" * arg2str(rgb.*255)
+				pens[k] *= @sprintf("-G%.0f/%.0f/%.0f", rgb[1]*255, rgb[2]*255, rgb[3]*255)
 			end
 		end
 	end

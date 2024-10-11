@@ -56,7 +56,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	(opt_p == "") ? (opt_p = CURRENT_VIEW[1]; cmd *= opt_p)	: (CURRENT_VIEW[1] = opt_p) # Save for eventual use in other modules.
 
 	if (is3D && isFV(arg1))			# case of 3D faces
-		arg1 = deal_faceverts(arg1, d, opt_p)
+		arg1 = deal_faceverts(arg1, d)
 		!haskey(d, :aspect3) && (d[:aspect3] = "equal")			# Needs thinking
 	elseif is_gridtri
 		arg1 = sort_visible_triangles(arg1)
@@ -126,8 +126,6 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	end
 
 	if (isa(arg1, GDtype) && !contains(opt_f, "T") && !contains(opt_f, "t") && !contains(opt_R, "T") && !contains(opt_R, "t"))
-		#isa(arg1, GMTdataset) && (cmd = set_fT(arg1, cmd, opt_f))
-		#isa(arg1, Vector{<:GMTdataset}) && (cmd = set_fT(arg1[1], cmd, opt_f))
 		cmd = isa(arg1, GMTdataset) ? set_fT(arg1, cmd, opt_f) : set_fT(arg1[1], cmd, opt_f)
 	end
 
@@ -367,12 +365,34 @@ function plt_txt_attrib!(D::GDtype, d::Dict, _cmd::Vector{String})
 end
 
 # ---------------------------------------------------------------------------------------------------
-function deal_faceverts(arg1, d, opt_p)
-	# Deal with the situation where we are plotting 3D FV's
-	spl = split(opt_p[4:end], '/')
+# replicate=(centers=[], zcolor=[], cmap=..., scales=..., )
+function deal_replicants(arg1, d)
+	(val = find_in_dict(d, [:replicate])[1]) === nothing && return arg1
+	((xyz = get(val, :centers, nothing)) === nothing) && error("Can't replicate without centers")
+	_xyz = (promote_type(eltype(arg1[1].data), eltype(xyz))).(xyz)
+	((zcolor = get(val, :zcolor, nothing)) === nothing) && (zcolor = collect(1.0:size(xyz, 1)))
+	cpt::GMTcpt = get(val, :cmap, GMTcpt())
+	(isempty(cpt)) && (cpt = gmt("makecpt -T1/$(length(zcolor))"))
+	scales = get(val, :scales, nothing)
+	spl = split(CURRENT_VIEW[1][4:end], '/')
 	azim = parse(Float64, spl[1])
 	elev = length(spl) > 1 ? parse(Float64, spl[2]) : 90.0
-	arg1, dotprod = sort_visible_faces(arg1, azim, elev)
+	arg1, = sort_visible_faces(arg1, azim, elev)		# Sort & kill invisible
+	replicant(arg1, _xyz, azim, elev, zcolor, cpt; scales=scales)
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    deal_faceverts(arg1, d)
+"""
+function deal_faceverts(arg1, d)
+	# Deal with the situation where we are plotting 3D FV's
+	(is_in_dict(d, [:replicate]) !== nothing) && return deal_replicants(arg1, d)
+
+	spl = split(CURRENT_VIEW[1][4:end], '/')
+	azim = parse(Float64, spl[1])
+	elev = length(spl) > 1 ? parse(Float64, spl[2]) : 90.0
+	arg1, dotprod = sort_visible_faces(arg1, azim, elev)		# Sort & kill invisible
 	if (is_in_dict(d, [:G :fill]) === nothing)		# If fill not set we use the dotprod and a gray CPT to set the fill
 		is_in_dict(d, [:Z :level :levels]) === nothing && (d[:Z] = dotprod)
 		(is_in_dict(d, CPTaliases) === nothing) && (d[:C] = gmt("makecpt -T0/1 -C150,210"))	# Users may still set a CPT
@@ -1424,7 +1444,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    FV = sort_visible_faces(FV::Vector{<:GMTdataset}, azim, elev) -> ::Vector{GMTdataset}
+    FV, projs = sort_visible_faces(FV::Vector{<:GMTdataset}, azim, elev) -> Tuple{Vector{GMTdataset}, Vector{Float64}}
 
 Take a Faces-Vertices dataset and delete the invisible faces from view vector. Next sort them by distance so
 that the furthest faces are drawn on first and hence do not hide the others.
@@ -1462,6 +1482,17 @@ function sort_visible_faces(FV::Vector{<:GMTdataset}, azim, elev)::Tuple{Vector{
 end
 
 # ---------------------------------------------------------------------------------------------------
+"""
+	Dv = sort_visible_triangles(Dv::Vector{<:GMTdataset}; del_hidden=false, zfact=1.0) -> Vector{GMTdataset}
+
+Take a Faces-Vertices dataset produced by grid2tri() and sort them by distance so that the furthest faces are
+drawn on first and hence do not hide others. Optionally remove the invisible triangles. This not true by default
+because we may want to see the inside of a top surface.
+
+`zfact` is a factor use to bring the z units to the same of the x,y units as for example when `z` is in km
+and `x` and `y` are in degrees, case in which an automatic projection takes place, or in meters. We need this
+if we want that the normal compuations makes sense.
+"""
 function sort_visible_triangles(Dv::Vector{<:GMTdataset}; del_hidden=false, zfact=1.0)::Vector{GMTdataset}
 	azim, elev = parse.(Float64, split(CURRENT_VIEW[1][4:end], '/'))
 	sin_az, cos_az, sin_el = sind(azim), cosd(azim), sind(elev)
@@ -1477,7 +1508,7 @@ function sort_visible_triangles(Dv::Vector{<:GMTdataset}; del_hidden=false, zfac
 	end
 
 	# ---------------------- Now sort by distance to the viewer ----------------------
-	Dc = gmtspatial(Dv, Q=true, o="0,1")
+	Dc = gmtspatial(Dv, Q=true, o="0,1")	# Should this directly in Julia and avoid calling GMT (=> a copy of Dv)
 	dists = [(Dc.data[1,1] * sin_az + Dc.data[1,2] * cos_az, (Dv[1].bbox[5] + Dv[1].bbox[6]) / 2 * sin_el)]
 	for k = 2:size(Dc, 1)
 		push!(dists, (Dc.data[k,1] * sin_az + Dc.data[k,2] * cos_az, (Dv[k].bbox[5] + Dv[k].bbox[6]) / 2 * sin_el))
@@ -1491,7 +1522,7 @@ function sort_visible_triangles(Dv::Vector{<:GMTdataset}; del_hidden=false, zfac
 	return Dv
 end
 
-# ---------------------------------------------------------------------------------------------------
+#= ---------------------------------------------------------------------------------------------------
 function tri_normals(Dv::Vector{<:GMTdataset}; zfact=1.0)
 	t = isgeog(Dv) ? mapproject(Dv, J="t$((Dv[1].ds_bbox[1] + Dv[1].ds_bbox[2])/2)/1:1", C=true, F=true) : Dv
 	Dc = gmtspatial(Dv, Q=true)
@@ -1514,4 +1545,51 @@ function quiver3(Dv::Vector{<:GMTdataset}; first=true, zfact=1.0, kwargs...)
 	end
 	D = mat2ds(mat, geom=wkbLineStringZ)
 	common_plot_xyz("", D, "plot3d", first, true, kwargs...)
+end
+=#
+
+# ---------------------------------------------------------------------------------------------------
+function replicant(FV::Vector{<:GMTdataset}, xyz::Matrix{<:Real}, azim, elev, cval=1:size(xyz, 1),
+                   cpt::GMTcpt=GMTcpt(); scales=nothing)
+
+	@assert length(cval) == size(xyz, 1)
+	if (scales !== nothing)
+		(length(scales) == 1) && (scales = fill(scales, length(cval)))
+		@assert length(scales) == length(cval)
+	end
+	FV, normals = sort_visible_faces(FV::Vector{<:GMTdataset}, azim, elev)
+	V::GMTdataset{Float64,2}, F::GMTdataset{Int,2} = FV[1], FV[2]
+
+	n_rows = size(F.data, 2)				# Number of rows (vertexes of the polygon)
+	n_cols = size(V.data, 2)				# Number of columns (2 for x,y; 3 for x,y,z)
+	n_faces = size(F.data, 1)				# Number of faces of base body
+
+	D1 = Vector{GMTdataset}(undef, n_faces)
+	t = zeros(eltype(V.data), n_rows, n_cols)
+	for face = 1:n_faces					# Loop over faces
+		for c = 1:n_cols, r = 1:n_rows
+			t[r,c] = V.data[F.data[face, r], c]
+		end
+		D1[face] = GMTdataset(data=copy(t))
+	end
+
+	cpt::GMTcpt = (isempty(cpt)) ? gmt(T="1/$(length(cval))") : cpt
+	P::Ptr{GMT_PALETTE} = palette_init(G_API[1], cpt)		# A pointer to a GMT CPT
+	rgb = [0.0, 0.0, 0.0, 0.0]
+	cor = [0.0, 0.0, 0.0]
+	D2 = Vector{GMTdataset}(undef, size(xyz, 1) * n_faces)
+
+	_scales = (scales === nothing) ? fill(one(eltype(V.data)), length(cval)) :		# Try to make _scales the same type as the V points
+	          (eltype(scales) == Float64 && eltype(V.data) == Float32) ? Float32.(scales) : scales
+
+	for k = 1:size(xyz, 1)					# Loop over number of positions. For each of these we have a new body
+		gmt_get_rgb_from_z(G_API[1], P, cval[k], rgb)
+		for face = 1:n_faces				# Loop over number of faces of the base body
+			cor[1], cor[2], cor[3] = rgb[1], rgb[2], rgb[3]
+			gmt_illuminate(G_API[1], normals[face], cor)
+			txt = @sprintf("-G%.0f/%.0f/%.0f", cor[1]*255, cor[2]*255, cor[3]*255)
+			D2[(k-1)*n_faces+face] = GMTdataset(data=(D1[face].data .+ xyz[k:k,1:3]) * _scales[k], header=txt)
+		end
+	end
+	return set_dsBB(D2)
 end

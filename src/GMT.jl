@@ -184,6 +184,8 @@ export
 
 	lazinfo, lazread, lazwrite, lasread, laswrite,
 
+	cube, dodecahedron, icosahedron, sphere, octahedron, tetrahedron,
+
 	df2ds, ODE2ds,
 	sprintf,
 	@?, @dir
