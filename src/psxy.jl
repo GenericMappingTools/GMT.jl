@@ -1556,6 +1556,8 @@ the replicated body.
   - `replicate`: A Mx3 Matrix with the centers of the each copy.
   - `replicate`: A Tuple with a Matrix and a scalar or a vector. The first element is the centers Mx3 matrix and the
      second is the scale factor (or vector of factors).
+  - `view or perspective`: Set the view angle for the replication. The default is `217.5/30`. Surface elements
+     that are not visible from this persective are eliminated.
 
 ### Returns
 A Vector{GMTdataset} with the replicated body. Normally, a triangulated surface.
@@ -1570,7 +1572,11 @@ or, to plot them
 viz(FV, replicate=(centers=rand(10,3)*10, scales=0.1))
 ```
 """
-replicant(FV, kwargs...) = replicant(FV, KW(kwargs))	# For direct calls to replicat()
+function replicant(FV; kwargs...)		# For direct calls to replicat()
+	d = KW(kwargs)
+	(is_in_dict(d, [:p :view :perspective]) === nothing) && (CURRENT_VIEW[1] = " -p217.5/30")
+	replicant(FV, d)
+end
 function replicant(FV, d::Dict{Symbol, Any})
 	!isFV(FV) && error("FV is not a valid Face-Vertices dataset")	# common_plot_xyz knows this already but direct calls no.
 	(val = find_in_dict(d, [:replicate])[1]) === nothing && error("Can't replicate without the 'replicate' option")
