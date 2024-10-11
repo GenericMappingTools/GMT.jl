@@ -56,7 +56,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	(opt_p == "") ? (opt_p = CURRENT_VIEW[1]; cmd *= opt_p)	: (CURRENT_VIEW[1] = opt_p) # Save for eventual use in other modules.
 
 	if (is3D && isFV(arg1))			# case of 3D faces
-		arg1 = deal_faceverts(arg1, d)
+		arg1 = (is_in_dict(d, [:replicate]) !== nothing) ? replicant(arg1, d) : deal_faceverts(arg1, d)
 		!haskey(d, :aspect3) && (d[:aspect3] = "equal")			# Needs thinking
 	elseif is_gridtri
 		arg1 = sort_visible_triangles(arg1)
@@ -365,21 +365,14 @@ function plt_txt_attrib!(D::GDtype, d::Dict, _cmd::Vector{String})
 end
 
 # ---------------------------------------------------------------------------------------------------
-# replicate=(centers=[], zcolor=[], cmap=..., scales=..., )
-function deal_replicants(arg1, d)
-	(val = find_in_dict(d, [:replicate])[1]) === nothing && return arg1
-	((xyz = get(val, :centers, nothing)) === nothing) && error("Can't replicate without centers")
-	_xyz = (promote_type(eltype(arg1[1].data), eltype(xyz))).(xyz)
-	((zcolor = get(val, :zcolor, nothing)) === nothing) && (zcolor = collect(1.0:size(xyz, 1)))
-	cpt::GMTcpt = get(val, :cmap, GMTcpt())
-	(isempty(cpt)) && (cpt = gmt("makecpt -T1/$(length(zcolor))"))
-	scales = get(val, :scales, nothing)
+function get_numeric_view()::Tuple{Float64, Float64}
+	isempty(CURRENT_VIEW[1]) && error("No perspective setting available yet (CURRENT_VIEW is empty)")
 	spl = split(CURRENT_VIEW[1][4:end], '/')
 	azim = parse(Float64, spl[1])
 	elev = length(spl) > 1 ? parse(Float64, spl[2]) : 90.0
-	arg1, = sort_visible_faces(arg1, azim, elev)		# Sort & kill invisible
-	replicant(arg1, _xyz, azim, elev, zcolor, cpt; scales=scales)
+	return azim, elev
 end
+
 
 # ---------------------------------------------------------------------------------------------------
 """
@@ -387,11 +380,8 @@ end
 """
 function deal_faceverts(arg1, d)
 	# Deal with the situation where we are plotting 3D FV's
-	(is_in_dict(d, [:replicate]) !== nothing) && return deal_replicants(arg1, d)
 
-	spl = split(CURRENT_VIEW[1][4:end], '/')
-	azim = parse(Float64, spl[1])
-	elev = length(spl) > 1 ? parse(Float64, spl[2]) : 90.0
+	azim, elev = get_numeric_view()
 	arg1, dotprod = sort_visible_faces(arg1, azim, elev)		# Sort & kill invisible
 	if (is_in_dict(d, [:G :fill]) === nothing)		# If fill not set we use the dotprod and a gray CPT to set the fill
 		is_in_dict(d, [:Z :level :levels]) === nothing && (d[:Z] = dotprod)
@@ -1549,14 +1539,84 @@ end
 =#
 
 # ---------------------------------------------------------------------------------------------------
-function replicant(FV::Vector{<:GMTdataset}, xyz::Matrix{<:Real}, azim, elev, cval=1:size(xyz, 1),
-                   cpt::GMTcpt=GMTcpt(); scales=nothing)
+"""
+    replicant(FV, kwargs...) -> Vector{GMTdataset}
 
-	@assert length(cval) == size(xyz, 1)
-	if (scales !== nothing)
-		(length(scales) == 1) && (scales = fill(scales, length(cval)))
-		@assert length(scales) == length(cval)
+Take a Faces-Vertices dataset describing a 3D body and replicate it N number of times with the option of
+assigning different colors and scales to each copy. The end result is a single Vector{GMTdataset} with
+the replicated body.
+
+### Parameters
+- `FV`: A Faces-Vertices dataset describing a 3D body.
+- `kwargs`:
+  - `replicate`: A NamedTuple with one or more of the following fields: `centers`, a Mx3 Matrix with the centers of the copies;
+    `zcolor`, a vector of length ``size(centers, 1)``, specifying a variable that will be used together with the `cmap`
+    option to assign a color of each copy (default is the ``1:size(centers, 1)``); `cmap`, a GMTcpt object; `scales`,
+    a scalar or a vector of ``size(centers, 1)``, specifying the scale factor of each copy.
+  - `replicate`: A Mx3 Matrix with the centers of the each copy.
+  - `replicate`: A Tuple with a Matrix and a scalar or a vector. The first element is the centers Mx3 matrix and the
+     second is the scale factor (or vector of factors).
+
+### Returns
+A Vector{GMTdataset} with the replicated body. Normally, a triangulated surface.
+
+### Examples
+```julia
+FV = sphere();
+D  = replicant(FV, replicate=(centers=rand(10,3), scales=0.1));
+
+or, to plot them
+
+viz(FV, replicate=(centers=rand(10,3)*10, scales=0.1))
+```
+"""
+replicant(FV, kwargs...) = replicant(FV, KW(kwargs))	# For direct calls to replicat()
+function replicant(FV, d::Dict{Symbol, Any})
+	!isFV(FV) && error("FV is not a valid Face-Vertices dataset")	# common_plot_xyz knows this already but direct calls no.
+	(val = find_in_dict(d, [:replicate])[1]) === nothing && error("Can't replicate without the 'replicate' option")
+
+	cpt::GMTcpt = GMTcpt()
+	if (isa(val, NamedTuple))
+		((xyz = get(val, :centers, nothing)) === nothing) && error("Can't replicate without centers")
+		_xyz::Matrix{<:Real} = (promote_type(eltype(FV[1].data), eltype(xyz))).(xyz)	# Attempt to not have auto promotions to Float64
+		((zcolor = get(val, :zcolor, nothing)) === nothing) && (zcolor = collect(1.0:size(xyz, 1)))
+		cpt = get(val, :cmap, GMTcpt())
+		isempty(cpt) && (cpt = get(val, :C, GMTcpt()))
+		isempty(cpt) && (cpt = get(val, :color, GMTcpt()))
+		scales = get(val, :scales, nothing)				# Scales can be a nothing or a number or a vector
+	elseif (isa(val, Matrix{<:Real}))					# User just passed replicate=centers
+		_xyz = (promote_type(eltype(FV[1].data), eltype(val))).(val)
+		zcolor = collect(1.0:size(_xyz, 1))
+		scales = one(eltype(FV[1].data))
+	elseif (isa(val, Tuple{Matrix{<:Real}, Union{Real, Vector{<:Real}}}))	# User passed replicate=(centers, scales)
+		_xyz = (promote_type(eltype(FV[1].data), eltype(val[1]))).(val[1])
+		zcolor = collect(1.0:size(_xyz, 1))
+		scales = val[2]
+	else
+		error("Unexpected 'replicate' option")
 	end
+
+	if (scales !== nothing)
+		(length(scales) == 1) && (scales = fill(scales, length(zcolor)))
+		@assert length(scales) == length(zcolor)
+	end
+
+	_scales = (scales === nothing) ? fill(one(eltype(FV[1].data)), length(zcolor)) :		# Try to make _scales the same type as the V points
+	          (eltype(scales) == Float64 && eltype(FV[1].data) == Float32) ? Float32.(scales) : scales
+	(length(scales) == 1) && (_scales = fill(scales, length(zcolor)))
+
+	# If no CPT, make one
+	(isempty(cpt)) && (cpt = gmt("makecpt -T1/$(length(zcolor))"))
+
+	azim, elev = get_numeric_view()
+	FV, = sort_visible_faces(FV, azim, elev)		# Sort & kill invisible
+	replicant_worker(FV, _xyz, azim, elev, zcolor, cpt, _scales)
+end
+
+# ---------------------------------------------------------------------------------------------------
+function replicant_worker(FV, xyz, azim, elev, cval, cpt, scales)
+	# This guy is the one who does the replicant work
+
 	FV, normals = sort_visible_faces(FV::Vector{<:GMTdataset}, azim, elev)
 	V::GMTdataset{Float64,2}, F::GMTdataset{Int,2} = FV[1], FV[2]
 
@@ -1573,14 +1633,10 @@ function replicant(FV::Vector{<:GMTdataset}, xyz::Matrix{<:Real}, azim, elev, cv
 		D1[face] = GMTdataset(data=copy(t))
 	end
 
-	cpt::GMTcpt = (isempty(cpt)) ? gmt(T="1/$(length(cval))") : cpt
 	P::Ptr{GMT_PALETTE} = palette_init(G_API[1], cpt)		# A pointer to a GMT CPT
 	rgb = [0.0, 0.0, 0.0, 0.0]
 	cor = [0.0, 0.0, 0.0]
 	D2 = Vector{GMTdataset}(undef, size(xyz, 1) * n_faces)
-
-	_scales = (scales === nothing) ? fill(one(eltype(V.data)), length(cval)) :		# Try to make _scales the same type as the V points
-	          (eltype(scales) == Float64 && eltype(V.data) == Float32) ? Float32.(scales) : scales
 
 	for k = 1:size(xyz, 1)					# Loop over number of positions. For each of these we have a new body
 		gmt_get_rgb_from_z(G_API[1], P, cval[k], rgb)
@@ -1588,7 +1644,7 @@ function replicant(FV::Vector{<:GMTdataset}, xyz::Matrix{<:Real}, azim, elev, cv
 			cor[1], cor[2], cor[3] = rgb[1], rgb[2], rgb[3]
 			gmt_illuminate(G_API[1], normals[face], cor)
 			txt = @sprintf("-G%.0f/%.0f/%.0f", cor[1]*255, cor[2]*255, cor[3]*255)
-			D2[(k-1)*n_faces+face] = GMTdataset(data=(D1[face].data .+ xyz[k:k,1:3]) * _scales[k], header=txt)
+			D2[(k-1)*n_faces+face] = GMTdataset(data=(D1[face].data * scales[k] .+ xyz[k:k,1:3]), header=txt)
 		end
 	end
 	return set_dsBB(D2)
