@@ -418,14 +418,6 @@ function gmt_get_rgb_from_z(API::Ptr{Cvoid}, P::Ptr{GMT_PALETTE}, value, rgb)
 	ccall((:gmt_get_rgb_from_z, libgmt), Cint, (Cstring, Ptr{Cvoid}, Cdouble, Ptr{Cdouble}), GMT_Get_Ctrl(API), P, value, rgb)
 end
 
-function gmt_get_index(API::Ptr{Cvoid}, P::Ptr{GMT_PALETTE}, value)
-	ccall((:gmt_get_index, libgmt), Cint, (Cstring, Ptr{Cvoid}, Ptr{Cdouble}), GMT_Get_Ctrl(API), P, value)
-end
-
-function gmt_get_rgb_lookup(API::Ptr{Cvoid}, P::Ptr{GMT_PALETTE}, ind, value, rgb)
-	ccall((:gmt_get_rgb_lookup, libgmt), Cint, (Cstring, Ptr{Cvoid}, Cint, Cdouble, Ptr{Cdouble}), GMT_Get_Ctrl(API), P, ind, value, rgb)
-end
-
 function gmt_illuminate(API::Ptr{Cvoid}, intensity, rgb::Vector{Float64})
 	ccall((:gmt_illuminate, libgmt), Cvoid, (Cstring, Cdouble, Ptr{Cdouble}), GMT_Get_Ctrl(API), intensity, rgb)
 end
