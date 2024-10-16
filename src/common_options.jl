@@ -3643,6 +3643,14 @@ end
 # ---------------------------------------------------------------------------------------------------
 function read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", is3D::Bool=false, get_info::Bool=false)
 	# Use 'get_info=true' to force reading the file when fname != ""
+	
+	if (isa(arg, GMTfv))			# A quick and dirty way to parse the GMTfv type
+		is_geo = isgeog(arg.proj4)			# MUST make isgeog sniff in GMTfv types
+		_wesn = round_wesn(arg.bbox, is_geo)		# Add a pad if not-tight
+		opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g/%.12g/%.12g", _wesn[1], _wesn[2], _wesn[3], _wesn[4], _wesn[5], _wesn[6])
+		return cmd * opt_R, arg, opt_R, _wesn, ""		# A GMTfv is already read
+	end
+
 	cmd::String, opt_i::String  = parse_i(d, cmd)	# If data is to be read with some column order
 	cmd, opt_bi::String = parse_bi(d, cmd)			# If data is to be read as binary
 	cmd, opt_di::String = parse_di(d, cmd)			# If data missing data other than NaN
@@ -3660,7 +3668,7 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", i
 		if (opt_yx != "" && !isempty(arg.colnames))  arg.colnames[2], arg.colnames[1] = arg.colnames[1], arg.colnames[2]   end
 		# Try guess if ascii file has time columns and if yes leave trace of it in GMTdadaset metadata.
 		(opt_bi == "") && file_has_time!(fname, arg)	# If fname is a .gmt file this does not make much sense.
-		# Remove the these options from cmd. Their job is done
+		# Remove these options from cmd. Their job is done
 		if (opt_i != "")  cmd = replace(cmd, opt_i => "");	opt_i = ""  end
 		if (opt_h != "")  cmd = replace(cmd, opt_h => "");	opt_h = ""  end
 	else							# No need to find -R so let the GMT module read the file
@@ -3714,9 +3722,9 @@ function _read_data(d::Dict, cmd::String, arg, opt_R::String="", is3D::Bool=fals
 
 	have_info = false
 	no_R = (opt_R == "" || opt_R[1] == '/' || opt_R == " -Rtight")
-	prj::String = (isGMTdataset(arg)) ? getproj(arg, proj4=true) : ""
+	prj::String = (isa(arg, GDtype)) ? getproj(arg, proj4=true) : ""
 	is_geo = isgeog(prj)
-	ds_bbox = isGMTdataset(arg) ? (isa(arg, GMTdataset) ? arg.ds_bbox : arg[1].ds_bbox) : Float64[]
+	ds_bbox = isa(arg, GDtype) ? (isa(arg, GMTdataset) ? arg.ds_bbox : arg[1].ds_bbox) : Float64[]
 	
 	if (no_R && !isempty(ds_bbox))			# If arg is a GMTdataset of polygons, use the ds_bbox directly
 		geom = isa(arg, Vector) ? arg[1].geom : arg.geom
@@ -3941,17 +3949,6 @@ function isgeog(in)::Bool
 	end
 	prj = getproj(in, proj4=true)
 	(prj != "" && (contains(prj, "=lon") || contains(prj, "=lat")))
-end
-
-# ---------------------------------------------------------------------------------------------------
-"""
-    isFV(D)::Bool
-
-Check if D is a Face-Vertices ensemble (a 2 elements vector of GMTdataset).
-"""
-function isFV(D)::Bool
-	(isa(D, Vector{<:GMTdataset}) && length(D) > 1) &&
-		(D[1].geom == wkbPoint || D[1].geom == wkbPointZ) && eltype(D[2].data) <: Integer
 end
 
 # ---------------------------------------------------------------------------------------------------

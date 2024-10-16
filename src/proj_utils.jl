@@ -323,6 +323,10 @@ function buffergeo(line::Matrix{<:Real}; width=0, unit=:m, np=120, flatstart=fal
 	#(line[1, 1:2] == line[end, 1:2]) && (flatstart = flatend = false)		# Polygons can't have start/end flat edges
 	width *= unit_factor(unit)
 	n_seg = length(azim)
+	
+	# --------------------- When 'line' is actually a single point -------------------------------------------- 
+	n_seg == 0 && return mat2ds(circgeo(line, radius=width, np=np, proj=proj, epsg=epsg), proj=proj, epsg=epsg)
+
 	D, _D = GMTdataset(), GMTdataset()
 	for n = 1:n_seg
 		seg = [geod(line[n,:], azim[n], 0:width/4:dist[n], proj=proj, epsg=epsg)[1]; line[n+1:n+1,:]]

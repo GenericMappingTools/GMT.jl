@@ -679,7 +679,7 @@ end
 
 # --------------------------------------------------------------------------------------------------------
 """
-    VF = read_obj(fname)
+    VF = read_obj(fname)::GMTfv
 
 Read a Wavefront .obj file and return the result in a FaceVertices object.
 """
@@ -725,9 +725,7 @@ function read_obj(fname)
 		end
 	end
 	close(fid)
-	DV = GMTdataset(data=V, geom=wkbPointZ)
-	set_dsBB!(DV)
-	return [DV, GMTdataset(data=F)]
+	fv2fv(F, V)
 end
 
 # --------------------------------------------------------------------------------------------------------
