@@ -8,7 +8,7 @@ Creates an icosahedron mesh with radius `r`.
 - `radius`: the keyword `radius` is an alternative to the positional argument `r`.
 - `origin`: A tuple of three numbers defining the origin of the body. Default is `(0.0, 0.0, 0.0)`.
 """
-function icosahedron(r=1.0; radius=1.0, origin=(0.0, 0.0, 0.0))
+function icosahedron(r=1.0; radius=1.0, origin=(0.0, 0.0, 0.0))::GMTfv
 
 	_r::Float64 = (radius != 1.0) ? radius : r		# If spelled, the `radius` kwarg take precedence
 	o::Matrix{Float64} = [origin[1] origin[2] origin[3]]
@@ -52,8 +52,7 @@ function icosahedron(r=1.0; radius=1.0, origin=(0.0, 0.0, 0.0))
 		 6 4 9]
  
 	(o[1] != 0 || o[2] != 0 || o[3] != 0) && (V .+= o)
-	DV = GMTdataset(data=V, geom=wkbPointZ);	set_dsBB!(DV)
-	return [DV, GMTdataset(data=F)]
+	fv2fv([F], V)
 end
 
 # --------------------------------------------------------
@@ -65,7 +64,7 @@ Creates an octahedron mesh with radius `r`.
 - `radius`: the keyword `radius` is an alternative to the positional argument `r`.
 - `origin`: A tuple of three numbers defining the origin of the body. Default is `(0.0, 0.0, 0.0)`.
 """
-function octahedron(r=1.0; radius=0.0, origin=(0.0, 0.0, 0.0))
+function octahedron(r=1.0; radius=0.0, origin=(0.0, 0.0, 0.0))::GMTfv
 
 	_r::Float64 = (radius != 1.0) ? radius : r		# If spelled, the `radius` kwarg take precedence
 	o::Matrix{Float64} = [origin[1] origin[2] origin[3]]
@@ -88,8 +87,7 @@ function octahedron(r=1.0; radius=0.0, origin=(0.0, 0.0, 0.0))
 		 6 4 1]
 
 	(o[1] != 0 || o[2] != 0 || o[3] != 0) && (V .+= o)
-	DV = GMTdataset(data=V, geom=wkbPointZ);	set_dsBB!(DV)
-	return [DV, GMTdataset(data=F)]
+	fv2fv([F], V)
 end
 
 # ----------------------------------------------------------------------------
@@ -101,7 +99,7 @@ Creates an dodecahedron mesh with radius `r`.
 - `radius`: the keyword `radius` is an alternative to the positional argument `r`.
 - `origin`: A tuple of three numbers defining the origin of the body. Default is `(0.0, 0.0, 0.0)`.
 """
-function dodecahedron(r=1.0; radius=1.0, origin=(0.0, 0.0, 0.0))
+function dodecahedron(r=1.0; radius=1.0, origin=(0.0, 0.0, 0.0))::GMTfv
 
 	_r::Float64 = (radius != 1.0) ? radius : r		# If spelled, the `radius` kwarg take precedence
 	o::Matrix{Float64} = [origin[1] origin[2] origin[3]]
@@ -146,8 +144,7 @@ function dodecahedron(r=1.0; radius=1.0, origin=(0.0, 0.0, 0.0))
 		 12 18  5 15 19]
 
 	(o[1] != 0 || o[2] != 0 || o[3] != 0) && (V .+= o)
-	DV = GMTdataset(data=V, geom=wkbPointZ);	set_dsBB!(DV)
-	return [DV, GMTdataset(data=F)]
+	fv2fv([F], V)
 end
 
 # ----------------------------------------------------------------------------
@@ -159,7 +156,7 @@ Creates a tetrahedron mesh with radius `r`.
 - `radius`: the keyword `radius` is an alternative to the positional argument `r`.
 - `origin`: A tuple of three numbers defining the origin of the body. Default is `(0.0, 0.0, 0.0)`.
 """
-function tetrahedron(r=1.0; radius=1.0, origin=(0.0, 0.0, 0.0))
+function tetrahedron(r=1.0; radius=1.0, origin=(0.0, 0.0, 0.0))::GMTfv
 
 	_r::Float64 = (radius != 1.0) ? radius : r		# If spelled, the `radius` kwarg take precedence
 	o::Matrix{Float64} = [origin[1] origin[2] origin[3]]
@@ -179,8 +176,7 @@ function tetrahedron(r=1.0; radius=1.0, origin=(0.0, 0.0, 0.0))
 		 4 1 3]
 
 	(o[1] != 0 || o[2] != 0 || o[3] != 0) && (V .+= o)
-	DV = GMTdataset(data=V, geom=wkbPointZ);	set_dsBB!(DV)
-	return [DV, GMTdataset(data=F)]
+	fv2fv([F], V)
 end
 
 # ----------------------------------------------------------------------------
@@ -192,7 +188,7 @@ Creates a cube mesh with radius `r`.
 - `radius`: the keyword `radius` is an alternative to the positional argument `r`.
 - `origin`: A tuple of three numbers defining the origin of the body. Default is `(0.0, 0.0, 0.0)`.
 """
-function cube(r=1.0; radius=1.0, origin=(0.0, 0.0, 0.0))
+function cube(r=1.0; radius=1.0, origin=(0.0, 0.0, 0.0))::GMTfv
 
 	_r::Float64 = (radius != 1.0) ? radius : r		# If spelled, the `radius` kwarg take precedence
 	o::Matrix{Float64} = [origin[1] origin[2] origin[3]]
@@ -216,8 +212,7 @@ function cube(r=1.0; radius=1.0, origin=(0.0, 0.0, 0.0))
 		 8 5 1 4]
 
 	(o[1] != 0 || o[2] != 0 || o[3] != 0) && (V .+= o)
-	DV = GMTdataset(data=V, geom=wkbPointZ);	set_dsBB!(DV)
-	return [DV, GMTdataset(data=F)]
+	fv2fv([F], V)
 end
 
 # ----------------------------------------------------------------------------
@@ -238,14 +233,14 @@ surface with radius `r` at each iteration.
 A two elements vector of GMTdataset where first contains the vertices and the second
 the indices that define the faces.
 """
-function sphere(r=1; n=1, radius=1.0, center=(0.0, 0.0, 0.0))
+function sphere(r=1; n=1, radius=1.0, center=(0.0, 0.0, 0.0))::GMTfv
 	_r::Float64 = (radius != 1.0) ? radius : r		# If spelled, the `radius` kwarg take precedence
 	o::Matrix{Float64} = [center[1] center[2] center[3]]
 
 	FV = icosahedron(_r)	# Can't use the center here because subTriSplit() screws it up
 	# Sub-triangulate the icosahedron for geodesic sphere triangulation
 	if (n > 0)				# If refinement is requested
-		Fn::Matrix{Int} = FV[2].data;	Vn::Matrix{Float64} = FV[1].data;		# Initialise Fn, Vn as input F and V
+		Fn::Matrix{Int} = FV.faces[1];	Vn::Matrix{Float64} = FV.verts;		# Initialise Fn, Vn as input F and V
 		for q = 1:n			# iteratively refine triangulation and push back radii to be r        
 			Vn, Fn  = subTriSplit(Vn, Fn, 1)			# Sub-triangulate      
 			T, P, R = cart2sph(view(Vn,:,1),view(Vn,:,2),view(Vn,:,3))			# Convert to spherical coordinates
@@ -254,8 +249,7 @@ function sphere(r=1; n=1, radius=1.0, center=(0.0, 0.0, 0.0))
 		end
 	end
 	(o[1] != 0 || o[2] != 0 || o[3] != 0) && (Vn .+= o)
-	DV = GMTdataset(data=Vn, geom=wkbPointZ);	set_dsBB!(DV)
-	return [DV, GMTdataset(data=Fn)]
+	fv2fv([Fn], Vn)
 end
 
 # ----------------------------------------------------------------------------
@@ -273,10 +267,9 @@ as two separate arrays (but it also accepts GMTdatasets) and returns two matrice
 
 - `n`: is the number of times the triangulation is split.
 """
-function subTriSplit(FV::Vector{<:GMTdataset}, n=1)
+function subTriSplit(FV::Vector{<:GMTdataset}, n=1)::GMTfv
 	V, F = subTriSplit(FV[1].data, FV[2].data, n)
-	DV = GMTdataset(data=V, geom=wkbPointZ);	set_dsBB!(DV)
-	return [DV, GMTdataset(data=F)]
+	fv2fv([F], V)
 end
 subTriSplit(V::GMTdataset{Float64,2}, F::GMTdataset{Int,2}, n=1) = subTriSplit(V.data, F.data, n)
 function subTriSplit(V::Matrix{Float64}, F::Matrix{Int}, n=1)
