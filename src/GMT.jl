@@ -112,7 +112,7 @@ if isdefined(Base, :Experimental) && isdefined(Base.Experimental, Symbol("@optle
 end
 
 export
-	GMTgrid, GMTimage, GMTdataset, GMTcpt, GItype, GDtype, GMTver, FMT, TMPDIR_USR, gmt, libgdal,
+	GMTgrid, GMTimage, GMTdataset, GMTfv, GMTcpt, GItype, GDtype, GMTver, FMT, TMPDIR_USR, gmt, libgdal,
 	arrows, arrows!, bar, bar!, bar3, bar3!, band, band!, bubblechart, bubblechart!, feather, feather!, hband, hband!,
 	hlines, hlines!, lines, lines!, legend, legend!, quiver, quiver!, radar, radar!, stairs, stairs!, stem, stem!,vlines,
 	vlines!, vband, vband!, hspan, hspan!, vspan, vspan!,
@@ -186,8 +186,7 @@ export
 
 	cube, dodecahedron, icosahedron, sphere, octahedron, tetrahedron, replicant,
 
-	df2ds, ODE2ds,
-	sprintf,
+	df2ds, ds2df, ODE2ds,
 	@?, @dir
 
 include("common_docs.jl")
