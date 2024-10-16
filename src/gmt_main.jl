@@ -722,6 +722,8 @@ function GMTJL_Set_Object(API::Ptr{Nothing}, X::GMT_RESOURCE, ptr, pad)::GMT_RES
 			end
 		elseif (isa(ptr, Vector{<:GMTdataset}))
 			X.object = dataset_init(API, ptr, X.direction)
+		elseif (isa(ptr, GMTfv))
+			X.object = dataset_init_FV(API, ptr)
 		else
 			if (X.direction == GMT_OUT)		# Here we accept ptr === nothing
 				X.object = convert(Ptr{GMT_DATASET}, GMT_Create_Data(API, GMT_IS_DATASET, GMT_IS_PLP, GMT_IS_OUTPUT, NULL, NULL, NULL, 0, 0, NULL))
@@ -1017,8 +1019,6 @@ function dataset_init(API::Ptr{Nothing}, Darr::Vector{<:GMTdataset}, direction::
 
 	(Darr == C_NULL || length(Darr) == 0) && error("Input is empty where it can't be.")
 
-	isFV(Darr) && return dataset_init_FV(API, Darr)			# Special case for Face-Vertices obj.
-
 	# We come here if we did not receive a matrix
 	dim = [1, 0, 0, 0]
 	dim[GMT_SEG+1] = length(Darr)					# Number of segments
@@ -1091,33 +1091,31 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function dataset_init_FV(API::Ptr{Nothing}, FV)::Ptr{GMT_MATRIX}
-	V::GMTdataset{Float64,2}, F::GMTdataset{Int,2} = FV[1], FV[2]
-	n_segs = size(F.data, 1)				# Number of segments or faces (polygons)
-	n_rows = size(F.data, 2)				# Number of rows (vertexes of the polygon)
-	n_cols = size(V.data, 2)				# Number of columns (2 for x,y; 3 for x,y,z)
-	dim = [1, n_segs, n_rows, n_cols]		# [1, GMT_SEG+1, GMT_ROW+1, GMT_COL+1]
+	n_segs = size(FV.faces[1], 1)			# Number of segments or faces (polygons)
+	n_rows = size(FV.faces[1], 2)			# Number of rows (vertices of the polygon)
+	dim = [1, n_segs, n_rows, 3]			# [1, GMT_SEG+1, GMT_ROW+1, GMT_COL+1]
 
 	pdim = pointer(dim)
 	D = convert(Ptr{GMT_DATASET}, GMT_Create_Data(API, GMT_IS_DATASET, GMT_IS_PLP, GMT_NO_STRINGS, pdim, NULL, NULL, 0, 0, NULL))
 	DS::GMT_DATASET = unsafe_load(D)
-	DT = unsafe_load(unsafe_load(DS.table))			# GMT_DATATABLE
+	DT = unsafe_load(unsafe_load(DS.table))		# GMT_DATATABLE
 
 	n_records = 0
-	tmp = zeros(n_rows, n_cols)
+	tmp = zeros(n_rows, 3)
 
-	for seg = 1:n_segs 								# Each row in F (a face) is a new data segment (a polygon)
+	for seg = 1:n_segs 							# Each row in a face is a new data segment (a polygon)
 		DSv = convert(Ptr{Nothing}, unsafe_load(DT.segment, seg))		# DT.segment = Ptr{Ptr{GMT_DATASEGMENT}}
-		S = GMT_Alloc_Segment(API, GMT_NO_STRINGS, n_rows, n_cols, "", DSv) # Ptr{GMT_DATASEGMENT}
-		Sb = unsafe_load(S)							# GMT_DATASEGMENT;		Sb.data -> Ptr{Ptr{Float64}}
-		
-		for c = 1:n_cols, r = 1:n_rows
-			tmp[r,c] = V.data[F.data[seg, r], c]
+		S = GMT_Alloc_Segment(API, GMT_NO_STRINGS, n_rows, 3, "", DSv) # Ptr{GMT_DATASEGMENT}
+		Sb = unsafe_load(S)						# GMT_DATASEGMENT;		Sb.data -> Ptr{Ptr{Float64}}
+	
+		for c = 1:3, r = 1:n_rows
+			tmp[r,c] = FV.verts[FV.faces[1][seg, r], c]
 		end
-		for col = 1:n_cols							# Copy the data columns
+		for col = 1:3							# Copy the data columns
 			unsafe_copyto!(unsafe_load(Sb.data, col), pointer(tmp[:,col]), n_rows)
 		end
 
-		n_records += n_rows							# Must manually keep track of totals
+		n_records += n_rows						# Must manually keep track of totals
 		DS.type_ = GMT_READ_DATA
 		unsafe_store!(S, Sb)
 		unsafe_store!(DT.segment, S, seg)
@@ -1578,6 +1576,11 @@ function Base.:show(io::IO, ::MIME"text/plain", D::Vector{<:GMTdataset})
 end
 Base.:show(io::IO, ::MIME"text/plain", D::GMTdataset) = show(D)
 Base.:display(D::GMTdataset) = show(D)		# Otherwise the default prints nothing when text only (data == [])
+
+# ---------------------------------------------------------------------------------------------------
+function Base.:show(io::IO, ::MIME"text/plain", FV::GMTfv)
+	println("Face-Vertices with a total of ", sum(size.(FV.faces,1)), " faces and $(size(FV.verts,1)) vertices")
+end
 
 # ---------------------------------------------------------------------------------------------------
 function Base.show(io::IO, C::GMTcpt)
