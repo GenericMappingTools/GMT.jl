@@ -45,7 +45,7 @@ does not need explicit coordinates to place the text.
   - `txt`: Return a Text record which is a Dataset with data = Mx2 and text in third column. The ``text``
      can be an array with same size as `mat` rows or a string (will be repeated n_rows times.) 
   - `x`:   An optional vector with the _xx_ coordinates
-  - `hdr`: optional String vector with either one or n_rows multis-egment headers.
+  - `hdr`: optional String vector with either one or n_rows multi-element headers.
   - `lc` or `linecolor` or `color`: optional array of strings/symbols with color names/values. Its length can be
      smaller than n_cols, case in which colors will be cycled. If `color` is not an array of strings, e.g.
      `color="yes"`, the colors cycle trough a pre-defined set of colors (same colors as in Matlab). If you
@@ -689,6 +689,30 @@ const alphabet_colors = ["#2BCE48", "#4C005C", "#005C31", "#5EF1F2", "#8F7C00", 
 # https://sashamaps.net/docs/resources/20-colors/
 const simple_distinct = ["#e6194b", "#3cb44b", "#ffe119", "#4363d8", "#f58231", "#911eb4", "#46f0f0", "#f032e6", "#bcf60c", "#fabebe", "#008080", "#e6beff", "#9a6324", "#fffac8", "#800000", "#aaffc3", "#808000", "#ffd8b1", "#000075", "#808080"]
  
+# ---------------------------------------------------------------------------------------------------
+"""
+    iFV = fv2fv(F, V; proj="", proj4="", wkt="", epsg=0) -> GMTfv
+
+- `F`:  A matrix of indices.
+- `V`:  A Mx3 matrix of vertices.
+- `proj` or `proj4`:  A proj4 string for dataset SRS.
+- `wkt`:  A WKT SRS.
+- `epsg`: Same as `proj` but using an EPSG code
+"""
+function fv2fv(F::Vector{Matrix{Int}}, V; hdr="", comment=String[], proj="", proj4="", wkt="", epsg=0)::GMTfv
+	(isempty(proj4) && !isempty(proj)) && (proj4 = proj)	# Allow both proj4 or proj keywords
+	bbox = extrema(V, dims=1)
+	GMTfv(verts=V, faces=F, bbox=[bbox[1][1], bbox[1][2], bbox[2][1], bbox[2][2], bbox[3][1], bbox[3][2]], proj4=proj4, wkt=wkt, epsg=epsg)
+end
+
+fv2fv(F::Matrix{Int}, V; proj="", proj4="", wkt="", epsg=0) = fv2fv([F], V; proj=proj, proj4=proj4, wkt=wkt, epsg=epsg)
+
+function fv2fv(F::Vector{Tuple{Int, Int, Int}}, V::Vector{Tuple{Float64, Float64, Float64}}; proj="", proj4="", wkt="", epsg=0)::GMTfv
+	verts=collect(reshape(reinterpret(Float64, V), (3,:))')
+	faces=[collect(reshape(reinterpret(Int, F), (3,:))')]
+	fv2fv(faces, verts; proj=proj, proj4=proj4, wkt=wkt, epsg=epsg)
+end
+
 # ---------------------------------------------------------------------------------------------------
 """
     v, names = splitds(D::Vector{<:GMTdataset}; groupby::String="") --> Tuple{Vector{Vector{Int}}, Vector{String}}
