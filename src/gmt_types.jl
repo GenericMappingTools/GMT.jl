@@ -292,7 +292,7 @@ GMTdataset(data::Array{Float32,2}, text::String) =
 GMTdataset(data::Array{Float32,2}) =
 	GMTdataset(data, Float64[], Float64[], DictSvS(), String[], String[], "", String[], "", "", 0, 0)
 
-Base.@kwdef struct GMTfv{T<:AbstractFloat} <: AbstractMatrix{T}
+Base.@kwdef mutable struct GMTfv{T<:AbstractFloat} <: AbstractMatrix{T}
 	verts::AbstractMatrix{T}=Matrix{Float64}(undef,0,0)
 	faces::Vector{<:AbstractMatrix{Int}}=Vector{<:AbstractMatrix{Int}}(undef,0)
 	faces_view::Vector{Matrix{Int}}=Vector{Matrix{Int}}(undef,0)

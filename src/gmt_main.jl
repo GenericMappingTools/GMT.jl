@@ -1090,35 +1090,43 @@ function dataset_init(API::Ptr{Nothing}, Darr::Vector{<:GMTdataset}, direction::
 end
 
 # ---------------------------------------------------------------------------------------------------
-function dataset_init_FV(API::Ptr{Nothing}, FV)::Ptr{GMT_MATRIX}
-	n_segs = size(FV.faces[1], 1)			# Number of segments or faces (polygons)
-	n_rows = size(FV.faces[1], 2)			# Number of rows (vertices of the polygon)
-	dim = [1, n_segs, n_rows, 3]			# [1, GMT_SEG+1, GMT_ROW+1, GMT_COL+1]
+function dataset_init_FV(API::Ptr{Nothing}, FV::GMTfv)::Ptr{GMT_MATRIX}
+	# FV is a GMTfv type and these types may be complicated when they hold bodies with more than one geometry
+	# (e.g. triangles and quadrangles) and/or more than one body. This function deals with those complixities.
+	what_faces = isempty(FV.faces_view) ? FV.faces : FV.faces_view	# faces_view is a processed version for the current view
+	n_segs_tot = sum(size.(what_faces, 1))			# Total number of segments or faces (polygons)
+	n_rows_tot = sum(size.(what_faces, 2))			# Total number of rows (vertices of the polygon)
+	dim = [1, n_segs_tot, n_rows_tot, 3]			# [1, GMT_SEG+1, GMT_ROW+1, GMT_COL+1]
 
 	pdim = pointer(dim)
 	D = convert(Ptr{GMT_DATASET}, GMT_Create_Data(API, GMT_IS_DATASET, GMT_IS_PLP, GMT_NO_STRINGS, pdim, NULL, NULL, 0, 0, NULL))
 	DS::GMT_DATASET = unsafe_load(D)
-	DT = unsafe_load(unsafe_load(DS.table))		# GMT_DATATABLE
+	DT = unsafe_load(unsafe_load(DS.table))			# GMT_DATATABLE
 
-	n_records = 0
-	tmp = zeros(n_rows, 3)
+	n_records, _seg = 0, 0
+	tmp = zeros(maximum(size.(what_faces,2)), 3)	# The maximum number of vertices in any polygon of all geometries
 
-	for seg = 1:n_segs 							# Each row in a face is a new data segment (a polygon)
-		DSv = convert(Ptr{Nothing}, unsafe_load(DT.segment, seg))		# DT.segment = Ptr{Ptr{GMT_DATASEGMENT}}
-		S = GMT_Alloc_Segment(API, GMT_NO_STRINGS, n_rows, 3, "", DSv) # Ptr{GMT_DATASEGMENT}
-		Sb = unsafe_load(S)						# GMT_DATASEGMENT;		Sb.data -> Ptr{Ptr{Float64}}
-	
-		for c = 1:3, r = 1:n_rows
-			tmp[r,c] = FV.verts[FV.faces[1][seg, r], c]
+	for geom = 1:numel(what_faces)					# If we have more than one type of geometries (e.g. triangles and quadrangles)
+		n_segs = size(what_faces[geom], 1)			# Number of segments or faces (polygons) in this geometry (what_faces[geom])
+		n_rows = size(what_faces[geom], 2)			# Number of rows (vertices of the polygon) in this geometry
+		for seg = 1:n_segs 							# Each row in a face is a new data segment (a polygon)
+			_seg += 1								# Counter that keeps track on the current number of polygon. 
+			DSv = convert(Ptr{Nothing}, unsafe_load(DT.segment, _seg))		# DT.segment = Ptr{Ptr{GMT_DATASEGMENT}}
+			S = GMT_Alloc_Segment(API, GMT_NO_STRINGS, n_rows, 3, "", DSv)	# Ptr{GMT_DATASEGMENT}
+			Sb = unsafe_load(S)						# GMT_DATASEGMENT;		Sb.data -> Ptr{Ptr{Float64}}
+		
+			for c = 1:3, r = 1:n_rows
+				tmp[r,c] = FV.verts[what_faces[geom][seg, r], c]
+			end
+			for col = 1:3							# Copy the data columns
+				unsafe_copyto!(unsafe_load(Sb.data, col), pointer(tmp[:,col]), n_rows)
+			end
+
+			n_records += n_rows						# Must manually keep track of totals
+			DS.type_ = GMT_READ_DATA
+			unsafe_store!(S, Sb)
+			unsafe_store!(DT.segment, S, _seg)
 		end
-		for col = 1:3							# Copy the data columns
-			unsafe_copyto!(unsafe_load(Sb.data, col), pointer(tmp[:,col]), n_rows)
-		end
-
-		n_records += n_rows						# Must manually keep track of totals
-		DS.type_ = GMT_READ_DATA
-		unsafe_store!(S, Sb)
-		unsafe_store!(DT.segment, S, seg)
 	end
 	DT.n_records, DS.n_records = n_records, n_records	# They are equal because our GMT_DATASET has only one table
 	Dt = unsafe_load(DS.table)

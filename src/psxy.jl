@@ -1438,66 +1438,44 @@ end
     FV, projs = sort_visible_faces(FV, azim, elev) -> Tuple{Vector{GMTdataset}, Vector{Float64}}
 
 Take a Faces-Vertices dataset and delete the invisible faces from view vector. Next sort them by distance so
-that the furthest faces are drawn first and hence do not hide the others.
+that the furthest faces are drawn first and hence do not hide the others. NOTE: to not change the original
+FV we store the resultant matix(ces) of faces in a FV0s fiels called "faces_view", which is a vector
+of matrices, one for each geometry (e.g. triangles, quadrangles, etc).
 
 - `FV`: The Faces-Vertices dataset.
 - `azim`: Azimuth angle in degrees. Positive clock-wise from North.
 - `elev`: Elevation angle in degrees above horizontal plane.
 """
-#=
-function sort_visible_faces(FV, azim, elev)::Tuple{Vector{GMTdataset{T, 2} where T<:Real}, Vector{Float64}}
-	V::GMTdataset{Float64,2}, F::GMTdataset{Int,2} = FV[1], FV[2]
-	cos_az, cos_el, sin_az, sin_el = cosd(azim), cosd(elev), sind(azim), sind(elev)
-	view_vec = [sin_az * cos_el, cos_az * cos_el, sin_el]
-
-	n_faces, n_verts = size(F.data, 1), size(F.data, 2)	# Number of faces (polygons) and vertices of the polygons
-	tmp = zeros(n_verts, 3)
-	isVisible = fill(false, n_faces)
-	projs = Float64[]
-	dists = NTuple{2,Float64}[]
-	for face = 1:n_faces
-		for c = 1:3, v = 1:n_verts						# Build the polygon from the FV collection
-			tmp[v,c] = V.data[F.data[face,v], c]
-		end
-		this_proj = dot(facenorm(tmp), view_vec)
-		if ((isVisible[face] = this_proj > 0))
-			cx, cy, cz = sum(tmp[:,1]), sum(tmp[:,2]), sum(tmp[:,3])	# Pseudo-centroids. Good enough for the sorting purpose
-			push!(dists, (cx * sin_az + cy * cos_az, cz * sin_el))
-			push!(projs, this_proj)
-		end
-	end
-	data = F.data[isVisible, :]
-	ind = sortperm(dists)
-	data = data[ind, :]
-	return [V, GMTdataset(data=data)], projs[ind]
-end
-=#
-
 function sort_visible_faces(FV::GMTfv, azim, elev)
 	cos_az, cos_el, sin_az, sin_el = cosd(azim), cosd(elev), sind(azim), sind(elev)
 	view_vec = [sin_az * cos_el, cos_az * cos_el, sin_el]
-
-	n_faces, n_verts = size(FV.faces[1], 1), size(FV.verts, 2)	# Number of faces (polygons) and vertices of the polygons
-	tmp = zeros(n_verts, 3)
-	isVisible = fill(false, n_faces)
 	projs = Float64[]
-	dists = NTuple{2,Float64}[]
-	for face = 1:n_faces
-		for c = 1:3, v = 1:n_verts						# Build the polygon from the FV collection
-			tmp[v,c] = FV.verts[FV.faces[1][face,v], c]
+
+	for k = 1:numel(FV.faces)			# Loop over number of face groups (we can have triangles, quads, etc)
+		n_faces, n_verts = size(FV.faces[k], 1), size(FV.verts, 2)	# Number of faces (polygons) and vertices of the polygons
+		tmp = zeros(n_verts, 3)
+		isVisible = fill(false, n_faces)
+		dists = NTuple{2,Float64}[]
+		_projs = Float64[]
+		for face = 1:n_faces
+			for c = 1:3, v = 1:n_verts						# Build the polygon from the FV collection
+				tmp[v,c] = FV.verts[FV.faces[k][face,v], c]
+			end
+			this_proj = dot(facenorm(tmp), view_vec)
+			if ((isVisible[face] = this_proj > 0))
+				cx, cy, cz = sum(tmp[:,1]), sum(tmp[:,2]), sum(tmp[:,3])	# Pseudo-centroids. Good enough for the sorting purpose
+				push!(dists, (cx * sin_az + cy * cos_az, cz * sin_el))
+				push!(_projs, this_proj)
+			end
 		end
-		this_proj = dot(facenorm(tmp), view_vec)
-		if ((isVisible[face] = this_proj > 0))
-			cx, cy, cz = sum(tmp[:,1]), sum(tmp[:,2]), sum(tmp[:,3])	# Pseudo-centroids. Good enough for the sorting purpose
-			push!(dists, (cx * sin_az + cy * cos_az, cz * sin_el))
-			push!(projs, this_proj)
-		end
+		data = FV.faces[k][isVisible, :]
+		ind = sortperm(dists)
+		data = data[ind, :]
+		(k == 1) ? (FV.faces_view = [data]) : append!(FV.faces_view, [data])
+		projs = (k == 1) ? _projs[ind] : append!(projs, _projs[ind])
 	end
-	data = FV.faces[1][isVisible, :]
-	ind = sortperm(dists)
-	data = data[ind, :]
-	FV.faces[1] = data
-	return FV, projs[ind]
+
+	return FV, projs
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -1652,34 +1630,40 @@ end
 function replicant_worker(FV::GMTfv, xyz, azim, elev, cval, cpt, scales)::Vector{GMTdataset}
 	# This guy is the one who does the replicant work
 
-	FV, normals = sort_visible_faces(FV, azim, elev)	# Sort & kill invisible
+	FV, normals = sort_visible_faces(FV, azim, elev)	# Return a modified FV containing info about the sorted visible faces.
 
-	n_faces = size(FV.faces[1], 1)			# Number of faces of base body
-	n_rows = size(FV.faces[1], 2)			# Number of rows (vertices of the polygon)
+	n_faces_tot = sum(size.(FV.faces_view, 1))			# Total number of segments or faces (polygons)
 
 	# ---------- First we convert the FV into a vector of GMTdataset
-	D1 = Vector{GMTdataset}(undef, n_faces)
-	t = zeros(eltype(FV.verts), n_rows, 3)
-	for face = 1:n_faces					# Loop over faces
-		for c = 1:3, r = 1:n_rows
-			t[r,c] = FV.verts[FV.faces[1][face, r], c]
+	D1 = Vector{GMTdataset}(undef, n_faces_tot)
+	t = zeros(eltype(FV.verts), maximum(size.(FV.faces_view,2)), 3)	# The maximum number of vertices in any polygon of all geometries
+	count_face = 0
+
+	for geom = 1:numel(FV.faces_view)					# If we have more than one type of geometries (e.g. triangles and quadrangles)
+		n_faces = size(FV.faces_view[geom], 1)			# Number of segments or faces (polygons) in this geometry
+		n_rows  = size(FV.faces_view[geom], 2)			# Number of rows (vertices of the polygon) in this geometry
+		for face = 1:n_faces							# Loop over faces
+			count_face += 1								# Counter that keeps track on the current number of polygon. 
+			for c = 1:3, r = 1:n_rows
+				t[r,c] = FV.verts[FV.faces_view[geom][face, r], c]
+			end
+			D1[count_face] = GMTdataset(data=copy(t))
 		end
-		D1[face] = GMTdataset(data=copy(t))
 	end
 
-	P::Ptr{GMT_PALETTE} = palette_init(G_API[1], cpt)		# A pointer to a GMT CPT
+	P::Ptr{GMT_PALETTE} = palette_init(G_API[1], cpt)	# A pointer to a GMT CPT
 	rgb = [0.0, 0.0, 0.0, 0.0]
 	cor = [0.0, 0.0, 0.0]
-	D2 = Vector{GMTdataset}(undef, size(xyz, 1) * n_faces)
+	D2 = Vector{GMTdataset}(undef, size(xyz, 1) * n_faces_tot)
 
 	# ---------- Now we do the replication
-	for k = 1:size(xyz, 1)					# Loop over number of positions. For each of these we have a new body
+	for k = 1:size(xyz, 1)								# Loop over number of positions. For each of these we have a new body
 		gmt_get_rgb_from_z(G_API[1], P, cval[k], rgb)
-		for face = 1:n_faces				# Loop over number of faces of the base body
+		for face = 1:n_faces_tot						# Loop over number of faces of the base body
 			cor[1], cor[2], cor[3] = rgb[1], rgb[2], rgb[3]
 			gmt_illuminate(G_API[1], normals[face], cor)
 			txt = @sprintf("-G%.0f/%.0f/%.0f", cor[1]*255, cor[2]*255, cor[3]*255)
-			D2[(k-1)*n_faces+face] = GMTdataset(data=(D1[face].data * scales[k] .+ xyz[k:k,1:3]), header=txt)
+			D2[(k-1)*n_faces_tot+face] = GMTdataset(data=(D1[face].data * scales[k] .+ xyz[k:k,1:3]), header=txt)
 		end
 	end
 	return set_dsBB(D2)
