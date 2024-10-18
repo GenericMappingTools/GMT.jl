@@ -684,8 +684,14 @@ end
 Read a Wavefront .obj file and return the result in a FaceVertices object.
 """
 function read_obj(fname)
-	n_vert, count_v, count_f, vr, fr = 0, 0, 0, 0, 0
+	# This functions became convoluted because we want to be able to read .obj files that may have
+	# a different number of vertices per face. For example we may have a sphere made of quadrangles
+	# and triangles to close the poles. We deal with these cases by storing the faces matices in a
+	# vector that will have as many elements as there are different geometries. This way we workaround
+	# the limitation that matrices must have the same number of columns, but we add complexity.
+	count_v, count_f, vr, fr = 0, 0, 0, 0
 	first, has_slash = true, false
+	n_vert_vec = Int[]		# Vector to store the number of vertices per each face
 
 	# Do a first round to find out how many vertices and faces there are as well as if indices are simple or with slashes
 	fid = open(fname)
@@ -694,14 +700,32 @@ function read_obj(fname)
 		isempty(it) && continue
 		if (it[1] == 'v' && it[2] == ' ') count_v += 1
 		elseif (it[1] == 'f')
-			first && (has_slash = contains(it, '/'); n_vert = length(split(it))-1;	first = false)
+			first && (has_slash = contains(it, '/'); first = false)
+			push!(n_vert_vec, length(split(it))-1)		# Store the number of vertices of this face
 			count_f += 1
 		end
 	end
 	close(fid)		# Don't know how to rewind 'iter', so close file and open it again.
 
+	u = sort(unique(n_vert_vec))		# Number of faces geometries (tri, quad, etc) in growing order of vertices number
+	n_geoms = length(u)
+	off = minimum(n_vert_vec) - 1
+	n_vert_vec .-= off					# Shift indices so they start at one and we can easily compute a histogram
+	hst = zeros(Int, n_geoms)
+	@inbounds for k = 1:numel(n_vert_vec)  hst[n_vert_vec[k]] += 1  end		# Micro histogram
+	n_vert_vec .+= off
+	F = Vector{Matrix{Int}}(undef, n_geoms)
+	for k = 1:n_geoms
+		F[k] = fill(0, hst[k], n_vert_vec[findfirst(n_vert_vec .== u[k])])	# Initialize each matrix of faces (onre for each geometry type)
+	end
+
+	ind_F = ones(Int, count_f)			# Indices of faces
+	for k = 2:n_geoms
+		ind_F[n_vert_vec .== u[k]] .= k	# For each face, we store the index of the corresponding geometry. That is we know which geometry it belongs to
+	end
+	count_F_rows = zeros(Int, n_geoms)
+
 	V = Matrix{Float64}(undef, count_v, 3)
-	F = Matrix{Int}(undef, count_f, n_vert)
 	fid = open(fname)
 	iter = eachline(fid)
 	for it in iter
@@ -712,14 +736,16 @@ function read_obj(fname)
 			V[vr, 1], V[vr, 2], V[vr, 3] = parse(Float64, line[2]), parse(Float64, line[3]), parse(Float64, line[4])
 		elseif (line[1] == "f")
 			fr += 1
-			if (has_slash)		# Vertex with texture/normals coordinate indices
-				for k = 1:n_vert
+			i_t = ind_F[fr]
+			count_F_rows[i_t] += 1		# 
+			if (has_slash)				# Vertex with texture/normals coordinate indices
+				for k = 1:n_vert_vec[fr]
 					spli = split(line[k+1], "/")
-					F[fr, k] = parse(Int, spli[1])
+					F[i_t][count_F_rows[i_t], k] = parse(Int, spli[1])
 				end
-			else				# simple vertex indices
-				for k = 1:n_vert
-					F[fr, k] = parse(Int, line[k+1])
+			else						# simple vertex indices
+				for k = 1:n_vert_vec[fr]
+					F[i_t][count_F_rows[i_t], k] = parse(Int, line[k+1])
 				end
 			end
 		end
