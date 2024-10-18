@@ -5,7 +5,6 @@
 	GMT.dodecahedron()
 	GMT.tetrahedron()
 	GMT.cube()
-	GMT.sphere()
 
 	FV = sphere();
 	D  = GMT.replicant(FV, replicate=(centers=rand(10,3), scales=0.1));
