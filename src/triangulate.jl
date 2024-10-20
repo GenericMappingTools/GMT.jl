@@ -372,7 +372,7 @@ end
 """
     Z = tri_z(D::Vector{<:GMTdataset})
 
-Get the half of the elevation for each 3D polygon in the vector of `D`. Note: this is NOT the average
+Get the half elevation for each 3D polygon in the vector of `D`. Note: this is NOT the average
 of vertices elevation, but the elevation at the midpoint of the polygon.
 
 In case the `D` is vector contains also a vertical wall, signaled by the comment starting with "vwall",
