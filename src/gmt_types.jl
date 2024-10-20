@@ -141,7 +141,7 @@ end
 find4similar(I::GMTimage, rest) = I
 
 """
-mutable struct GMTcpt
+    mutable struct GMTcpt
 
 The fields of this struct are:
 - `colormap::Array{Float64,2}`:  Mx3 matrix equal to the first three columns of cpt

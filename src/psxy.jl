@@ -157,7 +157,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		cmd = replace(cmd, opt_J => " -JX" * split(DEF_FIG_SIZE, '/')[1] * "/0")	# If projected, it's a axis equal for sure
 	end
 	if (is3D && isempty(opt_JZ) && length(collect(eachmatch(r"/", opt_R))) == 5)
-		opt_JZ = CTRL.pocket_J[3] = (is_gridtri) ? " -JZ3c" : " -JZ6c"		# Needed for eventual z-axis dir reversal.
+		opt_JZ = CTRL.pocket_J[3] = (is_gridtri) ? " -JZ5c" : " -JZ6c"	# This is really arbitrary and not satisfactory for all cases.
 		cmd *= opt_JZ		# Default -JZ
 	end
 
@@ -410,6 +410,7 @@ function deal_gridtri!(arg1, d)::Bool
 		C.bfn[2, :] .= 0.7			# Set the foreground color used by the vertical wall
 		d[:C] = C
 	end
+	(!haskey(d, :aspect) && !haskey(d, :aspect3)) && (d[:aspect] = "equal")		# At least x,y axes should be data driven
 	(is_in_dict(d, [:L :close :polygon]) === nothing) && (d[:L] = "")
 	return true
 end
@@ -1454,7 +1455,7 @@ of matrices, one for each geometry (e.g. triangles, quadrangles, etc).
 - `elev`: Elevation angle in degrees above horizontal plane.
 - `del`: Boolean to control whether to delete invisible faces. True by default
 """
-function sort_visible_faces(FV::GMTfv, azim, elev; del::Bool=true)
+function sort_visible_faces(FV::GMTfv, azim, elev; del::Bool=true)::Tuple{GMTfv, Vector{Float64}}
 	cos_az, cos_el, sin_az, sin_el = cosd(azim), cosd(elev), sind(azim), sind(elev)
 	view_vec = [sin_az * cos_el, cos_az * cos_el, sin_el]
 	projs = Float64[]
@@ -1482,6 +1483,8 @@ function sort_visible_faces(FV::GMTfv, azim, elev; del::Bool=true)
 		(k == 1) ? (FV.faces_view = [data]) : append!(FV.faces_view, [data])
 		projs = (k == 1) ? _projs[ind] : append!(projs, _projs[ind])
 	end
+	sum(size.(FV.faces_view, 1)) < 3 * sum(size.(FV.faces, 1)) &&
+		@warn("More than 2/3 of the faces found invisible. This often indicates that the Z and X,Y units are not the same. Consider using the `zscale` field of the `FV` input.")
 
 	return FV, projs
 end

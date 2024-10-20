@@ -147,7 +147,7 @@ end
     cl = worldrectcoast(proj="?", res="crude", coastlines=nothing, limits=Float64[])
 
 Return a project coastline, at `res` resolution, suitable to overlain in a grid created with the
-`worldrectangular` function. Note that this function, contrary to `coastlinesproj`, returns coastline
+`worldrectangular` function. Note that this function, contrary to `coastlinesproj`, return coastline
 data that spans > 360 degrees.
 
 - `proj`: A proj4 string describing the projection (Mandatory).

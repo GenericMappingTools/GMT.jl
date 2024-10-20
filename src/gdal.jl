@@ -2022,10 +2022,10 @@ end
 	end
 
 	"""
-	ds = wrapgeom(geom::AbstractGeometry, proj="") -> Dataset
+        ds = wrapgeom(geom::AbstractGeometry, proj="") -> Dataset
 
-		Wrap a geometry type into a GDAL dataset. Optionaly provide the SRS (proj4) via the PROJ option.
-		Handy function for saving a geometry on disk or visualize it with plot()
+    Wrap a geometry type into a GDAL dataset. Optionaly provide the SRS (proj4) via the PROJ option.
+    Handy function for saving a geometry on disk or visualize it with plot()
 	"""
 	function wrapgeom(geom::AbstractGeometry, proj::String="")
 		(proj != "" && !startswith(proj, "+proj=")) && error("Projection info must be in proj4 format.")

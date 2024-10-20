@@ -20,10 +20,10 @@ data near the median. This is useful for data with extreme outliers, such as ast
 ## Keyword arguments
 * `nsamples` - The number of samples to use from `input`. If fewer than `nsamples` are present, will use the full input
 * `contrast` - The desired contrast
-* `k_rej` - The number of standard deviations above which data is rejected
-* `max_iteration` - The number of iterations used for fitting samples
 * `max_reject` - The maximum number of pixels to reject during the iterative fitting
 * `min_npixels` - The minimum number of pixels to calculate the limits after the iterative fitting
+* `k_rej` - The number of standard deviations above which data is rejected
+* `max_iteration` - The number of iterations used for fitting samples
 
 See the extended help (in REPL, `??zscale`) for technical details.
 

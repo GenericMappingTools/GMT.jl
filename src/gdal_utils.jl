@@ -13,11 +13,11 @@ For files with `sds` with a scale_factor (e.g. MODIS data), that scale is applyi
 ### Examples:
    G = gd2gmt("AQUA_MODIS.20210228.L3m.DAY.NSST.sst.4km.NRT.nc", sds=1);
 
-or
+Or
 
    G = gd2gmt("SUBDATASET_1_NAME=NETCDF:AQUA_MODIS.20210228.L3m.DAY.NSST.sst.4km.NRT.nc:sst");
 
-or
+Or
 
    G = gd2gmt("NETCDF:AQUA_MODIS.20210228.L3m.DAY.NSST.sst.4km.NRT.nc:sst");
 """
@@ -792,7 +792,7 @@ Write a raster or a vector file to disk
            This list can be in the form of a vector of strings, or joined in a simgle string.
 - `kwargs`: This options accept the GMT region (-R) and increment (-I)
 
-or
+Or
 
     gdalwrite(cube::GItype, fname::AbstractString, v=nothing; dim_name::String="time", dim_units::String="")
 

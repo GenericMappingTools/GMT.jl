@@ -201,6 +201,9 @@
 	println("	TRISURF")
 	x,y,z = GMT.peaks(N=30, grid=false);
 	trisurf!([x[:] y[:] z[:]])
+	Gsombrero = gmt("grdmath -R-15/15/-15/15 -I0.3 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");
+	D = grid2tri(Gsombrero, thickness=1);
+	viz(D, Vd=dbg2);
 
 	println("	RADAR")
 	radar([10.5 20.5 30.6 40.9 46], axeslimts=[15, 25, 50, 90, 50], labels=["Spoons","Forks","Knifes","Dishes","Oranges"], annotall=true, marker=:circ, fill=true, Vd=dbg2)
