@@ -294,9 +294,10 @@ GMTdataset(data::Array{Float32,2}) =
 
 Base.@kwdef mutable struct GMTfv{T<:AbstractFloat} <: AbstractMatrix{T}
 	verts::AbstractMatrix{T}=Matrix{Float64}(undef,0,0)
-	faces::Vector{<:AbstractMatrix{Int}}=Vector{<:AbstractMatrix{Int}}(undef,0)
+	faces::Vector{<:AbstractMatrix{<:Integer}}=Vector{Matrix{Int}}(undef,0)
 	faces_view::Vector{Matrix{Int}}=Vector{Matrix{Int}}(undef,0)
 	bbox::Vector{Float64}=zeros(6)
+	zscale::Float64=1.0
 	proj4::String=""
 	wkt::String=""
 	epsg::Int=0
