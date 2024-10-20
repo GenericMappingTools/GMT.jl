@@ -308,3 +308,24 @@ function subTriSplit(V::Matrix{Float64}, F::Matrix{Int}, n=1)
 	end
 	return Vn, Fn
 end	
+
+# ----------------------------------------------------------------------------
+"""
+    FV = torus(; r=2.0, R=5.0, center=(0.0, 0.0, 0.0), nx=100, ny=50) -> GMTfv
+
+Creates a torus mesh with radius `r`. 
+
+- `r`: the inner radius of the torus.
+- `R`: the outer radius of the torus.
+- `center`: A tuple of three numbers defining the origin of the body. Default is `(0.0, 0.0, 0.0)`.
+- `nx`: the number of vertices in the xx direction.	
+- `ny`: the number of vertices in the yy direction.
+"""
+function torus(; r=2.0, R=5.0, center=(0.0, 0.0, 0.0), nx=100, ny=50)::GMTfv
+	if (R < r)  R, r = r, R  end
+	Θ, ϕ = range(-pi,pi,nx), range(-pi,pi,ny)
+	x = [(R + cos(v)) * cos(u) + center[1] for u in Θ, v in ϕ]
+	y = [(R + cos(v)) * sin(u) + center[2] for u in Θ, v in ϕ]
+	z = [r*sin(v) + center[3] for u in Θ, v in ϕ]
+	surf2fv(x, y, z)
+end

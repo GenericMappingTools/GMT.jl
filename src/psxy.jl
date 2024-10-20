@@ -57,7 +57,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 
 	if (is3D && isa(arg1, GMTfv))			# case of 3D faces
 		arg1 = (is_in_dict(d, [:replicate]) !== nothing) ? replicant(arg1, d) : deal_faceverts(arg1, d)
-		!haskey(d, :aspect3) && (d[:aspect3] = "equal")			# Needs thinking
+		(!haskey(d, :aspect3) && is_in_dict(d, [:JZ :Jz :zsize :zscale]) === nothing) && (d[:aspect3] = "equal")
 	elseif (is_gridtri)
 		arg1 = sort_visible_triangles(arg1)
 		is_in_dict(d, [:Z :level :levels]) === nothing && (d[:Z] = tri_z(arg1))
@@ -102,8 +102,8 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		end
 	end
 
+	axis_equal = is_axis_equal(d)		# See if the user asked for an equal aspect ratio
 	cmd, opt_JZ = parse_JZ(d, cmd; O=O, is3D=is3D)
-	#(is3D && O && opt_JZ == "" && CTRL.pocket_J[3] != "") && (cmd *= CTRL.pocket_J[3])
 	cmd, = parse_common_opts(d, cmd, [:a :e :f :g :t :w :params], first)
 	cmd, opt_l = parse_l(d, cmd)		# Parse this one (legend) aside so we can use it in classic mode
 	cmd, opt_f = parse_f(d, cmd)		# Parse this one (-f) aside so we can check against D.attrib
@@ -139,6 +139,13 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	end
 
 	cmd, arg1, opt_R, _, opt_i = read_data(d, cmd0, cmd, arg1, opt_R, is3D)
+
+	# We still need to set the right -JZ when the aspect is set to :equal (or :data). We couldn't do it
+	# before because only after parsing -R we know the full 3 sides sizes
+	if (is3D && axis_equal)
+		cmd, opt_JZ = refine_JZ(cmd, opt_JZ)
+	end
+
 	(cmd0 != "" && isa(arg1, GMTdataset)) && (arg1 = with_xyvar(d, arg1))	# If we read a file, see if requested cols
 	(!got_usr_R && opt_R != "") && (CTRL.pocket_R[1] = opt_R)	# Still on time to store it.
 	(N_args == 0 && arg1 !== nothing) && (N_args = 1)	# arg1 might have started as nothing and got values above
@@ -375,15 +382,15 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    FV = deal_faceverts(FV::GMTfv, d)::GMTfv
+    FV = deal_faceverts(FV::GMTfv, d; del::Bool=true)::GMTfv
 	
-Deal with the situation where we are plotting 3D FV's. Here we kill invisible faces and sort them
-according to the viewing angle. If no fill color is set in kwargs, we use the dotprod and a gray CPT
+Deal with the situation where we are plotting 3D FV's. Here we kill (if del==true) invisible faces and sort
+them according to the viewing angle. If no fill color is set in kwargs, we use the dotprod and a gray CPT
 to set the fill color that will be modulated by normals to each visible face.
 """
-function deal_faceverts(arg1::GMTfv, d)::GMTfv
+function deal_faceverts(arg1::GMTfv, d; del::Bool=true)::GMTfv
 	azim, elev = get_numeric_view()
-	arg1, dotprod = sort_visible_faces(arg1, azim, elev)		# Sort & kill invisible
+	arg1, dotprod = sort_visible_faces(arg1, azim, elev; del=del)		# Sort & kill (or not) invisible
 	if (is_in_dict(d, [:G :fill]) === nothing)		# If fill not set we use the dotprod and a gray CPT to set the fill
 		is_in_dict(d, [:Z :level :levels]) === nothing && (d[:Z] = dotprod)
 		(is_in_dict(d, CPTaliases) === nothing) && (d[:C] = gmt("makecpt -T0/1 -C150,210"))	# Users may still set a CPT
@@ -1435,7 +1442,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    FV, projs = sort_visible_faces(FV, azim, elev) -> Tuple{Vector{GMTdataset}, Vector{Float64}}
+    FV, projs = sort_visible_faces(FV, azim, elev; del=true) -> Tuple{Vector{GMTdataset}, Vector{Float64}}
 
 Take a Faces-Vertices dataset and delete the invisible faces from view vector. Next sort them by distance so
 that the furthest faces are drawn first and hence do not hide the others. NOTE: to not change the original
@@ -1445,8 +1452,9 @@ of matrices, one for each geometry (e.g. triangles, quadrangles, etc).
 - `FV`: The Faces-Vertices dataset.
 - `azim`: Azimuth angle in degrees. Positive clock-wise from North.
 - `elev`: Elevation angle in degrees above horizontal plane.
+- `del`: Boolean to control whether to delete invisible faces. True by default
 """
-function sort_visible_faces(FV::GMTfv, azim, elev)
+function sort_visible_faces(FV::GMTfv, azim, elev; del::Bool=true)
 	cos_az, cos_el, sin_az, sin_el = cosd(azim), cosd(elev), sind(azim), sind(elev)
 	view_vec = [sin_az * cos_el, cos_az * cos_el, sin_el]
 	projs = Float64[]
@@ -1454,22 +1462,22 @@ function sort_visible_faces(FV::GMTfv, azim, elev)
 	for k = 1:numel(FV.faces)			# Loop over number of face groups (we can have triangles, quads, etc)
 		n_faces, n_verts = size(FV.faces[k], 1), size(FV.verts, 2)	# Number of faces (polygons) and vertices of the polygons
 		tmp = zeros(n_verts, 3)
-		isVisible = fill(false, n_faces)
+		del && (isVisible = fill(false, n_faces))
 		dists = NTuple{2,Float64}[]
 		_projs = Float64[]
 		for face = 1:n_faces
 			for c = 1:3, v = 1:n_verts						# Build the polygon from the FV collection
 				tmp[v,c] = FV.verts[FV.faces[k][face,v], c]
 			end
-			this_proj = dot(facenorm(tmp), view_vec)
-			if ((isVisible[face] = this_proj > 0))
+			this_proj = dot(facenorm(tmp, zfact=FV.zscale), view_vec)
+			if (!del || (isVisible[face] = this_proj > 0))
 				cx, cy, cz = sum(tmp[:,1]), sum(tmp[:,2]), sum(tmp[:,3])	# Pseudo-centroids. Good enough for the sorting purpose
 				push!(dists, (cx * sin_az + cy * cos_az, cz * sin_el))
 				push!(_projs, this_proj)
 			end
 		end
-		data = FV.faces[k][isVisible, :]
-		ind = sortperm(dists)
+		data = del ? FV.faces[k][isVisible, :] : FV.faces[k]
+		ind  = sortperm(dists)
 		data = data[ind, :]
 		(k == 1) ? (FV.faces_view = [data]) : append!(FV.faces_view, [data])
 		projs = (k == 1) ? _projs[ind] : append!(projs, _projs[ind])
@@ -1598,6 +1606,7 @@ function replicant(FV::GMTfv, d::Dict{Symbol, Any})::Vector{GMTdataset}
 		isempty(cpt) && (cpt = get(val, :C, GMTcpt()))
 		isempty(cpt) && (cpt = get(val, :color, GMTcpt()))
 		scales = get(val, :scales, nothing)				# Scales can be a nothing or a number or a vector
+		(scales === nothing) && (scales = get(val, :scale, nothing))	# Try also 'scale'
 	elseif (isa(val, Matrix{<:Real}))					# User just passed replicate=centers
 		_xyz = (promote_type(eltype(FV.verts), eltype(val))).(val)
 		zcolor = collect(1.0:size(_xyz, 1))
@@ -1617,7 +1626,7 @@ function replicant(FV::GMTfv, d::Dict{Symbol, Any})::Vector{GMTdataset}
 
 	_scales = (scales === nothing) ? fill(one(eltype(FV.verts)), length(zcolor)) :		# Try to make _scales the same type as the V points
 	          (eltype(scales) == Float64 && eltype(FV.verts) == Float32) ? Float32.(scales) : scales
-	(length(scales) == 1) && (_scales = fill(scales, length(zcolor)))
+	(length(_scales) == 1) && (_scales = fill(scales, length(zcolor)))
 
 	# If no CPT, make one
 	(isempty(cpt)) && (cpt = gmt("makecpt -T1/$(length(zcolor))"))

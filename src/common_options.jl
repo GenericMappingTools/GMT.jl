@@ -394,7 +394,7 @@ function opt_R2num(opt_R::String)::Vector{Float64}
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_JZ(d::Dict, cmd::String, del::Bool=true; O::Bool=false, is3D::Bool=false)
+function parse_JZ(d::Dict, cmd::String, del::Bool=true; O::Bool=false, is3D::Bool=false)::Tuple{String,String}
 	symbs = [:JZ :Jz :zsize :zscale]
 	(SHOW_KWARGS[1]) && return (print_kwarg_opts(symbs, "String | Number"), "")
 	opt_J::String = "";		seek_JZ = true
@@ -412,7 +412,7 @@ function parse_JZ(d::Dict, cmd::String, del::Bool=true; O::Bool=false, is3D::Boo
 				h = w * dims[2] / dims[1]					# Apply the aspect ratio
 				opt_J = string(" -JZ", h)
 			else
-				opt_J = " -JZ" * split(o[2:end],'/')[1];
+				opt_J = " -JZ" * split(o[2:end],'/')[1];	# This is not final, and actually wrong for aspect3=:equal
 			end
 			seek_JZ = false
 			cmd *= opt_J
@@ -428,6 +428,34 @@ function parse_JZ(d::Dict, cmd::String, del::Bool=true; O::Bool=false, is3D::Boo
 	#CTRL.pocket_J[3] = opt_J
 	(is3D && O && opt_J == "" && CTRL.pocket_J[3] != "") ? (opt_J = CTRL.pocket_J[3]; cmd *= opt_J) : CTRL.pocket_J[3] = opt_J
 	return cmd, opt_J
+end
+
+# ---------------------------------------------------------------------------------------------------
+function refine_JZ(cmd::String, opt_JZ::String)::Tuple{String,String}
+	# Often, when parse_JZ is called we still don't know the full 3 plotting sides sizes and hence
+	# when asked for an aspect=equal the original JZ is wrong. This function sets its right by
+	# using the data stored in CTRL.limits.
+	(CTRL.limits[12] == CTRL.limits[11] == 0) && @warn("Cannot refine -JZ because Z in CTRL.limits is empty.") && return cmd, opt_JZ
+	hR = CTRL.limits[12] - CTRL.limits[11]
+	wR = CTRL.limits[8]  - CTRL.limits[7]
+	tZ = opt_JZ[5:end]
+	isletter(tZ[end]) && (tZ = tZ[1:end-1])		# Remove the letter 'x' which is hopefully a 'c'
+	_opt_JZ = @sprintf(" -JZ%.5gc", parse(Float64, tZ) * hR / wR)
+	cmd = replace(cmd, opt_JZ => _opt_JZ)
+	return cmd, _opt_JZ
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    is_axis_equal(d) -> Bool
+
+Return `true` if the the ``aspect`` or ``aspect3`` are set to `equal` or `data`.
+"""
+function is_axis_equal(d)::Bool
+	asp2 = string(get(d, :aspect2, ""))
+	(asp2 == "equal" || asp2 == "data") && return true
+	asp3 = string(get(d, :aspect3, ""))
+	return (asp3 == "equal" || asp3 == "data") ? true : false
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -637,9 +665,9 @@ set_aspect_ratio(aspect::Symbol, width::String, def_fig::Bool=false, is_aspect3:
 set_aspect_ratio(aspect::Real, width::String, def_fig::Bool=false, is_aspect3::Bool=false)::String =
 	set_aspect_ratio(string(aspect, ":1"), width, def_fig, is_aspect3)
 function set_aspect_ratio(aspect::String, width::String, def_fig::Bool=false, is_aspect3::Bool=false)::String
-	# Set the aspect ratio. ASPECT can be "equal", "eq"; "square", "sq" or a ratio in the form "4:3", "16:12", etc.
+	# Set the aspect ratio. ASPECT can be "equal", "eq", "data", "da"; "square", "sq" or a ratio in the form "4:3", "16:12", etc.
 	def_fig && (width = split(DEF_FIG_SIZE, '/')[1])
-	if (startswith(aspect, "eq") || is_aspect3)
+	if (startswith(aspect, "eq") || startswith(aspect, "da") || is_aspect3)
 		width *= "/0"
 	elseif (startswith(aspect, "sq"))
 		width *= "/" * width

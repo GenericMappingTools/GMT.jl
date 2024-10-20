@@ -691,26 +691,84 @@ const simple_distinct = ["#e6194b", "#3cb44b", "#ffe119", "#4363d8", "#f58231", 
  
 # ---------------------------------------------------------------------------------------------------
 """
-    iFV = fv2fv(F, V; proj="", proj4="", wkt="", epsg=0) -> GMTfv
+    FV = fv2fv(F, V; proj="", proj4="", wkt="", epsg=0) -> GMTfv
 
-- `F`:  A matrix of indices.
+Create a FacesVerices object from a matrix of faces indices and another matrix of vertices (a Mx3 matrix).
+
+- `F`:  A matrix of faces indices or a vector of matrices when defining more than one body.
 - `V`:  A Mx3 matrix of vertices.
-- `proj` or `proj4`:  A proj4 string for dataset SRS.
+- `proj` or `proj4`:  A proj4 string for setting the Coordinate Referencing System
 - `wkt`:  A WKT SRS.
 - `epsg`: Same as `proj` but using an EPSG code
 """
-function fv2fv(F::Vector{Matrix{Int}}, V; hdr="", comment=String[], proj="", proj4="", wkt="", epsg=0)::GMTfv
+function fv2fv(F::Vector{<:AbstractMatrix{<:Integer}}, V; hdr="", comment=String[], proj="", proj4="", wkt="", epsg=0)::GMTfv
 	(isempty(proj4) && !isempty(proj)) && (proj4 = proj)	# Allow both proj4 or proj keywords
 	bbox = extrema(V, dims=1)
 	GMTfv(verts=V, faces=F, bbox=[bbox[1][1], bbox[1][2], bbox[2][1], bbox[2][2], bbox[3][1], bbox[3][2]], proj4=proj4, wkt=wkt, epsg=epsg)
 end
 
-fv2fv(F::Matrix{Int}, V; proj="", proj4="", wkt="", epsg=0) = fv2fv([F], V; proj=proj, proj4=proj4, wkt=wkt, epsg=epsg)
+fv2fv(F::Matrix{<:Integer}, V; proj="", proj4="", wkt="", epsg=0) = fv2fv([F], V; proj=proj, proj4=proj4, wkt=wkt, epsg=epsg)
 
+"""
+When using Meshing.jl we can use the output of the ``isosurface`` function, "verts, faces" as input to this function.
+
+- `F`:  A vector of Tuple{Int, Int, Int} with the body faces indices
+- `V`:  A vector of Tuple{Float64, Float64, Float64} with the body vertices
+
+### Example
+```julia
+gyroid(v) = cos(v[1])*sin(v[2])+cos(v[2])*sin(v[3])+cos(v[3])*sin(v[1]);
+gyroid_shell(v) = max(gyroid(v)-0.4,-gyroid(v)-0.4);
+xr,yr,zr = ntuple(_ -> LinRange(0,pi*4,50), 3);
+A = [gyroid_shell((x,y,z)) for x in xr, y in yr, z in zr];
+A[1,:,:] .= 1e10; A[:,1,:] .= 1e10; A[:,:,1] .= 1e10; A[end,:,:] .= 1e10; A[:,end,:] .= 1e10; A[:,:,end] .= 1e10;
+vts, fcs = isosurface(A, MarchingCubes());
+FV = fv2fv(fcs, vts)
+viz(FV, cmap=makecpt(T="0/1", cmap="darkgreen,lightgreen"))
+```
+"""
 function fv2fv(F::Vector{Tuple{Int, Int, Int}}, V::Vector{Tuple{Float64, Float64, Float64}}; proj="", proj4="", wkt="", epsg=0)::GMTfv
-	verts=collect(reshape(reinterpret(Float64, V), (3,:))')
-	faces=[collect(reshape(reinterpret(Int, F), (3,:))')]
+	verts=reshape(reinterpret(Float64, V), (3,:))'
+	faces=[reshape(reinterpret(Int, F), (3,:))']
 	fv2fv(faces, verts; proj=proj, proj4=proj4, wkt=wkt, epsg=epsg)
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    FV = surf2fv(X::Matrix{T}, Y::Matrix{T}, Z::Matrix{T}; proj="", proj4="", wkt="", epsg=0) -> GMTfv
+
+Create a creates a three-dimensional FacesVerices object suitable for 3D plotting either of closed bodies or 3D surfaces.
+The values in matrix Z represent the heights above a grid in the x-y plane defined by X and Y
+
+- `X,Y,Z`: Three matrices of the same size and type float.
+- `proj` or `proj4`:  A proj4 string for setting the Coordinate Referencing System
+- `wkt`: A WKT SRS.
+- `epsg`: Same as `proj` but using an EPSG code.
+
+### Example
+```julia
+X,Y = meshgrid(1:0.5:10,1.:20);
+Z = sin.(X) .+ cos.(Y);
+FV = surf2fv(X, Y, Z);
+viz(FV)
+```
+"""
+function surf2fv(X::Matrix{T}, Y::Matrix{T}, Z::Matrix{T}; proj="", proj4="", wkt="", epsg=0)::GMTfv where {T <: AbstractFloat}
+	@assert length(X) == length(Y) == length(Z)
+	n_rows, n_cols = size(X)
+	F = fill(0, 2 * (n_rows - 1) * (n_cols - 1), 3)
+	n = 0
+	for col = 1:n_cols - 1
+		for row = 1:n_rows - 1
+			n += 1
+			r = row + (col - 1) * n_rows
+			c = r + n_rows
+			F[n,1], F[n,2], F[n,3] = r, r+1, c
+			n += 1
+			F[n,1], F[n,2], F[n,3] = r+1, r+1+n_rows, c
+		end
+	end
+	fv2fv(F, [X[:] Y[:] Z[:]]; proj=proj, proj4=proj4, wkt=wkt, epsg=epsg)
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -776,7 +834,24 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    D = df2ds(df)
+    D = mesh2ds(mesh) -> Vector{GMTdataset}
+
+Extract data from a GeometryBasics Mesh type and return it into a vector of GMTdataset.
+"""
+function mesh2ds(mesh)
+	(!startswith(string(typeof(mesh)), "Mesh{3,")) && error("Argument must be a GeometryBasics mesh")
+	D = Vector{GMTdataset}(undef, length(mesh))
+	for k = 1:numel(mesh)
+		D[k] = GMTdataset(data = [mesh[k].points.data[1].data[1] mesh[k].points.data[1].data[2] mesh[k].points.data[1].data[3];
+			                      mesh[k].points.data[2].data[1] mesh[k].points.data[2].data[2] mesh[k].points.data[2].data[3];
+				                  mesh[k].points.data[3].data[1] mesh[k].points.data[3].data[2] mesh[k].points.data[3].data[3]])
+	end
+	return set_dsBB(D)
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    D = df2ds(df) -> GMTdataset
 
 Extract numeric data from a DataFrame type and return it into a GMTdataset. Works only with 'simple' DataFrames.
 """
