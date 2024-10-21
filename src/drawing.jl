@@ -117,7 +117,7 @@ function helper_shapes(x, y, cmd; Vd=0, kw...)
 		(opt_J != " -J" && length(opt_J) > 3) && (d[:J] = opt_J[4:end])	# Dirty trick to force assign the J we want
 		(opt_R != " -R" && length(opt_R) > 3) && (d[:R] = opt_R[4:end])
 		d[:B] = "none"
-		cmd = GMT.common_plot_xyz("", nothing, cmd, CTRLshapes.first[1], false, d...)
+		cmd = GMT.common_plot_xyz("", nothing, cmd, CTRLshapes.first[1], false; d...)
 		(CTRLshapes.first[1] && opt_B != "") && (cmd = replace(cmd, "psxy" => "psxy" * opt_B))
 	end
 	(0 < Vd < 2) && println(cmd);	(Vd > 1) && return cmd
