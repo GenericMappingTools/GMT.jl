@@ -4,7 +4,7 @@ const psxyz  = plot3d
 const psxyz! = plot3d!
 
 # ---------------------------------------------------------------------------------------------------
-function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::Bool, kwargs...)#::Union{Nothing, String, Vector{String}, GMTimage, GMTps}
+function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::Bool; kwargs...)#::Union{Nothing, String, Vector{String}, GMTimage, GMTps}
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 	(cmd0 != "" && arg1 === nothing && is_in_dict(d, [:groupvar :hue]) !== nothing) && (arg1 = gmtread(cmd0); cmd0 = "")
 	(caller != "bar") && (arg1 = if_multicols(d, arg1, is3D))	# Check if it was asked to split a GMTdataset in its columns 
