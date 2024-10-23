@@ -339,7 +339,7 @@ end
 Create an extruded 2D/3D shape.
 
 ### Args
-- `shape`: The shape to extrude.
+- `shape`: The shape to extrude. It can be a 2D polygon or a 3D polygon defined by a Mx2 or Mx3 matrix or a `GMTdataset`
 - `h`: The height of the extrusion. Same units as in `shape`.
 
 ### Kwargs
@@ -354,25 +354,16 @@ function extrude(shape::Matrix{<:AbstractFloat}, h; base=0.0, closed=true)::GMTf
 		V = [shape; shape .+ [0 0 convert(eltype(shape), h)]]
 	end
 
-	if (h * facenorm(shape, normalize=false)[3] > 0)  v1, v2, f2, f4 = np:-1:1,     np+1:2np, 1, np
-	else                                              v1, v2, f2, f4 = 2np:-1:np+1, 1:np,     np, 1
+	if (h * facenorm(shape, normalize=false)[3] > 0)  v1, v2, f2, f4 = np:-1:1, np+1:2np,    1,  np		# Normal is pointing up
+	else                                              v1, v2, f2, f4 = 1:np,    2np:-1:np+1, np, 1		# Normal is pointing down
 	end
 
-	if (size(shape, 1) == 5 && shape[1,:] ≈ shape[end,:])		# When shape is a quad
-		F = (closed == 1) ? [[reshape([v1;], 1, :); reshape([v2;], 1, :); zeros(Int, np-1, 5)]] : [zeros(Int, np-1, 5)]
-		k = (closed == 1) ? 2 : 0		# Starting index of the faces vector that will contain the vertical faces
-		for n = 1:np-1					# Create vertical faces
-			k += 1 
-			F[1][k, 1], F[1][k, 2], F[1][k, 3], F[1][k, 4], F[1][k, 5] = n, n+f2, n+np+1, n+f4, n
-		end
-	else
-		if (closed == 1)  F = [[reshape([v1;], 1, :); reshape([v2;], 1, :)], zeros(Int, np-1, 5)]
-		else              F = [zeros(Int, np-1, 5)]
-		end
-		iF = (closed == 1) ? 2 : 1		# Index of the faces vector that will contain the vertical faces
-		for n = 1:np-1					# Create vertical faces
-			F[iF][n, 1], F[iF][n, 2], F[iF][n, 3], F[iF][n, 4], F[iF][n, 5] = n, n+f2, n+np+1, n+f4, n
-		end
+	if (closed == 1)  F = [reshape([v1;], 1, :), zeros(Int, np-1, 5), reshape([v2;], 1, :)]
+	else              F = [zeros(Int, np-1, 5)]
+	end
+	iF = (closed == 1) ? 2 : 1		# Index of the faces vector that will contain the vertical faces
+	for n = 1:np-1					# Create vertical faces
+		F[iF][n, 1], F[iF][n, 2], F[iF][n, 3], F[iF][n, 4], F[iF][n, 5] = n, n+f2, n+np+1, n+f4, n
 	end
 	fv2fv(F, V; bfculling=(closed == 1))
 end
@@ -409,7 +400,7 @@ Return a Faces-Vertices dataset.
 function cylinder(r, h; base=0.0, center=(0.0, 0.0, 0.0), closed=true, geog=false, unit="m", np=36)::GMTfv
 	h0 = (base != 0.0) ? base : length(center) == 3 ? center[3] : 0.0
 	if (geog == 1)
-		xy = circgeo(center[1], center[2]; radius=r, unit=unit)
+		xy::Matrix{Float64} = circgeo(center[1], center[2]; radius=r, unit=unit)
 	else
 		t = linspace(0, 2pi, np)
 		xy = [(center[1] .+ r * cos.(t)) (center[2] .+ r * sin.(t))]

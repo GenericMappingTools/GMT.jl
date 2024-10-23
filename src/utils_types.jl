@@ -936,7 +936,7 @@ function rasters2grid(arg; scale::Real=1f0, offset::Real=0f0)::GMTgrid
 			(for k = 1:numel(names) names[k] = names[k][1:10] end)
 	end
 
-	dic = arg.metadata.val
+	dic = !isempty(arg.metadata) ? arg.metadata.val : Dict()
 	(scale  == 1) && (scale  = get(dic, "scale", 1.0f0))
 	(offset == 0) && (offset = get(dic, "offset", 0.0f0))
 	z_unit  = get(dic, "units", "")
