@@ -1465,14 +1465,16 @@ function sort_visible_faces(FV::GMTfv, azim, elev; del::Bool=true)::Tuple{GMTfv,
 	projs = Float64[]
 
 	!FV.bfculling && (del = false)		# Do not delete if bfculling is set to false (for example if FV is not closed)
+	first_face_vis = true
 	for k = 1:numel(FV.faces)			# Loop over number of face groups (we can have triangles, quads, etc)
-		n_faces, n_verts = size(FV.faces[k], 1), size(FV.verts, 2)	# Number of faces (polygons) and vertices of the polygons
-		tmp = zeros(n_verts, 3)
+		n_faces = size(FV.faces[k], 1)	# Number of faces (polygons)
+		this_face_nverts = size(FV.faces[k], 2)
+		tmp = zeros(this_face_nverts, 3)
 		del && (isVisible = fill(false, n_faces))
 		dists = NTuple{2,Float64}[]
 		_projs = Float64[]
 		for face = 1:n_faces
-			for c = 1:3, v = 1:n_verts						# Build the polygon from the FV collection
+			for c = 1:3, v = 1:this_face_nverts						# Build the polygon from the FV collection
 				tmp[v,c] = FV.verts[FV.faces[k][face,v], c]
 			end
 			this_proj = dot(facenorm(tmp, zfact=FV.zscale), view_vec)
@@ -1483,10 +1485,12 @@ function sort_visible_faces(FV::GMTfv, azim, elev; del::Bool=true)::Tuple{GMTfv,
 			end
 		end
 		data = del ? FV.faces[k][isVisible, :] : FV.faces[k]
+		isempty(data) && continue
 		ind  = sortperm(dists)
 		data = data[ind, :]
-		(k == 1) ? (FV.faces_view = [data]) : append!(FV.faces_view, [data])
-		projs = (k == 1) ? _projs[ind] : append!(projs, _projs[ind])
+		(first_face_vis) ? (FV.faces_view = [data]) : append!(FV.faces_view, [data])
+		projs = (first_face_vis) ? _projs[ind] : append!(projs, _projs[ind])
+		first_face_vis = false
 	end
 	sum(size.(FV.faces_view, 1)) < sum(size.(FV.faces, 1) / 3) &&
 		@warn("More than 2/3 of the faces found invisible. This often indicates that the Z and X,Y units are not the same. Consider using the `zscale` field of the `FV` input.")
