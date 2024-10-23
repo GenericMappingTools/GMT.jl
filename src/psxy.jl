@@ -392,8 +392,8 @@ function deal_faceverts(arg1::GMTfv, d; del::Bool=true)::GMTfv
 	azim, elev = get_numeric_view()
 	arg1, dotprod = sort_visible_faces(arg1, azim, elev; del=del)		# Sort & kill (or not) invisible
 	if (is_in_dict(d, [:G :fill]) === nothing)		# If fill not set we use the dotprod and a gray CPT to set the fill
-		is_in_dict(d, [:Z :level :levels]) === nothing && (d[:Z] = dotprod)
-		(is_in_dict(d, CPTaliases) === nothing) && (d[:C] = gmt("makecpt -T0/1 -C150,210"))	# Users may still set a CPT
+		is_in_dict(d, [:Z :level :levels]) === nothing && (d[:Z] = abs.(dotprod))
+		(is_in_dict(d, CPTaliases) === nothing) && (d[:C] = gmt("makecpt -T0/1 -C140,220"))	# Users may still set a CPT
 	end
 	return arg1
 end
@@ -1450,16 +1450,21 @@ that the furthest faces are drawn first and hence do not hide the others. NOTE: 
 FV we store the resultant matix(ces) of faces in a FV0s fiels called "faces_view", which is a vector
 of matrices, one for each geometry (e.g. triangles, quadrangles, etc).
 
+### Args
 - `FV`: The Faces-Vertices dataset.
 - `azim`: Azimuth angle in degrees. Positive clock-wise from North.
 - `elev`: Elevation angle in degrees above horizontal plane.
-- `del`: Boolean to control whether to delete invisible faces. True by default
+
+### Kwargs
+- `del`: Boolean to control whether to delete invisible faces. True by default. But this can be
+  overwriten by the value of the ``bfculling`` member of the FV object.
 """
 function sort_visible_faces(FV::GMTfv, azim, elev; del::Bool=true)::Tuple{GMTfv, Vector{Float64}}
 	cos_az, cos_el, sin_az, sin_el = cosd(azim), cosd(elev), sind(azim), sind(elev)
 	view_vec = [sin_az * cos_el, cos_az * cos_el, sin_el]
 	projs = Float64[]
 
+	!FV.bfculling && (del = false)		# Do not delete if bfculling is set to false (for example if FV is not closed)
 	for k = 1:numel(FV.faces)			# Loop over number of face groups (we can have triangles, quads, etc)
 		n_faces, n_verts = size(FV.faces[k], 1), size(FV.verts, 2)	# Number of faces (polygons) and vertices of the polygons
 		tmp = zeros(n_verts, 3)
@@ -1483,7 +1488,7 @@ function sort_visible_faces(FV::GMTfv, azim, elev; del::Bool=true)::Tuple{GMTfv,
 		(k == 1) ? (FV.faces_view = [data]) : append!(FV.faces_view, [data])
 		projs = (k == 1) ? _projs[ind] : append!(projs, _projs[ind])
 	end
-	sum(size.(FV.faces_view, 1)) < 3 * sum(size.(FV.faces, 1)) &&
+	sum(size.(FV.faces_view, 1)) < sum(size.(FV.faces, 1) / 3) &&
 		@warn("More than 2/3 of the faces found invisible. This often indicates that the Z and X,Y units are not the same. Consider using the `zscale` field of the `FV` input.")
 
 	return FV, projs

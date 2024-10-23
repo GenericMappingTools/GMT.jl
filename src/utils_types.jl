@@ -701,13 +701,15 @@ Create a FacesVerices object from a matrix of faces indices and another matrix o
 - `wkt`:  A WKT SRS.
 - `epsg`: Same as `proj` but using an EPSG code
 """
-function fv2fv(F::Vector{<:AbstractMatrix{<:Integer}}, V; hdr="", comment=String[], proj="", proj4="", wkt="", epsg=0)::GMTfv
+function fv2fv(F::Vector{<:AbstractMatrix{<:Integer}}, V; zscale=1.0, bfculling=true, proj="", proj4="", wkt="", epsg=0)::GMTfv
 	(isempty(proj4) && !isempty(proj)) && (proj4 = proj)	# Allow both proj4 or proj keywords
 	bbox = extrema(V, dims=1)
-	GMTfv(verts=V, faces=F, bbox=[bbox[1][1], bbox[1][2], bbox[2][1], bbox[2][2], bbox[3][1], bbox[3][2]], proj4=proj4, wkt=wkt, epsg=epsg)
+	GMTfv(verts=V, faces=F, bbox=[bbox[1][1], bbox[1][2], bbox[2][1], bbox[2][2], bbox[3][1], bbox[3][2]],
+	      zscale=zscale, bfculling=bfculling, proj4=proj4, wkt=wkt, epsg=epsg)
 end
 
-fv2fv(F::Matrix{<:Integer}, V; proj="", proj4="", wkt="", epsg=0) = fv2fv([F], V; proj=proj, proj4=proj4, wkt=wkt, epsg=epsg)
+fv2fv(F::Matrix{<:Integer}, V; zscale=1.0, bfculling=true, proj="", proj4="", wkt="", epsg=0) =
+	fv2fv([F], V; zscale=zscale, bfculling=bfculling, proj=proj, proj4=proj4, wkt=wkt, epsg=epsg)
 
 """
 When using Meshing.jl we can use the output of the ``isosurface`` function, "verts, faces" as input to this function.
@@ -727,10 +729,11 @@ FV = fv2fv(fcs, vts)
 viz(FV, cmap=makecpt(T="0/1", cmap="darkgreen,lightgreen"))
 ```
 """
-function fv2fv(F::Vector{Tuple{Int, Int, Int}}, V::Vector{Tuple{Float64, Float64, Float64}}; proj="", proj4="", wkt="", epsg=0)::GMTfv
-	verts=reshape(reinterpret(Float64, V), (3,:))'
-	faces=[reshape(reinterpret(Int, F), (3,:))']
-	fv2fv(faces, verts; proj=proj, proj4=proj4, wkt=wkt, epsg=epsg)
+function fv2fv(F::Vector{Tuple{Int, Int, Int}}, V::Vector{Tuple{Float64, Float64, Float64}};
+               zscale=1.0, bfculling=true, proj="", proj4="", wkt="", epsg=0)::GMTfv
+	verts = reshape(reinterpret(Float64, V), (3,:))'
+	faces = [reshape(reinterpret(Int, F), (3,:))']
+	fv2fv(faces, verts; zscale=zscale, bfculling=bfculling, proj=proj, proj4=proj4, wkt=wkt, epsg=epsg)
 end
 
 # ---------------------------------------------------------------------------------------------------

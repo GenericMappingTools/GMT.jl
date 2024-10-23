@@ -212,15 +212,18 @@ end
 # -------------------------------------------------------------------------------------------------
 """
     circgeo(lon, lat; radius=X, proj="", s_srs="", epsg=0, dataset=false, unit=:m, np=120, shape="")
-or
+Or
 
     circgeo(lonlat; radius=X, proj="", s_srs="", epsg=0, dataset=false, unit=:m, np=120, shape="")
 
-Args:
+Compute a geographical circle (and other shapes) in geographical or in projected coordinates.
 
+### Args
 - `lonlat`:   - longitude, latitude (degrees). If a Mx2 matrix, returns as many segments as number of rows.
                 Use this to compute multiple shapes at different positions. In this case output type is
-				always a vector of GMTdatasets.
+                always a vector of GMTdatasets.
+
+### Kwargs
 - `radius`:   - The circle radius in meters (but see `unit`) or circumscribing circle for the other shapes
 - `proj` or `s_srs`:  - the given projection whose ellipsoid we move along. Can be a proj4 string or an WKT
 - `epsg`:     - Alternative way of specifying the projection [Default is WGS84]
@@ -233,9 +236,11 @@ Args:
 ### Returns
 - circ - A Mx2 matrix or GMTdataset with the circle coordinates
 
-## Example: Compute circle about the (0,0) point with a radius of 50 km
-
-    c = circgeo([0.,0], radius=50, unit=:k)
+### Example:
+Compute a circle about the (0,0) point with a radius of 50 km
+```julia
+    c = circgeo([0. 0], radius=50, unit=:k)
+```
 """
 circgeo(lon::Real, lat::Real; radius::Real=0., proj::String="", s_srs::String="", epsg::Integer=0, dataset::Bool=false, unit=:m, np::Int=120, shape="") =
 	circgeo([lon lat]; radius=radius, proj=proj, s_srs=s_srs, epsg=epsg, dataset=dataset, unit=unit, np=np, shape=shape)

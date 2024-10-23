@@ -1073,7 +1073,7 @@ end
 """
     overlap, value = rect_overlap(xc_1, yc_1, xc_2, yc_2, width1, height1, width2, height2) -> Bool, Float64
 
-Checks if two rectangles, aligned with the axes, overlap.
+Check if two rectangles, aligned with the axes, overlap.
 
 - `xc_1, yc_1`: Center of the first rectangle
 - `xc_2, yc_2`: Center of the second rectangle
@@ -1099,7 +1099,7 @@ end
 """
     n = facenorm(M::Matrix{<:Real}; normalize=true, zfact=1.0)
 
-Calculates the normal vector of a polygon with vertices in `M`.
+Calculate the normal vector of a polygon with vertices in `M`.
 
 - `normalize`: By default, it returns the unit vector. If `false`, it returns the non-normalized 
   vector that represents the area of the polygon.
@@ -1115,9 +1115,9 @@ function facenorm(M::Matrix{<:Real}; zfact=1.0, normalize=true)
 	p1 = M[1,:]
 	last = (p1 == M[end,:]) ? size(M,1)-1 : size(M,1)
 	if (zfact == 1.0)
-		c = cross(M[last,:], p1)			# First edge
+		c = cross2(M[last,:], p1)			# First edge
 		for k = 1:last-1					# Loop from first to end-1
-			c += cross(M[k,:], M[k+1,:])	# Sum the rest of edges
+			c += cross2(M[k,:], M[k+1,:])	# Sum the rest of edges
 		end
 	else
 		p2 = M[last,:]
@@ -1130,6 +1130,17 @@ function facenorm(M::Matrix{<:Real}; zfact=1.0, normalize=true)
 		end
 	end
 	return normalize ? c / norm(c) : c	# The cross product gives us 2 * A(rea)
+end
+
+# Like the cross() function from LinearAlgebra but deals also with 2D vectors, though it returns a 3D vector
+function cross2(a::AbstractVector, b::AbstractVector)
+	(length(a) == length(b) == 2) && return [0, 0, a[1]*b[2] - a[2]*b[1]]
+	if !(length(a) == length(b) == 3)
+		throw(DimensionMismatch("cross product is only defined for vectors of length 3"))
+	end
+	a1, a2, a3 = a
+	b1, b2, b3 = b
+	[a2*b3-a3*b2, a3*b1-a1*b3, a1*b2-a2*b1]
 end
 
 # ---------------------------------------------------------------------------------------------------
