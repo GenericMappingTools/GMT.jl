@@ -13,4 +13,6 @@
 	D  = GMT.replicant(FV, replicate=rand(5,3)*100);
 
 	FV = gmtread("file.obj");
+	FV = cylinder(1,4, np=5);
+	
 end
