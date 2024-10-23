@@ -3,7 +3,7 @@
 """
     FV = icosahedron(r=1.0; radius=1.0, origin=(0.0, 0.0, 0.0))
 
-Creates an icosahedron mesh with radius `r`. 
+Create an icosahedron mesh with radius `r`. 
 
 - `radius`: the keyword `radius` is an alternative to the positional argument `r`.
 - `origin`: A tuple of three numbers defining the origin of the body. Default is `(0.0, 0.0, 0.0)`.
@@ -59,7 +59,7 @@ end
 """
     FV = octahedron(r=1.0; radius=1.0, origin=(0.0, 0.0, 0.0))
 
-Creates an octahedron mesh with radius `r`. 
+Create an octahedron mesh with radius `r`. 
 
 - `radius`: the keyword `radius` is an alternative to the positional argument `r`.
 - `origin`: A tuple of three numbers defining the origin of the body. Default is `(0.0, 0.0, 0.0)`.
@@ -94,7 +94,7 @@ end
 """
     FV = dodecahedron(r=1.0; radius=1.0, origin=(0.0, 0.0, 0.0))
 
-Creates an dodecahedron mesh with radius `r`. 
+Create an dodecahedron mesh with radius `r`. 
 
 - `radius`: the keyword `radius` is an alternative to the positional argument `r`.
 - `origin`: A tuple of three numbers defining the origin of the body. Default is `(0.0, 0.0, 0.0)`.
@@ -151,7 +151,7 @@ end
 """
     FV = tetrahedron(r=1.0; radius=1.0, origin=(0.0, 0.0, 0.0))
 
-Creates a tetrahedron mesh with radius `r`. 
+Create a tetrahedron mesh with radius `r`. 
 
 - `radius`: the keyword `radius` is an alternative to the positional argument `r`.
 - `origin`: A tuple of three numbers defining the origin of the body. Default is `(0.0, 0.0, 0.0)`.
@@ -183,7 +183,7 @@ end
 """
     FV = cube(r=1.0; radius=1.0, origin=(0.0, 0.0, 0.0))
 
-Creates a cube mesh with radius `r`. 
+Create a cube mesh with radius `r`. 
 
 - `radius`: the keyword `radius` is an alternative to the positional argument `r`.
 - `origin`: A tuple of three numbers defining the origin of the body. Default is `(0.0, 0.0, 0.0)`.
@@ -217,9 +217,11 @@ end
 
 # ----------------------------------------------------------------------------
 """
-    FV = sphere(r=1; n=1, radius=1.0, center=(0.0, 0.0, 0.0))
+    FV = sphere(r=1; radius=1.0, n=1, center=(0.0, 0.0, 0.0))
 
-Generate a geodesic sphere triangulation based on the number of refinement iterations `n`
+Create a triangulated geodesic sphere. 
+
+Generates a geodesic sphere triangulation based on the number of refinement iterations `n`
 and the radius `r`. Geodesic spheres (aka Buckminster-Fuller spheres) are triangulations
 of a sphere that have near uniform edge lenghts.  The algorithm starts with a regular
 icosahedron. Next this icosahedron is refined `n` times, while nodes are pushed to a sphere
@@ -258,9 +260,9 @@ end
 
     V, F = subTriSplit(V, F, n=1)
 
-Splits the triangulation defined by the faces F, and the vertices V, n times. Each triangle is
-linearly split into 4 triangles with each iterations.
+Split the triangulation defined by the faces F, and the vertices V, n times.
 
+Each triangle is linearly split into 4 triangles with each iterations.
 First mode ingests a two elements vector of GMTdataset where first contains the vertices and the second
 the indices that define the faces and returns a same type. The second mode expects the vertices and faces
 as two separate arrays (but it also accepts GMTdatasets) and returns two matrices with the vertices and faces.
@@ -313,11 +315,11 @@ end
 """
     FV = torus(; r=2.0, R=5.0, center=(0.0, 0.0, 0.0), nx=100, ny=50) -> GMTfv
 
-Creates a torus mesh with radius `r`. 
+Create a torus mesh with radius `r`. 
 
 - `r`: the inner radius of the torus.
 - `R`: the outer radius of the torus.
-- `center`: A tuple of three numbers defining the origin of the body. Default is `(0.0, 0.0, 0.0)`.
+- `center`: A 3-element array or tuple of three numbers defining the origin of the body. Default is `(0.0, 0.0, 0.0)`.
 - `nx`: the number of vertices in the xx direction.	
 - `ny`: the number of vertices in the yy direction.
 """
@@ -328,4 +330,89 @@ function torus(; r=2.0, R=5.0, center=(0.0, 0.0, 0.0), nx=100, ny=50)::GMTfv
 	y = [(R + cos(v)) * sin(u) + center[2] for u in Θ, v in ϕ]
 	z = [r*sin(v) + center[3] for u in Θ, v in ϕ]
 	surf2fv(x, y, z)
+end
+
+# ----------------------------------------------------------------------------
+"""
+    FV = extrude(shape::Matrix{<:AbstractFloat}, h; base=0.0, closed=true) -> GMTfv
+
+Create an extruded 2D/3D shape.
+
+### Args
+- `shape`: The shape to extrude.
+- `h`: The height of the extrusion. Same units as in `shape`.
+
+### Kwargs
+- `base`: The base height of the 2D shape to extrude. Default is 0. Ignored if the shape is a 3D polygon.
+- `closed`: If true (the default), close the shapre at top and bottom.
+"""
+function extrude(shape::Matrix{<:AbstractFloat}, h; base=0.0, closed=true)::GMTfv
+	np = size(shape, 1)
+	if (size(shape, 2) < 3)			# 2D polygon
+		V = [shape fill(convert(eltype(shape), base), np); shape fill(convert(eltype(shape), h), np)]
+	else
+		V = [shape; shape .+ [0 0 convert(eltype(shape), h)]]
+	end
+
+	if (h * facenorm(shape, normalize=false)[3] > 0)  v1, v2, f2, f4 = np:-1:1,     np+1:2np, 1, np
+	else                                              v1, v2, f2, f4 = 2np:-1:np+1, 1:np,     np, 1
+	end
+
+	if (size(shape, 1) == 5 && shape[1,:] ≈ shape[end,:])		# When shape is a quad
+		F = (closed == 1) ? [[reshape([v1;], 1, :); reshape([v2;], 1, :); zeros(Int, np-1, 5)]] : [zeros(Int, np-1, 5)]
+		k = (closed == 1) ? 2 : 0		# Starting index of the faces vector that will contain the vertical faces
+		for n = 1:np-1					# Create vertical faces
+			k += 1 
+			F[1][k, 1], F[1][k, 2], F[1][k, 3], F[1][k, 4], F[1][k, 5] = n, n+f2, n+np+1, n+f4, n
+		end
+	else
+		if (closed == 1)  F = [[reshape([v1;], 1, :); reshape([v2;], 1, :)], zeros(Int, np-1, 5)]
+		else              F = [zeros(Int, np-1, 5)]
+		end
+		iF = (closed == 1) ? 2 : 1		# Index of the faces vector that will contain the vertical faces
+		for n = 1:np-1					# Create vertical faces
+			F[iF][n, 1], F[iF][n, 2], F[iF][n, 3], F[iF][n, 4], F[iF][n, 5] = n, n+f2, n+np+1, n+f4, n
+		end
+	end
+	fv2fv(F, V; bfculling=(closed == 1))
+end
+
+# ----------------------------------------------------------------------------
+extrude(shape::GMTdataset, h; base=0.0, closed=true)::GMTfv = extrude(shape.data, h; base=base, closed=closed)
+
+# ----------------------------------------------------------------------------
+"""
+    FV = cylinder(r, h; base=0.0, center=(0.0, 0.0, 0.0), geog=false, unit="m", np=36) -> GMTfv
+
+Create a cylinder with radius `r` and height `h`.
+
+### Args
+- `r`: The radius of the cylinder. For geographical cylinders, the default is meters. But see `unit` below.
+- `h`: The height of the cylinder. It should be in the same unit as `r`.
+
+### Kwargs
+- `base`: The base height of the cylinder. Default is 0.
+- `center`: A 3-element array or tuple of three numbers defining the origin of the body. Default is `(0.0, 0.0, 0.0)`.
+- `closed`: If true (the default), close the cylinder at top and bottom.
+- `geog`: If true, create a cylinder in geographical coordinates.
+- `unit`: For geographical cylinders only.If radius is not in meters use one of `unit=:km`, or `unit=:Nautical` or `unit=:Miles`
+- `np`: The number of vertices in the circle. Default is 36.
+
+Return a Faces-Vertices dataset.
+
+### Example
+```julia
+	FV = cylinder(50, 100)
+	viz(FV)
+```
+"""
+function cylinder(r, h; base=0.0, center=(0.0, 0.0, 0.0), closed=true, geog=false, unit="m", np=36)::GMTfv
+	h0 = (base != 0.0) ? base : length(center) == 3 ? center[3] : 0.0
+	if (geog == 1)
+		xy = circgeo(center[1], center[2]; radius=r, unit=unit)
+	else
+		t = linspace(0, 2pi, np)
+		xy = [(center[1] .+ r * cos.(t)) (center[2] .+ r * sin.(t))]
+	end
+	extrude(xy, h; base=h0, closed=closed)
 end
