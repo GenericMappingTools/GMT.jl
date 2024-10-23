@@ -178,7 +178,7 @@ Base.size(C::GMTcpt) = size(C.range, 1)
 Base.isempty(C::GMTcpt) = (size(C) == 0)
 
 """
-mutable struct GMTps
+    mutable struct GMTps
 
 The fields of this struct are:
 - `postscript::String`:         Actual PS plot (text string)
@@ -292,12 +292,29 @@ GMTdataset(data::Array{Float32,2}, text::String) =
 GMTdataset(data::Array{Float32,2}) =
 	GMTdataset(data, Float64[], Float64[], DictSvS(), String[], String[], "", String[], "", "", 0, 0)
 
+"""
+    mutable struct GMTfv{T<:AbstractFloat} <: AbstractMatrix{T}
+
+The GMTfv struct is used to store a triangulated mesh.
+
+The fields of this struct are:
+- `verts::AbstractMatrix{T}`:             Mx3 Matrix with the data vertices
+- `faces`:
+- `faces_view`:
+- `bbox`:
+- `zscale`:
+- `bfculling`:
+- `proj4`:
+- `wkt`:
+- `eps`:
+"""
 Base.@kwdef mutable struct GMTfv{T<:AbstractFloat} <: AbstractMatrix{T}
 	verts::AbstractMatrix{T}=Matrix{Float64}(undef,0,0)
 	faces::Vector{<:AbstractMatrix{<:Integer}}=Vector{Matrix{Int}}(undef,0)
 	faces_view::Vector{Matrix{Int}}=Vector{Matrix{Int}}(undef,0)
 	bbox::Vector{Float64}=zeros(6)
 	zscale::Float64=1.0
+	bfculling::Bool=true
 	proj4::String=""
 	wkt::String=""
 	epsg::Int=0
