@@ -992,6 +992,38 @@ getsize(D::GDtype) = isa(D, GMTdataset) ? (size(D.data,1), size(D.data,2), 1) : 
 
 # ------------------------------------------------------------------------------------------------------
 """
+	getface(FV::GMTfv, face=1, n=1; view=false) -> Matrix{Float64}
+
+Return the n-th face of the group number `face`. If `view` is true, return the viewable face.
+
+### Example
+```julia
+FV = cylinder(1.0, 4.0, np=5)
+getface(FV, 1, 1, view=true)
+```
+"""
+function getface(FV::GMTfv, face=1, n=1; view=false)
+	(view == 1) ? FV.verts[FV.faces_view[face][n,:],:] : FV.verts[FV.faces[face][n,:],:]
+end
+
+# ------------------------------------------------------------------------------------------------------
+"""
+    isclockwise(poly::Matrix{<:AbstractFloat}, view=(0.0,0.0,1.0)) -> Bool
+
+Return true if the 2D/3D `poly` is clockwise when seen from the `view` direction.
+
+### Example
+```julia
+poly = [0.0 0.0 0.0; 0.0 0.0 1.0; 0.0 1.0 1.0; 0.0 1.0 0.0; 0.0 0.0 0.0]
+isclockwise(poly, (1.0,0.1,0.0))
+```
+"""
+function isclockwise(poly::Matrix{<:AbstractFloat}, view=(0.0,0.0,1.0))
+	dot(facenorm(poly, normalize=false), [view[1], view[2], view[3]]) <= 0.0
+end
+
+# ------------------------------------------------------------------------------------------------------
+"""
     settimecol!(D::GDtype, Tcol)
 
 Set the time column in the dataset D (or vector of them). `Tcol` is either an Int scalar or vector
