@@ -93,21 +93,34 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 	end
 
 	cmd = add_opt(d, "", "M", [:M :dump])
+	have_opt_M = (cmd != "")
 	cmd = parse_E_coast(d, [:E, :DCW], cmd)		# Process first to avoid warning about "guess"
 	if (cmd != "")								# Check for a minimum of points that segments must have
 		if ((val = find_in_dict(d, [:minpts])[1]) !== nothing)  POSTMAN[1]["minpts"] = string(val)::String
 		elseif (get(POSTMAN[1], "minpts", "") != "")            delete!(POSTMAN[1], "minpts")
 		end
 	end
-	contains(cmd, " -M") && (POSTMAN[1]["DCWnames"] = "s")		# When dumping, we want to add the country name as attribute
-	if (!occursin("-E+l", cmd) && !occursin("-E+L", cmd))		# I.e., no listings only
-		cmd, = parse_R(d, cmd, O)
-		if (!contains(cmd, " -M"))				# If Dump no -R & -B
+
+	# Explain
+	toTrack::Union{String, GMTgrid} = ""
+	if (have_opt_M)
+		O = true
+		POSTMAN[1]["DCWnames"] = "s"		# When dumping, we want to add the country name as attribute
+		if ((val = find_in_dict(d, [:Z])[1]) !== nothing)
+			toTrack = (isa(val, GMTgrid) || (isa(val, String) && length(val) > 4)) ? val : ""
+			toTrack == "" && (POSTMAN[1]["plusZzero"] = "y")# If toTrack the extra column is added by the grdtrack call below
+		end
+	end
+	
+	if (!occursin("-E+l", cmd) && !occursin("-E+L", cmd))	# I.e., no listings only
+		cmd, = parse_R(d, cmd, O, true, false, have_opt_M)	# If have_opt_M we don't set the -R limits in globals
+		if (!have_opt_M)									# If Dump no -R & -B
 			cmd = parse_J(d, cmd, "guess", true, O)[1]
 			cmd = parse_B(d, cmd, (O ? "" : (IamModern[1]) ? "" : DEF_FIG_AXES[1]))[1]
 		end
 	end
-	cmd, = parse_common_opts(d, cmd, [:F :JZ :UVXY :bo :c :p :t :params], first)
+	common = have_opt_M ? [:F :JZ :UVXY :bo :c :t :params] : [:F :JZ :UVXY :bo :c :p :t :params]
+	cmd, = parse_common_opts(d, cmd, common, !O)	# If -M don't touch -p
 	cmd  = parse_these_opts(cmd, d, [[:A :area], [:C :river_fill], [:D :res :resolution]])
 	cmd  = parse_Td(d, cmd)
 	cmd  = parse_Tm(d, cmd)
@@ -154,15 +167,25 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 	end
 
 	R = finish_PS_module(d, _cmd, "", K, O, finish)
+	CTRL.pocket_d[1] = d					# Store d that may be not empty with members to use in other modules
+	!isa(R, GDtype) && return R				# If R is not a GMTdataset we are done.
+
 	if (get_largest)
 		ind = argmax(size.(R))
-		R = [R[ind]]		# Keep it a vector to be consistent with the other Dump cases
+		R = [R[ind]]						# Keep it a vector to be consistent with the other Dump cases
 		R[1].proj4, R[1].geom = prj4WGS84, wkbPolygon
 	end
+
+	if (toTrack != "")						# Mean, get a Z column by interpolating the coastlines over a grid.
+		_R::GDtype = grdtrack(toTrack, R, f="g", s="+a")
+		!isempty(_R) && (R = _R)
+	end
+
 	geom = occursin(" -M", cmd) ? (occursin(" -E", cmd) ? wkbPolygon : wkbLineString) : wkbUnknown
-	isa(R, Vector{<:GMTdataset}) && (for k = 1:numel(R)  R[k].colnames = ["Lon", "Lat"]; R[k].geom = geom  end; R[1].proj4 = prj4WGS84)
-	isa(R, GMTdataset) && (R.colnames = ["Lon", "Lat"]; R.geom = geom; R.proj4 = prj4WGS84)
-	CTRL.pocket_d[1] = d					# Store d that may be not empty with members to use in other modules
+	n_cols = isa(R, Vector{<:GMTdataset}) ? size(R[1].data, 2) : size(R.data, 2)
+	cnames = (n_cols == 2) ? ["Lon", "Lat"] : ["Lon", "Lat", "Z"]
+	isa(R, Vector{<:GMTdataset}) && (for k = 1:numel(R)  R[k].colnames = cnames; R[k].geom = geom  end; R[1].proj4 = prj4WGS84)
+	isa(R, GMTdataset) && (R.colnames = cnames; R.geom = geom; R.proj4 = prj4WGS84)
 	R
 end
 
