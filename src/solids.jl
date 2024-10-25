@@ -349,7 +349,7 @@ Create an extruded 2D/3D shape.
 function extrude(shape::Matrix{<:AbstractFloat}, h; base=0.0, closed=true)::GMTfv
 	np = size(shape, 1)
 	if (size(shape, 2) < 3)			# 2D polygon
-		V = [shape fill(convert(eltype(shape), base), np); shape fill(convert(eltype(shape), h), np)]
+		V = [shape fill(convert(eltype(shape), base), np); shape fill(convert(eltype(shape), h+base), np)]
 	else
 		V = [shape; shape .+ [0 0 convert(eltype(shape), h)]]
 	end
@@ -397,10 +397,10 @@ Return a Faces-Vertices dataset.
 	viz(FV)
 ```
 """
-function cylinder(r, h; base=0.0, center=(0.0, 0.0, 0.0), closed=true, geog=false, unit="m", np=36)::GMTfv
+function cylinder(r, h; base=0.0, center=(0.0, 0.0, 0.0), closed=true, geog=false, unit=:m, np=36)::GMTfv
 	h0 = (base != 0.0) ? base : length(center) == 3 ? center[3] : 0.0
 	if (geog == 1)
-		xy::Matrix{Float64} = circgeo(center[1], center[2]; radius=r, unit=unit)
+		xy::Matrix{Float64} = circgeo(center[1], center[2]; radius=r, np=np, unit=unit)
 	else
 		t = linspace(0, 2pi, np)
 		xy = [(center[1] .+ r * cos.(t)) (center[2] .+ r * sin.(t))]

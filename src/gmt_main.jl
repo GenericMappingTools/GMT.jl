@@ -623,6 +623,8 @@ function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})::GDtype
 	(min_pts > 0) && delete!(POSTMAN[1], "minpts")
 	DCWnames = (get(POSTMAN[1], "DCWnames", "") != "") ? true : false		# If DCW country names will turn into attribs
 	(DCWnames) && delete!(POSTMAN[1], "DCWnames")
+	plusZzero = (get(POSTMAN[1], "plusZzero", "") != "") ? true : false		# To eventually add an extra column with 0's
+	(plusZzero) && delete!(POSTMAN[1], "plusZzero")
 
 	seg_out = 0;
 	T::Vector{Ptr{GMT_DATATABLE}} = unsafe_wrap(Array, D.table, D.n_tables)
@@ -649,7 +651,7 @@ function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})::GDtype
 			(DS.n_rows <= min_pts) && continue 				# Skip empty/small segments
 
 			C = unsafe_wrap(Array, DS.data, DS.n_columns)	# DS.data = Ptr{Ptr{Float64}}; C = Array{Ptr{Float64},1}
-			dest::Matrix{Float64} = zeros(Float64, DS.n_rows, DS.n_columns)
+			dest::Matrix{Float64} = zeros(Float64, DS.n_rows, DS.n_columns + plusZzero)
 			for col = 1:DS.n_columns						# Copy the data columns
 				unsafe_copyto!(pointer(dest, DS.n_rows * (col - 1) + 1), unsafe_load(DS.data, col), DS.n_rows)
 			end
@@ -1588,6 +1590,7 @@ Base.:display(D::GMTdataset) = show(D)		# Otherwise the default prints nothing w
 # ---------------------------------------------------------------------------------------------------
 function Base.:show(io::IO, ::MIME"text/plain", FV::GMTfv)
 	println("Face-Vertices with a total of ", sum(size.(FV.faces,1)), " faces and $(size(FV.verts,1)) vertices")
+	println("BBox: ", FV.bbox)
 end
 
 # ---------------------------------------------------------------------------------------------------
