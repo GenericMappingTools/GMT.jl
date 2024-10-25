@@ -57,7 +57,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 
 	if (is3D && isa(arg1, GMTfv))			# case of 3D faces
 		arg1 = (is_in_dict(d, [:replicate]) !== nothing) ? replicant(arg1, d) : deal_faceverts(arg1, d)
-		(!haskey(d, :aspect3) && is_in_dict(d, [:JZ :Jz :zsize :zscale]) === nothing) && (d[:aspect3] = "equal")
+		(!O && !haskey(d, :aspect3) && is_in_dict(d, [:JZ :Jz :zsize :zscale]) === nothing) && (d[:aspect3] = "equal")
 	elseif (is_gridtri)
 		arg1 = sort_visible_triangles(arg1)
 		is_in_dict(d, [:Z :level :levels]) === nothing && (d[:Z] = tri_z(arg1))
@@ -157,7 +157,9 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		cmd = replace(cmd, opt_J => " -JX" * split(DEF_FIG_SIZE, '/')[1] * "/0")	# If projected, it's a axis equal for sure
 	end
 	if (is3D && isempty(opt_JZ) && length(collect(eachmatch(r"/", opt_R))) == 5)
-		opt_JZ = CTRL.pocket_J[3] = (is_gridtri) ? " -JZ5c" : " -JZ6c"	# This is really arbitrary and not satisfactory for all cases.
+		if O  opt_JZ = (CTRL.pocket_J[3] != "") ? CTRL.pocket_J[3][1:4] : " -JZ"
+		else  opt_JZ = CTRL.pocket_J[3] = (is_gridtri) ? " -JZ5c" : " -JZ6c"		# Arbitrary and not satisfactory for all cases.
+		end
 		cmd *= opt_JZ		# Default -JZ
 	end
 
@@ -1518,7 +1520,9 @@ function sort_visible_triangles(Dv::Vector{<:GMTdataset}; del_hidden=false, zfac
 
 	(del_hidden != 1 && contains(Dv[1].comment[1], "vwall")) && (del_hidden = true)	# If have vwalls, need to del invis
 	if (del_hidden == 1)		# Remove the triangles that are not visible from the normal view_vec
+		bak_view = CURRENT_VIEW[1]	# Save because mapproject will reset it to "" (parsing on a module that has first = true)
 		t = isgeog(Dv) ? mapproject(Dv, J="t$((Dv[1].ds_bbox[1] + Dv[1].ds_bbox[2])/2)/1:1", C=true, F=true) : Dv
+		CURRENT_VIEW[1] = bak_view 
 		view_vec = [sin_az * cosd(elev), cos_az * cosd(elev), sin_el]
 		is_vis = [dot(facenorm(t[k].data, zfact=zfact, normalize=false), view_vec) > 0 for k in eachindex(t)]
 		Dv = Dv[is_vis]
