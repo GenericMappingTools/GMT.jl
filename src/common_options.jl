@@ -141,7 +141,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 parse_RIr(d::Dict, cmd::String, O::Bool=false, del::Bool=true) = parse_R(d, cmd, O, del, true)
-function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=true, RIr::Bool=false)::Tuple{String, String}
+function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=true, RIr::Bool=false, noGlobalR::Bool=false)::Tuple{String, String}
 	# Build the option -R string. Make it simply -R if overlay mode (-O) and no new -R is fished here
 	# The RIr option is to assign also the -I and -r when R was given a GMTgrid|image value. This is a
 	# workaround for a GMT bug that ignores this behaviour when from externals.
@@ -169,7 +169,7 @@ function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=true, RIr::Bool=
 	end
 
 	(O && opt_R == "") && (opt_R = " -R")
-	if (opt_R != "" && opt_R != " -R" && !IamInset[1])		# Save limits in numeric
+	if (opt_R != "" && opt_R != " -R" && !IamInset[1] && !noGlobalR)	# Save limits in numeric
 		bak = IamModern[1]
 		try
 			limits = opt_R2num(opt_R)
@@ -1631,7 +1631,7 @@ function parse_append(d::Dict, cmd::String)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_helper(cmd::String, d::Dict, symbs::VMs, opt::String, sep='/')
+function parse_helper(cmd::String, d::Dict, symbs::VMs, opt::String, sep='/')::Tuple{String, String}
 	# Helper function to the parse_?() global options.
 	(SHOW_KWARGS[1]) && return (print_kwarg_opts(symbs, "(Common option not yet expanded)"),"")
 	opt_val::String = ""
@@ -3673,6 +3673,7 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", i
 	# Use 'get_info=true' to force reading the file when fname != ""
 	
 	if (isa(arg, GMTfv))			# A quick and dirty way to parse the GMTfv type
+		contains(cmd, " -R") && return cmd, arg, opt_R, "", ""	# If the FV is used in overlay no -R to set
 		is_geo = isgeog(arg.proj4)			# MUST make isgeog sniff in GMTfv types
 		_wesn = round_wesn(arg.bbox, is_geo)		# Add a pad if not-tight
 		opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g/%.12g/%.12g", _wesn[1], _wesn[2], _wesn[3], _wesn[4], _wesn[5], _wesn[6])
