@@ -119,7 +119,7 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 			cmd = parse_B(d, cmd, (O ? "" : (IamModern[1]) ? "" : DEF_FIG_AXES[1]))[1]
 		end
 	end
-	common = have_opt_M ? [:F :JZ :UVXY :bo :c :t :params] : [:F :JZ :UVXY :bo :c :p :t :params]
+	common = have_opt_M ? [:UVXY :bo :params] : [:F :JZ :UVXY :bo :c :p :t :params]
 	cmd, = parse_common_opts(d, cmd, common, !O)	# If -M don't touch -p
 	cmd  = parse_these_opts(cmd, d, [[:A :area], [:C :river_fill], [:D :res :resolution]])
 	cmd  = parse_Td(d, cmd)
