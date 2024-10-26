@@ -33,12 +33,12 @@ G = sphdistance(R="0/10/0/10", I=0.1, Q=D, L=:k, Vd=dbg2);	# But works with data
 println("	SURFACE")
 G = surface(rand(100,3) * 150, R="0/150/0/150", I=1, Ll=-100, upper=100, V=:q);
 @assert(size(G.z) == (151, 151))
-gridit("@ship_15.txt", M=0.3, preproc=:y);
+gridit("@ship_15.txt", M=0.3, preproc=:y, V=:q);
 gridit("@ship_15.txt", M=0.3, preproc=:y, Vd=2);
 gridit("@ship_15.txt",  method=:mean);
 gridit("@ship_15.txt",  method=:nearest);
 gridit(gmtread("@ship_15.txt"), method="average radius=0.3")
-gridit(gmtread("@ship_15.txt"), preproc=true, R="245/254.727/20/30.001");
+gridit(gmtread("@ship_15.txt"), preproc=true, R="245/254.727/20/30.001", V=:q);
 gridit(gmtread("@ship_15.txt"), preproc=true, I="0.137");
 gridit("@ship_15.txt", preproc=true, I="0.137");
 @test_throws ErrorException("Unknown interpolation method: lele") gridit(gmtread("@ship_15.txt"),  method=:lele) 

@@ -190,12 +190,15 @@ println("	PSTEXT")
 text(text_record("TopLeft"), R="1/10/1/10", J="X10", F="+cTL",fmt="ps",savefig="lixo.ps")
 text!(text_record("TopLeft"), R="1/10/1/10", J="X10", F="+cTL",Vd=dbg2)
 text!("", text_record("TopLeft"), R="1/10/1/10", J="X10", F="+cTL",Vd=dbg2)
+	@info "1..."
 t = ["46p A Tale of Two Cities", "32p Dickens, Charles", "24p 1812-1973"];
 pstext(text_record([3 8; 3 7; 3 6.4],t), R="0/6/0/9", J=:x1i, B=0, F="+f+jCM")
+	@info "2..."
 t = ["\tIt was the best of times, it was the worst of times, it was the age of wisdom, it was the age of,",
 	"",
 	"\tThere were a king with a large jaw and a queen with a plain face,"];
 T = text_record(t,"> 3 5 18p 5i j");
+	@info "3..."
 pstext!(T, F="+f16p,Times-Roman,red+jTC", M=true)
 pstext!(T, font=(16,"Times-Roman",:red), justify=:TC, M=true)
 pstext!(["MERDA"], x=2.0, y=2.0, Vd=dbg2)

@@ -13,7 +13,6 @@
 	GMT.density(X, -0.25:.05:1.25, 0:.1:15);
 	GMT.density(mat2ds(X), -0.25:.05:1.25, 0:.1:15);
 
-	@info "1..."
 	violin(v, Vd=dbg2)
 	violin!(v, Vd=dbg2)
 	y = randn(100,3);
@@ -27,7 +26,6 @@
 	boxplot!(y, Vd=dbg2)
 	GMT.resetGMT()
 
-	@info "2..."
 	y = randn(100,3,2);
 	violin(y, G=true, split=true)
 	violin!(y, Vd=dbg2)
@@ -37,7 +35,6 @@
 	vv = [round.(randn(50),digits=1), round.(randn(40),digits=3)]
 	GMT.kernelDensity(vv)
 
-	@info "3..."
 	vvv = [[randn(50), randn(30)], [randn(40), randn(48), randn(45)], [randn(35), randn(43)]];
 	GMT.kernelDensity(vvv)
 	boxplot!(vvv, Vd=dbg2)
@@ -54,7 +51,6 @@
 	boxplot(randn(50), rand(1:3,50), Vd=dbg2)
 	GMT.resetGMT()
 
-	@info "4..."
 	qqplot(randn(500), randn(50))
 	qqplot(randn(100), randn(50), qqline=:fit)
 	qqplot!(randn(200), qqline=:none, Vd=dbg2)
@@ -68,7 +64,6 @@
 
 	GMT.erfinv(-1.0)
 
-	@info "5..."
 	parallelplot("iris.dat",  groupvar="text", normalize="")
 	parallelplot("iris.dat",  groupvar="text", normalize="zscore")
 	parallelplot("iris.dat",  groupvar="text", normalize="scale", quantile=0.25)
@@ -78,36 +73,27 @@
 	parallelplot("iris.dat", groupvar="text", std=1.0, legend=true)
 	D = gmtread("iris.dat");
 	GMT.resetGMT()
-	@info "51..."
 	parallelplot!(D, normalize="scale")
 	parallelplot(D, normalize="zscore")
 	parallelplot(D, normalize="")
 	GMT.resetGMT()
-	@info "52..."
 	plot(D, xvar=1, yvar=2, groupvar="text", legend=true)
 	GMT.resetGMT()
 	plot(D, xvar=1, yvar=2, hue="Species", xlabel=:auto, ylabel=:auto, linefit=true, band_CI=true, legend=true)
 	GMT.resetGMT()
 
 	A = rand(10,2);		A[1] = NaN
-	@info "6..."
 	GMT.normalizeArray("zscore", A);
-	@info "61..."
 	try cornerplot("lixo"); catch end
 	GMT.resetGMT()
-	@info "62..."
 	try cornerplot!("lixo"); catch end
 	GMT.resetGMT()
-	@info "63..."
 	cornerplot(randn(50,3), scatter=true)
-	@info "64..."
 	cornerplot(randn(500,3), truths=[0.25, 0.5, 0.75])
-	@info "65..."
 	cornerplot(randn(500,3), hexbin=(inc=0.2, threshold=1.0))
 	cornerplot!(randn(500,3), hexbin=true)
 	GMT.resetGMT()
 
-	@info "7..."
 	marginalhist(randn(1000,2), scatter=true, histkw=(annot=true,))
 	marginalhist(randn(1000,2), hexbin=true)
 	marginalhist!(randn(2001,2), aspect=:equal)
