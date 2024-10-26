@@ -182,7 +182,6 @@ function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=true, RIr::Bool=
 				CTRL.limits[13] = 1.0						# To know that -R...+r was used.
 			end
 		catch err
-			@warn err
 			CTRL.limits .= 0.0
 			IamModern[1] = bak
 		end
@@ -521,9 +520,9 @@ function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bo
 			end
 		end
 	end
-	if (CTRL.proj_linear[1])			# If CTRL.proj_linear[1] == false, trust it
-		CTRL.proj_linear[1] = (length(opt_J) >= 4 && opt_J[4] != 'X' && opt_J[4] != 'x' && opt_J[4] != 'Q' && opt_J[4] != 'q') ? false : true
-	end
+	#if (CTRL.proj_linear[1])			# If CTRL.proj_linear[1] == false, trust it
+		#CTRL.proj_linear[1] = (length(opt_J) >= 4 && opt_J[4] != 'X' && opt_J[4] != 'x' && opt_J[4] != 'Q' && opt_J[4] != 'q') ? false : true
+	#end
 
 	(opt_J == " ") && (opt_J = "")		# We use " " when wanting to prevent the default -J
 	fish_size_from_J(opt_J)				# So far we only need this in plot(hexbin)
