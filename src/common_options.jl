@@ -4696,7 +4696,7 @@ function put_in_legend_bag(d::Dict, cmd, arg, O::Bool=false, opt_l::String="")
 			cmd_[1] *= " -G" * arg2str(rgb.*255)
 			for k = 1:numel(pens)
 				gmt_get_rgb_from_z(G_API[1], P, arg[gindex[k+1],ind]+10eps(), rgb)
-				pens[k] *= @sprintf("-G%.0f/%.0f/%.0f", rgb[1]*255, rgb[2]*255, rgb[3]*255)
+				pens[k] *= @sprintf(" -G%.0f/%.0f/%.0f", rgb[1]*255, rgb[2]*255, rgb[3]*255)
 			end
 		end
 	end
