@@ -42,7 +42,7 @@ function logo(cmd0::String=""; first=true, kwargs...)
 
 	cmd, = parse_R(d, "", O)
 	cmd, = parse_J(d, cmd, " -Jx1", true, O)
-	cmd, = parse_common_opts(d, cmd, [:UVXY :params], first)
+	cmd, = parse_common_opts(d, cmd, [:UVXY :params]; first=first)
 
 	cmd = parse_type_anchor(d, cmd, [:D :pos :position],
 	                        (map=("g", arg2str, 1), outside=("J", nothing, 1), inside=("j", nothing, 1), norm=("n", arg2str, 1), paper=("x", arg2str, 1), anchor=("", arg2str, 2), width="+w", size="+w", justify="+j", offset=("+o", arg2str)), 'g')

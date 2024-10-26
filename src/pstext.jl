@@ -110,7 +110,8 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	end
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX" * split(DEF_FIG_SIZE, '/')[1] * "/0")
-	cmd, = parse_common_opts(d, cmd, [:a :e :f :p :t :w :JZ :UVXY :params], first)
+	_is3D = (isa(arg1, GDtype) && getsize(arg1)[2] == 3)		# But this does not check the reading file path
+	cmd, = parse_common_opts(d, cmd, [:a :e :f :p :t :w :JZ :UVXY :params]; first=first, is3D=_is3D)
 	cmd  = parse_these_opts(cmd, d, [[:A :azimuths :azimuth :azim], [:M :paragraph], [:N :no_clip :noclip],
 	                                 [:Q :change_case], [:S :shade], [:T :text_box], [:Z :threeD]])
 	cmd  = add_opt(d, cmd, "C", [:C :clearance], (margin="#", round="_+tO", concave="_+tc", convex="_+tC"))
@@ -118,6 +119,7 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	# If file name sent in, read it and compute a tight -R if this was not provided
 	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R)
 	contains(opt_R, "NaN") && error("Text element has no coordinates. So you cannot show it in the first command.")
+
 	(isa(arg1, AbstractString) || isa(arg1, Vector{<:AbstractString})) && (arg1 = parse_xy(d, arg1))	# See if x=.., y=..
 	if (isa(arg1, Array{<:Real}))
 		arg1 = [GMTdataset(arg1, Float64[], Float64[], DictSvS(), String[], String[], "", String[], "", "", 0, 0)]

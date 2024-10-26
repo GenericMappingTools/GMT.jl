@@ -1643,7 +1643,7 @@ function parse_helper(cmd::String, d::Dict, symbs::VMs, opt::String, sep='/')::T
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_common_opts(d::Dict, cmd::String, opts::VMs, first::Bool=true)
+function parse_common_opts(d::Dict, cmd::String, opts::VMs; first::Bool=true, is3D::Bool=false)::Tuple{String, String}
 	(SHOW_KWARGS[1]) && return (print_kwarg_opts(opts, "(Common options)"),"")	# Just print the options
 
 	ignore_J, ignore_R, ignore_p, ignore_t = false, false, false, false
@@ -1661,7 +1661,7 @@ function parse_common_opts(d::Dict, cmd::String, opts::VMs, first::Bool=true)
 		elseif (opt == :R && !ignore_R)  cmd, o = parse_R(d, cmd)
 		elseif (opt == :I)  cmd  = parse_I(d, cmd, [:I :inc :increment :spacing], "I")
 		elseif (opt == :J && !ignore_J)  cmd, o = parse_J(d, cmd)
-		elseif (opt == :JZ) cmd, o = parse_JZ(d, cmd)
+		elseif (opt == :JZ) cmd, o = parse_JZ(d, cmd; is3D=is3D, O=!first)
 		elseif (opt == :G)  cmd, = parse_G(d, cmd)
 		elseif (opt == :F)  cmd  = parse_F(d, cmd)
 		elseif (opt == :UVXY)     cmd = parse_UVXY(d, cmd)

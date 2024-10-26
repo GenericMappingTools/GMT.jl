@@ -76,7 +76,7 @@ function grdview_helper(cmd0::String, arg1; first=true, kwargs...)
 	(!have_opt_B && isa(arg1, GMTimage) && (isimgsize(arg1) || CTRL.limits[1:4] == zeros(4)) && opt_B == DEF_FIG_AXES_BAK) &&
 		(cmd = replace(cmd, opt_B => ""))			# Dont plot axes for plain images if that was not required
 
-	cmd, = parse_common_opts(d, cmd, [:UVXY :c :f :n :p :t :params], first)
+	cmd, = parse_common_opts(d, cmd, [:UVXY :c :f :n :p :t :params]; first=first)
 	!first && !contains(cmd, " -p") && (cmd *= CURRENT_VIEW[1])		# Inherit current view
 	cmd  = add_opt(d, cmd, "S", [:S :smooth])
 	if ((val = find_in_dict(d, [:N :plane])[1]) !== nothing)

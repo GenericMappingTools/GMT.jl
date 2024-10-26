@@ -58,7 +58,7 @@ function colorbar(arg1::Union{Nothing, GMTcpt}=nothing; first=true, kwargs...)
 
 	cmd = parse_BJR(d, "", "", O, "")[1]
 	cmd = parse_JZ(d, cmd)[1]
-	cmd = parse_common_opts(d, cmd, [:F :UVXY :params :c :p :t], first)[1]
+	cmd = parse_common_opts(d, cmd, [:F :UVXY :params :c :p :t]; first=first)[1]
 	cmd = parse_these_opts(cmd, d, [[:G :truncate], [:I :shade], [:M :monochrome], [:N :dpi],
 	                                [:Q :log], [:S :appearance :nolines], [:W :scale], [:Z :zfile]])
 	opt_D = parse_type_anchor(d, "", [:D :pos :position],

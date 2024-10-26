@@ -35,7 +35,7 @@ function mbgetdata(cmd0::String=""; kwargs...)
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
 	cmd, opt_R = parse_R(d, "")
-	cmd, = parse_common_opts(d, cmd, [:UVXY :params], true)
+	cmd, = parse_common_opts(d, cmd, [:UVXY :params]; first=true)
 
 	cmd  = parse_these_opts(cmd, d, [[:A :flagged], [:D :scaling], [:F :format],
 	                                 [:S :speed], [:T :timegap], [:b :star_time], [:e :end_time]])

@@ -29,7 +29,7 @@ function windbarbs(arg1; first=true, kwargs...)
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O)
-	cmd = parse_common_opts(d, cmd, [:UVXY :a :bi :di :e :f :h :i :p :t :yx :params], first)[1]
+	cmd = parse_common_opts(d, cmd, [:UVXY :a :bi :di :e :f :h :i :p :t :yx :params]; first=first)[1]
 	cmd = parse_these_opts(cmd, d, [[:D :offset], [:I :intens], [:N :no_clip :noclip]])
 	cmd = add_opt(d, cmd, "Q", [:Q :barbs], (len=("", arg2str, 1), length=("", arg2str, 1), angle="+a", fill="+g", pen="+p", just="+j", speed="+s", width="+w", uv="+z", cartesian="+z"))
 	cmd *= opt_pen(d, 'W', [:W :pen])

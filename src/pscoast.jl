@@ -120,7 +120,7 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 		end
 	end
 	common = have_opt_M ? [:UVXY :bo :params] : [:F :JZ :UVXY :bo :c :p :t :params]
-	cmd, = parse_common_opts(d, cmd, common, !O)	# If -M don't touch -p
+	cmd, = parse_common_opts(d, cmd, common; first=first)	# If -M don't touch -p
 	cmd  = parse_these_opts(cmd, d, [[:A :area], [:C :river_fill], [:D :res :resolution]])
 	cmd  = parse_Td(d, cmd)
 	cmd  = parse_Tm(d, cmd)

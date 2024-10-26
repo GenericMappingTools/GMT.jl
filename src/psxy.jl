@@ -104,7 +104,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 
 	axis_equal = is_axis_equal(d)		# See if the user asked for an equal aspect ratio
 	cmd, opt_JZ = parse_JZ(d, cmd; O=O, is3D=is3D)
-	cmd, = parse_common_opts(d, cmd, [:a :e :f :g :t :w :params], first)
+	cmd, = parse_common_opts(d, cmd, [:a :e :f :g :t :w :params]; first=first)
 	cmd, opt_l = parse_l(d, cmd)		# Parse this one (legend) aside so we can use it in classic mode
 	cmd, opt_f = parse_f(d, cmd)		# Parse this one (-f) aside so we can check against D.attrib
 	cmd  = parse_these_opts(cmd, d, [[:D :shift :offset], [:I :intens], [:N :no_clip :noclip]])
