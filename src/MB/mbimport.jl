@@ -43,7 +43,7 @@ function mbimport(cmd0::String=""; kwargs...)
 
 	cmd, opt_R = parse_R(d, "")
 	cmd, opt_J = parse_J(d, cmd, " -JX12cd/0", true)
-	cmd, = parse_common_opts(d, cmd, [:UVXY :params :n :t], true)
+	cmd, = parse_common_opts(d, cmd, [:UVXY :params :n :t]; first=true)
 
 	cmd  = parse_these_opts(cmd, d, [[:A :footprint], [:D :scaling], [:F :format], [:E :dpi], [:G :shade],
 	                                 [:S :speed], [:T :timegap], [:b :star_time], [:e :end_time]])

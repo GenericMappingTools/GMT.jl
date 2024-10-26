@@ -130,7 +130,7 @@ function histogram_helper(cmd0::String, arg1; first=true, kwargs...)
 
 	cmd, opt_B, opt_J, opt_R ::String= parse_BJR(d, cmd, "histogram", O, " -JX14c/14c")
 	cmd = parse_JZ(d, cmd)[1]
-	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :c :e :f :p :t :w :params], first)[1]
+	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :c :e :f :p :t :w :params]; first=first)[1]
 	cmd = parse_these_opts(cmd, d, [[:A :horizontal], [:F :center], [:Q :cumulative], [:S :stairs]])
 	nofill = ((symb = is_in_dict(d, [:G :fill])) !== nothing && d[symb] == "") ? true : false	# To know if no fill was asked
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')

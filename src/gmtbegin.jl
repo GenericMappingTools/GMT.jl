@@ -65,7 +65,7 @@ end
 function inset(fim::StrSymb=""; stop=false, kwargs...)
  
 	d = KW(kwargs)
-	cmd, = parse_common_opts(d, "", [:c :F :V_params], true)
+	cmd, = parse_common_opts(d, "", [:c :F :V_params], first=true)
 	cmd  = parse_these_opts(cmd, d, [[:M :margins], [:N :no_clip :noclip]])
 	cmd  = parse_type_anchor(d, cmd, [:D :pos :position :inset :inset_box :insetbox],
 	                        (map=("g", arg2str, 1), outside=("J", arg2str, 1), inside=("j", arg2str, 1), norm=("n", arg2str, 1), paper=("x", arg2str, 1), anchor=("", arg2str, 2), width="+w", size="+w", justify="+j", offset=("+o", arg2str)), 'j')

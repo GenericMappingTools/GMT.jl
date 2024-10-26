@@ -50,7 +50,7 @@ function image_helper(cmd0::String, arg1; first=true, kwargs...)
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
 	cmd = parse_BJR(d, "", "", O, " -JX" * split(DEF_FIG_SIZE, '/')[1] * "/0")[1]
-	cmd = parse_common_opts(d, cmd, [:F :UVXY :JZ :c :p :t :params], first)[1]
+	cmd = parse_common_opts(d, cmd, [:F :UVXY :JZ :c :p :t :params]; first=first)[1]
 	cmd = parse_these_opts(cmd, d,  [[:I :invert], [:M :monochrome]])
 	((val = find_in_dict(d, [:G :bitcolor :bit_color])[1]) !== nothing && isa(val, String)) && (cmd *= string(" -G", val))
 	((val = find_in_dict(d, [:bit_bg])[1]) !== nothing) && (cmd = add_opt_fill(val, cmd, " -G") * "+b")

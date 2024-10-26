@@ -77,7 +77,7 @@ function grdcontour_helper(cmd0::String, arg1; first=true, kw...)
 	dict_auto_add!(d)					# The ternary module may send options via another channel
 
 	cmd::String, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX" * split(DEF_FIG_SIZE, '/')[1] * "/0")
-	cmd, = parse_common_opts(d, cmd, [:UVXY :params :bo :c :e :f :h :p :t], first)
+	cmd, = parse_common_opts(d, cmd, [:UVXY :params :bo :c :e :f :h :p :t]; first=first)
 	cmd  = parse_these_opts(cmd, d, [[:D :dump], [:F :force], [:L :range], [:Q :cut], [:S :smooth]])
 	cmd  = parse_contour_AGTW(d::Dict, cmd::String)[1]
 	cmd  = add_opt(d, cmd, "Z", [:Z :muladd :scale], (factor = "+s", shift = "+o", periodic = "_+p"))

@@ -79,7 +79,7 @@ function legend(cmd0::String="", arg1=nothing; first::Bool=true, kwargs...)
 	# where the default is 8 pts. This allows for the user to set options 'fontsize' or 'font' to override the defaults.
 	((fnt = get_legend_font(d, IamModern[1] ? 0 : 8; modern=IamModern[1])) != "") && (cmd *= " --FONT_ANNOT_PRIMARY=" * fnt)
 
-	cmd, = parse_common_opts(d, cmd, [:F :c :p :q :t :JZ :UVXY :params], first)
+	cmd, = parse_common_opts(d, cmd, [:F :c :p :q :t :JZ :UVXY :params]; first=first)
 
 	opt_D = parse_type_anchor(d, "", [:D :pos :position],
 	                         (map=("g", arg2str, 1), outside=("J", arg2str, 1), inside=("j", arg2str, 1), norm=("n", arg2str, 1), paper=("x", arg2str, 1), anchor=("", arg2str, 2), width=("+w", arg2str), justify="+j", spacing="+l", offset=("+o", arg2str)), 'j')

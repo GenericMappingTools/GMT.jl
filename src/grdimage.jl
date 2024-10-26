@@ -80,7 +80,7 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 	(!has_opt_B && isa(arg1, GMTimage) && (isimgsize(arg1) || CTRL.limits[1:4] == zeros(4)) && opt_B == DEF_FIG_AXES_BAK) &&
 		(cmd = replace(cmd, opt_B => ""))			# Dont plot axes for plain images if that was not required
 
-	cmd, = parse_common_opts(d, cmd, [:UVXY :params :c :f :n :p :t], first)
+	cmd, = parse_common_opts(d, cmd, [:UVXY :params :c :f :n :p :t]; first=first)
 	cmd  = parse_these_opts(cmd, d, [[:A :img_out :image_out], [:D :img_in :image_in], [:E :dpi], [:G :bit_color],
 	                                 [:M :monochrome], [:N :noclip], [:Q :nan_alpha :alpha_color]])
 	cmd = add_opt(d, cmd, "%", [:layout :mem_layout], nothing)

@@ -125,7 +125,7 @@ function imshow(arg1::GItype; kw...)
 		new_see = see
 		see = false				# because here we know that 'see' has to wait till last command
 	end
-	opt_p, = parse_common_opts(d, "", [:p :view :perspective], true)
+	opt_p, = parse_common_opts(d, "", [:p :view :perspective]; first=true)
 	have_tilles::Bool = ((til = find_in_dict(d, [:T :no_interp :tiles])[1]) !== nothing)
 	(!have_tilles && opt_p != "" && !contains(opt_p, '/')) && (flat = true)		# If only 'azimuth' and no 'elev'
 	flat::Bool = (find_in_dict(d, [:flat])[1] !== nothing)	# If true, force the use of grdimage
