@@ -293,20 +293,20 @@ GMTdataset(data::Array{Float32,2}) =
 	GMTdataset(data, Float64[], Float64[], DictSvS(), String[], String[], "", String[], "", "", 0, 0)
 
 """
-    mutable struct GMTfv{T<:AbstractFloat} <: AbstractMatrix{T}
+    struct GMTfv{T<:AbstractFloat} <: AbstractMatrix{T}
 
-The GMTfv struct is used to store a triangulated mesh.
+The GMTfv struct is used to store a (mostly) triangulated mesh.
 
 The fields of this struct are:
-- `verts::AbstractMatrix{T}`:             Mx3 Matrix with the data vertices
-- `faces`:
-- `faces_view`:
-- `bbox`:
-- `zscale`:
-- `bfculling`:
-- `proj4`:
-- `wkt`:
-- `eps`:
+- `verts::AbstractMatrix{T}`:        Mx3 Matrix with the data vertices
+- `faces`::Vector{<:AbstractMatrix{<:Integer}}   A vector of matrices with the faces. Each row is a face
+- `faces_view`::Vector{Matrix{Int}}  A subset of `faces` with only the visible faces from a certain perspective
+- `bbox`::Vector{Float64}            The vertices BoundingBox
+- `zscale`::Float64                  A multiplicative factor to scale the z values
+- `bfculling`::Bool                  If culling of invisible faces is wished
+- `proj4::String`                    Projection string in PROJ4 syntax (Optional)
+- `wkt::String`                      Projection string in WKT syntax (Optional)
+- `epsg::Int`                        EPSG projection code (Optional)
 """
 Base.@kwdef mutable struct GMTfv{T<:AbstractFloat} <: AbstractMatrix{T}
 	verts::AbstractMatrix{T}=Matrix{Float64}(undef,0,0)

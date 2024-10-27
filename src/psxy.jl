@@ -386,9 +386,10 @@ end
 """
     FV = deal_faceverts(FV::GMTfv, d; del::Bool=true)::GMTfv
 	
-Deal with the situation where we are plotting 3D FV's. Here we kill (if del==true) invisible faces and sort
-them according to the viewing angle. If no fill color is set in kwargs, we use the dotprod and a gray CPT
-to set the fill color that will be modulated by normals to each visible face.
+Deal with the situation where we are plotting 3D FV's.
+
+Here we kill (if del==true) invisible faces and sort them according to the viewing angle. If no fill color is set in
+kwargs, we use the dotprod and a gray CPT to set the fill color that will be modulated by normals to each visible face.
 """
 function deal_faceverts(arg1::GMTfv, d; del::Bool=true)::GMTfv
 	azim, elev = get_numeric_view()
@@ -1469,8 +1470,8 @@ function sort_visible_faces(FV::GMTfv, azim, elev; del::Bool=true)::Tuple{GMTfv,
 	!FV.bfculling && (del = false)		# Do not delete if bfculling is set to false (for example if FV is not closed)
 	first_face_vis = true
 	for k = 1:numel(FV.faces)			# Loop over number of face groups (we can have triangles, quads, etc)
-		n_faces = size(FV.faces[k], 1)	# Number of faces (polygons)
-		this_face_nverts = size(FV.faces[k], 2)
+		n_faces::Int = size(FV.faces[k], 1)	# Number of faces (polygons)
+		this_face_nverts::Int = size(FV.faces[k], 2)
 		tmp = zeros(this_face_nverts, 3)
 		del && (isVisible = fill(false, n_faces))
 		dists = NTuple{2,Float64}[]
@@ -1486,7 +1487,7 @@ function sort_visible_faces(FV::GMTfv, azim, elev; del::Bool=true)::Tuple{GMTfv,
 				push!(_projs, this_proj)
 			end
 		end
-		data = del ? FV.faces[k][isVisible, :] : FV.faces[k]
+		data::Matrix{Integer} = del ? FV.faces[k][isVisible, :] : FV.faces[k]
 		isempty(data) && continue
 		ind  = sortperm(dists)
 		data = data[ind, :]
