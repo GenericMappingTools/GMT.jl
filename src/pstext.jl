@@ -128,7 +128,7 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd, arg1, arg2, N_args = add_opt_cpt(d, cmd, [:C :color], 'C', N_args, arg1)
 
 	cmd = add_opt(d, cmd, "D", [:D :offset], (away=("j", nothing, 1), corners=("J", nothing, 1), shift="", line=("+v",add_opt_pen)), true)
-	cmd = add_opt(d, cmd, "F", [:F :attrib],
+	opt_F = add_opt(d, "", "F", [:F :attrib],
 		(angle="+a", Angle="+A", font=("+f", font), justify="+j", region_justify="+c", header="_+h", label="_+l", rec_number="_+r", text="+t", zvalues="_+z"), true, true)
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
 	contains(cmd, " -G") && (CTRL.pocket_B[3] = ".")	# Signal gmt() that it needs to restart because the fill f the API
@@ -147,6 +147,33 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 			end
 		end
 	end
+
+	# Didn't find this from the GMT manual, but trials showd that the (almost) documented first form:
+	# echo 1 13 black=~3p,green blue | gmt text -R0/18/0/15 -Jx1c -B5g1 -BWSne --FONT=28p,Helvetica-Bold -F+f+jBL -png lixo
+	# is equivalent to this second form and avoids the use of the "--FONT" mechanism.
+	# echo 1 13 28p,Helvetica-Bold,black=~3p,green blue | gmt text -R0/18/0/15 -Jx1c -B5g1 -BWSne  -F+f+jBL -png lixo
+	# But it requires quite a bit of gymnastics moving around the pen,font settings.
+	if ((val = find_in_dict(d, [:outline])[1]) !== nothing)
+		outline::String = (val == 1) ? "1p,white" : string(val)
+		if (opt_F == "")
+			opt_F = " -F+f"
+			outline = "black=~" * outline * " "
+		else
+			if ((ind = findfirst("+f", opt_F)) !== nothing)
+				if ((s = split(split(opt_F, "+f")[2], '+')[1]) != "")	# Example: split(split("-F+f28p,Times", "+f")[2], '+')[1] = "28p,Times"
+					opt_F = replace(opt_F, s => "")						# Remove the old font specification from -F
+					t_color = (count_chars(s, ',') <= 1) ? ",black=~" : "=~"
+					outline = s * t_color * outline * " "				# Example: 28p,Times,black=~3p,green
+				end
+			else
+				opt_F *= "+f"
+			end
+		end
+		for n = 1:size(arg1.data, 1)
+			arg1.text[n] = outline * arg1.text[n]
+		end
+	end
+	(opt_F != "") && (cmd *= opt_F)						# Needed, whether or not 'outline' is used
 
 	_cmd = [gmt_proggy * cmd]
 	_cmd = frame_opaque(_cmd, gmt_proggy, opt_B, opt_R, opt_J)		# No -t in frame
