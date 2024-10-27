@@ -601,6 +601,7 @@ function get_PS(API::Ptr{Nothing}, object::Ptr{Nothing})::GMTps
 	(object == C_NULL) && error("get_PS: programming error, input object is NULL")
 
 	P::GMT_POSTSCRIPT = unsafe_load(convert(Ptr{GMT_POSTSCRIPT}, object))
+	P.data == C_NULL && return GMTps()		# A bug in pstext.c causes coming here when pstext -L is used
 	out = GMTps(unsafe_string(P.data), Int(P.n_bytes), Int(P.mode), [])	# NEED TO FILL THE COMMENT
 end
 
