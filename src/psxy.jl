@@ -46,7 +46,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 
 	# --------------------- Check the grid2tri cases --------------------
 	is_gridtri::Bool = false
-	is3D && (is_gridtri = deal_gridtri!(arg1, d))
+	is3D && (is_gridtri = deal_gridtri!(arg1, d, O))
 
 	if (first && occursin('3', caller) && is_in_dict(d, [:p :view :perspective]) === nothing)
 		d[:p] = "217.5/30"			# Need this before parse_BJR() so MAP_FRAME_AXES can be guessed.
@@ -401,7 +401,7 @@ function deal_faceverts(arg1::GMTfv, d; del::Bool=true)::GMTfv
 end
 
 # ---------------------------------------------------------------------------------------------------
-function deal_gridtri!(arg1, d)::Bool
+function deal_gridtri!(arg1, d, O)::Bool
 	# Deal with the situation where we are plotting triangulated grids made by grid2tri()
 	!is_gridtri(arg1) && return false
 	is_in_dict(d, [:G :fill]) === nothing && (d[:G] = "+z")
@@ -412,7 +412,7 @@ function deal_gridtri!(arg1, d)::Bool
 		C.bfn[2, :] .= 0.7			# Set the foreground color used by the vertical wall
 		d[:C] = C
 	end
-	(!haskey(d, :aspect) && !haskey(d, :aspect3)) && (d[:aspect] = "equal")		# At least x,y axes should be data driven
+	(!O && !haskey(d, :aspect) && !haskey(d, :aspect3)) && (d[:aspect] = "equal")		# At least x,y axes should be data driven
 	(is_in_dict(d, [:L :close :polygon]) === nothing) && (d[:L] = "")
 	return true
 end
