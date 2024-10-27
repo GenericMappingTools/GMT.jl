@@ -1674,6 +1674,7 @@ function ternary(cmd0::String="", arg1=nothing; first::Bool=true, image::Bool=fa
 	r = common_plot_xyz("", mat2ds(arg1), "ternary", first, false; d...)
 	# With the following trick we leave the -R history in 0/1/0/1 and so we can append with plot, text, etc
 	gmt("psxy -Scp -R0/1/0/1 -JX -O -Vq > " * joinpath(TMPDIR_USR[1], "lixo_" * TMPDIR_USR[2] * TMPDIR_USR[3] * ".ps"), [0. 0.])
+	CTRL.pocket_R[1] = " -R0/1/0/1"		# Since we now always explicitly set -R, we must save it in CTRL.pocket_R
 	return r
 end
 
