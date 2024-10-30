@@ -407,3 +407,89 @@ function cylinder(r, h; base=0.0, center=(0.0, 0.0, 0.0), closed=true, geog=fals
 	end
 	extrude(xy, h; base=h0, closed=closed)
 end
+
+
+# ----------------------------------------------------------------------------
+"""
+    R = vec_rot_mat(theta, n) -> Matrix{Float64}
+
+Compute the rotation matrix that rotates by angle `theta` (in radians) about the vector `n`.
+"""
+function vec_rot_mat(theta, n)
+	cross_prod_mat(x) = [0.0 -x[3] x[2]; x[3] 0 -x[1]; -x[2] x[1] 0]
+
+	W = cross_prod_mat(n / norm(n))
+	eye(3) .+ W * sin(theta) .+ W^2 * (1-cos(theta))
+end
+
+"""
+    FV = revolve(curve::Matrix{Real}; extent = 2.0*pi, dir=:positive, n=[0.0,0.0,1.0], num_steps=0, close_loop=true,face_type=:quad) -> GMTfv
+
+Revolve curves to build surfaces.
+
+This function rotates the curve `curve` by the angle `extent`, in the direction 
+defined by `direction` (`:positive`, `:negative`, `:both`), around the vector 
+`n`, to build the output mesh defined as a Faces-Vertices type.
+
+### Credit
+This function is a modified version on the `revolvecurve` function from the `Comodo.jl` package.
+
+### Args
+- `curve`: A Mx3 matrix of points defining the curve to revolve. Each row is a point in 3D space.
+
+### Kwargs
+- `extent`: The extent of the revolved curve in radians.
+- `dir`: The direction of the revolved curve (`:positive`, `:negative`, `:both`).
+- `n`: The normal vector of the revolved curve.
+- `num_steps`: The number of steps used to build the revolved curve. If `0` (the default) the number of steps is computed from the curve point spacing.
+- `close_loop`: If `true` (the default), close the revolved curve at the start and end points.
+- `face_type`: The type of faces used to build the revolved curve (`:quad` (default), `:tri`).
+
+### Returns
+- `FV`: A Faces-Vertices dataset.
+"""
+function revolve(curve; extent=2pi, dir=:positive, n=[0.0,0.0,1.0], num_steps::Int=0, close_loop=true, face_type=:quad)
+
+	n_pts = size(curve,1)
+
+	# Compute num_steps from curve point spacing
+	if (num_steps == 0)
+		L = [0.0; cumsum(sqrt.(sum(diff(curve, dims=1).^2, dims=2)), dims=1)]	# Compute the accumulated distance along the curve
+		rMax = 0.0
+		for k = 1:n_pts
+			v = curve[k, :]
+			cc = cross(cross(n, v), n)
+			rNow = dot(cc / norm(cc), cc)
+			if !isnan(rNow)
+				rMax = max(rMax, rNow)
+			end
+		end
+		num_steps = ceil(Int, (rMax*extent) / mean(diff(L, dims=1)))        
+	end
+
+    # Set up angle range
+	if dir == :positive
+		θ_range = range(0,extent, num_steps)               
+	elseif dir == :negative
+		θ_range = range(-extent, 0, num_steps)
+	elseif dir == :both
+		θ_range = range(-extent/2, extent/2, num_steps)
+	else
+		throw(ArgumentError("$dir is not a valid direction, Use :positive, :in, or :both.")) 
+	end
+
+	X = Matrix{Float64}(undef, n_pts, num_steps)
+	Y,Z = copy(X), copy(X)
+	curveT = curve'
+	for k = 1:num_steps
+		R = vec_rot_mat(θ_range[k], n)
+		curve_rot = R * curveT		# Rotate the polygon
+		for m = 1:n_pts
+			X[m,k] = curve_rot[1,m]
+			Y[m,k] = curve_rot[2,m]
+			Z[m,k] = curve_rot[3,m]
+		end
+	end
+
+	surf2fv(X, Y, Z; type=:quad)
+end

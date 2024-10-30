@@ -738,12 +738,18 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    FV = surf2fv(X::Matrix{T}, Y::Matrix{T}, Z::Matrix{T}; proj="", proj4="", wkt="", epsg=0) -> GMTfv
+    FV = surf2fv(X::Matrix{T}, Y::Matrix{T}, Z::Matrix{T}; type=:tri, proj="", proj4="", wkt="", epsg=0) -> GMTfv
 
-Create a creates a three-dimensional FacesVerices object suitable for 3D plotting either of closed bodies or 3D surfaces.
+Create a three-dimensional FacesVertices object.
+
+This function is suitable for 3D plotting either of closed bodies or 3D surfaces.
 The values in matrix Z represent the heights above a grid in the x-y plane defined by X and Y
 
+### Args
 - `X,Y,Z`: Three matrices of the same size and type float.
+
+### Kwargs
+- `type`: The face type. Either ``:tri`` (the default) or ``:quad`` for triangular or quadrangular faces.
 - `proj` or `proj4`:  A proj4 string for setting the Coordinate Referencing System
 - `wkt`: A WKT SRS.
 - `epsg`: Same as `proj` but using an EPSG code.
@@ -756,19 +762,32 @@ FV = surf2fv(X, Y, Z);
 viz(FV)
 ```
 """
-function surf2fv(X::Matrix{T}, Y::Matrix{T}, Z::Matrix{T}; proj="", proj4="", wkt="", epsg=0)::GMTfv where {T <: AbstractFloat}
+function surf2fv(X::Matrix{T}, Y::Matrix{T}, Z::Matrix{T}; type=:tri, proj="", proj4="", wkt="", epsg=0)::GMTfv where {T <: AbstractFloat}
 	@assert length(X) == length(Y) == length(Z)
+	(type != :tri && type != :quad) && error("type must be :tri or :quad")
 	n_rows, n_cols = size(X)
-	F = fill(0, 2 * (n_rows - 1) * (n_cols - 1), 3)
+	c1, c2 = (type == :tri) ? (2, 3) : (1, 4)
+	F = fill(0, c1 * (n_rows - 1) * (n_cols - 1), c2)
 	n = 0
-	for col = 1:n_cols - 1
-		for row = 1:n_rows - 1
-			n += 1
-			r = row + (col - 1) * n_rows
-			c = r + n_rows
-			F[n,1], F[n,2], F[n,3] = r, r+1, c
-			n += 1
-			F[n,1], F[n,2], F[n,3] = r+1, r+1+n_rows, c
+	if (type == :tri)
+		for col = 1:n_cols - 1
+			for row = 1:n_rows - 1
+				r = row + (col - 1) * n_rows
+				c = r + n_rows
+				n += 1
+				F[n,1], F[n,2], F[n,3] = r, r+1, c
+				n += 1
+				F[n,1], F[n,2], F[n,3] = r+1, r+1+n_rows, c
+			end
+		end
+	else
+		for col = 1:n_cols - 1
+			for row = 1:n_rows - 1
+				r = row + (col - 1) * n_rows
+				c = r + n_rows
+				n += 1
+				F[n,1], F[n,2], F[n,3], F[n,4] = r, r+1, c+1, c
+			end
 		end
 	end
 	fv2fv(F, [X[:] Y[:] Z[:]]; proj=proj, proj4=proj4, wkt=wkt, epsg=epsg)

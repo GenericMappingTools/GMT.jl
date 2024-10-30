@@ -764,6 +764,19 @@ function fileparts(fn::String)
 	return pato, fname, ext
 end
 
+# ---------------------------------------------------------------------------------------------------
+"""
+    I = eye(n=3) returns an n-by-n identity matrix with ones on the main diagonal and zeros elsewhere.
+"""
+function eye(n=3)
+	M = zeros(n,n)
+	@inbounds for i = 1:n
+		M[i,i] = 1.0
+	end
+	M
+end
+
+# ---------------------------------------------------------------------------------------------------
 function uniq(A; dims=1)
 	# Like the Matlab function
 	# https://discourse.julialang.org/t/unique-indices-method-similar-to-matlab/34446/7

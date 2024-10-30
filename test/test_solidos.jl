@@ -15,4 +15,6 @@
 	FV = gmtread("file.obj");
 	FV = cylinder(1,4, np=5);
 	
+	ns=15; x=linspace(0,2*pi,ns).+1; y=zeros(size(x)); z=-cos.(x); Vc=[x[:] y[:] z[:]];
+	FV = revolve(Vc);
 end
