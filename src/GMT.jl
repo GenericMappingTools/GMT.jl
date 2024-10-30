@@ -184,7 +184,7 @@ export
 
 	lazinfo, lazread, lazwrite, lasread, laswrite,
 
-	cube, cylinder, dodecahedron, icosahedron, sphere, octahedron, tetrahedron, torus, replicant,
+	cube, cylinder, dodecahedron, icosahedron, sphere, octahedron, tetrahedron, torus, replicant, revolve,
 
 	df2ds, ds2df, extrude, fv2fv, surf2fv, ODE2ds,
 	@?, @dir
