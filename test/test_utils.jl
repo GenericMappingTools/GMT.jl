@@ -34,4 +34,5 @@
 	test_circfit();
 
 	A, B, C, D = GMT.eq_plane(0, 45, 10);
+	GMT.eye()
 end
