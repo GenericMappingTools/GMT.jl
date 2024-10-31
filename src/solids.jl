@@ -453,7 +453,7 @@ function revolve(curve; extent=2pi, dir=:positive, n=[0.0,0.0,1.0], n_steps::Int
 
 	n_pts = size(curve,1)
 
-	# Compute num_steps from curve point spacing
+	# Compute n_steps from curve point spacing
 	if (n_steps == 0)
 		L = [0.0; cumsum(sqrt.(sum(diff(curve, dims=1).^2, dims=2)), dims=1)]	# Compute the accumulated distance along the curve
 		rMax = 0.0
@@ -470,11 +470,11 @@ function revolve(curve; extent=2pi, dir=:positive, n=[0.0,0.0,1.0], n_steps::Int
 
     # Set up angle range
 	if dir == :positive
-		θ_range = range(0,extent, num_steps)               
+		θ_range = range(0,extent, n_steps)               
 	elseif dir == :negative
-		θ_range = range(-extent, 0, num_steps)
+		θ_range = range(-extent, 0, n_steps)
 	elseif dir == :both
-		θ_range = range(-extent/2, extent/2, num_steps)
+		θ_range = range(-extent/2, extent/2, n_steps)
 	else
 		throw(ArgumentError("$dir is not a valid direction, Use :positive, :in, or :both.")) 
 	end
