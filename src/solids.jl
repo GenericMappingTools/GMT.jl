@@ -492,7 +492,7 @@ function revolve(curve; extent=2pi, dir=:positive, n=[0.0,0.0,1.0], n_steps::Int
 		end
 	end
 
-	surf2fv(X, Y, Z; type=typed)
+	surf2fv(X, Y, Z; type=type)
 end
 
 
