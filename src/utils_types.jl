@@ -738,7 +738,8 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    FV = surf2fv(X::Matrix{T}, Y::Matrix{T}, Z::Matrix{T}; type=:tri, proj="", proj4="", wkt="", epsg=0) -> GMTfv
+    FV = surf2fv(X::Matrix{T}, Y::Matrix{T}, Z::Matrix{T}; type=:tri, bfculling=true,
+                 proj="", proj4="", wkt="", epsg=0, top=nothing, bottom=nothing) -> GMTfv
 
 Create a three-dimensional FacesVertices object.
 
@@ -750,9 +751,14 @@ The values in matrix Z represent the heights above a grid in the x-y plane defin
 
 ### Kwargs
 - `type`: The face type. Either ``:tri`` (the default) or ``:quad`` for triangular or quadrangular faces.
-- `proj` or `proj4`:  A proj4 string for setting the Coordinate Referencing System
-- `wkt`: A WKT SRS.
-- `epsg`: Same as `proj` but using an EPSG code.
+- `bfculling`: Boolean that specifies if culling of invisible faces is wished (default is ``true``)
+- `proj` or `proj4`:  A proj4 string for setting the Coordinate Referencing System (optional).
+- `wkt`: A WKT SRS (optional).
+- `epsg`: Same as `proj` but using an EPSG code (optional).
+- `top`: A Faces 1 row matrix with the top of the body (optional). Note that we have to impose that this
+   is an already created faces matrix because inside this function we no longer know what the order of
+   the ``X`` and ``Y`` matrices represent.
+- `bottom`: A Faces 1 row matrix with the bottom of the body (optional).
 
 ### Example
 ```julia
@@ -762,12 +768,28 @@ FV = surf2fv(X, Y, Z);
 viz(FV)
 ```
 """
-function surf2fv(X::Matrix{T}, Y::Matrix{T}, Z::Matrix{T}; type=:tri, proj="", proj4="", wkt="", epsg=0)::GMTfv where {T <: AbstractFloat}
+function surf2fv(X::Matrix{T}, Y::Matrix{T}, Z::Matrix{T}; type=:tri, bfculling=true,
+                 proj="", proj4="", wkt="", epsg=0, top=nothing, bottom=nothing)::GMTfv where {T <: AbstractFloat}
 	@assert length(X) == length(Y) == length(Z)
 	(type != :tri && type != :quad) && error("type must be :tri or :quad")
+
 	n_rows, n_cols = size(X)
 	c1, c2 = (type == :tri) ? (2, 3) : (1, 4)
-	F = fill(0, c1 * (n_rows - 1) * (n_cols - 1), c2)
+	if (bottom === nothing && top === nothing)
+		F = [fill(0, c1 * (n_rows - 1) * (n_cols - 1), c2)]
+		indS = 1
+	elseif (bottom === nothing && top !== nothing)
+		F = [fill(0, c1 * (n_rows - 1) * (n_cols - 1), c2), top]
+		indS = 1
+	elseif (bottom !== nothing && top !== nothing)
+		F = [bottom, fill(0, c1 * (n_rows - 1) * (n_cols - 1), c2), top]
+		indS = 2
+	elseif (bottom !== nothing && top === nothing)
+		F = [bottom, fill(0, c1 * (n_rows - 1) * (n_cols - 1), c2)]
+		indS = 2
+	end
+
+	#F = fill(0, c1 * (n_rows - 1) * (n_cols - 1), c2)
 	n = 0
 	if (type == :tri)
 		for col = 1:n_cols - 1
@@ -775,9 +797,9 @@ function surf2fv(X::Matrix{T}, Y::Matrix{T}, Z::Matrix{T}; type=:tri, proj="", p
 				r = row + (col - 1) * n_rows
 				c = r + n_rows
 				n += 1
-				F[n,1], F[n,2], F[n,3] = r, r+1, c
+				F[indS][n,1], F[indS][n,2], F[indS][n,3] = r, r+1, c
 				n += 1
-				F[n,1], F[n,2], F[n,3] = r+1, r+1+n_rows, c
+				F[indS][n,1], F[indS][n,2], F[indS][n,3] = r+1, r+1+n_rows, c
 			end
 		end
 	else
@@ -786,11 +808,11 @@ function surf2fv(X::Matrix{T}, Y::Matrix{T}, Z::Matrix{T}; type=:tri, proj="", p
 				r = row + (col - 1) * n_rows
 				c = r + n_rows
 				n += 1
-				F[n,1], F[n,2], F[n,3], F[n,4] = r, r+1, c+1, c
+				F[indS][n,1], F[indS][n,2], F[indS][n,3], F[indS][n,4] = r, r+1, c+1, c
 			end
 		end
 	end
-	fv2fv(F, [X[:] Y[:] Z[:]]; proj=proj, proj4=proj4, wkt=wkt, epsg=epsg)
+	fv2fv(F, [X[:] Y[:] Z[:]]; bfculling=bfculling, proj=proj, proj4=proj4, wkt=wkt, epsg=epsg)
 end
 
 # ---------------------------------------------------------------------------------------------------

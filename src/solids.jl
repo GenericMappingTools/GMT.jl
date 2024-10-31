@@ -408,7 +408,6 @@ function cylinder(r, h; base=0.0, center=(0.0, 0.0, 0.0), closed=true, geog=fals
 	extrude(xy, h; base=h0, closed=closed)
 end
 
-
 # ----------------------------------------------------------------------------
 """
     R = vec_rot_mat(theta, n) -> Matrix{Float64}
@@ -422,8 +421,9 @@ function vec_rot_mat(theta, n)
 	eye(3) .+ W * sin(theta) .+ W^2 * (1-cos(theta))
 end
 
+# ----------------------------------------------------------------------------
 """
-    FV = revolve(curve::Matrix{Real}; extent = 2.0*pi, dir=:positive, n=[0.0,0.0,1.0], num_steps=0, close_loop=true,face_type=:quad) -> GMTfv
+    FV = revolve(curve::Matrix{Real}; extent = 2.0*pi, dir=:positive, n=[0.0,0.0,1.0], n_steps=0, closed=true, type=:quad) -> GMTfv
 
 Revolve curves to build surfaces.
 
@@ -441,47 +441,48 @@ This function is a modified version on the `revolvecurve` function from the `Com
 - `extent`: The extent of the revolved curve in radians.
 - `dir`: The direction of the revolved curve (`:positive`, `:negative`, `:both`).
 - `n`: The normal vector of the revolved curve.
-- `num_steps`: The number of steps used to build the revolved curve. If `0` (the default) the number of steps is computed from the curve point spacing.
-- `close_loop`: If `true` (the default), close the revolved curve at the start and end points.
-- `face_type`: The type of faces used to build the revolved curve (`:quad` (default), `:tri`).
+- `n_steps`: The number of steps used to build the revolved curve. If `0` (the default) the number
+   of steps is computed from the curve point spacing.
+- `closed`: If `true` (the default), close the revolved curve at the start and end points.
+- `type`: The type of faces used to build the revolved curve (`:quad` (default), `:tri`).
 
 ### Returns
 - `FV`: A Faces-Vertices dataset.
 """
-function revolve(curve; extent=2pi, dir=:positive, n=[0.0,0.0,1.0], num_steps::Int=0, close_loop=true, face_type=:quad)
+function revolve(curve; extent=2pi, dir=:positive, n=[0.0,0.0,1.0], n_steps::Int=0, closed=true, type=:quad)
 
 	n_pts = size(curve,1)
 
-	# Compute num_steps from curve point spacing
-	if (num_steps == 0)
+	# Compute n_steps from curve point spacing
+	if (n_steps == 0)
 		L = [0.0; cumsum(sqrt.(sum(diff(curve, dims=1).^2, dims=2)), dims=1)]	# Compute the accumulated distance along the curve
 		rMax = 0.0
 		for k = 1:n_pts
-			v = curve[k, :]
+			v = [curve[k, 1], curve[k, 2], curve[k, 3]]
 			cc = cross(cross(n, v), n)
 			rNow = dot(cc / norm(cc), cc)
 			if !isnan(rNow)
 				rMax = max(rMax, rNow)
 			end
 		end
-		num_steps = ceil(Int, (rMax*extent) / mean(diff(L, dims=1)))        
+		n_steps = ceil(Int, (rMax*extent) / mean(diff(L, dims=1)))        
 	end
 
     # Set up angle range
 	if dir == :positive
-		θ_range = range(0,extent, num_steps)               
+		θ_range = range(0,extent, n_steps)               
 	elseif dir == :negative
-		θ_range = range(-extent, 0, num_steps)
+		θ_range = range(-extent, 0, n_steps)
 	elseif dir == :both
-		θ_range = range(-extent/2, extent/2, num_steps)
+		θ_range = range(-extent/2, extent/2, n_steps)
 	else
 		throw(ArgumentError("$dir is not a valid direction, Use :positive, :in, or :both.")) 
 	end
 
-	X = Matrix{Float64}(undef, n_pts, num_steps)
+	X = Matrix{Float64}(undef, n_pts, n_steps)
 	Y,Z = copy(X), copy(X)
 	curveT = curve'
-	for k = 1:num_steps
+	for k = 1:n_steps
 		R = vec_rot_mat(θ_range[k], n)
 		curve_rot = R * curveT		# Rotate the polygon
 		for m = 1:n_pts
@@ -491,5 +492,55 @@ function revolve(curve; extent=2pi, dir=:positive, n=[0.0,0.0,1.0], num_steps::I
 		end
 	end
 
-	surf2fv(X, Y, Z; type=:quad)
+	surf2fv(X, Y, Z; type=type)
+end
+
+
+# ----------------------------------------------------------------------------
+"""
+    FV = loft(C1, C2; n_steps::Int=0, closed=true, type=:quad) -> GMTfv
+
+Loft (linearly) a surface mesh between two input 3D curves.
+
+### Args
+- `C1, C2`: Two Mx3 matrices of points defining the 3D curves to _loft_. Each row is a point in 3D space.
+
+### Kwargs
+- `n_steps`: The number of steps used to build the lofted surface. If `0` (the default) the number
+   of steps is computed from the curve point spacing.
+- `closed`: If `true` (the default), close the lofted surface at the top and bottom with planes
+   created with `C1` and `C2`.
+- `type`: The type of faces used to build the lofted surface (`:quad` (default), `:tri`).
+"""
+function loft(C1, C2; n_steps::Int=0, closed=true, type=:quad)
+	@assert size(C1) == size(C2) "C1 and C2 curves must have the same number of elements."
+
+	function linA2B(A, B, n)	# Linear interpolate vector of components (x,y or z) from A to B
+		C = repeat(A, 1, n) .+ ((B-A) / (n-1)) * (0:n-1)'
+		for k = 1:numel(A)  C[k, end] = B[k]  end	# Make sure the last points are those of B
+		return C
+	end
+
+	if (n_steps == 0)			# Derive n_steps from distance and mean curve point spacing
+		d = 0.0
+		for k = 1:size(C1,1)
+			d += norm([C1[k,1] - C2[k,1], C1[k,2] - C2[k,2], C1[k,3] - C2[k,3]])
+		end
+		d /= size(C1,1)
+		L1 = [0.0; cumsum(sqrt.(sum(diff(C1, dims=1).^2, dims=2)), dims=1)]	# The cumdist along the curve
+		L2 = [0.0; cumsum(sqrt.(sum(diff(C2, dims=1).^2, dims=2)), dims=1)]
+		dp = 0.5* (mean(diff(L1, dims=1)) + mean(diff(L2, dims=1)))
+		n_steps = ceil(Int, d / dp)
+	end
+
+	X = linA2B(view(C1, :, 1), view(C2, :, 1), n_steps)
+	Y = linA2B(view(C1, :, 2), view(C2, :, 2), n_steps)
+	Z = linA2B(view(C1, :, 3), view(C2, :, 3), n_steps)
+
+	if (closed == 1)
+		bot = reshape(1:size(X,1), 1, size(X,1))		# So stupid way of creating a row matrix
+		top = bot .+ (length(X) - size(X,1))
+	end
+
+	surf2fv(X, Y, Z; type=type, bfculling=(closed != 1), top=top, bottom=bot)
 end
