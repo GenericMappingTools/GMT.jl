@@ -410,6 +410,66 @@ end
 
 # ----------------------------------------------------------------------------
 """
+    xyz = ellipse3D(a=1.0, b=a; center=(0.0, 0.0, 0.0), ang1=0.0, ang2=360.0, rot=0.0, e=0.0, f=0.0, plane=:xy, is2D=false, np=72)
+
+Create an ellipse in 2D or 3D space.
+
+### Args
+- `a`: The semi-major axis length of the ellipse.
+- `b`: The semi-minor axis length of the ellipse. Defaults to `a` if not provided (that is, a circle).
+
+### Kwargs
+- `center`: A 3-element array or tuple defining the center of the ellipse.
+- `ang1`: The starting angle of the ellipse in degrees.
+- `ang2`: The ending angle of the ellipse in degrees.
+- `rot`: The rotation angle of the ellipse in degrees. Positive means counterclockwise.
+- `e`: The eccentricity of the ellipse, between 0 and 1.
+- `f`: The flattening of the ellipse, defined as `(a-b)/a`.
+- `plane`: The plane in which to create the ellipse, one of `:xy`, `:xz`, or `:yz`.
+- `is2D`: If true, create a 2D ellipse (no z-coordinate).
+- `np`: The number of points to use to define the ellipse.
+
+### Returns
+- `xyz`: A matrix of points defining the ellipse, with each row representing a point in 3D space.
+"""
+function ellipse3D(a=1.0, b=a; center=(0.0, 0.0, 0.0), ang1=0.0, ang2=360.0, rot=0.0, e=0.0, f=0.0, plane=:xy, is2D=false, np=72)
+	@assert 0 <= e < 1 "Excentricity must be between in the interval [0 1["
+	!(plane == :xy || plane == :xz || plane == :yz) && error("The keyword `plane` must be one of :xy, :xz or :yz")
+	ang1 *= pi/180;		ang2 *= pi/180
+	t = linspace(ang1, ang2, np)
+	if (a == b)
+		if     (e != 0) b = sqrt(1 - e^2) * a
+		elseif (f != 0) b = sqrt(1 - 1/f) * a
+		end
+	end
+
+	xp, yp = a * cos.(t), b * sin.(t)
+	if (rot == 0)
+		if (is2D == 1)
+			xyz = [(center[1] .+ xp) (center[2] .+ yp)]
+		else
+			xyz = (plane == :xy) ? [(center[1] .+ xp) (center[2] .+ yp) fill(0.0, np)] :
+			      (plane == :xz) ? [(center[1] .+ xp) fill(0.0, np) (center[3] .+ yp)] :
+			                       [fill(0.0, np) (center[2] .+ xp) (center[3] .+ yp)]		# :yz
+		end
+	else
+		R = [cosd(rot) sind(rot); -sind(rot) cosd(rot)]
+		xy = [xp yp] * R
+		if (is2D == 1)
+			xyz = (center[1] != 0 || center[2] != 0) ? [(center[1] .+ view(xy,:,1)) (center[2] .+ view(xy,:,2))] : xy
+		else
+			xyz = (plane == :xy) ? [(center[1] .+ view(xy,:,1)) (center[2] .+ view(xy,:,2)) fill(0.0, np)] :
+			      (plane == :xz) ? [(center[1] .+ view(xy,:,1)) fill(0.0, np) (center[3] .+ view(xy,:,2))] :
+			                       [fill(0.0, np) (center[2] .+ view(xy,:,1)) (center[3] .+ view(xy,:,2))]
+		end
+	end
+	#(plane != :xy && isclockwise(xyz)) && (xyz = reverse(xyz, dims=1))	# Don't know why but non-:xy ellipses are CW
+
+	return xyz
+end
+
+# ----------------------------------------------------------------------------
+"""
     R = vec_rot_mat(theta, n) -> Matrix{Float64}
 
 Compute the rotation matrix that rotates by angle `theta` (in radians) about the vector `n`.
@@ -419,6 +479,15 @@ function vec_rot_mat(theta, n)
 
 	W = cross_prod_mat(n / norm(n))
 	eye(3) .+ W * sin(theta) .+ W^2 * (1-cos(theta))
+end
+
+function euler_rot_mat(a)
+	@assert length(a) == 3 "Angle vector must be of length 3"
+	Rx = [1 0 0; 0 cos(a[1]) -sin(a[1]); 0 sin(a[1]) cos(a[1])]
+	Ry = [cos(a[2]) 0 sin(a[2]); 0 1 0; -sin(a[2]) 0 cos(a[2])]
+	Rz = [cos(a[3]) -sin(a[3]) 0; sin(a[3]) cos(a[3]) 0; 0 0 1]
+	R = Rx * Ry * Rz
+	return R, collect(R')
 end
 
 # ----------------------------------------------------------------------------
@@ -448,8 +517,15 @@ This function is a modified version on the `revolvecurve` function from the `Com
 
 ### Returns
 - `FV`: A Faces-Vertices dataset.
+
+### Example
+```julia
+    ns=15; x=linspace(0,2*pi,ns).+1; y=zeros(size(x)); z=-cos.(x); curve=[x[:] y[:] z[:]];
+	FV = revolve(curve)
+	viz(FV, pen=0)
+```
 """
-function revolve(curve; extent=2pi, dir=:positive, n=[0.0,0.0,1.0], n_steps::Int=0, closed=true, type=:quad)
+function revolve(curve; extent=2pi, ang1=0.0, ang2=360.0, dir=:positive, n=[0.0,0.0,1.0], n_steps::Int=0, closed=true, type=:quad)
 
 	n_pts = size(curve,1)
 
@@ -465,18 +541,22 @@ function revolve(curve; extent=2pi, dir=:positive, n=[0.0,0.0,1.0], n_steps::Int
 				rMax = max(rMax, rNow)
 			end
 		end
+		(ang1 != 0 || ang2 != 360) && (extent = abs(ang2 - ang1) * pi / 180)
 		n_steps = ceil(Int, (rMax*extent) / mean(diff(L, dims=1)))        
 	end
 
     # Set up angle range
-	if dir == :positive
-		θ_range = range(0,extent, n_steps)               
+	if (ang1 != 0 || ang2 != 360)
+		ang1 *= pi/180;		ang2 *= pi/180
+		θ_range = range(ang1, ang2, n_steps)
+	elseif dir == :positive
+		θ_range = range(0, extent, n_steps)
 	elseif dir == :negative
 		θ_range = range(-extent, 0, n_steps)
 	elseif dir == :both
 		θ_range = range(-extent/2, extent/2, n_steps)
 	else
-		throw(ArgumentError("$dir is not a valid direction, Use :positive, :in, or :both.")) 
+		throw(ArgumentError("$dir is not a valid direction, Use :positive, :in, or :both."))
 	end
 
 	X = Matrix{Float64}(undef, n_pts, n_steps)
@@ -511,6 +591,19 @@ Loft (linearly) a surface mesh between two input 3D curves.
 - `closed`: If `true` (the default), close the lofted surface at the top and bottom with planes
    created with `C1` and `C2`.
 - `type`: The type of faces used to build the lofted surface (`:quad` (default), `:tri`).
+
+### Example
+```julia
+ns=75; t=linspace(0,2*pi,ns); r=5; x=r*cos.(t); y=r*sin.(t); z=zeros(size(x));
+C1=[x[:] y[:] z[:]];
+
+f(t) = r + 2.0.* sin(6.0*t)
+C2 = [(f(t)*cos(t),f(t)*sin(t),3) for t in range(0, 2pi, ns)];
+C2 = stack(C2)'
+
+FV = loft(C1, C2);
+viz(FV, pen=0)
+```
 """
 function loft(C1, C2; n_steps::Int=0, closed=true, type=:quad)
 	@assert size(C1) == size(C2) "C1 and C2 curves must have the same number of elements."
