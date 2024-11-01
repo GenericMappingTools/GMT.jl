@@ -56,7 +56,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	(opt_p == "") ? (opt_p = CURRENT_VIEW[1]; cmd *= opt_p)	: (CURRENT_VIEW[1] = opt_p) # Save for eventual use in other modules.
 
 	if (is3D && isa(arg1, GMTfv))			# case of 3D faces
-		arg1 = (is_in_dict(d, [:replicate]) !== nothing) ? replicant(arg1, d) : deal_faceverts(arg1, d)
+		arg1 = (is_in_dict(d, [:replicate]) !== nothing) ? replicant(arg1, d) : deal_faceverts(arg1, d; del=find_in_dict(d, [:nocull])[1] === nothing)
 		(!O && !haskey(d, :aspect3) && is_in_dict(d, [:JZ :Jz :zsize :zscale]) === nothing) && (d[:aspect3] = "equal")
 	elseif (is_gridtri)
 		arg1 = sort_visible_triangles(arg1)

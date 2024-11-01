@@ -547,6 +547,8 @@ function gmtwrite(fname::AbstractString, data; kwargs...)
 		(endswith(fname, ".laz") || endswith(fname, ".LAZ")) && return lazwrite(fname, data; kwargs...)		# Lasz
 		opt_T = " -Td"
 		cmd, = parse_bo(d, cmd)					# Write to binary file
+	elseif (isa(data, GMTfv) && (endswith(fname, ".obj") || endswith(fname, ".OBJ")))
+		return write_obj(fname, data)
 	elseif (isa(data, GMTcpt))
 		opt_T = " -Tc"
 	elseif (isa(data, GMTps))
@@ -756,7 +758,27 @@ end
 
 # --------------------------------------------------------------------------------------------------------
 """
-    write_stl(D::Vector{<:GMTdataset}, fname; binary=true, scale=1.0)
+    write_obj(fname, FV::GMTfv)
+
+Write a OBJ file. 
+"""
+function write_obj(fname::AbstractString, FV::GMTfv)
+	fid = open(fname, write=true)
+
+	for k = 1:size(FV.verts, 1)
+		@printf(fid, "v %.12g %.12g %.12g\n", FV.verts[k,1], FV.verts[k,2], FV.verts[k,3])
+	end
+	for n = 1:numel(FV.faces)				# Number of face groups
+		for m = 1:size(FV.faces[n], 1)		# Number of rows in this group
+			println(fid, "f ", join(convert.(Int, FV.faces[n][m,:]), " "))
+		end
+	end
+	close(fid)
+end
+
+# --------------------------------------------------------------------------------------------------------
+"""
+    write_stl(fname, D::Vector{<:GMTdataset}; binary=true, scale=1.0)
 
 Write a STL file. 
 """

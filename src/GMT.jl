@@ -184,9 +184,9 @@ export
 
 	lazinfo, lazread, lazwrite, lasread, laswrite,
 
-	cube, cylinder, dodecahedron, icosahedron, sphere, octahedron, tetrahedron, torus, replicant, revolve,
+	cube, cylinder, dodecahedron, ellipse3D, icosahedron, sphere, octahedron, tetrahedron, torus, replicant, loft, revolve,
 
-	df2ds, ds2df, extrude, fv2fv, surf2fv, ODE2ds,
+	df2ds, ds2df, extrude, fv2fv, isclockwise, surf2fv, ODE2ds,
 	@?, @dir
 
 include("common_docs.jl")
