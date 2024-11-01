@@ -441,6 +441,7 @@ function refine_JZ(cmd::String, opt_JZ::String)::Tuple{String,String}
 	isletter(tZ[end]) && (tZ = tZ[1:end-1])		# Remove the letter 'x' which is hopefully a 'c'
 	_opt_JZ = @sprintf(" -JZ%.5gc", parse(Float64, tZ) * hR / wR)
 	cmd = replace(cmd, opt_JZ => _opt_JZ)
+	CTRL.pocket_J[3] = _opt_JZ
 	return cmd, _opt_JZ
 end
 
