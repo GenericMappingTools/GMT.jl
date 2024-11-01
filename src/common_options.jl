@@ -4173,9 +4173,16 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K:
 		opt_T = " -Tg"; fname_ext = "png"		# In Jupyter or Pluto, png only
 	end
 
-	# When we are in Jupyter or Pluto, the image is already in a raster format by a previous call to 'gmt end'
+	if (fname_ps != "" && isPluto)				# A patch attempt to an undebugable Pluto thing
+		(K) && close_PS_file(fname_ps)			# Close the PS file first
+		gmt("psconvert -A2p -Qg4 -Qt4 " * fname_ps * " -Tg *")
+		out = TMPDIR_USR[1] * "/" * "GMTjl_" * TMPDIR_USR[2] * TMPDIR_USR[3] * ".png"
+		opt_T, fname_ps  = "", ""
+	end
+
+	# When we are in Jupyter or Pluto, the image may already be in a raster format by a previous call to 'gmt end'
 	(isJupyter[1] || isPluto) && (fname_ps = TMPDIR_USR[1] * "/" * "GMTjl_" * TMPDIR_USR[2] * TMPDIR_USR[3] * "." * FMT[1];	opt_T = "")
-	
+
 	if (opt_T != "")
 		(K) && close_PS_file(fname_ps)			# Close the PS file first
 		((val = find_in_dict(d, [:dpi :DPI])[1]) !== nothing) && (opt_T *= string(" -E", val))
