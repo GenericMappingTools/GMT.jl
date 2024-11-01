@@ -200,6 +200,8 @@
 	gmtwrite("lixo.stl", [mat2ds(rand(3,3)), mat2ds(rand(3,3))])
 	gmtwrite("lixo.stl", [mat2ds(rand(3,3)), mat2ds(rand(3,3))], binary=false)
 	rm("lixo.stl")
+	gmtwrite("lixo.obj", cylinder(50, 100))
+	rm("lixo.obj")
 	gmt("grdinfo lixo.tif");
 	@test_throws ErrorException("Output file name cannot be empty.") gmtwrite("",[1 2]);
 
