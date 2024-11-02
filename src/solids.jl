@@ -443,6 +443,8 @@ function ellipse3D(a=1.0, b=a; center=(0.0, 0.0, 0.0), ang1=0.0, ang2=360.0, rot
 		end
 	end
 
+	(plane != :xy) && (t = reverse(t))			# The clockwise tests are failing for non :xy ??
+
 	xp, yp = a * cos.(t), b * sin.(t)
 	if (rot == 0)
 		if (is2D == 1)
@@ -463,7 +465,6 @@ function ellipse3D(a=1.0, b=a; center=(0.0, 0.0, 0.0), ang1=0.0, ang2=360.0, rot
 			                       [fill(0.0, np) (center[2] .+ view(xy,:,1)) (center[3] .+ view(xy,:,2))]
 		end
 	end
-	#(plane != :xy && isclockwise(xyz)) && (xyz = reverse(xyz, dims=1))	# Don't know why but non-:xy ellipses are CW
 
 	return xyz
 end
@@ -525,7 +526,7 @@ This function is a modified version on the `revolvecurve` function from the `Com
 	viz(FV, pen=0)
 ```
 """
-function revolve(curve; extent=2pi, ang1=0.0, ang2=360.0, dir=:positive, n=[0.0,0.0,1.0], n_steps::Int=0, closed=true, type=:quad)
+function revolve(curve; extent=2pi, ang1=0.0, ang2=360.0, dir=:positive, n=[0.0,0.0,1.0], n_steps::Int=0, closed=false, type=:quad)
 
 	n_pts = size(curve,1)
 
@@ -572,7 +573,13 @@ function revolve(curve; extent=2pi, ang1=0.0, ang2=360.0, dir=:positive, n=[0.0,
 		end
 	end
 
-	surf2fv(X, Y, Z; type=type)
+	surf_ini = surf_fim = nothing
+	if (closed == 1)
+		surf_ini = reshape(1:n_pts, 1, n_pts)		# So stupid way of creating a row matrix
+		surf_fim = surf_ini .+ (length(X) - n_pts)
+	end
+
+	surf2fv(X, Y, Z; type=type, bfculling=(closed == 1), top=surf_fim, bottom=surf_ini)	# bot -> FV.faces[1]; top -> FV.faces[end]
 end
 
 
@@ -630,6 +637,7 @@ function loft(C1, C2; n_steps::Int=0, closed=true, type=:quad)
 	Y = linA2B(view(C1, :, 2), view(C2, :, 2), n_steps)
 	Z = linA2B(view(C1, :, 3), view(C2, :, 3), n_steps)
 
+	top = bot = nothing
 	if (closed == 1)
 		bot = reshape(1:size(X,1), 1, size(X,1))		# So stupid way of creating a row matrix
 		top = bot .+ (length(X) - size(X,1))
