@@ -1109,13 +1109,16 @@ function dataset_init_FV(API::Ptr{Nothing}, FV::GMTfv)::Ptr{GMT_MATRIX}
 	n_records, _seg = 0, 0
 	tmp = zeros(maximum(size.(what_faces,2)), 3)	# The maximum number of vertices in any polygon of all geometries
 
+	have_colors = !isempty(FV.color[1])				# Does this FV have a color for each polygon?
+	hdr = ""
 	for geom = 1:numel(what_faces)					# If we have more than one type of geometries (e.g. triangles and quadrangles)
 		n_segs = size(what_faces[geom], 1)			# Number of segments or faces (polygons) in this geometry (what_faces[geom])
 		n_rows = size(what_faces[geom], 2)			# Number of rows (vertices of the polygon) in this geometry
 		for seg = 1:n_segs 							# Each row in a face is a new data segment (a polygon)
 			_seg += 1								# Counter that keeps track on the current number of polygon. 
 			DSv = convert(Ptr{Nothing}, unsafe_load(DT.segment, _seg))		# DT.segment = Ptr{Ptr{GMT_DATASEGMENT}}
-			S = GMT_Alloc_Segment(API, GMT_NO_STRINGS, n_rows, 3, "", DSv)	# Ptr{GMT_DATASEGMENT}
+			have_colors && (hdr = FV.color[geom][seg])
+			S = GMT_Alloc_Segment(API, GMT_NO_STRINGS, n_rows, 3, hdr, DSv)	# Ptr{GMT_DATASEGMENT}
 			Sb = unsafe_load(S)						# GMT_DATASEGMENT;		Sb.data -> Ptr{Ptr{Float64}}
 		
 			for c = 1:3, r = 1:n_rows
