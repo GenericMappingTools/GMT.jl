@@ -1476,6 +1476,7 @@ function sort_visible_faces(FV::GMTfv, azim, elev; del::Bool=true)::Tuple{GMTfv,
 	
 	isPlane && !needNormals && return FV, projs		# Nothing to do here in this case.
 	
+	have_colors = !isempty(FV.color[1])				# Does this FV have a color for each polygon?
 	first_face_vis = true
 	for k = 1:numel(FV.faces)				# Loop over number of face groups (we can have triangles, quads, etc)
 		n_faces::Int = size(FV.faces[k], 1)	# Number of faces (polygons)
@@ -1510,7 +1511,7 @@ function sort_visible_faces(FV::GMTfv, azim, elev; del::Bool=true)::Tuple{GMTfv,
 		data = data[ind, :]
 		(first_face_vis) ? (FV.faces_view = [data]) : append!(FV.faces_view, [data])
 		projs = (first_face_vis) ? _projs[ind] : append!(projs, _projs[ind])
-		!isempty(FV.color[k]) && (FV.color[k] = FV.color[k][ind])
+		have_colors && (FV.color[k] = FV.color[k][ind])
 		first_face_vis = false
 	end
 	sum(size.(FV.faces_view, 1)) < sum(size.(FV.faces, 1) / 3) &&
