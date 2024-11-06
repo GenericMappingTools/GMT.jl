@@ -394,7 +394,7 @@ kwargs, we use the dotprod and a gray CPT to set the fill color that will be mod
 function deal_faceverts(arg1::GMTfv, d; del::Bool=true)::GMTfv
 	azim, elev = get_numeric_view()
 	arg1, dotprod = sort_visible_faces(arg1, azim, elev; del=del)		# Sort & kill (or not) invisible
-	if (is_in_dict(d, [:G :fill]) === nothing)		# If fill not set we use the dotprod and a gray CPT to set the fill
+	if (is_in_dict(d, [:G :fill]) === nothing && isempty(arg1.color[1]))# If fill not set we use the dotprod and a gray CPT to set the fill
 		is_in_dict(d, [:Z :level :levels]) === nothing && (d[:Z] = abs.(dotprod))
 		(is_in_dict(d, CPTaliases) === nothing) && (d[:C] = gmt("makecpt -T0/1 -C140,220"))	# Users may still set a CPT
 	end
@@ -1448,6 +1448,8 @@ end
 """
     FV, projs = sort_visible_faces(FV, azim, elev; del=true) -> Tuple{Vector{GMTdataset}, Vector{Float64}}
 
+Sort faces by distance and optionally delete the invisible ones.
+
 Take a Faces-Vertices dataset and delete the invisible faces from view vector. Next sort them by distance so
 that the furthest faces are drawn first and hence do not hide the others. NOTE: to not change the original
 FV we store the resultant matix(ces) of faces in a FV0s fiels called "faces_view", which is a vector
@@ -1467,36 +1469,53 @@ function sort_visible_faces(FV::GMTfv, azim, elev; del::Bool=true)::Tuple{GMTfv,
 	view_vec = [sin_az * cos_el, cos_az * cos_el, sin_el]
 	projs = Float64[]
 
-	!FV.bfculling && (del = false)		# Do not delete if bfculling is set to false (for example if FV is not closed)
+	!FV.bfculling && (del = false)			# Do not delete if bfculling is set to false (for example if FV is not closed)
+	isPlane = (FV.bbox[1] == FV.bbox[2]) || (FV.bbox[3] == FV.bbox[4]) || (FV.bbox[5] == FV.bbox[6])	# Is this FV a plane?
+	isPlane && (del = false)				# Planes have no invisibles
+	needNormals = isempty(FV.color[1])		# If we have no color, we need to compute the normals
+	
+	isPlane && !needNormals && return FV, projs		# Nothing to do here in this case.
+	
+	have_colors = !isempty(FV.color[1])				# Does this FV have a color for each polygon?
 	first_face_vis = true
-	for k = 1:numel(FV.faces)			# Loop over number of face groups (we can have triangles, quads, etc)
+	for k = 1:numel(FV.faces)				# Loop over number of face groups (we can have triangles, quads, etc)
 		n_faces::Int = size(FV.faces[k], 1)	# Number of faces (polygons)
 		this_face_nverts::Int = size(FV.faces[k], 2)
 		tmp = zeros(this_face_nverts, 3)
 		del && (isVisible = fill(false, n_faces))
 		dists = NTuple{2,Float64}[]
 		_projs = Float64[]
-		for face = 1:n_faces
-			for c = 1:3, v = 1:this_face_nverts						# Build the polygon from the FV collection
+		for face = 1:n_faces				# Loop over the faces of this group
+			for c = 1:3, v = 1:this_face_nverts								# Build the polygon from the FV collection
 				tmp[v,c] = FV.verts[FV.faces[k][face,v], c]
 			end
 			this_proj = dot(facenorm(tmp, zfact=FV.zscale), view_vec)
 			if (!del || (isVisible[face] = this_proj > 0))
-				cx, cy, cz = sum(tmp[:,1]), sum(tmp[:,2]), sum(tmp[:,3])	# Pseudo-centroids. Good enough for the sorting purpose
-				push!(dists, (cx * sin_az + cy * cos_az, cz * sin_el))
-				push!(_projs, this_proj)
+				if (!isPlane)				# Plades do not need sorting
+					cx, cy, cz = sum(tmp[:,1]), sum(tmp[:,2]), sum(tmp[:,3])	# Pseudo-centroids. Good enough for sorting
+					push!(dists, (cx * sin_az + cy * cos_az, cz * sin_el))
+				end
+				push!(_projs, this_proj)	# But need the normals as stated at the begining of this function
 			end
 		end
+		
+		if (isPlane)						# Here, FV being a plane we only care about storing the normals
+			projs = (first_face_vis) ? _projs[ind] : append!(projs, _projs[ind])
+			first_face_vis = false
+			continue
+		end
+
 		data::Matrix{Integer} = del ? FV.faces[k][isVisible, :] : FV.faces[k]
 		isempty(data) && continue
 		ind  = sortperm(dists)
 		data = data[ind, :]
 		(first_face_vis) ? (FV.faces_view = [data]) : append!(FV.faces_view, [data])
 		projs = (first_face_vis) ? _projs[ind] : append!(projs, _projs[ind])
+		have_colors && (FV.color[k] = FV.color[k][ind])
 		first_face_vis = false
 	end
 	sum(size.(FV.faces_view, 1)) < sum(size.(FV.faces, 1) / 3) &&
-		@warn("More than 2/3 of the faces found invisible. This often indicates that the Z and X,Y units are not the same. Consider using the `zscale` field of the `FV` input.")
+		@warn("More than 2/3 of the faces found invisible (actually: $(100 - sum(size.(FV.faces_view, 1)) / sum(size.(FV.faces, 1))*100)%). This often indicates that the Z and X,Y units are not the same. Consider setting `bfculling` to false or using the `zscale` field of the `FV` input.")
 
 	return FV, projs
 end

@@ -392,3 +392,35 @@ function tri_z(D::Vector{<:GMTdataset})::Vector{Float64}
 	end
 	return Zs
 end
+
+
+# ---------------------------------------------------------------------------------------------------
+"""
+"""
+function imgfv(I::Union{GMTimage, AbstractString})::GMTfv
+	_I = isa(I, GMTimage) ? I : gmtread(I)
+	n_rows, n_cols, n_bands = size(_I)
+	nxy, nxy2 = n_rows * n_cols, n_rows * n_cols * 2
+	X,Y = meshgrid(linspace(0, 1, n_cols+1), linspace(1, 0, n_rows+1))
+	#X,Y = meshgrid(linspace(0, n_cols-1, n_cols), linspace(n_rows-1, 0, n_rows))
+	FV = surf2fv(X, Y, zeros(n_rows+1, n_cols+1), type=:quad)
+	cor = Vector{String}(undef, nxy)
+	
+	kk = 0
+	#=
+	if (_I.layout[3] == 'B')
+		for n = 1:n_cols, m = 1:n_rows
+			k = (m-1) * n_cols + n
+			cor[kk+=1] = @sprintf("-G#%.2x%.2x%.2x", _I[k], _I[k+nxy], _I[k+nxy2])
+		end
+	else
+	=#
+		for n = 1:n_cols, m = 1:n_rows
+			k = (m-1) * n_cols * 3 + (n-1) * 3
+			cor[kk+=1] = @sprintf("-G#%.2x%.2x%.2x", _I[k+=1], _I[k+=1], _I[k+=1])
+		end
+	#end
+
+	FV.color = [cor]
+	return FV
+end

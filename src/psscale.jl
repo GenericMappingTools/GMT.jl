@@ -57,9 +57,7 @@ function colorbar(arg1::Union{Nothing, GMTcpt}=nothing; first=true, kwargs...)
 	parse_paper(d)		# See if user asked to temporarily pass into paper mode coordinates
 
 	cmd = parse_BJR(d, "", "", O, "")[1]
-	if (!contains(cmd, " -B") && !IamModern[1])
-		cmd *= DEF_FIG_AXES[1]
-	end
+	opt_B = (!contains(cmd, " -B") && !IamModern[1]) ? DEF_FIG_AXES[1] : ""
 	cmd = parse_JZ(d, cmd; O=O, is3D=(CTRL.pocket_J[3] != ""))[1]		# We can't use parse_J(d)[1]
 	cmd = parse_common_opts(d, cmd, [:F :UVXY :params :c :p :t]; first=first)[1]
 	cmd = parse_these_opts(cmd, d, [[:G :truncate], [:I :shade], [:M :monochrome], [:N :dpi],
@@ -77,6 +75,7 @@ function colorbar(arg1::Union{Nothing, GMTcpt}=nothing; first=true, kwargs...)
 	end
 
 	cmd = add_opt(d, cmd, "L", [:L :equal :equal_size], (range="i", gap=""))	# Aditive
+	(opt_B != "" && !contains(cmd, " -L")) && (cmd *= opt_B)					# If no -B & no -L, add default -B
 	isempty(opt_D) && (cmd *= " -DJMR")			#  So that we can call it with just a CPT
 
 	r = finish_PS_module(d, gmt_proggy * cmd, "", K, O, true, arg1)

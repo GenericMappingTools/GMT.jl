@@ -301,6 +301,7 @@ The fields of this struct are:
 - `verts::AbstractMatrix{T}`:        Mx3 Matrix with the data vertices
 - `faces`::Vector{<:AbstractMatrix{<:Integer}}   A vector of matrices with the faces. Each row is a face
 - `faces_view`::Vector{Matrix{Int}}  A subset of `faces` with only the visible faces from a certain perspective
+- `color`::Vector{Vector{String}}    A vector with G option colors (in hexadecimal) for each face
 - `bbox`::Vector{Float64}            The vertices BoundingBox
 - `zscale`::Float64                  A multiplicative factor to scale the z values
 - `bfculling`::Bool                  If culling of invisible faces is wished
@@ -312,6 +313,7 @@ Base.@kwdef mutable struct GMTfv{T<:AbstractFloat} <: AbstractMatrix{T}
 	verts::AbstractMatrix{T}=Matrix{Float64}(undef,0,0)
 	faces::Vector{<:AbstractMatrix{<:Integer}}=Vector{Matrix{Int}}(undef,0)
 	faces_view::Vector{Matrix{Int}}=Vector{Matrix{Int}}(undef,0)
+	color::Vector{Vector{String}}=[String[]]
 	bbox::Vector{Float64}=zeros(6)
 	zscale::Float64=1.0
 	bfculling::Bool=true

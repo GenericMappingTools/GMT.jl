@@ -916,11 +916,20 @@ function guess_proj(lonlim::VecOrMat{Float64}, latlim::VecOrMat{Float64})::Strin
 end
 
 # ---------------------------------------------------------------------------------------------------
+"""
+    parse_grid(d::Dict, args, opt_B::String="", stalone::Bool=true) -> String
+
+Parse the contents of the "grid" option (internal use).
+
+This option can be used as grid=(pen=:red, x=10), case on which the parsed result will be appended
+to DEF_FIG_AXES, or as a member of the "frame" option.  In this case DEF_FIG_AXES is dropped and
+only the contents of "frame" will be used. The argument can be a NamedTuple, which allows setting
+grid pen and individual axes, or as a string.
+
+### Examples
+grid=:on => -Bg;	grid=:x => -Bxg;	grid="x10" => -Bxg10; grid=:y ...;  grid=:xyz => " -Bg -Bzg"
+"""
 function parse_grid(d::Dict, args, opt_B::String="", stalone::Bool=true)::String
-	# Parse the contents of the "grid" option. This option can be used as grid=(pen=:red, x=10), case on
-	# which the parsed result will be appended to DEF_FIG_AXES, or as a member of the "frame" option.
-	# In this case DEF_FIG_AXES is dropped and only the contents of "frame" will be used. The argument can
-	# be a NamedTuple, which allows setting grid pen and individual axes, or as a string (see ex bellow).
 	pre::String = (stalone) ? " -B" : ""
 	get_int(oo) = return (tryparse(Float64, oo) !== nothing) ? oo : ""	# Micro nested-function
 	if (isa(args, NamedTuple))	# grid=(pen=?, x=?, y=?, xyz=?)
@@ -3875,7 +3884,13 @@ function round_wesn(_wesn::Vector{Float64}, geo::Bool=false, pad=zeros(2))::Vect
 	end
 	range[1] = wesn[2] - wesn[1]
 	range[2] = wesn[4] - wesn[3]
-	(n_axe == 3) && (range[3] = wesn[6] - wesn[5])
+	if (n_axe == 3)
+		if (wesn[5] == wesn[6])
+			wesn[5] -= abs(wesn[5]) * 0.05;	wesn[6] += abs(wesn[6]) * 0.05
+			(wesn[5] == wesn[6]) && (wesn[5] = -0.1; wesn[6] = 0.1)			# z was = 0
+		end
+		range[3] = wesn[6] - wesn[5]
+	end
 	if (geo) 					# Special checks due to periodicity
 		if (range[1] > 306.0) 	# If within 15% of a full 360 we promote to 360
 			if ((wesn[1] + wesn[2]) / 2 < 100)  wesn[1] = -180.;	wesn[2] = 180.
@@ -4173,9 +4188,10 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K:
 		opt_T = " -Tg"; fname_ext = "png"		# In Jupyter or Pluto, png only
 	end
 
+	pscvt_cmd = "psconvert -A$(FIG_MARGIN[1])p" * PSCONV_PAR[1]		# The default is "psconvert -A1p -Qg4 -Qt4 "
 	if (fname_ps != "" && isPluto)				# A patch attempt to an undebugable Pluto thing
 		(K) && close_PS_file(fname_ps)			# Close the PS file first
-		gmt("psconvert -A2p -Qg4 -Qt4 " * fname_ps * " -Tg *")
+		gmt(pscvt_cmd * fname_ps * " -Tg *")
 		out = TMPDIR_USR[1] * "/" * "GMTjl_" * TMPDIR_USR[2] * TMPDIR_USR[3] * ".png"
 		opt_T, fname_ps  = "", ""
 	end
@@ -4186,7 +4202,7 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K:
 	if (opt_T != "")
 		(K) && close_PS_file(fname_ps)			# Close the PS file first
 		((val = find_in_dict(d, [:dpi :DPI])[1]) !== nothing) && (opt_T *= string(" -E", val))
-		gmt("psconvert -A2p -Qg4 -Qt4 " * fname_ps * opt_T * " *")
+		gmt(pscvt_cmd * fname_ps * opt_T * " *")
 		reset_theme()
 		out::String = fname_ps[1:end-2] * fname_ext
 		(fname != "") && (out = mv(out, fname, force=true))
