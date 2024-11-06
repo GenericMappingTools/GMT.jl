@@ -1550,7 +1550,7 @@ end
 	gdalwarp(ds::Dataset, opts=String[]; dest="/vsimem/tmp", gdataset=false) = gdalwarp([ds], opts; dest=dest, gdataset=gdataset)
 	gdalwarp(ds::IDataset, opts=String[]; dest="/vsimem/tmp", gdataset=false) = gdalwarp([Dataset(ds.ptr)], opts; dest=dest, gdataset=gdataset)
 
-	function gdaltranslate(dataset::Dataset, options=String[]; dest="/vsimem/tmp", gdataset=false, save::AbstractString="")
+	function gdaltranslate(dataset::Dataset, options=String[]; dest="/vsimem/tmp", gdataset=false, save::AbstractString="", layout::String="")
 		(save != "") && (dest = save)
 		_options = GDALTranslateOptionsNew(options, C_NULL)
 		usage_error = Ref{Cint}()
@@ -1560,7 +1560,7 @@ end
 		if (dest != "/vsimem/tmp")
 			GDALClose(result);		return nothing
 		end
-		return (gdataset) ? IDataset(result) : gd2gmt(IDataset(result))
+		return (gdataset) ? IDataset(result) : gd2gmt(IDataset(result), layout=layout)
 	end
 	function gdaltranslate(ds::IDataset, opts=String[]; dest="/vsimem/tmp", gdataset=false, save::AbstractString="")
 		(save != "") && (dest = save)

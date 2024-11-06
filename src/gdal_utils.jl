@@ -81,8 +81,8 @@ function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int
 	(!isa(mat, Matrix) && size(mat,3) == 1) && (mat = reshape(mat, size(mat,1), size(mat,2)))	# Fck pain
 	if (layout != "" && !startswith(layout, "TRB"))	# From GDAL it always come as a TR but not sure about the interleave
 		if     (startswith(layout, "BR"))  mat = reverse(mat, dims=1)		# Just flipUD
-		elseif (startswith(layout, "TC"))  mat = collect(mat')
-		elseif (startswith(layout, "BC"))  mat = reverse(mat', dims=1)
+		elseif (startswith(layout, "TC"))  mat = (size(mat,3) == 1) ? collect(mat') : permutedims(mat, [2,1,3])
+		elseif (startswith(layout, "BC"))  mat = (size(mat,3) == 1) ? reverse(mat', dims=1) : reverse(permutedims(mat, [2,1,3]), dims=1)
 		else   @warn("Unsuported layout ($(layout)) change")
 		end
 		layout = layout[1:2] * "B"		# Till further knowledge, assume it's always Band interleaved
