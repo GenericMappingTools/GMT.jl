@@ -106,11 +106,17 @@ function GMTsyntax_opt(d::Dict, cmd::String, del::Bool=true)::Tuple{String, Stri
 end
 
 # ---------------------------------------------------------------------------------------------------
+"""
+    parse_paper(d::Dict) -> Nothing
+
+Move to paper coordinates.
+
+If user sets the 'paper' option, move to paper coordinates. By default we set a background
+canvas of 2x2 m. But for tuning it may be useful to plot a grid. For that use 'paper=:grid'
+Other option is to set the units to inches. For it use 'paper=:inch'
+If both inches and grid is intended use 'paper=(:inch,:grid)'
+"""
 function parse_paper(d::Dict)
-	# If user set the 'paper' option, move to paper coordinates. By default set a background
-	# canvas of 2x2 m. But for tuning it may be useful to plot a grid. For that use 'paper=:grid'
-	# Other option is to set the units to inches. For it use 'paper=:inch'
-	# If both inches and grid is intended use 'paper=(:inch,:grid)'
 	((val = find_in_dict(d, [:paper])[1]) === nothing) && return nothing
 
 	opt_J::String, opt_B::String, opt_R::String = " -Jx1c", "", " -R0/200/0/200"
@@ -130,8 +136,13 @@ function parse_paper(d::Dict)
 	CTRL.IamInPaperMode[1] = true
 	return nothing
 end
+# ---------------------------------------------------------------------------------------------------
+"""
+    leave_paper_mode() -> Nothing
+
+Reset the -R -J previous to the paper mode setting
+"""
 function leave_paper_mode()
-	# Reset the -R -J previous to the paper mode setting
 	!CTRL.IamInPaperMode[1] && return nothing
 	t::String = IamModern[1] ? "" : " -O -K >> " * PSname[1]::String
 	CTRL.IamInPaperMode[1] && gmt("psxy -T " * CTRL.pocket_R[1] * CTRL.pocket_J[1] * CTRL.pocket_J[3] * t)
@@ -1675,6 +1686,7 @@ function parse_common_opts(d::Dict, cmd::String, opts::VMs; first::Bool=true, is
 		elseif (opt == :F)  cmd  = parse_F(d, cmd)
 		elseif (opt == :UVXY)     cmd = parse_UVXY(d, cmd)
 		elseif (opt == :V_params) cmd = parse_V_params(d, cmd)
+		elseif (opt == :margin && haskey(d, :margin)) FIG_MARGIN[1] = d[:margin]; delete!(d, :margin)
 		elseif (opt == :a)  cmd, o = parse_a(d, cmd)
 		elseif (opt == :b)  cmd, o = parse_b(d, cmd)
 		elseif (opt == :c)  cmd, o = parse_c(d, cmd)
@@ -4188,7 +4200,8 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K:
 		opt_T = " -Tg"; fname_ext = "png"		# In Jupyter or Pluto, png only
 	end
 
-	pscvt_cmd = "psconvert -A$(FIG_MARGIN[1])p" * PSCONV_PAR[1]		# The default is "psconvert -A1p -Qg4 -Qt4 "
+	pscvt_cmd = "psconvert -A$(FIG_MARGIN[1])p" * " -Qg4 -Qt4 "		# The default is "psconvert -A1p -Qg4 -Qt4 "
+	(FIG_MARGIN[1] != 1) && (FIG_MARGIN[1] = 1)	# Reset the default
 	if (fname_ps != "" && isPluto)				# A patch attempt to an undebugable Pluto thing
 		(K) && close_PS_file(fname_ps)			# Close the PS file first
 		gmt(pscvt_cmd * fname_ps * " -Tg *")

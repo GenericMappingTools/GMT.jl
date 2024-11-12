@@ -72,7 +72,7 @@ function grdvector(arg1, arg2; first=true, kwargs...)
 	DEF_FIG_AXES_::String = (IamModern[1]) ? "" : DEF_FIG_AXES[1]	# DEF_FIG_AXES is a global const
 	cmd, opt_B = parse_B(d, cmd, (O ? "" : DEF_FIG_AXES_))
 
-	cmd = parse_common_opts(d, cmd, [:UVXY :f :p :t :params]; first=first)[1]
+	cmd = parse_common_opts(d, cmd, [:UVXY :f :p :t :margin :params]; first=first)[1]
 	!(contains(cmd, "-V")) && (cmd *= " -Ve")	# Shut up annoying warnings if -S has no units
 	cmd = parse_these_opts(cmd, d, [[:A :polar], [:N :noclip :no_clip], [:T :sign_scale], [:Z :azimuth]])
 	opt_S = add_opt(d, "", "S", [:S :vscale :vec_scale],
