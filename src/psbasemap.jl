@@ -52,7 +52,7 @@ function basemap(; first=true, kwargs...)
 
 	cmd, = parse_BJR(d, "", "", O, " -JX" * split(DEF_FIG_SIZE, '/')[1] * "/0")
 	cmd, = parse_JZ(d, cmd)
-	cmd, = parse_common_opts(d, cmd, [:F :UVXY :bo :c :f :p :t :params]; first=first)
+	cmd, = parse_common_opts(d, cmd, [:F :UVXY :bo :c :f :p :t :params :margin]; first=first)
 	cmd  = parse_these_opts(cmd, d, [[:A :polygon]])
 	cmd  = parse_Td(d, cmd)
 	cmd  = parse_Tm(d, cmd)

@@ -768,28 +768,30 @@ FV = surf2fv(X, Y, Z);
 viz(FV)
 ```
 """
-function surf2fv(X::Matrix{T}, Y::Matrix{T}, Z::Matrix{T}; type=:tri, bfculling=true,
+function surf2fv(X::Matrix{T}, Y::Matrix{T}, Z::Matrix{T}; type=:tri, bfculling=true, mask=BitArray(undef,0,0),
                  proj="", proj4="", wkt="", epsg=0, top=nothing, bottom=nothing)::GMTfv where {T <: AbstractFloat}
 	@assert length(X) == length(Y) == length(Z)
 	(type != :tri && type != :quad) && error("type must be :tri or :quad")
 
+	have_mask = !isempty(mask)
 	n_rows, n_cols = size(X)
+	n_faces = (have_mask) ? sum(mask) : (n_rows - 1) * (n_cols - 1)
+	(have_mask && n_faces == 0) && error("Something is wrong. The 'mask' matrix is filled with 'false' only.")
 	c1, c2 = (type == :tri) ? (2, 3) : (1, 4)
 	if (bottom === nothing && top === nothing)
-		F = [fill(0, c1 * (n_rows - 1) * (n_cols - 1), c2)]
+		F = [fill(0, c1 * n_faces, c2)]
 		indS = 1
 	elseif (bottom === nothing && top !== nothing)
-		F = [fill(0, c1 * (n_rows - 1) * (n_cols - 1), c2), top]
+		F = [fill(0, c1 * n_faces, c2), top]
 		indS = 1
 	elseif (bottom !== nothing && top !== nothing)
-		F = [bottom, fill(0, c1 * (n_rows - 1) * (n_cols - 1), c2), top]
+		F = [bottom, fill(0, c1 * n_faces, c2), top]
 		indS = 2
 	elseif (bottom !== nothing && top === nothing)
-		F = [bottom, fill(0, c1 * (n_rows - 1) * (n_cols - 1), c2)]
+		F = [bottom, fill(0, c1 * n_faces, c2)]
 		indS = 2
 	end
 
-	#F = fill(0, c1 * (n_rows - 1) * (n_cols - 1), c2)
 	n = 0
 	if (type == :tri)
 		for col = 1:n_cols - 1
@@ -805,6 +807,7 @@ function surf2fv(X::Matrix{T}, Y::Matrix{T}, Z::Matrix{T}; type=:tri, bfculling=
 	else
 		for col = 1:n_cols - 1
 			for row = 1:n_rows - 1
+				have_mask && !mask[row,col] && continue
 				r = row + (col - 1) * n_rows
 				c = r + n_rows
 				n += 1

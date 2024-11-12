@@ -445,3 +445,59 @@ flipud(G::GMTgrid) = GMTgrid(G.proj4, G.wkt, G.epsg, G.geog, G.range, G.inc, G.r
 fliplr(G::GMTgrid) = GMTgrid(G.proj4, G.wkt, G.epsg, G.geog, G.range, G.inc, G.registration, G.nodata, G.title, G.remark, G.command, G.cpt, G.names, G.x, G.y, G.v, fliplr(G.z), G.x_unit, G.y_unit, G.v_unit, G.z_unit, G.layout, G.scale, G.offset, G.pad, G.hasnans)
 flipud(I::GMTimage) = GMTimage(I.proj4, I.wkt, I.epsg, I.geog, I.range, I.inc, I.registration, I.nodata, I.color_interp, I.metadata, I.names, I.x, I.y, I.v, flipud(I.image), I.colormap, I.labels, I.n_colors, flipud(I.alpha), I.layout, I.pad)
 fliplr(I::GMTimage) = GMTimage(I.proj4, I.wkt, I.epsg, I.geog, I.range, I.inc, I.registration, I.nodata, I.color_interp, I.metadata, I.names, I.x, I.y, I.v, fliplr(I.image), I.colormap, I.labels, I.n_colors, fliplr(I.alpha), I.layout, I.pad)
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    FV = rotate(FV::GMTfv, a=Float64[]; rx=0.0, ry=0.0, rz=0.0) -> GMTfv
+
+Rotate the FacesVertices `FV` by the Euler angles (in degrees) `rx`, `ry` and `rz`.
+
+The _insitu_ version `rotate!()` does it in-place.
+Note: We set the `bfculling` value to false because after rotations surfaces are not guaranteed to be CCW.
+
+### Args
+- `FV::GMTfv`: FacesVertices object
+- `a=[rx, ry, rz]`: Euler angles (in degrees) about the x, y and z axes.
+
+### Kwargs
+- `rx, ry, rz`: Alternative to `a`, provide one to three of those Euler angles.
+
+"""
+function rotate(FV::GMTfv, a=Float64[]; rx=0.0, ry=0.0, rz=0.0, insitu::Bool=false)
+	!isempty(a) && (@assert length(a) == 3 "Angle vector must be of length 3")
+	isempty(a) && (a = [rx, ry, rz])
+	V = FV.verts * eulermat(a)[1]
+	mimas = extrema(V, dims=1)
+	bbox = [mimas[1][1], mimas[1][2], mimas[2][1], mimas[2][2], mimas[3][1], mimas[3][2]]		# So stu..
+	if insitu
+		FV.verts, FV.bfculling = V, false
+		FV.bbox = bbox
+		return FV
+	end
+	GMTfv(verts=V, faces=copy(FV.faces), color=copy(FV.color), bbox=bbox, zscale=FV.zscale, bfculling=false, isflat=FV.isflat)
+end
+rotate!(FV::GMTfv, a=Float64[]; rx=0.0, ry=0.0, rz=0.0) = rotate(FV, a; rx=rx, ry=ry, rz=rz, insitu=true)
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    FV = translate(FV::GMTfv; dx=0.0, dy=0.0, dz=0.0) -> GMTfv
+
+Translate the FacesVertices object by dx, dy and dz.
+
+The _insitu_ version `translate!()` does it in-place.
+
+### Args
+- `FV::GMTfv`: FacesVertices object
+
+### Kwargs
+- `dx, dy, dz`: The amount of offset to apply to the x, y and z  FV.verts components.
+"""
+function translate(FV::GMTfv; dx=0.0, dy=0.0, dz=0.0, insitu::Bool=false)
+	!insitu && (FV = deepcopy(FV))
+	(dx != 0) && (view(FV.verts, :, 1) .+= dx)
+	(dy != 0) && (view(FV.verts, :, 2) .+= dy)
+	(dz != 0) && (view(FV.verts, :, 3) .+= dz)
+	FV.bbox += [dx, dx, dy, dy, dz, dz]
+	return FV
+end
+translate!(FV::GMTfv; dx=0.0, dy=0.0, dz=0.0) = translate(FV; dx=dx, dy=dy, dz=dz, insitu=true)

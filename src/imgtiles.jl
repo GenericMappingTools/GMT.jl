@@ -331,10 +331,10 @@ function mosaic(lon::Vector{<:Float64}, lat::Vector{<:Float64}; pt_radius=637813
 	# ---------------------- Case when rectangle BB was given
 	if (length(lon) == 2)					# See if have other tiles in between the ones deffined by lon_min and lon_max
 		Dtile = xmm[2, 1] - xmm[1, 2]		# > 0, have tiles in the midle; == 0, two contiguous tiles; < 0, same tile
-		nInTilesX = Dtile > 0 ? Dtile / 256 : Dtile == 0 ? 0 : -1
+		nInTilesX = Dtile > 0 ? Int(Dtile / 256) : Dtile == 0 ? 0 : -1
 
 		Dtile = ymm[2, 1] - ymm[1, 2]		# Idem for lat
-		nInTilesY = Dtile > 0 ? Dtile / 256 : Dtile == 0 ? 0 : -1
+		nInTilesY = Dtile > 0 ? Int(Dtile / 256) : Dtile == 0 ? 0 : -1
 		neighbors = ones(Int(nInTilesY)+2, Int(nInTilesX)+2)		# Create the neighbors matrix
 
 		lon_mm = [minimum(lon_mm), maximum(lon_mm)]
@@ -429,16 +429,16 @@ function mosaic(lon::Vector{<:Float64}, lat::Vector{<:Float64}; pt_radius=637813
 
 	xx = collect(linspace(xm[1], xm[2], size(img,1)+1))
 	yy = collect(linspace(ym[1], ym[2], size(img,2)+1))
-	I::GMTimage = mat2img(img, x=xx, y=yy, proj4="+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +a=$pt_radius +b=$pt_radius +units=m +no_defs", layout="TRBa", is_transposed=true)
-	@assert typeof(I) === GMTimage{UInt8, 3}	# Fck compiler. Only this convinced it to make I type stable
+	I::GMTimage{UInt8, 3} = mat2img(img, x=xx, y=yy, proj4="+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +a=$pt_radius +b=$pt_radius +units=m +no_defs", layout="TRBa", is_transposed=true)
+	@assert typeof(I) === GMTimage{UInt8, 3}	# Fck compiler. Not even this convinced it to make I type stable
 
 	if (inMerc && isExact)		# Cut to the exact required limits
 		mat::Matrix{Float64} = mapproject([lon[1] lat_orig[1]; lon[2] lat_orig[2]], J=I.proj4).data
-		I = grdcut(I, R=(mat[1,1], mat[2,1], mat[1,2], mat[2,2]))::GMTimage
+		I = grdcut(I, R=(mat[1,1], mat[2,1], mat[1,2], mat[2,2]))::GMTimage{UInt8, 3}
 	elseif (!inMerc)			# That is, if project to Geogs
 		gdwopts = ["-t_srs","+proj=latlong +datum=WGS84", "-r","cubic"]
 		isExact && append!(gdwopts, ["-te"], ["$(lon[1])"], ["$(lat_orig[1])"], ["$(lon[2])"], ["$(lat_orig[2])"])
-		I = gdalwarp(I, gdwopts)::GMTimage
+		I = gdalwarp(I, gdwopts)::GMTimage{UInt8, 3}
 	end
 
 	return I
@@ -951,7 +951,7 @@ useful to use in the `mosaic` program. For that purpose, the returned BB is sore
 ### Example
     geocoder("Paris, France")
 """
-function geocoder(address::String; options=String[])
+function geocoder(address::String; options=String[])::GDtype
 	# Get the geocoder info for a given address. Adapted from https://www.itopen.it/geocoding-with-gdal/
 
 	_ops = isempty(options) ? C_NULL : options	# The default is ["SERVICE", "OSM_NOMINATIM"]
@@ -970,7 +970,7 @@ function geocoder(address::String; options=String[])
 	BB = parse.(Float64, split(dic["boundingbox"], ","))
 	GMT.Gdal.OGRGeocodeFreeResult(hLayer)
 	GMT.Gdal.OGRGeocodeDestroySession(hSession)
-	D = mat2ds([parse(Float64, dic["lon"]) parse(Float64, dic["lat"])], attrib=dic, proj4=prj4WGS84, geom=wkbPoint)
+	D::GDtype = mat2ds([parse(Float64, dic["lon"]) parse(Float64, dic["lat"])], attrib=dic, proj4=prj4WGS84, geom=wkbPoint)
 	D.ds_bbox = [BB[3], BB[4], BB[1], BB[2]]
 	return D
 end

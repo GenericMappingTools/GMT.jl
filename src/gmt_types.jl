@@ -305,11 +305,12 @@ The fields of this struct are:
 - `bbox`::Vector{Float64}            The vertices BoundingBox
 - `zscale`::Float64                  A multiplicative factor to scale the z values
 - `bfculling`::Bool                  If culling of invisible faces is wished
+- `isflat`::Bool                     If this is a flat mesh
 - `proj4::String`                    Projection string in PROJ4 syntax (Optional)
 - `wkt::String`                      Projection string in WKT syntax (Optional)
 - `epsg::Int`                        EPSG projection code (Optional)
 """
-Base.@kwdef mutable struct GMTfv{T<:AbstractFloat} <: AbstractMatrix{T}
+Base.@kwdef mutable struct GMTfv{T<:AbstractFloat} <: AbstractArray{T,2}
 	verts::AbstractMatrix{T}=Matrix{Float64}(undef,0,0)
 	faces::Vector{<:AbstractMatrix{<:Integer}}=Vector{Matrix{Int}}(undef,0)
 	faces_view::Vector{Matrix{Int}}=Vector{Matrix{Int}}(undef,0)
@@ -317,11 +318,21 @@ Base.@kwdef mutable struct GMTfv{T<:AbstractFloat} <: AbstractMatrix{T}
 	bbox::Vector{Float64}=zeros(6)
 	zscale::Float64=1.0
 	bfculling::Bool=true
+	isflat::Bool=false
 	proj4::String=""
 	wkt::String=""
 	epsg::Int=0
 end
-Base.size(FV::GMTfv) = sum(size.(FV.faces))
+Base.size(FV::GMTfv) = size(FV.verts)
+Base.getindex(FV::GMTfv{T}, inds::Vararg{Int}) where {T} = FV.verts[inds...]
+Base.setindex!(FV::GMTfv{T}, val, inds::Vararg{Int}) where {T} = FV.verts[inds...] = val
+Base.BroadcastStyle(::Type{<:GMTfv}) = Broadcast.ArrayStyle{GMTfv}()
+function Base.similar(bc::Broadcast.Broadcasted{Broadcast.ArrayStyle{GMTfv}}, ::Type{ElType}) where ElType
+	FV = find4similar(bc.args)		# Scan the inputs for the FV:
+	#GMTfv(similar(Array{ElType}, axes(bc)), FV.faces, FV.faces_view, FV.color, FV.bbox, FV.zscale, FV.bfculling, FV.proj4, FV.wkt, FV.epsg)
+	GMTfv(FV.verts, FV.faces, FV.faces_view, FV.color, FV.bbox, FV.zscale, FV.bfculling, FV.proj4, FV.wkt, FV.epsg)
+end
+find4similar(FV::GMTfv, rest) = FV
 
 #=
 Base.@kwdef struct GMTtypes
