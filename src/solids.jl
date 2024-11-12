@@ -438,7 +438,7 @@ function ellipse3D(a=1.0, b=a; center=(0.0, 0.0, 0.0), ang1=0.0, ang2=360.0, rot
 	ang1 *= pi/180;		ang2 *= pi/180
 	t = linspace(ang1, ang2, np)
 	if (a == b)
-		if     (e != 0) b = sqrt(1 - e^2) * a
+		if     (e != 0) b = sqrt(1 - e^2) * a	# e = sqrt(1 - (b/a)^2)
 		elseif (f != 0) b = sqrt(1 - 1/f) * a
 		end
 	end
@@ -471,29 +471,59 @@ end
 
 # ----------------------------------------------------------------------------
 """
-    R = vec_rot_mat(theta, n) -> Matrix{Float64}
+   xy = circlepts(r=1.0; center=(0.0, 0.0), ang1=0.0, ang2=360.0, np=72)
 
-Compute the rotation matrix that rotates by angle `theta` (in radians) about the vector `n`.
+Create an circle in 2D space (see `ellipse3D` if want a circle in the 3D space).
+
+### Args
+- `r`: The circle radius.
+
+### Kwargs
+- `center`: A 2-element array or tuple defining the center of the circle.
+- `ang1`: The starting angle in degrees.
+- `ang2`: The ending angle in degrees.
+- `np`: The number of points to use to define the circle.
+
+### Returns
+- `xy`: A Mx2 matrix of points defining the circle, where M = `np` 
 """
-function vec_rot_mat(theta, n)
+function circlepts(r=1.0; center=(0.0, 0.0), ang1=0.0, ang2=360.0, np=72)
+	t = linspace(ang1*pi/180, ang2*pi/180, np)
+	[(center[1] .+ r * cos.(t)) (center[2] .+ r * sin.(t))]
+end
+
+# ----------------------------------------------------------------------------
+"""
+    R = spinmat(theta, n) -> Matrix{Float64}
+
+Compute the rotation matrix that rotates by angle `theta` (in degrees) about the vector `n`.
+"""
+function spinmat(theta, n)
 	cross_prod_mat(x) = [0.0 -x[3] x[2]; x[3] 0 -x[1]; -x[2] x[1] 0]
 
 	W = cross_prod_mat(n / norm(n))
-	eye(3) .+ W * sin(theta) .+ W^2 * (1-cos(theta))
+	eye(3) .+ W * sind(theta) .+ W^2 * (1-cosd(theta))
 end
 
-function euler_rot_mat(a)
+# ----------------------------------------------------------------------------
+"""
+    R = eulermat(a) -> Matrix{Float64}
+
+Compute the Euler rotation matrix that rotates by angles `a` (in degrees) about the x, y and z axes.
+"""
+eulermat(; rx=0.0, ry=0.0, rz=0.0) = eulermat([rx, ry, rz])
+function eulermat(a)
 	@assert length(a) == 3 "Angle vector must be of length 3"
-	Rx = [1 0 0; 0 cos(a[1]) -sin(a[1]); 0 sin(a[1]) cos(a[1])]
-	Ry = [cos(a[2]) 0 sin(a[2]); 0 1 0; -sin(a[2]) 0 cos(a[2])]
-	Rz = [cos(a[3]) -sin(a[3]) 0; sin(a[3]) cos(a[3]) 0; 0 0 1]
+	Rx = [1 0 0; 0 cosd(a[1]) sind(a[1]); 0 -sind(a[1]) cosd(a[1])]
+	Ry = [cosd(a[2])  0 -sind(a[2]); 0 1 0; sin(a[2]) 0 cos(a[2])]
+	Rz = [cosd(a[3]) sind(a[3]) 0; -sind(a[3]) cosd(a[3]) 0; 0 0 1]
 	R = Rx * Ry * Rz
 	return R, collect(R')
 end
 
 # ----------------------------------------------------------------------------
 """
-    FV = revolve(curve::Matrix{Real}; extent = 2.0*pi, dir=:positive, n=[0.0,0.0,1.0], n_steps=0, closed=true, type=:quad) -> GMTfv
+    FV = revolve(curve::Matrix{Real}; extent = 360, ang1=0, ang2=360, dir=:positive, n=[0.0,0.0,1.0], n_steps=0, closed=true, type=:quad) -> GMTfv
 
 Revolve curves to build surfaces.
 
@@ -508,12 +538,15 @@ This function is a modified version on the `revolvecurve` function from the `Com
 - `curve`: A Mx3 matrix of points defining the curve to revolve. Each row is a point in 3D space.
 
 ### Kwargs
-- `extent`: The extent of the revolved curve in radians.
+- `extent`: The extent of the revolved curve in degrees. Default is 360 degrees. But a finer control
+   is possible using the `ang1` and `ang2` arguments.
+- `ang1`: The starting angle in degrees. Use this if start and end angles do not define a full revolution.
+- `ang2`: The ending angle in degrees.
 - `dir`: The direction of the revolved curve (`:positive`, `:negative`, `:both`).
 - `n`: The normal vector of the revolved curve.
 - `n_steps`: The number of steps used to build the revolved curve. If `0` (the default) the number
    of steps is computed from the curve point spacing.
-- `closed`: If `true` (the default), close the revolved curve at the start and end points.
+- `closed`: If `true` (the default), close the revolved curve at the start and end slice.
 - `type`: The type of faces used to build the revolved curve (`:quad` (default), `:tri`).
 
 ### Returns
@@ -526,7 +559,7 @@ This function is a modified version on the `revolvecurve` function from the `Com
 	viz(FV, pen=0)
 ```
 """
-function revolve(curve; extent=2pi, ang1=0.0, ang2=360.0, dir=:positive, n=[0.0,0.0,1.0], n_steps::Int=0, closed=false, type=:quad)
+function revolve(curve; extent=360.0, ang1=0.0, ang2=360.0, dir=:positive, n=[0.0,0.0,1.0], n_steps::Int=0, closed=false, type=:quad)
 
 	n_pts = size(curve,1)
 
@@ -542,13 +575,12 @@ function revolve(curve; extent=2pi, ang1=0.0, ang2=360.0, dir=:positive, n=[0.0,
 				rMax = max(rMax, rNow)
 			end
 		end
-		(ang1 != 0 || ang2 != 360) && (extent = abs(ang2 - ang1) * pi / 180)
-		n_steps = ceil(Int, (rMax*extent) / mean(diff(L, dims=1)))        
+		(ang1 != 0 || ang2 != 360) && (extent = abs(ang2 - ang1))
+		n_steps = ceil(Int, (rMax*extent*pi/180) / mean(diff(L, dims=1)))        
 	end
 
     # Set up angle range
 	if (ang1 != 0 || ang2 != 360)
-		ang1 *= pi/180;		ang2 *= pi/180
 		θ_range = range(ang1, ang2, n_steps)
 	elseif dir == :positive
 		θ_range = range(0, extent, n_steps)
@@ -564,7 +596,7 @@ function revolve(curve; extent=2pi, ang1=0.0, ang2=360.0, dir=:positive, n=[0.0,
 	Y,Z = copy(X), copy(X)
 	curveT = curve'
 	for k = 1:n_steps
-		R = vec_rot_mat(θ_range[k], n)
+		R = spinmat(θ_range[k], n)
 		curve_rot = R * curveT		# Rotate the polygon
 		for m = 1:n_pts
 			X[m,k] = curve_rot[1,m]
