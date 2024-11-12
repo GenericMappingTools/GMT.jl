@@ -92,8 +92,7 @@ const DEF_FIG_AXES_BAK     = " -Baf -BWSen"        # Default fig axes for plot l
 const DEF_FIG_AXES3_BAK    = " -Baf -Bza"          # 		"" but for 3D views
 const global DEF_FIG_AXES  = [DEF_FIG_AXES_BAK]    # This one may be be changed by theme()
 const global DEF_FIG_AXES3 = [DEF_FIG_AXES3_BAK]   #		""
-const global FIG_MARGIN = [1]                      # Figure margin in points after convertion by 'psconvert'
-const global PSCONV_PAR = [" -Qg4 -Qt4 "]          # In showfig() both are combined to get (default) " -A1p -Qg4 -Qt4 "
+const global FIG_MARGIN = [1]                      # Figure margin in points after convertion by 'psconvert'. Accessible 'margin' common option
 const global CTRL = CTRLstruct(zeros(13), zeros(6), [true], [false],
                                [:arrows, :bubblechart, :basemap, :band, :clip, :coast, :colorbar, :hband, :hlines, :inset, :logo, :lines, :grdvector, :plot, :plot3, :quiver, :scatter, :scatter3, :stairs, :text, :vlines, :vband], fill(nothing, 6), ["","",""], ["","", "", "   "], ["",""], ["",""], [false,true], [C_NULL], [Dict()])
 const global CTRLshapes = CTRLstruct2([true], [true], [""])			# Used in sub-module Drawing
@@ -186,7 +185,8 @@ export
 
 	lazinfo, lazread, lazwrite, lasread, laswrite,
 
-	cube, cylinder, dodecahedron, ellipse3D, icosahedron, sphere, octahedron, tetrahedron, torus, replicant, loft, revolve,
+	cube, cylinder, circlepts, dodecahedron, ellipse3D, eulermat, icosahedron, loft, sphere, spinmat, octahedron,
+	tetrahedron, torus, replicant, revolve, rotate, rotate!, translate, translate!,
 
 	df2ds, ds2df, extrude, fv2fv, isclockwise, surf2fv, ODE2ds,
 	@?, @dir
@@ -343,6 +343,8 @@ using GMT.Laszip
 	GMT.parse_B(Dict(:frame => (annot=10, title="Ai Ai"), :grid => (pen=2, x=10, y=20)), "", " -Baf -BWSen");
 	GMT.parse_R(Dict(:xlim => (1,2), :ylim => (3,4), :zlim => (5,6)), "");
 	GMT.parse_J(Dict(:J => "X", :scale => "1:10"), "");
+	#GMT.parse_opt_S(Dict(:size => [1 2]), rand(4));
+	GMT.parse_opt_S(Dict{String, Any}(), mat2ds(rand(4,2)));
 	GMT.build_opt_J(:X5);
 	GMT.theme("dark")
 	GMT.theme_modern()
