@@ -957,7 +957,7 @@ function whereami()
 	lat = parse(Float64, split(s[i_lat],":")[2])
 	country = string(split(s[i_country],":")[2][2:end-1])		# The [2:end-1] removes the quotes
 	s_city = split(s[i_city],":")[2]
-	city = string(s_city[2:length(s_city)-1])		# Something changed and now it may be a unicode, case in which :end-1 errors
+	city = string(s_city[2:lastindex(s_city)-1])
 	zip = string(split(s[i_zip],":")[2][2:end-1])
 	timezone = string(split(s[i_tz],":")[2][2:end-1])
 	region = string(split(s[i_region],":")[2][2:end-1])
