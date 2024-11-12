@@ -22,4 +22,21 @@
 	ellipse3D(center=(2,0,0), e=0.8, plane=:xz, rot=45);
 	ellipse3D(e=0.8, is2D=true);
 	ellipse3D(e=0.8, is2D=true, rot=45);
+
+	verts = [0.0 0.0 0.0; 1.0 1.0 1.0; 2.0 2.0 2.0];
+	FV = fv2fv([[1 2 3]], verts);
+    @test begin
+		res = translate(FV, dx=1.0)
+		all(res.verts[:,1] .== verts[:,1] .+ 1.0) && all(res.verts[:,2:3] .== verts[:,2:3]) && res.bbox == [1.0, 3.0, 0.0, 2.0, 0.0, 2.0]
+	end
+	FV = translate!(FV, dx=1.0)
+
+	verts = [0.0 0.0 0.0; 1.0 0.0 0.0; 1.0 1.0 0.0; 0.0 1.0 0.0; 0.0 0.0 1.0; 1.0 0.0 1.0; 1.0 1.0 1.0; 0.0 1.0 1.0]
+	faces = [1 2 3 4; 5 6 7 8; 1 2 6 5; 2 3 7 6; 3 4 8 7; 4 1 5 8]
+	FV = fv2fv(faces, verts);
+	rotated = rotate(FV, [90.0, 0.0, 0.0]);
+	@test rotated.bfculling == false
+	@test size(rotated.verts) == size(verts)
+	@test !isempty(rotated.bbox)
+	rotate!(FV, [90.0, 0.0, 0.0]);
 end
