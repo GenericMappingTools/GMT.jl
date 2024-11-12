@@ -53,6 +53,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		CURRENT_VIEW[1] = " -p217.5/30"
 	end
 	cmd, opt_p = parse_p(d, cmd)	# Parse this one (view angle) aside so we can use it to remove invisible faces (3D)
+	(opt_p == "" && !is3D && first) && (CURRENT_VIEW[1] = "")	# Make sure it empty under these conditions
 	(opt_p == "") ? (opt_p = CURRENT_VIEW[1]; cmd *= opt_p)	: (CURRENT_VIEW[1] = opt_p) # Save for eventual use in other modules.
 
 	if (is3D && isa(arg1, GMTfv))			# case of 3D faces
@@ -104,7 +105,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 
 	axis_equal = is_axis_equal(d)		# See if the user asked for an equal aspect ratio
 	cmd, opt_JZ = parse_JZ(d, cmd; O=O, is3D=is3D)
-	cmd, = parse_common_opts(d, cmd, [:a :e :f :g :t :w :params]; first=first)
+	cmd, = parse_common_opts(d, cmd, [:a :e :f :g :t :w :margin :params]; first=first)
 	cmd, opt_l = parse_l(d, cmd)		# Parse this one (legend) aside so we can use it in classic mode
 	cmd, opt_f = parse_f(d, cmd)		# Parse this one (-f) aside so we can check against D.attrib
 	cmd  = parse_these_opts(cmd, d, [[:D :shift :offset], [:I :intens], [:N :no_clip :noclip]])
@@ -679,7 +680,8 @@ function _helper_psxy_line(d::Dict, cmd::String, opt_W::String, is3D::Bool, args
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_opt_S(d::Dict, arg1, is3D::Bool=false)
+parse_opt_S(d::Dict, arg1::GMTfv, is3D::Bool) = arg1, ""	# Just to have a method for FVs
+function parse_opt_S(d::Dict, arg1::Union{GDtype, AbstractVector{<:Real}, Nothing}, is3D::Bool=false)
 
 	opt_S::String, have_custom = "", false
 	is1D = isvector(arg1)
@@ -699,7 +701,7 @@ function parse_opt_S(d::Dict, arg1, is3D::Bool=false)
 			arg1[arg1 .< mi_val] .= mi_sz
 			arg1[arg1 .> ma_val] .= ma_sz
 		end
-		((sc = _scale(isInt)) != 1.0) && (arg1 .*= sc)
+		((sc_local = _scale(isInt)) != 1.0) && (arg1 .*= sc_local)
 	end
 
 	if (opt_S == "" || (have_custom && custom_no_size))		# OK, no symbol given via the -S option. So fish in aliases
@@ -1470,7 +1472,7 @@ function sort_visible_faces(FV::GMTfv, azim, elev; del::Bool=true)::Tuple{GMTfv,
 	projs = Float64[]
 
 	!FV.bfculling && (del = false)			# Do not delete if bfculling is set to false (for example if FV is not closed)
-	isPlane = (FV.bbox[1] == FV.bbox[2]) || (FV.bbox[3] == FV.bbox[4]) || (FV.bbox[5] == FV.bbox[6])	# Is this FV a plane?
+	isPlane = (FV.isflat || FV.bbox[1] == FV.bbox[2]) || (FV.bbox[3] == FV.bbox[4]) || (FV.bbox[5] == FV.bbox[6])	# Is this FV a plane?
 	isPlane && (del = false)				# Planes have no invisibles
 	needNormals = isempty(FV.color[1])		# If we have no color, we need to compute the normals
 	
@@ -1491,14 +1493,14 @@ function sort_visible_faces(FV::GMTfv, azim, elev; del::Bool=true)::Tuple{GMTfv,
 			end
 			this_proj = dot(facenorm(tmp, zfact=FV.zscale), view_vec)
 			if (!del || (isVisible[face] = this_proj > 0))
-				if (!isPlane)				# Plades do not need sorting
+				if (!isPlane)				# Planes do not need sorting
 					cx, cy, cz = sum(tmp[:,1]), sum(tmp[:,2]), sum(tmp[:,3])	# Pseudo-centroids. Good enough for sorting
 					push!(dists, (cx * sin_az + cy * cos_az, cz * sin_el))
 				end
 				push!(_projs, this_proj)	# But need the normals as stated at the begining of this function
 			end
 		end
-		
+	
 		if (isPlane)						# Here, FV being a plane we only care about storing the normals
 			projs = (first_face_vis) ? _projs[ind] : append!(projs, _projs[ind])
 			first_face_vis = false
