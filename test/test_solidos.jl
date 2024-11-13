@@ -39,4 +39,31 @@
 	@test size(rotated.verts) == size(verts)
 	@test !isempty(rotated.bbox)
 	rotate!(FV, [90.0, 0.0, 0.0]);
+
+	@testset "flatfv" begin
+		# Test with basic GMTimage input
+		img = mat2img([UInt8(i) for i=1:8, j=1:8])
+		fv = flatfv(img)
+		@test isa(fv, GMTfv)
+		@test fv.isflat == true
+		@test length(fv.color[1]) == 64
+	
+		# Test with circle shape
+		fv_circle = flatfv(img, shape=:circle)
+		@test isa(fv_circle, GMTfv)
+	
+		# Test with ellipse shape
+		fv_ellipse = flatfv(img, shape=:ellipse)
+		@test isa(fv_ellipse, GMTfv)
+	
+		# Test with custom shape array (2 columns)
+		shape_2d = [0.0 0.0; 1.0 0.0; 1.0 1.0; 0.0 1.0]
+		fv_custom = flatfv(img, shape=shape_2d)
+		@test isa(fv_custom, GMTfv)
+	
+		# Test with custom shape array (3 columns)
+		shape_3d = [0.0 0.0 1.0; 1.0 0.0 1.0; 1.0 1.0 1.0; 0.0 1.0 1.0]
+		fv_3d = flatfv(img, shape=shape_3d)
+		@test isa(fv_3d, GMTfv)
+	end
 end
