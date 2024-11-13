@@ -158,8 +158,8 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		cmd = replace(cmd, opt_J => " -JX" * split(DEF_FIG_SIZE, '/')[1] * "/0")	# If projected, it's a axis equal for sure
 	end
 	if (is3D && isempty(opt_JZ) && length(collect(eachmatch(r"/", opt_R))) == 5)
-		if O  opt_JZ = (CTRL.pocket_J[3] != "") ? CTRL.pocket_J[3][1:4] : " -JZ"
-		else  opt_JZ = CTRL.pocket_J[3] = (is_gridtri) ? " -JZ5c" : " -JZ6c"		# Arbitrary and not satisfactory for all cases.
+		if (O) opt_JZ = (CTRL.pocket_J[3] != "") ? CTRL.pocket_J[3][1:4] : " -JZ"
+		else   opt_JZ = CTRL.pocket_J[3] = (is_gridtri) ? " -JZ5c" : " -JZ6c"		# Arbitrary and not satisfactory for all cases.
 		end
 		cmd *= opt_JZ		# Default -JZ
 	end
@@ -339,6 +339,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	end
 
 	_cmd = fish_bg(d, _cmd)					# See if we have a "pre-command"
+	_cmd = fish_pagebg(d, _cmd, autoJZ=(is3D && axis_equal))	# Last arg tells if JZ was computed automatically
 
 	isa(arg1, GDtype) && plt_txt_attrib!(arg1, d, _cmd)			# Function barrier to plot TEXT attributed labels (in case)
 
@@ -584,23 +585,111 @@ function with_xyvar(d::Dict, arg1::GMTdataset, no_x::Bool=false)::Union{GMTdatas
 end
 
 # ---------------------------------------------------------------------------------------------------
+"""
+    cmd = fish_pagebg(d::Dict, cmd::Vector{String}) -> Vector{String}
+
+Check if using a background image to replace the page color.
+
+This function checks for the presence of a `pagebg` option that sets the page background image.
+Note that this different from the `background` or `bg` option that sets the plotting canvas background color.
+
+- `pagebg`: a NamedTuple with the following members
+	- `image`: the image name or a GMTimage/GMTgrid object
+	- `width`: the width of the background image in percentage of the page width (default: 0.8)
+	- `offset`: the offset of the background image in percentage of the page width (default: (0.0,0.0))
+	   If only one value is provided it is used for the X offset only.
+
+OR 
+
+- `pagebg`: an image file name or a GMTimage/GMTgrid object
+   In this case the above defaults for the _width_ and _offset_ parameters are used
+"""
+function fish_pagebg(d::Dict, cmd::Vector{String}; autoJZ::Bool=true)::Vector{String}
+	((val = find_in_dict(d, [:pagebg])[1]) === nothing) && return cmd
+	width::Float64 = 0.8;	off_X::Float64 = 0.0;	off_Y::Float64 = 0.0	# The off's are offsets from the center
+	if isa(val, NamedTuple)
+		!haskey(val, :image) && error("pagebg: NamedTuple must contain the member 'image'")
+		fname = helper_fish_bgs(val[:image])		# Get the image name or set it under the hood if input is a GMTimage
+		haskey(val, :width) && (width = val[:width])
+		(width <= 0 || width > 1) && error("pagebg: width is a normalized value, must be between 0 and 1")
+		if (haskey(val, :offset) || haskey(val, :off))
+			off = (haskey(val, :offset)) ? val[:offset] : val[:off]
+			isa(off, Real) ? (off_X = off) : length(off) == 2 ? (off_X = off[1]; off_Y = off[2]) :
+				error("pagebg: offset must be a Real or a two elements Array/Tuple")
+		end
+	else				# Here, val is just the file name or a GMTimage
+		fname = helper_fish_bgs(val)	# Get the image name or set it under the hood if input is a GMTimage
+	end
+
+	if contains(CTRL.pocket_J[2], "/")  Wt, Ht = split(CTRL.pocket_J[2], '/')
+	else                                Wt = CTRL.pocket_J[2]; Ht = "/0"
+	end
+	isletter(Wt[end]) ? (cw=Wt[end]; Wt = Wt[1:end-1]) : (cw = 'c')
+	isletter(Ht[end]) ? (ch=Ht[end]; Ht = Ht[1:end-1]) : (ch = 'c');	(Ht == "0") && (Ht = "/0")
+	W = parse(Float64, Wt)
+	if (Ht != "" && Ht != "/0")			# User gave an explicit height
+		H = parse(Float64, Ht) * width	# r = H / W; H = r * width * W; = H * width
+		Ht = @sprintf("/%.4g%c", H, ch)
+	end
+
+	off_XY = @sprintf(" -X%.4g%c", off_X + (1-width)/2 * W, cw)
+	(off_Y != 0.0) && (off_XY *= @sprintf(" -Y%.4g%c", off_Y, cw))
+	opt_J = scan_opt(cmd[1], "-J", true)
+	new_J = string(opt_J[1:4], width * W, cw, Ht)
+
+	# If the 'bg' option is also set it sits in cmd[1] and then we want to modify cmd[2].
+	ind_cmd = startswith(cmd[1], "grdimage") ? 2 : 1	# The presence of 'grdimage' says that 'bg' was used.
+
+	cmd[ind_cmd] = replace(cmd[ind_cmd], opt_J => new_J * off_XY)
+	if (autoJZ && (opt_JZ = scan_opt(cmd[1], "-JZ", true)) != "")	# Only do this for JZ that was set automatically
+		z = parse(Float64, isletter(opt_JZ[end]) ? opt_JZ[5:end-1] : opt_JZ[5:end]) * width
+		CTRL.pocket_J[3] = @sprintf(" -JZ%.4g%c", z, cw)
+		cmd[ind_cmd] = replace(cmd[ind_cmd], opt_JZ => CTRL.pocket_J[3])
+	end
+	proggy = IamModern[1] ? "image " : "psimage "
+	[proggy * fname * CTRL.pocket_J[1] * CTRL.pocket_R[1] * " -Dx0/0+w"*Wt*cw, cmd...]
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    cmd = fish_bg(d::Dict, cmd::Vector{String}) -> Vector{String}
+
+Check if a background image in a plot area is requested.
+
+Check if the background image is used and if yes insert a first command that calls grdimage to fill
+the canvas with that bg image. The BG image can be a file name, the name of one of the pre-defined
+functions, or a GMTgrid/GMTimage object. By default we use a trimmed gray scale (between ~64 & 240)
+but if user wants to control the colormap then the option's argument can be a tuple where the second
+element is cpt name or a GMTcpt obj.
+
+### Example
+
+```julia
+plot(rand(8,2), bg=(:somb, :turbo), show=1)
+
+# To revert the sense of the color progression prefix the cpt name or of the pre-def function with a '-'
+
+plot(rand(8,2), bg="-circ", show=1)
+```
+"""
 function fish_bg(d::Dict, cmd::Vector{String})::Vector{String}
-	# Check if the background image is used and if yes insert a first command that calls grdimage to fill
-	# the canvas with that bg image. The BG image can be a file name, the name of one of the pre-defined
-	# functions, or a GMTgrid/GMTimage object.
-	# By default we use a trimmed gray scale (between ~64 & 240) but if user wants to control the colormap
-	# then the option's argument can be a tuple where the second element is cpt name or a GMTcpt obj.
-	# Ex:  plot(rand(8,2), bg=(:somb, :turbo), show=1)
-	# To revert the sense of the color progression prefix the cpt name or of the pre-def function with a '-'
-	# Ex: plot(rand(8,2), bg="-circ", show=1)
 	((val = find_in_dict(d, [:bg :background])[1]) === nothing) && return cmd
+	fname = helper_fish_bgs(val)
+
+	opt_p = scan_opt(cmd[1], "-p", true);		opt_c = scan_opt(cmd[1], "-c", true)
+	opt_D = (IamModern[1]) ? " -Dr " : " -D "	# Found this difference by experience. It might break in future GMTs
+	["grdimage" * opt_D * fname * CTRL.pocket_J[1] * opt_p * opt_c, cmd...]
+end
+
+function helper_fish_bgs(val)::String
 	arg1, arg2 = isa(val, Tuple) ? val[:] : (val, nothing)
-	(arg2 !== nothing && (!isa(arg2, GMTcpt) && !isa(arg2, StrSymb))) &&error("When a Tuple is used in argument of the background image option, the second element must be a string or a GMTcpt object.")
+	(arg2 !== nothing && (!isa(arg2, GMTcpt) && !isa(arg2, StrSymb))) &&
+		error("When a Tuple is used in argument of the background image option, the second element must be a string or a GMTcpt object.")
 	gotfname, fname::String, opt_I::String = false, "", ""
 	if (isa(arg1, StrSymb))
-		if (splitext(string(arg1)::String)[2] != "")		# Assumed to be an image file name
+		if (splitext(string(arg1)::String)[2] != "")	# Assumed to be an image file name
 			fname, gotfname = arg1, true
-		else										# A pre-set fun name
+		else											# A pre-set fun name
 			fun::String = string(arg1)
 			(fun[1] == '-') && (fun = fun[2:end]; opt_I = " -I")
 			I::GMTimage = imagesc(mat2grid(fun))
@@ -617,12 +706,8 @@ function fish_bg(d::Dict, cmd::Vector{String})::Vector{String}
 		image_cpt!(I, C)
 		CTRL.pocket_call[3] = I					# This signals finish_PS_module() to run _cmd first
 	end
-
-	opt_p = scan_opt(cmd[1], "-p");		(opt_p != "") && (opt_p = " -p" * opt_p)
-	opt_c = scan_opt(cmd[1], "-c");		(opt_c != "") && (opt_c = " -c" * opt_c)
-	#(opt_c == "" && contains(cmd[1], " -c ")) && (opt_c = " -c")	# Because of a scan_opt() desing error (but causes error)
-	opt_D = (IamModern[1]) ? " -Dr " : " -D "	# Found this difference by experience. It might break in future GMTs
-	["grdimage" * opt_D * fname * CTRL.pocket_J[1] * opt_p * opt_c, cmd...]
+	FIG_MARGIN[1] = 0
+	return fname
 end
 
 # ---------------------------------------------------------------------------------------------------
