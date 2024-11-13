@@ -15,6 +15,7 @@ struct CTRLstruct
 	pocket_call::Vector{Any}		# To temporarily store data needed by modules sub-calls. Put in [3] for pre-calls
 	pocket_B::Vector{String}		# To temporarily store opt_B grid and fill color to be reworked in psclip
 	pocket_J::Vector{String}		# To temporarily store opt_J and fig size to eventualy flip directions (y + down, etc)
+									# = [opt_J width opt_Jz codes-to-tell-which-axis-to-reverse]
 	pocket_R::Vector{String}		# To temporarily store opt_R
 	XYlabels::Vector{String}		# To temporarily store the x,y col names to let x|y labels know what to plot (if "auto")
 	IamInPaperMode::Vector{Bool}	# A 2 elem vec to know if we are in under-the-hood paper mode. 2nd traces if first call
@@ -185,8 +186,8 @@ export
 
 	lazinfo, lazread, lazwrite, lasread, laswrite,
 
-	cube, cylinder, circlepts, dodecahedron, ellipse3D, eulermat, icosahedron, loft, sphere, spinmat, octahedron,
-	tetrahedron, torus, replicant, revolve, rotate, rotate!, translate, translate!,
+	cube, cylinder, circlepts, dodecahedron, ellipse3D, eulermat, flatfv, icosahedron, loft, sphere, spinmat,
+	octahedron, tetrahedron, torus, replicant, revolve, rotate, rotate!, translate, translate!,
 
 	df2ds, ds2df, extrude, fv2fv, isclockwise, surf2fv, ODE2ds,
 	@?, @dir
