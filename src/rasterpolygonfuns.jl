@@ -293,3 +293,23 @@ function meansqrt(x)
 	end
 	sqrt(sum/length(x))
 end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    mask = maskregion(X::Matrix{T}, Y::Matrix{T}, shape) where {T <: AbstractFloat}
+"""
+function maskregion(X::Matrix{T}, Y::Matrix{T}, shape) where {T <: AbstractFloat}
+	# Need to add more methods and documentation
+	@assert length(X) == length(Y) "X and Y matrices have different sizes"
+	masca = BitArray(undef,size(X).-1)
+	n_rows, n_cols = size(masca)
+	# A a bug in 'pip'. pip(-0.5011, -3.469446951953614e-17, shape) = -1 but  pip(-0.5011, 0, shape) = 1
+	dx = (X[1,2]-X[1,1]) / 2.0
+	dy = (Y[2,1]-Y[1,1]) / 2.0
+	Threads.@threads for col = 1:n_cols
+		for row = 1:n_rows
+			@inbounds masca[row,col] = pip(X[row,col]+dx, Y[row,col]+dy, shape) >= 0
+		end
+	end
+	return masca
+end

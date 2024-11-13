@@ -677,3 +677,94 @@ function loft(C1, C2; n_steps::Int=0, closed=true, type=:quad)
 
 	surf2fv(X, Y, Z; type=type, bfculling=(closed != 1), top=top, bottom=bot)
 end
+
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    FV = flatfv(I::Union{GMTimage, AbstractString}; shape=nothing, level=0.0) ->GMTfv
+
+Create a flat 3D surface from an image and a set of xyz or just xy coordinates.
+
+This function creates face for each pixel in the image that is inside the `shape` and assigns the
+face's color from that of the image. So be careful that the image is not too large.
+
+### Args
+- `I`: A `GMTimage` object or a file name of an image.
+
+### Kwargs
+- `shape`: A xyz or xy polygon defining a flat surface. When it is a 3D polygon, it must lie in the xz or yz planes.
+   But it can also be a can also be a Symbol; one of `:circle`, `:circ`, `:ellipse`. In this later case, we
+   compute a normalized circle or ellipse with dimensions taken from number of rows and columns in `I`.
+   The ellipse (with a horizontal major) eccentricity  is computed from the ratio of the number of rows and columns.
+- `level`: In case that `shape` is a polygon in the xy plane, this is the level or height of that flat surface.
+   For other plane orientations, this level is extracted from the column of constant values in `shape`.
+
+Returns:
+- A `GMTfv` object representing the flat 3D surface.
+
+### Example
+```julia
+FV = flatfv("image.png", shape=:circle, level=1.0);
+viz(FV)
+```
+"""
+function flatfv(I::Union{GMTimage, AbstractString}; shape=:n, level=0.0)::GMTfv
+
+	function forceRGB(I)::GMTimage{UInt8, 3}
+		I_ = isa(I, GMTimage) ? I : gmtread(I)::GMTimage
+		size(I_, 3) == 1 && (I_ = ind2rgb(I_))
+		return I_
+	end
+
+	_I = forceRGB(I)
+	n_rows::Int, n_cols::Int = size(_I.image)
+
+	if (shape == :circle || shape == :circ || shape == :ellipse)
+		X,Y = meshgrid(linspace(0, 1, n_cols+1), linspace(1, 0, n_rows+1))
+		Z = fill(Float64(level), n_rows+1, n_cols+1)
+		if (shape == :ellipse)
+			e = sqrt(1 - ((n_rows+1) / (n_cols+1))^2)
+			masca = maskregion(X, Y, ellipse3D(0.5; center=(0.5, 0.5), e=e))	# An horizontal ellipse
+		else
+			masca = maskregion(X, Y, circlepts(0.5; center=(0.5, 0.5)))			# A normalized circle
+		end
+	elseif (isa(shape, Array{<:AbstractFloat}))
+		if (size(shape, 2) == 2)
+			xc = extrema(view(shape, :, 1))			# Start and end coordinates
+			yc = extrema(view(shape, :, 2))
+			X,Y = meshgrid(linspace(xc[1], xc[2], n_cols+1), linspace(yc[2], yc[1], n_rows+1))
+			Z = fill(Float64(level), n_rows+1, n_cols+1)
+			masca = maskregion(X, Y, shape)
+		elseif (size(shape, 2) == 3)				# A cicle but not necessarily in the xy plane
+			c0 = std(diff(view(shape, :, 1), dims=1)) ≈ 0 ? 1 : std(diff(view(shape, :, 2), dims=1)) ≈ 0 ? 2 :
+			     std(diff(view(shape, :, 3), dims=1)) ≈ 0 ? 3 : error("'shape' is not a circle in the horizontal or vertical planes.")
+			two_col = (c0 == 1) ? (2,3) : (c0 == 2) ? (1,3) : (1,2)		# The indices of the non-zero columns
+			xc = extrema(view(shape, :, two_col[1]))
+			yc = extrema(view(shape, :, two_col[2]))
+			_X,_Y = meshgrid(linspace(xc[1], xc[2], n_cols+1), linspace(yc[2], yc[1], n_rows+1))
+			masca = maskregion(_X, _Y, shape[:, [two_col[1], two_col[2]]])
+			level = (c0 == 1) ? shape[1] : (c0 == 2) ? shape[1,2] : shape[1,3]
+			_Z = fill(Float64(level), n_rows+1, n_cols+1)
+			X, Y, Z = (c0 == 1) ? (_Z, _X, _Y) : (c0 == 2) ? (_X, _Z, _Y) : (_X, _Y, _Z)
+		end
+	else
+		X,Y = meshgrid(_I.x, reverse(_I.y))		# MUST CONFIRM that these coords are pixel-reg
+		Z = fill(Float64(level), n_rows+1, n_cols+1)
+		masca = BitArray(undef,0,0)
+	end
+	doMask = !isempty(masca)
+
+	FV = surf2fv(X, Y, Z, type=:quad, mask=masca)
+	n_colors = doMask ? sum(masca) : (n_rows * n_cols)
+	cor = Vector{String}(undef, n_colors)
+
+	kk = 0
+	@inbounds for n = 1:n_cols, m = 1:n_rows
+		doMask && !masca[m,n] && continue
+		k = (m-1) * n_cols * 3 + (n-1) * 3
+		cor[kk+=1] = @sprintf("-G#%.2x%.2x%.2x", _I[k+=1], _I[k+=1], _I[k+=1])
+	end
+
+	FV.color, FV.isflat = [cor], true
+	return FV
+end
