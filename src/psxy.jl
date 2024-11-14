@@ -108,7 +108,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	cmd, = parse_common_opts(d, cmd, [:a :e :f :g :t :w :margin :params]; first=first)
 	cmd, opt_l = parse_l(d, cmd)		# Parse this one (legend) aside so we can use it in classic mode
 	cmd, opt_f = parse_f(d, cmd)		# Parse this one (-f) aside so we can check against D.attrib
-	cmd  = parse_these_opts(cmd, d, [[:D :shift :offset], [:I :intens], [:N :no_clip :noclip]])
+	cmd  = parse_these_opts(cmd, d, [[:D :shift :offset], [:I :intens], [:N :no_clip :noclip], [:T]])
 	parse_ls_code!(d::Dict)				# Check for linestyle codes (must be before the GMTsyntax_opt() call)
 	cmd  = GMTsyntax_opt(d, cmd)[1]		# See if an hardcore GMT syntax string has been passed by mk_styled_line!
 	(is_ternary) && (cmd = add_opt(d, cmd, "M", [:M :dump]))
@@ -591,13 +591,14 @@ end
 Check if using a background image to replace the page color.
 
 This function checks for the presence of a `pagebg` option that sets the page background image.
-Note that this different from the `background` or `bg` option that sets the plotting canvas background color.
+Note that this is different from the `background` or `bg` option that sets the plotting canvas background color.
 
 - `pagebg`: a NamedTuple with the following members
-	- `image`: the image name or a GMTimage/GMTgrid object
-	- `width`: the width of the background image in percentage of the page width (default: 0.8)
-	- `offset`: the offset of the background image in percentage of the page width (default: (0.0,0.0))
-	   If only one value is provided it is used for the X offset only.
+    - `image`: the image name or a GMTimage/GMTgrid object
+    - `logo`: To plot the GMT logo (from the global ``timestamp`` option) at the lower left corner.
+    - `width`: the width of the background image in percentage of the page width (default: 0.8)
+    - `offset`: the offset in paper units (cm prefrably) with respect to the center of the background
+       image (default: (0.0,0.0)). If only one value is provided it is used for the X offset only.
 
 OR 
 
@@ -607,6 +608,7 @@ OR
 function fish_pagebg(d::Dict, cmd::Vector{String}; autoJZ::Bool=true)::Vector{String}
 	((val = find_in_dict(d, [:pagebg])[1]) === nothing) && return cmd
 	width::Float64 = 0.8;	off_X::Float64 = 0.0;	off_Y::Float64 = 0.0	# The off's are offsets from the center
+	opt_U = ""
 	if isa(val, NamedTuple)
 		!haskey(val, :image) && error("pagebg: NamedTuple must contain the member 'image'")
 		fname = helper_fish_bgs(val[:image])		# Get the image name or set it under the hood if input is a GMTimage
@@ -617,6 +619,7 @@ function fish_pagebg(d::Dict, cmd::Vector{String}; autoJZ::Bool=true)::Vector{St
 			isa(off, Real) ? (off_X = off) : length(off) == 2 ? (off_X = off[1]; off_Y = off[2]) :
 				error("pagebg: offset must be a Real or a two elements Array/Tuple")
 		end
+		haskey(val, :logo) && (opt_U = " -U+o0+t")
 	else				# Here, val is just the file name or a GMTimage
 		fname = helper_fish_bgs(val)	# Get the image name or set it under the hood if input is a GMTimage
 	end
@@ -647,7 +650,7 @@ function fish_pagebg(d::Dict, cmd::Vector{String}; autoJZ::Bool=true)::Vector{St
 		cmd[ind_cmd] = replace(cmd[ind_cmd], opt_JZ => CTRL.pocket_J[3])
 	end
 	proggy = IamModern[1] ? "image " : "psimage "
-	[proggy * fname * CTRL.pocket_J[1] * CTRL.pocket_R[1] * " -Dx0/0+w"*Wt*cw, cmd...]
+	[proggy * fname * CTRL.pocket_J[1] * CTRL.pocket_R[1] * opt_U * " -Dx0/0+w"*Wt*cw, cmd...]
 end
 
 # ---------------------------------------------------------------------------------------------------
