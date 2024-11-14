@@ -987,8 +987,10 @@ getbb(D::GDtype) = isa(D, Vector) ? D[1].ds_bbox : D.ds_bbox
 """
     width, height = getsize(GI::GItype) -> Tuple(Int, Int)
 
-Return the width and height of the grid or image. The grid case is simple but images are more complicated
-due to the memory layout. To disambiguate this, we are not relying in 'size(GI)' but on the length of the
+Return the width and height of the grid or image.
+
+The grid case is simple but images are more complicated due to the memory layout.
+To disambiguate this, we are not relying in 'size(GI)' but on the length of the
 x,y coordinates vectors, that are assumed to always be correct. 
 """
 function getsize(GI::GItype)
@@ -1039,8 +1041,9 @@ end
 """
     settimecol!(D::GDtype, Tcol)
 
-Set the time column in the dataset D (or vector of them). `Tcol` is either an Int scalar or vector
-of Ints with the column number(s) that hold the time columns.
+Set the time column in the dataset D (or vector of them).
+
+`Tcol` is either an Int scalar or vector of Ints with the column number(s) that hold the time columns.
 """
 settimecol!(D::GDtype, Tc::Int) = isa(D, Vector) ? (D[1].attrib["Timecol"] = string(Tc)) : (D.attrib["Timecol"] = string(Tc))
 settimecol!(D::GDtype, Tc::VecOrMat{<:Int}) = isa(D, Vector) ? (D[1].attrib["Timecol"] = join(Tc, ",")) : (D.attrib["Timecol"] = join(Tc, ","))
@@ -1052,10 +1055,13 @@ const set_timecol! = settimecol!
 
 Changes the geometry of the dataset `D` (or vector of them). The keyword version takes precedence.
 
-### Parameters
+### Args
 - `D`: A GMTdataset, or a vector of them.
 - `geom` | `gm`: the new geometry to apply to D. These are alternatives ways of seting the geometry
   but the keyword version takes precedence.
+
+### Kwargs
+- `geom`: the new geometry to apply to D.
 """
 function setgeom!(D::GMTdataset, gm::Integer=0; geom::Integer=0)
 	D.geom = (geom != 0) ? geom : gm	# The keyword version takes precedenceg
@@ -1067,11 +1073,13 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    refsystem_A2B!(A, B)
+    refsystem_A2B!(A, B) -> nothing
 
-Copy the referencing information in object `A` to object `B`. Both `A` and `B` can be either a GMTgrid or
-GMTimage or GMTdataset or vectors of GMTdataset objects. Attention that any previous referencing information
-stored in object `A` will be lost (replaced by that on object `B`).
+Copy the referencing information in object `A` to object `B`.
+
+Both `A` and `B` can be either a GMTgrid or GMTimage or GMTdataset or vectors of GMTdataset objects.
+Attention that any previous referencing information stored in object `A` will be lost
+(replaced by that on object `B`).
 """
 function refsystem_A2B!(A, B)
 	prj, wkt, epsg = isa(A, Vector) ? (A[1].proj4, A[1].wkt, A[1].epsg) : (A.proj4, A.wkt, A.epsg)
@@ -1118,7 +1126,7 @@ end
 """
     overlap, value = rect_overlap(xc_1, yc_1, xc_2, yc_2, width1, height1, width2, height2) -> Bool, Float64
 
-Check if two rectangles, aligned with the axes, overlap.
+Check if two rectangles, aligned with the axes (non-rotated), overlap.
 
 - `xc_1, yc_1`: Center of the first rectangle
 - `xc_2, yc_2`: Center of the second rectangle
