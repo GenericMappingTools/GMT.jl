@@ -31,11 +31,12 @@ end
 
 Image/Grid reprojection and warping function.
 
-### Parameters
+### Args
 - `indata`:  Input data. It can be a file name, a GMTgrid or GMTimage object or a GDAL dataset
 - `options`: List of options. The accepted options are the ones of the gdal_translate utility.
             This list can be in the form of a vector of strings, or joined in a single string.
             The accepted options are the ones of the gdalwarp utility.
+
 - `kwargs`: Besides what was mentioned above one can also use `meta=metadata`, where `metadata`
             is a string vector with the form "NAME=...." for each of its elements. This data
             will be recognized by GDAL as Metadata.
@@ -54,14 +55,15 @@ end
 
 Fill selected raster regions by interpolation from the edges.
 
-### Parameters
+### Args
 - `data`:  Input data. It can be a file name, a GMTgrid or GMTimage object.
+
+### Kwargs
 - `nodata`: The nodata value that will be used to fill the regions. Otherwise use the `nodata` attribute of `indata`
    if it exists, or NaN if none of the above were set.
-- `kwargs`:
-  - band: the band number. Default is first layer in `indata` 
-  - maxdist: the maximum number of cels to search in all directions to find values to interpolate from. Default, fills all.
-  - nsmooth: the number of 3x3 smoothing filter passes to run (0 or more).
+- band: the band number. Default is first layer in `indata` 
+- maxdist: the maximum number of cels to search in all directions to find values to interpolate from. Default, fills all.
+- nsmooth: the number of 3x3 smoothing filter passes to run (0 or more).
 
 ### Returns
 The modified input `data`
