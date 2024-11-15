@@ -683,10 +683,13 @@ end
 """
     FV = flatfv(I::Union{GMTimage, AbstractString}; shape=nothing, level=0.0) ->GMTfv
 
-Create a flat 3D surface from an image and a set of xyz or just xy coordinates.
+Create a flat 3D surface from an image and a set of xyz or xy coordinates.
 
-This function creates face for each pixel in the image that is inside the `shape` and assigns the
-face's color from that of the image. So be careful that the image is not too large.
+This function creates a face for each pixel in the image that is inside the `shape` and assigns the
+face's color from that of the image. So be careful that the image is not too large. As explained below,
+this function creates flat surfaces in any of the xy, xz or yz planes. While this may seam a big
+limitation, it can be circumvented by a posterior rotation of the image with the help of a rotation
+matrix created with the `eulermat` function.
 
 ### Args
 - `I`: A `GMTimage` object or a file name of an image.
@@ -717,7 +720,16 @@ function flatfv(I::Union{GMTimage, AbstractString}; shape=:n, level=0.0)::GMTfv
 	end
 
 	_I = forceRGB(I)
-	n_rows::Int, n_cols::Int = size(_I.image)
+	n_cols::Int, n_rows::Int = getsize(_I)	# Works for both 'regular' and GDAL transposed images
+
+	hasAlphaMask = (length(_I.layout) == 4 && _I.layout[4] == 'A')
+	if hasAlphaMask
+		if (_I.layout[3] == 'B')				# Band interleaved
+			_masca = (_I.image[:, :, 4] .== 255)'
+		else									# Pixel interleaved
+			_masca = reshape((_I.image[4:4:end] .== 255), n_cols, n_rows)'
+		end
+	end
 
 	if (shape == :circle || shape == :circ || shape == :ellipse)
 		X,Y = meshgrid(linspace(0, 1, n_cols+1), linspace(1, 0, n_rows+1))
@@ -754,15 +766,30 @@ function flatfv(I::Union{GMTimage, AbstractString}; shape=:n, level=0.0)::GMTfv
 	end
 	doMask = !isempty(masca)
 
+	if (hasAlphaMask)
+		masca = doMask ? masca .& _masca : _masca
+		doMask = true
+	end
+
 	FV = surf2fv(X, Y, Z, type=:quad, mask=masca)
 	n_colors = doMask ? sum(masca) : (n_rows * n_cols)
 	cor = Vector{String}(undef, n_colors)
 
 	kk = 0
-	@inbounds for n = 1:n_cols, m = 1:n_rows
-		doMask && !masca[m,n] && continue
-		k = (m-1) * n_cols * 3 + (n-1) * 3
-		cor[kk+=1] = @sprintf("-G#%.2x%.2x%.2x", _I[k+=1], _I[k+=1], _I[k+=1])
+	if (_I.layout[3] == 'P')		# Pixel interleaved
+		n_interleaved = (length(_I.layout) == 4 && _I.layout[4] == 'A') ? 4 : 3
+		@inbounds for n = 1:n_cols, m = 1:n_rows
+			doMask && !masca[m,n] && continue
+			k = (m-1) * n_cols * n_interleaved + (n-1) * n_interleaved
+			cor[kk+=1] = @sprintf("-G#%.2x%.2x%.2x", _I[k+=1], _I[k+=1], _I[k+=1])
+		end
+	else							# Band interleaved
+		nxy, nxy2 = n_rows * n_cols, n_rows * n_cols * 2
+		@inbounds for n = 1:n_cols, m = 1:n_rows
+			doMask && !masca[m,n] && continue
+			k = (m-1) * n_cols + n
+			cor[kk+=1] = @sprintf("-G#%.2x%.2x%.2x", _I[k], _I[k+nxy], _I[k+nxy2])
+		end
 	end
 
 	FV.color, FV.isflat = [cor], true
