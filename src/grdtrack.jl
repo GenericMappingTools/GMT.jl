@@ -4,58 +4,10 @@
 Interpolates the grid(s) at the positions in the table and returns the table with the
 interpolated values added as (one or more) new columns.
 
-See full GMT (not the `GMT.jl` one) docs at [`grdtrack`]($(GMTdoc)/grdtrack.html)
-
-Parameters
-----------
-
-- **A** | **interp_path** | **resample** :: [Type => Str]		`Arg = f|p|m|r|R[+l]`
-
-    For track resampling (if `crossprofile` or `profile` are set) we can select how this is to be performed. 
-- **C** | **crossprofile** :: [Type => Str]		`Arg = length/ds[/spacing][+a|+v][l|r]`
-
-    Use input line segments to create an equidistant and (optionally) equally-spaced set of crossing
-    profiles along which we sample the grid(s)
-- **D** | **dfile** :: [Type => Str]  
-
-    In concert with `crossprofile` we can save the (possibly resampled) original lines to the file dfile
-- **E** | **profile** :: [Type => Str]
-
-    Instead of reading input track coordinates, specify profiles via coordinates and modifiers.
-- **F** | **critical** :: [Type => Str]
-
-    Find critical points along each cross-profile as a function of along-track distance. Requires
-    `crossprofile` and a single input grid.
-- **G** | **grid** :: [Type => Str | GMTgrid | Tuple(GMTgrid's)]
-
-- **N** | **no_skip** | **noskip** :: [Type => Bool]
-
-- $(_opt_R)
-- **S** | **stack** :: [Type => Str]
-
-- **T** | **radius** :: [Type => Number, Str | []]
-
-- **Z** | **z_only** :: [Type => Bool]
-
-- $(opt_V)
-- $(_opt_bi)
-- $(opt_bo)
-- $(_opt_di)
-- $(opt_e)
-- $(_opt_f)
-- $(opt_g)
-- $(_opt_h)
-- $(_opt_i)
-- $(opt_n)
-- $(opt_o)
-- $(opt_s)
-- $(opt_w)
-- $(opt_swap_xy)
-
 When using two numeric inputs and no G option, the order of the x,y and grid is not important.
-That is, both of this will work: ``D = grdtrack([0 0], G);``  or  ``D = grdtrack(G, [0 0]);`` 
+That is, both of this will work: ``D = grdtrack([0 0], Grid);``  or  ``D = grdtrack(Grid, [0 0]);`` 
 
-To see the full documentation type: ``@? grdtrack``
+To see the documentation type: ``@? grdtrack``
 """
 function grdtrack(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
@@ -74,10 +26,9 @@ function grdtrack(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
 	# Because we allow arg1 and arg2 to either exist or not and also contain data & grid in any order
 	if (arg1 !== nothing && arg2 !== nothing)
-		arg2_is_table = false;	arg1_is_grid = false
-		(isa(arg1, GMTgrid)) && (arg1_is_grid = true)
-		(isa(arg2, Array) || isa(arg2, GMTdataset)) && (arg2_is_table = true)
-		if (arg2_is_table && arg1_is_grid)			# Swap the arg1, arg2
+		arg1_is_grid, arg1_is_fv = isa(arg1, GMTgrid), isa(arg1, GMTfv)
+		arg2_is_table = (isa(arg2, Array) || isa(arg2, GMTdataset) || isa(arg1, GMTfv))
+		if (arg2_is_table && (arg1_is_grid || arg1_is_fv))			# Swap the arg1, arg2
 			arg1, arg2 = arg2, arg1
 		end
 	end
@@ -89,15 +40,25 @@ function grdtrack(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 	end
 
 	if (isa(grid_tuple, Tuple))
-		R = common_grd(d, "grdtrack " * cmd, (got_fname != 0) ? grid_tuple : tuple(arg1, grid_tuple...))
+		if (isa(arg1, GMTfv))		# The case where we are interpolating a FacesVertices
+			view(arg1.verts, :, 3) .= common_grd(d, "grdtrack -o2 " * cmd, (got_fname != 0) ? grid_tuple : tuple(view(arg1.verts, :, 1:2), grid_tuple...))
+		else
+			R = common_grd(d, "grdtrack " * cmd, (got_fname != 0) ? grid_tuple : tuple(arg1, grid_tuple...))
+		end
 	else
-		R = common_grd(d, "grdtrack " * cmd, arg1, arg2)
+		if (isa(arg1, GMTfv))
+			view(arg1.verts, :, 3) .= common_grd(d, "grdtrack -o2 " * cmd, view(arg1.verts, :, 1:2), arg2)
+		else
+			R = common_grd(d, "grdtrack " * cmd, arg1, arg2)
+		end
 	end
+	
+	isa(arg1, GMTfv) && (arg1.bbox[5:6] = [extrema(view(arg1.verts, :, 3))...]; return arg1)
 
 	# Assign column names
 	if (!isa(R, String))			# It is a string when Vd=2
 		prj = isa(arg1, GMTgrid) ? arg1.proj4 : (isa(arg2, GMTgrid) ? arg2.proj4 : "")
-		is_geog = (contains(prj, "=longlat") || contains(prj, "=latlong")) ? true : false
+		is_geog = isgeog(prj)
 		(coln = (is_geog) ? ["Lon", "Lat"] : ["X", "Y"])
 		if (isa(R, GMTdataset))
 			(size(R.data, 2) == 3) ? append!(coln, ["Z"]) : append!(coln, ["Z$(i-2)" for i=3:size(R.data, 2)])
