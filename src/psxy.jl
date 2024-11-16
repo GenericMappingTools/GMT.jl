@@ -58,7 +58,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 
 	if (is3D && isa(arg1, GMTfv))			# case of 3D faces
 		arg1 = (is_in_dict(d, [:replicate]) !== nothing) ? replicant(arg1, d) : deal_faceverts(arg1, d; del=find_in_dict(d, [:nocull])[1] === nothing)
-		(!O && !haskey(d, :aspect3) && is_in_dict(d, [:JZ :Jz :zsize :zscale]) === nothing) && (d[:aspect3] = "equal")
+		(!O && !haskey(d, :aspect3) && is_in_dict(d, [:JZ :Jz :zsize :zscale]) === nothing && !isgeog(arg1)) && (d[:aspect3] = "equal")
 	elseif (is_gridtri)
 		arg1 = sort_visible_triangles(arg1)
 		is_in_dict(d, [:Z :level :levels]) === nothing && (d[:Z] = tri_z(arg1))
@@ -1605,7 +1605,7 @@ function sort_visible_faces(FV::GMTfv, azim, elev; del::Bool=true)::Tuple{GMTfv,
 		first_face_vis = false
 	end
 	sum(size.(FV.faces_view, 1)) < sum(size.(FV.faces, 1) / 3) &&
-		@warn("More than 2/3 of the faces found invisible (actually: $(100 - sum(size.(FV.faces_view, 1)) / sum(size.(FV.faces, 1))*100)%). This often indicates that the Z and X,Y units are not the same. Consider setting `bfculling` to false or using the `zscale` field of the `FV` input.")
+		@warn("More than 2/3 of the faces found invisible (actually: $(100 - sum(size.(FV.faces_view, 1)) / sum(size.(FV.faces, 1))*100)%). This often indicates that the Z and X,Y units are not the same. Consider setting `bfculling` to false or use the `nocull=true` option, or using the `zscale` field of the `FV` input.")
 
 	return FV, projs
 end

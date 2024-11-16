@@ -29,18 +29,6 @@ struct CTRLstruct2
 	fname::Vector{String}			# Store the full name of PS being constructed
 end
 
-# The file deps/deps.jl is created by compile from the deps/build.jl
-# On Windows we use a system wide GMT if it is found from path or install it from a GMT installer. It is a MSVC binary.
-# On Unix the default is to use the GMT_jll artifact. However this can be changed to use a system wide GMT installation.
-# To swap to a system wide GMT installation, do (in REPL):
-# 1- ENV["SYSTEMWIDE_GMT"] = 1;
-# 2- import Pkg; Pkg.build("GMT")
-# 3- restart Julia
-#
-# Note the above will work up until some other reason triggers a Julia recompile, where the JLL artifacts 
-# will be used again. To make the ENV["SYSTEMWIDE_GMT"] = 1 solution permanent, declare a "SYSTEMWIDE_GMT"
-# environment variable permanently in your .bashrc (or whatever).
-
 depfile = joinpath(dirname(@__FILE__),"..","deps","deps.jl")	# File with shared lib names
 isfile(depfile) && include(depfile)		# This loads the shared libs names in the case of NON-JLL, otherwise just return
 
@@ -420,9 +408,21 @@ end
 GMT manipulating geographic and Cartesian data sets (including filtering, trend fitting, gridding, projecting, etc.)
 and producing high quality illustrations.
 
-Full modules list and docs in terse GMT style at $(GMTdoc)
+Documentation for GMT.jl at https://www.generic-mapping-tools.org/GMTjl_doc
 
-Documentation for GMT.jl at https://www.generic-mapping-tools.org/GMT.jl/latest/
+---
+
+The GMT.jl default is to use the GMT_jll artifact. However, this can be changed to use a system wide GMT installation.
+All info is stored in the `deps/deps.jl` file that is created by compile from the `deps/build.jl`.
+To swap to a system wide GMT installation, do (in REPL):
+
+- ENV["SYSTEMWIDE_GMT"] = 1;
+- import Pkg; Pkg.build("GMT")
+- restart Julia
+
+Note the above will work up until some other reason triggers a Julia recompile, where the JLL artifacts 
+will be used again. To make the ENV["SYSTEMWIDE_GMT"] = 1 solution permanent, declare a "SYSTEMWIDE_GMT"
+environment variable permanently in your .bashrc (or whatever).
 """
 GMT
 

@@ -1458,6 +1458,7 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 	getproj(I::GMTimage; proj4::Bool=false, wkt::Bool=false, epsg::Bool=false) = _getproj(I, proj4, wkt, epsg)
 	getproj(D::GMTdataset; proj4::Bool=false, wkt::Bool=false, epsg::Bool=false) = _getproj(D, proj4, wkt, epsg)
 	getproj(D::Vector{<:GMTdataset}; proj4::Bool=false, wkt::Bool=false, epsg::Bool=false) = _getproj(D[1], proj4, wkt, epsg)
+	getproj(F::GMTfv;  proj4::Bool=false, wkt::Bool=false, epsg::Bool=false) = _getproj(F, proj4, wkt, epsg)
 
 	getmetadata(ds::AbstractDataset) = GDALGetMetadata(ds.ptr, C_NULL)
 	function getmetadata(name::AbstractString)

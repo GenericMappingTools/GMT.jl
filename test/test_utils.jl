@@ -12,7 +12,7 @@
 
 	A = GMTdataset(data=[1. 2; 3 4], proj4="merc");
 	B = GMTdataset(data=[1. 2; 3 4]);
-	GMT.refsystem_A2B!(A, B)
+	GMT.copyrefA2B!(A, B);
 	@test A.proj4 == B.proj4
 	
 	@test GMT.wrap2pi(2π) < eps()
