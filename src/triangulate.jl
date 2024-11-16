@@ -277,13 +277,13 @@ function grid2tri(G::Union{GMTgrid, String}, G2=nothing; thickness=0.0, level=fa
 		Dwall = vwall(Dbnd_t, view(Dbnd_b, :, 3))
 		if (bottom == 1)
 			append!(Dt_b, Dwall, Dt_t)					# If including bottom too, start with it and add the wall and top.
-			(geog == 0) ? refsystem_A2B!(Dbnd_t, Dt_b) : (Dt_b[1].proj4 = prj4WGS84)	# Set ref sys
+			(geog == 0) ? copyrefA2B!(Dbnd_t, Dt_b) : (Dt_b[1].proj4 = prj4WGS84)	# Set ref sys
 			set_dsBB!(Dt_b, false)
 			return Dt_b
 		end
 	else
 		if (top_only == 1)								# Get out now if only the top surface is requested
-			(geog == 0) ? refsystem_A2B!(Dbnd_t, Dt_t) : (Dt_t[1].proj4 = prj4WGS84)	# Set ref sys
+			(geog == 0) ? copyrefA2B!(Dbnd_t, Dt_t) : (Dt_t[1].proj4 = prj4WGS84)	# Set ref sys
 			return Dt_t
 		end
 		Dwall = vwall(Dbnd_t, thickness, level != 0)
@@ -294,7 +294,7 @@ function grid2tri(G::Union{GMTgrid, String}, G2=nothing; thickness=0.0, level=fa
 		Dwall[1].comment[1] = "vwall+gridtri_top"
 		append!(Dwall[1].comment, ["$(Dt_t[1].ds_bbox[5])"])	# Save the top surface minimum to help making a default cpt.
 	end
-	(geog == 0) ? refsystem_A2B!(Dbnd_t, Dwall) : (Dwall[1].proj4 = prj4WGS84)			# Set ref sys
+	(geog == 0) ? copyrefA2B!(Dbnd_t, Dwall) : (Dwall[1].proj4 = prj4WGS84)			# Set ref sys
 	set_dsBB!(Dwall, false)
 	return Dwall
 end

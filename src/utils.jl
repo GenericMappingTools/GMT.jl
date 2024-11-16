@@ -1073,7 +1073,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    refsystem_A2B!(A, B) -> nothing
+    copyrefA2B!(A, B) -> nothing
 
 Copy the referencing information in object `A` to object `B`.
 
@@ -1081,7 +1081,7 @@ Both `A` and `B` can be either a GMTgrid or GMTimage or GMTdataset or vectors of
 Attention that any previous referencing information stored in object `A` will be lost
 (replaced by that on object `B`).
 """
-function refsystem_A2B!(A, B)
+function copyrefA2B!(A, B)
 	prj, wkt, epsg = isa(A, Vector) ? (A[1].proj4, A[1].wkt, A[1].epsg) : (A.proj4, A.wkt, A.epsg)
 	isa(B, Vector) ? (B[1].proj4 = prj; B[1].wkt = wkt; B[1].epsg = epsg) : (B.proj4 = prj; B.wkt = wkt; B.epsg = epsg)
 	return nothing

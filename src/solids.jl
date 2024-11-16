@@ -344,7 +344,15 @@ Create an extruded 2D/3D shape.
 
 ### Kwargs
 - `base`: The base height of the 2D shape to extrude. Default is 0. Ignored if the shape is a 3D polygon.
-- `closed`: If true (the default), close the shapre at top and bottom.
+- `closed`: If true (the default), close the shape at top and bottom.
+
+### Example
+Extrude the Swisserland
+```julia
+	Dsw = coast(M=true, DCW=(country=:CH, file=:ODS));	# Get the Swiss border
+	FV = extrude(Dsw, 0.2)
+	viz(FV)
+```
 """
 function extrude(shape::Matrix{<:AbstractFloat}, h; base=0.0, closed=true)::GMTfv
 	np = size(shape, 1)
@@ -369,7 +377,11 @@ function extrude(shape::Matrix{<:AbstractFloat}, h; base=0.0, closed=true)::GMTf
 end
 
 # ----------------------------------------------------------------------------
-extrude(shape::GMTdataset, h; base=0.0, closed=true)::GMTfv = extrude(shape.data, h; base=base, closed=closed)
+function extrude(shape::GMTdataset, h; base=0.0, closed=true)::GMTfv
+	FV = extrude(shape.data, h; base=base, closed=closed)
+	copyrefA2B!(shape, FV)
+	return FV
+end
 
 # ----------------------------------------------------------------------------
 """
@@ -740,14 +752,14 @@ function flatfv(I::Union{GMTimage, AbstractString}; shape=:n, level=0.0)::GMTfv
 		else
 			masca = maskregion(X, Y, circlepts(0.5; center=(0.5, 0.5)))			# A normalized circle
 		end
-	elseif (isa(shape, Array{<:AbstractFloat}))
+	elseif (isa(shape, Array{<:AbstractFloat}) || isa(shape, GMTdataset))
 		if (size(shape, 2) == 2)
 			xc = extrema(view(shape, :, 1))			# Start and end coordinates
 			yc = extrema(view(shape, :, 2))
 			X,Y = meshgrid(linspace(xc[1], xc[2], n_cols+1), linspace(yc[2], yc[1], n_rows+1))
 			Z = fill(Float64(level), n_rows+1, n_cols+1)
 			masca = maskregion(X, Y, shape)
-		elseif (size(shape, 2) == 3)				# A cicle but not necessarily in the xy plane
+		elseif (size(shape, 2) == 3)				# A 3D polygon but not necessarily in the xy plane
 			c0 = std(diff(view(shape, :, 1), dims=1)) ≈ 0 ? 1 : std(diff(view(shape, :, 2), dims=1)) ≈ 0 ? 2 :
 			     std(diff(view(shape, :, 3), dims=1)) ≈ 0 ? 3 : error("'shape' is not a circle in the horizontal or vertical planes.")
 			two_col = (c0 == 1) ? (2,3) : (c0 == 2) ? (1,3) : (1,2)		# The indices of the non-zero columns
