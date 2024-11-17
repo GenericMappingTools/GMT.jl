@@ -7,7 +7,7 @@ interpolated values added as (one or more) new columns.
 When using two numeric inputs and no G option, the order of the x,y and grid is not important.
 That is, both of this will work: ``D = grdtrack([0 0], Grid);``  or  ``D = grdtrack(Grid, [0 0]);`` 
 
-To see the documentation type: ``@? grdtrack``
+To see the documentation, type: ``@? grdtrack``
 """
 function grdtrack(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
@@ -27,7 +27,7 @@ function grdtrack(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 	# Because we allow arg1 and arg2 to either exist or not and also contain data & grid in any order
 	if (arg1 !== nothing && arg2 !== nothing)
 		arg1_is_grid, arg1_is_fv = isa(arg1, GMTgrid), isa(arg1, GMTfv)
-		arg2_is_table = (isa(arg2, Array) || isa(arg2, GMTdataset) || isa(arg1, GMTfv))
+		arg2_is_table = (isa(arg2, Array) || isa(arg2, GMTdataset) || isa(arg2, GMTfv))
 		if (arg2_is_table && (arg1_is_grid || arg1_is_fv))			# Swap the arg1, arg2
 			arg1, arg2 = arg2, arg1
 		end
@@ -103,4 +103,4 @@ function parse_G_grdtrk(d::Dict, symbs::Vector{<:Symbol}, cmd::String, arg1, arg
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdtrack(arg1, arg2=nothing; kw...) = grdtrack("", arg1, arg2; kw...)
+grdtrack(arg1, arg2=nothing; kw...) = isa(arg2, String) ? grdtrack(arg2, arg1; kw...) : grdtrack("", arg1, arg2; kw...)

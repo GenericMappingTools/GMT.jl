@@ -187,8 +187,8 @@ function common_insert_R!(d::Dict, O::Bool, cmd0, I_G; is3D=false)
 	end
 	(opt_R != "") && (CTRL.pocket_R[1] = " -R" * opt_R)
 end
-function isimgsize(GI)
-	width, height = (GI.layout != "" && GI.layout[2] == 'C') ? (size(GI,2), size(GI,1)) : (length(GI.x), length(GI.y)) .- GI.registration
+function isimgsize(GI)::Bool
+	width, height = getsize(GI)
 	(GI.range[2] - GI.range[1]) == width && (GI.range[4] - GI.range[3]) == height
 end
 
