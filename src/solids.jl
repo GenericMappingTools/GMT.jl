@@ -725,12 +725,33 @@ viz(FV)
 """
 function flatfv(I::Union{GMTimage, AbstractString}; shape=:n, level=0.0)::GMTfv
 
+	function crop_if_possible(I::Union{GMTimage, AbstractString}, shape)
+		# If the image is referenced crop it to the 'shape's bounding box
+		if isa(I, AbstractString)
+			D = grdinfo(I, C=1)
+			isnoref = (D[2] - D[1] == D[9] && D[7] == 1) && (D[4] - D[3] == D[10] && D[8] == 1)
+		else
+			isnoref = isimgsize(I)		# A function from grdimage.jl
+		end
+		isnoref && return I				# A plain image with no coords
+	
+		x = extrema(view(shape, :, 1))	# xx minmax
+		y = extrema(view(shape, :, 2))
+		isa(I, AbstractString) && (x[1] < D[1] || x[2] > D[2] || y[1] < D[3] || y[2] > D[4]) &&
+			error("The 'shape' is outside the image.")
+		isa(I, GMTimage) && (x[1] < I.range[1] || x[2] > I.range[2] || y[1] < I.range[3] || y[2] > I.range[4]) &&
+			error("The 'shape' is outside the image.")
+	
+		return isa(I, AbstractString) ? gmtread(I, R=(x[1], x[2], y[1], y[2]), V=:q) : crop(I, R=(x[1], x[2], y[1], y[2]))
+	end
+
 	function forceRGB(I)::GMTimage{UInt8, 3}
 		I_ = isa(I, GMTimage) ? I : gmtread(I)::GMTimage
 		size(I_, 3) == 1 && (I_ = ind2rgb(I_))
 		return I_
 	end
 
+	I = crop_if_possible(I, shape)
 	_I = forceRGB(I)
 	n_cols::Int, n_rows::Int = getsize(_I)	# Works for both 'regular' and GDAL transposed images
 
@@ -784,6 +805,7 @@ function flatfv(I::Union{GMTimage, AbstractString}; shape=:n, level=0.0)::GMTfv
 	end
 
 	FV = surf2fv(X, Y, Z, type=:quad, mask=masca)
+	copyrefA2B!(_I, FV)
 	n_colors = doMask ? sum(masca) : (n_rows * n_cols)
 	cor = Vector{String}(undef, n_colors)
 
