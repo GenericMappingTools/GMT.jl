@@ -45,7 +45,7 @@
 		img = mat2img([UInt8(i) for i=1:8, j=1:8])
 		fv = flatfv(img)
 		@test isa(fv, GMTfv)
-		@test fv.isflat == true
+		@test fv.isflat[1] == true
 		@test length(fv.color[1]) == 64
 	
 		# Test with circle shape
