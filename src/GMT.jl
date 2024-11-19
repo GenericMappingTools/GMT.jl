@@ -385,13 +385,6 @@ end
 #Base.precompile(Tuple{typeof(upGMT),Bool, Bool})		# Here it doesn't print anything.
 
 function __init__(test::Bool=false)
-	if !isfile(libgmt) || (!Sys.iswindows() && (!isfile(libgdal) || !isfile(libproj)))
-		println("\nDetected a previously working GMT.jl version but something has broken meanwhile.\n" *
-		"(like updating your GMT instalation). Restart Julia and run `import Pkg; Pkg.precompile()`")
-		return
-	end
-	(GMTver < v"6.4.0") && @warn("You should not be using a GMT version older than 6.4. Somethings will not work.")
-
 	clear_sessions(3600)		# Delete stray sessions dirs older than 1 hour
 	G_API[1] = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS)	# (0.010179 sec)
 	theme_modern()				# Set the MODERN theme and some more gmtlib_setparameter() calls
