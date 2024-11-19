@@ -17,7 +17,8 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	else		        gmt_proggy = (IamModern[1]) ? "plot "    : "psxy "
 	end
 
-	(arg1 !== nothing && !isa(arg1, GDtype) && !isa(arg1, Matrix{<:Real}) && !isa(arg1, GMTfv)) && (arg1 = tabletypes2ds(arg1, ((val = find_in_dict(d, [:interp])[1]) !== nothing) ? interp=val : interp=0))
+	(arg1 !== nothing && !isa(arg1, GDtype) && !isa(arg1, Matrix{<:Real}) && !isa(arg1, GMTfv)) &&
+		(arg1 = tabletypes2ds(arg1, ((val = find_in_dict(d, [:interp])[1]) !== nothing) ? interp=val : interp=0))
 	(caller != "bar") && (arg1 = if_multicols(d, arg1, is3D))	# Repeat because DataFrames or ODE's have skipped first round
 	(!O) && (LEGEND_TYPE[1] = legend_bag())		# Make sure that we always start with an empty one
 
@@ -59,6 +60,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	if (is3D && isa(arg1, GMTfv))			# case of 3D faces
 		arg1 = (is_in_dict(d, [:replicate]) !== nothing) ? replicant(arg1, d) : deal_faceverts(arg1, d; del=find_in_dict(d, [:nocull])[1] === nothing)
 		(!O && !haskey(d, :aspect3) && is_in_dict(d, [:JZ :Jz :zsize :zscale]) === nothing && !isgeog(arg1)) && (d[:aspect3] = "equal")
+		(!O && !haskey(d, :aspect3) && isgeog(arg1)) && (d[:aspect] = "equal")
 	elseif (is_gridtri)
 		arg1 = sort_visible_triangles(arg1)
 		is_in_dict(d, [:Z :level :levels]) === nothing && (d[:Z] = tri_z(arg1))
@@ -85,7 +87,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		def_J = " -JX" * split(DEF_FIG_SIZE, '/')[1]
 		cmd, opt_J::String = parse_J(d, cmd, def_J)
 	else
-		def_J = (is_ternary) ? " -JX" * split(DEF_FIG_SIZE, '/')[1] : ""		# Gives "-JX14c" 
+		def_J = (is_ternary) ? " -JX" * split(DEF_FIG_SIZE, '/')[1] : ""		# Gives "-JX15c" 
 		@inbounds (!is_ternary && isa(arg1, GMTdataset) && length(arg1.ds_bbox) >= 4) && (CTRL.limits[1:4] = arg1.ds_bbox[1:4])
 		@inbounds (!is_ternary && isa(arg1, Vector{<:GMTdataset}) && length(arg1[1].ds_bbox) >= 4) && (CTRL.limits[1:4] = arg1[1].ds_bbox[1:4])
 		(!is_ternary && CTRL.limits[7:10] == [0,0,0,0]) && (CTRL.limits[7:10] = CTRL.limits[1:4])	# Start with plot=data limits
@@ -1559,23 +1561,28 @@ function sort_visible_faces(FV::GMTfv, azim, elev; del::Bool=true)::Tuple{GMTfv,
 	view_vec = [sin_az * cos_el, cos_az * cos_el, sin_el]
 	projs = Float64[]
 
-	!FV.bfculling && (del = false)			# Do not delete if bfculling is set to false (for example if FV is not closed)
-	isPlane = (FV.isflat || FV.bbox[1] == FV.bbox[2]) || (FV.bbox[3] == FV.bbox[4]) || (FV.bbox[5] == FV.bbox[6])	# Is this FV a plane?
-	isPlane && (del = false)				# Planes have no invisibles
-	needNormals = isempty(FV.color[1])		# If we have no color, we need to compute the normals
+	#!FV.bfculling && (del = false)			# Do not delete if bfculling is set to false (for example if FV is not closed)
+	#isPlane = (FV.isflat || FV.bbox[1] == FV.bbox[2]) || (FV.bbox[3] == FV.bbox[4]) || (FV.bbox[5] == FV.bbox[6])	# Is this FV a plane?
+	#isPlane && (del = false)				# Planes have no invisibles
+	#needNormals = isempty(FV.color[1])		# If we have no color, we need to compute the normals
 	
-	isPlane && !needNormals && return FV, projs		# Nothing to do here in this case.
+	#isPlane && !needNormals && return FV, projs		# Nothing to do here in this case.
 	
-	have_colors = !isempty(FV.color[1])				# Does this FV have a color for each polygon?
 	first_face_vis = true
-	for k = 1:numel(FV.faces)				# Loop over number of face groups (we can have triangles, quads, etc)
-		n_faces::Int = size(FV.faces[k], 1)	# Number of faces (polygons)
+	for k = 1:numel(FV.faces)					# Loop over number of face groups (we can have triangles, quads, etc)
+		isPlane = FV.isflat[k]
+		needNormals = isempty(FV.color[1])		# If we have no color, we need to compute the normals
+		isPlane && !needNormals && continue		# Nothing to do here in this case.
+		del = !isPlane && FV.bfculling			# bfculling should become a vector too?
+		have_colors = !isempty(FV.color[1])		# Does this FV have a color for each polygon?
+
+		n_faces::Int = size(FV.faces[k], 1)		# Number of faces (polygons)
 		this_face_nverts::Int = size(FV.faces[k], 2)
 		tmp = zeros(this_face_nverts, 3)
 		del && (isVisible = fill(false, n_faces))
 		dists = NTuple{2,Float64}[]
 		_projs = Float64[]
-		for face = 1:n_faces				# Loop over the faces of this group
+		for face = 1:n_faces					# Loop over the faces of this group
 			for c = 1:3, v = 1:this_face_nverts								# Build the polygon from the FV collection
 				tmp[v,c] = FV.verts[FV.faces[k][face,v], c]
 			end
@@ -1604,7 +1611,8 @@ function sort_visible_faces(FV::GMTfv, azim, elev; del::Bool=true)::Tuple{GMTfv,
 		have_colors && (FV.color[k] = FV.color[k][ind])
 		first_face_vis = false
 	end
-	sum(size.(FV.faces_view, 1)) < sum(size.(FV.faces, 1) / 3) &&
+	vis = sum(size.(FV.faces_view, 1))		# If = 0, it must have been a plane.
+	vis > 0 && vis < sum(size.(FV.faces, 1) / 3) &&
 		@warn("More than 2/3 of the faces found invisible (actually: $(100 - sum(size.(FV.faces_view, 1)) / sum(size.(FV.faces, 1))*100)%). This often indicates that the Z and X,Y units are not the same. Consider setting `bfculling` to false or use the `nocull=true` option, or using the `zscale` field of the `FV` input.")
 
 	return FV, projs

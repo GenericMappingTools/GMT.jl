@@ -5,6 +5,10 @@
 
 Create an icosahedron mesh with radius `r`. 
 
+### Args
+- `r`: the radius of the enclosing sphere.
+
+### Kwargs
 - `radius`: the keyword `radius` is an alternative to the positional argument `r`.
 - `origin`: A tuple of three numbers defining the origin of the body. Default is `(0.0, 0.0, 0.0)`.
 """
@@ -61,6 +65,10 @@ end
 
 Create an octahedron mesh with radius `r`. 
 
+### Args
+- `r`: the radius of the enclosing sphere.
+
+### Kwargs
 - `radius`: the keyword `radius` is an alternative to the positional argument `r`.
 - `origin`: A tuple of three numbers defining the origin of the body. Default is `(0.0, 0.0, 0.0)`.
 """
@@ -96,6 +104,10 @@ end
 
 Create an dodecahedron mesh with radius `r`. 
 
+### Args
+- `r`: the radius of the enclosing sphere.
+
+### Kwargs
 - `radius`: the keyword `radius` is an alternative to the positional argument `r`.
 - `origin`: A tuple of three numbers defining the origin of the body. Default is `(0.0, 0.0, 0.0)`.
 """
@@ -153,6 +165,10 @@ end
 
 Create a tetrahedron mesh with radius `r`. 
 
+### Args
+- `r`: the radius of the enclosing sphere.
+
+### Kwargs
 - `radius`: the keyword `radius` is an alternative to the positional argument `r`.
 - `origin`: A tuple of three numbers defining the origin of the body. Default is `(0.0, 0.0, 0.0)`.
 """
@@ -185,6 +201,10 @@ end
 
 Create a cube mesh with radius `r`. 
 
+### Args
+- `r`: the radius of the enclosing sphere.
+
+### Kwargs
 - `radius`: the keyword `radius` is an alternative to the positional argument `r`.
 - `origin`: A tuple of three numbers defining the origin of the body. Default is `(0.0, 0.0, 0.0)`.
 """
@@ -227,6 +247,10 @@ of a sphere that have near uniform edge lenghts.  The algorithm starts with a re
 icosahedron. Next this icosahedron is refined `n` times, while nodes are pushed to a sphere
 surface with radius `r` at each iteration.
 
+### Args
+- `r`: the radius of the sphere.
+
+### Kwargs
 - `radius`: the keyword `radius` is an alternative to the positional argument `r`.
 - `n`: is the number of iterations used to obtain the sphere from the icosahedron.
 - `center`: A tuple of three numbers defining the center of the sphere.
@@ -317,6 +341,7 @@ end
 
 Create a torus mesh with radius `r`. 
 
+### Kwargs
 - `r`: the inner radius of the torus.
 - `R`: the outer radius of the torus.
 - `center`: A 3-element array or tuple of three numbers defining the origin of the body. Default is `(0.0, 0.0, 0.0)`.
@@ -711,6 +736,7 @@ matrix created with the `eulermat` function.
    But it can also be a can also be a Symbol; one of `:circle`, `:circ`, `:ellipse`. In this later case, we
    compute a normalized circle or ellipse with dimensions taken from number of rows and columns in `I`.
    The ellipse (with a horizontal major) eccentricity  is computed from the ratio of the number of rows and columns.
+
 - `level`: In case that `shape` is a polygon in the xy plane, this is the level or height of that flat surface.
    For other plane orientations, this level is extracted from the column of constant values in `shape`.
 
@@ -723,7 +749,7 @@ FV = flatfv("image.png", shape=:circle, level=1.0);
 viz(FV)
 ```
 """
-function flatfv(I::Union{GMTimage, AbstractString}; shape=:n, level=0.0)::GMTfv
+function flatfv(I::Union{GMTimage, AbstractString}; shape=:n, level=0.0, thickness=0.0, isbase=false)::GMTfv
 
 	function crop_if_possible(I::Union{GMTimage, AbstractString}, shape)
 		# If the image is referenced crop it to the 'shape's bounding box
@@ -807,8 +833,20 @@ function flatfv(I::Union{GMTimage, AbstractString}; shape=:n, level=0.0)::GMTfv
 	FV = surf2fv(X, Y, Z, type=:quad, mask=masca)
 	copyrefA2B!(_I, FV)
 	n_colors = doMask ? sum(masca) : (n_rows * n_cols)
-	cor = Vector{String}(undef, n_colors)
 
+	# --------------- See if we need to add a vertical wall 
+	n_wall = 0
+	if (thickness != 0)
+		FVwall = vwall(shape, thickness, size(FV.verts,1); isbase=isbase)
+		n_wall = size(FVwall.faces[1], 1)		# Number of wall faces
+
+		FV.verts = vcat(FV.verts, FVwall.verts)
+		FV.faces = vcat(FVwall.faces, FV.faces)
+		mima = extrema(view(FV.verts, :, 3))
+		FV.bbox[5:6] .= mima
+	end
+
+	cor = Vector{String}(undef, n_colors)
 	kk = 0
 	if (_I.layout[3] == 'P')		# Pixel interleaved
 		n_interleaved = (length(_I.layout) == 4 && _I.layout[4] == 'A') ? 4 : 3
@@ -826,6 +864,13 @@ function flatfv(I::Union{GMTimage, AbstractString}; shape=:n, level=0.0)::GMTfv
 		end
 	end
 
-	FV.color, FV.isflat = [cor], true
+	if (n_wall == 0)				# No vertical wall
+		FV.color, FV.isflat = [cor], [true]
+	else
+		cor_wall = Vector{String}(undef, n_wall)
+		for k = 1:n_wall  cor_wall[k] = "-G180"  end
+		FV.color = [cor_wall, cor]
+		FV.isflat = [true, false]
+	end
 	return FV
 end

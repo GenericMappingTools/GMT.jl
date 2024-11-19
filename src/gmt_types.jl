@@ -304,8 +304,8 @@ The fields of this struct are:
 - `color`::Vector{Vector{String}}    A vector with G option colors (in hexadecimal) for each face
 - `bbox`::Vector{Float64}            The vertices BoundingBox
 - `zscale`::Float64                  A multiplicative factor to scale the z values
-- `bfculling`::Bool                  If culling of invisible faces is wished
-- `isflat`::Bool                     If this is a flat mesh
+- `bfculling`::Bool                  If culling of invisible faces is wished. Default is true
+- `isflat`::Vector{Bool}             If this is a flat mesh. Default is false
 - `proj4::String`                    Projection string in PROJ4 syntax (Optional)
 - `wkt::String`                      Projection string in WKT syntax (Optional)
 - `epsg::Int`                        EPSG projection code (Optional)
@@ -318,7 +318,7 @@ Base.@kwdef mutable struct GMTfv{T<:AbstractFloat} <: AbstractArray{T,2}
 	bbox::Vector{Float64}=zeros(6)
 	zscale::Float64=1.0
 	bfculling::Bool=true
-	isflat::Bool=false
+	isflat::Vector{Bool}=[false]
 	proj4::String=""
 	wkt::String=""
 	epsg::Int=0

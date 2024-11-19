@@ -693,10 +693,14 @@ const simple_distinct = ["#e6194b", "#3cb44b", "#ffe119", "#4363d8", "#f58231", 
 """
     FV = fv2fv(F, V; proj="", proj4="", wkt="", epsg=0) -> GMTfv
 
-Create a FacesVerices object from a matrix of faces indices and another matrix of vertices (a Mx3 matrix).
+Create a FacesVertices object from a matrix of faces indices and another matrix of vertices (a Mx3 matrix).
 
-- `F`:  A matrix of faces indices or a vector of matrices when defining more than one body.
+### Args
+- `F`:  A matrix of faces indices or a vector of matrices when defining bodies made of multiple
+   surfaces (cylinders for example).
 - `V`:  A Mx3 matrix of vertices.
+
+### Keyword args
 - `proj` or `proj4`:  A proj4 string for setting the Coordinate Referencing System
 - `wkt`:  A WKT SRS.
 - `epsg`: Same as `proj` but using an EPSG code
@@ -704,8 +708,9 @@ Create a FacesVerices object from a matrix of faces indices and another matrix o
 function fv2fv(F::Vector{<:AbstractMatrix{<:Integer}}, V; zscale=1.0, bfculling=true, proj="", proj4="", wkt="", epsg=0)::GMTfv
 	(isempty(proj4) && !isempty(proj)) && (proj4 = proj)	# Allow both proj4 or proj keywords
 	bbox = extrema(V, dims=1)
+	isflat = zeros(Bool, length(F))			# Needs thinking
 	GMTfv(verts=V, faces=F, bbox=[bbox[1][1], bbox[1][2], bbox[2][1], bbox[2][2], bbox[3][1], bbox[3][2]],
-	      zscale=zscale, bfculling=bfculling, proj4=proj4, wkt=wkt, epsg=epsg)
+	      zscale=zscale, bfculling=bfculling, isflat=isflat, proj4=proj4, wkt=wkt, epsg=epsg)
 end
 
 fv2fv(F::Matrix{<:Integer}, V; zscale=1.0, bfculling=true, proj="", proj4="", wkt="", epsg=0) =

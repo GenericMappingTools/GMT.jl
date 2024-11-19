@@ -103,9 +103,12 @@ end
 """
   triplot(in::Matrix; onlyedges::Bool=false, noplot::Bool=false, kw...)
 
-Plots the 2-D triangulation or Voronoi polygons defined by the points in a matrix
+Plot the 2-D triangulation or Voronoi polygons defined by the points in a matrix
 
+### Args
 - `in`: The input data. Can be either a Mx2 or Mx3 matrix.
+
+### Kwargs
 - `noplot`: Return the computed Delaunay or Veronoi data instead of plotting it (the default).
 - `onlyedges`: By default we compute Delaunay tringles or Veronoi cells as polygons. Use this option as
    `onlyedges=true` to compute multiple line segments.
@@ -117,11 +120,12 @@ Plots the 2-D triangulation or Voronoi polygons defined by the points in a matri
 ### Returns
 A GMTdataset if `noplot=true` or ``nothing`` otherwise.
 
-## Example:
+### Example:
+```julia
+triplot(rand(5,2), voronoi=true, show=true)
 
-  triplot(rand(5,2), voronoi=true, show=true)
-
-  triplot(rand(5,3), lc=:red, show=true)
+triplot(rand(5,3), lc=:red, show=true)
+```
 """
 function triplot(in::Matrix; onlyedges::Bool=false, noplot::Bool=false, first::Bool=true, kw...)
 	d = KW(kw)
@@ -147,13 +151,17 @@ triplot!(in::Matrix; onlyedges::Bool=false, noplot::Bool=false, kw...) = triplot
 """
     trisurf(in, kw...)
 
-Plots the 3-D triangular surface defined by the points in a Mx3 matrix or a GMTdataset with data 
+Plots the 3-D triangular surface.
+
+The triangulation is defined by the points in a Mx3 matrix or a GMTdataset with data 
 x, y, z in the 3 first columns. The triangles are computed with a Delaunay triangulation done internaly.
 Since this is a `plot3d` _avatar_ all options in this function are those of the `plot3d` program.
 
 ### Example
+```julia
     x,y,z = GMT.peaks(N=45, grid=false);
 	trisurf([x[:] y[:] z[:]], pen=0.5, show=true)
+```
 """
 function trisurf(in::Union{Matrix, GDtype}; first::Bool=true, gdal::Bool=false, kw...)
 	# Keep the 'gdal' kwarg for backward compatibility (no longer used)
@@ -170,21 +178,21 @@ end
 trisurf!(in::Union{Matrix, GDtype}; kw...) = trisurf(in; first=false, kw...)
 
 """
-    trisurf(G, G2=nothing; bottom=false, downsample=0, level=false, ratio=0.01,
+    trisurf(G, G2=nothing; bottom=false, downsample=0, isbase=false, ratio=0.01,
             thickness=0.0, wall_only=false, top_only=false, geog=false, kw...)
 
 Short form for the sequence ``D = grid2tri(...)`` followed by ``viz(D)``. See the documentation of
 ``grid2tri`` for more details.
 """
-function trisurf(G::Union{GMTgrid, String}, G2=nothing; first::Bool=true, thickness=0.0, level=false, downsample=0,
+function trisurf(G::Union{GMTgrid, String}, G2=nothing; first::Bool=true, thickness=0.0, isbase=false, downsample=0,
                  ratio=0.01, bottom=false, wall_only=false, top_only=false, geog=false, kw...)
-	D = grid2tri(G, G2, thickness=thickness, level=level, downsample=downsample, ratio=ratio, bottom=bottom,
+	D = grid2tri(G, G2, thickness=thickness, isbase=isbase, downsample=downsample, ratio=ratio, bottom=bottom,
 	            wall_only=wall_only, top_only=top_only, geog=geog)
 	trisurf(D; first=first, kw...)
 end
-trisurf!(G::Union{GMTgrid, String}, G2=nothing; thickness=0.0, level=false, downsample=0, ratio=0.01,
+trisurf!(G::Union{GMTgrid, String}, G2=nothing; thickness=0.0, isbase=false, downsample=0, ratio=0.01,
          bottom=false, wall_only=false, top_only=false, geog=false, kw...) = 
-	trisurf(G, G2; first=false, thickness=thickness, level=level, downsample=downsample, ratio=ratio,
+	trisurf(G, G2; first=false, thickness=thickness, isbase=isbase, downsample=downsample, ratio=ratio,
 	        bottom=bottom, wall_only=wall_only, top_only=top_only, geog=geog, kw...)
 
 # ---------------------------------------------------------------------------------------------------
@@ -192,38 +200,37 @@ trisurf!(G::Union{GMTgrid, String}, G2=nothing; thickness=0.0, level=false, down
 # plot3(D,  zsize=3, G="+z", L=true, proj=:merc, show=1, pen=0)
 # plot3(D,  zsize=3,  proj=:merc,  G="+z", C="aa.cpt", show=1, Z=linspace(-7,-400,length(D)), Vd=1)
 """
-    D = grid2tri(G, G2=nothing; bottom=false, downsample=0, level=false, ratio=0.01,
+    D = grid2tri(G, G2=nothing; bottom=false, downsample=0, isbase=false, ratio=0.01,
                  thickness=0.0, wall_only=false, top_only=false, geog=false)
 
-Triangulates the surface defined by the grid `G`, and optionally the bottom surface `G2`, plus the
-vertical wall between them, or between `G` and constant level or a constant thickness. Optionally
-computes only the vertical wall or the full closed bodie (that is, including the bottom surface).
+Triangulate the surface defined by the grid `G`, and optionally the bottom surface `G2`.
+
+Other than the triangulation, this function computes also a vertical wall between `G` and `G2`,
+or between `G` and constant level or a constant thickness. Optionally, computes only the vertical
+wall or the full closed bodie (that is, including the bottom surface).
 
 The output of this function can be used in ``plot3d`` to create 3D views of volume layer.
 
 NOTE: The `G` grid should have a _out-skirt_ of NaNs, otherwise just use ``grdview`` with the ``N`` option.
 
-### Parameters
+### Args
 - `G`: A GMTgrid object or a grid file name representing the surface to be triangulated.
 
 - `G2`: An optional second grid (or file name) representing the bottom surface of the layer. Using this
   option makes the `thickness` option be ignored.
 
-### Keywords
+### Kwargs
 - `bottom`: If true, fully close the body with the bottom surface. By default we don't do this because that
   surface is often not visible whem elevation view angle is positive. But we may want this if later we want
   to save this mesh in STL for importing in a 3D viewer software.
-
-- `layer`: If true, we interpret `thickness` option as meaning a contant level value. That is, the vertical
-  wall is computed from the sides of `G` and a constant level provided via the `thickness` option.
 
 - `downsample`: If the grid is of too high resolution, files here get big and operations slow down with this
   and later figures may not benefit much. In those cases it is a good idea to downsample the grid. The 
   `downsample` option accepts an integer reduction factor. `downsample=2` will shrink the grid by a factor two
   in each dimention, `downsample=3` will shrink it by a factor three etc.
 
-- `geog`: If the `G` grid has no referencing information but you know that it is in geographical coordinates
-  set `geog=true`. This information will be added to the triangulation output and is usefull for plotting purposes.
+- `isbase`: If true, we interpret `thickness` option as meaning a contant level value. That is, the vertical
+  wall is computed from the sides of `G` and a constant level provided via the `thickness` option.
 
 - `ratio`: A slightly tricky parameter that determines how close the computed concave hull is to the true
   concave hull. A value smaller to 0.005 seems to do it but we normally don't want that close because the
@@ -234,14 +241,17 @@ NOTE: The `G` grid should have a _out-skirt_ of NaNs, otherwise just use ``grdvi
 - `thickness`: A scalar representing the layer thickness in the same units as those of the input grid.
   NOTE: this option is ignored when two grids are passed in input.
 
+- `wall_only`: If true, only the vertical wall  between `G` and `G2`, or `G` + `thickness` is computed and returned.
+
 - `top_only`: If true, only the triangulation of `G`is returned.
 
-- `wall_only`: If true, only the vertical wall  between `G` and `G2`, or `G` + `thickness` is computed and returned.
+- `geog`: If the `G` grid has no referencing information but you know that it is in geographical coordinates
+  set `geog=true`. This information will be added to the triangulation output and is usefull for plotting purposes.
 
 ### Returns
 A vector of GMTdataset with the triangulated surface and vertical wall, or just the wall or the full closed body.
 """
-function grid2tri(G::Union{GMTgrid, String}, G2=nothing; thickness=0.0, level=false, downsample=0, ratio=0.01, bottom=false,
+function grid2tri(G::Union{GMTgrid, String}, G2=nothing; thickness=0.0, isbase=false, downsample=0, ratio=0.01, bottom=false,
                   wall_only=false, top_only=false, geog=false)
 	(!isa(G2, GMTgrid) && !isa(G2, String) && thickness <= 0.0 && top_only == 0) && (top_only = true)
 
@@ -286,7 +296,7 @@ function grid2tri(G::Union{GMTgrid, String}, G2=nothing; thickness=0.0, level=fa
 			(geog == 0) ? copyrefA2B!(Dbnd_t, Dt_t) : (Dt_t[1].proj4 = prj4WGS84)	# Set ref sys
 			return Dt_t
 		end
-		Dwall = vwall(Dbnd_t, thickness, level != 0)
+		Dwall = vwall(Dbnd_t, thickness, isbase=(isbase!= 0))
 	end
 
 	if (wall_only == 0)					# That is vertical wall + top surface
@@ -321,26 +331,48 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    D = vwall(Bt, thk, level::Bool=false) -> Vector{GMTdataset}
+    D = vwall(Bt, thk [, FV::Int]; isbase::Bool=false)
 
 Compute the vertical wall between grid's concave hull `Bt` with a fixed or variable height `thk`.
 
+### Args
 - `Bt`: A Mx3 matrix or a GMTdataset with the concave hull of the top surface given in a clock-wise order
   (The order returned by GDAL's `concavehull` function).
-
 - `thk`: A constant or a vector with the thickness of the wall.
+- `fface`: Optional argument that makes it return a FacesVertices (GMTfv) instead of a vector of GMTdataset.
+   It's value indicates the first vertice of that face index. Pass 0 if faces start to count points from 1,
+   or the number of previous verts in another GMTfv object to which this vertical wall will be appended.
 
-- `level`: If ``true`` `thk` is interpreted as the level of the bottom surface instead of a constant thickness.
+### Kwargs
+- `isbase`: If ``true`` `thk` is interpreted as the level of the bottom surface instead of a constant thickness.
+
+### Returns
+- A vector of GMTdataset or a GMTfv
 """
-function vwall(Bt::Union{Matrix{<:Real}, GMTdataset}, thk::Union{<:Real, AbstractVector{<:Real}}, level::Bool=false)
+function vwall(Bt::Union{Matrix{<:Real}, GMTdataset}, thk::Union{<:Real, AbstractVector{<:Real}}; isbase::Bool=false)::Vector{GMTdataset}
+	# Method to be called to return a [GMTdataset]
+	Bb = helper_vwall(Bt, thk, isbase)
+	vwall(Bt, Bb)
+end
+
+function vwall(Bt::Union{Matrix{<:Real}, GMTdataset}, thk::Union{<:Real, AbstractVector{<:Real}}, fface::Int; isbase::Bool=false)::GMTfv
+	# Method to be called to return a GMTfv
+	mat = isa(Bt, GMTdataset) ? Bt.data : Bt
+	(size(mat, 2) < 3) && (mat = hcat(mat, zeros(eltype(mat), size(mat,1), 1)))
+	Bb = helper_vwall(mat, thk, isbase)		# 'Bb' is a copy of 'mat' with the 3rd col modified
+	vwallFV(mat, Bb, fface)
+end
+
+function helper_vwall(Bt::Union{Matrix{<:Real}, GMTdataset}, thk::Union{<:Real, AbstractVector{<:Real}}, isbase)
+	# Helper function to serve both 'vwall' methods so that each of them can be type stable in its return type
 	Bb = copy(Bt)						# Always return a Matrix, not a DS
 	if isa(thk, Real)
-		if (level)  view(Bb, :, 3) .=  convert(eltype(Bt), thk)
-		else        view(Bb, :, 3) .-= convert(eltype(Bt), thk)
+		if (isbase)  view(Bb, :, 3) .=  convert(eltype(Bt), thk)
+		else         view(Bb, :, 3) .-= convert(eltype(Bt), thk)
 		end
-	else            view(Bb, :, 3) .-= thk
+	else             view(Bb, :, 3) .-= thk
 	end
-	vwall(Bt, Bb)
+	return Bb
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -366,6 +398,19 @@ function vwall(Bt::Union{Matrix{<:Real}, GMTdataset}, Bb::Union{Matrix{<:Real}, 
 	Twall[1].geom = wkbPolygonZM
 	Twall[1].comment = ["vwall"]			# To help recognize this as a vertical wall.
 	return Twall
+end
+
+# ---------------------------------------------------------------------------------------------------
+function vwallFV(Bt::Union{Matrix{T}, GMTdataset}, Bb::Matrix{T}, fface::Int) where T<:Real
+	# 'Bt' and 'Bb' are the top and bottom polygons, respectively.
+	(size(Bt) != size(Bb)) && error("Input matrices must be the same size")
+	np = size(Bb,1)
+	F = [zeros(Int, np-1, 4)]
+	for k = 1:np-1
+		kk = k + fface
+		F[1][k, 1], F[1][k, 2], F[1][k, 3], F[1][k, 4] = kk, kk+1, kk+1+np, kk+np
+	end
+	fv2fv(F, [Bt; Bb])
 end
 
 # ---------------------------------------------------------------------------------------------------
