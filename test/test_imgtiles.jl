@@ -2,9 +2,9 @@
 
 	println("	TILES MOSAIC")
 	
-	quadkey(-9,39, 8) == ([121, 97, 8], ["03311003";;])
+	@test quadkey(-9,39, 8) == ([121, 97, 8], ["03311003";;])
 	quadkey(-9,39, 8, bounds=true)
-	quadkey([121, 97, 8], bounds=false) == "03311003"
+	@test quadkey([121, 97, 8], bounds=false) == "03311003"
 	mosaic(0.1,0.1,zoom=1);
 	mosaic([0.0 50],[0.0 40],zoom=1);
 	GMT.getprovider("OSM", 2);
