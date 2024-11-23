@@ -42,6 +42,8 @@ using Dates, Printf#, Logging
 	catch
 	end
 
+	println("		Entering: test_beziers.jl")
+	include("test_beziers.jl")
 	println("		Entering: test_imgfuns.jl")
 	include("test_imgfuns.jl")
 	println("		Entering: test_imgtiles.jl")
