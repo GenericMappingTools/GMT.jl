@@ -147,7 +147,7 @@ export
 	wkbMultiLineString, wkbMultiPolygon, wkbGeometryCollection, wkbPoint25D, wkbLineString25D, wkbPolygon25D, wkbMultiPoint25D,
 	wkbMultiLineString25D, wkbMultiPolygon25D, wkbGeometryCollection25D,
 
-	buffergeo, circgeo, epsg2proj, epsg2wkt, geod, invgeod, loxodrome, loxodrome_direct, loxodrome_inverse,
+	bezier, buffergeo, circgeo, epsg2proj, epsg2wkt, geod, invgeod, loxodrome, loxodrome_direct, loxodrome_inverse,
 	geodesic, orthodrome, proj2wkt, setcoords!, setfld!, setcrs!, setsrs!, settimecol!, set_timecol!, vecangles, wkt2proj,
 	inbbox, randgeo,
 
@@ -196,6 +196,7 @@ include("utils_types.jl")
 include("grd_operations.jl")
 include("common_options.jl")
 const global LEGEND_TYPE = [legend_bag()]	# To store Legends info
+include("beziers.jl")
 include("circfit.jl")
 include("custom_symb_funs.jl")
 include("gmtbegin.jl")

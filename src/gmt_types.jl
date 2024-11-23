@@ -301,7 +301,7 @@ The fields of this struct are:
 - `verts::AbstractMatrix{T}`:        Mx3 Matrix with the data vertices
 - `faces`::Vector{<:AbstractMatrix{<:Integer}}   A vector of matrices with the faces. Each row is a face
 - `faces_view`::Vector{Matrix{Int}}  A subset of `faces` with only the visible faces from a certain perspective
-- `color`::Vector{Vector{String}}    A vector with G option colors (in hexadecimal) for each face
+- `color`::Vector{Vector{String}}    A vector with G option colors for each face
 - `bbox`::Vector{Float64}            The vertices BoundingBox
 - `zscale`::Float64                  A multiplicative factor to scale the z values
 - `bfculling`::Bool                  If culling of invisible faces is wished. Default is true
