@@ -23,7 +23,7 @@
 	G = peaks(); G.proj4 = "+proj=lonlat";
 	mosaic(G, quadonly=1);
 	G = gdalwarp(G, ["-t_srs","+proj=merc"])
-	#mosaic(G, quadonly=1);		# This now diced to randonmly fail
+	#mosaic(G, quadonly=1);		# This now decded to randonmly fail
 
 	struct Provider
 		url::String
