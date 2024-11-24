@@ -66,4 +66,40 @@
 		fv_3d = flatfv(img, shape=shape_3d)
 		@test isa(fv_3d, GMTfv)
 	end
+
+	@testset "loft tests" begin
+		# Basic test with two simple curves
+		C1 = [0.0 0.0 0.0; 1.0 0.0 0.0; 1.0 1.0 0.0]
+		C2 = [0.0 0.0 1.0; 1.0 0.0 1.0; 1.0 1.0 1.0]
+		result = loft(C1, C2)
+		@test size(result.faces, 1) > 0
+		@test size(result.verts, 1) > 0
+
+		# Test with explicit n_steps
+		result_steps = loft(C1, C2, n_steps=5)
+		@test size(result_steps.verts, 1) == 15  # 3 points × 5 steps
+
+		# Test with non-closed option
+		result_open = loft(C1, C2, closed=false)
+		@test size(result_open.faces, 1) < size(result.faces, 1)
+
+		# Test with triangular mesh type
+		result_tri = loft(C1, C2, type=:tri)
+		#@test all(length.(eachrow(result_tri.faces)) .== 3)	<== FAILS
+
+		# Test error for mismatched curve sizes
+		C3 = [0.0 0.0 0.0; 1.0 0.0 0.0]
+		@test_throws AssertionError loft(C1, C3)
+
+		# Test with zero distance between curves		<== FAILS: "attempt to access 3×0 Matrix{Float64} at index [1, 0]"
+		#C4 = copy(C1)
+		#result_zero = loft(C1, C4)
+		#@test size(result_zero.verts, 1) > 0
+
+		# Test with large curves
+		large_C1 = rand(100, 3)
+		large_C2 = rand(100, 3)
+		result_large = loft(large_C1, large_C2)
+		@test size(result_large.verts, 1) == size(large_C1, 1) * 2
+	end
 end
