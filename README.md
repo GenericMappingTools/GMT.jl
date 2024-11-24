@@ -10,7 +10,7 @@ Julia wrapper for the Generic Mapping Tools [GMT](https://github.com/GenericMapp
 [docs-latest-img]: https://img.shields.io/badge/docs-latest-blue.svg
 [docs-latest-url]: https://genericmappingtools.github.io/GMTjl_doc/
 
-[codecov-img]: http://codecov.io/github/GenericMappingTools/GMT.jl/coverage.svg?branch=master
+[codecov-img]: http://codecov.io/github/GenericMappingTools/GMT.jl/coverage.svg
 [codecov-url]: http://codecov.io/github/GenericMappingTools/GMT.jl?branch=master
 
 [forum-img]: https://img.shields.io/discourse/status?label=forum&server=https%3A%2F%2Fforum.generic-mapping-tools.org%2F&style=flat-square
