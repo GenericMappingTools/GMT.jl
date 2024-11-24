@@ -58,7 +58,7 @@ D = bezier(mat2ds([30. -15; 30 45; -30 45; -30 -15], proj4="geog"));
 D = bezier(mat2ds([30. -15; 30 45; -30 45; -30 -15; -20 -25], proj4="geog"), firstcurve=false);
 ```
 """
-function bezier(D::GMTdataset; t=nothing, np::Int=0, pure=false, firstcurve=true)
+function bezier(D::GMTdataset; t=nothing, np::Int=0, pure=false, firstcurve=true)::GMTdataset{Float64, 2}
 	is_geo = isgeog(D)
 	if (is_geo)
 		mat::Matrix{Float64} = (size(D.data, 2) == 2) ? [D.data fill(0, size(D.data, 1))] : D.data
@@ -69,9 +69,9 @@ function bezier(D::GMTdataset; t=nothing, np::Int=0, pure=false, firstcurve=true
 	(pure == 1 && size(mat, 1) > 4) && (pure = false;
 		@warn("pure option not allowed for more than 4 control points. Reverting to 'impure'"))
 	
-	out = bezier(mat; t=t, np=np, pure=pure, firstcurve=firstcurve)
+	out::Matrix{Float64} = bezier(mat; t=t, np=np, pure=pure, firstcurve=firstcurve)
 	is_geo && (out = mapproject(out, E=true, I=true).data)		# Convert back to geographic
-	return mat2ds(out, D)::GMTdataset
+	return mat2ds(out, D)::GMTdataset{Float64, 2}
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -108,12 +108,19 @@ function bezier(p::Matrix{<:Real}; t=nothing, np::Int=0, pure=false, firstcurve=
 	(size(p, 1) < 4) && error("Input must have at least 4 rows")
 	(t === nothing) && (t = (np == 0) ? linspace(0,1,101) : linspace(0,1,np))
 	o::Matrix{Float64} = bezier(p[1,:], p[2,:], p[3,:], p[4,:]; t=t)	# 'out' is Core.box because it's modified below. But WHY?????
+	return (size(p, 1) == 4) ? o : helper_bezier_cb(o, Float64.(p), t, firstcurve)	# This avoids exporting the Core.box
+end
 
+function helper_bezier_cb(o::Matrix{Float64}, p::Matrix{Float64}, t, firstcurve::Bool)::Matrix{Float64}
+	# Made this function barrier to restrict the Core.box. For some incomprehensible reason, 'o' becomes
+	# a Core.box and that happens due to the appending (the 'vcats' below). Both Cthulhu and the debugger
+	# show that 'o' is no longer a Core.box when it lands on the calling function.
+	# This function is not efficient due to the matrix concatenations, but it's not expeced to cat much data.
 	for k = 5:size(p, 1)
 		oo = bezier(p[k-3,:], p[k-2,:], p[k-1,:], p[k,:]; t=t)
 		if (firstcurve)
 			xn = o[end,1];		yn = o[end,2];		zn = o[end,3]
-			d::Vector = [(oo[n,1] - xn)^2 + (oo[n,2] - yn)^2 + (oo[n,3] - zn)^2 for n = 1:size(oo, 1)]
+			d::Vector{Float64} = [(oo[n,1] - xn)^2 + (oo[n,2] - yn)^2 + (oo[n,3] - zn)^2 for n = 1:size(oo, 1)]
 		else
 			xn = oo[1,1];		yn = oo[1,2];		zn = oo[1,3]
 			d = [(o[n,1] - xn)^2 + (o[n,2] - yn)^2 + (o[n,3] - zn)^2 for n = 1:size(oo, 1)]
@@ -121,7 +128,7 @@ function bezier(p::Matrix{<:Real}; t=nothing, np::Int=0, pure=false, firstcurve=
 		m = argmin(d)
 		o = firstcurve ? vcat(o, oo[m+1:end,:]) : vcat(o[1:m,:], oo)
 	end
-	return o
+	return o		# Cthulhu says o::Union{Core.Box, Matrix{Float64}}
 end
 
 # ---------------------------------------------------------------------------------------------------
