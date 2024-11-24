@@ -4,14 +4,11 @@ GMT.jl
 Julia wrapper for the Generic Mapping Tools [GMT](https://github.com/GenericMappingTools/gmt)
 
 | **Documentation**                       | **Code coverage**              | **Discourse Forum**   | **Collaboration** |
-|:---------------------------------------:|:-----------------------------------------:|:---------------------:|:---------------------:|
+|:---------------------------------------:|:------------------------------:|:---------------------:|:---------------------:|
 | [![][docs-latest-img]][docs-latest-url] | [![][codecov-img]][codecov-url] | [![][forum-img]][forum-url] | [![][colprac-img]][colprac-url] |
 
 [docs-latest-img]: https://img.shields.io/badge/docs-latest-blue.svg
 [docs-latest-url]: https://genericmappingtools.github.io/GMTjl_doc/
-
-[travis-img]: https://travis-ci.com/GenericMappingTools/GMT.jl.svg?branch=master
-[travis-url]: https://travis-ci.com/GenericMappingTools/GMT.jl
 
 [codecov-img]: http://codecov.io/github/GenericMappingTools/GMT.jl/coverage.svg?branch=master
 [codecov-url]: http://codecov.io/github/GenericMappingTools/GMT.jl?branch=master
