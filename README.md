@@ -3,7 +3,7 @@ GMT.jl
 
 Julia wrapper for the Generic Mapping Tools [GMT](https://github.com/GenericMappingTools/gmt)
 
-| **Documentation**                       | **Build Status (Julia 1.10)**              | **Discourse Forum**   | **Collaboration** |
+| **Documentation**                       | **Code coverage**              | **Discourse Forum**   | **Collaboration** |
 |:---------------------------------------:|:-----------------------------------------:|:---------------------:|:---------------------:|
 | [![][docs-latest-img]][docs-latest-url] | [![][codecov-img]][codecov-url] | [![][forum-img]][forum-url] | [![][colprac-img]][colprac-url] |
 
@@ -12,9 +12,6 @@ Julia wrapper for the Generic Mapping Tools [GMT](https://github.com/GenericMapp
 
 [travis-img]: https://travis-ci.com/GenericMappingTools/GMT.jl.svg?branch=master
 [travis-url]: https://travis-ci.com/GenericMappingTools/GMT.jl
-
-[appveyor-img]: https://ci.appveyor.com/api/projects/status/usjewfb5v48m18kh/branch/master?svg=true
-[appveyor-url]: https://ci.appveyor.com/project/joa-quim/gmt-jl-suu4y/branch/master
 
 [codecov-img]: http://codecov.io/github/GenericMappingTools/GMT.jl/coverage.svg?branch=master
 [codecov-url]: http://codecov.io/github/GenericMappingTools/GMT.jl?branch=master
