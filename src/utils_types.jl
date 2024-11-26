@@ -700,21 +700,21 @@ Create a FacesVertices object from a matrix of faces indices and another matrix 
    surfaces (cylinders for example).
 - `V`:  A Mx3 matrix of vertices.
 
-### Keyword args
+### Kargs
 - `proj` or `proj4`:  A proj4 string for setting the Coordinate Referencing System
 - `wkt`:  A WKT SRS.
 - `epsg`: Same as `proj` but using an EPSG code
 """
-function fv2fv(F::Vector{<:AbstractMatrix{<:Integer}}, V; zscale=1.0, bfculling=true, proj="", proj4="", wkt="", epsg=0)::GMTfv
+function fv2fv(F::Vector{<:AbstractMatrix{<:Integer}}, V; color_vwall::String="", zscale=1.0, bfculling=true, proj="", proj4="", wkt="", epsg=0)::GMTfv
 	(isempty(proj4) && !isempty(proj)) && (proj4 = proj)	# Allow both proj4 or proj keywords
 	bbox = extrema(V, dims=1)
 	isflat = zeros(Bool, length(F))			# Needs thinking
 	GMTfv(verts=V, faces=F, bbox=[bbox[1][1], bbox[1][2], bbox[2][1], bbox[2][2], bbox[3][1], bbox[3][2]],
-	      zscale=zscale, bfculling=bfculling, isflat=isflat, proj4=proj4, wkt=wkt, epsg=epsg)
+	color_vwall=color_vwall, zscale=zscale, bfculling=bfculling, isflat=isflat, proj4=proj4, wkt=wkt, epsg=epsg)
 end
 
-fv2fv(F::Matrix{<:Integer}, V; zscale=1.0, bfculling=true, proj="", proj4="", wkt="", epsg=0) =
-	fv2fv([F], V; zscale=zscale, bfculling=bfculling, proj=proj, proj4=proj4, wkt=wkt, epsg=epsg)
+fv2fv(F::Matrix{<:Integer}, V; color_vwall::String="", zscale=1.0, bfculling=true, proj="", proj4="", wkt="", epsg=0) =
+	fv2fv([F], V; color_vwall=color_vwall, zscale=zscale, bfculling=bfculling, proj=proj, proj4=proj4, wkt=wkt, epsg=epsg)
 
 """
 When using Meshing.jl we can use the output of the ``isosurface`` function, "verts, faces" as input to this function.

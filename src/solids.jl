@@ -761,14 +761,18 @@ function flatfv(I::Union{GMTimage, AbstractString}; shape=:n, level=0.0, thickne
 		end
 		isnoref && return I				# A plain image with no coords
 	
-		x = extrema(view(shape, :, 1))	# xx minmax
-		y = extrema(view(shape, :, 2))
+		if (isa(shape, GDtype))
+			x, y = isa(shape, Vector) ? (shape[1].ds_bbox[1:2], shape[1].ds_bbox[3:4]) : (shape.ds_bbox[1:2], shape.ds_bbox[3:4])
+		else
+			x = extrema(view(shape, :, 1))	# xx minmax
+			y = extrema(view(shape, :, 2))
+		end
 		isa(I, AbstractString) && (x[1] < D[1] || x[2] > D[2] || y[1] < D[3] || y[2] > D[4]) &&
 			error("The 'shape' is outside the image.")
 		isa(I, GMTimage) && (x[1] < I.range[1] || x[2] > I.range[2] || y[1] < I.range[3] || y[2] > I.range[4]) &&
 			error("The 'shape' is outside the image.")
 	
-		return isa(I, AbstractString) ? gmtread(I, R=(x[1], x[2], y[1], y[2]), V=:q) : crop(I, R=(x[1], x[2], y[1], y[2]))
+		return isa(I, AbstractString) ? gmtread(I, R=(x[1], x[2], y[1], y[2]), V=:q) : crop(I, R=(x[1], x[2], y[1], y[2]))[1]
 	end
 
 	function forceRGB(I)::GMTimage{UInt8, 3}
@@ -868,9 +872,10 @@ function flatfv(I::Union{GMTimage, AbstractString}; shape=:n, level=0.0, thickne
 		FV.color, FV.isflat = [cor], [true]
 	else
 		cor_wall = Vector{String}(undef, n_wall)
-		for k = 1:n_wall  cor_wall[k] = "-G180"  end
+		#for k = 1:n_wall  cor_wall[k] = "-G180"  end
 		FV.color = [cor_wall, cor]
-		FV.isflat = [true, false]
+		FV.isflat = [false, true]
+		FV.color_vwall = "140,220"
 	end
 	return FV
 end
