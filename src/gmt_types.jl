@@ -298,24 +298,26 @@ GMTdataset(data::Array{Float32,2}) =
 The GMTfv struct is used to store a (mostly) triangulated mesh.
 
 The fields of this struct are:
-- `verts::AbstractMatrix{T}`:        Mx3 Matrix with the data vertices
-- `faces`::Vector{<:AbstractMatrix{<:Integer}}   A vector of matrices with the faces. Each row is a face
-- `faces_view`::Vector{Matrix{Int}}  A subset of `faces` with only the visible faces from a certain perspective
-- `color`::Vector{Vector{String}}    A vector with G option colors for each face
-- `bbox`::Vector{Float64}            The vertices BoundingBox
-- `zscale`::Float64                  A multiplicative factor to scale the z values
-- `bfculling`::Bool                  If culling of invisible faces is wished. Default is true
-- `isflat`::Vector{Bool}             If this is a flat mesh. Default is false
-- `proj4::String`                    Projection string in PROJ4 syntax (Optional)
-- `wkt::String`                      Projection string in WKT syntax (Optional)
-- `epsg::Int`                        EPSG projection code (Optional)
+- `verts::AbstractMatrix{T}`:         A Mx3 Matrix with the data vertices
+- `faces::Vector{<:AbstractMatrix{<:Integer}}`:   A vector of matrices with the faces. Each row is a face
+- `faces_view::Vector{Matrix{Int}}`:  A subset of `faces` with only the visible faces from a certain perspective
+- `bbox::Vector{Float64}`:            The vertices BoundingBox
+- `color::Vector{Vector{String}}`:    A vector with G option colors for each face
+- `color_vwall::String`:              A string for makecpt cmap option argument (e.g. "darkgreen,lightgreen") 
+- `zscale::Float64`:                  A multiplicative factor to scale the z values. Default is 1.
+- `bfculling::Bool`:                  If culling of invisible faces is wished. Default is true
+- `isflat::Vector{Bool}`:             If this is a flat mesh. Default is false
+- `proj4::String`:                    Projection string in PROJ4 syntax (Optional)
+- `wkt::String`:                      Projection string in WKT syntax (Optional)
+- `epsg::Int`:                        EPSG projection code (Optional)
 """
 Base.@kwdef mutable struct GMTfv{T<:AbstractFloat} <: AbstractArray{T,2}
 	verts::AbstractMatrix{T}=Matrix{Float64}(undef,0,0)
 	faces::Vector{<:AbstractMatrix{<:Integer}}=Vector{Matrix{Int}}(undef,0)
 	faces_view::Vector{Matrix{Int}}=Vector{Matrix{Int}}(undef,0)
-	color::Vector{Vector{String}}=[String[]]
 	bbox::Vector{Float64}=zeros(6)
+	color::Vector{Vector{String}}=[String[]]
+	color_vwall::String=""
 	zscale::Float64=1.0
 	bfculling::Bool=true
 	isflat::Vector{Bool}=[false]
@@ -330,7 +332,7 @@ Base.BroadcastStyle(::Type{<:GMTfv}) = Broadcast.ArrayStyle{GMTfv}()
 function Base.similar(bc::Broadcast.Broadcasted{Broadcast.ArrayStyle{GMTfv}}, ::Type{ElType}) where ElType
 	FV = find4similar(bc.args)		# Scan the inputs for the FV:
 	#GMTfv(similar(Array{ElType}, axes(bc)), FV.faces, FV.faces_view, FV.color, FV.bbox, FV.zscale, FV.bfculling, FV.proj4, FV.wkt, FV.epsg)
-	GMTfv(FV.verts, FV.faces, FV.faces_view, FV.color, FV.bbox, FV.zscale, FV.bfculling, FV.proj4, FV.wkt, FV.epsg)
+	GMTfv(FV.verts, FV.faces, FV.faces_view, FV.bbox, FV.color, FV.color_vwall, FV.zscale, FV.bfculling, FV.proj4, FV.wkt, FV.epsg)
 end
 find4similar(FV::GMTfv, rest) = FV
 

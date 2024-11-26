@@ -1561,20 +1561,20 @@ function sort_visible_faces(FV::GMTfv, azim, elev; del::Bool=true)::Tuple{GMTfv,
 	view_vec = [sin_az * cos_el, cos_az * cos_el, sin_el]
 	projs = Float64[]
 
-	#!FV.bfculling && (del = false)			# Do not delete if bfculling is set to false (for example if FV is not closed)
-	#isPlane = (FV.isflat || FV.bbox[1] == FV.bbox[2]) || (FV.bbox[3] == FV.bbox[4]) || (FV.bbox[5] == FV.bbox[6])	# Is this FV a plane?
-	#isPlane && (del = false)				# Planes have no invisibles
-	#needNormals = isempty(FV.color[1])		# If we have no color, we need to compute the normals
-	
-	#isPlane && !needNormals && return FV, projs		# Nothing to do here in this case.
-	
+	if (!isempty(FV.color_vwall))
+		P::Ptr{GMT_PALETTE} = palette_init(G_API[1], gmt("makecpt -T0/1 -C" * FV.color_vwall));	# A pointer to a GMT CPT
+		rgb = [0.0, 0.0, 0.0, 0.0]
+	end
+
+	FV.faces_view = Vector{Matrix{Int}}(undef,numel(FV.faces))
 	first_face_vis = true
 	for k = 1:numel(FV.faces)					# Loop over number of face groups (we can have triangles, quads, etc)
 		isPlane = FV.isflat[k]
-		needNormals = isempty(FV.color[1])		# If we have no color, we need to compute the normals
-		isPlane && !needNormals && continue		# Nothing to do here in this case.
+		have_colorwall = length(FV.color) >= k && !isassigned(FV.color[k], 1) && !isempty(FV.color_vwall)
+		needNormals = have_colorwall || (length(FV.color) >= k && isempty(FV.color[k])) 	# No color, no normals
+		(isPlane && !needNormals) && (FV.faces_view[k] = FV.faces[k]; continue)		# Nothing more to do in this case.
 		del = !isPlane && FV.bfculling			# bfculling should become a vector too?
-		have_colors = !isempty(FV.color[1])		# Does this FV have a color for each polygon?
+		have_colors = length(FV.color) >= k && !isempty(FV.color[k])	# Does this FV has a color for each polygon?
 
 		n_faces::Int = size(FV.faces[k], 1)		# Number of faces (polygons)
 		this_face_nverts::Int = size(FV.faces[k], 2)
@@ -1593,24 +1593,33 @@ function sort_visible_faces(FV::GMTfv, azim, elev; del::Bool=true)::Tuple{GMTfv,
 					push!(dists, (cx * sin_az + cy * cos_az, cz * sin_el))
 				end
 				push!(_projs, this_proj)	# But need the normals as stated at the begining of this function
+				if (have_colorwall)
+					gmt_get_rgb_from_z(G_API[1], P, this_proj, rgb)
+					FV.color[k][face] = @sprintf("-G#%.2x%.2x%.2x", round(Int, rgb[1]*255), round(Int, rgb[2]*255), round(Int, rgb[3]*255)) 
+				end
 			end
 		end
-	
-		if (isPlane)						# Here, FV being a plane we only care about storing the normals
-			projs = (first_face_vis) ? _projs[ind] : append!(projs, _projs[ind])
-			first_face_vis = false
-			continue
-		end
 
+		#if (isPlane)						# Here, FV being a plane we only care about storing the normals
+			#projs = (first_face_vis) ? _projs[ind] : append!(projs, _projs[ind])	# 'ind' may be first time use => error?
+			#first_face_vis = false
+			#continue
+		#end
+
+		(have_colorwall) && (FV.color[k] = FV.color[k][isVisible])		# SO FUNCIONA A PRIMEIRA VEZ
 		data::Matrix{Integer} = del ? FV.faces[k][isVisible, :] : FV.faces[k]
-		isempty(data) && continue
+		isempty(data) && continue			# These 'continues' leave out #undefs in FV.faces_view that need to be deleted
 		ind  = sortperm(dists)
 		data = data[ind, :]
-		(first_face_vis) ? (FV.faces_view = [data]) : append!(FV.faces_view, [data])
+		FV.faces_view[k] = data
 		projs = (first_face_vis) ? _projs[ind] : append!(projs, _projs[ind])
-		have_colors && (FV.color[k] = FV.color[k][ind])
+		(have_colors || have_colorwall) && (FV.color[k] = FV.color[k][ind])
 		first_face_vis = false
 	end
+
+	c = [isassigned(FV.faces_view, k) for k = 1:numel(FV.faces_view)]
+	!all(c) && (FV.faces_view = FV.faces_view[c])	# Delete eventual #undefs
+
 	vis = sum(size.(FV.faces_view, 1))		# If = 0, it must have been a plane.
 	vis > 0 && vis < sum(size.(FV.faces, 1) / 3) &&
 		@warn("More than 2/3 of the faces found invisible (actually: $(100 - sum(size.(FV.faces_view, 1)) / sum(size.(FV.faces, 1))*100)%). This often indicates that the Z and X,Y units are not the same. Consider setting `bfculling` to false or use the `nocull=true` option, or using the `zscale` field of the `FV` input.")

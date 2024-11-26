@@ -1228,10 +1228,10 @@ function palette_init(API::Ptr{Nothing}, cpt::GMTcpt)::Ptr{GMT_PALETTE}
 		rgb_diff = (cpt.cpt[j,4]-cpt.cpt[j,1], cpt.cpt[j,5]-cpt.cpt[j,2], cpt.cpt[j,6]-cpt.cpt[j,3], 0.0)
 		z_low  = cpt.range[j,1]
 		z_high = cpt.range[j,2]
-		# GMT6.1 bug does not free "key" but frees "label" and does not see if memory is external. Hence crash or mem leaks
+		i_dz = 1. / (z_high - z_low)
 
 		annot = (j == Pb.n_colors) ? 3 : 1				# Annotations L for all but last which is B(oth)
-		lut = GMT_LUT(z_low, z_high, glut.i_dz, rgb_low, rgb_high, rgb_diff, glut.hsv_low, glut.hsv_high,
+		lut = GMT_LUT(z_low, z_high, i_dz, rgb_low, rgb_high, rgb_diff, glut.hsv_low, glut.hsv_high,
 		              glut.hsv_diff, annot, glut.skip, glut.fill, C_NULL, C_NULL)
 
 		unsafe_store!(Pb.data, lut, j)
