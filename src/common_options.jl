@@ -4464,10 +4464,10 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 		is_basemap = (startswith(cmd[k], "psbasemap") || startswith(cmd[k], "basemap"))
 		is_text    = (startswith(cmd[k], "pstext") || startswith(cmd[k], "text"))
 		is_plot    = (startswith(cmd[k], "psxy")   || startswith(cmd[k], "plot"))
-		args1_is_G, args1_is_I, args1_isnot_C = false, false, false
+		args1_is_G, args1_is_I, args1_is_D, args1_isnot_C = false, false, false, false
 		if (k >= 1+fi)		# Using the supposed solution of @isdefined F. doesn't work. "if @isdefined(args)" is not respected.
 			try
-				args1_is_G, args1_is_I, args1_isnot_C = isa(args[1], GMTgrid), isa(args[1], GMTimage), !isa(args[1], GMTcpt)
+				args1_is_G, args1_is_I, args1_is_D, args1_isnot_C = isa(args[1], GMTgrid), isa(args[1], GMTimage), isa(args[1], GDtype), !isa(args[1], GMTcpt)
 			catch
 			end
 		end
@@ -4479,9 +4479,8 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 			(arg1.label[1] != "") && (cmd[k] = replace(cmd[k], "-Baf" => "-L0.1c"))	# If it has labels, use them. The gap should be calculated.
 			P = gmt(cmd[k], arg1)
 			continue
-		elseif (k >= 1+fi && (is_pscoast || is_basemap || is_plot) && (args1_is_I || args1_is_G))
-			proj4::String = args[1].proj4
-			(proj4 == "" && args[1].wkt != "") && (proj4 = toPROJ4(importWKT(args[1].wkt)))
+		elseif (k >= 1+fi && (is_pscoast || is_basemap || is_plot) && (args1_is_I || args1_is_G || args1_is_D))
+			proj4::String = getproj(args[1])
 			if (proj4 != "")					# This section tries to deal with the double axes case (2 different projections).
 				WESN = get_geoglimits(args[1])
 				J1, J2 = scan_opt(cmd[1], "-J"), scan_opt(cmd[2], "-J")

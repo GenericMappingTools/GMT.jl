@@ -988,24 +988,35 @@ If grid/image is not referenced, returns an empty vector.
 """
 function get_geoglimits(GI::GItype)::Vector{Float64}
 	prj = getproj(GI, proj4=true)
+	region = getregion(GI)
+	helper_geoglimits(prj, region)
+end
+
+function get_geoglimits(D::GDtype)::Vector{Float64}
+	prj = getproj(D, proj4=true)
+	region = getregion(D)
+	helper_geoglimits(prj, region)
+end
+
+function helper_geoglimits(prj::String, region::Vector{Float64})::Vector{Float64}
 	if (length(prj) > 12 && !contains(prj, " "))	# For when a condensed (for GMT) proj string was passed.
 		prj = replace(prj, "+" => " +")
 	end
 	(prj == "") && return Float64[]		# GI is not referenced
-	isgeog(prj) && return GI.range[1:4]	# GI is already in geographic coordinates
+	isgeog(prj) && return region	# GI is already in geographic coordinates
 
 	Gdal.CPLPushErrorHandler(@cfunction(Gdal.CPLQuietErrorHandler, Cvoid, (UInt32, Cint, Cstring)))
 	opts = ["-s_srs", prj, "-t_srs", prj4WGS84, "-overwrite"]
-	ds = Gdal.get_gdaldataset([GI.range[1] GI.range[3]], opts, false)[1]
+	ds = Gdal.get_gdaldataset([region[1] region[3]], opts, false)[1]
 	o1 = Gdal.gdalvectortranslate(ds, opts; dest="/vsimem/tmp", gdataset=true)
-	ds = Gdal.get_gdaldataset([GI.range[2] GI.range[4]], opts, false)[1]
+	ds = Gdal.get_gdaldataset([region[2] region[4]], opts, false)[1]
 	o2 = Gdal.gdalvectortranslate(ds, opts; dest="/vsimem/tmp", gdataset=true)
 	if (o1.ptr == C_NULL || o2.ptr == C_NULL)		# Diagonals failed, probably a Mollweide or alike projection
-		t = xy2lonlat([GI.range[1] min(0,GI.range[4]); GI.range[2] min(0,GI.range[4]);
-		               0 GI.range[3]; 0 GI.range[4]], s_srs=prj, t_srs=prj4WGS84)
+		t = xy2lonlat([region[1] min(0,region[4]); region[2] min(0,region[4]);
+		               0 region; 0 region], s_srs=prj, t_srs=prj4WGS84)
 		return [t[1, 1], t[2, 1], t[3, 2], t[4, 2]]
 	else
-		t = xy2lonlat([GI.range[1] GI.range[3]; GI.range[2] GI.range[4]], s_srs=prj, t_srs=prj4WGS84)
+		t = xy2lonlat([region[1] region[3]; region[2] region[4]], s_srs=prj, t_srs=prj4WGS84)
 		return [t[1, 1], t[2, 1], t[1, 2], t[2, 2]]
 	end
 end
