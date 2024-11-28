@@ -150,7 +150,7 @@ function parse_opt_range(d::Dict, cmd::String, opt::String="")::Tuple{String, Ve
 					end
 				end
 			elseif (n == 2)
-				out *= "/1"
+				out *= "/256+n"
 			end
 		elseif (isa(val, VMr) || isa(val, GMTdataset))
 			Tvec, out = vec(Float64.(val)), ""	# In 6.5, Tvec needs to be a GMTdataset with comment = LIST
