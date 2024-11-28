@@ -207,7 +207,6 @@ function plotlinefit(D::Vector{<:GMTdataset}; first::Bool=true, kw...)
 			d[:band_ab], d[:band_CI], d[:legend] = band_ab, band_CI, legend
 		end
 	end
-	showfig(show=do_show, figname=figname)		# Only show if requested but also sets the figname if requested.
 	(do_show || _figname !== nothing) && showfig(show=do_show, figname=_figname)	# Only show if requested and also sets the figname if requested.
 end
 
