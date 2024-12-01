@@ -213,7 +213,6 @@ Gdal.GDALDestroyDriverManager()
 	Gdal.GeomFieldDefn(C_NULL);
 	@info "3..."
 	Gdal.RasterBand(C_NULL);
-	@info "4..."
 	Gdal.destroy(Gdal.Driver(C_NULL));
 	Gdal.destroy(Gdal.Feature(C_NULL));
 	Gdal.destroy(Gdal.CoordTransform(C_NULL));
@@ -234,11 +233,10 @@ Gdal.GDALDestroyDriverManager()
 	#Gdal.identifydriver("lixo.gmt")
 	D = mat2ds([-8. 37.0; -8.1 37.5; -8.5 38.0], proj="+proj=longlat");
 	ds = gmt2gd(D)
-	@info "5..."
+	@info "4..."
 	ds = gmt2gd(D, geometry="Polygon")
 	gmt2gd(mat2ds([0 10; 1 11; 0 10], x=[0, 1, 2], multi=true), geometry="line")
 	gmt2gd(mat2ds([0 10; 1 11; 0 10; 0 10], x=[0, 1, 2, 0], multi=true), geometry="polyg")
-	@info "6..."
 	ogr2ogr(D, dest="lixo1.gmt")
 	gmt2gd(D, save="lixo2.gmt")
 	ds = gmt2gd(D)
@@ -248,7 +246,7 @@ Gdal.GDALDestroyDriverManager()
 	#ogr2ogr(D[1], "-t_srs '+proj=utm +zone=29' -overwrite")
 
 	D1 = mat2ds([0.0 0.0; 1.0 1.0; 1.0 0.0; 0.0 0.0]);
-	@info "7..."
+	@info "5..."
 	gmt2gd(D1);		gmt2gd(D1, geometry="line");	gmt2gd(D1, geometry="point")
 	D2 = mat2ds([0.0 0.0 1.; 1.0 1.0 2.; 1.0 0.0 3.; 0.0 0.0 1.]);
 	gmt2gd(D2);		gmt2gd(D2, geometry="line");	gmt2gd(D2, geometry="point")
@@ -273,18 +271,17 @@ Gdal.GDALDestroyDriverManager()
 		@test Gdal.geomlength(line) ≈ 76121.94397805972
 	end
 
-	@info "9..."
 	mp = Gdal.createmultipolygon_noholes(Vector{Tuple{Float64,Float64}}[
 		[(1204067., 634617.), (1204067., 620742.), (1215167., 620742.), (1215167., 634617.), (1204067., 634617.)],
 		[(1179553., 647105.), (1179553., 626292.), (1194354., 626292.), (1194354., 647105.), (1179553., 647105.)] ])
 	Gdal.wrapgeom(mp)
 
-	@info "10..."
+	@info "9..."
 	gdalinfo("poly_spatialite.sqlite");
 	Gdal.read("poly_spatialite.sqlite");
 	Gdal.inspect("SELECT HEX(GeomFromText('POINT(10 20)'))", "poly_spatialite.sqlite");
 
-	@info "11..."
+	@info "10..."
 	I1 = mat2img(reshape(collect(UInt8(1):UInt8(20)), 4, 5))	#  layout = TCBa
 	I2 = mat2img(reshape(collect(UInt8(11):UInt8(30)), 4, 5))
 	GMT.blendimg!(I1, I2)
