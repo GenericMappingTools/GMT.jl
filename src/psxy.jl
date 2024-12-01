@@ -17,7 +17,8 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	else		        gmt_proggy = (IamModern[1]) ? "plot "    : "psxy "
 	end
 
-	(arg1 !== nothing && !isa(arg1, GDtype) && !isa(arg1, Matrix{<:Real}) && !isa(arg1, GMTfv)) &&
+	isFV = (isa(arg1, GMTfv) || isa(arg1, Vector{GMTfv}))
+	(arg1 !== nothing && !isa(arg1, GDtype) && !isa(arg1, Matrix{<:Real}) && !isFV) &&
 		(arg1 = tabletypes2ds(arg1, ((val = find_in_dict(d, [:interp])[1]) !== nothing) ? interp=val : interp=0))
 	(caller != "bar") && (arg1 = if_multicols(d, arg1, is3D))	# Repeat because DataFrames or ODE's have skipped first round
 	(!O) && (LEGEND_TYPE[1] = legend_bag())		# Make sure that we always start with an empty one
@@ -57,7 +58,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	(opt_p == "" && !is3D && first) && (CURRENT_VIEW[1] = "")	# Make sure it empty under these conditions
 	(opt_p == "") ? (opt_p = CURRENT_VIEW[1]; cmd *= opt_p)	: (CURRENT_VIEW[1] = opt_p) # Save for eventual use in other modules.
 
-	if (is3D && isa(arg1, GMTfv))			# case of 3D faces
+	if (is3D && isFV)			# case of 3D faces
 		arg1 = (is_in_dict(d, [:replicate]) !== nothing) ? replicant(arg1, d) : deal_faceverts(arg1, d; del=find_in_dict(d, [:nocull])[1] === nothing)
 		(!O && !haskey(d, :aspect3) && is_in_dict(d, [:JZ :Jz :zsize :zscale]) === nothing && !isgeog(arg1)) && (d[:aspect3] = "equal")
 		(!O && !haskey(d, :aspect3) && isgeog(arg1)) && (d[:aspect] = "equal")
@@ -388,17 +389,18 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    FV = deal_faceverts(FV::GMTfv, d; del::Bool=true)::GMTfv
+    FV = deal_faceverts(FV::Union{GMTfv, Vector{GMTfv}}, d; del::Bool=true)::GMTfv
 	
 Deal with the situation where we are plotting 3D FV's.
 
 Here we kill (if del==true) invisible faces and sort them according to the viewing angle. If no fill color is set in
 kwargs, we use the dotprod and a gray CPT to set the fill color that will be modulated by normals to each visible face.
 """
-function deal_faceverts(arg1::GMTfv, d; del::Bool=true)::GMTfv
+function deal_faceverts(arg1, d; del::Bool=true)::Union{GMTfv, Vector{GMTfv}}
 	azim, elev = get_numeric_view()
-	arg1, dotprod = sort_visible_faces(arg1, azim, elev; del=del)		# Sort & kill (or not) invisible
-	if (is_in_dict(d, [:G :fill]) === nothing && isempty(arg1.color[1]))# If fill not set we use the dotprod and a gray CPT to set the fill
+	arg1, dotprod = sort_visible_faces(arg1, azim, elev; del=del)	# Sort & kill (or not) invisible
+	have_colors = (isa(arg1, GMTfv) && !isempty(arg1.color[1])) || (isa(arg1, Vector{GMTfv}) && !isempty(arg1[1].color[1]))
+	if (is_in_dict(d, [:G :fill]) === nothing && !have_colors)		# If fill not set we use the dotprod and a gray CPT to set the fill
 		is_in_dict(d, [:Z :level :levels]) === nothing && (d[:Z] = abs.(dotprod))
 		(is_in_dict(d, CPTaliases) === nothing) && (d[:C] = gmt("makecpt -T0/1 -C140,220"))	# Users may still set a CPT
 	end
@@ -770,7 +772,7 @@ function _helper_psxy_line(d::Dict, cmd::String, opt_W::String, is3D::Bool, args
 end
 
 # ---------------------------------------------------------------------------------------------------
-parse_opt_S(d::Dict, arg1::GMTfv, is3D::Bool) = arg1, ""	# Just to have a method for FVs
+parse_opt_S(d::Dict, arg1::Union{GMTfv, Vector{GMTfv}}, is3D::Bool) = arg1, ""	# Just to have a method for FVs
 function parse_opt_S(d::Dict, arg1::Union{GDtype, AbstractVector{<:Real}, Nothing}, is3D::Bool=false)
 
 	opt_S::String, have_custom = "", false
@@ -1556,6 +1558,14 @@ of matrices, one for each geometry (e.g. triangles, quadrangles, etc).
 - `del`: Boolean to control whether to delete invisible faces. True by default. But this can be
   overwriten by the value of the ``bfculling`` member of the FV object.
 """
+function sort_visible_faces(FV::Vector{GMTfv}, azim, elev; del::Bool=true)::Tuple{Vector{GMTfv}, Vector{Float64}}
+	# This method is for the case when FV is a vector of FV's. The 'projs' here worth nothing and is returned
+	# as a empty vector only for simetry with the case when FV is a single FV.
+	for k = 1:numel(FV)
+		FV[k] = sort_visible_faces(FV[k], azim, elev; del=del)[1]
+	end
+	return FV, Float64[]
+end
 function sort_visible_faces(FV::GMTfv, azim, elev; del::Bool=true)::Tuple{GMTfv, Vector{Float64}}
 	cos_az, cos_el, sin_az, sin_el = cosd(azim), cosd(elev), sind(azim), sind(elev)
 	view_vec = [sin_az * cos_el, cos_az * cos_el, sin_el]
