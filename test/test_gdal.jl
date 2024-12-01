@@ -68,11 +68,11 @@ Gdal.GDALDestroyDriverManager()
 	GMT.regiongeog("utmsmall.tif")
 	ds_small = Gdal.read("utmsmall.tif");
 	Gdal.getlayer(ds_small, 1);
-	gdalinfo(ds_small, [""]);
+	gdalinfo(ds_small);
 	#gdaldem("utmsmall.tif", "hillshade", ["-q"], save="lixo.nc");
 	#rm("lixo.nc")
-	gdaldem(ds_small, "hillshade", ["-q"]);
-	gdaltranslate(ds_small, [""]);
+	gdaldem(ds_small, "hillshade", ["-az", "10"]);
+	gdaltranslate(ds_small);
 	gdaltranslate("utmsmall.tif", R="442000/445000/3747000/3750000");
 	gdaltranslate("utmsmall.tif+b0");
 	gdaltranslate("utmsmall.tif", ["-b","1"]);
@@ -91,7 +91,7 @@ Gdal.GDALDestroyDriverManager()
 	catch
 	end
 
-	gdalwarp(ds_small, [""]);
+	gdalwarp(ds_small);
 	ds_warped = gdalwarp("utmsmall.tif", ["-of","MEM","-t_srs","EPSG:4326"], I=0.005, gdataset=true)
 	ds_warped = gdalwarp("utmsmall.tif", ["-of","MEM","-t_srs","EPSG:4326"], gdataset=true)
 	@test Gdal.width(ds_warped) == 109
@@ -204,7 +204,7 @@ Gdal.GDALDestroyDriverManager()
 	I = Gdal.dither("rgbsmall.tif");
 	gmt2gd(I);
 	Gdal.dither("rgbsmall.tif", save="lixo.tif");
-	Gdal.dither("rgbsmall.tif", save="lixo.tof");
+	Gdal.dither("rgbsmall.tif", save="lixo.tof");			# .tof to trigger the warning
 	Gdal.gdal_opts2vec("aa bb 'vv pp' aa \"ad uuu\"");
 
 	Gdal.GDALGetDataTypeByName("GTiff");
@@ -232,7 +232,7 @@ Gdal.GDALDestroyDriverManager()
 	GMT.Gdal.getmetadata(ds)
 
 	#Gdal.identifydriver("lixo.gmt")
-	D = mat2ds([-8. 37.0; -8.1 37.5; -8.5 38.0], proj="+proj=longlat");
+	D = mat2ds([-8. 37.0; -8.1 37.5; -8.5 38.0; -8. 37.0], proj="+proj=longlat");
 	ds = gmt2gd(D)
 	@info "5..."
 	ds = gmt2gd(D, geometry="Polygon")
@@ -247,19 +247,17 @@ Gdal.GDALDestroyDriverManager()
 	ogr2ogr(D, "-t_srs '+proj=utm +zone=29' -overwrite")	# Returns a GMT datset directly
 	#ogr2ogr(D[1], "-t_srs '+proj=utm +zone=29' -overwrite")
 
-	D1 = mat2ds([0.0 0.0; 1.0 1.0; 1.0 0.0; 0.0 0.0]);
-	@info "7..."
-	gmt2gd(D1);		gmt2gd(D1, geometry="line");	gmt2gd(D1, geometry="point")
-	D2 = mat2ds([0.0 0.0 1.; 1.0 1.0 2.; 1.0 0.0 3.; 0.0 0.0 1.]);
+	D1 = mat2ds([0.0 0.0; 1.0 1.0; 1.0 0.0; 0.0 0.0], geom=wkbPoint);
+	gmt2gd(D1); gmt2gd(D1, geometry="line"); gmt2gd(D1, geometry="point")
+	D2 = mat2ds([0.0 0.0 1.; 1.0 1.0 2.; 1.0 0.0 3.; 0.0 0.0 1.], geom=wkbPoint);
 	gmt2gd(D2);		gmt2gd(D2, geometry="line");	gmt2gd(D2, geometry="point")
 
-	@info "8..."
-	wkt = "POLYGON ((1179091. 712782.,1161053. 667456.,1214705. 641092.,1228580. 682719.,1218405. 721108.,1179091. 712782.))"
+	wkt = "POLYGON ((1179091. 712782.,1161053. 667456.,1214705. 641092.,1228580. 682719.,1218405. 721108.,1179091. 712782.))";
 	@test Gdal.getgeomtype(Gdal.forceto(Gdal.fromWKT(wkt), Gdal.wkbMultiPolygon)) == Gdal.wkbMultiPolygon
 	wkt = "POINT (1198054.34 648493.09)";
-	bf = Gdal.buffer(Gdal.fromWKT(wkt), 500)
+	bf = Gdal.buffer(Gdal.fromWKT(wkt), 500);
 	@test Gdal.getgeomtype(bf) == Gdal.wkbPolygon
-	show(bf);
+	show(bf); println()
 
 	@testset "Calculate the Area of a Geometry" begin
 		wkt = "POLYGON ((1162440. 672081., 1162440. 647105., 1195279. 647105., 1195279. 672081., 1162440. 672081.))"
@@ -279,12 +277,12 @@ Gdal.GDALDestroyDriverManager()
 		[(1179553., 647105.), (1179553., 626292.), (1194354., 626292.), (1194354., 647105.), (1179553., 647105.)] ])
 	Gdal.wrapgeom(mp)
 
-	@info "10..."
 	gdalinfo("poly_spatialite.sqlite");
 	Gdal.read("poly_spatialite.sqlite");
+	@info "3..."
 	Gdal.inspect("SELECT HEX(GeomFromText('POINT(10 20)'))", "poly_spatialite.sqlite");
 
-	@info "11..."
+	@info "4..."
 	I1 = mat2img(reshape(collect(UInt8(1):UInt8(20)), 4, 5))	#  layout = TCBa
 	I2 = mat2img(reshape(collect(UInt8(11):UInt8(30)), 4, 5))
 	GMT.blendimg!(I1, I2)

@@ -39,11 +39,12 @@ using Dates, Printf#, Logging
 		GMT.wmstest(wms, layer=37, region=(-8,-7,38,39), res="0.001d")
 		GMT.wmstest(wms, layer=37, region=(-8,-7,38,39), res=100)
 		@test GMT.wmstest(wms, layer=37, region="7829,6374,14", zoom=3, size=true) == (1635, 2048)
-	catch
+	catch err
+		@warn("Failed the WMS test. Error was:\n $err")
 	end
 
-	include("test_cody.jl")
 	include("test_beziers.jl")
+	include("test_cody.jl")
 	println("		Entering: test_imgfuns.jl")
 	include("test_imgfuns.jl")
 	println("		Entering: test_imgtiles.jl")
@@ -121,22 +122,29 @@ using Dates, Printf#, Logging
 
 	# Remove garbage
 	println("	REMOVE GARBAGE")
-	#rm("lixo1.gmt")
-	rm("gmt.history")
-	rm("lixo.ps")
-	#rm("lixo.png")
-	rm("lixo1.png")
-	rm("lixo2.png")
-	rm("lixo3.png")
-	rm("png.png")
-	rm("lixo.grd")
-	rm("lixo.cpt")
-	rm("lixo.dat")
-	rm("logo.png")
-	rm("lixo.eps")
-	rm("lixo.jpg")
-	rm("lixo.pdf")
-	#rm("9px.tif")
-	#rm("lixo_cube.nc")
+	function desgarbage(fname)
+		try
+			rm(fname)
+		catch
+			println("Failed to remove " * fname)
+		end
+	end
+	desgarbage("lixo1.gmt")
+	desgarbage("gmt.history")
+	desgarbage("lixo.ps")
+	desgarbage("lixo.png")
+	desgarbage("lixo1.png")
+	desgarbage("lixo2.png")
+	desgarbage("lixo3.png")
+	desgarbage("png.png")
+	desgarbage("lixo.grd")
+	desgarbage("lixo.cpt")
+	desgarbage("lixo.dat")
+	desgarbage("logo.png")
+	desgarbage("lixo.eps")
+	desgarbage("lixo.jpg")
+	desgarbage("lixo.pdf")
+	desgarbage("9px.tif")
+	desgarbage("lixo_cube.nc")
 
 end
