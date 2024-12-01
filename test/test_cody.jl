@@ -8,9 +8,9 @@
 		@test GMT.helper_geoglimits("+proj=longlat +datum=WGS84", [1.0, 2.0, 3.0, 4.0]) == [1.0, 2.0, 3.0, 4.0]
 	
 		# Test condensed proj string
-		region = [0.0, 10.0, 0.0, 10.0]
 		proj_str = "+proj=merc+lon_0=0+k=1+x_0=0+y_0=0+datum=WGS84+units=m+no_defs"
-		result = GMT.helper_geoglimits(proj_str, region)
+		result = GMT.helper_geoglimits(proj_str, [0.0, 10.0, 0.0, 10.0])
+		@test result !== nothing
 		@test length(result) == 4
 		@test all(isfinite.(result))
 	

@@ -298,8 +298,8 @@ GMTdataset(data::Array{Float32,2}) =
 The GMTfv struct is used to store a (mostly) triangulated mesh.
 
 The fields of this struct are:
-- `verts::AbstractMatrix{T}`:         A Mx3 Matrix with the data vertices
-- `faces::Vector{<:AbstractMatrix{<:Integer}}`:   A vector of matrices with the faces. Each row is a face
+- `verts::Matrix{T}`:         A Mx3 Matrix with the data vertices
+- `faces::Vector{<:Matrix{<:Int}}`:   A vector of matrices with the faces. Each row is a face
 - `faces_view::Vector{Matrix{Int}}`:  A subset of `faces` with only the visible faces from a certain perspective
 - `bbox::Vector{Float64}`:            The vertices BoundingBox
 - `color::Vector{Vector{String}}`:    A vector with G option colors for each face
@@ -312,8 +312,8 @@ The fields of this struct are:
 - `epsg::Int`:                        EPSG projection code (Optional)
 """
 Base.@kwdef mutable struct GMTfv{T<:AbstractFloat} <: AbstractArray{T,2}
-	verts::AbstractMatrix{T}=Matrix{Float64}(undef,0,0)
-	faces::Vector{<:AbstractMatrix{<:Integer}}=Vector{Matrix{Int}}(undef,0)
+	verts::Matrix{T}=Matrix{Float64}(undef,0,0)
+	faces::Vector{<:Matrix{<:Int}}=Vector{Matrix{Int}}(undef,0)
 	faces_view::Vector{Matrix{Int}}=Vector{Matrix{Int}}(undef,0)
 	bbox::Vector{Float64}=zeros(6)
 	color::Vector{Vector{String}}=[String[]]

@@ -3693,10 +3693,10 @@ end
 function read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", is3D::Bool=false, get_info::Bool=false)
 	# Use 'get_info=true' to force reading the file when fname != ""
 	
-	if (isa(arg, GMTfv))			# A quick and dirty way to parse the GMTfv type
+	if (isa(arg, GMTfv) || isa(arg, Vector{GMTfv}))	# A quick and dirty way to parse the GMTfv type
 		contains(cmd, " -R") && return cmd, arg, opt_R, "", ""	# If the FV is used in overlay no -R to set
-		is_geo = isgeog(arg.proj4)			# MUST make isgeog sniff in GMTfv types
-		_wesn = round_wesn(arg.bbox, is_geo)		# Add a pad if not-tight
+		is_geo = isgeog(arg)
+		_wesn = round_wesn(isa(arg, GMTfv) ? arg.bbox : getbbox(arg), is_geo)		# Add a pad if not-tight
 		opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g/%.12g/%.12g", _wesn[1], _wesn[2], _wesn[3], _wesn[4], _wesn[5], _wesn[6])
 		return cmd * opt_R, arg, opt_R, _wesn, ""		# A GMTfv is already read
 	end
