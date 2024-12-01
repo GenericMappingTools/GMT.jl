@@ -409,6 +409,16 @@ function extrude(shape::GMTdataset, h; base=0.0, closed=true)::GMTfv
 end
 
 # ----------------------------------------------------------------------------
+function extrude(shape::Vector{<:GMTdataset}, h; base=0.0, closed=true)::Vector{GMTfv}
+	FV = Vector{GMTfv}(undef, numel(shape))
+	for k = 1:numel(shape)
+		FV[k] = extrude(shape[k].data, h; base=base, closed=closed)
+	end
+	copyrefA2B!(shape[1], FV[1])
+	return FV
+end
+
+# ----------------------------------------------------------------------------
 """
     FV = cylinder(r, h; base=0.0, center=(0.0, 0.0, 0.0), geog=false, unit="m", np=36) -> GMTfv
 
@@ -749,7 +759,37 @@ FV = flatfv("image.png", shape=:circle, level=1.0);
 viz(FV)
 ```
 """
-function flatfv(I::Union{GMTimage, AbstractString}; shape=:n, level=0.0, thickness=0.0, isbase=false)::GMTfv
+#=
+flatfv(I::Union{GMTimage, AbstractString}, mat::Union{GMTdataset, Matrix{AbstractFloat}}; level=0.0, thickness=0.0, isbase=false)::GMTfv =
+	helper_flatfv(I; shape=mat, level=level, thickness=thickness, isbase=(isbase == 1))
+
+function flatfv(I::Union{GMTimage, AbstractString}; shape::Symbol=:n, level=0.0, thickness=0.0, isbase=false)::GMTfv
+	(shape == :n) && error("No shape given. Please specify one of: :circle, :circ, :ellipse")
+	helper_flatfv(I; shape=shape, level=level, thickness=thickness, isbase=(isbase == 1))
+end
+
+function flatfv(I::Union{GMTimage, AbstractString}, Dv::Vector{<:GMTdataset}; level=0.0, thickness=0.0, isbase=false)::Vector{GMTfv}
+	FV = Vector{GMTfv}(undef, numel(Dv))
+	for k = 1:numel(Dv)
+		FV[k] = helper_flatfv(I; shape=mat[k], level=level, thickness=thickness, isbase=(isbase == 1))
+	end
+end
+=#
+
+function flatfv(I::Union{GMTimage, AbstractString}; shape=:n, level=0.0, thickness=0.0, isbase=false)::Union{GMTfv, Vector{GMTfv}}
+	if (isa(shape, Vector))
+		FV = Vector{GMTfv}(undef, length(shape))
+		for k = 1:numel(FV)
+			FV[k] = helper_flatfv(I, shape[k], level, thickness, isbase == 1)
+		end
+		return FV
+	else
+		helper_flatfv(I, shape, level, thickness, isbase == 1)
+	end
+end
+
+#function flatfv(I::Union{GMTimage, AbstractString}; shape=:n, level=0.0, thickness=0.0, isbase=false)::GMTfv
+function helper_flatfv(I::Union{GMTimage, AbstractString}, shape, level, thickness, isbase::Bool)::GMTfv
 
 	function crop_if_possible(I::Union{GMTimage, AbstractString}, shape)
 		# If the image is referenced crop it to the 'shape's bounding box
@@ -762,7 +802,7 @@ function flatfv(I::Union{GMTimage, AbstractString}; shape=:n, level=0.0, thickne
 		isnoref && return I				# A plain image with no coords
 	
 		if (isa(shape, GDtype))
-			x, y = isa(shape, Vector) ? (shape[1].ds_bbox[1:2], shape[1].ds_bbox[3:4]) : (shape.ds_bbox[1:2], shape.ds_bbox[3:4])
+			x, y = isa(shape, Vector) ? (shape[1].ds_bbox[1:2], shape[1].ds_bbox[3:4]) : (shape.bbox[1:2], shape.bbox[3:4])
 		else
 			x = extrema(view(shape, :, 1))	# xx minmax
 			y = extrema(view(shape, :, 2))
@@ -776,13 +816,13 @@ function flatfv(I::Union{GMTimage, AbstractString}; shape=:n, level=0.0, thickne
 	end
 
 	function forceRGB(I)::GMTimage{UInt8, 3}
-		I_ = isa(I, GMTimage) ? I : gmtread(I)::GMTimage
+		I_::GMTimage = isa(I, GMTimage) ? I : gmtread(I)::GMTimage
 		size(I_, 3) == 1 && (I_ = ind2rgb(I_))
 		return I_
 	end
 
 	I = crop_if_possible(I, shape)
-	_I = forceRGB(I)
+	_I::GMTimage{UInt8, 3} = forceRGB(I)
 	n_cols::Int, n_rows::Int = getsize(_I)	# Works for both 'regular' and GDAL transposed images
 
 	hasAlphaMask = (length(_I.layout) == 4 && _I.layout[4] == 'A')
@@ -822,6 +862,7 @@ function flatfv(I::Union{GMTimage, AbstractString}; shape=:n, level=0.0, thickne
 			_Z = fill(Float64(level), n_rows+1, n_cols+1)
 			X, Y, Z = (c0 == 1) ? (_Z, _X, _Y) : (c0 == 2) ? (_X, _Z, _Y) : (_X, _Y, _Z)
 		end
+		(sum(masca) == 0) && (masca[div(size(masca, 1), 2), div(size(masca, 2), 2)] = true)		# Tinny polygons can give empty masks
 	else
 		X,Y = meshgrid(_I.x, reverse(_I.y))		# MUST CONFIRM that these coords are pixel-reg
 		Z = fill(Float64(level), n_rows+1, n_cols+1)
@@ -878,4 +919,19 @@ function flatfv(I::Union{GMTimage, AbstractString}; shape=:n, level=0.0, thickne
 		FV.color_vwall = "140,220"
 	end
 	return FV
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+	bbox = getbbox(FV::Vector{GMTfv}) -> Vector{Float64}
+
+Return the global bounding box of a vector of GMTfv structures.
+"""
+function getbbox(FV::Vector{GMTfv})::Vector{Float64}
+	bbox = FV[1].bbox
+	for k = 2:numel(FV)
+		bbox[1], bbox[3], bbox[5] = min(bbox[1], FV[k].bbox[1]), min(bbox[3], FV[k].bbox[3]), min(bbox[5], FV[k].bbox[5])
+		bbox[2], bbox[4], bbox[6] = max(bbox[2], FV[k].bbox[2]), max(bbox[4], FV[k].bbox[4]), max(bbox[6], FV[k].bbox[6])
+	end
+	return bbox
 end
