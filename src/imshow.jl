@@ -65,14 +65,20 @@ function imshow(arg1, x::AbstractVector{Float64}=Float64[], y::AbstractVector{Fl
 	elseif (isa(arg1, Array{UInt8}) || isa(arg1, Array{UInt16,3}))
 		Gi = mat2img(arg1; kw...)
 		call_img = true
-	elseif (isa(arg1, GDtype) || isa(arg1, GMTfv) || (isa(arg1, Matrix{<:Real}) && size(arg1,2) <= 4) || (isa(arg1, Gdal.AbstractDataset) || isa(arg1, Gdal.AbstractGeometry)))
+	elseif (isa(arg1, GDtype) || isa(arg1, GMTfv) || isa(arg1, Vector{GMTfv}) || (isa(arg1, Matrix{<:Real}) && size(arg1,2) <= 4) || (isa(arg1, Gdal.AbstractDataset) || isa(arg1, Gdal.AbstractGeometry)))
 		(isa(arg1, Gdal.AbstractDataset) || isa(arg1, Gdal.AbstractGeometry)) && (arg1 = gd2gmt(arg1))
 		isa(arg1, Matrix{<:Real}) && (arg1 = mat2ds(arg1))
-		ginfo = (isa(arg1, GMTdataset) || isa(arg1, GMTfv)) ? arg1.bbox : arg1[1].ds_bbox
+		if isa(arg1, Vector{GMTfv})
+			ginfo = getbbox(arg1);
+			isFV3D = (size(arg1[1].verts, 2) > 2)
+		else
+			ginfo = (isa(arg1, GMTdataset) || isa(arg1, GMTfv)) ? arg1.bbox : arg1[1].ds_bbox
+			isFV3D = (isa(arg1, GMTfv) && size(arg1.verts, 2) > 2)
+		end
 		CTRL.limits[1:4] = ginfo[1:4];		CTRL.limits[7:10] = ginfo[1:4]
 		call_plot3 = ((isa(arg1, GMTdataset) && arg1.geom == Gdal.wkbPolygonZM) ||
 		              (isa(arg1, Vector{<:GMTdataset}) && arg1[1].geom == Gdal.wkbPolygonZM) ||
-					  isa(arg1, GMTfv)) ? true : false		# Should evolve into a fun that detects the several plot3d cases.
+					  isFV3D) ? true : false			# Should evolve into a fun that detects the several plot3d cases.
 		!call_plot3 && (call_plot3 = isplot3(kw))
 		return (call_plot3) ? plot3d(arg1; show=see, kw...) : plot(arg1; show=see, kw...)
 	elseif (isa(arg1, GMTcpt))

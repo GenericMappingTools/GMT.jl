@@ -1812,7 +1812,7 @@ const psevents = events            # Alias
 cat_1_arg(arg::GMTdataset, toDS::Bool=false) = return arg			# Miserable attempts to force type stability
 cat_1_arg(arg::Vector{<:GMTdataset}, toDS::Bool=false) = return arg
 function cat_1_arg(arg, toDS::Bool=false)
-	isa(arg, GMTfv) && return arg				# A FV type. Nothing to here
+	(isa(arg, GMTfv) || isa(arg, Vector{GMTfv})) && return arg		# A FV type. Nothing to do here
 	# Add a first column with 1:n to all args that are not GMTdatasets
 	if (isa(arg, Vector) || typeof(arg) <: AbstractRange)
 		if isa(arg, Vector{<:Vector{<:Real}})
