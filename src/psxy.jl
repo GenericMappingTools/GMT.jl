@@ -1561,10 +1561,12 @@ of matrices, one for each geometry (e.g. triangles, quadrangles, etc).
 function sort_visible_faces(FV::Vector{GMTfv}, azim, elev; del::Bool=true)::Tuple{Vector{GMTfv}, Vector{Float64}}
 	# This method is for the case when FV is a vector of FV's. The 'projs' here worth nothing and is returned
 	# as a empty vector only for simetry with the case when FV is a single FV.
+	projs = Float64[]
 	for k = 1:numel(FV)
-		FV[k] = sort_visible_faces(FV[k], azim, elev; del=del)[1]
+		FV[k], _projs = sort_visible_faces(FV[k], azim, elev; del=del)
+		!isempty(_projs) && append!(projs, _projs)
 	end
-	return FV, Float64[]
+	return FV, projs
 end
 function sort_visible_faces(FV::GMTfv, azim, elev; del::Bool=true)::Tuple{GMTfv, Vector{Float64}}
 	cos_az, cos_el, sin_az, sin_el = cosd(azim), cosd(elev), sind(azim), sind(elev)
@@ -1582,7 +1584,13 @@ function sort_visible_faces(FV::GMTfv, azim, elev; del::Bool=true)::Tuple{GMTfv,
 		isPlane = FV.isflat[k]
 		have_colorwall = length(FV.color) >= k && !isassigned(FV.color[k], 1) && !isempty(FV.color_vwall)
 		needNormals = have_colorwall || (length(FV.color) >= k && isempty(FV.color[k])) 	# No color, no normals
-		(isPlane && !needNormals) && (FV.faces_view[k] = FV.faces[k]; continue)		# Nothing more to do in this case.
+		if (isPlane && !needNormals)			# But there is still a flaw in the 'needNormals' logic
+			FV.faces_view[k] = FV.faces[k];
+			_tmp = [FV.verts[FV.faces[k][1,v], c] for v = 1:size(FV.faces[k], 2), c = 1:3]
+			this_proj = dot(facenorm(_tmp, zfact=FV.zscale), view_vec)
+			append!(projs, this_proj)			# But since it has no color and is flat, we need to store the normal.
+			continue							# Nothing more to do in this case.
+		end
 		del = !isPlane && FV.bfculling			# bfculling should become a vector too?
 		have_colors = length(FV.color) >= k && !isempty(FV.color[k])	# Does this FV has a color for each polygon?
 
@@ -1627,7 +1635,7 @@ function sort_visible_faces(FV::GMTfv, azim, elev; del::Bool=true)::Tuple{GMTfv,
 		first_face_vis = false
 	end
 
-	c = [isassigned(FV.faces_view, k) for k = 1:numel(FV.faces_view)]
+	c = [isassigned(FV.faces_view, k) && !isempty(FV.faces_view[k]) for k = 1:numel(FV.faces_view)]
 	!all(c) && (FV.faces_view = FV.faces_view[c])	# Delete eventual #undefs
 
 	vis = sum(size.(FV.faces_view, 1))		# If = 0, it must have been a plane.

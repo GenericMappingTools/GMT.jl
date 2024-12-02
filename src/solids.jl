@@ -398,7 +398,9 @@ function extrude(shape::Matrix{<:AbstractFloat}, h; base=0.0, closed=true)::GMTf
 	for n = 1:np-1					# Create vertical faces
 		F[iF][n, 1], F[iF][n, 2], F[iF][n, 3], F[iF][n, 4], F[iF][n, 5] = n, n+f2, n+np+1, n+f4, n
 	end
-	fv2fv(F, V; bfculling=(closed == 1))
+	FV = fv2fv(F, V; bfculling=(closed == 1))
+	(closed == 1) && (FV.isflat = [true, false, true])
+	return FV
 end
 
 # ----------------------------------------------------------------------------

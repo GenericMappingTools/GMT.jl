@@ -1150,7 +1150,7 @@ end
 
 # ----------------------------------------------------------------------------
 """
-    n = facenorm(M::Matrix{<:Real}; normalize=true, zfact=1.0)
+    n = facenorm(M::AbstractMatrix{<:Real}; normalize=true, zfact=1.0)
 
 Calculate the normal vector of a polygon with vertices in `M`.
 
@@ -1163,7 +1163,7 @@ Calculate the normal vector of a polygon with vertices in `M`.
 ### Returns
 A 3 elements vector with the components of the normal vector.
 """
-function facenorm(M::Matrix{<:Real}; zfact=1.0, normalize=true)
+function facenorm(M::AbstractMatrix{<:Real}; zfact=1.0, normalize=true)
 	# Must take care of the case when the first and last vertices are the same
 	p1 = M[1,:]
 	last = (p1 == M[end,:]) ? size(M,1)-1 : size(M,1)

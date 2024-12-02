@@ -1126,10 +1126,14 @@ function dataset_init_FV(API::Ptr{Nothing}, FV::Vector{GMTfv})::Ptr{GMT_MATRIX}
 
 	n_records, _seg = 0, 0
 
+	# When all FVs have the same number of geometries we assume that the FV.facies order is important, like for example
+	# is the case of extruded polygons with vertical walls. So, for those we plot the first geom of all FVs, the second
+	# geom of all FVs, etc.
 	if (same_n_faces)
 		for ng = 1:n_geoms
 			for k = 1:nFVs
 				what_faces = isempty(FV[k].faces_view) ? FV[k].faces : FV[k].faces_view
+				(ng > length(what_faces)) && continue			# May happen when 'what_faces' is a 'faces_view' 	
 				tmp = zeros(maximum(size.(what_faces,2)), 3)	# The maximum number of vertices in any polygon of all geometries
 				have_colors = !isempty(FV[k].color[1])			# Does this FV have a color for each polygon?
 				DS, n_records, _seg = helper_init_FV(API, FV[k], DS, DT, tmp, what_faces, have_colors, n_records, _seg, ng)
