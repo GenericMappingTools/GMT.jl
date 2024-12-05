@@ -39,7 +39,8 @@ function quadkey(lon::Real, lat::Real, zoom::Int; bounds=false, geog=true)
 end
 
 function quadkey(xyz::VecOrMat{<:Int}; bounds=true, geog=true)
-	# Returns the x,y,z bounds unless quadtree=true
+	# Returns the x,y,z bounds
+	(bounds != 1) && return XY2quadtree(xyz[1], xyz[2], xyz[3])		# Mutch safer than going through a mosaic call
 	lon, lat_iso = getLonLat(xyz[1], xyz[2], xyz[3]+1)
 	lat = isometric2geod(lat_iso, 0.0)
 	r = quadkey(lon, lat, xyz[3]; bounds=bounds, geog=geog)
@@ -212,6 +213,21 @@ viz(I, coast=true)
 """
 function mosaic(address::String; pt_radius=6378137.0, provider="", zoom::Int=0, cache::String="",
                 verbose::Int=0, date::String="", key::String="", kw...)
+
+	lims, zoomL = mosaic_limits(address)
+	mosaic(lims[1:2], lims[3:4]; pt_radius=pt_radius, provider=provider, zoom=zoomL+zoom, cache=cache,
+	       date=date, verbose=verbose, key=key, kw...)
+end
+
+# ----------------------------------------------------------------------------------------------------------
+"""
+    lims, zoomL = mosaic_limits(address::String)
+
+Helper function that returns the limits and zoom level implied by the address.
+
+The `address` can be a ``quadtree`` or a ``XYZ`` tile address.
+"""
+function mosaic_limits(address::String)
 	s = split(address, ",")
 	(length(s) != 3 && length(s) != 1) && throw(error("Wrong type of tile address: $address"))
 
@@ -234,31 +250,39 @@ function mosaic(address::String; pt_radius=6378137.0, provider="", zoom::Int=0, 
 		else                                               xf = parse(Int, s[1]);	xl = xf
 		end
 
-		if     ((ind = findfirst('-', s[2])) !== nothing)  yf, yl = parse_LL(s[2], ind) .+ 1
-		elseif ((ind = findfirst('+', s[2])) !== nothing)  yf, yl = parse_CC(s[2], ind) .+ 1
-		else                                               yf = parse(Int, s[2]) + 1;	yl = yf
+		if     ((ind = findfirst('-', s[2])) !== nothing)  yf, yl = parse_LL(s[2], ind)
+		elseif ((ind = findfirst('+', s[2])) !== nothing)  yf, yl = parse_CC(s[2], ind)
+		else                                               yf = parse(Int, s[2]);	yl = yf
 		end
 		zoomL = parse(Int, s[3])
 		if (xf != xl || yf != yl)
-			limsLL = quadkey([xf, yf, zoomL])			# Each comes as 2x2 with [xmin ymin; xmax ymax]
-			limsUR = quadkey([xl, yl, zoomL])
-			lims::Vector{Float64} = [min(limsLL[1], limsUR[1]), max(limsLL[2], limsUR[2]), min(limsLL[3], limsUR[3]), max(limsLL[4], limsUR[4])]
+			#limsLL::Matrix{Float64} = quadkey([xf, yf, zoomL])			# Each comes as 2x2 with [xmin ymin; xmax ymax]
+			#limsUR::Matrix{Float64} = quadkey([xl, yl, zoomL])
+			#lims::Vector{Float64} = [min(limsLL[1], limsUR[1]), max(limsLL[2], limsUR[2]), min(limsLL[3], limsUR[3]), max(limsLL[4], limsUR[4])]
+			tLL = quadbounds_limits(XY2quadtree(xf, yf, zoomL))[1][1]	# A 5x2 matrix with the square corners (first_pt = last_pt)	
+			tUR = quadbounds_limits(XY2quadtree(xl, yl, zoomL))[1][1]
+			lims = [min(tLL[1,1], tUR[1,1]), max(tLL[3,1], tUR[3,1]), min(tLL[1,2], tUR[1,2]), max(tLL[3,2], tUR[3,2])]
 		else
-			lims = vec(quadkey([xf, yf, zoomL]))
+			#lims = vec(quadkey([xf, yf, zoomL]))
+			tq = quadbounds_limits(XY2quadtree(xf, yf, zoomL))[1][1]	# A 5x2 matrix with the square corners (first_pt = last_pt)	
+			lims = [tq[1,1], tq[3,1], tq[1,2], tq[3,2]]
 		end
-
-		#xyz = parse.(Int, s)
-		#xyz[2] += 1						# For some unknown reason we need to add 1 to play with the zoom
-		#lims, zoomL = quadkey(xyz), xyz[3]
 	else
-		Dlims, zoomL = quadbounds(address)
-		lims = Dlims.bbox
+		v, zoomL = quadbounds_limits(address)
+		lims = collect(Float64, Iterators.flatten(extrema(v[1], dims=1)))
+		if (length(v) > 1)
+			for k = 2:numel(v)
+				_lims = collect(Float64, Iterators.flatten(extrema(v[k], dims=1)))
+				lims[1] = min(lims[1], _lims[1]);		lims[2] = max(lims[2], _lims[2])
+				lims[3] = min(lims[3], _lims[3]);		lims[4] = max(lims[4], _lims[4])
+			end
+		end
 		zoomL -= 1						# Also because in getQuadLims() we add 1 to zoom.
 	end
-	mosaic(lims[1:2], lims[3:4]; pt_radius=pt_radius, provider=provider, zoom=zoomL+zoom, cache=cache,
-	       date=date, verbose=verbose, key=key, kw...)
+	return lims, zoomL
 end
 
+# ----------------------------------------------------------------------------------------------------------
 """
 I = mosaic(address::VecOrMat{<:Real}; ...)
 
@@ -411,7 +435,7 @@ function mosaic(lon::Vector{<:Float64}, lat::Vector{<:Float64}; pt_radius=637813
 	quadonly && return quad_, decimal_adress, lon_mm, lat_mm, xm, ym
 
 	# Return here if user wants a GMTdataset with the coordinates of the tiles
-	quadTiles && return quadbounds(quad_, quadkey)[1]
+	quadTiles && return quadbounds(quad_; quadkey=quadkey)[1]
 
 	# ------------------ Get the tiles and build up the image --------------------
 	cache, cache_supp = completeCacheName(cache, zoom, provider_code; variant=variant)
@@ -442,6 +466,23 @@ function mosaic(lon::Vector{<:Float64}, lat::Vector{<:Float64}; pt_radius=637813
 	end
 
 	return I
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+	quadtree = XY2quadtree(x, y, zoom; quadkey::Matrix{Char}=['0' '1'; '2' '3']) -> String
+
+Convert the tile coordinates `x` and `y` to the quadtree string.
+"""
+function XY2quadtree(x, y, zoom; quadkey::Matrix{Char}=['0' '1'; '2' '3'])
+	quadtree = ""
+	_x::Int, _y::Int = Int(x), Int(y)
+	for i = 1:zoom
+		_x, _rx = divrem(_x, 2);		rx = Int(_rx) + 1
+		_y, _ry = divrem(_y, 2);		ry = Int(_ry) + 1
+		quadtree *= quadkey[ry, rx]
+	end
+	return quadtree[end:-1:1]
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -619,7 +660,7 @@ end
 
 # -------------------------------------------------------------------------------------------------
 """
-    Dtiles, zoomL = quadbounds(quadtree; flatness=0.0, geog=true)
+    Dtiles, zoomL = quadbounds(quadtree; geog=true, quadkey=['0' '1'; '2' '3'])
 
 Compute the coordinates of the `quadtree` quadtree. Either a single quadtree string or an array
 of quadtree strings.
@@ -627,7 +668,7 @@ of quadtree strings.
 - `quadtree`: Either a single quadtree string or a `Matrix{String}` of quadtree strings.
   This is the quadtree string or array of strings to compute coordinates for and is obtained
   from a call to the `mosaic` using the `quadonly` option (see example below).
-- `flaness`: Flatness of the ellipsoid.
+- `quadkey=['0' '1'; '2' '3']`: The quadkey for the quadtree.
 
 ### Returns
 - `Dtiles`: A GMTdataset vector with the corner coordinates of each tile.
@@ -640,19 +681,32 @@ of quadtree strings.
   viz(D)
 ```
 """
-quadbounds(quadtree::String, quadkey=['0' '1'; '2' '3']; geog=true) = quadbounds([quadtree;;], quadkey; geog=geog)
-function quadbounds(quadtree::Matrix{String}, quadkey=['0' '1'; '2' '3']; geog=true)
+quadbounds(quadtree::String; geog=true, quadkey=['0' '1'; '2' '3']) = quadbounds([quadtree;;]; geog=geog, quadkey=quadkey)
+function quadbounds(quadtree::Matrix{String}; geog=true, quadkey=['0' '1'; '2' '3'])
+	v, zoomL = quadbounds_limits(quadtree; geog=geog, quadkey=quadkey)
+	proj = geog ? prj4WGS84 : "+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +a=6378137 +b=6378137 +units=m +no_defs"
+	D = mat2ds(v, proj=proj, geom=wkbPolygon)
+	D[1].comment = ["Zoom level = $zoomL"]
+	for k = 1:numel(D)						# Add tile addresses as attributes
+		D[k].attrib["quadtree"] = quadtree[k]
+		XY = getQuadLims(quadtree[k], quadkey, 1)[1]
+		D[k].attrib["XYZ"] = join(string.(XY), ",") * ",$(zoomL-1)"
+	end
+	(length(D) == 1) && (D = D[1])
+	set_dsBB!(D)
+	return D, zoomL
+end
+
+# This helper function is useful when we want only the limits and no extra overhead of a GMTdataset
+quadbounds_limits(quadtree::AbstractString; geog=true, quadkey=['0' '1'; '2' '3']) = quadbounds_limits([quadtree;;]; geog=geog, quadkey=quadkey)
+function quadbounds_limits(quadtree::Matrix{<:AbstractString}; geog=true, quadkey=['0' '1'; '2' '3'])
 	flatness = 0.0
 	
-	if isa(quadtree, AbstractString)		# A single quadtree
-		lims, zoomL = getQuadLims(quadtree, quaEdkey, "")
-		tiles_bb = lims[[1, 2, 4, 3]]		# In case idiot choice of 2 argouts
-	else									# Several in a cell array
-		tiles_bb = zeros(length(quadtree), 4)
-		for k = 1:length(quadtree)
-			lim, zoomL = getQuadLims(quadtree[k], quadkey, "")		# Remember that lim(3) = y_max
-			tiles_bb[k, :] .= lim
-		end
+	tiles_bb = zeros(length(quadtree), 4)
+	zoomL = 0			# Can't stand this need. F. F. F
+	for k = 1:length(quadtree)
+		lim, zoomL = getQuadLims(quadtree[k], quadkey, "")		# Remember that lim(3) = y_max
+		tiles_bb[k, :] .= lim
 	end
 	
 	tiles_bb[:, 3:4] .= isometric2geod(tiles_bb[:, 4:-1:3], flatness)
@@ -665,17 +719,7 @@ function quadbounds(quadtree::Matrix{String}, quadkey=['0' '1'; '2' '3']; geog=t
 				tiles_bb[k,1] tiles_bb[k,3]]
 		if (!geog)  xm, ym = geog2merc(v[k][:,1], v[k][:,2], 6378137.0);	v[k] = [xm ym]	end
 	end
-	proj = geog ? prj4WGS84 : "+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +a=6378137 +b=6378137 +units=m +no_defs"
-	D = mat2ds(v, proj=proj, geom=wkbPolygon)
-	D[1].comment = ["Zoom level = $zoomL"]
-	for k = 1:numel(D)						# Add tile addresses as attributes
-		D[k].attrib["quadtree"] = quadtree[k]
-		XY = getQuadLims(quadtree[k], quadkey, 1)[1]
-		D[k].attrib["XYZ"] = join(string.(XY), ",") * ",$(zoomL-1)"
-	end
-	(length(D) == 1) && (D = D[1])
-	set_dsBB!(D)
-	return D, zoomL
+	return v, zoomL
 end
 
 # -------------------------------------------------------------------------------------------------
@@ -735,7 +779,7 @@ function getQuadLims(quadtree, quadkey, opt)
 	
 	zoomL = length(quadtree) + 1
 	quad_x = zeros(Int, zoomL)
-	quad_y = copy(quad_x)
+	quad_y = zeros(Int, zoomL)
 
 	# MAPPING: X -> 0=0 1=1 3=1 2=0;		Y -> 0=0 1=0 3=1 2=1
 	quad_x[findall(quadkey[1, 2], quadtree)] .= 1
@@ -749,13 +793,13 @@ function getQuadLims(quadtree, quadkey, opt)
 	pixelX, pixelY = 0, 0
 	
 	for k = 1:length(quadtree)
-		pixelX = pixelX * 2 .+ quad_x[k]
-		pixelY = pixelY * 2 .+ quad_y[k]
+		pixelX = pixelX * 2 + quad_x[k]
+		pixelY = pixelY * 2 + quad_y[k]
 	end
 	
 	if isempty(opt)
 		lon1, lat1 = getLonLat(pixelX, pixelY, zoomL)
-		lon2, lat2 = getLonLat(pixelX .+ 1, pixelY .+ 1, zoomL)
+		lon2, lat2 = getLonLat(pixelX + 1, pixelY + 1, zoomL)
 		lims = [lon1, lon2, lat1, lat2]
 	else
 		lims = [pixelX, pixelY]
@@ -769,7 +813,7 @@ function getPixel(lon, lat, zoomL)
 	# In fact x,y are the fractional number of the 256 bins counting from origin
 	pixPerDeg = 2^(zoomL - 1) / 360
 	x = (lon .+ 180) * pixPerDeg
-	y = (180 .- lat) * pixPerDeg .+ 1000eps()	# Don't know why I use floor instead of round but floor may "floor" to the wrong side.
+	y = (180 .- lat) * pixPerDeg .+ 1e5 * eps()	# Don't know why I use floor instead of round but floor may "floor" to the wrong side.
 	isa(y, VecOrMat) && (y = y[end:-1:1])			# WHY ?????
 	
 	if length(lon) == 1
