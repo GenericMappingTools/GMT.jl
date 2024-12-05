@@ -1031,7 +1031,7 @@ function helper_vecZscale!(d::Dict, arg1, first::Bool, typevec::Int, opt_R::Stri
 	isArrowGMT4 = haskey(d, :arrow4) || haskey(d, :vector4)
 	isArrowGMT4 && (unit = replace(unit, "q" => ""); def_z = def_h = def_e = "")	# GMT4 arrows stuff only
 
-	if ((ahdr::String = helper_arrows(d, true)) != "")			# Have to use delete to avoid double parsing in -W
+	if ((ahdr::String = helper_arrows(d)) != "")		# Have to use delete to avoid double parsing in -W
 		contains(ahdr, "+e") && (def_e = "")
 		contains(ahdr, "+h") && (def_h = "")
 		if (typevec < 2 && contains(ahdr, "+z"))
