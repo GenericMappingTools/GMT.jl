@@ -186,7 +186,7 @@ function inset_nested(D::GDtype, n; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function inset_nested(f::Function, n; kwargs...)
+function inset_nested(f::Function, n; kwargs...)::Nothing
 	# This method is only called from the first inset_nested(nt::NamedTuple, n) when nt[1] is a function
 	d = KW(kwargs)
 	d, fname, opt_B, opt_J, opt_R = helper1_inset_nested(d; iscoast=(f == coast))	# fname is gmt_0.ps- file in modern session
@@ -306,7 +306,7 @@ function helper1_inset_nested(d; iscoast=false, isplot=false, imgdims=tuple())
 end
 
 # ---------------------------------------------------------------------------------------------------
-function helper2_inset_nested(fname, n)
+function helper2_inset_nested(fname, n)::Nothing
 	# All inset_nested methods end with this
 	inset(:end)
 	mv(fname, TMPDIR_USR[1] * "/" * "GMTjl__inset__$(n).ps", force=true)
