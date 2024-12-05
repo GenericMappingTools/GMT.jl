@@ -341,7 +341,7 @@ using GMT.Laszip
 	mat2ds([9 8; 9 8], x=[0 7], pen=["5p,black", "4p,white,20p_20p"], multi=true);
 	GMT.cat_2_arg2(rand(3), mat2ds(rand(3,2)));
 	GMT.cat_2_arg2(mat2ds(rand(3,2)), mat2ds(rand(3,2)));
-	GMT.cat_3_arg2(rand(3),rand(3),rand(3));
+	#GMT.cat_3_arg2(rand(3),rand(3),rand(3));
 	makecpt(T=(0,10))
 	t = joinpath(tempdir(), "lixo.dat");
 	gmtwrite(t,[0.0 0; 1 1]);
@@ -364,7 +364,7 @@ using GMT.Laszip
 	#grdsample(Glix, inc=0.5);
 	#grdtrend(Glix, model=3);
 	#grdtrack(Glix, [1 1]);
-	#coast(R=:g, proj=:guess, W=(level=1,pen=(2,:green)), Vd=2);
+	coast(R=:g, proj=:guess, W=(level=1,pen=(2,:green)));
 	#gridit(rand(10,3), preproc=true, I=0.1);
 	#earthregions("PT", Vd=2);
 	#violin(rand(50), fmt=:ps);
