@@ -5,6 +5,8 @@
 	@test quadkey(-9,39, 8) == ([121, 97, 8], ["03311003";;])
 	quadkey(-9,39, 8, bounds=true)
 	@test quadkey([121, 97, 8], bounds=false) == "03311003"
+	@test GMT.XY2quadtree(7829, 6376, 14) == "03311032212101"
+	@test quadkey([7829, 6376, 14], bounds=false) == "03311032212101"
 	mosaic(0.1,0.1,zoom=1);
 	mosaic([0.0 50],[0.0 40],zoom=1);
 	GMT.getprovider("OSM", 2);
@@ -23,7 +25,8 @@
 	G = peaks(); G.proj4 = "+proj=lonlat";
 	mosaic(G, quadonly=1);
 	G = gdalwarp(G, ["-t_srs","+proj=merc"])
-	#mosaic(G, quadonly=1);		# This now decded to randonmly fail
+	#mosaic(G, quadonly=1);		# This now decided to randomly fail
+	D15 = mosaic("7829,6374,14", zoom=1, mesh=true);
 
 	struct Provider
 		url::String
