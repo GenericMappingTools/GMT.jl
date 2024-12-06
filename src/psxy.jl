@@ -206,7 +206,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 		# Allow to use "Z=(data="att=XXXX", nofill=true)" when the Di are polygons.
 		last_ind, got_extra = length(opt_Z), false
 		(opt_Z[end] == 'f' || opt_Z[end] == 'o') && (last_ind -= 1; got_extra = true)
-		arg2 = parse.(Float64, make_attrtbl(arg1, att=opt_Z[ind_att+1:last_ind]))
+		arg2 = parse.(Float64, make_attrtbl(arg1, att=opt_Z[ind_att+1:last_ind])[1])
 		opt_Z = (got_extra) ? " -Z" * opt_Z[end] : ((arg1[1].geom == wkbLineString || arg1[1].geom == wkbLineString) ? " -Zf" : " -Z")
 		N_args = 2
 	end
