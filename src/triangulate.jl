@@ -142,7 +142,7 @@ function triplot(in::Matrix; onlyedges::Bool=false, noplot::Bool=false, first::B
 	isa(D, Vector{<:GMTdataset}) && (for k = 1:numel(D)  D[k].geom = wkbPolygon  end)
 	isa(D, GMTdataset) && (D.geom = wkbPolygon)
 	(noplot || Vd > 1) && return D
-	GMT.common_plot_xyz("", D, "plot", first, false; d...)
+	GMT.common_plot_xyz("", D, "plot", first, false, d)
 end
 
 triplot!(in::Matrix; onlyedges::Bool=false, noplot::Bool=false, kw...) = triplot(in; onlyedges=onlyedges, noplot=noplot, first=false, kw...)
@@ -173,7 +173,7 @@ function trisurf(in::Union{Matrix, GDtype}; first::Bool=true, gdal::Bool=false, 
 	(size(in, 2) < 3) && error("This 'trisurf' call needs at least 3 columns in input")
 	D = triangulate(in, S=true, Z=true)
 	D[1].comment = ["gridtri_top"]
-	common_plot_xyz("", D, "plot3d", first, true; d...)
+	common_plot_xyz("", D, "plot3d", first, true, d)
 end
 trisurf!(in::Union{Matrix, GDtype}; kw...) = trisurf(in; first=false, kw...)
 
