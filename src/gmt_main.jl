@@ -1588,7 +1588,7 @@ function info(D::GDtype; crs::Bool=false, attribs=false, att::StrSymb="")
 
 	(attribs == false) && (_D = isa(D, Vector) ? D[1] : D)
 	(attribs == false && att == "" && isempty(_D.attrib)) && return show(_D)
-	(attribs == false && att == "") && (t = make_attrtbl(D, false);
+	(attribs == false && att == "") && (t = make_attrtbl(D, false)[1];
 	                                    return isa(t, Tuple) ? show(_D, attrib_table=t[1]) : show(_D, attrib_table=t))
 
 	# OK, here we are dealing with printing the attribs, or returning a column with the values of one attrib.
@@ -1602,7 +1602,7 @@ function info(D::GDtype; crs::Bool=false, attribs=false, att::StrSymb="")
 	else
 		# Do differently depending on: plot whole attrib table or return the values of one attribute.
 		if (att == "") att_tbl, att_names = make_attrtbl(D, true)
-		else           att_tbl = make_attrtbl(D, att=att)
+		else           att_tbl = make_attrtbl(D, att=att)[1]
 		end
 		if (isa(n_att, Int))
 			tbl = (n_att > 0) ? att_tbl[1:n_att,:] : (n_att < 0) ? att_tbl[size(att_tbl,1)+n_att+1:end,:] : att_tbl
@@ -1625,12 +1625,12 @@ Base.:display(I::GMTimage) = show(I)
 """
     att_tbl, att_names = make_attrtbl(D::GDtype, names::Bool=false; att::StrSymb="")
 
-Create a string matrix with the dataset attributes. 'names', if true, returns also a string vector
-with attribute names. 'att', if == to one atribute, returns only that column of the att table.
+Create a string matrix with the dataset attributes. 'names', if true, returns also a string vector with
+attribute names. 'att', if == to one atribute, returns only that column of the 'att' table and and empty string vector.
 """
 function make_attrtbl(D::GDtype, names::Bool=false; att::StrSymb="")
 	!isa(D, Vector) && (att_tbl = reshape(vec(string.(values(D.attrib))),1,length(D.attrib)))
-	!isa(D, Vector) && return att_tbl
+	!isa(D, Vector) && return att_tbl, String[]
 
 	len_D, len_att = length(D), length(D[1].attrib)
 	att_tbl = Matrix{String}(undef, len_D, len_att)
@@ -1638,7 +1638,7 @@ function make_attrtbl(D::GDtype, names::Bool=false; att::StrSymb="")
 		att_tbl[k, :] = reshape(vec(string.(values(D[k].attrib))), 1, len_att)
 	end
 	att_names = (names || att != "") ? vec(string.(keys(D[1].attrib))) : String[]
-	(att != "") && ((ind = findfirst(string(att) .== att_names)) !== nothing) && return att_tbl[:,ind]
+	(att != "") && ((ind = findfirst(string(att) .== att_names)) !== nothing) && return att_tbl[:,ind], String[]
 	att_tbl, att_names
 end
 
