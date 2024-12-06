@@ -184,7 +184,7 @@ function plotyy(arg1, arg2; first=true, kw...)
 	d[:lc] = "#0072BD"
 	(haskey(d, :show)) ? (delete!(d, :show);  do_show = true) : do_show = false
 	d[:par] = (MAP_FRAME_PEN="#0072BD", MAP_TICK_PEN="#0072BD", FONT_ANNOT_PRIMARY="#0072BD", FONT_LABEL="#0072BD")
-	r1 = common_plot_xyz("", cat_1_arg(arg1, true), "plotyy", first, false; d...)
+	r1 = common_plot_xyz("", cat_1_arg(arg1, true), "plotyy", first, false, d)
 
 	(Vd != 0) && (d[:Vd] = Vd)
 	(seclabel != "" && occursin(" ", seclabel)) && (seclabel = "\"" * seclabel * "\"")
@@ -192,7 +192,7 @@ function plotyy(arg1, arg2; first=true, kw...)
 	d[:B] = " af E"	* seclabel		# Also remember that previous -B was consumed in first call
 	d[:lc]  = "#D95319"
 	d[:par] = (MAP_FRAME_PEN="#D95319", MAP_TICK_PEN="#D95319", FONT_ANNOT_PRIMARY="#D95319", FONT_LABEL="#D95319")
-	r2 = common_plot_xyz("", cat_1_arg(arg2, true), "plotyy", false, false; d...)
+	r2 = common_plot_xyz("", cat_1_arg(arg2, true), "plotyy", false, false, d)
 
 	(xlabel != "" && occursin(" ", xlabel)) && (xlabel = "\"" * xlabel * "\"")
 	opt_B = (xlabel != "") ? "af Sn x+l" * xlabel : "af Sn"
@@ -466,7 +466,7 @@ function bar(cmd0::String="", arg=nothing; first=true, kw...)
 	end
 
 	if (do_cat) arg = Float64.(cat_1_arg(arg))  end		# If ARG is a vector, prepend it with a 1:N x column
-	common_plot_xyz("", mat2ds(arg), "bar", first, false; kw...)
+	common_plot_xyz("", mat2ds(arg), "bar", first, false, d)
 end
 bar!(cmd0::String="", arg=nothing; kw...) = bar(cmd0, arg; first=false, kw...)
 
@@ -582,7 +582,7 @@ function bar3(cmd0::String="", arg=nothing; first=true, kwargs...)
 	end
 
 	(opt_R != "") && (d[:R] = opt_R[4:end])
-	common_plot_xyz("", mat2ds(arg1), "bar3|" * opt_S * opt_z, first, true; d...)
+	common_plot_xyz("", mat2ds(arg1), "bar3|" * opt_S * opt_z, first, true, d)
 end
 
 bar3(arg1; kw...) = bar3("", arg1; first=true, kw...)
@@ -802,7 +802,7 @@ function fill_between(arg1, arg2=nothing; first=true, kwargs...)
 
 	# ---------------------------------- Plot the patches ---------------------------------------
 	do_stairs && (d[:A] = "y")
-	common_plot_xyz("", Dsd, "", first, false; d...)	# The patches
+	common_plot_xyz("", Dsd, "", first, false, d)	# The patches
 	do_stairs && (delete!(d, :A))
 	delete!(d, [[:theme], [:figsize], [:frame], [:xaxis], [:yaxis]])	# To not repeat -B -J
 	# -------------------------------------------------------------------------------------------
@@ -810,22 +810,22 @@ function fill_between(arg1, arg2=nothing; first=true, kwargs...)
 	_D2 = one_array ? mat2ds(D1, (:,[1,3])) : D2		# Put second line in a unique var
 
 	if (border > 0)										# Plot a white border
-		one_array ? common_plot_xyz("", [mat2ds(D1, (:,[1,2])), _D2], "lines", false, false; Dict(:W => "$(border),white", :Vd => Vd)...) :
-		            common_plot_xyz("", [D1, _D2], "lines", false, false; Dict(:W => "$(border),white", :Vd => Vd)...)
+		one_array ? common_plot_xyz("", [mat2ds(D1, (:,[1,2])), _D2], "lines", false, false, Dict(:W => "$(border),white", :Vd => Vd)) :
+		            common_plot_xyz("", [D1, _D2], "lines", false, false, Dict(:W => "$(border),white", :Vd => Vd))
 	end
 
 	do_stairs && (d[:stairs_step] = :pre)
 	d[:W], d[:Vd] = l_colors[1], Vd
 	do_markers && (d[:marker] = :point; d[:mc] = string(split(fill_colors[1], "@")[1]))
 	!isempty(legs) && (d[:legend] = legs[1])
-	common_plot_xyz("", D1, "lines", false, false; d...)
+	common_plot_xyz("", D1, "lines", false, false; d...)		# This d... must be. D cant be consumed at this point
 
 	do_stairs && (d[:stairs_step] = :post)
 	d[:W], d[:Vd] = l_colors[2], Vd
 	do_markers && (d[:marker] = :point; d[:mc] = string(split(fill_colors[2], "@")[1]))
 	!isempty(legs) && (d[:legend] = (lab_pos == "") ? legs[2] : (label=legs[2], pos=lab_pos, box=lab_box))
 	d[:show] = do_show
-	common_plot_xyz("", _D2, "lines", false, false; d...)
+	common_plot_xyz("", _D2, "lines", false, false, d)
 
 	#=
 	d[:marker] = "c"
@@ -833,7 +833,7 @@ function fill_between(arg1, arg2=nothing; first=true, kwargs...)
 	d[:mc] = :black
 	d[:Vd] = Vd
 	d[:show] = do_show
-	common_plot_xyz("", int, "", false, false; d...)
+	common_plot_xyz("", int, "", false, false, d)
 	=#
 end
 
@@ -936,7 +936,7 @@ function stem(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	MULTI_COL[1] = false		# Some cat_2_arg2 paths set it to true, wich cannot happen in this function
 	have_baseline = ((find_in_dict(d, [:nobaseline])[1]) === nothing)
-	out1, out2 = common_plot_xyz("", mat2ds(arg1), "stem", first, false; d...), nothing
+	out1, out2 = common_plot_xyz("", mat2ds(arg1), "stem", first, false, d), nothing
 	(have_baseline) && (out2 = hlines!(0.0, show=_show))	# See if we have a no-baseline request
 	(out1 !== nothing && out2 !== nothing) ? [out1;out2] : ((out1 !== nothing) ? out1 : out2)
 end
@@ -1177,7 +1177,7 @@ function feather(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	# TYPEVEC = 0, ==> u,v = theta,rho. TYPEVEC = 1, ==> u,v = u,v. TYPEVEC = 2, ==> u,v = x2,y2 
 	typevec = (find_in_dict(d, [:rtheta])[1] !== nothing) ? 0 : (find_in_dict(d, [:endpt :endpoint])[1] !== nothing) ? 2 : 1
 	d, arg1 = helper_vecBug(d, arg1, first, haveR, haveVarFill, typevec, true)		# Deal with the GMT annoying bug
-	common_plot_xyz("", mat2ds(arg1), "feather", first, false; d...)
+	common_plot_xyz("", mat2ds(arg1), "feather", first, false, d)
 end
 
 feather!(cmd0::String="", arg1=nothing; kw...) = feather!(cmd0, arg1; first=false, kw...)
@@ -1225,7 +1225,7 @@ function quiver(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	d[:S] = "v$(len)+e+s"
 
 	MULTI_COL[1] = false		# Some cat_2_arg2 paths set it to true, wich cannot happen in this function 
-	common_plot_xyz("", mat2ds(arg1), "quiver", first, false; d...)
+	common_plot_xyz("", mat2ds(arg1), "quiver", first, false, d)
 end
 function quiver(arg1, arg2, arg3, arg4; first=true, kw...)
 	@assert(length(arg1) == length(arg2) && length(arg2) == length(arg3) && length(arg3) == length(arg4))
@@ -1333,7 +1333,7 @@ function radar_helper(cmd0::String, arg1; first::Bool=true, axeslimts=Float64[],
 	
 	d[:L] = true		# Make sure line is closed.
 	(is_in_dict(d, [:lw :W :pen]) === nothing) && (d[:lw] = 1)
-	common_plot_xyz("", D, "line", false, false; d...)
+	common_plot_xyz("", D, "line", false, false, d)
 end
 
 # ------------------------------------------------------------------------------------------------------
@@ -1381,7 +1381,7 @@ function band(cmd0::String="", arg1=nothing; first=true, width=0.0, envelope=fal
 	d[:L] = (_L != "") ? _L : opt_L
 	MULTI_COL[1] = false		# Some cat_2_arg2 paths set it to true, wich cannot happen in this function 
 
-	common_plot_xyz("", mat2ds(arg1), "lines", first, false; d...)
+	common_plot_xyz("", mat2ds(arg1), "lines", first, false, d)
 end
 band!(cmd0::String="", arg1=nothing; width=0.0, envelope=false, kw...) =
 	band(cmd0, arg1; first=false, width=width, envelope=envelope, kw...)
@@ -1475,7 +1475,7 @@ function helper_vhlines(arg1, vert::Bool, first::Bool, xymin, xymax, percent, kw
 	vert && (d[:yx] = true)		# Because we need to swapp x / y columns in the vlines case
 	delete!(d, [[:xmin], [:xmax], [:ymin], [:ymax]])
 
-	common_plot_xyz("", D, "lines", first, false; d...)
+	common_plot_xyz("", D, "lines", first, false, d)
 end
 
 # ------------------------------------------------------------------------------------------------------
@@ -1536,7 +1536,7 @@ function helper_hvband(mat::Matrix{<:Real}, tipo="v"; width=false, height=false,
 
 	d[:S] = bB						# Add -Sb|B, otherwise headers are not scanned.
 	got_pattern && (d[:G] = "p1")	# Patterns fck the session. Use this to inform gmt() that session must be recreated
-	common_plot_xyz("", D, "", first, false; d...)
+	common_plot_xyz("", D, "", first, false, d)
 end
 
 # ------------------------------------------------------------------------------------------------------
@@ -1671,7 +1671,7 @@ function ternary(cmd0::String="", arg1=nothing; first::Bool=true, image::Bool=fa
 		d[:par] = (MAP_GRID_PEN_PRIMARY="thinnest,gray",)
 	end
 	(G_API[1] == C_NULL) && gmt_restart()	# Force having a valid API. We can't afford otherwise here.
-	r = common_plot_xyz("", mat2ds(arg1), "ternary", first, false; d...)
+	r = common_plot_xyz("", mat2ds(arg1), "ternary", first, false, d)
 	# With the following trick we leave the -R history in 0/1/0/1 and so we can append with plot, text, etc
 	gmt("psxy -Scp -R0/1/0/1 -JX -O -Vq > " * joinpath(TMPDIR_USR[1], "lixo_" * TMPDIR_USR[2] * TMPDIR_USR[3] * ".ps"), [0. 0.])
 	CTRL.pocket_R[1] = " -R0/1/0/1"		# Since we now always explicitly set -R, we must save it in CTRL.pocket_R
@@ -1804,7 +1804,7 @@ function events(cmd0::String="", arg1=nothing; kwargs...)
 		(away=("j", nothing, 1), corners=("J", nothing, 1), shift="", line=("+v",add_opt_pen)))
 	cmd = add_opt(d, cmd, "F", [:F :attrib],
 		(angle="+a", Angle="+A", font=("+f", font), justify="+j", region_justify="+c", header="_+h", label="_+l", rec_number="+r", text="+t", zvalues="+z"), false)
-	common_plot_xyz(cmd0, mat2ds(arg1), "events|" * cmd, true, false; d...)
+	common_plot_xyz(cmd0, mat2ds(arg1), "events|" * cmd, true, false, d)
 end
 const psevents = events            # Alias
 

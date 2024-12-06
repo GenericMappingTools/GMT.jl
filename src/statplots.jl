@@ -370,7 +370,7 @@ function plotcandles_and_showsep(d, D, first::Bool, isVert::Bool, n4t, isGroup::
 	showSep = ((SEPcmd = find_in_dict(d, [:separator])[1]) !== nothing)
 	(showSep) && (sep_pen = parse_stats_separator_pen(d, SEPcmd))
 	(showSep) && (do_show = ((val = find_in_dict(d, [:show])[1]) !== nothing && val != 0))
-	common_plot_xyz("", D, "boxplot", first, false; d...)
+	common_plot_xyz("", D, "boxplot", first, false, d)
 	if (showSep)
 		issplit = isa(D, Vector) && all(size.(D[:],1) .=== 1)
 		if (isGroup)
@@ -723,7 +723,7 @@ function helper2_violin(D, Ds, data, xc, N_grp, ccolor, first, isVert, N_in_each
 		opt_t = parse_t(d, "", false)[1]		# Seek for transparency opt
 		(opt_t != "") && (opt_t = opt_t[4:end])
 
-		R = common_plot_xyz("", D, "violin", first, false; d...)		# The violins
+		R = common_plot_xyz("", D, "violin", first, false, d)	# The violins
 		delete!(d, [[:xticks], [:yticks], [:G, :fill]])			# To no plot them again
 		hz  = !isVert ? true : false			# For the case horizontal violins want candle sticks too
 		(showOL && isempty(Ds) && isa(OLcmd, Bool)) && (OLcmd = (size="4p",))	# No scatter, smaller stars
@@ -736,19 +736,19 @@ function helper2_violin(D, Ds, data, xc, N_grp, ccolor, first, isVert, N_in_each
 			boxplot(data; first=false, G=fill_box, t=opt_t, hor=hz, otl=otl, byviolin=true)
 			d[:show], d[:G], d[:marker] = this_show, "black", "point"
 			(figname != "") && (d[:savefig] = d[:savefig] = figname)
-			R = common_plot_xyz("", Ds, "scatter", false, false; d...)		# The scatter plot
+			R = common_plot_xyz("", Ds, "scatter", false, false, d)		# The scatter plot
 		end
 		(showSep) && (f = (isVert) ? vlines! : hlines!;	R = f(xc[1:end-1] .+ diff(xc)/2, pen=sep_pen, show=do_show))
 	else
 		(!isempty(Ds) || showSep) && (do_show = ((val = find_in_dict(d, [:show])[1]) !== nothing && val != 0)) 
 		(figname != "" && isempty(Ds)) && (d[:savefig] = d[:savefig] = figname)		# Reset the figname now
-		R = common_plot_xyz("", D, "violin", first, false; d...)			# The violins
+		R = common_plot_xyz("", D, "violin", first, false, d)			# The violins
 		if (!isempty(Ds))
 			delete!(d, [[:xticks], [:yticks], [:G, :fill]])
 			d[:G], d[:marker] = "black", "point"
 			d[:show] = (showSep) ? false : do_show
 			(figname != "") && (d[:savefig] = d[:savefig] = figname)
-			R = common_plot_xyz("", Ds, "scatter", false, false; d...)		# The scatter pts
+			R = common_plot_xyz("", Ds, "scatter", false, false, d)		# The scatter pts
 		end
 		(showSep) && (f = (isVert) ? vlines! : hlines!;	R = f(xc[1:end-1] .+ diff(xc)/2, pen=sep_pen, show=do_show))
 	end
@@ -947,7 +947,7 @@ function qqplot(x, y; qqline=:identity, first=true, kwargs...)
 	end
 	d[:show] = do_show
 	(figname != "") && (d[:savefig] = figname)		# Restore in case
-	common_plot_xyz("", mat2ds([qx qy]), "scatter", first, false; d...)		# The scatter plot
+	common_plot_xyz("", mat2ds([qx qy]), "scatter", first, false, d)		# The scatter plot
 end
 
 function qqplot(x; qqline=:identity, first=true, kwargs...)
@@ -1221,7 +1221,7 @@ function parplot_helper(cmd0::String, arg1; first::Bool=true, axeslabels::Vector
 	!haveband && (d[:gindex] = [gidx[k][1] for k=1:numel(gidx)])	# The `band` case is handled in put_in_legend_bag
 	(_quantile != 0 || _std != 0) && (d[:gindex] = 1:3:length(D))	# But the envelope is a different case
 	(!haveband && haskey(d, :legend) && isa(d[:legend], Bool) && d[:legend] && !isempty(gnames)) && (d[:label] = gnames)
-	!haveband ? common_plot_xyz("", D, "line", false, false; d...) : plot_bands_from_vecDS(D, d, do_show, d[:W], gnames)
+	!haveband ? common_plot_xyz("", D, "line", false, false, d) : plot_bands_from_vecDS(D, d, do_show, d[:W], gnames)
 end
 
 # ----------------------------------------------------------------------------------------------------------
@@ -1367,7 +1367,7 @@ function cornerplot(arg1; first::Bool=true, kwargs...)
 				d[:xlabel], d[:ylabel] = varnames[c1], varnames[c2]
 				if (do_scatter)
 					d[:marker] = ((val = find_in_dict(d, [:marker :Marker :shape])[1]) !== nothing) ? val : "p"
-					common_plot_xyz("", mat2ds(D[:,[c1,c2]]), "scatter", first, false; d...)
+					common_plot_xyz("", mat2ds(D[:,[c1,c2]]), "scatter", first, false; d...)	# Needs to be d... because d is consumed
 				else		#if (do_hexbin)
 					d[:ml] = 0.1;
 					common_plot_xyz("", gmtbinstats(D[:,[c1,c2]]; d2...), "scatter", first, false; d...)
@@ -1498,12 +1498,12 @@ function marginalhist(arg1::Union{GDtype, Matrix{<:Real}}; first=true, kwargs...
 		d[:R] = @sprintf("%.10g/%.10g/%.10g/%.10g", mima...)
 		if (do_scatter)
 			d[:marker] = ((val = find_in_dict(d, [:marker :Marker :shape])[1]) !== nothing) ? val : "p"
-			common_plot_xyz("", D, "scatter", first, false; d...)
+			common_plot_xyz("", D, "scatter", first, false, d)
 		else		#if (do_hexbin)
 			d[:ml] = 0.1;
 			CTRL.figsize[1] = (CTRL.figsize[1] - gap) * (1 -f)
 			do_cbar = (find_in_dict(d, [:nocbar])[1] === nothing)	# To know if we should plot a colorscale
-			common_plot_xyz("", gmtbinstats(D; d2...), "scatter", first, false; d...)
+			common_plot_xyz("", gmtbinstats(D; d2...), "scatter", first, false, d)
 			if (do_cbar)
 				l = CTRL.figsize[1] <= 6 ? 3 : CTRL.figsize[1] <= 20 ? CTRL.figsize[1] / 4 : CTRL.figsize[1] * 0.2
 				colorbar(pos=(inside=:TL,length=(l,0.25), horizontal=true, offset=(0.2,0.2)), B=(ylabel=:Count, annot=:a), par=("FONT_ANNOT_PRIMARY","7p"), Vd=Vd)

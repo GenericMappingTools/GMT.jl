@@ -4,8 +4,19 @@ const psxyz  = plot3d
 const psxyz! = plot3d!
 
 # ---------------------------------------------------------------------------------------------------
-function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::Bool; kwargs...)#::Union{Nothing, String, Vector{String}, GMTimage, GMTps}
+# All this annoying tricks with multiple tinny methods is to avoid the very sad fact that Julia
+# RECOMPLILES EVERY TIME we use a new arg in kwargs or EVEN WHEN THEY ARE USED IN DIFFERENT ORDER.
+# So, we now pass only a Dict of kwargs. The recompilations still happen, but over the tinny method.
+# The risk of this is if the calling function is not expectiong the 'd' Dict to be modified.
+function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::Bool; kwargs...)
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
+	_common_plot_xyz(cmd0, arg1, caller, O, K, is3D, d)
+end
+function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::Bool, d)
+	_common_plot_xyz(cmd0, arg1, caller, !first, true, is3D, d)
+end
+function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, is3D::Bool, d::Dict)
+	first = !O
 	(cmd0 != "" && arg1 === nothing && is_in_dict(d, [:groupvar :hue]) !== nothing) && (arg1 = gmtread(cmd0); cmd0 = "")
 	(caller != "bar") && (arg1 = if_multicols(d, arg1, is3D))	# Check if it was asked to split a GMTdataset in its columns 
 
@@ -366,15 +377,18 @@ function plt_txt_attrib!(D::GDtype, d::Dict, _cmd::Vector{String})
 	ind::Int = _ind											# Because it fck insists _ind is a Any
 	ts::String = s_val[ind+1:end]
 	ct::GMTdataset = centroid(D)							# Texts will be plotted at the polygons centroids
-	ct.text = info(D, att=ts)
-	(CTRL.pocket_call[1] === nothing) ? (CTRL.pocket_call[1] = ct) : (CTRL.pocket_call[2] = ct)
 	if ((fnt = add_opt(d, "", "", [:font], (angle="+a", font=("+f", font)), false, true)) != "")
 		(fnt[1] != '+') && (fnt = "+f" * fnt)
 		delete!(d, :font)
+		ct.text = make_attrtbl(D, att=ts)[1]
 	else
 		nc::Int = round(Int, sqrt(length(D)))				# A crude guess of the number of columns
-		fnt = (nc < 5) ? "+f8p" : (nc < 9 ? "+f6p" : "+f5p")# A simple heuristic
+		fnt = (nc < 5) ? "7p" : (nc < 9 ? "5p" : "4p")		# A simple heuristic
+		outline = fnt * ",black=~1p,white "					# Apply the outline trick
+		fnt = "+f"
+		ct.text = outline .* make_attrtbl(D, att=ts)[1]
 	end
+	(CTRL.pocket_call[1] === nothing) ? (CTRL.pocket_call[1] = ct) : (CTRL.pocket_call[2] = ct)
 	append!(_cmd, ["pstext -R -J -F" * fnt * "+jMC"])
 	return nothing
 end
@@ -762,6 +776,7 @@ function helper_psxy_line_barr3(arg1, val, cpt::GMTcpt, is3D::Bool, got_color_li
 end
 
 function helper_psxy_line_barr2(arg1, cpt::GMTcpt, is3D::Bool)
+	made_it_vector, rep_str = false, ""
 	if (!is3D)
 		arg1 = mat2ds(color_gradient_line(arg1, is3D=is3D))
 		made_it_vector, rep_str = true, "+cl"
