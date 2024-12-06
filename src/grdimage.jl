@@ -208,10 +208,11 @@ function common_shade(d::Dict, cmd::String, arg1, arg2, arg3, arg4, prog)
 							  (auto = "_+", azim = "+a", azimuth = "+a", norm = "+n", default = "_+d+a-45+nt1"))
 			end
 		else
+			valG::GMTgrid = val
 			if (prog == "grdimage")  cmd, N_used = put_in_slot(cmd, 'I', arg1, arg2, arg3, arg4)
 			else                     cmd, N_used = put_in_slot(cmd, 'I', arg1, arg2, arg3)
 			end
-			(N_used == 1) ? arg1 = val : ((N_used == 2) ? arg2 = val : ((N_used == 3) ? arg3 = val : arg4 = val))
+			(N_used == 1) ? arg1 = valG : ((N_used == 2) ? arg2 = valG : ((N_used == 3) ? arg3 = valG : arg4 = valG))
 		end
 		delete!(d, [:I, :shade, :shading, :intensity])
 	end

@@ -234,7 +234,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 
 	# Need to parse -W here because we need to know if the call to make_color_column() MUST be avoided. 
 	opt_W::String = add_opt_pen(d, [:W :pen], "W")
-	arg1, opt_W, got_color_line_grad, made_it_vector = _helper_psxy_line(d, cmd, opt_W, is3D, arg1, arg2, arg3)
+	arg1, opt_W, got_color_line_grad, made_it_vector = helper_psxy_line(d, cmd, opt_W, is3D, arg1, arg2, arg3)
 
 	arg1, cmd = check_ribbon(d, arg1, cmd, opt_W)	# Do this check here, after -W is known and before parsing -G & -L
 
@@ -347,11 +347,11 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	isa(arg1, GDtype) && plt_txt_attrib!(arg1, d, _cmd)			# Function barrier to plot TEXT attributed labels (in case)
 
 	finish = (is_ternary && occursin(" -M",_cmd[1])) ? false : true		# But this case (-M) is bugged still in 6.2.0
-	r = finish_PS_module(d, _cmd, "", K, O, finish, arg1, arg2, arg3, arg4)
+	R = finish_PS_module(d, _cmd, "", K, O, finish, arg1, arg2, arg3, arg4)
 	CTRL.pocket_d[1] = d					# Store d that may be not empty with members to use in other modules
 	#(occursin("-Sk", opt_S)) && gmt_restart()  # Apparently patterns & custom symbols are screwing the session
 	(opt_B == " -B") && gmt_restart()		# For some Fking mysterious reason (see Ex45)
-	return r
+	return R
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -360,8 +360,9 @@ function plt_txt_attrib!(D::GDtype, d::Dict, _cmd::Vector{String})
 	((val = find_in_dict(d, [:labels])[1]) === nothing) && return nothing
 
 	s_val::String = string(val)
-	(!startswith(s_val, "att") || ((ind = findfirst("=", s_val)) === nothing) && (_ind = findfirst(':', s_val)) === nothing) &&
+	!(startswith(s_val, "att") && (contains(s_val, '=') || contains(s_val, ':'))) &&
 		error("The labels option must be 'labels=att=???' or 'labels=attrib=???'")
+	((_ind = findfirst('=', s_val)) === nothing) && (_ind = findfirst(':', s_val))
 	ind::Int = _ind											# Because it fck insists _ind is a Any
 	ts::String = s_val[ind+1:end]
 	ct::GMTdataset = centroid(D)							# Texts will be plotted at the polygons centroids
@@ -727,49 +728,65 @@ function isTimecol_in_pltcols(D::GDtype)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function _helper_psxy_line(d::Dict, cmd::String, opt_W::String, is3D::Bool, args...)
-	haskey(d, :multicol) && return args[1], opt_W, false, false	# NOT OBVIOUS IF THIS IS WHAT WE WANT TO DO
-	got_color_line_grad, got_variable_lt, made_it_vector, rep_str = false, false, false, ""
-	(contains(opt_W, ",gradient") || contains(opt_W, ",grad")) && (got_color_line_grad = true)
-
-	if (got_color_line_grad)
-		if (occursin("-C", cmd))
-			cpt = get_first_of_this_type(GMTcpt, args...)
-			if (cpt === nothing)
-				CPTname = scan_opt(cmd, "-C")
-				cpt = gmtread(CPTname, cpt=true)
-			end
-		elseif (!isempty(CURRENT_CPT[1]))
-			cpt = CURRENT_CPT[1]
-		else
-			mima = (size(args[1],2) == 2) ? (1,size(args[1],1)) : (args[1].ds_bbox[5+0*is3D], args[1].ds_bbox[6+0*is3D])
-			cpt::GMTcpt = gmt(@sprintf("makecpt -T%f/%f/65+n -Cturbo -Vq", mima[1]-eps(1e10), mima[2]+eps(1e10)))
-		end
-	end
+function helper_psxy_line(d::Dict, cmd::String, opt_W::String, is3D::Bool, arg1, arg2, arg3)
+	haskey(d, :multicol) && return arg1, opt_W, false, false	# NOT OBVIOUS IF THIS IS WHAT WE WANT TO DO
+	made_it_vector, rep_str = false, ""
+	got_color_line_grad = contains(opt_W, ",grad")		# Checks both ",gradient" and ",grad"
 
 	# If we get a line thickness variation we must always call line2multiseg(). The :var_lt was set in build_pen()
-	((val = find_in_dict(d, [:var_lt])[1]) !== nothing) && (got_variable_lt = true)
+	got_variable_lt = ((val = find_in_dict(d, [:var_lt])[1]) !== nothing)
+
+	if (got_color_line_grad)
+		cpt = helper_psxy_line_barr1(cmd, is3D, arg1, arg2, arg3)
+	end
 
 	if (got_color_line_grad && !got_variable_lt)
-		if (!is3D)
-			arg1 = mat2ds(color_gradient_line(args[1], is3D=is3D))
-			made_it_vector, rep_str = true, "+cl"
-		else
-			arg1 = line2multiseg(args[1], is3D=true, color=cpt)
-		end
+		arg1, made_it_vector, rep_str = helper_psxy_line_barr2(arg1, cpt, is3D)
 	elseif (got_variable_lt)	# Otherwise just return without doing anything
-		lt::Vector{Float64} = vec(Float64.(val))
-		if (got_color_line_grad)  arg1 = line2multiseg(args[1], is3D=is3D, lt=lt, color=cpt)
-		else                      arg1 = line2multiseg(args[1], is3D=is3D, lt=lt)
-		end
-	else
-		arg1 = args[1]			# Means this function call did nothing
+		arg1 = helper_psxy_line_barr3(arg1, val, cpt, is3D, got_color_line_grad)
+	#else						# Means this function call did nothing
 	end
 	contains(opt_W, ",gradient") && (opt_W = replace(opt_W, ",gradient" => rep_str))
 	contains(opt_W, ",grad")     && (opt_W = replace(opt_W, ",grad" => rep_str))
 	(opt_W == " -W") && (opt_W = "")	# All -W options are set in dataset headers, so no need for -W
 	return arg1, opt_W, got_color_line_grad, made_it_vector
 end
+
+# ---------------------------------------------------------------------------------------------------
+# Barrier functions to limit the damage of invalidations, that helper_psxy_line() still has
+function helper_psxy_line_barr3(arg1, val, cpt::GMTcpt, is3D::Bool, got_color_line_grad::Bool)
+	lt::Vector{Float64} = vec(Float64.(val))
+	if (got_color_line_grad)  arg1 = line2multiseg(arg1, is3D=is3D, lt=lt, color=cpt)
+	else                      arg1 = line2multiseg(arg1, is3D=is3D, lt=lt)
+	end
+end
+
+function helper_psxy_line_barr2(arg1, cpt::GMTcpt, is3D::Bool)
+	if (!is3D)
+		arg1 = mat2ds(color_gradient_line(arg1, is3D=is3D))
+		made_it_vector, rep_str = true, "+cl"
+	else
+		arg1 = line2multiseg(arg1, is3D=true, color=cpt)
+	end
+	return arg1, made_it_vector, rep_str
+end
+
+function helper_psxy_line_barr1(cmd::String, is3D::Bool, arg1, arg2, arg3)::GMTcpt
+	if (occursin("-C", cmd))
+		cpt = get_first_of_this_type(GMTcpt, arg1, arg2, arg3)
+		if (cpt === nothing)
+			CPTname = scan_opt(cmd, "-C")
+			cpt::GMTcpt = gmtread(CPTname, cpt=true)
+		end
+	elseif (!isempty(CURRENT_CPT[1]))
+		cpt = CURRENT_CPT[1]
+	else
+		mima = (size(arg1,2) == 2) ? (1,size(arg1,1)) : (arg1.ds_bbox[5+0*is3D], arg1.ds_bbox[6+0*is3D])
+		cpt = gmt(@sprintf("makecpt -T%f/%f/65+n -Cturbo -Vq", mima[1]-eps(1e10), mima[2]+eps(1e10)))
+	end
+	return cpt
+end
+# ---------------------------------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------------------------------
 parse_opt_S(d::Dict, arg1::Union{GMTfv, Vector{GMTfv}}, is3D::Bool) = arg1, ""	# Just to have a method for FVs
@@ -1617,12 +1634,6 @@ function sort_visible_faces(FV::GMTfv, azim, elev; del::Bool=true)::Tuple{GMTfv,
 				end
 			end
 		end
-
-		#if (isPlane)						# Here, FV being a plane we only care about storing the normals
-			#projs = (first_face_vis) ? _projs[ind] : append!(projs, _projs[ind])	# 'ind' may be first time use => error?
-			#first_face_vis = false
-			#continue
-		#end
 
 		(have_colorwall) && (FV.color[k] = FV.color[k][isVisible])		# SO FUNCIONA A PRIMEIRA VEZ
 		data::Matrix{Integer} = del ? FV.faces[k][isVisible, :] : FV.faces[k]

@@ -272,8 +272,8 @@ function merge_R_and_xyzlims(d::Dict, opt_R::String)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function build_opt_R(val::StrSymb, symb::Symbol=Symbol())::String
-	r::String = string(val)
+build_opt_R(val::Symbol, symb::Symbol=Symbol())::String = build_opt_R(string(val), symb)
+function build_opt_R(r::String, symb::Symbol=Symbol())::String
 	if     (r == "global")     R = " -Rd"
 	elseif (r == "global360")  R = " -Rg"
 	elseif (r == "same")       R = " -R"
@@ -376,18 +376,17 @@ function opt_R2num(opt_R::String)::Vector{Float64}
 		# Don't know anymore how -R...+r limits should be stored in CTRL.limits
 	elseif (istilename(opt_R))						# A XYZ or quadtree tile address
 		t = scan_opt(opt_R, "-R")
-		limits = mosaic(t, mesh=true).bbox
+		limits = mosaic_limits(address)[1]
 		zl::Int = contains(t, ",") ? parse(Int, t[findlast(',', t)+1:end]) : length(t)
 		inc = (360 / 2 ^ zl) / 256					# Increment in degrees at this zoom level
 		CTRL.pocket_R[2] = "$inc"
 	elseif (opt_R != " -R" && opt_R != " -Rtight")	# One of those complicated -R forms. Ask GMT the limits (but slow. It takes 0.2 s)
-
 		# If opt_R is not a grid's name, we are f.
 		((ind = findfirst("-R@", opt_R)) !== nothing) && return gmt("grdinfo " * opt_R[ind[3]:end] * " -C")[1:4]	# should be a cache file
 		(((f = guess_T_from_ext(opt_R)) == " -Tg") || f == " -Ti") && return gmt("grdinfo " * opt_R * " -C")[1:4]	# any local file
 
 		(opt_R == " -R=WD") && return [-180.0, 180., -90., 90.]		# World map. Shit is if [0 360] is wanted.
-		kml::GMTdataset = gmt("gmt2kml " * opt_R, [0 0])			# for example, opt_R = " -RPT"
+		kml::GMTdataset{Float64, 2} = gmt("gmt2kml " * opt_R, [0 0])	# for example, opt_R = " -RPT"
 		limits = zeros(4)
 		t::String = kml.text[28][12:end];	_ind::Int = findfirst("<", t)[1]		# north
 		limits[4] = parse(Float64, t[1:(_ind-1)])
@@ -1902,7 +1901,7 @@ function add_opt_pen(d::Dict, symbs::Union{Nothing, VMs}, opt::String="", del::B
 end
 
 # ------------------------------------------------------------------------------------------------------
-function helper_arrows(d::Dict, del::Bool=true)::String
+function helper_arrows(d::Dict; del::Bool=true)::String
 	# Helper function to set the vector head attributes
 	(SHOW_KWARGS[1]) && return print_kwarg_opts([:arrow :vector :arrow4 :vector4 :vecmap :geovec :geovector], "NamedTuple | String")
 
@@ -2054,7 +2053,8 @@ function parse_ls_code!(d::Dict)
 	return nothing
 end
 
-function mk_styled_line!(d::Dict, code)
+mk_styled_line!(d::Dict, code::Symbol) = mk_styled_line!(d, string(code))
+function mk_styled_line!(d::Dict, code::String)
 	# Parse the CODE string and generate line style. These line styles can be a single annotated line with symbols
 	# or two lines, one a plain line and the other the symbols to plot. This is achieved by tweaking the D dict
 	# and inserting in it the members that the common_plot_xyz function is expecting.
@@ -2063,7 +2063,7 @@ function mk_styled_line!(d::Dict, code)
 	# The second form (annotated line) requires separating the style and marker name by a '&', '_' or '!'. The last
 	# two ways allow sending CODE as a Symbol (e.g. :line!circ). Enclose the "Symbol" in a pair of those markersize
 	# to create an annotated line instead. E.g. ls="Line&Bla Bla Bla&"
-	isa(code, Symbol) && (code = string(code)::String)
+	
 	_code::String = lowercase(code)
 	inv = !isletter(code[end])					# To know if we want to make white outline and fill = lc
 	is1line = (occursin("&", _code) || occursin("_", _code) || occursin("!", _code))	# e.g. line&Circ
@@ -2203,7 +2203,10 @@ function finish_PS_nested(d::Dict, cmd::Vector{String})::Vector{String}
 	proj_linear_bak = CTRL.proj_linear[1]
 	cmd2::Vector{String} = add_opt_module(d)
 	CTRL.proj_linear[1]  = proj_linear_bak		# Because add_opt_module may change it (coast does that)
+	helper_finish_PS_nested(cmd, cmd2)
+end
 
+function helper_finish_PS_nested(cmd::Vector{String}, cmd2::Vector{String})::Vector{String}
 	if (!isempty(cmd2) && startswith(cmd2[1], "clip"))	# Deal with the particular psclip case (Tricky)
 		opt_R = scan_opt(cmd[1], "-R", true)
 		opt_J = scan_opt(cmd[1], "-J", true)
@@ -2819,50 +2822,9 @@ function add_opt_module(d::Dict)::Vector{String}
 			inset_nested(isa(val, Matrix{<:Real}) ? mat2ds(val) : val, n_inset)
 			r = "inset_$(n_inset)"
 		elseif (isa(val, NamedTuple))
-			nt::NamedTuple = val
-			if     (symb == :coast)     r = coast!(; Vd=2, nt...)
-			elseif (symb == :basemap)   r = basemap!(; Vd=2, nt...)
-			elseif (symb == :logo)      r = logo!(; Vd=2, nt...)
-			elseif (symb == :colorbar)
-				r = colorbar!(; Vd=2, nt...)
-				!contains(r, " -B") && (r = replace(r, "psscale" => "psscale -Baf"))		# Add -B if not present
-			elseif (symb == :clip)		# Need lots of little shits to parse the clip options
-				if ((isa(nt, NamedTuple) && (isa(nt[1], String) || isa(nt[1], Symbol))) || isa(nt[1], NamedTuple))
-					r = (isa(nt, NamedTuple)) ? coast!(""; Vd=2, E=nt) : coast!(""; Vd=2, nt...)
-					opt_E = scan_opt(r, "-E")	# We are clipping so opt_E must contain eith +c or +C. If not, add +c
-					startswith(opt_E, "=land")  && (r = replace(r, " -E"*opt_E => " -Gc"))	# Stupid user mistakes. Try to recover
-					startswith(opt_E, "=ocean") && (r = replace(r, " -E"*opt_E => " -Sc"))
-					(!contains(opt_E, "+c") && !contains(opt_E, "+C")) && (r = replace(r, opt_E => opt_E * "+c"))
-					is_coast = true
-				else
-					(CTRL.pocket_call[1] === nothing) ? (CTRL.pocket_call[1] = val[1]) : (CTRL.pocket_call[2] = val[1])
-					k,v = keys(nt), values(nt)
-					nt = NamedTuple{Tuple(Symbol.(k[2:end]))}(v[2:end])		# Fck, what a craziness to remove 1 el from a nt
-					r = clip!(""; Vd=2, nt...)
-					is_coast = false
-				end
-				r = r[1:findfirst(" -K", r)[1]];	# Remove the "-K -O >> ..."
-				opt_R = scan_opt(r, "-R", true)
-				r = replace(r, opt_R * " -J" => "")	# Mus fish -R first because now all -R are complete (not just -R)
-				r = (is_coast) ? "clip " * r : "clip " * strtok(r)[2]	# coast case returns a "clip pscoast ..." string that caller can parse 
-			else
-				!(symb in CTRL.callable) && error("Nested Fun call $symb not in the callable nested functions list")
-				_d = nt2dict(nt)
-				ind_pocket = (CTRL.pocket_call[1] === nothing) ? 1 : 2
-				(haskey(_d, :data)) && (CTRL.pocket_call[ind_pocket] = _d[:data]; delete!(_d, :data))
-				this_symb = CTRL.callable[findfirst(symb .== CTRL.callable)]
-				fn = getfield(GMT, Symbol(string(this_symb, "!")))
-				if (this_symb in [:vband, :hband, :vspan, :hspan])
-					r = fn(CTRL.pocket_call[ind_pocket]; nested=true, Vd=2, nt...)
-				else
-					r = fn(; Vd=2, nt...)
-				end
-			end
+			r = add_opt_module_barr1(val, symb)
 		elseif (isa(val, Real) && (val != 0))		# Allow setting coast=true || colorbar=true
-			if     (symb == :coast)    r = coast!(W=0.5, A="200/0/2", Vd=2)
-			elseif (symb == :colorbar) r = colorbar!(pos=(anchor="RM",), B="af", Vd=2)
-			elseif (symb == :logo)     r = logo!(Vd=2)
-			end
+			r = add_opt_module_barr2(symb)
 		elseif (symb == :colorbar && (isa(val, StrSymb)))
 			t::Char = lowercase(string(val)[1])		# Accept "Top, Bot, Left" but default to Right
 			anc = (t == 't') ? "TC" : (t == 'b' ? "BC" : (t == 'l' ? "LM" : "RM"))
@@ -2888,6 +2850,59 @@ function add_opt_module(d::Dict)::Vector{String}
 		(isa(r, String) && (r != "")) && append!(out, [r])
 	end
 	return out
+end
+
+# Add to split code from above in these 2 function barriers to avoid all finish_PS_nested() invalidations
+function add_opt_module_barr2(symb::Symbol)::Union{String, Vector{String}}
+	r::Union{String, Vector{String}} = ""
+	if     (symb == :coast)    r = coast!(W=0.5, A="200/0/2", Vd=2)
+	elseif (symb == :colorbar) r = colorbar!(pos=(anchor="RM",), B="af", Vd=2)
+	elseif (symb == :logo)     r = logo!(Vd=2)
+	end
+	return r
+end
+
+function add_opt_module_barr1(nt, symb::Symbol)::Union{String, Vector{String}}
+	r::Union{String, Vector{String}} = ""
+	if     (symb == :coast)     r = coast!(; Vd=2, nt...)
+	elseif (symb == :basemap)   r = basemap!(; Vd=2, nt...)
+	elseif (symb == :logo)      r = logo!(; Vd=2, nt...)
+	elseif (symb == :colorbar)
+		r = colorbar!(; Vd=2, nt...)
+		!contains(r, " -B") && (r = replace(r, "psscale" => "psscale -Baf"))		# Add -B if not present
+	elseif (symb == :clip)		# Need lots of little shits to parse the clip options
+		if ((isa(nt, NamedTuple) && (isa(nt[1], String) || isa(nt[1], Symbol))) || isa(nt[1], NamedTuple))
+			r = (isa(nt, NamedTuple)) ? coast!(""; Vd=2, E=nt) : coast!(""; Vd=2, nt...)
+			opt_E = scan_opt(r, "-E")	# We are clipping so opt_E must contain eith +c or +C. If not, add +c
+			startswith(opt_E, "=land")  && (r = replace(r, " -E"*opt_E => " -Gc"))	# Stupid user mistakes. Try to recover
+			startswith(opt_E, "=ocean") && (r = replace(r, " -E"*opt_E => " -Sc"))
+			(!contains(opt_E, "+c") && !contains(opt_E, "+C")) && (r = replace(r, opt_E => opt_E * "+c"))
+			is_coast = true
+		else
+			(CTRL.pocket_call[1] === nothing) ? (CTRL.pocket_call[1] = nt[1]) : (CTRL.pocket_call[2] = nt[1])
+			k,v = keys(nt), values(nt)
+			nt = NamedTuple{Tuple(Symbol.(k[2:end]))}(v[2:end])		# Fck, what a craziness to remove 1 el from a nt
+			r = clip!(""; Vd=2, nt...)
+			is_coast = false
+		end
+		r = r[1:findfirst(" -K", r)[1]];	# Remove the "-K -O >> ..."
+		opt_R = scan_opt(r, "-R", true)
+		r = replace(r, opt_R * " -J" => "")	# Mus fish -R first because now all -R are complete (not just -R)
+		r = (is_coast) ? "clip " * r : "clip " * strtok(r)[2]	# coast case returns a "clip pscoast ..." string that caller can parse 
+	else
+		!(symb in CTRL.callable) && error("Nested Fun call $symb not in the callable nested functions list")
+		_d::Dict{Symbol, Any} = nt2dict(nt)
+		ind_pocket = (CTRL.pocket_call[1] === nothing) ? 1 : 2
+		(haskey(_d, :data)) && (CTRL.pocket_call[ind_pocket] = _d[:data]; delete!(_d, :data))
+		this_symb = CTRL.callable[findfirst(symb .== CTRL.callable)]
+		fn::Function = getfield(GMT, Symbol(string(this_symb, "!")))
+		if (this_symb in [:vband, :hband, :vspan, :hspan])
+			r = fn(CTRL.pocket_call[ind_pocket]; nested=true, Vd=2, nt...)
+		else
+			r = fn(; Vd=2, nt...)
+		end
+	end
+	return r
 end
 
 #=
@@ -4472,54 +4487,17 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 			end
 		end
 		if (k >= 1+fi && is_psscale && args1_isnot_C)		# Ex: imshow(I, cmap=C, colorbar=true)
-			arg1  = add_opt_cpt(d, cmd[k], CPTaliases, 'C', 0, nothing, nothing, false, false, "", true)[2]
-			(arg1 === nothing && haskey(d, :this_cpt)) && (arg1 = gmt("makecpt -C" * d[:this_cpt]::String))	# May bite back.
-			(arg1 === nothing && isa(args[1], GMTimage) && !isempty(args[1].colormap)) && (arg1 = cmap2cpt(args[1]))
-			(arg1 === nothing) && (@warn("No cmap found to use in colorbar. Ignoring this command."); continue)
-			(arg1.label[1] != "") && (cmd[k] = replace(cmd[k], "-Baf" => "-L0.1c"))	# If it has labels, use them. The gap should be calculated.
-			P = gmt(cmd[k], arg1)
+			P = finish_PS_module_barr_1(d, cmd, k)
 			continue
 		elseif (k >= 1+fi && (is_pscoast || is_basemap || is_plot) && (args1_is_I || args1_is_G || args1_is_D))
-			proj4::String = getproj(args[1])
-			if (proj4 != "")					# This section tries to deal with the double axes case (2 different projections).
-				WESN = get_geoglimits(args[1])
-				J1, J2 = scan_opt(cmd[1], "-J"), scan_opt(cmd[2], "-J")
-				if !(is_plot && J2 == "")		# plot nested calls with no explicit proj are not modified.
-					if (!isgeog(proj4))
-						opt_J = replace(proj4, " " => "")
-						isoblique = any(contains.(opt_J, ["=utm", "=lcc", "=omerc", "=tmerc", "=laea"]))	# <== ADD OTHER OBLIQUES HERE
-						opt_R::String = isoblique ? @sprintf(" -R%f/%f/%f/%f+r", WESN[1],WESN[3],WESN[2],WESN[4]) : @sprintf(" -R%f/%f/%f/%f", WESN...)
-						size_::String = (J1[1] == 'x') ? "+scale=" * J1[2:end] : (J1[1] == 'X') ? "+width=" * J1[2:end] : ""
-						(size_ == "") && @warn("Could not find the right fig size used. Result will be wrong")  
-						cmd[k] = replace(cmd[k], " -J" => " -J" * opt_J * size_)
-					else
-						J2 = replace(scan_opt(cmd[2], "-J"), " " => "")
-						opt_R = ""
-						if (J2 != "")					# Case where J2 wasn't simply "-J"
-							@warn("If $J1 is a cylindrical projection, second set of coordinates will likely be wrong.")
-							D = mapproject([WESN[1] WESN[3]; WESN[1] WESN[4]; WESN[2] WESN[4]; WESN[2] WESN[3]], J=J2)
-							opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g", D.ds_bbox...)
-							W = (CTRL.pocket_J[2] != "") ? CTRL.pocket_J[2] : string(split(DEF_FIG_SIZE, "/")[1])
-							fig_size = W * "/" * string(mapproject([WESN[1] WESN[4]], R=[WESN...], J=J1).data[2])::String
-							cmd[k] = replace(cmd[k], J2 => islowercase(J2[1]) ? "x" * fig_size : "X" * fig_size)	# Fails for scales
-						end
-					end
-					if (opt_R != "")					# opt_R is "" when J2 == "". Hmmm, has a sniff
-						cmd[k] = replace(cmd[k], scan_opt(cmd[k], "-R", true) => opt_R)
-					end
-				end
-				have_Vd && println("\t",cmd[k])			# Useful to know what command was actually executed.
-				orig_J, orig_R = J1, scan_opt(cmd[1], "-R")
-			end
+			orig_J, orig_R = finish_PS_module_barr_2(d, args[1], cmd, k, is_plot, orig_J)
 		elseif (k >= 1+fi && !is_psscale && !is_pscoast && !is_basemap && !is_text && (CTRL.pocket_call[1] !== nothing))
 			# For nested calls that need to pass data
 			P = gmt(cmd[k], get_pocket_call())
 			continue
 		elseif (startswith(cmd[k], "psclip") || is_text)			# Pure (unique) psclip requires args. Compose cmd not
-			#P = (CTRL.pocket_call[1] !== nothing) ? gmt(cmd[k], CTRL.pocket_call[1]) :
 			P = (CTRL.pocket_call[1] !== nothing) ? gmt(cmd[k], get_pocket_call()) :
 			                                        (length(cmd) > 1) ? gmt(cmd[k]) : gmt(cmd[k], args...)
-			#CTRL.pocket_call[1] = CTRL.pocket_call[2];	CTRL.pocket_call[2] = nothing
 			continue
 		elseif (startswith(cmd[k], "inset"))		# Here we have an already made inset ps file waiting to be included
 			finset = searchdir(TMPDIR_USR[1], "GMTjl__inset__")[1]	# Even if there are more we only want the first
@@ -4538,12 +4516,61 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 	end
 	CTRL.pocket_call[1] = nothing;	CTRL.pocket_call[2] = nothing		# For the case it was not yet empty
 
-	leave_paper_mode()				# See if we were in an intermediate state of paper coordinates
-	if (usedConfPar[1])				# Hacky shit to force start over when --PAR options were use
-		usedConfPar[1] = false;
-		theme_modern()
-	end
+	finish_PS_module_barr_last(d, cmd, fname, fname_ext, opt_extra, output, opt_T, K, P)	# returns P
+end
 
+function finish_PS_module_barr_1(d, cmd, k)
+	_arg1 = add_opt_cpt(d, cmd[k], CPTaliases, 'C', 0, nothing, nothing, false, false, "", true)[2]
+	if (_arg1 === nothing)
+		if haskey(d, :this_cpt)
+			_arg1 = gmt("makecpt -C" * d[:this_cpt]::String)	# May bite back.
+		elseif (isa(arg1, GMTimage) && !isempty(arg1.colormap))
+			_arg1 = cmap2cpt(args[1])
+		else
+			@warn("No cmap found to use in colorbar. Ignoring this command.");
+			return nothing
+		end
+	end
+	(_arg1.label[1] != "") && (cmd[k] = replace(cmd[k], "-Baf" => "-L0.1c"))	# If it has labels, use them. The gap should be calculated.
+	gmt(cmd[k], _arg1)
+end
+
+function finish_PS_module_barr_2(d, arg1, cmd, k, is_plot, orig_J)
+	proj4::String = getproj(arg1)
+	(proj4 == "") && return orig_J, ""
+	# This section tries to deal with the double axes case (2 different projections).
+	WESN = get_geoglimits(arg1)
+	J1, J2 = scan_opt(cmd[1], "-J"), scan_opt(cmd[2], "-J")
+	if !(is_plot && J2 == "")		# plot nested calls with no explicit proj are not modified.
+		if (!isgeog(proj4))
+			opt_J = replace(proj4, " " => "")
+			isoblique = any(contains.(opt_J, ["=utm", "=lcc", "=omerc", "=tmerc", "=laea"]))	# <== ADD OTHER OBLIQUES HERE
+			opt_R::String = isoblique ? @sprintf(" -R%f/%f/%f/%f+r", WESN[1],WESN[3],WESN[2],WESN[4]) : @sprintf(" -R%f/%f/%f/%f", WESN...)
+			size_::String = (J1[1] == 'x') ? "+scale=" * J1[2:end] : (J1[1] == 'X') ? "+width=" * J1[2:end] : ""
+			(size_ == "") && @warn("Could not find the right fig size used. Result will be wrong")  
+			cmd[k] = replace(cmd[k], " -J" => " -J" * opt_J * size_)
+		else
+			J2 = replace(scan_opt(cmd[2], "-J"), " " => "")
+			opt_R = ""
+			if (J2 != "")					# Case where J2 wasn't simply "-J"
+				@warn("If $J1 is a cylindrical projection, second set of coordinates will likely be wrong.")
+				D::GMTdataset{Float64, 2} = mapproject([WESN[1] WESN[3]; WESN[1] WESN[4]; WESN[2] WESN[4]; WESN[2] WESN[3]], J=J2)
+				opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g", D.ds_bbox...)
+				W = (CTRL.pocket_J[2] != "") ? CTRL.pocket_J[2] : string(split(DEF_FIG_SIZE, "/")[1])
+				fig_size = W * "/" * string(mapproject([WESN[1] WESN[4]], R=[WESN...], J=J1).data[2])::String
+				cmd[k] = replace(cmd[k], J2 => islowercase(J2[1]) ? "x" * fig_size : "X" * fig_size)	# Fails for scales
+			end
+		end
+		if (opt_R != "")					# opt_R is "" when J2 == "". Hmmm, has a sniff
+			cmd[k] = replace(cmd[k], scan_opt(cmd[k], "-R", true) => opt_R)
+		end
+	end
+	haskey(d, :Vd) && println("\t",cmd[k])			# Useful to know what command was actually executed.
+	orig_J, orig_R = J1, scan_opt(cmd[1], "-R")
+	return orig_J, orig_R
+end
+
+function finish_PS_module_barr_last(d, cmd, fname, fname_ext, opt_extra, output, opt_T, K, P)
 	if (!IamModern[1])
 		if (fname_ext == "" && opt_extra == "")		# Return result as an GMTimage
 			P = showfig(d, output, fname_ext, "", K)
@@ -4564,7 +4591,6 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 	end
 	CTRL.XYlabels[1] = "";	CTRL.XYlabels[2] = "";	# Reset these in case they weren't empty
 	show_non_consumed(d, cmd)
-	#(GMTver < v"6.5" && isa(P, GMTps)) && gmt_restart()
 	return P
 end
 
