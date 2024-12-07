@@ -376,7 +376,7 @@ function plt_txt_attrib!(D::GDtype, d::Dict, _cmd::Vector{String})
 	((_ind = findfirst('=', s_val)) === nothing) && (_ind = findfirst(':', s_val))
 	ind::Int = _ind											# Because it fck insists _ind is a Any
 	ts::String = s_val[ind+1:end]
-	ct::GMTdataset = centroid(D)							# Texts will be plotted at the polygons centroids
+	ct::GMTdataset = gmtspatial(D, centroid=true)			# Texts will be plotted at the polygons centroids
 	if ((fnt = add_opt(d, "", "", [:font], (angle="+a", font=("+f", font)), false, true)) != "")
 		(fnt[1] != '+') && (fnt = "+f" * fnt)
 		delete!(d, :font)
@@ -384,7 +384,7 @@ function plt_txt_attrib!(D::GDtype, d::Dict, _cmd::Vector{String})
 	else
 		nc::Int = round(Int, sqrt(length(D)))				# A crude guess of the number of columns
 		fnt = (nc < 5) ? "7p" : (nc < 9 ? "5p" : "4p")		# A simple heuristic
-		outline = fnt * ",black=~1p,white "					# Apply the outline trick
+		outline = fnt * ",black=~0.75p,white "				# Apply the outline trick
 		fnt = "+f"
 		ct.text = outline .* make_attrtbl(D, att=ts)[1]
 	end
