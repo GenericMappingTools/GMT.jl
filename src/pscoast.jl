@@ -80,10 +80,14 @@ Parameters
 
 To see the full documentation type: ``@? coast``
 """
-function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
+function coast(cmd0::String=""; clip::StrSymb="", first=true, kwargs...)
+	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
+	_coast(cmd0, O, K, clip, d)
+end
+function _coast(cmd0::String, O::Bool, K::Bool, clip::StrSymb, d::Dict)
 
 	gmt_proggy = (IamModern[1]) ? "coast "  : "pscoast "
-	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
+	first = !O
 
 	if ((val = find_in_dict(d, [:getR :getregion :get_region], false)[1]) !== nothing)
 		t::String = string(gmt_proggy, " -E", val)
@@ -128,7 +132,7 @@ function coast(cmd0::String=""; clip=nothing, first=true, kwargs...)
 	cmd  = add_opt_fill(cmd, d, [:G :land], 'G')
 	cmd  = add_opt_fill(cmd, d, [:S :water :ocean], 'S')
 
-	if (clip !== nothing)
+	if (clip !== "")
 		_clip::String = string(clip)
 		if     (_clip == "land")    cmd *= " -Gc"
 		elseif (_clip == "water" || _clip == "ocean") cmd *= " -Sc"
@@ -274,7 +278,7 @@ function parse_dcw(val::Tuple)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-coast!(cmd0::String=""; clip=nothing, kw...) = coast(cmd0; clip=clip, first=false, kw...)
+coast!(cmd0::String=""; clip::StrSymb="", kw...) = coast(cmd0; clip=clip, first=false, kw...)
 
 const pscoast  = coast			# Alias
 const pscoast! = coast!

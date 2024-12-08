@@ -59,9 +59,13 @@ grdview!(arg1; kwargs...)         = grdview_helper("", arg1; first=false, kwargs
 
 # ---------------------------------------------------------------------------------------------------
 function grdview_helper(cmd0::String, arg1; first=true, kwargs...)
+	d, K, O = init_module(first, kwargs...)			# Also checks if the user wants ONLY the HELP mode
+	grdview_helper(cmd0, arg1, O, K, d)
+end
+function grdview_helper(cmd0::String, arg1, O::Bool, K::Bool, d::Dict)
 
 	arg2 = nothing;	arg3 = nothing;	arg4 = nothing;	arg5 = nothing;
-	d, K, O = init_module(first, kwargs...)			# Also checks if the user wants ONLY the HELP mode
+	first = !O
 
 	haskey(d, :outline) && delete!(d, :outline)		# May come through `pcolor` where it was valid, but not here.
 	have_opt_JZ = (is_in_dict(d, [:JZ :Jz :zsize :zscale]) !== nothing)
