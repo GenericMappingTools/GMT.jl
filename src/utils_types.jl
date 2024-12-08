@@ -196,8 +196,11 @@ the georeference info as well as `attrib` and `colnames`.
 mat2ds(mat::Array{T,N}, ref::GMTdataset) where {T,N} = mat2ds(mat; ref=ref)
 
 # ---------------------------------------------------------------------------------------------------
-function mat2ds(mat::Array{T,N}, txt::Union{String,Vector{String}}=String[]; hdr=String[], geom=0, kwargs...)::GDtype where {T,N}
+function mat2ds(mat::Array{T,N}, txt::Union{String,Vector{String}}=String[]; hdr::Union{String,VecOrMat{String}}=String[], geom=0, kwargs...)::GDtype where {T,N}
 	d = KW(kwargs)
+	_mat2ds(mat, txt, isa(hdr, String) ? [hdr] : vec(hdr), Int(geom), d)
+end
+function _mat2ds(mat::Array{T,N}, txt::Union{String,Vector{String}}, hdr::Vector{String}, geom::Int, d::Dict)::GDtype where {T,N}
 
 	(!isempty(txt)) && return text_record(mat, txt,  hdr)
 	((text = find_in_dict(d, [:text])[1]) !== nothing) && return text_record(mat, text, hdr)
@@ -218,14 +221,12 @@ function mat2ds(mat::Array{T,N}, txt::Union{String,Vector{String}}=String[]; hdr
 		xx = Vector{Float64}()
 	end
 
-	if (!isempty(hdr) && isa(hdr, String))	# Accept one only but expand to n_ds with the remaining as blanks
-		_hdr::Vector{String} = Base.fill("", n_ds);	_hdr[1] = hdr
+	if (!isempty(hdr) && length(hdr) == 1)	# Accept one only but expand to n_ds with the remaining as blanks
+		_hdr::Vector{String} = Base.fill("", n_ds);	_hdr[1] = hdr[1]
 	elseif (!isempty(hdr) && length(hdr) != n_ds)
 		error("The header vector can only have length = 1 or same number of MAT Y columns")
-	elseif (!isempty(hdr))
-		_hdr = vec(hdr)
 	else
-		_hdr = String[]
+		_hdr = hdr
 	end
 
 	color_cycle = false
@@ -407,7 +408,8 @@ function mat2ds(mat::Array{T,N}, txt::Union{String,Vector{String}}=String[]; hdr
 	(length(ref_coln) >= size(D[1].data,2)) && (D[1].colnames = ref_coln[1:size(D[1].data,2)])	# This still loses Text colname
 	CTRL.pocket_d[1] = d		# Store d that may be not empty with members to use in other functions
 	set_dsBB!(D)				# Compute and set the global BoundingBox for this dataset
-	return (find_in_kwargs(kwargs, [:letsingleton])[1] !== nothing) ? D : (length(D) == 1 && !multi) ? D[1] : D
+	#return (find_in_kwargs(kwargs, [:letsingleton])[1] !== nothing) ? D : (length(D) == 1 && !multi) ? D[1] : D
+	return (find_in_dict(d, [:letsingleton])[1] !== nothing) ? D : (length(D) == 1 && !multi) ? D[1] : D
 end
 
 # ---------------------------------------------------------------------------------------------------

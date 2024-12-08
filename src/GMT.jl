@@ -353,7 +353,7 @@ using GMT.Laszip
 	grdimage(rand(Float32,32,32), R="0/32/0/32");
 	I = mat2img(rand(UInt8, 32, 32, 3), clim=:zscale);
 	grdimage(I, V=:q);
-	#grdview(rand(Float32,32,32), Vd=2);
+	grdview(rand(Float32,32,32), Vd=2);
 	#grdinfo(mat2grid(rand(Float32,4,4)));
 	#Glix=gmt("grdmath", "-R0/10/0/10 -I2 X");
 	#grdcontour(Glix);

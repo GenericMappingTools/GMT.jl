@@ -72,13 +72,17 @@ Parameters
 To see the full documentation type: ``@? pstext``
 """
 function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
+	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
+	_text(cmd0, arg1, O, K, d)
+end
+function _text(cmd0::String, arg1, O::Bool, K::Bool, d::Dict)
 
-	(find_in_kwargs(kwargs, [:L :list])[1] !== nothing) && return gmt("pstext -L")
+	(is_in_dict(d, [:L :list]) !== nothing) && return gmt("pstext -L")
 
     gmt_proggy = (IamModern[1]) ? "text " : "pstext "
 
 	N_args = (arg1 === nothing) ? 0 : 1
-	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
+	first = !O
 
 	function parse_xy(d, arg)
 		# Deal with cases (txt="Bla", x=0.5, y=0.5) or (data="Bla", x=0.5, y=0.5)

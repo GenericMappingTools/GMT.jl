@@ -49,9 +49,13 @@ Parameters
 To see the full documentation type: ``@? grdimage``
 """
 function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; first=true, kwargs...)
+	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
+	_grdimage(cmd0, arg1, arg2, arg3, O, K, d)
+end
+function _grdimage(cmd0::String, arg1, arg2, arg3, O::Bool, K::Bool, d::Dict)
 
 	arg4 = nothing		# For the r,g,b + intensity case
-	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
+	first = !O
 	(cmd0 != "" && arg1 === nothing && haskey(d, :inset)) && (arg1 = gmtread(cmd0); cmd0 = "")
 	common_insert_R!(d, O, cmd0, arg1)			# Set -R in 'd' out of grid/images (with coords) if limits was not used
 	
@@ -106,8 +110,8 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 			(isa(arg3, Matrix{<:Real})) && (arg3 = mat2grid(arg3))
 		end
 	elseif (isa(arg1, GMTimage) && size(arg1, 3) <= 3 && eltype(arg1.image) <: UInt16)
-		arg1 = mat2img(arg1; kwargs...)
-		(haskey(kwargs, :stretch) || haskey(kwargs, :histo_bounds)) && delete!(d, [:histo_bounds, :stretch])
+		arg1 = mat2img(arg1; d...)
+		(haskey(d, :stretch) || haskey(d, :histo_bounds)) && delete!(d, [:histo_bounds, :stretch])
 	end
 
 	set_defcpt!(d, cmd0, arg1)	# When dealing with a remote grid assign it a default CPT
