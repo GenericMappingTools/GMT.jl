@@ -238,6 +238,8 @@ function gmt(cmd::String, args...)
 
 end
 
+gmt_GMTdataset(cmd::String, args...)::GMTdataset{Float64,2} = gmt(cmd, args...)
+
 # -----------------------------------------------------------------------------------------------
 function gmt_restart(restart::Bool=true)
 	# Destroy the contents of the current API pointer and, by default, recreate a new one.
