@@ -3024,10 +3024,15 @@ function data_type(val)
 end
 
 # ---------------------------------------------------------------------------------------------------
-axis(nt::NamedTuple, D::Dict=Dict(); x::Bool=false, y::Bool=false, z::Bool=false, secondary::Bool=false) = axis(D;x=x, y=y, z=z, secondary=secondary, nt...)
+axis(nt::NamedTuple, D::Dict=Dict(); x::Bool=false, y::Bool=false, z::Bool=false, secondary::Bool=false) = axis(D; x=x, y=y, z=z, secondary=secondary, nt...)
 function axis(D::Dict=Dict(); x::Bool=false, y::Bool=false, z::Bool=false, secondary::Bool=false, kwargs...)::Tuple{String, Vector{Bool}}
-	# Build the (terrible) -B option
 	d = KW(kwargs)			# These kwargs always come from the fields of a NamedTuple 
+	axis(D, x, y, z, secondary, d)
+end
+#function axis(D::Dict=Dict(); x::Bool=false, y::Bool=false, z::Bool=false, secondary::Bool=false, kwargs...)::Tuple{String, Vector{Bool}}
+function axis(D::Dict, x::Bool, y::Bool, z::Bool, secondary::Bool, d::Dict)::Tuple{String, Vector{Bool}}
+	# Build the (terrible) -B option
+	#d = KW(kwargs)			# These kwargs always come from the fields of a NamedTuple 
 
 	# Before anything else
 	(haskey(d, :none)) && return " -B0", [false, false]
@@ -3365,10 +3370,17 @@ function str_with_blancs(str)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-vector_attrib(d::Dict, lixo=nothing) = vector_attrib(; d...)	# When comming from add_opt()
-vector_attrib(t::NamedTuple) = vector_attrib(; t...)
+#vector_attrib(d::Dict, lixo=nothing) = vector_attrib(; d...)	# When comming from add_opt()
+#vector_attrib(t::NamedTuple) = vector_attrib(; t...)
+#function vector_attrib(; kwargs...)::String
+vector_attrib(d::Dict, lixo) = vector_attrib(d)		# When comming from add_opt()
+vector_attrib(t::NamedTuple) = vector_attrib(Dict(pairs(t)))
 function vector_attrib(; kwargs...)::String
 	d = KW(kwargs)
+	vector_attrib(d::Dict)
+end
+function vector_attrib(d::Dict)::String
+	#d = KW(kwargs)
 	cmd::String = add_opt(d, "", "", [:len :length])
 	(haskey(d, :angle)) && (cmd = string(cmd, "+a", d[:angle]))
 	if (haskey(d, :middle))
@@ -3753,16 +3765,13 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", i
 	_read_data(d, cmd, arg, opt_R, is3D, get_info, opt_i, opt_di, opt_yx)
 end
 
-function _read_data(d::Dict, cmd::String, arg, opt_R::String="", is3D::Bool=false, get_info::Bool=false,
-	opt_i::String="", opt_di::String="", opt_yx::String="")#::Tuple{String, Union{Nothing, GDtype}, String, Matrix{Float64}, String}
-	# In case DATA holds a file name, read that data and put it in ARG
-	# Also compute a tight -R if this was not provided. This forces reading a the `fname` file if provided.
-
-	(IamModern[1] && FirstModern[1]) && (FirstModern[1] = false)
-
+# ------------------------------------------------------------------------
+# Function barrier to avoid mysterious invalidations and recompilations.
+function read_data_barr_1(d, arg_is_nothing)
+	arg = nothing
 	if (haskey(d, :data))
 		arg = mat2ds(d[:data]);		delete!(d, [:data])
-	elseif (arg === nothing)	# OK, last chance of findig the data is in the x=..., y=... kwargs
+	elseif (arg_is_nothing)	# OK, last chance of findig the data is in the x=..., y=... kwargs
 		if (haskey(d, :x) && haskey(d, :y))
 			_arg = cat_2_arg2(d[:x], d[:y])
 			(haskey(d, :z)) && (_arg = hcat(_arg, d[:z][:]);	delete!(d, [:z]))
@@ -3772,6 +3781,21 @@ function _read_data(d::Dict, cmd::String, arg, opt_R::String="", is3D::Bool=fals
 			arg = mat2ds(d[:x]);		delete!(d, [:x])
 		end
 	end
+	return arg
+end
+
+function _read_data(d::Dict, cmd::String, arg, opt_R::String="", is3D::Bool=false, get_info::Bool=false,
+	opt_i::String="", opt_di::String="", opt_yx::String="")#::Tuple{String, Union{Nothing, GDtype}, String, Matrix{Float64}, String}
+	# In case DATA holds a file name, read that data and put it in ARG
+	# Also compute a tight -R if this was not provided. This forces reading a the `fname` file if provided.
+
+	(IamModern[1] && FirstModern[1]) && (FirstModern[1] = false)
+
+	# This convoluted code was the way found to avoid that 1.12 @trace_compile stopped complained that 'read_data'
+	# was invalidated to start with and recompiled it again. The culprit a the line with 'arg = mat2ds(d[:data])'
+	# Using a barrier function and doing this gymnastics cleared the issue. At leas as seen from 1.12
+	_arg = read_data_barr_1(d, arg === nothing)
+	(_arg !== nothing && arg === nothing) && (arg = _arg)
 
 	# See if we have DateTime objects
 	got_datetime, is_onecol = false, false
@@ -4454,8 +4478,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 	cmd, opt_T = prepare2geotif(d, cmd, opt_T, O)		# Settings for the GeoTIFF and KML cases
 	(finish && cmd[1] != "") && (cmd = finish_PS(d, cmd, output, K, O))
 
-	have_Vd = haskey(d, :Vd)
-	(have_Vd && d[:Vd] > 2) && show_args_types(args...)
+	(haskey(d, :Vd) && d[:Vd] > 2) && show_args_types(args...)
 	if ((r = dbg_print_cmd(d, cmd)) !== nothing)  return length(r) == 1 ? r[1] : r  end
 	IMG_MEM_LAYOUT[1] = add_opt(d, "", "", [:layout])
 	(IMG_MEM_LAYOUT[1] == "images") && (IMG_MEM_LAYOUT[1] = "I   ")		# Special layout for Images.jl

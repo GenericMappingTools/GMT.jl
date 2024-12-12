@@ -61,13 +61,16 @@ To see the full documentation type: ``@? makecpt``
 """
 makecpt(cmd0::Symbol; kwargs...) = makecpt(""; C=string(cmd0), kwargs...)	# Ex: makecpt(:gray)
 function makecpt(cmd0::String="", arg1=nothing; kwargs...)::Union{String, GMTcpt}
-
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+	makecpt(cmd0, arg1, d)
+end
+function makecpt(cmd0::String, arg1, d::Dict)::Union{String, GMTcpt}
+
 	cmd, = parse_common_opts(d, "", [:V_params])
 
 	# This deals with the special case of, for example, "makecpt(G, cmap=:gray"). Here, we recieve (makecpt(G,...) is comp)
 	# a (C=nothing, cmap=:gray) and because 'C' is searched first we would loose the cmap=:gray. Solution is to delete :C
-	((get(kwargs, :C, nothing)) === nothing && is_in_kwargs(kwargs, [:color :cmap :colormap :colorscale])) && delete!(d, :C)
+	((get(d, :C, nothing)) === nothing && is_in_dict(d, [:color :cmap :colormap :colorscale]) !== nothing) && delete!(d, :C)
 
     # If file name sent in, read it and compute a tight -R if this was not provided 
     cmd, arg1, = read_data(d, cmd0, cmd, arg1, " ")
