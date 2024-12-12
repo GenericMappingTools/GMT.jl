@@ -28,55 +28,11 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 	else		        gmt_proggy = (IamModern[1]) ? "plot "    : "psxy "
 	end
 
-	isFV = (isa(arg1, GMTfv) || isa(arg1, Vector{GMTfv}))
-	(arg1 !== nothing && !isa(arg1, GDtype) && !isa(arg1, Matrix{<:Real}) && !isFV) &&
-		(arg1 = tabletypes2ds(arg1, ((val = find_in_dict(d, [:interp])[1]) !== nothing) ? interp=val : interp=0))
-	(caller != "bar") && (arg1 = if_multicols(d, arg1, is3D))	# Repeat because DataFrames or ODE's have skipped first round
-	(!O) && (LEGEND_TYPE[1] = legend_bag())		# Make sure that we always start with an empty one
-
-	cmd::String = "";	sub_module::String = ""	# Will change to "scatter", etc... if called by sub-modules
-	opt_A::String = ""							# For the case the caller was in fact "stairs"
-	g_bar_fill = Vector{String}()				# May hold a sequence of colors for gtroup Bar plots
-	if (caller != "")
-		if (occursin(" -", caller))				# some sub-modues use this piggy-backed call to send a cmd
-			if ((ind = findfirst('|', caller)) !== nothing)	# A mixed case with "caler|partiall_command"
-				_ind::Int = Int(ind)			# Because it still F. insists that 'ind' is a Any
-				sub_module = caller[1:_ind-1]
-				cmd = caller[_ind+1:end]
-				caller = sub_module				# Because of parse_BJR()
-				(caller == "events") && (gmt_proggy = "events ")
-			else
-				cmd = caller
-				caller = "others"				# It was piggy-backed
-			end
-		else
-			sub_module = caller
-			# Needs to be processed here to distinguish from the more general 'fill'
-			(caller == "bar") && (g_bar_fill = helper_gbar_fill(d))
-			opt_A = (caller == "lines" && ((val = find_in_dict(d, [:stairs_step])[1]) !== nothing)) ? string(val) : ""
-		end
-	end
+	# ------------- Parse whose caller and some other initializations
+	cmd, isFV, caller, sub_module, gmt_proggy, opt_A, g_bar_fill, arg1 = parse_plot_callers(d, gmt_proggy, caller, is3D, O, arg1)
 
 	# --------------------- Check the grid2tri cases --------------------
-	is_gridtri::Bool = false
-	is3D && (is_gridtri = deal_gridtri!(arg1, d, O))
-
-	if (first && occursin('3', caller) && is_in_dict(d, [:p :view :perspective]) === nothing)
-		d[:p] = "217.5/30"			# Need this before parse_BJR() so MAP_FRAME_AXES can be guessed.
-		CURRENT_VIEW[1] = " -p217.5/30"
-	end
-	cmd, opt_p = parse_p(d, cmd)	# Parse this one (view angle) aside so we can use it to remove invisible faces (3D)
-	(opt_p == "" && !is3D && first) && (CURRENT_VIEW[1] = "")	# Make sure it empty under these conditions
-	(opt_p == "") ? (opt_p = CURRENT_VIEW[1]; cmd *= opt_p)	: (CURRENT_VIEW[1] = opt_p) # Save for eventual use in other modules.
-
-	if (is3D && isFV)			# case of 3D faces
-		arg1 = (is_in_dict(d, [:replicate]) !== nothing) ? replicant(arg1, d) : deal_faceverts(arg1, d; del=find_in_dict(d, [:nocull])[1] === nothing)
-		(!O && !haskey(d, :aspect3) && is_in_dict(d, [:JZ :Jz :zsize :zscale]) === nothing && !isgeog(arg1)) && (d[:aspect3] = "equal")
-		(!O && !haskey(d, :aspect3) && isgeog(arg1)) && (d[:aspect] = "equal")
-	elseif (is_gridtri)
-		arg1 = sort_visible_triangles(arg1)
-		is_in_dict(d, [:Z :level :levels]) === nothing && (d[:Z] = tri_z(arg1))
-	end
+	cmd, is_gridtri, arg1 = parse_grid2tri_case(d, cmd, caller, is3D, isFV, O, arg1)
 	
 	isa(arg1, GMTdataset) && (arg1 = with_xyvar(d, arg1))		# See if we have a column request based on column names
 	if ((val = find_in_dict(d, [:decimate])[1]) !== nothing)	# Asked for a clever data decimation?
@@ -191,49 +147,13 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 	(opt_F != "" && !occursin("/", opt_F)) && (opt_F = string(opt_F[1]))	# Allow con=:net or con=(1,2)
 	(opt_F != "") && (cmd *= " -F" * opt_F)
 
-	# Error Bars?
-	got_Ebars = false
-	val, symb = find_in_dict(d, [:E :error :error_bars], false)
-	if (val !== nothing)
-		if isa(val, String)
-			cmd *= " -E" * val
-		else
-			_mat = (arg1 === nothing) ? arg1 : isa(arg1, GMTdataset) ? arg1.data : arg1[1].data
-			cmd, mat_t = add_opt(add_opt, (d, cmd, "E", [symb]),
-			                     (x="|x",y="|y",xy="|xy",X="|X",Y="|Y", asym="_+a", colored="_+c", cline="_+cl", csymbol="_+cf", notch="|+n", boxwidth="+w", cap="+w", pen=("+p",add_opt_pen)), false, _mat)
-			(arg1 !== nothing) && (isa(arg1, GMTdataset) ? (arg1.data = mat_t; append!(arg1.colnames, ["Ebar"])) :
-			                       (arg1[1].data = mat_t; append!(arg1[1].colnames, ["Ebar"])))
-		end
-		got_Ebars = true
-		delete!(d, [symb])
-	end
+	# --------------------- Error Bars? --------------------------------
+	cmd, got_Ebars, arg1 = parse_Ebars(d, cmd, arg1)
 
-	# Look for color request. Do it after error bars because they may add a column
+	# ----------------- Look for color request. Do it after error bars because they may add a column
 	len_cmd = length(cmd);	n_prev = N_args;
-	opt_Z, args, n, got_Zvars = add_opt(d, "", "Z", [:Z :level :levels], :data, Any[arg1, arg2], (outline="_o", nofill="_f"))
-	(opt_Z == " -Z" && n == 0) && error("The 'level' option (Z) must be set a single value, a file name or a vector os reals.")
-	if (isa(arg1, Vector{<:GMTdataset}) && ((ind_att = findfirst('=', opt_Z)) !== nothing))
-		# Here we deal with the case where the -Z option refers to a particular attribute.
-		# Allow to use "Z=(data="att=XXXX", nofill=true)" when the Di are polygons.
-		last_ind, got_extra = length(opt_Z), false
-		(opt_Z[end] == 'f' || opt_Z[end] == 'o') && (last_ind -= 1; got_extra = true)
-		arg2 = parse.(Float64, make_attrtbl(arg1, att=opt_Z[ind_att+1:last_ind])[1])
-		opt_Z = (got_extra) ? " -Z" * opt_Z[end] : ((arg1[1].geom == wkbLineString || arg1[1].geom == wkbLineString) ? " -Zf" : " -Z")
-		N_args = 2
-	end
-	if (contains(opt_Z, "f") && !contains(opt_Z, "o"))	# Short version. If no fill it must outline otherwise nothing
-		do_Z_fill, do_Z_outline = false, true;		opt_Z = replace(opt_Z, "f" => "")
-	else
-		(!contains(opt_Z, "f")) ? do_Z_fill = true : (do_Z_fill = false; opt_Z = replace(opt_Z, "f" => ""))
-		(contains(opt_Z, "o")) ? (do_Z_outline = true; opt_Z = replace(opt_Z, "o" => "")) : (do_Z_outline = false)
-	end
-	(opt_Z != "") && (cmd *= opt_Z)
-	(!got_Zvars) && (do_Z_fill = do_Z_outline = false)	# Because they may have wrongly been set above
+	cmd, N_args, do_Z_fill, got_Zvars, do_Z_outline, arg1, arg2 = parse_color_request(d, cmd, N_args, arg1, arg2)	
 
-	if (n > 0)
-		arg1, arg2 = args[:]
-		N_args = n
-	end
 	in_bag = (got_Zvars || haskey(d, :hexbin)) ? true : false		# Other cases should add to this list
 	opt_T::String = (haskey(d, :hexbin)) ? @sprintf(" -T%s/%s/%d+n",arg1.bbox[5], arg1.bbox[6], 65) : ""
 	if (N_args < 2)
@@ -257,22 +177,7 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 		                                                 got_Ebars, bar_ok, g_bar_fill, arg1, arg2)
 	end
 
-	opt_G::String = ""
-	if (isempty(g_bar_fill))					# Otherwise bar fill colors are dealt with somewhere else
-		((opt_G = add_opt_fill("", d, [:G :fill], 'G')) != "") && (cmd *= opt_G)	# Also keep track if -G was set
-	end
-	opt_Gsymb::String = add_opt_fill("", d, [:G :mc :markercolor :markerfacecolor :MarkerFaceColor], 'G')	# Filling of symbols
-	(opt_Gsymb == " -G") && (opt_Gsymb *= "black")	# Means something like 'mc=true' was used, but we need a color
-
-	opt_L::String = ""
-	if (is_ternary)				# Means we are in the psternary mode
-		cmd = add_opt(d, cmd, "L", [:L :vertex_labels])
-	else
-		opt_L = add_opt(d, "", "L", [:L :close :polygon],
-		                (left="_+xl", right="_+xr", x0="+x", bot="_+yb", top="_+yt", y0="+y", sym="_+d", asym="_+D", envelope="_+b", pen=("+p",add_opt_pen)))
-		(length(opt_L) > 3 && !occursin("-G", cmd) && !occursin("+p", cmd)) && (opt_L *= "+p0.5p")
-		cmd *= opt_L
-	end
+	cmd, opt_G, opt_Gsymb, opt_L = parse_plot_G_L(d, cmd, g_bar_fill, is_ternary)
 
 	if ((val = find_in_dict(d, [:decorated])[1]) !== nothing)
 		cmd = (isa(val, String)) ? cmd * " " * val : cmd * decorated(val)
@@ -322,9 +227,7 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 	(made_it_vector && opt_S == "") && (cmd *= " -Sv+s")	# No set opt_S because it results in 2 separate commands
 
 	# See if any of the scatter, bar, lines, etc... was the caller and if yes, set sensible defaults.
-	cmd  = check_caller(d, cmd, opt_S, opt_W, sub_module, g_bar_fill, O)
-	(mcc && caller == "bar" && !got_usr_R && opt_R != " -R") && (cmd = recompute_R_4bars!(cmd, opt_R, arg1))	# Often needed
-	_cmd::Vector{String} = build_run_cmd(cmd, opt_B, opt_Gsymb, opt_ML, opt_S, opt_W, opt_Wmarker, opt_UVXY, opt_c)
+	_cmd = set_avatar_defaults(d, cmd, mcc, caller, got_usr_R, opt_B, opt_Gsymb, opt_ML, opt_R, opt_S, opt_W, sub_module, g_bar_fill, opt_Wmarker, opt_UVXY, opt_c, O, arg1)
 
 	(got_Zvars && opt_S == "" && opt_W == "" && !occursin(" -G", _cmd[1])) && (_cmd[1] *= " -W0.5")
 	(opt_W == "" && caller == "feather") && (_cmd[1] *= " -W0.1")		# feathers are normally many so better they are thin
@@ -360,9 +263,142 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 	finish = (is_ternary && occursin(" -M",_cmd[1])) ? false : true		# But this case (-M) is bugged still in 6.2.0
 	R = finish_PS_module(d, _cmd, "", K, O, finish, arg1, arg2, arg3, arg4)
 	CTRL.pocket_d[1] = d					# Store d that may be not empty with members to use in other modules
-	#(occursin("-Sk", opt_S)) && gmt_restart()  # Apparently patterns & custom symbols are screwing the session
 	(opt_B == " -B") && gmt_restart()		# For some Fking mysterious reason (see Ex45)
 	return R
+end
+
+# ---------------------------------------------------------------------------------------------------
+function parse_grid2tri_case(d, cmd, caller, is3D, isFV, O, arg1)
+	is_gridtri::Bool = false
+	is3D && (is_gridtri = deal_gridtri!(arg1, d, O))
+
+	if (!O && occursin('3', caller) && is_in_dict(d, [:p :view :perspective]) === nothing)
+		d[:p] = "217.5/30"			# Need this before parse_BJR() so MAP_FRAME_AXES can be guessed.
+		CURRENT_VIEW[1] = " -p217.5/30"
+	end
+	cmd, opt_p = parse_p(d, cmd)	# Parse this one (view angle) aside so we can use it to remove invisible faces (3D)
+	(opt_p == "" && !is3D && !O) && (CURRENT_VIEW[1] = "")	# Make sure it empty under these conditions
+	(opt_p == "") ? (opt_p = CURRENT_VIEW[1]; cmd *= opt_p)	: (CURRENT_VIEW[1] = opt_p) # Save for eventual use in other modules.
+
+	if (is3D && isFV)			# case of 3D faces
+		arg1 = (is_in_dict(d, [:replicate]) !== nothing) ? replicant(arg1, d) : deal_faceverts(arg1, d; del=find_in_dict(d, [:nocull])[1] === nothing)
+		(!O && !haskey(d, :aspect3) && is_in_dict(d, [:JZ :Jz :zsize :zscale]) === nothing && !isgeog(arg1)) && (d[:aspect3] = "equal")
+		(!O && !haskey(d, :aspect3) && isgeog(arg1)) && (d[:aspect] = "equal")
+	elseif (is_gridtri)
+		arg1 = sort_visible_triangles(arg1)
+		is_in_dict(d, [:Z :level :levels]) === nothing && (d[:Z] = tri_z(arg1))
+	end
+	return cmd, is_gridtri, arg1
+end
+
+function parse_Ebars(d, cmd, arg1)
+	got_Ebars = false
+	val, symb = find_in_dict(d, [:E :error :error_bars], false)
+	if (val !== nothing)
+		if isa(val, String)
+			cmd *= " -E" * val
+		else
+			_mat = (arg1 === nothing) ? arg1 : isa(arg1, GMTdataset) ? arg1.data : arg1[1].data
+			cmd, mat_t = add_opt(add_opt, (d, cmd, "E", [symb]),
+			                     (x="|x",y="|y",xy="|xy",X="|X",Y="|Y", asym="_+a", colored="_+c", cline="_+cl", csymbol="_+cf", notch="|+n", boxwidth="+w", cap="+w", pen=("+p",add_opt_pen)), false, _mat)
+			(arg1 !== nothing) && (isa(arg1, GMTdataset) ? (arg1.data = mat_t; append!(arg1.colnames, ["Ebar"])) :
+			                       (arg1[1].data = mat_t; append!(arg1[1].colnames, ["Ebar"])))
+		end
+		got_Ebars = true
+		delete!(d, [symb])
+	end
+	return cmd, got_Ebars, arg1
+end
+
+# ---------------------------------------------------------------------------------------------------
+function parse_color_request(d, cmd, N_args, arg1, arg2)
+	opt_Z, args, n, got_Zvars = add_opt(d, "", "Z", [:Z :level :levels], :data, Any[arg1, arg2], (outline="_o", nofill="_f"))
+	(opt_Z == " -Z" && n == 0) && error("The 'level' option (Z) must be set a single value, a file name or a vector os reals.")
+	if (isa(arg1, Vector{<:GMTdataset}) && ((ind_att = findfirst('=', opt_Z)) !== nothing))
+		# Here we deal with the case where the -Z option refers to a particular attribute.
+		# Allow to use "Z=(data="att=XXXX", nofill=true)" when the Di are polygons.
+		last_ind, got_extra = length(opt_Z), false
+		(opt_Z[end] == 'f' || opt_Z[end] == 'o') && (last_ind -= 1; got_extra = true)
+		arg2 = parse.(Float64, make_attrtbl(arg1, att=opt_Z[ind_att+1:last_ind])[1])
+		opt_Z = (got_extra) ? " -Z" * opt_Z[end] : ((arg1[1].geom == wkbLineString || arg1[1].geom == wkbLineString) ? " -Zf" : " -Z")
+		N_args = 2
+	end
+	if (contains(opt_Z, "f") && !contains(opt_Z, "o"))	# Short version. If no fill it must outline otherwise nothing
+		do_Z_fill, do_Z_outline = false, true;		opt_Z = replace(opt_Z, "f" => "")
+	else
+		(!contains(opt_Z, "f")) ? do_Z_fill = true : (do_Z_fill = false; opt_Z = replace(opt_Z, "f" => ""))
+		(contains(opt_Z, "o")) ? (do_Z_outline = true; opt_Z = replace(opt_Z, "o" => "")) : (do_Z_outline = false)
+	end
+	(opt_Z != "") && (cmd *= opt_Z)
+	(!got_Zvars) && (do_Z_fill = do_Z_outline = false)	# Because they may have wrongly been set above
+
+	if (n > 0)
+		arg1, arg2 = args[:]
+		N_args = n
+	end
+	return cmd, N_args, do_Z_fill, got_Zvars, do_Z_outline, arg1, arg2
+end
+
+# ---------------------------------------------------------------------------------------------------
+function set_avatar_defaults(d, cmd, mcc, caller, got_usr_R, opt_B, opt_Gsymb, opt_ML, opt_R, opt_S, opt_W, sub_module, g_bar_fill, opt_Wmarker, opt_UVXY, opt_c, O, arg1)::Vector{String}
+	cmd  = check_caller(d, cmd, opt_S, opt_W, sub_module, g_bar_fill, O)
+	(mcc && caller == "bar" && !got_usr_R && opt_R != " -R") && (cmd = recompute_R_4bars!(cmd, opt_R, arg1))	# Often needed
+	_cmd = build_run_cmd(cmd, opt_B, opt_Gsymb, opt_ML, opt_S, opt_W, opt_Wmarker, opt_UVXY, opt_c)
+	return _cmd
+end
+
+# ---------------------------------------------------------------------------------------------------
+function parse_plot_G_L(d, cmd, g_bar_fill, is_ternary)
+	opt_G::String = ""
+	if (isempty(g_bar_fill))					# Otherwise bar fill colors are dealt with somewhere else
+		((opt_G = add_opt_fill("", d, [:G :fill], 'G')) != "") && (cmd *= opt_G)	# Also keep track if -G was set
+	end
+	opt_Gsymb::String = add_opt_fill("", d, [:G :mc :markercolor :markerfacecolor :MarkerFaceColor], 'G')	# Filling of symbols
+	(opt_Gsymb == " -G") && (opt_Gsymb *= "black")	# Means something like 'mc=true' was used, but we need a color
+
+	opt_L::String = ""
+	if (is_ternary)				# Means we are in the psternary mode
+		cmd = add_opt(d, cmd, "L", [:L :vertex_labels])
+	else
+		opt_L = add_opt(d, "", "L", [:L :close :polygon],
+		                (left="_+xl", right="_+xr", x0="+x", bot="_+yb", top="_+yt", y0="+y", sym="_+d", asym="_+D", envelope="_+b", pen=("+p",add_opt_pen)))
+		(length(opt_L) > 3 && !occursin("-G", cmd) && !occursin("+p", cmd)) && (opt_L *= "+p0.5p")
+		cmd *= opt_L
+	end
+	return cmd, opt_G, opt_Gsymb, opt_L
+end
+
+# ---------------------------------------------------------------------------------------------------
+function parse_plot_callers(d, gmt_proggy, caller, is3D, O, arg1)
+	isFV = (isa(arg1, GMTfv) || isa(arg1, Vector{GMTfv}))
+	(arg1 !== nothing && !isa(arg1, GDtype) && !isa(arg1, Matrix{<:Real}) && !isFV) &&
+		(arg1 = tabletypes2ds(arg1, ((val = find_in_dict(d, [:interp])[1]) !== nothing) ? interp=val : interp=0))
+	(caller != "bar") && (arg1 = if_multicols(d, arg1, is3D))	# Repeat because DataFrames or ODE's have skipped first round
+	(!O) && (LEGEND_TYPE[1] = legend_bag())		# Make sure that we always start with an empty one
+
+	cmd::String = "";	sub_module::String = ""	# Will change to "scatter", etc... if called by sub-modules
+	opt_A::String = ""							# For the case the caller was in fact "stairs"
+	g_bar_fill = Vector{String}()				# May hold a sequence of colors for gtroup Bar plots
+	if (caller != "")
+		if (occursin(" -", caller))				# some sub-modues use this piggy-backed call to send a cmd
+			if ((ind = findfirst('|', caller)) !== nothing)	# A mixed case with "caler|partiall_command"
+				_ind::Int = Int(ind)			# Because it still F. insists that 'ind' is a Any
+				sub_module = caller[1:_ind-1]
+				cmd = caller[_ind+1:end]
+				caller = sub_module				# Because of parse_BJR()
+				(caller == "events") && (gmt_proggy = "events ")
+			else
+				cmd = caller
+				caller = "others"				# It was piggy-backed
+			end
+		else
+			sub_module = caller
+			# Needs to be processed here to distinguish from the more general 'fill'
+			(caller == "bar") && (g_bar_fill = helper_gbar_fill(d))
+			opt_A = (caller == "lines" && ((val = find_in_dict(d, [:stairs_step])[1]) !== nothing)) ? string(val) : ""
+		end
+	end
+	return cmd, isFV, caller, sub_module, gmt_proggy, opt_A, g_bar_fill, arg1
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -376,7 +412,7 @@ function plt_txt_attrib!(D::GDtype, d::Dict, _cmd::Vector{String})
 	((_ind = findfirst('=', s_val)) === nothing) && (_ind = findfirst(':', s_val))
 	ind::Int = _ind											# Because it fck insists _ind is a Any
 	ts::String = s_val[ind+1:end]
-	ct::GMTdataset = gmtspatial(D, centroid=true)			# Texts will be plotted at the polygons centroids
+	#ct::GMTdataset = gmtspatial(D, centroid=true)			# Texts will be plotted at the polygons centroids
 	if ((fnt = add_opt(d, "", "", [:font], (angle="+a", font=("+f", font)), false, true)) != "")
 		(fnt[1] != '+') && (fnt = "+f" * fnt)
 		delete!(d, :font)
