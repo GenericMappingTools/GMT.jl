@@ -349,7 +349,8 @@ using GMT.Laszip
 	rm(t)
 	D = mat2ds(rand(3,3), colnames=["Time","b","c"]); D.attrib = Dict("Timecol" => "1");
 	D[:Time];	D["Time", "b"];
-	plot(rand(5,2), marker=:point, lc=:red, ls=:dot, lw=1)
+	#plot(rand(5,2), marker=:point, lc=:red, ls=:dot, lw=1)
+	plot(rand(5,2))
 	grdimage(rand(Float32,32,32), R="0/32/0/32");
 	I = mat2img(rand(UInt8, 32, 32, 3), clim=:zscale);
 	grdimage(I, V=:q);

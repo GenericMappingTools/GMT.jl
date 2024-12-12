@@ -136,6 +136,11 @@ In the former case (Vector{Vector}) the length of each Vector[i] must equal to t
 """
 function mat2ds(mat::Vector{<:AbstractMatrix}; hdr=String[], kwargs...)
 	d = KW(kwargs)
+	mat2ds(mat, hdr, d)
+end
+#function mat2ds(mat::Vector{<:AbstractMatrix}; hdr=String[], kwargs...)
+function mat2ds(mat::Vector{<:AbstractMatrix}, hdr::Vector{String}, d::Dict)
+	#d = KW(kwargs)
 	D::Vector{GMTdataset} = Vector{GMTdataset}(undef, length(mat))
 	pen   = find_in_dict(d, [:pen])[1]
 	color = find_in_dict(d, [:lc :linecolor :color])[1]
@@ -604,10 +609,15 @@ Base.:stack(D::Vector{<:GMTdataset}) = ds2ds(D)
 
 # ---------------------------------------------------------------------------------------------------
 function ds2ds(D::GMTdataset; is3D::Bool=false, kwargs...)::Vector{<:GMTdataset}
+	d = KW(kwargs)
+	ds2ds(D, is3D, d)
+end
+#function ds2ds(D::GMTdataset; is3D::Bool=false, kwargs...)::Vector{<:GMTdataset}
+function ds2ds(D::GMTdataset, is3D::Bool, d::Dict)::Vector{<:GMTdataset}
 	# Take one DS and split it into an array of DS's, one for each row and optionally add -G<fill>
 	# Alternativelly, if [:multi :multicol] options lieve in 'd', split 'D' by columns: [1,2], [1,3], [1,4], ...
 	# So far only for internal use but may grow in function of needs
-	d = KW(kwargs)
+	#d = KW(kwargs)
 
 	#multi = 'r'		# Default split by rows
 	#if ((val = find_in_dict(d, [:multi :multicol], false)[1]) !== nothing)  multi = 'c'  end		# Then by columns
@@ -645,7 +655,7 @@ function ds2ds(D::GMTdataset; is3D::Bool=false, kwargs...)::Vector{<:GMTdataset}
 end
 
 # ----------------------------------------------
-function helper_ds_fill(d::Dict, del::Bool=true; symbs=[:fill :fillcolor], nc=0)::Vector{String}
+function helper_ds_fill(d::Dict; del::Bool=true, symbs=[:fill :fillcolor], nc=0)::Vector{String}
 	# Shared by ds2ds & mat2ds & statplots
 	# The NC parameter is used to select the color schema: <= 8 ==> 'matlab_cycle_colors'; otherwise 'simple_distinct'
 	# By using a non-default SYMBS we can use this function for other than selecting fill colors.
@@ -1026,7 +1036,7 @@ isODE(arg) = (fs = fields(arg); return (!isempty(fs) && (fs[1] == :u && any(fs .
 israsters(arg) = (fs = fields(arg); return (length(fs) >= 6 && (fs[1] == :data && fs[end] == :missingval)) ? true : false)
 
 # ---------------------------------------------------------------------------------------------------
-function color_gradient_line(D::Matrix{<:Real}; is3D::Bool=false, color_col::Int=3, first::Bool=true)
+function color_gradient_line(D::Matrix{<:Real}; is3D::Bool=false, color_col::Int=3, first::Bool=true)::Matrix{Real}
 	# Reformat a Mx2 (or Mx3) matrix so that it can be used as vectors with no head/tail but varying
 	# color determined by last column and using plot -Sv+s -W+cl
 	(!is3D && size(D,2) < 2) && error("This function requires that the data matrix has at least 2 columns")
@@ -1039,12 +1049,12 @@ function color_gradient_line(D::Matrix{<:Real}; is3D::Bool=false, color_col::Int
 	[D[1:end-1, 1:dim_col] val D[2:end, 1:dim_col]]
 end
 
-function color_gradient_line(D::GMTdataset; is3D::Bool=false, color_col::Int=3, first::Bool=true)
+function color_gradient_line(D::GMTdataset; is3D::Bool=false, color_col::Int=3, first::Bool=true)::GMTdataset
 	mat = color_gradient_line(D.data, is3D=is3D, color_col=color_col, first=first)
 	mat2ds(mat, proj=D.proj4, wkt=D.wkt, geom=wkbLineString)
 end
 
-function color_gradient_line(Din::Vector{<:GMTdataset}; is3D::Bool=false, color_col::Int=3, first::Bool=true)
+function color_gradient_line(Din::Vector{<:GMTdataset}; is3D::Bool=false, color_col::Int=3, first::Bool=true)::Vector{GMTdataset}
 	D = Vector{GMTdataset}(undef, length(Din))
 	for k = 1:length(Din)
 		D[k] = color_gradient_line(Din[k], is3D=is3D, color_col=color_col, first=first)
@@ -1054,22 +1064,23 @@ end
 # ---------------------------------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------------------------------
-function line2multiseg(M::Matrix{<:Real}; is3D::Bool=false, color::GMTcpt=GMTcpt(), auto_color::Bool=false, lt=Vector{Real}(), color_col::Int=0)
+function line2multiseg(M::Matrix{<:Real}; is3D::Bool=false, color::GMTcpt=GMTcpt(), auto_color::Bool=false, lt=nothing, color_col::Int=0)
 	# Take a 2D or 3D poly-line and break it into an array of DS, one for each line segment
 	# AUTO_COLOR -> color from 1:size(M,1)
 	(!isempty(color) && size(M,2) < 3) && error("For a varying color the input data must have at least 3 columns")
 	n_ds = size(M,1)-1
 	_hdr::Vector{String} = fill("", n_ds)
 	first, use_row_number = true, false
-	if (!isempty(lt))
-		nth = length(lt)
+	_lt = (lt === nothing) ? Float64[] : vec(Float64.(lt))
+	if (!isempty(_lt))
+		nth = length(_lt)
 		if (nth < size(M,1))
-			if (nth == 2)  th = linspace(lt[1], lt[2], n_ds)		# If we have only 2 thicknesses.
-			else           th::Vector{Float64} = vec(gmt("sample1d -T -o1", [collect(1:nth) lt], collect(linspace(1,nth,n_ds))).data)
+			if (nth == 2)  th::Vector{Float64} = collect(linspace(_lt[1], _lt[2], n_ds))	# If we have only 2 thicknesses.
+			else           th = hlp_var_thk(lt, n_ds)
 			end
 			for k = 1:n_ds  _hdr[k] = string(" -W", th[k])  end
 		else
-			for k = 1:n_ds  _hdr[k] = string(" -W", lt[k])  end
+			for k = 1:n_ds  _hdr[k] = string(" -W", _lt[k])  end
 		end
 		first = false
 	end
@@ -1102,13 +1113,21 @@ function line2multiseg(M::Matrix{<:Real}; is3D::Bool=false, color::GMTcpt=GMTcpt
 	Dm
 end
 
-function line2multiseg(D::GMTdataset; is3D::Bool=false, color::GMTcpt=GMTcpt(), auto_color::Bool=false, lt=Vector{Real}(), color_col::Int=0)
+function hlp_var_thk(lt, n_ds)
+	# The cmd "vec(gmt_GMTdataset("sample1d -T -o1", [collect(1:nth) _lt], collect(linspace(1,nth,n_ds))).data)" causes
+	# function invalidation (Fck Julia) that goes up the stack chain. So we approx it with a 2nd order polynomial interp.
+	nth = length(lt)
+	p = polyfit(1:nth, lt)
+	polyval(p, linspace(1, nth, n_ds))
+end
+
+function line2multiseg(D::GMTdataset; is3D::Bool=false, color::GMTcpt=GMTcpt(), auto_color::Bool=false, lt=nothing, color_col::Int=0)
 	Dm = line2multiseg(D.data, is3D=is3D, color=color, auto_color=auto_color, lt=lt, color_col=color_col)
 	Dm[1].proj4, Dm[1].wkt, Dm[1].ds_bbox, Dm[1].colnames = D.proj4, D.wkt, D.ds_bbox, D.colnames
 	Dm
 end
 
-function line2multiseg(D::Vector{<:GMTdataset}; is3D::Bool=false, color::GMTcpt=GMTcpt(), auto_color::Bool=false, lt=Vector{Real}(), color_col::Int=0)
+function line2multiseg(D::Vector{<:GMTdataset}; is3D::Bool=false, color::GMTcpt=GMTcpt(), auto_color::Bool=false, lt=nothing, color_col::Int=0)
 	Dm = line2multiseg(D[1], is3D=is3D, color=color, auto_color=auto_color, lt=lt, color_col=color_col)
 	Dm[1].proj4, Dm[1].wkt, Dm[1].colnames = D[1].proj4, D[1].wkt, D[1].colnames
 	bb_min = bb_max = D[1].ds_bbox
@@ -1151,16 +1170,22 @@ function mat2img(mat::Union{AbstractArray{<:Unsigned}, AbstractArray{<:Bool}}; x
 	# Take a 2D array of uint8 and turn it into a GMTimage.
 	# Note: if HDR is empty we guess the registration from the sizes of MAT & X,Y
 	(cmap === nothing && eltype(mat) == Bool) && (cmap = makecpt(T=(0,1), cmap=:gray))
-	helper_mat2img(mat; x=x, y=y, v=v, hdr=hdr, proj4=proj4, wkt=wkt, cmap=cmap, is_transposed=is_transposed, kw...)
+	#helper_mat2img(mat; x=x, y=y, v=v, hdr=hdr, proj4=proj4, wkt=wkt, cmap=cmap, is_transposed=is_transposed, kw...)
+	d = KW(kw)
+	helper_mat2img(mat, vec(Float64.(x)), vec(Float64.(y)), vec(Float64.(v)), vec(Float64.(hdr)), proj4, wkt, cmap, is_transposed, d)
 end
 
 # Special version to desambiguate between UInt8 and UInt16
 function mat2img16(mat::AbstractArray{<:Unsigned}; x=Float64[], y=Float64[], v=Float64[], hdr=Float64[],
                    proj4::String="", wkt::String="", cmap=GMTcpt(), is_transposed::Bool=false, kw...)
-	helper_mat2img(mat; x=x, y=y, v=v, hdr=hdr, proj4=proj4, wkt=wkt, cmap=cmap, is_transposed=is_transposed, kw...)
+	#helper_mat2img(mat; x=x, y=y, v=v, hdr=hdr, proj4=proj4, wkt=wkt, cmap=cmap, is_transposed=is_transposed, kw...)
+	d = KW(kw)
+	helper_mat2img(mat, vec(Float64.(x)), vec(Float64.(y)), vec(Float64.(v)), vec(Float64.(hdr)), proj4, wkt, cmap, is_transposed, d)
 end
-function helper_mat2img(mat; x=Float64[], y=Float64[], v=Float64[], hdr=Float64[],
-                        proj4::String="", wkt::String="", cmap=GMTcpt(), is_transposed::Bool=false, kw...)
+#function helper_mat2img(mat; x=Float64[], y=Float64[], v=Float64[], hdr=Float64[],
+                        #proj4::String="", wkt::String="", cmap=GMTcpt(), is_transposed::Bool=false, kw...)
+function helper_mat2img(mat, x::Vector{Float64}, y::Vector{Float64}, v::Vector{Float64}, hdr::Vector{Float64},
+                        proj4::String, wkt::String, cmap::GMTcpt, is_transposed::Bool, d::Dict)
 	color_interp = "";		n_colors = 0;
 	if (!isempty(cmap))
 		colormap, labels, n_colors = cpt2cmap(cmap)
@@ -1179,11 +1204,11 @@ function helper_mat2img(mat; x=Float64[], y=Float64[], v=Float64[], hdr=Float64[
 	nx = size(mat, 2);		ny = size(mat, 1);
 	if (is_transposed)  nx, ny = ny, nx  end
 	reg::Int = (!isempty(hdr)) ? Int(hdr[7]) : (nx == length(x) && ny == length(y)) ? 0 : 1
-	hdr::Vector{Float64} = vec(hdr);	x::Vector{Float64} = vec(x);	y::Vector{Float64} = vec(y)	# Otherwis JET screammmms
+	#hdr::Vector{Float64} = vec(hdr);	x::Vector{Float64} = vec(x);	y::Vector{Float64} = vec(y)	# Otherwis JET screammmms
 	x, y, hdr, x_inc, y_inc = grdimg_hdr_xy(mat, reg, hdr, x, y, is_transposed)
 
 	mem_layout = (size(mat,3) == 1) ? "TCBa" : "TCBa"		# Just to have something. Likely wrong for 3D
-	d = KW(kw)
+	#d = KW(kw)
 	((val = find_in_dict(d, [:layout :mem_layout])[1]) !== nothing) && (mem_layout = string(val)::String)
 	_names::Vector{String} = ((val = find_in_dict(d, [:names])[1]) !== nothing) ? val : String[]
 	_meta::Vector{String}  = ((val = find_in_dict(d, [:metadata])[1]) !== nothing) ? val : String[]
@@ -1228,7 +1253,7 @@ Converts the `I` colormap, which is a plain vector, into a GMTcpt.
 function cmap2cpt(I::GMTimage)
 	(length(I.colormap) <= 4) && (@warn("This image has no associated colormap");	return nothing)
 	_nc = length(I.colormap) / I.n_colors
-	(_nc != 4 && _nc != 3) && (@warn("Something is wrong with this Image colormap. Returning nothing"); return nothing)
+	(_nc != 4 && _nc != 3) && error("Something is wrong with this Image colormap. No RGB nor RGBA.")
 
 	nc, n_colors, n = Int(_nc), I.n_colors, I.n_colors
 	cmap = reshape(I.colormap, n, nc)
@@ -1341,6 +1366,7 @@ function mat2img(mat::Union{GMTgrid,Matrix{<:AbstractFloat}}; x=Float64[], y=Flo
 	else
 		img = isa(mat,GMTgrid) ? round.(UInt8, (mat.z .- mi) ./ (ma - mi) .* 255) : round.(UInt8, (mat .- mi) ./ (ma - mi) .* 255) 
 	end
+
 	(clim[1] >= clim[2]) && error("CLIM values are non-sense (min > max)")
 	if (clim[1] > 0 && clim[1] < 255)
 		for k in eachindex(img)  if (img[k] < clim[1])  img[k] = clim[1]  end  end
@@ -1983,7 +2009,7 @@ If neither them exists, the layer is replicated 3 times thus resulting in a gray
 
 Use the `cmap` keyword in alternative to the `cpt` positional variable. 
 """
-function ind2rgb(I::GMTimage, cpt::GMTcpt=GMTcpt(), layout="BRPa"; cmap=GMTcpt())
+function ind2rgb(I::GMTimage, cpt::GMTcpt=GMTcpt(), layout="BRPa"; cmap::GMTcpt=GMTcpt())
 	(size(I.image, 3) >= 3) && return I 		# Image is already RGB(A)
 
 	(isempty(cpt) && isa(cmap, Symbol) || isa(cmap, String)) && (cpt = makecpt(I.range[6]-I.range[5]+1, C=cmap))
