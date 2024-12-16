@@ -336,7 +336,7 @@ Returns either an ``Int`` or a ``Vector{Int}`` depending on the number of input 
     plot!(points, marker=:star, ms="12p", fill=:blue, show=true)
 """
 inwhichpolygon(D::Vector{<:GMTdataset}, x, y; on_is_in=false, pack=false) = inwhichpolygon([x y], D; on_is_in=on_is_in, pack=pack)
-inwhichpolygon(x, y, D::Vector{<:GMTdataset}; on_is_in=false, pack=false) = inwhichpolygon([x y], D; on_is_in=on_is_in, pack=pack)
+inwhichpolygon(x::Union{Vector{<:Real}, Real}, y::Union{Vector{<:Real}, Real}, D::Vector{<:GMTdataset}; on_is_in=false, pack=false) = inwhichpolygon([x y], D; on_is_in=on_is_in, pack=pack)
 inwhichpolygon(D::Vector{<:GMTdataset}, point::VecOrMat{<:Real}; on_is_in=false, pack=false) =
 	inwhichpolygon(point, D; on_is_in=on_is_in, pack=pack)
 inwhichpolygon(point::Tuple{Vector{<:Real}, Vector{<:Real}}, D::Vector{<:GMTdataset}; on_is_in=false, pack=false) =
