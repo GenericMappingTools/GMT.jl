@@ -6,8 +6,6 @@ or
 
 Make static color palette tables (CPTs). The second form accepts a name of one of the GMT CPT defaults.
 
-See full GMT (not the `GMT.jl` one) docs at [`makecpt`]($(GMTdoc)makecpt.html)
-
 - **A** | **alpha** | **transparency** :: [Type => Str]
 
     Sets a constant level of transparency (0-100) for all color slices.
@@ -52,10 +50,6 @@ See full GMT (not the `GMT.jl` one) docs at [`makecpt`]($(GMTdoc)makecpt.html)
 - **Z** | **continuous** :: [Type => Bool]
 
     Creates a continuous CPT [Default is discontinuous, i.e., constant colors for each interval].
-- $(_opt_bi)
-- $(_opt_di)
-- $(_opt_h)
-- $(_opt_i)
 
 To see the full documentation type: ``@? makecpt``
 """
@@ -72,8 +66,8 @@ function makecpt(cmd0::String, arg1, d::Dict)::Union{String, GMTcpt}
 	# a (C=nothing, cmap=:gray) and because 'C' is searched first we would loose the cmap=:gray. Solution is to delete :C
 	((get(d, :C, nothing)) === nothing && is_in_dict(d, [:color :cmap :colormap :colorscale]) !== nothing) && delete!(d, :C)
 
-    # If file name sent in, read it and compute a tight -R if this was not provided 
-    cmd, arg1, = read_data(d, cmd0, cmd, arg1, " ")
+	# If file name sent in, read it
+	cmd, arg1, = read_data(d, cmd0, cmd, arg1, " ")
 	cmd, arg1, = add_opt_cpt(d, cmd, CPTaliases, 'C', 0, arg1)
 	cmd, Tvec = helper_cpt(d, cmd)
 	cmd = parse_E_mkcpt(d, [:E :nlevels], cmd, arg1)
@@ -84,6 +78,7 @@ function makecpt(cmd0::String, arg1, d::Dict)::Union{String, GMTcpt}
 	(arg1 === nothing && !isempty(Tvec)) && (arg1 = Tvec; Tvec = Float64[])
 	_r = gmt(cmd, arg1, !isempty(Tvec) ? Tvec : nothing)
 	r::GMTcpt = (_r !== nothing) ? _r : GMTcpt()	# _r === nothing when we save CPT on disk.
+	@assert (r isa GMTcpt)
 	(got_N && !isempty(r)) && (r.bfn = ones(3,3))	# Cannot remove the bfn like in plain GMT so make it all whites
 	CTRL.pocket_d[1] = d					# Store d that may be not empty with members to use in other modules
 	CURRENT_CPT[1] = r

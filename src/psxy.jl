@@ -291,6 +291,7 @@ function parse_grid2tri_case(d, cmd, caller, is3D, isFV, O, arg1)
 	return cmd, is_gridtri, arg1
 end
 
+# ---------------------------------------------------------------------------------------------------
 function parse_Ebars(d, cmd, arg1)
 	got_Ebars = false
 	val, symb = find_in_dict(d, [:E :error :error_bars], false)
@@ -412,7 +413,7 @@ function plt_txt_attrib!(D::GDtype, d::Dict, _cmd::Vector{String})
 	((_ind = findfirst('=', s_val)) === nothing) && (_ind = findfirst(':', s_val))
 	ind::Int = _ind											# Because it fck insists _ind is a Any
 	ts::String = s_val[ind+1:end]
-	#ct::GMTdataset = gmtspatial(D, centroid=true)			# Texts will be plotted at the polygons centroids
+	ct::GMTdataset = gmtspatial(D, centroid=true)			# Texts will be plotted at the polygons centroids
 	if ((fnt = add_opt(d, "", "", [:font], (angle="+a", font=("+f", font)), false, true)) != "")
 		(fnt[1] != '+') && (fnt = "+f" * fnt)
 		delete!(d, :font)
