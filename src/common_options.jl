@@ -2308,7 +2308,7 @@ function prepare2geotif(d::Dict, cmd::Vector{String}, opt_T::String, O::Bool)::T
 end
 
 # ---------------------------------------------------------------------------------------------------
-function add_opt_1char(cmd::String, d::Dict, symbs::Vector{Matrix{Symbol}}, del::Bool=true)::String
+function add_opt_1char(cmd::String, d::Dict, symbs::Vector{Matrix{Symbol}}; del::Bool=true)::String
 	# Scan the D Dict for SYMBS keys and if found create the new option OPT and append it to CMD
 	# If DEL == true we remove the found key.
 	# The keyword value must be a string, symbol or a tuple of them. We only retain the first character of each item
@@ -4691,10 +4691,10 @@ mutable struct legend_bag
 	cmd::Vector{String}
 	cmd2::Vector{String}
 	opt_l::String
-	optsDict::Dict
+	optsDict::Dict{Symbol,Any}
 	Vd::Int
 end
-legend_bag() = legend_bag(Vector{String}(), Vector{String}(), Vector{String}(), "", Dict(), 0)
+legend_bag() = legend_bag(Vector{String}(), Vector{String}(), Vector{String}(), "", Dict{Symbol,Any}(), 0)
 
 # --------------------------------------------------------------------------------------------------
 function put_in_legend_bag(d::Dict, cmd, arg, O::Bool=false, opt_l::String="")
@@ -4828,9 +4828,9 @@ end
 # --------------------------------------------------------------------------------------------------
 function digests_legend_bag(d::Dict, del::Bool=true)
 	# Plot a legend if the leg or legend keywords were used. Legend info is stored in LEGEND_TYPE global variable
-	(size(LEGEND_TYPE[1].label, 1) == 0) && return
+	(size(LEGEND_TYPE[1].label, 1) == 0) && return nothing
 
-	dd::Dict = ((val = find_in_dict(d, [:leg :legend :l], false)[1]) !== nothing && isa(val, NamedTuple)) ? nt2dict(val) : Dict{Symbol, Any}()
+	dd::Dict{Symbol, Any} = ((val = find_in_dict(d, [:leg :legend :l], false)[1]) !== nothing && isa(val, NamedTuple)) ? nt2dict(val) : Dict{Symbol, Any}()
 
 	kk, fs = 0, 8				# Font size in points
 	symbW = 0.65				# Symbol width. Default to 0.75 cm (good for lines but bad for symbols)
@@ -4885,9 +4885,9 @@ function digests_legend_bag(d::Dict, del::Bool=true)
 
 	# Because we accept extended settings either from first or last legend() commands we must seek which
 	# one may have the desired keyword. First command is stored in 'LEGEND_TYPE[1].optsDict' and last in 'dd'
-	_d = (haskey(dd, :pos) || haskey(dd, :position)) ? dd :
+	_d::Dict{Symbol,Any} = (haskey(dd, :pos) || haskey(dd, :position)) ? dd :
 	     (haskey(LEGEND_TYPE[1].optsDict, :pos) || haskey(LEGEND_TYPE[1].optsDict, :position)) ?
-		 LEGEND_TYPE[1].optsDict : Dict()
+		 LEGEND_TYPE[1].optsDict : Dict{Symbol,Any}()
 
 	_opt_D = (((val = find_in_dict(_d, [:pos :position], false)[1]) !== nothing) && isa(val, StrSymb)) ? string(val)::String : ""
 	if ((opt_D::String = parse_type_anchor(_d, "", [:_ :pos :position],
@@ -4923,7 +4923,7 @@ function digests_legend_bag(d::Dict, del::Bool=true)
 		(!occursin("+o", opt_D)) && (opt_D *= "+o" * offset)
 	end
 
-	_d = (haskey(dd, :box) && dd[:box] !== nothing) ? dd : haskey(LEGEND_TYPE[1].optsDict, :box) ? LEGEND_TYPE[1].optsDict : Dict()
+	_d = (haskey(dd, :box) && dd[:box] !== nothing) ? dd : haskey(LEGEND_TYPE[1].optsDict, :box) ? LEGEND_TYPE[1].optsDict : Dict{Symbol, Any}()
 	if ((opt_F::String = add_opt(_d, "", "", [:box],
 		(clearance="+c", fill=("+g", add_opt_fill), inner="+i", pen=("+p", add_opt_pen), rounded="+r", shade="+s"), false)) == "")
 		opt_F = "+p0.5+gwhite"
