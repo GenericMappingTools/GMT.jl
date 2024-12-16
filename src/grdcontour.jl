@@ -1,10 +1,8 @@
 """
 	grdcontour(cmd0::String="", arg1=nothing; kwargs...)
 
-Reads a 2-D grid file or a GMTgrid type and produces a contour map by tracing each
+Read a 2-D grid file or a GMTgrid type and produces a contour map by tracing each
 contour through the grid.
-
-See full GMT (not the `GMT.jl` one) docs at [`grdcontour`]($(GMTdoc)grdcontour.html)
 
 Parameters
 ----------
@@ -72,12 +70,15 @@ grdcontour!(arg1; kw...) = grdcontour_helper("", arg1; first=false, kw...)
 
 # ---------------------------------------------------------------------------------------------------
 function grdcontour_helper(cmd0::String, arg1; first=true, kw...)
-	arg2 = arg3 = nothing
 	d, K, O = init_module(first, kw...)		# Also checks if the user wants ONLY the HELP mode
+	_grdcontour_helper(cmd0, arg1, O, K, d)
+end
+function _grdcontour_helper(cmd0::String, arg1, O::Bool, K::Bool, d::Dict)
+	arg2, arg3 = nothing, nothing
 	dict_auto_add!(d)					# The ternary module may send options via another channel
 
 	cmd::String, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX" * split(DEF_FIG_SIZE, '/')[1] * "/0")
-	cmd, = parse_common_opts(d, cmd, [:UVXY :margin :params :bo :c :e :f :h :p :t]; first=first)
+	cmd, = parse_common_opts(d, cmd, [:UVXY :margin :params :bo :c :e :f :h :p :t]; first=!O)
 	cmd  = parse_these_opts(cmd, d, [[:D :dump], [:F :force], [:L :range], [:Q :cut], [:S :smooth]])
 	cmd  = parse_contour_AGTW(d::Dict, cmd::String)[1]
 	cmd  = add_opt(d, cmd, "Z", [:Z :muladd :scale], (factor = "+s", shift = "+o", periodic = "_+p"))
@@ -85,7 +86,6 @@ function grdcontour_helper(cmd0::String, arg1; first=true, kw...)
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)	# Find how data was transmitted
 	if (isa(arg1, Matrix{<:Real}))	arg1 = mat2grid(arg1)	end
 
-	# cmd, N_used, arg1, arg2, = get_cpt_set_R(d, cmd0, cmd, opt_R, got_fname, arg1, arg2, nothing, "grdcontour")
 	cmd, N_used, arg1, arg2, = common_get_R_cpt(d, cmd0, cmd, opt_R, got_fname, arg1, arg2, nothing, "grdcontour")
 
 	got_N_cpt = false		# Shits because 6.1 still cannot process N=cpt (6.1.1 can)

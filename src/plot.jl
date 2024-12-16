@@ -593,7 +593,7 @@ bar3!(arg1; kw...) = bar3("", arg1; first=false, kw...)
 """
     lines(cmd0::String="", arg1=nothing; decorated=(...), kwargs...)
 
-Reads a file or (x,y) pairs and plots a collection of different line with decorations
+Read a file or (x,y) pairs and plot a collection of different line with decorations
 
 - $(_opt_B)
 - $(_opt_J)
@@ -1098,7 +1098,11 @@ function helper_vecBug(d, arg1, first::Bool, haveR::Bool, haveVarFill::Bool, typ
 	end
 
 	function rθ2uv(arg1)		# Convert to u,v
-		(eltype(arg1) <: Integer) && (arg1 = convert(Array{Float64}, arg1))
+		if (eltype(arg1) <: Integer)
+			arg1 = convert(Array{Float64}, arg1)
+		else
+			arg1 = copy(arg1)	# We don't want to modify the original
+		end
 		for k = 1:size(arg1,1)
 			s, c = sincosd(arg1[k,3])
 			arg1[k,3] = arg1[k,4] * c
