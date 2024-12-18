@@ -302,6 +302,18 @@ function parse_Ebars(d, cmd, arg1)
 			_mat = (arg1 === nothing) ? arg1 : isa(arg1, GMTdataset) ? arg1.data : arg1[1].data
 			cmd, mat_t = add_opt(add_opt, (d, cmd, "E", [symb]),
 			                     (x="|x",y="|y",xy="|xy",X="|X",Y="|Y", asym="_+a", colored="_+c", cline="_+cl", csymbol="_+cf", notch="|+n", boxwidth="+w", cap="+w", pen=("+p",add_opt_pen)), false, _mat)
+			#=
+			if (arg1 === nothing)
+				_cmd = add_opt(val, (x="|x",y="|y",xy="|xy",X="|X",Y="|Y", asym="_+a", colored="_+c", cline="_+cl", csymbol="_+cf", notch="|+n", boxwidth="+w", cap="+w", pen=("+p",add_opt_pen)))
+			else
+				_mat = isa(arg1, GMTdataset) ? arg1.data : arg1[1].data
+				n_rows = size(_mat, 1)
+				mat = reshape(copy(_mat), :)
+				_cmd = add_opt(val, (x="|x",y="|y",xy="|xy",X="|X",Y="|Y", asym="_+a", colored="_+c", cline="_+cl", csymbol="_+cf", notch="|+n", boxwidth="+w", cap="+w", pen=("+p",add_opt_pen)), mat)
+				mat_t = reshape(mat, n_rows, :)
+			end	
+			cmd *= " -E" * _cmd
+			=#
 			(arg1 !== nothing) && (isa(arg1, GMTdataset) ? (arg1.data = mat_t; append!(arg1.colnames, ["Ebar"])) :
 			                       (arg1[1].data = mat_t; append!(arg1[1].colnames, ["Ebar"])))
 		end
@@ -414,7 +426,7 @@ function plt_txt_attrib!(D::GDtype, d::Dict, _cmd::Vector{String})
 	ind::Int = _ind											# Because it fck insists _ind is a Any
 	ts::String = s_val[ind+1:end]
 	ct::GMTdataset = gmtspatial(D, centroid=true)			# Texts will be plotted at the polygons centroids
-	if ((fnt = add_opt(d, "", "", [:font], (angle="+a", font=("+f", font)), false, true)) != "")
+	if ((fnt = add_opt(d, "", "", [:font], (angle="+a", font=("+f", font)); del=false)) != "")
 		(fnt[1] != '+') && (fnt = "+f" * fnt)
 		delete!(d, :font)
 		ct.text = make_attrtbl(D, att=ts)[1]
@@ -1539,7 +1551,7 @@ function check_caller(d::Dict, cmd::String, opt_S::String, opt_W::String, caller
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_bar_cmd(d::Dict, key::Symbol, cmd::String, optS::String, no_u::Bool=false)::Tuple{String, String}
+function parse_bar_cmd(d::Dict, key::Symbol, cmd::String, optS::String; no_u::Bool=false)::Tuple{String, String}
 	# Deal with parsing the 'bar' & 'hbar' keywors of psxy. Also called by plot/bar3. For this
 	# later module if input is not a string or NamedTuple the scatter options must be processed in bar3().
 	# KEY is either :bar or :hbar

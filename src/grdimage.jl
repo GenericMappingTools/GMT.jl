@@ -36,14 +36,6 @@ Parameters
 
     Make grid nodes with z = NaN transparent, or pick a color for transparency in a image.
 - $(_opt_R)
-- $(opt_U)
-- $(opt_V)
-- $(opt_X)
-- $(opt_Y)
-- $(_opt_f)
-- $(opt_n)
-- $(_opt_p)
-- $(_opt_t)
 - $(opt_savefig)
 
 To see the full documentation type: ``@? grdimage``
@@ -87,7 +79,7 @@ function _grdimage(cmd0::String, arg1, arg2, arg3, O::Bool, K::Bool, d::Dict)
 	cmd, = parse_common_opts(d, cmd, [:UVXY :params :margin :c :f :n :p :t]; first=first)
 	cmd  = parse_these_opts(cmd, d, [[:A :img_out :image_out], [:D :img_in :image_in], [:E :dpi], [:G :bit_color],
 	                                 [:M :monochrome], [:N :noclip], [:Q :nan_alpha :alpha_color]])
-	cmd = add_opt(d, cmd, "%", [:layout :mem_layout], nothing)
+	cmd = add_opt(d, cmd, "%", [:layout :mem_layout])
 	cmd = add_opt(d, cmd, "T", [:T :no_interp :tiles], (skip="_+s", skip_nan="_+s", outlines=("+o", add_opt_pen)))
 
 	if (isa(arg1, GMTgrid) && length(opt_R) > 3 && !isapprox(CTRL.limits[1:4], arg1.range[1:4]))

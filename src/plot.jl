@@ -560,7 +560,7 @@ function bar3(cmd0::String="", arg=nothing; first=true, kwargs...)
 	else
 		opt_S = parse_I(d, "", [:S :width], "So", true)
 		if (opt_S == "")
-			opt_S = parse_bar_cmd(d, :bar, "", "So", true)[1]
+			opt_S = parse_bar_cmd(d, :bar, "", "So"; no_u=true)[1]
 		end
 		if (opt_S == "")
 			if ((isa(arg1, Array) && size(arg1,2) < 5) || (isa(arg1, GMTdataset) && size(arg1.data,2) < 5))
@@ -1101,7 +1101,7 @@ function helper_vecBug(d, arg1, first::Bool, haveR::Bool, haveVarFill::Bool, typ
 		if (eltype(arg1) <: Integer)
 			arg1 = convert(Array{Float64}, arg1)
 		else
-			arg1 = copy(arg1)	# We don't want to modify the original
+			arg1 = deepcopy(arg1)	# We don't want to modify the original
 		end
 		for k = 1:size(arg1,1)
 			s, c = sincosd(arg1[k,3])
@@ -1807,7 +1807,7 @@ function events(cmd0::String="", arg1=nothing; kwargs...)
 	cmd = add_opt(d, cmd, "D", [:D :offset],
 		(away=("j", nothing, 1), corners=("J", nothing, 1), shift="", line=("+v",add_opt_pen)))
 	cmd = add_opt(d, cmd, "F", [:F :attrib],
-		(angle="+a", Angle="+A", font=("+f", font), justify="+j", region_justify="+c", header="_+h", label="_+l", rec_number="+r", text="+t", zvalues="+z"), false)
+		(angle="+a", Angle="+A", font=("+f", font), justify="+j", region_justify="+c", header="_+h", label="_+l", rec_number="+r", text="+t", zvalues="+z"); del=false)
 	common_plot_xyz(cmd0, mat2ds(arg1), "events|" * cmd, true, false, d)
 end
 const psevents = events            # Alias

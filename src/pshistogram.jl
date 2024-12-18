@@ -8,8 +8,6 @@ convenient for contrast enhancement (histogram stretch). The values represent th
 countings used to estimate the boundings. The option 'zoom=true' will set 'auto=true' and show
 histogram only on the region of interest.
 
-See full GMT (not the `GMT.jl` one) docs at [`pshistogram`]($(GMTdoc)histogram.html)
-
 Parameters
 ----------
 
@@ -67,20 +65,7 @@ Parameters
 - **Z** | **kind** :: [Type => Number | Str]
 
     Choose between 6 types of histograms.
-- $(opt_U)
-- $(opt_V)
-- $(opt_X)
-- $(opt_Y)
-- $(_opt_bi)
-- $(_opt_di)
-- $(opt_e)
-- $(_opt_f)
-- $(_opt_h)
-- $(_opt_i)
-- $(_opt_p)
-- $(_opt_t)
-- $(opt_w)
-- $(opt_swap_xy)
+
 - $(opt_savefig)
 
 To see the full documentation type: ``@? histogram``
@@ -106,7 +91,7 @@ function histogram_helper(cmd0::String, arg1; first=true, kwargs...)
 
 	cmd::String = ""
 	opt_Z = add_opt(d, "", "Z", [:Z :kind], (counts = "_0", count = "_0", freq = "_1", frequency = "_1",
-	                                         log_count = "_2", log_freq = "_3", log10_count = "_4", log10_freq = "_5", weights = "+w"), true, "")::String
+	                                         log_count = "_2", log_freq = "_3", log10_count = "_4", log10_freq = "_5", weights = "+w"); del=true, expand_str=true)::String
 	opt_T = parse_opt_range(d, "", "")[1]		# [:T :range :inc :bin]
 	(isa(arg1, GItype)) && occursin("/", opt_T) && error("here 'bin' must be a scalar")
 

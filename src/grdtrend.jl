@@ -4,8 +4,6 @@
 reads a 2-D grid file and fits a low-order polynomial trend to these data by
 [optionally weighted] least-squares.
 
-See full GMT (not the `GMT.jl` one) docs at [`grdtrend`]($(GMTdoc)grdtrend.html)
-
 Parameters
 ----------
 
@@ -33,7 +31,7 @@ function grdtrend(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 	cmd, = parse_R(d, "")
 	cmd = parse_V_params(d, cmd)
 	cmd = parse_these_opts(cmd, d, [[:D :diff], [:T :trend]])
-	opt_N = add_opt(d, "", "N", [:N :model], (n="", n_model="", robust="_+r", xonly="_+x", yonly="_+y"), true, true)
+	opt_N = add_opt(d, "", "N", [:N :model], (n="", n_model="", robust="_+r", xonly="_+x", yonly="_+y"); expand=true)
 	(opt_N == "" && !SHOW_KWARGS[1]) && error("The 'model' parameter is mandatory")
 	cmd *= opt_N
 

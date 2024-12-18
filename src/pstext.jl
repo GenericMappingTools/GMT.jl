@@ -4,8 +4,6 @@
 Plots text strings of variable size, font type, and orientation. Various map projections are
 provided, with the option to draw and annotate the map boundaries.
 
-See full GMT (not the `GMT.jl` one) docs at [`pstext`]($(GMTdoc)pstext.html)
-
 Parameters
 ----------
 
@@ -53,20 +51,7 @@ Parameters
 - **Z** | **threeD** :: [Type => Str]
 
     For 3-D projections: expect each item to have its own level given in the 3rd column.
-- $(opt_U)
-- $(opt_V)
-- $(opt_X)
-- $(opt_Y)
-- $(opt_a)
-- $(_opt_bi)
-- $(_opt_di)
-- $(opt_e)
-- $(_opt_f)
-- $(opt_g)
-- $(_opt_h)
-- $(_opt_p)
-- $(_opt_t)
-- $(opt_swap_xy)
+
 - $(opt_savefig)
 
 To see the full documentation type: ``@? pstext``
@@ -94,11 +79,11 @@ function _text(cmd0::String, arg1, O::Bool, K::Bool, d::Dict)
 			error("The 'text' option must be a text or a Symbol but was $(typeof(arg))")
 
 		if (isa(arg, AbstractString) || isa(arg, Symbol))
-			arg1 = (y === nothing) ? text_record(x, [string(arg)]) : text_record(length(x) == 1 ? [x y] : hcat(x[:],y[:]), [string(arg)])
+			_arg1 = (y === nothing) ? text_record(x, [string(arg)]) : text_record(length(x) == 1 ? [x y] : hcat(x[:],y[:]), [string(arg)])
 		else
-			arg1 = (y === nothing) ? text_record(x, arg) : text_record(length(x) == 1 ? [x y] : hcat(x[:],y[:]), arg)
+			_arg1 = (y === nothing) ? text_record(x, arg) : text_record(length(x) == 1 ? [x y] : hcat(x[:],y[:]), arg)
 		end
-		arg1
+		_arg1
 	end
 
 	parse_paper(d)		# See if user asked to temporarily pass into paper mode coordinates
@@ -131,9 +116,9 @@ function _text(cmd0::String, arg1, O::Bool, K::Bool, d::Dict)
 
 	cmd, arg1, arg2, N_args = add_opt_cpt(d, cmd, [:C :color], 'C', N_args, arg1)
 
-	cmd = add_opt(d, cmd, "D", [:D :offset], (away=("j", nothing, 1), corners=("J", nothing, 1), shift="", line=("+v",add_opt_pen)), true)
+	cmd = add_opt(d, cmd, "D", [:D :offset], (away=("j", nothing, 1), corners=("J", nothing, 1), shift="", line=("+v",add_opt_pen)))
 	opt_F = add_opt(d, "", "F", [:F :attrib],
-		(angle="+a", Angle="+A", font=("+f", font), justify="+j", region_justify="+c", header="_+h", label="_+l", rec_number="_+r", text="+t", zvalues="_+z"), true, true)
+		(angle="+a", Angle="+A", font=("+f", font), justify="+j", region_justify="+c", header="_+h", label="_+l", rec_number="_+r", text="+t", zvalues="_+z"); expand=true)
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
 	contains(cmd, " -G") && (CTRL.pocket_B[3] = ".")	# Signal gmt() that it needs to restart because the fill f the API
 	cmd *= add_opt_pen(d, [:W :pen], "W")

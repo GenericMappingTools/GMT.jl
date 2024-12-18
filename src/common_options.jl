@@ -61,8 +61,8 @@ end
 """
     is_in_dict(d::Dict, symbs::VMs, help_str::String=""; del::Bool=false)
 
-See if `d` contains any of the symbols in `symbs`. If yes, return the used smb in symbs.
-If not, return nothing.
+Check if `d` contains any of the symbols in `symbs`. If yes, return the used symb in symbs,
+else return nothing.
 """
 function is_in_dict(d::Dict, symbs::VMs, help_str::String=""; del::Bool=false)
 	(SHOW_KWARGS[1] && help_str != "") && return print_kwarg_opts(symbs, help_str)
@@ -1424,7 +1424,7 @@ function parse_type_anchor(d::Dict, cmd::String, symbs::VMs, mapa::NamedTuple, d
 	for s in symbs		# Check if arg value is a string. If yes, ignore 'def_CS'
 		(haskey(d, s) && isa(d[s], String)) && (got_str = true; break)
 	end
-	opt::String = add_opt(d, "", "", symbs, mapa, del)
+	opt::String = add_opt(d, "", "", symbs, mapa; del=del)
 	if (!got_str && opt != "" && opt[1] != 'j' && opt[1] != 'J' && opt[1] != 'g' && opt[1] != 'n' && opt[1] != 'x')
 		opt = def_CS * opt
 	end
@@ -1534,7 +1534,7 @@ end
 # ---------------------------------------------------------------------------------
 function parse_l(d::Dict, cmd::String, del::Bool=false)
 	cmd_::String = add_opt(d, "", "l", [:l :legend],
-		(text=("", arg2str, 1), hline=("+D", add_opt_pen), vspace="+G", header="+H", image="+I", line_text="+L", n_cols="+N", ncols="+N", ssize="+S", start_vline=("+V", add_opt_pen), end_vline=("+v", add_opt_pen), font=("+f", font), fill="+g", justify="+j", offset="+o", frame_pen=("+p", add_opt_pen), width="+w", scale="+x"), del)
+		(text=("", arg2str, 1), hline=("+D", add_opt_pen), vspace="+G", header="+H", image="+I", line_text="+L", n_cols="+N", ncols="+N", ssize="+S", start_vline=("+V", add_opt_pen), end_vline=("+v", add_opt_pen), font=("+f", font), fill="+g", justify="+j", offset="+o", frame_pen=("+p", add_opt_pen), width="+w", scale="+x"); del=del)
 	# Now make sure blanks in legend text are wrapped in ""
 	if ((ind = findfirst("+", cmd_)) !== nothing)
 		cmd_ = " -l" * str_with_blancs(cmd_[4:ind[1]-1]) * cmd_[ind[1]:end]
@@ -1749,7 +1749,7 @@ function parse_these_opts(cmd::String, d::Dict, opts, del::Bool=true)::String
 	# Parse a group of options that individualualy would had been parsed as (example):
 	# cmd = add_opt(d, cmd, "A", [:A :horizontal])
 	for opt in opts
-		cmd = add_opt(d, cmd, string(opt[1]), opt, nothing, del)
+		cmd = add_opt(d, cmd, string(opt[1]), opt; del=del)
 	end
 	return cmd
 end
@@ -1990,11 +1990,11 @@ function build_pen(d::Dict, del::Bool=false)::String
 		end
 		lw::String = ""
 	else
-		lw = add_opt(d, "", "", [:lw :lt :linewidth :linethick :linethickness], nothing, del)	# Line width
+		lw = add_opt(d, "", "", [:lw :lt :linewidth :linethick :linethickness]; del=del)	# Line width
 	end
 	(lw == "" && find_in_dict(d, [:line])[1] !== nothing) && (lw = "0.5p")	# Means, accept also line=true
 
-	ls::String = add_opt(d, "", "", [:ls :linestyle], nothing, del)			# Line style
+	ls::String = add_opt(d, "", "", [:ls :linestyle]; del=del)			# Line style
 	lc::String = parse_pen_color(d, [:lc :linecolor], del)
 	out::String = ""
 	if (lw != "" || lc != "" || ls != "")
@@ -2330,7 +2330,23 @@ function add_opt_1char(cmd::String, d::Dict, symbs::Vector{Matrix{Symbol}}; del:
 end
 
 # ---------------------------------------------------------------------------------------------------
-function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, mapa=nothing, del::Bool=true, arg=nothing)::String
+function add_opt(d::Dict, cmd::String, opt::String, mapa::NamedTuple; del::Bool=true)::String
+	cmd_::String = ""
+	for k in keys(mapa)
+		((val_ = find_in_dict(d, [k], false)[1]) === nothing) && continue	# This mapa key was not used
+		if (isa(mapa[k], Tuple))    cmd_ *= mapa[k][1]::String * mapa[k][2](d, [k])::String	# mapa[k][2] is a function
+		else
+			if (mapa[k][1] == '_')  cmd_ *= mapa[k][2:end]::String			# Keep only the flag
+			else                    cmd_ *= mapa[k] * arg2str(val_)::String
+			end
+		end
+		delete!(d, [k])		# Now we can delete the key
+	end
+	(cmd_ != "") && (cmd *= " -" * opt * cmd_)
+	return cmd
+end
+
+function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, mapa=nothing, arg=nothing; del::Bool=true, expand::Bool=false, expand_str::Bool=false)::String
 	# Scan the D Dict for SYMBS keys and if found create the new option OPT and append it to CMD
 	# If DEL == false we do not remove the found key.
 	# ARG, is a special case to append to a matrix (can't realy be done in Julia)
@@ -2341,27 +2357,15 @@ function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, mapa=nothing, de
 	(SHOW_KWARGS[1]) && return print_kwarg_opts(symbs, mapa)	# Just print the kwargs of this option call
 
 	if ((val = find_in_dict(d, symbs, del)[1]) === nothing)
-		if (isa(arg, Bool) && isa(mapa, NamedTuple))	# Make each mapa[i] a mapa[i]key=mapa[i]val
-			local cmd_::String = ""
-			for k in keys(mapa)
-				((val_ = find_in_dict(d, [k], false)[1]) === nothing) && continue	# This mapa key was not used
-				if (isa(mapa[k], Tuple))    cmd_ *= mapa[k][1]::String * mapa[k][2](d, [k])::String	# mapa[k][2] is a function
-				else
-					if (mapa[k][1] == '_')  cmd_ *= mapa[k][2:end]::String		# Keep only the flag
-					else                    cmd_ *= mapa[k] * arg2str(val_)::String
-					end
-				end
-				delete!(d, [k])		# Now we can delete the key
-			end
-			(cmd_ != "") && (cmd *= " -" * opt * cmd_)
+		if (expand && isa(mapa, NamedTuple))
+			cmd = add_opt(d, cmd, opt, mapa; del=del)
 		end
 		return cmd
-	elseif (isa(arg, String) && isa(mapa, NamedTuple))	# Use the mapa KEYS as possibe values of 'val'
-		local cmd_ = ""
+	elseif (expand_str && isa(mapa, NamedTuple))		# Use the mapa KEYS as possibe values of 'val'
+		cmd_ = ""
 		for k in keys(mapa)
 			if (string(val) == string(k))
 				cmd_ = " -" * opt
-				#(length(mapa[k][1]) == 0) && error("Need alias value. Cannot be empty")
 				first_ind = (mapa[k][1] == '_') ? 2 : 1
 				cmd_ *= mapa[k][first_ind:end]::String
 				break
@@ -2433,7 +2437,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)::String
-	# Generic parser of options passed in a NT and whose last element is anther NT with the mapping
+	# Generic parser of options passed in a NT and whose last element is another NT with the mapping
 	# between expanded sub-options names and the original GMT flags.
 	# ARG, is a special case to append to a matrix (can't realy be done in Julia)
 	# Example:
@@ -2516,27 +2520,53 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)::String
 		end
 		if (occursin(':', cmd_hold[last]))		# It must be a geog coordinate in dd:mm
 			cmd = "g" * cmd
-#=
+		#=
 		elseif (length(cmd_hold[last]) > 2)		# Temp patch to avoid parsing single char flags
 			rs = split(cmd_hold[last], '/')
 			if (length(rs) == 2)
 				x = tryparse(Float64, rs[1]);		y = tryparse(Float64, rs[2]);
 				if (x !== nothing && y !== nothing && 0 <= x <= 1.0 && 0 <= y <= 1.0 && !occursin(r"[gjJxn]", string(cmd[1])))  cmd = "n" * cmd  end		# Otherwise, either a paper coord or error
 			end
-=#
+		=#
 		end
 	end
 
 	return cmd
 end
 
+#= ---------------------------------------------------------------------------------------------------
+function add_opt(nt::NamedTuple, mapa::NamedTuple, mat::VecOrMat{<:Real})#::Tuple{String, Matrix{<:Real}}
+	# ARG, is a special case to append to a matrix (can't realy be done in Julia) used in Ebars
+	key = keys(nt);						# The keys actually used in this call
+	d = nt2dict(mapa)					# The flags mapping as a Dict (all possible flags of the specific option)
+	cmd::String = ""
+
+	for k = 1:numel(key)::Int			# Loop over the keys of option's tuple
+		if (d[key[k]] != "" && d[key[k]][1] == '|')		# Potentialy append to the arg matrix (here in vector form)
+			if (isa(nt[k], AbstractArray) || isa(nt[k], Tuple))
+				if (isa(nt[k], AbstractArray))  append!(mat, reshape(nt[k], :))
+				else                            append!(mat, reshape(collect(nt[k]), :))
+				end
+			end
+		end
+		cmd *= string(d[key[k]][2:end])::String		# And now append the flag
+	end
+	return cmd
+end
+=#
+
 # ---------------------------------------------------------------------------------------------------
-function add_opt(fun::Function, t1::Tuple, t2::NamedTuple, del::Bool, mat)
+function add_opt(fun::Function, t1::Tuple, t2::NamedTuple, del::Bool, mat;)
 	# Crazzy shit to allow increasing the arg1 matrix
-	(mat === nothing) && return fun(t1..., t2, del, mat), mat  # psxy error_bars may send mat = nothing
+	(mat === nothing) && return fun(t1..., t2; del=del), mat  # psxy error_bars may send mat = nothing
 	n_rows = size(mat, 1)
 	mat = reshape(mat, :)
-	cmd::String = fun(t1..., t2, del, mat)
+	cmd::String = fun(t1..., t2, mat; del=del)
+
+	#((val = find_in_dict(t1[1], t1[4], del)[1]) === nothing) && error("Programming error")
+	#cmd = add_opt(val, t2, mat)
+	#cmd = t1[2] * cmd		# t1[2] = opt
+	
 	mat = reshape(mat, n_rows, :)
 	return cmd, mat
 end

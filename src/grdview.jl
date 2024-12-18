@@ -5,8 +5,6 @@ Reads a 2-D grid and produces a 3-D perspective plot by drawing a mesh, painting
 colored/grayshaded surface made up of polygons, or by scanline conversion of these polygons
 to a raster image.
 
-See full GMT (not the `GMT.jl` one) docs at [`grdview`]($(GMTdoc)grdview.html)
-
 - $(_opt_J)
 - $(opt_Jz)
 - $(_opt_R)
@@ -40,14 +38,7 @@ See full GMT (not the `GMT.jl` one) docs at [`grdview`]($(GMTdoc)grdview.html)
 
     When drapping an image that has projection info over a grid that is in geographics but does not carry any
     information about this fact we may need to use this option to help the program finding the common BoundingBox.
-- $(opt_U)
-- $(opt_V)
-- $(opt_X)
-- $(opt_Y)
-- $(_opt_f)
-- $(opt_n)
-- $(_opt_p)
-- $(_opt_t)
+
 - $(opt_savefig)
 
 To see the full documentation type: ``@? grdview``
@@ -95,7 +86,7 @@ function grdview_helper(cmd0::String, arg1, O::Bool, K::Bool, d::Dict)
 	if (!occursin(" -T", cmd))  cmd, opt_JZ = parse_JZ(d, cmd, O=O, is3D=true)
 	else                        delete!(d, [:JZ])			# Means, even if we had one, ignore silently
 	end
-	cmd = add_opt(d, cmd, "%", [:layout :mem_layout], nothing)
+	cmd = add_opt(d, cmd, "%", [:layout :mem_layout])
 
 	if (isa(arg1, GMTgrid) && length(opt_R) > 3 && CTRL.limits[1:4] != arg1.range[1:4])
 		# If a -R is used and grid is in mem, better to crop it right now. Also helps with getting the auto CPT from crop

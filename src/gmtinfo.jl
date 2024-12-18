@@ -40,17 +40,6 @@ Parameters
 - $(opt_V)
 - $(opt_write)
 - $(opt_append)
-- $(_opt_bi)
-- $(_opt_di)
-- $(opt_e)
-- $(_opt_f)
-- $(opt_g)
-- $(_opt_h)
-- $(_opt_i)
-- $(opt_o)
-- $(opt_r)
-- $(opt_w)
-- $(opt_swap_xy)
 """
 gmtinfo(cmd0::String; kwargs...) = gmtinfo_helper(cmd0, nothing; kwargs...)
 gmtinfo(arg1; kwargs...)         = gmtinfo_helper("", arg1; kwargs...)
@@ -66,7 +55,7 @@ function gmtinfo_helper(cmd0::String, arg1; kwargs...)::Union{String, GMTdataset
 	cmd = parse_these_opts(cmd, d, [[:A :ranges], [:C :numeric :per_column], [:D :center], [:E :get_record], [:F :counts],
 	                                [:L :common_limits], [:S :for_error_bars]])
 	cmd = add_opt(d, cmd, "I", [:I :inc :increment :spacing],
-	              (exact=("e", nothing, 1), polyg=("b", nothing, 1), surface=("s", nothing, 1), fft=("d", nothing, 1), inc=("", arg2str, 2)), false, true)
+	              (exact=("e", nothing, 1), polyg=("b", nothing, 1), surface=("s", nothing, 1), fft=("d", nothing, 1), inc=("", arg2str, 2)); del=false, expand=true)
 	cmd = add_opt(d, cmd, "T", [:T :nearest_multiple], (dz="", col="+c", column="+c"))
 
 	# If file name sent in, read it.
