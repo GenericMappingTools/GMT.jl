@@ -56,7 +56,7 @@ function nearneighbor_helper(cmd0::String, arg1; kwargs...)
 	d = seek_auto_RI(d, cmd0, arg1)				# If -R -I (or one of them) not set, guess.
 	cmd, = parse_common_opts(d, "", [:G :RIr :V_params :bi :di :e :f :h :i :n :w :yx])
 	cmd  = parse_these_opts(cmd, d, [[:E :empty], [:S :search_radius], [:W :weights], [:A]])
-	cmd  = add_opt(d, cmd, "N", [:N :sectors], (n="", min_sectors="+m"), true)
+	cmd  = add_opt(d, cmd, "N", [:N :sectors], (n="", min_sectors="+m"))
 	opt  = add_opt(d, "", "N", [:N :nn :nearest])
 	if (opt != "")  cmd *= " -Nn"  end
 
