@@ -426,7 +426,7 @@ function plt_txt_attrib!(D::GDtype, d::Dict, _cmd::Vector{String})
 	ind::Int = _ind											# Because it fck insists _ind is a Any
 	ts::String = s_val[ind+1:end]
 	ct::GMTdataset = gmtspatial(D, centroid=true)			# Texts will be plotted at the polygons centroids
-	if ((fnt = add_opt(d, "", "", [:font], (angle="+a", font=("+f", font)); del=false, expand=true)) != "")
+	if ((fnt = add_opt(d, "", "", [:font], (angle="+a", font=("+f", font)); del=false)) != "")
 		(fnt[1] != '+') && (fnt = "+f" * fnt)
 		delete!(d, :font)
 		ct.text = make_attrtbl(D, att=ts)[1]
