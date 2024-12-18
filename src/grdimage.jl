@@ -36,14 +36,6 @@ Parameters
 
     Make grid nodes with z = NaN transparent, or pick a color for transparency in a image.
 - $(_opt_R)
-- $(opt_U)
-- $(opt_V)
-- $(opt_X)
-- $(opt_Y)
-- $(_opt_f)
-- $(opt_n)
-- $(_opt_p)
-- $(_opt_t)
 - $(opt_savefig)
 
 To see the full documentation type: ``@? grdimage``

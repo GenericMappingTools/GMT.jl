@@ -4,8 +4,6 @@
 reads a 2-D grid file and fits a low-order polynomial trend to these data by
 [optionally weighted] least-squares.
 
-See full GMT (not the `GMT.jl` one) docs at [`grdtrend`]($(GMTdoc)grdtrend.html)
-
 Parameters
 ----------
 

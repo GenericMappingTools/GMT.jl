@@ -8,8 +8,6 @@ convenient for contrast enhancement (histogram stretch). The values represent th
 countings used to estimate the boundings. The option 'zoom=true' will set 'auto=true' and show
 histogram only on the region of interest.
 
-See full GMT (not the `GMT.jl` one) docs at [`pshistogram`]($(GMTdoc)histogram.html)
-
 Parameters
 ----------
 
@@ -67,20 +65,7 @@ Parameters
 - **Z** | **kind** :: [Type => Number | Str]
 
     Choose between 6 types of histograms.
-- $(opt_U)
-- $(opt_V)
-- $(opt_X)
-- $(opt_Y)
-- $(_opt_bi)
-- $(_opt_di)
-- $(opt_e)
-- $(_opt_f)
-- $(_opt_h)
-- $(_opt_i)
-- $(_opt_p)
-- $(_opt_t)
-- $(opt_w)
-- $(opt_swap_xy)
+
 - $(opt_savefig)
 
 To see the full documentation type: ``@? histogram``

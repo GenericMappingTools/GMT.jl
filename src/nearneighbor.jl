@@ -7,8 +7,6 @@ The average value is computed as a weighted mean of the nearest point from each 
 radius. The weighting function used is w(r) = 1 / (1 + d ^ 2), where d = 3 * r / search_radius and r is
 distance from the node. This weight is modulated by the weights of the observation points [if supplied].
 	
-See full GMT (not the `GMT.jl` one) docs at [`nearneighbor`]($(GMTdoc)nearneighbor.html)
-
 Parameters
 ----------
 
