@@ -58,11 +58,14 @@ This form takes a grid (or the file name of one) as input an paints it's cell wi
 	pcolor(XX,YY, reshape(repeat([1:18; 18:-1:1], 9,1), size(XX)), lc=:black, show=true)
 """
 function pcolor(X_::VMr, Y_::VMr, C::Union{Nothing, AbstractMatrix{<:Real}}=nothing; first::Bool=true, kwargs...)
+	pcolor(X_, Y_, C, first, KW(kwargs))
+end
+function pcolor(X_::VMr, Y_::VMr, C::Union{Nothing, AbstractMatrix{<:Real}}, first::Bool, d)
 	((isvector(X_) && !isvector(Y_)) || (isvector(Y_) && !isvector(X_))) &&
 		error("X and Y must be both vectors or matrices, not one of each color.")
 
 	# Only the tiles mesh is requested? If yes, we are done.
-	(C === nothing) && return boxes(X_, Y_; kwargs...)
+	(C === nothing) && return boxes(X_, Y_, d)
 
 	if (isvector(X_))
 		gridreg = (length(X_) == size(C,2)) && (length(Y_) == size(C,1))
@@ -85,7 +88,8 @@ function pcolor(X_::VMr, Y_::VMr, C::Union{Nothing, AbstractMatrix{<:Real}}=noth
 	D::Vector{GMTdataset}, k = Vector{GMTdataset}(undef, length(C)), 0
 	if (isvector(X))
 		for col = 1:length(X)-1, row = 1:length(Y)-1	# Gdal.wkbPolygon = 3
-			if (k == 0) D[k+=1] = mat2ds([X[col] Y[row]; X[col] Y[row+1]; X[col+1] Y[row+1]; X[col+1] Y[row]; X[col] Y[row]]; geom=3, kwargs...)
+			if (k == 0) 
+				D[k+=1] = mat2ds([X[col] Y[row]; X[col] Y[row+1]; X[col+1] Y[row+1]; X[col+1] Y[row]; X[col] Y[row]]; geom=3, d...)
 			else        D[k+=1] = mat2ds([X[col] Y[row]; X[col] Y[row+1]; X[col+1] Y[row+1]; X[col+1] Y[row]; X[col] Y[row]]; geom=3)
 			end
 		end
@@ -93,7 +97,7 @@ function pcolor(X_::VMr, Y_::VMr, C::Union{Nothing, AbstractMatrix{<:Real}}=noth
 	else
 		for col = 1:size(X_,2)-1, row = 1:size(X_,1)-1
 			if (k == 0)
-				D[k+=1] = mat2ds([X[row,col] Y[row,col]; X[row+1,col] Y[row+1,col]; X[row+1,col+1] Y[row+1,col+1]; X[row,col+1] Y[row,col+1]; X[row,col] Y[row,col]]; geom=3, kwargs...)
+				D[k+=1] = mat2ds([X[row,col] Y[row,col]; X[row+1,col] Y[row+1,col]; X[row+1,col+1] Y[row+1,col+1]; X[row,col+1] Y[row,col+1]; X[row,col] Y[row,col]]; geom=3, d...)
 			else
 				D[k+=1] = mat2ds([X[row,col] Y[row,col]; X[row+1,col] Y[row+1,col]; X[row+1,col+1] Y[row+1,col+1]; X[row,col+1] Y[row,col+1]; X[row,col] Y[row,col]]; geom=3)
 			end
@@ -102,15 +106,14 @@ function pcolor(X_::VMr, Y_::VMr, C::Union{Nothing, AbstractMatrix{<:Real}}=noth
 	end
 
 	Z = istransposed(C) ? vec(copy(C)) : vec(C)
-	kwargs, do_show, got_labels, ndigit, opt_F = helper_pcolor(kwargs, Z)
+	do_show, got_labels, ndigit, opt_F = helper_pcolor(d, Z)
 
-	d = KW(kwargs)
 	got_fn = ((fname = find_in_dict(d, [:name :figname :savefig])[1]) !== nothing)
 	d[:show] = got_labels ? false : do_show
 	(!got_labels && got_fn) && (d[:name] = fname)
 
 
-	if (find_in_kwargs(kwargs, [:R :region :limits :region_llur :limits_llur :limits_diag :region_diag], false)[1] === nothing)
+	if (is_in_dict(d, [:R :region :limits :region_llur :limits_llur :limits_diag :region_diag]) === nothing)
 		plot(D; first=first, Z=Z, R=@sprintf("%.12g/%.12g/%.12g/%.12g", D[1].ds_bbox...), d...)
 	else
 		plot(D; first=first, Z=Z, d...)
@@ -130,6 +133,9 @@ pcolor!(X::VMr, Y::VMr, C::Matrix{<:Real}; kw...) = pcolor(X, Y, C; first=false,
 
 # ---------------------------------------------------------------------------------------------------
 function pcolor(cmd0::String="", arg1=nothing; first=true, kwargs...)
+	pcolor(cmd0, arg1, first, KW(kwargs))
+end
+function pcolor(cmd0::String, arg1, first::Bool, d::Dict{Symbol,Any})
 	# Method for grids
 
 	function get_grid_xy(reg, bbox, inc, nx, ny)	# Return the grid registration x,y coord vectors.
@@ -143,20 +149,21 @@ function pcolor(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	end
 
 	got_labels = false
-	if (haskey(kwargs, :labels))		# If want to plot the cell values
+	if (is_in_dict(d, [:labels]) !== nothing)
 		G = (isa(arg1, GMTgrid)) ? arg1 : gmtread(cmd0)		# If fname we have to read the grid
 		x,y = (G.registration == 0) ? (G.x, G.y) : get_grid_xy(G.registration, G.range, G.inc, size(G,2), size(G,1))
-		kwargs, do_show, got_labels, ndigit, opt_F = helper_pcolor(kwargs, G.range[5:6])
+		do_show, got_labels, ndigit, opt_F = helper_pcolor(d, G.range[5:6])
 	end
 
-	if (find_in_kwargs(kwargs, [:T :no_interp :tiles])[1] === nothing)	# If no -T, make one here
+	if (find_in_dict(d, [:T :no_interp :tiles])[1] === nothing)	# If no -T, make one here
 		opt_T = "+s"
-		if ((val = find_in_kwargs(kwargs, [:outline])[1]) !== nothing)	# -T+o is bugged for line styles
+		if ((val = find_in_dict(d, [:outline])[1]) !== nothing)	# -T+o is bugged for line styles
 			opt_T *= "+o" * add_opt_pen(Dict(:outline => val), [:outline])
 		end
-		grdview_helper(cmd0, arg1; first=first, T=opt_T, kwargs...)
+		d[:T] = opt_T
+		grdview_helper(cmd0, arg1, !first, true, d)
 	else
-		grdview_helper(cmd0, arg1; first=first, kwargs...)
+		grdview_helper(cmd0, arg1, !first, true, d)
 	end
 
 	if (got_labels)
@@ -172,44 +179,44 @@ pcolor!(cmd0::String="", arg1=nothing; kw...) = pcolor(cmd0, arg1; first=false, 
 pcolor!(arg1; kw...) = pcolor("", arg1; first=false, kw...)
 
 # ---------------------------------------------------------------------------------------------------
-function helper_pcolor(kwargs, Z)
+function helper_pcolor(d::Dict{Symbol,Any}, Z)
 	# Lots of gymn to see if we have a show request and suspend it in case we also want to plot text labels
 	# Also fishes contents of the 'labels' and 'font' keywords.
 	do_show, got_labels = false, false
 	ndigit, opt_F = 2, "+f6p+jMC"		# Just default value to always have these vars defined
-	if (haskey(kwargs, :labels))
+	if (is_in_dict(d, [:labels]) !== nothing)
 		got_labels = true
-		if ((isa(kwargs[:labels], Bool) && kwargs[:labels]) || isa(kwargs[:labels], String) || isa(kwargs[:labels], Symbol))
+		if ((isa(d[:labels], Bool) && d[:labels]) || isa(d[:labels], String) || isa(d[:labels], Symbol))
 			dif = (length(Z) == 2) ? abs(Z[2] - Z[1]) : abs(maximum_nan(Z) - minimum_nan(Z))
 			ndigit = (dif < 1) ? 3 : (dif <= 10 ? 2 : (dif < 100 ? 1 : 0))
-		elseif (isa(kwargs[:labels], Int))
-			ndigit = abs(kwargs[:labels])
+		elseif (isa(d[:labels], Int))
+			ndigit = abs(d[:labels])
 		end
 
-		if (haskey(kwargs, :font))
-			opt_F = add_opt(KW(kwargs), "", "F", [:font], (angle="+a", font=("+f", font)), false, true)
+		if (is_in_dict(d, [:font]) !== nothing)
+			opt_F = add_opt(d, "", "F", [:font], (angle="+a", font=("+f", font)); del=false)
 		end
 
-		if (is_in_kwargs(kwargs, [:show]))
-			do_show = (kwargs[:show] != 0)
-			kwargs = pairs(Base.structdiff(NamedTuple(kwargs), NamedTuple{(:show,:labels,:font)}))	# All this to remove keywords...
-		else
-			kwargs = pairs(Base.structdiff(NamedTuple(kwargs), NamedTuple{(:labels,:font)}))	# Still have to remove the keyword
+		if (is_in_dict(d, [:show]) !== nothing)
+			do_show = (d[:show] != 0)
 		end
+		delete!(d, [:show, :labels, :font])		# Still have to remove these keywords
 	else
-		is_in_kwargs(kwargs, [:show]) && (do_show = (kwargs[:show] != 0))
+		(is_in_dict(d, [:show]) !== nothing) && (do_show = (d[:show] != 0))
 	end
-	return kwargs, do_show, got_labels, ndigit, opt_F
+	return do_show, got_labels, ndigit, opt_F
 end
 
 # ---------------------------------------------------------------------------------------------------
 function boxes(X::VMr, Y::VMr; kwargs...)
+	boxes(X, Y, KW(kwargs))
+end
+function boxes(X::VMr, Y::VMr, d::Dict{Symbol,Any})
 	# ...
 	((isvector(X) && !isvector(Y)) || (isvector(Y) && !isvector(X))) &&
 		error("X and Y must be both vectors or matrices, not one of each color.")
 	(!isvector(X) && ((size(X) != size(Y)))) && error("When X,Y are 2D matrices they MUST have the same size.")
 
-	d = KW(kwargs)
 	isautomask = false
 	if ((val = find_in_dict(d, [:grdlandmask])[1]) !== nothing)
 		y_inc = Y[2] - Y[1]		# Always good as long as when Y is a matrix it is a meshgrid one
@@ -226,7 +233,7 @@ function boxes(X::VMr, Y::VMr; kwargs...)
 	if (isvector(X))
 		for col = 1:length(X)-1, row = 1:length(Y)-1
 			(isautomask && Gmask.z[row, col] != mask_true) && continue
-			if (k == 0) D[k+=1] = mat2ds([X[col] Y[row]; X[col] Y[row+1]; X[col+1] Y[row+1]; X[col+1] Y[row]; X[col] Y[row]]; geom=3, kwargs...)
+			if (k == 0) D[k+=1] = mat2ds([X[col] Y[row]; X[col] Y[row+1]; X[col+1] Y[row+1]; X[col+1] Y[row]; X[col] Y[row]]; geom=3, d...)
 			else        D[k+=1] = mat2ds([X[col] Y[row]; X[col] Y[row+1]; X[col+1] Y[row+1]; X[col+1] Y[row]; X[col] Y[row]]; geom=3)
 			end
 		end
@@ -237,7 +244,7 @@ function boxes(X::VMr, Y::VMr; kwargs...)
 	else
 		for col = 1:size(X,2)-1, row = 1:size(X,1)-1
 			if (k == 0)
-				D[k+=1] = mat2ds([X[row,col] Y[row,col]; X[row+1,col] Y[row+1,col]; X[row+1,col+1] Y[row+1,col+1]; X[row,col+1] Y[row,col+1]; X[row,col] Y[row,col]]; geom=3, kwargs...)
+				D[k+=1] = mat2ds([X[row,col] Y[row,col]; X[row+1,col] Y[row+1,col]; X[row+1,col+1] Y[row+1,col+1]; X[row,col+1] Y[row,col+1]; X[row,col] Y[row,col]]; geom=3, d...)
 			else
 				D[k+=1] = mat2ds([X[row,col] Y[row,col]; X[row+1,col] Y[row+1,col]; X[row+1,col+1] Y[row+1,col+1]; X[row,col+1] Y[row,col+1]; X[row,col] Y[row,col]]; geom=3)
 			end

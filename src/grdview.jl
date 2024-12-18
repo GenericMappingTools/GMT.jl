@@ -95,7 +95,7 @@ function grdview_helper(cmd0::String, arg1, O::Bool, K::Bool, d::Dict)
 	if (!occursin(" -T", cmd))  cmd, opt_JZ = parse_JZ(d, cmd, O=O, is3D=true)
 	else                        delete!(d, [:JZ])			# Means, even if we had one, ignore silently
 	end
-	cmd = add_opt(d, cmd, "%", [:layout :mem_layout], nothing)
+	cmd = add_opt(d, cmd, "%", [:layout :mem_layout])
 
 	if (isa(arg1, GMTgrid) && length(opt_R) > 3 && CTRL.limits[1:4] != arg1.range[1:4])
 		# If a -R is used and grid is in mem, better to crop it right now. Also helps with getting the auto CPT from crop

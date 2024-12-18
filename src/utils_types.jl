@@ -79,7 +79,7 @@ mat2ds(mat::Nothing) = mat		# Method to simplify life and let call mat2ds on a n
 mat2ds(mat::GDtype)  = mat		# Method to simplify life and let call mat2ds on a already GMTdataset
 mat2ds(text::Union{AbstractString, Vector{<:AbstractString}}) = text_record(text)	# Now we can hide text_record
 mat2ds(text::Vector{String}; hdr::String="") = text_record(fill(NaN,length(text),2), text, [hdr])
-#function mat2ds(mat::Matrix{Any}; hdr=String[], geom=0, kwargs...)
+
 function mat2ds(mat::AbstractMatrix; hdr=String[], geom=0, kwargs...)::GMTdataset
 	# Here we are expecting that Any-ness results from columns with DateTime. If not returm 'mat' as is
 	# DateTime columns are converted to seconds and a regular GMTdatset with appropriate column names and attribs is return 
