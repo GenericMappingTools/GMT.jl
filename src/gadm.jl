@@ -7,7 +7,7 @@
 """
     gadm(country, subregions...; children=false, names=false, children_raw=false, reportlevels=false)
 
-Returns a GMTdataset for the requested country, or country subregion(s)
+Return a GMTdataset for the requested country, or country subregion(s)
 
 - `country`: ISO 3166 Alpha 3 country code  .
 - `subregions`: Full official names in hierarchial order (provinces, districts, etc...).

@@ -3,8 +3,6 @@
 
 Time domain filtering of 1-D data tables.
 
-See full GMT (not the `GMT.jl` one) docs at [`filter1d`]($(GMTdoc)filter1d.html)
-
 Parameters
 ----------
 
@@ -38,18 +36,8 @@ Parameters
 
     Compute the cumulative distance along the input line. Note that for this the first two columns
     must contain the spatial coordinates.
-- $(opt_V)
-- $(opt_write)
-- $(opt_append)
-- $(opt_b)
-- $(opt_d)
-- $(opt_e)
-- $(_opt_f)
-- $(opt_g)
-- $(_opt_h)
-- $(_opt_i)
-- $(opt_o)
-- $(opt_swap_xy)
+
+To see the full documentation type: ``@? histogram``
 """
 filter1d(cmd0::String; kw...) = filter1d_helper(cmd0, nothing; kw...)
 filter1d(arg1; kw...)         = filter1d_helper("", arg1; kw...)

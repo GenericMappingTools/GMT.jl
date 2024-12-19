@@ -3,8 +3,6 @@
 
 Make linear or histogram-equalized color palette table from grid
 
-See full GMT (not the `GMT.jl` one) docs at [`grd2cpt`]($(GMTdoc)grd2cpt.html)
-
 Parameters
 ----------
 
@@ -62,6 +60,8 @@ Parameters
     Creates a continuous CPT [Default is discontinuous, i.e., constant colors for each interval].
 - $(opt_V)
 - $(opt_write)
+
+To see the full documentation type: ``@? grd2cpt``
 """
 grd2cpt(cmd0::String; kwargs...) = grd2cpt_helper(cmd0, nothing; kwargs...)
 grd2cpt(arg1; kwargs...)         = grd2cpt_helper("", arg1; kwargs...)

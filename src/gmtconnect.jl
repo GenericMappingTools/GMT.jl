@@ -3,8 +3,6 @@
 
 Connect individual lines whose end points match within tolerance
 
-See full GMT (not the `GMT.jl` one) docs at [`gmtconnect`]($(GMTdoc)gmtconnect.html)
-
 Parameters
 ----------
 
@@ -25,18 +23,8 @@ Parameters
 
     Specifies the separation tolerance in the data coordinate units [0]; append distance unit.
     If two lines has end-points that are closer than this cutoff they will be joined.
-- $(opt_V)
-- $(opt_write)
-- $(opt_append)
-- $(opt_b)
-- $(opt_d)
-- $(opt_e)
-- $(_opt_f)
-- $(opt_g)
-- $(_opt_h)
-- $(_opt_i)
-- $(opt_o)
-- $(opt_swap_xy)
+
+To see the full documentation type: ``@? gmtconnect``
 """
 function gmtconnect(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 

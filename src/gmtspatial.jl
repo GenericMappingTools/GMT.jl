@@ -48,17 +48,7 @@ Parameters
 
     Extend all segments with extra first and last points that are <dist> units away from the original
     end points in the directions implied by the line ends.
-- $(opt_write)
-- $(opt_append)
-- $(opt_b)
-- $(opt_d)
-- $(opt_e)
-- $(_opt_f)
-- $(opt_g)
-- $(_opt_h)
-- $(_opt_i)
-- $(opt_o)
-- $(opt_swap_xy)
+
 """
 function gmtspatial(cmd0::String="", arg1=nothing, arg2 = nothing; kwargs...)
 

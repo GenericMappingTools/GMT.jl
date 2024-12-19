@@ -2,11 +2,10 @@
     coast(cmd0::String=""; kwargs...)
 
 Plot continents, shorelines, rivers, and borders on maps.
+
 Plots grayshaded, colored, or textured land-masses [or water-masses] on
 maps and [optionally] draws coastlines, rivers, and political
 boundaries. A map projection must be supplied.
-
-See full GMT (not the `GMT.jl` one) docs at [`coast`]($(GMTdoc)coast.html)
 
 Parameters
 ----------
@@ -71,11 +70,7 @@ Parameters
 - $(opt_V)
 - **W** | **shore** | **shorelines** | **coast** | **coastlines** :: [Type => Str]
     Draw shorelines [Default is no shorelines]. Append pen attributes.
-- $(opt_X)
-- $(opt_Y)
-- $(opt_bo)
-- $(_opt_p)
-- $(_opt_t)
+
 - $(opt_savefig)
 
 To see the full documentation type: ``@? coast``

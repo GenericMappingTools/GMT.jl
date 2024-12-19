@@ -4,8 +4,6 @@
 Reads a 2-D grid file and makes a quadtree of PNG images and KML wrappers for Google Earth
 using the selected tile size [256x256 pixels].
 
-See full GMT (not the `GMT.jl` one) docs at [`grd2kml`]($(GMTdoc)grd2kml.html)
-
 Parameters
 ----------
 
@@ -48,11 +46,8 @@ Parameters
 - **W** | **contours** :: [Type => Str]		        `Arg = title`
 
     Supply a file with records each holding a contour value and a contour pen.
-- $(opt_V)
-- $(opt_write)
-- $(opt_append)
-- $(_opt_f)
-- $(opt_n)
+
+To see the full documentation type: ``@? grd2kml``
 """
 function grd2kml(cmd0::String="", arg1=nothing; kwargs...)
 
