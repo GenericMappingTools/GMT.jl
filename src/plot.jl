@@ -951,10 +951,12 @@ stem!(arg1, arg2; kw...) = stem("", cat_2_arg2(arg1, arg2, true); first=false, k
 """
     arrows(cmd0::String="", arg1=nothing; arrow=(...), kwargs...)
 
-Plots an arrow field. When the keyword `arrow=(...)` or `vector=(...)` is used, the direction (in degrees
-counter-clockwise from horizontal) and length must be found in columns 3 and 4, and size, if not specified
-on the command-line, should be present in column 5. The size is the length of the vector head. Vector stem
-width is set by option `pen` or `line_attrib`.
+Plot an arrow field.
+
+When the keyword `arrow=(...)` or `vector=(...)` is used, the direction (in degrees counter-clockwise
+from horizontal) and length must be found in columns 3 and 4, and size, if not specified on the command-line,
+should be present in column 5. The size is the length of the vector head. Vector stem width is set by
+option `pen` or `line_attrib`.
 
 The `vecmap=(...)` variation is similar to above except azimuth (in degrees east of north) should be
 given instead of direction. The azimuth will be mapped into an angle based on the chosen map projection.
@@ -988,7 +990,7 @@ function arrows(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	# TYPEVEC = 0, ==> u,v = theta,rho. TYPEVEC = 1, ==> u,v = u,v. TYPEVEC = 2, ==> u,v = x2,y2 
 	typevec = (find_in_dict(d, [:uv])[1] !== nothing) ? 1 : (find_in_dict(d, [:endpt :endpoint])[1] !== nothing) ? 2 : 0
-	d, arg1 = helper_vecBug(d, arg1, first, haveR, haveVarFill, typevec, false)		# Deal with GMT nasty bug
+	d, arg1 = helper_vecBug(d, arg1, first, haveR, haveVarFill, typevec)		# Deal with GMT nasty bug
 	common_plot_xyz(cmd0, mat2ds(arg1), "", first, false; d...)
 end
 
@@ -997,7 +999,7 @@ arrows(arg1; kw...)  = arrows("", arg1; first=true, kw...)
 arrows!(arg1; kw...) = arrows("", arg1; first=false, kw...)
 
 # ------------------------------------------------------------------------------------------------------
-function helper_vecZscale!(d::Dict, arg1, first::Bool, typevec::Int, opt_R::String="", fancy_arrow::Bool=false)
+function helper_vecZscale!(d::Dict, arg1, first::Bool, typevec::Int; opt_R::String="", fancy_arrow::Bool=false, paper_u::Bool=false)
 	# We have a GMT bug (up till 6.4.0) that screws when vector components are dx,dy or r,theta and
 	# x,y is not isometric or when -Sv+z<scale> (and possibly in other cases). So, between thinking and
 	# dumb trial-and-error I came out with this patch that computes two scale factors, one to be applied
@@ -1017,7 +1019,8 @@ function helper_vecZscale!(d::Dict, arg1, first::Bool, typevec::Int, opt_R::Stri
 		scale_fig     = round(aspect_sizes / aspect_limits, digits=8)	# This compensates for the non-isometry
 		
 		unit = isa(arg1, Vector{<:GMTdataset}) ? "q" : "iq"	# The BUG only strikes on matrices, not GMTdatsets
-		def_z::String = @sprintf("+z%.8g%s", (Dwh[1] / (CTRL.limits[8] - CTRL.limits[7])), unit)
+		def_z_val = paper_u ? 1.0 : Dwh[1] / (CTRL.limits[8] - CTRL.limits[7])
+		def_z::String = @sprintf("+z%.8g%s", def_z_val, unit)
 	end
 	if (Tc)				# Have a time column
 		bb = (isone) ? arg1.bbox : arg1[1].ds_bbox
@@ -1071,7 +1074,7 @@ function helper_vecZscale!(d::Dict, arg1, first::Bool, typevec::Int, opt_R::Stri
 end
 
 # ------------------------------------------------------------------------------------------------------
-function helper_vecBug(d, arg1, first::Bool, haveR::Bool, haveVarFill::Bool, typevec::Int, isfeather::Bool=false)
+function helper_vecBug(d, arg1, first::Bool, haveR::Bool, haveVarFill::Bool, typevec::Int; isfeather::Bool=false)
 	# Helper function that deals with setting several defaults and mostly patch a GMT vectors bug.
 	# TYPEVEC = 0, ==> u,v = theta,rho. TYPEVEC = 1, ==> u,v = u,v. TYPEVEC = 2, ==> u,v = x2,y2 
 	
@@ -1163,7 +1166,8 @@ function helper_vecBug(d, arg1, first::Bool, haveR::Bool, haveVarFill::Bool, typ
 		d[:R] = opt_R[4:end]
 	end
 
-	d, arg1 = helper_vecZscale!(d, arg1, first, typevec, opt_R, !isfeather)	# Apply scale factor and compensates GMT bug.
+	u = (find_in_dict(d, [:paper, :paper_units])[1] !== nothing) ? true : false
+	d, arg1 = helper_vecZscale!(d, arg1, first, typevec; opt_R=opt_R, fancy_arrow=!isfeather, paper_u=u)	# Apply scale factor and compensates GMT bug.
 	return d, arg1
 end
 
@@ -1180,7 +1184,7 @@ function feather(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	# TYPEVEC = 0, ==> u,v = theta,rho. TYPEVEC = 1, ==> u,v = u,v. TYPEVEC = 2, ==> u,v = x2,y2 
 	typevec = (find_in_dict(d, [:rtheta])[1] !== nothing) ? 0 : (find_in_dict(d, [:endpt :endpoint])[1] !== nothing) ? 2 : 1
-	d, arg1 = helper_vecBug(d, arg1, first, haveR, haveVarFill, typevec, true)		# Deal with the GMT annoying bug
+	d, arg1 = helper_vecBug(d, arg1, first, haveR, haveVarFill, typevec; isfeather=true)	# Deal with the GMT annoying bug
 	common_plot_xyz("", mat2ds(arg1), "feather", first, false, d)
 end
 

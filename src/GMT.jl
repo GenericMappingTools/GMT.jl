@@ -380,6 +380,7 @@ using GMT.Laszip
 	#pca(mat2img(rand(UInt8, 64,64,4)));
 	#kmeans(rand(100,3), 3, maxiter=10);
 	#rm(joinpath(tempdir(), "GMTjl_custom_p_x.txt"))		# This one gets created before username is set.
+	#arrows([0 8.2 0 6], limits=(-2,4,0,9), arrow=(len=2,stop=1,shape=0.5,fill=:red), axis=:a, pen="6p");
 	theme()
 	resetGMT()
 end
