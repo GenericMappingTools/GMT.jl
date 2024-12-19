@@ -6,8 +6,6 @@ determines which points are within the given radius. These point are then used i
 specified statistic. The results may be presented as is or may be normalized by the circle area to perhaps
 give density estimates. Alternatively, select hexagonal tiling instead or a rectangular grid layout.
 	
-See full GMT (not the `GMT.jl` one) docs at [`gmtbinstats`]($(GMTdoc)gmtbinstats.html)
-
 Parameters
 ----------
 
@@ -37,18 +35,6 @@ Parameters
 - **W** | **weights** :: [Type => Bool | String]
 
     Input data have a 4th column containing observation point weights.
-- $(opt_a)
-- $(_opt_bi)
-- $(_opt_di)
-- $(opt_e)
-- $(_opt_f)
-- $(opt_g)
-- $(_opt_h)
-- $(_opt_i)
-- $(opt_q)
-- $(opt_r)
-- $(opt_w)
-- $(opt_swap_xy)
 
 To see the full documentation type: ``@? gmtbinstats``
 """

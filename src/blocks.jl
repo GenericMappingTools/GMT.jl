@@ -2,8 +2,6 @@
     blockmean(cmd0::String="", arg1=nothing; kwargs...)
 
 Block average (x,y,z) data tables by L2 norm.
-	
-See full GMT (not the `GMT.jl` one) docs at [`blockmean`]($(GMTdoc)blockmean.html)
 
 Parameters
 ----------
@@ -52,18 +50,10 @@ Parameters
 
     Unweighted input and output have 3 columns x,y,z; Weighted i/o has 4 columns x,y,z,w. Weights can
     be used in input to construct weighted mean values for each block.
-- $(opt_V)
-- $(_opt_bi)
-- $(_opt_di)
-- $(opt_e)
-- $(_opt_f)
-- $(_opt_h)
-- $(_opt_i)
-- $(opt_o)
-- $(opt_q)
-- $(opt_r)
-- $(opt_w)
+
 - $(opt_swap_xy)
+
+To see the full documentation type: ``@? blockmean``
 """
 blockmean(cmd0::String; kwargs...) = blockmean_helper(cmd0, nothing; kwargs...)
 blockmean(arg1; kwargs...)         = blockmean_helper("", arg1; kwargs...)
@@ -92,7 +82,7 @@ end
 
 Block average (x,y,z) data tables by L1 norm.
 	
-See full GMT (not the `GMT.jl` one) docs at [`blockmedian`]($(GMTdoc)blockmedian.html)
+To see the full documentation type: ``@? blockmedian``
 """
 blockmedian(cmd0::String; kwargs...) = blockmedian_helper(cmd0, nothing; kwargs...)
 blockmedian(arg1; kwargs...)         = blockmedian_helper("", arg1; kwargs...)
@@ -115,7 +105,7 @@ end
 
 Block average (x,y,z) data tables by mode estimation.
 	
-See full GMT (not the `GMT.jl` one) docs at [`blockmode`]($(GMTdoc)blockmode.html)
+To see the full documentation type: ``@? blockmode``
 """
 blockmode(cmd0::String; kwargs...) = blockmode_helper(cmd0, nothing; kwargs...)
 blockmode(arg1; kwargs...)         = blockmode_helper("", arg1; kwargs...)

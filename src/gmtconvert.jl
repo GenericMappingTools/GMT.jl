@@ -3,8 +3,6 @@
 
 Convert, Paste, and/or Extract columns from data tables
 
-See full GMT (not the `GMT.jl` one) docs at [`gmtconvert`]($(GMTdoc)gmtconvert.html)
-
 Parameters
 ----------
 
@@ -51,22 +49,8 @@ Parameters
 
     Limit output to the specified record range. If first is not set it defaults to record 0
     (very first record) and if last is not set then it defaults to the very last record.
-- $(opt_V)
-- $(opt_write)
-- $(opt_append)
-- $(opt_b)
-- $(opt_bo)
-- $(opt_d)
-- $(opt_e)
-- $(_opt_f)
-- $(opt_g)
-- $(_opt_h)
-- $(_opt_i)
-- $(opt_o)
-- $(opt_q)
-- $(opt_s)
-- $(opt_w)
-- $(opt_swap_xy)
+
+To see the full documentation type: ``@? gmtconvert``
 """
 function gmtconvert(cmd0::String="", arg1=nothing; kwargs...)
 

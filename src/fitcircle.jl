@@ -3,8 +3,6 @@
 
 Find mean position and great [or small] circle fit to points on a sphere.
 
-See full GMT (not the `GMT.jl` one) docs at [`fitcircle`]($(GMTdoc)fitcircle.html)
-
 Parameters
 ----------
 
@@ -17,18 +15,8 @@ Parameters
 - **S** | **small_circle** :: [Type => Number]    `Arg = symmetry_factor`
 
     Attempt to
-- $(opt_V)
-- $(opt_write)
-- $(opt_append)
-- $(_opt_bi)
-- $(_opt_di)
-- $(opt_e)
-- $(_opt_f)
-- $(opt_g)
-- $(_opt_h)
-- $(_opt_i)
-- $(opt_o)
-- $(opt_swap_xy)
+
+To see the full documentation type: ``@? fitcircle``
 """
 fitcircle(cmd0::String; kwargs...) = fitcircle_helper(cmd0, nothing; kwargs...)
 fitcircle(arg1; kwargs...)         = fitcircle_helper("", arg1; kwargs...)

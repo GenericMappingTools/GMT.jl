@@ -3,8 +3,6 @@
 
 Convert GMT data tables to KML files for Google Earth
 
-    See full GMT (not the `GMT.jl` one) docs at [`gmt2kml`]($(GMTdoc)gmt2kml.html)
-
 Parameters
 ----------
 
@@ -74,7 +72,7 @@ Parameters
 - $(_opt_i)
 - $(opt_swap_xy)
 
-To see the full documentation type: ``@? gmt2kiml``
+To see the full documentation type: ``@? gmt2kml``
 """
 gmt2kml(cmd0::String; kwargs...) = gmt2kml_helper(cmd0, nothing; kwargs...)
 gmt2kml(arg1; kwargs...)         = gmt2kml_helper("", arg1; kwargs...)

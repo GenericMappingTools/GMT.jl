@@ -3,8 +3,6 @@
 
 Reads (length,azimuth) pairs from file and plot a windclip diagram.
 
-See full GMT (not the `GMT.jl` one) docs at [`psclip`]($(GMTdoc)clip.html)
-
 Parameters
 ----------
 
@@ -26,20 +24,6 @@ Parameters
 - **T** | **clipregion** :: [Type => Bool]
 
     Rather than read any input files, simply turn on clipping for the current map region.
-- $(opt_U)
-- $(opt_V)
-- $(opt_X)
-- $(opt_Y)
-- $(_opt_bi)
-- $(_opt_di)
-- $(opt_e)
-- $(_opt_f)
-- $(opt_g)
-- $(_opt_h)
-- $(_opt_i)
-- $(_opt_p)
-- $(_opt_t)
-- $(opt_swap_xy)
 
 To see the full documentation type: ``@? clip``
 """

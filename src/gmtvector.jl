@@ -27,18 +27,7 @@ Parameters
 - **T** | **transform** :: [Type => Str | List]     `Arg = a|d|D|paz|s|r[arg|R|x]`
 
     Specify the vector transformation of interest.
-- $(opt_V)
-- $(opt_write)
-- $(opt_append)
-- $(opt_b)
-- $(opt_d)
-- $(opt_e)
-- $(_opt_f)
-- $(opt_g)
-- $(_opt_h)
-- $(_opt_i)
-- $(opt_o)
-- $(opt_swap_xy)
+
 """
 function gmtvector(cmd0::String="", arg1=nothing; kwargs...)
 

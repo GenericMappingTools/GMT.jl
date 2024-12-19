@@ -302,18 +302,6 @@ function parse_Ebars(d, cmd, arg1)
 			_mat = (arg1 === nothing) ? arg1 : isa(arg1, GMTdataset) ? arg1.data : arg1[1].data
 			cmd, mat_t = add_opt(add_opt, (d, cmd, "E", [symb]),
 			                     (x="|x",y="|y",xy="|xy",X="|X",Y="|Y", asym="_+a", colored="_+c", cline="_+cl", csymbol="_+cf", notch="|+n", boxwidth="+w", cap="+w", pen=("+p",add_opt_pen)), false, _mat)
-			#=
-			if (arg1 === nothing)
-				_cmd = add_opt(val, (x="|x",y="|y",xy="|xy",X="|X",Y="|Y", asym="_+a", colored="_+c", cline="_+cl", csymbol="_+cf", notch="|+n", boxwidth="+w", cap="+w", pen=("+p",add_opt_pen)))
-			else
-				_mat = isa(arg1, GMTdataset) ? arg1.data : arg1[1].data
-				n_rows = size(_mat, 1)
-				mat = reshape(copy(_mat), :)
-				_cmd = add_opt(val, (x="|x",y="|y",xy="|xy",X="|X",Y="|Y", asym="_+a", colored="_+c", cline="_+cl", csymbol="_+cf", notch="|+n", boxwidth="+w", cap="+w", pen=("+p",add_opt_pen)), mat)
-				mat_t = reshape(mat, n_rows, :)
-			end	
-			cmd *= " -E" * _cmd
-			=#
 			(arg1 !== nothing) && (isa(arg1, GMTdataset) ? (arg1.data = mat_t; append!(arg1.colnames, ["Ebar"])) :
 			                       (arg1[1].data = mat_t; append!(arg1[1].colnames, ["Ebar"])))
 		end

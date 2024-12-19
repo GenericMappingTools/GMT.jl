@@ -2346,12 +2346,12 @@ function add_opt(d::Dict, cmd::String, opt::String, mapa::NamedTuple; del::Bool=
 	return cmd
 end
 
-function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, mapa=nothing, arg=nothing; del::Bool=true, expand::Bool=false, expand_str::Bool=false)::String
+function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, mapa=nothing; grow_mat=nothing, del::Bool=true, expand::Bool=false, expand_str::Bool=false)::String
 	# Scan the D Dict for SYMBS keys and if found create the new option OPT and append it to CMD
 	# If DEL == false we do not remove the found key.
-	# ARG, is a special case to append to a matrix (can't realy be done in Julia)
-	# ARG can also be a Bool, in which case when MAPA is a NT we expand each of its members as sep options
-	# If ARG is a string, then the keys of MAPA can be used as values of SYMBS and are replaced by vals of MAPA
+	# 'grow_mat=mat', is a special case to append to a matrix (can't realy be done in Julia)
+	# If 'expand=true', then MAPA (a NT) and we expand each of its members as sep options
+	# If 'expand_str=true' then the keys of MAPA can be used as values of SYMBS and are replaced by vals of MAPA
 	#    Example (hitogram -Z): add_opt(d, "", "Z", [:Z :kind], (counts="0", freq="1",...)) Z=freq => -Z1
 	#  But this only works when sub-options have default values. i.e. they are aliases
 	(SHOW_KWARGS[1]) && return print_kwarg_opts(symbs, mapa)	# Just print the kwargs of this option call
@@ -2377,7 +2377,7 @@ function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, mapa=nothing, ar
 	args::Vector{String} = Vector{String}(undef,1)
 	isa(val, AbstractDict) && (val = Base.invokelatest(dict2nt, val))
 	if (isa(val, NamedTuple) && isa(mapa, NamedTuple))
-		args[1] = Base.invokelatest(add_opt, val, mapa, arg)
+		args[1] = Base.invokelatest(add_opt, val, mapa, grow_mat)
 	elseif (isa(val, NamedTuple) && mapa === nothing)
 		# Happens when the inline 'inset' passed a NT with options for inset itself and not the module it called
 		return cmd
@@ -2385,7 +2385,7 @@ function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, mapa=nothing, ar
 		# Used in recursive calls for options like -I, -N , -W of pscoast. Here we assume that opt != ""
 		_args::String = ""
 		for k = 1:numel(val)
-			_args *= " -" * opt * Base.invokelatest(add_opt, val[k], mapa, arg)::String
+			_args *= " -" * opt * Base.invokelatest(add_opt, val[k], mapa, grow_mat)::String
 		end
 		return cmd * _args
 	elseif (isa(mapa, Tuple) && length(mapa) > 1 && isa(mapa[2], Function))	# grdcontour -G
@@ -2556,17 +2556,12 @@ end
 =#
 
 # ---------------------------------------------------------------------------------------------------
-function add_opt(fun::Function, t1::Tuple, t2::NamedTuple, del::Bool, mat;)
+function add_opt(fun::Function, t1::Tuple, t2::NamedTuple, del::Bool, mat)
 	# Crazzy shit to allow increasing the arg1 matrix
 	(mat === nothing) && return fun(t1..., t2; del=del), mat  # psxy error_bars may send mat = nothing
 	n_rows = size(mat, 1)
 	mat = reshape(mat, :)
-	cmd::String = fun(t1..., t2, mat; del=del)
-
-	#((val = find_in_dict(t1[1], t1[4], del)[1]) === nothing) && error("Programming error")
-	#cmd = add_opt(val, t2, mat)
-	#cmd = t1[2] * cmd		# t1[2] = opt
-	
+	cmd::String = fun(t1..., t2; grow_mat=mat, del=del)
 	mat = reshape(mat, n_rows, :)
 	return cmd, mat
 end
@@ -3400,9 +3395,6 @@ function str_with_blancs(str)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-#vector_attrib(d::Dict, lixo=nothing) = vector_attrib(; d...)	# When comming from add_opt()
-#vector_attrib(t::NamedTuple) = vector_attrib(; t...)
-#function vector_attrib(; kwargs...)::String
 vector_attrib(d::Dict, lixo) = vector_attrib(d)		# When comming from add_opt()
 vector_attrib(t::NamedTuple) = vector_attrib(Dict(pairs(t)))
 function vector_attrib(; kwargs...)::String
@@ -4955,7 +4947,7 @@ function digests_legend_bag(d::Dict, del::Bool=true)
 
 	_d = (haskey(dd, :box) && dd[:box] !== nothing) ? dd : haskey(LEGEND_TYPE[1].optsDict, :box) ? LEGEND_TYPE[1].optsDict : Dict{Symbol, Any}()
 	if ((opt_F::String = add_opt(_d, "", "", [:box],
-		(clearance="+c", fill=("+g", add_opt_fill), inner="+i", pen=("+p", add_opt_pen), rounded="+r", shade="+s"), false)) == "")
+		(clearance="+c", fill=("+g", add_opt_fill), inner="+i", pen=("+p", add_opt_pen), rounded="+r", shade="+s"); del=false)) == "")
 		opt_F = "+p0.5+gwhite"
 	else
 		if (opt_F == "none")
