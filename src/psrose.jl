@@ -95,7 +95,7 @@ function rose_helper(cmd0::String, arg1; first=true, kwargs...)
 		return gmt("psrose " * cmd, arg1)
 	end
 
-	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c")
+	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, defaultJ=" -JX12c")
 	cmd, = parse_common_opts(d, cmd, [:UVXY :c :e :p :t :w :margin :params]; first=first)
 	cmd  = parse_these_opts(cmd, d, [[:D :shift], [:F :no_scale], [:L :labels], [:M :vector_params], [:N :vonmises],
 	                                 [:Q :alpha], [:S :norm :normalize], [:T :orientation], [:Z :scale]])

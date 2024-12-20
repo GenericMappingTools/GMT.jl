@@ -79,7 +79,7 @@ function grdvector(arg1, arg2; first=true, kwargs...)
 	                (inverse=("i", nothing, 1), length=("l", arg2str, 1), scale=("",arg2str,2), scale_at_lat="+c", refsize="+s"))
 	
 	opt_R = (contains(cmd, "-R") && !contains(cmd, " -R ")) ? "" : @sprintf(" -R%.4g/%.14g/%.14g/%.14g", info[1:4]...)
-	w,h = get_figsize(opt_R, opt_J)
+	w,h = get_figsize(opt_R=opt_R, opt_J=opt_J)
 	max_extrema = max(abs(info[5]), abs(info[6]), abs(info2[5]), abs(info2[6]))	# The max of the absolute extremas
 	as = 1.05 * max_extrema * sqrt((n_rows*n_cols) / (w*h))		# Autoscale (approx). Idealy it should be max magnitude.
 

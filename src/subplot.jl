@@ -45,7 +45,7 @@ function subplot(fim=nothing; stop=false, kwargs...)
 	# In case :title exists we must use and delete it to avoid double parsing
 	cmd = ((val = find_in_dict(d, [:T :title])[1]) !== nothing) ? " -T\"" * val * "\"" : ""
 	val_grid = find_in_dict(d, [:grid])[1]		# Must fish this one right now because parse_B also looks for (another) :grid
-	cmd, = parse_BJR(d, cmd, "", false, " ")
+	cmd, = parse_BJR(d, cmd, "", false, defaultJ=" ")
 	cmd, = parse_common_opts(d, cmd, [:V_params], first=true)
 	cmd  = parse_these_opts(cmd, d, [[:M :margin :margins]])
 	cmd  = add_opt(d, cmd, "A", [:A :autolabel],
