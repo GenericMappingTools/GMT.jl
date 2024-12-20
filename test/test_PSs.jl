@@ -157,7 +157,7 @@ println("	PSMASK")
 D = gmtmath("-T-90/90/10 -N2/1 0");
 mask(D, G=:yellow, I="30m", R="-75/75/-90/90", J="Q0/7i", S="4d", T=true, B="xafg180 yafg10")
 mask!(D, G=:yellow, I="30m", R="-75/75/-90/90", J="Q0/7i", S="4d", T=true, Vd=dbg2)
-mask!("", D, G=:yellow, I="30m", R="-75/75/-90/90", J="Q0/7i", S="4d", T=true, Vd=dbg2)
+mask!(D, G=:yellow, I="30m", R="-75/75/-90/90", J="Q0/7i", S="4d", T=true, Vd=dbg2)
 D = coast(DCW=:HR, dump=true);
 I = gmtread("@earth_day_05m", region=D, V=:q);
 mask(I, D);
