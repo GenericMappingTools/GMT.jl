@@ -76,8 +76,13 @@ Examples
 ```
 """
 function contourf(cmd0::String="", arg1=nothing, arg2=nothing; first=true, kwargs...)
-
 	d = KW(kwargs)
+	contourf(cmd0, arg1, arg2, first==1, d)
+end
+#function contourf(cmd0::String="", arg1=nothing, arg2=nothing; first=true, kwargs...)
+function contourf(cmd0::String, arg1, arg2, first::Bool, d::Dict)
+
+	#d = KW(kwargs)
 	dict_auto_add!(d)					# The ternary module may send options via another channel
 	CPT_arg::GMTcpt = (isa(arg1, GMTcpt)) ? arg1 : (isa(arg2, GMTcpt) ? arg2 : GMTcpt())	# Fish a CPT, if any.
 
@@ -220,6 +225,6 @@ function auto_contour_interval(range)
 end
 
 # ---------------------------------------------------------------------------------------------------
-contourf!(cmd0::String="", arg1=nothing, arg2=nothing; kw...) = contourf(cmd0, arg1, arg2; first=false, kw...)
-contourf(arg1, arg2=nothing; kw...) = contourf("", arg1, arg2; first=true, kw...)
-contourf!(arg1, arg2=nothing; kw...) = contourf("", arg1, arg2; first=false, kw...)
+contourf!(cmd0::String="", arg1=nothing, arg2=nothing; kw...) = contourf(cmd0, arg1, arg2, false, KW(kw))
+contourf(arg1, arg2=nothing; kw...) = contourf("", arg1, arg2, true, KW(kw))
+contourf!(arg1, arg2=nothing; kw...) = contourf("", arg1, arg2, false, KW(kw))

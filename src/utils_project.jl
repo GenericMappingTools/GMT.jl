@@ -470,7 +470,7 @@ function cubeplot(fname1::Union{GMTimage, String}, fname2::Union{GMTimage, Strin
 	# ...
 	d = KW(kw)
 	opt_R = ((txt::String = parse_R(d, "")[2]) != "") ? txt[4:end] : "0/9/0/9/-9/0"
-	opt_J = ((txt = parse_J(d, "", " ")[2]) != "") ? txt[4:end] : "X15/0";	txt = ""
+	opt_J = ((txt = parse_J(d, "", default=" ")[2]) != "") ? txt[4:end] : "X15/0";	txt = ""
 	opt_JZ = ((txt = parse_JZ(d, "")[2]) != "") ? txt[5:end] : "15";
 	txt == "" && (CTRL.pocket_J[3] = " -JZ15")
 	opt_p = ((txt = parse_p(d, "")[2]) != "" && txt != " -p") ? txt[4:end] : "135/30"
@@ -680,7 +680,7 @@ function cubeplot(G::GMTgrid; top=nothing, topshade=false, zdown::Bool=false, xl
 	end
 
 	d = KW(kw)
-	if ((opt_R = parse_R(d, "", false)[2]) != "")
+	if ((opt_R = parse_R(d, "", O=false)[2]) != "")
 		x_min, x_max, y_min, y_max, = opt_R2num(opt_R)
 	else
 		x_min, x_max, y_min, y_max = G.range[1], G.range[2], G.range[3], G.range[4]

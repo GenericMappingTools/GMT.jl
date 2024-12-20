@@ -54,24 +54,24 @@
 	@test GMT.parse_JZ(Dict(:JZ => "5c"), "")[1] == " -JZ5c"
 	@test GMT.parse_JZ(Dict(:Jz => "5c"), "")[1] == " -Jz5c"
 	@test GMT.parse_JZ(Dict(:aspect3 => 1), " -JX10")[1] == " -JX10 -JZ10"
-	@test GMT.parse_J(Dict(:J => "X5"), "", "", false)[1] == " -JX5"
-	@test GMT.parse_J(Dict(:a => ""), "", "", true, true)[1] == " -J"
+	@test GMT.parse_J(Dict(:J => "X5"), "", default="", map=false)[1] == " -JX5"
+	@test GMT.parse_J(Dict(:a => ""), "", default="", map=true, O=true)[1] == " -J"
 	@test GMT.parse_J(Dict(:J => "X", :figsize => 10), "")[1] == " -JX10"
 	@test GMT.parse_J(Dict(:J => "X", :scale => "1:10"), "")[1] == " -Jx1:10"
 	@test GMT.parse_J(Dict(:proj => "Ks0/15"), "")[1] == " -JKs0/15"
 	@test GMT.parse_J(Dict(:scale=>"1:10"), "")[1] == " -Jx1:10"
-	@test GMT.parse_J(Dict(:s=>"1:10"), "", " -JU")[1] == " -JU"
-	@test GMT.parse_J(Dict(:J => "Merc", :figsize => 10), "", "", true, true)[1] == " -JM10"
+	@test GMT.parse_J(Dict(:s=>"1:10"), "", default=" -JU")[1] == " -JU"
+	@test GMT.parse_J(Dict(:J => "Merc", :figsize => 10), "", default="", map=true, O=true)[1] == " -JM10"
 	@test GMT.parse_J(Dict(:J => "+proj=merc"), "")[1] == " -J+proj=merc+width=" * split(GMT.DEF_FIG_SIZE, '/')[1]
-	@test GMT.parse_J(Dict(:J => (name=:albers, parallels=[45 65])), "", "", false)[1] == " -JB0/0/45/65"
-	@test GMT.parse_J(Dict(:J => (name=:albers, center=[10 20], parallels=[45 65])), "", "", false)[1] == " -JB10/20/45/65"
-	@test GMT.parse_J(Dict(:J => "winkel"), "", "", false)[1] == " -JR"
-	@test GMT.parse_J(Dict(:J => "M0/0"), "", "", false)[1] == " -JM0/0"
-	@test GMT.parse_J(Dict(:J => (name=:merc,center=10)), "","", false)[1] == " -JM10"
-	@test GMT.parse_J(Dict(:J => (name=:merc,parallels=10)), "","", false)[1] == " -JM0/0/10"
-	@test GMT.parse_J(Dict(:J => (name=:Cyl_,center=(0,45))), "", "", false)[1] == " -JCyl_stere/0/45"
-	@test_throws ErrorException("When projection arguments are in a NamedTuple the projection 'name' keyword is madatory.") GMT.parse_J(Dict(:J => (parallels=[45 65],)), "", "", false)
-	@test_throws ErrorException("When projection is a named tuple you need to specify also 'center' and|or 'parallels'") GMT.parse_J(Dict(:J => (name=:merc,)), "", "", false)
+	@test GMT.parse_J(Dict(:J => (name=:albers, parallels=[45 65])), "", default="", map=false)[1] == " -JB0/0/45/65"
+	@test GMT.parse_J(Dict(:J => (name=:albers, center=[10 20], parallels=[45 65])), "", default="", map=false)[1] == " -JB10/20/45/65"
+	@test GMT.parse_J(Dict(:J => "winkel"), "", default="", map=false)[1] == " -JR"
+	@test GMT.parse_J(Dict(:J => "M0/0"), "", default="", map=false)[1] == " -JM0/0"
+	@test GMT.parse_J(Dict(:J => (name=:merc,center=10)), "",default="", map=false)[1] == " -JM10"
+	@test GMT.parse_J(Dict(:J => (name=:merc,parallels=10)), "",default="", map=false)[1] == " -JM0/0/10"
+	@test GMT.parse_J(Dict(:J => (name=:Cyl_,center=(0,45))), "", default="", map=false)[1] == " -JCyl_stere/0/45"
+	@test_throws ErrorException("When projection arguments are in a NamedTuple the projection 'name' keyword is madatory.") GMT.parse_J(Dict(:J => (parallels=[45 65],)), "", default="", map=false)
+	@test_throws ErrorException("When projection is a named tuple you need to specify also 'center' and|or 'parallels'") GMT.parse_J(Dict(:J => (name=:merc,)), "", default="", map=false)
 	r = GMT.parse_params(Dict(:par => (MAP_FRAME_WIDTH=0.2, IO=:lixo, OI="xoli")), "");
 	@test r == " --MAP_FRAME_WIDTH=0.2 --IO=lixo --OI=xoli"
 	@test GMT.parse_params(Dict(:par => (:MAP_FRAME_WIDTH,0.2)), "") == " --MAP_FRAME_WIDTH=0.2"
@@ -114,9 +114,9 @@
 	@test GMT.add_opt_fill((("red+p",), ("blue+n",)), "", " -G") == " -Gred+p -Gblue+n"
 	@test_throws ErrorException("For 'fill' option as a NamedTuple, you MUST provide a 'patern' member") GMT.add_opt_fill("", Dict(:G=>(inv_pat=12,fg="white")), [:G], 'G')
 	d = Dict(:offset=>5, :bezier=>true, :cline=>"", :ctext=>true, :pen=>("10p",:red,:dashed));
-	@test GMT.add_opt_pen(d, [:W :pen], "W") == " -W10p,red,-+cl+cf+s+o5"
+	@test GMT.add_opt_pen(d, [:W :pen], opt="W") == " -W10p,red,-+cl+cf+s+o5"
 	d = Dict(:W=>(offset=5, bezier=true, cline="", ctext=true, pen=("10p",:red,:dashed), arrow=(length=0.1,)));
-	@test GMT.add_opt_pen(d, [:W :pen], "W") == " -W10p,red,-+cl+cf+s+o5+v0.1"
+	@test GMT.add_opt_pen(d, [:W :pen], opt="W") == " -W10p,red,-+cl+cf+s+o5+v0.1"
 	GMT.add_opt_cpt(Dict(:a=>1), "", [:b], 'A', 0, nothing, nothing, false, true, "-T0/10/1");
 	GMT.add_opt_cpt(Dict(:a=>:red), "", [:a], 'A', 0, nothing, nothing, false, true, "-T0/10/1");
 
@@ -175,12 +175,12 @@
 	@test GMT.parse_B(Dict(:title => :bla), "")[1] == " -Baf -BWSen+tbla"
 	@test GMT.parse_B(Dict(:frame => :auto, :title => :bla), "")[1] == " -Baf -BWSen+tbla"
 	@test GMT.parse_B(Dict(:B=>:WS), "")[1] == " -Baf -BWS"
-	@test GMT.parse_B(Dict(:title => "bla"), "", " -Baf")[1] == " -Baf -B+tbla"
-	@test GMT.parse_B(Dict(:frame => (annot=10, title="Ai Ai"), :grid => (pen=2, x=10, y=20)), "", " -Baf -BWSen")[1] == " -Bpa10 -Byg20 -Bxg10 -BWSen+t\"Ai Ai\""
+	@test GMT.parse_B(Dict(:title => "bla"), "", opt_B__=" -Baf")[1] == " -Baf -B+tbla"
+	@test GMT.parse_B(Dict(:frame => (annot=10, title="Ai Ai"), :grid => (pen=2, x=10, y=20)), "", opt_B__=" -Baf -BWSen")[1] == " -Bpa10 -Byg20 -Bxg10 -BWSen+t\"Ai Ai\""
 	@test GMT.parse_B(Dict(:frame => (axes=(:left_full, :bottom_full, :right_full, :top_full), annot=10)), "")[1] == " -Bpa10 -BWSEN"
 	@test GMT.parse_B(Dict(:xaxis => (axes=:full, annot=10)), "")[1] == " -Bpxa10 -BWSEN"
 	@test GMT.parse_B(Dict(:xaxis => "xg10", :yaxis => "g20"), "")[1] == " -Bpxg10 -Bpyg20"
-	@test GMT.parse_B(Dict(:frame => (fill=220,)), "", " -Baf -Bg -BWSne")[1] == " -Baf -Bg -BWSne+g220"
+	@test GMT.parse_B(Dict(:frame => (fill=220,)), "", opt_B__=" -Baf -Bg -BWSne")[1] == " -Baf -Bg -BWSne+g220"
 	@test GMT.parse_B(Dict(:frame => :full), "")[1] == " -Baf -BWSEN"
 	@test GMT.parse_B(Dict(:title => "BlaBla", :frame => :none), "")[1] == " -B+tBlaBla"
 	GMT.helper2_axes("lolo");
@@ -254,7 +254,7 @@
 	I = GMT.mat2img(rand(8,8), GI=mat2grid(rand(8,8)), cmap=makecpt(T=(0,1),))
 	mat = rand(8,8);	mat[10] = NaN
 	imagesc(mat2grid(mat))
-	@test rescale(1:5,-1,1) == -1.0:0.5:1
+	@test rescale(1:5,low=-1,up=1) == -1.0:0.5:1
 	@test rescale(1:4, type=UInt8) == [0, 85, 170, 255]
 	magic(4)
 	magic(6)

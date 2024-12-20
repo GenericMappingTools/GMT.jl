@@ -159,7 +159,7 @@ function plotyy(arg1, arg2; first=true, kw...)
 	savefig = ((val = find_in_dict(d, [:savefig :figname :name])[1]) !== nothing) ? arg2str(val)::String : nothing
 	Vd = ((val = find_in_dict(d, [:Vd])[1]) !== nothing) ? val : 0
 
-	cmd::String, opt_B::String = parse_B(d, "", " -Baf -BW")
+	cmd::String, opt_B::String = parse_B(d, "", opt_B__=" -Baf -BW")
 	if (opt_B != " -Baf -BW")
 		if (occursin(" -Bx", opt_B) || occursin(" -By", opt_B) || occursin("+t", opt_B))
 			# OK, so here's the problem. Both title and label maybe multi-words, case in which they will have the
@@ -540,7 +540,7 @@ function bar3(cmd0::String="", arg=nothing; first=true, kwargs...)
 			elseif (haskey(d, :Nbands))  opt_z = string("+Z", d[:Nbands]);	delete!(d, :Nbands)
 			end
 		end
-		opt_R, = parse_R(d, "", !first)
+		opt_R, = parse_R(d, "", O=!first)
 		if (opt_R == "" || opt_R == " -R")			# OK, no R but we know it here so put it in 'd'
 			if (arg1.registration == 1)			# Fine, grid is already pixel reg
 				push!(d, :R => arg1.range)
@@ -1011,8 +1011,8 @@ function helper_vecZscale!(d::Dict, arg1, first::Bool, typevec::Int; opt_R::Stri
 	Tc = (isGMTdataset(arg1) && (isone ? get(arg1.attrib, "Timecol", "") == "1" :
 	                                     get(arg1[1].attrib, "Timecol", "") == "1")) ? true : false
 	if (typevec < 2 || Tc)		# typevec = 2 means u,v are in fact the end points and that doesn't need scaling.
-		opt_R::String = (first) ? ((opt_R == "") ? parse_R(d, "", false, false)[2] : opt_R) : CTRL.pocket_R[1]
-		opt_J::String = (first) ? parse_J(d, "", "", true, false, false)[2] : CTRL.pocket_J[1]
+		opt_R::String = (first) ? ((opt_R == "") ? parse_R(d, "", O=false, del=false)[2] : opt_R) : CTRL.pocket_R[1]
+		opt_J::String = (first) ? parse_J(d, "", default="", map=true, O=false, del=false)[2] : CTRL.pocket_J[1]
 		aspect_limits = (CTRL.limits[10] - CTRL.limits[9]) / (CTRL.limits[8] - CTRL.limits[7])	# Plot, not data, limits
 		Dwh::Matrix{<:Float64} = gmt("mapproject -W " * opt_R * opt_J).data		# Fig dimensions in paper coords.
 		aspect_sizes  = Dwh[2] / Dwh[1]
@@ -1034,6 +1034,7 @@ function helper_vecZscale!(d::Dict, arg1, first::Bool, typevec::Int; opt_R::Stri
 	isArrowGMT4 = haskey(d, :arrow4) || haskey(d, :vector4)
 	isArrowGMT4 && (unit = replace(unit, "q" => ""); def_z = def_h = def_e = "")	# GMT4 arrows stuff only
 
+	code = "v"
 	if ((ahdr::String = helper_arrows(d)) != "")		# Have to use delete to avoid double parsing in -W
 		contains(ahdr, "+e") && (def_e = "")
 		contains(ahdr, "+h") && (def_h = "")
@@ -1051,13 +1052,14 @@ function helper_vecZscale!(d::Dict, arg1, first::Bool, typevec::Int; opt_R::Stri
 				end
 			end
 		end
+		code = string(ahdr[1])
 		ahdr = ahdr[2:end]								# Need to drop the code because that is set elsewhere.
 	end
 
 	len = ((val = find_in_dict(d, [:ms :markersize :MarkerSize :size])[1]) !== nothing) ? arg2str(val)::String : "8p"
 	(ahdr != "" && ahdr[1] != '+') && (len = "")		# Because a length was set in the arrow(len=?,...) and it takes precedence(?)
 	contains(ahdr, "+s") && (def_z = "")				# If second point (+s) no scaling(+z)
-	d[:S] = "v$(len)" * ahdr * def_e * def_h * ((typevec < 2) ? def_z : "+s")
+	d[:S] = code * "$(len)" * ahdr * def_e * def_h * ((typevec < 2) ? def_z : "+s")
 
 	# Need to apply a scale factor that also compensates for the GMT bug.
 	if (typevec < 2 && isa(arg1, Vector{<:GMTdataset}) && scale_fig != 1.0)
@@ -1208,8 +1210,8 @@ function quiver(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	haveVarFill && delete!(d, :fill)		# Otherwise GMT would error
 	(haveVarFill && !isa(arg1, Vector{<:GMTdataset})) && (@warn("'fill=true' is only usable with multi-segments"); delete!(d, :fill))
 
-	(haveR) && (opt_R = parse_R(d, "", false, false)[2])
-	opt_J = parse_J(d, "", "", true, false, false)[2]
+	(haveR) && (opt_R = parse_R(d, "", O=false, del=false)[2])
+	opt_J = parse_J(d, "", default="", map=true, O=false, del=false)[2]
 	Dhw = mapproject(opt_R * opt_J * " -W")
 
 	if (isGMTdataset(arg1))
@@ -1474,7 +1476,7 @@ function helper_vhlines(arg1, vert::Bool, first::Bool, xymin, xymax, percent, kw
 	mat::Matrix{Float64} = ones(2, len)
 	mat[1,:] = mat[2,:] .= (arg1 !== nothing) ? arg1 : arg1_
 
-	parse_R(d, "", first, false)[2]		# Just to make the limits land in CTRL.limits (if they aren't there already)
+	parse_R(d, "", O=first, del=false)[2]		# Just to make the limits land in CTRL.limits (if they aren't there already)
 	xy = vert ? [CTRL.limits[9], CTRL.limits[10]] : [CTRL.limits[7], CTRL.limits[8]]
 	xy == [0, 0] && (xy = [-1e150, 1e150])	# Because -R for histograms may have it [0 0] to let GMT C set the true limits.
 	!isnan(xymin) && (xy[1] = !percent ? xymin : xy[1] + (xy[2]-xy[1]) * xymin)
@@ -1503,9 +1505,9 @@ const hspan! = hband!
 function helper_hvband(mat::Matrix{<:Real}, tipo="v"; width=false, height=false, percent=false, first=true, kwargs...)
 	# This is the main function for the hband and vband functions.
 	d, _, O = init_module(first, kwargs...)
-	cmd, = parse_R(d, "", O, false)
+	cmd, = parse_R(d, "", O=O, del=false)
 	all(CTRL.limits .== 0.) && error("Need to know the axes limits in a numeric form.")
-	cmd, = parse_J(d, cmd, "", true, O, false)
+	cmd, = parse_J(d, cmd, default="", map=true, O=O, del=false)
 	!CTRL.proj_linear[1] && error("Plotting bands is only possible with linear projections.")
 	cmd, = parse_B(d, cmd)
 	n_ds = size(mat, 1)
@@ -1641,7 +1643,7 @@ function ternary(cmd0::String="", arg1=nothing; first::Bool=true, image::Bool=fa
 	(cmd0 == "" && arg1 === nothing) && (arg1 = [0.0 0.0 0.0])	# No data in, just a kind of ternary basemap
 	(cmd0 != "") && (arg1 = gmtread(cmd0))
 	d = init_module(first, kwargs...)[1]
-	opt_J::String = parse_J(d, "", " -JX" * split(DEF_FIG_SIZE, '/')[1] * "/0", true, false, false)[2]
+	opt_J::String = parse_J(d, "", default=" -JX" * split(DEF_FIG_SIZE, '/')[1] * "/0", map=true, O=false, del=false)[2]
 	opt_R::String = parse_R(d, "")[1]
 	d[:R] = (opt_R ==  "") ? "0/100/0/100/0/100" : opt_R[4:end]
 	parse_B4ternary!(d, first)
@@ -1688,7 +1690,7 @@ end
 
 function parse_B4ternary!(d::Dict, first::Bool=true)
 	# Ternary accepts only a special brand of -B. Try to parse and/or build -B option
-	opt_B = parse_B(d, "", " -Bafg")[2]
+	opt_B = parse_B(d, "", opt_B__=" -Bafg")[2]
 	if ((val = find_in_dict(d, [:labels])[1]) !== nothing)		# This should be the easier way
 		!(isa(val,Tuple) && length(val) == 3) && error("The `labels` option must be Tuple with 3 elements.")
 		opt_Bs = split(opt_B)							# This drops the leading ' '

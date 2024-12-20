@@ -151,8 +151,8 @@ function leave_paper_mode()
 end
 
 # ---------------------------------------------------------------------------------------------------
-parse_RIr(d::Dict, cmd::String, O::Bool=false, del::Bool=true) = parse_R(d, cmd, O, del, true)
-function parse_R(d::Dict, cmd::String, O::Bool=false, del::Bool=true, RIr::Bool=false, noGlobalR::Bool=false)::Tuple{String, String}
+parse_RIr(d::Dict, cmd::String, O::Bool=false, del::Bool=true) = parse_R(d, cmd, O=O, del=del, RIr=true)
+function parse_R(d::Dict, cmd::String; O::Bool=false, del::Bool=true, RIr::Bool=false, noGlobalR::Bool=false)::Tuple{String, String}
 	# Build the option -R string. Make it simply -R if overlay mode (-O) and no new -R is fished here
 	# The RIr option is to assign also the -I and -r when R was given a GMTgrid|image value. This is a
 	# workaround for a GMT bug that ignores this behaviour when from externals.
@@ -469,7 +469,7 @@ function is_axis_equal(d)::Bool
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_J(d::Dict, cmd::String, default::String="", map::Bool=true, O::Bool=false, del::Bool=true)
+function parse_J(d::Dict, cmd::String; default::String="", map::Bool=true, O::Bool=false, del::Bool=true)
 	# Build the option -J string. Make it simply -J if in overlay mode (-O) and no new -J is fished here
 	# Default to 15c if no size is provided.
 	# If MAP == false, do not try to append a fig size
@@ -927,7 +927,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    parse_grid(d::Dict, args, opt_B::String="", stalone::Bool=true) -> String
+    parse_grid(d::Dict, args; opt_B::String="", stalone::Bool=true) -> String
 
 Parse the contents of the "grid" option (internal use).
 
@@ -939,7 +939,7 @@ grid pen and individual axes, or as a string.
 ### Examples
 grid=:on => -Bg;	grid=:x => -Bxg;	grid="x10" => -Bxg10; grid=:y ...;  grid=:xyz => " -Bg -Bzg"
 """
-function parse_grid(d::Dict, args, opt_B::String="", stalone::Bool=true)::String
+function parse_grid(d::Dict, args; opt_B::String="", stalone::Bool=true)::String
 	pre::String = (stalone) ? " -B" : ""
 	get_int(oo) = return (tryparse(Float64, oo) !== nothing) ? oo : ""	# Micro nested-function
 	if (isa(args, NamedTuple))	# grid=(pen=?, x=?, y=?, xyz=?)
@@ -976,7 +976,7 @@ function parse_grid(d::Dict, args, opt_B::String="", stalone::Bool=true)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tuple{String,String}
+function parse_B(d::Dict, cmd::String; opt_B__::String="", del::Bool=true)::Tuple{String,String}
 	# opt_B is used to transmit a default value. If not empty the Bframe part must be at the end and only one -B...
 
 	(SHOW_KWARGS[1]) && return (print_kwarg_opts([:B :frame :axes :axis :xaxis :yaxis :zaxis :axis2 :xaxis2 :yaxis2], "NamedTuple | String"), "")
@@ -1072,7 +1072,7 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 		end
 	end
 
-	((val = find_in_dict(d, [:grid])[1]) !== nothing) && (opt_B = parse_grid(d, val, opt_B))
+	((val = find_in_dict(d, [:grid])[1]) !== nothing) && (opt_B = parse_grid(d, val, opt_B=opt_B))
 
 	function titlices(d::Dict, arg, fun::Function)
 		# Helper function to deal with setting title & cousins while controling also Font & Offset 
@@ -1373,8 +1373,8 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_BJR(d::Dict, cmd::String, caller::String, O::Bool, defaultJ::String="", del::Bool=true)
 	# Join these three in one function. CALLER is non-empty when module is called by plot()
-	cmd, opt_R = parse_R(d, cmd, O, del)
-	cmd, opt_J = parse_J(d, cmd, defaultJ, true, O, del)
+	cmd, opt_R = parse_R(d, cmd, O=O, del=del)
+	cmd, opt_J = parse_J(d, cmd, default=defaultJ, map=true, O=O, del=del)
 
 	parse_theme(d)		# Must be first because some themes change DEF_FIG_AXES
 	is3D = (is_in_dict(d, [:JZ :Jz :zscale :zsize]) !== nothing)
@@ -1383,13 +1383,13 @@ function parse_BJR(d::Dict, cmd::String, caller::String, O::Bool, defaultJ::Stri
 	if (caller != "" && occursin("-JX", opt_J))		# e.g. plot() sets 'caller'
 		if (occursin("3", caller) || caller == "grdview")
 			DEF_FIG_AXES3_::String = (IamModern[1]) ? "" : DEF_FIG_AXES3[1]
-			cmd, opt_B = parse_B(d, cmd, (O ? "" : DEF_FIG_AXES3_), del)
+			cmd, opt_B = parse_B(d, cmd, opt_B__=(O ? "" : DEF_FIG_AXES3_), del=del)
 		else
 			xx::String = (O ? "" : caller != "ternary" ? DEF_FIG_AXES_ : string(split(DEF_FIG_AXES_)[1]))
-			cmd, opt_B = parse_B(d, cmd, xx, del)	# For overlays, default is no axes
+			cmd, opt_B = parse_B(d, cmd, opt_B__=xx, del=del)	# For overlays, default is no axes
 		end
 	else
-		cmd, opt_B = parse_B(d, cmd, (O ? "" : DEF_FIG_AXES_), del)
+		cmd, opt_B = parse_B(d, cmd, opt_B__=(O ? "" : DEF_FIG_AXES_), del=del)
 	end
 	return cmd, opt_B, opt_J, opt_R
 end
@@ -1798,7 +1798,7 @@ function parse_I(d::Dict, cmd::String, symbs, opt::String, del::Bool=true)::Stri
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_params(d::Dict, cmd::String, del::Bool=true)::String
+function parse_params(d::Dict, cmd::String; del::Bool=true)::String
 	# Parse the gmt.conf parameters when used from within the modules. Return a --PAR=val string
 	# The input to this kwarg can be a tuple (e.g. (PAR,val)) or a NamedTuple (P1=V1, P2=V2,...)
 
@@ -1819,7 +1819,7 @@ function parse_params(d::Dict, cmd::String, del::Bool=true)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function add_opt_pen(d::Dict, symbs::Union{Nothing, VMs}, opt::String="", del::Bool=true)::String
+function add_opt_pen(d::Dict, symbs::Union{Nothing, VMs}; opt::String="", del::Bool=true)::String
 	# Build a pen option. Input can be either a full hard core string or spread in lw (or lt), lc, ls, etc or a tuple
 
 	(SHOW_KWARGS[1]) && return print_kwarg_opts(symbs, "NamedTuple | Tuple | String | Number")	# Just print the options
@@ -1838,7 +1838,7 @@ function add_opt_pen(d::Dict, symbs::Union{Nothing, VMs}, opt::String="", del::B
 				if (isa(val[1], NamedTuple))	# Then assume they are all NTs
 					for v in val
 						d2 = nt2dict(v)			# Decompose the NT and feed it into this-self
-						out *= opt * add_opt_pen(d2, symbs, "", false)
+						out *= opt * add_opt_pen(d2, symbs, opt="", del=false)
 					end
 				else
 					out = opt * parse_pen(val)	# Should be a better function
@@ -1852,10 +1852,10 @@ function add_opt_pen(d::Dict, symbs::Union{Nothing, VMs}, opt::String="", del::B
 				c::String = (:color in k) ? string(val[:color]) : ""
 				s::String = (:style in k) ? string(val[:style]) : ""
 				if (w != "" || c != "" || s != "")
-					out = opt * add_opt_pen(Dict(:pen => (w,c,s)), symbs, "", false)
+					out = opt * add_opt_pen(Dict(:pen => (w,c,s)), symbs, opt="", del=false)
 				else
 					d2 = nt2dict(val)				# Decompose the NT and feed into this-self
-					t = add_opt_pen(d2, symbs, "", false)
+					t = add_opt_pen(d2, symbs, opt="", del=false)
 					if (t == "")
 						d, out = nt2dict(val), opt
 					else
@@ -1870,7 +1870,7 @@ function add_opt_pen(d::Dict, symbs::Union{Nothing, VMs}, opt::String="", del::B
 	end
 
 	# All further options prepend or append to an existing pen. So, if empty we are donne here.
-	(out == "") && return out
+	(out == "" || is_in_dict(d, [:geovec]) !== nothing) && return out
 
 	# -W in ps|grdcontour may have extra flags at the begining but take care to not prepend on a blank
 	if     (out[1] != ' ' && haskey(d, :cont) || haskey(d, :contour))  out = "c" * out
@@ -3099,7 +3099,7 @@ function axis(D::Dict, x::Bool, y::Bool, z::Bool, secondary::Bool, d::Dict)::Tup
 	((val = find_in_dict(d, [:Xfill :Xbg :Xwall])[1]) !== nothing) && (opt = add_opt_fill(val, opt, "+x"))
 	((val = find_in_dict(d, [:Yfill :Ybg :Ywall])[1]) !== nothing) && (opt = add_opt_fill(val, opt, "+y"))
 	((val = find_in_dict(d, [:Zfill :Zbg :Zwall])[1]) !== nothing) && (opt = add_opt_fill(val, opt, "+z"))
-	((p = add_opt_pen(d, [:wall_outline], "+w")) != "") && (opt *= p)
+	((p = add_opt_pen(d, [:wall_outline], opt="+w")) != "") && (opt *= p)
 	(haskey(d, :cube))     && (opt *= "+b")
 	(haskey(d, :internal)) && (opt *= "+i" * arg2str(d[:internal])::String)
 	(startswith(opt, " -B+") && !startswith(opt, " -B+g")) && (opt = " -BWSENZ" * opt[4:end])	# Without axes prev opts screw -B
@@ -3144,7 +3144,7 @@ function axis(D::Dict, x::Bool, y::Bool, z::Bool, secondary::Bool, d::Dict)::Tup
 	(haskey(d, :ticks_unit)) && (ints *= helper2_axes(d[:ticks_unit]))
 
 	if (haskey(d, :grid))
-		if (isa(d[:grid], NamedTuple))  gri_d = parse_grid(D, d[:grid], "", false)		# Whatever comes out
+		if (isa(d[:grid], NamedTuple))  gri_d = parse_grid(D, d[:grid], opt_B="", stalone=false)		# Whatever comes out
 		else                            gri_d = "g" * helper1_axes(d[:grid], is3D, 'g')
 		end
 		contains(gri_d, ' ') && (spli = split(gri_d); gri_d = string(spli[1]); gri_2 = string(spli[2]); gri_3 = string(spli[3]))
@@ -3444,7 +3444,7 @@ function vector_attrib(d::Dict)::String
 	(haskey(d, :norm)) && (cmd = string(cmd, "+n", arg2str(d[:norm])))
 	(haskey(d, :pole)) && (cmd *= "+o" * arg2str(d[:pole])::String)
 	if (haskey(d, :pen))
-		((p = add_opt_pen(d, [:pen], "")) != "") && (cmd *= "+p" * p)
+		((p = add_opt_pen(d, [:pen], opt="")) != "") && (cmd *= "+p" * p)
 	end
 
 	if (haskey(d, :shape))

@@ -42,7 +42,7 @@ function mbimport(cmd0::String=""; kwargs...)
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
 	cmd, opt_R = parse_R(d, "")
-	cmd, opt_J = parse_J(d, cmd, " -JX12cd/0", true)
+	cmd, opt_J = parse_J(d, cmd, default=" -JX12cd/0", map=true)
 	cmd, = parse_common_opts(d, cmd, [:UVXY :params :n :t]; first=true)
 
 	cmd  = parse_these_opts(cmd, d, [[:A :footprint], [:D :scaling], [:F :format], [:E :dpi], [:G :shade],

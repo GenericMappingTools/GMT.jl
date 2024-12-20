@@ -269,7 +269,7 @@ function plotlinefit(D::GMTdataset; first::Bool=true, grp::Bool=false, kw...)
 		wesn::Vector{Float64} = round_wesn([D.ds_bbox[1], D.ds_bbox[2], mi, ma], false, [0.01, 0.01])
 		opt_R = @sprintf("%.12g/%.12g/%.12g/%.12g", wesn[1], wesn[2], wesn[3], wesn[4])
 
-		if (do_legends && (_cmd = parse_params(d, "", false)) != "")
+		if (do_legends && (_cmd = parse_params(d, ""; del=false)) != "")
 			contains(_cmd, "inside") && (leg_off = "0.6")		# For inside annotations, offset must be larger
 		end
 
@@ -426,7 +426,7 @@ ablines!(a, b; kw...) = ablines(a, b; first=false, kw...)
 
 function helper_ablines(d, a, b)
 	# Deal with the two cases of whether or not a plotting limits was passed in.
-	if ((opt_R = parse_R(d, "", false, false)[2]) != "")
+	if ((opt_R = parse_R(d, "", O=false, del=false)[2]) != "")
 		x1, x2 = CTRL.limits[7], CTRL.limits[8]
 		y1, y2 = a + b * x1, a + b * x2
 		[x1 y1; x2 y2]

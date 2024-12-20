@@ -79,7 +79,7 @@ function triangulate_helper(cmd0::String, arg1; kwargs...)
 	cmd = parse_Q_tri(d, [:Q :voronoi], cmd)
 	(occursin("-I", cmd) && occursin("-R", cmd) && !occursin("-G", cmd)) && (cmd *= " -G")
 	(occursin("-Q", cmd) && !occursin("-M", cmd)) && (cmd *= " -M")		# Otherwise kills Julia (GMT bug)
-	(!occursin("-G", cmd)) && (cmd = parse_J(d, cmd, " ")[1])
+	(!occursin("-G", cmd)) && (cmd = parse_J(d, cmd, default=" ")[1])
 
 	out = common_grd(d, cmd0, cmd, "triangulate ", arg1)		# Finish build cmd and run it
 	if isa(out, GDtype)
@@ -131,7 +131,7 @@ function triplot(in::Matrix; onlyedges::Bool=false, noplot::Bool=false, first::B
 	d = KW(kw)
 	do_voronoi::Bool = ((val = find_in_dict(d, [:voronoi])[1]) !== nothing)
 	if (do_voronoi)
-		opt_R = parse_R(d, "", false, false)[2]
+		opt_R = parse_R(d, "", O=false, del=false)[2]
 		(opt_R == "") && (opt_R = read_data(d, "", "", in, "")[3])
 		opt_Q = onlyedges ? "" : "pol"
 	end

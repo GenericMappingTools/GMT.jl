@@ -1425,7 +1425,7 @@ end
 function imagesc(I::GMTimage{<:UInt16}; clim=0)
 	# User probably meant to use 'rescale(I,stretch=1,type=UInt8)' instead of 'imagesc(I)' for scaling a
 	# UInt16 GMTimage directly, so do it instead of erroring as we used to do.
-	return clim == 0 ? rescale(I, stretch=1, type=UInt8) : rescale(I, stretch=[clim[1],clim[2]], type=UInt8)
+	return clim == 0 ? rescale(I, stretch=true, type=UInt8) : rescale(I, stretch=[clim[1],clim[2]], type=UInt8)
 end
 
 # ---------------------------------------------------------------------------------------------------

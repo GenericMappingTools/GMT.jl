@@ -121,7 +121,7 @@ function _text(cmd0::String, arg1, O::Bool, K::Bool, d::Dict)
 		(angle="+a", Angle="+A", font=("+f", font), justify="+j", region_justify="+c", header="_+h", label="_+l", rec_number="_+r", text="+t", zvalues="_+z"); expand=true)
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
 	contains(cmd, " -G") && (CTRL.pocket_B[3] = ".")	# Signal gmt() that it needs to restart because the fill f the API
-	cmd *= add_opt_pen(d, [:W :pen], "W")
+	cmd *= add_opt_pen(d, [:W :pen], opt="W")
 
 	if (!occursin(" -F", cmd))		# Test if the GMTdataset has text or if a numeric column is to be used as such
 		if ((isa(arg1, GMTdataset) && isempty(arg1.text)) || (isa(arg1, Vector{<:GMTdataset}) && isempty(arg1[1].text)) )
