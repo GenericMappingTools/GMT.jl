@@ -87,7 +87,7 @@ function gmt2kml_helper(cmd0::String, arg1; kwargs...)
 	                                 [:I :icon], [:K :not_over], [:L :extra_data], [:N :feature_name], [:O :overlay], [:Qa :wiggles], [:Qi :wiggle_fixedazim], [:Qs :wiggle_scale], [:S :ilscale], [:T :title], [:Z :attrib]])
 
 	cmd = add_opt(d, cmd, "G", [:G :fill])
-	cmd *= add_opt_pen(d, [:W :pen], "W")
+	cmd *= add_opt_pen(d, [:W :pen], opt="W")
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)
 	N_used = got_fname == 0 ? 1 : 0			# To know whether a cpt will go to arg1 or arg2

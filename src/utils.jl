@@ -515,14 +515,15 @@ end
 Returns a GMTgrid if `A` is a GMTgrid of floats, a GMTimage if `A` is a GMTimage and `type` is used or
 an array of Float32|64 otherwise.
 """
-function rescale(A::String, low=0.0, up=1.0; inputmin=nothing, inputmax=nothing, stretch=false, type=nothing)
+function rescale(A::String; low=0.0, up=1.0, inputmin=nothing, inputmax=nothing, stretch=false, type=nothing)
 	GI = gmtread(A)
-	rescale(GI, low, up, inputmin=inputmin, inputmax=inputmax, stretch=stretch, type=type)
+	rescale(GI; low=low, up=up, inputmin=inputmin, inputmax=inputmax, stretch=stretch, type=type)
 end
-function rescale(A::AbstractArray, _low=0.0, _up=1.0; inputmin=nothing, inputmax=nothing, stretch=false, type=nothing)
+function rescale(A::AbstractArray; low=0.0, up=1.0, inputmin=nothing, inputmax=nothing, stretch=false, type=nothing)
 	(type !== nothing && (!isa(type, DataType) || !(type <: Unsigned))) && error("The 'type' variable must be an Unsigned DataType")
 	((inputmin !== nothing || inputmax !== nothing) && stretch == 1) && @warn("The `stretch` option overrules `inputmin|max`.")
-	low::Float64, up::Float64 = _low, _up
+	low = Float64(low)
+	up  = Float64(up)
 	if (stretch == 1)
 		inputmin, inputmax = histogram(A, getauto=true)
 	elseif (isa(stretch, Tuple) || (isvector(stretch) && length(stretch) == 2))

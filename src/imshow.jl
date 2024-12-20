@@ -150,7 +150,7 @@ function imshow(arg1::GItype; kw...)
 
 			(arg1.geog > 0 && all(CTRL.limits .== 0)) && snif_GI_set_CTRLlimits(arg1)
 			(arg1.geog > 0 && is_in_dict(d, [:J :proj :projection]) === nothing) && (d[:J] = "guess")
-			opt_J = parse_J(d, "", "", true, false, false)[2]
+			opt_J = parse_J(d, "", default="", map=true, O=false, del=false)[2]
 			(startswith(opt_J, " -JX") && !contains(opt_J, '/')) && (opt_J *= "/0")	# We always want axis equal
   			w, h = plot_GI_size(arg1, opt_J)	# Compute the plot Width,Height given the arg1 limits and proj
 			aspect = h / w

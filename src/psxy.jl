@@ -48,12 +48,12 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 			cmd, opt_B = string(cmd, d[:B]), d[:B]		# B option was parsed in plot/ternary
 			delete!(d, :B)
 		end
-		cmd, opt_R = parse_R(d, cmd, O)
+		cmd, opt_R = parse_R(d, cmd, O=O)
 	end
 
 	if (is_ternary && !first) 	# Either a -J was set and we'll fish it here or no and we'll use the default.
 		def_J = " -JX" * split(DEF_FIG_SIZE, '/')[1]
-		cmd, opt_J::String = parse_J(d, cmd, def_J)
+		cmd, opt_J::String = parse_J(d, cmd, default=def_J)
 	else
 		def_J = (is_ternary) ? " -JX" * split(DEF_FIG_SIZE, '/')[1] : ""		# Gives "-JX15c" 
 		@inbounds (!is_ternary && isa(arg1, GMTdataset) && length(arg1.ds_bbox) >= 4) && (CTRL.limits[1:4] = arg1.ds_bbox[1:4])
@@ -62,7 +62,7 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 		(!IamModern[1] && haskey(d, :hexbin) && !haskey(d, :aspect)) && (d[:aspect] = :equal)	# Otherwise ... gaps between hexagons
 		(isa(arg1, GMTdataset) && size(arg1,2) > 1 && !isempty(arg1.colnames)) && (CTRL.XYlabels[1] = arg1.colnames[1]; CTRL.XYlabels[2] = arg1.colnames[2])
 		isa(arg1, Vector{<:GMTdataset}) && !isempty(arg1[1].colnames) && (CTRL.XYlabels[1] = arg1[1].colnames[1]; CTRL.XYlabels[2] = arg1[1].colnames[2])
-		if (is_ternary)  cmd, opt_J = parse_J(d, cmd, def_J)
+		if (is_ternary)  cmd, opt_J = parse_J(d, cmd, default=def_J)
 		else             cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd, caller, O, def_J)
 		end
 		# Current parse_B does not add a default -Baz when 3D AND -J has a projection. More or less fix that.
@@ -164,7 +164,7 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 	end
 
 	# Need to parse -W here because we need to know if the call to make_color_column() MUST be avoided. 
-	opt_W::String = add_opt_pen(d, [:W :pen], "W")
+	opt_W::String = add_opt_pen(d, [:W :pen], opt="W")
 	arg1, opt_W, got_color_line_grad, made_it_vector = helper_psxy_line(d, cmd, opt_W, is3D, arg1, arg2, arg3)
 
 	arg1, cmd = check_ribbon(d, arg1, cmd, opt_W)	# Do this check here, after -W is known and before parsing -G & -L
@@ -932,6 +932,8 @@ function parse_opt_S(d::Dict, arg1::Union{GDtype, AbstractVector{<:Real}, Nothin
 			w::Float64 = (CTRL.figsize[1] != 0) ? CTRL.figsize[1] : 15.0
 			opt_S = " -Sh$(w / (r * 1.5))"		# Is it always 1.5?
 			delete!(d, :hexbin)
+		elseif (is_in_dict(d, [:arrow :geovec :geovector]) !== nothing)
+			opt_S = " -S" * helper_arrows(d)
 		end
 	else
 		val, symb = find_in_dict(d, [:ms :markersize :MarkerSize :size])
@@ -947,7 +949,7 @@ function parse_markerline(d::Dict, opt_ML::String, opt_Wmarker::String)::Tuple{S
 	# Make this code into a function so that it can also be called from mk_styled_line!()
 	if ((val = find_in_dict(d, [:ml :markerline :MarkerLine])[1]) !== nothing)
 		if (isa(val, Tuple))           opt_ML::String = " -W" * parse_pen(val) # This can hold the pen, not extended atts
-		elseif (isa(val, NamedTuple))  opt_ML = add_opt_pen(nt2dict(val), [:pen], "W")
+		elseif (isa(val, NamedTuple))  opt_ML = add_opt_pen(nt2dict(val), [:pen], opt="W")
 		else                           opt_ML = " -W" * arg2str(val)
 		end
 		if (opt_Wmarker != "")
@@ -1088,7 +1090,7 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill::Vector{Strin
 					(_arg[k+2] == 0) && (con[(k-1)*3+2, 2] = tmp[k+1,2])	# 'total' bars are always 0->top
 				end
 				CTRL.pocket_call[3] = con
-				cmd2 = add_opt_pen(d, [:connector], "W")
+				cmd2 = add_opt_pen(d, [:connector], opt="W")
 			end
 		end
 		(is_hbar) && (tmp = [tmp[:,2] tmp[:,1] tmp[:,3]])		# Horizontal bars must swap 1-2 cols
@@ -1336,6 +1338,7 @@ function get_marker_name(d::Dict, arg1, symbs::Vector{Symbol}, is3D::Bool, del::
 				elseif (o == "r" || startswith(o, "rec"))  opt = "r";  N = 2
 				elseif (o == "V" || startswith(o, "Vec"))  opt = "V";  N = 2
 				elseif (o == "v" || startswith(o, "vec"))  opt = "v";  N = 2
+				elseif (startswith(o, "geovec"))  opt = "=";  N = 2
 				elseif (o == "w" || o == "pie" || o == "web" || o == "wedge")  opt = "w";  N = 2
 				elseif (o == "W" || o == "Pie" || o == "Web" || o == "Wedge")  opt = "W";  N = 2
 				end
@@ -1344,7 +1347,7 @@ function get_marker_name(d::Dict, arg1, symbs::Vector{Symbol}, is3D::Bool, del::
 				if (length(t) == 3 && isa(t[3], NamedTuple))
 					if (marca == "w" || marca == "W")	# Ex (spiderweb): marker=(:pie, [...], (inner=1,))
 						marca *= add_opt(t[3], (inner="/", arc="+a", radial="+r", size=("", arg2str, 1), pen=("+p", add_opt_pen)) )
-					elseif (marca == "m" || marca == "M")
+					elseif (marca == "m" || marca == "M" || marca == "=")
 						marca *= vector_attrib(t[3])
 					end
 				end
@@ -1359,6 +1362,7 @@ function get_marker_name(d::Dict, arg1, symbs::Vector{Symbol}, is3D::Bool, del::
 				elseif (key == :k || key == :custom)  opt = "k"
 				elseif (key == :M || key == :Matang)  opt = "M"
 				elseif (key == :m || key == :matang)  opt = "m"
+				elseif (key == :geovec)  opt = "="
 				end
 				if (opt == "w" || opt == "W")
 					marca = opt * add_opt(t, (size=("", arg2str, 1), inner="/", arc="+a", radial="+r", pen=("+p", add_opt_pen)))
@@ -1366,7 +1370,7 @@ function get_marker_name(d::Dict, arg1, symbs::Vector{Symbol}, is3D::Bool, del::
 					marca = opt * add_opt(t, (size=("", arg2str, 1), base="+b", Base="+B"))
 				elseif (opt == "l")
 					marca = opt * add_opt(t, (size=("", arg2str, 1), letter="+t", justify="+j", font=("+f", font)))
-				elseif (opt == "m" || opt == "M")
+				elseif (opt == "m" || opt == "M" || opt == "=")
 					marca = opt * add_opt(t, (size=("", arg2str, 1), arrow=("", vector_attrib)))
 				elseif (opt == "k" || opt == "K")
 					marca = opt * add_opt(t, (custom="", size="/"))

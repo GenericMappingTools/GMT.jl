@@ -60,17 +60,17 @@ function grdvector(arg1, arg2; first=true, kwargs...)
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
 	# Must call parse_R first to get opt_R that is needed in the get_grdinfo() call.
-	cmd, opt_R = parse_R(d, "", O)
+	cmd, opt_R = parse_R(d, "", O=O)
 	#x_min  x_max  y_min  y_max  z_min  z_max  dx(7)  dy(8)  n_cols(9) n_rows(10)  reg(11) isgeog(12)
 	info  = get_grdinfo(arg1, opt_R);		n_cols, n_rows = info[9], info[10]
 	info2 = get_grdinfo(arg2, opt_R)
 	isa(arg1, String) && (CTRL.limits[1:4] = info[1:4]; CTRL.limits[7:10] = info[1:4])
 
 	def_J = " -JX" * split(DEF_FIG_SIZE, '/')[1] * "/0"
-	cmd, opt_J = parse_J(d, cmd, def_J, true, O)
+	cmd, opt_J = parse_J(d, cmd, default=def_J, map=true, O=O)
 	parse_theme(d)		# Must be first because some themes change DEF_FIG_AXES
 	DEF_FIG_AXES_::String = (IamModern[1]) ? "" : DEF_FIG_AXES[1]	# DEF_FIG_AXES is a global const
-	cmd, opt_B = parse_B(d, cmd, (O ? "" : DEF_FIG_AXES_))
+	cmd, opt_B = parse_B(d, cmd, opt_B__=(O ? "" : DEF_FIG_AXES_))
 
 	cmd = parse_common_opts(d, cmd, [:UVXY :f :p :t :margin :params]; first=first)[1]
 	!(contains(cmd, "-V")) && (cmd *= " -Ve")	# Shut up annoying warnings if -S has no units
@@ -137,7 +137,7 @@ function grdvector(arg1, arg2; first=true, kwargs...)
 
 	opt_Q = !isbarbs ? parse_Q_grdvec(d, [:Q :vec :vector :arrow], defLen, defHead, defNorm) : ""
 	!occursin(" -G", opt_Q) && (cmd = add_opt_fill(cmd, d, [:G :fill], 'G'))	# If fill not passed in arrow, try from regular option
-	cmd *= add_opt_pen(d, [:W :pen], "W")
+	cmd *= add_opt_pen(d, [:W :pen], opt="W")
 	(!occursin(" -C", cmd) && !occursin(" -W", cmd) && !occursin(" -G", opt_Q)) && (cmd *= " -W0.5")	# If still nothing, set -W.
 	(opt_Q != "") && (cmd *= opt_Q)
 

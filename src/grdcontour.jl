@@ -161,6 +161,6 @@ function parse_contour_AGTW(d::Dict, cmd::String)
 	cmd = add_opt(d, cmd, "G", [:G :labels], ("", helper_decorated))
 	cmd = add_opt(d, cmd, "T", [:T :ticks], (local_high = ("h", nothing, 1), local_low = ("l", nothing, 1),
 	                                         labels = "+l", closed = "_+a", gap = "+d") )
-	opt_W = add_opt_pen(d, [:W :pen], "W")
+	opt_W = add_opt_pen(d, [:W :pen], opt="W")
 	return cmd * opt_W, opt_W
 end

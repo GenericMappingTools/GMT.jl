@@ -59,7 +59,7 @@ function grdedit_helper(cmd0::String, arg1; kwargs...)
 	(isa(arg1, GMTgrid) && length(kwargs) == 0) && (arg1.range[5:6] .= extrema(arg1); return arg1)  # Update the z_min|max
 
 	cmd, = parse_common_opts(d, "", [:G :R :V_params :bi :di :e :f :w :yx])
-	cmd = parse_J(d, cmd, " ")[1]       # No default J here.
+	cmd = parse_J(d, cmd, default=" ")[1]       # No default J here.
 	cmd  = parse_these_opts(cmd, d, [[:A :adjust_inc], [:C :clear_history], [:D :header :metadata], [:E :flip],
 	                                 [:L :adust_lon], [:S :wrap], [:T :toggle :toggle_reg]])
 	cmd, args, n, = add_opt(d, cmd, "N", [:N :replace], :data, Array{Any,1}([arg1, arg2]), (x="",))

@@ -112,10 +112,10 @@ function _coast(cmd0::String, O::Bool, K::Bool, clip::StrSymb, d::Dict)
 	end
 	
 	if (!occursin("-E+l", cmd) && !occursin("-E+L", cmd))	# I.e., no listings only
-		cmd, = parse_R(d, cmd, O, true, false, have_opt_M)	# If have_opt_M we don't set the -R limits in globals
+		cmd, = parse_R(d, cmd, O=O, del=true, RIr=false,  noGlobalR=have_opt_M)	# If have_opt_M we don't set the -R limits in globals
 		if (!have_opt_M)									# If Dump no -R & -B
-			cmd = parse_J(d, cmd, "guess", true, O)[1]
-			cmd = parse_B(d, cmd, (O ? "" : (IamModern[1]) ? "" : DEF_FIG_AXES[1]))[1]
+			cmd = parse_J(d, cmd, default="guess", map=true, O=O)[1]
+			cmd = parse_B(d, cmd, opt_B__=(O ? "" : (IamModern[1]) ? "" : DEF_FIG_AXES[1]))[1]
 		end
 	end
 	common = have_opt_M ? [:UVXY :bo :params] : [:F :JZ :UVXY :bo :c :p :t :params :margin]

@@ -152,7 +152,7 @@ function histogram_helper(cmd0::String, arg1; first=true, kwargs...)
 	end
 
 	cmd  = add_opt(d, cmd, "L", [:L :out_range], (first = "l", last = "h", both = "b"))
-	cmd *= add_opt_pen(d, [:W :pen], "W")
+	cmd *= add_opt_pen(d, [:W :pen], opt="W")
 	if (!occursin("-G", cmd) && !occursin("-C", cmd) && !occursin("-S", cmd))
 		!nofill && (cmd *= " -G#0072BD")		# Unless specifically set to no, use a default color
 		!occursin("-W", cmd) && (cmd *= " -Wfaint")

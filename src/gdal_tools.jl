@@ -382,7 +382,7 @@ function GMT_opts_to_GDAL(f::Function, opts::Vector{String}, kwargs...)
 		f == gdalgrid ? append!(opts, ["-txe", s[1], s[2], "-tye", s[3], s[4]]) : append!(opts, op)
 		#f == gdalgrid ? append!(opts, ["-txe", s[1], s[2], "-tye", s[3], s[4]]) : append!(opts, ["-projwin", split(opt_R[4:end], '/')[[1,4,2,3]]...])	# Ugly
 	end
-	((opt_J = GMT.parse_J(d, "", " ")[1]) != "") && append!(opts, ["-a_srs", opt_J[4:end]])
+	((opt_J = GMT.parse_J(d, "", default=" ")[1]) != "") && append!(opts, ["-a_srs", opt_J[4:end]])
 	if ((opt_I = GMT.parse_I(d, "", [:I :inc :increment :spacing], "I")) != "")	# Need the 'I' to not fall into parse_I() exceptions
 		t = split(opt_I[4:end], '/')
 		(length(t) == 1) ? append!(opts, ["-tr", t[1], t[1]]) : append!(opts, ["-tr", t[1], t[2]])
