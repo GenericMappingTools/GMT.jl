@@ -71,7 +71,7 @@ function legend(cmd0::String="", arg1=nothing; first::Bool=true, kwargs...)
 	end
 
 	def_J = " -JX" * split(DEF_FIG_SIZE, '/')[1] * "/0"
-	cmd, _, _, opt_R = parse_BJR(d, "", "", O, def_J)
+	cmd, _, _, opt_R = parse_BJR(d, "", "", O, defaultJ=def_J)
 	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R)	# If called from classic without input it hangs here.
 	
 	# Trouble here is that 'legend' may be called from modern mode (inside gmtbegin()), case in which so far we want to

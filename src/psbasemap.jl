@@ -50,7 +50,7 @@ function basemap(; first=true, kwargs...)
 
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
-	cmd, = parse_BJR(d, "", "", O, " -JX" * split(DEF_FIG_SIZE, '/')[1] * "/0")
+	cmd, = parse_BJR(d, "", "", O, defaultJ=" -JX" * split(DEF_FIG_SIZE, '/')[1] * "/0")
 	cmd, = parse_JZ(d, cmd)
 	cmd, = parse_common_opts(d, cmd, [:F :UVXY :bo :c :f :p :t :params :margin]; first=first)
 	cmd  = parse_these_opts(cmd, d, [[:A :polygon]])

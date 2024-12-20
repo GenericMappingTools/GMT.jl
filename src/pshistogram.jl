@@ -113,7 +113,7 @@ function histogram_helper(cmd0::String, arg1; first=true, kwargs...)
 		return gmt(gmt_proggy * cmd, arg1)
 	end
 
-	cmd, opt_B, opt_J, opt_R ::String= parse_BJR(d, cmd, "histogram", O, " -JX14c/14c")
+	cmd, opt_B, opt_J, opt_R ::String= parse_BJR(d, cmd, "histogram", O, defaultJ=" -JX14c/14c")
 	cmd = parse_JZ(d, cmd)[1]
 	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :c :e :f :p :t :w :params :margin]; first=first)[1]
 	cmd = parse_these_opts(cmd, d, [[:A :horizontal], [:F :center], [:Q :cumulative], [:S :stairs]])

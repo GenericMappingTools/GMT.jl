@@ -71,7 +71,7 @@ function _grdimage(cmd0::String, arg1, arg2, arg3, O::Bool, K::Bool, d::Dict)
 
 	has_opt_B = (is_in_dict(d, [:B :frame :axis :axes]) !== nothing)
 	(is_in_dict(d, [:A :img_out :image_out]) !== nothing) && (d[:B] = "none")	# When -A is used, -B is forbiden
-	cmd::String, opt_B::String, opt_J::String, opt_R::String = parse_BJR(d, "", "", O, " -JX" * split(DEF_FIG_SIZE, '/')[1] * "/0")
+	cmd::String, opt_B::String, opt_J::String, opt_R::String = parse_BJR(d, "", "", O, defaultJ=" -JX" * split(DEF_FIG_SIZE, '/')[1] * "/0")
 	(startswith(opt_J, " -JX") && !contains(opt_J, "/")) && (cmd = replace(cmd, opt_J => opt_J * "/0")) # When sub-regions
 	(!has_opt_B && isa(arg1, GMTimage) && (isimgsize(arg1) || CTRL.limits[1:4] == zeros(4)) && opt_B == DEF_FIG_AXES_BAK) &&
 		(cmd = replace(cmd, opt_B => ""))			# Dont plot axes for plain images if that was not required

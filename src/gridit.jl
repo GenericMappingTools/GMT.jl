@@ -94,7 +94,7 @@ gridit(arg1::MatGDsGd; method::StrSymb="surface", proj="", epsg=0, kw...) =
 function seek_auto_RI(d::Dict{Symbol,Any}, fname::String, arg1::Union{Nothing, MatGDsGd})
 	# Check if -R -I was provided and if not make a wild guess of them.
 	IamModern[1] && return d							# No sniffs in modern
-	opt_RI, opt_R = parse_RIr(d, "", false, false)
+	opt_RI, opt_R = parse_RIr(d, "", false, del=false)
 	opt_I = (opt_RI != opt_R) ? split(opt_RI)[1] : ""	# opt_RI has -I first than -R
 	have_R, have_I = (opt_R != ""), (opt_RI != opt_R)
 
