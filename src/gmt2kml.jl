@@ -64,13 +64,6 @@ Parameters
 - $(opt_V)
 - $(opt_write)
 - $(opt_append)
-- $(_opt_bi)
-- $(_opt_di)
-- $(opt_e)
-- $(_opt_f)
-- $(_opt_h)
-- $(_opt_i)
-- $(opt_swap_xy)
 
 To see the full documentation type: ``@? gmt2kml``
 """
@@ -83,10 +76,9 @@ function gmt2kml_helper(cmd0::String, arg1; kwargs...)
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
 	cmd, = parse_common_opts(d, "", [:R :V_params :bi :di :e :f :h :i :yx])
-	cmd  = parse_these_opts(cmd, d, [[:A :altitude_mode], [:D :descript], [:E :extrude], [:F :feature_type],
+	cmd  = parse_these_opts(cmd, d, [[:A :altitude_mode], [:D :descript], [:E :extrude], [:F :feature_type], [:G :fill],
 	                                 [:I :icon], [:K :not_over], [:L :extra_data], [:N :feature_name], [:O :overlay], [:Qa :wiggles], [:Qi :wiggle_fixedazim], [:Qs :wiggle_scale], [:S :ilscale], [:T :title], [:Z :attrib]])
 
-	cmd = add_opt(d, cmd, "G", [:G :fill])
 	cmd *= add_opt_pen(d, [:W :pen], opt="W")
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)

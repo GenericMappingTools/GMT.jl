@@ -83,7 +83,7 @@ function grdvector(arg1, arg2; first=true, kwargs...)
 	max_extrema = max(abs(info[5]), abs(info[6]), abs(info2[5]), abs(info2[6]))	# The max of the absolute extremas
 	as = 1.05 * max_extrema * sqrt((n_rows*n_cols) / (w*h))		# Autoscale (approx). Idealy it should be max magnitude.
 
-	opt_I = parse_I(d, "", [:I :inc :increment :spacing], "I")
+	opt_I = parse_I(d, "", [:I :inc :increment :spacing], "I", true)
 	multx = multy = 1
 	if (opt_I == "")
 		# To estimate the "jumping" factor, we use a virtual 'maxlen' that is the maximum length that

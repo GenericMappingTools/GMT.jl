@@ -52,9 +52,15 @@ Parameters
 
 To see the full documentation type: ``@? gmtconvert``
 """
-function gmtconvert(cmd0::String="", arg1=nothing; kwargs...)
+gmtconvert(cmd0::String; kwargs...) = gmtconvert_helper(cmd0, nothing; kwargs...)
+gmtconvert(arg1; kwargs...)         = gmtconvert_helper("", arg1; kwargs...)
 
+function gmtconvert_helper(cmd0::String, arg1; kwargs...)
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+    gmtconvert_helper(cmd0, arg1, d)
+end
+# ---------------------------------------------------------------------------------------------------
+function gmtconvert_helper(cmd0::String, arg1, d::Dict{Symbol,Any})
 
 	cmd, = parse_common_opts(d, "", [:V_params :write :append :a :b :bo :d :e :f :g :h :i :o :q :s :w :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :hcat], [:C :n_records], [:D :dump], [:E :first_last], [:F :conn_method],
@@ -64,6 +70,3 @@ function gmtconvert(cmd0::String="", arg1=nothing; kwargs...)
 	(!contains(cmd, " -b") && isa(out, GDtype) && cmd0 != "") && file_has_time!(cmd0, out)  # Try to guess if time columns
 	return out
 end
-
-# ---------------------------------------------------------------------------------------------------
-gmtconvert(arg1; kw...) = gmtconvert("", arg1; kw...)

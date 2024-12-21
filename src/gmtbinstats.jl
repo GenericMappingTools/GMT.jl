@@ -38,17 +38,19 @@ Parameters
 
 To see the full documentation type: ``@? gmtbinstats``
 """
-function binstats(fname::String=""; nbins=0, kwargs...)
+function binstats(fname::String; nbins=0, kwargs...)
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	arg1 = read_data(d, fname, "", nothing, " ", false, true)[2]	# Make sure we have the data here
-	binstats(arg1; nbins=0, d...)
+	binstats_helper(arg1, nbins, d)
 end
-function binstats(arg1; nbins=0, kwargs...)
-#function binstats(cmd0::String="", arg1=nothing; nbins=0, kwargs...)
 
+function binstats(arg1; nbins=0, kwargs...)
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
-	#arg1 = read_data(d, "", "", arg1, " ", false, true)[2]	# Make sure we have the data here
-	data = mat2ds(arg1)
+    binstats_helper(mat2ds(arg1), nbins, d)
+end
+
+function binstats_helper(data::GDtype, nbins::Int, d::Dict{Symbol,Any})
+
 	isa(data, Vector{<:GMTdataset}) && isempty(data[1].ds_bbox) && set_dsBB!(data)
 
 	cmd, = parse_common_opts(d, "", [:G :I :R :V_params :a :bi :di :e :f :g :h :i :q :r :w :yx])
@@ -116,6 +118,4 @@ function binstats(arg1; nbins=0, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-#binstats(arg1; kw...) = binstats("", arg1; kw...)
-
 const gmtbinstats = binstats			# Alias

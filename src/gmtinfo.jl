@@ -44,11 +44,13 @@ Parameters
 gmtinfo(cmd0::String; kwargs...) = gmtinfo_helper(cmd0, nothing; kwargs...)
 gmtinfo(arg1; kwargs...)         = gmtinfo_helper("", arg1; kwargs...)
 
+function gmtinfo_helper(cmd0::String, arg1; kwargs...)
+	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+    gmtinfo_helper(cmd0, arg1, d)
+end
 # ---------------------------------------------------------------------------------------------------
 
-function gmtinfo_helper(cmd0::String, arg1; kwargs...)::Union{String, GMTdataset}
-
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+function gmtinfo_helper(cmd0::String, arg1, d::Dict{Symbol,Any})::Union{String, GMTdataset}
 
 	cmd, = parse_common_opts(d, "", [:V_params :e :f :i :o :r :w :yx])
 	(endswith(cmd, "-:")) && (cmd *= "i")    # Need to be -:i not -: to not swap output too
