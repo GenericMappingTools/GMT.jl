@@ -169,12 +169,12 @@ function parse_R(d::Dict, cmd::String; O::Bool=false, del::Bool=true, RIr::Bool=
 
 	if (RIr)
 		if (isa(val, GItype))
-			opt_I = parse_I(d, "", [:I :inc :increment :spacing], "I")
+			opt_I = parse_I(d, "", [:I :inc :increment :spacing], "I", true)
 			(opt_I == "") && (cmd *= " -I" * arg2str(val.inc))::String
 			opt_r = parse_r(d, "")[2]
 			(opt_r == "") && (cmd *= " -r" * ((val.registration == 0) ? "g" : "p"))
 		else				# Here we must parse the -I and -r separately.
-			cmd = parse_I(d, cmd, [:I :inc :increment :spacing], "I", del=del)
+			cmd = parse_I(d, cmd, [:I :inc :increment :spacing], "I", del)
 			cmd = parse_r(d, cmd, del)[1]
 		end
 	end
@@ -1396,8 +1396,8 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_F(d::Dict, cmd::String)::String
-	cmd = add_opt(d, cmd, "F", [:F :box], (clearance="+c", fill=("+g", add_opt_fill), inner="+i",
-	                                       pen=("+p", add_opt_pen), rounded="+r", shaded=("+s", arg2str), shade=("+s", arg2str)) )
+	cmd = add_opt(d, cmd, "F", [:F :box], (clearance="+c", fill=("+g", add_opt_fill), inner="+i", pen=("+p", add_opt_pen),
+	                                       rounded="+r", shaded=("+s", arg2str), shade=("+s", arg2str)) )
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -1678,7 +1678,7 @@ function parse_common_opts(d::Dict, cmd::String, opts::VMs; first::Bool=true, is
 	for opt in opts
 		if     (opt == :RIr)  cmd, o = parse_RIr(d, cmd)
 		elseif (opt == :R && !ignore_R)  cmd, o = parse_R(d, cmd)
-		elseif (opt == :I)  cmd  = parse_I(d, cmd, [:I :inc :increment :spacing], "I")
+		elseif (opt == :I)  cmd  = parse_I(d, cmd, [:I :inc :increment :spacing], "I", true)
 		elseif (opt == :J && !ignore_J)  cmd, o = parse_J(d, cmd)
 		elseif (opt == :JZ) cmd, o = parse_JZ(d, cmd; is3D=is3D, O=!first)
 		elseif (opt == :G)  cmd, = parse_G(d, cmd)
@@ -1745,11 +1745,11 @@ function parse_theme(d::Dict, del::Bool=true)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_these_opts(cmd::String, d::Dict, opts, del::Bool=true)::String
+function parse_these_opts(cmd::String, d::Dict, opts)::String
 	# Parse a group of options that individualualy would had been parsed as (example):
 	# cmd = add_opt(d, cmd, "A", [:A :horizontal])
 	for opt in opts
-		cmd = add_opt(d, cmd, string(opt[1]), opt; del=del)
+		cmd = add_opt(d, cmd, string(opt[1]), opt)
 	end
 	return cmd
 end
@@ -1759,7 +1759,7 @@ end
 parse_G(d::Dict, cmd::String) = parse_helper(cmd, d, [:G :save :write :outgrid :outfile], " -G")
 
 # ---------------------------------------------------------------------------------------------------
-function parse_I(d::Dict, cmd::String, symbs, opt::String; del::Bool=true)::String
+function parse_I(d::Dict, cmd::String, symbs, opt::String, del::Bool)::String
 	# Parse the quasi-global -I option. But arguments can be strings, arrays, tuples or NamedTuples
 	# At the end we must recreate this syntax: xinc[unit][+e|n][/yinc[unit][+e|n]] or
 	get_that_string(arg)::String = string(arg)::String		# Function barrier. Shuting up JET, etc.
@@ -1990,11 +1990,11 @@ function build_pen(d::Dict, del::Bool=false)::String
 		end
 		lw::String = ""
 	else
-		lw = add_opt(d, "", "", [:lw :lt :linewidth :linethick :linethickness]; del=del)	# Line width
+		lw = add_opt(d, "", "", [:lw :lt :linewidth :linethick :linethickness])	# Line width
 	end
 	(lw == "" && find_in_dict(d, [:line])[1] !== nothing) && (lw = "0.5p")	# Means, accept also line=true
 
-	ls::String = add_opt(d, "", "", [:ls :linestyle]; del=del)			# Line style
+	ls::String = add_opt(d, "", "", [:ls :linestyle])			# Line style
 	lc::String = parse_pen_color(d, [:lc :linecolor], del)
 	out::String = ""
 	if (lw != "" || lc != "" || ls != "")
@@ -2330,7 +2330,7 @@ function add_opt_1char(cmd::String, d::Dict, symbs::Vector{Matrix{Symbol}}; del:
 end
 
 # ---------------------------------------------------------------------------------------------------
-function add_opt(d::Dict, cmd::String, opt::String, mapa::NamedTuple; del::Bool=true)::String
+function add_opt(d::Dict, cmd::String, opt::String, mapa::NamedTuple)::String
 	cmd_::String = ""
 	for k in keys(mapa)
 		((val_ = find_in_dict(d, [k], false)[1]) === nothing) && continue	# This mapa key was not used
@@ -2346,7 +2346,17 @@ function add_opt(d::Dict, cmd::String, opt::String, mapa::NamedTuple; del::Bool=
 	return cmd
 end
 
-function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, mapa=nothing; grow_mat=nothing, del::Bool=true, expand::Bool=false, expand_str::Bool=false)::String
+#
+function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs)::String
+	((val = find_in_dict(d, symbs, true)[1]) === nothing) && return cmd
+	isa(val, AbstractDict) && (val = Base.invokelatest(dict2nt, val))
+	isa(val, NamedTuple) && return cmd # Happens when the inline 'inset' passed a NT with options for inset itself and not the module it called
+	args = arg2str(val)::String
+	return (opt != "") ? string(cmd, " -", opt, args) : string(cmd, args)
+end
+#
+
+function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, mapa; grow_mat=nothing, del::Bool=true, expand::Bool=false, expand_str::Bool=false)::String
 	# Scan the D Dict for SYMBS keys and if found create the new option OPT and append it to CMD
 	# If DEL == false we do not remove the found key.
 	# 'grow_mat=mat', is a special case to append to a matrix (can't realy be done in Julia)
@@ -2358,7 +2368,7 @@ function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, mapa=nothing; gr
 
 	if ((val = find_in_dict(d, symbs, del)[1]) === nothing)
 		if (expand && isa(mapa, NamedTuple))
-			cmd = add_opt(d, cmd, opt, mapa; del=del)
+			cmd = add_opt(d, cmd, opt, mapa)
 		end
 		return cmd
 	elseif (expand_str && isa(mapa, NamedTuple))		# Use the mapa KEYS as possibe values of 'val'
