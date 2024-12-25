@@ -622,12 +622,16 @@ function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})::GDtype
 	D::GMT_DATASET = unsafe_load(convert(Ptr{GMT_DATASET}, object))
 
 	# This is for the particular case of the DCW countries that have a myriad of small segments and no Attributes
-	min_pts = (get(POSTMAN[1], "minpts", "") != "") ? parse(Int, POSTMAN[1]["minpts"]) - 1 : 0
-	(min_pts > 0) && delete!(POSTMAN[1], "minpts")
-	DCWnames = (get(POSTMAN[1], "DCWnames", "") != "") ? true : false		# If DCW country names will turn into attribs
-	(DCWnames) && delete!(POSTMAN[1], "DCWnames")
-	plusZzero = (get(POSTMAN[1], "plusZzero", "") != "") ? true : false		# To eventually add an extra column with 0's
-	(plusZzero) && delete!(POSTMAN[1], "plusZzero")
+	if (!isempty(POSTMAN))
+		min_pts = (get(POSTMAN[1], "minpts", "") != "") ? parse(Int, POSTMAN[1]["minpts"]) - 1 : 0
+		(min_pts > 0) && delete!(POSTMAN[1], "minpts")
+		DCWnames = (get(POSTMAN[1], "DCWnames", "") != "") ? true : false		# If DCW country names will turn into attribs
+		(DCWnames) && delete!(POSTMAN[1], "DCWnames")
+		plusZzero = (get(POSTMAN[1], "plusZzero", "") != "") ? true : false		# To eventually add an extra column with 0's
+		(plusZzero) && delete!(POSTMAN[1], "plusZzero")
+	else
+		min_pts, DCWnames, plusZzero = 0, false, false
+	end
 
 	seg_out = 0;
 	T::Vector{Ptr{GMT_DATATABLE}} = unsafe_wrap(Array, D.table, D.n_tables)

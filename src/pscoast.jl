@@ -115,7 +115,7 @@ function _coast(cmd0::String, O::Bool, K::Bool, clip::StrSymb, d::Dict)
 		cmd, = parse_R(d, cmd, O=O, del=true, RIr=false,  noGlobalR=have_opt_M)	# If have_opt_M we don't set the -R limits in globals
 		if (!have_opt_M)									# If Dump no -R & -B
 			cmd = parse_J(d, cmd, default="guess", map=true, O=O)[1]
-			cmd = parse_B(d, cmd, opt_B__=(O ? "" : (IamModern[1]) ? "" : DEF_FIG_AXES[1]))[1]
+			cmd = parse_B(d, cmd, (O ? "" : (IamModern[1]) ? "" : DEF_FIG_AXES[1]))[1]
 		end
 	end
 	common = have_opt_M ? [:UVXY :bo :params] : [:F :JZ :UVXY :bo :c :p :t :params :margin]
@@ -343,6 +343,10 @@ To see the plots produced by these examples type: ``@? earthregions``
 """
 function earthregions(name::String=""; proj="guess", grid::Bool=false, dataset="", res="", exact::Bool=false,
                       registration="", country::Bool=false, round=0, Vd::Int=0)
+	_earthregions(name, string(proj), grid, string(dataset), string(res), exact, string(registration), country, round, Vd)
+end
+
+function _earthregions(name::String, proj::String, grid::Bool, dataset::String, res::String, exact::Bool, registration::String, country::Bool, round, Vd::Int)
 
 	(name == "") && (println("Available collections:\n\t" * join(["DCW", "NatEarth", "UN", "Mainlands", "IHO", "Wiki", "Lakes"], ", ")); return)
 

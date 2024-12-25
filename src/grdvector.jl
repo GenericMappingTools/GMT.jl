@@ -70,7 +70,7 @@ function grdvector(arg1, arg2; first=true, kwargs...)
 	cmd, opt_J = parse_J(d, cmd, default=def_J, map=true, O=O)
 	parse_theme(d)		# Must be first because some themes change DEF_FIG_AXES
 	DEF_FIG_AXES_::String = (IamModern[1]) ? "" : DEF_FIG_AXES[1]	# DEF_FIG_AXES is a global const
-	cmd, opt_B = parse_B(d, cmd, opt_B__=(O ? "" : DEF_FIG_AXES_))
+	cmd, opt_B = parse_B(d, cmd, (O ? "" : DEF_FIG_AXES_))
 
 	cmd = parse_common_opts(d, cmd, [:UVXY :f :p :t :margin :params]; first=first)[1]
 	!(contains(cmd, "-V")) && (cmd *= " -Ve")	# Shut up annoying warnings if -S has no units
