@@ -159,7 +159,7 @@ function plotyy(arg1, arg2; first=true, kw...)
 	savefig = ((val = find_in_dict(d, [:savefig :figname :name])[1]) !== nothing) ? arg2str(val)::String : nothing
 	Vd = ((val = find_in_dict(d, [:Vd])[1]) !== nothing) ? val : 0
 
-	cmd::String, opt_B::String = parse_B(d, "", opt_B__=" -Baf -BW")
+	cmd::String, opt_B::String = parse_B(d, "", " -Baf -BW")
 	if (opt_B != " -Baf -BW")
 		if (occursin(" -Bx", opt_B) || occursin(" -By", opt_B) || occursin("+t", opt_B))
 			# OK, so here's the problem. Both title and label maybe multi-words, case in which they will have the
@@ -1690,7 +1690,7 @@ end
 
 function parse_B4ternary!(d::Dict, first::Bool=true)
 	# Ternary accepts only a special brand of -B. Try to parse and/or build -B option
-	opt_B = parse_B(d, "", opt_B__=" -Bafg")[2]
+	opt_B = parse_B(d, "", " -Bafg")[2]
 	if ((val = find_in_dict(d, [:labels])[1]) !== nothing)		# This should be the easier way
 		!(isa(val,Tuple) && length(val) == 3) && error("The `labels` option must be Tuple with 3 elements.")
 		opt_Bs = split(opt_B)							# This drops the leading ' '

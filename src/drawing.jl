@@ -85,7 +85,7 @@ function helper_shapes(x, y, cmd; Vd=0, kw...)
 	if (CTRLshapes.first[1])
 		CTRLshapes.fname[1] = GMT.PSname[1]
 		if ((val = find_in_dict(d, [:units])[1]) !== nothing)
-			_cmd, opt_B = GMT.parse_B(d, "", opt_B__=DEF_FIG_AXES[1])
+			_cmd, opt_B = GMT.parse_B(d, "", DEF_FIG_AXES[1])
 			cmd *= " --PROJ_LENGTH_UNIT=p"
 			opt_J = " -Jx1"
 			if ((val = find_in_dict(d, [:paper])[1]) !== nothing)

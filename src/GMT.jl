@@ -205,6 +205,7 @@ include("blocks.jl")
 include("contourf.jl")
 include("filter1d.jl")
 include("fitcircle.jl")
+include("finish_PS_nested.jl")
 include("gadm.jl")
 include("gmt2kml.jl")
 include("gmtbinstats.jl")
@@ -330,7 +331,7 @@ using GMT.Laszip
 
 @setup_workload let
 	G_API[1] = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS)
-	GMT.parse_B(Dict(:frame => (annot=10, title="Ai Ai"), :grid => (pen=2, x=10, y=20)), "", opt_B__=" -Baf -BWSen");
+	GMT.parse_B(Dict(:frame => (annot=10, title="Ai Ai"), :grid => (pen=2, x=10, y=20)), "", " -Baf -BWSen");
 	GMT.parse_R(Dict(:xlim => (1,2), :ylim => (3,4), :zlim => (5,6)), "");
 	GMT.parse_J(Dict(:J => "X", :scale => "1:10"), "");
 	#GMT.parse_opt_S(Dict(:size => [1 2]), rand(4));
