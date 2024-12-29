@@ -1,9 +1,11 @@
 """
     level = isodata(I::GMTimage; band=1) -> Int
 
-`isodata` Computes global image threshold using iterative isodata method that can be used to convert
-an intensity image to a binary image with ``binarize`. `level` is a normalized intensity value that lies
-in the range [0 255].  This iterative technique for choosing a threshold was developed by Ridler and Calvard.
+Compute global image threshold using iterative isodata method.
+
+It can be used to convert
+an intensity image to a binary image with ``binarize``. `level` is a normalized intensity value that lies
+in the range [0 255]. This iterative technique for choosing a threshold was developed by Ridler and Calvard.
 The histogram is initially segmented into two parts using a starting threshold value such as 0 = 2B-1, 
 half the maximum dynamic range. The sample mean (mf,0) of the gray values associated with the foreground
 pixels and the sample mean (mb,0) of the gray values associated with the background pixels are computed.
@@ -45,18 +47,21 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    Ibw = binarize(I::GMTimage, threshold; band=1, revert=false) -> GMTimage
+    Ibw = binarize(I::GMTimage, threshold=nothing; band=1, revert=false) -> GMTimage
 
-Converts an image to a binary image (black-and-white) using a threshold. If `revert=true`, values below the
-threshold are set to 255, and values above the threshold are set to 0. If the `I` image has more than one band,
-use `band` to specify which one to binarize.
+Convert an image to a binary image (black-and-white) using a threshold.
+
+If `threshold` is `nothing`, the threshold is computed using the ``isodata`` method.
+If `revert=true`, values below the threshold are set to 255, and values above the threshold are set to 0.
+If the `I` image has more than one band, use `band` to specify which one to binarize.
 """
-function binarize(I::GMTimage, threshold; band=1, revert=false)
+function binarize(I::GMTimage, threshold=nothing; band=1, revert=false)::GMTimage
+	thresh = threshold isa Nothing ? isodata(I, band=band) : threshold
 	img = zeros(UInt8, size(I, 1), size(I, 2))
 	if revert
-		t = view(I.image, :, :, band) .< threshold
+		t = view(I.image, :, :, band) .< thresh
 	else
-		t = view(I.image, :, :, band) .> threshold
+		t = view(I.image, :, :, band) .> thresh
 	end
 	img[t] .= 255
 	return mat2img(img, I)
@@ -66,7 +71,7 @@ end
 """
     Igray = rgb2gray(I) -> GMTimage
 
-Converts an RGB image to a grayscale image applying the television YMQ transformation.
+Convert an RGB image to a grayscale image applying the television YMQ transformation.
 """
 function rgb2gray(I::GMTimage{UInt8, 3})
 	img = helper_img_transforms(I, 0.299, 0.587, 0.114)
@@ -100,7 +105,7 @@ or
 
 	Y,Cb,Cr = rgb2YCbCr(I::GMTimage{UInt8, 3}; Y=false, Cb=false, Cr=false, BT709=false)
 
-Converts RGB color values to luminance (Y) and chrominance (Cb and Cr) values of a YCbCr image.
+Convert RGB color values to luminance (Y) and chrominance (Cb and Cr) values of a YCbCr image.
 
 Optionally, return only one to three of Y, Cb and Cr in separate images. For that use the `keywords`:
 `Y=true`, `Cb=true` or `Cr=true`. Each ``true`` occurence makes it return that component, otherwise it returns an empty image.
@@ -158,14 +163,32 @@ function helper_rgb2ycbcr(I::GMTimage{UInt8,3}, c1, c2, c3, add; buf::AbstractMa
 	img
 end
 
-#= ---------------------------------------------------------------------------------------------------
-function padarray(a, p)
+# ---------------------------------------------------------------------------------------------------
+"""
+	padarray(A, padsize; padval=nothing)
+
+Pad matrix A with an amount of padding in each dimension specified by padsize.
+
+`padsize` can be a scalar or a array of length equal to 2 (only matrices are supported).
+If `padval` is not specified, `A` is padded with a replication of the first/last row and column, otherwise
+`padval` specifies a constant value to use for padded elements. `padval` can take the value -Inf or Inf,
+in which case the smallest or largest representable value of the type of `A` is used, respectively.
+"""
+function padarray(a::AbstractArray{T,2}, p; padval=nothing) where T
+	# https://discourse.julialang.org/t/julia-version-of-padarray-in-matlab/37635/9
 	h, w = size(a)
-	y = clamp.((1-p[1]):(h+p[1]), 1, h)
-	x = clamp.((1-p[2]):(w+p[2]), 1, w)
-	return a[y, x]
+	_p = isa(p, Int) ? (Int(p), Int(p)) : (Int(p[1]), Int(p[2]))
+	y = clamp.((1-_p[1]):(h+_p[1]), 1, h)
+	x = clamp.((1-_p[2]):(w+_p[2]), 1, w)
+	
+	(padval === nothing) && return a[y, x]
+
+	pv = (padval == -Inf) ? typemin(eltype(a)) : (padval == Inf) ? typemax(eltype(a)) : !(eltype(a) <: AbstractFloat) ? clamp(padval, eltype(a)) : convert(eltype(a), padval)
+	r = fill(pv, h+2_p[1], w+2_p[2])
+	r[_p[1]+1:h+_p[1], _p[2]+1:w+_p[2]] .= a
+	return r
 end
-=#
+
 @inline function gamma_correction(r255, g255, b255)
 	r = r255 / 255;		g = g255 / 255;		b = b255 / 255
 	r = (r > 0.04045) ? ((r + 0.055) / 1.055)^2.4 : r / 12.92
@@ -238,4 +261,63 @@ function rgb2lab(I::GMTimage{UInt8, 3}; L=false, a=false, b=false)
 	imgb = rescale(t2; type=UInt8)
 	(composite) && return mat2img(cat(imgL, imga, imgb, dims=3), I)
 	return mat2img(imgL, I), mat2img(imga, I), mat2img(imgb, I)
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    J = imcomplement(I) -> GMTimage
+
+Compute the complement of the image `I` and returns the result in `J`.
+
+`I` can be a binary, intensity, or truecolor image. `J` has the same type and size as `I`. `I` can
+also be just a matrix. All types numeric (but complex) are allowed.
+
+In the complement of a binary image, black becomes white and white becomes black. In the case of a
+grayscale or truecolor image, dark areas become lighter and light areas become darker.
+
+The ``imcomplement!`` function works in-place and returns the modified ``I``.
+"""
+function imcomplement(I::GMTimage; insitu=false)
+	(insitu == 1) && (imcomplement!(I.image))
+	J = (insitu == 1) ? I : mat2img(imcomplement(I.image), I)
+	if (size(I.image, 3) == 4 && I.layout[4] == 'A')	# An image with transparency, must recover the orig transparency
+		nxy = size(I.image, 1) * size(I.image, 2);		nxy3 = 3 * nxy
+		if (I.layout[3] == 'B')							# Easy, band interleaved
+			@inbounds Threads.@threads for ij = 1:nxy
+				J.image[nxy3+ij] = I.image[nxy3+ij]
+			end
+		else											# Shit, pixel interleaved
+			@inbounds Threads.@threads for ij = 4:4:4nxy
+				J.image[ij] = I.image[ij]
+			end
+		end
+	end
+	return J
+end
+imcomplement!(I::GMTimage) = imcomplement(I; insitu=true)
+
+function imcomplement(mat::VecOrMat{<:Real})
+	if eltype(mat) == Bool
+		r = .!mat
+	elseif (eltype(mat) == UInt8 || eltype(mat) == UInt16 || eltype(mat) == UInt32 || eltype(mat) == UInt64)
+		r = typemax(eltype(mat)) .- mat
+	elseif (eltype(mat) == Float16 || eltype(mat) == Float32 || eltype(mat) == Float64)
+		r = one(eltype(mat)) .- mat
+	else		# Signed types
+		r = reshape([~x for x in mat], size(mat))
+	end
+end
+
+function imcomplement!(mat::VecOrMat{<:Real})::Nothing
+	tmax = typemax(eltype(mat))
+	if eltype(mat) == Bool
+		for k = 1:numel(mat)  mat[k] = !mat[k]  end
+	elseif (eltype(mat) == UInt8 || eltype(mat) == UInt16 || eltype(mat) == UInt32 || eltype(mat) == UInt64)
+		for k = 1:numel(mat)  mat[k] = tmax - mat[k]  end
+	elseif (eltype(mat) == Float16 || eltype(mat) == Float32 || eltype(mat) == Float64)
+		for k = 1:numel(mat)  mat[k] = one(eltype(mat)) - mat[k]  end
+	else		# Signed types
+		for k = 1:numel(mat)  mat[k] = ~mat[k]  end
+	end
+	return nothing
 end

@@ -133,14 +133,14 @@ end
 """
     code, vals = mk_codes_values(codes::Vector{String}, vals; region::StrSymb="world")
 
-Take a list of country `codes`` in the ISO alpha-3 country code names, a vector of numeric `vals`
+Take a list of country `codes` in the ISO alpha-3 country code names, a vector of numeric `vals`
 that will be used in a choropleth and select only those that belong to the region `region`.
 Possible values for region are: "world", "eu", "af" or "na".
 
 Returns `code` in the ISO alpha-2 country code names and corresponding `vals`. This output is then
 usable in cpt2dcw() to create a colormap to use in `plot()` and make a country choropleth map.
 """
-function mk_codes_values(codes::Vector{String}, vals; region::StrSymb="world")
+function mk_codes_values(codes::Vector{<:AbstractString}, vals; region::StrSymb="world")
 	isempty(codes) && error("The country codes 'codes' input argument is empty.")
 	code_len = length(codes[1])
 	(length(codes[1]) != 3) && error("The country codes in this function must follow the 3 char ISO codes. This does not.")
@@ -150,7 +150,7 @@ function mk_codes_values(codes::Vector{String}, vals; region::StrSymb="world")
 	d = (_reg == "eu") ? iso3to2_eu() : (_reg == "af") ? iso3to2_af() : (_reg == "na") ? iso3to2_na() : iso3to2_world()
 
 	ky, vl = String[], Float64[]
-	for k = 1:length(codes)
+	for k = 1:numel(codes)
 		r = get(d, codes[k], "")
 		if (r != "" && vals[k] !== missing)
 			append!(ky, [r])
