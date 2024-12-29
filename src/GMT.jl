@@ -164,7 +164,8 @@ export
 
 	VSdisp, mad, info, kmeans, pca, mosaic, quadbounds, quadkey, geocoder, getprovider,
 
-	binarize, isodata, rgb2gray, rgb2lab, rgb2YCbCr, rgb2ycbcr, grid2img, img2grid, grays2cube, grays2rgb,
+	binarize, isodata, padarray, rgb2gray, rgb2lab, rgb2YCbCr, rgb2ycbcr, grid2img, img2grid, grays2cube, grays2rgb,
+	imcomplement, imcomplement!,
 
 	makeDCWs, mksymbol, pastplates, circfit,
 
@@ -347,6 +348,7 @@ using GMT.Laszip
 	t = joinpath(tempdir(), "lixo.dat");
 	gmtwrite(t,[0.0 0; 1 1]);
 	gmtread(t);
+	gmtread(GMT.TESTSDIR * "burro_cenora.jpg");
 	rm(t)
 	D = mat2ds(rand(3,3), colnames=["Time","b","c"]); D.attrib = Dict("Timecol" => "1");
 	D[:Time];	D["Time", "b"];
