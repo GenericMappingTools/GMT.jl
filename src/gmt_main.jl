@@ -489,7 +489,8 @@ function get_image(API::Ptr{Nothing}, object)::GMTimage
 		if (layout != "" && layout[1] == 'I')		# The special layout for using this image in Images.jl
 			o = (nz == 1) ? (ny, nx) : (nz, ny, nx)
 		else
-			o = (nz == 1) ? (ny, nx) : (ny, nx, nz)
+			#o = (nz == 1) ? (ny, nx) : (ny, nx, nz)
+			o = (nz == 1) ? (nx, ny) : (nx, ny, nz)
 			isBRP = startswith(layout, "BRP") || startswith(layout, "TRP")
 			(nz == 1 && isBRP) && (layout = "BRPa")	# For 1 layer "BRBa" and "BRPa" is actualy the same.
 			(!isBRP && nz > 1) && @warn("Only 'I' for Images.jl and 'BRP' MEM layouts are allowed.")
