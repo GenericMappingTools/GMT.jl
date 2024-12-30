@@ -1233,7 +1233,7 @@ function make_color_column(d::Dict, cmd::String, opt_i::String, len_cmd::Int, N_
 	end
 
 	# Filled polygons with -Z don't need extra col
-	((val = find_in_dict(d, [:G :fill], false)[1]) == "+z") && return cmd, arg1, nothing, N_args, false
+	((val = find_in_dict(d, [:G :fill], false)[1]) == "+z") && return cmd, arg1, arg2, N_args, false
 
 	n_rows, n_col = get_sizes(arg1)		# Deal with the matrix, DS & Vec{DS} cases
 	#(isa(mz, Int) && mz <= n_col && mz == 3+is3D) && return cmd, arg1, nothing, N_args, false	# zcolor column is already in place
