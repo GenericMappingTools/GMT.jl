@@ -991,7 +991,7 @@ function arrows(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	# TYPEVEC = 0, ==> u,v = theta,rho. TYPEVEC = 1, ==> u,v = u,v. TYPEVEC = 2, ==> u,v = x2,y2 
 	typevec = (find_in_dict(d, [:uv])[1] !== nothing) ? 1 : (find_in_dict(d, [:endpt :endpoint])[1] !== nothing) ? 2 : 0
 	d, arg1 = helper_vecBug(d, arg1, first, haveR, haveVarFill, typevec)		# Deal with GMT nasty bug
-	common_plot_xyz(cmd0, mat2ds(arg1), "", first, false; d...)
+	common_plot_xyz(cmd0, mat2ds(arg1), "", first, false, d)
 end
 
 arrows!(cmd0::String="", arg1=nothing; kw...) = arrows(cmd0, arg1; first=false, kw...)
@@ -1084,7 +1084,7 @@ function helper_vecBug(d, arg1, first::Bool, haveR::Bool, haveVarFill::Bool, typ
 		# Get x,y minmax from datasets that may have had teir columns rearranged.
 		(typevec < 2) ? [min(D.bbox[1], D.bbox[1]+D.bbox[5]), max(D.bbox[2], D.bbox[2]+D.bbox[6]),
 		                 min(D.bbox[3], D.bbox[3]+D.bbox[7]), max(D.bbox[4], D.bbox[4]+D.bbox[8])] :
-						D.bbox[1:4] 
+		                D.bbox[1:4] 
 	end
 
 	function expandDS!(D::GMTdataset)
@@ -1168,7 +1168,7 @@ function helper_vecBug(d, arg1, first::Bool, haveR::Bool, haveVarFill::Bool, typ
 		d[:R] = opt_R[4:end]
 	end
 
-	u = (find_in_dict(d, [:paper, :paper_units])[1] !== nothing) ? true : false
+	u = (find_in_dict(d, [:paper, :paper_units], false)[1] !== nothing) ? true : false
 	d, arg1 = helper_vecZscale!(d, arg1, first, typevec; opt_R=opt_R, fancy_arrow=!isfeather, paper_u=u)	# Apply scale factor and compensates GMT bug.
 	return d, arg1
 end
