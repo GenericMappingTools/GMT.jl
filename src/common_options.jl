@@ -151,7 +151,7 @@ function leave_paper_mode()
 end
 
 # ---------------------------------------------------------------------------------------------------
-parse_RIr(d::Dict, cmd::String, O::Bool=false; del::Bool=true) = parse_R(d, cmd, O=O, del=del, RIr=true)
+parse_RIr(d::Dict, cmd::String, O::Bool=false, del::Bool=true) = parse_R(d, cmd, O=O, del=del, RIr=true)
 function parse_R(d::Dict, cmd::String; O::Bool=false, del::Bool=true, RIr::Bool=false, noGlobalR::Bool=false)::Tuple{String, String}
 	# Build the option -R string. Make it simply -R if overlay mode (-O) and no new -R is fished here
 	# The RIr option is to assign also the -I and -r when R was given a GMTgrid|image value. This is a
@@ -163,7 +163,7 @@ function parse_R(d::Dict, cmd::String; O::Bool=false, del::Bool=true, RIr::Bool=
 	val, symb = find_in_dict(d, [:R :region :limits :region_llur :limits_llur :limits_diag :region_diag], del)
 
 	(val === nothing && IamModern[1] && !RIr) && return cmd, ""
-	opt_R = build_opt_R(val, symb=symb)
+	opt_R = build_opt_R(val, symb)
 
 	opt_R = merge_R_and_xyzlims(d, opt_R)	# Let a -R be partially changed by the use of optional xyzlim
 
@@ -272,8 +272,8 @@ function merge_R_and_xyzlims(d::Dict, opt_R::String)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-build_opt_R(val::Symbol; symb::Symbol=Symbol())::String = build_opt_R(string(val), symb=symb)
-function build_opt_R(r::String; symb::Symbol=Symbol())::String
+build_opt_R(val::Symbol, symb::Symbol=Symbol())::String = build_opt_R(string(val), symb)
+function build_opt_R(r::String, symb::Symbol=Symbol())::String
 	if     (r == "global")     R = " -Rd"
 	elseif (r == "global360")  R = " -Rg"
 	elseif (r == "same")       R = " -R"
@@ -282,7 +282,7 @@ function build_opt_R(r::String; symb::Symbol=Symbol())::String
 	R
 end
 
-function build_opt_R(val; symb::Symbol=Symbol())::String		# Generic function that deals with all but NamedTuple args
+function build_opt_R(val, symb::Symbol=Symbol())::String		# Generic function that deals with all but NamedTuple args
 	R::String = ""
 	if ((isvector(val) || isa(val, Tuple)) && (length(val) == 4 || length(val) == 6))
 		if (symb ∈ (:region_llur, :limits_llur, :limits_diag, :region_diag))
@@ -303,7 +303,7 @@ function build_opt_R(val; symb::Symbol=Symbol())::String		# Generic function tha
 end
 
 # ---------------------------------------------------------------------------------------------------
-function build_opt_R(arg::NamedTuple; symb::Symbol=Symbol())::String
+function build_opt_R(arg::NamedTuple, symb::Symbol=Symbol())::String
 	# Option -R can also be diabolicly complicated. Try to addres it. Stil misses the Time part.
 	BB::String = ""
 	d = nt2dict(arg)					# Convert to Dict
@@ -403,7 +403,7 @@ function opt_R2num(opt_R::String)::Vector{Float64}
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_JZ(d::Dict, cmd::String; del::Bool=true, O::Bool=false, is3D::Bool=false)::Tuple{String,String}
+function parse_JZ(d::Dict, cmd::String, del::Bool=true; O::Bool=false, is3D::Bool=false)::Tuple{String,String}
 	symbs = [:JZ :Jz :zsize :zscale]
 	(SHOW_KWARGS[1]) && return (print_kwarg_opts(symbs, "String | Number"), "")
 	opt_J::String = "";		seek_JZ = true
@@ -498,7 +498,7 @@ function parse_J(d::Dict, cmd::String; default::String="", map::Bool=true, O::Bo
 		end
 		(opt_J == "") && (opt_J = " -JX")
 		# If only the projection but no size, try to get it from the kwargs.
-		if ((s = helper_append_figsize(d, opt_J, O, del=del)) != "")		# Takes care of both fig scales and fig sizes
+		if ((s = helper_append_figsize(d, opt_J, O, del)) != "")		# Takes care of both fig scales and fig sizes
 			opt_J = s
 		elseif (default != "" && opt_J == " -JX")
 			opt_J = IamSubplot[1] ? " -JX?" : (default != "guess" ? default : opt_J) 	# -JX was a working default
@@ -521,7 +521,7 @@ function parse_J(d::Dict, cmd::String; default::String="", map::Bool=true, O::Bo
 			end
 		end
 	else										# For when a new size is entered in a middle of a script
-		if ((s = helper_append_figsize(d, opt_J, O, del=del)) != "")
+		if ((s = helper_append_figsize(d, opt_J, O, del)) != "")
 			if (opt_J == " -J")
 				(CTRL.pocket_J[1] != s) &&		# Composed funs (ex: fill_between) would trigger this warning
 					println("SEVERE WARNING: When appending a new fig with a different size you SHOULD set the `projection`. \n\tAdding `projection=:linear` at your own risk.");
@@ -588,7 +588,7 @@ function fish_size_from_J(opt_J; onlylinear::Bool=true, opt_R::String="")
 	return nothing
 end
 
-function get_figsize(; opt_R::String="", opt_J::String="")
+function get_figsize(opt_R::String="", opt_J::String="")
 	# Compute the current fig dimensions in paper coords using the know -R -J
 	(opt_R == "" || opt_R == " -R") && (opt_R = CTRL.pocket_R[1])
 	(opt_J == "" || opt_J == " -J") && (opt_J = CTRL.pocket_J[1])
@@ -597,7 +597,7 @@ function get_figsize(; opt_R::String="", opt_J::String="")
 	return Dwh[1], Dwh[2]		# Width, Height
 end
 
-function helper_append_figsize(d::Dict, opt_J::String, O::Bool; del::Bool=true)::String
+function helper_append_figsize(d::Dict, opt_J::String, O::Bool, del::Bool=true)::String
 	val_, symb = find_in_dict(d, [:figscale :fig_scale :scale :figsize :fig_size], del)
 	(val_ === nothing && is_in_dict(d, [:flipaxes :flip_axes]) === nothing) && return ""
 	val::String = arg2str(val_)
@@ -609,18 +609,18 @@ function helper_append_figsize(d::Dict, opt_J::String, O::Bool; del::Bool=true):
 		if (opt_J == " -JX")
 			val = check_flipaxes(d, val)
 			opt_J::String = isletter(val[1]) ? " -J" * val : " -Jx" * val		# FRAGILE
-		else                          opt_J = append_figsize(d, opt_J, width=val, scale=true)
+		else                          opt_J = append_figsize(d, opt_J, val, true)
 		end
 	else										# A fig SIZE request
 		(haskey(d, :units)) && (val *= d[:units][1]::String)
 		if (occursin("+proj", opt_J)) opt_J *= "+width=" * val
-		else                          opt_J = append_figsize(d, opt_J, width=val)
+		else                          opt_J = append_figsize(d, opt_J, val)
 		end
 	end
 	return opt_J
 end
 
-function append_figsize(d::Dict, opt_J::String; width::String="", scale::Bool=false)::String
+function append_figsize(d::Dict, opt_J::String, width::String="", scale::Bool=false)::String
 	# Appending either a fig width or fig scale depending on what projection.
 	# Sometimes we need to separate with a '/' others not. If WIDTH == "" we
 	# use the DEF_FIG_SIZE, otherwise use WIDTH that can be a size or a scale.
@@ -697,7 +697,7 @@ end
 
 # ----------------------------------------------------------------------------------------------------
 """
-    w, h = plot_GI_size(GI; proj="", region="")
+    w, h = plot_GI_size(GI, proj="", region="")
 
 Compute the plot width and height in cm given the the region `region` and projection `proj`. Note that
 here the `region` and `proj` options, if provided, must be the full " -R...." and " -J..." strings and
@@ -707,7 +707,7 @@ value is not particularly important because the main idea here is to be able to 
 
 Returns a tuple of Float64 with the width, height in cm.
 """
-function plot_GI_size(GI::GItype; opt_J="", opt_R="")
+function plot_GI_size(GI::GItype, opt_J="", opt_R="")
 	got_J = (opt_J != "")
 	(opt_R == "") && (opt_R = @sprintf(" -R%.10g/%.10g/%.10g/%.10g", GI.range[1:4]...))
 	(opt_J == "") && (opt_J = (GI.geog > 0) ? guess_proj(GI.range[1:2], GI.range[3:4]) : " -JX")
@@ -1309,11 +1309,11 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 title(; str::AbstractString="",  font=nothing, offset=0) = titles_e_comp(str, font, offset)
-subtitle(; str::AbstractString="", font=nothing, offset=0) = titles_e_comp(str, font, offset, tipo="s")
-xlabel(; str::AbstractString="", font=nothing, offset=0) = titles_e_comp(str, font, offset, tipo="x")
-ylabel(; str::AbstractString="", font=nothing, offset=0) = titles_e_comp(str, font, offset, tipo="y")
-zlabel(; str::AbstractString="", font=nothing, offset=0) = titles_e_comp(str, font, offset, tipo="z")
-function titles_e_comp(str::AbstractString, fnt, offset; tipo::String="")::Tuple{String, String}
+subtitle(; str::AbstractString="", font=nothing, offset=0) = titles_e_comp(str, font, offset, "s")
+xlabel(; str::AbstractString="", font=nothing, offset=0) = titles_e_comp(str, font, offset, "x")
+ylabel(; str::AbstractString="", font=nothing, offset=0) = titles_e_comp(str, font, offset, "y")
+zlabel(; str::AbstractString="", font=nothing, offset=0) = titles_e_comp(str, font, offset, "z")
+function titles_e_comp(str::AbstractString, fnt, offset, tipo::String="")::Tuple{String, String}
 	f::String = (fnt !== nothing) ? font(fnt) : ""
 	o::String = (offset != 0) ? string(offset) : ""
 	(str == "") && return str, ""
@@ -1371,7 +1371,7 @@ function guess_WESN(d::Dict, cmd::String)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_BJR(d::Dict, cmd::String, caller::String, O::Bool; defaultJ::String="", del::Bool=true)
+function parse_BJR(d::Dict, cmd::String, caller::String, O::Bool, defaultJ::String="", del::Bool=true)
 	# Join these three in one function. CALLER is non-empty when module is called by plot()
 	cmd, opt_R = parse_R(d, cmd, O=O, del=del)
 	cmd, opt_J = parse_J(d, cmd, default=defaultJ, map=true, O=O, del=del)
@@ -1511,16 +1511,16 @@ function parse_c(d::Dict, cmd::String)::Tuple{String, String}
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_d(d::Dict, cmd::String; symbs::VMs=[:d :nodata])
+function parse_d(d::Dict, cmd::String, symbs::VMs=[:d :nodata])
 	(SHOW_KWARGS[1]) && return (print_kwarg_opts(symbs, "$(symbs[2])=val"),"")
 	parse_helper(cmd, d, [:d :nodata], " -d")
 end
-parse_di(d::Dict, cmd::String) = parse_d(d, cmd, symbs=[:di :nodata_in])
-parse_do(d::Dict, cmd::String) = parse_d(d, cmd, symbs=[:do :nodata_out])
+parse_di(d::Dict, cmd::String) = parse_d(d, cmd, [:di :nodata_in])
+parse_do(d::Dict, cmd::String) = parse_d(d, cmd, [:do :nodata_out])
 parse_e(d::Dict,  cmd::String) = parse_helper(cmd, d, [:e :pattern :find], " -e")
 parse_g(d::Dict,  cmd::String) = parse_helper(cmd, d, [:g :gap], " -g")
 parse_h(d::Dict,  cmd::String) = parse_helper(cmd, d, [:h :header], " -h")
-parse_i(d::Dict,  cmd::String) = parse_helper(cmd, d, [:i :incols :incol], " -i", sep=',')
+parse_i(d::Dict,  cmd::String) = parse_helper(cmd, d, [:i :incols :incol], " -i", ',')
 parse_j(d::Dict,  cmd::String) = parse_helper(cmd, d, [:j :metric :spherical :spherical_dist], " -j")
 
 # ---------------------------------------------------------------------------------
@@ -1565,7 +1565,7 @@ function parse_n(d::Dict, cmd::String, gmtcompat::Bool=false)
 end
 
 # ---------------------------------------------------------------------------------
-parse_o(d::Dict, cmd::String) = parse_helper(cmd, d, [:o :outcols :outcol], " -o", sep=',')
+parse_o(d::Dict, cmd::String) = parse_helper(cmd, d, [:o :outcols :outcol], " -o", ',')
 parse_p(d::Dict, cmd::String) = parse_helper(cmd, d, [:p :view :perspective], " -p")
 
 # ---------------------------------------------------------------------------------
@@ -1650,7 +1650,7 @@ function parse_append(d::Dict, cmd::String)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_helper(cmd::String, d::Dict, symbs::VMs, opt::String; sep='/')::Tuple{String, String}
+function parse_helper(cmd::String, d::Dict, symbs::VMs, opt::String, sep='/')::Tuple{String, String}
 	# Helper function to the parse_?() global options.
 	(SHOW_KWARGS[1]) && return (print_kwarg_opts(symbs, "(Common option not yet expanded)"),"")
 	opt_val::String = ""
@@ -1759,7 +1759,7 @@ end
 parse_G(d::Dict, cmd::String) = parse_helper(cmd, d, [:G :save :write :outgrid :outfile], " -G")
 
 # ---------------------------------------------------------------------------------------------------
-function parse_I(d::Dict, cmd::String, symbs, opt::String, del::Bool)::String
+function parse_I(d::Dict, cmd::String, symbs, opt::String, del::Bool=true)::String
 	# Parse the quasi-global -I option. But arguments can be strings, arrays, tuples or NamedTuples
 	# At the end we must recreate this syntax: xinc[unit][+e|n][/yinc[unit][+e|n]] or
 	get_that_string(arg)::String = string(arg)::String		# Function barrier. Shuting up JET, etc.

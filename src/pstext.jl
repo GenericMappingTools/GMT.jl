@@ -98,7 +98,7 @@ function _text(cmd0::String, arg1, O::Bool, K::Bool, d::Dict)
 		cmd0 = ""
 	end
 
-	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, defaultJ=" -JX" * split(DEF_FIG_SIZE, '/')[1] * "/0")
+	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX" * split(DEF_FIG_SIZE, '/')[1] * "/0")
 	_is3D = (isa(arg1, GDtype) && getsize(arg1)[2] == 3)		# But this does not check the reading file path
 	cmd, = parse_common_opts(d, cmd, [:a :e :f :p :t :w :JZ :UVXY :margin :params]; first=first, is3D=_is3D)
 	cmd  = parse_these_opts(cmd, d, [[:A :azimuths :azimuth :azim], [:M :paragraph], [:N :no_clip :noclip],

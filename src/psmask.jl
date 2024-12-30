@@ -60,19 +60,13 @@ Parameters
 
 To see the full documentation type: ``@? mask``
 """
-mask(cmd0::String; kwargs...)  = mask_helper(cmd0, nothing; kwargs...)
-mask(arg1; kwargs...)          = mask_helper("", arg1; kwargs...)
-mask!(cmd0::String; kwargs...) = mask_helper(cmd0, nothing; first=false, kwargs...)
-mask!(arg1; kwargs...)         = mask_helper("", arg1; first=false, kwargs...)
-
-# ---------------------------------------------------------------------------------------------------
-function mask_helper(cmd0::String, arg1; first=true, kwargs...)
+function mask(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
     gmt_proggy = (IamModern[1]) ? "mask "  : "psmask "
 
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
-	cmd, _, _, opt_R = parse_BJR(d, "", "", O, defaultJ=" -JX12c/12c")
+	cmd, _, _, opt_R = parse_BJR(d, "", "", O, " -JX12c/12c")
 	cmd, = parse_common_opts(d, cmd, [:I :UVXY :JZ :c :e :p :r :t :w :params]; first=first)
 	cmd  = parse_these_opts(cmd, d, [[:C :endclip :end_clip_path], [:D :dump], [:L :nodegrid], [:N :invert :inverse],
 	                                 [:Q :cut :cut_number], [:S :search_radius], [:T :tiles]])
@@ -90,9 +84,9 @@ function mask_helper(cmd0::String, arg1; first=true, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-#mask!(cmd0::String="", arg1=nothing; kw...) = mask(cmd0, arg1; first=false, kw...)
-#mask(arg1; kw...)  = mask("", arg1; first=true, kw...)
-#mask!(arg1; kw...) = mask("", arg1; first=false, kw...)
+mask!(cmd0::String="", arg1=nothing; kw...) = mask(cmd0, arg1; first=false, kw...)
+mask(arg1; kw...)  = mask("", arg1; first=true, kw...)
+mask!(arg1; kw...) = mask("", arg1; first=false, kw...)
 
 # ---------------------------------------------------------------------------------------------------
 # This method has nothing to do with psmask, but can be seen as an extension to it.

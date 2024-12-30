@@ -85,7 +85,7 @@ function contour_helper(cmd0::String, arg1; first=true, kwargs...)
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 	dict_auto_add!(d)			# The ternary module may send options via another channel
 
-	cmd, _, _, opt_R = parse_BJR(d, "", "", O, defaultJ=" -JX" * split(DEF_FIG_SIZE, '/')[1] * "/0")
+	cmd, _, _, opt_R = parse_BJR(d, "", "", O, " -JX" * split(DEF_FIG_SIZE, '/')[1] * "/0")
 	cmd, = parse_common_opts(d, cmd, [:UVXY :bo :c :d :do :e :p :t :params :margin]; first=first)
 	cmd  = parse_these_opts(cmd, d, [[:D :dump], [:I :fill :colorize], [:N :no_clip], [:Q :cut], [:S :skip]])
 	cmd *= add_opt_pen(d, [:L :mesh], opt="L")

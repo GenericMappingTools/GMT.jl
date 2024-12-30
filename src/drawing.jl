@@ -97,7 +97,7 @@ function helper_shapes(x, y, cmd; Vd=0, kw...)
 			end
 			CTRLshapes.points[1] = true
 		else
-			_cmd, opt_B, opt_J, opt_R = GMT.parse_BJR(d, "", "", false, defaultJ=" ")
+			_cmd, opt_B, opt_J, opt_R = GMT.parse_BJR(d, "", "", false, " ")
 			(opt_R == "")  && (opt_R = " -R0/21/0/29")
 			(opt_J == " ") && (opt_J = " -Jx1")
 		end

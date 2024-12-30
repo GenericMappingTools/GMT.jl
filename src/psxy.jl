@@ -63,7 +63,7 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 		(isa(arg1, GMTdataset) && size(arg1,2) > 1 && !isempty(arg1.colnames)) && (CTRL.XYlabels[1] = arg1.colnames[1]; CTRL.XYlabels[2] = arg1.colnames[2])
 		isa(arg1, Vector{<:GMTdataset}) && !isempty(arg1[1].colnames) && (CTRL.XYlabels[1] = arg1[1].colnames[1]; CTRL.XYlabels[2] = arg1[1].colnames[2])
 		if (is_ternary)  cmd, opt_J = parse_J(d, cmd, default=def_J)
-		else             cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd, caller, O, defaultJ=def_J)
+		else             cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd, caller, O, def_J)
 		end
 		# Current parse_B does not add a default -Baz when 3D AND -J has a projection. More or less fix that.
 		if (is3D && opt_B != "" && !contains(opt_B, " -Bz"))

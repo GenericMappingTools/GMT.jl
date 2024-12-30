@@ -991,7 +991,7 @@ function arrows(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	# TYPEVEC = 0, ==> u,v = theta,rho. TYPEVEC = 1, ==> u,v = u,v. TYPEVEC = 2, ==> u,v = x2,y2 
 	typevec = (find_in_dict(d, [:uv])[1] !== nothing) ? 1 : (find_in_dict(d, [:endpt :endpoint])[1] !== nothing) ? 2 : 0
 	d, arg1 = helper_vecBug(d, arg1, first, haveR, haveVarFill, typevec)		# Deal with GMT nasty bug
-	_common_plot_xyz(cmd0, mat2ds(arg1), "", first==1, true, false, d)
+	common_plot_xyz(cmd0, mat2ds(arg1), "", first, false; d...)
 end
 
 arrows!(cmd0::String="", arg1=nothing; kw...) = arrows(cmd0, arg1; first=false, kw...)

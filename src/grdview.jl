@@ -66,7 +66,7 @@ function grdview_helper(cmd0::String, arg1, O::Bool, K::Bool, d::Dict)
 	common_insert_R!(d, O, cmd0, arg1; is3D=true)	# Set -R in 'd' out of grid/images (with coords) if limits was not used
 
 	have_opt_B = (find_in_dict(d, [:B :frame :axis :axes], false)[1] !== nothing)
-	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "grdview", O, defaultJ=" -JX" * split(DEF_FIG_SIZE, '/')[1] * "/0")
+	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "grdview", O, " -JX" * split(DEF_FIG_SIZE, '/')[1] * "/0")
 	(startswith(opt_J, " -JX") && !contains(opt_J, "/")) && (cmd = replace(cmd, opt_J => opt_J * "/0")) # When sub-regions
 	(!have_opt_B && isa(arg1, GMTimage) && (isimgsize(arg1) || CTRL.limits[1:4] == zeros(4)) && opt_B == DEF_FIG_AXES_BAK) &&
 		(cmd = replace(cmd, opt_B => ""))			# Dont plot axes for plain images if that was not required
