@@ -71,7 +71,7 @@ function wiggle_helper(cmd0::String, arg1; first=true, kw...)
 
 	d, K, O = init_module(first, kw...)		# Also checks if the user wants ONLY the HELP mode
 
-	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, defaultJ=" -JX12c/0")
+	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12c/0")
 	cmd, = parse_common_opts(d, cmd, [:c :e :f :g :p :t :w :F :UVXY :margin :params]; first=first)
 	cmd  = parse_these_opts(cmd, d, [[:A :azimuth], [:C :center], [:I :fixed_azim], [:S], [:Z :ampscale :amp_scale]])
 

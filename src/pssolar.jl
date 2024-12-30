@@ -46,7 +46,7 @@ function solar(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	def_J = (isempty(d)) ? " -JG0/0/14c" : " -JX14cd/0d"
 	(isempty(d)) && (d[:coast] = true; d[:T] = :d; d[:G] = "navy@75"; d[:show] = true)
-	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, defaultJ=def_J)
+	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, def_J)
 	cmd, = parse_common_opts(d, cmd, [:bo :c :h :o :p :t :UVXY :params]; first=first)
 	cmd  = parse_these_opts(cmd, d, [[:C :format], [:M :dump], [:N :invert]])
 

@@ -226,7 +226,7 @@ function helper1_inset_nested(d; iscoast=false, isplot=false, imgdims=tuple())
 	# All inset_nested methods start with this. Also sets some defaults.
 	fig_opt_R, fig_opt_J = CTRL.pocket_R[1], CTRL.pocket_J[1]	# Main fig region and proj. Need these to cheat the modern session
 	bak = CTRL.limits[7:end]							# Backup these because parse_R will change them
-	_, opt_B::String, opt_J::String, opt_R::String = parse_BJR(d, "", "", false, defaultJ=" ")
+	_, opt_B::String, opt_J::String, opt_R::String = parse_BJR(d, "", "", false, " ")
 	CTRL.limits[7:end] = bak							# and we don't want that change to be stored
 	islinear = (opt_J == "" || opt_J[4] == 'X' || opt_J[4] == 'x');
 	fname = hack_modern_session(fig_opt_R, fig_opt_J)	# Start a modern session and return the full name of the gmt_0.ps- file
