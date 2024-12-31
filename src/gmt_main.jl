@@ -969,8 +969,13 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage)::Ptr{GMT_IMAGE}
 	unsafe_store!(I, Ib)
 
 	if (!already_converted && !startswith(Img.layout, "BRP"))
-		img = (mem_owned_by_gmt) ? img_padded : copy(Img.image)		# This copy is a waste when not Change_layout. Needs revisit.
-		(size(img,3) > 2) && GMT_Change_Layout(API, GMT_IS_IMAGE, "BRP", 0, I, img);	# Convert to BRP. Not 100% on the > 2 though.
+		img = (mem_owned_by_gmt) ? img_padded : Img.image
+		if (size(img,3) > 2)
+			img = copy(Img.image)
+			GMT_Change_Layout(API, GMT_IS_IMAGE, "BRP", 0, I, img);	# Convert to BRP. Not 100% on the > 2 though.
+		elseif (!mem_owned_by_gmt && size(img,3) == 1 && Img.layout[2] == 'C')
+			img = fliplr(img')
+		end
 		Ib.data = pointer(img)
 		unsafe_store!(I, Ib)
 	end
