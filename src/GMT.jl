@@ -5,6 +5,7 @@ using Tables: Tables
 using PrettyTables
 using PrecompileTools
 using LinearAlgebra
+using Leptonica_jll
 
 struct CTRLstruct
 	limits::Vector{Float64}			# To store the data limits. First 6 store: data limits. Second 6: plot limits, 13th +r
@@ -167,6 +168,8 @@ export
 	binarize, isodata, padarray, rgb2gray, rgb2lab, rgb2YCbCr, rgb2ycbcr, grid2img, img2grid, grays2cube, grays2rgb,
 	imcomplement, imcomplement!,
 
+	imfill, imreconstruct,
+
 	makeDCWs, mksymbol, pastplates, circfit,
 
 	gunique, sortslicesperm,
@@ -326,6 +329,9 @@ include("windbarbs/windbarbs.jl")
 include("zscale.jl")
 include("drawing.jl")
 include("get_enums.jl")
+
+include("libleptonica.jl")
+include("lepto_funs.jl")
 
 include("laszip/Laszip.jl")
 using GMT.Laszip
