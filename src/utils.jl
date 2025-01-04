@@ -578,7 +578,7 @@ function rescale(A::AbstractArray; low=0.0, up=1.0, inputmin=nothing, inputmax=n
 		end
 		return isa(A, GItype) ? mat2img(o, A) : o
 	else
-		oType = isa(eltype(A), AbstractFloat) ? eltype(A) : Float64
+		oType = (eltype(A) <: AbstractFloat) ? eltype(A) : Float64
 		o = Array{oType}(undef, size(A))
 		if (oType <: Integer && have_nans)						# Shitty case
 			if (inputmin === nothing && inputmax === nothing)	# Faster case. No IFs in loop
