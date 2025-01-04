@@ -168,7 +168,7 @@ export
 	binarize, isodata, padarray, rgb2gray, rgb2lab, rgb2YCbCr, rgb2ycbcr, grid2img, img2grid, grays2cube, grays2rgb,
 	imcomplement, imcomplement!,
 
-	imfill, imreconstruct,
+	imfill, imreconstruct, fillsinks, fillsinks!,
 
 	makeDCWs, mksymbol, pastplates, circfit,
 

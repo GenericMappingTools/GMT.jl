@@ -61,3 +61,9 @@ end
 	@test GMT.getsize(filled_gmt) == (10, 10)
 	@test filled_gmt.image[1, 1] == 255
 end
+
+G = peaks();
+G2 = fillsinks(G);
+
+fillsinks(grdcut(G, region="-1.1678/1.786/-3.0/-0.57243"));
+@test G2.range[5] > -0.35

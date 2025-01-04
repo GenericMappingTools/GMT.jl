@@ -1253,4 +1253,6 @@ end
 
 #GI.geometry[1].geoms[1].rings[1].vertices.data[1].coords.lat.val
 
-#include("leptos.jl")
+#r = Ref(tuple(5.0, 2.0, 1.0, 6.0))
+#p = Base.unsafe_convert(Ptr{Float64}, r)
+#u = unsafe_wrap(Array, p, 4)
