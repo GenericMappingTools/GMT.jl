@@ -67,3 +67,8 @@ G2 = fillsinks(G);
 
 fillsinks(grdcut(G, region="-1.1678/1.786/-3.0/-0.57243"));
 @test G2.range[5] > -0.35
+
+BW1 = Bool.([1 0 0 0 0 0 0 0; 1 1 1 1 1 0 0 0; 1 0 0 0 1 0 1 0; 1 0 0 0 1 1 1 0; 1 1 1 1 0 1 1 1; 1 0 0 1 1 0 1 0; 1 0 0 0 1 0 1 0; 1 0 0 0 1 1 1 0]);
+BW2 = imfill(BW1);
+@test isa(BW2, BitMatrix)
+@test sum(BW2) == 40
