@@ -1,9 +1,9 @@
 
-function img2pix(mat::Matrix{UInt8}; layout="TRBa")::Sppix
+function img2pix(mat::Matrix{<:Integer}; layout="TRBa")::Sppix
 	@assert isa(layout, String) && length(layout) >= 3
 	img2pix(mat2img(mat, layout=layout))
 end
-function img2pix(I::GMTimage{UInt8, 2})::Sppix
+function img2pix(I::GMTimage{<:Integer, 2})::Sppix
 	# Minimalist. Still doesn't have a colormap and not yet RGB(A)
 
 	width, height = GMT.getsize(I)
@@ -16,14 +16,14 @@ function img2pix(I::GMTimage{UInt8, 2})::Sppix
 		for i = 1:h[]
 			line = unsafe_wrap(Array, lineptrs[i], w[])
 			for j = 1:w[]
-				line[j] = I.image[k+=1]
+				line[j] = UInt8(I.image[k+=1])
 			end
 		end
 	else					# Column major must be written in row major
 		for i = 1:h[]
 			line = unsafe_wrap(Array, lineptrs[i], w[])
 			for j = 1:w[]
-				line[j] = I.image[i,j]
+				line[j] = UInt8(I.image[i,j])
 			end
 		end
 	end
@@ -55,12 +55,14 @@ function imreconstruct(seed::Union{Matrix{Bool}, Matrix{UInt8}}, Imask::GMTimage
 	isa(eltype(Iseed), Bool) && (Iseed = togglemask(Iseed))
 	imreconstruct(Iseed, Imask; conn=conn, insitu=insitu)
 end
-function imreconstruct(Iseed::GMTimage, Imask::Union{GMTimage{<:UInt8, 2}, Matrix{UInt8}}; conn=4, insitu=true)::GMTimage
+function imreconstruct(Iseed::GMTimage{<:Integer, 2}, Imask::Union{GMTimage{<:Integer, 2}, Matrix{<:Integer}}; conn=4, insitu=true)::GMTimage
 	ppixIs = img2pix(Iseed)
 	ppixIm = img2pix(Imask)
 	p = (insitu == 1) ? ppixIs : pixCopy(C_NULL, ppixIs)	# pixCopy is a shallow copy that does duplicate data. So this is wrong
 	pixSeedfillGray(p.ptr, ppixIm.ptr, conn)		# The image in 'p' is modified
-	pix2img(p)
+	I = pix2img(p)
+	#isa(eltype(Iseed), Bool) && (I = togglemask(I))
+	return I
 end
 function imreconstruct(seed::Union{Matrix{Bool}, Matrix{UInt8}}, mask::Union{Matrix{Bool}, Matrix{UInt8}};
                        conn=4, layout="TRBa", insitu=true, is_transposed=false)
@@ -79,11 +81,40 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
+    I2 = imfill(I; conn=4, is_transposed=true, layout="TRBa")
+
+Fill holes in the grayscale ``GMTimage`` I or UInt8 matrix I.
+
+Here, a hole is defined as an area of dark pixels surrounded by lighter pixels.
+
+### Args
+- `I::Union{GMTimage{UInt8, 2}, GMTimage{Bool, 2}, Matrix{UInt8}, Matrix{Bool}, BitMatrix}`: Input image.
+
+### Kwargs
+- `conn::Int`: Connectivity for sink filling (4 or 8). Default is 4.
+- `is_transposed::Bool`: If `true`, it informs that the input image array is transposed. Default is `true`.
+   Normally the ``GMTimage`` carries information to know about the transposition (which is `true` when the layout is "TRB").
+   When passing a matrix in column-major order (the default in Julia), `is_transposed` must be set to `false`.
+   NOTE: The deaful is `true` because that is the normal case when reading a file image with ``gmtread`` or ``gdalread``.
+- `layout::String`: Layout of the input Matrix (default is "TRBa"). If the input is a GMTimage,
+   this argument should have been set automatically and can normally be ignored.
+
+### Returns
+- A new ``GMTimage`` (or Matrix) with the holes filled.
+
+### Examples
+```julia
+# Example from Matlab imfill
+I = gmtread("C:\\programs\\MATLAB\\R2024b\\toolbox\\images\\imdata\\coins.png");
+Ibw = binarize(I);
+BW2 = imfill(Ibw);
+```
 """
-function imfill(mat::Matrix{<:Real}; conn=4, is_transposed=false, layout="TRBa")
+function imfill(mat::Matrix{<:Integer}; conn=4, is_transposed=true, layout="TRBa")
     #if (eltype(I) == Bool)  mask = togglemask(mat)
     #else                    mask = I;
 	#end
+	@assert conn == 4 || conn == 8 "Only conn=4 or conn=8 are supported"
     mask = padarray(mat, ones(Int, 1, ndims(mat)), padval=-Inf)		# 'mask' is always a matrix
 	GMT.imcomplement!(mask)
     marker = copy(mask)
@@ -92,11 +123,16 @@ function imfill(mat::Matrix{<:Real}; conn=4, is_transposed=false, layout="TRBa")
     I2 = imreconstruct(marker, mask, conn=conn, is_transposed=is_transposed, layout=layout)
 	GMT.imcomplement!(I2)
 	I2 = I2[2:end-1, 2:end-1]
-	isa(eltype(mat), Bool) && (I2 = (I2 .!= 0))
+	(eltype(mat) <: Bool) && (I2 = collect(I2 .== 255))
 	return I2
 end
 function imfill(I::GMTimage; conn=4)::GMTimage
 	mat2img(imfill(I.image; conn=conn, is_transposed=(GMT.getsize(I) == size(I) && I.layout[2] == 'R'), layout=I.layout), I)
+end
+function imfill(mat::BitMatrix; conn=4, is_transposed=true, layout="TRBa")
+	# This method can be improved to use the Leptonica function pixSeedfillBinary()
+	r = imfill(UInt8.(mat); conn=conn, is_transposed=is_transposed, layout=layout)
+	r .== 1
 end
 
 # ---------------------------------------------------------------------------------------------------
