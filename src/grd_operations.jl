@@ -230,8 +230,8 @@ function sub8_layout(I1, I2)
 	I1.layout[2] == I2.layout[2] &&
 		return eltype(I1) <: Bool ? collect(I1.image .& .!I2.image) : collect(reinterpret(Bool, I1.image) .& .!reinterpret(Bool, I2.image))
 	
-	z1 = (eltype(I1) <: Bool) ? I1.image  : reinterpret(Bool, I1.image)
-	z2 = (eltype(I2) <: Bool) ? I2.image' : reinterpret(Bool, I2.image)'
+	z1 = (eltype(I1) <: Bool) ? I1.image  : collect(reinterpret(Bool, I1.image))
+	z2 = (eltype(I2) <: Bool) ? I2.image' : collect(reinterpret(Bool, I2.image)')
 	return collect(z1 .& .!z2)
 end
 
@@ -305,11 +305,11 @@ end
 """
     I = togglemask(I::Union{GMTimage{<:Bool, 2}, GMTimage{<:UInt8, 2}}) -> GMTimage
 
-Convert between UInt8 and Boolean representations of the mask images. A new object is returned but
-the underlying mask matrix is kept unchanged, that is, not copied, but reinterpred in the other type.
+Convert between UInt8 and Boolean representations of the mask images. A new object is returned
+with a copy of the input data.
 """
-togglemask(I::GMTimage{<:Bool, 2}) = return mat2img(reinterpret(UInt8, I.image), I)
-togglemask(I::GMTimage{<:UInt8, 2}) = return mat2img(reinterpret(Bool, I.image), I)
+togglemask(I::GMTimage{<:Bool, 2}) = return mat2img(collect(reinterpret(UInt8, I.image)), I)
+togglemask(I::GMTimage{<:UInt8, 2}) = return mat2img(collect(reinterpret(Bool, I.image)), I)
 
 # ---------------------------------------------------------------------------------------------------
 Base.:+(add::T, D1::GMTdataset) where T<:AbstractArray = Base.:+(D1::GMTdataset, add)
