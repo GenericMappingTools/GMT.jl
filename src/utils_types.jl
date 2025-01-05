@@ -1170,7 +1170,6 @@ function mat2img(mat::Union{AbstractArray{<:Unsigned}, AbstractArray{<:Bool}}; x
 	# Take a 2D array of uint8 and turn it into a GMTimage.
 	# Note: if HDR is empty we guess the registration from the sizes of MAT & X,Y
 	(cmap === nothing && eltype(mat) == Bool) && (cmap = makecpt(T=(0,1), cmap=:gray))
-	#helper_mat2img(mat; x=x, y=y, v=v, hdr=hdr, proj4=proj4, wkt=wkt, cmap=cmap, is_transposed=is_transposed, kw...)
 	d = KW(kw)
 	helper_mat2img(mat, vec(Float64.(x)), vec(Float64.(y)), vec(Float64.(v)), vec(Float64.(hdr)), proj4, wkt, cmap, is_transposed, d)
 end
@@ -1178,12 +1177,9 @@ end
 # Special version to desambiguate between UInt8 and UInt16
 function mat2img16(mat::AbstractArray{<:Unsigned}; x=Float64[], y=Float64[], v=Float64[], hdr=Float64[],
                    proj4::String="", wkt::String="", cmap=GMTcpt(), is_transposed::Bool=false, kw...)
-	#helper_mat2img(mat; x=x, y=y, v=v, hdr=hdr, proj4=proj4, wkt=wkt, cmap=cmap, is_transposed=is_transposed, kw...)
 	d = KW(kw)
 	helper_mat2img(mat, vec(Float64.(x)), vec(Float64.(y)), vec(Float64.(v)), vec(Float64.(hdr)), proj4, wkt, cmap, is_transposed, d)
 end
-#function helper_mat2img(mat; x=Float64[], y=Float64[], v=Float64[], hdr=Float64[],
-                        #proj4::String="", wkt::String="", cmap=GMTcpt(), is_transposed::Bool=false, kw...)
 function helper_mat2img(mat, x::Vector{Float64}, y::Vector{Float64}, v::Vector{Float64}, hdr::Vector{Float64},
                         proj4::String, wkt::String, cmap::GMTcpt, is_transposed::Bool, d::Dict)
 	color_interp = "";		n_colors = 0;
@@ -1356,8 +1352,13 @@ end
 function mat2img(mat::Union{GMTgrid,Matrix{<:AbstractFloat}}; x=Float64[], y=Float64[], hdr=Float64[],
 	             proj4::String="", wkt::String="", GI::Union{GItype,Nothing}=nothing, clim=[0,255], cmap=GMTcpt(), kw...)
 	# This is the same as Matlab's imagesc() ... plus some extras.
+
+	if (isa(mat, GMTgrid) && (opt_R::String = parse_R(KW(kw), "")[2]) != "")
+		mat = grdcut(mat, R=opt_R[4:end])
+	end
+
 	mi, ma = (isa(mat,GMTgrid)) ? mat.range[5:6] : extrema(mat)
-	(isa(mat,GMTgrid) && mat.hasnans == 2) && (mi = NaN)		# Don't know yet so force checking
+	(isa(mat,GMTgrid) && mat.hasnans != 1) && (mi = NaN)		# Don't know yet so force checking
 	if (isnan(mi))			# Shit, such a memory waste we need to do.
 		mi, ma = extrema_nan(mat)
 		t = isa(mat, GMTgrid) ? Float32.((mat.z .- mi) ./ (ma - mi) .* 255) : Float32.((mat .- mi) ./ (ma - mi) .* 255)
@@ -1391,24 +1392,27 @@ function mat2img(mat::Union{GMTgrid,Matrix{<:AbstractFloat}}; x=Float64[], y=Flo
 end
 
 """
-    I = imagesc(mat; x=, y=, hdr=, proj4=, wkt=, GI=, clim=, cmap=, kw...)
+    I = imagesc(mat; x=, y=, hdr=, proj4=, wkt=, clim=, cmap=, GI=, kw...)
 
 imagesc takes a Float matrix or a GMTgrid type and scales it (by default) to the [0, 255] interval.
 In the process it creates a GMTimage type. Those types can account for coordinates and projection
 information, hence the optional arguments. Contrary to its Matlab cousin, it doesn't display the
 result (that we easily do with `imshow(mat)`) but return instead a GMTimage object.
 
-  - `clim`: Specify clims as a two-element vector of the form [cmin cmax], where values of the scaled image
-     less than or equal to cmin are assigned that value. The same goes for cmax.
-  - `cmap`: If provided, `cmap` is a GMTcpt and its contents is converted to the `GMTimage` colormap.
-  - `GI`: This can be either a GMTgrid or a GMTimage and its contents is used to set spatial contents
-     (x,y coordinates) and projection info that one may attach to the created image result. This is
-     a handy alterative to the `x=, y=, proj4=...` options.
-  - `stretch`: This option is indicated to select an interval of the range of the `z` values and use only
-     those to scale to the [0 255] interval. A `stretch=true` automatically determines good values for
-     histogram stretching via a call to `histogram`. The form `stretch=(zmin,zmax)` allows specifying the
-     input limits directly. A previous plot of ``histogram(mat, show=true)`` can help determine good values.
-     Note that when this option `stretch` is used, ALL OTHER options are ignored. See also the ``rescale`` function.
+### Kwargs
+- `clim`: Specify clims as a two-element vector of the form [cmin cmax], where values of the scaled image
+   less than or equal to cmin are assigned that value. The same goes for cmax.
+- `cmap`: If provided, `cmap` is a GMTcpt and its contents is converted to the `GMTimage` colormap.
+- `GI`: This can be either a GMTgrid or a GMTimage and its contents is used to set spatial contents
+   (x,y coordinates) and projection info that one may attach to the created image result. This is
+   a handy alterative to the `x=, y=, proj4=...` options.
+- `stretch`: This option is indicated to select an interval of the range of the `z` values and use only
+   those to scale to the [0 255] interval. A `stretch=true` automatically determines good values for
+   histogram stretching via a call to `histogram`. The form `stretch=(zmin,zmax)` allows specifying the
+   input limits directly. A previous plot of ``histogram(mat, show=true)`` can help determine good values.
+   Note that when this option `stretch` is used, ALL OTHER options are ignored. See also the ``rescale`` function.
+- `region:` Limit the action to a region of the grid specified by `region`. See for example the ``coast``
+   manual for and extended doc on this keword. Note that this option is only available when `mat` is a GMTgrid type.
 
 If 'mat' is instead a UInt16 GMTimage type we call `rescale(I, stretch=true, type=UInt8)` instead of
 issuing an error. In this case `clim` can be a two elements vector to specify the desired stretch range.

@@ -111,9 +111,6 @@ BW2 = imfill(Ibw);
 ```
 """
 function imfill(mat::Matrix{<:Integer}; conn=4, is_transposed=true, layout="TRBa")
-    #if (eltype(I) == Bool)  mask = togglemask(mat)
-    #else                    mask = I;
-	#end
 	@assert conn == 4 || conn == 8 "Only conn=4 or conn=8 are supported"
     mask = padarray(mat, ones(Int, 1, ndims(mat)), padval=-Inf)		# 'mask' is always a matrix
 	GMT.imcomplement!(mask)
@@ -137,7 +134,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-	fillsinks(G::GMTgrid; conn=4, insitu=false)
+	fillsinks(G::GMTgrid; conn=4, region=nothing, insitu=false)
 
 Fill sinks in a grid.
 
@@ -150,6 +147,8 @@ which is not that much.
 
 ### Kwargs
 - `conn::Int`: Connectivity for sink filling. Default is 4.
+- `region`: Limit the action to a region of the grid specified by `region`. See for example the ``coast``
+  manual for and extended doc on this keword, but note that here only `region` is accepted and not `R`, etc...
 - `insitu::Bool`: If `true`, modify the grid in place. Default is `false`.
   Alternatively, use the conventional form ``fillsinks!(G; conn=4)``.
 
@@ -163,9 +162,9 @@ G2 = fillsinks(G)
 viz(G2, shade=true)
 ```
 """
-fillsinks!(G::GMTgrid; conn=4) = fillsinks(G; conn=conn, insitu=true)
-function fillsinks(G::GMTgrid; conn=4, insitu=false)
-	I = imagesc(G)
+fillsinks!(G::GMTgrid; conn=4, region=nothing) = fillsinks(G; conn=conn, region=region, insitu=true)
+function fillsinks(G::GMTgrid; conn=4, region=nothing, insitu=false)
+	I = imagesc(G, region=region)
 	I2 = imfill(I, conn=conn)
 	d = (I .== I2')
 	D = polygonize(d)
