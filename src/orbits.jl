@@ -3,9 +3,12 @@
 
 Plots the orbit, or whatever the input data in `xyz` represents, about the Earth or other planetary bodies.
 
+### Args
 - `xyz`: The orbit coordinates. By default, we expect the coordinates in the Earth Centered Earth Fixed (ECEF)
   system but they can be in spherical coordinates (lon, lat) as well. In this case `xyz` must be a Mx2 matrix
   and `height` (the orbit height) must be > 0. If this argument is omitted, we plot a demo spiral "orbit".
+
+### Kwargs
 - `radius`: The planetary body (spherical) radius. This value may be passed in meters or km and is only used
   when input is passed in spherical coordinates.
 - `first`: Boolean that indicates if ``orbits`` creates the first layer of the image plot. If the default
