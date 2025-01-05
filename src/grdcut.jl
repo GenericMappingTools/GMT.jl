@@ -4,8 +4,6 @@
 Produce a new outgrid which is a subregion of ingrid. The subregion is specified with
 ``limits`` (the -R); the specified range must not exceed the range of ingrid (but see ``extend``).
 
-See full GMT (not the `GMT.jl` one) docs at [`grdcut`]($(GMTdoc)grdcut.html)
-
 Parameters
 ----------
 
@@ -39,6 +37,8 @@ Parameters
     Determine a new rectangular region so that all nodes outside this region are also outside
     the given z-range.
 - $(_opt_f)
+
+To see the full documentation type: ``@? grdcut``
 """
 grdcut(cmd0::String; kwargs...) = grdcut_helper(cmd0, nothing; kwargs...)
 grdcut(arg1; kwargs...)         = grdcut_helper("", arg1; kwargs...)
