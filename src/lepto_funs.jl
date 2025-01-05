@@ -134,7 +134,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-	fillsinks(G::GMTgrid; conn=4, region=nothing, insitu=false)
+	fillsinks(G::GMTgrid; conn=4, region=nothing, saco=false, insitu=false)
 
 Fill sinks in a grid.
 
@@ -149,6 +149,11 @@ which is not that much.
 - `conn::Int`: Connectivity for sink filling. Default is 4.
 - `region`: Limit the action to a region of the grid specified by `region`. See for example the ``coast``
   manual for and extended doc on this keword, but note that here only `region` is accepted and not `R`, etc...
+- `saco::Bool`: Save the lines (GMTdataset ~contours) used to fill the sinks in a global variable called
+  GMT.SACO. This is intended to avoid return them all the time when function ends. This global variable
+  is a ``[Dict{String,Union{AbstractArray, Vector{AbstractArray}}}()]``, so to access its contents you must use:
+
+  ``D = get(GMT.SACO[1], "saco", nothing)``, where ``D`` is now a GMTdataset or a vector of them.
 - `insitu::Bool`: If `true`, modify the grid in place. Default is `false`.
   Alternatively, use the conventional form ``fillsinks!(G; conn=4)``.
 
@@ -158,17 +163,30 @@ which is not that much.
 ### Examples
 ```julia
 G = peaks();
-G2 = fillsinks(G)
+G2 = fillsinks(G);
 viz(G2, shade=true)
 ```
+
+Now save the filling contours and make a plot that overlayes them
+```julia
+G2 = fillsinks(G);
+G2 = fillsinks(G, saco=true);
+grdimage(G2)
+plot!(get(GMT.SACO[1], "saco", nothing), color=:white, show=true)
+```
 """
-fillsinks!(G::GMTgrid; conn=4, region=nothing) = fillsinks(G; conn=conn, region=region, insitu=true)
-function fillsinks(G::GMTgrid; conn=4, region=nothing, insitu=false)
+function fillsinks(G::GMTgrid; conn=4, region=nothing, saco=false, insitu=false)
 	I = imagesc(G, region=region)
 	I2 = imfill(I, conn=conn)
 	d = (I .== I2')
 	D = polygonize(d)
-	means = isa(D, Vector) ? median.(grdtrack(G, D, o=2)) : median(grdtrack(G, D, o=2))	# The mean of each interpolated contour
+	if (saco == 1)
+		Dtrk = grdtrack(G, D)
+		means = isa(D, Vector) ? median.(Dtrk) : median(Dtrk)
+		GMT.SACO[1] = Dict("saco" => Dtrk)			# Save the grdtrack interpolated lines for eventual external use.
+	else
+		means = isa(D, Vector) ? median.(grdtrack(G, D, o=2)) : median(grdtrack(G, D, o=2))	# The mean of each interpolated contour
+	end
 	_G = (insitu == 1) ? G : deepcopy(G)
 
 	function filled_ranges(G, D)
@@ -202,3 +220,4 @@ function fillsinks(G::GMTgrid; conn=4, region=nothing, insitu=false)
 	_G.range[5] = minimum_nan(_G.z)
 	return _G
 end
+fillsinks!(G::GMTgrid; conn=4, region=nothing, saco=false) = fillsinks(G; conn=conn, region=region, saco=saco, insitu=true)
