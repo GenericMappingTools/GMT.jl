@@ -154,6 +154,10 @@ which is not that much.
   is a ``[Dict{String,Union{AbstractArray, Vector{AbstractArray}}}()]``, so to access its contents you must use:
 
   ``D = get(GMT.SACO[1], "saco", nothing)``, where ``D`` is now a GMTdataset or a vector of them.
+
+  NOTE: It is the user's responsibility to empty this global variable when it is no longer needed.
+
+  You do that with: ``delete!(GMT.SACO[1], "saco")``
 - `insitu::Bool`: If `true`, modify the grid in place. Default is `false`.
   Alternatively, use the conventional form ``fillsinks!(G; conn=4)``.
 

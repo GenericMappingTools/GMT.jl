@@ -1554,6 +1554,7 @@ end
 
 	function gdaltranslate(dataset::Dataset, options=String[]; dest="/vsimem/tmp", gdataset=false, save::AbstractString="", layout::String="")
 		(save != "") && (dest = save)
+		(dest != "/vsimem/tmp" && gdataset == 1) && @warn "'gdataset' option is ignored when requesting to save data to a file."
 		_options = GDALTranslateOptionsNew(options, C_NULL)
 		usage_error = Ref{Cint}()
 		result = GDALTranslate(dest, dataset.ptr, _options, usage_error)
