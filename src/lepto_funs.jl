@@ -41,6 +41,27 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
+    I = imreconstruct(marker::Union{Matrix{Bool}, Matrix{UInt8}}, Imask::GMTimage{<:UInt8, 2}; conn=4, insitu=true)
+
+Perform morphological reconstruction of the image `marker` under the image `mask`.
+
+The elements of `marker` must be less than or equal to the corresponding elements of `mask`.
+If the values in `marker` are greater than corresponding elements in `mask`, then ``imreconstruct``
+clips the values to the mask level before starting the procedure. The worphological work is
+done by the Leptonica function ``pixSeedfillGray``.
+
+### Args
+- `marker`: The image to be reconstructed (will hold the reconstructed image). This can be a matrix
+  or a ``GMTimage`` with Boolean or UInt8 types
+- `mask`: The mask image. Types (``GMTimage`` or matrix) are Boolean or UInt8.
+
+### Kwargs
+- `conn::Int`: Connectivity for the image reconstruction (4 or 8). Default is 4.
+- `insitu::Bool`: If true, the input images are treated as in situ. Default is true.
+
+### Returns
+- A new ``GMTimage`` (or Matrix) with the holes filled.
+
 ### Examlple
 ```julia
 I = gmtread("C:\\programs\\MATLAB\\R2024a\\toolbox\\images\\imdata\\text.png");
@@ -52,7 +73,7 @@ im = imreconstruct(Im, I)
 """
 function imreconstruct(seed::Union{Matrix{Bool}, Matrix{UInt8}}, Imask::GMTimage{<:UInt8, 2}; conn=4, insitu=true)::GMTimage
 	Iseed = mat2img(seed, Imask)
-	isa(eltype(Iseed), Bool) && (Iseed = togglemask(Iseed))
+	(eltype(Iseed) == Bool) && (Iseed = togglemask(Iseed))
 	imreconstruct(Iseed, Imask; conn=conn, insitu=insitu)
 end
 function imreconstruct(Iseed::GMTimage{<:Integer, 2}, Imask::Union{GMTimage{<:Integer, 2}, Matrix{<:Integer}}; conn=4, insitu=true)::GMTimage
@@ -61,7 +82,7 @@ function imreconstruct(Iseed::GMTimage{<:Integer, 2}, Imask::Union{GMTimage{<:In
 	p = (insitu == 1) ? ppixIs : pixCopy(C_NULL, ppixIs)	# pixCopy is a shallow copy that does duplicate data. So this is wrong
 	pixSeedfillGray(p.ptr, ppixIm.ptr, conn)		# The image in 'p' is modified
 	I = pix2img(p)
-	#isa(eltype(Iseed), Bool) && (I = togglemask(I))
+	(eltype(Iseed) == Bool) && (I = togglemask(I))
 	return I
 end
 function imreconstruct(seed::Union{Matrix{Bool}, Matrix{UInt8}}, mask::Union{Matrix{Bool}, Matrix{UInt8}};
@@ -91,7 +112,7 @@ Here, a hole is defined as an area of dark pixels surrounded by lighter pixels.
 - `I::Union{GMTimage{UInt8, 2}, GMTimage{Bool, 2}, Matrix{UInt8}, Matrix{Bool}, BitMatrix}`: Input image.
 
 ### Kwargs
-- `conn::Int`: Connectivity for sink filling (4 or 8). Default is 4.
+- `conn::Int`: Connectivity for the image filling (4 or 8). Default is 4.
 - `is_transposed::Bool`: If `true`, it informs that the input image array is transposed. Default is `true`.
    Normally the ``GMTimage`` carries information to know about the transposition (which is `true` when the layout is "TRB").
    When passing a matrix in column-major order (the default in Julia), `is_transposed` must be set to `false`.
@@ -146,7 +167,7 @@ which is not that much.
 - `G::GMTgrid`: The input grid to process.
 
 ### Kwargs
-- `conn::Int`: Connectivity for sink filling. Default is 4.
+- `conn::Int`: Connectivity for sink filling (4 or 8). Default is 4.
 - `region`: Limit the action to a region of the grid specified by `region`. See for example the ``coast``
   manual for and extended doc on this keword, but note that here only `region` is accepted and not `R`, etc...
 - `saco::Bool`: Save the lines (GMTdataset ~contours) used to fill the sinks in a global variable called
