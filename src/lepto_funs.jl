@@ -36,7 +36,7 @@ function pix2img(ppix::Sppix)::GMTimage
 	pnbytes = Ref{Csize_t}()
 	pixGetRasterData(ppix.ptr, pdata, pnbytes)
 	r = unsafe_wrap(Array, pdata[], pnbytes[], own=true)
-	mat2img(reshape(r, (pixGetWidth(ppix.ptr), pixGetHeight(ppix.ptr))), layout="TRBa")
+	mat2img(reshape(r, (pixGetWidth(ppix.ptr), pixGetHeight(ppix.ptr))), layout="TRBa", is_transposed=true)
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -60,14 +60,18 @@ done by the Leptonica function ``pixSeedfillGray``.
 - `insitu::Bool`: If true, the input images are treated as in situ. Default is true.
 
 ### Returns
-- A new ``GMTimage`` (or Matrix) with the holes filled.
+- A new ``GMTimage`` (or Matrix).
 
 ### Examlple
+
+Use Reconstruction to Segment an Image
+
 ```julia
-I = gmtread("C:\\programs\\MATLAB\\R2024a\\toolbox\\images\\imdata\\text.png");
+text(["Hello World"], region=(1.92,2.08,1.97,2.02), x=2.0, y=2.0, font=(30, "Helvetica-Bold", :white),
+     frame=(axes=:none, bg=:black), figsize=(6,0), name="tmp.png")
+I = gmtread("tmp.png", band=1);
 marker = fill(UInt8(0),(size(I)));
-marker[94,13] = UInt8(255);
-Im = mat2img(marker, I);
+marker[390,130] = UInt8(255);
 im = imreconstruct(Im, I)
 ```
 """
