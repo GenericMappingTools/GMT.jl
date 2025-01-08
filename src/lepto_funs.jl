@@ -64,7 +64,7 @@ done by the Leptonica function ``pixSeedfillGray``.
 
 ### Examlple
 
-Use Reconstruction to Segment an Image
+Use reconstruction to segment an image
 
 ```julia
 text(["Hello World"], region=(1.92,2.08,1.97,2.02), x=2.0, y=2.0, font=(30, "Helvetica-Bold", :white),
