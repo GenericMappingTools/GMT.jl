@@ -911,6 +911,8 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage)::Ptr{GMT_IMAGE}
 
 	n_rows = size(Img.image, 1);		n_cols = size(Img.image, 2);		n_bands = size(Img.image, 3)
 	if (Img.layout[2] == 'R' && Img.layout[3] == 'B')  n_rows, n_cols = n_cols, n_rows  end
+	(n_bands == 1 &&Img.layout[2] == 'R' && Img.layout[3] == 'B') && (Img.layout = Img.layout[1:2] * "Pa")
+
 	family = GMT_IS_IMAGE
 	if (n_bands == 2 || n_bands == 4)			# Then we want the alpha layer together with data
 		family = family | GMT_IMAGE_ALPHA_LAYER
@@ -952,7 +954,17 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage)::Ptr{GMT_IMAGE}
 
 	(mem_owned_by_gmt) && (CTRL.gmt_mem_bag[1] = Ib.data)	# Hold on the GMT owned array to be freed in gmt()
 
-	if (length(Img.colormap) > 3)  Ib.colormap = pointer(Img.colormap)  end
+	#if (length(Img.colormap) > 3)  Ib.colormap = pointer(Img.colormap)  end
+	if (length(Img.colormap) > 3)					# the 2000 comes from gmtwrite
+		if (length(Img.colormap) >= 256*3 || Img.n_colors < 2000)	# A 256x3 or 256x4 colormap. All good, just point to it.
+			Ib.colormap = pointer(Img.colormap)
+		else										# Must pad the colormap to 256 colors because GDAL expects it.
+			t_cm = copy(Img.colormap)				# Make a copy because we will modify it
+			nc = div(length(Img.colormap), div(Img.n_colors, 1000))		# Should be 3 or 4
+			(nc == 3) ? append!(t_cm, zeros(Int, 256*3-length(t_cm))) : append!(t_cm, zeros(Int, 256*4-length(t_cm)))
+			Ib.colormap = pointer(t_cm)
+		end
+	end
 	Ib.n_indexed_colors = Img.n_colors
 	if (Img.color_interp != "")    Ib.color_interp = pointer(Img.color_interp)  end
 	Ib.alpha = (size(Img.alpha) != (1,1)) ? pointer(Img.alpha) : C_NULL
