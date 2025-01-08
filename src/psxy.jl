@@ -294,7 +294,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_Ebars(d, cmd, arg1)
 	got_Ebars = false
-	val, symb = find_in_dict(d, [:E :error :error_bars], false)
+	val, symb = find_in_dict(d, [:E :error :errorbars :error_bars], false)
 	if (val !== nothing)
 		if isa(val, String)
 			cmd *= " -E" * val
