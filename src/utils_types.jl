@@ -1166,10 +1166,9 @@ If `stretch` is a scalar, scale the values > `stretch` to [0 255]
 The `kw...` kwargs search for [:layout :mem_layout], [:names] and [:metadata]
 """
 function mat2img(mat::Union{AbstractArray{<:Unsigned}, AbstractArray{<:Bool}}; x=Float64[], y=Float64[], v=Float64[], hdr=Float64[],
-                 proj4::String="", wkt::String="", cmap=GMTcpt(), is_transposed::Bool=false, kw...)
+                 proj4::String="", wkt::String="", cmap::GMTcpt=GMTcpt(), is_transposed::Bool=false, kw...)
 	# Take a 2D array of uint8 and turn it into a GMTimage.
 	# Note: if HDR is empty we guess the registration from the sizes of MAT & X,Y
-	(cmap === nothing && eltype(mat) == Bool) && (cmap = makecpt(T=(0,1), cmap=:gray))
 	d = KW(kw)
 	helper_mat2img(mat, vec(Float64.(x)), vec(Float64.(y)), vec(Float64.(v)), vec(Float64.(hdr)), proj4, wkt, cmap, is_transposed, d)
 end
@@ -1182,6 +1181,11 @@ function mat2img16(mat::AbstractArray{<:Unsigned}; x=Float64[], y=Float64[], v=F
 end
 function helper_mat2img(mat, x::Vector{Float64}, y::Vector{Float64}, v::Vector{Float64}, hdr::Vector{Float64},
                         proj4::String, wkt::String, cmap::GMTcpt, is_transposed::Bool, d::Dict)
+	nx = size(mat, 2);		ny = size(mat, 1);
+	if (is_transposed)  nx, ny = ny, nx  end
+	reg::Int = (!isempty(hdr)) ? Int(hdr[7]) : (nx == length(x) && ny == length(y)) ? 0 : 1
+	x, y, hdr, x_inc, y_inc = grdimg_hdr_xy(mat, reg, hdr, x, y, is_transposed)
+
 	color_interp = "";		n_colors = 0;
 	if (!isempty(cmap))
 		colormap, labels, n_colors = cpt2cmap(cmap)
@@ -1197,14 +1201,7 @@ function helper_mat2img(mat, x::Vector{Float64}, y::Vector{Float64}, v::Vector{F
 		labels = String[]
 	end
 
-	nx = size(mat, 2);		ny = size(mat, 1);
-	if (is_transposed)  nx, ny = ny, nx  end
-	reg::Int = (!isempty(hdr)) ? Int(hdr[7]) : (nx == length(x) && ny == length(y)) ? 0 : 1
-	#hdr::Vector{Float64} = vec(hdr);	x::Vector{Float64} = vec(x);	y::Vector{Float64} = vec(y)	# Otherwis JET screammmms
-	x, y, hdr, x_inc, y_inc = grdimg_hdr_xy(mat, reg, hdr, x, y, is_transposed)
-
 	mem_layout = (size(mat,3) == 1) ? "TCBa" : "TCBa"		# Just to have something. Likely wrong for 3D
-	#d = KW(kw)
 	((val = find_in_dict(d, [:layout :mem_layout])[1]) !== nothing) && (mem_layout = string(val)::String)
 	_names::Vector{String} = ((val = find_in_dict(d, [:names])[1]) !== nothing) ? val : String[]
 	_meta::Vector{String}  = ((val = find_in_dict(d, [:metadata])[1]) !== nothing) ? val : String[]
