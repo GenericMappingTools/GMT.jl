@@ -638,13 +638,12 @@ function transpcmap!(I::GMTimage, toGMT::Bool=true)
 	(ndims(I) != 2 || I.n_colors <= 1 || eltype(I) == UInt16) && return nothing 	# Nothing to do
 
 	n_colors = I.n_colors
-	(n_colors > 2000) && (n_colors = Int(floor(n_colors / 1000)))
+	(n_colors >= 2000) && (n_colors = Int(floor(n_colors / 1000)))
 	if (toGMT)
 		n_cols = Int(length(I.colormap) / n_colors)
 		(I.n_colors < 2000 || n_cols == 4) && (I.n_colors *= 1000)	#  Because gmtwrite uses a trick to know if cmap is Mx2 or Mx4
 	else
-		(I.n_colors > 2000) && (I.n_colors = div(I.n_colors, 1000))		# Revert the trick 
-		#n_cols = Int(length(I.colormap) / n_colors)
+		(I.n_colors >= 2000) && (I.n_colors = div(I.n_colors, 1000))		# Revert the trick 
 	end
 	return nothing
 end
