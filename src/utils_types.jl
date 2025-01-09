@@ -991,11 +991,12 @@ function rasters2grid(arg; scale::Real=1f0, offset::Real=0f0)::GMTgrid
 	end
 
 	# Only case tested has CF times but I imagine we can have other units that make sense translate to names
-	names = String[]
+	names::Vector{String} = String[]
 	if (eltype(_v) <: TimeType)
 		names = string.(_v)		# Next, strip the "T00:00:00" part if there is no Time info
 		endswith(names[1], "T00:00:00") && endswith(names[end], "T00:00:00") &&
 			(for k = 1:numel(names) names[k] = names[k][1:10] end)
+		names = collect(names)	# Because typeof(names) was of an indescritible exotherism.
 	end
 
 	dic = !isempty(arg.metadata) ? arg.metadata.val : Dict()
