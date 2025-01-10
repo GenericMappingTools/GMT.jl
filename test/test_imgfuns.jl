@@ -32,4 +32,12 @@
 	padded_float = padarray(a_float, 1, padval=0.0)
 	@test eltype(padded_float) == Float32
 	@test padded_float[1,1] == 0.0
+
+	# imcomplement
+	I = gmtread(GMT.TESTSDIR * "assets/table_flowers.jpg");
+	imcomplement(I);
+	imcomplement!(I);
+
+	I = gmtread(GMT.TESTSDIR * "assets/coins.jpg");
+	binarize(I, band=1)
 end

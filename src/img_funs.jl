@@ -20,13 +20,14 @@ Originaly from MATLAB http://www.mathworks.com/matlabcentral/fileexchange/3195 (
 ### Kwargs
 - band: If the `I` image has more than one band, use `band` to specify which one to use.
 
-### Returns
+### Return
 An integer value that lies in the range [0 255].
 
 ### Example
 ```jldoctest
 I = gmtread(GMT.TESTSDIR * "assets/coins.jpg");
 level = isodata(I, band=1)
+119
 ```
 """
 function isodata(I::GMTimage; band=1)
@@ -75,7 +76,7 @@ Convert an image to a binary image (black-and-white) using a threshold.
 - band: If the `I` image has more than one band, use `band` to specify which one to binarize.
 - `revert`: If `true`, values below the threshold are set to 255, and values above the threshold are set to 0.
 
-### Returns
+### Return
 A new ``GMTimage``.
 
 ### Example
@@ -91,9 +92,9 @@ function binarize(I::GMTimage, threshold::Int=0; band=1, revert=false)::GMTimage
 	thresh = (threshold == 0) ? isodata(I, band=band) : threshold
 	img = zeros(UInt8, size(I, 1), size(I, 2))
 	if revert
-		t = view(I.image, :, :, band) .< thresh
+		t = I.layout[3] == 'B' ? (view(I.image, :, :, band) .< thresh) : (slicecube(I, band).image .< thresh)
 	else
-		t = view(I.image, :, :, band) .> thresh
+		t = I.layout[3] == 'B' ? (view(I.image, :, :, band) .> thresh) : (slicecube(I, band).image .> thresh)
 	end
 	img[t] .= 255
 	return mat2img(img, I)
@@ -108,7 +109,7 @@ Convert an RGB image to a grayscale image applying the television YMQ transforma
 ### Args
 - `I::GMTimage{UInt8, 3}`: input image of type UInt8.
 
-### Returns
+### Return
 A new ``GMTimage{UInt8, 2}``.
 
 ### Example
@@ -169,7 +170,7 @@ The alternative ``rgb2ycbcr`` alias (all lowercase) is also accepted.
 - `BT709`: If `true` use the ``ITU-R BT.709`` conversion  instead of the default ``ITU-R BT.601``.
   See https://en.wikipedia.org/wiki/YCbCr
 
-### Returns
+### Return
 A RGB ``GMTimage`` or up to three ``GMTimages`` grayscales images with the luminance (Y), Cb and Cr components.
 
 ### Example
@@ -181,9 +182,6 @@ Iycbcr = rgb2YCbCr(I);
 
 # The Cb and Cr components
 _,Cb,Cr = rgb2YCbCr(I, Cb=true, Cr=true);
-
-# The Cb component
-Cb = rgb2YCbCr(mat2img(rand(UInt8, 100, 100, 3), Cb=true)[2];
 
 # Show the four.
 grdimage(I, figsize=6)
@@ -237,7 +235,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-	padarray(A, padsize; padval=nothing)
+	B = padarray(A, padsize; padval=nothing)
 
 Pad matrix A with an amount of padding in each dimension specified by padsize.
 
@@ -251,7 +249,7 @@ Pad matrix A with an amount of padding in each dimension specified by padsize.
   `padval` specifies a constant value to use for padded elements. `padval` can take the value -Inf or Inf,
   in which case the smallest or largest representable value of the type of `A` is used, respectively.
 
-### Returns
+### Return
 Padded array of same type as input.
 
 """
@@ -329,7 +327,7 @@ Optionally, return only one to three of: L, a* and b* separate images. For that 
 - `a`: If `true` return the `a` component.
 - `b`: If `true` return the `b` component.
 
-### Returns
+### Return
 A RGB ``GMTimage`` or up to three ``GMTimages`` grayscales images with the L, a* and b* components.
 
 ### Example
@@ -397,7 +395,7 @@ grayscale or truecolor image, dark areas become lighter and light areas become d
 
 The ``imcomplement!`` function works in-place and returns the modified ``I``.
 
-### Returns
+### Return
 The modified ``I`` image.
 
 ### Example
@@ -434,7 +432,7 @@ function imcomplement(I::GMTimage; insitu=false)
 end
 imcomplement!(I::GMTimage) = imcomplement(I; insitu=true)
 
-function imcomplement(mat::VecOrMat{<:Real})
+function imcomplement(mat::AbstractArray{<:Real})
 	if eltype(mat) == Bool
 		r = .!mat
 	elseif (eltype(mat) == UInt8 || eltype(mat) == UInt16 || eltype(mat) == UInt32 || eltype(mat) == UInt64)
@@ -446,7 +444,7 @@ function imcomplement(mat::VecOrMat{<:Real})
 	end
 end
 
-function imcomplement!(mat::VecOrMat{<:Real})::Nothing
+function imcomplement!(mat::AbstractArray{<:Real})::Nothing
 	tmax = typemax(eltype(mat))
 	if eltype(mat) == Bool
 		for k = 1:numel(mat)  mat[k] = !mat[k]  end
