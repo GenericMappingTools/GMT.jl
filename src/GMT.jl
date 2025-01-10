@@ -355,7 +355,7 @@ using GMT.Laszip
 	t = joinpath(tempdir(), "lixo.dat");
 	gmtwrite(t,[0.0 0; 1 1]);
 	gmtread(t);
-	gmtread(GMT.TESTSDIR * "burro_cenora.jpg");
+	gmtread(GMT.TESTSDIR * "assets/burro_cenora.jpg");
 	rm(t)
 	D = mat2ds(rand(3,3), colnames=["Time","b","c"]); D.attrib = Dict("Timecol" => "1");
 	D[:Time];	D["Time", "b"];
