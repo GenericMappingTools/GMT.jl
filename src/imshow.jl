@@ -29,7 +29,7 @@ julia> imshow(rand(128,128))
 julia> imshow(gmtread()"http://larryfire.files.wordpress.com/2009/07/untooned_jessicarabbit.jpg"), region=:global, frame="g", proj=:sinu)
 
 # Plot images in the walls of the cube for the 3D view cases. Replace file names with those that exist for you.
-julia> viz(G, zsize=6, facades=("cenora_base.jpg", "bunny_cenora.webp", "burro_cenora.webp"))
+julia> viz(G, zsize=6, facades=(GMT.TESTSDIR*"assets/cenora_base.jpg", GMT.TESTSDIR*"bunny_cenora.webp", GMT.TESTSDIR*"burro_cenora.webp"))
 ```
 See also: [`grdimage`](@ref), [`grdview`](@ref)
 """
