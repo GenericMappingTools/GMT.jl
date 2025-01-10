@@ -13,6 +13,21 @@ A new threshold value 1 is now computed as the average of these two sample means
 based upon the new threshold, until the threshold value does not change any more.
 
 Originaly from MATLAB http://www.mathworks.com/matlabcentral/fileexchange/3195 (BSD, Licenced)
+
+### Args
+- `I::GMTimage`: input image of type UInt8.
+
+### Kwargs
+- band: If the `I` image has more than one band, use `band` to specify which one to use.
+
+### Returns
+An integer value that lies in the range [0 255].
+
+### Example
+```jldoctest
+I = gmtread(GMT.TESTSDIR * "assets/coins.jpg");
+level = isodata(I, band=1)
+```
 """
 function isodata(I::GMTimage; band=1)
 
@@ -47,16 +62,33 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    Ibw = binarize(I::GMTimage, threshold=nothing; band=1, revert=false) -> GMTimage
+    Ibw = binarize(I::GMTimage, threshold::Int=0; band=1, revert=false) -> GMTimage
 
 Convert an image to a binary image (black-and-white) using a threshold.
 
-If `threshold` is `nothing`, the threshold is computed using the ``isodata`` method.
-If `revert=true`, values below the threshold are set to 255, and values above the threshold are set to 0.
-If the `I` image has more than one band, use `band` to specify which one to binarize.
+### Args
+- `I::GMTimage`: input image of type UInt8.
+- `threshold::Int`: A number in the range [0 255]. If the default (`nothing`) is maintained,
+  the threshold is computed using the ``isodata`` method.
+
+### Kwargs
+- band: If the `I` image has more than one band, use `band` to specify which one to binarize.
+- `revert`: If `true`, values below the threshold are set to 255, and values above the threshold are set to 0.
+
+### Returns
+A new ``GMTimage``.
+
+### Example
+```jldoctest
+I = gmtread(GMT.TESTSDIR * "assets/coins.jpg");
+Ibw = binarize(I, band=1)
+# Show the two side-by-side
+grdimage(I, figsize=6)
+grdimage!(Ibw, figsize=6, xshift=6.1, show=true)
+```
 """
-function binarize(I::GMTimage, threshold=nothing; band=1, revert=false)::GMTimage
-	thresh = threshold isa Nothing ? isodata(I, band=band) : threshold
+function binarize(I::GMTimage, threshold::Int=0; band=1, revert=false)::GMTimage
+	thresh = (threshold == 0) ? isodata(I, band=band) : threshold
 	img = zeros(UInt8, size(I, 1), size(I, 2))
 	if revert
 		t = view(I.image, :, :, band) .< thresh
@@ -69,9 +101,25 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    Igray = rgb2gray(I) -> GMTimage
+    Igray = rgb2gray(I::GMTimage{UInt8, 3}) -> GMTimage{UInt8, 2}
 
 Convert an RGB image to a grayscale image applying the television YMQ transformation.
+
+### Args
+- `I::GMTimage{UInt8, 3}`: input image of type UInt8.
+
+### Returns
+A new ``GMTimage{UInt8, 2}``.
+
+### Example
+```jldoctest
+I = gmtread(GMT.TESTSDIR * "assets/bunny_cenora.jpg");
+Igray = rgb2gray(I)
+
+# Show the two side-by-side
+grdimage(I, figsize=6)
+grdimage!(Igray, figsize=6, xshift=6.1, show=true)
+```
 """
 function rgb2gray(I::GMTimage{UInt8, 3})
 	img = helper_img_transforms(I, 0.299, 0.587, 0.114)
@@ -108,18 +156,40 @@ or
 Convert RGB color values to luminance (Y) and chrominance (Cb and Cr) values of a YCbCr image.
 
 Optionally, return only one to three of Y, Cb and Cr in separate images. For that use the `keywords`:
-`Y=true`, `Cb=true` or `Cr=true`. Each ``true`` occurence makes it return that component, otherwise it returns an empty image.
+`Y`, `Cb` or `Cr`. Each ``true`` occurence makes it return that component, otherwise it returns an empty image.
+The alternative ``rgb2ycbcr`` alias (all lowercase) is also accepted.
 
-The `BT709` option makes it use the ``ITU-R BT.709`` conversion instead of the default ``ITU-R BT.601``.
-See https://en.wikipedia.org/wiki/YCbCr
+### Args
+- `I::GMTimage{UInt8, 3}`: input RGB image.
 
-### Examples
+### Kwargs
+- `Y`: If `true` return the luminance (Y) component.
+- `Cb`: If `true` return the Cb component.
+- `Cr`: If `true` return the Cr component.
+- `BT709`: If `true` use the ``ITU-R BT.709`` conversion  instead of the default ``ITU-R BT.601``.
+  See https://en.wikipedia.org/wiki/YCbCr
+
+### Returns
+A RGB ``GMTimage`` or up to three ``GMTimages`` grayscales images with the luminance (Y), Cb and Cr components.
+
+### Example
 ```julia
-Iycbcr = rgb2YCbCr(mat2img(rand(UInt8, 100, 100, 3))              # A 3D image
 
-_,Cb,Cr = rgb2YCbCr(mat2img(rand(UInt8, 100, 100, 3), Cb=true, Cr=true)     # The Cb and Cr components
+# Read an RGB image
+I = gmtread(GMT.TESTSDIR * "assets/seis_section_rgb.jpg");
+Iycbcr = rgb2YCbCr(I);
 
-Cb = rgb2YCbCr(mat2img(rand(UInt8, 100, 100, 3), Cb=true)[2]      # The Cb component
+# The Cb and Cr components
+_,Cb,Cr = rgb2YCbCr(I, Cb=true, Cr=true);
+
+# The Cb component
+Cb = rgb2YCbCr(mat2img(rand(UInt8, 100, 100, 3), Cb=true)[2];
+
+# Show the four.
+grdimage(I, figsize=6)
+grdimage!(Iycbcr, figsize=6, yshift=-2.84)
+grdimage!(Cb, figsize=6, yshift=-2.84)
+grdimage!(Cr, figsize=6, yshift=-2.84, show=true)
 ```
 """
 function rgb2YCbCr(I::GMTimage{UInt8, 3}; Y=false, Cb=false, Cr=false, BT709=false)
@@ -133,10 +203,12 @@ function rgb2YCbCr(I::GMTimage{UInt8, 3}; Y=false, Cb=false, Cr=false, BT709=fal
 	composite = (Y != 0 || Cb != 0 || Cr != 0) ? false : true
 	if (composite)
 		img = zeros(UInt8, size(I))
-		img[:,:,1] .= helper_rgb2ycbcr(I, c[1,1],  c[1,2], c[1,3], a1; buf=view(I.image, :,:,1))
-		img[:,:,2] .= helper_rgb2ycbcr(I, c[2,1],  c[2,2], c[2,3], a2; buf=view(I.image, :,:,2))
-		img[:,:,3] .= helper_rgb2ycbcr(I, c[3,1],  c[3,2], c[3,3], a2; buf=view(I.image, :,:,3))
-		return mat2img(img, I)
+		img[:,:,1] .= helper_rgb2ycbcr(I, c[1,1],  c[1,2], c[1,3], a1)
+		img[:,:,2] .= helper_rgb2ycbcr(I, c[2,1],  c[2,2], c[2,3], a2)
+		img[:,:,3] .= helper_rgb2ycbcr(I, c[3,1],  c[3,2], c[3,3], a2)
+		_I = mat2img(img, I)
+		(_I.layout[3] == 'P') && (_I.layout = "TRBa")	# When I was read with `gmtread`, layout was "BRP"
+		return _I
 	end
 	_Y  = (Y  != 0) ? mat2img(helper_rgb2ycbcr(I, c[1,1],  c[1,2], c[1,3], a1), I) : GMTimage()
 	_Cb = (Cb != 0) ? mat2img(helper_rgb2ycbcr(I, c[2,1],  c[2,2], c[2,3], a2), I) : GMTimage()
@@ -146,17 +218,17 @@ end
 const rgb2ycbcr = rgb2YCbCr			# Alias
 
 # ---------------------------------------------------------------------------------------------------
-function helper_rgb2ycbcr(I::GMTimage{UInt8,3}, c1, c2, c3, add; buf::AbstractMatrix{UInt8}=Matrix{UInt8}(undef,0,0))
+function helper_rgb2ycbcr(I::GMTimage{UInt8,3}, c1, c2, c3, add)
 	_Img::Array{UInt8,3} = I.image			# If we don't do this it F insists I.image is Any and slows down 1000 times
 	nxy::Int = size(_Img, 1) * size(_Img, 2)
-	img = isempty(buf) ? zeros(UInt8, size(_Img, 1), size(_Img, 2)) : buf
+	img = zeros(UInt8, size(_Img, 1), size(_Img, 2))
 	if (I.layout[3] != 'P')
-		@inbounds for ij = 1:nxy
+		@inbounds Threads.@threads for ij = 1:nxy
 			img[ij] = round(UInt8, add + c1 * _Img[ij] + c2 * _Img[ij+nxy] + c3 * _Img[ij+2nxy])
 		end
 	else
 		i = 0
-		@inbounds for ij = 1:3:3nxy
+		@inbounds Threads.@threads for ij = 1:3:3nxy
 			img[i+=1] = round(UInt8, add + c1 * _Img[ij] + c2 * _Img[ij+1] + c3 * _Img[ij+2])
 		end
 	end
@@ -169,10 +241,19 @@ end
 
 Pad matrix A with an amount of padding in each dimension specified by padsize.
 
-`padsize` can be a scalar or a array of length equal to 2 (only matrices are supported).
-If `padval` is not specified, `A` is padded with a replication of the first/last row and column, otherwise
-`padval` specifies a constant value to use for padded elements. `padval` can take the value -Inf or Inf,
-in which case the smallest or largest representable value of the type of `A` is used, respectively.
+### Args
+- `A`: GMTimage, GMTgrid or Matrix to pad.
+- `padsize`: Amount of padding in each dimension. It can be a scalar or a array of length
+  equal to 2 (only matrices are supported).
+
+### Kwargs
+- `padval`: If not specified, `A` is padded with a replication of the first/last row and column, otherwise
+  `padval` specifies a constant value to use for padded elements. `padval` can take the value -Inf or Inf,
+  in which case the smallest or largest representable value of the type of `A` is used, respectively.
+
+### Returns
+Padded array of same type as input.
+
 """
 function padarray(a::AbstractArray{T,2}, p; padval=nothing) where T
 	# https://discourse.julialang.org/t/julia-version-of-padarray-in-matlab/37635/9
@@ -183,12 +264,14 @@ function padarray(a::AbstractArray{T,2}, p; padval=nothing) where T
 	
 	(padval === nothing) && return a[y, x]
 
-	pv = (padval == -Inf) ? typemin(eltype(a)) : (padval == Inf) ? typemax(eltype(a)) : !(eltype(a) <: AbstractFloat) ? clamp(padval, eltype(a)) : convert(eltype(a), padval)
+	pv = (padval == -Inf) ? typemin(eltype(a)) : (padval == Inf) ? typemax(eltype(a)) :
+	                        !(eltype(a) <: AbstractFloat) ? clamp(padval, eltype(a)) : convert(eltype(a), padval)
 	r = fill(pv, h+2_p[1], w+2_p[2])
 	r[_p[1]+1:h+_p[1], _p[2]+1:w+_p[2]] .= a
 	return r
 end
 
+# ---------------------------------------------------------------------------------------------------
 @inline function gamma_correction(r255, g255, b255)
 	r = r255 / 255;		g = g255 / 255;		b = b255 / 255
 	r = (r > 0.04045) ? ((r + 0.055) / 1.055)^2.4 : r / 12.92
@@ -197,6 +280,7 @@ end
 	return r, g, b
 end
 
+# ---------------------------------------------------------------------------------------------------
 @inline function rgb2xyz(r, g, b)
 	r, g, b = gamma_correction(r, g, b)
 	X = r * 41.24 + g * 35.76 + b * 18.05
@@ -205,6 +289,7 @@ end
 	return X, Y, Z
 end
 
+# ---------------------------------------------------------------------------------------------------
 @inline function xyz2lab(x, y, z)
 	x /= 95.047;	y /= 100.0;		z /= 108.883;	f = 16 / 116
 	x = (x > 0.008856) ? x^(1/3) : (7.787 * x) + f
@@ -217,6 +302,7 @@ end
 	return L, a, b
 end
 
+# ---------------------------------------------------------------------------------------------------
 function rgb2lab(r, g, b)
 	x, y, z = rgb2xyz(r, g, b)
 	L, a, b = xyz2lab(x, y, z)
@@ -228,11 +314,40 @@ end
     img = rgb2lab(I::GMTimage{UInt8, 3})
 or
 
-    L, a, b = rgb2lab(I::GMTimage{UInt8, 3}, L=true)
+    L, a, b = rgb2lab(I::GMTimage{UInt8, 3}, L=false, a=false, b=false)
 
 Convert RGB to CIE 1976 L*a*b*
 
-Optionally, return three images with the L, a* and b* components. For that use the option `L=true`
+Optionally, return only one to three of: L, a* and b* separate images. For that use the `keywords`:
+`L`, `a` or `b`. Each ``true`` occurence makes it return that component, otherwise it returns an empty image.
+
+### Args
+- `I::GMTimage{UInt8, 3}`: input RGB image.
+
+### Kwargs
+- `L`: If `true` return the `L` component.
+- `a`: If `true` return the `a` component.
+- `b`: If `true` return the `b` component.
+
+### Returns
+A RGB ``GMTimage`` or up to three ``GMTimages`` grayscales images with the L, a* and b* components.
+
+### Example
+```julia
+# Read an RGB image and compute the Lab transform.
+I = gmtread(GMT.TESTSDIR * "assets/seis_section_rgb.jpg");
+Ilab = rgb2lab(I);
+
+# The L, a* and b* components
+L,a,b = rgb2lab(I, L=true, a=true, b=true);
+
+# Show the five.
+grdimage(I, figsize=8)
+grdimage!(Ilab, figsize=8, yshift=-3.8)
+grdimage!(L, figsize=8, yshift=-3.8)
+grdimage!(a, figsize=8, yshift=-3.8)
+grdimage!(b, figsize=8, yshift=-3.8, show=true)
+```
 """
 function rgb2lab(I::GMTimage{UInt8, 3}; L=false, a=false, b=false)
 	_Img::Array{UInt8,3} = I.image			# If we don't do this it F insists I.image is Any and slows down 1000 times
@@ -244,28 +359,33 @@ function rgb2lab(I::GMTimage{UInt8, 3}; L=false, a=false, b=false)
 
 	if (I.layout[3] == 'B')				# Band interleaved
 		@inbounds for ij = 1:nxy
-			L,a,b = rgb2lab(_Img[ij], _Img[ij+nxy], _Img[ij+2nxy])
-			imgL[ij] = round(UInt8, L * 2.55)		# L -> [0 100]
-			t1[ij], t2[ij] = Float32(a), Float32(b) 
+			_L, _a, _b = rgb2lab(_Img[ij], _Img[ij+nxy], _Img[ij+2nxy])
+			imgL[ij] = round(UInt8, _L * 2.55)		# L -> [0 100]
+			t1[ij], t2[ij] = Float32(_a), Float32(_b) 
 		end
 	else								# Pixel interleaved
 		i = 0
 		@inbounds for ij = 1:3:3nxy
-			L,a,b = rgb2lab(_Img[ij], _Img[ij+1], _Img[ij+2])
-			imgL[i+=1] = round(UInt8, L * 2.55)		# L -> [0 100]
-			t1[i], t2[i] = Float32(a), Float32(b) 
+			_L, _a, _b = rgb2lab(_Img[ij], _Img[ij+1], _Img[ij+2])
+			imgL[i+=1] = round(UInt8, _L * 2.55)		# L -> [0 100]
+			t1[i], t2[i] = Float32(_a), Float32(_b) 
 		end
 	end
 
-	imga = rescale(t1; type=UInt8)
-	imgb = rescale(t2; type=UInt8)
-	(composite) && return mat2img(cat(imgL, imga, imgb, dims=3), I)
-	return mat2img(imgL, I), mat2img(imga, I), mat2img(imgb, I)
+	(composite || a == 1) && (imga = rescale(t1; type=UInt8))
+	(composite || b == 1) && (imgb = rescale(t2; type=UInt8))
+	if (composite)
+		_I = mat2img(cat(imgL, imga, imgb, dims=3), I)
+		(I.layout[3] == 'P') && (_I.layout = "TRBa")	# When I was read with `gmtread`, layout was "BRP"
+		return _I
+	end
+
+	return mat2img(imgL, I), (a == 1) ? mat2img(imga, I) : GMTimage(), (b == 1) ? mat2img(imgb, I) : GMTimage()
 end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    J = imcomplement(I) -> GMTimage
+    J = imcomplement(I::GMTimage) -> GMTimage
 
 Compute the complement of the image `I` and returns the result in `J`.
 
@@ -276,6 +396,24 @@ In the complement of a binary image, black becomes white and white becomes black
 grayscale or truecolor image, dark areas become lighter and light areas become darker.
 
 The ``imcomplement!`` function works in-place and returns the modified ``I``.
+
+### Returns
+The modified ``I`` image.
+
+### Example
+```jldoctest
+text(["Hello World"], region=(1.92,2.08,1.97,2.02), x=2.0, y=2.0,
+     font=(30, "Helvetica-Bold", :white),
+     frame=(axes=:none, bg=:black), figsize=(6,0), name="tmp.png")
+
+# Read only one band (althouh gray scale, the "tmp.png" is actually RGB)
+I = gmtread("tmp.png", band=1);
+Ic = imcomplement(I);
+
+# Show the two
+grdimage(I, figsize=8)
+grdimage!(Ic, figsize=8, yshift=-2.57, show=true)
+```
 """
 function imcomplement(I::GMTimage; insitu=false)
 	(insitu == 1) && (imcomplement!(I.image))
