@@ -104,7 +104,7 @@ if isdefined(Base, :Experimental) && isdefined(Base.Experimental, Symbol("@optle
 end
 
 export
-	GMTgrid, GMTimage, GMTdataset, GMTfv, GMTcpt, GItype, GDtype, GMTver, FMT, TMPDIR_USR, gmt, libgdal,
+	GMTgrid, GMTimage, GMTdataset, GMTfv, GMTcpt, GItype, GDtype, GMTver, FMT, TMPDIR_USR, TESTSDIR, gmt, libgdal,
 	arrows, arrows!, bar, bar!, bar3, bar3!, band, band!, bubblechart, bubblechart!, feather, feather!, hband, hband!,
 	hlines, hlines!, lines, lines!, legend, legend!, quiver, quiver!, radar, radar!, stairs, stairs!, stem, stem!,vlines,
 	vlines!, vband, vband!, hspan, hspan!, vspan, vspan!,
