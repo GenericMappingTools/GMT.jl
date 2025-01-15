@@ -439,7 +439,7 @@ end
 """
     J = imclose(I::Union{GMTimage{<:UInt8, 2}, GMTimage{<:Bool, 2}}; hsize=3, vsize=3, sel=nothing)::GMTimage
 
-Open the grayscale or binary image I.
+Close the grayscale or binary image I.
 
 The morphological close operation is a dilation followed by an erosion, using the same structuring element
 for both operations.
