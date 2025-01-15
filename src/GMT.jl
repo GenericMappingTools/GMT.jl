@@ -167,7 +167,7 @@ export
 	VSdisp, mad, info, kmeans, pca, mosaic, quadbounds, quadkey, geocoder, getprovider,
 
 	binarize, isodata, padarray, rgb2gray, rgb2lab, rgb2YCbCr, rgb2ycbcr, grid2img, img2grid, grays2cube, grays2rgb,
-	imcomplement, imcomplement!,
+	imcomplement, imcomplement!, imerode, imdilate, imopen, imclose, strel,
 
 	imfill, imreconstruct, fillsinks, fillsinks!,
 
