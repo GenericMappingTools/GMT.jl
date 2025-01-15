@@ -72,3 +72,11 @@ BW1 = Bool.([1 0 0 0 0 0 0 0; 1 1 1 1 1 0 0 0; 1 0 0 0 1 0 1 0; 1 0 0 0 1 1 1 0;
 BW2 = imfill(BW1);
 @test isa(BW2, BitMatrix)
 @test sum(BW2) == 40
+
+I = gmtread(TESTSDIR * "assets/chip.png");
+imerode(I, sel=strel("disk", 10));
+imdilate(I, sel=strel("disk", 10));
+
+I = gmtread(TESTSDIR * "assets/packman.png");
+imopen(I, sel=strel("box", 20));
+imclose(I, sel=strel("box", 20));

@@ -57,6 +57,28 @@ struct Pix
 	colormap::Ptr{PixColormap}
 	data::Ptr{Cuint}
 end
+
+"""
+    Sel
+
+| Field | Note                                     |
+| :---- | :--------------------------------------- |
+| sy    | sel height                               |
+| sx    | sel width                                |
+| cy    | y location of sel origin                 |
+| cx    | x location of sel origin                 |
+| data  | {0,1,2}; data[i][j] in [row][col] order  |
+| name  | used to find sel by name                 |
+"""
+struct Sel
+    sy::Cint
+    sx::Cint
+    cy::Cint
+    cx::Cint
+    data::Ptr{Ptr{Cint}}
+    name::Cstring
+end
+
 """
 When the garbage collector collects this object the associated Sppix object will be freed in the C library.
 """
@@ -65,9 +87,9 @@ mutable struct Sppix
 	function Sppix(ptr::Union{Ptr{Pix}, Ptr{Cvoid}})
 		retval = new(ptr)
 		#finalizer(retval) do obj
-			#PIX_delete!(obj)
+			#Pix_delete!(obj)
 		#end
-		finalizer(PIX_delete!, retval)
+		finalizer(Pix_delete!, retval)
 		return retval
 	end
 end
@@ -79,7 +101,7 @@ the object early. This method can be called multiple times without any negative 
 Calling this method will free the object unless a reference is held by an external library. Once
 that library releases it's reference the Sppix object should be fully freed.
 """
-function PIX_delete!(sppix::Sppix)::Nothing
+function Pix_delete!(sppix::Sppix)::Nothing
 	if sppix.ptr != C_NULL
 		pixDestroy(Ref(sppix.ptr))
 		sppix.ptr = C_NULL
@@ -88,33 +110,26 @@ function PIX_delete!(sppix::Sppix)::Nothing
 end
 
 pixGetWidth(pix) = ccall((:pixGetWidth, liblept), Cint, (Ptr{Pix},), pix)
-
 pixSetWidth(pix, width) = ccall((:pixSetWidth, liblept), Cint, (Ptr{Pix}, Cint), pix, width)
-
 pixGetHeight(pix) = ccall((:pixGetHeight, liblept), Cint, (Ptr{Pix},), pix)
-
 pixSetHeight(pix, height) = ccall((:pixSetHeight, liblept), Cint, (Ptr{Pix}, Cint), pix, height)
-
 pixGetDepth(pix) = ccall((:pixGetDepth, liblept), Cint, (Ptr{Pix},), pix)
-
 pixSetDepth(pix, depth) = ccall((:pixSetDepth, liblept), Cint, (Ptr{Pix}, Cint), pix, depth)
+pixGetSpp(pix) = ccall((:pixGetSpp, liblept), Cint, (Ptr{Pix},), pix)
+pixGetWpl(pix) = ccall((:pixGetWpl, liblept), Cint, (Ptr{Pix},), pix)
+pixSetWpl(pix, wpl) = ccall((:pixSetWpl, liblept), Cint, (Ptr{Pix}, Cint), pix, wpl)
 
 function pixGetDimensions(pix, pw, ph, pd)
 	ccall((:pixGetDimensions, liblept), Cint, (Ptr{Pix}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}), pix, pw, ph, pd)
 end
 
 pixDestroy(ppix) = ccall((:pixDestroy, liblept), Cvoid, (Ptr{Ptr{Pix}},), ppix)
-
 pixCopy(pixd, pixs) = ccall((:pixCopy, liblept), Ptr{Pix}, (Ptr{Pix}, Ptr{Pix}), pixd, pixs)
-
 pixResizeImageData(pixd, pixs) = ccall((:pixResizeImageData, liblept), Cint, (Ptr{Pix}, Ptr{Pix}), pixd, pixs)
-
 pixCopyColormap(pixd, pixs) = ccall((:pixCopyColormap, liblept), Cint, (Ptr{Pix}, Ptr{Pix}), pixd, pixs)
-
 pixRead(filename) = ccall((:pixRead, liblept), Ptr{Pix}, (Cstring,), filename)
-
+pixWrite(fname, pix, format) = ccall((:pixWrite, liblept), Cint, (Cstring, Ptr{Pix}, Cint), fname, pix, format)
 pixEndianTwoByteSwapNew(pixs) = ccall((:pixEndianTwoByteSwapNew, liblept), Ptr{Pix}, (Ptr{Pix},), pixs)
-
 pixEndianTwoByteSwap(pixs) = ccall((:pixEndianTwoByteSwap, liblept), Cint, (Ptr{Pix},), pixs)
 
 function pixGetRasterData(pixs, pdata, pnbytes)
@@ -131,11 +146,19 @@ function pixCleanupByteProcessing(pix, lineptrs)
 	ccall((:pixCleanupByteProcessing, liblept), Cint, (Ptr{Pix}, Ptr{Ptr{Cuchar}}), pix, lineptrs)
 end
 
-function pixSeedfillGray(pixs, pixm, conn)
-	ccall((:pixSeedfillGray, liblept), Cint, (Ptr{Pix}, Ptr{Pix}, Cint), pixs, pixm, conn)
-end
-
-function pixSeedfillGrayInv(pixs, pixm, conn)
-	ccall((:pixSeedfillGrayInv, liblept), Cint, (Ptr{Pix}, Ptr{Pix}, Cint), pixs, pixm, conn)
-end
-
+#_liblept = "C:\\programs\\compa_libs\\leptonica\\compileds\\VC14_64\\lib\\leptonica_w64.dll"
+pixSeedfillGray(pixs, pixm, conn)  = ccall((:pixSeedfillGray, liblept), Cint, (Ptr{Pix}, Ptr{Pix}, Cint), pixs, pixm, conn)
+pixSeedfillGrayInv(pixs, pixm, conn) = ccall((:pixSeedfillGrayInv, liblept), Cint, (Ptr{Pix}, Ptr{Pix}, Cint), pixs, pixm, conn)
+pixErodeGray(pixs, hsize, vsize)   = ccall((:pixErodeGray, liblept),  Ptr{Pix}, (Ptr{Pix}, Cint, Cint), pixs, hsize, vsize)
+pixDilateGray(pixs, hsize, vsize)  = ccall((:pixDilateGray, liblept), Ptr{Pix}, (Ptr{Pix}, Cint, Cint), pixs, hsize, vsize)
+pixOpenGray(pixs, hsize, vsize)    = ccall((:pixOpenGray, liblept),   Ptr{Pix}, (Ptr{Pix}, Cint, Cint), pixs, hsize, vsize)
+pixCloseGray(pixs, hsize, vsize)   = ccall((:pixCloseGray, liblept),  Ptr{Pix}, (Ptr{Pix}, Cint, Cint), pixs, hsize, vsize)
+pixErodeGray3(pixs, hsize, vsize)  = ccall((:pixErodeGray3, liblept), Ptr{Pix}, (Ptr{Pix}, Cint, Cint), pixs, hsize, vsize)
+pixDilateGray3(pixs, hsize, vsize) = ccall((:pixDilateGray3, liblept),Ptr{Pix}, (Ptr{Pix}, Cint, Cint), pixs, hsize, vsize)
+pixOpenGray3(pixs, hsize, vsize)   = ccall((:pixOpenGray3, liblept),  Ptr{Pix}, (Ptr{Pix}, Cint, Cint), pixs, hsize, vsize)
+pixCloseGray3(pixs, hsize, vsize)  = ccall((:pixCloseGray3, liblept), Ptr{Pix}, (Ptr{Pix}, Cint, Cint), pixs, hsize, vsize)
+pixDilate(pixd, pixs, sel) = ccall((:pixDilate, liblept), Ptr{Pix}, (Ptr{Pix}, Ptr{Pix}, Ptr{Sel}), pixd, pixs, sel)
+pixErode(pixd, pixs, sel)  = ccall((:pixErode, liblept),  Ptr{Pix}, (Ptr{Pix}, Ptr{Pix}, Ptr{Sel}), pixd, pixs, sel)
+pixOpen(pixd, pixs, sel)   = ccall((:pixOpen, liblept),   Ptr{Pix}, (Ptr{Pix}, Ptr{Pix}, Ptr{Sel}), pixd, pixs, sel)
+pixClose(pixd, pixs, sel)  = ccall((:pixClose, liblept),  Ptr{Pix}, (Ptr{Pix}, Ptr{Pix}, Ptr{Sel}), pixd, pixs, sel)
+#pixCloseSafe(pixd, pixs, sel) = ccall((:pixCloseSafe, liblept), Ptr{Pix}, (Ptr{Pix}, Ptr{Pix}, Ptr{Sel}), pixd, pixs, sel)
