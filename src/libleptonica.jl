@@ -162,3 +162,13 @@ pixErode(pixd, pixs, sel)  = ccall((:pixErode, liblept),  Ptr{Pix}, (Ptr{Pix}, P
 pixOpen(pixd, pixs, sel)   = ccall((:pixOpen, liblept),   Ptr{Pix}, (Ptr{Pix}, Ptr{Pix}, Ptr{Sel}), pixd, pixs, sel)
 pixClose(pixd, pixs, sel)  = ccall((:pixClose, liblept),  Ptr{Pix}, (Ptr{Pix}, Ptr{Pix}, Ptr{Sel}), pixd, pixs, sel)
 #pixCloseSafe(pixd, pixs, sel) = ccall((:pixCloseSafe, liblept), Ptr{Pix}, (Ptr{Pix}, Ptr{Pix}, Ptr{Sel}), pixd, pixs, sel)
+
+function pixMorphGradient(pixs, hsize, vsize, smoothing)
+	ccall((:pixMorphGradient, liblept), Ptr{Pix}, (Ptr{Pix}, Cint, Cint, Cint), pixs, hsize, vsize, smoothing)
+end
+pixHDome(pixs, height, conn) = ccall((:pixHDome, liblept), Ptr{Pix}, (Ptr{Pix}, Cint, Cint), pixs, height, conn)
+pixHMT(pixd, pixs, sel) = ccall((:pixHMT, liblept), Ptr{Pix}, (Ptr{Pix}, Ptr{Pix}, Ptr{Sel}), pixd, pixs, sel)
+pixTophat(pixs, hsize, vsize, type) = ccall((:pixTophat, liblept), Ptr{Pix}, (Ptr{Pix}, Cint, Cint, Cint), pixs, hsize, vsize, type)
+
+pixAddGray(pixd, pixs1, pixs2) = ccall((:pixAddGray, liblept), Ptr{Pix}, (Ptr{Pix}, Ptr{Pix}, Ptr{Pix}), pixd, pixs1, pixs2)
+pixSubtractGray(pixd, pixs1, pixs2) = ccall((:pixSubtractGray, liblept), Ptr{Pix}, (Ptr{Pix}, Ptr{Pix}, Ptr{Pix}), pixd, pixs1, pixs2)
