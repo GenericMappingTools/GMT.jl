@@ -760,11 +760,48 @@ function bwperim(I::Union{GMTimage{<:UInt8, 2}, GMTimage{<:Bool, 2}}; hsize::Int
 	helper_morph(I, hsize, vsize, "perim", sel)
 end
 
+# ---------------------------------------------------------------------------------------------------
+"""
+    J = bwskell(I::Union{GMTimage{<:UInt8, 2}, GMTimage{<:Bool, 2}}; type::Int=1, maxiters::Int=0, conn::Int=4)::GMTimage
+
+Reduce all objects to lines in 2-D binary image.
+
+Reduces all objects in the 2-D binary image `I` to 1-pixel wide curved lines, without changing the essential
+structure of the image. This process, called skeletonization, extracts the centerline while preserving the topology.
+
+### Args
+- `I::Union{GMTimage{<:UInt8, 2}, GMTimage{<:Bool, 2}}`: Input image.
+
+### Kwargs
+- `type::Int=1`: 1 To thin the foreground (normal situation), or 2 to thin the background.
+- `maxiters::Int=0`: Maximum number of iterations allowed. Use 0 to iterate untill completion.
+- `conn::Int=4`: 4 for 4-connectivity, 8 for 8-connectivity.
+
+### Returns
+A new `GMTimage` of the same type as `I` with the skeleton.
+
+### Example
+
+```julia
+I = gmtread(TESTSDIR * "assets/bone.png");
+J = bwskell(I);
+grdimage(I, figsize=6)
+grdimage!(J, figsize=6, xshift=6, show=true)
+```
+"""
+function bwskell(I::Union{GMTimage{<:UInt8, 2}, GMTimage{<:Bool, 2}}; type::Int=1, maxiters::Int=0, conn::Int=4)::GMTimage
+	@assert conn == 4 || conn == 8 "Only conn=4 or conn=8 are supported"
+	@assert type == 1 || type == 2 "'type' must be 1 (foreground) or 2 (background)"
+	c = bitcat2(type, conn)		# Join type and connectivity in a single number
+	helper_morph(I, c, maxiters, "skell", nothing)
+end
+
 # =====================================================================================================
 function helper_morph(I, hsize, vsize, tipo, sel)
 	bpp = (eltype(I) == Bool || I.range[6] == 1) ? 1 : 8
-	(tipo in ["hitmiss", "perim"] && bpp != 1) && error("'bwhitmiss' or 'bwperim' are only available for binary images")
-	(bpp == 1 && sel === nothing) && (sel = strel("box", hsize, vsize))#(bpp = 8)
+	(tipo in ["hitmiss", "perim", "skell"] && bpp != 1) && error("'bwhitmiss' or 'bwperim' are only available for binary images")
+	nosel = (tipo in ["skell"])		# List of 1 bpp that do not use 'sel'
+	(bpp == 1 && !nosel && sel === nothing) && (sel = strel("box", hsize, vsize))
 	(tipo in ["tophat", "bothat", "hdome", "hmin", "hmax", "mgrad", "perim"]) && (bpp = 8)		# Those must be 8 bpp	
 	ppixI = img2pix(I, bpp)
 	is3 = (hsize == 1 || hsize == 3) && (vsize == 1 || vsize == 3)	# To use faster methods
@@ -805,6 +842,9 @@ function helper_morph(I, hsize, vsize, tipo, sel)
 		_ppix = pixSubtractGray(pI, pI, ppix)			# _ppix == pI (memorywise)
 		pixDestroy(Ref(ppix))							# Free ppix to not leak its memory
 		ppix = _ppix									# Rename  because letter all cases are 'ppix'
+	elseif (tipo == "skell")
+		type, conn = bituncat2(hsize)
+		ppix = pixThinConnected(pI, type, conn, vsize)
 	end
 	_I = pix2img(Sppix(ppix))
 	(eltype(I) == Bool) && (_I = togglemask(_I))		# Probably wrong
