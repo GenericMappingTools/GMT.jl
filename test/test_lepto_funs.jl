@@ -80,3 +80,29 @@ imdilate(I, sel=strel("disk", 10));
 I = gmtread(TESTSDIR * "assets/packman.png");
 imopen(I, sel=strel("box", 20));
 imclose(I, sel=strel("box", 20));
+
+interval = [2 2 2; 2 1 1; 2 1 0];
+I = gmtread(TESTSDIR * "assets/small_squares.png");
+J = bwhitmiss(I, interval);
+
+a = fill(UInt8(10),10,10);
+a[2:4,2:4] .= UInt8(13);
+a[6:8,6:8] .= UInt8(18);
+I = imhmin(mat2img(a), 4);
+
+a = fill(UInt8(10),10,10);
+a[2:4,2:4] .= UInt8(13);
+a[6:8,6:8] .= UInt8(18);
+I = imhmax(mat2img(a), 4);
+
+I = gmtread(TESTSDIR * "assets/j.png");
+J = immorphgrad(I, hsize=5, vsize=5);
+
+I = gmtread(TESTSDIR * "assets/circles.png");
+J = bwperim(I);
+
+I = gmtread(TESTSDIR * "assets/rice.png");
+J = imtophat(I, hsize=11, vsize=11);
+J = imbothat(I, hsize=11, vsize=11);
+
+
