@@ -2825,10 +2825,10 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function get_color(val)::String
-	# Parse a color input. Always return a string
-	# color1,color2[,color3,…] colorn can be a r/g/b triplet, a color name, or an HTML hexadecimal color (e.g. #aabbcc
+	# Parse a color input.
+	# color1,color2[,color3,…] colorn can be a r/g/b triplet, a color name, or an HTML hexadecimal color (e.g. #aabbcc)
 	(isa(val, AbstractString) || isa(val, Symbol) || isa(val, Real)) && return isa(val, Bool) ? "" : string(val)
-	error("\tGET_COLOR: got an unsupported data type")
+	error("\tGET_COLOR: got an unsupported data type: $(typeof(val))")
 end
 function get_color(val::Tuple)::String
 	out::String = ""

@@ -35,4 +35,8 @@
 
 	A, B, C, D = GMT.eq_plane(0, 45, 10);
 	GMT.eye()
+
+	n = GMT.bitcat2(10, 20);
+	n1, n2 = GMT.bituncat2(n);
+	@test n1 == 10 && n2 == 20
 end

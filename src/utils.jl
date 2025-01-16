@@ -1222,6 +1222,27 @@ function eq_plane(azim, elev, dist)
 end
 
 # ---------------------------------------------------------------------------------------------------
+"""
+	n = bitcat2(n1, n2)::Int64
+
+Concatenate two Int numbers into a 64-bit integer (first 32 bits are n1, last 32 bits are n2).
+Note: `n1` and `n2` must fit into a UIn32 integers
+"""
+function bitcat2(n1, n2)::Int64
+	parse(Int, bitstring(UInt32(n1)) * bitstring(UInt32(n2)); base=2)
+end
+
+"""
+    n1, n2 = bituncat2(N::Int64)
+
+Extract two Int numbers from a 64-bit integer (first 32 bits are n1, last 32 bits are n2).
+"""
+function bituncat2(N::Int64)::Tuple{Int, Int}
+	s = bitstring(N)
+	return parse(Int, s[1:32]; base=2), parse(Int, s[33:64]; base=2)
+end
+
+# ---------------------------------------------------------------------------------------------------
 include("makeDCWs.jl")
 	
 # ------------------------------------------------------------------------------------------------------
