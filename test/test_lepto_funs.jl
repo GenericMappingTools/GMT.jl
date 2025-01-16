@@ -105,4 +105,6 @@ I = gmtread(TESTSDIR * "assets/rice.png");
 J = imtophat(I, hsize=11, vsize=11);
 J = imbothat(I, hsize=11, vsize=11);
 
+I = gmtread(TESTSDIR * "assets/bone.png");
+J = bwskell(I);
 
