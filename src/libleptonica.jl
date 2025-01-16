@@ -172,3 +172,7 @@ pixTophat(pixs, hsize, vsize, type) = ccall((:pixTophat, liblept), Ptr{Pix}, (Pt
 
 pixAddGray(pixd, pixs1, pixs2) = ccall((:pixAddGray, liblept), Ptr{Pix}, (Ptr{Pix}, Ptr{Pix}, Ptr{Pix}), pixd, pixs1, pixs2)
 pixSubtractGray(pixd, pixs1, pixs2) = ccall((:pixSubtractGray, liblept), Ptr{Pix}, (Ptr{Pix}, Ptr{Pix}, Ptr{Pix}), pixd, pixs1, pixs2)
+
+function pixThinConnected(pixs, type, connectivity, maxiters)
+	ccall((:pixThinConnected, liblept), Ptr{Pix}, (Ptr{Pix}, Cint, Cint, Cint), pixs, type, connectivity, maxiters)
+end
