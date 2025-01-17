@@ -131,7 +131,7 @@ function pix2img(ppix::Sppix)::GMTimage
 		pixSetWidth(ppix.ptr, width)		# Same for width
 		mat2img(mat, layout="TRBa", is_transposed=true)
 	else
-		mat2img(reshape(r, (pixGetWidth(ppix.ptr), pixGetHeight(ppix.ptr))), layout="TRBa", is_transposed=true)
+		mat2img(reshape(r, (width, height)), layout="TRBa", is_transposed=true)
 	end
 end
 
@@ -642,10 +642,10 @@ A new ``GMTimage`` of the same type as `I`.
 
 ```julia
 a = fill(UInt8(10),10,10);
-a[2:4,2:4] = 7;  
-a[6:8,6:8] = 2;
-a[1:3,7:9] = 13;
-a[2,8] = 10;
+a[2:4,2:4] .= 7;  
+a[6:8,6:8] .= 2;
+a[1:3,7:9] .= 13;
+a[2,8] .= 10;
 I = imhmin(mat2img(a), 4);
 ```
 """
@@ -716,7 +716,7 @@ The result will look like the outline of the object.
 I = gmtread(TESTSDIR * "assets/j.png");
 J = immorphgrad(I, hsize=5, vsize=5);
 grdimage(I, figsize=5)
-grdimage!(J, figsize=, xshift=5, show=true)
+grdimage!(J, figsize=5, xshift=5, show=true)
 ```
 """
 function immorphgrad(I::Union{GMTimage{<:UInt8, 2}, GMTimage{<:Bool, 2}}; hsize::Int=3, vsize::Int=3, smooth::Int=0)::GMTimage
@@ -882,8 +882,11 @@ function strel(nhood::Matrix{<:Integer}; name::String="")::Sel
 	sy, sx = size(nhood)
 	cx, cy = floor.(Int32, (size(nhood))./2)
 	_nhood = Int32.(nhood)
-	data = [pointer(_nhood[:,i]) for i in 1:size(_nhood,1)]
+	data = [pointer(_nhood[i,:]) for i in 1:size(_nhood,1)]
 	Sel(sy, sx, cy, cx, pointer(data), Base.unsafe_convert(Cstring, name))
+end
+function strel(nhood::Vector{<:Integer}; name::String="")::Sel	# Because in Julia it's stupidly difficult to create a one col matrix.
+	strel(reshape(nhood, (length(nhood), 1)); name=name)
 end
 function strel(name::String, par1::Int, par2::Int=0)::Sel
 	(!(name in ["cross", "disk", "diamond", "square", "box"]) && !startswith(name, "rec")) && error("Unknown structuring element name: $name")
