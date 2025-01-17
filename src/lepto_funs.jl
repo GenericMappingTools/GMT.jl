@@ -13,7 +13,7 @@ function img2pix(mat::Matrix{<:Integer}, bpp=8; layout="TRBa")::Sppix
 	@assert isa(layout, String) && length(layout) >= 3
 	img2pix(mat2img(mat, layout=layout), bpp=bpp)
 end
-function img2pix(I::GMTimage{<:Integer, 2}, bpp=8)::Sppix		# Minimalist. Still doesn't have a colormap and not yet RGB(A)
+function img2pix(I::GMTimage, bpp=8)::Sppix		# Minimalist. Still doesn't have a colormap and not yet RGB(A)
 	# The Leptonoica library has (in fact it almost hasn't) an awfull documentation.
 	# I was able, however, to find a way to create and fill a Pix object with a matrix. The trick is to
 	# create a Pix object with the right size and then fill it with the matrix data. The pixSetupByteProcessing()
@@ -39,7 +39,7 @@ function img2pix(I::GMTimage{<:Integer, 2}, bpp=8)::Sppix		# Minimalist. Still d
 				for j = 1:w[]  line[j] = UInt8(I.image[i,j])  end
 			end
 		end
-	else					# bpp == 1
+	else						# bpp == 1
 		resto = rem(width, 8)
 		cols_iter = (resto == 0) ? (1:_width) : (1:(_width-1))
 		if (I.layout[2] == 'R')
@@ -57,7 +57,7 @@ function img2pix(I::GMTimage{<:Integer, 2}, bpp=8)::Sppix		# Minimalist. Still d
 					end
 				end
 			end
-		else
+		else					# Column major
 			for i = 1:h[]
 				line = unsafe_wrap(Array, lineptrs[i], w[])
 				for j = cols_iter
@@ -67,7 +67,7 @@ function img2pix(I::GMTimage{<:Integer, 2}, bpp=8)::Sppix		# Minimalist. Still d
 				end
 				if (resto != 0)
 					for n = resto-1:-1:0
-						(I.image[i,j+n+1] != 0) && (line[_width] = line[_width] | UInt8(1) << UInt8(n))
+						(I.image[i,width] != 0) && (line[_width] = line[_width] | UInt8(1) << UInt8(n))
 					end
 				end
 			end
@@ -104,7 +104,7 @@ function pix2img(ppix::Sppix)::GMTimage
 	if (bpp == 1)
 		# https://www.geeksforgeeks.org/extract-bits-in-c/
 		mat = zeros(UInt8, width, height)		# We are storing the image as "TRBa"
-		u255 = UInt8(255)
+		u1 = UInt8(1)
 		masks8 = [1,2,4,8,16,32,64,128]
 		k, m = 1, 0
 		resto = rem(width, 8)
@@ -114,15 +114,14 @@ function pix2img(ppix::Sppix)::GMTimage
 			for j = cols_iter
 				t = r[m+=1]
 				for n = 7:-1:0
-					#((t & u1) == u1) && (mat[k] = u255);	t = t >> u1
-					(((t & masks8[n+1]) >> n) == 1) && (mat[k] = u255)
+					(((t & masks8[n+1]) >> n) == 1) && (mat[k] = u1)
 					k += 1
 				end
 			end
 			if (resto != 0)
 				t = r[m+=1]
 				for n = resto-1:-1:0
-					(((t & masks8[n+1]) >> n) == 1) && (mat[k] = u255)
+					(((t & masks8[n+1]) >> n) == 1) && (mat[k] = u1)
 					k += 1
 				end
 			end
@@ -799,6 +798,7 @@ end
 # =====================================================================================================
 function helper_morph(I, hsize, vsize, tipo, sel)
 	bpp = (eltype(I) == Bool || I.range[6] == 1) ? 1 : 8
+	(bpp == 8 && I.range[6] == 255 && I.n_colors == 0 && rem(sum(I.image), 255) == 0) && (bpp = 1)	# A bit risky but not much
 	(tipo in ["hitmiss", "perim", "skell"] && bpp != 1) && error("'bwhitmiss' or 'bwperim' are only available for binary images")
 	nosel = (tipo in ["skell"])		# List of 1 bpp that do not use 'sel'
 	(bpp == 1 && !nosel && sel === nothing) && (sel = strel("box", hsize, vsize))
