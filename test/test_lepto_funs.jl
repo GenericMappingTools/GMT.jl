@@ -84,6 +84,7 @@ imclose(I, sel=strel("box", 20));
 interval = [2 2 2; 2 1 1; 2 1 0];
 I = gmtread(TESTSDIR * "assets/small_squares.png");
 J = bwhitmiss(I, interval);
+J = imrankfilter(I, width=10);
 
 a = fill(UInt8(10),10,10);
 a[2:4,2:4] .= UInt8(13);
@@ -108,3 +109,5 @@ J = imbothat(I, hsize=11, vsize=11);
 I = gmtread(TESTSDIR * "assets/bone.png");
 J = bwskell(I);
 
+I = gmtread(TESTSDIR * "assets/bunny_cenora.jpg");
+J = imsegment(I, colors=7);

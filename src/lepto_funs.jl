@@ -21,17 +21,20 @@ function img2pix(I::GMTimage, bpp=8)::Sppix		# Minimalist. Still doesn't have a 
 	# However, the same does not work for 1 bpp (binary) images. The trick is to create a 8 bpp image with the
 	# the same number of bits per row as the 1 bpp image, work on the bits and then convert to 1 bpp.
 	width, height = GMT.getsize(I)
-	_width = (bpp == 8) ? width : ceil(Int, width/8)
+	n_bands = size(I,3)
+	(n_bands >= 3 && !(I.layout[2] == 'R' && (I.layout[3] == 'B' || I.layout[3] == 'P'))) &&
+		error("Only Row-major memory layout is supported for RGB(A) images.")
+	(n_bands >= 3) && (bpp = 32)
+	_width = (bpp == 1) ? ceil(Int, width/8) : (bpp == 8) ? width : width*4
 	ppix = pixCreate(_width, height, 8)					# Create an empty Pix
 	w, h = Ref{Cint}(0), Ref{Cint}(0)
 	plineptrs = pixSetupByteProcessing(ppix, w, h)
 	lineptrs = unsafe_wrap(Array, plineptrs, h[])		# ::Vector{Ptr{UInt8}}
+	k = 0
 	if (bpp == 8)
 		if (I.layout[2] == 'R')
-			k = 0
-			for i = 1:h[]
-				line = unsafe_wrap(Array, lineptrs[i], w[])
-				for j = 1:w[]  line[j] = UInt8(I.image[k+=1])  end
+			for i = 1:height, j = 1:w[]		# Put the alpha values in the every fourth position
+				unsafe_store!(lineptrs[i], UInt8(I.image[k+=1]), j)
 			end
 		else					# Column major must be written in row major
 			for i = 1:h[]
@@ -39,11 +42,39 @@ function img2pix(I::GMTimage, bpp=8)::Sppix		# Minimalist. Still doesn't have a 
 				for j = 1:w[]  line[j] = UInt8(I.image[i,j])  end
 			end
 		end
+	elseif (bpp == 32)
+		if (I.layout[3] == 'P')	# Pixel interleaved
+			cols_iter = (n_bands == 4) ? (1:w[]) : (1:w[])[rem.(1:w[],4) .!= 0]	# (1:8)[rem.(1:8,4) .!= 0] = [1 2 3 5 6 7], that is, jump every 4th
+			for i = 1:height, j = cols_iter			# cols_iter knows if we are writing RGB or RGBA
+				unsafe_store!(lineptrs[i], I.image[k+=1], j)
+			end
+			if (n_bands == 3 && length(I.alpha) == width * height)
+				k = 0
+				for i = 1:height, j = 1:4:w[]		# Put the alpha values in the every fourth position
+					unsafe_store!(lineptrs[i], I.alpha[k+=1], j)
+				end
+			end
+		else					# Band interleaved
+			cols_iter = (n_bands == 4) ? (1:w[]) : (1:w[])[rem.(1:w[],4) .!= 0]
+			for i = 1:height
+				k = 0
+				for j = 1:width
+					for b = 1:n_bands
+						unsafe_store!(lineptrs[i], I.image[j,i,b], cols_iter[k+=1])
+					end
+				end
+			end
+			if (n_bands == 3 && length(I.alpha) == width * height)
+				k = 0
+				for i = 1:height, j = 1:4:w[]		# Put the alpha values in the every fourth position
+					unsafe_store!(lineptrs[i], I.alpha[k+=1], j)
+				end
+			end
+		end
 	else						# bpp == 1
 		resto = rem(width, 8)
 		cols_iter = (resto == 0) ? (1:_width) : (1:(_width-1))
 		if (I.layout[2] == 'R')
-			k = 0
 			for i = 1:h[]
 				line = unsafe_wrap(Array, lineptrs[i], _width)
 				for j = cols_iter
@@ -74,10 +105,9 @@ function img2pix(I::GMTimage, bpp=8)::Sppix		# Minimalist. Still doesn't have a 
 		end
 	end
 	pixCleanupByteProcessing(ppix, plineptrs)
-	if (bpp == 1)
-		pixSetDepth(ppix, 1)
-		pixSetWidth(ppix, width)		# Set the true width for 1 bpp
-		#pixSetWpl(ppix, 8)
+	if (bpp == 1 || bpp == 32)
+		pixSetDepth(ppix, bpp)
+		pixSetWidth(ppix, width)		# Set the true width
 	end
 	return Sppix(ppix)
 end
@@ -128,10 +158,39 @@ function pix2img(ppix::Sppix)::GMTimage
 		end
 		pixSetDepth(ppix.ptr, 1)			# Reset the original bpp
 		pixSetWidth(ppix.ptr, width)		# Same for width
-		mat2img(mat, layout="TRBa", is_transposed=true)
-	else
-		mat2img(reshape(r, (width, height)), layout="TRBa", is_transposed=true)
+		I = mat2img(mat, layout="TRBa", is_transposed=true)
+	elseif (bpp == 8)
+		I = mat2img(reshape(r, (width, height)), layout="TRBa", is_transposed=true)
+		cmap = getPixCPT(ppix.ptr)
+		length(cmap) > 3 && (I.colormap = cmap[:]; I.n_colors = 256)
+	else		# bpp == 32. And what if we have transparency? How to know that?
+		I = mat2img(reshape(r, (width, height, 3)), layout="BRPa", is_transposed=true)
 	end
+	return I
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    pal = getPixCPT(ppix::Ptr{GMT.Pix})::Matrix{Int32}
+
+Get the color palette from a Pix object and return it as a 256x4 matrix (or [0 0 0] if no colormap).
+"""
+function getPixCPT(ppix::Ptr{GMT.Pix})::Matrix{Int32}
+	(unsafe_load(ppix).colormap == C_NULL) && return zeros(Int32, 1, 3)		# No colormap
+	P = convert(Ptr{Pix}, ppix)
+	Pi::Pix = unsafe_load(P)				# We now have a Pix structure
+	Pc = unsafe_load(Pi.colormap)			# PixColormap
+	(Pc.depth != 8) && error("Other than 8 bit color palettes are not implemented yet")
+	Pq = convert(Ptr{RGBA_Quad}, Pc.array)
+	RGBA = unsafe_wrap(Array, Pq, Pc.n)		# Pc.n-element Vector{GMT.RGBA_Quad}
+	pal = zeros(Int32, 256, 4)				# Remember that GDAL (at least via GMT) expects a 256x4 palette
+	for k = 1:Pc.n							# Loop over n colors in palette
+		pal[k,1] = RGBA[k].red
+		pal[k,2] = RGBA[k].green
+		pal[k,3] = RGBA[k].blue
+		pal[k,4] = RGBA[k].alpha
+	end
+	return pal
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -791,8 +850,101 @@ grdimage!(J, figsize=6, xshift=6, show=true)
 function bwskell(I::Union{GMTimage{<:UInt8, 2}, GMTimage{<:Bool, 2}}; type::Int=1, maxiters::Int=0, conn::Int=4)::GMTimage
 	@assert conn == 4 || conn == 8 "Only conn=4 or conn=8 are supported"
 	@assert type == 1 || type == 2 "'type' must be 1 (foreground) or 2 (background)"
-	c = bitcat2(type, conn)		# Join type and connectivity in a single number
+	c = bitcat2(type, conn)						# Join type and connectivity in a single number
 	helper_morph(I, c, maxiters, "skell", nothing)
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    J = function imsegment(I::GMTimage{<:UInt8, 3}; maxdist::Int=0, maxcolors::Int=0, selsize::Int=3, colors::Int=5)::GMTimage
+
+Unsupervised RGB color segmentation.
+
+For more details see the docs in Leptonica's function ``pixColorSegment`` (in src/colorseg.c).
+
+### Args
+- `I::GMTimage{<:UInt8, 3}`: Input RGB image.
+
+### Kwargs
+- `maxdist::Int=0`: Maximum euclidean dist to existing cluster.
+- `maxcolors::Int=0`: Maximum number of colors allowed in first pass.
+- `selsize::Int=3`: Size of the structuring element for closing to remove noise.
+- `colors::Int=5`: Number of final colors allowed after 4th pass.
+
+As a very rough guideline (Leptonica docs), given a target value of `colors`, here are
+approximate values of `maxdist` and `maxcolors`:
+
+| `colors` | `maxcolors` | `maxdist` |
+|----------|-------------|-----------|
+| 2        | 4           | 150       |
+| 3        | 6           | 100       |
+| 4        | 8           | 90        |
+| 5        | 10          | 75        |
+| 6        | 12          | 60        |
+| 7        | 14          | 45        |
+| 8        | 16          | 30        |
+
+### Returns
+A new, indexed, `GMTimage` with the segmentation.
+
+### Example
+
+This was thought as a simple example but turned out to show a bit tricky result. The image
+"bunny_cenora.jpg" is simple and we can clearly see that it has only 6 colors, so we would
+expect that ``colors=6`` would do the job. But in fact we need to set ``colors=7`` because
+the outline (black) is in fact picked as two different (dark) colors.
+
+```julia
+I = gmtread(TESTSDIR * "assets/bunny_cenora.jpg");
+J = imsegment(I, colors=7);
+grdimage(I, figsize=6)
+grdimage!(J, figsize=6, xshift=6, show=true)
+```
+"""
+function imsegment(I::GMTimage{<:UInt8, 3}; maxdist::Int=0, maxcolors::Int=0, selsize::Int=3, colors::Int=5)::GMTimage
+	table = [2 150; 3 100; 4 90; 5 75; 6 60; 7 45; 8 30]
+	(maxdist == 0 && maxcolors == 0 && 2 <= colors <= 8) && (maxcolors = 2 * colors; maxdist = table[colors-1, 1])
+	c = bitcat2(maxcolors, colors)				# Join them in a single number
+	d = bitcat2(maxdist, selsize)
+	helper_morph(I, c, d, "segment", nothing)
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    J = imrankfilter(I::GMTimage; width::Int=3, height::Int=0, rank=0.5)::GMTimage
+
+Rank order filter.
+
+This defines, for each pixel, a neighborhood of pixels given by a rectangle "centered" on the pixel.
+This set of ``width x height`` pixels has a distribution of values, and if they are sorted in increasing
+order, we choose the pixel such that rank*(wf*hf-1) pixels have a lower or equal value and (1-rank)*(wf*hf-1)
+pixels have an equal or greater value. In other words, `rank=0` returns the minimun, `rank=1` returns
+the maximum in box and `rank=0.5` returns the median. Other values return the quantile.
+
+### Args
+- `I::GMTimage`: Input image. This can be a RGB, grayscale or a binary image.
+
+### Kwargs
+- `width::Int=3`: Width of the filter.
+- `height::Int`: Height of the filter (defaults to `width`).
+- `rank=0.5`: Rank.
+
+### Returns
+A new `GMTimage` of the same type as `I` with the filtered image.
+
+### Example
+
+```julia
+I = gmtread(TESTSDIR * "assets/small_squares.png");
+J = imrankfilter(I, width=10);
+grdimage(I, figsize=6)
+grdimage!(J, figsize=6, xshift=6, show=true)
+```
+"""
+function imrankfilter(I::GMTimage; width::Int=3, height::Int=0, rank=0.5)::GMTimage
+	(height == 0) && (height = width)
+	c = bitcat2(width, height)
+	helper_morph(I, c, round(Int, rank * 1000), "rankf", nothing)
 end
 
 # =====================================================================================================
@@ -800,9 +952,9 @@ function helper_morph(I, hsize, vsize, tipo, sel)
 	bpp = (eltype(I) == Bool || I.range[6] == 1) ? 1 : 8
 	(bpp == 8 && I.range[6] == 255 && I.n_colors == 0 && rem(sum(I.image), 255) == 0) && (bpp = 1)	# A bit risky but not much
 	(tipo in ["hitmiss", "perim", "skell"] && bpp != 1) && error("'bwhitmiss' or 'bwperim' are only available for binary images")
-	nosel = (tipo in ["skell"])		# List of 1 bpp that do not use 'sel'
+	nosel = (tipo in ["skell", "rankf"])		# List of 1 bpp that do not use 'sel'
 	(bpp == 1 && !nosel && sel === nothing) && (sel = strel("box", hsize, vsize))
-	(tipo in ["tophat", "bothat", "hdome", "hmin", "hmax", "mgrad", "perim"]) && (bpp = 8)		# Those must be 8 bpp	
+	(tipo in ["tophat", "bothat", "hdome", "hmin", "hmax", "mgrad", "perim", "rankf"]) && (bpp = 8)		# Those must be 8 bpp	
 	ppixI = img2pix(I, bpp)
 	is3 = (hsize == 1 || hsize == 3) && (vsize == 1 || vsize == 3)	# To use faster methods
 	pI = ppixI.ptr			# Short name
@@ -842,10 +994,19 @@ function helper_morph(I, hsize, vsize, tipo, sel)
 		_ppix = pixSubtractGray(pI, pI, ppix)			# _ppix == pI (memorywise)
 		pixDestroy(Ref(ppix))							# Free ppix to not leak its memory
 		ppix = _ppix									# Rename  because letter all cases are 'ppix'
+	elseif (tipo == "rankf")
+		wf, hf = bituncat2(hsize)
+		ppix = pixRankFilter(pI, wf, hf, Float32(vsize/1000))
+	elseif (tipo == "segment")
+		maxcolors, finalcolors = bituncat2(hsize)
+		maxdist, selsize = bituncat2(vsize)
+		ppix = pixColorSegment(pI, maxdist, maxcolors, selsize, finalcolors, 0)
+		(ppix == C_NULL) && (@warn("'imgsegment': pixColorSegment failed"); return GMTimage())
 	elseif (tipo == "skell")
 		type, conn = bituncat2(hsize)
 		ppix = pixThinConnected(pI, type, conn, vsize)
 	end
+	(ppix == C_NULL) && (@warn("Operation '$(tipo)' failed"); return GMTimage())
 	_I = pix2img(Sppix(ppix))
 	(eltype(I) == Bool) && (_I = togglemask(_I))		# Probably wrong
 	return _I

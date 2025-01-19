@@ -11,7 +11,7 @@ Colormap of a [`Pix`]
 
 | Field  | Note                                           |
 | :----- | :--------------------------------------------- |
-| array  | colormap table (array of [`RGBA_QUAD`](@ref))  |
+| array  | colormap table (array of [`RGBA_Quad`](@ref))  |
 | depth  | of pix (1, 2, 4 or 8 bpp)                      |
 | nalloc | number of color entries allocated              |
 | n      | number of color entries used                   |
@@ -21,6 +21,26 @@ struct PixColormap
 	depth::Cint
 	nalloc::Cint
 	n::Cint
+end
+
+"""
+    RGBA_Quad
+
+Colormap table entry (after the BMP version). Note that the BMP format stores the colormap table
+exactly as it appears here, with color samples being stored sequentially, in the order (b,g,r,a).
+
+| Field | Note         |
+| :---- | :----------- |
+| blue  | blue value   |
+| green | green value  |
+| red   | red value    |
+| alpha | alpha value  |
+"""
+struct RGBA_Quad
+	blue::Cuchar
+	green::Cuchar
+	red::Cuchar
+	alpha::Cuchar
 end
 
 """
@@ -176,3 +196,9 @@ pixSubtractGray(pixd, pixs1, pixs2) = ccall((:pixSubtractGray, liblept), Ptr{Pix
 function pixThinConnected(pixs, type, connectivity, maxiters)
 	ccall((:pixThinConnected, liblept), Ptr{Pix}, (Ptr{Pix}, Cint, Cint, Cint), pixs, type, connectivity, maxiters)
 end
+
+function pixColorSegment(pixs, maxdist, maxcolors, selsize, finalcolors, debugflag)
+	ccall((:pixColorSegment, liblept), Ptr{Pix}, (Ptr{Pix}, Cint, Cint, Cint, Cint, Cint), pixs, maxdist, maxcolors, selsize, finalcolors, debugflag)
+end
+
+pixRankFilter(pixs, wf, hf, rank) = ccall((:pixRankFilter, liblept), Ptr{Pix}, (Ptr{Pix}, Cint, Cint, Cfloat), pixs, wf, hf, rank)
