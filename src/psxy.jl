@@ -842,7 +842,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 parse_opt_S(d::Dict, arg1::Union{GMTfv, Vector{GMTfv}}, is3D::Bool) = arg1, ""	# Just to have a method for FVs
-function parse_opt_S(d::Dict, arg1::Union{GDtype, AbstractVector{<:Real}, Nothing}, is3D::Bool=false)
+function parse_opt_S(d::Dict, arg1, is3D::Bool=false)
 
 	opt_S::String, have_custom = "", false
 	is1D = isvector(arg1)
