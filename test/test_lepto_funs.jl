@@ -105,9 +105,13 @@ J = bwperim(I);
 I = gmtread(TESTSDIR * "assets/rice.png");
 J = imtophat(I, hsize=11, vsize=11);
 J = imbothat(I, hsize=11, vsize=11);
+J = imsobel(I);
 
 I = gmtread(TESTSDIR * "assets/bone.png");
 J = bwskell(I);
 
 I = gmtread(TESTSDIR * "assets/bunny_cenora.jpg");
 J = imsegment(I, colors=7);
+
+I = gmtread(TESTSDIR * "assets/moon.png");
+J = imfilter(I, [-1 -1 -1; -1 9 -1; -1 -1 -1]);
