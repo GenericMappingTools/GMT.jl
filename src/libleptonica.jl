@@ -100,6 +100,27 @@ struct Sel
 end
 
 """
+    L_Kernel
+
+Kernel
+
+| Field | Note                            |
+| :---- | :------------------------------ |
+| sy    | kernel height                   |
+| sx    | kernel width                    |
+| cy    | y location of kernel origin     |
+| cx    | x location of kernel origin     |
+| data  | data[i][j] in [row][col] order  |
+"""
+struct L_Kernel
+	sy::Cint
+	sx::Cint
+	cy::Cint
+	cx::Cint
+	data::Ptr{Ptr{Cfloat}}
+end
+
+"""
 When the garbage collector collects this object the associated Sppix object will be freed in the C library.
 """
 mutable struct Sppix
@@ -202,3 +223,18 @@ function pixColorSegment(pixs, maxdist, maxcolors, selsize, finalcolors, debugfl
 end
 
 pixRankFilter(pixs, wf, hf, rank) = ccall((:pixRankFilter, liblept), Ptr{Pix}, (Ptr{Pix}, Cint, Cint, Cfloat), pixs, wf, hf, rank)
+pixSobelEdgeFilter(pixs, orientflag) = ccall((:pixSobelEdgeFilter, liblept), Ptr{Pix}, (Ptr{Pix}, Cint), pixs, orientflag)
+pixTwoSidedEdgeFilter(pixs, orientflag) = ccall((:pixTwoSidedEdgeFilter, liblept), Ptr{Pix}, (Ptr{Pix}, Cint), pixs, orientflag)
+
+function pixConvolve(pixs, kel, outdepth, normflag)
+	ccall((:pixConvolve, liblept), Ptr{Pix}, (Ptr{Pix}, Ptr{L_Kernel}, Cint, Cint), pixs, kel, outdepth, normflag)
+end
+function pixConvolveSep(pixs, kelx, kely, outdepth, normflag)
+    ccall((:pixConvolveSep, liblept), Ptr{Pix}, (Ptr{Pix}, Ptr{L_Kernel}, Ptr{L_Kernel}, Cint, Cint), pixs, kelx, kely, outdepth, normflag)
+end
+
+pixConvolveRGB(pixs, kel) = ccall((:pixConvolveRGB, liblept), Ptr{Pix}, (Ptr{Pix}, Ptr{L_Kernel}), pixs, kel)
+function pixConvolveRGBSep(pixs, kelx, kely)
+	ccall((:pixConvolveRGBSep, liblept), Ptr{Pix}, (Ptr{Pix}, Ptr{L_Kernel}, Ptr{L_Kernel}), pixs, kelx, kely)
+end
+
