@@ -990,7 +990,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-	J = imfilter(I::GMTimage, kernel::Matrix{<:Real}; normalize::Int=1)::GMTimage
+	J = imfilter(I::GMTimage, kernel::Matrix{<:Real}; normalize::Int=1, sep::Bool=false)::GMTimage
 
 Generic convolution filter.
 
@@ -1001,6 +1001,8 @@ Generic convolution filter.
 ### Kwargs
 - `normalize::Int=1`: Normalize the filter to unit sum. This is the default, unless ``sum(kernel) == 0``,
    case in which we change it to 0.
+- `sep::Bool=false`: Try to decompose the filter into two 1-D components. If possible, this leads to a faster execution.
+   MxN x (m+n) operations, instead of MxN x mxn. Where M,N and m,n are the sizes of the image I and the kernel filter respectively.
 
 ### Returns
 A new `GMTimage` of the same type as `I` with the filtered image.
@@ -1016,17 +1018,43 @@ grdimage(I, figsize=5)
 grdimage!(J, figsize=5, xshift=5, show=true)
 ```
 """
-function imfilter(I::GMTimage, kernel::Matrix{<:Real}; normalize::Int=1)::GMTimage
+function imfilter(I::GMTimage, kernel::Matrix{<:Real}; normalize::Int=1, sep::Bool=false)::GMTimage
 	@assert (eltype(I) == UInt8) "'imfilter' is only available for UInt8 images"
-	(sum(kernel) == 0) && (normalize = 0)
+	@assert all(isfinite.(kernel))
+	isapprox(sum(kernel), 0, atol=1e-8) && (normalize = 0)
 	bpp = (size(I,3) >= 3) ? 32 : 8
 	ppixI = img2pix(I, bpp)
-	kel = filtkernel(kernel)
-	if (size(I,3) == 1)  ppix = pixConvolve(ppixI.ptr, Ref(kel), 8, normalize)	# 8 => requesting to always return a 8 bpp image
-	else                 ppix = pixConvolveRGB(ppixI.ptr, Ref(kel))
+	if (sep)  hy, hx = decompose_2D(kernel)  end
+
+	if (sep && !isempty(hy))
+		kely = Ref(filtkernel(reshape(hy, 1, length(hy))));		kelx = Ref(filtkernel(reshape(hx, 1, length(hx))))
+		if (size(I,3) == 1)  ppix = pixConvolveSep(ppixI.ptr, kelx, kely, 8, normalize)	# 8 => requesting to always return a 8 bpp image
+		else                 ppix = pixConvolveRGBSep(ppixI.ptr, kelx, kely)
+		end
+	else
+		kel = Ref(filtkernel(kernel))
+		if (size(I,3) == 1)  ppix = pixConvolve(ppixI.ptr, kel, 8, normalize)	# 8 => requesting to always return a 8 bpp image
+		else                 ppix = pixConvolveRGB(ppixI.ptr, kel)
+		end
 	end
+
 	(ppix == C_NULL) && (@warn("Convolution filter operation failed"); return GMTimage())
 	pix2img(Sppix(ppix))
+end
+
+# This does the decomposition of a 2D kernel into 2 1D kernels
+# https://www.mathworks.com/matlabcentral/fileexchange/28238-kernel-decomposition
+function decompose_2D(h)
+	ms, ns = size(h)
+	(ms == 1 || ns == 1) && return Float64[], Float64[]
+	u, s, v = svd(h)
+	tol = maximum(size(h)) * eps(maximum(s))
+	rank = sum(s .> tol)
+	separable = rank==1
+	!separable && return Float64[], Float64[]
+	hy = u[:,1] * sqrt(s[1])
+	hx = (conj(v[:,1]) * sqrt(s[1]))
+	return hy, hx
 end
 
 # =====================================================================================================
@@ -1125,7 +1153,7 @@ A Sel type object.
 """
 function strel(nhood::Matrix{<:Integer}; name::String="")::Sel
 	sy, sx = size(nhood)
-	cx, cy = floor.(Int32, (size(nhood))./2)
+	cy, cx = floor.(Int32, (size(nhood))./2)
 	_nhood = Int32.(nhood)
 	data = [pointer(_nhood[i,:]) for i in 1:size(_nhood,1)]
 	Sel(sy, sx, cy, cx, pointer(data), Base.unsafe_convert(Cstring, name))
@@ -1154,7 +1182,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function filtkernel(mat::Matrix{<:Real})::L_Kernel
 	sy, sx = size(mat)
-	cx, cy = floor.(Int32, (size(mat))./2)
+	cy, cx = floor.(Int32, (size(mat))./2)
 	_mat = Float32.(mat)
 	data = [pointer(_mat[i,:]) for i in 1:size(_mat,1)]
 	L_Kernel(sy, sx, cy, cx, pointer(data))
