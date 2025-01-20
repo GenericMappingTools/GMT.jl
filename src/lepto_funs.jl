@@ -284,7 +284,7 @@ Here, a hole is defined as an area of dark pixels surrounded by lighter pixels.
 ### Examples
 ```julia
 # Example from Matlab imfill
-I = gmtread("C:\\programs\\MATLAB\\R2024b\\toolbox\\images\\imdata\\coins.png");
+I = gmtread("TESTSDIR * "assets/coins.png");
 Ibw = binarize(I);
 BW2 = imfill(Ibw);
 ```
@@ -947,6 +947,88 @@ function imrankfilter(I::GMTimage; width::Int=3, height::Int=0, rank=0.5)::GMTim
 	helper_morph(I, c, round(Int, rank * 1000), "rankf", nothing)
 end
 
+# ---------------------------------------------------------------------------------------------------
+"""
+    J = imsobel(I::GMTimage{<:UInt8, 2}; direction::Int=2)::GMTimage
+
+Sobel edge detecting filter.
+
+Returns a binary image BW containing 1s where the function finds edges in the grayscale or binary image I and 0s elsewhere.
+
+### Args
+- `I::GMTimage`: Input grayscale image.
+
+### Kwargs
+- `direction::Int=2`: Orientation flag: `0` means detect horizontal edges, `1` means vertical and `2` means all edges.
+
+### Returns
+A new `GMTimage` grayscale image `I` with the edge detection, edges are brighter.
+
+### Example
+
+Let us vectorize the rice grains in the image "rice.png". The result is not perfect because
+the grains in the image's edge are not closed and therefore not filled. And those get poligonized
+twice (in and outside) making the red lines look thicker (but they are not, they are just doubled).
+
+```julia
+I = gmtread(TESTSDIR * "assets/rice.png");
+J = imsobel(I);
+BW = binarize(J);
+BW = bwskell(BW);	# Skeletize to get a better approximation of the shapes.
+BW = imfill(BW);	# Fill to avoid "double" vectorization (outside and inside grain outline)
+D = polygonize(BW);
+grdimage(I, figsize=5)
+grdimage!(J, figsize=5, xshift=5.05)
+grdimage!(BW, figsize=5, xshift=-5.05, yshift=-5.05)
+grdimage!(I, figsize=5, xshift=5.05, plot=(data=D, lc=:red), show=true)
+```
+"""
+function imsobel(I::GMTimage{<:UInt8, 2}; direction::Int=2)::GMTimage
+	@assert 0 <= direction <= 2 "'direction' must be 0 (horizontal), 1 (vertical) or 2 (all edges)"
+	helper_morph(I, direction, 0, "sobel", nothing)
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+	J = imfilter(I::GMTimage, kernel::Matrix{<:Real}; normalize::Int=1)::GMTimage
+
+Generic convolution filter.
+
+### Args
+- `I::GMTimage`: Input image. This can be a RGB or grayscale image.
+- `kernel::Matrix{<:Real}`: The filter kernel MxN matrix.
+
+### Kwargs
+- `normalize::Int=1`: Normalize the filter to unit sum. This is the default, unless ``sum(kernel) == 0``,
+   case in which we change it to 0.
+
+### Returns
+A new `GMTimage` of the same type as `I` with the filtered image.
+
+### Example
+
+Apply an 3x3 Mean Removal filter to the image "moon.png".
+
+```julia
+I = gmtread(TESTSDIR * "assets/moon.png");
+J = imfilter(I, [-1 -1 -1; -1 9 -1; -1 -1 -1]);
+grdimage(I, figsize=5)
+grdimage!(J, figsize=5, xshift=5, show=true)
+```
+"""
+function imfilter(I::GMTimage, kernel::Matrix{<:Real}; normalize::Int=1)::GMTimage
+	@assert (eltype(I) == UInt8) "'imfilter' is only available for UInt8 images"
+	(sum(kernel) == 0) && (normalize = 0)
+	bpp = (size(I,3) >= 3) ? 32 : 8
+	ppixI = img2pix(I, bpp)
+	kel = filtkernel(kernel)
+	if (size(I,3) == 1)  ppix = pixConvolve(ppixI.ptr, Ref(kel), 8, normalize)	# 8 => requesting to always return a 8 bpp image
+	else                 ppix = pixConvolveRGB(ppixI.ptr, Ref(kel))
+	end
+	(ppix == C_NULL) && (@warn("Convolution filter operation failed"); return GMTimage())
+	pix2img(Sppix(ppix))
+end
+
 # =====================================================================================================
 function helper_morph(I, hsize, vsize, tipo, sel)
 	bpp = (eltype(I) == Bool || I.range[6] == 1) ? 1 : 8
@@ -1005,6 +1087,8 @@ function helper_morph(I, hsize, vsize, tipo, sel)
 	elseif (tipo == "skell")
 		type, conn = bituncat2(hsize)
 		ppix = pixThinConnected(pI, type, conn, vsize)
+	elseif (tipo == "sobel")
+		ppix = pixSobelEdgeFilter(pI, hsize)
 	end
 	(ppix == C_NULL) && (@warn("Operation '$(tipo)' failed"); return GMTimage())
 	_I = pix2img(Sppix(ppix))
@@ -1065,6 +1149,15 @@ function strel(name::String, par1::Int, par2::Int=0)::Sel
 		out	= ones(Int32, par1, par2)
 	end
 	strel(out, name=name)
+end
+
+# ---------------------------------------------------------------------------------------------------
+function filtkernel(mat::Matrix{<:Real})::L_Kernel
+	sy, sx = size(mat)
+	cx, cy = floor.(Int32, (size(mat))./2)
+	_mat = Float32.(mat)
+	data = [pointer(_mat[i,:]) for i in 1:size(_mat,1)]
+	L_Kernel(sy, sx, cy, cx, pointer(data))
 end
 
 function Base.show(io::IO, ::MIME"text/plain", sel::Sel)::Nothing
