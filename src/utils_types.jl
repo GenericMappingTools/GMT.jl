@@ -1193,9 +1193,10 @@ function helper_mat2img(mat, x::Vector{Float64}, y::Vector{Float64}, v::Vector{F
 	else
 		(size(mat,3) == 1) && (color_interp = "Gray")
 		if (!isempty(hdr) && (hdr[5] == 0 && hdr[6] == 1))	# A mask. Let's create a colormap for it
-			colormap = zeros(Int32, 256 * 3)
+			colormap = zeros(Int32, 256 * 4)
 			n_colors = 256;					# Because for GDAL we always send 256 even if they are not all filled
 			colormap[2] = colormap[258] = colormap[514] = 255
+			colormap[256*3+1:end] .= 255
 		else
 			colormap = zeros(Int32,3)		# Because we need an array
 		end
