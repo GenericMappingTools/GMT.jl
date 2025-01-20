@@ -114,4 +114,5 @@ I = gmtread(TESTSDIR * "assets/bunny_cenora.jpg");
 J = imsegment(I, colors=7);
 
 I = gmtread(TESTSDIR * "assets/moon.png");
-J = imfilter(I, [-1 -1 -1; -1 9 -1; -1 -1 -1]);
+J = imfilter(I, [1 0 -1; 2 0 -2; 1 0 -1]);
+J = imfilter(I, [1 0 -1; 2 0 -2; 1 0 -1], sep=true);
