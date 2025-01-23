@@ -218,6 +218,7 @@
 	image_alpha!(img, alpha_band=mask, burn=:red)
 	mask[1] = 100;		# Force variable mask
 	image_alpha!(img, alpha_band=mask, burn=(0,255,0))
+	@info "after image_alpha!"
 
 	I1 = mat2img(rand(UInt8, 16,16)); I2 = mat2img(rand(UInt8, 16,16)); I3 = mat2img(rand(UInt8, 16,16));
 	grays2rgb(I1,I2,I3);
@@ -234,8 +235,8 @@
 	GMT.transpcmap!(I, false)
 	@info "before image_cpt!"
 	image_cpt!(I, clear=true)
-
 	@info "after image_cpt!"
+
 	GMT.linspace(1,1,100);
 	GMT.logspace(1,5);
 	GMT.fakedata(50,1);

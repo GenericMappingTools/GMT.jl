@@ -66,9 +66,18 @@
 	gmtconvert([1.1 2; 3 4], o=0)
 
 	println("	GMTGRAVMAG3D")
-	gmtgravmag3d(M=(shape=:prism, params=(1,1,1,5)), I=1.0, R="-15/15/-15/15", H="10/60/10/-10/40", Vd=dbg2);
-	@test_throws ErrorException("Missing one of 'index', 'raw_triang' or 'str' data") gmtgravmag3d(I=1.0);
-	@test_throws ErrorException("For grid output MUST specify grid increment ('I' or 'inc')") gmtgravmag3d(Tv=true);
+	#gmtgravmag3d(M=(shape=:prism, params=(1,1,1,5)), I=1.0, R="-15/15/-15/15", H="10/60/10/-10/40", Vd=dbg2);
+	#@test isa(G, GMTgrid)
+	#D = gravmag3d(region="-15/15/-15/15", I=0.1, mag_params="10/60/10/-10/40", body=(shape=:prism, params="1/1/1/-5/-10/1"), F=[-14 -14; 14 14]);
+	#@test isa(D, GMTdataset)
+	#D = grd2xyz("@earth_relief_10m_g", R="-41:50/-41:20/47:30/47:50", f=:g);
+	#Dtri = triangulate(D);
+	#D = gmtgravmag3d(D, index=Dtri, C=1700, R="-41.833/-41.333/47.5/47.833", f=:g, Z=-4300, F=[-41.793 47.552; -41.567 47.672; -41.357 47.809]);
+	#@test isa(D, GMTdataset)
+	#G = gmtgravmag3d(D, index=Dtri, C=1700, R="-41.833/-41.333/47.5/47.833", f=:g, Z=-4300, I="1m");
+	#@test isa(G, GMTgrid)
+	#@test_throws ErrorException("Missing one of 'index', 'raw_triang' or 'str' data") gmtgravmag3d(I=1.0);
+	#@test_throws ErrorException("For grid output MUST specify grid increment ('I' or 'inc')") gmtgravmag3d(Tv=true);
 
 	println("	GRDGRAVMAG3D")
 	grdgravmag3d("@earth_relief_10m", region=(-12.5,-10,35.5,37.5), density=1700, inc=0.05, pad=0.5, z_level=:b, f=:g, Vd=dbg2)

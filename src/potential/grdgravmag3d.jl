@@ -36,7 +36,7 @@ Parameters
 - **S** | **radius** :: [Type => Number]
 
     Set search radius in km (valid only in the two grids mode OR when `thickness`) [Default = 30 km].
-- **Z** | **z_level** | **reference_level** :: [Type => Number]
+- **Z** | **level** | **reference_level** :: [Type => Number]
 
     Level of reference plane [Default = 0].
 - $(opt_V)
@@ -57,7 +57,7 @@ function grdgravmag3d(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
 	cmd::String = parse_common_opts(d, "", [:I :G :R :V_params :f :x])[1]
 	cmd = parse_these_opts(cmd, d, [[:E :thickness], [:Q :pad], [:L :z_obs :observation_level], [:S :radius]])
-	opt_Z = add_opt(d, "", "Z", [:Z :z_level :reference_level])
+	opt_Z = add_opt(d, "", "Z", [:Z :level :reference_level], (bottom="_b", top="_t"))
 	if (opt_Z != "")
 		if     (opt_Z[4] == 't')  cmd *= " -Zt"
 		elseif (opt_Z[4] == 'b')  cmd *= " -Zb"
