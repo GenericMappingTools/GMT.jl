@@ -124,7 +124,7 @@ export
 	rose!, sample1d, scatter, scatter!, scatter3, scatter3!, solar, solar!, spectrum1d, sphdistance, sphinterpolate,
 	sphtriangulate, surface, ternary, ternary!, text, text!, text_record, trend1d, trend2d, triangulate, gmtsplit,
 	decorated, vector_attrib, wiggle, wiggle!, xyz2grd, gmtbegin, gmtend, gmthelp, subplot, gmtfig, inset, showfig,
-	earthtide, gravfft, gmtgravmag3d, grdgravmag3d, gravprisms, pscoupe, pscoupe!, coupe, coupe!, psmeca, psmeca!,
+	earthtide, gravfft, gmtgravmag3d, gravmag3d, grdgravmag3d, gravprisms, pscoupe, pscoupe!, coupe, coupe!, psmeca, psmeca!,
 	meca, meca!, psvelo, psvelo!, velo, velo!, gmtisf, getbyattrib, inpolygon, inwhichpolygon, pcolor, pcolor!,
 	triplot, triplot!, trisurf, trisurf!, grdrotater, imagesc, upGMT, boxes,
 
