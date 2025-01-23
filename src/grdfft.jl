@@ -47,7 +47,6 @@ Parameters
 """
 function grdfft(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
-    (GMTver < v"6.4.0") && (@warn("Sorry but you need at least GMT 6.4 to use this module. Previous version had a bug that prevented Julia wrapper to work."); return nothing)
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
 	cmd, = parse_common_opts(d, "", [:G :V_params :f])
