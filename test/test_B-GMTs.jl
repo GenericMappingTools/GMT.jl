@@ -68,7 +68,7 @@
 	println("	GMTGRAVMAG3D")
 	gmtgravmag3d(M=(shape=:prism, params=(1,1,1,5)), I=1.0, R="-15/15/-15/15", H="10/60/10/-10/40", Vd=dbg2);
 	#@test isa(G, GMTgrid)
-	D = gravmag3d(region="-15/15/-15/15", I=0.1, mag_params="10/60/10/-10/40", body=(shape=:prism, params="1/1/1/-5/-10/1"), F=[-14 -14; 14 14]);
+	#D = gravmag3d(region="-15/15/-15/15", I=0.1, mag_params="10/60/10/-10/40", body=(shape=:prism, params="1/1/1/-5/-10/1"), F=[-14 -14; 14 14]);
 	#@test isa(D, GMTdataset)
 	#D = grd2xyz("@earth_relief_10m_g", R="-41:50/-41:20/47:30/47:50", f=:g);
 	#Dtri = triangulate(D);
