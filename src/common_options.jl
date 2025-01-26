@@ -59,12 +59,12 @@ function find_in_kwargs(p, symbs::VMs, del::Bool=true, primo::Bool=true, help_st
 end
 
 """
-    is_in_dict(d::Dict, symbs::VMs, help_str::String=""; del::Bool=false)
+    is_in_dict(d::Dict, symbs::VMs, help_str::String=""; del::Bool=false)::Union{Symbol, Nothing}
 
 Check if `d` contains any of the symbols in `symbs`. If yes, return the used symb in symbs,
 else return nothing.
 """
-function is_in_dict(d::Dict, symbs::VMs, help_str::String=""; del::Bool=false)
+function is_in_dict(d::Dict, symbs::VMs, help_str::String=""; del::Bool=false)::Union{Symbol, Nothing}
 	(SHOW_KWARGS[1] && help_str != "") && return print_kwarg_opts(symbs, help_str)
 	for symb in symbs
 		if (haskey(d, symb))
@@ -2299,7 +2299,7 @@ function add_opt(d::Dict, cmd::String, opt::String, mapa::NamedTuple)::String
 		end
 		delete!(d, [k])		# Now we can delete the key
 	end
-	(cmd_ != "") && (cmd *= " -" * opt * cmd_)
+	(cmd_ != "") && (cmd *= (opt != "") ? " -" * opt * cmd_ : cmd_)
 	return cmd
 end
 
@@ -2358,7 +2358,7 @@ function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, mapa; grow_mat=n
 	elseif (isa(mapa, Tuple) && length(mapa) > 1 && isa(mapa[2], Function))	# grdcontour -G
 		(!isa(val, NamedTuple) && !isa(val, String)) && error("Option argument must be a NamedTuple, not a Tuple")
 		if (isa(val, NamedTuple))
-			args[1] = (mapa[2] == helper_decorated) ? mapa[2](val, true) : args[1] = mapa[2](val)	# 2nd case not yet inv
+			args[1] = (mapa[2] == helper_decorated) ? mapa[2](val, true) : mapa[2](val)	# 2nd case not yet inv
 		elseif (isa(val, String))  args[1] = val
 		end
 	else
@@ -2378,6 +2378,7 @@ function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, mapa; grow_mat=n
 		end
 	end
 
+	(args[1] == "") && return cmd
 	cmd = (opt != "") ? string(cmd, " -", opt, args[1]) : string(cmd, args[1])
 
 	return cmd
