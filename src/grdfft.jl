@@ -47,6 +47,7 @@ Parameters
 """
 function grdfft(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
+	(cmd0 == "" && arg1 === nothing && arg2 === nothing && length(kwargs) == 0) && return gmt("grdfft")
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
 	cmd, = parse_common_opts(d, "", [:G :V_params :f])
