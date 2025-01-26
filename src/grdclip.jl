@@ -67,7 +67,7 @@ function grdclip_helper(cmd0::String, arg1; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function opt_S(d::Dict, cmd::String, symbs, flag::Char)
+function opt_S(d::Dict, cmd::String, symbs, flag::Char)::String
 	# This is common to the 4 cases
 	val, symb = find_in_dict(d, symbs)
 	if (val !== nothing)

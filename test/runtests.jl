@@ -25,6 +25,8 @@ using Dates, Printf#, Logging
 	#rm("lixo1.gmt")
 	rm("lixo2.gmt")
 
+	println("	MAGREF")
+	include("test_mgd77.jl")
 	println("	CUBES")
 	include("test_cube.jl")
 

@@ -128,6 +128,8 @@ export
 	meca, meca!, psvelo, psvelo!, velo, velo!, gmtisf, getbyattrib, inpolygon, inwhichpolygon, pcolor, pcolor!,
 	triplot, triplot!, trisurf, trisurf!, grdrotater, imagesc, upGMT, boxes,
 
+	mgd77magref, magref,
+
 	find_in_dict, find_in_kwargs,
 	mbimport, mbgetdata, mbsvplist, mblevitus,
 
@@ -322,6 +324,7 @@ include("MB/mbimport.jl")
 include("MB/mbgetdata.jl")
 include("MB/mbsvplist.jl")
 include("MB/mblevitus.jl")
+include("mgd77/magref.jl")
 include("potential/gmtgravmag3d.jl")
 include("potential/grdgravmag3d.jl")
 include("potential/gravprisms.jl")

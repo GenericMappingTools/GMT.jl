@@ -37,7 +37,7 @@ Parameters
 - **T+s** | **stl** :: [Type => Str]
 
     Gives names of a xyz and vertex (ndex="vert_file") files defining a close surface.
-- **Z** | **z_level** | **reference_level** :: [Type => Number]
+- **Z** | **level** | **reference_level** :: [Type => Number]
 
     Level of reference plane [Default = 0].
 
@@ -47,23 +47,21 @@ Parameters
 	imshow(G)
 ```
 """
-#
 gravmag3d(cmd0::String; kwargs...) = gravmag3d_helper(cmd0, nothing; kwargs...)
 gravmag3d(arg1; kwargs...)         = gravmag3d_helper("", arg1; kwargs...)
 gravmag3d(; kwargs...)             = gravmag3d_helper("", nothing; kwargs...)
 
 function gravmag3d_helper(cmd0::String, arg1; kwargs...)
+	(cmd0 == "" && arg1 === nothing && length(kwargs) == 0) && return gmt("gmtgravmag3d")
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	gravmag3d_helper(cmd0, arg1, d)
 end
-#
 
 # ---------------------------------------------------------------------------------------------------
 function gravmag3d_helper(cmd0::String, arg1, d::Dict{Symbol,Any})
 	
 	cmd = parse_common_opts(d, "", [:G :RIr :V_params :bi :f])[1]
-	cmd = parse_these_opts(cmd, d, [[:C :density], [:E :thickness], [:G :grid :outgrid],
-	                                [:L :z_obs :observation_level], [:S :radius], [:Z :reference_level]])
+	cmd = parse_these_opts(cmd, d, [[:C :density], [:E :thickness], [:L :z_obs :observation_level], [:S :radius], [:Z :level :reference_level]])
 	cmd = add_opt(d, cmd, "H", [:H :mag_params], (field_dec="", field_dip="", mag="", mag_dec="", mag_dip=""))
 
 	arg2, arg3 = nothing, nothing;

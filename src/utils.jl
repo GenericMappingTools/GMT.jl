@@ -1040,6 +1040,19 @@ end
 
 # ------------------------------------------------------------------------------------------------------
 """
+    region_is_global()::Bool
+
+Check if the limits stored in CTRL.limits are global.
+
+Cuurently this check is for an exact match, that is [360 90] but it should also chech for pixel registration
+'globality'. However, for that we need to parse and store the increments (from -I, like we do for -R).
+"""
+function region_is_global()::Bool
+	diff(CTRL.limits)[1:2:3] == [360.0, 180.0]
+end
+
+# ------------------------------------------------------------------------------------------------------
+"""
     settimecol!(D::GDtype, Tcol)
 
 Set the time column in the dataset D (or vector of them).

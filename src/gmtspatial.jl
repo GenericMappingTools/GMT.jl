@@ -52,6 +52,7 @@ Parameters
 """
 function gmtspatial(cmd0::String="", arg1=nothing, arg2 = nothing; kwargs...)
 
+	(cmd0 == "" && arg1 === nothing && arg2 === nothing && length(kwargs) == 0) && return gmt("gmtspatial")
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	arg3 = nothing;     arg4 = nothing
 

@@ -66,8 +66,7 @@
 	gmtconvert([1.1 2; 3 4], o=0)
 
 	println("	GMTGRAVMAG3D")
-	#gmtgravmag3d(M=(shape=:prism, params=(1,1,1,5)), I=1.0, R="-15/15/-15/15", H="10/60/10/-10/40", Vd=dbg2);
-	#@test isa(G, GMTgrid)
+	gmtgravmag3d(M=(shape=:prism, params=(1,1,1,5)), I=1.0, R="-15/15/-15/15", H="10/60/10/-10/40", Vd=dbg2);
 	#D = gravmag3d(region="-15/15/-15/15", I=0.1, mag_params="10/60/10/-10/40", body=(shape=:prism, params="1/1/1/-5/-10/1"), F=[-14 -14; 14 14]);
 	#@test isa(D, GMTdataset)
 	#D = grd2xyz("@earth_relief_10m_g", R="-41:50/-41:20/47:30/47:50", f=:g);
@@ -80,7 +79,7 @@
 	#@test_throws ErrorException("For grid output MUST specify grid increment ('I' or 'inc')") gmtgravmag3d(Tv=true);
 
 	println("	GRDGRAVMAG3D")
-	grdgravmag3d("@earth_relief_10m", region=(-12.5,-10,35.5,37.5), density=1700, inc=0.05, pad=0.5, z_level=:b, f=:g, Vd=dbg2)
+	grdgravmag3d("@earth_relief_10m", region=(-12.5,-10,35.5,37.5), density=1700, inc=0.05, pad=0.5, level=:b, f=:g, Vd=dbg2)
 	@test_throws ErrorException("Bad data type in option F") grdgravmag3d("@earth_relief_10m", region=(-12,-10,35,37), density=1700, inc=0.05, z_level=:a, F=:a)
 
 	println("	GRAVPRISMS")
