@@ -11,7 +11,7 @@ Parameters
 - **A** | **zup** :: [Type => Bool]
 
     The z-axis should be positive upwards [Default is down].
-- **C** | **density** :: [Type => Str | GMTgrid]
+- **D** | **density** :: [Type => Str | GMTgrid]
 
     Sets body density in SI. Provide either a constant density or a grid with a variable one.
 - **E** | **dxdy** | **xy_sides** :: [Type => Number | Tuple numbers]
@@ -81,12 +81,15 @@ function gravprisms(cmd0::String="", arg1::GDtype=GMTdataset(); kwargs...)
 
 	cmd::String = parse_common_opts(d, cmd, [:G :RIr :V_params :bo :d :f :i :o :r :x])[1]
 	is_geog = contains(cmd, "-fg")
-	cmd = parse_these_opts(cmd, d, [[:A :zup], [:E :dxdy :xy_sides], [:G :grid :outgrid], [:W :out_mean_rho]])
+	cmd = parse_these_opts(cmd, d, [[:A :zup], [:E :dxdy :xy_sides], [:G :grid :outgrid], [:W :hvar_rho :avedens]])
 
 	if ((val = find_in_dict(d, [:N :track])[1]) !== nothing)
 		cmd *= " -N"	
-		isa(val, String) && (cmd *= val)
-		(isa(val, GMTdataset) || isa(val, Matrix)) && (isempty(arg1) ? arg1 = mat2ds(val) : arg2 = mat2ds(val))
+		if (isa(val, GMTdataset) || isa(val, Matrix))
+			isempty(arg1) ? (arg1 = mat2ds(val)) : (arg2 = mat2ds(val))
+		else
+			cmd *= string(val)
+		end
 	end
 
 	# Deals with options that may pass GMTgrids or file names of them.
@@ -94,13 +97,13 @@ function gravprisms(cmd0::String="", arg1::GDtype=GMTdataset(); kwargs...)
 	cmd, N_used = fish_grids(d, Gs, cmd, [:S :topography], 'S', N_used)
 	cmd, N_used = fish_grids(d, Gs, cmd, [:L :base], 'L', N_used)
 	cmd, N_used = fish_grids(d, Gs, cmd, [:T :top], 'T', N_used)
-	cmd, N_used = fish_grids(d, Gs, cmd, [:Z :z_obs :observation_level], 'Z', N_used)
+	cmd, N_used = fish_grids(d, Gs, cmd, [:Z :level :reference_level], 'Z', N_used)
 	deleteat!(Gs, N_used+1:length(Gs))
 
-	opt_F = add_opt(d, "", "F", [:F :component], (faa="_f", geoid="n", vgrad="_v"))
+	opt_F = add_opt(d, "", "F", [:F :component], (faa="_f", geoid="_n", vgrad="_v"))
 	valname = contains(opt_F, "Fn") ? "Geoid" : contains(opt_F, "Fv") ? "VGG" : "FAA"
 	cmd *= opt_F
-	cmd = add_opt(d, cmd, "H", [:H :radial_rho], (low_high_rho="", pressure_rho="+d", power="+p"))
+	cmd = add_opt(d, cmd, "H", [:H :radial_rho], (height="", low_high_rho="", pressure_rho="+d", power="+p"))
 	cmd = add_opt(d, cmd, "M", [:M :units], (horizontal="_h", vertical="_v"))
 
 	(!occursin(" -N", cmd) && !occursin(" -G", cmd)) && (cmd *= " -G")
