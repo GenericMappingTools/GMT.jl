@@ -54,11 +54,20 @@ gravmag3d(; kwargs...)             = gravmag3d_helper("", nothing; kwargs...)
 function gravmag3d_helper(cmd0::String, arg1; kwargs...)
 	(cmd0 == "" && arg1 === nothing && length(kwargs) == 0) && return gmt("gmtgravmag3d")
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
-	gravmag3d_helper(cmd0, arg1, d)
+	(cmd0 != "") && (arg1 = gmtread(cmd0, data=true))
+	if (isa(arg1, GMTfv))
+		v = mat2ds(arg1.verts) 
+		f = arg1.faces[1]# .- 1
+		d[:Tf] = f
+		d[:Q] = true
+		arg1 = v
+	end
+	isa(arg1, Matrix{<:AbstractFloat}) && (arg1 = mat2ds(arg1))		# Ensure we always send a GMTdataset
+	gravmag3d_helper(arg1, d)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function gravmag3d_helper(cmd0::String, arg1, d::Dict{Symbol,Any})
+function gravmag3d_helper(arg1, d::Dict{Symbol,Any})
 	
 	cmd = parse_common_opts(d, "", [:G :RIr :V_params :bi :f])[1]
 	cmd = parse_these_opts(cmd, d, [[:C :density], [:E :thickness], [:L :z_obs :observation_level], [:S :radius], [:Z :level :reference_level]])
@@ -66,7 +75,8 @@ function gravmag3d_helper(cmd0::String, arg1, d::Dict{Symbol,Any})
 
 	arg2, arg3 = nothing, nothing;
 	if ((val = find_in_dict(d, [:Tv :index], true, "GMTdataset | Mx3 array | String")[1]) !== nothing && val != "")  opt = " -Tv"
-	elseif ((val = find_in_dict(d, [:Tr :raw_triang], true, "GMTdataset | Mx3 array | String")[1]) !== nothing && val != "") opt = " -Tr"
+	elseif ((val = find_in_dict(d, [:Tr :raw :raw_triang], true, "GMTdataset | Mx3 array | String")[1]) !== nothing && val != "") opt = " -Tr"
+	elseif ((val = find_in_dict(d, [:Tf], true)[1]) !== nothing && val != "") opt = " -Tf"
 	elseif ((val = find_in_dict(d, [:Ts :stl :STL], true, "String (file name)")[1]) !== nothing && val != "")  opt = " -Ts"
 	elseif ((val = find_in_dict(d, [:M :body], false, "String | NamedTuple")[1]) !== nothing && val != "")
 		if (isa(val, Tuple))
@@ -82,16 +92,21 @@ function gravmag3d_helper(cmd0::String, arg1, d::Dict{Symbol,Any})
 	elseif (SHOW_KWARGS[1])  opt = "" 
 	else   error("Missing one of 'index', 'raw_triang' or 'str' data")
 	end
+	
+	(find_in_dict(d, [:Q :onebased :one_based])[1] !== nothing) && (cmd *= " -Q")	# Tells to use 1 based in the C side
 
 	if (opt != " -Ts")		# The STL format can only be requested via file (so we can keep testing that with old syntax)
 		if (isa(val, Array{<:Real}) || isa(val, GDtype))
-			(arg1 === nothing) ? arg1 = val : arg2 = val		# Find the free slot
-			cmd *= " -T+" * opt[end]	# New -T syntax
+			(arg1 === nothing) ? arg1 = val : arg2 = val		# Find the free slot (update. I think now arg1 is always a GMTdatset)
+			cmd *= " -T+" * opt[end]		# New -T syntax
 		else
-			cmd *= arg2str(val)
-			cmd *= opt					# Old syntax. This should be removed when we rebuild GMT_jll
+			cmd *= isa(val, String) ? " -T" * arg2str(val) * "+" * opt[end] : " -T+" * opt[end]
 		end
+	elseif (isa(val, String))				# STL case, which can only be a file name
+		cmd *= " -T" * val * "+s"
 	end
+
+	(find_in_dict(d, [:noswap :no_swap])[1] !== nothing) && (cmd *= "+n")	# 
 
 	if ((val = find_in_dict(d, [:F :track], true, "GMTdataset | Mx2 array | String")[1]) !== nothing && val != "")
 		cmd *= " -F"
@@ -104,3 +119,58 @@ function gravmag3d_helper(cmd0::String, arg1, d::Dict{Symbol,Any})
 end
 
 const gmtgravmag3d = gravmag3d		# Alias
+
+#=
+# ---------------------------------------------------------------------------------------------------
+function sph_analytic(; z0=-15, d=1000)
+
+	G = 6.6743e-11
+	mass = 4/3 * pi * 10^3 * d;
+	Gm = G*mass * 1e+5		# To give results in mGal
+	y=-50:50;	x=-50:50
+	g = Matrix{Float32}(undef, length(y), length(x))
+	z2 = z0 * z0
+	Threads.@threads for row = 1:numel(x)
+		for col = 1:numel(y)
+			@inbounds g[col,row] = Float32(Gm * z0 / (x[col]*x[col] + y[row]*y[row] + z2)^(1.5))
+		end
+	end
+	mat2grid(g, x, y)
+end
+
+# ---------------------------------------------------------------------------------------------------
+# 2pi r^2 G zRho / (x^2 + y^2 + z^2)
+
+
+function gravity_effect_of_prism(x, y, z, prism_params)
+	G = 6.67430e-11  # Gravitational constant in m^3 kg^-1 s^-2
+    # Unpack prism parameters
+    x1, y1, z1, x2, y2, z2 = prism_params
+    
+    # Calculate intermediate values
+    a = (x - x1) / sqrt((y - y1)^2 + (z - z1)^2)
+    b = (x - x2) / sqrt((y - y2)^2 + (z - z2)^2)
+    
+    # Calculate the gravity effect
+    gz = G * (z1 * log(a) - z2 * log(b)) / (4π)
+    
+    return gz
+end
+
+function calculate_gravity_anomaly(prism_params, grid_points)
+    gz = zeros(length(grid_points))
+    
+    for i in 1:length(grid_points)
+        x, y, z = grid_points[i]
+        gz[i] = gravity_effect_of_prism(x, y, z, prism_params)
+    end
+    
+    return gz
+end
+
+# Example usage:
+prism_params = [0, 0, 0, 10, 0, 100]  # Prism corners: (x1, y1, z1), (x2, y2, z2)
+grid_points = [(0, 0, 0), (10, 0, 0), (5, 5, 0)]  # Points to calculate gravity at
+
+gz = calculate_gravity_anomaly(prism_params, grid_points)
+=#

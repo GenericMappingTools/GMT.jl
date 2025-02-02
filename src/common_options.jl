@@ -3932,6 +3932,19 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
+	guessgeog(in)::Bool
+
+Guess if the input `in` (GMTgrid, GMTimage, GMTdadaset or vector of them) is in geographical coordinates.
+The guessing is very crude and is based on the data limits being inside the [-180 360-90 90] interval.
+"""
+guessgeog(GI::GItype)::Bool = (GI.range[1] >= -180 && GI.range[2] <= 360) && GI.range[3] >= -90 && GI.range[4] <= 90
+function guessgeog(D::GDtype)::Bool
+	isa(D, GMTdataset) && return (D.bbox[1] >= -180 && D.bbox[2] <= 360) && D.bbox[3] >= -90 && D.bbox[4] <= 90
+	return (D[1].ds_bbox[1] >= -180 && D[1].ds_bbox[2] <= 360) && D[1].ds_bbox[3] >= -90 && D[1].ds_bbox[4] <= 90
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
     is_gridtri(D)::Bool
 
 Check if D is a Vector{GMTdataset} produced by the gridtri() function.

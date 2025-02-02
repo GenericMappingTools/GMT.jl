@@ -242,7 +242,7 @@ Pad matrix A with an amount of padding in each dimension specified by padsize.
 ### Args
 - `A`: GMTimage, GMTgrid or Matrix to pad.
 - `padsize`: Amount of padding in each dimension. It can be a scalar or a array of length
-  equal to 2 (only matrices are supported).
+  equal to 2 or 4 (only matrices are supported).
 
 ### Kwargs
 - `padval`: If not specified, `A` is padded with a replication of the first/last row and column, otherwise
@@ -252,20 +252,41 @@ Pad matrix A with an amount of padding in each dimension specified by padsize.
 ### Return
 Padded array of same type as input.
 
+### Examples
+```julia
+julia> padarray(ones(Int,2,3), (1,2); padval=0)
+4×7 Matrix{Int64}:
+ 0  0  0  0  0  0  0
+ 0  0  1  1  1  0  0
+ 0  0  1  1  1  0  0
+ 0  0  0  0  0  0  0
+```
+
+ Padd with a different number of rows and columns on left-right and top-botom
+
+```julia
+ julia> padarray(ones(Int,2,3), (1,2,2,1); padval=0)
+5×6 Matrix{Int64}:
+ 0  0  0  0  0  0
+ 0  0  1  1  1  0
+ 0  0  1  1  1  0
+ 0  0  0  0  0  0
+ 0  0  0  0  0  0
+```
 """
 function padarray(a::AbstractArray{T,2}, p; padval=nothing) where T
 	# https://discourse.julialang.org/t/julia-version-of-padarray-in-matlab/37635/9
 	h, w = size(a)
-	_p = isa(p, Int) ? (Int(p), Int(p)) : (Int(p[1]), Int(p[2]))
-	y = clamp.((1-_p[1]):(h+_p[1]), 1, h)
-	x = clamp.((1-_p[2]):(w+_p[2]), 1, w)
+	_p = isa(p, Int) ? (Int(p), Int(p), Int(p), Int(p)) : (length(p) == 2) ? (Int(p[1]), Int(p[1]), Int(p[2]), Int(p[2])) : (Int(p[1]), Int(p[2]), Int(p[3]), Int(p[4]))
+	y = clamp.((1-_p[1]):(h + +_p[2]), 1, h)
+	x = clamp.((1-_p[3]):(w + +_p[4]), 1, w)
 	
 	(padval === nothing) && return a[y, x]
 
 	pv = (padval == -Inf) ? typemin(eltype(a)) : (padval == Inf) ? typemax(eltype(a)) :
 	                        !(eltype(a) <: AbstractFloat) ? clamp(padval, eltype(a)) : convert(eltype(a), padval)
-	r = fill(pv, h+2_p[1], w+2_p[2])
-	r[_p[1]+1:h+_p[1], _p[2]+1:w+_p[2]] .= a
+	r = fill(pv, h + _p[1] + _p[2], w + _p[3] + _p[4])
+	r[_p[1]+1:h+_p[1], _p[3]+1:w+_p[3]] .= a
 	return r
 end
 

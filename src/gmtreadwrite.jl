@@ -548,8 +548,9 @@ function gmtwrite(fname::AbstractString, data; kwargs...)
 		(endswith(fname, ".laz") || endswith(fname, ".LAZ")) && return lazwrite(fname, data; kwargs...)		# Lasz
 		opt_T = " -Td"
 		cmd, = parse_bo(d, cmd)					# Write to binary file
-	elseif (isa(data, GMTfv) && (endswith(fname, ".obj") || endswith(fname, ".OBJ")))
-		return write_obj(fname, data)
+	elseif (isa(data, GMTfv))
+		(endswith(fname, ".obj") || endswith(fname, ".OBJ")) && return write_obj(fname, data)
+		(endswith(fname, ".stl") || endswith(fname, ".STL")) && return write_stl(fname, data; kwargs...)
 	elseif (isa(data, GMTcpt))
 		opt_T = " -Tc"
 	elseif (isa(data, GMTps))
@@ -794,7 +795,7 @@ function write_stl(fname::AbstractString, D::Vector{<:GMTdataset}; binary::Bool=
 			n = facenorm(D[k].data)
 			foreach(j-> write(fid, Float32(n[j])), 1:3)
 			for t = 1:3
-				write(fid, Float32(D[k][t,1]), Float32(D[k][t,2]), Float32(D[k][t,3]))
+				write(fid, Float32(D[k][t,1]), Float32(D[k][t,2]), Float32(D[k][t,3]*scale))
 			end
 			write(fid, 0x0000)		# write 16bit empty byte count
 		end
@@ -809,6 +810,50 @@ function write_stl(fname::AbstractString, D::Vector{<:GMTdataset}; binary::Bool=
 			@printf fid "\t\tvertex  %.12g %.12g %.12g\n" D[k][3,1] D[k][3,2] D[k][3,3]*scale
 			write(fid,"\tendloop\n")
 			write(fid,"endfacet\n")
+		end
+		write(fid,"endsolid $name\n")
+	end
+	close(fid)
+end
+
+function write_stl(fname::AbstractString, FV::GMTfv; binary::Bool=true, scale=1.0)
+	@assert size(FV.faces[1],2) == 3 "Only triangulated bodies can be saved in STL format."
+	name = fileparts(fname)[2]
+	fid = open(fname, write=true)
+
+	function hlp(FV, t, k, m)
+		t[1,:] .= FV.verts[FV.faces[k][m,1],:]
+		t[2,:] .= FV.verts[FV.faces[k][m,2],:]
+		t[3,:] .= FV.verts[FV.faces[k][m,3],:]
+		return t, facenorm(t)
+	end
+
+	t = zeros(3,3)
+	if (binary)
+		foreach(k -> write(fid, 0x00), 1:80)	# header (empty)
+		write(fid, UInt32(sum(size.(FV.faces,1))))	# number of triangles
+		for k = 1:numel(FV.faces)				# Number of face groups
+			for m = 1:size(FV.faces[k], 1)		# Number of rows in this group
+				t, n = hlp(FV, t, k, m)
+				foreach(j-> write(fid, Float32(n[j])), 1:3)
+				for c = 1:3
+					write(fid, Float32(t[c,1]), Float32(t[c,2]), Float32(t[c,3]*scale))
+				end
+				write(fid, 0x0000)				# write 16bit empty byte count
+			end
+		end
+	else
+    	write(fid, "solid $name\n")
+		for k = 1:numel(FV.faces)				# Number of face groups
+			for m = 1:size(FV.faces[k], 1)		# Number of rows in this group
+				t, n = hlp(FV, t, k, m)
+				@printf(fid, "facet normal %.12g %.12g %.12g\n", n[1], n[2], n[3])
+				write(fid,"\touter loop\n")
+				@printf fid "\t\tvertex  %.12g %.12g %.12g\n" t[1,1] t[1,2] t[1,3]*scale
+				@printf fid "\t\tvertex  %.12g %.12g %.12g\n" t[2,1] t[2,2] t[2,3]*scale
+				@printf fid "\t\tvertex  %.12g %.12g %.12g\n" t[3,1] t[3,2] t[3,3]*scale
+				write(fid,"\tendloop\nendfacet\n")
+			end
 		end
 		write(fid,"endsolid $name\n")
 	end
