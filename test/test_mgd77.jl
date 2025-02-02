@@ -4,7 +4,8 @@
 	@test magref([0. 0], alt=10, H=1, CM4core=true, Vd=dbg2) == " -A+a10 -Fh/1"
 	@test magref([0. 0], alt=10, F=:CM4litho, L=:iono_p, Vd=dbg2) == " -A+a10 -Frt/2"
 	@test magref([0. 0], alt=10, L=:iono_p, Vd=dbg2) == " -A+a10 -Lrt/2"
-	@test magref([0. 0], alt=10, L=:iono_p, Vd=dbg2) == " -A+a10 -Lrt/2"
+	magref([0. 0 0], alt=10, L=:iono_p);
 	@test magref([0. 0], alt=10, L=(T=true, iono_i=true), Vd=dbg2) == " -A+a10 -Lt/3"
 	@test magref(R=:d, alt=10, L=(T=true, iono_i=true), Vd=dbg2) == " -A+a10 -Lrt/3"
+	magref("", R=:d, L=:iono_p, Vd=dbg2)
 end
