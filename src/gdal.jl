@@ -666,6 +666,10 @@ GDALBuildVRT(pszDest, nSrcCount, pahSrcDS, pSrcDSNames, pOpts, pUError) =
     acare(ccall((:GDALBuildVRT, libgdal), pVoid, (Cstring, Cint, Ptr{pVoid}, Ptr{Cstring}, pVoid, Ptr{Cint}), pszDest, nSrcCount, pahSrcDS, pSrcDSNames, pOpts, pUError))
 GDALBuildVRTOptionsFree(pOpts) = acare(ccall((:GDALBuildVRTOptionsFree, libgdal), Cvoid, (pVoid,), pOpts))
 
+GDALSieveFilter(hSrcBand, hMaskBand, hDstBand, nSizeThreshold, nConn, papszOptions, pfnProgress, pProgressArg) =
+	acare(ccall((:GDALSieveFilter, libgdal), UInt32, (pVoid, pVoid, pVoid, Cint, Cint, Ptr{Cstring}, pVoid, pVoid),
+	             hSrcBand, hMaskBand, hDstBand, nSizeThreshold, nConn, papszOptions, pfnProgress, pProgressArg))
+
 #function GDALViewshedGenerate(hBand, pDriverName, pTargetName, pCreationOpts, obsX, obsY, obsH, dfTargetHeight, dfVisibleVal, dfInvVal, dfOutOfRangeVal, dfNoDataVal, dfCurvCoeff, eMode, dfMaxDist, pfnProgress, pProgArg, heightMode, pExtraOpts)
 	#acare(ccall((:GDALViewshedGenerate, thelib), pVoid, (pVoid, Cstring, Cstring, Ptr{Cstring}, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, UInt32, Cdouble, pVoid, pVoid, UInt32, Ptr{Cstring}), hBand, pDriverName, pTargetName, pCreationOpts, obsX, obsY, obsH, dfTargetHeight, dfVisibleVal, dfInvVal, dfOutOfRangeVal, dfNoDataVal, dfCurvCoeff, eMode, dfMaxDist, pfnProgress, pProgArg, heightMode, pExtraOpts))
 #end
@@ -1578,7 +1582,7 @@ end
 	gdalviewshed(ds::IDataset, opts=String[]; dest="/vsimem/tmp") = gdalviewshed(Dataset(ds.ptr), opts; dest=dest)
 	=#
 
-	function gdalinfo(ds::Dataset, options::Vector{String}=String[])
+	function gdalinfo(ds::AbstractDataset, options::Vector{String}=String[])
 		o = GDALInfoOptionsNew(options, C_NULL)
 		return try
 			GDALInfo(ds.ptr, o)
@@ -1674,6 +1678,18 @@ end
 	end
 	gdalpolygonize(dataset::IDataset, opts=String[]; mask::pVoid=C_NULL, options::Vector{String}=String[], progress::pVoid=C_NULL, kw...) =
 		gdalpolygonize(Dataset(dataset.ptr); mask=mask, options=options, progress=progress, kw...)
+
+	function gdalsievefilter(src::Dataset; mask::pVoid=C_NULL, progress::pVoid=C_NULL, kw...)
+		nbd = (find_in_kwargs(kw, [:band])[1] !== nothing) ? kw[:band] : 1
+		thresh = get(kw, :thresh, 10)
+		conn = get(kw, :conn, 4)
+		@assert conn in (4, 8) "conn must be 4 or 8"
+		bd  = getband(src, nbd)
+		(GDALSieveFilter(bd.ptr, mask, bd.ptr, thresh, conn, C_NULL, progress, C_NULL) != 0) && error("GDALSieveFilter failed.")
+		return bd
+	end
+	gdalsievefilter(src::IDataset; mask::pVoid=C_NULL, progress::pVoid=C_NULL, kw...) =
+		gdalsievefilter(Dataset(src.ptr); mask=mask, progress=progress, kw...)
 
 #=
 	for gdalfunc in (:boundary, :buffer, :centroid, :clone, :convexhull, :create, :createcolortable,
@@ -2535,7 +2551,7 @@ end
 	# ---------------------------------
 
 	export
-		getband, getdriver, getlayer, getproj, getgeom, getgeotransform, toPROJ4, toWKT, importPROJ4,
+		bwareaopen, getband, getdriver, getlayer, getproj, getgeom, getgeotransform, toPROJ4, toWKT, importPROJ4,
 		importWKT, importEPSG, gdalinfo, gdalwarp, gdaldem, gdaltranslate, gdalgrid, gdalvectortranslate, ogr2ogr,
 		gdalrasterize, gdalbuildvrt, readraster, setgeotransform!, setproj!, destroy, arcellipse, arccircle,
 		delaunay, dither, buffer, centroid, intersection, intersects, polyunion, fromWKT, fillnodata!, fillnodata,

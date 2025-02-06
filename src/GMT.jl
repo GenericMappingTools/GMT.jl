@@ -124,9 +124,9 @@ export
 	rose!, sample1d, scatter, scatter!, scatter3, scatter3!, solar, solar!, spectrum1d, sphdistance, sphinterpolate,
 	sphtriangulate, surface, ternary, ternary!, text, text!, text_record, trend1d, trend2d, triangulate, gmtsplit,
 	decorated, vector_attrib, wiggle, wiggle!, xyz2grd, gmtbegin, gmtend, gmthelp, subplot, gmtfig, inset, showfig,
-	earthtide, gravfft, gmtgravmag3d, gravmag3d, grdgravmag3d, gravprisms, pscoupe, pscoupe!, coupe, coupe!, psmeca, psmeca!,
-	meca, meca!, psvelo, psvelo!, velo, velo!, gmtisf, getbyattrib, inpolygon, inwhichpolygon, pcolor, pcolor!,
-	triplot, triplot!, trisurf, trisurf!, grdrotater, imagesc, upGMT, boxes,
+	earthtide, gravfft, gmtgravmag3d, gravmag3d, grdgravmag3d, gravprisms, parkermag, pscoupe, pscoupe!, coupe, coupe!,
+	psmeca, psmeca!, meca, meca!, psvelo, psvelo!, velo, velo!, gmtisf, getbyattrib, inpolygon, inwhichpolygon,
+	pcolor, pcolor!, triplot, triplot!, trisurf, trisurf!, grdrotater, imagesc, upGMT, boxes,
 
 	mgd77magref, magref,
 
@@ -168,7 +168,7 @@ export
 
 	VSdisp, mad, info, kmeans, pca, mosaic, quadbounds, quadkey, geocoder, getprovider,
 
-	bwhitmiss, binarize, bwperim, bwskell, isodata, padarray, rgb2gray, rgb2lab, rgb2YCbCr, rgb2ycbcr, grid2img,
+	bwhitmiss, binarize, bwareaopen, bwperim, bwskell, isodata, padarray, rgb2gray, rgb2lab, rgb2YCbCr, rgb2ycbcr, grid2img,
 	img2grid, grays2cube, grays2rgb, imclose, imcomplement, imcomplement!, imdilate, imerode, imfilter, imopen, imsegment,
 	imsobel, imtophat, imbothat, imhdome, imhmin, imhmax, immorphgrad, imrankfilter, strel, 
 
@@ -269,6 +269,7 @@ include("makecpt.jl")
 include("mapproject.jl")
 include("movie.jl")
 include("nearneighbor.jl")
+#include("parkermag.jl")
 include("pastplates.jl")
 include("pca.jl")
 include("pcolor.jl")
