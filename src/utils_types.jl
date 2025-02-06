@@ -2116,7 +2116,7 @@ end
                  title::String="", rem::String="", cmd::String="", names::Vector{String}=String[],
                  scale::Float32=1f0, offset::Float32=0f0, eqc=false)
 
-Take a 2/3D `mat` array and a HDR 1x9 [xmin xmax ymin ymax zmin zmax reg xinc yinc] header descriptor and 
+Take a 2/3D `mat` array and a HDR 1x9 [xmin, xmax, ymin, ymax, zmin, zmax, reg, xinc, yinc] header descriptor and 
 return a grid GMTgrid type. Alternatively to HDR, provide a pair of vectors, `x` & `y`, with the X and Y coordinates.
 Optionally add a `v` vector with vertical coordinates if `mat` is a 3D array and one wants to create a ``cube``.
 Optionally, the HDR arg may be omitted and it will computed from `mat` alone, but then x=1:ncol, y=1:nrow
@@ -2325,6 +2325,7 @@ function grdimg_hdr_xy(mat, reg, hdr, x=Float64[], y=Float64[], is_transposed=fa
 # Arrays coming from GDAL are often scanline so they are transposed. In that case is_transposed should be true
 	row_dim, col_dim = (is_transposed) ? (2,1) : (1,2) 
 	nx = size(mat, col_dim);		ny = size(mat, row_dim);
+	one_or_zero = reg == 0 ? 1 : 0
 
 	if (!isempty(x) && !isempty(y))		# But not tested if they are equi-spaced as they MUST be
 		if ((length(x) != (nx+reg) || length(y) != (ny+reg)) && (length(x) != 2 || length(y) != 2))
@@ -2332,7 +2333,6 @@ function grdimg_hdr_xy(mat, reg, hdr, x=Float64[], y=Float64[], is_transposed=fa
 			(length(y) != (ny+reg)) && @warn("length y = $(length(y))  ny = $ny, registration = $reg")
 			error("size of x,y vectors incompatible with 2D array size")
 		end
-		one_or_zero = reg == 0 ? 1 : 0
 		if (length(x) != 2)				# Check that REGistration and coords are compatible
 			(reg == 1 && round((x[end] - x[1]) / (x[2] - x[1])) != nx) &&		# Gave REG = pix but xx say grid
 				(@warn("Gave REGistration = 'pixel' but X coordinates say it's gridline. Keeping later reg."); one_or_zero = 1)
@@ -2352,8 +2352,14 @@ function grdimg_hdr_xy(mat, reg, hdr, x=Float64[], y=Float64[], is_transposed=fa
 		hdr = Float64.([x[1], x[end], y[1], y[end], zmin, zmax])
 		x_inc = 1.0;	y_inc = 1.0
 	else
-		(length(hdr) != 9) && error("The HDR array must have 9 elements")
+		(length(hdr) != 9 && length(hdr) != 4) && error("The HDR array must have 4 or 9 elements")
 		(eltype(hdr) != Float64) && (hdr = Float64.(hdr))
+		if (length(hdr) == 4)			# No increments nor min/max, must compute them
+			x_inc = (hdr[2] - hdr[1]) / (nx - one_or_zero)
+			y_inc = (hdr[4] - hdr[3]) / (ny - one_or_zero)
+			zmin, zmax = extrema_nan(mat)
+			hdr = append!(hdr, [zmin, zmax, reg, x_inc, y_inc])
+		end
 		one_or_zero = (hdr[7] == 0) ? 1 : 0
 		if (ny == 1 && nx == 2 && mat[1] === nothing)
 			# In this case the 'mat' is a tricked matrix with [nothing val]. Compute nx,ny from header
