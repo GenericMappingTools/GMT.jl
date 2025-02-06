@@ -178,6 +178,51 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
+    Ic = bwareaopen(Ibw::Union{GMTimage{UInt8,2}, GMTimage{Bool,2}}; keepwhites::Bool=false, keepblacks::Bool=false, kwargs...)::GMTimage
+
+Remove all connected components (groups of pixels) that have fewer than P pixels from the binary image ``Ibw``.
+
+Remove groups of pixels in the image that are smaller than a provided threshold size (in pixels)
+and replaces them with the pixel value of the largest neighbor polygon. This operation is known as an area opening. 
+
+_Polygons_ are determined as regions of the image where the pixels all have the same value, and that are
+contiguous (connected). The work is done by the GDAL ``GDALSieveFilter`` function.
+
+### Args
+- `I`: Input binary image. It can be a GMTimage object or a file name that once read by ``gmtread`` returns a binary image.
+
+### Kwargs
+- `keepwhites`: If set to `true` keeps all the white pixels (or true) in input image as white in the output image.
+   That is, only let the black pixels be set to white (or true).
+- `keepblacks`: If set to `true` keeps the black pixels (or false) in the input image as black in the output image.
+   That is, only let the white pixels be set to black (or false).
+- `threshold`: groups of pixels with sizes smaller than this will be merged into their largest neighbor.
+   The default is 10. 
+- `conn`: Connectivity. Either 4 indicating that diagonal pixels are not considered directly adjacent for polygon
+   membership purposes or 8 indicating they are. The default is 4.
+"""
+function bwareaopen(I::Union{GMTimage{UInt8,2}, GMTimage{Bool,2}}; keepwhites::Bool=false, keepblacks::Bool=false, kwargs...)::GMTimage
+	d = GMT.KW(kwargs)
+	# When the memory layout is column major, the gmt2gd step has to make a data copy, so we better forget the
+	# possibility an insitu gdalsievefilter operation and do a copy right away when layout is row major. 
+	Ic::GMTimage{UInt8,2} = helper_run_GDAL_fun(gdalsievefilter, I.layout[2] == 'C' ? I : deepcopy(I), "", String[], "", d...)
+	(!keepwhites && !keepblacks) && return Ic
+	white = (I.range[6] == 1) ? UInt8(1) : UInt8(255)
+	black = UInt8(0)
+	if (keepwhites)
+		for k = 1:GMT.numel(Ic)  @inbounds (I[k] == white) && (Ic[k] = white)  end
+	else
+		for k = 1:GMT.numel(Ic)  @inbounds (I[k] == black) && (Ic[k] = black)  end
+	end
+	return Ic
+end
+function bwareaopen(data::String; kwargs...)
+	data = gmtread(data, layout="TRB")
+	bwareaopen(data; kwargs...)
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
     gdaldem(dataset, method, options=String[]; dest="/vsimem/tmp", color=name|GMTcpt, kw...)
 
 Tools to analyze and visualize DEMs.
@@ -319,6 +364,9 @@ function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::St
 		o = gd2gmt(dataset)
 		indata.z, indata.hasnans, indata.layout = o.z, 1, o.layout
 		return nothing
+	elseif (f == gdalsievefilter)
+		o = f(dataset; d...)
+		return gd2gmt(o.ownedby)	# 'o' is a IRasterBand
 	else
 		o = (method == "") ? f(dataset, opts; dest=dest, gdataset=true) : f(dataset, method, opts; dest=dest, gdataset=true, colorfile=_cmap)
 	end
