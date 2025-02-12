@@ -81,7 +81,7 @@ function gravprisms(cmd0::String="", arg1::GDtype=GMTdataset(); kwargs...)
 
 	cmd::String = parse_common_opts(d, cmd, [:G :RIr :V_params :bo :d :f :i :o :r :x])[1]
 	is_geog = contains(cmd, "-fg")
-	cmd = parse_these_opts(cmd, d, [[:A :zup], [:E :dxdy :xy_sides], [:G :grid :outgrid], [:W :hvar_rho :avedens]])
+	cmd = parse_these_opts(cmd, d, [[:A :zup], [:E :dxdy :xy_sides], [:W :hvar_rho :avedens]])
 
 	if ((val = find_in_dict(d, [:N :track])[1]) !== nothing)
 		cmd *= " -N"	
@@ -103,7 +103,7 @@ function gravprisms(cmd0::String="", arg1::GDtype=GMTdataset(); kwargs...)
 	opt_F = add_opt(d, "", "F", [:F :component], (faa="_f", geoid="_n", vgrad="_v"))
 	valname = contains(opt_F, "Fn") ? "Geoid" : contains(opt_F, "Fv") ? "VGG" : "FAA"
 	cmd *= opt_F
-	cmd = add_opt(d, cmd, "H", [:H :radial_rho], (height="", low_high_rho="", pressure_rho="+d", power="+p"))
+	cmd = add_opt(d, cmd, "H", [:H :radial_rho], (height="", low_high_rho="", boost="_+b", pressure_rho="+d", power="+p"))
 	cmd = add_opt(d, cmd, "M", [:M :units], (horizontal="_h", vertical="_v"))
 
 	(!occursin(" -N", cmd) && !occursin(" -G", cmd)) && (cmd *= " -G")

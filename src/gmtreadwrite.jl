@@ -423,6 +423,7 @@ end
 function guess_T_from_ext(fname::String; write::Bool=false, text_only::Bool=false)::String
 	# Guess the -T option from a couple of known extensions
 	fn, ext = splitext(fname)
+	contains(ext, "+") && return " -Tg"		# Only grids are allowed to have +s+o+n,...
 	ext = lowercase(ext[2:end])
 	(ext == "obj") && return "obj"	# To be read by read_obj() internal function.
 	(ext == "laz" || ext == "las") && return "las"	# To be read by lazwrite()
