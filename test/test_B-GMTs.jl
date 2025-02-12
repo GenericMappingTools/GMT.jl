@@ -90,6 +90,9 @@
 	catch
 	end
 
+	println("	GRDSEAMOUNT")
+	grdseamount([-1.0 -2.0 30 4500], R="1:30W/0:30W/2:30S/1:30S", I="1m", K="ro", W="ave", Vd=dbg2)
+
 	println("	GRAVFFT")
 	G = grdcut("@earth_relief_10m_g", region=(-12.5,-10,35.5,37.5), V=:q);
 	gravfft(G, density=1700, F=(faa=1,slab=1), Vd=dbg2)
