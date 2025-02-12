@@ -124,9 +124,9 @@ export
 	rose!, sample1d, scatter, scatter!, scatter3, scatter3!, solar, solar!, spectrum1d, sphdistance, sphinterpolate,
 	sphtriangulate, surface, ternary, ternary!, text, text!, text_record, trend1d, trend2d, triangulate, gmtsplit,
 	decorated, vector_attrib, wiggle, wiggle!, xyz2grd, gmtbegin, gmtend, gmthelp, subplot, gmtfig, inset, showfig,
-	earthtide, gravfft, gmtgravmag3d, gravmag3d, grdgravmag3d, gravprisms, parkermag, pscoupe, pscoupe!, coupe, coupe!,
-	psmeca, psmeca!, meca, meca!, psvelo, psvelo!, velo, velo!, gmtisf, getbyattrib, inpolygon, inwhichpolygon,
-	pcolor, pcolor!, triplot, triplot!, trisurf, trisurf!, grdrotater, imagesc, upGMT, boxes,
+	earthtide, gravfft, gmtgravmag3d, gravmag3d, grdgravmag3d, gravprisms, grdseamount, parkermag, parkergrav,
+	pscoupe, pscoupe!, coupe, coupe!, psmeca, psmeca!, meca, meca!, psvelo, psvelo!, velo, velo!, gmtisf, getbyattrib,
+	inpolygon, inwhichpolygon, pcolor, pcolor!, triplot, triplot!, trisurf, trisurf!, grdrotater, imagesc, upGMT, boxes,
 
 	mgd77magref, magref,
 
@@ -330,6 +330,7 @@ include("potential/gmtgravmag3d.jl")
 include("potential/grdgravmag3d.jl")
 include("potential/gravprisms.jl")
 include("potential/gravfft.jl")
+include("potential/grdseamount.jl")
 include("spotter/grdrotater.jl")
 include("windbarbs/windbarbs.jl")
 include("zscale.jl")
