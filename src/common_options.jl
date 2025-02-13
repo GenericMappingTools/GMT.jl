@@ -2158,7 +2158,7 @@ function line_decorated_with_string(str::AbstractString; dist=0)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function arg2str(d::Dict, symbs)
+function arg2str(d::Dict, symbs)::String
 	# Version that allow calls from add_opt()
 	arg2str(find_in_dict(d, symbs)[1])
 end
@@ -2734,7 +2734,8 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 	end
 
 	if (isa(arg1, GItype) || (cmd0 != "" && cmd0[1] != '@'))
-		if (isempty(CURRENT_CPT[1]) && (val = find_in_dict(d, CPTaliases, false)[1]) === nothing)
+		val, symb = find_in_dict(d, CPTaliases, false)
+		if (isempty(CURRENT_CPT[1]) && val === nothing)
 			# If no cpt name sent in, then compute (later) a default cpt
 			if (isa(arg1, GMTgrid) && ((val = find_in_dict(d, [:percent :pct])[1])) !== nothing)
 				lh = quantile(any(!isfinite, arg1) ? skipnan(vec(arg1)) : vec(arg1), [(100 - val)/200, (1 - (100 - val)/200)])
@@ -2745,12 +2746,15 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 			elseif (cpt_opt_T == "")
 				drange = range[6] - range[5]
 				(drange > 1e6) && @warn("The z range expands to more then 6 orders of magnitude. Missed to replace the nodatavalues?\n\n")
-				loc_eps = (drange > 1e-8) ? 1e-8 : 1e-15		# Totally ad hoc condition
-				cpt_opt_T = @sprintf(" -T%.12g/%.12g/256+n", range[5] - loc_eps, range[6] + loc_eps)
+				loc_eps = (drange > 1e-6) ? 1e-6 : 1e-12		# Totally ad hoc condition
+				cpt_opt_T = @sprintf(" -T%.12g/%.12g/256+n", range[5] - loc_eps*abs(range[5]), range[6] + loc_eps*abs(range[6]))
 			end
 			(range[5] > 1e100) && (cpt_opt_T = "")	# cmd0 is an image name and now grdinfo does not compute its min/max
+		elseif (val == :auto || val == "auto")		# Force computing the cpt from input grid. Usefull for multi-grdimages in one figure
+			cpt_opt_T = @sprintf(" -T%.12g/%.12g/256+n", range[5] - 1e-6*abs(range[5]), range[6] + 1e-6*abs(range[6]))
+			delete!(d, symb)
 		end
-		if (opt_R == "" && (!IamModern[1] || (IamModern[1] && FirstModern[1])) )	# No -R ovewrite by accident
+		if (opt_R == "" && (!IamModern[1] || (IamModern[1] && FirstModern[1])))	# No -R ovewrite by accident
 			cmd *= @sprintf(" -R%.14g/%.14g/%.14g/%.14g", range[1], range[2], range[3], range[4])
 		end
 	elseif (cmd0 != "" && cmd0[1] == '@')			# No reason not to let @grids use clim=[...]

@@ -86,6 +86,9 @@ function add_opt_module(d::Dict)::Vector{String}
 				(CTRL.pocket_call[1] === nothing) ? (CTRL.pocket_call[1] = val) : (CTRL.pocket_call[2] = val)
 				r = "clip"
 			end
+		elseif (symb == :grdcontour)
+			(CTRL.pocket_call[1] === nothing) ? (CTRL.pocket_call[1] = val) : (CTRL.pocket_call[2] = val)
+			r = "grdcontour -J -R"
 		end
 		delete!(d, symb)
 
@@ -109,6 +112,7 @@ function add_opt_module_barr1(nt, symb::Symbol)::Union{String, Vector{String}}
 	r::Union{String, Vector{String}} = ""
 	if     (symb == :coast)     r = coast!(; Vd=2, nt...)
 	elseif (symb == :basemap)   r = basemap!(; Vd=2, nt...)
+	elseif (symb == :grdcontour) r = grdcontour!(; Vd=2, nt...)		# Not working
 	elseif (symb == :logo)      r = logo!(; Vd=2, nt...)
 	elseif (symb == :colorbar)
 		r = colorbar!(; Vd=2, nt...)

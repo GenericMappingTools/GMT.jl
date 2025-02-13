@@ -98,7 +98,9 @@ function makecpt(G::GMTgrid; equalize=false, kw...)		# A version that works on g
 	end
 	if (equalize == 0)
 		t = isempty(d) ? kw : d
-		makecpt(; T=@sprintf("%.12g/%.12g/256+n", G.range[5]*(1-0.001), G.range[6]*(1+0.001)), C=cpt, t...)
+		range::Vector{Float64} = G.range
+		loc_eps = 0.0004
+		makecpt(; T=@sprintf("%.12g/%.12g/256+n", range[5] - loc_eps*abs(range[5]), range[6] + loc_eps*abs(range[6])), C=cpt, t...)
 	else
 		(equalize == 1) ? grd2cpt(G, C=cpt, kw...) : grd2cpt(G, T="$equalize", C=cpt, kw...)
 	end
@@ -136,8 +138,8 @@ function parse_opt_range(d::Dict, cmd::String, opt::String="")::Tuple{String, Ve
 	Tvec::Vector{Float64} = Float64[]
 	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
 		if (isa(val, Tuple))
-			n = length(val)
-			out = isa(val[1], Symbol) ? arg2str(val[1:min(n,3)], ',') : arg2str(val[1:min(n,3)])
+			n::Int = length(val)
+			out::String = isa(val[1], Symbol) ? arg2str(val[1:min(n,3)], ',') : arg2str(val[1:min(n,3)])
 			if (n > 3)
 				for k = 4:n			# N should be at most = 5 (e.g. +n+b)
 					_opt::String = string(val[k])
