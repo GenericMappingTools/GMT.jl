@@ -106,6 +106,7 @@ function grdview_helper(cmd0::String, arg1, O::Bool, K::Bool, d::Dict)
 
 	_cmd = ["grdview " * cmd]
 	_cmd = frame_opaque(_cmd, opt_B, opt_R, opt_J, opt_JZ; bot=false)		# No -t in frame
+	(isa(arg1, GMTgrid) && find_in_dict(d, [:contour :contours])[1] !== nothing) && (d[:grdcontour] = arg1)	# Still very rudimentar
 	_cmd = finish_PS_nested(d, _cmd)
 	if (length(_cmd) > 1 && cmd0 != "")		# In these cases no -R is passed so the nested calls set an unknown -R
 		for k = 2:lastindex(_cmd)  _cmd[k] = replace(_cmd[k], "-R " => "-R" * cmd0 * " ")  end
