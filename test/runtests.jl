@@ -27,8 +27,6 @@ using FFTW
 	println("		Entering: test_proj4.jl")
 	include("test_proj4.jl")
 
-	println("		Entering: test_parker.jl")
-	include("test_parker.jl")
 	println("	MAGREF")
 	include("test_mgd77.jl")
 	println("	CUBES")
@@ -126,6 +124,9 @@ using FFTW
 	@test_throws ErrorException("Asked data for a level (3) that is lower than lowest data level (2)") gadm("AND", "ordino", names=true);
 	catch
 	end
+
+	println("		Entering: test_parker.jl")
+	include("test_parker.jl")
 
 	# Remove garbage
 	println("	REMOVE GARBAGE")
