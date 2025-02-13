@@ -224,20 +224,6 @@ function GMT.parkergrav(Gz::GMTgrid{Float32, 2}, dir::String="dir"; nnx=0, nny=0
 	mat2grid(g[to_restore[1]+1:to_restore[1]+width, to_restore[3]+1:to_restore[3]+height], Gz)
 end
 
-function testa()
-	Gbat = gmtread("C:\\v\\Grav3D\\model_depth_xyz.grd");
-	Ggrv = gmtread("C:\\v\\Grav3D\\observed_xyz.grd");
-	Gg_bat0 = parkergrav(Gbat, rho=400, nterms=10, padtype="taper")
-	Gb_grv0 = parkergrav(Ggrv, "inv", rho=400, depth=20.0, padtype="taper")
-	gmtwrite("Gg_bat0.grd", Gg_bat0)
-	gmtwrite("Gb_grv0.grd", Gb_grv0)
-	Gg_bat1 = parkergrav(Gb_grv0, rho=400, nterms=10, padtype="taper")
-	Gb_grv1 = parkergrav(Gg_bat0, "inv", rho=400, depth=20.0, padtype="taper")
-	gmtwrite("Gg_bat1.grd", Gg_bat1)
-	gmtwrite("Gb_grv1.grd", Gb_grv1)
-	gmtwrite("Gg_res.grd", Gg_bat0 - Gg_bat1)	# Residues
-end
-
 # ------------------------------------------------------------------------------------------------------
 function syn3d(m3d, h, dx, dy, rlat, rlon, yr, zobs, thick, slin, sdip, sdec, nterms, verbose)::Matrix{Float32}
 	# SYN3D Calculate magnetic field given a magnetization and bathymetry
