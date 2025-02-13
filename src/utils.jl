@@ -1270,6 +1270,11 @@ function Gcrossjoin end
 function Gsemijoin end
 function Gantijoin end
 
+parkermag(x, y, z=""; kw...) =
+	printstyled("\tTo use this function you need to load the FFTW package first. Do:\n\tusing FFTW"; color=:yellow)
+parkergrav(x, y=""; kw...)   =
+	printstyled("\tTo use this function you need to load the FFTW package first. Do:\n\tusing FFTW"; color=:yellow)
+
 #=
 function harmfit(x, y, n::Int=1)
 	@assert length(x) == length(y) "x and y must have the same length"
