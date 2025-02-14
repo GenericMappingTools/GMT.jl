@@ -7,7 +7,7 @@ To see the full documentation type: ``@? magref``
 
 ### Example
 ```julia
-	G = magref(R=:d, time=2020);
+	G = magref(R=:d, onetime=2020);
 	viz(G, coast=true)
 ```
 """
@@ -19,6 +19,7 @@ function magref_helper(cmd0::String, arg1; kwargs...)::Union{GDtype, GMTgrid, St
 	(cmd0 == "" && arg1 === nothing && length(kwargs) == 0) && return gmt("mgd77magref ")
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	(cmd0 != "") && (arg1 = gmtread(cmd0, data=true))
+	isa(arg1, Vector) && error("Input cannot be a vector. It must be a Matrix.")
 	isgrid = false
 	if (arg1 === nothing && (opts = parse_common_opts(d, "", [:RIr])[1]) != "")
 		!contains(opts, "-R") && error("When not providing input locations, need to provide grid limits")
@@ -27,7 +28,13 @@ function magref_helper(cmd0::String, arg1; kwargs...)::Union{GDtype, GMTgrid, St
 		arg1 = gmt("grd2xyz  -o0,1", gmt("grdmath " * opts * " 0"))
 		isgrid, d[:isG] = true, true
 	end
-	isa(arg1, Matrix{<:AbstractFloat}) && (arg1 = mat2ds(arg1))		# Ensure we always send a GMTdataset
+	isa(arg1, Matrix{<:Real}) && (arg1 = mat2ds(Float64.(arg1)))		# Ensure we always send a GMTdataset
+	if (isa(arg1, Matrix) && eltype(arg1) == Any)
+		if (isa(arg1[1,end], String) && contains(arg1[1,end], '-') || contains(arg1[1,end], 'T'))
+			t = yeardecimal(string.(arg1[:,end]))
+			arg1 = mat2ds([Float64.(arg1[:,1:end-1]) t])
+		end
+	end
 	r = magref_helper(arg1, d)
 	return (!isgrid || isa(r, String)) ? r : gmt("xyz2grd " * opts, r)
 end
@@ -38,10 +45,11 @@ function magref_helper(arg1::GDtype, d::Dict{Symbol,Any})
 	cmd = parse_common_opts(d, "", [:V_params :bi :f :hi :o :yx])[1]
 	cmd = parse_these_opts(cmd, d, [[:C :cm4file], [:D :dstfile], [:E :f107file]])
 
-	opt_A = add_opt(d, cmd, "A", [:A :input_params], (alt="+a", altitude="+a", time="+t"); expand=true)
+	opt_A = add_opt(d, cmd, "A", [:A :adjust], (alt="+a", altitude="+a", onetime="+t", yeardec="+y"); expand=true)
 	n_cols = getsize(arg1)[2]
 	if (opt_A == "")		# Only check if n cols in is == 2. Other cases are just too painfull to test here.
-		(n_cols == 2) && (opt_A = " -A+a0+t" * "$(yeardecimal(now()))" * "+y")	# Avisar perigo por causa do 'now()'
+		(n_cols == 2) && (opt_A = " -A+a0+t" * "$(yeardecimal(now()))" * "+y")	# Use current time
+		(n_cols >= 3) && (opt_A = " -A+y")		# All inputs passed via arg1 have time as decimal years.
 	else			# Here we test if the time is a number and add the "+y" ourselves.
 		(n_cols == 2 && !contains(opt_A, "+a")) && (opt_A *= "+a0")
 		(contains(opt_A, "+t") && tryparse(Float32, split.(split(opt_A, "+t"), '+')[2][1]) !== nothing) && (opt_A *= "+y")
@@ -57,14 +65,15 @@ function magref_helper(arg1::GDtype, d::Dict{Symbol,Any})
 	got_F = false				# Will be set to true if user explicitly set -F
 	opt_F1 = add_opt(d, "", "F", [:F :internal], (all_input="_r", total="_t", T="_t", horizontal="_h", H="_h", X="_x",
 	                              Y="_y", Z="_z", dec="_d", declination="_d", inc="_i", inclination="_i"); del=false, expand=true)
-	(length(opt_F1) > 4) && (opt_F1 = "")		# Happens for example when 'F=:CM4litho', which returns " -FCM4litho"
+	(contains(opt_F1, "CM4") || contains(opt_F1, "IGR")) && (opt_F1 = "")	# Happens for example when 'F=:CM4litho', which returns " -FCM4litho"
 	opt_F2 = add_opt(d, "", "", [:F :internal], (IGRF="_0", CM4core="_1", CM4litho="_2", CM4mag_p="_3",
-	                             CM4mag_i="_4", CM4iono_p="_5", CM4iono_i="_6", CM4toroid="_7", IGRG_CM4="_8"); expand=true)
+	                             CM4mag_i="_4", CM4iono_p="_5", CM4iono_i="_6", CM4toroid="_7", IGRG_CM4="_9"); expand=true)
 	(opt_F1 == "" && opt_F2 != "") && (opt_F1 = " -Frt")	# Like this we let user to set only the F2 and use a default F1
 	if (opt_F1 != "")
+		(opt_F1 == " -F" * opt_F2) && (opt_F2 = "")			# Happens when opt_F1 was passed a string, e.g., F="tdi/13456"
 		(isgrid && !contains(opt_F1, 'r')) && (opt_F1 = " -Fr" * opt_F1[4])		# The grid case needs 'r' and just one contribution
 		(isgrid && length(opt_F2) > 1) && (opt_F2 = string(opt_F2[1]))
-		opt_F = (opt_F2 == "") ? opt_F1 * "/0" : opt_F1 * "/" * opt_F2
+		opt_F = (opt_F2 == "") ? ((!contains(opt_F1, '/')) ? opt_F1 * "/0" : opt_F1) : opt_F1 * "/" * opt_F2
 		got_F = true
 	else
 		opt_F = isgrid ? " -Frt/0" : " -Frthxyzdi/0"		# The default when no -F
@@ -92,8 +101,9 @@ function magref_helper(arg1::GDtype, d::Dict{Symbol,Any})
 	end
 	# -----------------
 
-	(dbg_print_cmd(d, "'magref'") !== nothing) && return cmd
-	finish_PS_module(d, "mgd77magref " * cmd, "", true, false, false, arg1)
+	cmd = "mgd77magref" * cmd
+	(dbg_print_cmd(d, cmd) !== nothing) && return cmd
+	finish_PS_module(d, cmd, "", true, false, false, arg1)
 end
 
 const mgd77magref = magref		# Alias
