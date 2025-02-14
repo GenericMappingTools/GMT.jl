@@ -277,7 +277,7 @@ function syn3d(m3d, h, dx, dy, rlat, rlon, yr, zobs, thick, slin, sdip, sdec, nt
 	if (abs(sdip) == 90 && abs(rlat) == 90)
 		decl1, incl1 = 0.0, 90.0		# Trick used to inform that the Field is RTP
 	else
-		decl1::Float64, incl1::Float64 = magref([rlon rlat], alt=zobs, time=yr).data[8:9]
+		decl1::Float64, incl1::Float64 = magref([rlon rlat], alt=zobs, onetime=yr).data[8:9]
 	end
 
 	# compute skewness parameter
@@ -619,7 +619,7 @@ function inv3d(f3d, h, dx, dy, wl, ws, rlat, rlon, yr, zobs, thick, sdec, sdip, 
 	mnf3d = mean(f3d)
 	f3d .-= mnf3d
 
-	decl::Float64, incl::Float64 = magref([rlon rlat], alt=zobs, time=yr).data[8:9]
+	decl::Float64, incl::Float64 = magref([rlon rlat], alt=zobs, onetime=yr).data[8:9]
 
 	# compute phase and amplitude factors from 2D method
 	if (sdec == 0 && abs(sdip) == 90)
