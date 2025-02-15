@@ -72,7 +72,7 @@ Create an octahedron mesh with radius `r`.
 - `radius`: the keyword `radius` is an alternative to the positional argument `r`.
 - `origin`: A tuple of three numbers defining the origin of the body. Default is `(0.0, 0.0, 0.0)`.
 """
-function octahedron(r=1.0; radius=0.0, origin=(0.0, 0.0, 0.0))::GMTfv
+function octahedron(r=1.0; radius=1.0, origin=(0.0, 0.0, 0.0))::GMTfv
 
 	_r::Float64 = (radius != 1.0) ? radius : r		# If spelled, the `radius` kwarg take precedence
 	o::Matrix{Float64} = [origin[1] origin[2] origin[3]]
@@ -374,7 +374,7 @@ Create an extruded 2D/3D shape.
 ### Example
 Extrude the Swisserland
 ```julia
-	Dsw = coast(M=true, DCW=(country=:CH, file=:ODS));	# Get the Swiss border
+	Dsw = coast(dump=true, DCW=(country=:CH, file=:ODS));	# Get the Swiss border
 	FV = extrude(Dsw, 0.2)
 	viz(FV)
 ```
@@ -603,9 +603,9 @@ This function is a modified version on the `revolvecurve` function from the `Com
 
 ### Example
 ```julia
-    ns=15; x=linspace(0,2*pi,ns).+1; y=zeros(size(x)); z=-cos.(x); curve=[x[:] y[:] z[:]];
-	FV = revolve(curve)
-	viz(FV, pen=0)
+ns=15; x=linspace(0,2*pi,ns).+1; y=zeros(size(x)); z=-cos.(x); curve=[x[:] y[:] z[:]];
+FV = revolve(curve)
+viz(FV, pen=0)
 ```
 """
 function revolve(curve; extent=360.0, ang1=0.0, ang2=360.0, dir=:positive, n=[0.0,0.0,1.0], n_steps::Int=0, closed=false, type=:quad)
