@@ -5,8 +5,6 @@
 2. The pathfiles simply represent data point locations and the mask is set to the inside or outside
    value depending on whether a node is within a maximum distance from the nearest data point. 
 
-   See full GMT (not the `GMT.jl` one) docs at [`grdmask`]($(GMTdoc)grdmask.html)
-
 Parameters
 ----------
 
@@ -63,5 +61,7 @@ function grdmask_helper(cmd0::String, arg1; kwargs...)
 			error("Failed to automatically load the input file. You must do it manually and pass it as numeric.")
 		end
 	end
-	common_grd(d, "grdmask " * cmd, arg1)           # Finish build cmd and run it
+	cmd = "grdmask " * cmd
+	(dbg_print_cmd(d, cmd) !== nothing) && return cmd
+	common_grd(d, cmd, arg1)           # Finish build cmd and run it
 end
