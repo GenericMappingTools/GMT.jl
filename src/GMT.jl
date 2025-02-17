@@ -100,7 +100,7 @@ const global filesep = Sys.iswindows() ? "\\" : "/"
 #const global unused_subopts = [()]					# To track consumed options in sub-options
 
 if isdefined(Base, :Experimental) && isdefined(Base.Experimental, Symbol("@optlevel"))
-	@eval Base.Experimental.@optlevel 3
+	@eval Base.Experimental.@optlevel 1
 end
 
 export
