@@ -1,5 +1,5 @@
 """
-	gmtspectrum1d(cmd0::String="", arg1=nothing, kwargs...)
+    gmtspectrum1d(cmd0::String="", arg1=nothing, kwargs...)
 
 Compute auto- [and cross- ] spectra from one [or two] time-series.
 
@@ -20,7 +20,7 @@ Parameters
     Set the spacing between samples in the time-series [Default = 1].
 - **L** | **leave_trend** :: [Type => Str | []]     ``Arg = [h|m]``
 
-    Leave trend alone. By default, a linear trend will be removed prior to the transform.
+Leave trend alone. By default, a linear trend will be removed prior to the transform.
 - **N** | **name** :: [Type => Int]      ``Arg = t_col``
 
     Indicates which
@@ -54,41 +54,26 @@ function spectrum1d_helper(cmd0::String, arg1; kwargs...)
 	cmd = parse_common_opts(d, "", [:V_params :b :d :e :g :h :i :yx])[1]
 	cmd = parse_these_opts(cmd, d, [[:D :sample_dist], [:L :leave_trend], [:N :name], [:S :size], [:T :multifiles], [:W :wavelength]])
 	opt_C = add_opt(d, "", "C", [:C :components :outputs :response_fun],
-	                (xpower="_x", ypower="_y", cpower="_c", npower="_n", phase="_p", admit="_a", gain="_g", coh="_o"))
-    if (!contains(cmd, " -T"))                  # Return vars, otherwise it saves them in disk files
-        flags = (opt_C == "") ? "xycnpago" : opt_C[4:end]
-        if (contains(flags, '/'))
-            sli = split(flags, '/')
-            flags = ""
-            for k = 1:numel(sli)
-                startswith(sli[k], "xp") && (flags *= 'x')
-                startswith(sli[k], "yp") && (flags *= 'y')
-                startswith(sli[k], "cp") && (flags *= 'c')
-                startswith(sli[k], "np") && (flags *= 'n')
-                startswith(sli[k], "ph") && (flags *= 'p')
-                startswith(sli[k], "ad") && (flags *= 'a')
-                startswith(sli[k], "ga") && (flags *= 'g')
-                startswith(sli[k], "co") && (flags *= 'o')
-            end
-            opt_C = " -C" * flags
-        end
-        cnames = Vector{String}(undef, 2*length(flags) + 1)
-        cnames[1] = contains(cmd, " -W") ? "Wavelength" : "Frequency"
-        for k = 1:numel(flags)
-            if     (flags[k] == 'x') cnames[2*k] = "Xpower"; cnames[2*k+1] = "σ_Xpow"
-            elseif (flags[k] == 'y') cnames[2*k] = "Ypower"; cnames[2*k+1] = "σ_Ypow"
-            elseif (flags[k] == 'c') cnames[2*k] = "Cpower"; cnames[2*k+1] = "σ_Cpow"
-            elseif (flags[k] == 'n') cnames[2*k] = "Npower"; cnames[2*k+1] = "σ_Npow"
-            elseif (flags[k] == 'p') cnames[2*k] = "Phase";  cnames[2*k+1] = "σ_Phase"
-            elseif (flags[k] == 'a') cnames[2*k] = "Admit";  cnames[2*k+1] = "σ_Admit"
-            elseif (flags[k] == 'g') cnames[2*k] = "Gain";   cnames[2*k+1] = "σ_Gain"
-            elseif (flags[k] == 'o') cnames[2*k] = "Coher";  cnames[2*k+1] = "σ_Coher"
-            end
-        end
-    end
-    (opt_C != "") && (cmd *= opt_C)
+					(xpower="_x", ypower="_y", cpower="_c", npower="_n", phase="_p", admit="_a", gain="_g", coh="_o"))
+	if (!contains(cmd, " -T"))                  # Return vars, otherwise it saves them in disk files
+		flags = (opt_C == "") ? "x" : opt_C[4:end]
+		cnames = Vector{String}(undef, 2*length(flags) + 1)
+		cnames[1] = contains(cmd, " -W") ? "Wavelength" : "Frequency"
+		for k = 1:numel(flags)
+			if     (flags[k] == 'x') cnames[2*k] = "Xpower"; cnames[2*k+1] = "σ_Xpow"
+			elseif (flags[k] == 'y') cnames[2*k] = "Ypower"; cnames[2*k+1] = "σ_Ypow"
+			elseif (flags[k] == 'c') cnames[2*k] = "Cpower"; cnames[2*k+1] = "σ_Cpow"
+			elseif (flags[k] == 'n') cnames[2*k] = "Npower"; cnames[2*k+1] = "σ_Npow"
+			elseif (flags[k] == 'p') cnames[2*k] = "Phase";  cnames[2*k+1] = "σ_Phase"
+			elseif (flags[k] == 'a') cnames[2*k] = "Admit";  cnames[2*k+1] = "σ_Admit"
+			elseif (flags[k] == 'g') cnames[2*k] = "Gain";   cnames[2*k+1] = "σ_Gain"
+			elseif (flags[k] == 'o') cnames[2*k] = "Coher";  cnames[2*k+1] = "σ_Coher"
+			end
+		end
+	end
+	(opt_C != "") && (cmd *= opt_C)
 
 	D = common_grd(d, cmd0, cmd, "spectrum1d ", arg1)		# Finish build cmd and run it
-    (D !== nothing) && (D.colnames = cnames)
-    return D
+	isa(D, GMTdataset) && (D.colnames = cnames)
+	return D
 end
