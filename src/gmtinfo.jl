@@ -3,8 +3,6 @@
 
 Reads files and finds the extreme values in each of the columns.
 
-See full GMT (not the `GMT.jl` one) docs at [`gmtinfo`]($(GMTdoc)gmtinfo.html)
-
 Parameters
 ----------
 
@@ -40,6 +38,8 @@ Parameters
 - $(opt_V)
 - $(opt_write)
 - $(opt_append)
+
+To see the full documentation type: ``@? grdmask``
 """
 gmtinfo(cmd0::String; kwargs...) = gmtinfo_helper(cmd0, nothing; kwargs...)
 gmtinfo(arg1; kwargs...)         = gmtinfo_helper("", arg1; kwargs...)
@@ -48,8 +48,8 @@ function gmtinfo_helper(cmd0::String, arg1; kwargs...)
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
     gmtinfo_helper(cmd0, arg1, d)
 end
-# ---------------------------------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------------------------------
 function gmtinfo_helper(cmd0::String, arg1, d::Dict{Symbol,Any})::Union{String, GMTdataset}
 
 	cmd, = parse_common_opts(d, "", [:V_params :e :f :i :o :r :w :yx])
@@ -62,6 +62,7 @@ function gmtinfo_helper(cmd0::String, arg1, d::Dict{Symbol,Any})::Union{String, 
 
 	# If file name sent in, read it.
 	if (cmd0 != "")  cmd, arg1, = read_data(d, cmd0, cmd, arg1, " ")  end
+	cmd = "gmtinfo" * cmd
 	if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end
-	isa(arg1, Tuple) ? gmt("gmtinfo " * cmd, arg1...) : gmt("gmtinfo " * cmd, arg1)
+	isa(arg1, Tuple) ? gmt(cmd, arg1...) : gmt(cmd, arg1)
 end
