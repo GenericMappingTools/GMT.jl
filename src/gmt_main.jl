@@ -126,11 +126,7 @@ function gmt(cmd::String, args...)
 	LL = GMT_Create_Options(G_API[1], 0, r)		# It uses also the fact that GMT parses and check options
 
 	# 4. Preprocess to update GMT option lists and return info array X
-
-	# Here I have an issue that I can't resolve any better. For modules that can have no options (e.g. gmtinfo)
-	# the LinkedList (LL) is actually created in GMT_Encode_Options but I can't get it's contents back when pLL
-	# is a Ref, so I'm forced to use 'pointer', which goes against the documents recommendation.
-	pLL = (LL != NULL) ? Ref([LL], 1) : pointer([NULL])
+	pLL = Ref([LL], 1)
 
 	n_itemsP = Ref{UInt32}(0)
 	XX = GMT_Encode_Options(G_API[1], g_module, n_argin, pLL, n_itemsP)	# This call also changes LL
@@ -139,9 +135,9 @@ function gmt(cmd::String, args...)
 		(n_items > 65000) ? n_items = 0 : error("Failure to encode Julia command options") 
 	end
 
+	# For modules that can have no options (e.g. gmtinfo) the LinkedList (LL) is actually created in GMT_Encode_Option
 	if (LL == NULL)		# The no-options case. Must get the LL that was created in GMT_Encode_Options
-		LL = convert(Ptr{GMT_OPTION}, unsafe_load(pLL))
-		pLL = Ref([LL], 1)		# Need this because GMT_Destroy_Options() wants a Ref
+		LL = convert(Ptr{GMT_OPTION}, pLL[])
 	end
 
 	X = Vector{GMT_RESOURCE}(undef, n_items)

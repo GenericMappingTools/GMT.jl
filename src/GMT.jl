@@ -366,7 +366,6 @@ using GMT.Laszip
 	D = mat2ds(rand(3,3), colnames=["Time","b","c"]); D.attrib = Dict("Timecol" => "1");
 	D[:Time];	D["Time", "b"];
 	#plot(rand(5,2), marker=:point, lc=:red, ls=:dot, lw=1)
-	plot(rand(5,2))
 	grdimage(rand(Float32,32,32), R="0/32/0/32");
 	I = mat2img(rand(UInt8, 32, 32, 3), clim=:zscale);
 	grdimage(I, V=:q);
@@ -398,6 +397,8 @@ using GMT.Laszip
 	#rm(joinpath(tempdir(), "GMTjl_custom_p_x.txt"))		# This one gets created before username is set.
 	#arrows([0 8.2 0 6], limits=(-2,4,0,9), arrow=(len=2,stop=1,shape=0.5,fill=:red), axis=:a, pen="6p");
 	theme()
+	gmtinfo([1. 2 3])
+	plot(rand(5,2))
 	resetGMT()
 end
 
