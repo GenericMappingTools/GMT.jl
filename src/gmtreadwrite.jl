@@ -122,6 +122,7 @@ function gmtread(_fname::String; kwargs...)
 			if (opt_T == " -To")					# See if it's a OGR layer request
 				ogr_layer = Int32(val)::Int32 - 1	# -1 because it's going to be sent to C (zero based)
 			else
+				endswith(fname, "=gd") && (fname = fname[1:end-3])	# Further up, we might have added "=gd" to fname.
 				ds = Gdal.unsafe_read(fname)
 				(Gdal.nraster(ds) < 2) &&			# Check that file is indeed a cube
 					(println("\tThis file ($fname) does not contain cube data (more than one layer).
@@ -129,8 +130,14 @@ function gmtread(_fname::String; kwargs...)
 					Gdal.GDALClose(ds.ptr); return nothing)
 				if (isa(val, String) || isa(val, Symbol) || isa(val, Real))
 					bd_str::String = string(val)::String
+					if (via_gdal)
+						gdopts = ""
+						if (isa(val, Real))               gdopts = string(" -b ", val)
+						elseif (isa(val, AbstractArray))  gdopts = join([string(" -b ", val[i]) for i in 1:numel(val)])
+						end
+					end
 					if (bd_str == "all")
-						proggy = ((val = find_in_dict(d, [:gdal])[1]) !== nothing) ? "gdalread" : "grdinterpolate "
+						proggy = via_gdal ? "gdalread" : "grdinterpolate "
 					else
 						fname = string(fname, "+b", parse(Int, bd_str)-1)	# Should be possible to have a GDAL alternative here.
 					end
