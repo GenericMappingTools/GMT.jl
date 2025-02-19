@@ -165,6 +165,42 @@ const _FETCHGEOM = Dict{UInt32, String}(
 	wkbCurvePolygon       => "Curve Polygon"
 )
 
+"""
+    GDALRIOResampleAlg
+
+RasterIO() resampling method.
+
+since GDAL 2.0
+
+| Enumerator                | Note                        |
+| :------------------------ | :----------------------------------------------------------------------------------------------------------------------- |
+| GRIORA\\_NearestNeighbour | Nearest neighbour                                |
+| GRIORA\\_Bilinear         | Bilinear (2x2 kernel)                            |
+| GRIORA\\_Cubic            | Cubic Convolution Approximation (4x4 kernel)     |
+| GRIORA\\_CubicSpline      | Cubic B-Spline Approximation (4x4 kernel)        |
+| GRIORA\\_Lanczos          | Lanczos windowed sinc interpolation (6x6 kernel) |
+| GRIORA\\_Average          | Average                                                                       |
+| GRIORA\\_Mode             | Mode (selects the value which appears most often of all the sampled points)   |
+| GRIORA\\_Gauss            | Gauss blurring                                                                |
+| GRIORA\\_RESERVED\\_START |  |
+| GRIORA\\_RESERVED\\_END   |  |
+| GRIORA\\_RMS              | RMS: Root Mean Square / Quadratic Mean. For complex numbers, applies on the real and imaginary part independently. |
+"""
+@enum GDALRIOResampleAlg::UInt32 begin
+    GRIORA_NearestNeighbour = 0
+    GRIORA_Bilinear = 1
+    GRIORA_Cubic = 2
+    GRIORA_CubicSpline = 3
+    GRIORA_Lanczos = 4
+    GRIORA_Average = 5
+    GRIORA_Mode = 6
+    GRIORA_Gauss = 7
+    GRIORA_RESERVED_START = 8
+    GRIORA_RESERVED_END = 13
+    GRIORA_RMS = 14
+    #GRIORA_LAST = 14
+end
+
 struct OGREnvelope
 	MinX::Cdouble
 	MaxX::Cdouble
@@ -669,6 +705,10 @@ GDALBuildVRTOptionsFree(pOpts) = acare(ccall((:GDALBuildVRTOptionsFree, libgdal)
 GDALSieveFilter(hSrcBand, hMaskBand, hDstBand, nSizeThreshold, nConn, papszOptions, pfnProgress, pProgressArg) =
 	acare(ccall((:GDALSieveFilter, libgdal), UInt32, (pVoid, pVoid, pVoid, Cint, Cint, Ptr{Cstring}, pVoid, pVoid),
 	             hSrcBand, hMaskBand, hDstBand, nSizeThreshold, nConn, papszOptions, pfnProgress, pProgressArg))
+
+GDALRasterInterpolateAtPoint(hSrcBand, dfPixel, dfLine, eInterpolation, pdfRealValue, pdfImagValue) =
+	acare(ccall((:GDALRasterInterpolateAtPoint, libgdal), UInt32, (pVoid, Cdouble, Cdouble, UInt32, Ptr{Cdouble}, Ptr{Cdouble}),
+	             hSrcBand, dfPixel, dfLine, eInterpolation, pdfRealValue, pdfImagValue))
 
 #function GDALViewshedGenerate(hBand, pDriverName, pTargetName, pCreationOpts, obsX, obsY, obsH, dfTargetHeight, dfVisibleVal, dfInvVal, dfOutOfRangeVal, dfNoDataVal, dfCurvCoeff, eMode, dfMaxDist, pfnProgress, pProgArg, heightMode, pExtraOpts)
 	#acare(ccall((:GDALViewshedGenerate, thelib), pVoid, (pVoid, Cstring, Cstring, Ptr{Cstring}, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, UInt32, Cdouble, pVoid, pVoid, UInt32, Ptr{Cstring}), hBand, pDriverName, pTargetName, pCreationOpts, obsX, obsY, obsH, dfTargetHeight, dfVisibleVal, dfInvVal, dfOutOfRangeVal, dfNoDataVal, dfCurvCoeff, eMode, dfMaxDist, pfnProgress, pProgArg, heightMode, pExtraOpts))
@@ -1690,6 +1730,23 @@ end
 	end
 	gdalsievefilter(src::IDataset; mask::pVoid=C_NULL, progress::pVoid=C_NULL, kw...) =
 		gdalsievefilter(Dataset(src.ptr); mask=mask, progress=progress, kw...)
+
+	function gdalrasterinterpolate(src::Dataset, dfPL::Matrix{Float64}; method=GRIORA_Cubic)
+		nbands = nraster(src)
+		n_pts  = size(dfPL, 1)
+		vals   = Matrix{Cdouble}(undef, nbands, n_pts)
+		pdfRealValue = Ref{Cdouble}()
+		for k = 1:nbands
+			bd = getband(src, k)
+			for n = 1:n_pts
+				GDALRasterInterpolateAtPoint(bd.ptr, dfPL[n,1], dfPL[n,2], method, pdfRealValue, C_NULL)
+				vals[k, n] = pdfRealValue[]
+			end
+		end
+		return vals
+	end
+	gdalrasterinterpolate(src::IDataset, dfPL::Matrix{Float64}; method=GRIORA_Cubic) =
+		gdalrasterinterpolate(Dataset(src.ptr), dfPL; method=method)
 
 #=
 	for gdalfunc in (:boundary, :buffer, :centroid, :clone, :convexhull, :create, :createcolortable,

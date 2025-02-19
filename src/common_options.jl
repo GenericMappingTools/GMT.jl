@@ -4056,11 +4056,11 @@ function common_grd(d::Dict, cmd::String, args...)
 	# This chunk of code is shared by several grdxxx & other modules, so wrap it in a function
 	IamModern[1] && (cmd = replace(cmd, " -R " => " "))
 	(haskey(d, :Vd) && d[:Vd] > 2) && show_args_types(args...)
+	show_non_consumed(d, cmd)
 	(dbg_print_cmd(d, cmd) !== nothing) && return cmd		# Vd=2 cause this return
 	# First case below is of a ARGS tuple(tuple) with all numeric inputs.
 	R = isa(args, Tuple{Tuple}) ? gmt(cmd, args[1]...) : gmt(cmd, args...)
 	(isGMTdataset(R) && contains(cmd, " -fg") && getproj(R) == "") && (isa(R, GMTdataset) ? R.proj4 = prj4WGS84 : R[1].proj4 = prj4WGS84)
-	show_non_consumed(d, cmd)
 	return R
 end
 

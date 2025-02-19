@@ -62,7 +62,7 @@ To see the full documentation type: ``@? grdinterpolate``
 grdinterpolate(cmd0::String; kwargs...) = grdinterp_helper(cmd0, nothing; kwargs...)
 grdinterpolate(arg1; kwargs...)         = grdinterp_helper("", arg1; kwargs...)
 
-function grdinterp_helper(cmd0::String, arg1; allcols::Bool=false, kwargs...)
+function grdinterp_helper(cmd0::String, arg1; allcols::Bool=false, gdal=false, kwargs...)
 
 	arg2 = nothing
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
@@ -90,9 +90,11 @@ function grdinterp_helper(cmd0::String, arg1; allcols::Bool=false, kwargs...)
 				!isfile(_fn) && error("File not found: $_fn")
 				pts = gmtread(_fn, data=true)
 			end
-		elseif ((isa(val, VMr) || isa(val, Tuple)) && length(val) == 2)
+		elseif ((isa(val, Vector) || isa(val, Tuple)) && length(val) >= 2)
 			pts = mat2ds(Float64.([val[1] val[2]]))
 			#cmd *= " -S" * arg2str(val)
+		elseif (isa(val, Matrix{<:Real}))
+			pts = mat2ds(Float64.(val))
 		elseif (isGMTdataset(val))
 			pts = val
 			#(arg1 === nothing) ? arg1 = val : ((arg2 === nothing) ? arg2 = val : arg3 = val)
@@ -105,7 +107,7 @@ function grdinterp_helper(cmd0::String, arg1; allcols::Bool=false, kwargs...)
 			arg1 = pts
 			cmd *= " -S"
 		else					# GMT can't handle cubes in memory, so we have to do it here
-			return grdinterp_local_opt_S(arg1, pts, no_coords)			# EXIT here
+			return grdinterp_local_opt_S(arg1, pts, no_coords, gdal=gdal)			# EXIT here
 		end
 	end
 
@@ -115,7 +117,8 @@ function grdinterp_helper(cmd0::String, arg1; allcols::Bool=false, kwargs...)
 	out_two_cols && (cmd *= " -o2,3")		# The default is NOT ouput the first two columns (redundant)
 
 	if (isa(arg1, Tuple))
-		for k = 1:length(arg1)  cmd *= " ?"  end		# Need as many '?' as numel(arg1)
+		#for k = 1:length(arg1)  cmd *= " ?"  end		# Need as many '?' as numel(arg1)
+		cmd *= repeat(" ?", length(arg1))	# Need as many '?' as numel(arg1)
 		common_grd(d, "grdinterpolate " * cmd, arg1..., arg2)
 	else
 		common_grd(d, "grdinterpolate " * cmd, arg1, arg2)
@@ -123,13 +126,14 @@ function grdinterp_helper(cmd0::String, arg1; allcols::Bool=false, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function grdinterp_local_opt_S(arg1::GItype, pts::GMTdataset, no_coords::Bool; rowlayers=false)
+function grdinterp_local_opt_S(arg1::GItype, pts::GMTdataset, no_coords::Bool; rowlayers=false, gdal=false)
 	# GMT grdinterpolate can't handle cubes in memory, so we have to do the interpolations here.
 	# If 'rowlayers' is true the output rows will have first 2 columns with the cordinates (or not if 'no_coords=true')
 	# followed by the interpolated values at each layer. If 'rowlayers' is false, first column holds the
 	# layer number and the rest in the output each column contains the vertical profile for each point.
 	# In this case the point coordinates are not output.
 	# This whole thing needs further documentation and testing.
+	# Up. Don't understand anymore this 'rowlayers' thing and it doesn't seem to be ever used nor to work well.
 	n_pts, n_layers = size(pts,1), size(arg1,3)
 	DT = no_coords ? eltype(arg1) : eltype(pts)			# When we have coordinates, their type dominates.
 	if (rowlayers)
@@ -138,13 +142,22 @@ function grdinterp_local_opt_S(arg1::GItype, pts::GMTdataset, no_coords::Bool; r
 		D = mat2ds(Matrix{DT}(undef, n_layers, n_pts+1))
 		layer_vals = isa(arg1.v, Vector{<:Real}) ? arg1.v : collect(1:n_layers)
 	end
-	startcol = no_coords ? 0 : 2
-	for k = 1:n_layers
-		t = grdtrack(slicecube(arg1, k), pts, o=2)		# Want only the third column
-		if (rowlayers)  D[:, k+startcol] .= convert.(DT, t.data)
-		else
-			for i = 1:n_pts  D.data[k,i+1] = t.data[i]  end
-			D.data[k,1] = layer_vals[k]
+	startcol = no_coords ? 0 : 2				# This is used only in the 'rowlayers' case
+	if (gdal)
+		reg = arg1.registration
+		pl = [((pts[:,1] .- arg1.range[1]) / arg1.inc[1] .- reg) ((size(arg1,1)-1) .- (pts[:,2] .- arg1.range[3]) / arg1.inc[2] .- reg)]
+		(reg == 0) && (pl .+= [0.5 0.5])		# Because on the GDAL side registration is always pixel
+		r = Gdal.gdalrasterinterpolate(gmt2gd(arg1), pl; method=Gdal.GRIORA_Cubic)
+		D.data[:,2:end] .= r
+		D.data[:,1] .= layer_vals
+	else
+		for k = 1:n_layers
+			t = grdtrack(slicecube(arg1, k), pts, o=2)		# Want only the third column
+			if (rowlayers)  D[:, k+startcol] .= convert.(DT, t.data)
+			else
+				for i = 1:n_pts  D.data[k,i+1] = t.data[i]  end
+				D.data[k,1] = layer_vals[k]
+			end
 		end
 	end
 	set_dsBB!(D)	
