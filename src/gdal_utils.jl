@@ -256,6 +256,9 @@ function gd2gmt(dataset::Gdal.AbstractDataset)
 	# This method is for OGR formats only
 	(Gdal.OGRGetDriverByName(Gdal.shortname(getdriver(dataset))) == C_NULL) && return gd2gmt(dataset; pad=0)
 
+	drv = get(POSTMAN[1], "GDALdriver", "");	(drv != "") && delete!(GMT.POSTMAN[1], "GDALdriver")
+	(startswith(drv, "XLS") || drv == "CSV") && return helper_read_XLSCSV(dataset)
+
 	min_area = (get(POSTMAN[1], "min_polygon_area", "") != "") ? parse(Float64, POSTMAN[1]["min_polygon_area"]) : 0.0
 	max_area = (get(POSTMAN[1], "max_polygon_area", "") != "") ? parse(Float64, POSTMAN[1]["max_polygon_area"]) : 0.0
 	p_isgeog = (get(POSTMAN[1], "polygon_isgeog", "") != "") ? true : false
@@ -342,6 +345,47 @@ function gd2gmt(dataset::Gdal.AbstractDataset)
 	if ((tol = get(GMT.POSTMAN[1], "simplify", "")) != "")		# The caller requested a line simplification step
 		D = gmtsimplify(D, T=tol, f = p_isgeog ? "g" : "c")
 		delete!(GMT.POSTMAN[1], "simplify")					# Used, so clean it.
+	end
+	return (length(D) == 1) ? D[1] : D
+end
+
+# -------------------------------------------------------------------------------------------------------------
+# This function is made apart because XLS and CSVs have geometries and the calling functio, as is,
+# would not be able to extract the data from the 'dataset'
+function helper_read_XLSCSV(dataset::Gdal.AbstractDataset)::GDtype
+	n_layers = Gdal.nlayer(dataset)
+	D = Vector{GMTdataset}(undef, n_layers)
+	local inds_r, inds_s					# n^inf Fck. If I don't do this here errors are completly non-sensical.
+	for n_layer = 1:n_layers
+		layer = getlayer(dataset, n_layer-1)
+		Gdal.resetreading!(layer)
+		n_features = Gdal.nfeature(layer)
+		n = 0								# Counter of elements in a 'feature'
+		local mat, text_col, colnames		# F., f.
+		for f in layer						# 'f' is a 'feature'
+			if ((n += 1) == 1)
+				nf = Gdal.nfield(f)
+				c = zeros(Bool, nf)
+				for k = 1:Gdal.nfield(f)  c[k] = (Gdal.gettype(Gdal.getfielddefn(f, k-1)) == 0x00000004)  end
+				colnames = [Gdal.getname(Gdal.getfielddefn(f, i)) for i = 0:nf-1]
+				inds_r, inds_s = findall(.!c), findall(c)	# Indices of the columns with numeric and string fields
+				mat = Matrix{Float64}(undef, n_features, length(inds_r))
+				text_col = (!isempty(inds_s)) ? Vector{String}(undef, n_features) : String[]
+			end
+			for k = 1:numel(inds_r)
+				#mat[n, k] = get(Gdal._FETCHFIELD, Gdal.gettype(Gdal.getfielddefn(f, inds_r[k]-1)), Gdal.getdefault)(f,inds_r[k]-1)
+				mat[n, k] = Gdal.getfield(f, inds_r[k]-1)
+			end
+			if !isempty(inds_s)
+				text_col[n] = Gdal.getfield(f, inds_s[1]-1)
+				for k = 2:numel(inds_s)
+					text_col[n] *= " | " * Gdal.getfield(f, inds_s[k]-1)
+					colnames[inds_s[1]] *= "|" * colnames[inds_s[k]]		# Concatenate all text column names (we have only 1 text column)
+				end
+			end
+		end
+		D[n_layer] = GMTdataset(mat, text_col)
+		D[n_layer].colnames = [colnames[inds_r]; colnames[inds_s[1]]]
 	end
 	return (length(D) == 1) ? D[1] : D
 end
@@ -760,6 +804,7 @@ function gdalread(fname::AbstractString, optsP=String[]; opts=String[], gdataset
 	else
 		(ds_t.ptr == C_NULL) && (ds_t = Gdal.read(fname, flags = Gdal.GDAL_OF_VECTOR | Gdal.GDAL_OF_VERBOSE_ERROR, I=false))
 		optsP = (isempty(optsP)) ? ["-overwrite"] : (isa(optsP, String) ? ["-overwrite " * optsP] : append!(optsP, ["-overwrite"]))
+		POSTMAN[1]["GDALdriver"] = Gdal.shortname(getdriver(ds_t))			# Used when read XLS files
 		ds = ogr2ogr(ds_t, optsP; gdataset=true, kw...)
 		(ds.ptr != C_NULL) && Gdal.deletedatasource(ds, "/vsimem/tmp")		# WTF I need to do this?
 	end
