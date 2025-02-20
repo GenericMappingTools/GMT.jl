@@ -51,6 +51,7 @@
 	gdalwrite("lixo.png", I1);
 	I2 = gdalread("lixo.png");
 	@test I1 == I2'		# Because the layout is different
+	gdalread(TESTSDIR * "/assets/test.csv");
 
 	function test_method(f::Function, wkt1::AbstractString, wkt2::AbstractString, wkt3::AbstractString)
 		geom1 = Gdal.fromWKT(wkt1)
