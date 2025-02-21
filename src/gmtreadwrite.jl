@@ -69,6 +69,8 @@ to read a jpg image with the bands reversed
 """
 function gmtread(_fname::String; kwargs...)
 
+	endswith(_fname, ".xlsx") && return read_xls(_fname; kwargs...)		# Excel extension
+
 	fname::String = _fname					# Because args signatures seam to worth shit in body.
 	d = init_module(false, kwargs...)[1]	# Also checks if the user wants ONLY the HELP mode
 	cmd::String, opt_R::String = parse_R(d, "")
