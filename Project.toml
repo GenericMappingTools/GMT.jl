@@ -22,10 +22,12 @@ Leptonica_jll = "6a1430e4-294a-53a5-a485-ec66ef6b843c"
 [weakdeps]
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 FFTW = "7a1cc6ca-52ef-59f5-83cd-3a7055c09341"
+XLSX = "fdbf4ff8-1666-58a4-91e7-1b58723a45e0"
 
 [extensions]
 GMTDataFramesExt = "DataFrames"
 GMTParkerFFTExt = "FFTW"
+GMTExcelExt = "XLSX"
 
 [compat]
 Tables = "1"
@@ -35,12 +37,14 @@ GDAL_jll = "302.1000"
 DataFrames = "1.6.0"
 Leptonica_jll = "1.85"
 FFTW = "1"
+XLSX = "0.10.4"
 julia = "1.7"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 FFTW = "7a1cc6ca-52ef-59f5-83cd-3a7055c09341"
+XLSX = "fdbf4ff8-1666-58a4-91e7-1b58723a45e0"
 
 [targets]
-test = ["Test", "FFTW", "DataFrames"]
+test = ["Test", "FFTW", "DataFrames", "XLSX"]
