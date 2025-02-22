@@ -387,6 +387,7 @@ function helper_read_XLSCSV(dataset::Gdal.AbstractDataset)::GDtype
 		D[n_layer] = GMTdataset(mat, text_col)
 		D[n_layer].colnames = [colnames[inds_r]; colnames[inds_s[1]]]
 	end
+	set_dsBB!(D)
 	return (length(D) == 1) ? D[1] : D
 end
 
