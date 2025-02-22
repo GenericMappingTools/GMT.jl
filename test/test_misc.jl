@@ -172,6 +172,11 @@
 	#GMT.line2multiseg([mat2ds(rand(3,2)), mat2ds(rand(4,2))], lt=[1,2], auto_color=true);
 	#GMT.resetGMT()
 
+	stats(D);
+	stats(D, 2);
+	@test groupby(mat2ds([1.0 44; 1 7; 2 9; 2 5]), 1)[1].data == [1.0 44; 1 7]
+	@test groupby(mat2ds([1.0 44; 1 7; 2 9; 2 5], ["A", "A", "B", "B"]), "Text")[1].data == [1.0 44; 1 7]
+
 	GMT.mat2grid(rand(Float32, 10,10), reg=1);
 	GMT.mat2grid(1, hdr=[0. 5 0 5 1 1])
 	GMT.num2str(rand(2,3));
