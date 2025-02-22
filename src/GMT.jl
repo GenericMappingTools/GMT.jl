@@ -179,6 +179,7 @@ export
 	gunique, sortslicesperm,
 
 	Ginnerjoin, Gouterjoin, Gleftjoin, Grightjoin, Gcrossjoin, Gsemijoin, Gantijoin, spatialjoin,
+	groupby, stats,
 
 	lazinfo, lazread, lazwrite, lasread, laswrite,
 
