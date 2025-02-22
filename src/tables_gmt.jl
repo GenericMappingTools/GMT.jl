@@ -13,6 +13,7 @@ function Tables.getcolumn(D::GMTdataset, name::AbstractString)
 		Columnames = [join("Column" * "$(n)") for n = 1:size(D,2)]
 		((i = findfirst(name .== Columnames)) === nothing) && error("Column name - $(name) - not found in this dataset")
 	end
+	(i > size(D.data, 2)) && return D.text		# It must be the text column
 	D.data[:,i]
 end
 
