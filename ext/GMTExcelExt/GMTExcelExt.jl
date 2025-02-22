@@ -27,6 +27,7 @@ module GMTExcelExt
 		end
 		D = GMT.GMTdataset(mat, text_col)
 		D.colnames = [colnames[inds_r]; colnames[inds_s[1]]]
+		GMT.set_dsBB!(D)
 		return D
 	end
 
