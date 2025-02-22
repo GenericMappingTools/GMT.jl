@@ -78,7 +78,7 @@ does not need explicit coordinates to place the text.
 mat2ds(mat::Nothing) = mat		# Method to simplify life and let call mat2ds on a nothing
 mat2ds(mat::GDtype)  = mat		# Method to simplify life and let call mat2ds on a already GMTdataset
 mat2ds(text::Union{AbstractString, Vector{<:AbstractString}}) = text_record(text)	# Now we can hide text_record
-mat2ds(text::Vector{String}; hdr::String="") = text_record(fill(NaN,length(text),2), text, [hdr])
+mat2ds(text::Vector{String}; hdr::String="", kw...) = text_record(fill(NaN,length(text),2), text, [hdr])	# The kw... is only to not error
 
 function mat2ds(mat::AbstractMatrix; hdr=String[], geom=0, kwargs...)::GMTdataset
 	# Here we are expecting that Any-ness results from columns with DateTime. If not returm 'mat' as is
@@ -843,8 +843,10 @@ end
 Compute the indices that split a vector of datasets into groups. The grouping is done either by a provided 
 attribute name (`groupby`) or by the Feature_ID attribute. This function is mostly used internally by `zonal_statistics`
 
+### Args
 - `D`: A vector of GMTdataset
 
+### Kwargs
 - `groupby`: If provided, it must be an attribute name, for example, `groupby="NAME"`. If not provided, we use
   the `Feature_ID` attribute that is a unique identifier assigned during an OGR file reading (by the GMT6.5 C lib).
   If the `Feature_ID` attribute does not exist, you must use a valid attribute name passed in `groupby`.
@@ -884,6 +886,75 @@ function splitds(D::Vector{<:GMTdataset}; groupby::String="")
 end
 
 # ---------------------------------------------------------------------------------------------------
+"""
+    Dv = groupby(D::GMTdataset, col)::Vector{GMTdataset}
+
+Split a GMTdataset by the unique values of the column selected by `col`.
+
+`col` can be a column name, either as a String or a Symbol, or a column number. In any case, it must point
+to a column with integers (normaly a flint (Floating Point Integer)), or a string column. _i.e.,_ the last
+column in a GMTdataset.
+"""
+function groupby(D::GMTdataset, cols::Union{String,Symbol,Int})::Vector{GMTdataset}
+	n_cols = size(D.data, 2)
+	colnames = !isempty(D.colnames) ? D.colnames : ["col.$i" for i=1:n_cols]
+	!isempty(D.text) && length(colnames) == n_cols && push!(colnames, "Text")	# 'Text' is the text column generic name
+	colname::String = isa(cols, Real) ? colnames[cols] : (isa(cols, Symbol) ? string(cols) : cols)
+	((cn = findfirst(colname .== colnames)) === nothing) && error("Column '$colname' not found in dataset!")
+	if (cn > n_cols)								# It must be the text column
+		feature_names = unique(D.text)
+		nf = length(feature_names)
+		vv = Vector{Vector{Int}}(undef, nf)
+		for k = 1:nf  vv[k] = findall(D.text .== feature_names[k])  end
+	else
+		c = D.data[min(50, size(D.data, 1)), cn]	# look at the first 50 elements of the picked column
+		!all(round.(c) .== c) && error("The selected column is not an integer (flint, in fact) column!")
+		ids = unique(view(D.data, :, cn))
+		vv = Vector{Vector{Int}}(undef, length(ids))
+		for k = 1:numel(ids)  vv[k] = findall(view(D.data, :, cn) .== ids[k])  end
+	end
+	Dv = Vector{GMTdataset}(undef, numel(vv))
+	for k = 1:numel(vv)								# Loop over groups
+		Dv[k] = mat2ds(D, (vv[k], :))
+	end
+	return Dv
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    D = stats(D::GMTdataset, cols=0) -> GMTdataset
+
+Return descriptive statistics for a dataset `GMTdataset` where each row represents the statistics for each column.
+
+If `cols` is a column name, either as a String or a Symbol, or a column number, only the statistics
+for that column are returned.
+"""
+function stats(D::GMTdataset, cols::Union{String,Symbol,Int}=0)::GMTdataset
+	if (cols == 0)
+		nc = size(D.data, 2)
+		q25 = Vector{Float64}(undef, nc);	q50 = similar(q25);		q75 = similar(q25);		m = similar(q25);	s = similar(q25)
+		mi, ma  = D.bbox[1:2:end], D.bbox[2:2:end]
+		for k = 1:nc
+			q25[k] = quantile(view(D,:,k), 0.25)
+			q50[k] = quantile(view(D,:,k), 0.50)
+			q75[k] = quantile(view(D,:,k), 0.75)
+			m[k]   = mean(view(D,:,k))
+			s[k]   = std(view(D,:,k))
+		end
+		Ds = mat2ds(hcat(mi, m, ma, q25, q50, q75, s))
+	else
+		colname::String = isa(cols, Real) ? D.colnames[cols] : (isa(cols, Symbol) ? string(cols) : cols)
+		((cn = findfirst(colname .== D.colnames)) === nothing) && error("Column '$colname' not found in dataset!")
+		(cn > size(D.data, 2)) && error("Column '$colname' is the text column!. Must select a numeric column.")
+		_q25, _q50, _q75, _m, _s = quantile(view(D,:,cn), 0.25), quantile(view(D,:,cn), 0.50),
+		                           quantile(view(D,:,cn), 0.75), mean(view(D,:,cn)), std(view(D,:,cn))
+		Ds = mat2ds(hcat(D.bbox[2cn-1], _m, D.bbox[2cn], _q25, _q50, _q75, _s))
+	end
+	Ds.colnames = ["min", "mean", "max", "q25", "q50", "q75", "std"]
+	return Ds
+end
+
+# ---------------------------------------------------------------------------------------------------
 function tabletypes2ds(arg, interp=0)
 	# Try guesswork to convert Tables types into GMTdatasets usable in plots.
 	#(arg === nothing || isa(arg, GDtype) || isa(arg, Matrix{<:Real})) && return arg
@@ -901,7 +972,7 @@ end
 """
     D = mesh2ds(mesh) -> Vector{GMTdataset}
 
-Extract data from a GeometryBasics Mesh type and return it into a vector of GMTdataset.
+Extract data from a GeometryBasics Mesh type and return it in a vector of GMTdataset.
 """
 function mesh2ds(mesh)
 	(!startswith(string(typeof(mesh)), "Mesh{3,")) && error("Argument must be a GeometryBasics mesh")
