@@ -47,6 +47,7 @@ using FFTW
 		@warn("Failed the WMS test. Error was:\n $err")
 	end
 
+	include("test_maregrams.jl")
 	include("test_lepto_funs.jl")
 	include("test_beziers.jl")
 	include("test_cody.jl")
