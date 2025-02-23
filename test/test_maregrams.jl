@@ -2,6 +2,6 @@
 
 	println("	MAREGRAMS")
 	
-	maregrams(list=true)
-	maregrams(-25, 36)
+	maregrams(list=true);
+	maregrams(-25, 36);
 end
