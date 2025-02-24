@@ -164,17 +164,16 @@ export
 	fill_between, fill_between!, marginalhist, marginalhist!, parallelplot, parallelplot!, plotlinefit, plotlinefit!,
 	qqplot, qqplot!, qqnorm, qqnorm!, remotegrid, sealand, squeeze, terramar, violin, violin!, viz, vizpdf, windbarbs, whereami,
 
-	maregrams, seismicity, weather, wmsinfo, wmstest, wmsread,
+	maregrams, pastplates, seismicity, weather, wmsinfo, wmstest, wmsread,
 
 	VSdisp, mad, info, kmeans, pca, mosaic, quadbounds, quadkey, geocoder, getprovider,
 
 	bwhitmiss, binarize, bwareaopen, bwperim, bwskell, isodata, padarray, rgb2gray, rgb2lab, rgb2YCbCr, rgb2ycbcr, grid2img,
 	img2grid, grays2cube, grays2rgb, imclose, imcomplement, imcomplement!, imdilate, imerode, imfilter, imopen, imsegment,
 	imsobel, imtophat, imbothat, imhdome, imhmin, imhmax, immorphgrad, imrankfilter, strel, 
-
 	imfill, imreconstruct, fillsinks, fillsinks!,
 
-	makeDCWs, mksymbol, pastplates, circfit,
+	findpeaks, makeDCWs, mksymbol, circfit,
 
 	gunique, sortslicesperm,
 	hampel, hampel!,

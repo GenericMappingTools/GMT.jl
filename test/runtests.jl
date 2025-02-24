@@ -47,6 +47,7 @@ using FFTW
 		@warn("Failed the WMS test. Error was:\n $err")
 	end
 
+	include("test_findpeaks.jl")
 	include("test_hampel.jl")
 	include("test_maregrams.jl")
 	include("test_lepto_funs.jl")
@@ -70,7 +71,6 @@ using FFTW
 	include("test_common_opts.jl")
 	println("		Entering: test_B-GMTs.jl")
 	include("test_B-GMTs.jl")
-	println("		Entering: test_new_projs.jl")
 	include("test_new_projs.jl")
 	println("		Entering: test_GRDs.jl")
 	include("test_GRDs.jl")
@@ -78,13 +78,11 @@ using FFTW
 	include("test_views.jl")
 	println("		Entering: test_PSs.jl")
 	include("test_PSs.jl")
-	println("		Entering: test_modern.jl")
 	include("test_modern.jl")
 	println("		Entering: test_P_a_T.jl")
 	include("test_P_a_T.jl")
 	println("		Entering: test_solidos.jl")
 	include("test_solidos.jl")
-	println("		Entering: test_statplots.jl")
 	include("test_statplots.jl")
 	println("		Entering: test_texture.jl")
 	include("test_texture.jl")
@@ -127,7 +125,6 @@ using FFTW
 	catch
 	end
 
-	println("		Entering: test_parker.jl")
 	include("test_parker.jl")
 
 	# Remove garbage
