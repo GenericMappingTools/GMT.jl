@@ -37,15 +37,16 @@ plot(D, title="Prominent peaks")
 scatter!(D[peaks,:], mc=:red, show=true)
 ```
 """
-function findpeaks(y::AbstractVector{T}, x::AbstractVector{S}=collect(1:length(y)); min_height::T=minimum(y),
-                   min_prom::T=zero(y[1]), min_dist::S=zero(x[1]), threshold::T=zero(y[1])) where {T <: Real, S}
+function findpeaks(y::AbstractVecOrMat{T}, x::AbstractVecOrMat=collect(1:length(y)); min_height::T=minimum(y),
+                   min_prom=0.0, min_dist=0.0, threshold=0.0) where {T <: Real}
 
+	isa(y, AbstractMatrix) && (y = vec(y))
 	peaks = in_threshold(diff(y), threshold)
 	peaks = with_prominence(y, peaks, min_prom)
 	peaks = peaks[y[peaks] .> min_height]			# minimal height refinement
 	peaks = with_distance(peaks, x, y, min_dist)
 end
-function findpeaks(D::GMTdataset; min_height=D.bbox[1], min_prom=zero(D[1]), min_dist=zero(D[1]), threshold=zero(D[1]))
+function findpeaks(D::GMTdataset; min_height=D.bbox[1], min_prom=0.0, min_dist=0.0, threshold=0.0)
 	findpeaks(view(D.data, :, 2), view(D.data, :, 1); min_height=min_height, min_prom=min_prom, min_dist=min_dist, threshold=threshold)
 end
 
@@ -62,7 +63,7 @@ function in_threshold(dy::AbstractVector{T}, threshold::T) where {T <: Real}
 	peaks[1:k]
 end
 
-function with_prominence(y::AbstractVector{T}, peaks::AbstractVector{Int}, min_prom::T,) where {T <: Real}
+function with_prominence(y::AbstractVector{T}, peaks::AbstractVector{Int}, min_prom,) where {T <: Real}
 	# Select peaks that have a given prominence
 	peaks[prominence(y, peaks) .> min_prom]		# minimal prominence refinement
 end
@@ -96,7 +97,7 @@ function prominence(y::AbstractVector{T}, peaks::AbstractVector{Int}) where {T <
 	return proms
 end
 
-function with_distance(peaks::AbstractVector{Int}, x::AbstractVector{S}, y::AbstractVector{T}, min_dist::S,) where {T <: Real, S}
+function with_distance(peaks::AbstractVector{Int}, x::AbstractVector{<:Real}, y::AbstractVector{T}, min_dist) where {T <: Real}
 	# Select only peaks that are further apart than `min_dist`
 	peaks2del = zeros(Bool, length(peaks))
 	inds = sortperm(y[peaks], rev=true)
