@@ -37,8 +37,8 @@ Base.@kwdef mutable struct GMTgrid{T<:Number,N} <: AbstractArray{T,N}
 	wkt::String=""
 	epsg::Int=0
 	geog::Int=0
-	range::Union{Vector{Float64}, Vector{Any}}=Float64[]
-	inc::Union{Vector{Float64}, Vector{Any}}=Float64[]
+	range::Vector{Float64}=Float64[]#Union{Vector{Float64}, Vector{Any}}=Float64[]
+	inc::Vector{Float64}=Float64[]#Union{Vector{Float64}, Vector{Any}}=Float64[]
 	registration::Int=0
 	nodata::Union{Float64, Float32}=0.0
 	title::String=""
