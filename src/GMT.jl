@@ -158,14 +158,13 @@ export
 	colorzones!, rasterzones!, rasterzones, lelandshade, texture_img, crop, doy2date, date2doy, yeardecimal, ISOtime2unix,
 	median, mean, quantile, std, nanmean, nanstd, skipnan, zonal_statistics, zonal_stats,
 
-	add2PSfile, append2fig, linearfitxy, regiongeog, streamlines, wmsinfo, wmstest, wmsread, peaks, polygonlevels,
-	randinpolygon, polyfit, polyval,
+	add2PSfile, append2fig, linearfitxy, regiongeog, streamlines, peaks, polygonlevels, randinpolygon, polyfit, polyval,
 
 	ablines, ablines!, density, density!, boxplot, boxplot!, cornerplot, cornerplot!, cubeplot, cubeplot!, ecdfplot, ecdfplot!,
 	fill_between, fill_between!, marginalhist, marginalhist!, parallelplot, parallelplot!, plotlinefit, plotlinefit!,
 	qqplot, qqplot!, qqnorm, qqnorm!, remotegrid, sealand, squeeze, terramar, violin, violin!, viz, vizpdf, windbarbs, whereami,
 
-	maregrams, seismicity, weather,
+	maregrams, seismicity, weather, wmsinfo, wmstest, wmsread,
 
 	VSdisp, mad, info, kmeans, pca, mosaic, quadbounds, quadkey, geocoder, getprovider,
 
@@ -178,6 +177,7 @@ export
 	makeDCWs, mksymbol, pastplates, circfit,
 
 	gunique, sortslicesperm,
+	hampel, hampel!,
 
 	Ginnerjoin, Gouterjoin, Gleftjoin, Grightjoin, Gcrossjoin, Gsemijoin, Gantijoin, spatialjoin,
 	groupby, stats,
@@ -261,6 +261,7 @@ include("grdview.jl")
 include("grdvolume.jl")
 include("greenspline.jl")
 include("gridit.jl")
+include("hampel_outliers.jl")
 include("img_funs.jl")
 include("imgtiles.jl")
 include("imshow.jl")
@@ -272,7 +273,6 @@ include("mapproject.jl")
 include("maregrams.jl")
 include("movie.jl")
 include("nearneighbor.jl")
-#include("parkermag.jl")
 include("pastplates.jl")
 include("pca.jl")
 include("pcolor.jl")
