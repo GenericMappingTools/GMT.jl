@@ -11,7 +11,7 @@ Parameters
 - **S** | **size** :: [Type => Str]        ``Arg = segment_size``
 
     ``segment_size`` is a radix-2 number of samples per window for ensemble averaging.
-- **C** | **outputs** :: [Type => Str | []]        ``Arg = [xycnpago]``
+- **C** | **output** :: [Type => Str | []]        ``Arg = [xycnpago]``
 
     Read the first two columns of input as samples of two time-series, X(t) and Y(t).
     Consider Y(t) to be the output and X(t) the input in a linear system with noise.
@@ -53,8 +53,8 @@ function spectrum1d_helper(cmd0::String, arg1; kwargs...)
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd = parse_common_opts(d, "", [:V_params :b :d :e :g :h :i :yx])[1]
 	cmd = parse_these_opts(cmd, d, [[:D :sample_dist], [:L :leave_trend], [:N :name], [:S :size], [:T :multifiles], [:W :wavelength]])
-	opt_C = add_opt(d, "", "C", [:C :components :outputs :response_fun],
-					(xpower="_x", ypower="_y", cpower="_c", npower="_n", phase="_p", admit="_a", gain="_g", coh="_o"))
+	opt_C = add_opt(d, "", "C", [:C :components :output],
+					(xpower="_x", ypower="_y", cpower="_c", npower="_n", phase="_p", admitt="_a", gain="_g", coh="_o"))
 	if (!contains(cmd, " -T"))                  # Return vars, otherwise it saves them in disk files
 		flags = (opt_C == "") ? "x" : opt_C[4:end]
 		cnames = Vector{String}(undef, 2*length(flags) + 1)
