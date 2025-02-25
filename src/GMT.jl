@@ -376,7 +376,7 @@ using GMT.Laszip
 	Glix=gmt("grdmath", "-R0/10/0/10 -I2 X");
 	grdcontour(Glix);
 	grd2cpt(Glix);
-	grd2xyz(Glix);
+	#grd2xyz(Glix);
 	#grdlandmask(R="-10/4/37/45", res=:c, inc=0.1);
 	#grdmask([10 20; 40 40; 70 20; 10 20], R="0/100/0/100", out_edge_in=[100 0 0], I=2);
 	#grdsample(Glix, inc=0.5);
