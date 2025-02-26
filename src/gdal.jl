@@ -969,7 +969,7 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 
 	function getgeotransform!(dataset::AbstractDataset, transform::Vector{Cdouble})
 		@assert length(transform) == 6
-		result = GDALGetGeoTransform(dataset.ptr, pointer(transform))
+		result = GDALGetGeoTransform(dataset.ptr, transform)
 		@cplerr result "Failed to get geotransform"
 		return transform
 	end
@@ -977,7 +977,7 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 	
 	function setgeotransform!(dataset::AbstractDataset, transform::Vector{Cdouble})
 		@assert length(transform) == 6
-		result = GDALSetGeoTransform(dataset.ptr, pointer(transform))
+		result = GDALSetGeoTransform(dataset.ptr, transform)
 		@cplerr result "Failed to transform raster dataset"
 		return dataset
 	end
@@ -1372,11 +1372,15 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 					poffset = (pad * xbsize + pad) * sizeof($T)
 					xbsize, ybsize = xsize, ysize
 				end
+				GC.@preserve buffer begin
+				GC.@preserve bands begin
 				result = ccall((:GDALDatasetRasterIOEx,libgdal), UInt32, 
 							   (pVoid, UInt32, Cint, Cint, Cint, Cint, pVoid, Cint, Cint, UInt32, Cint,
 							   Ptr{Cint}, Clonglong, Clonglong, Clonglong, Ptr{GDALRasterIOExtraArg}),
 							   dataset.ptr, access, xoffset, yoffset, xsize, ysize, pointer(buffer)+poffset, xbsize,
 							   ybsize, $GT, nband, pointer(bands), pxspace, linespace, bandspace, extraargs)
+				end
+				end
 				@cplerr result "Access in DatasetRasterIO failed."
 				return buffer
 			end
@@ -1392,7 +1396,7 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 					poffset = (pad * xbsize + pad) * sizeof($T)
 					xbsize, ybsize = xsize, ysize
 				end
-				result = ccall((:GDALRasterIOEx,libgdal),UInt32,
+				result = GC.@preserve buffer ccall((:GDALRasterIOEx,libgdal),UInt32,
 					(pVoid,UInt32,Cint,Cint,Cint,Cint,pVoid, Cint,Cint,UInt32,Clonglong, Clonglong,
 					Ptr{GDALRasterIOExtraArg}),
 					rasterband.ptr,access,xoffset, yoffset,xsize,ysize,pointer(buffer)+poffset,xbsize,ybsize,$GT,
@@ -1822,11 +1826,14 @@ end
 	end
 
 	function toWKT(geom::AbstractGeometry)::String
-		wkt_ptr = Ref(Cstring(C_NULL))
-		result = OGR_G_ExportToWkt(geom.ptr, wkt_ptr)
-		@ogrerr result "OGRErr $result: failed to export geometry to WKT"
-		wkt = unsafe_string(wkt_ptr[])
-		VSIFree(pointer(wkt_ptr[]))
+		p = Cstring(C_NULL)
+		GC.@preserve p begin
+			wkt_ptr = Ref(p)
+			result = OGR_G_ExportToWkt(geom.ptr, wkt_ptr)
+			@ogrerr result "OGRErr $result: failed to export geometry to WKT"
+			wkt = unsafe_string(wkt_ptr[])
+			VSIFree(pointer(wkt_ptr[]))
+		end
 		return wkt
 	end
 

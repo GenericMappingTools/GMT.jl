@@ -213,15 +213,20 @@
 	GMT.resetGMT()
 	I = mat2img(check, cmap=C);
 	rgb = GMT.ind2rgb(I);
+	println()
 	@info "before image_alpha!"
 	image_alpha!(I, alpha_ind=5);
+	@info "before 2"
 	image_alpha!(I, alpha_vec=round.(UInt32,rand(6).*255));
+	@info "before 3"
 	image_alpha!(I, alpha_band=round.(UInt8,rand(27,27).*255))
 	img = mat2img(rand(UInt8, 6, 6, 3));
 	mask = fill(UInt8(0), 6, 6);
 	mask[3:4,3:4] .= 255;
+	@info "before 4"
 	image_alpha!(img, alpha_band=mask, burn=:red)
 	mask[1] = 100;		# Force variable mask
+	@info "before 5"
 	image_alpha!(img, alpha_band=mask, burn=(0,255,0))
 	@info "after image_alpha!"
 

@@ -282,8 +282,10 @@ function gmtread(_fname::String; kwargs...)
 	drop_islands = (find_in_dict(d, [:no_islands :no_holes])[1] !== nothing) ? true : false
 	x = (opt_R == "") ? [0.0, 0, 0, 0] : opt_R2num(opt_R)		# See if we have a limits request
 	lims = tuple(vcat(x,[0.0, 0.0])...)
-	ctrl = OGRREAD_CTRL(Int32(0), ogr_layer, pointer(fname), lims)
-	O = ogr2GMTdataset(gmt_ogrread(API2, pointer([ctrl])), drop_islands)
+	GC.@preserve fname begin
+		ctrl = OGRREAD_CTRL(Int32(0), ogr_layer, pointer(fname), lims)
+		O = ogr2GMTdataset(gmt_ogrread(API2, Ref(ctrl)), drop_islands)
+	end
 
 	ressurectGDAL()				# Because GMT called GDALDestroyDriverManager()
 	GMT_Destroy_Session(API2)

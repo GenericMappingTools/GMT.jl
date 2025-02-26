@@ -644,10 +644,12 @@ end
 
 # -------------------------------------------------------------------------------------------------
 function _geod_direct!(geod::geod_geodesic, lonlat, azim, distance)
+	GC.@preserve lonlat begin
 	p = pointer(lonlat)
 	azi = Ref{Cdouble}()		# the (forward) azimuth at the destination
 	ccall((:geod_direct, libproj), Cvoid, (Ptr{Cvoid},Cdouble,Cdouble,Cdouble,Cdouble,Ptr{Cdouble},Ptr{Cdouble},Ptr{Cdouble}),
 		  pointer_from_objref(geod), lonlat[2], lonlat[1], azim, distance, p+sizeof(Cdouble), p, azi)
+	end
 	lonlat, azi[]
 end
 

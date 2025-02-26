@@ -1155,8 +1155,11 @@ function strel(nhood::Matrix{<:Integer}; name::String="")::Sel
 	sy, sx = size(nhood)
 	cy, cx = floor.(Int32, (size(nhood))./2)
 	_nhood = Int32.(nhood)
-	data = [pointer(_nhood[i,:]) for i in 1:size(_nhood,1)]
-	Sel(sy, sx, cy, cx, pointer(data), Base.unsafe_convert(Cstring, name))
+	GC.@preserve _nhood begin
+		data = [pointer(_nhood[i,:]) for i in 1:size(_nhood,1)]
+		r = Sel(sy, sx, cy, cx, pointer(data), Base.unsafe_convert(Cstring, name))
+	end
+	return r
 end
 function strel(nhood::Vector{<:Integer}; name::String="")::Sel	# Because in Julia it's stupidly difficult to create a one col matrix.
 	strel(reshape(nhood, (length(nhood), 1)); name=name)
@@ -1184,8 +1187,11 @@ function filtkernel(mat::Matrix{<:Real})::L_Kernel
 	sy, sx = size(mat)
 	cy, cx = floor.(Int32, (size(mat))./2)
 	_mat = Float32.(mat)
-	data = [pointer(_mat[i,:]) for i in 1:size(_mat,1)]
-	L_Kernel(sy, sx, cy, cx, pointer(data))
+	GC.@preserve _mat begin
+		data = [pointer(_mat[i,:]) for i in 1:size(_mat,1)]
+		r = L_Kernel(sy, sx, cy, cx, pointer(data))
+	end
+	return r
 end
 
 function Base.show(io::IO, ::MIME"text/plain", sel::Sel)::Nothing

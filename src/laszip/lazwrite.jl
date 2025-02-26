@@ -119,7 +119,7 @@ function lazwrite(fname::AbstractString, xyz; grd_hdr=Float64[], scaleX=nothing,
 			coordinates[1] = xyz[n,1]
 			coordinates[2] = xyz[n,2]
 			coordinates[3] = xyz[n,3]
-			laszip_set_coordinates(writer[], convert(Ptr{Cdouble}, pointer(coordinates)))
+			GC.@preserve coordinates laszip_set_coordinates(writer[], convert(Ptr{Cdouble}, pointer(coordinates)))
 			laszip_write_point(writer[])
 		end
 	else
@@ -130,17 +130,17 @@ function lazwrite(fname::AbstractString, xyz; grd_hdr=Float64[], scaleX=nothing,
 			coordinates[1] = xyz[n]
 			coordinates[2] = xyz[n+1]
 			coordinates[3] = xyz[n+2]
-			laszip_set_coordinates(writer[], convert(Ptr{Cdouble}, pointer(coordinates)))
+			GC.@preserve coordinates laszip_set_coordinates(writer[], convert(Ptr{Cdouble}, pointer(coordinates)))
 			laszip_write_point(writer[])
 		end
 		if (r == 1)
 			coordinates[1] = xyz[last_ind+1]
-			laszip_set_coordinates(writer[], convert(Ptr{Cdouble}, pointer(coordinates)))
+			GC.@preserve coordinates laszip_set_coordinates(writer[], convert(Ptr{Cdouble}, pointer(coordinates)))
 			laszip_write_point(writer[])
 		elseif (r == 2)
 			coordinates[1] = xyz[last_ind+1]
 			coordinates[2] = xyz[last_ind+2]
-			laszip_set_coordinates(writer[], convert(Ptr{Cdouble}, pointer(coordinates)))
+			GC.@preserve coordinates laszip_set_coordinates(writer[], convert(Ptr{Cdouble}, pointer(coordinates)))
 			laszip_write_point(writer[])
 		end
 	end
