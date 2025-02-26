@@ -820,10 +820,10 @@ function grid_init(API::Ptr{Nothing}, X::GMT_RESOURCE, Grid::GMTgrid, pad::Int=2
 			_inc[3] = (Grid.range[6] - Grid.range[5]) / (size(Grid.z, 3) - 1.0)
 			(length(Grid.inc) < 3) ? @warn("This cube doesn't even has a z_inc. Computing one to not error.") : @warn("The z_inc of this cube is wrong. It is $(Grid.inc[3]) but should be $(_inc[3])")
 		end
-		G = convert(Ptr{GMT_CUBE}, GMT_Create_Data(API, GMT_IS_CUBE, GMT_IS_VOLUME, mode, NULL, Grid.range, _inc, UInt32(Grid.registration), pad))
+		G = convert(Ptr{GMT_CUBE}, GMT_Create_Data(API, GMT_IS_CUBE, GMT_IS_VOLUME, mode, NULL, Grid.range, _inc, UInt32(Grid.registration), pad, NULL))
 		X.family, X.geometry = GMT_IS_CUBE, GMT_IS_VOLUME
 	else
-		G = convert(Ptr{GMT_GRID}, GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, mode, NULL, Float64.(Grid.range[1:4]), Float64.(Grid.inc[1:2]), UInt32(Grid.registration), pad))
+		G = convert(Ptr{GMT_GRID}, GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, mode, NULL, Float64.(Grid.range[1:4]), Float64.(Grid.inc[1:2]), UInt32(Grid.registration), pad, NULL))
 	end
 
 	Gb = unsafe_load(G)			# Gb = GMT_GRID | GMT_CUBE
@@ -850,8 +850,10 @@ function grid_init(API::Ptr{Nothing}, X::GMT_RESOURCE, Grid::GMTgrid, pad::Int=2
 			end
 		end
 	else
-		Gb.data = (eltype(Grid.z) == Float32) ? pointer(Grid.z) : pointer(Float32.(Grid.z))		# Horrible wasting if input is not float32
-		GMT_Set_AllocMode(API, GMT_IS_GRID, G)	# Otherwise memory already belongs to GMT
+		#Gb.data = (eltype(Grid.z) == Float32) ? pointer(Grid.z) : pointer(Float32.(Grid.z))		# What a waste if input is not float32
+		zMat = (eltype(Grid.z) == Float32) ? Grid.z : Float32.(Grid.z)		# What a waste if input is not float32
+		Gb.data = GC.@preserve zMat pointer(zMat)	# Attempt to preserve G.z in case of !float32, but not sure it lasts long enough
+		GMT_Set_AllocMode(API, GMT_IS_GRID, G)		# Otherwise memory already belongs to GMT
 		#GMT_Set_Default(API, "API_GRID_LAYOUT", "TR");
 	end
 
@@ -917,8 +919,8 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage)::Ptr{GMT_IMAGE}
 	mode = (pad == 2) ? GMT_CONTAINER_AND_DATA : GMT_CONTAINER_ONLY
 	(pad == 2 && Img.pad == 0 && Img.layout[2] == 'R') && (mode = GMT_CONTAINER_AND_DATA)	# Unfortunately
 
-	I = convert(Ptr{GMT_IMAGE}, GMT_Create_Data(API, family, GMT_IS_SURFACE, mode, pointer([n_cols, n_rows, n_bands]),
-	                                            Float64.(Img.range[1:4]), Float64.(Img.inc), Img.registration, pad))
+	I = convert(Ptr{GMT_IMAGE}, GMT_Create_Data(API, family, GMT_IS_SURFACE, mode, UInt64[n_cols, n_rows, n_bands],
+	                                            Float64.(Img.range[1:4]), Float64.(Img.inc), Img.registration, pad, NULL))
 	Ib::GMT_IMAGE = unsafe_load(I)				# Ib = GMT_IMAGE (constructor with 1 method)
 	h::GMT_GRID_HEADER = unsafe_load(Ib.header)
 
@@ -1043,14 +1045,13 @@ function dataset_init(API::Ptr{Nothing}, Darr::Vector{<:GMTdataset}, direction::
 	(Darr == C_NULL || length(Darr) == 0) && error("Input is empty where it can't be.")
 
 	# We come here if we did not receive a matrix
-	dim = [1, 0, 0, 0]
+	dim = UInt64[1, 0, 0, 0]
 	dim[GMT_SEG+1] = length(Darr)					# Number of segments
 	dim[GMT_COL+1] = size(Darr[1].data, 2)			# Number of columns
 
 	mode = (length(Darr[1].text) != 0) ? GMT_WITH_STRINGS : GMT_NO_STRINGS
 
-	pdim = pointer(dim)
-	D = convert(Ptr{GMT_DATASET}, GMT_Create_Data(API, GMT_IS_DATASET, GMT_IS_PLP, mode, pdim, NULL, NULL, 0, 0, NULL))
+	D = convert(Ptr{GMT_DATASET}, GMT_Create_Data(API, GMT_IS_DATASET, GMT_IS_PLP, mode, dim, NULL, NULL, 0, 0, NULL))
 	DS::GMT_DATASET = unsafe_load(D)
 	DT = unsafe_load(unsafe_load(DS.table))			# GMT_DATATABLE
 
@@ -1125,10 +1126,9 @@ function dataset_init_FV(API::Ptr{Nothing}, FV::Vector{GMTfv})::Ptr{GMT_MATRIX}
 		n_segs_tot += sum(size.(what_faces, 1))
 		n_rows_tot += sum(size.(what_faces, 2))
 	end
-	dim = [1, n_segs_tot, n_rows_tot, 3]			# [1, GMT_SEG+1, GMT_ROW+1, GMT_COL+1]
+	dim = UInt64[1, n_segs_tot, n_rows_tot, 3]		# [1, GMT_SEG+1, GMT_ROW+1, GMT_COL+1]
 
-	pdim = pointer(dim)
-	D = convert(Ptr{GMT_DATASET}, GMT_Create_Data(API, GMT_IS_DATASET, GMT_IS_PLP, GMT_NO_STRINGS, pdim, NULL, NULL, 0, 0, NULL))
+	D = convert(Ptr{GMT_DATASET}, GMT_Create_Data(API, GMT_IS_DATASET, GMT_IS_PLP, GMT_NO_STRINGS, dim, NULL, NULL, 0, 0, NULL))
 	DS::GMT_DATASET = unsafe_load(D)
 	DT = unsafe_load(unsafe_load(DS.table))			# GMT_DATATABLE
 
@@ -1203,10 +1203,9 @@ function dataset_init_FV(API::Ptr{Nothing}, FV::GMTfv)::Ptr{GMT_MATRIX}
 	what_faces = isempty(FV.faces_view) ? FV.faces : FV.faces_view	# faces_view is a processed version for the current view
 	n_segs_tot = sum(size.(what_faces, 1))			# Total number of segments or faces (polygons)
 	n_rows_tot = sum(size.(what_faces, 2))			# Total number of rows (vertices of the polygon)
-	dim = [1, n_segs_tot, n_rows_tot, 3]			# [1, GMT_SEG+1, GMT_ROW+1, GMT_COL+1]
+	dim = UInt64[1, n_segs_tot, n_rows_tot, 3]		# [1, GMT_SEG+1, GMT_ROW+1, GMT_COL+1]
 
-	pdim = pointer(dim)
-	D = convert(Ptr{GMT_DATASET}, GMT_Create_Data(API, GMT_IS_DATASET, GMT_IS_PLP, GMT_NO_STRINGS, pdim, NULL, NULL, 0, 0, NULL))
+	D = convert(Ptr{GMT_DATASET}, GMT_Create_Data(API, GMT_IS_DATASET, GMT_IS_PLP, GMT_NO_STRINGS, dim, NULL, NULL, 0, 0, NULL))
 	DS::GMT_DATASET = unsafe_load(D)
 	DT = unsafe_load(unsafe_load(DS.table))			# GMT_DATATABLE
 
@@ -1222,8 +1221,8 @@ end
 function dataset_init(API::Ptr{Nothing}, ptr, actual_family::Vector{<:Integer})::Ptr{GMT_MATRIX}
 # Create empty Matrix container, associate it with julia data matrix, and use as GMT input.
 
-	dim = pointer([size(ptr,2), size(ptr,1), 0])	# MATRIX in GMT uses (col,row)
-	M = convert(Ptr{GMT_MATRIX}, GMT_Create_Data(API, GMT_IS_MATRIX|GMT_VIA_MATRIX, GMT_IS_PLP, 0, dim, NULL, NULL, 0, 0, NULL))
+	#dim = Ref(UInt64[size(ptr,2), size(ptr,1), 0],3)	# MATRIX in GMT uses (col,row)
+	M = convert(Ptr{GMT_MATRIX}, GMT_Create_Data(API, GMT_IS_MATRIX|GMT_VIA_MATRIX, GMT_IS_PLP, 0, UInt64[size(ptr,2), size(ptr,1), 0], NULL, NULL, 0, 0, NULL))
 	actual_family[1] = actual_family[1] | GMT_VIA_MATRIX
 
 	Mb::GMT_MATRIX = unsafe_load(M)			# Mb = GMT_MATRIX (constructor with 1 method)

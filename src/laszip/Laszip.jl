@@ -20,9 +20,12 @@ include("lazwrite.jl")
 		"extramsg" is an optional extra message to be printed before the laszip error message.
 """
 function msgerror(lzobj::Ptr{Cvoid}, extramsg::AbstractString="")
-	pStr = pointer([pointer(lpad("",128,"        "))])		# Create a 1024 bytes string and get its pointer
-	laszip_get_error(lzobj, pStr)
-	Str = unsafe_string(unsafe_load(pStr))
+	s = lpad("",128,"        ")
+	GC.@preserve s begin
+		pStr = pointer([pointer(s)])		# Create a 1024 bytes string and get its pointer
+		laszip_get_error(lzobj, pStr)
+		Str = unsafe_string(unsafe_load(pStr))
+	end
 	isempty(extramsg) ? error(Str) : error(extramsg * "\n\t" * Str)
 end
 function msgerror(lzobj::Ptr{Ptr{Cvoid}}, extramsg::AbstractString="")

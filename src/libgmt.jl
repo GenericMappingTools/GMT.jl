@@ -4,8 +4,8 @@ function GMT_Create_Session(tag::String="GMT", pad=2, mode=0, print_func::Ptr{Cv
 	return API
 end
 
-function GMT_Create_Data(API::Ptr{Cvoid}, family::Integer, geometry, mode, dim=NULL, wesn=NULL,
-                         inc=NULL, registration=0, pad=2, data::Ptr{Cvoid}=NULL)
+function GMT_Create_Data(API::Ptr{Cvoid}, family::Integer, geometry, mode, dim, wesn,
+                         inc, registration, pad, data::Ptr{Cvoid})
 	ptr = ccall((:GMT_Create_Data, libgmt), Ptr{Cvoid}, (Cstring, UInt32, UInt32, UInt32, Ptr{UInt64},
 		Ptr{Cdouble}, Ptr{Cdouble}, UInt32, Cint, Ptr{Cvoid}), API, family, geometry, mode, dim, wesn, inc,
 		registration, pad, data)
@@ -143,17 +143,13 @@ function GMT_Get_Default(API::Ptr{Cvoid}, keyword::String, value)
 end
 
 function GMT_Call_Module(API::Ptr{Cvoid}, _module::AbstractString, mode=0, args=C_NULL)
-	#(isa(args, String)) && (args = pointer(args))
 	ccall((:GMT_Call_Module, libgmt), Cint, (Cstring, Ptr{UInt8}, Cint, Ptr{Cvoid}), API, _module, mode, args)
 end
 
 function GMT_Create_Options(API::Ptr{Cvoid}, argc::Int, args)
 	# VERSATILIZAR PARA O CASO DE ARGS SER STRING OU ARRAY DE STRINGS
-	# ccall((:GMT_Create_Options, libgmt), Ptr{GMT_OPTION}, (Ptr{Cvoid}, Cint, Ptr{Cvoid}), API, argc, args)
 	ccall((:GMT_Create_Options, libgmt), Ptr{GMT_OPTION}, (Cstring, Cint, Cstring), API, argc, args)
 end
-# GMT_Create_Options(API::Ptr{Cvoid}, argc::Integer, args::String) = 
-#                   GMT_Create_Options(API, argc, convert(Ptr{Cvoid},pointer(args)))
 
 function GMT_Destroy_Options(API::Ptr{Cvoid}, head::Ref{Ptr{GMT_OPTION}})
 	ccall((:GMT_Destroy_Options, libgmt), Cint, (Cstring, Ref{Ptr{GMT_OPTION}}), API, head)
@@ -434,7 +430,7 @@ end
 #=
 function get_common_R(API::Ptr{Cvoid})
 	R = COMMON_R((false,false,false,false), false, 0, 0, 0, (0., 0., 0., 0., 0., 0.), (0., 0., 0., 0.), (0., 0.), map(UInt8, (string(repeat(" ",256))...,)))
-	Rp = pointer([R])
+	Rp = Ref(R)
 	ccall((:gmtlib_get_common_R, libgmt), Cint, (Cstring, Ptr{COMMON_R}), API, Rp)
 	return unsafe_load(Rp)
 end
