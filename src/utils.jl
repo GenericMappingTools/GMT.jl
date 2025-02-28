@@ -9,8 +9,22 @@ skipnan(itr) = Iterators.filter(el->isfinite(el), itr)
 square(x) = x ^ 2
 pow(b,e)  = b ^ e
 
+"""
+    y = funcurve(f::Function, lims::VMr, n=100) -> Vector{Float64}
+	
+Geneate a curve between lims[1] and lims[2] having the form of function 'f'
+
+### Args
+- `f`: A function among: `exp`, `log`, `log10`, `exp10`, `sqrt`, `square`
+- `lims`: limits of `x` in `y = f(x)`
+- `n`: number of points in the generated curve.
+
+### Example
+```julia
+	x = funcurve(exp, [1, 10], 10)
+```
+"""
 function funcurve(f::Function, lims::VMr, n=100)::Vector{Float64}
-	# Geneate a curve between lims[1] and lims[2] having the form of function 'f'
 	if     (f == exp)    x::Vector{Float64} = vec(log.(Float64.(lims)))
 	elseif (f == log)    x = vec(exp.(Float64.(lims)))
 	elseif (f == log10)  x = vec(exp10.(Float64.(lims)))
@@ -21,6 +35,24 @@ function funcurve(f::Function, lims::VMr, n=100)::Vector{Float64}
 	end
 	f.(linspace(x[1], x[2], n))
 end
+
+#=
+"""
+"""
+function autocorr(x; demean=true)
+	N = length(x)
+	a = zeros(N)
+	x1 = vec(x) .- mean(x)
+	x2 = deepcopy(x1)
+	a[1] = sum(x1 .* x1)
+	for k = 2:N
+		circshift!(x2,-1)
+		t = view(x2, 1:(N-k+1))
+		a[k] = sum(t .* view(x1, 1:(N-k+1)))
+	end
+	a ./= a[1]
+end
+=#
 
 """
     x, y = pol2cart(theta, rho; deg=false)
@@ -1258,6 +1290,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 include("makeDCWs.jl")
 include("findpeaks.jl")
+include("signalcorr.jl")
 	
 # ------------------------------------------------------------------------------------------------------
 isdefined(Main, :VSCodeServer) && (const VSdisp = Main.VSCodeServer.vscodedisplay)
