@@ -67,7 +67,7 @@ function imshow(arg1, x::AbstractVector{Float64}=Float64[], y::AbstractVector{Fl
 		call_img = true
 	elseif (isa(arg1, GDtype) || isa(arg1, GMTfv) || isa(arg1, Vector{GMTfv}) || (isa(arg1, VecOrMat{<:Real}) && size(arg1,2) <= 4) || (isa(arg1, Gdal.AbstractDataset) || isa(arg1, Gdal.AbstractGeometry)))
 		(isa(arg1, Gdal.AbstractDataset) || isa(arg1, Gdal.AbstractGeometry)) && (arg1 = gd2gmt(arg1))
-		isa(arg1, Matrix{<:Real}) && (arg1 = mat2ds(arg1))
+		isa(arg1, Matrix{<:Real}) && (arg1 = size(arg1,2) == 1 ? cat_1_arg(arg1, true) : mat2ds(arg1))
 		isa(arg1, Vector{<:Real}) && (arg1 = mat2ds([1:length(arg1) arg1]))	# Make it a 2D dataset with the first col = 1:ncol(arg1))
 		if isa(arg1, Vector{GMTfv})
 			ginfo = getbbox(arg1);

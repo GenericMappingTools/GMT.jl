@@ -37,7 +37,7 @@ Parameters
     Compute the cumulative distance along the input line. Note that for this the first two columns
     must contain the spatial coordinates.
 
-To see the full documentation type: ``@? histogram``
+To see the full documentation type: ``@? filter1d``
 """
 filter1d(cmd0::String; kw...) = filter1d_helper(cmd0, nothing; kw...)
 filter1d(arg1; kw...)         = filter1d_helper("", arg1; kw...)

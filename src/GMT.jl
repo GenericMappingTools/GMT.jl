@@ -157,6 +157,8 @@ export
 
 	colorzones!, rasterzones!, rasterzones, lelandshade, texture_img, crop, doy2date, date2doy, yeardecimal, ISOtime2unix,
 	median, mean, quantile, std, nanmean, nanstd, skipnan, zonal_statistics, zonal_stats,
+	
+	conv, xcorr, xcov,
 
 	add2PSfile, append2fig, linearfitxy, regiongeog, streamlines, peaks, polygonlevels, randinpolygon, polyfit, polyval,
 
