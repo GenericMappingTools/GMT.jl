@@ -917,6 +917,7 @@ function stem(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	end
 	if (!haveR)
 		t = round_wesn(mimas)		# Add a pad. Also sets the CTRL.limits plot values
+		(t[3] > 0) && (t[3] = 0)	# Stems, when all positives, must start at zero
 		CTRL.limits[1:4] = mimas				# These are the data limits
 		opt_R::String = @sprintf(" -R%.12g/%.12g/%.12g/%.12g", t[1], t[2], t[3], t[4])
 		_opt_R::String = merge_R_and_xyzlims(d, opt_R)	# See if a x or ylim is used

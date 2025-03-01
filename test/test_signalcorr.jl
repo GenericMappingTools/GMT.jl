@@ -96,12 +96,13 @@ c22 = GMT.crosscov(x2, x2)
 
 @test GMT.crosscov(x,  x1) ≈ [c11 c21]
 @test GMT.crosscov(realx, realx1) ≈ [c11 c21]
-#@test GMT.crosscov(x1, x)  ≈ [c11 c12]
-#@test GMT.crosscov(realx1, realx)  ≈ [c11 c12]
+@test GMT.crosscov(x1, x)  ≈ [c11 c12]
+@test GMT.crosscov(realx1, realx)  ≈ [c11 c12]
 @test GMT.crosscov(x,  x)  ≈ cat([c11 c21], [c12 c22], dims=3)
 @test GMT.crosscov(realx,  realx)  ≈ cat([c11 c21], [c12 c22], dims=3)
 @test xcov(x,  x1) ≈ [c11 c21]
 @test xcov(realx, realx1) ≈ [c11 c21]
+@test xcov(x1, x)  ≈ [c11 c12]
 @test xcov(x,  x)  ≈ cat([c11 c21], [c12 c22], dims=3)
 @test xcov(realx,  realx)  ≈ cat([c11 c21], [c12 c22], dims=3)
 
