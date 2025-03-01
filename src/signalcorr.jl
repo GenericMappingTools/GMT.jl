@@ -3,19 +3,6 @@
 #  autocorrelation
 #  cross-correlation
 
-function xcorr(x::AbstractVector{<:Real}; demean::Bool=true, lags::AbstractVector{<:Integer}=Int[], maxlags=0)
-	_lags = !isempty(lags) ? lags : (maxlags == 0 ? default_autolags(length(x)) : 0:minimum(maxlags, length(x)-1))
-	out = Vector{float(eltype(x))}(undef, length(_lags))
-	autocor!(out, x, _lags; demean=demean)
-end
-
-function xcorr(x::AbstractMatrix{<:Real}; demean::Bool=true, lags::AbstractVector{<:Integer}=Int[], maxlags=0)
-	_lags = !isempty(lags) ? lags : (maxlags == 0 ? default_autolags(size(x,1)) : 0:minimum(maxlags, size(x,1)-1))
-	out = Matrix{float(eltype(x))}(undef, length(_lags), size(x,2))
-	autocor!(out, x, _lags; demean=demean)
-end
-
-#---------------------------------------------------------------------------------------------------------------------
 """
     xcorr(x::AbstractVecOrMat{<:Real}, y::AbstractVecOrMat{<:Real}; demean::Bool=true, lags::AbstractVector{<:Integer}=Int[], maxlags=0)
 
@@ -39,8 +26,17 @@ a function of the lag.
    `-min(size(x,1)-1, 10*log10(size(x,1))) to min(size(x,1), 10*log10(size(x,1)))`
 - `maxlags`: limits the lag range from `-maxlag` to `maxlag`.
 """
-xcorr(x::AbstractVecOrMat{<:Real}; demean::Bool=true, lags::AbstractVector{<:Integer}=Int[], maxlags=0) =
-	xcorr(x, demean=demean, lags=lags, maxlags=maxlags)
+function xcorr(x::AbstractVector{<:Real}; demean::Bool=true, lags::AbstractVector{<:Integer}=Int[], maxlags=0)
+	_lags = !isempty(lags) ? lags : (maxlags == 0 ? default_autolags(length(x)) : 0:minimum(maxlags, length(x)-1))
+	out = Vector{float(eltype(x))}(undef, length(_lags))
+	autocor!(out, x, _lags; demean=demean)
+end
+
+function xcorr(x::AbstractMatrix{<:Real}; demean::Bool=true, lags::AbstractVector{<:Integer}=Int[], maxlags=0)
+	_lags = !isempty(lags) ? lags : (maxlags == 0 ? default_autolags(size(x,1)) : 0:minimum(maxlags, size(x,1)-1))
+	out = Matrix{float(eltype(x))}(undef, length(_lags), size(x,2))
+	autocor!(out, x, _lags; demean=demean)
+end
 
 #---------------------------------------------------------------------------------------------------------------------
 function xcorr(x::AbstractVector{<:Real}, y::AbstractVector{<:Real}; demean::Bool=true, lags::AbstractVector{<:Integer}=Int[], maxlags=0)
@@ -68,10 +64,24 @@ function xcorr(x::AbstractMatrix{<:Real}, y::AbstractMatrix{<:Real}; lags::Abstr
 end
 
 #---------------------------------------------------------------------------------------------------------------------
-xcorr(x::AbstractVecOrMat{<:Real}, y::AbstractVecOrMat{<:Real}; demean::Bool=true, lags::AbstractVector{<:Integer}=Int[], maxlags=0) =
-xcorr(x, y, demean=demean, lags=lags, maxlags=maxlags)
+"""
+    xcov(x, y, [lags]; demean=true)
 
-#---------------------------------------------------------------------------------------------------------------------
+Compute the cross covariance function (CCF) between real-valued vectors or
+matrices `x` and `y`, optionally specifying the `lags`. `demean` specifies
+whether the respective means of `x` and `y` should be subtracted from them
+before computing their CCF.
+
+If both x and y are vectors, return a vector of the same length as lags. Otherwise,
+compute cross covariances between each pairs of columns in x and y.
+
+### Kwargs
+- `demean`: Specifies whether the respective means of x and y should be subtracted from them before
+   computing their cross covariance.
+- `lags`: When left unspecified and `maxlags=0`, the lags used are the integers from
+   `-min(size(x,1)-1, 10*log10(size(x,1))) to min(size(x,1), 10*log10(size(x,1)))`
+- `maxlags`: limits the lag range from `-maxlag` to `maxlag`.
+"""
 function xcov(x::AbstractVector{<:Real}, y::AbstractVector{<:Real}; demean::Bool=true, lags::AbstractVector{<:Integer}=Int[], maxlags=0)
 	_lags = !isempty(lags) ? lags : (maxlags == 0 ? default_crosslags(length(x)) : 0:minimum(maxlags, length(x)-1))
 	out = Vector{float(Base.promote_eltype(x, y))}(undef, length(_lags))
@@ -95,28 +105,6 @@ function xcov(x::AbstractMatrix{<:Real}, y::AbstractMatrix{<:Real}; lags::Abstra
 	out = Array{float(Base.promote_eltype(x, y)),3}(undef, length(_lags), size(x,2), size(y,2))
 	crosscov!(out, x, y, _lags; demean=demean)
 end
-
-#---------------------------------------------------------------------------------------------------------------------
-"""
-    xcov(x, y, [lags]; demean=true)
-
-Compute the cross covariance function (CCF) between real-valued vectors or
-matrices `x` and `y`, optionally specifying the `lags`. `demean` specifies
-whether the respective means of `x` and `y` should be subtracted from them
-before computing their CCF.
-
-If both x and y are vectors, return a vector of the same length as lags. Otherwise,
-compute cross covariances between each pairs of columns in x and y.
-
-### Kwargs
-- `demean`: Specifies whether the respective means of x and y should be subtracted from them before
-   computing their cross covariance.
-- `lags`: When left unspecified and `maxlags=0`, the lags used are the integers from
-   `-min(size(x,1)-1, 10*log10(size(x,1))) to min(size(x,1), 10*log10(size(x,1)))`
-- `maxlags`: limits the lag range from `-maxlag` to `maxlag`.
-"""
-xcov(x::AbstractVecOrMat{<:Real}, y::AbstractVecOrMat{<:Real}; demean::Bool=true, lags::AbstractVector{<:Integer}=Int[], maxlags=0) =
-	xcov(x, y, demean=demean, lags=lags, maxlags=maxlags)
 
 
 """
@@ -475,7 +463,7 @@ function crosscov!(r::AbstractMatrix{<:Real}, x::AbstractMatrix{<:Real}, y::Abst
 end
 
 function crosscov!(r::AbstractMatrix{<:Real}, x::AbstractVector{<:Real}, y::AbstractMatrix{<:Real}, lags::AbstractVector{<:Integer}; demean::Bool=true)
-	lx, ns, m = size(x, 1), size(x, 2), length(lags)
+	lx, ns, m = size(x, 1), size(y, 2), length(lags)
 	(size(y, 1) == lx && size(r) == (m, ns)) || throw(DimensionMismatch())
 	check_lags(lx, lags)
 
