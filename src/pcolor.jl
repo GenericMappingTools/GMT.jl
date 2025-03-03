@@ -5,6 +5,7 @@ Creates a colored cells plot using the values in matrix `C`. The color of each c
 value of `C` after consulting a color table (cpt). If a color table is not provided via option `cmap=xxx` we
 compute a default one.
 
+### Args
 - `X`, `Y`: Vectors or 1 row matrices with the x- and y-coordinates for the vertices. The number of
   elements of `X` must match the number of columns in `C` (is using the grid registration model) or exceed
   it by one (pixel registration). The same for `Y` and the number of rows in `C`. Notice that `X` and `Y`
@@ -13,7 +14,9 @@ compute a default one.
   m-by-n grid, then `C` should be an (m-1)-by-(n-1) matrix, though we also allow it to be m-by-n but we then
   drop the last row and column from `C`
 - `C`: A matrix with the values that will be used to color the cells.
-- `kwargs`: This form of `pcolor` is in fact a wrap up of ``plot`` so any option of that module can be used here.
+
+### Kwargs
+This form of `pcolor` is in fact a wrap up of ``plot`` so any option of that module can be used here.
 - `labels`: If this ``keyword`` is used then we plot the value of each node in the corresponding cell. Use `label=n`,
   where ``n`` is integer and represents the number of printed decimals. Any other value like ``true``, ``"y"``
   or ``:y`` tells the program to guess the number of decimals.
@@ -36,8 +39,17 @@ This form takes a grid (or the file name of one) as input an paints it's cell wi
 - `kwargs`: This form of `pcolor` is a wrap of ``grdview`` so any option of that module can be used here.
   One can for example control the tilling option via ``grdview's`` ``tiles`` option.
 
+---
+    pcolor(GorD; kwargs...)
+
+If `GorD` is either a GMTgrid or a GMTdataset containing a Pearson correlation matrix obtained with ``GMT.cor()``,
+the processing recieves a special treatment. In this case, other than the `labels` keyword, user is also
+interested in seing if the automatic choice of x-annotaions angle is correct. If not, one can force it
+by setting the `rotx` (ot `slanted`) keywords.
+
 ### Examples
 
+```julia
     # Create an example grid
 	G = GMT.peaks(N=21);
 
@@ -56,6 +68,13 @@ This form takes a grid (or the file name of one) as input an paints it's cell wi
 	X,Y = meshgrid(-3:6/17:3);
 	XX = 2*X .* Y;	YY = X.^2 .- Y.^2;
 	pcolor(XX,YY, reshape(repeat([1:18; 18:-1:1], 9,1), size(XX)), lc=:black, show=true)
+```
+
+Display a Pearson's correlation matrix
+
+```julia
+pcolor(GMT.cor(rand(4,4)), labels=:y, colorbar=1, show=true)
+```
 """
 function pcolor(X_::VMr, Y_::VMr, C::Union{Nothing, AbstractMatrix{<:Real}}=nothing; first::Bool=true, kwargs...)
 	pcolor(X_, Y_, C, first, KW(kwargs))
@@ -106,7 +125,7 @@ function pcolor(X_::VMr, Y_::VMr, C::Union{Nothing, AbstractMatrix{<:Real}}, fir
 	end
 
 	Z = istransposed(C) ? vec(copy(C)) : vec(C)
-	do_show, got_labels, ndigit, opt_F = helper_pcolor(d, Z)
+	do_show, got_labels, ndigit, opt_F = helper_pcolor(d, Z, round(Int, sqrt(length(Z))))
 
 	got_fn = ((fname = find_in_dict(d, [:name :figname :savefig])[1]) !== nothing)
 	d[:show] = got_labels ? false : do_show
@@ -133,26 +152,57 @@ pcolor!(X::VMr, Y::VMr, C::Matrix{<:Real}; kw...) = pcolor(X, Y, C; first=false,
 
 # ---------------------------------------------------------------------------------------------------
 function pcolor(cmd0::String="", arg1=nothing; first=true, kwargs...)
-	pcolor(cmd0, arg1, first, KW(kwargs))
+	(cmd0 != "") && (arg1 = gmtread(cmd0))
+	(isa(arg1, Matrix)) && (arg1 = mat2grid(Float32.(arg1)))
+	isdataframe(arg1) && (arg1 = df2ds(arg1))
+	if ((arg1 == arg1' && arg1[1] == 1 && arg1[end] == 1))		# A corr matrix (computed with GMT.cor())
+		return pcolor(mat2ds(arg1.z); first=first, kwargs...)
+	elseif (isa(arg1, GMTdataset))		# Arrive here when arg1 was originally a DataFrame
+		return pcolor(arg1; first=first, kwargs...)
+	end
+	pcolor(arg1, first, KW(kwargs))
 end
-function pcolor(cmd0::String, arg1, first::Bool, d::Dict{Symbol,Any})
+
+function pcolor(D::GMTdataset; first=true, kwargs...)
+	d = KW(kwargs)
+	z = Float32.(D.data)
+	colnames = D.colnames[1:size(z,2)]
+	ang::Float64 = 90.0
+	if ((val = find_in_dict(d, [:slanted :rotx])[1]) !== nothing)
+		ang = val
+	elseif (is_in_dict(d, [:figscale :fig_scale :scale :figsize :fig_size]) === nothing)
+		maxchars = maximum(length.(colnames))
+		with_per_col = 15 / size(z,2)
+		ang = (with_per_col / 0.25) >= maxchars ? 0 : 90
+	end
+	d[:xticks] = (colnames, ang)
+	d[:yticks] = colnames[end:-1:1]
+	if (D == D' && D[1] == 1 && D[end] == 1)		# A correlation matrix (that computed with GMT.cor())
+		(is_in_dict(d, CPTaliases) === nothing) && (d[:C] = makecpt(T=(-1,1.0,0.1), C="tomato,azure1,dodgerblue4", Z=true))
+		for n = 1:size(z,2), m = 1:size(z,1)
+			m < n && (z[m,n] = NaN)					# Since the matrix is symmetric, remove the upper triangle
+		end
+	end
+	pcolor(mat2grid(flipud(z)), first, d)
+end
+
+function pcolor(G::GMTgrid, first::Bool, d::Dict{Symbol,Any})
 	# Method for grids
 
-	function get_grid_xy(reg, bbox, inc, nx, ny)	# Return the grid registration x,y coord vectors.
-		_bbox = copy(bbox)		# Make a copy to not risk to change the original
-		if (reg == 1)
-			_bbox[1] += inc[1] / 2;	_bbox[2] -= inc[1] / 2;
-			_bbox[3] += inc[2] / 2;	_bbox[4] -= inc[2] / 2;
-		end
-		x, y = linspace(_bbox[1], _bbox[2], nx), linspace(_bbox[3], _bbox[4], ny)
-		return x,y
+	changed_reg = false
+	if (G.registration == 0)			# If not pixel reg, make it so
+		G.registration = 1
+		range_bak = copy(G.range)
+		x_bak, y_bak = G.x, G.y
+		G.range[1:4] .= range_bak[1:4] .- [G.inc[1], -G.inc[1], G.inc[2], -G.inc[2]] / 2
+		G.x = linspace(G.range[1], G.range[2], size(G.z, 2)+1)
+		G.y = linspace(G.range[3], G.range[4], size(G.z, 1)+1)
+		changed_reg = true
 	end
 
 	got_labels = false
 	if (is_in_dict(d, [:labels]) !== nothing)
-		G = (isa(arg1, GMTgrid)) ? arg1 : gmtread(cmd0)		# If fname we have to read the grid
-		x,y = (G.registration == 0) ? (G.x, G.y) : get_grid_xy(G.registration, G.range, G.inc, size(G,2), size(G,1))
-		do_show, got_labels, ndigit, opt_F = helper_pcolor(d, G.range[5:6])
+		do_show, got_labels, ndigit, opt_F = helper_pcolor(d, G.range[5:6], size(G.z, 2))
 	end
 
 	if (find_in_dict(d, [:T :no_interp :tiles])[1] === nothing)	# If no -T, make one here
@@ -161,14 +211,17 @@ function pcolor(cmd0::String, arg1, first::Bool, d::Dict{Symbol,Any})
 			opt_T *= "+o" * add_opt_pen(Dict(:outline => val), [:outline])
 		end
 		d[:T] = opt_T
-		grdview_helper(cmd0, arg1, !first, true, d)
-	else
-		grdview_helper(cmd0, arg1, !first, true, d)
 	end
+	grdview_helper("", G, !first, true, d)
+
+	(changed_reg) && ((G.registration, G.range, G.x, G.y) = (0, range_bak, x_bak, y_bak))	# Undo the reg change
 
 	if (got_labels)
-		X,Y = meshgrid(x, y)
-		Dt = mat2ds([X[:] Y[:]], string.(round.(G.z[:], digits=ndigit)))
+		X,Y = (G.registration == 0) ? meshgrid(G.x, G.y) : meshgrid(G.x[1:end-1].+G.inc[1]/2, G.y[1:end-1].+G.inc[2]/2)
+		z = G.z[:]
+		ind = .!isnan.(z)				# We don't want to plot NaNs
+		_X, _Y, _z = X[ind], Y[ind], z[ind]
+		Dt = mat2ds([_X _Y], string.(round.(_z, digits=ndigit)))
 		text!(Dt, F=opt_F, show=do_show)
 	end
 end
@@ -179,16 +232,17 @@ pcolor!(cmd0::String="", arg1=nothing; kw...) = pcolor(cmd0, arg1; first=false, 
 pcolor!(arg1; kw...) = pcolor("", arg1; first=false, kw...)
 
 # ---------------------------------------------------------------------------------------------------
-function helper_pcolor(d::Dict{Symbol,Any}, Z)
+function helper_pcolor(d::Dict{Symbol,Any}, Z, nc::Int)
 	# Lots of gymn to see if we have a show request and suspend it in case we also want to plot text labels
 	# Also fishes contents of the 'labels' and 'font' keywords.
 	do_show, got_labels = false, false
-	ndigit, opt_F = 2, "+f6p+jMC"		# Just default value to always have these vars defined
+	opt_F = (nc < 5) ? "+f10p+jMC" : (nc < 8 ? "+f9p+jMC" : nc < 11 ? "+f8p+jMC" : nc <= 15 ? "+f7p+jMC" : nc < 30 ? "+f6p+jMC" : "+f5p+jMC")
+	ndigit = 2		# Just default value to always have these vars defined
 	if (is_in_dict(d, [:labels]) !== nothing)
 		got_labels = true
 		if ((isa(d[:labels], Bool) && d[:labels]) || isa(d[:labels], String) || isa(d[:labels], Symbol))
 			dif = (length(Z) == 2) ? abs(Z[2] - Z[1]) : abs(maximum_nan(Z) - minimum_nan(Z))
-			ndigit = (dif < 1) ? 3 : (dif <= 10 ? 2 : (dif < 100 ? 1 : 0))
+			ndigit = (dif < 1) ? 3 : (dif <= 10 ? 2 : (dif < 100 ? 1 : 0)) + Int(nc <= 15)
 		elseif (isa(d[:labels], Int))
 			ndigit = abs(d[:labels])
 		end
