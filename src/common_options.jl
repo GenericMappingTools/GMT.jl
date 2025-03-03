@@ -2920,10 +2920,8 @@ function axis(D::Dict=Dict(); x::Bool=false, y::Bool=false, z::Bool=false, secon
 	d = KW(kwargs)			# These kwargs always come from the fields of a NamedTuple 
 	axis(D, x, y, z, secondary, d)
 end
-#function axis(D::Dict=Dict(); x::Bool=false, y::Bool=false, z::Bool=false, secondary::Bool=false, kwargs...)::Tuple{String, Vector{Bool}}
 function axis(D::Dict, x::Bool, y::Bool, z::Bool, secondary::Bool, d::Dict)::Tuple{String, Vector{Bool}}
 	# Build the (terrible) -B option
-	#d = KW(kwargs)			# These kwargs always come from the fields of a NamedTuple 
 
 	# Before anything else
 	(haskey(d, :none)) && return " -B0", [false, false]
@@ -3042,6 +3040,7 @@ function axis(D::Dict, x::Bool, y::Bool, z::Bool, secondary::Bool, d::Dict)::Tup
 		if (isa(d[:custom], String))  ints *= "c" * d[:custom]::String
 		else
 			if ((r = helper3_axes(d[:custom], primo, axe)) != "")  ints *= "c" * r  end
+			(axe == "x") && isa(d[:custom], NamedTuple) && ((_ang = get(d[:custom], :angle, nothing)) !== nothing) && (ints *= "+a$_ang")
 		end
 	elseif (haskey(d, :customticks))			# These ticks are custom axis
 		((r = ticks(d[:customticks]; axis=axe, primary=primo)) != "") && (ints *= "c" * r)
@@ -3176,8 +3175,8 @@ function helper3_axes(arg, primo::String, axe::String)::String
 		tipo = fill('a', n_annot)			# Default to annotate
 	elseif (isa(arg, NamedTuple) || isa(arg, Dict))
 		if (isa(arg, NamedTuple))  d = nt2dict(arg)  end
-		!haskey(d, :pos) && error("Custom annotations NamedTuple must contain the member 'pos'")
-		pos = isa(d[:pos], Vector{<:AbstractRange}) ? collect(d[:pos][1]) : d[:pos]
+		(!haskey(d, :pos) && !haskey(d, :label)) && error("Custom annotations NamedTuple must contain at least one of: 'label' or 'pos' members.")
+		pos = (!haskey(d, :pos)) ? collect(1:length(d[:label])) : (isa(d[:pos], Vector{<:AbstractRange}) ? collect(d[:pos][1]) : d[:pos])
 		n_annot = length(pos);		got_tipo = false
 		if ((val = find_in_dict(d, [:type])[1]) !== nothing)
 			if (isa(val, Char) || isa(val, String) || isa(val, Symbol))
@@ -3239,12 +3238,18 @@ zticks(labels, pos=nothing) = ticks(labels, pos; axis="z")
 function ticks(labels, pos=nothing; axis="x", primary="p")
 	# Simple plot of custom ticks.
 	# LABELS can be an Array or Tuple of strings or symbols with the labels to be plotted at ticks in POS
-	if (isa(labels, Tuple) && length(labels) == 2 && isa(labels[1], AbstractArray))
+	types_in = typeof.(labels)		# If they are all equal it means we got a labels=(:a, :b, :c) or labels=("a", "b", "c")
+	if (isa(labels, Tuple) && length(labels) > 1 && !all(types_in .== types_in[1]))
 		# helper3 wants (Array{Real}, Array{String}) but here we accept both orders, just need to figure out which
-		inds = (eltype(labels[1]) <: AbstractString) ? [2,1] : [1,2]
-		!(isa(labels[inds[1]], AbstractArray) && eltype(labels[inds[1]][1]) <: Real) &&
-			error("Input must be: (Vector{Real}, Vector{String}) (in any order)")
-		r = helper3_axes((pos=labels[inds[1]], label=labels[inds[2]]), primary, axis)
+		# If 'labels contains an element that is a number, we interpret it to mean the annotations angle.'
+		((ind_s = findfirst(types_in .<: AbstractArray{String})) === nothing) &&
+			((inds_s = findfirst(eltype.(labels) .== String)) === nothing) &&
+			error("Must provide the annotation labels in form of a vector or tuple.")
+		pos = ((ind_p = findfirst(types_in .<: AbstractArray{<:Real})) !== nothing) ? labels[ind_p] : (1:length(labels[ind_s]))
+		ind_a = findfirst(types_in .<: Real)
+		(ind_a !== nothing && axis != "x") && (ind_a = nothing; @warn("Annotation angle can only be specified for the x axis."))
+		r = helper3_axes((pos=pos, label=labels[ind_s]), primary, axis)
+		(ind_a !== nothing) && (r *= "+a" * string(labels[ind_a]))
 	else
 		_pos = (pos === nothing) ? (1:length(labels)) : pos
 		r = helper3_axes((pos=_pos, label=labels), primary, axis)
