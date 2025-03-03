@@ -250,6 +250,7 @@
 	pcolor(G.x, G.y, G.z, labels=:y, show=false)
 	pcolor(G.x, G.y, G.z, labels=1)
 	pcolor(G, labels=1, font=(angle=45, font=(5,:red)))
+	pcolor(GMT.cor(rand(4,4)), labels=:y);
 	x = -20:5:40; y = 30:5:50;
 	GMT.boxes(x,y, grdlandmask=:water);
 	GMT.boxes(meshgrid(x,y)...);
@@ -288,7 +289,7 @@
 	bar(rand(20),hbar=(width=0.5,unit=:c, base=9), Vd=dbg2)
 	bar(rand(20),bar="0.5c+b9",  Vd=dbg2)
 	bar(rand(20),hbar="0.5c+b9",  Vd=dbg2)
-	bar(rand(10), xaxis=(custom=(pos=1:5,type="A"),), Vd=dbg2)
+	bar(rand(10), xaxis=(custom=(pos=1:5,type="A",angle=45),), Vd=dbg2)
 	bar(rand(10), axis=(custom=(pos=1:5,label=[:a :b :c :d :e]),), Vd=dbg2)
 	bar((1,2,3), Vd=dbg2)
 	bar((1,2,3), (1,2,3), Vd=dbg2)

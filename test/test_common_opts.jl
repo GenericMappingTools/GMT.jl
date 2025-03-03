@@ -184,7 +184,7 @@
 	@test GMT.parse_B(Dict(:frame => :full), "")[1] == " -Baf -BWSEN"
 	@test GMT.parse_B(Dict(:title => "BlaBla", :frame => :none), "")[1] == " -B+tBlaBla"
 	GMT.helper2_axes("lolo");
-	@test_throws ErrorException("Custom annotations NamedTuple must contain the member 'pos'") GMT.helper3_axes((a=0,),"","")
+	@test_throws ErrorException("Custom annotations NamedTuple must contain at least one of: 'label' or 'pos' members.") GMT.helper3_axes((a=0,),"","")
 
 	@test GMT.consolidate_Baxes(" -Baf -BWSen -BpxaUfg10 -BWSen+taiai -Bpx+lai+sBlaBla -Bpyclixo.txt -Bsxa5f1") ==
 		" -BWSen -BpxaUfg10 -BWSen+taiai -Bpx+lai+sBlaBla -Bpyclixo.txt -Bsxa5f1"
@@ -222,7 +222,7 @@
 	@test GMT.line_decorated_with_symbol(Dict()) == " -S~d0.88:+sc0.11+gwhite+p0.75,black"
 	@test_throws ErrorException("Argument of the *bar* keyword can be only a string or a NamedTuple.") GMT.parse_bar_cmd(Dict(:a => 0), :a, "", "")
 
-	@test_throws ErrorException("Custom annotations NamedTuple must contain the member 'pos'") GMT.helper3_axes((post=1:5,), "p", "x")
+	@test_throws ErrorException("Custom annotations NamedTuple must contain at least one of: 'label' or 'pos' members.") GMT.helper3_axes((post=1:5,), "p", "x")
 	GMT.helper3_axes(1,"","")		# Trigger a warning
 
 	dt = collect(Dates.DateTime(Dates.now()):Dates.Month(6):Dates.DateTime(Dates.now() + Dates.Year(10)));
