@@ -178,7 +178,7 @@ export
 	findpeaks, makeDCWs, mksymbol, circfit,
 
 	gunique, sortslicesperm,
-	hampel, hampel!, whittaker,
+	hampel, hampel!, lowess, whittaker,
 
 	Ginnerjoin, Gouterjoin, Gleftjoin, Grightjoin, Gcrossjoin, Gsemijoin, Gantijoin, spatialjoin,
 	groupby, stats,
@@ -337,6 +337,7 @@ include("potential/gravfft.jl")
 include("potential/grdseamount.jl")
 include("spotter/grdrotater.jl")
 include("windbarbs/windbarbs.jl")
+include("lowess.jl")
 include("whittaker.jl")
 include("zscale.jl")
 include("drawing.jl")
