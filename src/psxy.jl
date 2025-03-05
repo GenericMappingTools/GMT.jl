@@ -262,6 +262,7 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 
 	finish = (is_ternary && occursin(" -M",_cmd[1])) ? false : true		# But this case (-M) is bugged still in 6.2.0
 	R = finish_PS_module(d, _cmd, "", K, O, finish, arg1, arg2, arg3, arg4)
+	LEGEND_TYPE[1].Vd = 0					# Because for nested calls with legends this was still > 0, which screwed later
 	CTRL.pocket_d[1] = d					# Store d that may be not empty with members to use in other modules
 	(opt_B == " -B") && gmt_restart()		# For some Fking mysterious reason (see Ex45)
 	return R
