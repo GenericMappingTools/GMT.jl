@@ -1,6 +1,6 @@
 module GMT
 
-using Printf, Dates, Statistics, Downloads
+using Printf, Dates, Statistics, Downloads, SparseArrays
 using Tables: Tables
 using PrettyTables
 using PrecompileTools
@@ -178,7 +178,7 @@ export
 	findpeaks, makeDCWs, mksymbol, circfit,
 
 	gunique, sortslicesperm,
-	hampel, hampel!,
+	hampel, hampel!, whittaker,
 
 	Ginnerjoin, Gouterjoin, Gleftjoin, Grightjoin, Gcrossjoin, Gsemijoin, Gantijoin, spatialjoin,
 	groupby, stats,
@@ -337,6 +337,7 @@ include("potential/gravfft.jl")
 include("potential/grdseamount.jl")
 include("spotter/grdrotater.jl")
 include("windbarbs/windbarbs.jl")
+include("whittaker.jl")
 include("zscale.jl")
 include("drawing.jl")
 include("get_enums.jl")

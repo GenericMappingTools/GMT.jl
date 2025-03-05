@@ -10,8 +10,6 @@ using FFTW
 	global dbg2 = 2			# Either 2 or 3. 3 to test the used kwargs
 	global dbg0 = 0			# With 0 prints only the non-consumed options. Set to -1 to ignore this Vd
 
-	include("test_signalcorr.jl")
-
 	GMT.GMT_Get_Version();
 	ma=[0];mi=[0];pa=[0];
 	GMT.GMT_Get_Version(ma,mi,pa);
@@ -29,6 +27,8 @@ using FFTW
 	println("		Entering: test_proj4.jl")
 	include("test_proj4.jl")
 
+	include("test_whittaker.jl")
+	include("test_signalcorr.jl")
 	println("	MAGREF")
 	include("test_mgd77.jl")
 	println("	CUBES")
