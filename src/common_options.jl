@@ -4407,7 +4407,8 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 		CTRL.pocket_call[3] = nothing		# Reset
 		fi = 2		# First index, the one that the args... respect, start at 2
 	end
-	for k = fi:lastindex(cmd)
+	n_cmds = length(cmd)
+	for k = fi:n_cmds
 		is_psscale = (startswith(cmd[k], "psscale") || startswith(cmd[k], "colorbar"))
 		is_pscoast = (startswith(cmd[k], "pscoast") || startswith(cmd[k], "coast"))
 		is_basemap = (startswith(cmd[k], "psbasemap") || startswith(cmd[k], "basemap"))
@@ -4440,7 +4441,11 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 			continue
 		end
 		# Allow also plot data from a nested call to plot
-		P = !(k > fi && is_plot && (CTRL.pocket_call[1] !== nothing)) ? gmt(cmd[k], args...) : gmt(cmd[k], get_pocket_call())
+		cond = !(k > fi && is_plot && (CTRL.pocket_call[1] !== nothing))
+		# Next line means cases like 'plot(D, marker=:circ, ms="4p", lt=0.5, plot=(data=...))' where data in 'D'
+		# must be used twice before we pass to the next 'plot' (a nested call).
+		!cond && is_plot && (k == fi + 1) && (k < n_cmds) && contains(cmd[k], " -S") && (cond = true)
+		P = cond ? gmt(cmd[k], args...) : gmt(cmd[k], get_pocket_call())
 
 		# If we had a double frame to plot Geog on a Cartesian plot we must reset memory to original -J & -R so
 		# that appending other plots to same fig can continue to work and not fail because proj had become Geog.

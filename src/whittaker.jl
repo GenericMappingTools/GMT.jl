@@ -38,7 +38,7 @@ t = 2001:0.003:2007;
 _v = 5*cospi.((t .- 2000)/2); v = _v + (5*rand(length(t)) .- 2.5);
 v[2002.6 .< t .< 2003.4] .= NaN;
 z = whittaker(t, v, 0.01, 3);
-plot(t, v, legend="Noisy", plot=(data=[t _v], lc=:green, lt=1, legend="Original"), show=1)
+plot(t, v, legend="Noisy", plot=(data=[t _v], lc=:green, lt=1, legend="Original"))
 plot!(t, z, lc=:red, lt=1, legend="Degree 3", show=1)
 ```
 """
