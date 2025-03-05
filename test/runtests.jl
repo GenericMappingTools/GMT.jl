@@ -27,6 +27,7 @@ using FFTW
 	println("		Entering: test_proj4.jl")
 	include("test_proj4.jl")
 
+	include("test_lowess.jl")
 	include("test_whittaker.jl")
 	include("test_signalcorr.jl")
 	println("	MAGREF")
@@ -83,9 +84,7 @@ using FFTW
 	println("		Entering: test_solidos.jl")
 	include("test_solidos.jl")
 	include("test_statplots.jl")
-	println("		Entering: test_texture.jl")
 	include("test_texture.jl")
-	println("		Entering: test_pca.jl")
 	include("test_pca.jl")
 	println("		Entering: test_las.jl")
 	include("test_las.jl")
