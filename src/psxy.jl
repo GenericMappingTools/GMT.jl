@@ -404,7 +404,8 @@ function parse_plot_callers(d, gmt_proggy, caller, is3D, O, arg1)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function plt_txt_attrib!(D::GDtype, d::Dict, _cmd::Vector{String})
+plt_txt_attrib!(D::GMTdataset, d::Dict, _cmd::Vector{String}) = plt_txt_attrib!([D], d, _cmd)
+function plt_txt_attrib!(D::Vector{<:GMTdataset}, d::Dict, _cmd::Vector{String})
 	# Plot TEXT attributed labels and serve as function barrier agains to f Anys
 	((val = find_in_dict(d, [:labels])[1]) === nothing) && return nothing
 
