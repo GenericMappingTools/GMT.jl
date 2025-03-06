@@ -72,7 +72,7 @@ end
 
 function kernelDensity(mat::AbstractMatrix{<:Real}; nbins::Integer=200, bins::Vector{<:Real}=Vector{Real}(),
                        bandwidth=nothing, kernel::StrSymb="normal")
-	D = Vector{GMTdataset}(undef, size(mat,2))
+	D = Vector{GMTdataset{Float64,2}}(undef, size(mat,2))
 	for k = 1:size(mat,2)
 		D[k] = kernelDensity(Base.invokelatest(view, mat,:,k); nbins=nbins, bins=bins, bandwidth=bandwidth, kernel=kernel)
 	end
@@ -82,7 +82,7 @@ end
 function kernelDensity(mat::Vector{Vector{T}}; nbins::Integer=200, bins::Vector{<:Real}=Vector{Real}(),
                        bandwidth=nothing, kernel::StrSymb="normal") where T
 	# Differs from mat::AbstractMatrix in that inner vectors can have different size but matrices not (all cols same size)
-	D = Vector{GMTdataset}(undef, numel(mat))
+	D = Vector{GMTdataset{Float64,2}}(undef, numel(mat))
 	for k = 1:numel(mat)
 		D[k] = kernelDensity(mat[k]; nbins=nbins, bins=bins, bandwidth=bandwidth, kernel=kernel)
 	end
@@ -92,7 +92,7 @@ end
 function kernelDensity(mat::Vector{Vector{Vector{T}}}; nbins::Integer=200, bins::Vector{<:Real}=Vector{Real}(),
                        bandwidth=nothing, kernel::StrSymb="normal") where T
 	# First index is number of groups, second the number of violins/candles in each group. Third the number of points in each.
-	D = Vector{GMTdataset}(undef, sum(length.(mat[:])))
+	D = Vector{GMTdataset{Float64,2}}(undef, sum(length.(mat[:])))
 	k, kk = 0, 0
 	for ng = 1:length(mat)
 		for n = 1:length(mat[kk+=1])
@@ -275,8 +275,8 @@ function boxplot(data::Array{T,3}; pos::Vector{<:Real}=Vector{Real}(), first::Bo
 	N_grp = size(data,3)							# N elements in group
 	boxspacing = groupwidth / N_grp
 	offs = (0:N_grp-1) .- ((N_grp-1)/2);			# Isto se cada grupo ocupar uma unidade
-	D3 = Vector{GMTdataset}(undef, N_grp)			# As many as the number of elements in a group
-	Dol = Vector{GMTdataset}(undef, N_grp)
+	D3 = Vector{GMTdataset{Float64,2}}(undef, N_grp)			# As many as the number of elements in a group
+	Dol = Vector{GMTdataset{Float64,2}}(undef, N_grp)
 	mi, ma, nol = 1e100, -1e100, 0
 	for nig = 1:N_grp								# Loop over each element in the group
 		D3[nig], Dt = helper2_boxplot(Base.invokelatest(view, data,:,:,nig), pos, w, offs[nig]*boxspacing, _fill, showOL, isVert)
@@ -313,8 +313,8 @@ function boxplot(data::Vector{Vector{Vector{T}}}; pos::Vector{<:Real}=Vector{Rea
 
 	N_in_each_grp = length.(data[:])					# Vec with the N elements in each group
 	N_grp = length(N_in_each_grp)
-	Dol = Vector{GMTdataset}(undef, N_grp)
-	D3_ = Vector{GMTdataset}(undef, N_grp)				# As many as number of groups
+	Dol = Vector{GMTdataset{Float64,2}}(undef, N_grp)
+	D3_ = Vector{GMTdataset{Float64,2}}(undef, N_grp)				# As many as number of groups
 	_pos = !isempty(pos) ? pos : collect(1.0:N_grp)
 	mi, ma, nol = 1e100, -1e100, 0
 	for ng = 1:N_grp									# Loop over number of groups
@@ -585,8 +585,8 @@ function violin(data::Array{<:Real,3}; pos::Vector{<:Real}=Vector{Real}(), nbins
 	(!isempty(pos) && length(pos) != size(data,2)) && error("Coordinate vector 'pos' must have same size as columns in 'data'")
 	scatter = (find_in_kwargs(kwargs, [:scatter])[1] !== nothing)
 	isVert = (find_in_kwargs(kwargs, [:horizontal :hbar])[1] === nothing) ? true : false
-	D3 = Vector{GMTdataset}(undef, size(data,2)*size(data,3))
-	Ds = (scatter) ? Vector{GMTdataset}(undef, length(D3)) : Vector{GMTdataset}()
+	D3 = Vector{GMTdataset{Float64,2}}(undef, size(data,2)*size(data,3))
+	Ds = (scatter) ? Vector{GMTdataset{Float64,2}}(undef, length(D3)) : [GMTdataset()]
 	split = (find_in_kwargs(kwargs, [:split])[1] !== nothing)
 	(split && size(data,3) != 2) && (split=false; @warn("The split method requires groups of two violins only. Ignoring."))
 
@@ -615,8 +615,8 @@ function violin(data::Vector{Vector{Vector{T}}}; pos::Vector{<:Real}=Vector{Real
 
 	N_in_each_grp = length.(data[:])					# Vec with the N elements in each group
 	N_grp = length(N_in_each_grp)
-	D3 = Vector{GMTdataset}(undef, sum(N_in_each_grp))		# As many as ...
-	Ds = (scatter) ? Vector{GMTdataset}(undef, length(D3)) : Vector{GMTdataset}()
+	D3 = Vector{GMTdataset{Float64,2}}(undef, sum(N_in_each_grp))		# As many as ...
+	Ds = (scatter) ? Vector{GMTdataset{Float64,2}}(undef, length(D3)) : [GMTdataset()]
 	_pos = !isempty(pos) ? pos : collect(1.0:N_grp)
 	n, m = 0, 0
 	for nig = 1:N_grp									# Loop over number of groups
@@ -649,7 +649,7 @@ function helper1_violin(data::Union{Vector{Vector{T}}, AbstractMatrix{T}}, x::Ve
 	_x = !isempty(x) ? Float64.(x) : isa(data, AbstractMatrix) ? collect(1.0:size(data,2)) : collect(1.0:length(data))
 
 	Dv = kernelDensity(data; nbins=nbins, bins=bins, bandwidth=bandwidth, kernel=kernel)
-	Ds = (scatter) ? Vector{GMTdataset}(undef, length(Dv)) : Vector{GMTdataset}()
+	Ds = (scatter) ? Vector{GMTdataset{Float64,2}}(undef, length(Dv)) : [GMTdataset()]
 	for k = 1:numel(Dv)
 		xd, d = Base.invokelatest(view,Dv[k].data,:,1), Base.invokelatest(view,Dv[k].data,:,2)
 		d = 1/2N_grp * 0.75 * groupwidth .* d ./ maximum(d)
@@ -1177,7 +1177,7 @@ function parplot_helper(cmd0::String, arg1; first::Bool=true, axeslabels::Vector
 		end
 	end
 
-	D = Vector{GMTdataset}(undef, size(data,1))
+	D = Vector{GMTdataset{Float64,2}}(undef, size(data,1))
 	gc = helper_ds_fill(d; nc=numel(gidx))
 	isempty(gc) && (gc = (numel(gidx) < 8) ? matlab_cycle_colors : simple_distinct)		# Group colors
 	if (normalize == "range" || normalize == "" || normalize == "none")

@@ -175,7 +175,7 @@ function grdinterp_local_opt_S(arg1::GItype, pts::Vector{<:GMTdataset}, no_coord
 	# This whole thing needs further documentation and testing.
 	n_layers = size(arg1,3)
 	startcol = no_coords ? 0 : 2
-	D = Vector{GMTdataset}(undef, length(pts))
+	D = Vector{GMTdataset{Float64,2}}(undef, length(pts))
 	DT = no_coords ? eltype(arg1) : eltype(pts[1])		# When we have coordinates, their type dominates.
 	(DT <: Integer) && (DT = eltype(pts[1]))			# We don't want conversions to integers that are a pain. Specially if UInt8.
 	for n = 1:length(pts)					# Loop over number of segments and initialize the output dataset vector

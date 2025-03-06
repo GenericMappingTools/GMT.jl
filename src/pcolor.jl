@@ -104,7 +104,7 @@ function pcolor(X_::VMr, Y_::VMr, C::Union{Nothing, AbstractMatrix{<:Real}}, fir
 		[Y[k] -= yinc2 for k = 1:numel(Y)];	append!(Y, Y[end]+yinc)
 	end
 
-	D, k = Vector{GMTdataset}(undef, length(C)), 0
+	D, k = Vector{GMTdataset{Float64,2}}(undef, length(C)), 0
 	if (isvector(X))
 		for col = 1:length(X)-1, row = 1:length(Y)-1	# Gdal.wkbPolygon = 3
 			if (k == 0) 
@@ -283,7 +283,7 @@ function boxes(X::VMr, Y::VMr, d::Dict{Symbol,Any})
 	end
 
 	n_tiles = isvector(X) ? (length(X) - 1)*(length(Y) - 1) : (size(X,1) - 1)*(size(X,2) - 1)
-	D, k = Vector{GMTdataset}(undef, n_tiles), 0
+	D, k = Vector{GMTdataset{promote_type(eltype(X), eltype(Y)), 2}}(undef, n_tiles), 0
 	if (isvector(X))
 		for col = 1:length(X)-1, row = 1:length(Y)-1
 			(isautomask && Gmask.z[row, col] != mask_true) && continue

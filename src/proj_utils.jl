@@ -312,7 +312,7 @@ buffergeo(D::GMTdataset; width=0, unit=:m, np=120, flatstart=false, flatend=fals
 	buffergeo(D.data; width=width, unit=unit, np=np, flatstart=flatstart, flatend=flatend, proj=D.proj4, epsg=epsg, tol=tol)
 
 function buffergeo(D::Vector{<:GMTdataset}; width=0, unit=:m, np=120, flatstart=false, flatend=false, epsg::Integer=0, tol=-1.0)
-	_D = Vector{GMTdataset}(undef, length(D))
+	_D = Vector{GMTdataset{Float64,2}}(undef, length(D))
 	for k = 1:length(D)
 		_D[k] = buffergeo(D[k].data; width=width, unit=unit, np=np, flatstart=flatstart, flatend=flatend,
 		                  proj=D[1].proj4, epsg=epsg, tol=tol)
@@ -432,7 +432,7 @@ geodesic(ds::Gdal.AbstractDataset; step=0.0, unit=:m, np=0, proj::String="", eps
 
 function geodesic(D::Vector{<:GMTdataset}; step=0.0, unit=:m, np=0, proj::String="", epsg::Integer=0,
 	              longest::Bool=false)
-	_D = Vector{GMTdataset}(undef, length(D))
+	_D = Vector{GMTdataset{Float64,2}}(undef, length(D))
 	for k = 1:length(D)
 		_D[k] = mat2ds(geodesic(D[k].data; step=step, unit=unit, np=np, proj = (proj == "") ? D[k].proj4 : proj,
 		               epsg=epsg, longest=longest))
@@ -613,7 +613,7 @@ function helper_gdirect(projPJ_ptr, lonlat, azim, dist, proj_string, isgeog, dat
 			(length(dist) != n_lines) && (proj_destroy(projPJ_ptr);error("Number of distance vectors MUST be equal to number of azimuths"))
 			Vdist = dist
 		end
-		D = Vector{GMTdataset}(undef, n_lines)
+		D = Vector{GMTdataset{Float64,2}}(undef, n_lines)
 		for nl = 1:n_lines
 			n_pts = length(Vdist[nl])					# Number of points in this line
 			dest = Array{Float64}(undef, n_pts, 3)		# Azimuth goes into the D too
