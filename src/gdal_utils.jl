@@ -1047,7 +1047,7 @@ Return a vector of GMTdatasets from a vector of WKT strings.
 """
 function readgeom(wkt::Vector{String})
 	n_ds = length(wkt)
-	D::Vector{GMTdataset} = Vector{GMTdataset}(undef, n_ds)
+	D = Vector{GMTdataset}(undef, n_ds)
 	for k = 1:n_ds
 		D[k] = gd2gmt(fromWKT(wkt[k]))
 	end

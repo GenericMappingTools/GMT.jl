@@ -72,7 +72,7 @@ end
 
 function kernelDensity(mat::AbstractMatrix{<:Real}; nbins::Integer=200, bins::Vector{<:Real}=Vector{Real}(),
                        bandwidth=nothing, kernel::StrSymb="normal")
-	D::Vector{GMTdataset} = Vector{GMTdataset}(undef, size(mat,2))
+	D = Vector{GMTdataset}(undef, size(mat,2))
 	for k = 1:size(mat,2)
 		D[k] = kernelDensity(Base.invokelatest(view, mat,:,k); nbins=nbins, bins=bins, bandwidth=bandwidth, kernel=kernel)
 	end
@@ -82,7 +82,7 @@ end
 function kernelDensity(mat::Vector{Vector{T}}; nbins::Integer=200, bins::Vector{<:Real}=Vector{Real}(),
                        bandwidth=nothing, kernel::StrSymb="normal") where T
 	# Differs from mat::AbstractMatrix in that inner vectors can have different size but matrices not (all cols same size)
-	D::Vector{GMTdataset} = Vector{GMTdataset}(undef, numel(mat))
+	D = Vector{GMTdataset}(undef, numel(mat))
 	for k = 1:numel(mat)
 		D[k] = kernelDensity(mat[k]; nbins=nbins, bins=bins, bandwidth=bandwidth, kernel=kernel)
 	end
@@ -92,7 +92,7 @@ end
 function kernelDensity(mat::Vector{Vector{Vector{T}}}; nbins::Integer=200, bins::Vector{<:Real}=Vector{Real}(),
                        bandwidth=nothing, kernel::StrSymb="normal") where T
 	# First index is number of groups, second the number of violins/candles in each group. Third the number of points in each.
-	D::Vector{GMTdataset} = Vector{GMTdataset}(undef, sum(length.(mat[:])))
+	D = Vector{GMTdataset}(undef, sum(length.(mat[:])))
 	k, kk = 0, 0
 	for ng = 1:length(mat)
 		for n = 1:length(mat[kk+=1])
@@ -276,7 +276,7 @@ function boxplot(data::Array{T,3}; pos::Vector{<:Real}=Vector{Real}(), first::Bo
 	boxspacing = groupwidth / N_grp
 	offs = (0:N_grp-1) .- ((N_grp-1)/2);			# Isto se cada grupo ocupar uma unidade
 	D3 = Vector{GMTdataset}(undef, N_grp)			# As many as the number of elements in a group
-	Dol::Vector{GMTdataset} = Vector{GMTdataset}(undef, N_grp)
+	Dol = Vector{GMTdataset}(undef, N_grp)
 	mi, ma, nol = 1e100, -1e100, 0
 	for nig = 1:N_grp								# Loop over each element in the group
 		D3[nig], Dt = helper2_boxplot(Base.invokelatest(view, data,:,:,nig), pos, w, offs[nig]*boxspacing, _fill, showOL, isVert)
@@ -585,8 +585,8 @@ function violin(data::Array{<:Real,3}; pos::Vector{<:Real}=Vector{Real}(), nbins
 	(!isempty(pos) && length(pos) != size(data,2)) && error("Coordinate vector 'pos' must have same size as columns in 'data'")
 	scatter = (find_in_kwargs(kwargs, [:scatter])[1] !== nothing)
 	isVert = (find_in_kwargs(kwargs, [:horizontal :hbar])[1] === nothing) ? true : false
-	D3::Vector{GMTdataset} = Vector{GMTdataset}(undef, size(data,2)*size(data,3))
-	Ds::Vector{GMTdataset} = (scatter) ? Vector{GMTdataset}(undef, length(D3)) : Vector{GMTdataset}()
+	D3 = Vector{GMTdataset}(undef, size(data,2)*size(data,3))
+	Ds = (scatter) ? Vector{GMTdataset}(undef, length(D3)) : Vector{GMTdataset}()
 	split = (find_in_kwargs(kwargs, [:split])[1] !== nothing)
 	(split && size(data,3) != 2) && (split=false; @warn("The split method requires groups of two violins only. Ignoring."))
 
@@ -615,8 +615,8 @@ function violin(data::Vector{Vector{Vector{T}}}; pos::Vector{<:Real}=Vector{Real
 
 	N_in_each_grp = length.(data[:])					# Vec with the N elements in each group
 	N_grp = length(N_in_each_grp)
-	D3::Vector{GMTdataset} = Vector{GMTdataset}(undef, sum(N_in_each_grp))		# As many as ...
-	Ds::Vector{GMTdataset} = (scatter) ? Vector{GMTdataset}(undef, length(D3)) : Vector{GMTdataset}()
+	D3 = Vector{GMTdataset}(undef, sum(N_in_each_grp))		# As many as ...
+	Ds = (scatter) ? Vector{GMTdataset}(undef, length(D3)) : Vector{GMTdataset}()
 	_pos = !isempty(pos) ? pos : collect(1.0:N_grp)
 	n, m = 0, 0
 	for nig = 1:N_grp									# Loop over number of groups
@@ -1225,7 +1225,7 @@ function parplot_helper(cmd0::String, arg1; first::Bool=true, axeslabels::Vector
 end
 
 # ----------------------------------------------------------------------------------------------------------
-function plot_bands_from_vecDS(D::Vector{GMTdataset}, d, do_show, pen, gnames)
+function plot_bands_from_vecDS(D::Vector{<:GMTdataset}, d, do_show, pen, gnames)
 	# This function is needed because of a GMT bug that screws the polygons when headers have -G
 	d[:show], isname = false, false
 	lw::String, lc::String, ls::String = break_pen(pen)

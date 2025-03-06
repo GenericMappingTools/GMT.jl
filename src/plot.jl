@@ -1531,7 +1531,7 @@ function helper_hvband(mat::Matrix{<:Real}, tipo="v"; width=false, height=false,
 	else              ind_w, ind_b, ind_t, thick, bB = 9:10, 7, 9, height != 0, "B"
 	end
 
-	D::Vector{GMTdataset} = Vector{GMTdataset}(undef, n_ds)
+	D = Vector{GMTdataset}(undef, n_ds)
 	for k = 1:n_ds
 		w = (thick) ? mat[k,2] : (percent != 0) ? mat[k,2]*diff(CTRL.limits[ind_w]) : mat[k,2]-mat[k,1]	# bar width
 		i = rem(k, length(colors)); (i == 0) && (i = length(colors))

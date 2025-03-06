@@ -342,7 +342,7 @@ Base.@kwdef struct GMTtypes
 	grd::GMTgrid = GMTgrid()
 	img::GMTimage = GMTimage()
 	ds::GMTdataset = GMTdataset()
-	dsv::Vector{GMTdataset} = [GMTdataset()]
+	dsv::Vector{GMTdataset::Vector{GMTdataset}} = [GMTdataset()]
 	cpt::GMTcpt = GMTcpt()
 	ps::GMTps = GMTps()
 	function GMTtypes(stored, grd, img, ds, dsv, cpt, ps)
