@@ -1725,7 +1725,7 @@ because we may want to see the inside of a top surface.
 and `x` and `y` are in degrees, case in which an automatic projection takes place, or in meters. We need this
 if we want that the normal compuations makes sense.
 """
-function sort_visible_triangles(Dv::Vector{<:GMTdataset}; del_hidden=false, zfact=1.0)::Vector{GMTdataset}
+function sort_visible_triangles(Dv::Vector{<:GMTdataset}; del_hidden=false, zfact=1.0)
 	azim, elev = parse.(Float64, split(CURRENT_VIEW[1][4:end], '/'))
 	sin_az, cos_az, sin_el = sind(azim), cosd(azim), sind(elev)
 	prj, wkt, epsg = Dv[1].proj4, Dv[1].wkt, Dv[1].epsg
@@ -1818,14 +1818,14 @@ or, to plot them
 viz(FV, replicate=(centers=rand(10,3)*10, scales=0.1))
 ```
 """
-function replicant(FV::GMTfv; kwargs...)::Vector{GMTdataset}		# For direct calls to replicat()
+function replicant(FV::GMTfv; kwargs...)		# For direct calls to replicat()
 	d = KW(kwargs)
 	(is_in_dict(d, [:p :view :perspective]) === nothing) && (CURRENT_VIEW[1] = " -p217.5/30")
 	replicant(FV, d)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function replicant(FV::GMTfv, d::Dict{Symbol, Any})::Vector{GMTdataset}
+function replicant(FV::GMTfv, d::Dict{Symbol, Any})
 	(val = find_in_dict(d, [:replicate])[1]) === nothing && error("Can't replicate without the 'replicate' option")
 
 	cpt::GMTcpt = GMTcpt()
@@ -1867,7 +1867,7 @@ function replicant(FV::GMTfv, d::Dict{Symbol, Any})::Vector{GMTdataset}
 end
 
 # ---------------------------------------------------------------------------------------------------
-function replicant_worker(FV::GMTfv, xyz, azim, elev, cval, cpt, scales)::Vector{GMTdataset}
+function replicant_worker(FV::GMTfv, xyz, azim, elev, cval, cpt, scales)
 	# This guy is the one who does the replicant work
 
 	FV, normals = sort_visible_faces(FV, azim, elev)	# Return a modified FV containing info about the sorted visible faces.

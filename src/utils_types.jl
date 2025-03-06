@@ -141,7 +141,7 @@ end
 #function mat2ds(mat::Vector{<:AbstractMatrix}; hdr=String[], kwargs...)
 function mat2ds(mat::Vector{<:AbstractMatrix}, hdr::Vector{String}, d::Dict)
 	#d = KW(kwargs)
-	D::Vector{GMTdataset} = Vector{GMTdataset}(undef, length(mat))
+	D = Vector{GMTdataset}(undef, length(mat))
 	pen   = find_in_dict(d, [:pen])[1]
 	color = find_in_dict(d, [:lc :linecolor :color])[1]
 	ls    = find_in_dict(d, [:ls :linestyle])[1]
@@ -345,7 +345,7 @@ function _mat2ds(mat::Array{T,N}, txt::Union{String,Vector{String}}, hdr::Vector
 	!isempty(att) && !isa(att, Dict{String, Union{String, Vector{String}}}) && error("Attributs must be a Dict{String, Union{String, Vector{String}}}")
 	txtcol::Vector{String} = ((val = find_in_dict(d, [:txtcol :textcol])[1]) !== nothing) ? val : String[]
 
-	D::Vector{GMTdataset} = Vector{GMTdataset}(undef, n_ds)
+	D = Vector{GMTdataset}(undef, n_ds)
 
 	function segnan_mat(mat, coln, _hdr, is_geog, prj, _geom, xx=Float64[])
 		# Create a multi-segment where segments are separated by NaNs.
@@ -895,7 +895,7 @@ Split a GMTdataset by the unique values of the column selected by `col`.
 to a column with integers (normaly a flint (Floating Point Integer)), or a string column. _i.e.,_ the last
 column in a GMTdataset.
 """
-function groupby(D::GMTdataset, cols::Union{String,Symbol,Int})::Vector{GMTdataset}
+function groupby(D::GMTdataset, cols::Union{String,Symbol,Int})
 	n_cols = size(D.data, 2)
 	colnames = !isempty(D.colnames) ? D.colnames : ["col.$i" for i=1:n_cols]
 	!isempty(D.text) && length(colnames) == n_cols && push!(colnames, "Text")	# 'Text' is the text column generic name
@@ -1131,7 +1131,7 @@ function color_gradient_line(D::GMTdataset; is3D::Bool=false, color_col::Int=3, 
 	mat2ds(mat, proj=D.proj4, wkt=D.wkt, geom=wkbLineString)
 end
 
-function color_gradient_line(Din::Vector{<:GMTdataset}; is3D::Bool=false, color_col::Int=3, first::Bool=true)::Vector{GMTdataset}
+function color_gradient_line(Din::Vector{<:GMTdataset}; is3D::Bool=false, color_col::Int=3, first::Bool=true)
 	D = Vector{GMTdataset}(undef, length(Din))
 	for k = 1:length(Din)
 		D[k] = color_gradient_line(Din[k], is3D=is3D, color_col=color_col, first=first)

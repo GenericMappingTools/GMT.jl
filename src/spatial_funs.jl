@@ -444,7 +444,7 @@ A GMTdatset if only one polygon was passed or a Vector{GMTaset} otherwise.
 randinpolygon(mat::Matrix{<:AbstractFloat}; density=0.1, np::Int=0) = randinpolygon(mat2ds(mat); density=density, np=np)
 function randinpolygon(Din::GDtype; density=0.1, np::Int=0)
 
-	D::Vector{GMTdataset} = Vector{GMTdataset}(undef, isa(Din, Vector) ? length(Din) : 1)
+	D = Vector{GMTdataset}(undef, isa(Din, Vector) ? length(Din) : 1)
 
 	function get_the_points(_D, dx, dy, density, np, isgeo)
 		# Points are returned in same data types as those of _D

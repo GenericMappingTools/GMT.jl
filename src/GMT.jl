@@ -199,7 +199,7 @@ include("gdal.jl")
 include("gdal_utils.jl")
 include("proj_utils.jl")
 using GMT.Gdal
-const global MatGDsGd = Union{Matrix{<:AbstractFloat}, GMTdataset, Vector{GMTdataset}, Gdal.AbstractDataset}
+const global MatGDsGd = Union{Matrix{<:AbstractFloat}, GMTdataset, Vector{<:GMTdataset}, Gdal.AbstractDataset}
 const global CURRENT_CPT = [GMTcpt()]		# To store the current palette
 
 include("gmt_main.jl")

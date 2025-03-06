@@ -349,7 +349,7 @@ Compute the vertical wall between grid's concave hull `Bt` with a fixed or varia
 ### Returns
 - A vector of GMTdataset or a GMTfv
 """
-function vwall(Bt::Union{Matrix{<:Real}, GMTdataset}, thk::Union{<:Real, AbstractVector{<:Real}}; isbase::Bool=false)::Vector{GMTdataset}
+function vwall(Bt::Union{Matrix{<:Real}, GMTdataset}, thk::Union{<:Real, AbstractVector{<:Real}}; isbase::Bool=false)
 	# Method to be called to return a [GMTdataset]
 	Bb = helper_vwall(Bt, thk, isbase)
 	vwall(Bt, Bb)
