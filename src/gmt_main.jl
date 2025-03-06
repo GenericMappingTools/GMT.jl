@@ -1371,7 +1371,7 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)::Union{GMTdat
 		(n_islands > 0) && println("\tThis file has islands (holes in polygons).\n\tUse `gmtread(..., no_islands=true)` to ignore them.")
 	end
 
-	D::Vector{GMTdataset} = Vector{GMTdataset}(undef, n_total_segments)
+	D = Vector{GMTdataset{Float64, 2}}(undef, n_total_segments)
 
 	n = 1
 	attrib = DictSvS();	# For the case there are no attribs at all.
@@ -1702,7 +1702,7 @@ Base.:show(io::IO, mime::MIME"image/png", wp::WrapperPluto) = write(io, read(wp.
 # ---------- For Tables -----------------------------------------------------------------------------
 Base.:names(D::GDtype) = isa(D, Vector) ? D[1].colnames : D.colnames
 #Base.:names(D::GMTdataset) = D.colnames
-#Base.:names(D::Vector{GMTdataset}) = D[1].colnames
+#Base.:names(D::Vector{<:GMTdataset}) = D[1].colnames
 
 # ---------- For fck stop printing UInts in hexadecinal ---------------------------------------------
 #Base.show(io::IO, x::T) where {T<:Union{UInt, UInt128, UInt64, UInt32, UInt16, UInt8}} = Base.print(io, x)

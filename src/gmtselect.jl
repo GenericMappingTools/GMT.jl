@@ -108,7 +108,7 @@ function clipbyrect(D::Vector{<:GMTdataset}, limits; revert::Bool=false)
 		cross[k] = !in[k] && !out
 	end
 	revert && (in .= .!in)
-	Dclipped = Vector{GMTdataset}(undef, sum(in)+sum(cross))
+	Dclipped = Vector{GMTdataset{Float64,2}}(undef, sum(in)+sum(cross))
 	m = 0
 	for k = 1:numel(D)
 		in[k] && (Dclipped[m+=1] = deepcopy(D[k]))

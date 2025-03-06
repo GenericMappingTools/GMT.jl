@@ -19,7 +19,7 @@ function text_record(data, text::Union{String, Vector{String}, Vector{Vector{Str
 	elseif (isa(text, Array{Array}) || isa(text, Array{Vector{String}}))
 		nl_t = length(text);	nl_d = size(data,1)
 		(nl_d > 0 && nl_d != nl_t) && error("Number of data points ($nl_d) is not equal to number of text strings ($nl_t).")
-		T = Vector{GMTdataset}(undef,nl_t)
+		T = Vector{GMTdataset{Float64, 2}}(undef,nl_t)
 		for k = 1:nl_t
 			T[k] = GMTdataset((nl_d == 0 ? fill(NaN, length(text[k]) ,2) : data[k]), Float64[], Float64[], DictSvS(), String[], text[k], (isempty(hdr) ? "" : hdr[k]), Vector{String}(), "", "", 0, 0)
 		end
@@ -141,7 +141,7 @@ end
 #function mat2ds(mat::Vector{<:AbstractMatrix}; hdr=String[], kwargs...)
 function mat2ds(mat::Vector{<:AbstractMatrix}, hdr::Vector{String}, d::Dict)
 	#d = KW(kwargs)
-	D::Vector{GMTdataset} = Vector{GMTdataset}(undef, length(mat))
+	D = Vector{GMTdataset{eltype(mat[1]), 2}}(undef, length(mat))
 	pen   = find_in_dict(d, [:pen])[1]
 	color = find_in_dict(d, [:lc :linecolor :color])[1]
 	ls    = find_in_dict(d, [:ls :linestyle])[1]
@@ -345,7 +345,7 @@ function _mat2ds(mat::Array{T,N}, txt::Union{String,Vector{String}}, hdr::Vector
 	!isempty(att) && !isa(att, Dict{String, Union{String, Vector{String}}}) && error("Attributs must be a Dict{String, Union{String, Vector{String}}}")
 	txtcol::Vector{String} = ((val = find_in_dict(d, [:txtcol :textcol])[1]) !== nothing) ? val : String[]
 
-	D::Vector{GMTdataset} = Vector{GMTdataset}(undef, n_ds)
+	D = Vector{GMTdataset{isempty(xx) ? eltype(mat) : Float64, 2}}(undef, n_ds)
 
 	function segnan_mat(mat, coln, _hdr, is_geog, prj, _geom, xx=Float64[])
 		# Create a multi-segment where segments are separated by NaNs.
@@ -471,7 +471,7 @@ function mat2dsnan(mat::Matrix{<:Real}; is3D=false, kw...)
 	is3D && (ind = ind .| isnan.(view(mat, :, 3)))
 	ind2 = [1, findall(diff(ind) .!= 0) .+ 1 ..., size(mat,1)+1]	# Indices of boundaries between NaNs
 	n_ds = length(ind2) - 1
-	Dm = Vector{GMTdataset}(undef, n_ds)
+	Dm = Vector{GMTdataset{eltype(mat),2}}(undef, n_ds)
 	for k = 1:n_ds
 		Dm[k] = mat2ds(mat[ind2[k]:ind2[k+1]-1, :], kw...)
 	end
@@ -640,7 +640,7 @@ function ds2ds(D::GMTdataset, is3D::Bool, d::Dict)::Vector{<:GMTdataset}
 		(D.header != _hdr[1]) && (_hdr[1] = D.header * _hdr[1])	# Copy eventual contents of first header
 	end
 
-	Dm = Vector{GMTdataset}(undef, n_ds)
+	Dm = Vector{GMTdataset{eltype(D.data),2}}(undef, n_ds)
 	if (multi == 'r')
 		for k = 1:n_ds
 			Dm[k] = GMTdataset(D.data[k:k, :], Float64[], Float64[], DictSvS(), String[], String[], (isempty(_fill) ? "" : _hdr[k]), String[], "", "", 0, wkbPoint)
@@ -895,7 +895,7 @@ Split a GMTdataset by the unique values of the column selected by `col`.
 to a column with integers (normaly a flint (Floating Point Integer)), or a string column. _i.e.,_ the last
 column in a GMTdataset.
 """
-function groupby(D::GMTdataset, cols::Union{String,Symbol,Int})::Vector{GMTdataset}
+function groupby(D::GMTdataset, cols::Union{String,Symbol,Int})
 	n_cols = size(D.data, 2)
 	colnames = !isempty(D.colnames) ? D.colnames : ["col.$i" for i=1:n_cols]
 	!isempty(D.text) && length(colnames) == n_cols && push!(colnames, "Text")	# 'Text' is the text column generic name
@@ -913,7 +913,7 @@ function groupby(D::GMTdataset, cols::Union{String,Symbol,Int})::Vector{GMTdatas
 		vv = Vector{Vector{Int}}(undef, length(ids))
 		for k = 1:numel(ids)  vv[k] = findall(view(D.data, :, cn) .== ids[k])  end
 	end
-	Dv = Vector{GMTdataset}(undef, numel(vv))
+	Dv = Vector{GMTdataset{eltype(D.data),2}}(undef, numel(vv))
 	for k = 1:numel(vv)								# Loop over groups
 		Dv[k] = mat2ds(D, (vv[k], :))
 	end
@@ -976,7 +976,7 @@ Extract data from a GeometryBasics Mesh type and return it in a vector of GMTdat
 """
 function mesh2ds(mesh)
 	(!startswith(string(typeof(mesh)), "Mesh{3,")) && error("Argument must be a GeometryBasics mesh")
-	D = Vector{GMTdataset}(undef, length(mesh))
+	D = Vector{GMTdataset{Float64, 2}}(undef, length(mesh))
 	for k = 1:numel(mesh)
 		D[k] = GMTdataset(data = [mesh[k].points.data[1].data[1] mesh[k].points.data[1].data[2] mesh[k].points.data[1].data[3];
 			                      mesh[k].points.data[2].data[1] mesh[k].points.data[2].data[2] mesh[k].points.data[2].data[3];
@@ -1113,7 +1113,7 @@ isODE(arg) = (fs = fields(arg); return (!isempty(fs) && (fs[1] == :u && any(fs .
 israsters(arg) = (fs = fields(arg); return (length(fs) >= 6 && (fs[1] == :data && fs[end] == :missingval)) ? true : false)
 
 # ---------------------------------------------------------------------------------------------------
-function color_gradient_line(D::Matrix{<:Real}; is3D::Bool=false, color_col::Int=3, first::Bool=true)::Matrix{Real}
+function color_gradient_line(D::Matrix{<:Real}; is3D::Bool=false, color_col::Int=3, first::Bool=true)
 	# Reformat a Mx2 (or Mx3) matrix so that it can be used as vectors with no head/tail but varying
 	# color determined by last column and using plot -Sv+s -W+cl
 	(!is3D && size(D,2) < 2) && error("This function requires that the data matrix has at least 2 columns")
@@ -1131,8 +1131,8 @@ function color_gradient_line(D::GMTdataset; is3D::Bool=false, color_col::Int=3, 
 	mat2ds(mat, proj=D.proj4, wkt=D.wkt, geom=wkbLineString)
 end
 
-function color_gradient_line(Din::Vector{<:GMTdataset}; is3D::Bool=false, color_col::Int=3, first::Bool=true)::Vector{GMTdataset}
-	D = Vector{GMTdataset}(undef, length(Din))
+function color_gradient_line(Din::Vector{<:GMTdataset}; is3D::Bool=false, color_col::Int=3, first::Bool=true)
+	D = Vector{GMTdataset{Float64,2}}(undef, length(Din))
 	for k = 1:length(Din)
 		D[k] = color_gradient_line(Din[k], is3D=is3D, color_col=color_col, first=first)
 	end
@@ -1182,7 +1182,7 @@ function line2multiseg(M::Matrix{<:Real}; is3D::Bool=false, color::GMTcpt=GMTcpt
 		end
 	end
 
-	Dm = Vector{GMTdataset}(undef, n_ds)
+	Dm = Vector{GMTdataset{eltype(M),2}}(undef, n_ds)
 	geom = (is3D) ? Int(Gdal.wkbLineStringZ) : Int(Gdal.wkbLineString)
 	for k = 1:n_ds
 		Dm[k] = GMTdataset(M[k:k+1, :], Float64[], Float64[], DictSvS(), String[], String[], _hdr[k], String[], "", "", 0, geom)

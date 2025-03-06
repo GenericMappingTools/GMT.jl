@@ -219,7 +219,7 @@ function gd2gmt(geom::Gdal.AbstractGeometry, proj::String="")::Union{GMTdataset,
 		geom = Gdal.getgeom(geom,0)
 	elseif (gmtype == wkbMultiPolygon || gmtype == wkbMultiLineString || gmtype == Gdal.wkbGeometryCollection || gmtype == Gdal.wkbGeometryCollection25D)
 		n_pts = Gdal.ngeom(geom)
-		D = Vector{GMTdataset}(undef, n_pts)
+		D = Vector{GMTdataset{Float64, 2}}(undef, n_pts)
 		for k = 1:n_pts  D[k] = gd2gmt(Gdal.getgeom(geom,k-1), "")::GMTdataset  end
 		(proj != "") && (D[1].proj4 = proj)
 		set_dsBB!(D)				# Compute and set the BoundingBox's for this dataset
@@ -262,7 +262,7 @@ function gd2gmt(dataset::Gdal.AbstractDataset)
 	min_area = (get(POSTMAN[1], "min_polygon_area", "") != "") ? parse(Float64, POSTMAN[1]["min_polygon_area"]) : 0.0
 	max_area = (get(POSTMAN[1], "max_polygon_area", "") != "") ? parse(Float64, POSTMAN[1]["max_polygon_area"]) : 0.0
 	p_isgeog = (get(POSTMAN[1], "polygon_isgeog", "") != "") ? true : false
-	D, ds, get_area = Vector{GMTdataset}(undef, Gdal.ngeom(dataset)), 1, false
+	D, ds, get_area = Vector{GMTdataset{Float64, 2}}(undef, Gdal.ngeom(dataset)), 1, false
 	(get(POSTMAN[1], "sort_polygons", "") != "") && (polyg_area = zeros(length(D));		get_area = true)
 	proj = ""		# Fk local vars inside for 
 	for k = 1:Gdal.nlayer(dataset)
@@ -283,7 +283,7 @@ function gd2gmt(dataset::Gdal.AbstractDataset)
 				get_area && (polyg_area[ds] = geomarea(geom))	# This area will NOT be what is expected if geom is known to be geog
 				# Maybe when nlayers > 1 or other cases, starting allocated size is not enough
 				len_D = isa(_D, GMTdataset) ? 1 : length(_D)
-				(len_D + ds >= length(D)) && append!(D, Vector{GMTdataset}(undef, round(Int, 0.5 * length(D))))
+				(len_D + ds >= length(D)) && append!(D, Vector{GMTdataset{Float64, 2}}(undef, round(Int, 0.5 * length(D))))
 				if isa(_D, GMTdataset)
 					D[ds] = _D
 					D[ds].geom = gt
@@ -354,7 +354,7 @@ end
 # would not be able to extract the data from the 'dataset'
 function helper_read_XLSCSV(dataset::Gdal.AbstractDataset)::GDtype
 	n_layers = Gdal.nlayer(dataset)
-	D = Vector{GMTdataset}(undef, n_layers)
+	D = Vector{GMTdataset{Float64, 2}}(undef, n_layers)
 	local inds_r, inds_s					# n^inf Fck. If I don't do this here errors are completly non-sensical.
 	for n_layer = 1:n_layers
 		layer = getlayer(dataset, n_layer-1)
@@ -1047,7 +1047,7 @@ Return a vector of GMTdatasets from a vector of WKT strings.
 """
 function readgeom(wkt::Vector{String})
 	n_ds = length(wkt)
-	D::Vector{GMTdataset} = Vector{GMTdataset}(undef, n_ds)
+	D = Vector{GMTdataset}(undef, n_ds)
 	for k = 1:n_ds
 		D[k] = gd2gmt(fromWKT(wkt[k]))
 	end

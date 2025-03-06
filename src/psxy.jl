@@ -404,7 +404,8 @@ function parse_plot_callers(d, gmt_proggy, caller, is3D, O, arg1)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function plt_txt_attrib!(D::GDtype, d::Dict, _cmd::Vector{String})
+plt_txt_attrib!(D::GMTdataset, d::Dict, _cmd::Vector{String}) = plt_txt_attrib!([D], d, _cmd)
+function plt_txt_attrib!(D::Vector{<:GMTdataset}, d::Dict, _cmd::Vector{String})
 	# Plot TEXT attributed labels and serve as function barrier agains to f Anys
 	((val = find_in_dict(d, [:labels])[1]) === nothing) && return nothing
 
@@ -1725,7 +1726,7 @@ because we may want to see the inside of a top surface.
 and `x` and `y` are in degrees, case in which an automatic projection takes place, or in meters. We need this
 if we want that the normal compuations makes sense.
 """
-function sort_visible_triangles(Dv::Vector{<:GMTdataset}; del_hidden=false, zfact=1.0)::Vector{GMTdataset}
+function sort_visible_triangles(Dv::Vector{<:GMTdataset}; del_hidden=false, zfact=1.0)
 	azim, elev = parse.(Float64, split(CURRENT_VIEW[1][4:end], '/'))
 	sin_az, cos_az, sin_el = sind(azim), cosd(azim), sind(elev)
 	prj, wkt, epsg = Dv[1].proj4, Dv[1].wkt, Dv[1].epsg
@@ -1818,14 +1819,14 @@ or, to plot them
 viz(FV, replicate=(centers=rand(10,3)*10, scales=0.1))
 ```
 """
-function replicant(FV::GMTfv; kwargs...)::Vector{GMTdataset}		# For direct calls to replicat()
+function replicant(FV::GMTfv; kwargs...)		# For direct calls to replicat()
 	d = KW(kwargs)
 	(is_in_dict(d, [:p :view :perspective]) === nothing) && (CURRENT_VIEW[1] = " -p217.5/30")
 	replicant(FV, d)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function replicant(FV::GMTfv, d::Dict{Symbol, Any})::Vector{GMTdataset}
+function replicant(FV::GMTfv, d::Dict{Symbol, Any})
 	(val = find_in_dict(d, [:replicate])[1]) === nothing && error("Can't replicate without the 'replicate' option")
 
 	cpt::GMTcpt = GMTcpt()
@@ -1867,7 +1868,7 @@ function replicant(FV::GMTfv, d::Dict{Symbol, Any})::Vector{GMTdataset}
 end
 
 # ---------------------------------------------------------------------------------------------------
-function replicant_worker(FV::GMTfv, xyz, azim, elev, cval, cpt, scales)::Vector{GMTdataset}
+function replicant_worker(FV::GMTfv, xyz, azim, elev, cval, cpt, scales)
 	# This guy is the one who does the replicant work
 
 	FV, normals = sort_visible_faces(FV, azim, elev)	# Return a modified FV containing info about the sorted visible faces.
@@ -1875,8 +1876,8 @@ function replicant_worker(FV::GMTfv, xyz, azim, elev, cval, cpt, scales)::Vector
 	n_faces_tot = sum(size.(FV.faces_view, 1))			# Total number of segments or faces (polygons)
 
 	# ---------- First we convert the FV into a vector of GMTdataset
-	D1 = Vector{GMTdataset}(undef, n_faces_tot)
 	t = zeros(eltype(FV.verts), maximum(size.(FV.faces_view,2)), 3)	# The maximum number of vertices in any polygon of all geometries
+	D1 = Vector{GMTdataset{eltype(t),2}}(undef, n_faces_tot)
 	count_face = 0
 
 	for geom = 1:numel(FV.faces_view)					# If we have more than one type of geometries (e.g. triangles and quadrangles)
@@ -1894,7 +1895,7 @@ function replicant_worker(FV::GMTfv, xyz, azim, elev, cval, cpt, scales)::Vector
 	P::Ptr{GMT_PALETTE} = palette_init(G_API[1], cpt)	# A pointer to a GMT CPT
 	rgb = [0.0, 0.0, 0.0, 0.0]
 	cor = [0.0, 0.0, 0.0]
-	D2 = Vector{GMTdataset}(undef, size(xyz, 1) * n_faces_tot)
+	D2 = Vector{GMTdataset{promote_type(eltype(xyz), eltype(scales), eltype(t)),2}}(undef, size(xyz, 1) * n_faces_tot)
 
 	# ---------- Now we do the replication
 	for k = 1:size(xyz, 1)								# Loop over number of positions. For each of these we have a new body
