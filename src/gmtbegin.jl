@@ -473,7 +473,7 @@ function zoom2inset(d, center)
 	else
 		bak = CTRL.limits[7:end]						# Backup these because round_wesn will change them
 		nDS = (isa(data, Vector)) ? length(data) : 1
-		D = Vector{GMTdataset}(undef, nDS)
+		D = Vector{GMTdataset{Float64, 2}}(undef, nDS)
 		zoom_lims::Vector{Float64} = [Inf, -Inf, Inf, -Inf]
 		for k = 1:nDS
 			if (nDS == 1)

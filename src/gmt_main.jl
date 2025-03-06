@@ -1371,7 +1371,7 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)::Union{GMTdat
 		(n_islands > 0) && println("\tThis file has islands (holes in polygons).\n\tUse `gmtread(..., no_islands=true)` to ignore them.")
 	end
 
-	D = Vector{GMTdataset}(undef, n_total_segments)
+	D = Vector{GMTdataset{Float64, 2}}(undef, n_total_segments)
 
 	n = 1
 	attrib = DictSvS();	# For the case there are no attribs at all.
