@@ -64,7 +64,7 @@ function worldrectangular(GI::GItype; proj::StrSymb="+proj=vandg +over", pm=0, l
 	pad = (contains(proj, "wintri") && pad == 0) ? 120 : pad	# Winkel Tripel needs more
 	(pad == 0) && (pad = 90)		# The default value
 	res = (isa(coast, Symbol) || isa(coast, String)) ? string(coast) : (coast == 1 ? "crude" : "none")
-	coastlines = (res == "none" && isa(coast, GDtype)) ? coast : GMTdataset[]	# See if we have an costlines argin.
+	coastlines = (res == "none" && isa(coast, GDtype)) ? coast : GMTdataset{Float64,2}[]	# See if we have an costlines argin.
 	(isempty(coastlines) && !isa(coast, Bool) && res[1] != 'c' && res[1] != 'l' && res[1] != 'i'  && res[1] != 'h') && error("Bad input for the 'coast' option.")
 
 	if (pm >= 0)
@@ -134,7 +134,7 @@ A Vector of GMTdataset containing the projected (or not) world GSHHG coastlines 
 ### Example
     cl = coastlinesproj(proj="+proj=ob_tran +o_proj=moll +o_lon_p=40 +o_lat_p=50 +lon_0=60");
 """
-function coastlinesproj(; proj::StrSymb="", res="crude", coastlines::Vector{<:GMTdataset}=GMTdataset[], lonlim=Float64[])
+function coastlinesproj(; proj::StrSymb="", res="crude", coastlines::Vector{<:GMTdataset}=GMTdataset{Float64,2}[], lonlim=Float64[])
 	# Project the GSHHG coastlines with PROJ. 'proj' must be a valid proj4 string.
 	_proj = isa(proj, Symbol) ? string(proj) : proj
 	(_proj != "" && !startswith(_proj, "+proj=")) && (_proj = "+proj=" * _proj)
@@ -160,7 +160,7 @@ data that spans > 360 degrees.
 ### Returns
 A Vector of GMTdataset containing the projected world GSHHG coastlines at resolution `res`.
 """
-function worldrectcoast(; proj::StrSymb="", res="crude", coastlines::Vector{<:GMTdataset}=GMTdataset[], limits=Float64[], round=false)
+function worldrectcoast(; proj::StrSymb="", res="crude", coastlines::Vector{<:GMTdataset}=GMTdataset{Float64,2}[], limits=Float64[], round=false)
 	# Project also the coastlines to go along with the grid created by worldrectangular
 	_proj  = isa(proj, Symbol) ? string(proj) : proj	# Make it a string
 	cl     = (isempty(coastlines)) ? coast(dump=:true, res=res, region=:global) : coastlines
@@ -308,7 +308,7 @@ function worldrectgrid(; proj::StrSymb="", width=(30,20), grid=Vector{Vector{Rea
 		return nothing
 	end
 
-	Dgrid = Vector{GMTdataset}(undef, length(meridians)+length(parallels))
+	Dgrid = Vector{GMTdataset{Float64, 2}}(undef, length(meridians)+length(parallels))
 	n = 0
 	if (_proj != "")
 		for m = meridians

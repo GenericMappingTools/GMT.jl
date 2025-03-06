@@ -291,7 +291,7 @@ function boxes(X::VMr, Y::VMr, d::Dict{Symbol,Any})
 			else        D[k+=1] = mat2ds([X[col] Y[row]; X[col] Y[row+1]; X[col+1] Y[row+1]; X[col+1] Y[row]; X[col] Y[row]]; geom=3)
 			end
 		end
-		k == 0 && return GMTdataset[]
+		k == 0 && return GMTdataset{eltype(D.data),2}[]
 		(isautomask && k != (length(X)-1)*(length(Y)-1)) && deleteat!(D, k+1:n_tiles)	# Remove the unused D's
 		D[1].ds_bbox = [X[1], X[end], Y[1], Y[end]]
 		isautomask && set_dsBB!(D, false) 

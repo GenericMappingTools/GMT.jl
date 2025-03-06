@@ -1875,8 +1875,8 @@ function replicant_worker(FV::GMTfv, xyz, azim, elev, cval, cpt, scales)
 	n_faces_tot = sum(size.(FV.faces_view, 1))			# Total number of segments or faces (polygons)
 
 	# ---------- First we convert the FV into a vector of GMTdataset
-	D1 = Vector{GMTdataset}(undef, n_faces_tot)
 	t = zeros(eltype(FV.verts), maximum(size.(FV.faces_view,2)), 3)	# The maximum number of vertices in any polygon of all geometries
+	D1 = Vector{GMTdataset{eltype(t),2}}(undef, n_faces_tot)
 	count_face = 0
 
 	for geom = 1:numel(FV.faces_view)					# If we have more than one type of geometries (e.g. triangles and quadrangles)
@@ -1894,7 +1894,7 @@ function replicant_worker(FV::GMTfv, xyz, azim, elev, cval, cpt, scales)
 	P::Ptr{GMT_PALETTE} = palette_init(G_API[1], cpt)	# A pointer to a GMT CPT
 	rgb = [0.0, 0.0, 0.0, 0.0]
 	cor = [0.0, 0.0, 0.0]
-	D2 = Vector{GMTdataset}(undef, size(xyz, 1) * n_faces_tot)
+	D2 = Vector{GMTdataset{promote_type(eltype(xyz), eltype(scales), eltype(t)),2}}(undef, size(xyz, 1) * n_faces_tot)
 
 	# ---------- Now we do the replication
 	for k = 1:size(xyz, 1)								# Loop over number of positions. For each of these we have a new body
