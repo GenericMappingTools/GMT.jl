@@ -177,7 +177,7 @@ function streamlines(U::GMTgrid, V::GMTgrid, sx::VMr, sy::VMr; step=0.1, max_ver
 		t, n_allocated = helper_stream(x, y, x_vec, y_vec, n_rows, n_cols, isT, n_allocated)
 		return !isempty(t) ? mat2ds(t) : GMTdataset()
 	else
-		D = Vector{GMTdataset}(undef, length(_sx))
+		D = Vector{GMTdataset{Float64, 2}}(undef, length(_sx))
 		kk, c = 0, false
 		for k = 1:numel(_sx)
 			x = interp_vec(x_vec, _sx[k])
@@ -312,7 +312,7 @@ function streamlines(U::GMTgrid, V::GMTgrid, W::GMTgrid, sx::VMr, sy::VMr, sz::V
 		t, n_allocated = helper_stream(x, y, z, n_rows, n_cols, isT, n_allocated)
 		return !isempty(t) ? mat2ds(t) : GMTdataset()
 	else
-		D = Vector{GMTdataset}(undef, length(_sx))
+		D = Vector{GMTdataset{Float64, 2}}(undef, length(_sx))
 		kk, c = 0, false
 		for k = 1:numel(_sx)
 			x = interp_vec(U.x,  _sx[k])
@@ -392,7 +392,7 @@ function equistreams(u::GMTgrid, v::GMTgrid; density=1, max_density=4)
 	endgrid   = zeros(Bool, n_rows_fine, n_cols_fine)
 
 	vo = Vector{Matrix{<:Real}}(undef, 2)
-	D  = Vector{GMTdataset}(undef, n_rows_coarse*n_cols_coarse)
+	D  = Vector{GMTdataset{Float64, 2}}(undef, n_rows_coarse*n_cols_coarse)
 	count_streams = 0
 
 	for r = 1:n_rows_coarse, c = 1:n_cols_coarse	# Changing the loops order changes the result. And this makes a symetric case symetric
@@ -452,7 +452,7 @@ function arrowheads_pos(D, x, y, n_cols_coarse, n_rows_coarse)
 	inv_range_y = n_rows_coarse / (maximum(y) - ymin)
 	arrowgrid = ones(Bool, n_rows_coarse, n_cols_coarse)
 	arrowgrid[2:3:end, 2:3:end] .= false
-	Da = Vector{GMTdataset}(undef, length(D))
+	Da = Vector{GMTdataset{Float64, 2}}(undef, length(D))
 	this_stream = Matrix{Float64}(undef, 50, 2)
 	count = 0
 

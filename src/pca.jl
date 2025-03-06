@@ -227,7 +227,7 @@ function kmeans(X::Union{GMTdataset, Matrix{<:Real}}, k=3; seeds=nothing, maxite
 	
 	(raw) && return idx, centers, [classes [sum(idx .== classes[n]) for n = 1:numel(classes)]]
 
-	Dv = Vector{GMTdataset}(undef, length(classes))
+	Dv = Vector{GMTdataset{Float64,2}}(undef, length(classes))
 	colnames = isa(X, GMTdataset) ? X.colnames : String[]
 	has_text = isa(X, GMTdataset) && !isempty(X.text)
 	for n = 1:numel(classes)

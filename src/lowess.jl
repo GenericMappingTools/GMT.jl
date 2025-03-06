@@ -66,10 +66,7 @@ function lowess(x::AbstractVector{T}, y::AbstractVector{T}; span::T=2/3, nsteps:
 	c1::T = 0.0
 	r::T = 0.0
 
-	if (n < 2)
-		ys[1] = y[1]
-		return ys
-	end
+	(n < 2) && (ys[1] = y[1]; return ys)
 
 	ns = max(min(floor(Int, span * n), n), 2)  # at least two, at most n points
 	for iter = 1:(nsteps + 1)  # robustness iterations
@@ -93,9 +90,7 @@ function lowess(x::AbstractVector{T}, y::AbstractVector{T}; span::T=2/3, nsteps:
 			lowest(x, y, n, x[i + 1], ys, i, nleft, nright, res, (iter > 1), rw, ok)
 
 			# fitted value at x[i + 1]
-			if (ok == 0)
-				ys[i + 1] = y[i + 1]
-			end
+			(ok == 0) && (ys[i + 1] = y[i + 1])
 
 			# all weights zero - copy over value (all rw==0)
 			if (last < i - 1)   # skipped points -- interpolate

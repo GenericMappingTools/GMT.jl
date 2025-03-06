@@ -109,7 +109,7 @@ function plot(arg1; first=true, kw...)
 		gidx, gnames = get_group_indices(d, arg1)
 		cycle_colors = (numel(gidx) <= 7) ? matlab_cycle_colors : simple_distinct	# Will blow if > 20
 		if (!isempty(gidx))
-			Dv = Vector{GMTdataset}(undef, length(gidx))
+			Dv = Vector{GMTdataset{Float64,2}}(undef, length(gidx))
 			for k = 1:numel(gidx)
 				Dv[k] = linearfitxy(mat2ds(arg1, (gidx[k], :)))
 				Dv[k].header = "-G"*cycle_colors[k] * " -W"*cycle_colors[k]
@@ -738,7 +738,7 @@ function fill_between(arg1, arg2=nothing; first=true, kwargs...)
 		end
 		ind = find_the_pos(view(D1, :, 1), view(int, :, 1))		# Indices of the points before the intersections
 		n_crossings = size(ind,1)
-		Dsd = Vector{GMTdataset}(undef, n_crossings+1)
+		Dsd = Vector{GMTdataset{Float64,2}}(undef, n_crossings+1)
 		ff = (D1[1,2] < D1[1,3]) ? 2 : 1
 		Dsd[1] = mat2ds([D1[1:ind[1], [1,2]]; int[1:1,1:2]; D1[ind[1]:-1:1, [1,3]]], fill=fill_colors[ff])
 		for k = 2:n_crossings
@@ -760,7 +760,7 @@ function fill_between(arg1, arg2=nothing; first=true, kwargs...)
 		ind1 = find_the_pos(view(D1, :, 1), view(int, :, 1))		# Indices of the points before the intersections at line 1
 		ind2 = find_the_pos(view(D2, :, 1), view(int, :, 1))		# Indices of the points before the intersections at line 2
 		n_crossings = size(int,1)
-		Dsd = Vector{GMTdataset}(undef, n_crossings+1)
+		Dsd = Vector{GMTdataset{Float64,2}}(undef, n_crossings+1)
 		ff = (D1[1,2] < D2[1,2]) ? 2 : 1
 		Dsd[1] = mat2ds([D1[1:ind1[1], [1,2]]; int[1:1,1:2]; D2[ind2[1]:-1:1, [1,2]]], fill=fill_colors[ff])
 		for k = 2:n_crossings
@@ -1531,7 +1531,7 @@ function helper_hvband(mat::Matrix{<:Real}, tipo="v"; width=false, height=false,
 	else              ind_w, ind_b, ind_t, thick, bB = 9:10, 7, 9, height != 0, "B"
 	end
 
-	D::Vector{GMTdataset} = Vector{GMTdataset}(undef, n_ds)
+	D = Vector{GMTdataset{Float64,2}}(undef, n_ds)
 	for k = 1:n_ds
 		w = (thick) ? mat[k,2] : (percent != 0) ? mat[k,2]*diff(CTRL.limits[ind_w]) : mat[k,2]-mat[k,1]	# bar width
 		i = rem(k, length(colors)); (i == 0) && (i = length(colors))
