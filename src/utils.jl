@@ -1,7 +1,7 @@
 # Collect generic utility functions in this file
 
 """ Return the decimal part of a float number `x`"""
-getdecimal(x::AbstractFloat) = x - trunc(Int, x)
+getdecimal(x::Number) = x - trunc(Int, x)
 
 """ Return an ierator over data skipping non-finite values"""
 skipnan(itr) = Iterators.filter(el->isfinite(el), itr)
@@ -353,7 +353,8 @@ date2doy(date::String) = dayofyear(Date(date))
 """
     yeardecimal(date)
 
-Convert a Date or DateTime or a string representation of them to decimal years.
+Convert a Date or DateTime or a string representation of them to decimal years, or vice-versa.
+That is, convert from decimal year to DateTime.
 
 ### Example
     yeardecimal(now())
@@ -373,6 +374,14 @@ function yeardecimal(dtm::Union{DateTime, Vector{DateTime}})
 	# FRAC = number_of_milli_sec_in_datetime / number_of_milli_sec_in_that_year
 	frac = (Dates.datetime2epochms.(dtm) .- Dates.datetime2epochms.(DateTime.(Y))) ./ (daysinyear.(dtm) .* 86400000)
 	Y .+ frac
+end
+
+# This function is from DateFormats.jl
+function yeardecimal(years::Real)		# Covert from decimal years to DateTime
+	years_whole = floor(Int, years)
+	year_ms = DateTime(years_whole + 1) - DateTime(years_whole) |> Dates.value
+	period_ms = year_ms * (years - years_whole)
+	return DateTime(years_whole) + Millisecond(round(Int64, period_ms))
 end
 
 # --------------------------------------------------------------------------------------------------
