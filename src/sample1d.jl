@@ -3,8 +3,6 @@
 
 Resample 1-D table data using splines
 
-See full GMT (not the `GMT.jl` one) docs at [`sample1d`]($(GMTdoc)sample1d.html)
-
 Parameters
 ----------
 
@@ -101,6 +99,7 @@ function sample1d_helper(cmd0::String, arg1; kwargs...)
 	if isa(arg1, GDtype)
 		colnames = isa(arg1, GMTdataset) ? arg1.colnames : arg1[1].colnames
 		have_cumdist && append!(colnames, ["cumdist"])
+		!isempty(arg1.attrib) && (r.attrib = arg1.attrib)	# Keep the attribs
 	else		# Input was eith a matrix or a file name
 		nc = isa(r, GMTdataset) ? size(r, 2) : size(r[1], 2)
 		colnames = [@sprintf("Z%d", k) for k = 1:nc]
