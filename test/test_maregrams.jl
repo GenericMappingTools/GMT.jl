@@ -2,6 +2,6 @@
 
 	println("	MAREGRAMS")
 	
-	maregrams(list=true);
+	maregrams(list="Portugal");
 	maregrams(-25, 36);
 end
