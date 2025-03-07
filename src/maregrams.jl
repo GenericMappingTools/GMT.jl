@@ -21,7 +21,8 @@ a valid one, we still return the data for that station. Example:
    This is an alternative way of selecting a station instead of using `code` or `name` that require knowing them.
 
 ### Kwargs
-- `list::Bool`: If true, returns a GMTdataset with the list all available stations and their codes and coords.
+- `list`: If equal to `true`, returns a GMTdataset with the list all available stations and their codes and coords.
+   If it is a string, search all entries that contain that string. _e.g.,_ `list=Canada` returns all stations in Canada.
 - `code`: Station code (See the output of `list`)
 - `name`: In alternative to `code` give the station name (See the output of `list`)
 - `days`: Number of days to be downloaded. It can be a decimal number.
@@ -39,8 +40,14 @@ D = maregrams(code="lgos", days=4, starttime="2025-02-01")
 viz(D, title="Tide Gauge at Lagos (Portugal)")
 ```	
 """
-function maregrams(; list::Bool=false, code="", name="", days=2, starttime::String="", printurl::Bool=false)::GMTdataset
-	(list == true) && return gmtread(TESTSDIR * "/assets/maregs_online.csv")
+function maregrams(; list=false, code="", name="", days=2, starttime::String="", printurl::Bool=false)::GMTdataset{Float64, 2}
+	if (list != 0)			# Either list all stations or search those that contains a "list" string
+		Dl = gmtread(TESTSDIR * "/assets/maregs_online.csv")
+		list == 1 && return Dl
+		inds = findall(contains.(Dl.text,list))
+		isempty(inds) && (println("'$list' was not found in stations list."); return GMTdataset())
+		return mat2ds(Dl, (inds,:))
+	end
 	@assert days > 0  "Number of days must be > 0."
 	_code::String = string(code)		# To let 'code' be a symbol as well
 	d = read_maregrams()
@@ -52,7 +59,9 @@ function maregrams(; list::Bool=false, code="", name="", days=2, starttime::Stri
 	# The shit here is that the site wants the endtime instead of starttime, sowe must do the maths to get it right.
 	(starttime != "") &&
 		try DateTime(starttime) catch; error("The start time '$starttime' is not a valid date.") end 
-	endtime = (starttime == "") ? DateTime(now()) : DateTime(starttime) + Dates.Day(days)
+	M = ((daydec = getdecimal(days)) != 0) ? round(Int, daydec*24*60) : 0
+	(daydec != 0) && (days = trunc(Int, days))
+	endtime = (starttime == "") ? DateTime(now()) : DateTime(starttime) + Dates.Day(days) + Dates.Minute(M)
 	endtime > DateTime(now()) && (days -= round((endtime - DateTime(now())).value / (24*3600000), digits=6); endtime = DateTime(now()))
 	url = "http://www.ioc-sealevelmonitoring.org/bgraph.php?code=$_code&output=asc&period=$days&endtime=$endtime"
 	printurl && println(url[1:(54+length(_code))])		# Station's URL

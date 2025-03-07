@@ -138,9 +138,7 @@ function mat2ds(mat::Vector{<:AbstractMatrix}; hdr=String[], kwargs...)
 	d = KW(kwargs)
 	mat2ds(mat, hdr, d)
 end
-#function mat2ds(mat::Vector{<:AbstractMatrix}; hdr=String[], kwargs...)
 function mat2ds(mat::Vector{<:AbstractMatrix}, hdr::Vector{String}, d::Dict)
-	#d = KW(kwargs)
 	D = Vector{GMTdataset{eltype(mat[1]), 2}}(undef, length(mat))
 	pen   = find_in_dict(d, [:pen])[1]
 	color = find_in_dict(d, [:lc :linecolor :color])[1]
@@ -201,7 +199,8 @@ the georeference info as well as `attrib` and `colnames`.
 mat2ds(mat::Array{T,N}, ref::GMTdataset) where {T,N} = mat2ds(mat; ref=ref)
 
 # ---------------------------------------------------------------------------------------------------
-function mat2ds(mat::Array{T,N}, txt::Union{String,Vector{String}}=String[]; hdr::Union{String,VecOrMat{String}}=String[], geom=0, kwargs...)::GDtype where {T,N}
+function mat2ds(mat::Array{T,N}, txt::Union{String,Vector{String}}=String[];
+                hdr::Union{String,VecOrMat{String}}=String[], geom=0, kwargs...)::GDtype where {T,N}
 	d = KW(kwargs)
 	_mat2ds(mat, txt, isa(hdr, String) ? [hdr] : vec(hdr), Int(geom), d)
 end
@@ -612,7 +611,6 @@ function ds2ds(D::GMTdataset; is3D::Bool=false, kwargs...)::Vector{<:GMTdataset}
 	d = KW(kwargs)
 	ds2ds(D, is3D, d)
 end
-#function ds2ds(D::GMTdataset; is3D::Bool=false, kwargs...)::Vector{<:GMTdataset}
 function ds2ds(D::GMTdataset, is3D::Bool, d::Dict)::Vector{<:GMTdataset}
 	# Take one DS and split it into an array of DS's, one for each row and optionally add -G<fill>
 	# Alternativelly, if [:multi :multicol] options lieve in 'd', split 'D' by columns: [1,2], [1,3], [1,4], ...

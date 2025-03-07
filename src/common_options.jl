@@ -170,7 +170,7 @@ function parse_R(d::Dict, cmd::String; O::Bool=false, del::Bool=true, RIr::Bool=
 	if (RIr)
 		if (isa(val, GItype))
 			opt_I = parse_I(d, "", [:I :inc :increment :spacing], "I", true)
-			(opt_I == "") && (cmd *= " -I" * arg2str(val.inc))::String
+			(opt_I == "") ? (cmd *= " -I" * arg2str(val.inc))::String : (cmd *= opt_I)
 			opt_r = parse_r(d, "")[2]
 			(opt_r == "") && (cmd *= " -r" * ((val.registration == 0) ? "g" : "p"))
 		else				# Here we must parse the -I and -r separately.
