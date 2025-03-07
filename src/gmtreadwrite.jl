@@ -88,7 +88,7 @@ function gmtread(_fname::String; kwargs...)
 		elseif ((opt_T = guess_T_from_ext(fname)) == " -Tg")  fname *= "=gd"
 		end
 	else
-		opt_T = add_opt(d, "", "Ti", [:img :image])
+		(opt_T == "") && (opt_T = add_opt(d, "", "Ti", [:img :image]))
 	end
 
 	if (opt_T == "")  opt_T = add_opt(d, "", "Td", [:data :dataset :table])  end
@@ -425,8 +425,9 @@ function file_has_time!(fname::String, D::GDtype, corder::Vector{Int}=Int[], opt
 		isone ? (D.colnames = String[]) : [D[k].colnames = String[] for k = 1:lastindex(D)]
 		@warn("Failed to parse file '$fname' for file_has_time!(). Error was:\n $err")
 	end
-	isone ? (length(D.colnames) < n_cols && (D.colnames = String[])) : (length(D[1].colnames) < n_cols && (D[1].colnames = String[]))
 	close(fid)
+	isone ? (length(D.colnames) < n_cols && (D.colnames = String[])) : (length(D[1].colnames) < n_cols && (D[1].colnames = String[]))
+	!isone && !isempty(D[1].attrib) && [D[k].attrib = D[1].attrib for k = 2:lastindex(D)]	# All segs must have same attrib (?)
 	return nothing
 end
 	
