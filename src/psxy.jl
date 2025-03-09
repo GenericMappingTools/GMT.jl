@@ -85,17 +85,6 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 	opt_UVXY = parse_UVXY(d, "")		# Need it separate to not risk to double include it.
 	cmd, opt_c = parse_c(d, cmd)		# Need opt_c because we may need to remove it from double calls
 
-	# If the input is a GMTdataset and one of its columns is a Time column, automatically set the -fT
-	function set_fT(D::GMTdataset, cmd::String, opt_f::String)
-		if ((Tc = get(D.attrib, "Timecol", "")) != "")
-			tc::Int = parse(Int, Tc) - 1
-			_opt_f = (opt_f == "") ? " -f$(tc)T" : opt_f * ",$(tc)T"
-			((Tc = get(D.attrib, "Time_epoch", "")) != "") && (_opt_f *= Tc)	# If other than Unix time
-			return (opt_f == "") ? cmd * _opt_f : replace(cmd, opt_f => _opt_f)
-		end
-		return cmd
-	end
-
 	if (isa(arg1, GDtype) && !contains(opt_f, "T") && !contains(opt_f, "t") && !contains(opt_R, "T") && !contains(opt_R, "t"))
 		cmd = isa(arg1, GMTdataset) ? set_fT(arg1, cmd, opt_f) : set_fT(arg1[1], cmd, opt_f)
 	end
@@ -266,6 +255,18 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 	CTRL.pocket_d[1] = d					# Store d that may be not empty with members to use in other modules
 	(opt_B == " -B") && gmt_restart()		# For some Fking mysterious reason (see Ex45)
 	return R
+end
+
+# ---------------------------------------------------------------------------------------------------
+# If the input is a GMTdataset and one of its columns is a Time column, automatically set the -fT
+function set_fT(D::GMTdataset, cmd::String, opt_f::String)
+	if ((Tc = get(D.attrib, "Timecol", "")) != "")
+		tc::Int = parse(Int, Tc) - 1
+		_opt_f = (opt_f == "") ? " -f$(tc)T" : opt_f * ",$(tc)T"
+		((Tc = get(D.attrib, "Time_epoch", "")) != "") && (_opt_f *= Tc)	# If other than Unix time
+		return (opt_f == "") ? cmd * _opt_f : replace(cmd, opt_f => _opt_f)
+	end
+	return cmd
 end
 
 # ---------------------------------------------------------------------------------------------------
