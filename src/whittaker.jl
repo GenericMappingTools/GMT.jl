@@ -51,7 +51,6 @@ function whittaker(D::GMTdataset, lambda, d=2; weights=nothing)
 		y = D.data[:, 2];	y[indNaN] .= zero(eltype(D.data));
 		w = weights === nothing ? Int32.(.!indNaN) : (weights[indNaN] .= zero(eltype(D.data)))
 		z = whittaker(view(D.data, :, 1), y, lambda, d, weights=w, checkedNaN=true)
-		z[indNaN] .= NaN			# Restore the original NaNs
 	end
 	Dout = deepcopy(D)
 	Dout.data[:, 2] = z
