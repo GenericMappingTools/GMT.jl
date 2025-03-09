@@ -54,7 +54,8 @@ sample1d(arg1; kw...)         = sample1d_helper("", arg1; kw...)
 function sample1d_helper(cmd0::String, arg1; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
-	cmd = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :o :w :yx])[1]
+	cmd = parse_common_opts(d, "", [:V_params :b :d :e :f :h :i :o :w :yx])[1]
+	_, opt_g = parse_g(d, "")
 	cmd = parse_these_opts(cmd, d, [[:A :resample], [:N :time_col :timecol], [:W :weights :weights_col]])
 	cmd, Tvec = parse_opt_range(d, cmd, "T")
 	have_cumdist = false
@@ -93,13 +94,43 @@ function sample1d_helper(cmd0::String, arg1; kwargs...)
 		cmd *= " -F" * opt
 	end
 
+	if (opt_g != "")			# Big trickery because -g apparently is broken for externals
+		d[:Vd] = 2
+		have_nonans = (find_in_dict(d, [:nonans])[1] !== nothing)		# Remove NaNs if requested
+		if (cmd0 != "")
+			cmd = common_grd(d, cmd0, cmd * opt_g, "sample1d ", arg1, isempty(Tvec) ? nothing : Tvec)
+			input_tmp = ""
+		else
+			input_tmp = tempname() * ".dat"
+			gmtwrite(input_tmp, arg1)
+			cmd = common_grd(d, input_tmp, cmd * opt_g, "sample1d ", nothing, isempty(Tvec) ? nothing : Tvec)
+		end
+		tmp = tempname() * ".dat"
+		cmd = cmd * opt_g * " > " * tmp
+		gmt(cmd)
+		r = gmtread(tmp)
+		rm(tmp);	(input_tmp != "") && rm(input_tmp)
+		if (have_nonans)							# Remove NaNs if requested
+			if isa(r, GMTdataset)
+				indNaN = isnan.(view(r.data, :, 2))
+				any(indNaN) && (r = mat2ds(r.data, (.!indNaN, :)))
+			else
+				for k = 1:numel(r)
+					indNaN = isnan.(view(r[k].data, :, 2))
+					any(indNaN) && (r[k] = mat2ds(r[k], (.!indNaN, :)))
+				end
+			end
+		end
+		return r
+	end
+	
 	r = common_grd(d, cmd0, cmd, "sample1d ", arg1, isempty(Tvec) ? nothing : Tvec)		# Finish build cmd and run it
 	(r === nothing || isa(r, String)) && return r		# Nothing if saved in file, String if Vd == 2
 
 	if isa(arg1, GDtype)
 		colnames = isa(arg1, GMTdataset) ? arg1.colnames : arg1[1].colnames
 		have_cumdist && append!(colnames, ["cumdist"])
-		!isempty(arg1.attrib) && (r.attrib = arg1.attrib)	# Keep the attribs
+		isa(arg1, GMTdataset) ? (r.attrib = arg1.attrib) : [r[k].attrib = arg1[1].attrib for k = 1:numel(r)]	# Keep the attribs
 	else		# Input was eith a matrix or a file name
 		nc = isa(r, GMTdataset) ? size(r, 2) : size(r[1], 2)
 		colnames = [@sprintf("Z%d", k) for k = 1:nc]
