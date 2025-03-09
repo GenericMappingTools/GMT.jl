@@ -533,13 +533,13 @@ function gmtwrite(fname::AbstractString, data; kwargs...)
 		(opt_G != "") && (fname = opt_G[4:end])	# opt_G comes with the " -G" prefix
 	end
 	(fname == "") && error("Output file name cannot be empty.")
+	_, opt_f = parse_f(d, "")
 
 	if (isa(data, GMTgrid))
 		(endswith(fname, ".laz") || endswith(fname, ".LAZ")) && return lazwrite(fname, data; kwargs...)		# Lasz
 
 		# GMT doesn't write correct CF nc grids that are referenced but non-geographic. So, use GDAL in those cases
 		fmt = parse_grd_format(d)				# See if we have format requests
-		_, opt_f = parse_f(d, "")
 		ext = lowercase(splitext(fname)[2])
 		if (fmt == "" && opt_f == "" && (ext == ".grd" || ext == ".nc"))
 			prj = getproj(data, proj4=true)
@@ -561,6 +561,7 @@ function gmtwrite(fname::AbstractString, data; kwargs...)
 		(endswith(fname, ".laz") || endswith(fname, ".LAZ")) && return lazwrite(fname, data; kwargs...)		# Lasz
 		opt_T = " -Td"
 		cmd, = parse_bo(d, cmd)					# Write to binary file
+		cmd = isa(data, GMTdataset) ? set_fT(data, cmd, opt_f) : set_fT(data[1], cmd, opt_f)
 	elseif (isa(data, GMTfv))
 		(endswith(fname, ".obj") || endswith(fname, ".OBJ")) && return write_obj(fname, data)
 		(endswith(fname, ".stl") || endswith(fname, ".STL")) && return write_stl(fname, data; kwargs...)
