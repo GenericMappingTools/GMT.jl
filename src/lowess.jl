@@ -4,15 +4,19 @@
 lowess(x, y, span = 2 / 3, nsteps = 3, delta = 0.01 * (maximum(x) - minimum(x)))
 ```
 
-Compute the smooth of a scatterplot of `y` against `x` using robust locally weighted regression. Input vectors `x` and `y` must contain either integers or floats. Parameters `span` and `delta` must be of type `T`, where `T <: AbstractFloat`. Returns a vector `ys`; `ys[i]` is the fitted value at `x[i]`. To get the smooth plot, `ys` must be plotted against `x`.
+Compute the smooth of a scatterplot of `y` against `x` using robust locally weighted regression.
+Input vectors `x` and `y` must contain either integers or floats. Parameters `span` and `delta`
+must be of type `T`, where `T <: AbstractFloat`. Returns a vector `ys`; `ys[i]` is the fitted
+value at `x[i]`. To get the smooth plot, `ys` must be plotted against `x`.
 
 # Arguments
 
   - `x::Vector`: Abscissas of the points on the scatterplot. `x` must be ordered.
   - `y::Vector`: Ordinates of the points in the scatterplot.
-  - `span::T`: The amount of smoothing.
+  - `span`: The amount of smoothing.
   - `nsteps::Integer`: Number of iterations in the robust fit.
-  - `delta::T`: A nonnegative parameter which may be used to save computations.
+  - `delta`: A nonnegative parameter which may be used to save computations.
+    Default is `0.01 * (maximum(x) - minimum(x))`.
 
 # Example
 
@@ -26,7 +30,8 @@ plot!(x, ys)
 """
 function lowess(D::GMTdataset; span=2/3, nsteps=3, delta=0.0)
 	(delta == 0.0) && (delta = 0.01 * (D.bbox[2] - D.bbox[1]))
-	lowess(view(D.data, :, 1), view(D.data, :, 2); span=span, nsteps=nsteps, delta=delta)
+	new_y = lowess(view(D.data, :, 1), view(D.data, :, 2); span=span, nsteps=nsteps, delta=convert(eltype(D.data), delta))
+	mat2ds([D.data[:,1] new_y], D)
 end
 
 function lowess(x::AbstractVector{R}, y::AbstractVector{S}; span::T=2/3, nsteps::Integer=3,
@@ -34,6 +39,10 @@ function lowess(x::AbstractVector{R}, y::AbstractVector{S}; span::T=2/3, nsteps:
 	lowess((R <: AbstractFloat) ? x : Vector{Float64}(x), (S <: AbstractFloat) ? y : Vector{Float64}(y); span=span, nsteps=nsteps, delta=delta)
 end
 
+function lowess(mat::Matrix{<:Real}; span=2/3, nsteps::Integer=3, delta=0.1*diff(collect(extrema(view(mat, :,2))), dims=1)[1])
+	new_y = lowess(view(mat, :,1), view(mat, :,2); span=span, nsteps=nsteps, delta=delta)
+	return [mat[:,1] new_y]
+end
 function lowess(x::AbstractVector{T}, y::AbstractVector{T}; span::T=2/3, nsteps::Integer=3,
                 delta::T = 0.01 * (maximum(x) - minimum(x))) where {T <: AbstractFloat}
 	# defining needed variables

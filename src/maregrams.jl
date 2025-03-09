@@ -64,7 +64,7 @@ function maregrams(; list=false, code="", name="", days=2, starttime::String="",
 	endtime = (starttime == "") ? DateTime(now()) : DateTime(starttime) + Dates.Day(days) + Dates.Minute(M)
 	endtime > DateTime(now()) && (days -= round((endtime - DateTime(now())).value / (24*3600000), digits=6); endtime = DateTime(now()))
 	url = "http://www.ioc-sealevelmonitoring.org/bgraph.php?code=$_code&output=asc&period=$days&endtime=$endtime"
-	printurl && println(url[1:(54+length(_code))])		# Station's URL
+	printurl && println(url)		# Station's URL
 	file = Downloads.download(url, "_query.csv")
 
 	n_lines = countlines(file) - 2				# -2 to ignore the two header lines

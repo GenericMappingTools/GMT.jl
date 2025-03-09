@@ -1518,7 +1518,7 @@ end
 parse_di(d::Dict, cmd::String) = parse_d(d, cmd, [:di :nodata_in])
 parse_do(d::Dict, cmd::String) = parse_d(d, cmd, [:do :nodata_out])
 parse_e(d::Dict,  cmd::String) = parse_helper(cmd, d, [:e :pattern :find], " -e")
-parse_g(d::Dict,  cmd::String) = parse_helper(cmd, d, [:g :gap], " -g")
+parse_g(d::Dict,  cmd::String) = parse_helper(cmd, d, [:g :gap :gaps], " -g")
 parse_h(d::Dict,  cmd::String) = parse_helper(cmd, d, [:h :header], " -h")
 parse_i(d::Dict,  cmd::String) = parse_helper(cmd, d, [:i :incols :incol], " -i", ',')
 parse_j(d::Dict,  cmd::String) = parse_helper(cmd, d, [:j :metric :spherical :spherical_dist], " -j")
