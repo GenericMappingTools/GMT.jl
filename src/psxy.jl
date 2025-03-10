@@ -263,7 +263,9 @@ function set_fT(D::GMTdataset, cmd::String, opt_f::String)
 	if ((Tc = get(D.attrib, "Timecol", "")) != "")
 		tc::Int = parse(Int, Tc) - 1
 		_opt_f = (opt_f == "") ? " -f$(tc)T" : opt_f * ",$(tc)T"
-		((Tc = get(D.attrib, "Time_epoch", "")) != "") && (_opt_f *= Tc)	# If other than Unix time
+		((Tc = get(D.attrib, "Time_epoch", ""))  != "") && (_opt_f *= " --TIME_EPOCH=$(Tc)")	# If other than Unix time
+		((Tc = get(D.attrib, "Time_unit", ""))   != "") && (_opt_f *= " --TIME_UNIT=$(Tc)")
+		((Tc = get(D.attrib, "Time_system", "")) != "") && (_opt_f *= " --TIME_SYSTEM=$(Tc)")
 		return (opt_f == "") ? cmd * _opt_f : replace(cmd, opt_f => _opt_f)
 	end
 	return cmd
