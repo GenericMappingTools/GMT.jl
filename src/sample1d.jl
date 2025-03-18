@@ -50,10 +50,14 @@ To see the full documentation type: ``@? sample1d``
 sample1d(cmd0::String; kw...) = sample1d_helper(cmd0, nothing; kw...)
 sample1d(arg1; kw...)         = sample1d_helper("", arg1; kw...)
 
-# ---------------------------------------------------------------------------------------------------
 function sample1d_helper(cmd0::String, arg1; kwargs...)
-
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+    sample1d_helper(cmd0, arg1, d)
+end
+
+# ---------------------------------------------------------------------------------------------------
+function sample1d_helper(cmd0::String, arg1, d::Dict{Symbol,Any})
+
 	cmd = parse_common_opts(d, "", [:V_params :b :d :e :f :h :i :o :w :yx])[1]
 	_, opt_g = parse_g(d, "")
 	cmd = parse_these_opts(cmd, d, [[:A :resample], [:N :time_col :timecol], [:W :weights :weights_col]])

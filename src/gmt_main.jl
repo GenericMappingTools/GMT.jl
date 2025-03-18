@@ -619,7 +619,7 @@ function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})::GDtype
 	D::GMT_DATASET = unsafe_load(convert(Ptr{GMT_DATASET}, object))
 
 	# This is for the particular case of the DCW countries that have a myriad of small segments and no Attributes
-	if (!isempty(POSTMAN))
+	if (!isempty(POSTMAN[1]))
 		min_pts = (get(POSTMAN[1], "minpts", "") != "") ? parse(Int, POSTMAN[1]["minpts"]) - 1 : 0
 		(min_pts > 0) && delete!(POSTMAN[1], "minpts")
 		DCWnames = (get(POSTMAN[1], "DCWnames", "") != "") ? true : false		# If DCW country names will turn into attribs
@@ -952,7 +952,9 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage)::Ptr{GMT_IMAGE}
 
 	(mem_owned_by_gmt) && (CTRL.gmt_mem_bag[1] = Ib.data)	# Hold on the GMT owned array to be freed in gmt()
 
-	#if (length(Img.colormap) > 3)  Ib.colormap = pointer(Img.colormap)  end
+	# If we have a boolean mask and no colormap, we set a BW colormap
+	(length(Img.colormap) == 3 && eltype(Img) == Bool) && image_cpt!(Img, gmt("makecpt  -C0/0/0,255/255/255"))
+
 	if (length(Img.colormap) > 3)					# the 2000 comes from gmtwrite
 		if (length(Img.colormap) >= 256*3 || Img.n_colors < 2000)	# A 256x3 or 256x4 colormap. All good, just point to it.
 			Ib.colormap = pointer(Img.colormap)

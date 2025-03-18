@@ -61,7 +61,7 @@ function gmtspatial(cmd0::String="", arg1=nothing, arg2 = nothing; kwargs...)
 	                                 [:I :intersections], [:Q :centroid :area :length], [:W :extend]])
 	cmd = add_opt(d, cmd, "S", [:S :polygons :polyg_process], (buffer="b", holes="_h", intersection ="_i", dateline="_s", union="_u"))
 
-	cmd, args, n, = add_opt(d, cmd, "D", [:D :duplicates], :data, Array{Any,1}([arg1, arg2]), (amax="+a", dmax="+d", cmax="+c", Cmax="+c", fact="+s", ortho="_+p"))
+	cmd, args, n, = add_opt(d, cmd, "D", [:D :duplicates], :data, [arg1, arg2], (amax="+a", dmax="+d", cmax="+c", Cmax="+c", fact="+s", ortho="_+p"))
 	if (n > 0)
 		arg1, arg2 = args[:];   cmd *= "+f"
 	end
@@ -89,7 +89,9 @@ function gmtspatial(cmd0::String="", arg1=nothing, arg2 = nothing; kwargs...)
 		!isempty(D.text) && (D.text = D.text[ind])
 	end
 	if contains(cmd, "-N+i")
-		D.colnames = ["x","y","polID"]; (!hasID && [D[k,3] += 1 for k = 1:size(D,1)])
+		D.colnames = ["x","y","polID"]
+		sz = hasID ? 0 : size(D,1)
+		for k = 1:sz  D[k,3] += 1  end
 	elseif contains(cmd, " -Q")		# -Q -> centroids
 		setgeom!(D, wkbPoint)		# -Q+l is probably a different geom
 		D.colnames = getsize(D)[2] == 2 ? ["centroid_x","centroid_y"] : ["centroid_x","centroid_y","area"];

@@ -3,8 +3,6 @@
 	
 Plots gray scales or color scales on maps.
 
-See full GMT (not the `GMT.jl` one) docs at [`psscale`]($(GMTdoc)psscale.html)
-
 - **D** | **pos** | **position** :: [Type => Str]
 
     Defines the reference point on the map for the color scale using one of four coordinate systems.
