@@ -140,6 +140,7 @@ function parse_opt_range(d::Dict, cmd::String, opt::String="")::Tuple{String, Ve
 		if (isa(val, Tuple))
 			n::Int = length(val)
 			out::String = isa(val[1], Symbol) ? arg2str(val[1:min(n,3)], ',') : arg2str(val[1:min(n,3)])
+			endswith(out, "/number") && (out = replace(out, "/number", "/+n"))	#Strange but -T0/1/+n works but -T0/1/1+n does not 
 			if (n > 3)
 				for k = 4:n			# N should be at most = 5 (e.g. +n+b)
 					_opt::String = string(val[k])
