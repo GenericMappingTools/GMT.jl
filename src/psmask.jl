@@ -76,7 +76,15 @@ function mask(cmd0::String="", arg1=nothing; first=true, kwargs...)
     end
 
 	# If file name sent in, read it and compute a tight -R if this was not provided 
-	cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R)
+	if (arg1 === nothing && cmd0 != "")
+		cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R)
+	end
+
+	if ((val = find_in_dict(d, [:threshold])[1]) !== nothing)
+		thres = convert(eltype(arg1), val)
+		isinv = (find_in_dict(d, [:less])[1] !== nothing)
+		return isinv ? mat2img(collect(arg1.z .<= thres), arg1) : mat2img(collect(arg1.z .>= thres), arg1)
+	end
 
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
 
