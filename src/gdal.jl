@@ -1752,6 +1752,32 @@ end
 	gdalrasterinterpolate(src::IDataset, dfPL::Matrix{Float64}; method=GRIORA_Cubic) =
 		gdalrasterinterpolate(Dataset(src.ptr), dfPL; method=method)
 
+	function gdalrasterinterpolate(fname::AbstractString, D::GMT.GDtype; method=GRIORA_Cubic)
+		x_min, x_max, y_min, y_max, x_inc, y_inc, xsize, ysize, nbands = gdal_get_limits(fname)
+		pl = [((D[:,1] .- x_min) / x_inc .+ 0.5) ((ysize-1) .- (D[:,2] .- y_min) / y_inc .+ 0.5)]
+		gdalrasterinterpolate(read(fname), pl; method=method)
+	end
+
+	"""
+	    x_min, x_max, y_min, y_max, x_inc, y_inc, xsize, ysize, nbands = gdal_get_limits(fname)
+	
+	Compute the limits and increments of a dataset
+	"""
+	function gdal_get_limits(ds)
+		nbands = nraster(ds)
+		xsize = width(ds)
+		ysize = height(ds)
+		try
+			gt = getgeotransform(ds)
+			x_inc = abs(gt[2])
+			y_inc = abs(gt[end])
+			return gt[1], gt[1] + (xsize * x_inc), gt[4] - (ysize * y_inc), gt[4], x_inc, y_inc, xsize, ysize, nbands
+		catch
+			return 0.0, Float64(xsize), 0.0, Float64(ysize), 1.0, 1.0, xsize, ysize, nbands
+		end
+	end
+	gdal_get_limits(fname::AbstractString) = gdal_get_limits(read(fname))
+
 #=
 	for gdalfunc in (:boundary, :buffer, :centroid, :clone, :convexhull, :create, :createcolortable,
 		:createcoordtrans, :copy, :createfeaturedefn, :createfielddefn, :creategeom, :creategeomcollection,
