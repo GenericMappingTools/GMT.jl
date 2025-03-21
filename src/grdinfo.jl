@@ -3,8 +3,6 @@
 
 Reads a 2-D grid file and reports metadata and various statistics for the (x,y,z) data in the grid file
 
-See full GMT (not the `GMT.jl` one) docs at [`grdinfo`]($(GMTdoc)grdinfo.html)
-
 Parameters
 ----------
 
