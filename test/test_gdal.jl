@@ -18,6 +18,7 @@ Gdal.GDALDestroyDriverManager()
 	"""
 
 	dataset = Gdal.create("", driver = getdriver("MEM"), width=241, height=181, nbands=1, dtype=Float64)
+	Gdal.gdal_get_limits(dataset)
 	crs = toWKT(importPROJ4("+proj=latlong"), true);
 	crs = toWKT(importPROJ4("+proj=latlong"));
 	importWKT(crs)
@@ -25,6 +26,7 @@ Gdal.GDALDestroyDriverManager()
 	Gdal.write!(dataset, rand(181,241), 1)
 	setproj!(dataset, crs)
 	setgeotransform!(dataset, [-4.016666666666667, 0.03333333333333333, 0.0, -3.01666666666, 0.0, 0.03333333333333333])
+	Gdal.gdal_get_limits(dataset)
 	Gdal.listcapability(dataset)
 
 	#show(dataset)
