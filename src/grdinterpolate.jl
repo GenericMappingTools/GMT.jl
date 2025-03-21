@@ -103,11 +103,12 @@ function grdinterp_helper(cmd0::String, arg1; allcols::Bool=false, gdal=false, k
 		end
 
 		no_coords = (haskey(d, :no_coords) || haskey(d, :nocoords))		# Output or not the x,y coordinates
-		if (cmd0 != "" || contains(cmd, " -Z"))		# Passed in a cube file name or a grid's collection. Job for GMT grdinterpolate
+		if (gdal == 0 && (cmd0 != "" || contains(cmd, " -Z")))		# Passed in a cube file name or a grid's collection. Job for GMT grdinterpolate
 			arg1 = pts
 			cmd *= " -S"
 		else					# GMT can't handle cubes in memory, so we have to do it here
-			return grdinterp_local_opt_S(arg1, pts, no_coords, gdal=gdal)			# EXIT here
+			(gdal == 1 && cmd0 != "") && return grdinterp_local_opt_S(cmd0, pts, no_coords)		# Passed in a cube file name
+			return grdinterp_local_opt_S(arg1, pts, no_coords, gdal=gdal)	# EXIT here
 		end
 	end
 
@@ -117,15 +118,29 @@ function grdinterp_helper(cmd0::String, arg1; allcols::Bool=false, gdal=false, k
 	out_two_cols && (cmd *= " -o2,3")		# The default is NOT ouput the first two columns (redundant)
 
 	if (isa(arg1, Tuple))
-		#for k = 1:length(arg1)  cmd *= " ?"  end		# Need as many '?' as numel(arg1)
 		cmd *= repeat(" ?", length(arg1))	# Need as many '?' as numel(arg1)
 		common_grd(d, "grdinterpolate " * cmd, arg1..., arg2)
 	else
+		if (cmd0 != "" && !contains(cmd, " -R") && val !== nothing)		# Since GMT will read layer-by-layer, better to limit to the region framing the points
+			D = grdinfo(cmd0, C=true)
+			x_min = max(D[1], pts.ds_bbox[1]-D[9]*3);	x_max = min(D[2], pts.ds_bbox[2]+D[9]*3)
+			y_min = max(D[3], pts.ds_bbox[3]-D[10]*3);	y_max = min(D[4], pts.ds_bbox[4]+D[10]*3)
+			cmd *= " -R$x_min/$x_max/$y_min/$y_max"
+		end
 		common_grd(d, "grdinterpolate " * cmd, arg1, arg2)
 	end
 end
 
 # ---------------------------------------------------------------------------------------------------
+# Minimalist method that uses GDAL. Needs to be expanded to handle, at least, a -R option.
+function grdinterp_local_opt_S(fname::AbstractString, pts::GMTdataset, no_coords::Bool)
+	r = Gdal.gdalrasterinterpolate(fname, pts; method=Gdal.GRIORA_Cubic)
+	D = mat2ds([collect(1:length(r)) r])
+	!isempty(pts.attrib) && (D.attrib = pts.attrib)		# Pass on the points attributes as well. But no colnames from bands.
+	D.colnames = ["Layer", "Value"]
+	return D
+end
+
 function grdinterp_local_opt_S(arg1::GItype, pts::GMTdataset, no_coords::Bool; rowlayers=false, gdal=false)
 	# GMT grdinterpolate can't handle cubes in memory, so we have to do the interpolations here.
 	# If 'rowlayers' is true the output rows will have first 2 columns with the cordinates (or not if 'no_coords=true')

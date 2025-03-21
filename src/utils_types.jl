@@ -2,7 +2,6 @@ function text_record(data, text::Union{String, Vector{String}, Vector{Vector{Str
 	# Create a text record to send to pstext. DATA is the Mx2 coordinates array.
 	# TEXT is a string or a cell array
 
-	(data == []) && (data = [NaN NaN])
 	(isa(data, Vector)) && (data = data[:,:]) 		# Needs to be 2D
 	#(!isa(data, Array{Float64})) && (data = Float64.(data))
 
@@ -26,6 +25,7 @@ function text_record(data, text::Union{String, Vector{String}, Vector{Vector{Str
 	else
 		error("Wrong type ($(typeof(text))) for the 'text' argin")
 	end
+	(!isempty(data) && !isnan(data[1])) && set_dsBB!(T)
 	return T
 end
 text_record(text::String, hdr::String="") = text_record(fill(NaN,1,2), text, (hdr == "") ? String[] : [hdr])
@@ -544,7 +544,6 @@ function set_dsBB!(D, all_bbs::Bool=true)
 
 	if (all_bbs)		# Compute all BBs
 		if isa(D, GMTdataset)
-			(size(D,1) == 1) && return nothing		# Single liners have no BB
 			D.ds_bbox = D.bbox = collect(Float64, Iterators.flatten(extrema(D.data, dims=1)))
 			ind = findall(.!isfinite.(D.bbox))		# If we have some columns with NaNs or Infs
 			if (!isempty(ind))

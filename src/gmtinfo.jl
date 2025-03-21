@@ -62,7 +62,7 @@ function gmtinfo_helper(cmd0::String, arg1, d::Dict{Symbol,Any})::Union{String, 
 
 	# If file name sent in, read it.
 	if (cmd0 != "")  cmd, arg1, = read_data(d, cmd0, cmd, arg1, " ")  end
-	cmd = "gmtinfo" * cmd
+	cmd = "gmtinfo " * cmd
 	if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end
 	isa(arg1, Tuple) ? gmt(cmd, arg1...) : gmt(cmd, arg1)
 end
