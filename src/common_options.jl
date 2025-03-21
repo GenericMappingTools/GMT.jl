@@ -968,7 +968,7 @@ function parse_grid(d::Dict, args; opt_B::String="", stalone::Bool=true)::String
 		elseif (_y)           opt_B *= pre*"yg" * (length(o) > 1 ? o[2:end] : "")
 		elseif (_xyz)         opt_B *= pre*"g -Bzg"
 		elseif (_xy)          spli[1] *= "g";	opt_B = " " * join(spli, " ")
-		elseif (o == "true")  opt_B = " " * join(spli .* "g", " ")
+		elseif (o == "true")  opt_B = " " * join(spli[1] .* "g")		# Risky as it assumes spli[1] is -B<axis> as in -Baf
 		else                  opt_B *= pre*"g"			# For example: grid=:on
 		end
 	end
