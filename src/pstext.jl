@@ -224,3 +224,16 @@ end
 
 const pstext  = text			# Alias
 const pstext! = text!			# Alias
+
+# ---------------------------------------------------------------------------------------------------
+#function annotate(text, xy, xytext=nothing, arrowprops=nothing; kwargs...)
+#function annotate(cmd0::String="", arg1=nothing; first=true, kwargs...)
+function annotate(D::GMTdataset; first=true, kwargs...)
+	d = KW(kwargs)
+	D.colnames = ["x1", "y1", "x2", "y2", "text"]
+	Vd = get(d, :Vd, 0)
+	text(D; first=first, justify="LM", offset=(0.1,0.0), kwargs...)		# This plots the text at the text position (whatever it is)
+	if ((arrowprops = find_in_dict(d, [:arrowprops])[1]) === nothing)
+		arrows!(D, pen=1, arrow=(len=0.6, stop=true), fill=:black, endpt=true, Vd=Vd)
+	end
+end
