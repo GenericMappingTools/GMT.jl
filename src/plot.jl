@@ -1923,20 +1923,19 @@ function help_parametric_3f(f1::Function, f2::Function, f3::Function, range_t=no
 	x = [f1(x) for x in t];		y = [f2(y) for y in t];		z = [f3(z) for z in t]
 	return hcat(x[:], y[:], z[:])
 end
-# ------------------------------------------------------------------------------------------------------
 
-#= ------------------------------------------------------------------------------------------------------
+## ------------------------------------------------------------------------------------------------------
 function piechart(x::VecOrMat; names::Vector{<:AbstractString}=String[], kw...)
 	sumx = sum(x)
 	@assert (sumx != 0) "Sum of x must be non-zero"
-	if (sumx < 1)
-		data = zeros(length(x), 4)
-		data[1, 3] = 90. - x[1]*360
-		data[1, 4] = 90.0
-		for k = 2:numel(x)
-			data[k, 3] = 90. - x[k]*360
-		end
-		plot(R=(0,10,0,10), marker=:wedge, ms=6)
+	(sumx > 1) && (x = x / sumx)
+	data = zeros(length(x), 4)
+	data[1, 3] = 90. - x[1]*360
+	data[1, 4] = 90.0
+	for k = 2:numel(x)
+		data[k, 3] = 90.0 - data[k, 3] - x[k]*360
+		data[k, 4] = data[k, 3]
 	end
+	plot(data, R=(0,10,0,10), marker=:wedge, ms=6)
 end
-=#
+##
