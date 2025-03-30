@@ -1924,18 +1924,157 @@ function help_parametric_3f(f1::Function, f2::Function, f3::Function, range_t=no
 	return hcat(x[:], y[:], z[:])
 end
 
-## ------------------------------------------------------------------------------------------------------
-function piechart(x::VecOrMat; names::Vector{<:AbstractString}=String[], kw...)
+# ------------------------------------------------------------------------------------------------------
+"""
+    piechart(x::VecOrMat; kw...)
+
+Create a pie chart of the values in the vector data `x`.
+
+Each slice has a label indicating its size as a percentage of the whole pie or a label provided by the user.
+
+### Args
+- `x`: Slice data, specified as a vector of numeric values. The size of each slice is a percentage of the whole pie,
+   depending on the sum of the elements of data:
+   - If sum(data) < 1, the values of data specify the areas of the pie slices, and the result is a partial pie.
+   - If sum(data) ≥ 1, the data values are normalized by data/sum(data) to determine the area of each slice of the pie.
+
+### Kwargs
+- `colors`: - A sequence of comma separated colors through which the pie chart will cycle. By default we use the cycle colors.
+- `explode`: - Offset slices, specified as a Int or logical vector. Slice numbers specified in this option are
+   _exploded_ with a shift of 4% of the pie diameter. Example: `explode=2` will explode slice 2. `explode=[2,4]`
+   will explode slices 2 and 4.
+- `font`: The fontsize used in labels. By default we compute onde from the pie size (see ``ms`` below), but
+   user can specify a fontsize in points (and optionally a font name and color).
+- `labels`: - A string vector or a tuple with the labels of each slice.
+- `labelstyle`: - Label style, specified as one of the values in the next list.
+   - `"namepercent"`: - Display the ``labels`` and proportions values (as percentages) next to the corresponding slices.
+   - `"namedata"`: - Labels with the name and value of each slice.
+   - `"name"`: - Display the ``labels`` values next to the corresponding slices.
+   - `"data"`: - Display the Data values next to the corresponding slices.
+   - `"percent"`: - Display the proportions values (as percentages) next to the corresponding slices (the defaul when no ``labels`` are provided).
+   - `"none"`: - Do not display any labels.
+- `ms or markersize`: - The diameter of the pie in cm (Default is 8 cm).
+
+### Example
+```julia
+piechart([1,2,3,4], explode=2, labels=("A","B","C","D"), labelstyle="namepercent", show=true)
+```
+"""
+function piechart(x::VecOrMat; first::Bool=true, kw...)
+	d = KW(kw)
 	sumx = sum(x)
 	@assert (sumx != 0) "Sum of x must be non-zero"
-	(sumx > 1) && (x = x / sumx)
-	data = zeros(length(x), 4)
-	data[1, 3] = 90. - x[1]*360
+	X = (sumx > 1) ? vec(x) / sumx : vec(Float64.(x))
+	data = zeros(length(X), 4)
+	data[1, 3] = 90. - X[1]*360
 	data[1, 4] = 90.0
-	for k = 2:numel(x)
-		data[k, 3] = 90.0 - data[k, 3] - x[k]*360
-		data[k, 4] = data[k, 3]
+	for k = 2:numel(X)
+		data[k, 3] = data[k-1, 3] - X[k]*360
+		data[k, 4] = data[k-1, 3]
 	end
-	plot(data, R=(0,10,0,10), marker=:wedge, ms=6)
+	
+	mid_angs = [(data[k, 3] + data[k, 4]) / 2 for k = 1:numel(x)]		# Compute the bissections angles
+
+	do_explode = false
+	non_exploded = ones(Bool, length(X))		# Default to no explosion
+	if ((val = find_in_dict(d, [:explode])[1]) !== nothing)
+		explode::Vector{Int} = isa(val, Bool) ? find(val) : [(val)...]
+		maximum(explode) > length(X) && error("The explode option must be a vector of Ints with no values larger than the size of data")
+		data_explode = data[explode, :]			# Get the exploded data
+		non_exploded[explode] .= false
+		data = data[non_exploded, :]			# Get the non-exploded data
+		do_explode = true
+	end
+	
+	# Need to parse these ones first to not get messages of "not-consumed" options from plot()
+	ms::Float64 = ((val = find_in_dict(d, [:ms :markersize :MarkerSize :size])[1]) === nothing) ? 8.0 : parse(Float64, val)
+	labels::Vector{<:String} = ((val = find_in_dict(d, [:labels :label])[1]) === nothing) ? String[] : [string.(val)...]
+	labelstyle::String = ((val = find_in_dict(d, [:labelstyle])[1]) === nothing) ? "" : string(val)::String
+
+	!isempty(labels) && (length(labels) != length(X)) &&
+		error("The number of labels ($(length(labels))) does not match the number of data slices ($(length(X)))")
+	!(labelstyle in ["", "namepercent", "namedata", "name", "data", "percent", "none"]) &&
+		(@warn("Bad value ($labelstyle) for the 'labelstyle' option. Defaulting to 'percent'"); labelstyle = "percent")
+	isempty(labels) && (labelstyle in ["namepercent", "namedata", "name", "data"]) &&
+		(@warn("When not providing 'labels' cannot use this 'labelstyle' option ($labelstyle). Defaulting to 'percent'"); labelstyle = "percent")
+	(isempty(labels) && labelstyle == "") && (labelstyle = "percent")
+
+	# Now we can parse the rest of the options
+	if ((val = find_in_dict(d, [:color :colors])[1]) === nothing)
+		fill = (length(X) <= 8) ? matlab_cycle_colors[1:length(X)] : simple_distinct[1:length(X)]
+	else
+		fill = string.(split(string(val), ","))
+		(length(fill) < length(X)) && (fill = repeat(fill, ceil(Int, length(X)/length(fill))))
+		(length(fill) > length(X)) && (fill = fill[1:length(X)])
+	end
+	d[:R] = (-2*ms, 2*ms, -2*ms, 2*ms)			# Set it big enough that even long legends do not get clipped
+	d[:marker] = "wedge"
+	d[:ms] = ms
+	d[:B] = "none"
+	one_not_exploded = any(non_exploded)		# If we have at least one not exploded slice
+	one_not_exploded ? (Dv = ds2ds(mat2ds(data), fill=fill[non_exploded])) : (d[:ms] = 0)
+
+	# ------------ If no lables wanted we just plot the wedges and return
+	(labelstyle == "none") && return _common_plot_xyz("", Dv, "plot", !first, true, false, d)
+
+	fs = font(d, [:font])						# See if we have a font (size & others) specification	
+	fs = (fs != "") ? fs : string(round(ms / (2.54/72) / 30, digits=1))	# Use a font size that is ~30 smaler than pie diameter
+
+	do_show = (val = find_in_dict(d, [:show])[1]) !== nothing ? true : false
+	one_not_exploded ? _common_plot_xyz("", Dv, "plot", !first, true, false, d) : _common_plot_xyz("", [0 0 0 0], "plot", !first, true, false, d)
+
+	# Compute the h-v scales
+	sc_x = (CTRL.limits[2]-CTRL.limits[1]) / CTRL.figsize[1]
+	sc_y = CTRL.figsize[2] != 0.0 ? (CTRL.limits[4]-CTRL.limits[3]) / CTRL.figsize[2] : sc_x
+
+	# If some slices are to be "exploded"
+	explode_off = ms * 0.04				# The offset of exploded slices (4% of the pie diameter)
+	if (do_explode)
+		for k = 1:size(data_explode, 1)
+			data_explode[k, 1] += explode_off * sc_x * cosd(mid_angs[explode[k]])
+			data_explode[k, 2] += explode_off * sc_y * sind(mid_angs[explode[k]])
+		end
+		Dv = ds2ds(mat2ds(data_explode), fill=fill[explode])
+		d[:marker], d[:ms] = "wedge", ms-explode_off/2
+		_common_plot_xyz("", Dv, "plot", true, true, false, d)
+	end
+
+	#  Get the text positions
+	r = ms * 1.05 / 2							# In cm
+	txt_pts = zeros(length(X), 2)
+	for k = 1:numel(X)
+		_r = non_exploded[k] ? r : r + explode_off
+		txt_pts[k, 1], txt_pts[k, 2] = _r * sc_x * cosd(mid_angs[k]), _r * sc_y * sind(mid_angs[k])
+	end
+
+	str = (labelstyle == "percent") ? string.(round.(X*100, digits=1), "%") : (labelstyle == "namepercent") ?
+		labels .* " (" .* string.(round.(X*100, digits=1), "%)") : (labelstyle == "namedata") ?
+		labels .* " (" .* string.(vec(x), ")") : (labelstyle == "name") ?
+		labels : (labelstyle == "data") ? string.(vec(x)) : String[]
+
+	justs = pick_justify(mid_angs)				# Get the text box justifications
+
+	text!(mat2ds(txt_pts, text=justs .* " " .* str), F="+f"*fs*"+j", show=do_show)
 end
-##
+
+# ------------------------------------------------------------------------------------------------------
+piechart!(x::VecOrMat; kw...) = piechart(x; first=false, kw...)
+
+# ------------------------------------------------------------------------------------------------------
+function pick_justify(angs)::Vector{String}
+	justs = ["BL", "ML", "TL", "TC", "TR", "MR", "BR", "BC"]
+	t = collect(1:length(angs))
+	angs[angs .< 0] .+= 360
+	for k = 1:numel(angs)
+		if     (angs[k] >= 80 && angs[k] <= 100)   t[k] = 8
+		elseif (angs[k] >= 170 && angs[k] <= 190)  t[k] = 6
+		elseif (angs[k] >= 260 && angs[k] <= 280)  t[k] = 4
+		elseif (angs[k] >= 350 && angs[k] <= 10)   t[k] = 2
+		elseif (angs[k]  > 10 && angs[k]  < 80)    t[k] = 1
+		elseif (angs[k]  > 100 && angs[k] < 170)   t[k] = 7
+		elseif (angs[k]  > 190 && angs[k] < 260)   t[k] = 5
+		elseif (angs[k]  > 280 && angs[k] < 350)   t[k] = 3
+		end
+	end
+	return justs[t]
+end
