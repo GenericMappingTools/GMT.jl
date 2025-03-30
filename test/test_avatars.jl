@@ -257,7 +257,7 @@
 
 	println("	PIECHART")
 	piechart([1,2,3,4])
-	piechart([1,2,3,4], colors="red")
+	piechart!([1,2,3,4], colors="red")
 	piechart([1,2,3,4], explode=2, labels=("A","B","C","D"), labelstyle="namepercent")
 
 	println("	SCATTER")
