@@ -1298,8 +1298,6 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 include("makeDCWs.jl")
-include("findpeaks.jl")
-include("signalcorr.jl")
 	
 # ------------------------------------------------------------------------------------------------------
 isdefined(Main, :VSCodeServer) && (const VSdisp = Main.VSCodeServer.vscodedisplay)
