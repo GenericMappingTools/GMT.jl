@@ -376,7 +376,7 @@ function opt_R2num(opt_R::String)::Vector{Float64}
 		# Don't know anymore how -R...+r limits should be stored in CTRL.limits
 	elseif (istilename(opt_R))						# A XYZ or quadtree tile address
 		t = scan_opt(opt_R, "-R")
-		limits = mosaic_limits(address)[1]
+		limits = mosaic_limits(t)[1]
 		zl::Int = contains(t, ",") ? parse(Int, t[findlast(',', t)+1:end]) : length(t)
 		inc = (360 / 2 ^ zl) / 256					# Increment in degrees at this zoom level
 		CTRL.pocket_R[2] = "$inc"
