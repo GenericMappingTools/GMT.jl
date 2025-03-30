@@ -27,38 +27,38 @@ a function of the lag.
 - `maxlags`: limits the lag range from `-maxlag` to `maxlag`.
 """
 function xcorr(x::AbstractVector{<:Real}; demean::Bool=true, lags::AbstractVector{<:Integer}=Int[], maxlags=0)
-	_lags = !isempty(lags) ? lags : (maxlags == 0 ? default_autolags(length(x)) : 0:minimum(maxlags, length(x)-1))
+	_lags = !isempty(lags) ? lags : (maxlags == 0 ? default_autolags(length(x)) : 0:min(maxlags, length(x)-1))
 	out = Vector{float(eltype(x))}(undef, length(_lags))
 	autocor!(out, x, _lags; demean=demean)
 end
 
 function xcorr(x::AbstractMatrix{<:Real}; demean::Bool=true, lags::AbstractVector{<:Integer}=Int[], maxlags=0)
-	_lags = !isempty(lags) ? lags : (maxlags == 0 ? default_autolags(size(x,1)) : 0:minimum(maxlags, size(x,1)-1))
+	_lags = !isempty(lags) ? lags : (maxlags == 0 ? default_autolags(size(x,1)) : 0:min(maxlags, size(x,1)-1))
 	out = Matrix{float(eltype(x))}(undef, length(_lags), size(x,2))
 	autocor!(out, x, _lags; demean=demean)
 end
 
 #---------------------------------------------------------------------------------------------------------------------
 function xcorr(x::AbstractVector{<:Real}, y::AbstractVector{<:Real}; demean::Bool=true, lags::AbstractVector{<:Integer}=Int[], maxlags=0)
-	_lags = !isempty(lags) ? lags : (maxlags == 0 ? default_crosslags(length(x)) : 0:minimum(maxlags, length(x)-1))
+	_lags = !isempty(lags) ? lags : (maxlags == 0 ? default_crosslags(length(x)) : 0:min(maxlags, length(x)-1))
 	out = Vector{float(Base.promote_eltype(x, y))}(undef, length(_lags))
 	crosscor!(out, x, y, _lags; demean=demean)
 end
 
 function xcorr(x::AbstractMatrix{<:Real}, y::AbstractVector{<:Real}; lags::AbstractVector{<:Integer}=Int[], demean::Bool=true, maxlags=0)
-	_lags = !isempty(lags) ? lags : (maxlags == 0 ? default_crosslags(size(x,1)) : 0:minimum(maxlags, size(x,1)-1))
+	_lags = !isempty(lags) ? lags : (maxlags == 0 ? default_crosslags(size(x,1)) : 0:min(maxlags, size(x,1)-1))
 	out = Matrix{float(Base.promote_eltype(x, y))}(undef, length(_lags), size(x,2))
 	crosscor!(out, x, y, _lags; demean=demean)
 end
 
 function xcorr(x::AbstractVector{<:Real}, y::AbstractMatrix{<:Real}; lags::AbstractVector{<:Integer}=Int[], demean::Bool=true, maxlags=0)
-	_lags = !isempty(lags) ? lags : (maxlags == 0 ? default_crosslags(length(x)) : 0:minimum(maxlags, length(x)-1))
+	_lags = !isempty(lags) ? lags : (maxlags == 0 ? default_crosslags(length(x)) : 0:min(maxlags, length(x)-1))
 	out = Matrix{float(Base.promote_eltype(x, y))}(undef, length(_lags), size(y,2))
 	crosscor!(out, x, y, _lags; demean=demean)
 end
 
 function xcorr(x::AbstractMatrix{<:Real}, y::AbstractMatrix{<:Real}; lags::AbstractVector{<:Integer}=Int[], demean::Bool=true, maxlags=0)
-	_lags = !isempty(lags) ? lags : (maxlags == 0 ? default_crosslags(size(x,1)) : 0:minimum(maxlags, size(x,1)-1))
+	_lags = !isempty(lags) ? lags : (maxlags == 0 ? default_crosslags(size(x,1)) : 0:min(maxlags, size(x,1)-1))
 	out = Array{float(Base.promote_eltype(x, y)),3}(undef, length(_lags), size(x,2), size(y,2))
 	crosscor!(out, x, y, _lags; demean=demean)
 end
@@ -83,25 +83,25 @@ compute cross covariances between each pairs of columns in x and y.
 - `maxlags`: limits the lag range from `-maxlag` to `maxlag`.
 """
 function xcov(x::AbstractVector{<:Real}, y::AbstractVector{<:Real}; demean::Bool=true, lags::AbstractVector{<:Integer}=Int[], maxlags=0)
-	_lags = !isempty(lags) ? lags : (maxlags == 0 ? default_crosslags(length(x)) : 0:minimum(maxlags, length(x)-1))
+	_lags = !isempty(lags) ? lags : (maxlags == 0 ? default_crosslags(length(x)) : 0:min(maxlags, length(x)-1))
 	out = Vector{float(Base.promote_eltype(x, y))}(undef, length(_lags))
 	crosscov!(out, x, y, _lags; demean=demean)
 end
 
 function xcov(x::AbstractMatrix{<:Real}, y::AbstractVector{<:Real}; lags::AbstractVector{<:Integer}=Int[], demean::Bool=true, maxlags=0)
-	_lags = !isempty(lags) ? lags : (maxlags == 0 ? default_crosslags(size(x,1)) : 0:minimum(maxlags, size(x,1)-1))
+	_lags = !isempty(lags) ? lags : (maxlags == 0 ? default_crosslags(size(x,1)) : 0:min(maxlags, size(x,1)-1))
 	out = Matrix{float(Base.promote_eltype(x, y))}(undef, length(_lags), size(x,2))
 	crosscov!(out, x, y, _lags; demean=demean)
 end
 
 function xcov(x::AbstractVector{<:Real}, y::AbstractMatrix{<:Real}; lags::AbstractVector{<:Integer}=Int[], demean::Bool=true, maxlags=0)
-	_lags = !isempty(lags) ? lags : (maxlags == 0 ? default_crosslags(length(x)) : 0:minimum(maxlags, length(x)-1))
+	_lags = !isempty(lags) ? lags : (maxlags == 0 ? default_crosslags(length(x)) : 0:min(maxlags, length(x)-1))
 	out = Matrix{float(Base.promote_eltype(x, y))}(undef, length(_lags), size(y,2))
 	crosscov!(out, x, y, _lags; demean=demean)
 end
 
 function xcov(x::AbstractMatrix{<:Real}, y::AbstractMatrix{<:Real}; lags::AbstractVector{<:Integer}=Int[], demean::Bool=true, maxlags=0)
-	_lags = !isempty(lags) ? lags : (maxlags == 0 ? default_crosslags(size(x,1)) : 0:minimum(maxlags, size(x,1)-1))
+	_lags = !isempty(lags) ? lags : (maxlags == 0 ? default_crosslags(size(x,1)) : 0:min(maxlags, size(x,1)-1))
 	out = Array{float(Base.promote_eltype(x, y)),3}(undef, length(_lags), size(x,2), size(y,2))
 	crosscov!(out, x, y, _lags; demean=demean)
 end
@@ -121,13 +121,13 @@ xcov(x::AbstractVecOrMat{<:Real}; demean::Bool=true, lags::AbstractVector{<:Inte
 	xcov(x, demean=demean, lags=lags, maxlags=maxlags)
 
 function xcov(x::AbstractVector{<:Real}; demean::Bool=true, lags::AbstractVector{<:Integer}=Int[], maxlags=0)
-	_lags = !isempty(lags) ? lags : (maxlags == 0 ? default_autolags(length(x)) : 0:minimum(maxlags, length(x)-1))
+	_lags = !isempty(lags) ? lags : (maxlags == 0 ? default_autolags(length(x)) : 0:min(maxlags, length(x)-1))
     out = Vector{float(eltype(x))}(undef, length(_lags))
     autocov!(out, x, _lags; demean=demean)
 end
 
 function xcov(x::AbstractMatrix{<:Real}; demean::Bool=true, lags::AbstractVector{<:Integer}=Int[], maxlags=0)
-	_lags = !isempty(lags) ? lags : (maxlags == 0 ? default_autolags(size(x,1)) : 0:minimum(maxlags, size(x,1)-1))
+	_lags = !isempty(lags) ? lags : (maxlags == 0 ? default_autolags(size(x,1)) : 0:min(maxlags, size(x,1)-1))
     out = Matrix{float(eltype(x))}(undef, length(_lags), size(x,2))
     autocov!(out, x, _lags; demean=demean)
 end

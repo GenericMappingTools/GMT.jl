@@ -207,7 +207,7 @@ end
 function _mat2ds(mat::Array{T,N}, txt::Union{String,Vector{String}}, hdr::Vector{String}, geom::Int, d::Dict)::GDtype where {T,N}
 
 	(!isempty(txt)) && return text_record(mat, txt,  hdr)
-	((text = find_in_dict(d, [:text])[1]) !== nothing) && return text_record(mat, text, hdr)
+	((_text = find_in_dict(d, [:text])[1]) !== nothing) && return text_record(mat, _text, hdr)
 	is3D = (find_in_dict(d, [:is3D])[1] === nothing) ? false : true		# Should account for is3D == false?
 	isa(mat, Vector) && (mat = reshape(mat, length(mat), 1))
 
@@ -614,7 +614,6 @@ function ds2ds(D::GMTdataset, is3D::Bool, d::Dict)::Vector{<:GMTdataset}
 	# Take one DS and split it into an array of DS's, one for each row and optionally add -G<fill>
 	# Alternativelly, if [:multi :multicol] options lieve in 'd', split 'D' by columns: [1,2], [1,3], [1,4], ...
 	# So far only for internal use but may grow in function of needs
-	#d = KW(kwargs)
 
 	#multi = 'r'		# Default split by rows
 	#if ((val = find_in_dict(d, [:multi :multicol], false)[1]) !== nothing)  multi = 'c'  end		# Then by columns

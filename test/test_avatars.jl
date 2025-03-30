@@ -255,6 +255,11 @@
 	GMT.boxes(x,y, grdlandmask=:water);
 	GMT.boxes(meshgrid(x,y)...);
 
+	println("	PIECHART")
+	piechart([1,2,3,4])
+	piechart([1,2,3,4], colors="red")
+	piechart([1,2,3,4], explode=2, labels=("A","B","C","D"), labelstyle="namepercent")
+
 	println("	SCATTER")
 	sizevec = [s for s = 1:10] ./ 10;
 	scatter(1:10, 1:10, markersize = sizevec, aspect=:equal, B=:a, marker=:square, fill=:green)

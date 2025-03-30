@@ -158,12 +158,12 @@ export
 	colorzones!, rasterzones!, rasterzones, lelandshade, texture_img, crop, doy2date, date2doy, yeardecimal, ISOtime2unix,
 	median, mean, quantile, std, nanmean, nanstd, skipnan, zonal_statistics, zonal_stats,
 	
-	conv, xcorr, xcov,
+	autocor, autocor!, autocov, autocov!, conv, xcorr, xcov,
 
 	add2PSfile, append2fig, linearfitxy, regiongeog, streamlines, peaks, polygonlevels, randinpolygon, polyfit, polyval,
 
 	ablines, ablines!, density, density!, boxplot, boxplot!, cornerplot, cornerplot!, cubeplot, cubeplot!, ecdfplot, ecdfplot!,
-	fill_between, fill_between!, marginalhist, marginalhist!, parallelplot, parallelplot!, plotlinefit, plotlinefit!,
+	fill_between, fill_between!, marginalhist, marginalhist!, parallelplot, parallelplot!, piechart, piechart!, plotlinefit, plotlinefit!,
 	qqplot, qqplot!, qqnorm, qqnorm!, remotegrid, sealand, squeeze, terramar, violin, violin!, viz, vizpdf, windbarbs, whereami,
 
 	maregrams, pastplates, seismicity, weather, wmsinfo, wmstest, wmsread,
@@ -216,6 +216,7 @@ include("blocks.jl")
 include("contourf.jl")
 include("filter1d.jl")
 include("fitcircle.jl")
+include("findpeaks.jl")
 include("finish_PS_nested.jl")
 include("gadm.jl")
 include("gmt2kml.jl")
@@ -298,6 +299,7 @@ include("pswiggle.jl")
 include("rasterpolygonfuns.jl")
 include("remotegrids.jl")
 include("sample1d.jl")
+include("signalcorr.jl")
 include("sealand.jl")
 include("spatial_funs.jl")
 include("spectrum1d.jl")
