@@ -28,6 +28,9 @@ Parameters
 
     Compute the cumulative distance along the input line. Note that for this the first two columns
     must contain the spatial coordinates.
+- `nonans`: [Type => Bool]
+
+    Remove all rows that have NaN fields.
 - $(opt_V)
 - **W** | **weights** :: [Type => Int]     ``Arg = w_col``
 

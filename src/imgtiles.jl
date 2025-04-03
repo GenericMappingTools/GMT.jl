@@ -603,6 +603,11 @@ function getprovider(name::StrSymb, zoom::Int; variant="", format="", ZYX::Bool=
 		variant = d * "_" * v * filesep * variant		# Need to carry also the dates (this will be used in cache name)
 		url = "https://prod-data.nimbo.earth/mapcache/tms/1.0.0/" * d * "_" * v * "@kermap/"
 		max_zoom = 13;	isZXY = true; code = "nimbo";	ext = "png";	sitekey = "?kermap_token=" * key
+	#elseif (_name == "ortosat")							# 
+		# variants: CorVerdadeira, falsacor
+		#layer = (variant == "falsacor") ? 1 : 2
+		#wms = wmsinfo("https://ortos.dgterritorio.gov.pt/wms/ortosat2023?service=wms&request=getcapabilities")
+		#url, isZXY, max_zoom, code = wms, true, 19, "ortosat"
 	elseif (_name == "mesh")							# For mesh we don't care the provider and max zoom is ilimitted
 		url, isZXY, max_zoom, code = string(name), true, 50, "unknown"
 	else
