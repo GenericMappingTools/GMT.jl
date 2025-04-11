@@ -1361,6 +1361,7 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)::Union{GMTdat
 	n_total_segments = OGR_F.n_filled
 	ds_bbox = OGR_F.BoundingBox
 	(n_total_segments == 0) && (@warn("Could not read this OGR dataset. A reading error or there is no data in it."); return GMTdataset())
+	is3D = (OGR_F.z != C_NULL) ? true : false
 
 	if (!drop_islands)
 		# First count the number of islands. Need to know the size to put in the D pre-allocation
@@ -1385,7 +1386,7 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)::Union{GMTdat
 			wkt   = OGR_F.wkt != C_NULL ? unsafe_string(OGR_F.wkt) : ""
 			(proj4 == "" && wkt != "") && (proj4 = wkt2proj(wkt))
 			is_geog = (contains(proj4, "=longlat") || contains(proj4, "=lonlat") || contains(proj4, "=latlon")) ? true : false
-			(coln = (is_geog) ? ["Lon", "Lat"] : ["X", "Y"])
+			(coln = (is_geog) ? (is3D ? ["Lon", "Lat", "Z"] : ["Lon", "Lat"]) : (is3D ? ["X", "Y", "Z"] : ["X", "Y"]))
 		else
 			proj4, wkt, coln = "", "", String[]
 		end
@@ -1405,21 +1406,23 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)::Union{GMTdat
 			if (OGR_F.n_islands == 0)
 				geom_type = unsafe_string(OGR_F.type)
 				geom = (geom_type == "Polygon") ? wkbPolygon : ((geom_type == "LineString") ? wkbLineString : wkbPoint)
-				D[n] = GMTdataset([unsafe_wrap(Array, OGR_F.x, OGR_F.np) unsafe_wrap(Array, OGR_F.y, OGR_F.np)],
-				                  Float64[], Float64[], attrib, coln, String[], hdr, String[], proj4, wkt, 0, Int(geom))
+				(is3D && (geom == wkbPolygon || geom == wkbPoint)) && (geom == wkbPolygon ? wkbPointZ : wkbPointZM)	# Convert 2D to 3D
+				data = is3D ? [unsafe_wrap(Array, OGR_F.x, OGR_F.np) unsafe_wrap(Array, OGR_F.y, OGR_F.np) unsafe_wrap(Array, OGR_F.z, OGR_F.np)] : [unsafe_wrap(Array, OGR_F.x, OGR_F.np) unsafe_wrap(Array, OGR_F.y, OGR_F.np)]
+				D[n] = GMTdataset(data, Float64[], Float64[], attrib, coln, String[], hdr, String[], proj4, wkt, 0, Int(geom))
 			else
 				islands = reshape(unsafe_wrap(Array, OGR_F.islands, 2 * (OGR_F.n_islands+1)), OGR_F.n_islands+1, 2) 
 				np_main = islands[1,2]+1			# Number of points of outer ring
-				D[n] = GMTdataset([unsafe_wrap(Array, OGR_F.x, np_main) unsafe_wrap(Array, OGR_F.y, np_main)], Float64[],
-				                  Float64[], attrib, coln, String[], hdr, String[], proj4, wkt, 0, Int(wkbPolygon))
+				data = is3D ? [unsafe_wrap(Array, OGR_F.x, np_main) unsafe_wrap(Array, OGR_F.y, np_main) unsafe_wrap(Array, OGR_F.z, np_main)] : [unsafe_wrap(Array, OGR_F.x, np_main) unsafe_wrap(Array, OGR_F.y, np_main)]
+				geom = (is3D) ? wkbPointZM : wkbPolygon
+				D[n] = GMTdataset(data, Float64[], Float64[], attrib, coln, String[], hdr, String[], proj4, wkt, 0, Int(geom))
 
 				if (!drop_islands)
 					for k = 2:size(islands,2)		# 2 because first row holds the outer ring indexes 
 						n = n + 1
 						off = islands[k,1] * 8
 						len = islands[k,2] - islands[k,1] + 1
-						D[n] = GMTdataset([unsafe_wrap(Array, OGR_F.x+off, len) unsafe_wrap(Array, OGR_F.y+off, len)],
-						                  Float64[], Float64[], attrib, coln, String[], " -Ph", String[], proj4, wkt, 0, Int(wkbPolygon))
+						data = is3D ? [unsafe_wrap(Array, OGR_F.x+off, len) unsafe_wrap(Array, OGR_F.y+off, len) unsafe_wrap(Array, OGR_F.z+off, len)] : [unsafe_wrap(Array, OGR_F.x+off, len) unsafe_wrap(Array, OGR_F.y+off, len)]
+						D[n] = GMTdataset(data, Float64[], Float64[], attrib, coln, String[], " -Ph", String[], proj4, wkt, 0, Int(geom))
 					end
 				end
 			end
@@ -1432,6 +1435,7 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)::Union{GMTdat
 		D[k].bbox = collect(Float64, Iterators.flatten(bb))
 	end
 	D[1].ds_bbox = collect(ds_bbox)			# It always has 6 elements and last two maybe zero
+	is3D && set_dsBB!(D, false)				# In the 3D case we missed to compute the global z_min/max
 	return (length(D) == 1) ? D[1] : D
 end
 
