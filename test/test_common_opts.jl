@@ -419,7 +419,14 @@
 	#rm("lixo_cube.nc")		# can't be deleted because Julia still holds its file handle.
 
 	A = reshape(collect(1:16), 4,4);
-	GMT.delrows!(A, [1,3]);
+
+	A = [1.0:6 10:10:60];
+	A[3] = NaN;
+	M1 = delrows(A, rows=[1,5])
+	M2 = delrows(M1, nodata=NaN)
+	M3 = delrows(M2, nodata=40)
+	M3 = delrows(M2, nodata=40, col=2)
+	@test  M3 == [2 20; 6 60]
 
 	gmtbegin()
 		GMT.gmt_restart(false)
