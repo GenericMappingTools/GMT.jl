@@ -1,23 +1,45 @@
+include("ellipsoids.jl")
+
 """
     xEast, yNorth, zUp = geodetic2enu(lon, lat, h, lon0, lat0, h0)
 
 Convert from geodetic coordinates to local East, North, Up (ENU) coordinates.
+
+- `lon`: a scalar, or vector of longitudes to be transformed
+- `lat`: a scalar, or vector of latitudes to be transformed
+- `h`: a scalar, or vector of altitudes of the point(s) to be transformed
+- `lon0, lat0, h0`: Origin of the geodetic coordinates system (all 3 scalars)
+
+Returns three Float64 scalars or three vectors with the cartesian ENU components
 """
 function geodetic2enu(lon, lat, h, lon0, lat0, h0)
-	#
-	D1 = mapproject([lon lat h], geod2ecef=true);
-	D0 = mapproject([lon0 lat0 h0], geod2ecef=true);
-	d  = D1.data .- D0.data;
-	ecef2enuv(view(d, :, 1), view(d, :, 2), view(d, :, 3), lon0, lat0)
+	e1,c1,f1 = geodetic2ecef(lon, lat, h)
+	e2,c2,f2 = geodetic2ecef(lon0, lat0, h0)
+	ecef2enuv(e1 .- e2, c1 .- c2, f1 .- f2, lon0, lat0)
 end
 
 function ecef2enuv(u, v, w, lon0, lat0)
 	# Adapted from Octave, that adapted from anonymous contributor that probably adapted from Matlab
-	t     =  cosd(lon0) .* u + sind(lon0) .* v;
-	east  = -sind(lon0) .* u + cosd(lon0) .* v;
-	up    =  cosd(lat0) .* t + sind(lat0) .* w;
-	north = -sind(lat0) .* t + cosd(lat0) .* w;
+	sin_lon0, cos_lon0 = sincosd(lon0)
+	sin_lat0, cos_lat0 = sincosd(lat0)
+	t     =  cos_lon0 * u + sin_lon0 * v;
+	east  = -sin_lon0 * u + cos_lon0 * v;
+	up    =  cos_lat0 * t + sin_lat0 * w;
+	north = -sin_lat0 * t + cos_lat0 * w;
 	return east, north, up
+end
+
+# -----------------------------------------------------------------------------------------------
+function geodetic2ecef(lon, lat, h; ellps::Ellipsoid=WGS84_ellps)
+    sinϕ, cosϕ = sincosd.(lat)
+    sinλ, cosλ = sincosd.(lon)
+
+    N = ellps.a ./ sqrt.(1 .- ellps.e2 * sinϕ.^2)  # Radius of curvature (meters)
+
+    x = (N .+ h) .* cosϕ .* cosλ
+    y = (N .+ h) .* cosϕ .* sinλ
+    z = (N .* (1 .- ellps.e2) .+ h) .* sinϕ
+    return x, y, z
 end
 
 # -----------------------------------------------------------------------------------------------
