@@ -547,9 +547,8 @@ function set_dsBB!(D, all_bbs::Bool=true)
 			D.ds_bbox = D.bbox = collect(Float64, Iterators.flatten(extrema(D.data, dims=1)))
 			ind = findall(.!isfinite.(D.bbox))		# If we have some columns with NaNs or Infs
 			if (!isempty(ind))
-				for k = 2:2:length(ind)
-					k2 = div(k,2)
-					D.ds_bbox[k2*2-1], D.ds_bbox[k2*2] = extrema_cols_nan(D.data, col=k2)
+				for k = 1:2:length(ind)
+					D.ds_bbox[ind[k]], D.ds_bbox[ind[k+1]] = extrema_cols_nan(D.data, col=div(ind[k+1],2))
 				end
 				D.bbox = D.ds_bbox
 			end
