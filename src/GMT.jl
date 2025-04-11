@@ -138,7 +138,7 @@ export
 	getregion, gd2gmt, gmt2gd, gdalread, gdalshade, gdalwrite, gadm, xyzw2cube, coastlinesproj, graticules, orbits, orbits!,
 	plotgrid!, worldrectangular, worldrectgrid,
 
-	earthregions, gridit, grid2tri, magic, rescale, stackgrids, delrows!, setgrdminmax!, meshgrid, cart2pol, pol2cart,
+	earthregions, gridit, grid2tri, magic, rescale, stackgrids, delrows, setgrdminmax!, meshgrid, cart2pol, pol2cart,
 	cart2sph, sph2cart,
 
 	arcellipse, arccircle, getband, getdriver, getlayer, getproj, getgeom, getgeotransform, gdaldrivers, toPROJ4, toWKT,
@@ -324,6 +324,7 @@ include("utils_project.jl")
 include("choropleth_utils.jl")
 include("webmapserver.jl")
 include("extras/seismicity.jl")
+include("extras/okada.jl")
 include("extras/weather.jl")
 include("seis/psmeca.jl")
 include("seis/gmtisf.jl")

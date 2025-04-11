@@ -175,12 +175,16 @@ function _show(io::IO,
 
 	if ((Tc = get(D.attrib, "Timecol", "")) != "")
 		Tcn = parse.(Int, split(Tc, ","))
+		WTS = get(D.attrib, "what_time_sys", "")		# If other than Unix time is being used. Cuurently only decimal year is supported
+		if (WTS == "YearDecimal0000")  fun = yeardecimal
+		else                           fun = unix2datetime
+		end
 		if (size(Dt,1) > 250)
-			newTcs = string.(unix2datetime.([Dt[1:50, Tcn]; Dt[end-50:end, Tcn]]))
+			newTcs = string.(fun.([Dt[1:50, Tcn]; Dt[end-50:end, Tcn]]))
 			Dt = [D.data[1:50, :]; D.data[end-50:end, :]]
 			(skipd_rows == 0) && (skipd_rows = size(D,1) - size(Dt,1))
 		else
-			newTcs = string.(unix2datetime.(Dt[:, Tcn]))
+			newTcs = string.(fun.(Dt[:, Tcn]))
 		end
 		Dt = (length(Tcn) == 1) ? [Dt[:,1:Tcn[1]-1] newTcs[:,1] Dt[:,Tcn[1]+1:end]] :
 		                          [Dt[:,1:Tcn[1]-1] newTcs[:,1] Dt[:,Tcn[1]+1:Tcn[2]-1] newTcs[:,2] Dt[:,Tcn[2]+1:end]]
