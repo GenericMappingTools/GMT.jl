@@ -61,7 +61,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function sample1d_helper(cmd0::String, arg1, d::Dict{Symbol,Any})
 
-	cmd = parse_common_opts(d, "", [:V_params :b :d :e :f :h :i :o :w :yx])[1]
+	cmd = parse_common_opts(d, "", [:V_params :b :d :e :f :h :i :o :s :w :yx])[1]
 	_, opt_g = parse_g(d, "")
 	cmd = parse_these_opts(cmd, d, [[:A :resample], [:N :time_col :timecol], [:W :weights :weights_col]])
 	cmd, Tvec = parse_opt_range(d, cmd, "T")
