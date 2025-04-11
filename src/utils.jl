@@ -385,6 +385,60 @@ function yeardecimal(years::Real)		# Covert from decimal years to DateTime
 end
 
 # --------------------------------------------------------------------------------------------------
+"""
+    settimecol!(D::GMTdataset; col::Int=0, time_system="", time_unit="", time_epoch="")
+
+Set the time column of a `D` GMTdataset (or vector of GMTdatasets) to a given time system.
+
+### Args
+- `D``: a GMTdataset or a vector of GMTdatasets
+
+### Kwargs
+- `col`: is the column number of the time column. Attention, this is a MANDATORY option
+   If only `col` is provided (_i.e._, no `time_xxx` options are used), then we only set internal
+   info to make `col` the time column. That is, we assume that `col` contains already time in seconds (Unix time)
+- `time_system`: is one of: "JD", "MJD", "J2000", "S1985", "UNIX", "RD0001", "RATA".
+   See the GMT manual for a description of these systems (https://docs.generic-mapping-tools.org/dev/gmt.conf.html#term-TIME_SYSTEM).
+- `time_epoch`: In ALTERNATIVE to `time_system` use the `time_epoch` AND `time_unit` options.
+   `time_epoch` a string of the form 'yyyy-mm-ddT[hh:mm:ss]' (Gregorian) or 'yyyy-Www-ddT[hh:mm:ss]' (ISO)
+- `time_unit`: is one of: "year", "month", "week", "day", "hour", "minute", "second"
+"""
+function settimecol!(D::GMTdataset; col::Int=0, time_system="", time_unit="", time_epoch="")
+	(col <= 0) && error("Must provide the 'col' (column) number of the time column")
+	(col > size(D, 2)) && error("Column number $col is out of range")
+	(time_system == "") && ((time_unit != "" && time_epoch == "") || (time_unit == "" && time_epoch != "")) &&
+		error("Must provide either 'time_system' or, 'time_unit' AND 'time_epoch'")
+	!(time_system in ["", "JD", "MJD", "J2000", "S1985", "UNIX", "RD0001", "RATA"]) &&
+		error("time_system must be one of: \"JD\", \"MJD\", \"J2000\", \"S1985\", \"UNIX\", \"RD0001\", \"RATA\"")
+	(time_epoch != "") && (count_chars(time_epoch, '-') != 2) &&
+		error("time_epoch must be a string of the form 'yyyy-mm-ddT[hh:mm:ss]' (Gregorian) or 'yyyy-Www-ddT[hh:mm:ss]' (ISO)")
+	(time_unit != "") && (tu = lowercase(time_unit[1])) ∉ ['y', 'o', 'w', 'd', 'h', 'm', 's'] &&
+		error("time_unit must be a string starting with 'y' (year), 'o' (month), 'w' (week), 'd' (day), 'h' (hour), 'm' (minute) or 's' (second)")
+	(startswith(lowercase(time_unit), "mo") && (tu = 'o'))		# Because both month and minute start with an 'm'
+
+	col_s = string(col)
+	((Tc = get(D.attrib, "Timecol", "")) == "") ? D.attrib["Timecol"] = col_s : (Tc != col_s) ? D.attrib["Timecol"] = Tc * ",$col" : nothing
+	D.colnames[col] = "Time"
+
+	(time_system == "" && time_unit == "" && time_epoch == "") && return D	# Just set the column 'col' as a TimeCol
+
+	if (time_system != "") D.attrib["Time_system"] = time_system
+	else
+		D.attrib["Time_unit"], D.attrib["Time_epoch"] = string(tu), time_epoch
+		# The following is to help show_pretty_datasets to print the correct ISO time
+		(tu == 'y') && startswith(time_epoch, "0000-01-01") && (D.attrib["what_time_sys"] = "YearDecimal0000")
+	end
+	return D	
+end
+function settimecol!(D::Vector{GMTdataset}; col::Int=0, time_system="", time_unit="", time_epoch="")
+	settimecol!(view(D,1), col=col, time_system=time_system, time_unit=time_unit, time_epoch=time_epoch)
+end
+function settimecol!(x)
+	@warn "settimecol!() is only implemented for GMTdatasets, not this type of input ($(typeof(x)))"
+end
+
+
+# --------------------------------------------------------------------------------------------------
 function peaks(; N=49, grid::Bool=true, pixreg::Bool=false)
 	x,y = meshgrid(range(-3,stop=3,length=N))
 
@@ -518,21 +572,55 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    delrows!(A::Matrix, rows::VecOrMat)
+    delrows(A::Union{Matrix, GMTdataset}; rows::Vector{<:Integer}=Int[], nodata=nothing, col=0)
 
-Delete the rows of Matrix `A` listed in the vector `rows`
+Return a new matrix or GMTdataset where the rows listed in the vector of integers `rows` or rows found with other conditions were deleted.
+
+### Args
+- `A`: Matrix or GMTdataset
+
+### Kwargs
+- `rows`: Vector of integers specifying the rows to delete. Note: either this or the `nodata` option must be specified.
+- `nodata`: Value that indicates no data value. Rows where this value is found are deleted. Use ``nodata=NaN``
+   to delete rows with NaN values. Note: either this or the `rows` option must be specified.
+- `col`: Column to check for `nodata`. the Default is to search in all columns. Use this option is to restrict the search to a specific column.
+
+### Examples
+```julia
+A = [1.0:6 10:10:60];
+A[3] = NaN;
+M1 = delrows(A, rows=[1,5])
+M2 = delrows(M1, nodata=NaN)
+M3 = delrows(M2, nodata=40, col=2)
+```
+
 """
-function delrows!(A::Matrix, rows::VecOrMat)
-	nrows, ncols = size(A)
-	npts = length(A)
-	A = reshape(A, npts)
-	ndr = length(rows)			# Number of rows to delete
-	inds = Vector{Int}(undef, ndr * ncols)
-	for k = 1:ndr
-		inds[(k-1)*ncols+1:k*ncols] = collect(rows[k]:nrows:npts-nrows+rows[k])
+function delrows(A::Matrix; rows::Vector{<:Integer}=Int[], nodata=nothing, col=0)
+	isempty(rows) && nodata === nothing && error("Must select something to delete")
+	@assert col >= 0 && col <= size(A,2) "Column number must be between 1 and $(size(A,2))"
+	if !isempty(rows)
+		bv = .~BitVector(undef, size(A,1))		# A BitVector of true's (can this be trusted to be always true?)
+		bv[rows] .= false
+	else
+		if (col == 0)
+			if isnan(nodata)
+				bv = .!isnan.(view(A,:,1))
+				for k = 2:size(A,2)  bv .= bv .& .!isnan.(view(A,:,k)) end
+			else
+				bv = (view(A,:,1) .!= nodata)
+				for k = 2:size(A,2)  bv .= bv .& (view(A,:,k) .!= nodata) end
+			end
+		else
+			if isnan(nodata)  bv = isnan.(view(A,:,col))
+			else              bv = (view(A,:,col) .!= nodata)
+			end
+		end
 	end
-	inds = sort(inds)
-	reshape(deleteat!(A, inds), nrows-ndr, ncols)
+	return any(bv) ? A[bv,:] : A		# If nothing found, just return the original array
+end
+function delrows(D::GMTdataset; rows::Vector{<:Integer}=Int[], nodata=nothing, col=0)
+	mat = delrows(D.data, rows=rows, nodata=nodata, col=col)
+	return size(mat,1) != size(D,1) ? mat2ds(mat, D) : D	# If nothing found, just return the original dataset
 end
 
 # --------------------------------------------------------------------------------------------------
