@@ -50,6 +50,7 @@ using FFTW
 		@warn("Failed the WMS test. Error was:\n $err")
 	end
 
+	include("test_okadas.jl")
 	include("test_findpeaks.jl")
 	include("test_hampel.jl")
 	include("test_maregrams.jl")
