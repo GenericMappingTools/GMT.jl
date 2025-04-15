@@ -40,6 +40,11 @@ Specify data type (with *type*=true, e.g. `img=true`).  Choose among:
 
 - `inrows`: Select specific data rows to be read. Valid args include ranges or a string with an hard core GMT -q option.
 
+- `nodata`: When reading table data via GMT (but not GDAL), this option allows user-coded missing data values
+  to be translated to NaN values. By default examine all input columns after the first two. Use the +c modifier
+  to override the starting column used for the examinations. e.g. `nodata=-99999+c1` to replace all -99999 values
+  in second column with NaNs.
+
 - `stride`: When reading table data via GMT (but not GDAL), this option allows subsampling the data. Provide a
   number to be used as stride for the rows. A `stride=2` will read every other row.
 
@@ -197,6 +202,7 @@ function gmtread(_fname::String; kwargs...)
 		if (proggy == "read ")
 			((val = find_in_dict(d, [:stride])[1]) !== nothing) && (cmd *= " -Em" * arg2str(val)::String; proggy = "gmtconvert ")
 			((val = find_in_dict(d, [:q :inrows :inrow])[1]) !== nothing) && (cmd *= " -q" * arg2str(val)::String; proggy = "gmtconvert ")
+			((val = find_in_dict(d, [:d :nodata])[1]) !== nothing) && (cmd *= " -di" * arg2str(val)::String; proggy = "gmtconvert ")
 			cmd *= opt_T
 		end
 

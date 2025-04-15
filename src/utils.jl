@@ -572,9 +572,10 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    delrows(A::Union{Matrix, GMTdataset}; rows::Vector{<:Integer}=Int[], nodata=nothing, col=0)
+    delrows(A::Union{Matrix, GDtype}; rows::Vector{<:Integer}=Int[], nodata=nothing, col=0)
 
-Return a new matrix or GMTdataset where the rows listed in the vector of integers `rows` or rows found with other conditions were deleted.
+Return a new matrix or GMTdataset where the rows listed in the vector of integers `rows`
+or rows found with other conditions were deleted.
 
 ### Args
 - `A`: Matrix or GMTdataset
@@ -583,7 +584,8 @@ Return a new matrix or GMTdataset where the rows listed in the vector of integer
 - `rows`: Vector of integers specifying the rows to delete. Note: either this or the `nodata` option must be specified.
 - `nodata`: Value that indicates no data value. Rows where this value is found are deleted. Use ``nodata=NaN``
    to delete rows with NaN values. Note: either this or the `rows` option must be specified.
-- `col`: Column to check for `nodata`. the Default is to search in all columns. Use this option is to restrict the search to a specific column.
+- `col`: Column to check for `nodata`. the Default is to search in all columns. Use this option is
+   to restrict the search to a specific column.
 
 ### Examples
 ```julia
@@ -599,7 +601,8 @@ function delrows(A::Matrix; rows::Vector{<:Integer}=Int[], nodata=nothing, col=0
 	isempty(rows) && nodata === nothing && error("Must select something to delete")
 	@assert col >= 0 && col <= size(A,2) "Column number must be between 1 and $(size(A,2))"
 	if !isempty(rows)
-		bv = .~BitVector(undef, size(A,1))		# A BitVector of true's (can this be trusted to be always true?)
+		bv = BitVector(undef, size(A,1))
+		for k = 1:size(A,1)  bv[k] = true  end		# Because I don't know how to create an initialized BitVector
 		bv[rows] .= false
 	else
 		if (col == 0)
@@ -621,6 +624,13 @@ end
 function delrows(D::GMTdataset; rows::Vector{<:Integer}=Int[], nodata=nothing, col=0)
 	mat = delrows(D.data, rows=rows, nodata=nodata, col=col)
 	return size(mat,1) != size(D,1) ? mat2ds(mat, D) : D	# If nothing found, just return the original dataset
+end
+function delrows(D::Vector{<:GMTdataset}; rows::Vector{<:Integer}=Int[], nodata=nothing, col=0)
+	Dv = Vector{GMTdataset{typeof(D[1])}}(undef, length(D))
+	for k = 1:length(D)
+		Dv[k] = delrows(D[k], rows=rows, nodata=nodata, col=col)
+	end
+	return Dv
 end
 
 # --------------------------------------------------------------------------------------------------

@@ -29,6 +29,7 @@ plot!(x, ys)
 ```
 """
 function lowess(D::GMTdataset; span=2/3, nsteps=3, delta=0.0)
+	any(isnan.(view(D.data, :, 2))) && (D = sample1d(D, fill_nans=true))
 	(delta == 0.0) && (delta = 0.01 * (D.bbox[2] - D.bbox[1]))
 	new_y = lowess(view(D.data, :, 1), view(D.data, :, 2); span=span, nsteps=nsteps, delta=convert(eltype(D.data), delta))
 	mat2ds([D.data[:,1] new_y], D)
