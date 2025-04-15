@@ -55,6 +55,10 @@ sample1d(arg1; kw...)         = sample1d_helper("", arg1; kw...)
 
 function sample1d_helper(cmd0::String, arg1; kwargs...)
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+	isa(arg1, Matrix{<:Real}) && (arg1 = mat2ds(arg1))		#  One less type to deal with
+	fill_nans = is_in_kwargs(d, [:fill_nans :interp_nans])
+	(cmd0 != "") && fill_nans && (arg1 = gmtread(cmd0))
+	fill_nans && isa(arg1, Vector) && (@warn "Filling NaNs only works with GMTdatasets. For vectors you must run one by one"; return nothing)
     sample1d_helper(cmd0, arg1, d)
 end
 
@@ -130,20 +134,62 @@ function sample1d_helper(cmd0::String, arg1, d::Dict{Symbol,Any})
 		end
 		return r
 	end
-	
+
+	#= sample1d unfortunately does not have an option to ignore NaNs, so they propagate. We workarout that fact by
+	# removing them.
+	if (isa(arg1, GDtype) && ((ign_nans = find_in_dict(d, [:ignore_nans])[1]) !== nothing ||
+	                          (fill_nans = (find_in_dict(d, [:fill_nans :interp_nans])[1]) !== nothing)))
+		if isa(arg1, GMTdataset)
+			indNaN = findall(isnan.(view(arg1.data, :, 2)))
+			if (!isempty(indNaN))
+				fill_nans && (Tvec = arg1.data[indNaN, 1])		# Sample only at the NaNs locations
+				arg1 = delrows(arg1, rows=indNaN)
+				!contains(cmd, " -T") && (cmd *= " -T")
+			end
+		else
+			have_nans = false
+			for k = 1:numel(arg1)
+				any(isnan.(view(arg1[k].data, :, 2))) && (have_nans = true; break)
+			end
+			have_nans && (arg1 = delrows(arg1, nodata=NaN))
+		end
+	end
+	=#
+
+	# BLOODY tricky this one. If we use defaults, sample1d will not interpolate through NaNs. Need to use --IO_NAN_RECORDS=skip
+	fill_nans = (find_in_dict(d, [:fill_nans :interp_nans])[1] !== nothing)
+	(fill_nans || (find_in_dict(d, [:keep_nans])[1] === nothing)) && (cmd *= " --IO_NAN_RECORDS=skip")
+
+	if (fill_nans)
+		indNaN = isnan.(view(arg1.data, :, 2))
+		for k = 3:size(arg1.data, 2)				# If we have more than 2 columns, we need to find the NaNs in all of them
+			indNaN .|= isnan.(view(arg1.data, :, k))
+		end
+		if (any(indNaN))
+			(Tvec = arg1.data[indNaN, 1])					# Sample only at the NaNs locations
+			!contains(cmd, " -T") && (cmd *= " -T")
+		end
+	end
+
 	r = common_grd(d, cmd0, cmd, "sample1d ", arg1, isempty(Tvec) ? nothing : Tvec)		# Finish build cmd and run it
-	(r === nothing || isa(r, String)) && return r		# Nothing if saved in file, String if Vd == 2
+	(r === nothing || isa(r, String)) && return r			# Nothing if saved in file, String if Vd == 2
 
 	if isa(arg1, GDtype)
+		if (fill_nans)
+			c = deepcopy(arg1)
+			c.data[indNaN, 2:end] = r.data[:, 2:end];		# Fill the NaNs with the new interpolated data
+			r = c
+		end
 		colnames = isa(arg1, GMTdataset) ? arg1.colnames : arg1[1].colnames
 		have_cumdist && append!(colnames, ["cumdist"])
 		isa(arg1, GMTdataset) ? (r.attrib = arg1.attrib) : [r[k].attrib = arg1[1].attrib for k = 1:numel(r)]	# Keep the attribs
-	else		# Input was eith a matrix or a file name
+	else		# Input was a file name
 		nc = isa(r, GMTdataset) ? size(r, 2) : size(r[1], 2)
 		colnames = [@sprintf("Z%d", k) for k = 1:nc]
 		(nc > 1) && (colnames[1] = "X"; colnames[2] = "Y")
 		have_cumdist && (colnames[end] = "cumdist")
 	end
+
 	isa(r, GMTdataset) ? (r.colnames = colnames) : (r[1].colnames = colnames)
 	return r
 end
