@@ -13,13 +13,9 @@ struct Ellipsoid
 end
 
 function Ellipsoid(; a::String="", b::String="", f_inv::String="", name=:UNKNOWN)
-	if isempty(a) || isempty(b) == isempty(f_inv)
-		throw(ArgumentError("Specify parameter 'a' and either 'b' or 'f_inv'"))
-	end
-	if isempty(b)
-		_ellipsoid_af(parse(Float64, a), parse(Float64, f_inv), name)
-	else
-		_ellipsoid_ab(parse(Float64, a), parse(Float64, b), name)
+	(isempty(a) || isempty(b) == isempty(f_inv)) && throw(ArgumentError("Specify parameter 'a' and either 'b' or 'f_inv'"))
+	if isempty(b)  _ellipsoid_af(parse(Float64, a), parse(Float64, f_inv), name)
+	else           _ellipsoid_ab(parse(Float64, a), parse(Float64, b), name)
 	end
 end
 
@@ -35,9 +31,8 @@ end
 
 function Base.show(io::IO, el::Ellipsoid)
 	if el.name != :UNKNOWN
-		# To clarify that these are Ellipsoids, we wrap the name in
-		# 'Ellipsoid', even though the name itself should resolve to the
-		# correct ellipsoid instance.
+		# To clarify that these are Ellipsoids, we wrap the name in 'Ellipsoid',
+		# even though the name itself should resolve to the correct ellipsoid instance.
 		print(io, "Ellipsoid($(el.name))")
 	else
 		print(io, "Ellipsoid(a=$(el.a), b=$(el.b))")
