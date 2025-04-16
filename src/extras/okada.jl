@@ -1,4 +1,4 @@
-"""
+#=
 OKADA85 Surface deformation due to a finite rectangular source.
 	[uE,uN,uZ,uZE,uZN,uNN,uNE,uEN,uEE] = OKADA85(...
 	   E,N,DEPTH,STRIKE,DIP,LENGTH,WIDTH,RAKE,SLIP,OPEN)
@@ -76,6 +76,25 @@ OKADA85 Surface deformation due to a finite rectangular source.
 	      New York, 1980.
 	   Okada Y., Surface deformation due to shear and tensile faults in a
 	      half-space, Bull. Seismol. Soc. Am., 75:4, 1135-1154, 1985.	
+=#
+
+"""
+    Gdef = okada(G::GMTgrid; kw...)
+
+### Args
+- `G`: A grid defining the region and the grid spacing where the deformation will be computed.
+- `x_start`: The x coordinate of the fault's start (UpperLeft corner of the fault plane).
+- `y_start`: The y coordinate of the fault's start.
+- `W`: The width of the fault in km.
+- `L`: The length of the fault in km.
+- `depth`: The depth of the fault top center in km (`depth` > 0).
+- `strike`: The strike of the fault trace direction (0 to 360° relative to North) defined so that
+   the fault dips to the right side of the trace.
+- `dip`: The dip of the fault in degrees (angle between the fault plane and the horizontal plane).
+- `rake`: Direction the hanging wall moves during rupture, measured relative to the fault STRIKE (-180 to 180°).
+- `slip`: Dislocation in `rake` direction (km when `G` is in geographic coordinates, length unit when in cartesian).
+- `open`: dislocation in tensile component (same unit as `slip`).
+- `nu`: The Poisson's ratio of the faulted medium.
 """
 function okada(G::GMTgrid; kw...)
 	# Do all the parsings here so that only this tinny function gets recompiled when any of kwargs change.
@@ -89,7 +108,7 @@ function okada(G::GMTgrid; kw...)
 	(r = get(kw, :rake, nothing))   === nothing && error("'rake' must be specified"); rake = Float64(r)
 	(s = get(kw, :slip, nothing))   === nothing && error("'slip' must be specified"); slip = Float64(s)
 	(n = get(kw, :nu, 0.25)); nu = Float64(n)
-	U3 = get(kw, :U3, 0.0);
+	U3 = get(kw, :open, 0.0);
 	okada(G, x_start, y_start, W, L, depth, strike, dip, rake, slip, nu, U3=U3)
 end
 
@@ -124,7 +143,7 @@ function okada(x::Vector{Float64}, y::Vector{Float64}; kw...)
 	(r = get(kw, :rake, nothing))   === nothing && error("'rake' must be specified"); rake = Float64(r)
 	(s = get(kw, :slip, nothing))   === nothing && error("'slip' must be specified"); slip = Float64(s)
 	(n = get(kw, :nu, 0.25)); nu = Float64(n)
-	U3 = get(kw, :U3, 0.0);
+	U3 = get(kw, :open, 0.0);
 	do_all3 = (get(kw, :enz, nothing) !== nothing)
 
 	if (do_all3)
@@ -532,6 +551,7 @@ function I5(xi,eta,q,sin_dip, cos_dip,nu,R,db)
 	return I
 end
 
+#=
 #---------------------------------------------------------------------------------------------------
 # Tilt subfunctions
 # strike-slip tilt subfunctions [equation (37) p. 1147]
@@ -706,3 +726,4 @@ end
 J3(xi,eta,q,sin_dip, cos_dip,nu,R) = (1 - 2*nu) * -xi/(R*(R + eta)) - J2(xi,eta,q,sin_dip, cos_dip,nu,R)
 
 J4(xi,eta,q,sin_dip, cos_dip,nu,R) = (1 - 2*nu) * (-cos_dip/R - q*sin_dip/(R*(R + eta))) - J1(xi,eta,q,sin_dip, cos_dip,nu,R)
+=#
