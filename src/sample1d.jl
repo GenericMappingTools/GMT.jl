@@ -135,28 +135,7 @@ function sample1d_helper(cmd0::String, arg1, d::Dict{Symbol,Any})
 		return r
 	end
 
-	#= sample1d unfortunately does not have an option to ignore NaNs, so they propagate. We workarout that fact by
-	# removing them.
-	if (isa(arg1, GDtype) && ((ign_nans = find_in_dict(d, [:ignore_nans])[1]) !== nothing ||
-	                          (fill_nans = (find_in_dict(d, [:fill_nans :interp_nans])[1]) !== nothing)))
-		if isa(arg1, GMTdataset)
-			indNaN = findall(isnan.(view(arg1.data, :, 2)))
-			if (!isempty(indNaN))
-				fill_nans && (Tvec = arg1.data[indNaN, 1])		# Sample only at the NaNs locations
-				arg1 = delrows(arg1, rows=indNaN)
-				!contains(cmd, " -T") && (cmd *= " -T")
-			end
-		else
-			have_nans = false
-			for k = 1:numel(arg1)
-				any(isnan.(view(arg1[k].data, :, 2))) && (have_nans = true; break)
-			end
-			have_nans && (arg1 = delrows(arg1, nodata=NaN))
-		end
-	end
-	=#
-
-	# BLOODY tricky this one. If we use defaults, sample1d will not interpolate through NaNs. Need to use --IO_NAN_RECORDS=skip
+	# Tricky this one. If we use defaults, sample1d will not interpolate through NaNs. Need to use --IO_NAN_RECORDS=skip
 	fill_nans = (find_in_dict(d, [:fill_nans :interp_nans])[1] !== nothing)
 	(fill_nans || (find_in_dict(d, [:keep_nans])[1] === nothing)) && (cmd *= " --IO_NAN_RECORDS=skip")
 

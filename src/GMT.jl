@@ -184,6 +184,7 @@ export
 	groupby, stats,
 
 	lazinfo, lazread, lazwrite, lasread, laswrite,
+	okada,
 
 	cube, cylinder, circlepts, dodecahedron, ellipse3D, eulermat, flatfv, icosahedron, loft, sphere, spinmat,
 	octahedron, tetrahedron, torus, replicant, revolve, rotate, rotate!, translate, translate!,
