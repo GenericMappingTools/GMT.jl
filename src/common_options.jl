@@ -2745,7 +2745,7 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 				cpt_opt_T = @sprintf(" -T%.12g/%.12g/256+n -D", range[5], range[6])
 			elseif (cpt_opt_T == "")
 				drange = range[6] - range[5]
-				(drange > 1e6) && @warn("The z range expands to more then 6 orders of magnitude. Missed to replace the nodatavalues?\n\n")
+				(drange > 1e8) && @warn("The z range expands to more then 6 orders of magnitude. Missed to replace the nodatavalues?\n\n")
 				loc_eps = (drange > 1e-6) ? 1e-6 : 1e-12		# Totally ad hoc condition
 				cpt_opt_T = @sprintf(" -T%.12g/%.12g/256+n", range[5] - loc_eps*abs(range[5]), range[6] + loc_eps*abs(range[6]))
 			end

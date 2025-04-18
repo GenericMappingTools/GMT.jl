@@ -31,10 +31,10 @@ end
 
 # -----------------------------------------------------------------------------------------------
 function geodetic2ecef(lon, lat, h; ellps::Ellipsoid=WGS84_ellps)
-    sinϕ, cosϕ = sincosd.(lat)
-    sinλ, cosλ = sincosd.(lon)
+    sinϕ, cosϕ = sind.(lat), cosd.(lat)
+    sinλ, cosλ = sind.(lon), cosd.(lon)
 
-    N = ellps.a ./ sqrt.(1 .- ellps.e2 * sinϕ.^2)  # Radius of curvature (meters)
+    N = ellps.a ./ sqrt.(1 .- ellps.e2 .* sinϕ.^2)  # Radius of curvature (meters)
 
     x = (N .+ h) .* cosϕ .* cosλ
     y = (N .+ h) .* cosϕ .* sinλ

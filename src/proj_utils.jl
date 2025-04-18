@@ -93,7 +93,10 @@ function geod(lonlat::Matrix{<:Real}, azim, distance; proj::String="", s_srs::St
 		if (isa(azi, Real))
 			azi += 180;		(azi > 180) && (azi -= 360)
 		else
-			azi .+= 180;	[(azi[k] > 180) && (azi[k] -= 360) for k = 1:lastindex(azi)]
+			azi .+= 180
+			for k = 1:lastindex(azi)
+				(azi[k] > 180) && (azi[k] -= 360)
+			end
 		end
 		isa(dest, GMTdataset) && (dest[:,3] = azi)
 	end
@@ -586,8 +589,8 @@ function helper_gdirect(projPJ_ptr, lonlat, azim, dist, proj_string, isgeog, dat
 		(!isgeog) && (dest = lonlat2xy(dest, proj_string))
 		(dataset) && (dest = helper_gdirect_SRS(dest, proj_string, wkbPoint))
 	elseif (isa(azim, Real) && isvector(dist))					# One line only with several points along it
-		dest, azi = Array{Float64}(undef, length(dist), 2), Vector{Float64}(undef, length(dist))
-		for k = 1:lastindex(dist)
+		dest, azi = Array{Float64}(undef, length(dist)::Int, 2), Vector{Float64}(undef, length(dist)::Int)
+		for k = 1:lastindex(dist)::Int
 			d, azi[k] = _geod_direct!(ggd, copy(lonlat), azim, dist[k])
 			dest[k, :] = (isgeog) ? d : lonlat2xy(d, proj_string)
 		end
