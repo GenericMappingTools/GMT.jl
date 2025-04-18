@@ -17,4 +17,6 @@
 
 	G = mat2grid(hdr=[-17.5 -5.049999999999997 31.05 40.45 1 1 0 0.01666666666666667 0.01666666666666667]);
 	Gdef = okada(G, x_start=-12.13355, y_start=35.68912, depth=0, strike=65.3, dip=90, L=180, W=45, rake=90, slip=1);
+	Gdef = okada(G, x_start=-12.13355, y_start=35.68912, depth=0, strike=65.3, dip=90, L=180, W=45, rake=90, slip=1, enz=1);
+	Gdef = okada(G, x_start=-12.13355, y_start=35.68912, depth=0, strike=65.3, dip=90, L=180, W=45, rake=90, slip=1, z3d=1);
 end
