@@ -17,7 +17,7 @@ Parameters
 - **C** | **condition_number** :: [Type => Number]   ``Arg = condition_number``
 
     Set the maximum allowed condition number for the matrix solution.
-- **I** | **conf_level** :: [Type => Number | []]   ``Arg = [confe_level]``
+- **I** | **conf_level** :: [Type => Number | []]   ``Arg = [conf_level]``
 
     Iteratively increase the number of model parameters, starting at one, until n_model is reached
     or the reduction in variance of the model is not significant at the conf_level level.
