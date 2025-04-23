@@ -60,7 +60,7 @@ function filter1d_helper(cmd0::String, arg1; kwargs...)
 		cmd *= _opt_F
 		delete!(d, symb)
 	else                            # Or a F=(type=:gaussian, width=10, highpass=true) => -Fg10+h
-		cmd = add_opt(d, cmd, "F", [:F :filter :filter_type], (type="1", width="", highpass="_"))
+		cmd = add_opt(d, cmd, "F", [:F :filter :filter_type], (type="1", width="", highpass="+h"))
 	end
 
 	(isvector(arg1)) && (arg1 = cat_1_arg(arg1))		# Accept vectors (GMT should do that too)
