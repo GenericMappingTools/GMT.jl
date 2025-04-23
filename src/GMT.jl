@@ -160,7 +160,7 @@ export
 	
 	autocor, autocor!, autocov, autocov!, conv, xcorr, xcov,
 
-	add2PSfile, append2fig, linearfitxy, regiongeog, streamlines, peaks, polygonlevels, randinpolygon, polyfit, polyval,
+	add2PSfile, append2fig, isoutlier, linearfitxy, regiongeog, streamlines, peaks, polygonlevels, randinpolygon, polyfit, polyval,
 
 	ablines, ablines!, density, density!, boxplot, boxplot!, cornerplot, cornerplot!, cubeplot, cubeplot!, ecdfplot, ecdfplot!,
 	fill_between, fill_between!, marginalhist, marginalhist!, parallelplot, parallelplot!, piechart, piechart!, plotlinefit, plotlinefit!,
@@ -190,7 +190,7 @@ export
 	octahedron, tetrahedron, torus, replicant, revolve, rotate, rotate!, translate, translate!,
 
 	df2ds, ds2df, extrude, fv2fv, isclockwise, surf2fv, ODE2ds,
-	@?, @dir
+	@?, @G, @dir
 
 include("common_docs.jl")
 include("libgmt_h.jl")
