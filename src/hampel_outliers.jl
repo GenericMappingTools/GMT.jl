@@ -4,7 +4,7 @@
 # A bunch of dependencies only because of a simple single function is a too high price.
 
 # Default function to measure spread of data. It becomes the stadard deviation for normally distributed data
-mad_spread = x -> mad(x)
+mad_spread = x -> mad(x)[1]
 
 """
 	hampel(x; spread=mad(x), threshold=2)
