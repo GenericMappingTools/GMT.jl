@@ -28,6 +28,9 @@ Parameters
 
     Compute the cumulative distance along the input line. Note that for this the first two columns
     must contain the spatial coordinates.
+- `fill_nans` | `interp_nans`: [Type => Bool]
+
+    Replace all NaN fields with the interpolated values from their neighbors.
 - `nonans`: [Type => Bool]
 
     Remove all rows that have NaN fields.
