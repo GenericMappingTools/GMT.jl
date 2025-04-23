@@ -83,7 +83,7 @@
 	C, ia, ic = GMT.uniq(A; dims=1);
 	@test ia == [6, 7, 3, 5, 1, 4, 2]
 	@test ic == [5, 7, 3, 6, 4, 1, 2, 4, 7, 7]
-	@test isapprox(mad(ia), 2.965204437)
+	@test isapprox(mad(ia)[1], 2.965204437)
 
 	D = mat2ds(ones(3,2));
 	@test D + 2 == [3 1; 3 1; 3 1];
