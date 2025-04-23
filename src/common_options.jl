@@ -3780,17 +3780,30 @@ function _read_data(d::Dict, cmd::String, arg, opt_R::String="", is3D::Bool=fals
 		else
 			opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g", wesn_f64[1], wesn_f64[2], wesn_f64[3], wesn_f64[4])
 		end
+		if (contains(cmd, "--TIME_EPOCH") && !contains(opt_R, "T"))		# Need to fish the time axis from -f option to add to -R
+			s = split(opt_R, '/')	# 
+			opt_f = scan_opt(cmd, "-f")
+			cT = ((ind_t = findfirst('T', opt_f)) !== nothing) ? "T" : (ind_t = findfirst('t', opt_f)) !== nothing ? "t" : ""
+			(cT == "") && @warn("Option -f has no time axis information. Expect troubles.")
+			t_col = tryparse(Int, string(opt_f[ind_t-1]))
+			(t_col == 0) ? (s[1] *= cT; s[2] *= cT) : (t_col == 1) ? (s[3] *= cT; s[4] *= cT) : (t_col == 2 && length(s) == 6) ? (s[5] *= cT; s[6] *= cT) : error("-f option not cmpatible with -R")
+			opt_R = join(s, "/")				# Reconstruct the -R with the T's in the time axis
+			# Remove the --TIME_UNIT from the command due to a GMT bug. But do it only when using the default -B. VERY RISKY. If fails => GB'
+			#(contains(cmd, DEF_FIG_AXES_BAK) && ((TU = scan_opt(cmd, "--TIME_UNIT=")) != "")) && (cmd = replace(cmd, " --TIME_UNIT="*TU => ""))
+			#((TU = scan_opt(cmd, "--TIME_UNIT=")) != "") && (cmd = replace(cmd, " --TIME_UNIT="*TU => ""))
+			#((TU = scan_opt(cmd, "--TIME_EPOCH=")) != "") && (cmd = replace(cmd, " --TIME_EPOCH="*TU => ""))
+		end
 		(opt_R != " -Rtight" && !is_onecol) && (opt_R = merge_R_and_xyzlims(d, opt_R))	# We may have some hanging xyzlim requests
-		(!is_onecol) && (cmd *= opt_R)		# The onecol case (for histogram) has an imcomplete -R
+		(!is_onecol) && (cmd *= opt_R)			# The onecol case (for histogram) has an imcomplete -R
 	end
 
 	if (!CONVERT_SYNTAX[1] && get_info && !have_info)
 		wesn_f64 = gmt("gmtinfo -C" * opt_i * opt_di * opt_yx, arg).data
-		if (wesn_f64[1] > wesn_f64[2])		# Workaround a bug/feature in GMT when -: is arround
+		if (wesn_f64[1] > wesn_f64[2])			# Workaround a bug/feature in GMT when -: is arround
 			wesn_f64[2], wesn_f64[1] = wesn_f64[1], wesn_f64[2]
 		end
 	elseif (!have_info)
-		wesn_f64 = [NaN NaN NaN NaN]		# Need something to return
+		wesn_f64 = [NaN NaN NaN NaN]			# Need something to return
 	end
 
 	return cmd, arg, opt_R, wesn_f64, opt_i
@@ -5049,9 +5062,18 @@ function gmthelp(opt)
 end
 
 # --------------------------------------------------------------------------------------------------
+"""
+    @? name
+Macro to open module manuals that have individual html pages.
+
+For other functions that are exported but do not have individual pages we get a 404
+
+### Example
+```julia
+	@? plot 
+```
+"""
 macro var"?"(name)
-	# Macro to open module manuals that have individual html pages.
-	# For other functions that are exported but do not have individual pages we get a 404
 	quote
 		try
 			sym = Symbol($name)
@@ -5059,8 +5081,8 @@ macro var"?"(name)
 			dir = "modules/"
 			if sym in [:ablines, :append2fig, :blendimg, :cart2pol, :cart2sph, :colorzones, :cpt4dcw, :crop, :cubeplot,
 			         :coastlinesproj,:cubeslice,:date2doy,:delrows!,:doy2date,:gadm,:geocoder,:geodetic2enu,:getbyattrib,
-					 :gmtread,:gmtwrite,:graticules,:gridit,:gunique,:imagesc,:inwhichpolygon,:image_alpha!,:image_cpt!,
-					 :imshow,:ind2rgb,:info,:isnodata,:lelandshade,:linearfitxy,:magic,:mat2ds,:mat2grid,:mat2img,:mosaic,
+					 :gmtread,:gmtwrite,:graticules,:gridit,:gunique,hampel,:imagesc,:inwhichpolygon,:image_alpha!,:image_cpt!,
+					 :imshow,:ind2rgb,:info,:isnodata,:lelandshade,:linearfitxy,:lowess,:magic,:mat2ds,:mat2grid,:mat2img,:mosaic,
 					 :ODE2ds,:orbits,:pca,:plotgrid!,:plotyy,:pol2cart,:polygonlevels,:rasterzones!,:regiongeog,:rescale,
 					 :slicecube,:sph2cart,:stackgrids,:ter2cart,:theme,:uniqueind,:vecangles,:weather,:whereami,:wmsinfo,
 					 :wmsread,:wmstest,:worldrectgrid,:worldrectcoast,:worldrectangular,:xyzw2cube,:yeardecimal,:zonal_stats
@@ -5075,6 +5097,16 @@ macro var"?"(name)
 			catch err
 				println(err)
 			end
+		end
+	end
+end
+macro G(name)
+	quote
+		try
+			sym = Symbol($name)
+			run(`gmt docs $sym -S`)
+		catch err
+			println(err)
 		end
 	end
 end
