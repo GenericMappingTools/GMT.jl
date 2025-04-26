@@ -43,6 +43,7 @@ function trend1d(cmd0::String="", arg1=nothing; kwargs...)
 
 	cmd, = parse_common_opts(d, "", [:V_params :b :d :e :f :h :i :w :yx])
 	cmd  = parse_these_opts(cmd, d, [[:C :condition_number], [:I :conf_level :confidence_level], [:F :out :output], [:W :weights]])
+	opt_F = scan_opt(cmd, "-F")
 	((val = find_in_dict(d, [:N :model], false)[1]) === nothing) && error("The option 'model' must be specified")
 	if (isa(val, Tuple) && isa(val[1], NamedTuple))
 		# Complicated case here -- A mixed model ---. So input must be a Tuple of NamedTuples, and the +l+o+r options
@@ -68,7 +69,27 @@ function trend1d(cmd0::String="", arg1=nothing; kwargs...)
 	(tryparse(Int, opt_N[4:end]) !== nothing) && (opt_N = " -Np" * opt_N[4:end])	# -N2 is old syntax and will error GMT
 	cmd *= opt_N
 
-	common_grd(d, cmd0, cmd, "trend1d ", arg1)		# Finish build cmd and run it
+	R = common_grd(d, cmd0, cmd, "trend1d ", arg1)		# Finish build cmd and run it
+	!isa(R, GDtype) && return R							# Should be the output of Vd=2
+
+	if (opt_F != "")		# Extract column names from opt_F
+		if (opt_F[1] == 'p' || opt_F[1] == 'P' || opt_F[1] == 'c')
+			colnames = ["a$i" for i=0:size(D,2)-1]
+		else
+			s = collect(opt_F)
+			colnames = Vector{String}(undef, length(s))
+			for k = 1:numel(s)
+				if     (s[k] == 'x')  colnames[k] = "x"
+				elseif (s[k] == 'y')  colnames[k] = "y"
+				elseif (s[k] == 'm')  colnames[k] = "model"
+				elseif (s[k] == 'r')  colnames[k] = "residues"
+				elseif (s[k] == 'w')  colnames[k] = "weights"
+				end
+			end
+		end
+		isa(R, GMTdataset) ? (R.colnames = colnames) : (R[1].colnames = colnames)
+	end
+	return R
 end
 
 # ---------------------------------------------------------------------------------------------------

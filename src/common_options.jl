@@ -3789,7 +3789,7 @@ function _read_data(d::Dict, cmd::String, arg, opt_R::String="", is3D::Bool=fals
 			(t_col == 0) ? (s[1] *= cT; s[2] *= cT) : (t_col == 1) ? (s[3] *= cT; s[4] *= cT) : (t_col == 2 && length(s) == 6) ? (s[5] *= cT; s[6] *= cT) : error("-f option not cmpatible with -R")
 			opt_R = join(s, "/")				# Reconstruct the -R with the T's in the time axis
 			# Remove the --TIME_UNIT from the command due to a GMT bug. But do it only when using the default -B. VERY RISKY. If fails => GB'
-			#(contains(cmd, DEF_FIG_AXES_BAK) && ((TU = scan_opt(cmd, "--TIME_UNIT=")) != "")) && (cmd = replace(cmd, " --TIME_UNIT="*TU => ""))
+			(contains(cmd, DEF_FIG_AXES_BAK) && ((TU = scan_opt(cmd, "--TIME_UNIT=")) == "y")) && (cmd = replace(cmd, " --TIME_UNIT="*TU => ""))
 			#((TU = scan_opt(cmd, "--TIME_UNIT=")) != "") && (cmd = replace(cmd, " --TIME_UNIT="*TU => ""))
 			#((TU = scan_opt(cmd, "--TIME_EPOCH=")) != "") && (cmd = replace(cmd, " --TIME_EPOCH="*TU => ""))
 		end
