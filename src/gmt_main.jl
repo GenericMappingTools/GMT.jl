@@ -660,7 +660,7 @@ function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})::GDtype
 				unsafe_copyto!(pointer(dest, DS.n_rows * (col - 1) + 1), unsafe_load(DS.data, col), DS.n_rows)
 			end
 			Darr[seg_out].data = dest
-			if (!isvector(dest))							# One-rowers do not have BBs
+			if (!isvector(dest) && !isempty(dest))					# One-rowers do not have BBs
 				bb = extrema(dest, dims=1)					# A N Tuple.
 				Darr[seg_out].bbox = collect(Float64, Iterators.flatten(bb))
 			end
