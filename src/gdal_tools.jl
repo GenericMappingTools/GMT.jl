@@ -121,8 +121,8 @@ Its natural use is to digitize masks images.
 - `max_area`: Maximum area in m2 for a polygon to be retained.
 - `simplify`: Apply the Douglas-Peucker line simplification algorithm to the poligons. Provide a tolerence
     in meters. For example: `simplify=0.5`. But be warned that this is a risky option since a too large tolerance
-	can lead to loss of otherwise good polygons. A good rule of thumb is to use the cell size for the tolerance.
-	And in fact that is what we do when using `simplify=:auto`.
+    can lead to loss of otherwise good polygons. A good rule of thumb is to use the cell size for the tolerance.
+    And in fact that is what we do when using `simplify=:auto`.
 - `sort`: If true, will sort polygons by pixel count. Default is the order that GDAL decides internally.
 """
 function polygonize(data::GItype; gdataset=nothing, kwargs...)

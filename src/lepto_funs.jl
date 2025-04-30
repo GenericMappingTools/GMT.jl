@@ -967,7 +967,7 @@ A new `GMTimage` grayscale image `I` with the edge detection, edges are brighter
 ### Example
 
 Let us vectorize the rice grains in the image "rice.png". The result is not perfect because
-the grains in the image's edge are not closed and therefore not filled. And those get poligonized
+the grains in the image's edge are not closed and therefore not filled. And those get polygonized
 twice (in and outside) making the red lines look thicker (but they are not, they are just doubled).
 
 ```julia

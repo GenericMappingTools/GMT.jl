@@ -1713,7 +1713,7 @@ end
 		nbd = (find_in_kwargs(kw, [:band])[1] !== nothing) ? kw[:band] : 1
 		bd = getband(dataset, nbd)
 		ds = Gdal.create(Gdal.getdriver("MEMORY"))
-		layer = createlayer(name = "poligonized", dataset=ds, geom=Gdal.wkbPolygon)
+		layer = createlayer(name="polygonized", dataset=ds, geom=Gdal.wkbPolygon)
 		addfielddefn!(layer, "Px", OFTString, nwidth = 32)
 		#isfloat ? GDALPolygonize(bd.ptr, mask, layer.ptr, 0, options, progress, C_NULL) :
 		          #GDALPolygonize( bd.ptr, mask, layer.ptr, 0, options, progress, C_NULL)	
