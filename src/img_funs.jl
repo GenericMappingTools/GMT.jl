@@ -63,17 +63,20 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    Ibw = binarize(I::GMTimage, threshold::Int=0; band=1, revert=false) -> GMTimage
+    Ibw = binarize(I::GMTimage, threshold::Int=0; band=1, , threshold::Int=0, revert=false) -> GMTimage
 
 Convert an image to a binary image (black-and-white) using a threshold.
 
 ### Args
 - `I::GMTimage`: input image of type UInt8.
-- `threshold::Int`: A number in the range [0 255]. If the default (`nothing`) is maintained,
-  the threshold is computed using the ``isodata`` method.
+- `threshold::Int`: A number in the range [0 255]. If the default (0) is kept and the keyword
+  `threshold` is not used, then the threshold is computed using the ``isodata`` method.
 
 ### Kwargs
 - band: If the `I` image has more than one band, use `band` to specify which one to binarize.
+  By default the first band is used.
+- `threshold`: Alternative keyword argument to the positional `threshold` argument. Meaning, one can either
+  use the `binarize(I, =??)` or `binarize(I, threshold=??)`.
 - `revert`: If `true`, values below the threshold are set to 255, and values above the threshold are set to 0.
 
 ### Return
@@ -88,13 +91,14 @@ grdimage(I, figsize=6)
 grdimage!(Ibw, figsize=6, xshift=6.1, show=true)
 ```
 """
-function binarize(I::GMTimage, threshold::Int=0; band=1, revert=false)::GMTimage
-	thresh = (threshold == 0) ? isodata(I, band=band) : threshold
+function binarize(I::GMTimage, thresh::Int=0; band=1, threshold::Int=0, revert=false)::GMTimage
+	(thresh == 0 && threshold > 0) && (thresh = threshold)
+	_tresh = (thresh == 0) ? isodata(I, band=band) : thresh
 	img = zeros(UInt8, size(I, 1), size(I, 2))
 	if revert
-		t = I.layout[3] == 'B' ? (view(I.image, :, :, band) .< thresh) : (slicecube(I, band).image .< thresh)
+		t = I.layout[3] == 'B' ? (view(I.image, :, :, band) .< _tresh) : (slicecube(I, band).image .< _tresh)
 	else
-		t = I.layout[3] == 'B' ? (view(I.image, :, :, band) .> thresh) : (slicecube(I, band).image .> thresh)
+		t = I.layout[3] == 'B' ? (view(I.image, :, :, band) .> _tresh) : (slicecube(I, band).image .> _tresh)
 	end
 	img[t] .= 255
 	return mat2img(img, I)

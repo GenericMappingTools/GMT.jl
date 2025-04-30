@@ -456,7 +456,7 @@ function guess_T_from_ext(fname::String; write::Bool=false, text_only::Bool=fals
 	(!write && (ext == "jp2" || ext == "tif" || ext == "tiff") && (!isfile(fname) && !startswith(fname, "/vsi") &&
 		!occursin("https:", fname) && !occursin("http:", fname) && !occursin("ftps:", fname) && !occursin("ftp:", fname))) &&
 		error("File $fname does not exist.")
-	if     (findfirst(isequal(ext), ["grd", "nc", "nc=gd"])  !== nothing)  out = " -Tg";
+	if     (findfirst(isequal(ext), ["grd", "nc", "nc=gd", "grb", "grib2"])  !== nothing)  out = " -Tg";
 	elseif (findfirst(isequal(ext), ["dat", "txt", "csv", "isf"])   !== nothing)  out = " -Td";
 	elseif (findfirst(isequal(ext), ["jpg", "jpeg", "png", "bmp", "webp"]) 	!== nothing)  out = " -Ti";
 	elseif (findfirst(isequal(ext), ["arrow", "arrows", "shp", _kml, "kmz", "json", "feather", "fgb", "geojson", "gmt", "gpkg", "gpx", "gml", "ipc", "parquet", "sqlite"]) !== nothing)  out = " -To";
