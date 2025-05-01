@@ -166,6 +166,7 @@ function histogram_helper(cmd0::String, arg1; first=true, kwargs...)
 	do_zoom = ((find_in_dict(d, [:zoom])[1]) !== nothing) ? true : false	# Automatic zoom to interesting region
 
 	function if_zoom(cmd, opt_R, limit_L, hst)
+		isempty(hst) && error("No histogram data to compute the region limits.")
 		mm = extrema(hst, dims=1)			# 1×2 Array{Tuple{UInt16,UInt16},2}
 		x_max = min(limit_R * 1.15, hst[end,1])		# 15% to the right but not fall the cliff
 		opt_R_ = " -R$(limit_L * 0.85)/$x_max/0/$(mm[2][2] * 1.1) "
@@ -259,6 +260,7 @@ function histogram_helper(cmd0::String, arg1; first=true, kwargs...)
 	# And if wished, plot the two vertical lines with the limits annotated in them
 	if (limit_L !== nothing)
 		if (opt_R == " ")					# Set a region for the vlines
+			isempty(hst) && error("No histogram data to compute the region limits.")
 			mm = extrema(hst, dims=1)
 			opt_R = " -R$(mm[1][1])/$(mm[1][2])/0/$(mm[2][2])"
 		end

@@ -245,6 +245,7 @@ function plotlinefit(D::GMTdataset; first::Bool=true, grp::Bool=false, kw...)
 	tl, bl = (a - σa) .+ (b + σb)*X,  (a + σa) .+ (b - σb)*X
 	recta = a .+ b * X
 	if (do_rib_ab)
+		(isempty(tl) || isempty(bl)) && error("One of 'tl'' or ''bl'' is empty.");	# Should never happen but see #1711
 		σp, σm = vec(maximum([tl bl], dims=2)) .- recta, recta .- vec(minimum([tl bl], dims=2))
 	end
 

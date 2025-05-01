@@ -1108,6 +1108,7 @@ function parplot_helper(cmd0::String, arg1; first::Bool=true, axeslabels::Vector
                       labels::Vector{String}=String[], group::AbstractVector=AbstractVector[], groupvar="", normalize="range", kwargs...)
 	d = KW(kwargs)
 	(cmd0 != "") && (arg1 = read_data(d, cmd0, "", arg1, " ", false, true)[2])	# Make sure we have the data here
+	isempty(arg1) && error("The 'arg1' input cannot be empty.")		# #1711		
 	if     (isa(arg1, Matrix{<:Real}))        data = mat2ds(arg1)
 	elseif (isa(arg1, Vector{<:GMTdataset}))  data = ds2ds(arg1)
 	else                                      data = mat2ds(arg1)

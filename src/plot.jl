@@ -909,6 +909,7 @@ function stem(cmd0::String="", arg1=nothing; first=true, kwargs...)
 			add2ds!(arg1[1])		# Fix arg1 meta after column insertion.
 		end
 	else							# Case of plain matrices
+		isempty(arg1) && error("stem: 'arg1' cannot be empty.")
 		if (!haveR)
 			mm = extrema(arg1, dims=1)
 			mimas = [mm[1][1], mm[1][2], mm[2][1], mm[2][2]]
@@ -1080,6 +1081,8 @@ end
 function helper_vecBug(d, arg1, first::Bool, haveR::Bool, haveVarFill::Bool, typevec::Int; isfeather::Bool=false)
 	# Helper function that deals with setting several defaults and mostly patch a GMT vectors bug.
 	# TYPEVEC = 0, ==> u,v = theta,rho. TYPEVEC = 1, ==> u,v = u,v. TYPEVEC = 2, ==> u,v = x2,y2 
+
+	isempty(arg1) && error("'arg1' input cannot be empty.")
 	
 	function get_minmaxs(D::GMTdataset)
 		# Get x,y minmax from datasets that may have had teir columns rearranged.
