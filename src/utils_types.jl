@@ -544,6 +544,7 @@ function set_dsBB!(D, all_bbs::Bool=true)
 
 	if (all_bbs)		# Compute all BBs
 		if isa(D, GMTdataset)
+			isempty(D.data) && return nothing		# Likely a Text only DS
 			D.ds_bbox = D.bbox = collect(Float64, Iterators.flatten(extrema(D.data, dims=1)))
 			ind = findall(.!isfinite.(D.bbox))		# If we have some columns with NaNs or Infs
 			if (!isempty(ind))
@@ -555,6 +556,7 @@ function set_dsBB!(D, all_bbs::Bool=true)
 			return nothing
 		else
 			for k = 1:lastindex(D)
+				isempty(D[k].data) && continue		# Likely a Text only DS
 				bb = Base.invokelatest(extrema, D[k].data, dims=1)		# A N Tuple.
 				_bb = collect(Float64, Iterators.flatten(bb))
 				if (any(isnan.(_bb)))				# Shit, we don't have a minimum_nan(A, dims)

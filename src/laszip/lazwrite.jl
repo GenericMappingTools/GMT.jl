@@ -23,6 +23,7 @@ end
 function lazwrite(fname::AbstractString, xyz; grd_hdr=Float64[], scaleX=nothing, scaleY=nothing, scaleZ=nothing,
                   offX=nothing, offY=nothing, offZ=nothing, layout::String="")
 
+	isempty(xyz) && error("The 'xyz' input cannot be empty as it is.")
 	n_rows, n_cols = parse_inputs_dat2las(xyz, grd_hdr)
 
 	if (!isempty(grd_hdr))

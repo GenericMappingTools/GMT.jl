@@ -40,7 +40,9 @@ function lowess(x::AbstractVector{R}, y::AbstractVector{S}; span::T=2/3, nsteps:
 	lowess((R <: AbstractFloat) ? x : Vector{Float64}(x), (S <: AbstractFloat) ? y : Vector{Float64}(y); span=span, nsteps=nsteps, delta=delta)
 end
 
-function lowess(mat::Matrix{<:Real}; span=2/3, nsteps::Integer=3, delta=0.1*diff(collect(extrema(view(mat, :,2))), dims=1)[1])
+function lowess(mat::Matrix{<:Real}; span=2/3, nsteps::Integer=3, delta=0.0)
+	isempty(mat) && error("lowess: 'mat' cannot be an empty matrix")
+	(delta == 0.0) && (delta = 0.1*diff(collect(extrema(view(mat, :,2))), dims=1)[1])
 	new_y = lowess(view(mat, :,1), view(mat, :,2); span=span, nsteps=nsteps, delta=delta)
 	return [mat[:,1] new_y]
 end

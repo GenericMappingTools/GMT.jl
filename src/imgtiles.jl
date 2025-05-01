@@ -708,6 +708,7 @@ function quadbounds_limits(quadtree::Matrix{<:AbstractString}; geog=true, quadke
 	flatness = 0.0
 	
 	tiles_bb = zeros(length(quadtree), 4)
+	isempty(tiles_bb) && error("The 'quadtree' input cannot be empty.")		# #1711		
 	zoomL = 0			# Can't stand this need. F. F. F
 	for k = 1:length(quadtree)
 		lim, zoomL = getQuadLims(quadtree[k], quadkey, "")		# Remember that lim(3) = y_max

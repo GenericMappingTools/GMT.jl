@@ -467,6 +467,7 @@ function rotate(FV::GMTfv, a=Float64[]; rx=0.0, ry=0.0, rz=0.0, insitu::Bool=fal
 	!isempty(a) && (@assert length(a) == 3 "Angle vector must be of length 3")
 	isempty(a) && (a = [rx, ry, rz])
 	V = FV.verts * eulermat(a)[1]
+	isempty(V) && error("The 'V' input cannot be empty.")		# #1711		
 	mimas = extrema(V, dims=1)
 	bbox = [mimas[1][1], mimas[1][2], mimas[2][1], mimas[2][2], mimas[3][1], mimas[3][2]]		# So stu..
 	if insitu

@@ -1431,6 +1431,7 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)::Union{GMTdat
 	end
 	(n_total_segments > (n-1)) && deleteat!(D, n:n_total_segments)
 	for k = 1:length(D)			# Compute the BoundingBoxes per segment (C version doesn't do it)
+		isempty(D[k].data) && continue		# #1711
 		bb = Base.invokelatest(extrema, D[k].data, dims=1)		# A N Tuple.
 		D[k].bbox = collect(Float64, Iterators.flatten(bb))
 	end
