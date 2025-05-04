@@ -72,3 +72,154 @@ function weather(lon=0.0, lat=0.0; city::String="", last=0, days=7, year::Int=0,
 	(show != 0) && plot(D; legend=D.colnames[2], title=D.attrib["Location"], show=true, d...)
 	return (retD || show == 0) ? D : nothing
 end
+
+# ------------------------------------------------------------------------------------------------------------------------
+"""
+    era5(; filename="", dataset="", cb::Bool=false, params::AbstractString="", key::String="",
+         url::String="", verbose::Bool=true)
+
+This function retrieves data from the Climate Data Store (CDS) (https://cds.climate.copernicus.eu) service.
+
+- `filename`: The name of the file to save the data to. If not provided, the function will generate a
+  name based on the dataset and the data format.
+- `dataset`: The name of the dataset to retrieve. This option can be skipped if the `dataset` option
+  is provided in the `params` argument, or is included clipboard copy (the `cb` option is set to true).
+- `cb`: A boolean indicating whether to use the clipboard contents. If true, the function will use the
+  ``clipboard()`` to fetch its contents. The clipboard should contain a valid API request code as generated
+  by the CDS website. This site provides a ``Show API request`` button at the bottom of the download tab
+  of each dataset. After clicking it, the user can copy the request code with a Control-C (or click ``Copy``
+  button) which will and paste it into the clipboard.
+- `params`: A JSON string containing the request parameters. This string should be in the format expected
+  by the CDSAPI. When using input via this option the `dataset` option is mandatory.
+- `key`: The API key for the CDSAPI server. Default is the value in the ``.cdsapirc`` file in the home directory.
+  but if that file does not exist, the user can provide the `key` and `url` as arguments. Instructions on how
+  to create the ``.cdsapirc`` file for your user account can be found at https://cds.climate.copernicus.eu/how-to-api 
+- `url`: The URL of the CDS API server. Default is https://cds.climate.copernicus.eu/api
+- `verbose`: A boolean indicating whether to print the attemps to connect to the CDS server. Default is true.
+
+### Credits
+This function is based in part on bits of CDSAPI.jl but doesn't require any of the dependencies of that package.
+
+### Example
+```julia
+# Copy the following code by selecting it and pressing Ctrl-C
+
+{"product_type": ["reanalysis"],
+    "variable": [
+        "10m_u_component_of_wind",
+        "10m_v_component_of_wind"
+    ],
+    "year": ["2024"],
+    "month": ["12"],
+    "day": ["06"],
+    "time": ["16:00"],
+    "data_format": "netcdf",
+    "download_format": "unarchived",
+    "area": [58, 6, 55, 9]
+}
+
+# Now call the function but WARNING: DO NOT COPY_PASTE it as it would replace the clipboard contents
+era5(dataset="reanalysis-era5-single-levels", cb=true)
+```
+"""
+function era5(reanalysis::Symbol=:reanalysis; filename="", dataset="", cb::Bool=false, params::AbstractString="", key::String="", url::String="", wait=1.0, verbose::Bool=true)
+
+	function cdsapikey()::Tuple{String, String}
+		# Get the API key and URL from the ~/.cdsapirc file
+		credfile = joinpath(homedir(), ".cdsapirc")
+		!isfile(credfile) && return "", ""
+		creds = Dict()
+		open(credfile) do f
+			for line in readlines(f)
+				key, val = strip.(split(line, ':', limit=2))
+				creds[key] = val
+			end
+		end
+		return string(creds["key"]), string(creds["url"])
+	end
+
+	function parse_request(request::String)
+		bv = BitVector(undef, length(request))
+		t = collect(request)
+		for k = 1:numel(request)
+			bv[k] = (t[k] != ' ' && t[k] != '\n')
+		end
+		t2 = join(t[bv])
+		if t2[1] == '{' && t2[end] == '}'		# We got a JSON request string like the CDSAPI example
+			return "{\"inputs\":" * t2 * "}", ""
+		else
+			dataset  = ""		# Accept that no dataset name was provided if from clipboard
+			if ((ind = findfirst("dataset=\"", t2)) !== nothing)	# "import cdsapi\n\ndataset = \"reanalysis-era5-land\"\nrequest = {\n
+				ind2 = findfirst("request={", t2)
+				dataset = string(t2[ind[end]+1:ind2[1]-2])
+				ind3 = findlast('}', t2)
+			end
+			return "{\"inputs\":" * t2[ind2[end]:ind3] * "}", dataset
+		end
+	end
+
+	function curl_post(url, body, key)
+		open(`curl -s --show-error --header "Content-Type: application/json" --request POST -H "PRIVATE-TOKEN":$key $url -d $body`, "r", stdout) do io
+			split(readlines(io)[1], ',')
+		end
+	end
+	function curl_get(url, key)
+		open(`curl -s --show-error --header "Content-Type: application/json" --request GET -H "PRIVATE-TOKEN":$key $url`, "r", stdout) do io
+			split(readlines(io)[1], ',')
+		end
+	end
+
+	if (key == "")
+		KEY, URL = cdsapikey()
+		(KEY == "") && error("The 'key' option was not used and credentials file $(joinpath(homedir(), ".cdsapirc")) not found")
+	else
+		KEY = key
+		URL = (url != "") ? url : "https://cds.climate.copernicus.eu/api"		# Default URL for CDSAPI
+	end
+
+	if (cb && params == "")
+		tcb = clipboard()
+		!contains(tcb, "variable\"") && error("Clipboard does not contain a valid API request code")
+		body, _dataset = parse_request(tcb)
+	else
+		body, _dataset = parse_request(params)
+	end
+	(dataset == "" && _dataset == "") && error("'dataset' not provided, Neither as an argument nor in the clipboard.")
+	(dataset == "" && _dataset != "") && (dataset = _dataset)
+
+	s = curl_post(URL * "/retrieve/v1/processes/$dataset/execute", body, KEY)
+	st_line = findfirst(startswith.(s,"\"status"))
+	if (contains(s[st_line], ":4"))
+		ind = findfirst(startswith.(s,"\"title"))
+		throw(ArgumentError(split(s[ind], ':')[2][2:end-1]))	# It has the form "\"title\":\"Autentication failed\""
+	end
+	status = s[st_line][11:end-1]			# It has the form "{\"status\":\"accepted\""
+	ep_line = findfirst(startswith.(s,"{\"href"))
+	endpoint = s[ep_line][10:end-1]			# It has the form "{\"href\":\"https://cds.climate...\""
+	while (status != "successful")
+		s = curl_get(endpoint, KEY)
+		st_line = findfirst(startswith.(s,"\"status"))
+		contains(s[st_line], "404") && throw(ArgumentError("""The requested dataset $dataset was not found."""))
+		status = s[st_line][11:end-1]
+		verbose && @info "Request status: dataset = $dataset;    status = $status"
+        if (status == "failed")
+			throw(ErrorException("""Request to dataset $dataset failed. Check https://cds.climate.copernicus.eu/requests
+			for more information (after login)."""))
+		end
+        (status != "successful") && (sleep(wait))
+		wait = min(1.4 * wait, 3.0)
+	end
+
+	s = curl_get(endpoint * "/results", KEY)
+
+	#ind = findfirst(startswith.(s,"\"file:size"))
+	#fsize = parse(Float64, s[ind][13:end-1])		# It has the form "\"file:size\":34063"
+	ind = findfirst(startswith.(s,"\"href"))
+	urlname = string(s[ind][9:end-1])				# It has the form "\"href\":\"https://object-store...\""
+	if (filename == "")								# Now we know the filename extension. It's in the urlname
+		filename = dataset * splitext(urlname)[2]
+	end
+	verbose && @info "Request is now completed. Downloading $(uppercase(dataset))" URL=urlname Destination=filename; flush(stderr)
+
+	run(`curl --show-error $urlname -o $filename`)
+end
