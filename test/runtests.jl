@@ -2,6 +2,7 @@ using GMT, GMT.Drawing, GMT.Gdal
 using Test
 using Dates, Printf#, Logging
 using FFTW
+using InteractiveUtils
 
 @testset "GMT" begin
 
