@@ -5079,13 +5079,18 @@ macro var"?"(name)
 			sym = Symbol($name)
 			getfield(Main, sym)
 			dir = "modules/"
-			if sym in [:ablines, :append2fig, :blendimg, :cart2pol, :cart2sph, :colorzones, :cpt4dcw, :crop, :cubeplot,
-			         :coastlinesproj,:cubeslice,:date2doy,:delrows!,:doy2date,:gadm,:geocoder,:geodetic2enu,:getbyattrib,
-					 :gmtread,:gmtwrite,:graticules,:gridit,:gunique,hampel,:imagesc,:inwhichpolygon,:image_alpha!,:image_cpt!,
-					 :imshow,:ind2rgb,:info,:isnodata,:lelandshade,:linearfitxy,:lowess,:magic,:mat2ds,:mat2grid,:mat2img,:mosaic,
+			if sym in [:ablines,:append2fig,:blendimg,:cart2pol,:cart2sph,:colorzones,:cpt4dcw,:crop,:cubeplot,:coastlinesproj,
+			         :cubeslice,:date2doy,:delrows!,:doy2date,:era5,:gadm,:geocoder,:geodetic2enu,:getbyattrib,:gmtread,:gmtwrite,
+					 :graticules,:gridit,:gunique,hampel,:imagesc,:inwhichpolygon,:image_alpha!,:image_cpt!,:imshow,:ind2rgb,
+					 :info,:isnodata,:isoutlier,:lelandshade,:linearfitxy,:lowess,:magic,:mat2ds,:mat2grid,:mat2img,:mosaic,
 					 :ODE2ds,:orbits,:pca,:plotgrid!,:plotyy,:pol2cart,:polygonlevels,:rasterzones!,:regiongeog,:rescale,
 					 :slicecube,:sph2cart,:stackgrids,:ter2cart,:theme,:uniqueind,:vecangles,:weather,:whereami,:wmsinfo,
-					 :wmsread,:wmstest,:worldrectgrid,:worldrectcoast,:worldrectangular,:xyzw2cube,:yeardecimal,:zonal_stats
+					 :wmsread,:wmstest,:worldrectgrid,:worldrectcoast,:worldrectangular,:xyzw2cube,:yeardecimal,:zonal_stats,
+					 :cube,:cylinder,:dodecahedron,:ellipse3D,:flatfv,:fv2fv,:icosahedron,:loft,:sphere,
+					 :octahedron,:tetrahedron,:torus,:replicant,:revolve,
+					 :binarize,:bwareaopen,:bwhitmiss,:bwperim,:bwskell,:fillsinks,:imbothat,:imclose,:imcomplement,:imdilate,
+					 :imerode,:imfill,:imfilter,:imhdome,:imhmin,:imhmax,:immorphgrad,:imopen,:imrankfilter,:imreconstruct,
+					 :imsegment,:imsobel,:imtophat,:isodata, :padarray,:strel,:rgb2gray,:rgb2lab,:rgb2ycbcr	
 					]
 					dir = "utilities/"
 			end
