@@ -1010,7 +1010,7 @@ function geocoder(address::String; options=String[])::GDtype
 	hFDefn = GMT.Gdal.OGR_L_GetLayerDefn(hLayer)
 	hFeature = GMT.Gdal.OGR_L_GetNextFeature(hLayer)
 	count = GMT.Gdal.OGR_FD_GetFieldCount(hFDefn)
-	(count == 0) && (@warn("No result found for the address $address"); return nothing)
+	(count == 0) && (@warn("No result found for the address $address"); return GMTdataset())
 	dic = Dict{String,String}()
 	for k = 0:count-1
 		hFieldDefn = GMT.Gdal.OGR_FD_GetFieldDefn(hFDefn,k)

@@ -5,6 +5,7 @@ using Tables: Tables
 using PrettyTables
 using PrecompileTools
 using LinearAlgebra
+using InteractiveUtils
 using Leptonica_jll
 
 struct CTRLstruct
@@ -166,7 +167,7 @@ export
 	fill_between, fill_between!, marginalhist, marginalhist!, parallelplot, parallelplot!, piechart, piechart!, plotlinefit, plotlinefit!,
 	qqplot, qqplot!, qqnorm, qqnorm!, remotegrid, sealand, squeeze, terramar, violin, violin!, viz, vizpdf, windbarbs, whereami,
 
-	maregrams, pastplates, seismicity, weather, wmsinfo, wmstest, wmsread,
+	maregrams, pastplates, seismicity, era5, weather, wmsinfo, wmstest, wmsread,
 
 	VSdisp, mad, info, kmeans, pca, mosaic, quadbounds, quadkey, geocoder, getprovider,
 

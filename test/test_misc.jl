@@ -115,7 +115,6 @@
 	GMT.find4similar(())
 	GMT.find4similar((0,1))
 	GMT.find4similar([],0)
-	@info "3..."
 	I = mat2img(rand(UInt8,4,4,3))
 	GMT.find4similar(I,0)
 	size(I)
@@ -134,7 +133,6 @@
 	ablines!(0,1, Vd=dbg2)
 	ablines!([1, 2, 3], [1, 1.5, 2], linecolor=[:red, :orange, :pink], linestyle=:dash, linewidth=2, Vd=dbg2)
 
-	@info "1..."
 	isempty(GMT.GMTcpt())
 	size(GMT.GMTcpt())
 	isempty(GMT.GMTps())
@@ -285,6 +283,25 @@
 	println("	Weather")
 	weather(year=2023, debug=1);
 	weather(city="Quarteira", var="rain");
+
+	dataset = "reanalysis-era5-single-levels"
+	request = """{
+		"product_type": ["reanalysis"],
+		"variable": [
+			"10m_u_component_of_wind",
+			"10m_v_component_of_wind"
+		],
+		"year": ["2024"],
+		"month": ["12"],
+		"day": ["06"],
+		"time": ["16:00"],
+		"data_format": "netcdf",
+		"download_format": "unarchived",
+		"area": [58, 6, 55, 9]
+	}"""
+	@test_throws ArgumentError era5(dataset=dataset, params=request, key="blabla");
+	clipboard(request)
+	@test_throws ArgumentError era5(cb=true, dataset=dataset, key="blabla");
 
 	# MB-System
 	println("	MB-System")

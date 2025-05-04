@@ -1086,9 +1086,13 @@ Shows your current location plus some additional information (Timezone, Country,
 """
 function whereami()
 	io = IOBuffer()
-	Downloads.download("https://api.ipify.org?format=csv", io)
-	ip = String(take!(io))
-	Downloads.download("http://ip-api.com/json/" * ip, io)
+	try
+		Downloads.download("https://api.ipify.org?format=csv", io)
+		ip = String(take!(io))
+		Downloads.download("http://ip-api.com/json/" * ip, io)
+	catch e
+		println(e);		return GMTdataset()
+	end
 	_s = String(take!(io))
 	s = split(_s, ",")
 	i_lon, i_lat = findfirst(contains.(s, "lon")), findfirst(contains.(s, "lat"))
