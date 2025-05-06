@@ -300,8 +300,14 @@
 		"area": [58, 6, 55, 9]
 	}"""
 	@test_throws ArgumentError era5(dataset=dataset, params=request, key="blabla");
-	clipboard(request)
-	@test_throws ArgumentError era5(cb=true, dataset=dataset, key="blabla");
+	if !Sys.isunix()		# The Linux CI fails saying they don't have clipboard installed 
+		clipboard(request)
+		@test_throws ArgumentError era5(cb=true, dataset=dataset, key="blabla");
+	end
+	listera5vars(contain="Temperature", test=true)
+	var = era5vars(["t2m", "skt"]);			# "t2m" is the 2m temperature and "skt" is the skin temperature
+	dt = era5time(hour=10:14);
+	era5(dataset="reanalysis-era5-land", params=[var, dt], region=(-10, 0, 30, 45), key="blabla")
 
 	# MB-System
 	println("	MB-System")
