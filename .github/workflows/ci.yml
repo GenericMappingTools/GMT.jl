@@ -109,7 +109,7 @@ jobs:
       - name: Configure API Keys 🔒
         shell: bash
         run: |
-          echo "url: https://cds.climate.copernicus.eu/api}" > ~/.cdsapirc
+          echo "url: https://cds.climate.copernicus.eu/api" > ~/.cdsapirc
           echo "key: ${{ secrets.CDSAPI_KEY }}" >> ~/.cdsapirc
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1

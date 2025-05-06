@@ -198,7 +198,6 @@ t = ["\tIt was the best of times, it was the worst of times, it was the age of w
 	"",
 	"\tThere were a king with a large jaw and a queen with a plain face,"];
 T = text_record(t,"> 3 5 18p 5i j");
-	@info "3..."
 pstext!(T, F="+f16p,Times-Roman,red+jTC", M=true)
 pstext!(T, font=(16,"Times-Roman",:red), justify=:TC, M=true)
 pstext!(["MERDA"], x=2.0, y=2.0, Vd=dbg2)

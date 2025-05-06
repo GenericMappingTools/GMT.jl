@@ -207,7 +207,9 @@ function era5(reanalysis::Symbol=:reanalysis; filename="", cb::Bool=false, datas
 			params = join(params, '\n')
 			if (pressure != "")		# Pressure levels are provided
 				pr = getdtp(pressure, "1000");	(pr == "e") && error("Unknown type for 'pressure'")
-				params *= "\"pressure_level\": [" * pr * "],\n"
+				sp = @sprintf("\"pressure_level\": [\"%s\"],\n", pr)
+				sp = replace(sp, "[\"[" => "[");	sp = replace(sp, "]\"]" => "]");	# Remove double [[ & ]]
+				params *= sp
 			end
 			params *= (format == "netcdf") ? "\"data_format\": \"netcdf\",\n" : "\"data_format\": \"grib\",\n"
 			last = (region == "") ? "\n" : ",\n"	# Having an extra comma at the end of the line is a json syntax error

@@ -123,12 +123,10 @@
 	setindex!(I, [101 1],1:2)
 	I .+ UInt8(0);
 
-	@info "linearfitxy"
 	GMT.resetGMT()
 	D = linearfitxy([0.0, 0.9, 1.8, 2.6, 3.3, 4.4, 5.2, 6.1, 6.5, 7.4], [5.9, 5.4, 4.4, 4.6, 3.5, 3.7, 2.8, 2.8, 2.4, 1.5], sx=1 ./ sqrt.([1000., 1000, 500, 800, 200, 80,  60, 20, 1.8, 1]), sy=1 ./ sqrt.([1., 1.8, 4, 8, 20, 20, 70, 70, 100, 500]));
 	plot(D, linefit=true, band_ab=true, band_CI=true, ellipses=true, Vd=dbg2);
 	plot!(D, linefit=true, Vd=dbg2)
-	@info "ablines"
 	ablines!(D, Vd=dbg2)
 	ablines!(0,1, Vd=dbg2)
 	ablines!([1, 2, 3], [1, 1.5, 2], linecolor=[:red, :orange, :pink], linestyle=:dash, linewidth=2, Vd=dbg2)
@@ -151,8 +149,9 @@
 	D[:Time];
 	D["Time", "b"];
 	try
-	display(D);		# It seems the pretty tables solution has an Heisenbug.
-	catch
+		display(D);		# It seems the pretty tables solution has an Heisenbug.
+	catch e
+		println(e)
 	end
 	plot(D, legend=true, Vd=dbg2);
 	mat2ds(rand(5,4), x=:ny, color=:cycle, hdr=" -W1");
@@ -265,7 +264,7 @@
 	GMT.zscale(0:9999)
 
 	# Orbits
-	println("	Orbits")
+	println("	ORBITS")
 	@test_throws ErrorException("Only Orthographic projection is allowed.") orbits!();
 	@test_throws ErrorException("Only Orthographic projection is allowed.") orbits!(mat2ds(rand(10,3)));
 	orbits()
@@ -301,9 +300,12 @@
 	}"""
 	#@test_throws ArgumentError era5(dataset=dataset, params=request, key="blabla");
 	era5(dataset=dataset, params=request);
-	if !Sys.isunix()		# The Linux CI fails saying they don't have clipboard installed 
+	#if !Sys.isunix()		# The Linux CI fails saying they don't have clipboard installed 
+	try						# Because the Linux CI fails saying they don't have clipboard installed
 		clipboard(request)
 		@test_throws ArgumentError era5(cb=true, dataset=dataset, key="blabla");
+	catch e
+		println(e)
 	end
 	listera5vars(contain="Temperature", test=true)
 	var = era5vars(["t2m", "skt"]);			# "t2m" is the 2m temperature and "skt" is the skin temperature
