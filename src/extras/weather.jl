@@ -75,32 +75,42 @@ end
 
 # ------------------------------------------------------------------------------------------------------------------------
 """
-    era5(; filename="", dataset="", cb::Bool=false, params::AbstractString="", key::String="",
-         url::String="", verbose::Bool=true)
+    era5(; filename="", cb::Bool=false, dataset="", params::AbstractString="", key::String="",
+         url::String="", region="", format="netcdf", debug::Bool=false, verbose::Bool=true)
 
 This function retrieves data from the Climate Data Store (CDS) (https://cds.climate.copernicus.eu) service.
 
 - `filename`: The name of the file to save the data to. If not provided, the function will generate a
   name based on the dataset and the data format.
-- `dataset`: The name of the dataset to retrieve. This option can be skipped if the `dataset` option
-  is provided in the `params` argument, or is included clipboard copy (the `cb` option is set to true).
 - `cb`: A boolean indicating whether to use the clipboard contents. If true, the function will use the
   ``clipboard()`` to fetch its contents. The clipboard should contain a valid API request code as generated
   by the CDS website. This site provides a ``Show API request`` button at the bottom of the download tab
   of each dataset. After clicking it, the user can copy the request code with a Control-C (or click ``Copy``
   button) which will and paste it into the clipboard.
+- `dataset`: The name of the dataset to retrieve. This option can be skipped if the `dataset` option
+  is provided in the `params` argument, or is included clipboard copy (the `cb` option is set to true).
 - `params`: A JSON string containing the request parameters. This string should be in the format expected
   by the CDSAPI. When using input via this option the `dataset` option is mandatory.
+  If you feel brave, you can create the request parametrs yourself and pass them as a two elements string
+  vector with the output of the ``era5vars()`` and ``era5time()`` functions. In this case, a region selection,
+  if desired, must be provided via the `region` option that has the same syntax in all other GMT.jl modules
+  that use it, _e.g._ the ``coast`` function.
 - `key`: The API key for the CDSAPI server. Default is the value in the ``.cdsapirc`` file in the home directory.
   but if that file does not exist, the user can provide the `key` and `url` as arguments. Instructions on how
   to create the ``.cdsapirc`` file for your user account can be found at https://cds.climate.copernicus.eu/how-to-api 
 - `url`: The URL of the CDS API server. Default is https://cds.climate.copernicus.eu/api
+- `region`: Specify a region of a specific geographic area. It can be provided as a string with form "N/W/S/E"
+  or a 4-element vector or tuple with numeric data. This option is only used when the `params` argument is
+  provided as a two elements string vector.
+- `format`: The format of the data to download. Default is "netcdf". Other options is "grib".
+- `debug`: A boolean indicating whether to print the `params` from the outputs of the `era5vars()` and
+  `era5time()` functions. I this case, we just print the `params` and return without trying to download any file.
 - `verbose`: A boolean indicating whether to print the attemps to connect to the CDS server. Default is true.
 
 ### Credits
 This function is based in part on bits of CDSAPI.jl but doesn't require any of the dependencies of that package.
 
-### Example
+### Examples
 ```julia
 # Copy the following code by selecting it and pressing Ctrl-C
 
@@ -121,8 +131,15 @@ This function is based in part on bits of CDSAPI.jl but doesn't require any of t
 # Now call the function but WARNING: DO NOT COPY_PASTE it as it would replace the clipboard contents
 era5(dataset="reanalysis-era5-single-levels", cb=true)
 ```
+
+### Let's dare and build the request ourselves
+```julia
+var = era5vars(["t2m", "skt"])			# "t2m" is the 2m temperature and "skt" is the skin temperature
+datetime = era5time(hour=10:14);
+era5(dataset="reanalysis-era5-land", params=[var, datetime], region=(-10, 0, 30, 45))
+```
 """
-function era5(reanalysis::Symbol=:reanalysis; filename="", dataset="", cb::Bool=false, params::AbstractString="", key::String="", url::String="", wait=1.0, verbose::Bool=true)
+function era5(reanalysis::Symbol=:reanalysis; filename="", cb::Bool=false, dataset="", params::Union{AbstractString, Vector{String}}="", key::String="", url::String="", wait=1.0, region="", format="netcdf", debug::Bool=false, verbose::Bool=true)
 
 	function cdsapikey()::Tuple{String, String}
 		# Get the API key and URL from the ~/.cdsapirc file
@@ -182,6 +199,17 @@ function era5(reanalysis::Symbol=:reanalysis; filename="", dataset="", cb::Bool=
 		!contains(tcb, "variable\"") && error("Clipboard does not contain a valid API request code")
 		body, _dataset = parse_request(tcb)
 	else
+		if isa(params, Vector)
+			params = join(params, '\n')
+			params *= (format == "netcdf") ? "\"data_format\": \"netcdf\",\n" : "\"data_format\": \"grib\",\n"
+			params *= "\"download_format\": \"unarchived\",\n"
+			if (region != "")		# The region is provided by parse_R() as a string like " -R58/6/55/9" (N/W/S/E)
+				optR = split(parse_R(Dict(:R => region), "")[1], '/')
+				params *= "\"area\": [" * optR[1][4:end] * ", " * optR[4] * ", " * optR[2] * ", " * optR[3] * "]\n"
+			end
+			params = "{\"product_type\": [\"reanalysis\"],\n" * params * "}"
+			debug && (println(params);		return nothing)		# <== EXIT here
+		end
 		body, _dataset = parse_request(params)
 	end
 	(dataset == "" && _dataset == "") && error("'dataset' not provided, Neither as an argument nor in the clipboard.")
@@ -189,11 +217,11 @@ function era5(reanalysis::Symbol=:reanalysis; filename="", dataset="", cb::Bool=
 
 	s = curl_post(URL * "/retrieve/v1/processes/$dataset/execute", body, KEY)
 	st_line = findfirst(startswith.(s,"\"status"))
+	status = s[st_line][11:end-1]			# It has the form "{\"status\":\"accepted\""
 	if (contains(s[st_line], ":4"))
 		ind = findfirst(startswith.(s,"\"title"))
 		throw(ArgumentError(split(s[ind], ':')[2][2:end-1]))	# It has the form "\"title\":\"Autentication failed\""
 	end
-	status = s[st_line][11:end-1]			# It has the form "{\"status\":\"accepted\""
 	ep_line = findfirst(startswith.(s,"{\"href"))
 	endpoint = s[ep_line][10:end-1]			# It has the form "{\"href\":\"https://cds.climate...\""
 	while (status != "successful")
@@ -206,14 +234,12 @@ function era5(reanalysis::Symbol=:reanalysis; filename="", dataset="", cb::Bool=
 			throw(ErrorException("""Request to dataset $dataset failed. Check https://cds.climate.copernicus.eu/requests
 			for more information (after login)."""))
 		end
-        (status != "successful") && (sleep(wait))
+		(status != "successful") && (sleep(wait))
 		wait = min(1.4 * wait, 3.0)
 	end
 
 	s = curl_get(endpoint * "/results", KEY)
 
-	#ind = findfirst(startswith.(s,"\"file:size"))
-	#fsize = parse(Float64, s[ind][13:end-1])		# It has the form "\"file:size\":34063"
 	ind = findfirst(startswith.(s,"\"href"))
 	urlname = string(s[ind][9:end-1])				# It has the form "\"href\":\"https://object-store...\""
 	if (filename == "")								# Now we know the filename extension. It's in the urlname
@@ -222,4 +248,129 @@ function era5(reanalysis::Symbol=:reanalysis; filename="", dataset="", cb::Bool=
 	verbose && @info "Request is now completed. Downloading $(uppercase(dataset))" URL=urlname Destination=filename; flush(stderr)
 
 	run(`curl --show-error $urlname -o $filename`)
+end
+
+# ------------------------------------------------------------------------------------------------------------------------
+"""
+    listera5vars(; single::Bool=true, pressure::Bool=false, contain::AbstractString="")
+
+Print a list of CDS ERA5 variables.
+
+### Kwargs
+- `single`: If true, only single-level variables are listed. If false, pressure-level variables are listed [Default is true].
+- `pressure`: If true, only pressure-level variables are listed. If false, single-level variables are listed.
+- `contain`: A string to filter the variables by their Name. Only those containing this string (case sensitive)
+  are listed. If not provided, all variables are listed.
+
+#### Example
+```julia
+# Print all pressure-level variables.
+listera5vars(pressure=true)
+
+# Print only single-level variables containing "Temperature" in their name.
+listera5vars(contain="Temperature")
+```
+"""
+function listera5vars(; single::Bool=true, pressure::Bool=false, contain::AbstractString="", test::Bool=false)
+	d, title_str = helper_era5vars(single::Bool, pressure::Bool)
+	if (contain != "")
+		d = filter(((k,v),) -> contains(v[2], contain), d)
+		isempty(d) && (@info "No variables found in the dataset for the search string \"$contain\""; return nothing)
+	end
+	ds = sort(d, by=first)
+	test && return nothing
+	pretty_table(hcat(collect(keys(ds)),stack(values(ds), dims=1)),header=["ID","Long-Name (nc var name)","Name","Units"],
+	             alignment=[:c,:l,:l,:c], title=title_str * "-level variables", title_alignment=:c, crop=:horizontal)
+end
+
+# ------------------------------------------------------------------------------------------------------------------------
+"""
+    era5vars(varID; single::Bool=true, pressure::Bool=false) -> String
+
+Selec one or more variables from a CDS ERA5 dataset.
+
+This function returns a JSON formatted string that can be used as an input to the ``era5()`` function `params` option.
+See the ``listera5vars()`` function for a list of available variables.
+
+### Args
+- `varID`: The variable name. It can be a string or a symbol to select a unique variavle, or a vector of
+  strings/symbols to select multiple variables.
+
+### Kwargs
+- `single`: If true, only single-level variables are listed. If false, pressure-level variables are listed [Default is true].
+- `pressure`: If true, only pressure-level variables are listed. If false, single-level variables are listed.
+  [Default is false].
+
+### Returns
+A string with the JSON formatted variable name.
+
+### Example
+```julia
+# "t2m" is the 2m temperature and "skt" is the skin temperature
+var = era5vars(["t2m", "skt"])
+```
+"""
+era5vars(varID::Union{String, Symbol}; single::Bool=true, pressure::Bool=false) = era5vars([string(varID)], single=single, pressure=pressure)
+function era5vars(varID::Union{Vector{String}, Vector{Symbol}}; single::Bool=true, pressure::Bool=false)::String
+	d = helper_era5vars(single::Bool, pressure::Bool)[1]
+	_vars = (eltype(varID) == Symbol) ? string.(varID) : varID
+	for k = 1:numel(_vars)
+		!haskey(d, _vars[k]) && error("Variable \"$_vars[$k]\" not found in the dataset")
+	end
+	# Next line took me HOURS to figure it out. Shame on your printf Julia, shame on you.
+	@sprintf("\"variable\": [\n\t\"%s\"\n],", join([d[k][1] for k in _vars], "\",\n\t\""))
+end
+
+# ------------------------------------------------------------------------------------------------------------------------
+function helper_era5vars(single::Bool, pressure::Bool)
+	pressure && (single = false);	!single && (pressure = true)
+	dim_char = (single) ? "2" : "3";	title_str = (single) ? "Single" : "Pressure"
+	return include(joinpath(dirname(pathof(GMT)), "extras/era5vars" * dim_char * "d.jl")), title_str
+end
+
+# ------------------------------------------------------------------------------------------------------------------------
+"""
+    era5time(; year="", month="", day="", hour="") -> String
+
+Select one or more fate-times from a CDS ERA5 dataset.
+
+This function returns a JSON formatted string that can be used as an input to the ``era5()`` function `params` option.
+
+### Kwargs
+- `year`: The year(s) to select. It can be a string to select a unique year, or a vector of strings or Ints to select multiple years.
+  It can also be a range of years, e.g. "2010:2020".
+- `month`: The month(s) to select. It can be a string to select a unique month, or a vector of strings or Ints to select multiple months.
+  It can also be a range of months, e.g. "01:06".
+- `day`: The day(s) to select. It can be a string to select a unique day, or a vector of strings or Ints to select multiple days.
+  It can also be a range of days, e.g. "01:20".
+- `hour`: The hour(s) to select. It can be a string to select a unique hour, or a vector of strings or Ints to select multiple hours.
+  It can also be a range of hours, e.g. "01:10".
+
+### Returns
+A string with the JSON formatted time.
+
+### Example
+```julia
+# All times in 2023
+var = era5time(year="2023")
+```
+"""
+function era5time(; year="", month="", day="", hour="")
+	function getdt(x, def)
+		(x == "") ? def : (typeof(x) <: OrdinalRange) ? string.(collect(x)) : isa(x, Vector{Int}) ? string.(x) : isa(x, Vector{String}) ? x : "e"
+	end
+
+	_y, _m, _d, _h = agora()
+	yr = (year == "all") ? string(collect(2000:parse(Int, _y))) : getdt(year, _y);	(yr == "e") && error("Unknown type for 'year'")
+	mo = (month == "all") ? string(collect(1:12)) : getdt(month, _m);	(mo == "e") && error("Unknown type for 'month'")
+	dy = (day == "all") ? string(collect(1:30)) : getdt(day, _d);	(dy == "e") && error("Unknown type for 'day'")
+	hr = (day == "all") ? string(collect(0:23)) : getdt(hour, _h);	(hr == "e") && error("Unknown type for 'hour'")
+	s = @sprintf("\"year\": [\"%s\"],\n\"month\": [\"%s\"],\n\"day\": [\"%s\"],\n\"time\": [\"%s\"],\n", yr, mo, dy, hr)
+	s = replace(s, "[\"[" => "[");	s = replace(s, "]\"]" => "]");		# Remove double [[ & ]]
+	return s
+end
+
+function agora()	# Must put this in a separate function because I want to use the keywords year, month, etc
+	t = now()
+	return string(year(t)), string(month(t)), string(day(t)), string(hour(t))
 end

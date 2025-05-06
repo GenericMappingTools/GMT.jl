@@ -167,7 +167,7 @@ export
 	fill_between, fill_between!, marginalhist, marginalhist!, parallelplot, parallelplot!, piechart, piechart!, plotlinefit, plotlinefit!,
 	qqplot, qqplot!, qqnorm, qqnorm!, remotegrid, sealand, squeeze, terramar, violin, violin!, viz, vizpdf, windbarbs, whereami,
 
-	maregrams, pastplates, seismicity, era5, weather, wmsinfo, wmstest, wmsread,
+	maregrams, pastplates, seismicity, era5, era5time, era5vars, listera5vars, weather, wmsinfo, wmstest, wmsread,
 
 	VSdisp, mad, info, kmeans, pca, mosaic, quadbounds, quadkey, geocoder, getprovider,
 

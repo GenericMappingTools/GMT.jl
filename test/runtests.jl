@@ -51,6 +51,8 @@ using InteractiveUtils
 		@warn("Failed the WMS test. Error was:\n $err")
 	end
 
+	include("test_avatars.jl")
+	include("test_misc.jl")
 	include("test_isoutlier.jl")
 	include("test_okadas.jl")
 	include("test_findpeaks.jl")
@@ -62,10 +64,6 @@ using InteractiveUtils
 	include("test_imgfuns.jl")
 	include("test_imgtiles.jl")
 	include("test_makecpts.jl")
-	println("		Entering: test_avatars.jl")
-	include("test_avatars.jl")
-	println("		Entering: test_misc.jl")
-	include("test_misc.jl")
 	println("		Entering: test_utils.jl")
 	include("test_utils.jl")
 	println("		Entering: test_tables.jl")
