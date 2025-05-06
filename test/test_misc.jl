@@ -307,7 +307,7 @@
 	listera5vars(contain="Temperature", test=true)
 	var = era5vars(["t2m", "skt"]);			# "t2m" is the 2m temperature and "skt" is the skin temperature
 	dt = era5time(hour=10:14);
-	era5(dataset="reanalysis-era5-land", params=[var, dt], region=(-10, 0, 30, 45), key="blabla")
+	@test_throws ArgumentError era5(dataset="reanalysis-era5-land", params=[var, dt], region=(-10, 0, 30, 45), key="blabla")
 
 	# MB-System
 	println("	MB-System")
