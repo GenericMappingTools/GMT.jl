@@ -92,16 +92,19 @@ This function retrieves data from the Climate Data Store (CDS) (https://cds.clim
 - `params`: A JSON string containing the request parameters. This string should be in the format expected
   by the CDSAPI. When using input via this option the `dataset` option is mandatory.
   If you feel brave, you can create the request parametrs yourself and pass them as a two elements string
-  vector with the output of the ``era5vars()`` and ``era5time()`` functions. In this case, a region selection,
-  if desired, must be provided via the `region` option that has the same syntax in all other GMT.jl modules
-  that use it, _e.g._ the ``coast`` function.
+  vector with the output of the ``era5vars()`` and ``era5time()`` functions. In this case, a region selection
+  and pressure levels, if desired, must be provided via the `region` and `pressure` options. The `region`
+  option has the same syntax in all other GMT.jl modules that use it, _e.g._ the ``coast`` function.
 - `key`: The API key for the CDSAPI server. Default is the value in the ``.cdsapirc`` file in the home directory.
   but if that file does not exist, the user can provide the `key` and `url` as arguments. Instructions on how
   to create the ``.cdsapirc`` file for your user account can be found at https://cds.climate.copernicus.eu/how-to-api 
 - `url`: The URL of the CDS API server. Default is https://cds.climate.copernicus.eu/api
+- `pressure`: List of pressure levels to retrieve. It can be a string to select a unique level, or a vector
+  of strings or Ints to select multiple levels. But it can also be a range of levels, e.g. "1000:-100:500". 
+  This option is only used when the `params` argument is provided as a string vector.
 - `region`: Specify a region of a specific geographic area. It can be provided as a string with form "N/W/S/E"
   or a 4-element vector or tuple with numeric data. This option is only used when the `params` argument is
-  provided as a two elements string vector.
+  provided as a string vector.
 - `format`: The format of the data to download. Default is "netcdf". Other options is "grib".
 - `debug`: A boolean indicating whether to print the `params` from the outputs of the `era5vars()` and
   `era5time()` functions. I this case, we just print the `params` and return without trying to download any file.
@@ -139,7 +142,7 @@ datetime = era5time(hour=10:14);
 era5(dataset="reanalysis-era5-land", params=[var, datetime], region=(-10, 0, 30, 45))
 ```
 """
-function era5(reanalysis::Symbol=:reanalysis; filename="", cb::Bool=false, dataset="", params::Union{AbstractString, Vector{String}}="", key::String="", url::String="", wait=1.0, region="", format="netcdf", debug::Bool=false, verbose::Bool=true)
+function era5(reanalysis::Symbol=:reanalysis; filename="", cb::Bool=false, dataset="", params::Union{AbstractString, Vector{String}}="", key::String="", url::String="", wait=1.0, pressure="", region="", format="netcdf", debug::Bool=false, verbose::Bool=true)
 
 	function cdsapikey()::Tuple{String, String}
 		# Get the API key and URL from the ~/.cdsapirc file
@@ -185,6 +188,7 @@ function era5(reanalysis::Symbol=:reanalysis; filename="", cb::Bool=false, datas
 			split(readlines(io)[1], ',')
 		end
 	end
+	# ======================== End of nested functions ========================
 
 	if (key == "")
 		KEY, URL = cdsapikey()
@@ -201,8 +205,15 @@ function era5(reanalysis::Symbol=:reanalysis; filename="", cb::Bool=false, datas
 	else
 		if isa(params, Vector)
 			params = join(params, '\n')
+			if (pressure != "")		# Pressure levels are provided
+				pr = getdtp(pressure, "1000");	(pr == "e") && error("Unknown type for 'pressure'")
+				sp = @sprintf("\"pressure_level\": [\"%s\"],\n", pr)
+				sp = replace(sp, "[\"[" => "[");	sp = replace(sp, "]\"]" => "]");	# Remove double [[ & ]]
+				params *= sp
+			end
 			params *= (format == "netcdf") ? "\"data_format\": \"netcdf\",\n" : "\"data_format\": \"grib\",\n"
-			params *= "\"download_format\": \"unarchived\",\n"
+			last = (region == "") ? "\n" : ",\n"	# Having an extra comma at the end of the line is a json syntax error
+			params *= "\"download_format\": \"unarchived\"" * last
 			if (region != "")		# The region is provided by parse_R() as a string like " -R58/6/55/9" (N/W/S/E)
 				optR = split(parse_R(Dict(:R => region), "")[1], '/')
 				params *= "\"area\": [" * optR[1][4:end] * ", " * optR[4] * ", " * optR[2] * ", " * optR[3] * "]\n"
@@ -216,14 +227,15 @@ function era5(reanalysis::Symbol=:reanalysis; filename="", cb::Bool=false, datas
 	(dataset == "" && _dataset != "") && (dataset = _dataset)
 
 	s = curl_post(URL * "/retrieve/v1/processes/$dataset/execute", body, KEY)
-	st_line = findfirst(startswith.(s,"\"status"))
-	status = s[st_line][11:end-1]			# It has the form "{\"status\":\"accepted\""
-	if (contains(s[st_line], ":4"))
+	ind = findfirst(startswith.(s,"\"status"))
+	(ind === nothing) && throw(ArgumentError("The request was not accepted, probably a malformed one. Check it the 'debug' option."))
+	status = s[ind][11:end-1]			# It has the form "{\"status\":\"accepted\""
+	if (contains(s[ind], ":4"))
 		ind = findfirst(startswith.(s,"\"title"))
 		throw(ArgumentError(split(s[ind], ':')[2][2:end-1]))	# It has the form "\"title\":\"Autentication failed\""
 	end
-	ep_line = findfirst(startswith.(s,"{\"href"))
-	endpoint = s[ep_line][10:end-1]			# It has the form "{\"href\":\"https://cds.climate...\""
+	ind = findfirst(startswith.(s,"{\"href"))
+	endpoint = s[ind][10:end-1]			# It has the form "{\"href\":\"https://cds.climate...\""
 	while (status != "successful")
 		s = curl_get(endpoint, KEY)
 		st_line = findfirst(startswith.(s,"\"status"))
@@ -347,7 +359,7 @@ This function returns a JSON formatted string that can be used as an input to th
   It can also be a range of hours, e.g. "01:10".
 
 ### Returns
-A string with the JSON formatted time.
+A string with the JSON formatted date-time.
 
 ### Example
 ```julia
@@ -356,18 +368,18 @@ var = era5time(year="2023")
 ```
 """
 function era5time(; year="", month="", day="", hour="")
-	function getdt(x, def)
-		(x == "") ? def : (typeof(x) <: OrdinalRange) ? string.(collect(x)) : isa(x, Vector{Int}) ? string.(x) : isa(x, Vector{String}) ? x : "e"
-	end
-
 	_y, _m, _d, _h = agora()
-	yr = (year == "all") ? string(collect(2000:parse(Int, _y))) : getdt(year, _y);	(yr == "e") && error("Unknown type for 'year'")
-	mo = (month == "all") ? string(collect(1:12)) : getdt(month, _m);	(mo == "e") && error("Unknown type for 'month'")
-	dy = (day == "all") ? string(collect(1:30)) : getdt(day, _d);	(dy == "e") && error("Unknown type for 'day'")
-	hr = (day == "all") ? string(collect(0:23)) : getdt(hour, _h);	(hr == "e") && error("Unknown type for 'hour'")
+	yr = getdtp(year, _y);	(yr == "e") && error("Unknown type for 'year'")
+	mo = getdtp(month, _m);	(mo == "e") && error("Unknown type for 'month'")
+	dy = getdtp(day, _d);	(dy == "e") && error("Unknown type for 'day'")
+	hr = getdtp(hour, _h);	(hr == "e") && error("Unknown type for 'hour'")
 	s = @sprintf("\"year\": [\"%s\"],\n\"month\": [\"%s\"],\n\"day\": [\"%s\"],\n\"time\": [\"%s\"],\n", yr, mo, dy, hr)
 	s = replace(s, "[\"[" => "[");	s = replace(s, "]\"]" => "]");		# Remove double [[ & ]]
 	return s
+end
+	
+function getdtp(x, def)		# used also in era5() to get the pressure levels
+	(x == "") ? def : (typeof(x) <: OrdinalRange) ? string.(collect(x)) : isa(x, Vector{Int}) ? string.(x) : isa(x, Vector{String}) ? x : "e"
 end
 
 function agora()	# Must put this in a separate function because I want to use the keywords year, month, etc

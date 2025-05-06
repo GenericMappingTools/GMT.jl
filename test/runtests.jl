@@ -17,6 +17,8 @@ using InteractiveUtils
 	API = GMT.GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL);
 	GMT.GMT_Get_Ctrl(API);
 
+	include("test_avatars.jl")
+	include("test_misc.jl")
 	println("		Entering: test_gd_ext.jl")
 	include("test_gd_ext.jl")
 	println("		Entering: test_gdal.jl")
@@ -51,8 +53,6 @@ using InteractiveUtils
 		@warn("Failed the WMS test. Error was:\n $err")
 	end
 
-	include("test_avatars.jl")
-	include("test_misc.jl")
 	include("test_isoutlier.jl")
 	include("test_okadas.jl")
 	include("test_findpeaks.jl")
