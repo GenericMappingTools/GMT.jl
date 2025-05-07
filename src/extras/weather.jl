@@ -75,8 +75,8 @@ end
 
 # ------------------------------------------------------------------------------------------------------------------------
 """
-    era5(; filename="", cb::Bool=false, dataset="", params::AbstractString="", key::String="",
-         url::String="", region="", format="netcdf", debug::Bool=false, verbose::Bool=true)
+    ecmwf(; filename="", cb::Bool=false, dataset="", params::AbstractString="", key::String="",
+          url::String="", region="", format="netcdf", debug::Bool=false, verbose::Bool=true)
 
 This function retrieves data from the Climate Data Store (CDS) (https://cds.climate.copernicus.eu) service.
 
@@ -93,13 +93,13 @@ This function retrieves data from the Climate Data Store (CDS) (https://cds.clim
   by the CDSAPI. When using input via this option the `dataset` option is mandatory.
   If you feel brave, you can create the request parametrs yourself and pass them as a two elements string
   vector with the output of the ``era5vars()`` and ``era5time()`` functions. In this case, a region selection
-  and pressure levels, if desired, must be provided via the `region` and `pressure` options. The `region`
+  and pressure levels, if desired, must be provided via the `region` and `levlist` options. The `region`
   option has the same syntax in all other GMT.jl modules that use it, _e.g._ the ``coast`` function.
 - `key`: The API key for the CDSAPI server. Default is the value in the ``.cdsapirc`` file in the home directory.
   but if that file does not exist, the user can provide the `key` and `url` as arguments. Instructions on how
   to create the ``.cdsapirc`` file for your user account can be found at https://cds.climate.copernicus.eu/how-to-api 
 - `url`: The URL of the CDS API server. Default is https://cds.climate.copernicus.eu/api
-- `pressure`: List of pressure levels to retrieve. It can be a string to select a unique level, or a vector
+- `levlist`: List of pressure levels to retrieve. It can be a string to select a unique level, or a vector
   of strings or Ints to select multiple levels. But it can also be a range of levels, e.g. "1000:-100:500". 
   This option is only used when the `params` argument is provided as a string vector.
 - `region`: Specify a region of a specific geographic area. It can be provided as a string with form "N/W/S/E"
@@ -132,17 +132,47 @@ This function is based in part on bits of CDSAPI.jl but doesn't require any of t
 }
 
 # Now call the function but WARNING: DO NOT COPY_PASTE it as it would replace the clipboard contents
-era5(dataset="reanalysis-era5-single-levels", cb=true)
+ecmwf(dataset="reanalysis-era5-single-levels", cb=true)
 ```
 
 ### Let's dare and build the request ourselves
 ```julia
 var = era5vars(["t2m", "skt"])			# "t2m" is the 2m temperature and "skt" is the skin temperature
 datetime = era5time(hour=10:14);
-era5(dataset="reanalysis-era5-land", params=[var, datetime], region=(-10, 0, 30, 45))
+ecmwf(dataset="reanalysis-era5-land", params=[var, datetime], region=(-10, 0, 30, 45))
+```
+
+-----
+    ecmwf(:forecast; levlist="", kw...)
+
+Download a forecast dataset from the ECMWF.
+
+### Kwargs
+- `levlist`: The pressure levels to select. It can be a string to select a unique pressure level,
+  or a vector of strings or Ints to select multiple pressure levels.
+- `param, variable, var, vars`: The variable(s) to select. It can be a string to select a unique variable,
+  or a vector of strings or Ints to select multiple variables. When variable(s) is requested, we download only those
+  variables as separate files. The names of those files are the same as the variable names with the .grib2 extension.
+- `step`: An Int with the forecast step to select.
+- `model`: A string with the model to select. Either "ifs" or "aifs". Default is "ifs".
+- `date`: The date to select. It can be a string to select a unique date, a ``DateTime`` object, or a Int.
+  Where the Int is the number of days to go back from today. If the Int is greater than 3, an error is raised.
+  If the date is a string, it must be in the form YYYYMMDD or YYYY-MM-DD.
+- `time`: The time in hours to select. It can be a string a ``Time`` object, or a Int. What ever it is,
+  it will floored to 0, 6, 12 or 18. The default is the current hour.
+- `stream`: A string with the stream to select, it must be one of: "oper", "enfo", "waef", "wave", "scda", "scwv", "mmsf". Default is "oper".
+- `type`: A string with the type of forecast to select, it must be one of: "fc", "ef", "ep", "tf". Default is "fc".
+
+### Example
+Try to get the latest 10m wind and 2m temperature forecast for today. It probably will fail because
+the data is likely not available yet. Adding a good `date` will make it work.	
+```julia
+ecmwf(:forecast, vars=["10u", "2t"])
 ```
 """
-function era5(reanalysis::Symbol=:reanalysis; filename="", cb::Bool=false, dataset="", params::Union{AbstractString, Vector{String}}="", key::String="", url::String="", wait=1.0, pressure="", region="", format="netcdf", debug::Bool=false, verbose::Bool=true)
+function ecmwf(source::Symbol=:reanalysis; filename="", cb::Bool=false, dataset="", params::Union{AbstractString, Vector{String}}="", key::String="", url::String="", wait=1.0, levlist="", region="", format="netcdf", debug::Bool=false, verbose::Bool=true, kw...)
+
+	(source == :forecast) && return ecmwf_fc(; filename=filename, levlist=levlist, kw...)
 
 	function cdsapikey()::Tuple{String, String}
 		# Get the API key and URL from the ~/.cdsapirc file
@@ -205,8 +235,8 @@ function era5(reanalysis::Symbol=:reanalysis; filename="", cb::Bool=false, datas
 	else
 		if isa(params, Vector)
 			params = join(params, '\n')
-			if (pressure != "")		# Pressure levels are provided
-				pr = getdtp(pressure, "1000");	(pr == "e") && error("Unknown type for 'pressure'")
+			if (levlist != "")		# Pressure levels are provided
+				pr = getdtp(levlist, "1000");	(pr == "e") && error("Unknown type for 'levlist'")
 				sp = @sprintf("\"pressure_level\": [\"%s\"],\n", pr)
 				sp = replace(sp, "[\"[" => "[");	sp = replace(sp, "]\"]" => "]");	# Remove double [[ & ]]
 				params *= sp
@@ -264,9 +294,12 @@ end
 
 # ------------------------------------------------------------------------------------------------------------------------
 """
-    listera5vars(; single::Bool=true, pressure::Bool=false, contain::AbstractString="")
+    listecmwfvars(source::Symbol=:reanalysis; single::Bool=true, levlist::Bool=false, contain::AbstractString="")
 
 Print a list of CDS ERA5 variables.
+
+### Args
+- `source`: The source of the data. It can be either ``:reanalysis`` or ``:forecast``. Default is `:reanalysis`.
 
 ### Kwargs
 - `single`: If true, only single-level variables are listed. If false, pressure-level variables are listed [Default is true].
@@ -277,22 +310,26 @@ Print a list of CDS ERA5 variables.
 #### Example
 ```julia
 # Print all pressure-level variables.
-listera5vars(pressure=true)
+listecmwfvars(pressure=true)
 
-# Print only single-level variables containing "Temperature" in their name.
-listera5vars(contain="Temperature")
+# Print only single-level variables containing "Temperature" in their name from the foorecast datasets.
+listecmwfvars(:forecast, contain="Temperature")
 ```
 """
-function listera5vars(; single::Bool=true, pressure::Bool=false, contain::AbstractString="", test::Bool=false)
-	d, title_str = helper_era5vars(single::Bool, pressure::Bool)
+function listecmwfvars(source::Symbol=:reanalysis; single::Bool=true, pressure::Bool=false, contain::AbstractString="", test::Bool=false)
+	what = (source == :reanalysis) ? "era5" : "fc"
+	d, title_str = helper_ecmwf_vars(single, pressure, what)
 	if (contain != "")
 		d = filter(((k,v),) -> contains(v[2], contain), d)
 		isempty(d) && (@info "No variables found in the dataset for the search string \"$contain\""; return nothing)
 	end
 	ds = sort(d, by=first)
+	header = (what == "fc") ? ["ID","Name","Units"] : ["ID","Long-Name (nc var name)","Name","Units"]
+	align = (what == "fc") ? [:c,:l,:c] : [:c,:l,:l,:c]
+	t = (what == "fc") ? "  (Forecast)" : "  (ERA5)";	
 	test && return nothing
-	pretty_table(hcat(collect(keys(ds)),stack(values(ds), dims=1)),header=["ID","Long-Name (nc var name)","Name","Units"],
-	             alignment=[:c,:l,:l,:c], title=title_str * "-level variables", title_alignment=:c, crop=:horizontal)
+	pretty_table(hcat(collect(keys(ds)),stack(values(ds), dims=1)), header=header, alignment=align,
+	             title=title_str * "-level variables" * t, title_alignment=:l, crop=:horizontal)
 end
 
 # ------------------------------------------------------------------------------------------------------------------------
@@ -301,8 +338,8 @@ end
 
 Selec one or more variables from a CDS ERA5 dataset.
 
-This function returns a JSON formatted string that can be used as an input to the ``era5()`` function `params` option.
-See the ``listera5vars()`` function for a list of available variables.
+This function returns a JSON formatted string that can be used as an input to the ``ecmwf()`` function `params` option.
+See the ``listecmwfvars()`` function for a list of available variables.
 
 ### Args
 - `varID`: The variable name. It can be a string or a symbol to select a unique variavle, or a vector of
@@ -324,7 +361,7 @@ var = era5vars(["t2m", "skt"])
 """
 era5vars(varID::Union{String, Symbol}; single::Bool=true, pressure::Bool=false) = era5vars([string(varID)], single=single, pressure=pressure)
 function era5vars(varID::Union{Vector{String}, Vector{Symbol}}; single::Bool=true, pressure::Bool=false)::String
-	d = helper_era5vars(single::Bool, pressure::Bool)[1]
+	d = helper_ecmwf_vars(single, pressure, "era5")[1]
 	_vars = (eltype(varID) == Symbol) ? string.(varID) : varID
 	for k = 1:numel(_vars)
 		!haskey(d, _vars[k]) && error("Variable \"$_vars[$k]\" not found in the dataset")
@@ -334,19 +371,19 @@ function era5vars(varID::Union{Vector{String}, Vector{Symbol}}; single::Bool=tru
 end
 
 # ------------------------------------------------------------------------------------------------------------------------
-function helper_era5vars(single::Bool, pressure::Bool)
+function helper_ecmwf_vars(single::Bool, pressure::Bool, prefix::String)
 	pressure && (single = false);	!single && (pressure = true)
-	dim_char = (single) ? "2" : "3";	title_str = (single) ? "Single" : "Pressure"
-	return include(joinpath(dirname(pathof(GMT)), "extras/era5vars" * dim_char * "d.jl")), title_str
+	dim_char = (single) ? "2" : "3";	title_str = ((single) ? "\nSingle" : "\nPressure")
+	return include(joinpath(dirname(pathof(GMT)), "extras/" * prefix * "vars" * dim_char * "d.jl")), title_str
 end
-
+	
 # ------------------------------------------------------------------------------------------------------------------------
 """
     era5time(; year="", month="", day="", hour="") -> String
 
-Select one or more fate-times from a CDS ERA5 dataset.
+Select one or more date-times from a CDS ERA5 dataset.
 
-This function returns a JSON formatted string that can be used as an input to the ``era5()`` function `params` option.
+This function returns a JSON formatted string that can be used as an input to the ``ecmwf()`` function `params` option.
 
 ### Kwargs
 - `year`: The year(s) to select. It can be a string to select a unique year, or a vector of strings or Ints to select multiple years.
@@ -378,11 +415,96 @@ function era5time(; year="", month="", day="", hour="")
 	return s
 end
 	
-function getdtp(x, def)		# used also in era5() to get the pressure levels
-	(x == "") ? def : (typeof(x) <: OrdinalRange) ? string.(collect(x)) : isa(x, Vector{Int}) ? string.(x) : isa(x, Vector{String}) ? x : "e"
+function getdtp(x, def)		# used also in ecmwf() to get the pressure levels
+	(x == "") ? def : (typeof(x) <: OrdinalRange) ? string.(collect(x)) : isa(x, Vector{Int}) ? string.(x) : isa(x, Vector{String}) ? x : isa(x, String) ? [x] : "e"
 end
 
 function agora()	# Must put this in a separate function because I want to use the keywords year, month, etc
 	t = now()
 	return string(year(t)), string(month(t)), string(day(t)), string(hour(t))
+end
+
+# ------------------------------------------------------------------------------------------------------------------------
+function ecmwf_fc(; filename="", levlist="", kw...)
+	d = KW(kw)
+	vars::Union{String, Vector{String}} = ""
+	((val = find_in_dict(d, [:variable :var :vars :param])[1]) !== nothing) && (vars = getdtp(val, ""))	# <== TEST THAT VARS ARE VALID
+	step::String = ((val = find_in_dict(d, [:step])[1]) === nothing) ? "0" : string(val)::String;
+	model::String = ((val = find_in_dict(d, [:model])[1]) === nothing) ? "ifs" : lowercase(string(val)::String)
+	model = lowercase(model);	(model != "ifs" && model != "aifs") && error("Model must be either \"ifs\" or \"aifs\"")
+	date::String, tim::String, _h::Int = "", "", 0
+	if ((val = find_in_dict(d, [:date])[1]) !== nothing)
+		if (isa(val, String))
+			data::String = val		# To f the Any
+			date = (length(data) == 8) ? data : (length(data) == 10 && contains(data, "-")) ? data[1:4] * data[6:7] * data[9:10] : error("When string, 'date' must be in the form YYYYMMDD")
+		elseif (isa(val, Date) || isa(val, DateTime))
+			date = Dates.format(val, dateformat"yyyymmdd")
+			isa(val, DateTime) && (_h = hour(val))
+		elseif (isa(val, Int))
+			n::Int = Int(abs(val))::Int
+			(n > 3) && error(" Forecasts older than 3 days are no longer available")
+			date = Dates.format(now()-Day(n), dateformat"yyyymmdd");
+		end
+	else
+		date = Dates.format(now(), dateformat"yyyymmdd");	_h = hour(now())
+	end
+
+	if ((val = find_in_dict(d, [:time])[1]) !== nothing)	# Even if gotten above, a explicit mention to time takes precedence
+		if (isa(val, String))   _h = parse(Int, val)::Int
+		elseif (isa(val, Time)) _h = hour(val)::Int
+		elseif (isa(val, Int))	_h = val
+		end
+	end
+	_h -= rem(_h, 6)					# To get only 0, 6, 12 or 18 hours
+	tim = @sprintf("%.02d", _h)
+
+	stream::String = "oper"				# Default is high-res
+	if ((val = find_in_dict(d, [:stream])[1]) !== nothing)	# 
+		stream = string(val)::String
+		!(stream in ["oper", "enfo", "waef", "wave", "scda", "scwv", "mmsf"]) &&
+			error("Unknown 'stream' code. Must be either: \"oper\", \"enfo\" , \"waef\", \"wave\", \"scda\", \"scwv\" or \"mmsf\"")
+		(stream != "oper") && (model != "ifs") && error("The 'stream' option is not available for the \"ifs\" model")
+	end
+
+	type::String = "fc"					# Default is forecast
+	if ((val = find_in_dict(d, [:type])[1]) !== nothing)	# 
+		type = lowercase(string(val)::String)
+		(!type in ["fc", "ef", "ep", "tf"]) && error("Unknown 'type' code. Must be either: \"fc\", \"ef\", \"ep\" or \"tf\"")
+	end
+	format = (type == "tf") ? "bufr" : "grib2"				# No choices here
+
+	root = "https://data.ecmwf.int/forecasts"
+	if ((val = find_in_dict(d, [:root])[1]) !== nothing)	# 
+		root = string(val)::String
+		(!contains(root, "https://") && !contains(root, "ecmwf")) && error("The 'root' option must be a valid URL")
+	end
+
+	# OK, now we have all the parameters to build the URL
+	# [ROOT]/[yyyymmdd]/[HH]z/[model]/[resol]/[stream]/[yyyymmdd][HH]0000-[step][U]-[stream]-[type].[format]
+	if (vars != "")
+		tmp = tempname()
+		Downloads.download(root * "/$date/$tim" * "z" * "/$model/0p25/$stream/$(date)$(tim)0000-$(step)h-$(stream)-$(type).index", tmp)
+		off_len = zeros(Int, length(vars), 2)		# Matrix{String}(undef, length(vars), 2)
+		fid = open(tmp)
+		iter = eachline(fid)
+		for k = 1:numel(vars)
+			_var = "\"$(vars[k])\""
+			for it in iter
+				!contains(it, _var) && continue
+				s = split(it, ',')[11:12]			# Should contain the "_offset": XX, "_length": YY
+				off_len[k, 1], off_len[k, 2] = parse(Int, s[1][12:end]), parse(Int, s[2][12:end-1])		# end-1 becase last char is the '}'
+				break
+			end
+		end
+		close(fid)
+		rm(tmp)
+		url = root * "/$date/$tim" * "z" * "/$model/0p25/$stream/$(date)$(tim)0000-$(step)h-$(stream)-$(type).$format"
+		for k = 1:numel(vars)
+			fname = vars[k] * ".grib2"		# This var file name
+			start, stop = off_len[k, 1], off_len[k, 1] + off_len[k, 2] - 1		# This var bite range
+			@info "Downloading $(fname) from $url"
+			run(`curl --show-error --range $(start)-$(stop) $url -o $fname`)
+		end
+	end
+	url = root * "/$date/$tim" * "z" * "/$model/0p25/$stream/$(date)$(tim)0000-$(step)h-$(stream)-$(type).$format"
 end

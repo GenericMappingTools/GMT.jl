@@ -167,7 +167,7 @@ export
 	fill_between, fill_between!, marginalhist, marginalhist!, parallelplot, parallelplot!, piechart, piechart!, plotlinefit, plotlinefit!,
 	qqplot, qqplot!, qqnorm, qqnorm!, remotegrid, sealand, squeeze, terramar, violin, violin!, viz, vizpdf, windbarbs, whereami,
 
-	maregrams, pastplates, seismicity, era5, era5time, era5vars, listera5vars, weather, wmsinfo, wmstest, wmsread,
+	maregrams, pastplates, seismicity, ecmwf, era5time, era5vars, listecmwfvars, weather, wmsinfo, wmstest, wmsread,
 
 	VSdisp, mad, info, kmeans, pca, mosaic, quadbounds, quadkey, geocoder, getprovider,
 
@@ -191,6 +191,10 @@ export
 	octahedron, tetrahedron, torus, replicant, revolve, rotate, rotate!, translate, translate!,
 
 	df2ds, ds2df, extrude, fv2fv, isclockwise, surf2fv, ODE2ds,
+
+	# Reexport some from Dates
+	Year, Month, Week, Day, Hour, Minute, Second, year, month, week, day, hour, minute, second, now, today,
+
 	@?, @G, @dir
 
 include("common_docs.jl")
