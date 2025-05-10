@@ -1,6 +1,6 @@
 """
-    D = maregrams(list::Bool=false, code="", name="", days::Real=2, starttime::String="", printurl=false)::GMTdataset
-	D = maregrams(lon::Real, lat::Real; days=2, starttime::String="")::GMTdataset
+    D = maregrams(list=false, code="", name="", days::Real=2, starttime::String="", printurl=false)::GMTdataset
+    D = maregrams(lon::Real, lat::Real; days=2, starttime::String="")::GMTdataset
 
 Download maregrams data from http://www.ioc-sealevelmonitoring.org.
 
@@ -62,7 +62,7 @@ function maregrams(; list=false, code="", name="", days=2, starttime::String="",
 	M = ((daydec = getdecimal(days)) != 0) ? round(Int, daydec*24*60) : 0
 	(daydec != 0) && (days = trunc(Int, days))
 	endtime = (starttime == "") ? DateTime(now()) : DateTime(starttime) + Dates.Day(days) + Dates.Minute(M)
-	endtime > DateTime(now()) && (days -= round((endtime - DateTime(now())).value / (24*3600000), digits=6); endtime = DateTime(now()))
+	(endtime > now()) && (days -= round((endtime - now()).value / (24*3600000), digits=6); endtime = now())
 	url = "http://www.ioc-sealevelmonitoring.org/bgraph.php?code=$_code&output=asc&period=$days&endtime=$endtime"
 	printurl && println(url)		# Station's URL
 	file = Downloads.download(url, "_query.csv")
@@ -74,7 +74,7 @@ function maregrams(; list=false, code="", name="", days=2, starttime::String="",
 	n = -2
 	var_in_mareg = ["prs(m)"]
 	open(file, "r") do io
-        for line in eachline(io)
+		for line in eachline(io)
 			if ((n += 1) <= 0)					# To jump the first two (header) lines
 				(n == -1) && continue			# Header line with station name
 				what = split(line, "\t")

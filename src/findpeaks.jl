@@ -1,6 +1,6 @@
 """
-    findpeaks(y, x=1:length(y); min_height=minimum(y), min_prom=minimum(y), min_dist=0, threshold=0)
-    findpeaks(D::GMTdataset; min_height=minimum(y), min_prom=minimum(y), min_dist=0, threshold=0)
+    findpeaks(y, x=1:length(y); min_height=minimum(y), min_prom=minimum(y), min_dist=0, threshold=0; xsorted::Bool=false)
+    findpeaks(D::GMTdataset; min_height=minimum(y), min_prom=minimum(y), min_dist=0, threshold=0; xsorted::Bool=false)
 
 Returns indices of local maxima (sorted from highest peaks to lowest) in 1D array of real numbers.
 Similar to MATLAB's findpeaks().
@@ -25,9 +25,10 @@ The peaks are output in order of occurrence. This function is from the ``Findpea
    the algorithm chooses the tallest peak and ignores all peaks within `min_dist` of it.
 - `threshold`: Minimal difference (absolute value) between peak and neighboring points. Use this argument to have
    ``findpeaks`` return only those peaks that exceed their immediate neighboring values by at least the value of `threshold`.
+- `xsorted`: If true, the indices of local maxima are sorted in ascending order of `x`. Default is to sort by amplitude.
 
 ### Returns
-- `peaks`: Indices of local maxima (sorted from highest peaks to lowest).
+- `peaks`: Indices of local maxima (sorted from highest peaks to lowest when `xsorted=false`).
 
 ### Examples
 ```julia
@@ -37,14 +38,14 @@ plot(D, title="Prominent peaks")
 scatter!(D[peaks,:], mc=:red, show=true)
 ```
 """
-function findpeaks(y::AbstractVecOrMat{T}, x::AbstractVecOrMat=collect(1:length(y)); min_height::T=minimum(y),
-                   min_prom=0.0, min_dist=0.0, threshold=0.0) where {T <: Real}
+function findpeaks(y::AbstractVecOrMat{T}, x::AbstractVecOrMat=collect(1:length(y)); min_height::Real=minimum(y),
+                   min_prom=0.0, min_dist=0.0, threshold=0.0, xsorted::Bool=false) where {T <: Real}
 
 	isa(y, AbstractMatrix) && (y = vec(y))
 	peaks = in_threshold(diff(y), threshold)
-	peaks = with_prominence(y, peaks, min_prom)
+	(min_prom != 0) && (peaks = with_prominence(y, peaks, min_prom))
 	peaks = peaks[y[peaks] .> min_height]			# minimal height refinement
-	peaks = with_distance(peaks, x, y, min_dist)
+	peaks = with_distance(peaks, x, y, min_dist, xsorted=xsorted)
 end
 function findpeaks(D::GMTdataset; min_height=D.bbox[1], min_prom=0.0, min_dist=0.0, threshold=0.0)
 	findpeaks(view(D.data, :, 2), view(D.data, :, 1); min_height=min_height, min_prom=min_prom, min_dist=min_dist, threshold=threshold)
@@ -97,8 +98,10 @@ function prominence(y::AbstractVector{T}, peaks::AbstractVector{Int}) where {T <
 	return proms
 end
 
-function with_distance(peaks::AbstractVector{Int}, x::AbstractVector{<:Real}, y::AbstractVector{T}, min_dist) where {T <: Real}
+function with_distance(peaks::AbstractVector{Int}, x::AbstractVector{<:Real}, y::AbstractVector{T}, min_dist; xsorted::Bool=false) where {T <: Real}
 	# Select only peaks that are further apart than `min_dist`
+	xsorted && min_dist == 0 && return peaks	# nothing to do in this case
+
 	peaks2del = zeros(Bool, length(peaks))
 	inds = sortperm(y[peaks], rev=true)
 	permute!(peaks, inds)
@@ -109,5 +112,5 @@ function with_distance(peaks::AbstractVector{Int}, x::AbstractVector{<:Real}, y:
 			end
 		end
 	end
-	return peaks[.!peaks2del]
+	return xsorted ? sort(peaks[.!peaks2del]) : peaks[.!peaks2del]
 end
