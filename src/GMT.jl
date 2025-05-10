@@ -41,6 +41,7 @@ if ((!(@isdefined have_jll) || have_jll == 1) && get(ENV, "SYSTEMWIDE_GMT", "") 
 	const GMTdevdate = (length(t) > 1) ? Date(t[end], dateformat"y.m.d") : Date("0001-01-01")	# For DEV versions
 	const GMTuserdir = [readlines(`$(GMT_jll.gmt()) "--show-userdir"`)[1]]
 	const GSbin = Ghostscript_jll.gs()[1]
+	const GMTbin = GMT_jll.gmt()[1]
 	const isJLL = true
 	fname = joinpath(GMTuserdir[1], "ghost_jll_path.txt")
 	!isdir(GMTuserdir[1]) && mkdir(GMTuserdir[1])	# When installing on a clean no GMT sys, ~/.gmt doesn't exist
@@ -49,7 +50,7 @@ if ((!(@isdefined have_jll) || have_jll == 1) && get(ENV, "SYSTEMWIDE_GMT", "") 
 	end
 else
 	const isJLL = false
-	const GMTver, libgmt, libgdal, libproj, GMTuserdir = _GMTver, _libgmt, _libgdal, _libproj, [userdir]
+	const GMTver, libgmt, libgdal, libproj, GMTuserdir, GMTbin = _GMTver, _libgmt, _libgdal, _libproj, [userdir], "gmt"
 	const GMTdevdate = Date(devdate, dateformat"y.m.d")		# 'devdate' comes from reading 'deps.jl'
 end
 
