@@ -310,7 +310,7 @@
 	var = era5vars(["t2m", "skt"]);			# "t2m" is the 2m temperature and "skt" is the skin temperature
 	dt = era5time(hour=10:14);
 	@test_throws ArgumentError ecmwf(dataset="reanalysis-era5-land", params=[var, dt], pressure=[1000, 900], region=(-10, 0, 30, 45), key="blabla")
-	ecmwf(:forecast);
+	ecmwf(:forecast, time=0, type="fc", stream="oper", levels=["1000", "925"]);
 
 	# MB-System
 	println("	MB-System")
