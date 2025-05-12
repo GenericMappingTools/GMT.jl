@@ -254,7 +254,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function gd2gmt(dataset::Gdal.AbstractDataset)
 	# This method is for OGR formats only
-	(Gdal.OGRGetDriverByName(Gdal.shortname(getdriver(dataset))) == C_NULL) && return gd2gmt(dataset; pad=0)
+	(Gdal.GDALGetRasterCount(dataset.ptr) >= 1) && return gd2gmt(dataset; pad=0)
 
 	drv = get(POSTMAN[1], "GDALdriver", "");	(drv != "") && delete!(GMT.POSTMAN[1], "GDALdriver")
 	(startswith(drv, "XLS") || drv == "CSV") && return helper_read_XLSCSV(dataset)
@@ -856,7 +856,7 @@ function gdalwrite(fname::AbstractString, data, optsP=String[]; opts=String[], k
 	(fname == "") && error("Output file name is missing.")
 	(isempty(optsP) && !isempty(opts)) && (optsP = opts)		# Accept either Positional or KW argument
 	ds = Gdal.get_gdaldataset(data, optsP)[1]
-	if (Gdal.OGRGetDriverByName(Gdal.shortname(getdriver(ds))) == C_NULL)
+	if (Gdal.GDALGetRasterCount(ds.ptr) >= 1)
 		gdaltranslate(ds, optsP; dest=fname, kw...)
 	else
 		ogr2ogr(ds, optsP; dest=fname, kw...)
