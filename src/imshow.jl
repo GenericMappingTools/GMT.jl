@@ -239,7 +239,7 @@ function imshow(arg1::GMTcpt; horizontal::Bool=false, kw...)
 end
 
 function imshow(arg1::Gdal.AbstractDataset; kw...)
-	(Gdal.OGRGetDriverByName(Gdal.shortname(getdriver(arg1))) != C_NULL) && return plot(gd2gmt(arg1), show=1)
+	(Gdal.GDALGetRasterCount(arg1.ptr) == 0) && return plot(gd2gmt(arg1), show=1)
 	imshow(gd2gmt(arg1); kw...)
 end
 
