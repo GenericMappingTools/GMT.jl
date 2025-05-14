@@ -863,7 +863,7 @@ function gdalwrite(fname::AbstractString, data, optsP=String[]; opts=String[], k
 	end
 end
 
-function gdalwrite(cube::GItype, fname::AbstractString, v=nothing; dim_name::String="time", dim_units::String="")
+function gdalwrite(cube::GItype, fname::AbstractString, v=nothing; dim_name::String="time", dim_units::String="", band_name::String="")
 	nbands = size(cube,3)
 	(v === nothing && !isempty(cube.v)) && (v = cube.v)
 	_v = (v === nothing) ? "$(collect(1:nbands))" : "$(v)"
@@ -874,15 +874,18 @@ function gdalwrite(cube::GItype, fname::AbstractString, v=nothing; dim_name::Str
 	Gdal.setmetadataitem(ds, "NETCDF_DIM_" * dim_name * "_VALUES", "{" *_v[2:end-1] * "}")
 	Gdal.setmetadataitem(ds, dim_name * "#axis", string(dim_name[1]))
 	#Gdal.setmetadataitem(ds, "Band1#actual_range","{0,50000}")
+	#Gdal.setmetadataitem(ds, "Band1#_FillValue","NaN")
 	if (dim_units != "")
 		Gdal.setmetadataitem(ds, dim_name * "#units", dim_units)
 	elseif (isa(cube, GMTgrid) && cube.z_unit != "")	# Mind off the error "embedded NULs are not allowed in C strings"
 		dim_units = ((ind = findfirst('\0', cube.z_unit)) !== nothing) ? cube.z_unit[1:ind-1] : cube.z_unit
 		Gdal.setmetadataitem(ds, dim_name * "#units", dim_units)
 	end
+	(band_name != "") && Gdal.setmetadataitem(ds, "BAND_NAMES", band_name)
 	crs = Gdal.getproj(cube, wkt=true)
 	(crs != "" ) && Gdal.setproj!(ds, crs)
 	Gdal.unsafe_copy(ds, filename=fname, driver=getdriver("netCDF"), options=["FORMAT=NC4", "COMPRESS=DEFLATE", "ZLEVEL=4"])
+	#Gdal.GDALClose(ds.ptr)
 	return nothing
 end
 

@@ -94,6 +94,7 @@ function Base.:*(G1::GMTgrid, scale::Real)
 	G2 = GMTgrid(G1.proj4, G1.wkt, epsg, geog, range, inc, registration, nodata, "", "", "", "", G1.names, x, y, v,
 	             z, G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, G1.hasnans)
 	G2.range[5:6] .*= scale
+	if (scale < 0)  G2.range[5], G2.range[6] = G2.range[6], G2.range[5]   end
 	return G2
 end
 # For images
@@ -138,6 +139,7 @@ function Base.:/(G1::GMTgrid, scale::Real)
 	G2 = GMTgrid(G1.proj4, G1.wkt, epsg, geog, range, inc, registration, nodata, "", "", "", "", G1.names, x, y, v,
 	             z, G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, G1.hasnans)
 	G2.range[5:6] ./= scale
+	if (G2.range[6] < G2.range[5])  G2.range[5], G2.range[6] = G2.range[6], G2.range[5]   end
 	return G2
 end
 # For images

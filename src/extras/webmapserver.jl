@@ -258,7 +258,7 @@ function wms_helper(wms::WMS; layer=0, kw...)
 			end
 			dim_x, dim_y = loc_getsize(_res, lims)
 		end
-	elseif (CTRL.limits[2] != "")		# Indirect check if -R was set via a mosaic tile name. A bit FRAGILE
+	elseif (CTRL.limits[2] != "" && (CTRL.limits[1:2] != [0.0, 0]))		# Indirect check if -R was set via a mosaic tile name. A bit FRAGILE
 		try _res = tryparse(Float64, CTRL.pocket_R[2])
 		catch; error("Programming error. 'CTRL.pocket_R[2]' is empty")
 		end
