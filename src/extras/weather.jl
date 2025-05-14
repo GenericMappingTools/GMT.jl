@@ -178,17 +178,17 @@ function ecmwf(source::Symbol=:reanalysis; filename="", cb::Bool=false, dataset=
 		# Get the API key and URL from the ~/.cdsapirc file
 		credfile = joinpath(homedir(), ".cdsapirc")
 		!isfile(credfile) && return "", ""
-		creds = Dict()
+		creds = Dict{String, String}()
 		open(credfile) do f
 			for line in readlines(f)
-				key, val = strip.(split(line, ':', limit=2))
-				creds[key] = val
+				_key_, _val_ = strip.(split(line, ':', limit=2))
+				creds[_key_] = _val_
 			end
 		end
 		return string(creds["key"]), string(creds["url"])
 	end
 
-	function parse_request(request::String)
+	function parse_request(request::String)::Tuple{String, String}
 		bv = BitVector(undef, length(request))
 		t = collect(request)
 		for k = 1:numel(request)
@@ -201,15 +201,15 @@ function ecmwf(source::Symbol=:reanalysis; filename="", cb::Bool=false, dataset=
 			t2 = replace(t2, ",]" => "]")		# Python cdsapi examples are full of shits like this that cause JSON errors
 			return "{\"inputs\":" * t2 * "}", ""
 		else
-			dataset  = ""		# Accept that no dataset name was provided if from clipboard
-			if ((ind = findfirst("dataset=\"", t2)) !== nothing)	# "import cdsapi\n\ndataset = \"reanalysis-era5-land\"\nrequest = {\n
-				ind2 = findfirst("request={", t2)
-				dataset = string(t2[ind[end]+1:ind2[1]-2])
+			_dataset_  = ""		# Accept that no dataset name was provided if from clipboard
+			if ((_ind_ = findfirst("dataset=\"", t2)) !== nothing)	# "import cdsapi\n\ndataset = \"reanalysis-era5-land\"\nrequest = {\n
+				_ind2_ = findfirst("request={", t2)
+				_dataset_ = string(t2[_ind_[end]+1:_ind2_[1]-2])
 				ind3 = findlast('}', t2)
-				t2 = t2[ind2[end]:ind3] * "}"
+				t2 = t2[_ind2_[end]:ind3] * "}"
 			end
 			t2 = replace(replace(t2, ",]" => "]"), ",}" => "}")		# Just in case we have those extra commas
-			return "{\"inputs\":" * t2, dataset
+			return "{\"inputs\":" * t2, _dataset_
 		end
 	end
 
@@ -262,7 +262,7 @@ function ecmwf(source::Symbol=:reanalysis; filename="", cb::Bool=false, dataset=
 	(dataset == "" && _dataset != "") && (dataset = _dataset)
 
 	s = curl_post(URL * "/retrieve/v1/processes/$dataset/execute", body, KEY)
-	ind = findfirst(startswith.(s,"\"status"))
+	ind::Union{Nothing, Int} = findfirst(startswith.(s,"\"status"))		# Annotate it otherwise it's a spee Anys
 	(ind === nothing) && throw(ArgumentError("The request was not accepted, probably a malformed one. Check it the 'debug' option."))
 	status = s[ind][11:end-1]			# It has the form "{\"status\":\"accepted\""
 	if (contains(s[ind], ":4"))
@@ -376,7 +376,7 @@ function era5vars(varID::Union{Vector{String}, Vector{Symbol}}; single::Bool=tru
 end
 
 # ---------------------------------------------------------------------------------------------------------------
-function helper_ecmwf_vars(single::Bool, pressure::Bool, prefix::String)
+function helper_ecmwf_vars(single::Bool, pressure::Bool, prefix::String)::Tuple{Dict{String, Vector{String}}, String}
 	pressure && (single = false);	!single && (pressure = true)
 	dim_char = (single) ? "2" : "3";	title_str = ((single) ? "\nSingle" : "\nPressure")
 	return include(joinpath(dirname(pathof(GMT)), "extras/" * prefix * "vars" * dim_char * "d.jl")), title_str
@@ -574,6 +574,9 @@ function ecmwf_fc(; filename="", levlist="", kw...)
 	grdclip_cmd = parse_R(d, "")[1] * " -Sr1/1 -G"
 	EXT = (((val = find_in_dict(d, [:format])[1]) !== nothing) && val == "grib") ? ".grib" : ".grd"
 
+	# Save multi-layer variables as cubes
+	((val = find_in_dict(d, [:cube])[1]) !== nothing) && (cubeit = true)
+
 	tmp = tempname()
 	for ns = 1:numel(step)						# Loop over the steps
 		Downloads.download(root * "/$date/$(tim)z/$(model)/0p25/$stream/$(date)$(tim)0000-$(step[ns])h-$(stream)-$(type).index", tmp)
@@ -582,17 +585,39 @@ function ecmwf_fc(; filename="", levlist="", kw...)
 
 		url = root * "/$date/$(tim)z/$(model)/0p25/$stream/$(date)$(tim)0000-$(step[ns])h-$(stream)-$(type).$format"
 
-		for k = 1:numel(vars)
+		for k = 1:numel(vars)					# Loop over the vars
 			@info "Downloading $(vars[k]) from $url and saving to $EXT format"
 
 			if (check_var[k] == 2)				# A Pressure level variable
+				local mat, G, x, y, range, inc
 				for nl = 1:numel(levels)
 					start, len, stop = off_len[k,1,nl], off_len[k,2,nl], off_len[k,1,nl] + off_len[k,2,nl] - 1		# This var byte range
-					fname = vars[k] * "_step$(step[ns])_level$(levels[nl])_$(model)_$(stream)_$(type)_$(date)_$(tim)$(EXT)"	# This var fname
-					(EXT == ".grd") ? gmt("grdclip /vsisubfile/$(start)_$(len)" * ",/vsicurl/" * url * grdclip_cmd * fname) :
-				                      run(`curl --show-error --range $(start)-$(stop) $url -o $fname`)
+					if (cubeit)					# Create a cube with all levels
+						if (nl == 1)			# First time, read the first level and create a 3d array with the right dims
+							G = gmt("grdclip /vsisubfile/$(start)_$(len)" * ",/vsicurl/" * url * grdclip_cmd)
+							x, y, range, inc = G.x, G.y, G.range, G.inc
+							mat = Array{Float32, 3}(undef, size(G,1), size(G,2), length(levels))
+						else
+							G = gmt("grdclip /vsisubfile/$(start)_$(len)" * ",/vsicurl/" * url * grdclip_cmd)
+						end
+						mat[:,:,nl] .= G.z
+					else
+						fname = vars[k] * "_step$(step[ns])_level$(levels[nl])_$(model)_$(stream)_$(type)_$(date)_$(tim)$(EXT)"	# This var fname
+						(EXT == ".grd") ? gmt("grdclip /vsisubfile/$(start)_$(len)" * ",/vsicurl/" * url * grdclip_cmd * fname) :
+					                      run(`curl --show-error --range $(start)-$(stop) $url -o $fname`)
+					end
 				end
-			else
+
+				if (cubeit)						# Save the cube on a file
+					cube = mat2grid(mat, G)
+					cube.x = x;		cube.y = y;		cube.range = range;		cube.inc = inc;		cube.z_unit = "Hecto Pascal"
+					cube.names = levels;			cube.v = parse.(Float64, levels);	cube.proj4 = prj4WGS84
+					append!(cube.range, [cube.v[1], cube.v[end]])
+					fname = vars[k] * "_step$(step[ns])_$(model)_$(stream)_$(type)_$(date)_$(tim).nc"		# This cube fname
+					gdalwrite(cube, fname, cube.v, dim_name="Pressure", band_name=vars[k])
+				end
+
+			else								# A surface variable
 				start, len, stop = off_len[k,1,1], off_len[k,2,1], off_len[k,1,1] + off_len[k,2,1] - 1		# This var byte range
 				fname = vars[k] * "_step$(step[ns])_$(model)_$(stream)_$(type)_$(date)_$(tim)$(EXT)"	# This var fname
 				(EXT == ".grd") ? gmt("grdclip /vsisubfile/$(start)_$(len),/vsicurl/" * url * grdclip_cmd * fname) :

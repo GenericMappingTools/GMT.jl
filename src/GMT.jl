@@ -139,6 +139,7 @@ export
 	fields, flipud, fliplr, flipdim, flipdim!, grdinterpolate, pow, tic, toc, theme, tern2cart, geodetic2enu, cpt4dcw,
 	getregion, gd2gmt, gmt2gd, gdalread, gdalshade, gdalwrite, gadm, xyzw2cube, coastlinesproj, graticules, orbits, orbits!,
 	plotgrid!, worldrectangular, worldrectgrid,
+	togglemask,
 
 	earthregions, gridit, grid2tri, magic, rescale, stackgrids, delrows, setgrdminmax!, meshgrid, cart2pol, pol2cart,
 	cart2sph, sph2cart,
