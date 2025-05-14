@@ -4435,7 +4435,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 			end
 		end
 		if (k >= 1+fi && is_psscale && args1_isnot_C)		# Ex: imshow(I, cmap=C, colorbar=true)
-			P = finish_PS_module_barr_1(d, cmd, k)
+			P = finish_PS_module_barr_1(d, cmd, k, args[1])
 			continue
 		elseif (k >= 1+fi && (is_pscoast || is_basemap || is_plot) && (args1_is_I || args1_is_G || args1_is_D))
 			orig_J, orig_R = finish_PS_module_barr_2(d, args[1], cmd, k, is_plot, orig_J)
@@ -4471,13 +4471,13 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 	finish_PS_module_barr_last(d, cmd, fname, fname_ext, opt_extra, output, opt_T, K, P)	# returns P
 end
 
-function finish_PS_module_barr_1(d, cmd, k)
+function finish_PS_module_barr_1(d, cmd, k, arg1)
 	_arg1 = add_opt_cpt(d, cmd[k], CPTaliases, 'C', 0, nothing, nothing, false, false, "", true)[2]
 	if (_arg1 === nothing)
 		if haskey(d, :this_cpt)
 			_arg1 = gmt("makecpt -C" * d[:this_cpt]::String)	# May bite back.
 		elseif (isa(arg1, GMTimage) && !isempty(arg1.colormap))
-			_arg1 = cmap2cpt(args[1])
+			_arg1 = cmap2cpt(arg1)
 		else
 			@warn("No cmap found to use in colorbar. Ignoring this command.");
 			return nothing
