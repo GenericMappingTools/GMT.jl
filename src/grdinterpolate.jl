@@ -90,15 +90,15 @@ function grdinterp_helper(cmd0::String, arg1; allcols::Bool=false, gdal=false, k
 				!isfile(_fn) && error("File not found: $_fn")
 				pts = gmtread(_fn, data=true)
 			end
+		elseif (isGMTdataset(val))
+			pts = val
+			#(arg1 === nothing) ? arg1 = val : ((arg2 === nothing) ? arg2 = val : arg3 = val)
+			#cmd *= " -S"
 		elseif ((isa(val, Vector) || isa(val, Tuple)) && length(val) >= 2)
 			pts = mat2ds(Float64.([val[1] val[2]]))
 			#cmd *= " -S" * arg2str(val)
 		elseif (isa(val, Matrix{<:Real}))
 			pts = mat2ds(Float64.(val))
-		elseif (isGMTdataset(val))
-			pts = val
-			#(arg1 === nothing) ? arg1 = val : ((arg2 === nothing) ? arg2 = val : arg3 = val)
-			#cmd *= " -S"
 		else  error("Bad data type for option `track` $(typeof(val))")
 		end
 
@@ -183,11 +183,12 @@ function grdinterp_local_opt_S(arg1::GItype, pts::GMTdataset, no_coords::Bool; r
 end
 
 # ---------------------------------------------------------------------------------------------------
-function grdinterp_local_opt_S(arg1::GItype, pts::Vector{<:GMTdataset}, no_coords::Bool)
+function grdinterp_local_opt_S(arg1::GItype, pts::Vector{<:GMTdataset}, no_coords::Bool; gdal=false)
 	# More complicated case of a multi-segment file
 	# This method has no 'rowlayers' option because it is meant to be used for image classifications that
 	# pass in multi-segment files (groups for training).
 	# This whole thing needs further documentation and testing.
+	# The 'gdal' kwarg is not used but needed to match the signature of the other grdinterp_local_opt_S method
 	n_layers = size(arg1,3)
 	startcol = no_coords ? 0 : 2
 	D = Vector{GMTdataset{Float64,2}}(undef, length(pts))
