@@ -881,10 +881,11 @@ function gdalwrite(cube::GItype, fname::AbstractString, v=nothing; dim_name::Str
 		dim_units = ((ind = findfirst('\0', cube.z_unit)) !== nothing) ? cube.z_unit[1:ind-1] : cube.z_unit
 		Gdal.setmetadataitem(ds, dim_name * "#units", dim_units)
 	end
-	(band_name != "") && Gdal.setmetadataitem(ds, "BAND_NAMES", band_name)
 	crs = Gdal.getproj(cube, wkt=true)
 	(crs != "" ) && Gdal.setproj!(ds, crs)
-	Gdal.unsafe_copy(ds, filename=fname, driver=getdriver("netCDF"), options=["FORMAT=NC4", "COMPRESS=DEFLATE", "ZLEVEL=4"])
+	opts=["FORMAT=NC4", "COMPRESS=DEFLATE", "ZLEVEL=4"]
+	(band_name != "") && append!(opts, [repeat("BAND_NAMES=$(band_name),", size(cube,3))])
+	Gdal.unsafe_copy(ds, filename=fname, driver=getdriver("netCDF"), options=opts)
 	#Gdal.GDALClose(ds.ptr)
 	return nothing
 end

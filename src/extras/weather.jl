@@ -148,16 +148,22 @@ ecmwf(dataset="reanalysis-era5-land", params=[var, datetime], region=(-10, 0, 30
 Download a forecast dataset from the ECMWF.
 
 ### Kwargs
-- `levlist`: The pressure levels to select. It can be a string to select a unique pressure level,
-  or a vector of strings or Ints to select multiple pressure levels.
-- `param, variable, var, vars`: The variable(s) to select. It can be a string to select a unique variable,
-  or a vector of strings or Ints to select multiple variables. When variable(s) is requested, we download only those
-  variables as separate files. The names of those files are the same as the variable names with the .grib2 extension.
-- `step`: An Int with the forecast step to select.
-- `model`: A string with the model to select. Either "ifs" or "aifs". Default is "ifs".
+- `cube`: If true, when downloading pressure levels variables, save them data as a netCDF 3D cubes instead
+   of one file per layer. Unfortunately, currently that cube file handle is not closed in Julia and we must close
+   the Julia session to get access to the data. Because of this, the default for the `cube` option is false.
 - `date`: The date to select. It can be a string to select a unique date, a ``DateTime`` object, or a Int.
   Where the Int is the number of days to go back from today. If the Int is greater than 3, an error is raised.
   If the date is a string, it must be in the form YYYYMMDD or YYYY-MM-DD.
+- `format`: The format in which to save the downloaded data. It can be "grib" or "netcdf". Default is "netcdf".
+- `levlist`: The pressure levels to select. It can be a string to select a unique pressure level,
+  or a vector of strings or Ints to select multiple pressure levels.
+- `model`: A string with the model to select. Either "ifs" or "aifs". Default is "ifs".
+- `param, variable, var, vars`: The variable(s) to select. It can be a string to select a unique variable,
+  or a vector of strings or Ints to select multiple variables. When variable(s) is requested, we download only those
+  variables as separate files. The names of those files are the same as the variable names with the .grib2 extension.
+- `root`: The root URL of the CDS ERA5 dataset. Default is "https://data.ecmwf.int/forecasts".
+- `step`: An Int with the forecast step to select.
+- `stream`: The stream to select. It can be one of: "oper", "enfo", "waef", "wave", "scda", "scwv", "mmsf". Default is "oper".
 - `time`: The time in hours to select. It can be a string a ``Time`` object, or a Int. What ever it is,
   it will floored to 0, 6, 12 or 18. The default is the current hour.
 - `stream`: A string with the stream to select, it must be one of: "oper", "enfo", "waef", "wave", "scda", "scwv", "mmsf". Default is "oper".
@@ -438,6 +444,9 @@ end
    or a vector of strings or Ints to select multiple pressure levels.
 - `stream`: The stream to select. It can be one of: "oper", "enfo", "waef", "wave", "scda", "scwv", "mmsf". Default is "oper".
 - `type`: The type of forecast to select.
+- `cube`: If true, when downloading pressure levels variables, save them data as a netCDF 3D cubes instead
+   of one file per layer. Unfortunately, currently that cube file handle is not closed in Julia and we must close
+   the Julia session to get access to the data. Because of this, the default for the `cube` option is false.
 """
 function ecmwf_fc(; filename="", levlist="", kw...)
 
@@ -575,7 +584,7 @@ function ecmwf_fc(; filename="", levlist="", kw...)
 	EXT = (((val = find_in_dict(d, [:format])[1]) !== nothing) && val == "grib") ? ".grib" : ".grd"
 
 	# Save multi-layer variables as cubes
-	((val = find_in_dict(d, [:cube])[1]) !== nothing) && (cubeit = true)
+	cubeit = (find_in_dict(d, [:cube])[1] !== nothing) ? true : false
 
 	tmp = tempname()
 	for ns = 1:numel(step)						# Loop over the steps
@@ -594,7 +603,7 @@ function ecmwf_fc(; filename="", levlist="", kw...)
 					start, len, stop = off_len[k,1,nl], off_len[k,2,nl], off_len[k,1,nl] + off_len[k,2,nl] - 1		# This var byte range
 					if (cubeit)					# Create a cube with all levels
 						if (nl == 1)			# First time, read the first level and create a 3d array with the right dims
-							G = gmt("grdclip /vsisubfile/$(start)_$(len)" * ",/vsicurl/" * url * grdclip_cmd)
+							G::GMTgrid{Float32,2} = gmt("grdclip /vsisubfile/$(start)_$(len)" * ",/vsicurl/" * url * grdclip_cmd)
 							x, y, range, inc = G.x, G.y, G.range, G.inc
 							mat = Array{Float32, 3}(undef, size(G,1), size(G,2), length(levels))
 						else
@@ -610,7 +619,7 @@ function ecmwf_fc(; filename="", levlist="", kw...)
 
 				if (cubeit)						# Save the cube on a file
 					cube = mat2grid(mat, G)
-					cube.x = x;		cube.y = y;		cube.range = range;		cube.inc = inc;		cube.z_unit = "Hecto Pascal"
+					cube.x = x;		cube.y = y;		cube.range = range;		cube.inc = inc;		cube.z_unit = "millibars"
 					cube.names = levels;			cube.v = parse.(Float64, levels);	cube.proj4 = prj4WGS84
 					append!(cube.range, [cube.v[1], cube.v[end]])
 					fname = vars[k] * "_step$(step[ns])_$(model)_$(stream)_$(type)_$(date)_$(tim).nc"		# This cube fname
