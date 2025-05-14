@@ -433,7 +433,7 @@ function file_has_time!(fname::String, D::GDtype, corder::Vector{Int}=Int[], opt
 	end
 	close(fid)
 	isone ? (length(D.colnames) < n_cols && (D.colnames = String[])) : (length(D[1].colnames) < n_cols && (D[1].colnames = String[]))
-	!isone && !isempty(D[1].attrib) && [D[k].attrib = D[1].attrib for k = 2:lastindex(D)]	# All segs must have same attrib (?)
+	!isone && (!isempty(D[1].attrib) && isempty(D[2].attrib)) && [D[k].attrib = D[1].attrib for k = 2:lastindex(D)]	# All segs must have same attrib (?)
 	return nothing
 end
 	
