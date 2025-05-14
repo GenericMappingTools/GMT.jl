@@ -2010,7 +2010,7 @@ Burn the alpha channel into the image by compositing the image values with the b
 
 """
 burn_alpha!(img::GMTimage{<:UInt8, 3}, alpha::Matrix{Bool}; bg=:white) = burn_alpha!(img, reinterpret(UInt8, alpha); bg=bg)
-function burn_alpha!(img::GMTimage{<:UInt8, 3}, alpha::Matrix{UInt8}; bg=:white)
+function burn_alpha!(img::GMTimage{<:UInt8, 3}, alpha::AbstractMatrix{UInt8}; bg=:white)
 	helper_alpha!(img, alpha)			# Error if sizes of img and alpha do not match.
 	!(isa(bg, Symbol) || isa(bg, String) || isa(bg, Tuple{Real,Real,Real})) && error("Invalid background color specification")
 
@@ -2023,13 +2023,14 @@ function burn_alpha!(img::GMTimage{<:UInt8, 3}, alpha::Matrix{UInt8}; bg=:white)
 		bg_r, bg_g, bg_b = Float64(bg[1]), Float64(bg[2]), Float64(bg[3])
 	end
 
-	u255 = UInt8(255)
+	u1, u255 = UInt8(1), UInt8(255)
 	nm = numel(alpha)
 	un = unique(alpha)
-	if (numel(un) == 2 && un[2] == 255)
+	if (numel(un) == 2 && (un[2] == 255 || un[2] == 1))
 		u_r, u_g, u_b = round(UInt8, bg_r), round(UInt8, bg_g), round(UInt8, bg_b)
+		_u = (un[2] == 255) ? u255 : u1
 		@inbounds for k = 1:nm
-			alpha[k] == u255 && continue
+			alpha[k] == _u && continue
 			img.image[k], img.image[k+=nm], img.image[k+=nm] = u_r, u_g, u_b
 		end
 	else
@@ -2205,6 +2206,7 @@ For 3D arrays the `names` option is used to give a description for each layer (a
 
 The `scale` and `offset` options are used when `mat` is an Integer type and we want to save the grid with a scale/offset.  
 
+------
 Other methods of this function do:
 
     G = mat2grid(val=0.0f; hdr=hdr_vec, reg=0, proj4::String="", wkt::String="", title::String="", rem::String="")
