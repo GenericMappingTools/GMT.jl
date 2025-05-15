@@ -885,8 +885,7 @@ function gdalwrite(cube::GItype, fname::AbstractString, v=nothing; dim_name::Str
 	(crs != "" ) && Gdal.setproj!(ds, crs)
 	opts=["FORMAT=NC4", "COMPRESS=DEFLATE", "ZLEVEL=4"]
 	(band_name != "") && append!(opts, [repeat("BAND_NAMES=$(band_name),", size(cube,3))])
-	Gdal.unsafe_copy(ds, filename=fname, driver=getdriver("netCDF"), options=opts)
-	#Gdal.GDALClose(ds.ptr)
+	Gdal.destroy(Gdal.unsafe_copy(ds, filename=fname, driver=getdriver("netCDF"), options=opts))
 	return nothing
 end
 
