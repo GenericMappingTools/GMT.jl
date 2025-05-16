@@ -213,7 +213,6 @@
 	println()
 	@info "before image_alpha!"
 	image_alpha!(I, alpha_ind=5);
-	@info "before 2"
 	image_alpha!(I, alpha_vec=round.(UInt32,rand(6).*255));
 	@info "before 3"
 	image_alpha!(I, alpha_band=round.(UInt8,rand(27,27).*255))
@@ -223,7 +222,6 @@
 	@info "before 4"
 	image_alpha!(img, alpha_band=mask, burn=:red)
 	mask[1] = 100;		# Force variable mask
-	@info "before 5"
 	image_alpha!(img, alpha_band=mask, burn=(0,255,0))
 	@info "after image_alpha!"
 
@@ -311,6 +309,8 @@
 	dt = era5time(hour=10:14);
 	@test_throws ArgumentError ecmwf(dataset="reanalysis-era5-land", params=[var, dt], pressure=[1000, 900], region=(-10, 0, 30, 45), key="blabla")
 	ecmwf(:forecast, time=0, type="fc", stream="oper", levels=["1000", "925"]);
+	ecmwf(:forecast, var="t", R="PTC", levlist=["1000", "925", "850"], cube=1)
+	ecmwf(:forecast, var="t", R="PTC", steps=0:3:6, cube=1)
 
 	# MB-System
 	println("	MB-System")

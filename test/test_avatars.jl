@@ -351,5 +351,5 @@
 	earthregions("PT", Vd=2)
 	earthregions("PTC", Vd=2)
 	earthregions("PT,ES", Vd=2)
-	earthregions("PT", dataset="earth_relief", res="01d")
-	earthregions("PT", dataset="earth_night", res="01d")
+	@test typeof(earthregions("PT", dataset="earth_relief", res="01d")) == GMTgrid{Float32, 2}
+	@test typeof(earthregions("PT", dataset="earth_night", res="01d")) == GMTimage{UInt8, 3}

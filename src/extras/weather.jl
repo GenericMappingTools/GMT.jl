@@ -483,15 +483,31 @@ function ecmwf_fc(; filename="", levlist="", kw...)
 
 	# ---------- Levels -----------------------------------------------------
 	levels::Union{Vector{String}, Nothing} = nothing
-	if (levlist != "")		# Pressure levels are provided
+	if (levlist != "")				# Pressure levels are provided
 		list_levs = ["1000", "925", "850", "700", "500", "300", "250", "200", "50"]	
 		levels = (levlist == "all") ? list_levs : getdtp(levlist, "");	(levels === nothing) && error("Unknown type for 'levlist'")
+		if (levlist != "all")		# Check if all levels provided are legal values
+			res = [it for it in levels if it ∉ ["1000", "925", "850", "700", "500", "300", "250", "200", "50", "5", "4", "3", "2", "1"]]
+			(length(res) > 0) && error("Non-existing pressure levels: $(join(res, ", ")) given in 'levlist' option")
+		end
 	else
 		levels = ["1000"]
 	end
 
+	# ---------- Steps ------------------------------------------------------
 	step = ((val = find_in_dict(d, [:step :steps])[1]) === nothing) ? ["0"] : getdtp(val, ["0"])
 	(step === nothing) && error("Unknown type for 'step'")
+
+	# Check if we want to save multi-layer variables as cubes
+	cubeit = (find_in_dict(d, [:cube])[1] !== nothing) ? true : false
+	if (cubeit && length(step) > 1 && length(levels) > 1)
+		@warn "Sorry, selecting multi-time-steps and multi-pressure-layers cubes are not supported yet."
+		return nothing
+	end
+
+	multi_steps = (cubeit && length(step) > 1) ? true : false	# To know if we 'cube' a multi-steps file
+
+	# ---------- Model ------------------------------------------------------
 	model::String = ((val = find_in_dict(d, [:model])[1]) === nothing) ? "ifs" : lowercase(string(val)::String)
 	(model != "ifs" && model != "aifs") && error("Model must be either \"ifs\" or \"aifs\"")
 	(model == "aifs") && (model = "aifs-single")		# This the name of the directory in the ECMWF servers
@@ -582,28 +598,28 @@ function ecmwf_fc(; filename="", levlist="", kw...)
 
 	grdclip_cmd = parse_R(d, "")[1] * " -Sr1/1 -G"
 	EXT = (((val = find_in_dict(d, [:format])[1]) !== nothing) && val == "grib") ? ".grib" : ".grd"
+	fmt_info = (EXT == ".grib") ? "GRIB" : "netCDF"	# For printing info
 
-	# Save multi-layer variables as cubes
-	cubeit = (find_in_dict(d, [:cube])[1] !== nothing) ? true : false
-
+	local mat, G::GMTgrid{Float32,2}, x, y, range, inc
 	tmp = tempname()
 	for ns = 1:numel(step)						# Loop over the steps
 		Downloads.download(root * "/$date/$(tim)z/$(model)/0p25/$stream/$(date)$(tim)0000-$(step[ns])h-$(stream)-$(type).index", tmp)
 
-		off_len = fish_var_off_len_in_index_file(tmp, vars, levels, check_var)	# Find the 'offset' and 'length' of each variable
+		# Find the 'offset' and 'length' of each variable
+		off_len = fish_var_off_len_in_index_file(tmp, vars, levels, check_var)
 
 		url = root * "/$date/$(tim)z/$(model)/0p25/$stream/$(date)$(tim)0000-$(step[ns])h-$(stream)-$(type).$format"
 
 		for k = 1:numel(vars)					# Loop over the vars
-			@info "Downloading $(vars[k]) from $url and saving to $EXT format"
+			@info "Downloading $(vars[k]) from $url and saving to $fmt_info format"
 
 			if (check_var[k] == 2)				# A Pressure level variable
-				local mat, G, x, y, range, inc
-				for nl = 1:numel(levels)
+				n_levels = numel(levels)
+				for nl = 1:n_levels
 					start, len, stop = off_len[k,1,nl], off_len[k,2,nl], off_len[k,1,nl] + off_len[k,2,nl] - 1		# This var byte range
-					if (cubeit)					# Create a cube with all levels
+					if (cubeit && n_levels > 1)	# Create a cube with all levels
 						if (nl == 1)			# First time, read the first level and create a 3d array with the right dims
-							G::GMTgrid{Float32,2} = gmt("grdclip /vsisubfile/$(start)_$(len)" * ",/vsicurl/" * url * grdclip_cmd)
+							G = gmt("grdclip /vsisubfile/$(start)_$(len)" * ",/vsicurl/" * url * grdclip_cmd)
 							x, y, range, inc = G.x, G.y, G.range, G.inc
 							mat = Array{Float32, 3}(undef, size(G,1), size(G,2), length(levels))
 						else
@@ -617,13 +633,9 @@ function ecmwf_fc(; filename="", levlist="", kw...)
 					end
 				end
 
-				if (cubeit)						# Save the cube on a file
-					cube = mat2grid(mat, G)
-					cube.x = x;		cube.y = y;		cube.range = range;		cube.inc = inc;		cube.z_unit = "millibars"
-					cube.names = levels;			cube.v = parse.(Float64, levels);	cube.proj4 = prj4WGS84
-					append!(cube.range, [cube.v[1], cube.v[end]])
+				if (cubeit && n_levels > 1)		# Save the cube on a file
 					fname = vars[k] * "_step$(step[ns])_$(model)_$(stream)_$(type)_$(date)_$(tim).nc"		# This cube fname
-					gdalwrite(cube, fname, cube.v, dim_name="Pressure", band_name=vars[k])
+					make_cube_ecmwf(G, mat, x, y, range, inc, levels, "millibars", levels, "Pressure", vars[1], fname)
 				end
 
 			else								# A surface variable
@@ -634,9 +646,35 @@ function ecmwf_fc(; filename="", levlist="", kw...)
 			end
 			#run(`curl --show-error --range $(start)-$(stop) $url -o $fname`)
 			#gdaltranslate("/vsisubfile/$(start)_$(len)" * ",/vsicurl/" * url, save=vars[k] * "_step$(step[ns]).nc")
+			
+			if (cubeit && multi_steps)
+				if (ns == 1)
+					G = gmtread(fname)
+					x, y, range, inc = G.x, G.y, G.range, G.inc
+					mat = Array{Float32, 3}(undef, size(G,1), size(G,2), length(step))
+				else
+					G = gmtread(fname)
+				end
+				mat[:,:,ns] .= G.z
+				rm(fname)
+			end
 		end
 	end
+	
+	if (cubeit && multi_steps)
+		fname = vars[1] * "_step$(step[1])-$(step[end])_$(model)_$(stream)_$(type)_$(date)_$(tim).nc"		# This cube fname
+		make_cube_ecmwf(G, mat, x, y, range, inc, step, "hour", step, "time", vars[1], fname)
+	end
 	rm(tmp)
+end
+
+function make_cube_ecmwf(G, mat, x, y, range, inc, the_levels, z_unit, names, dim_name, band_name, cube_name)
+	# Make a cube from a 3D array of size (size(G,1), size(G,2), length(names))
+	cube = mat2grid(mat, G)
+	cube.x = x;		cube.y = y;		cube.range = range;		cube.inc = inc;		cube.z_unit = z_unit
+	cube.names = names;				cube.v = parse.(Float64, the_levels);		cube.proj4 = prj4WGS84
+	append!(cube.range, [cube.v[1], cube.v[end]])
+	gdalwrite(cube, cube_name, cube.v, dim_name=dim_name, band_name=band_name)
 end
 
 function check_url(url::AbstractString)::Bool
