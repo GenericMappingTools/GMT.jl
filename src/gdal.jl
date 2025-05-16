@@ -255,7 +255,10 @@ function GDALError()
 end
 
 GDALAllRegister() = acare(ccall((:GDALAllRegister, libgdal), Cvoid, ()))
+GDALRegisterDriver(a1) = acare(ccall((:GDALRegisterDriver, libgdal), Cint, (pVoid,), a1))
+GDALDeregisterDriver(a1) = acare(ccall((:GDALDeregisterDriver, libgdal), Cvoid, (pVoid,), a1))
 GDALDestroyDriverManager() = acare(ccall((:GDALDestroyDriverManager, libgdal), Cvoid, ()))
+GDALDestroy() = acare(ccall((:GDALDestroy, libgdal), Cvoid, ()))
 
 CPLErrorReset() = ccall((:CPLErrorReset, libgdal), Cvoid, ())
 CPLGetLastErrorType() = ccall((:CPLGetLastErrorType, libgdal), Cint, ())
