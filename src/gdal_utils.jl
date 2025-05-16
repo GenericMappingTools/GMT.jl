@@ -537,7 +537,7 @@ function gmt2gd(GI)
 			end
 		else
 			if (GI.layout != "" && GI.layout[2] == 'R')		# Here we may need to reshape the GI array to fit GDAL needs.
-				indata = (height != size(GI, 1)) ? (n_dims == 2) ? reshape(GI.z, width, height) : reshape(GI.z, width, height, size(GI,3)) : GI.z
+				indata = (height != size(GI, 1)) ? (n_dims == 2) ? reshape(GI.z, width, height) : reshape(GI.z, width, height, size(GI,3)) : reshape(GI.z, width, height, size(GI,3))
 			else
 				indata = GI.z
 			end
@@ -886,6 +886,7 @@ function gdalwrite(cube::GItype, fname::AbstractString, v=nothing; dim_name::Str
 	opts=["FORMAT=NC4", "COMPRESS=DEFLATE", "ZLEVEL=4"]
 	(band_name != "") && append!(opts, [repeat("BAND_NAMES=$(band_name),", size(cube,3))])
 	Gdal.destroy(Gdal.unsafe_copy(ds, filename=fname, driver=getdriver("netCDF"), options=opts))
+	#write(ds, fname, driver=getdriver("netCDF"), options=opts)
 	return nothing
 end
 
