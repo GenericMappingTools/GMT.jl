@@ -408,15 +408,16 @@
 	@test yeardecimal("2000-01-01T00:00:00") == 2000.0
 
 	# STACKGRIDS
+	println("	STACKGRIDS")
 	GMT.stackgrids(["a","b"], [1,2], mirone=true)
 	rm("automatic_list.txt")
 	gmtwrite("lixo1.grd", mat2grid(rand(Float32, 16, 16), proj4=GMT.prj4WGS84))
 	gmtwrite("lixo2.grd", mat2grid(rand(Float32, 16, 16), proj4=GMT.prj4WGS84))
-	GMT.stackgrids(["lixo1.grd", "lixo2.grd"], [now(), now()+Dates.Day(1)], save="lixo_cube.nc", z_unit="date")
+	GMT.stackgrids(["lixo1.grd", "lixo2.grd"], [now(), now()+Day(1)], save="lixo_cube.nc", z_unit="date")
 	rescale("lixo1.grd", inputmin=0.1, inputmax=0.9)
 	rm("lixo1.grd")
 	rm("lixo2.grd")
-	#rm("lixo_cube.nc")		# can't be deleted because Julia still holds its file handle.
+	rm("lixo_cube.nc")
 
 	A = reshape(collect(1:16), 4,4);
 
