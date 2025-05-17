@@ -39,4 +39,7 @@
 	n = GMT.bitcat2(10, 20);
 	n1, n2 = GMT.bituncat2(n);
 	@test n1 == 10 && n2 == 20
+
+	@test !bissextile(100)
+	@test bissextile(-4)
 end
