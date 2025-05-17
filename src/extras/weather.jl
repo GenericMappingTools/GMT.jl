@@ -383,7 +383,7 @@ function ecmwf_fc(; levlist="", kw...)
 	(msg != "") && (@info msg; return nothing)	 			# Requested a non existing thing
 
 	# [ROOT]/[yyyymmdd]/[HH]z/[model]/[resol]/[stream]/[yyyymmdd][HH]0000-[step][U]-[stream]-[type].[format]
-	dryrun = (find_in_dict(d, [:dryrun])[1] !== nothing) ? true : false
+	dryrun = ((val = find_in_dict(d, [:dryrun])[1]) !== nothing && val == 1) ? true : false
 	if (vars == "")
 		destdir::String = ((val = find_in_dict(d, [:destdir])[1]) !== nothing) ? string(val)::String * "/" : ""
 		for ns = 1:numel(step)
