@@ -69,11 +69,11 @@ imshow(I, coast=(land=:red,), show=false)
 I = mat2img(rand(UInt16,32,32),x=[220800 453600], y=[3.5535e6 3.7902e6]);
 imshow(I, show=false)
 x = range(-10, 10, length = 30);
-f(x,y) = sqrt(x^2 + y^2);
-imshow(x,x,f, Vd=dbg2);
-imshow(x,f, Vd=dbg2);
-imshow(f, x, Vd=dbg2);
-imshow(f, x, x, Vd=dbg2);
+f2(x,y) = sqrt(x^2 + y^2);
+imshow(x,x,f2, Vd=dbg2);
+imshow(x,f2, Vd=dbg2);
+imshow(f2, x, Vd=dbg2);
+imshow(f2, x, x, Vd=dbg2);
 imshow(-2:0.1:2, -1:0.1:3,"rosenbrock", Vd=dbg2);
 imshow(-2:0.1:2, "rosenbrock", Vd=dbg2);
 imshow("lixo", Vd=dbg2);

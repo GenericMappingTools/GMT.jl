@@ -196,6 +196,7 @@ export
 
 	# Reexport some from Dates
 	Year, Month, Week, Day, Hour, Minute, Second, year, month, week, day, hour, minute, second, now, today,
+	bissextile,
 
 	@?, @G, @dir
 

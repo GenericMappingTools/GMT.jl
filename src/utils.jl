@@ -1401,6 +1401,20 @@ function bituncat2(N::Int64)::Tuple{Int, Int}
 end
 
 # ---------------------------------------------------------------------------------------------------
+"""
+    bissextile(year::Integer) -> Bool
+
+Extremly fast function to check if a year is bissextile (leap year).
+See https://hueffner.de/falk/blog/a-leap-year-check-in-three-instructions.html
+
+It falls back to classic method for years < 0.
+"""
+function bissextile(year::Integer)::Bool
+	year >= 0 && return ((year * 1073750999) & 3221352463) <= 126976
+	(year % 4 == 0) && ((year % 100 != 0) || (year % 400 == 0))
+end
+
+# ---------------------------------------------------------------------------------------------------
 include("makeDCWs.jl")
 	
 # ------------------------------------------------------------------------------------------------------
