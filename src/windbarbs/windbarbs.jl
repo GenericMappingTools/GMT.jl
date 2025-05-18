@@ -25,7 +25,7 @@ Plot wind barbs in either 2D or 3D, from table data or two u,v grids.
 windbarbs(cmd0::String=""; first=true, kwargs...) = windbarbs(gmtread(cmd0, data=true); first=first, kwargs...)
 function windbarbs(arg1; first=true, kwargs...)
 
-    gmt_proggy = (IamModern[1]) ? "barb " : "psbarb "
+	gmt_proggy = (IamModern[1]) ? "barb " : "psbarb "
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O)
@@ -49,8 +49,8 @@ end
 function windbarbs(arg1::Union{String, GMTgrid}, arg2::Union{String, GMTgrid}; first=true, kwargs...)
 	d, cmd, arg1, arg2, arg3 = grdvector(arg1, arg2; first=first, barbs=true, kwargs...)	# arg3 is a possible CPT
 	cmd[1] = replace(cmd[1], "grdvector" => "grdbarb")
-	cmd[1] = add_opt(d, cmd[1], "Q", [:Q :barbs], (len=("", arg2str, 1), length=("", arg2str, 1), angle="+a", fill="+g", pen="+p", just="+j", speed="+s", width="+w"))
-	cmd[1] = parse_these_opts(cmd[1], d, [[:A :polar], [:T :signs], [:Z :azim :azimuth :azimuths]])
+	cmd[1] = add_opt(d, cmd[1], "Q", [:Q :barbs], (len=("", arg2str, 1), length=("", arg2str, 1), angle="+a", fill="+g", pen="+p", just="+j", justify="+j", speed="+s", width="+w"))
+	cmd[1] = parse_these_opts(cmd[1], d, [[:A :polar], [:T :signs :sign_scale], [:Z :azim :azimuth :azimuths]])
 
-    finish_PS_module(d, cmd, "", first, !first, true, arg1, arg2, arg3)
+	finish_PS_module(d, cmd, "", first, !first, true, arg1, arg2, arg3)
 end
