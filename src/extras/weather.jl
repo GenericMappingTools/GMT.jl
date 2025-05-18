@@ -334,8 +334,10 @@ function ecmwf_fc(; levlist="", kw...)
 		for k = 1:numel(vars)			# Check if var is in srf or pl
 			if     (vars[k] in srf)  check_var[k] = 1			# A surface var
 			elseif (vars[k] in pl)   check_var[k] = 2			# A pressure var
-			else                     error("Variable \"$(var[k])\" not found in either surface or pressure level datasets")
-			end	
+			else
+				@info "Variable \"$(vars[k])\" not found in either surface or pressure level datasetsi.\nCheck with 'listecmmwfvars(:forecast)' for a list of available variables."
+				return nothing
+			end
 		end
 	end
 
@@ -413,8 +415,6 @@ function ecmwf_fc(; levlist="", kw...)
 		url = thisFile * format
 
 		for k = 1:numel(vars)					# Loop over the vars
-			@info "Downloading $(vars[k]) from $url and saving to $fmt_info format"
-
 			if (check_var[k] == 2)				# A Pressure level variable
 				n_levels = numel(levels)
 				for nl = 1:n_levels
@@ -429,21 +429,24 @@ function ecmwf_fc(; levlist="", kw...)
 							G = gmtread(uname, R=opt_R, grd=true, layout="TRB")
 						end
 						mat[:,:,nl] .= G.z
-					else
+					else						# Just save the single level
 						fname = vars[k] * "_step$(step[ns])_level$(levels[nl])_$(model)_$(stream)_$(type)_$(date)_$(tim)$(EXT)"	# This var fname
+						@info "Downloading $(vars[k]) and saving to $fname"
 						(EXT == ".grd") ? gmt("grdclip /vsisubfile/$(start)_$(len)" * ",/vsicurl/" * url * grdclip_cmd * fname) :
-					                      run(`curl --show-error --range $(start)-$(stop) $url -o $fname`)
+						                  run(`curl --show-error --range $(start)-$(stop) $url -o $fname`)
 					end
 				end
 
 				if (cubeit && n_levels > 1)		# Save the cube (implied by 'cubeit') on a 3D file
 					fname = vars[k] * "_step$(step[ns])_$(model)_$(stream)_$(type)_$(date)_$(tim).nc"		# This cube fname
+					@info "Downloading $(vars[k]) and saving cube to $fname"
 					make_cube_ecmwf(G, mat, x, y, range, inc, levels, "millibars", levels, "Pressure", vars[1], fname)
 				end
 
 			else								# A surface variable
 				start, len, stop = off_len[k,1,1], off_len[k,2,1], off_len[k,1,1] + off_len[k,2,1] - 1		# This var byte range
 				fname = vars[k] * "_step$(step[ns])_$(model)_$(stream)_$(type)_$(date)_$(tim)$(EXT)"		# This var fname
+				@info "Downloading $(vars[k]) and saving to $fname"
 				(EXT == ".grd") ? gmt("grdclip /vsisubfile/$(start)_$(len),/vsicurl/" * url * grdclip_cmd * fname) :
 				                  run(`curl --show-error --range $(start)-$(stop) $url -o $fname`)
 			end
@@ -463,7 +466,8 @@ function ecmwf_fc(; levlist="", kw...)
 	end
 	
 	if (cubeit && multi_steps)
-		fname = vars[1] * "_step$(step[1])-$(step[end])_$(model)_$(stream)_$(type)_$(date)_$(tim).nc"		# This cube fname
+		fname = vars[1] * "_step$(step[1])-$(step[end])_$(model)_$(stream)_$(type)_$(date)_$(tim).nc"	# This cube fname
+		@info "Saving multi-step cube of $(vars[1]) to $fname"
 		make_cube_ecmwf(G, mat, x, y, range, inc, step, "hour", step, "time", vars[1], fname)
 	end
 	!dryrun && rm(tmp)

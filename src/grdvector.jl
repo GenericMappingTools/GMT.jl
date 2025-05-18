@@ -119,12 +119,12 @@ function grdvector(arg1, arg2; first=true, kwargs...)
 		as = km_per_plotint / (max_extrema * 1.05)		# Plus 5% to compensate a bit max_extrema not being max_mag.
 	end
 
-	isbarbs = (find_in_dict(d, [:barbs])[1] !== nothing) ? true : false		# true if called from windbarbs
+	isbarbs = (is_in_dict(d, [:Q :barbs]) !== nothing) ? true : false		# true if called from windbarbs
 	isbarbs && (opt_S = " ")
 
 	if (opt_S == "")
 		opt_S = @sprintf(" -S%s%.8g%s", inv_c, as, km_u)
-	elseif (startswith(opt_S, " -S+c") || startswith(opt_S, " -S+s"))	# For legends stuff
+	elseif (startswith(opt_S, " -S+c") || startswith(opt_S, " -S+s"))		# For legends stuff
 		opt_S = @sprintf(" -S%s%.8g%s%s", inv_c, as, km_u, opt_S[4:end])
 	end
 	cmd *= opt_I * opt_S
