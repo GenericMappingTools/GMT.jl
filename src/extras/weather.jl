@@ -155,6 +155,8 @@ Download a forecast dataset from the ECMWF.
    Where the Int is the number of days to go back from today. If the Int is greater than 3, an error is raised.
    If the date is a string, it must be in the form YYYYMMDD or YYYY-MM-DD.
 - `dryrun`: Print the URL of the requested data and return without trying to download anything.
+- `filename`: The name of the file to save the data to. If not provided, you still have two options: (1) the function
+   will generate a name based on the on the variables and the date. (2) Use the `prefix` option to provide a prefix for the file name.
 - `format`: The format in which to save the downloaded data. It can be "grib" or "netcdf". Default is "netcdf".
 - `levlist`: The pressure levels to select. It can be a string to select a unique pressure level,
    or a vector of strings or Ints to select multiple pressure levels.
@@ -163,7 +165,10 @@ Download a forecast dataset from the ECMWF.
    of strings or Ints to select multiple variables. When variable(s) is requested, we download only those
    variables as separate files. The names of those files are the same as the variable names with the .grib2 extension.
    NOTE: Not specifying a variable will download the entire forecast grib file for each forecast step selected with the `step` option.
+- `prefix`: A string with the prefix to use for the file name. The file name will be the prefix followed by the variable name.
 - `root`: The root URL of the CDS ERA5 dataset. Default is "https://data.ecmwf.int/forecasts".
+- `region`: Specify a region of a specific geographic area. It can be provided as a string with form "N/W/S/E"
+   or a 4-element vector or tuple with numeric data, or all a earthregion name.
 - `step`: An Int with the forecast step to select.
 - `stream`: The stream to select. It can be one of: "oper", "enfo", "waef", "wave", "scda", "scwv", "mmsf". Default is "oper".
 - `time`: The time in hours to select. It can be a string a ``Time`` object, or a Int. What ever it is,
@@ -172,15 +177,16 @@ Download a forecast dataset from the ECMWF.
 - `type`: A string with the type of forecast to select, it must be one of: "fc", "ef", "ep", "tf". Default is "fc".
 
 ### Example
-Try to get the latest 10m wind and 2m temperature forecast for today. It probably will fail because
-the data is likely not available yet. Adding a good `date` will make it work.	
-```julia
+
+Get the latest 10m wind and 2m temperature forecast for today.
+
+	```julia
 ecmwf(:forecast, vars=["10u", "2t"])
 ```
 """
 function ecmwf(source::Symbol=:reanalysis; filename="", cb::Bool=false, dataset="", params::Union{AbstractString, Vector{String}}="", key::String="", url::String="", wait=1.0, levlist="", region="", format="netcdf", dryrun=false, verbose::Bool=true, kw...)
 
-	(source == :forecast) && return ecmwf_fc(; levlist=levlist, dryrun=dryrun, kw...)
+	(source == :forecast) && return ecmwf_fc(; filename=filename, levlist=levlist, dryrun=dryrun, kw...)
 
 	function cdsapikey()::Tuple{String, String}
 		# Get the API key and URL from the ~/.cdsapirc file
@@ -306,9 +312,17 @@ function ecmwf(source::Symbol=:reanalysis; filename="", cb::Bool=false, dataset=
 end
 
 # ---------------------------------------------------------------------------------------------------------------
-function ecmwf_fc(; levlist="", kw...)
+function ecmwf_fc(; filename="", levlist="", kw...)
 
 	d = KW(kw)
+
+	function which_name(d::Dict, thisvar::String, name::String, filename::AbstractString, EXT::String)::String
+		# Select which name to use for saving the file. NAME is the composed (long) name. The others are user choices.
+		(filename != "") && return filename					# This one takes priority
+		fname_prefix::String = ((val = find_in_dict(d, [:prefix], false)[1]) !== nothing) ? string(val)::String * "_$(thisvar)$(EXT)" : ""
+		return (fname_prefix != "") ? fname_prefix : name	# 'fname_prefix' takes priority if exists.
+	end
+
 	root = "https://data.ecmwf.int/forecasts"
 	if ((val = find_in_dict(d, [:root])[1]) !== nothing)	#
 		root = string(val)::String
@@ -399,10 +413,9 @@ function ecmwf_fc(; levlist="", kw...)
 	grdclip_cmd = opt_R * " -Sr1/1 -G"			# Not always used. To be replaced when grdconvert GMT bug is fixed
 	(opt_R != "") && (opt_R = opt_R[4:end])
 	EXT = (((val = find_in_dict(d, [:format])[1]) !== nothing) && val == "grib") ? ".grib" : ".grd"
-	fmt_info = (EXT == ".grib") ? "GRIB" : "netCDF"	# For printing info
 
 	local mat, G::GMTgrid{Float32,2}, x, y, range, inc
-	tmp = tempname()
+	tmp = tempname()							# Temporary to store the index file
 	for ns = 1:numel(step)						# Loop over the steps
 		thisFile = root * "/$(date)/$(tim)z/$(model)/0p25/$(stream)/$(date)$(tim)0000-$(step[ns])h-$(stream)-$(type)."
 		dryrun && (println(thisFile * "grib2"); continue)	# Dry run
@@ -431,6 +444,7 @@ function ecmwf_fc(; levlist="", kw...)
 						mat[:,:,nl] .= G.z
 					else						# Just save the single level
 						fname = vars[k] * "_step$(step[ns])_level$(levels[nl])_$(model)_$(stream)_$(type)_$(date)_$(tim)$(EXT)"	# This var fname
+						fname = which_name(d, vars[k], fname, filename, EXT)			# Decide the final name
 						@info "Downloading $(vars[k]) and saving to $fname"
 						(EXT == ".grd") ? gmt("grdclip /vsisubfile/$(start)_$(len)" * ",/vsicurl/" * url * grdclip_cmd * fname) :
 						                  run(`curl --show-error --range $(start)-$(stop) $url -o $fname`)
@@ -439,6 +453,7 @@ function ecmwf_fc(; levlist="", kw...)
 
 				if (cubeit && n_levels > 1)		# Save the cube (implied by 'cubeit') on a 3D file
 					fname = vars[k] * "_step$(step[ns])_$(model)_$(stream)_$(type)_$(date)_$(tim).nc"		# This cube fname
+					fname = which_name(d, vars[k], fname, filename, ".nc")
 					@info "Downloading $(vars[k]) and saving cube to $fname"
 					make_cube_ecmwf(G, mat, x, y, range, inc, levels, "millibars", levels, "Pressure", vars[1], fname)
 				end
@@ -446,6 +461,7 @@ function ecmwf_fc(; levlist="", kw...)
 			else								# A surface variable
 				start, len, stop = off_len[k,1,1], off_len[k,2,1], off_len[k,1,1] + off_len[k,2,1] - 1		# This var byte range
 				fname = vars[k] * "_step$(step[ns])_$(model)_$(stream)_$(type)_$(date)_$(tim)$(EXT)"		# This var fname
+				fname = which_name(d, vars[k], fname, filename, EXT)
 				@info "Downloading $(vars[k]) and saving to $fname"
 				(EXT == ".grd") ? gmt("grdclip /vsisubfile/$(start)_$(len),/vsicurl/" * url * grdclip_cmd * fname) :
 				                  run(`curl --show-error --range $(start)-$(stop) $url -o $fname`)
@@ -467,6 +483,7 @@ function ecmwf_fc(; levlist="", kw...)
 	
 	if (cubeit && multi_steps)
 		fname = vars[1] * "_step$(step[1])-$(step[end])_$(model)_$(stream)_$(type)_$(date)_$(tim).nc"	# This cube fname
+		fname = which_name(d, vars[1], fname, filename, ".nc")
 		@info "Saving multi-step cube of $(vars[1]) to $fname"
 		make_cube_ecmwf(G, mat, x, y, range, inc, step, "hour", step, "time", vars[1], fname)
 	end
