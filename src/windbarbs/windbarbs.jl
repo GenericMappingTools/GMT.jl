@@ -50,6 +50,7 @@ function windbarbs(arg1::Union{String, GMTgrid}, arg2::Union{String, GMTgrid}; f
 	d, cmd, arg1, arg2, arg3 = grdvector(arg1, arg2; first=first, barbs=true, kwargs...)	# arg3 is a possible CPT
 	cmd[1] = replace(cmd[1], "grdvector" => "grdbarb")
 	cmd[1] = add_opt(d, cmd[1], "Q", [:Q :barbs], (len=("", arg2str, 1), length=("", arg2str, 1), angle="+a", fill="+g", pen="+p", just="+j", justify="+j", speed="+s", width="+w"))
+	delete!(d, :barbs)			# Because if we used 'Q', 'barbs' was still in the dictionary
 	cmd[1] = parse_these_opts(cmd[1], d, [[:A :polar], [:T :signs :sign_scale], [:Z :azim :azimuth :azimuths]])
 
 	finish_PS_module(d, cmd, "", first, !first, true, arg1, arg2, arg3)

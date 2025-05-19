@@ -1,5 +1,5 @@
 """
-	earthtide(cmd0::String=""; kwargs...)
+	earthtide(; kwargs...)
 
 Compute grids or time-series of solid Earth tides.
 
@@ -10,7 +10,7 @@ See full GMT (not the `GMT.jl` one) docs at [`earthtide`]($(GMTdoc)supplements/g
 	imshow(G)
 ```
 """
-function earthtide(cmd0::String=""; kwargs...)
+function earthtide(; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
@@ -27,7 +27,7 @@ function earthtide(cmd0::String=""; kwargs...)
 		return R
 	end
 
-	cmd = ((opt_C = add_opt(d, "", "C", [:C :components])) != "") ? cmd * opt_C : cmd * " -Cz"
+	cmd = ((opt_C = add_opt(d, "", "C", [:C :component :components])) != "") ? cmd * opt_C : cmd * " -Cz"
 	opt_G = add_opt(d, "", "G", [:G :grid :outgrid])
 	(length(opt_G) > 3) && (cmd *= opt_G)		# G=true will give " -G", which we'll ignore  (Have to)
 
