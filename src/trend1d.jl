@@ -76,11 +76,12 @@ function trend1d(cmd0::String="", arg1=nothing; kwargs...)
 		if (opt_F[1] == 'p' || opt_F[1] == 'P' || opt_F[1] == 'c')
 			colnames = ["a$i" for i=0:size(D,2)-1]
 		else
+			cnames = (isa(arg1, GDtype)) ? (isa(arg1, GMTdataset) ? arg1.colnames : arg1[1].colnames) : String[]
 			s = collect(opt_F)
 			colnames = Vector{String}(undef, length(s))
 			for k = 1:numel(s)
-				if     (s[k] == 'x')  colnames[k] = "x"
-				elseif (s[k] == 'y')  colnames[k] = "y"
+				if     (s[k] == 'x')  colnames[k] = isempty(cnames) ? "x" : cnames[1]
+				elseif (s[k] == 'y')  colnames[k] = isempty(cnames) ? "y" : cnames[2]
 				elseif (s[k] == 'm')  colnames[k] = "model"
 				elseif (s[k] == 'r')  colnames[k] = "residues"
 				elseif (s[k] == 'w')  colnames[k] = "weights"
@@ -88,6 +89,7 @@ function trend1d(cmd0::String="", arg1=nothing; kwargs...)
 			end
 		end
 		isa(R, GMTdataset) ? (R.colnames = colnames) : (R[1].colnames = colnames)
+		(!isempty(cnames) && cnames[1] == "Time") && settimecol!(R, 1)		# Set time column
 	end
 	return R
 end
