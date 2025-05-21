@@ -63,21 +63,30 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    Ibw = binarize(I::GMTimage, threshold::Int=0; band=1, , threshold::Int=0, revert=false) -> GMTimage
+    Ibw = binarize(I::GMTimage, threshold::Int=0; band::Int=1, threshold::Int=0, revert::Bool=false, bool::Bool=false) -> GMTimage
+or
 
-Convert an image to a binary image (black-and-white) using a threshold.
+    Ibw = binarize(I::GMTimage, threshold::Vector{Int}; band::Int=1, revert::Bool=false, bool::Bool=false) -> GMTimage
+
+Convert an image to a binary image (black-and-white) using a threshold(s).
 
 ### Args
 - `I::GMTimage`: input image of type UInt8.
 - `threshold::Int`: A number in the range [0 255]. If the default (0) is kept and the keyword
   `threshold` is not used, then the threshold is computed using the ``isodata`` method.
+   Alternatively, a vector of two numbers in the range [0 255] can be used. In this case, the
+   threshold is set to the first value and the second value is used to set the upper limit of the
+   threshold range. That is, values between the two values are set to 255 and the rest to 0
+   (or `true` and false respectively when the `bool` keyword is set to `true`). Note that with
+   this second form, the `threshold` keyword does not exist.
 
 ### Kwargs
-- band: If the `I` image has more than one band, use `band` to specify which one to binarize.
-  By default the first band is used.
+- `band`: If the `I` image has more than one band, use `band` to specify which one to binarize.
+   By default the first band is used.
+- `bool`: If `true`, the output image is of type Bool, otherwise it is of type UInt8.
 - `threshold`: Alternative keyword argument to the positional `threshold` argument. Meaning, one can either
-  use the `binarize(I, =??)` or `binarize(I, threshold=??)`.
-- `revert`: If `true`, values below the threshold are set to 255, and values above the threshold are set to 0.
+   use the `binarize(I, =??)` or `binarize(I, threshold=??)`.
+- `revert`: If `true`, values below the threshold are set to 255, and values >= the threshold are set to 0.
 
 ### Return
 A new ``GMTimage``.
@@ -91,16 +100,26 @@ grdimage(I, figsize=6)
 grdimage!(Ibw, figsize=6, xshift=6.1, show=true)
 ```
 """
-function binarize(I::GMTimage, thresh::Int=0; band=1, threshold::Int=0, revert=false)::GMTimage
+function binarize(I::GMTimage, thresh::Int=0; band::Int=1, threshold::Int=0, revert::Bool=false,
+                  bool::Bool=false)::Union{GMTimage{Bool, 2}, GMTimage{UInt8, 2}}
 	(thresh == 0 && threshold > 0) && (thresh = threshold)
 	_tresh = (thresh == 0) ? isodata(I, band=band) : thresh
-	img = zeros(UInt8, size(I, 1), size(I, 2))
+	img = bool ? zeros(Bool, size(I, 1), size(I, 2)) : zeros(UInt8, size(I, 1), size(I, 2))
 	if revert
-		t = I.layout[3] == 'B' ? (view(I.image, :, :, band) .< _tresh) : (slicecube(I, band).image .< _tresh)
+		t = I.layout[3] == 'B' ? (view(I.image, :, :, band) .<= _tresh) : (slicecube(I, band).image .<= _tresh)
 	else
-		t = I.layout[3] == 'B' ? (view(I.image, :, :, band) .> _tresh) : (slicecube(I, band).image .> _tresh)
+		t = I.layout[3] == 'B' ? (view(I.image, :, :, band) .>= _tresh) : (slicecube(I, band).image .>= _tresh)
 	end
-	img[t] .= 255
+	img[t] .= bool ? true : 255
+	return mat2img(img, I)
+end
+function binarize(I::GMTimage, thresh::Vector{Int}; band::Int=1, revert::Bool=false,
+                  bool::Bool=false)::Union{GMTimage{Bool, 2}, GMTimage{UInt8, 2}}
+	@assert length(thresh) == 2 && thresh[1] > 0 && thresh[2] < 255 "The threshold vector must have two elements in the range ]0 255["
+	img = bool ? zeros(Bool, size(I, 1), size(I, 2)) : zeros(UInt8, size(I, 1), size(I, 2))
+	t = I.layout[3] == 'B' ? thresh[1] .<= (view(I.image, :, :, band) .<= thresh[2]) : (thresh[1] .<= slicecube(I, band).image .<= thresh[2])
+	revert && for k = 1:numel(t)  t[k] = !t[k]  end
+	img[t] .= bool ? true : 255
 	return mat2img(img, I)
 end
 

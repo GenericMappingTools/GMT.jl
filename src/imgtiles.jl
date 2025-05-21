@@ -600,6 +600,7 @@ function getprovider(name::StrSymb, zoom::Int; variant="", format="", ZYX::Bool=
 		(length(date) == 0 || (length(date) != 6 && length(date) == 7)) || (date[5] != '_' && date[5] != ',') &&
 			error("Date must be in 'YYYY_MM' or 'YYYY,MM' format")
 		d = (date == "") ? "2023_12" : date[5] == ',' ? replace(date, "," => "_") : date
+		(d[6] == '0') && (d = d[1:5] * d[7])			# If the month is 01, make it 1 (same for 02, 03, etc)
 		variant = d * "_" * v * filesep * variant		# Need to carry also the dates (this will be used in cache name)
 		url = "https://prod-data.nimbo.earth/mapcache/tms/1.0.0/" * d * "_" * v * "@kermap/"
 		max_zoom = 13;	isZXY = true; code = "nimbo";	ext = "png";	sitekey = "?kermap_token=" * key
@@ -1037,4 +1038,29 @@ function istilename(s::AbstractString)::Bool
 	contains(s, "-R") && occursin(r"^[0-3]+$", s[findfirst('R', s)+1:end]) && return true	# Accepts also that 's' is an opt_R
 	occursin(r"^[0-3]+$", s) && return true
 	return false
+end
+
+"""
+    binarize(img::AbstractArray{<:Number}, threshold::Real=0.5) -> BitArray
+
+Convert an image or array to a binary (0/1) mask using the given threshold.
+
+If `img` is a color image (3rd dimension size 3), it is converted to grayscale using the mean across channels.
+The threshold is applied such that values >= threshold are set to 1, others to 0.
+
+# Arguments
+- `img`: Input array (2D or 3D).
+- `threshold`: Threshold value (default 0.5).
+
+# Returns
+- `BitArray`: Binary mask.
+"""
+function binarize(img::AbstractArray{<:Number}, threshold::Real=0.5)
+    if ndims(img) == 3 && size(img,3) == 3
+        # Convert to grayscale by averaging channels
+        gray = mean(img, dims=3)
+        return map(x -> x >= threshold, dropdims(gray; dims=3))
+    else
+        return map(x -> x >= threshold, img)
+    end
 end

@@ -39,5 +39,6 @@
 	imcomplement!(I);
 
 	I = gmtread(GMT.TESTSDIR * "assets/coins.jpg");
-	binarize(I, band=1)
+	binarize(I, band=1);
+	binarize(I, [30, 80]);
 end
