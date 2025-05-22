@@ -407,7 +407,7 @@ function mosaic(lon::Vector{<:Float64}, lat::Vector{<:Float64}; pt_radius=637813
 			for j in nn[1]:nn[2]
 				quad_[i+mc, j+nc] = getNext(quadtree, quadkey, i, j)
 				decAdr::Vector{Int} = getQuadLims(quad_[i+mc, j+nc], quadkey, 1)[1]
-				(provider_code == "nimbo") && (decAdr[2] = 2^zoom - decAdr[2])		# Because Nimbus count y from top (shit)
+				(provider_code == "nimbo") && (decAdr[2] = 2^zoom - decAdr[2] - 1)		# Because Nimbus count y from top (shit)
 				(isZYX) && (decAdr = [decAdr[2], decAdr[1]])		# Swap x and y because Esri uses z,y,x instead of z,x,y
 				if (isXeYeZ)
 					tile_url[i+mc, j+nc] = string(provider_url, decAdr[1], "&y=", decAdr[2], "&z=$(zoom)")
