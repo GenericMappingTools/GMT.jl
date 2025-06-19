@@ -407,7 +407,7 @@ function mosaic(lon::Vector{<:Float64}, lat::Vector{<:Float64}; pt_radius=637813
 			for j in nn[1]:nn[2]
 				quad_[i+mc, j+nc] = getNext(quadtree, quadkey, i, j)
 				decAdr::Vector{Int} = getQuadLims(quad_[i+mc, j+nc], quadkey, 1)[1]
-				(provider_code == "nimbo") && (decAdr[2] = 2^zoom - decAdr[2] - 1)		# Because Nimbus count y from top (shit)
+				(provider_code == "nimbo") && (decAdr[2] = 2^zoom - decAdr[2])		# Because Nimbus count y from top (shit)
 				(isZYX) && (decAdr = [decAdr[2], decAdr[1]])		# Swap x and y because Esri uses z,y,x instead of z,x,y
 				if (isXeYeZ)
 					tile_url[i+mc, j+nc] = string(provider_url, decAdr[1], "&y=", decAdr[2], "&z=$(zoom)")
@@ -1038,29 +1038,4 @@ function istilename(s::AbstractString)::Bool
 	contains(s, "-R") && occursin(r"^[0-3]+$", s[findfirst('R', s)+1:end]) && return true	# Accepts also that 's' is an opt_R
 	occursin(r"^[0-3]+$", s) && return true
 	return false
-end
-
-"""
-    binarize(img::AbstractArray{<:Number}, threshold::Real=0.5) -> BitArray
-
-Convert an image or array to a binary (0/1) mask using the given threshold.
-
-If `img` is a color image (3rd dimension size 3), it is converted to grayscale using the mean across channels.
-The threshold is applied such that values >= threshold are set to 1, others to 0.
-
-# Arguments
-- `img`: Input array (2D or 3D).
-- `threshold`: Threshold value (default 0.5).
-
-# Returns
-- `BitArray`: Binary mask.
-"""
-function binarize(img::AbstractArray{<:Number}, threshold::Real=0.5)
-    if ndims(img) == 3 && size(img,3) == 3
-        # Convert to grayscale by averaging channels
-        gray = mean(img, dims=3)
-        return map(x -> x >= threshold, dropdims(gray; dims=3))
-    else
-        return map(x -> x >= threshold, img)
-    end
 end
