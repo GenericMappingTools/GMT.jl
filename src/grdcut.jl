@@ -73,7 +73,8 @@ function grdcut_helper(cmd0::String, arg1; kwargs...)::Union{Nothing, GMTgrid, G
 		R = cut_with_gdal(cmd0, opts, outname)
 	else
 		# If only cut, call crop directly
-		R = (cmd == opt_R && arg1 !== nothing && arg2 === nothing) ? crop(arg1; R=opt_R2num(opt_R))[1] :
+		do_crop_here = ((oJ = scan_opt(cmd, "-J")) != "" && in(oJ[1], "xXQq"))	# Try to catch cases where -J does not need to go via grdcut
+		R = ((do_crop_here || cmd == opt_R) && (arg1 !== nothing && arg2 === nothing)) ? crop(arg1; R=opt_R2num(opt_R))[1] :
 			common_grd(d, cmd0, cmd, "grdcut ", arg1, arg2)	# Finish build cmd and run it
 	end
 	(R !== nothing && ((prj = planets_prj4(cmd0)) != "")) && (R.proj4 = prj)	# Get cached (@moon_..., etc) planets proj4
