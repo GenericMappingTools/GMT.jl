@@ -349,7 +349,7 @@ function ecmwf_fc(; filename="", levlist="", kw...)
 			if     (vars[k] in srf)  check_var[k] = 1			# A surface var
 			elseif (vars[k] in pl)   check_var[k] = 2			# A pressure var
 			else
-				@info "Variable \"$(vars[k])\" not found in either surface or pressure level datasetsi.\nCheck with 'listecmmwfvars(:forecast)' for a list of available variables."
+				@info "Variable \"$(vars[k])\" not found in either surface or pressure level datasetsi.\nCheck with 'listecmwfvars(:forecast)' for a list of available variables."
 				return nothing
 			end
 		end
@@ -466,7 +466,7 @@ function ecmwf_fc(; filename="", levlist="", kw...)
 				(EXT == ".grd") ? gmt("grdclip /vsisubfile/$(start)_$(len),/vsicurl/" * url * grdclip_cmd * fname) :
 				                  run(`curl --show-error --range $(start)-$(stop) $url -o $fname`)
 			end
-			
+	
 			if (cubeit && multi_steps)
 				if (ns == 1)
 					G = gmtread(fname, layout="TRB")

@@ -433,7 +433,13 @@ function GMT_opts_to_GDAL(f::Function, opts::Vector{String}, kwargs...)
 		f == gdalgrid ? append!(opts, ["-txe", s[1], s[2], "-tye", s[3], s[4]]) : append!(opts, op)
 		#f == gdalgrid ? append!(opts, ["-txe", s[1], s[2], "-tye", s[3], s[4]]) : append!(opts, ["-projwin", split(opt_R[4:end], '/')[[1,4,2,3]]...])	# Ugly
 	end
-	((opt_J = GMT.parse_J(d, "", default=" ")[1]) != "") && append!(opts, ["-a_srs", opt_J[4:end]])
+
+	x_srs = (f == gdaltranslate) ? "-a_srs" : "-t_srs"		# But don't know if there are others that take -a_srs instead of -t_srs
+	if ((opt_J = GMT.parse_J(d, "", default=" ")[1]) != "")
+		ind = findfirst("+width=", opt_J)					# We don't want the width here.
+		(ind !== nothing) && (opt_J = opt_J[1:ind[1]-1])
+		append!(opts, [x_srs, opt_J[4:end]])
+	end
 	if ((opt_I = GMT.parse_I(d, "", [:I :inc :increment :spacing], "I", true)) != "")	# Need the 'I' to not fall into parse_I() exceptions
 		t = split(opt_I[4:end], '/')
 		(length(t) == 1) ? append!(opts, ["-tr", t[1], t[1]]) : append!(opts, ["-tr", t[1], t[2]])
