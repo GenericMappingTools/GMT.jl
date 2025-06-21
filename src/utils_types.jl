@@ -992,7 +992,31 @@ function df2ds(arg)::GMTdataset
 	# Try to convert a DataFrame into a GMTdataset. Keep all numerical columns and first Text one
 	colnames = [i for i in names(arg) if Base.nonmissingtype(eltype(arg[!,i])) <: Real]
 	mat = Matrix(coalesce.(arg[!,[colnames...]], NaN))
-	D = mat2ds(mat, colnames=colnames)
+	col_time_names = [i for i in names(arg) if Base.nonmissingtype(eltype(arg[!,i])) <: TimeType]
+	if (isempty(col_time_names))						# Simple case, no time columns
+		D = mat2ds(mat, colnames=colnames)
+	else			# We have time columns. Need to convert them to unix time AND insert them in the matrix 'mat'
+		colnames = [i for i in names(arg) if Base.nonmissingtype(eltype(arg[!,i])) <: Union{Real, TimeType}]	# all of the names
+		inds_time = [findfirst(col_time_names[k] .== colnames) for k = 1:numel(col_time_names)]
+		new_mat = Matrix{Float64}(undef, size(mat, 1), size(mat, 2) + numel(inds_time))
+		new_inds = zeros(Int, size(mat, 2) + numel(inds_time))
+		for k = 1:numel(inds_time)						# Insert the time columns first.
+			new_mat[:,inds_time[k]] .= datetime2unix.(DateTime.(collect(arg[!, col_time_names[k]])))	# Unbelievable, how f complicated Julia is!
+			new_inds[inds_time[k]] = inds_time[k]
+		end
+
+		kk = 0
+		for k = 1:numel(new_inds)
+			(new_inds[k] != 0) && continue				# This column is already filled with a time
+			new_inds[k] = new_inds[k-1]+1				# new_inds has zeros in the non-time columns. We fill each before use to copy next col
+			new_mat[:, new_inds[k]] .= mat[:, kk+=1]
+		end
+		D = mat2ds(new_mat, colnames=colnames)
+		for k = 1:numel(inds_time)
+			settimecol!(D, col=inds_time[k])
+		end
+	end
+
 	colnames = [i for i in names(arg) if Base.nonmissingtype(eltype(arg[!,i])) <: AbstractString]	# Fish first (if any) text column
 	!isempty(colnames) && (D.text = string.(arg[!,colnames[1]]); append!(D.colnames, [colnames[1]]))
 	return D
