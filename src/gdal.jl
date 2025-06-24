@@ -1927,13 +1927,13 @@ end
 	#getname(fielddefn::AbstractFieldDefn) = OGR_Fld_GetNameRef(fielddefn.ptr)
 	function getname(fielddefn::AbstractFieldDefn)
 		# Issue reported here https://github.com/JuliaLang/julia/issues/47003 but answer ... don't be rude
-		(VERSION > v"1.8") && println(IOBuffer(maxsize=0), fielddefn.ptr);		# TEMP to avoid 1.9 bug
+		#(VERSION > v"1.8") && println(IOBuffer(maxsize=0), fielddefn.ptr);		# TEMP to avoid 1.9 bug
 		OGR_Fld_GetNameRef(fielddefn.ptr)
 	end
 	getname(obj::UInt32) = GDALGetColorInterpretationName(obj)
 	#getname(geomdefn::AbstractGeomFieldDefn) = OGR_Fld_GetNameRef(geomdefn.ptr)
 	function getname(geomdefn::AbstractGeomFieldDefn)
-		(VERSION > v"1.8") && println(IOBuffer(maxsize=0), geomdefn.ptr);		# TEMP to avoid 1.9 bug
+		#(VERSION > v"1.8") && println(IOBuffer(maxsize=0), geomdefn.ptr);		# TEMP to avoid 1.9 bug
 		OGR_Fld_GetNameRef(geomdefn.ptr)
 	end
 
@@ -1950,7 +1950,7 @@ end
 	gettype(name::AbstractString) = GDALGetDataTypeByName(name)
 	#gettype(fielddefn::AbstractFieldDefn) = OGR_Fld_GetType(fielddefn.ptr)
 	function gettype(fielddefn::AbstractFieldDefn)
-		(VERSION > v"1.8") && println(IOBuffer(maxsize=0), fielddefn.ptr);		# TEMP to avoid 1.9 bug
+		#(VERSION > v"1.8") && println(IOBuffer(maxsize=0), fielddefn.ptr);		# TEMP to avoid 1.9 bug
 		OGR_Fld_GetType(fielddefn.ptr)
 	end
 	gettype(geomdefn::AbstractGeomFieldDefn) = OGR_GFld_GetType(geomdefn.ptr)
@@ -2162,6 +2162,9 @@ end
 		if isfieldset(feature, i)
 			_fieldtype = gettype(getfielddefn(feature, i))
 			_fetchfield = get(_FETCHFIELD, _fieldtype, getdefault)
+			#t1 = getfielddefn(feature, i)
+			#_fieldtype = gettype(t1)
+			#_fetchfield = get(_FETCHFIELD, UInt8(4), getdefault)
 			return _fetchfield(feature, i)
 		else
 			return getdefault(feature, i)
