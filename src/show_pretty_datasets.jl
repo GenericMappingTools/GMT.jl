@@ -153,8 +153,8 @@ function _show(io::IO,
 			append!(alignment, [:c, :c])
 			append!(types_str, ["String", "String"])
 		end
-		if (size(D,1) > 250)	# Since only dataset's begining and end is displayed do not make a potentially big copy
-			Dt = [[D.data[1:50, :]; D.data[end-50:end, :]] [D.text[1:50, :]; D.text[end-50:end, :]]]
+		if (size(D,1) > 200)	# Since only dataset's begining and end is displayed do not make a potentially big copy
+			Dt = [[D.data[1:40, :]; D.data[end-40:end, :]] [D.text[1:40, :]; D.text[end-40:end, :]]]
 			skipd_rows = size(D,1) - size(Dt,1)
 		else
 			if (!is_named_region)
@@ -174,8 +174,9 @@ function _show(io::IO,
 	Dt, names_str, types_str = add_att_cols(D, Dt, names_str, types_str)	# Check for string vector attributes
 
 	if ((Tc = get(D.attrib, "Timecol", "")) != "")
+		Td = (get(D.attrib, "DateOnly", "") != "")	# When it is known that the time column contains only date values
 		Tcn = parse.(Int, split(Tc, ","))
-		WTS = get(D.attrib, "what_time_sys", "")		# If other than Unix time is being used. Cuurently only decimal year is supported
+		WTS = get(D.attrib, "what_time_sys", "")	# If other than Unix time is being used. Currently only decimal year is supported
 		if (WTS == "YearDecimal0000")  fun = yeardecimal
 		else                           fun = unix2datetime
 		end
@@ -184,10 +185,15 @@ function _show(io::IO,
 			Dt = [D.data[1:50, :]; D.data[end-50:end, :]]
 			(skipd_rows == 0) && (skipd_rows = size(D,1) - size(Dt,1))
 		else
-			newTcs = string.(fun.(Dt[:, Tcn]))
+			newTcs = !Td ? string.(fun.(Dt[:, Tcn])) : string.(Date.(fun.(Dt[:, Tcn])))
 		end
-		Dt = (length(Tcn) == 1) ? [Dt[:,1:Tcn[1]-1] newTcs[:,1] Dt[:,Tcn[1]+1:end]] :
-		                          [Dt[:,1:Tcn[1]-1] newTcs[:,1] Dt[:,Tcn[1]+1:Tcn[2]-1] newTcs[:,2] Dt[:,Tcn[2]+1:end]]
+
+		Dt = (length(Tcn) == 1) ? [Dt[:,1:Tcn[1]-1] newTcs[:,1] Dt[:,Tcn[1]+1:end]] : (length(Tcn) == 2) ? 
+		                          [Dt[:,1:Tcn[1]-1] newTcs[:,1] Dt[:,Tcn[1]+1:Tcn[2]-1] newTcs[:,2] Dt[:,Tcn[2]+1:end]] : (length(Tcn) == 3) ?
+								  [Dt[:,1:Tcn[1]-1] newTcs[:,1] Dt[:,Tcn[1]+1:Tcn[2]-1] newTcs[:,2] Dt[:,Tcn[2]+1:Tcn[3]-1] newTcs[:,3] Dt[:,Tcn[3]+1:end]] : (length(Tcn) == 4) ?
+								  [Dt[:,1:Tcn[1]-1] newTcs[:,1] Dt[:,Tcn[1]+1:Tcn[2]-1] newTcs[:,2] Dt[:,Tcn[2]+1:Tcn[3]-1] newTcs[:,3] Dt[:,Tcn[3]+1:Tcn[4]-1] newTcs[:,4] Dt[:,Tcn[4]+1:end]] : (length(Tcn) == 5) ?
+								  [Dt[:,1:Tcn[1]-1] newTcs[:,1] Dt[:,Tcn[1]+1:Tcn[2]-1] newTcs[:,2] Dt[:,Tcn[2]+1:Tcn[3]-1] newTcs[:,3] Dt[:,Tcn[3]+1:Tcn[4]-1] newTcs[:,4] Dt[:,Tcn[4]+1:Tcn[5]-1] newTcs[:,5] Dt[:,Tcn[5]+1:end]] :
+								  [Dt[:,1:Tcn[1]-1] newTcs[:,1] Dt[:,Tcn[1]+1:Tcn[2]-1] newTcs[:,2] Dt[:,Tcn[2]+1:Tcn[3]-1] newTcs[:,3] Dt[:,Tcn[3]+1:Tcn[4]-1] newTcs[:,4] Dt[:,Tcn[4]+1:Tcn[5]-1] newTcs[:,5] Dt[:,Tcn[5]+1:Tcn[6]-1] newTcs[:,6] Dt[:,Tcn[6]+1:end]]
 	end
 
 	# Print the table with the selected options.
@@ -197,7 +203,7 @@ function _show(io::IO,
 				 alignment_anchor_regex      = alignment_anchor_regex,
 				 compact_printing            = compact_printing,
 				 crop                        = crop,
-				 reserved_display_lines = 2,
+				 reserved_display_lines      = 2,
 				 ellipsis_line_skip          = 3,
 				 formatters                  = (_pretty_tables_general_formatter,),
 				 header                      = (names_str, types_str),
@@ -206,11 +212,11 @@ function _show(io::IO,
 				 highlighters                = (_PRETTY_TABLES_HIGHLIGHTER,),
 				 maximum_columns_width       = maximum_columns_width,
 				 newline_at_end              = false,
-				 show_subheader                 = !eltypes,
-				 row_label_alignment          = :r,
-				 row_label_crayon             = Crayon(),
-				 row_label_column_title       = string(rowlabel),
-				 row_labels                   = row_names,
+				 show_subheader              = !eltypes,
+				 row_label_alignment         = :r,
+				 row_label_crayon            = Crayon(),
+				 row_label_column_title      = string(rowlabel),
+				 row_labels                  = row_names,
 				 row_number_alignment        = :r,
 				 row_number_column_title     = string(rowlabel),
 				 show_row_number             = show_row_number,
