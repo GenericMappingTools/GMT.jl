@@ -1205,7 +1205,10 @@ Set the time column in the dataset D (or vector of them).
 `Tcol` is either an Int scalar or vector of Ints with the column number(s) that hold the time columns.
 """
 settimecol!(D::GDtype, Tc::Int) = isa(D, Vector) ? (D[1].attrib["Timecol"] = string(Tc)) : (D.attrib["Timecol"] = string(Tc))
-settimecol!(D::GDtype, Tc::VecOrMat{<:Int}) = isa(D, Vector) ? (D[1].attrib["Timecol"] = join(Tc, ",")) : (D.attrib["Timecol"] = join(Tc, ","))
+function settimecol!(D::GDtype, Tc::VecOrMat{<:Int})
+	isa(D, Vector) ? (D[1].attrib["Timecol"] = join(Tc, ",")) : (D.attrib["Timecol"] = join(Tc, ","))
+	return nothing
+end
 const set_timecol! = settimecol!
 	
 # ------------------------------------------------------------------------------------------------------
@@ -1457,3 +1460,34 @@ end
 #r = Ref(tuple(5.0, 2.0, 1.0, 6.0))
 #p = Base.unsafe_convert(Ptr{Float64}, r)
 #u = unsafe_wrap(Array, p, 4)
+
+#=		# In case we need to read a local gzipped file
+mutable struct GzFile <: IO
+	fp::Ptr{Cvoid}
+
+	function GzFile(fn::String, mode = "r")
+		x = ccall((:gzopen, "libz"), Ptr{Cvoid}, (Cstring, Cstring), fn, mode)
+		x == C_NULL ? nothing : new(x)
+	end
+end
+
+function readgz(fname::AbstractString)
+	if length(fname) == 0 return end
+	fp = GzFile(fname)
+	#s = readlines(fp)
+	iter = eachline(fp)
+	for it in iter
+	end
+	ccall((:gzclose, "libz"), Cint, (Ptr{Cvoid},), fp.fp)
+end
+
+function Base.read(fp::GzFile, ::Type{UInt8})::UInt8
+	c = ccall((:gzgetc, "libz"), Cint, (Ptr{Cvoid},), fp.fp)
+	return c == -1 ? UInt8('\n') : UInt8(c)
+end
+
+function Base.eof(fp::GzFile)
+	ret = ccall((:gzeof, "libz"), Cint, (Ptr{Cvoid},), fp.fp)
+	ret != 0 ? true : false
+end
+=#

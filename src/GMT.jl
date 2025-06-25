@@ -188,6 +188,7 @@ export
 
 	lazinfo, lazread, lazwrite, lasread, laswrite,
 	okada,
+	haralick,
 
 	cube, cylinder, circlepts, dodecahedron, ellipse3D, eulermat, flatfv, icosahedron, loft, sphere, spinmat,
 	octahedron, tetrahedron, torus, replicant, revolve, rotate, rotate!, translate, translate!,
@@ -195,7 +196,7 @@ export
 	df2ds, ds2df, extrude, fv2fv, isclockwise, surf2fv, ODE2ds,
 
 	# Reexport some from Dates
-	Year, Month, Week, Day, Hour, Minute, Second, year, month, week, day, hour, minute, second, now, today,
+	Date, DateTime, Year, Month, Week, Day, Hour, Minute, Second, year, month, week, day, hour, minute, second, now, today,
 	bissextile,
 
 	@?, @G, @dir
@@ -363,6 +364,9 @@ include("lepto_funs.jl")
 
 include("laszip/Laszip.jl")
 using GMT.Laszip
+
+include("ImageFeatures/ImageFeatures.jl")
+using GMT.ImageFeatures
 
 @setup_workload let
 	G_API[1] = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS)

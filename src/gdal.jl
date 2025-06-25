@@ -2159,9 +2159,6 @@ end
 		if isfieldset(feature, i)
 			_fieldtype = gettype(getfielddefn(feature, i))
 			_fetchfield = get(_FETCHFIELD, _fieldtype, getdefault)
-			#t1 = getfielddefn(feature, i)
-			#_fieldtype = gettype(t1)
-			#_fetchfield = get(_FETCHFIELD, UInt8(4), getdefault)
 			return _fetchfield(feature, i)
 		else
 			return getdefault(feature, i)
