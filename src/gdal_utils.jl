@@ -402,15 +402,16 @@ function read_meteostat(dataset::Gdal.AbstractDataset)::GDtype
 	layer = getlayer(dataset, 0)
 	Gdal.resetreading!(layer)
 	n_features = Gdal.nfeature(layer)
-	n = 0								# Counter of elements in a 'feature'
-	local mat, is_hourly, nf, start		# F., f.
-	for f in layer						# 'f' is a 'feature'
-		if ((n += 1) == 1)
-			nf = Gdal.nfield(f)
-			start = (nf == 13) ? 3 : 2	# Next field after time
-			is_hourly = (nf == 13) ? true : false			# If 13 fields, we have a date and a hour field
-			mat = Matrix{Float64}(undef, n_features, nf - is_hourly)
-		end
+	nf = Gdal.nfield(layer)					# N fields
+	
+	(nf == 16) && return read_meteostat_stations(layer, n_features)		# The Stations file has 16 fields
+
+	start = (nf == 13) ? 3 : 2				# Next field after time
+	is_hourly = (nf == 13) ? true : false	# If 13 fields, we have a date and a hour field
+	mat = Matrix{Float64}(undef, n_features, nf - is_hourly)
+	n = 0									# Counter of elements in a 'feature'
+	for f in layer							# 'f' is a 'feature'
+		n += 1
 		mat[n,1] = datetime2unix(DateTime(Gdal.getfield(f, 0)))		# The first field is always the date
 		c = parse(Float64, Gdal.getfield(f, 1))
 		is_hourly ? mat[n,1] += 60.0 : mat[n,2] = c
@@ -419,10 +420,36 @@ function read_meteostat(dataset::Gdal.AbstractDataset)::GDtype
 			mat[n, k - is_hourly] = (t !== nothing) ? t : NaN
 		end
 	end
-	colnames = (nf == 13) ? ["Time", "temp", "dwpt", "rhum", "prcp", "snow", "wdir", "wspd", "wpgt", "pres", "tsun", "coco"] :
-	                        ["Time", "tavg", "tmin", "tmax", "prcp", "snow", "wdir", "wspd", "wpgt", "pres", "tsun"]
-	D = mat2ds(mat, colnames=colnames)
+	cnames = (nf == 13) ? ["Time", "temp", "dwpt", "rhum", "prcp", "snow", "wdir", "wspd", "wpgt", "pres", "tsun", "coco"] :
+	                      ["Time", "tavg", "tmin", "tmax", "prcp", "snow", "wdir", "wspd", "wpgt", "pres", "tsun"]
+	D = mat2ds(mat, colnames=cnames)
 	settimecol!(D, 1)		# Set the time column to be the first one
+	return D
+end
+
+# ---------------------------------------------------------------------------------------------------
+function read_meteostat_stations(layer, n_features::Int)::GDtype
+	# Read the stations.csv.gz file from Meteostat.
+	mat = Matrix{Float64}(undef, n_features, 9)		# lon, lat, elev and 6 times
+	txt = Vector{String}(undef, n_features)			# The text columns in the stations file
+	n = 0											# Counter of elements in a 'feature'
+	for f in layer									# 'f' is a 'feature'
+		mat[n+=1,1] = parse(Float64, Gdal.getfield(f, 6))	# Lon
+		mat[n,2] = parse(Float64, Gdal.getfield(f, 7))		# Lat
+		mat[n,3] = parse(Float64, Gdal.getfield(f, 8))		# Elev
+		for k = 10:13
+			mat[n, k - 6] = ((t = Gdal.getfield(f, k)) != "") ? datetime2unix(DateTime(t)) : -62167219200.	# UNIXEPOCH + 365*24*3600
+		end
+		for k = 14:15
+			mat[n, k - 6] = ((t = Gdal.getfield(f, k)) != "") ? datetime2unix(DateTime(Date(t))) : -62167219200
+		end
+
+		txt[n] = join([Gdal.getfield(f, 0), Gdal.getfield(f, 1), Gdal.getfield(f, 2), Gdal.getfield(f, 3), Gdal.getfield(f, 4), Gdal.getfield(f, 5), Gdal.getfield(f, 9)], " | ")
+	end
+	cnames = ["lon", "lat", "elev", "hourly_start", "hourly_end", "daily_start", "daily_end", "monthly_start", "monthly_end", "id | name | country | region | wmo | icao | timezone"]
+	D = mat2ds(mat, txtcol=txt, colnames=cnames)
+	settimecol!(D, [4,5,6,7,8,9])		# Set the time columns
+	D.attrib["DateOnly"] = "y"			# Special attribute that tells pretty tables that time columns are date only.
 	return D
 end
 
