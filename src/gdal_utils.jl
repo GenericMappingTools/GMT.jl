@@ -250,7 +250,7 @@ function gd2gmt(geom::Gdal.AbstractGeometry, proj::String="")::Union{GMTdataset,
 	set_dsBB!(D)				# Compute and set the BoundingBox's for this dataset
 	return (length(D) == 1) ? D[1] : D
 end
-
+  
 # ---------------------------------------------------------------------------------------------------
 function gd2gmt(dataset::Gdal.AbstractDataset)
 	# This method is for OGR formats only
@@ -353,6 +353,11 @@ end
 # This function is made apart because XLS and CSVs have geometries and the calling functio, as is,
 # would not be able to extract the data from the 'dataset'
 function helper_read_XLSCSV(dataset::Gdal.AbstractDataset)::GDtype
+	if (get(POSTMAN[1], "meteostat", "") != "")
+		delete!(GMT.POSTMAN[1], "meteostat")
+		return read_meteostat(dataset)
+	end
+
 	n_layers = Gdal.nlayer(dataset)
 	D = Vector{GMTdataset{Float64, 2}}(undef, n_layers)
 	local inds_r, inds_s					# n^inf Fck. If I don't do this here errors are completly non-sensical.
@@ -389,6 +394,36 @@ function helper_read_XLSCSV(dataset::Gdal.AbstractDataset)::GDtype
 	end
 	set_dsBB!(D)
 	return (length(D) == 1) ? D[1] : D
+end
+
+# ---------------------------------------------------------------------------------------------------
+function read_meteostat(dataset::Gdal.AbstractDataset)::GDtype
+	# Read Meteostat (remote) gzipped data files. We use the knowledge that first column is date.
+	layer = getlayer(dataset, 0)
+	Gdal.resetreading!(layer)
+	n_features = Gdal.nfeature(layer)
+	n = 0								# Counter of elements in a 'feature'
+	local mat, is_hourly, nf, start		# F., f.
+	for f in layer						# 'f' is a 'feature'
+		if ((n += 1) == 1)
+			nf = Gdal.nfield(f)
+			start = (nf == 13) ? 3 : 2	# Next field after time
+			is_hourly = (nf == 13) ? true : false			# If 13 fields, we have a date and a hour field
+			mat = Matrix{Float64}(undef, n_features, nf - is_hourly)
+		end
+		mat[n,1] = datetime2unix(DateTime(Gdal.getfield(f, 0)))		# The first field is always the date
+		c = parse(Float64, Gdal.getfield(f, 1))
+		is_hourly ? mat[n,1] += 60.0 : mat[n,2] = c
+		for k = start:nf
+			t = tryparse(Float64, Gdal.getfield(f, k-1))
+			mat[n, k - is_hourly] = (t !== nothing) ? t : NaN
+		end
+	end
+	colnames = (nf == 13) ? ["Time", "temp", "dwpt", "rhum", "prcp", "snow", "wdir", "wspd", "wpgt", "pres", "tsun", "coco"] :
+	                        ["Time", "tavg", "tmin", "tmax", "prcp", "snow", "wdir", "wspd", "wpgt", "pres", "tsun"]
+	D = mat2ds(mat, colnames=colnames)
+	settimecol!(D, 1)		# Set the time column to be the first one
+	return D
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -806,6 +841,7 @@ function gdalread(fname::AbstractString, optsP=String[]; opts=String[], gdataset
 		(ds_t.ptr == C_NULL) && (ds_t = Gdal.read(fname, flags = Gdal.GDAL_OF_VECTOR | Gdal.GDAL_OF_VERBOSE_ERROR, I=false))
 		optsP = (isempty(optsP)) ? ["-overwrite"] : (isa(optsP, String) ? ["-overwrite " * optsP] : append!(optsP, ["-overwrite"]))
 		POSTMAN[1]["GDALdriver"] = Gdal.shortname(getdriver(ds_t))			# Used when read XLS files
+		startswith(fname, "/vsigzip") && contains(fname, ".meteostat") && (POSTMAN[1]["meteostat"] = "y")	# Escape route for Meteostat files
 		ds = ogr2ogr(ds_t, optsP; gdataset=true, kw...)
 		(ds.ptr != C_NULL) && Gdal.deletedatasource(ds, "/vsimem/tmp")		# WTF I need to do this?
 	end
