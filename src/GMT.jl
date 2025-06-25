@@ -365,8 +365,8 @@ include("lepto_funs.jl")
 include("laszip/Laszip.jl")
 using GMT.Laszip
 
-include("ImageFeatures/ImageFeatures.jl")
-using GMT.ImageFeatures
+#include("ImageFeatures/ImageFeatures.jl")
+#using GMT.ImageFeatures
 
 @setup_workload let
 	G_API[1] = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS)
