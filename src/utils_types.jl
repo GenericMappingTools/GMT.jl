@@ -478,12 +478,17 @@ function mat2dsnan(mat::Matrix{<:Real}; is3D=false, kw...)
 end
 
 # ---------------------------------------------------------------------------------------------------
+"""
+    add2ds!(D::GMTdataset, mat, ind::Int=0; name::AbstractString="", names::Vector{<:AbstractString}=AbstractString[])
+
+Add the Vector or Matrix 'mat' to columns of D where 'ind' is the column index of the insertion point.
+Takes care also of updating the column names.
+
+If 'ind=0' append 'mat' at the end of 'D'
+If 'mat' is a vector optionally use the 'name' for the new inserted column
+If 'mat' is a matrix optionally use a 'names' vector (must have size(mat,2) elements) of new column names.
+"""
 function add2ds!(D::GMTdataset, mat, ind::Int=0; name::AbstractString="", names::Vector{<:AbstractString}=AbstractString[])
-	# Add the Vector or Matrix 'mat' to D where 'ind' is the column index of the insertion point.
-	# Takes care also of updating the column names.
-	# If 'ind=0' append 'mat' at the end of 'D'
-	# If 'mat' is a vector optionally use the 'name' for the new inserted column
-	# If 'mat' is a matrix optionally use a 'names' vector (must have size(mat,2) elements) of new column names.
 	(isvector(mat) && size(D,1) != length(mat)) && error("Number of rows in GMTdataset and adding vector elements do not match.")
 	(isa(mat, Matrix) && size(mat,1) > 1 && size(D,1) != size(mat,1)) && error("Number of rows in GMTdataset and adding matrix do not match.")
 	n_newCols = isvector(mat) ? 1 : size(mat,2)
@@ -592,6 +597,7 @@ end
 function ds2ds(D::Vector{<:GMTdataset})::GMTdataset
 	# Take a vector of DS and collapse it into a single GMTdataset DS. Some metadata, proj, colnames
 	# and attributes are copied from first segment. Colors in header and text are lost.
+	length(D) == 1 && return D[1]			# Nothing to do. Happens when D is computed programmatically
 	tot_rows = sum(size.(D,1))
 	data = zeros(eltype(D[1]), tot_rows, size(D[1],2))
 	s, e = 1, size(D[1],1)
