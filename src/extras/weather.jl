@@ -875,6 +875,6 @@ function load_meteostat(ID::AbstractString, granularity::String, year::Int, verb
 		end
 	end
 	verbose && @info "Reading $fname"
-	fname = Sys.iswindows() ? "/vsigzip/" * fname : "/vsigzip" * fname	# Because unix path alsready has a leading slash
+	fname = Sys.iswindows() ? "/vsigzip/" * fname : "/vsigzip/" * fname	# Because unix path already has a leading slash
 	gdalread(fname)
 end
