@@ -414,7 +414,7 @@ function read_meteostat(dataset::Gdal.AbstractDataset)::GDtype
 		n += 1
 		mat[n,1] = datetime2unix(DateTime(Gdal.getfield(f, 0)))		# The first field is always the date
 		c = parse(Float64, Gdal.getfield(f, 1))
-		is_hourly ? mat[n,1] += 60.0 : mat[n,2] = c
+		is_hourly ? mat[n,1] += c*3600.0 : mat[n,2] = c
 		for k = start:nf
 			t = tryparse(Float64, Gdal.getfield(f, k-1))
 			mat[n, k - is_hourly] = (t !== nothing) ? t : NaN
@@ -431,11 +431,16 @@ end
 function read_meteostat_stations(layer, n_features::Int)::GDtype
 	# Read the stations.csv.gz file from Meteostat.
 	mat = Matrix{Float64}(undef, n_features, 9)		# lon, lat, elev and 6 times
-	txt = Vector{String}(undef, n_features)			# The text columns in the stations file
+	IDs = Vector{String}(undef, n_features)
+	name = Vector{String}(undef, n_features)
+	country = Vector{String}(undef, n_features)
+	region = Vector{String}(undef, n_features)
+	icao = Vector{String}(undef, n_features)
+	TZ = Vector{String}(undef, n_features)
 	n = 0											# Counter of elements in a 'feature'
 	for f in layer									# 'f' is a 'feature'
-		mat[n+=1,1] = parse(Float64, Gdal.getfield(f, 6))	# Lon
-		mat[n,2] = parse(Float64, Gdal.getfield(f, 7))		# Lat
+		mat[n+=1,1] = parse(Float64, Gdal.getfield(f, 7))	# Lon
+		mat[n,2] = parse(Float64, Gdal.getfield(f, 6))		# Lat
 		mat[n,3] = parse(Float64, Gdal.getfield(f, 8))		# Elev
 		for k = 10:13
 			mat[n, k - 6] = ((t = Gdal.getfield(f, k)) != "") ? datetime2unix(DateTime(t)) : -62167219200.	# UNIXEPOCH + 365*24*3600
@@ -444,12 +449,20 @@ function read_meteostat_stations(layer, n_features::Int)::GDtype
 			mat[n, k - 6] = ((t = Gdal.getfield(f, k)) != "") ? datetime2unix(DateTime(Date(t))) : -62167219200
 		end
 
-		txt[n] = join([Gdal.getfield(f, 0), Gdal.getfield(f, 1), Gdal.getfield(f, 2), Gdal.getfield(f, 3), Gdal.getfield(f, 4), Gdal.getfield(f, 5), Gdal.getfield(f, 9)], " | ")
+		IDs[n] = Gdal.getfield(f, 0);		name[n] = Gdal.getfield(f, 1);		country[n] = Gdal.getfield(f, 2)
+		region[n] = Gdal.getfield(f, 3);	icao[n] = Gdal.getfield(f, 5);		TZ[n] = Gdal.getfield(f, 9)
 	end
-	cnames = ["lon", "lat", "elev", "hourly_start", "hourly_end", "daily_start", "daily_end", "monthly_start", "monthly_end", "id | name | country | region | wmo | icao | timezone"]
-	D = mat2ds(mat, txtcol=txt, colnames=cnames)
+	cnames = ["lon", "lat", "elev", "hour_start", "hour_end", "day_start", "day_end", "month_start", "month_end"]
+	D = mat2ds(mat, colnames=cnames)
 	settimecol!(D, [4,5,6,7,8,9])		# Set the time columns
 	D.attrib["DateOnly"] = "y"			# Special attribute that tells pretty tables that time columns are date only.
+	D.attrib["ID"] = IDs
+	D.attrib["Name"] = name
+	D.attrib["Country"] = country
+	D.attrib["Region"] = region
+	D.attrib["icao"] = icao
+	D.attrib["TZ"] = TZ
+	D.attrib["att_order"] = "ID,Name,Country,TZ,Region,icao"	# Order of the attributes in the table (because Dics are unordered)
 	return D
 end
 

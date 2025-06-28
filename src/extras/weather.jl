@@ -755,3 +755,126 @@ function agora()	# Must put this in a separate function because I want to use th
 	t = now()-Day(5)	# 5 days ago because the 5 in ERA5 means that the most recent data is 5 days ago.
 	return string(year(t)), string(month(t)), string(day(t)), string(hour(t))
 end
+	
+# ---------------------------------------------------------------------------------------------------------------
+function meteostat()::GMTdataset
+	# Download/read the Meteostat stations list and return it as a GMTdataset.
+	load_meteostat("", "", 0, true)
+end
+
+# ---------------------------------------------------------------------------------------------------------------
+function meteostat(lon::Real, lat::Real, granularity::Type{T}, start_date::Dates.Date, end_date::Dates.Date, verbose::Bool=true) where {T<:Dates.Period}
+	(granularity != Day && granularity != Hour) && error("Granularity must be either 'Day' or 'Hour'")
+	@assert -180 <= lon <= 360 && -90 <= lat <= 90  "Coordinates must be between -180 and 360 and -90 and 90."
+	@assert start_date < end_date "Start date must be before to end date."
+	_meteostat(Float64(lon), Float64(lat), string(granularity), string(start_date), string(end_date), verbose)
+end
+
+# ---------------------------------------------------------------------------------------------------------------
+function meteostat(ID::String, granularity::Type{T}, start_date::Dates.Date, end_date::Dates.Date, verbose::Bool=true)::GMTdataset where {T<:Dates.Period}
+	(granularity != Day && granularity != Hour) && error("Granularity must be either 'Day' or 'Hour'")
+	@assert start_date < end_date "Start date must be before to end date."
+	Dst = meteostat()					# Get the stations list
+	any(Dst.attrib["ID"] .== ID) && return _meteostat(ID, string(granularity), string(start_date), string(end_date), verbose)
+	if ((ind = findfirst(contains.(Dst.attrib["Name"], ID))) !== nothing)
+		return _meteostat(Dst.attrib["ID"][ind], string(granularity), string(start_date), string(end_date), verbose)
+	end
+	@warn("Station ID or Name \"$ID\" not found in the Meteostat stations list.")
+	GMTdataset()	# If not found, return an empty dataset
+end
+
+# ---------------------------------------------------------------------------------------------------------------
+function meteostat(lon::Real, lat::Real; granularity::String="day", startdate::String="", enddate::String="", verbose::Bool=true)
+	_meteostat(Float64(lon), Float64(lat), granularity, startdate, enddate, verbose)
+end
+function _meteostat(lon::Float64, lat::Float64, granularity::String, startdate::String, enddate::String, verbose::Bool)
+	@assert -180 <= lon <= 360 && -90 <= lat <= 90  "Coordinates must be between -180 and 360 and -90 and 90."
+	Dstations = meteostat()					# Get the stations list
+	dists = mapproject(Dstations[:, [1,2]], G="$lon/$lat", o=2)
+	ind = argmin(dists)						# index of the closest station
+	#id = split(Dstations.text[ind])[1]		# Station ID
+	id = Dstations.attrib["ID"][ind]		# Station ID
+	_meteostat(id, granularity, startdate, enddate, verbose)
+end
+
+# ---------------------------------------------------------------------------------------------------------------
+#function meteostat(ID; granularity::String="day", startdate::String="", enddate::String="")
+	#Dstations = meteostat()					# Get the stations list
+#end
+
+# ---------------------------------------------------------------------------------------------------------------
+function meteostat(ID::AbstractString; granularity::String="day", startdate::String="", enddate::String="", verbose::Bool=true)
+	_meteostat(string(ID), lowercase(granularity), startdate, enddate, verbose)
+end
+function _meteostat(ID::String, granularity::String, startdate::String, enddate::String, verbose::Bool)
+	# All typed inputs to do not let Julia "recompile at will"
+	(startdate != "") && (date_b = Date(startdate))
+	(enddate   != "") && (date_e = Date(enddate))
+	@assert (startdate != "" && enddate != "" && date_b < date_e) "Start date must be before end date."
+	granul = lowercase(granularity)
+	
+	function chop_start(D_, date_b)			# Remove the first rows until the start date
+		ind = findlast(datetime2unix(DateTime(date_b)) .>= view(D_, :, 1))
+		mat2ds(D_, (ind:size(D_,1), :))
+	end
+	function chop_end(D_, date_e)			# Remove the rows after end date
+		ind = findfirst(datetime2unix(DateTime(date_e)) .<= view(D_, :, 1))		# Find rows till the end date
+		mat2ds(D_, (1:ind, :))
+	end
+
+	if (granul == "day")
+		D = load_meteostat(ID, granul, 1, verbose)
+		(startdate != "") && (D = chop_start(D, date_b))
+		(enddate != "")   && (D = chop_end(D, date_e))
+	else
+		year1 = (startdate != "") ? parse(Int, startdate[1:4]) : year(now())	# Get a year from the start date
+		year2 = (enddate   != "") ? parse(Int, enddate[1:4]) : 0
+		(year2 == 0) && (year2 = year1)			# If no end date, use the start date year. That is, use current year
+		n_years = (year2 - year1 + 1)
+		D = load_meteostat(ID, granul, year1, verbose)
+		if (n_years > 1)						# If more than one year, read multiple files
+			Dv = Vector{GMTdataset}(undef, n_years-1)
+			for k = year1+1:year2
+				Dv[k-year1] = load_meteostat(ID, granul, k, verbose)
+			end
+		end
+		if ((startdate != "") && (date_b > Date(year1)))
+			D = chop_start(D, date_b)					# Remove the first rows until the start date
+		end
+		if ((enddate != "") && (date_e < Date(year2+1)-Day(1)))
+			_D = (year1 == year2) ? D : Dv[end]			# pick the last 'D'
+			(year1 == year2) ? (D = chop_end(_D, date_e)) : (Dv[end] = chop_end(Dv[end], date_e))
+		end
+		(n_years > 1) && (D = ds2ds([D, ds2ds(Dv)]))	# If more than one year, stack the partial datasets
+	end
+	return D
+end
+
+# ---------------------------------------------------------------------------------------------------------------
+function load_meteostat(ID::AbstractString, granularity::String, year::Int, verbose::Bool=false)
+	# Load meteostat files. If 'year' is 0, it reads the stations file.
+	# 'year' is ignored for 'day' granularity, but it NEEDS to be != 0.
+	# 'granularity' can be either "day" or "hour". If "day", 'year' is ignored.
+	# 'ID' is the station ID. Ignored when 'year' is 0 (because it then reads the stations).
+	endpoint = "https://bulk.meteostat.net/v2/"
+	cache = joinpath(tempdir(), ".meteostat", "cache")
+	if (year == 0)								# Read the stations file	
+    	fname = joinpath(cache, "stations.csv.gz")
+		if !isfile(fname)
+			mkpath(cache);
+			verbose && @info "Downloading $(endpoint)stations/slim.csv.gz to $fname"
+			Downloads.download("https://bulk.meteostat.net/v2/stations/slim.csv.gz", fname)
+		end
+	else
+		fname = (granularity == "day") ? joinpath(cache, "daily", ID * ".csv.gz") : joinpath(cache, "hourly", string(year), ID * ".csv.gz")
+		if !isfile(fname)
+			uri = (granularity == "day") ? "$(endpoint)daily/" * ID * ".csv.gz" : "$(endpoint)hourly/$(year)/" * ID * ".csv.gz"
+			(granularity == "day") ? mkpath(joinpath(cache,"daily")) : mkpath(joinpath(cache,"hourly", string(year)))
+			verbose && @info "Downloading $(endpoint)hourly/$(year)/$ID.csv.gz to $fname"
+			Downloads.download(uri, fname)
+		end
+	end
+	verbose && @info "Reading $fname"
+	fname = Sys.iswindows() ? "/vsigzip/" * fname : "/vsigzip" * fname	# Because unix path alsready has a leading slash
+	gdalread(fname)
+end
