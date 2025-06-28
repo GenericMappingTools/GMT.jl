@@ -129,7 +129,7 @@ function _show(io::IO,
 	# See if we have attribs as vector of strings to be displayed as columns in the table.
 	function add_att_cols(D, Dt, names_str, types_str)
 		isempty(D.attrib) && return Dt, names_str, types_str
-		ky = collect(keys(D.attrib))
+		ky = (get(D.attrib, "att_order", "") != "") ? collect(split(D.attrib["att_order"], ",")) : collect(keys(D.attrib))
 		for k = 1:numel(ky)
 			!isa(D.attrib[ky[k]], Vector{String}) && continue
 			push!(names_str, ky[k]*" (att)")
@@ -137,6 +137,7 @@ function _show(io::IO,
 			push!(types_str, "String")
 			t = D.attrib[ky[k]]
 			(length(t) < size(D.data, 1)) && (t = vcat(t, fill("", size(D, 1) - length(t))))	# Accept shorter vectors
+			length(t) > 100 && (t = [t[1:40]; t[end-40:end]])		# Make it same length as Dt (trimmed before to 80 rows) 
 			Dt = [Dt t]
 		end
 		return Dt, names_str, types_str
@@ -153,7 +154,7 @@ function _show(io::IO,
 			append!(alignment, [:c, :c])
 			append!(types_str, ["String", "String"])
 		end
-		if (size(D,1) > 200)	# Since only dataset's begining and end is displayed do not make a potentially big copy
+		if (size(D,1) > 100)	# Since only dataset's begining and end is displayed do not make a potentially big copy
 			Dt = [[D.data[1:40, :]; D.data[end-40:end, :]] [D.text[1:40, :]; D.text[end-40:end, :]]]
 			skipd_rows = size(D,1) - size(Dt,1)
 		else
@@ -168,7 +169,12 @@ function _show(io::IO,
 			end
 		end
 	else
-		Dt = D.data
+		if (size(D,1) > 100)	# Since only dataset's begining and end is displayed do not make a potentially big copy
+			Dt = [D.data[1:40, :]; D.data[end-40:end, :]]
+			skipd_rows = size(D,1) - size(Dt,1)
+		else
+			Dt = D.data
+		end
 	end
 
 	Dt, names_str, types_str = add_att_cols(D, Dt, names_str, types_str)	# Check for string vector attributes
@@ -180,9 +186,9 @@ function _show(io::IO,
 		if (WTS == "YearDecimal0000")  fun = yeardecimal
 		else                           fun = unix2datetime
 		end
-		if (size(Dt,1) > 250)
-			newTcs = string.(fun.([Dt[1:50, Tcn]; Dt[end-50:end, Tcn]]))
-			Dt = [D.data[1:50, :]; D.data[end-50:end, :]]
+		if (size(Dt,1) > 100)
+			newTcs = !Td ? string.(fun.([Dt[1:40, Tcn]; Dt[end-40:end, Tcn]])) : string.(Date.(fun.([Dt[1:40, Tcn]; Dt[end-40:end, Tcn]])))
+			Dt = [Dt[1:40, :]; Dt[end-40:end, :]]
 			(skipd_rows == 0) && (skipd_rows = size(D,1) - size(Dt,1))
 		else
 			newTcs = !Td ? string.(fun.(Dt[:, Tcn])) : string.(Date.(fun.(Dt[:, Tcn])))
