@@ -866,6 +866,7 @@ function gdalread(fname::AbstractString, optsP=String[]; opts=String[], gdataset
 	(fname == "") && error("Input file name is missing.")
 	ind = findfirst(':', fname)
 	check = (ind === nothing || ind[1] < 3) ? true : false
+	check && startswith(fname, "/vsi") && (check = false)		# Don't check existence of /VSI.../ files
 	(check && !isfile(fname)) && error("Input file '$fname' does not exist.")	# Breaks when passing a SUBDATASET
 	startswith(fname, "NETCDF:") && (POSTMAN[1] = Dict("nc_name" => fname))		# For cases where GDAL fcks and doest have a geotransform
 	(isempty(optsP) && !isempty(opts)) && (optsP = opts)		# Accept either Positional or KW argument
