@@ -313,11 +313,9 @@
 	ecmwf(:forecast, var="t", R="PTC", steps=0:3:6)
 
 	# Meteostat
-	if Sys.iswindows()
-		println("	Meteostat")
-		meteostat(-8.0,37.0, Day, Date(2025,2,1), Date(2025,4,1));
-		meteostat(-8.0,37.0, Hour, Date(2025,2,1), Date(2025,5,30))
-	end
+	println("	Meteostat")
+	meteostat(-8.0,37.0, Day, Date(2025,2,1), Date(2025,4,1));
+	meteostat(-8.0,37.0, Hour, Date(2025,2,1), Date(2025,5,30))
 
 	# MB-System
 	println("	MB-System")
