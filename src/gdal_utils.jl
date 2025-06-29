@@ -413,7 +413,8 @@ function read_meteostat(dataset::Gdal.AbstractDataset)::GDtype
 	for f in layer							# 'f' is a 'feature'
 		n += 1
 		mat[n,1] = datetime2unix(DateTime(Gdal.getfield(f, 0)))		# The first field is always the date
-		c = parse(Float64, Gdal.getfield(f, 1))
+		t = tryparse(Float64, Gdal.getfield(f, 1))
+		c = (t !== nothing) ? t : NaN		# May happen in many stations
 		is_hourly ? mat[n,1] += c*3600.0 : mat[n,2] = c
 		for k = start:nf
 			t = tryparse(Float64, Gdal.getfield(f, k-1))
