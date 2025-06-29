@@ -1228,7 +1228,9 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 		# "CPL_VSIL_CURL_USE_HEAD","FALSE"; "GDAL_HTTP_COOKIEFILE", "..."; "GDAL_HTTP_COOKIEJAR","...", big shit follows
 		# Next line is a patch to try to catch that situation by cleaning the vsi cache. Maybe it will backfire, who knows.
 		(startswith(fname, "/vsi") && CPLGetConfigOption("GDAL_HTTP_COOKIEFILE", C_NULL) !== nothing) && VSICurlClearCache()
+		CPLPushErrorHandler(@cfunction(CPLQuietErrorHandler, Cvoid, (UInt32, Cint, Cstring)))	# To shut up eventual error messages
 		r = GDALOpenEx(fname, Int(flags), alloweddrivers, options, siblingfiles)
+		CPLPopErrorHandler();
 		return (I) ? IDataset(r) : Dataset(r)
 	end
 	unsafe_read(fname::AbstractString; flags=GDAL_OF_READONLY | GDAL_OF_VERBOSE_ERROR, alloweddrivers=Ptr{Cstring}(C_NULL),
@@ -1638,7 +1640,7 @@ end
 	end
 	gdalinfo(ds::IDataset, opts::Vector{String}=String[]) = gdalinfo(Dataset(ds.ptr), opts)
 	function gdalinfo(fname::AbstractString, opts=String[])
-		CPLPushErrorHandler(@cfunction(CPLQuietErrorHandler, Cvoid, (UInt32, Cint, Cstring)))	# WTF is this needed?
+		CPLPushErrorHandler(@cfunction(CPLQuietErrorHandler, Cvoid, (UInt32, Cint, Cstring)))	# Suppress error messages
 		o = gdalinfo(unsafe_read(fname; options=opts), opts)
 		CPLPopErrorHandler();
 		return o
