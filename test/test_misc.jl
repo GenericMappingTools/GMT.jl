@@ -320,6 +320,7 @@
 	meteostat(-8.0,37.0, Hour)
 	meteostat(-8.0,37.0)
 	meteostat("Faro", name=true)
+	meteostat("Faro", Hour, Date(2024,11,1), Date(2025,3,1), false)
 
 	# MB-System
 	println("	MB-System")
