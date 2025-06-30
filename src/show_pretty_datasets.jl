@@ -115,7 +115,7 @@ function _show(io::IO,
 				for k = 1:numel(ind)
 					t_vec[ind[k]] = "In col" * string(size(D, 2) + !isempty(D.text) + ind[k])
 				end
-				pretty_table(reshape(t_vec, 1, length(D.attrib)), header=hdr, title=tit)
+				(hdr != ["Timecol"]) && pretty_table(reshape(t_vec, 1, length(D.attrib)), header=hdr, title=tit)
 			end
 		end
 		(~isempty(D.bbox))    && println("BoundingBox: ", D.bbox)

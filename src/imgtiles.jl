@@ -83,7 +83,7 @@ Get image tiles from a web map tiles provider for given longitude, latitude coor
 - `cache`: Full name of the the cache directory where to save the downloaded tiles. If empty, a cache
   directory is created in the system's TMP directory. If `cache="gmt"` the cache directory is created in
   ``~/.gmt/cache_tileserver``. NOTE: this normally is neeaded only for the first time you run this function when,
-  if `cache!=""`, the cache dir location is saved in the ``~./gmt/tiles_cache_dir.txt`` file and used in
+  if `cache != ""`, the cache dir location is saved in the ``~./gmt/tiles_cache_dir.txt`` file and used in
   subsequent calls.
 - `mapwidth`: Map width in cm. Used together with the `dpi` option to automatically compute the zoom level.
 - `dpi`: Dots per inch. Used together with the `mapwidth` option to automatically compute the zoom level.

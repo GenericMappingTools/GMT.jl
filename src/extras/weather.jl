@@ -784,7 +784,7 @@ Download data from the station that is closest to the given coordinates.
 - `verbose`: If `true`, print download/load file information.
 
 The files are downloaded from the Meteostat endpoint and saved in a cache folder in the _tmp_ directory. Later
-reuse reads from the cache folder when files are not older than a week to ensure that the most updated data is used. 
+reuse reads from the cache folder when files are not older than a day to ensure that the most updated data is used. 
 
 ### Returns
 A `GMTdataset` with the data from the closest station to the given coordinates.
@@ -958,22 +958,23 @@ function load_meteostat(ID::AbstractString, granularity::String, ano::Int, verbo
 	end
 
 	endpoint = "https://bulk.meteostat.net/v2/"
+	#endpoint = "https://data.meteostat.net/"
 	cache = joinpath(tempdir(), ".meteostat", "cache")		# WARNING: the ".meteostat" in dir name is important! (checked by gdalread)
 	if (ano == 0)								# Read the stations file
     	fname = joinpath(cache, "stations.csv.gz")
-		if (!isfile(fname) || file_is_old(fname, 365))		# If the file does not exist or is older than 1 year
-			mkpath(cache);
+		if (!isfile(fname) || file_is_old(fname, 30))		# If the file does not exist or is older than 1 month
+			isdir(cache) || mkpath(cache);
 			verbose && @info "Downloading $(endpoint)stations/slim.csv.gz to $fname"
 			Downloads.download("https://bulk.meteostat.net/v2/stations/slim.csv.gz", fname)
 		end
 	else
 		fname = (granularity == "day") ? joinpath(cache, "daily", ID * ".csv.gz") : joinpath(cache, "hourly", string(ano), ID * ".csv.gz")
-		old = file_is_old(fname, 7)
+		old = file_is_old(fname, 1)
 		(granularity == "hourly") && (ano < year(today())) && (old = false)	# If hourly and year is not current, then file is NOT old
-		if (!isfile(fname) || old)				# If the file does not exist or is older than 7 days
+		if (!isfile(fname) || old)				# If the file does not exist or is older than 1 day
 			uri = (granularity == "day") ? "$(endpoint)daily/" * ID * ".csv.gz" : "$(endpoint)hourly/$(ano)/" * ID * ".csv.gz"
 			(granularity == "day") ? mkpath(joinpath(cache,"daily")) : mkpath(joinpath(cache,"hourly", string(ano)))
-			verbose && @info "Downloading $(endpoint)hourly/$(ano)/$ID.csv.gz to $fname"
+			verbose && @info "Downloading $uri to $fname"
 			Downloads.download(uri, fname)
 		end
 	end
