@@ -1405,7 +1405,7 @@ function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)::Union{GMTdat
 
 			if (OGR_F.n_islands == 0)
 				geom_type = unsafe_string(OGR_F.type)
-				geom = (geom_type == "Polygon") ? wkbPolygon : ((geom_type == "LineString") ? wkbLineString : wkbPoint)
+				geom::Int = (geom_type == "Polygon") ? wkbPolygon : ((geom_type == "LineString") ? wkbLineString : wkbPoint)
 				(is3D && (geom == wkbPolygon || geom == wkbPoint)) && (geom == wkbPolygon ? wkbPointZ : wkbPointZM)	# Convert 2D to 3D
 				data = is3D ? [unsafe_wrap(Array, OGR_F.x, OGR_F.np) unsafe_wrap(Array, OGR_F.y, OGR_F.np) unsafe_wrap(Array, OGR_F.z, OGR_F.np)] : [unsafe_wrap(Array, OGR_F.x, OGR_F.np) unsafe_wrap(Array, OGR_F.y, OGR_F.np)]
 				D[n] = GMTdataset(data, Float64[], Float64[], attrib, coln, String[], hdr, String[], proj4, wkt, 0, Int(geom))
