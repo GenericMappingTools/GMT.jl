@@ -628,7 +628,7 @@ function delrows(D::GMTdataset; rows::Vector{<:Integer}=Int[], nodata=nothing, c
 	return size(mat,1) != size(D,1) ? mat2ds(mat, D) : D	# If nothing found, just return the original dataset
 end
 function delrows(D::Vector{<:GMTdataset}; rows::Vector{<:Integer}=Int[], nodata=nothing, col=0)
-	Dv = Vector{GMTdataset{typeof(D[1])}}(undef, length(D))
+	Dv = Vector{GMTdataset{typeof(D[1]),2}}(undef, length(D))
 	for k = 1:length(D)
 		Dv[k] = delrows(D[k], rows=rows, nodata=nodata, col=col)
 	end
@@ -1011,7 +1011,7 @@ Returns the shorter vector `y` and indices of picked points in `ind`
 
 See https://skemman.is/bitstream/1946/15343/3/SS_MSthesis.pdf
 """
-function lttb(D::GMTdataset, decfactor::Int=10)::GMTdataset
+function lttb(D::GMTdataset{T,2}, decfactor::Int=10)::GMTdataset{T,2} where T
 	y, ind = lttb(view(D.data, :, 2), decfactor)
 	(size(D,2) == 2) ? mat2ds([D.data[ind,1] y], ref=D) : mat2ds([D.data[ind,1] y D.data[ind,3:end]], ref=D)
 end

@@ -929,7 +929,7 @@ function _meteostat(ID::String, granularity::String, startdate::String, enddate:
 		n_years = (year2 - year1 + 1)
 		D = load_meteostat(ID, granul, year1, verbose)
 		if (n_years > 1)						# If more than one year, read multiple files
-			Dv = Vector{GMTdataset}(undef, n_years-1)
+			Dv = Vector{GMTdataset{Float64,2}}(undef, n_years-1)
 			for k = year1+1:year2
 				Dv[k-year1] = load_meteostat(ID, granul, k, verbose)
 			end

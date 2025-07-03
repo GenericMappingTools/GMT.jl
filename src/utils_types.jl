@@ -80,7 +80,7 @@ mat2ds(mat::GDtype)  = mat		# Method to simplify life and let call mat2ds on a a
 mat2ds(text::Union{AbstractString, Vector{<:AbstractString}}) = text_record(text)	# Now we can hide text_record
 mat2ds(text::Vector{String}; hdr::String="", kw...) = text_record(fill(NaN,length(text),2), text, [hdr])	# The kw... is only to not error
 
-function mat2ds(mat::AbstractMatrix; hdr=String[], geom=0, kwargs...)::GMTdataset
+function mat2ds(mat::AbstractMatrix{T}; hdr=String[], geom=0, kwargs...)::GMTdataset{T, 2} where {T<:Real}
 	# Here we are expecting that Any-ness results from columns with DateTime. If not returm 'mat' as is
 	# DateTime columns are converted to seconds and a regular GMTdatset with appropriate column names and attribs is return 
 	c = zeros(Bool, size(mat, 2))
@@ -138,7 +138,7 @@ function mat2ds(mat::Vector{<:AbstractMatrix}; hdr=String[], kwargs...)
 	d = KW(kwargs)
 	mat2ds(mat, hdr, d)
 end
-function mat2ds(mat::Vector{<:AbstractMatrix}, hdr::Vector{String}, d::Dict)
+function mat2ds(mat::Vector{<:AbstractMatrix{T}}, hdr::Vector{String}, d::Dict)::Vector{GMTdataset{T,2}} where {T<:Real}
 	D = Vector{GMTdataset{eltype(mat[1]), 2}}(undef, length(mat))
 	pen   = find_in_dict(d, [:pen])[1]
 	color = find_in_dict(d, [:lc :linecolor :color])[1]
@@ -196,15 +196,15 @@ end
 Take a 2D `mat` array and convert it into a GMTdataset. Pass in a reference GMTdataset from which we'll take
 the georeference info as well as `attrib` and `colnames`.
 """
-mat2ds(mat::Array{T,N}, ref::GMTdataset) where {T,N} = mat2ds(mat; ref=ref)
+mat2ds(mat::Array{T,N}, ref::GMTdataset) where {T<:Real,N} = mat2ds(mat; ref=ref)
 
 # ---------------------------------------------------------------------------------------------------
 function mat2ds(mat::Array{T,N}, txt::Union{String,Vector{String}}=String[];
-                hdr::Union{String,VecOrMat{String}}=String[], geom=0, kwargs...)::GDtype where {T,N}
+                hdr::Union{String,VecOrMat{String}}=String[], geom=0, kwargs...)::GDtype where {T<:Real,N}
 	d = KW(kwargs)
 	_mat2ds(mat, txt, isa(hdr, String) ? [hdr] : vec(hdr), Int(geom), d)
 end
-function _mat2ds(mat::Array{T,N}, txt::Union{String,Vector{String}}, hdr::Vector{String}, geom::Int, d::Dict)::GDtype where {T,N}
+function _mat2ds(mat::Array{T,N}, txt::Union{String,Vector{String}}, hdr::Vector{String}, geom::Int, d::Dict)::GDtype where {T<:Real, N}
 
 	(!isempty(txt)) && return text_record(mat, txt,  hdr)
 	((_text = find_in_dict(d, [:text])[1]) !== nothing) && return text_record(mat, _text, hdr)
@@ -424,7 +424,7 @@ Cut a GMTdataset D with the indices in INDS but updating the colnames and the Ti
 INDS is a Tuple of 2 with ranges in rows and columns. Ex: (:, 1:3) or (:, [1,4,7]), etc...
 Attention, if original had attributes other than 'Timeinfo' there is no guarentie that they remain correct. 
 """
-function mat2ds(D::GMTdataset, inds)::GMTdataset
+function mat2ds(D::GMTdataset{T,N}, inds)::GMTdataset{T,N} where {T<:Real, N}
 	(length(inds) != ndims(D)) && error("\tNumber of GMTdataset dimensions and indices components must be the same.\n")
 	_coln = isempty(D.colnames) ? String[] : (inds[2] === Colon() || last(inds[2]) <= length(D.colnames) ? D.colnames[inds[2]] : String[])
 	(!isempty(_coln) && (typeof(inds[1]) == Colon) && length(D.colnames) > size(D,2)) && append!(_coln, [D.colnames[end]])	# Append text colname if exists
@@ -465,7 +465,7 @@ argument is the same as used in `mat2ds()`.
 ### Example, create a vector of 2 GMTdatasets:
    mat2dsnan([0 1; 1 1; NaN 0; 2 2 3 3])
 """
-function mat2dsnan(mat::Matrix{<:Real}; is3D=false, kw...)
+function mat2dsnan(mat::Matrix{T}; is3D=false, kw...)::Vector{GMTdataset{T,2}} where {T<:Real}
 	ind = isnan.(view(mat, :, 1)) .| isnan.(view(mat, :, 2))
 	is3D && (ind = ind .| isnan.(view(mat, :, 3)))
 	ind2 = [1, findall(diff(ind) .!= 0) .+ 1 ..., size(mat,1)+1]	# Indices of boundaries between NaNs
@@ -488,7 +488,7 @@ If 'ind=0' append 'mat' at the end of 'D'
 If 'mat' is a vector optionally use the 'name' for the new inserted column
 If 'mat' is a matrix optionally use a 'names' vector (must have size(mat,2) elements) of new column names.
 """
-function add2ds!(D::GMTdataset, mat, ind::Int=0; name::AbstractString="", names::Vector{<:AbstractString}=AbstractString[])
+function add2ds!(D::GMTdataset{T,2}, mat, ind::Int=0; name::AbstractString="", names::Vector{<:AbstractString}=AbstractString[]) where {T<:Real}
 	(isvector(mat) && size(D,1) != length(mat)) && error("Number of rows in GMTdataset and adding vector elements do not match.")
 	(isa(mat, Matrix) && size(mat,1) > 1 && size(D,1) != size(mat,1)) && error("Number of rows in GMTdataset and adding matrix do not match.")
 	n_newCols = isvector(mat) ? 1 : size(mat,2)
@@ -516,13 +516,13 @@ function add2ds!(D::GMTdataset, mat, ind::Int=0; name::AbstractString="", names:
 end
 
 # ---------------------------------------------------------------------------------------------------
-function add2ds!(D::Vector{<:GMTdataset}, mat, ind::Int=0; name::AbstractString="", names::Vector{<:AbstractString}=AbstractString[])::Union{Nothing,Matrix{<:Real}}
+function add2ds!(D::Vector{<:GMTdataset}, mat, ind::Int=0; name::AbstractString="", names::Vector{<:AbstractString}=AbstractString[])
 	for k = 1:numel(D)  add2ds!(D[k], mat, ind; name=name, names=names)  end
 	return nothing
 end
 
 # ---------------------------------------------------------------------------------------------------
-function add2ds!(D::GMTdataset; name::AbstractString="", names::Vector{<:AbstractString}=AbstractString[])
+function add2ds!(D::GMTdataset{T,2}; name::AbstractString="", names::Vector{<:AbstractString}=AbstractString[]) where {T<:Real}
 	# Method for fixing the colnames and/or the bbox in DS that had their matrix extended.
 	# 'name' and 'names' are only usable if 'D' already has 'colnames'
 	isempty(D.colnames) && (D.colnames = [string("Col.",k) for k=1:size(D,2)])
@@ -594,7 +594,7 @@ function set_dsBB!(D, all_bbs::Bool=true)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function ds2ds(D::Vector{<:GMTdataset})::GMTdataset
+function ds2ds(D::Vector{<:GMTdataset{T,2}})::GMTdataset{T,2} where {T<:Real}
 	# Take a vector of DS and collapse it into a single GMTdataset DS. Some metadata, proj, colnames
 	# and attributes are copied from first segment. Colors in header and text are lost.
 	length(D) == 1 && return D[1]			# Nothing to do. Happens when D is computed programmatically
@@ -613,11 +613,11 @@ end
 Base.:stack(D::Vector{<:GMTdataset}) = ds2ds(D)
 
 # ---------------------------------------------------------------------------------------------------
-function ds2ds(D::GMTdataset; is3D::Bool=false, kwargs...)::Vector{<:GMTdataset}
+function ds2ds(D::GMTdataset{T,2}; is3D::Bool=false, kwargs...)::Vector{<:GMTdataset{T,2}} where {T<:Real}
 	d = KW(kwargs)
 	ds2ds(D, is3D, d)
 end
-function ds2ds(D::GMTdataset, is3D::Bool, d::Dict)::Vector{<:GMTdataset}
+function ds2ds(D::GMTdataset{T,2}, is3D::Bool, d::Dict)::Vector{<:GMTdataset{T,2}} where {T<:Real}
 	# Take one DS and split it into an array of DS's, one for each row and optionally add -G<fill>
 	# Alternativelly, if [:multi :multicol] options lieve in 'd', split 'D' by columns: [1,2], [1,3], [1,4], ...
 	# So far only for internal use but may grow in function of needs
@@ -863,7 +863,7 @@ attribute name (`groupby`) or by the Feature_ID attribute. This function is most
   It will be the values of the attribute name provided by `groupby` or those of the first attribute value
   if that option is not used.
 """
-function splitds(D::Vector{<:GMTdataset}; groupby::String="")
+function splitds(D::Vector{<:GMTdataset{T,N}}; groupby::String="") where {T<:Real, N}
 	# Split a vector of datasets into groups by the Feature_ID attribute.
 	if (groupby != "")		# Use the attribute selected by the user
 		att_names = vec(string.(keys(D[1].attrib)))
@@ -898,7 +898,7 @@ Split a GMTdataset by the unique values of the column selected by `col`.
 to a column with integers (normaly a flint (Floating Point Integer)), or a string column. _i.e.,_ the last
 column in a GMTdataset.
 """
-function groupby(D::GMTdataset, cols::Union{String,Symbol,Int})
+function groupby(D::GMTdataset{T,2}, cols::Union{String,Symbol,Int})::Vector{GMTdataset{T,2}} where {T<:Real}
 	n_cols = size(D.data, 2)
 	colnames = !isempty(D.colnames) ? D.colnames : ["col.$i" for i=1:n_cols]
 	!isempty(D.text) && length(colnames) == n_cols && push!(colnames, "Text")	# 'Text' is the text column generic name
@@ -932,7 +932,7 @@ Return descriptive statistics for a dataset `GMTdataset` where each row represen
 If `cols` is a column name, either as a String or a Symbol, or a column number, only the statistics
 for that column are returned.
 """
-function stats(D::GMTdataset, cols::Union{String,Symbol,Int}=0)::GMTdataset
+function stats(D::GMTdataset{T,2}, cols::Union{String,Symbol,Int}=0)::GMTdataset{Float64,2} where {T<:Real}
 	if (cols == 0)
 		nc = size(D.data, 2)
 		q25 = Vector{Float64}(undef, nc);	q50 = similar(q25);		q75 = similar(q25);		m = similar(q25);	s = similar(q25)
@@ -1080,7 +1080,8 @@ function rasters2grid(arg; scale::Real=1f0, offset::Real=0f0)::GMTgrid
 	isa(t, Int) ? (epsg = t; proj = epsg2proj(t)) : startswith(t, "GEOGCS") ? (wkt=t; proj=wkt2proj(t)) : startswith(t, "+proj") ? (proj=t) : nothing
 
 	data = nothing
-	(isa(arg.missingval, Real) && !isnan(arg.missingval) && eltype(arg.data) <: AbstractFloat) && (@inbounds Threads.@threads for k=1:numel(arg.data) arg.data[k] == arg.missingval && (arg.data[k] = NaN)  end)
+	(isa(arg.missingval, Real) && !isnan(arg.missingval) && eltype(arg.data) <: AbstractFloat) &&
+		(@inbounds Threads.@threads for k=1:numel(arg.data) arg.data[k] == arg.missingval && (arg.data[k] = NaN)  end)
 
 	# If Raster{Union{Missing, Float32},2} we're f... Copies and repetions all the time.
 	if (ismissing(arg.missingval))
@@ -1112,7 +1113,8 @@ function rasters2grid(arg; scale::Real=1f0, offset::Real=0f0)::GMTgrid
 	(eltype(data) == Int16) && (data = convert(Array{Float32, ndims(data)}, data))	# And what about UInt16, UInt8, etc ...?
 
 	(is_transp && Yorder == 'B') && (reverse!(data, dims=2); layout = "TRB")	# GMT expects grids to be scanline and Top->Bot
-	mat2grid(data, x=collect(arg.dims[1]), y=_y, v=v, names=names, tit=string(arg.name), rem="Converted from a Rasters object.", is_transposed=is_transp, layout=layout, proj4=proj, wkt=wkt, epsg=epsg, z_unit=z_unit, v_unit=v_unit)
+	mat2grid(data, x=collect(arg.dims[1]), y=_y, v=v, names=names, tit=string(arg.name), rem="Converted from a Rasters object.",
+	         is_transposed=is_transp, layout=layout, proj4=proj, wkt=wkt, epsg=epsg, z_unit=z_unit, v_unit=v_unit)
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -1121,7 +1123,7 @@ end
 
 Wrap a `KernelDensity` object to a `GMTgrid`
 """
-function kde2grid(arg)
+function kde2grid(arg)::GMTgrid{Float32,2}
 	# KernelDensity types come in row major order and rows as columns, so we have to trick things a little bit here.
 	G = mat2grid(Float32.(arg.density), arg.y, arg.x)
 	G.layout = "TRB"
@@ -1168,7 +1170,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------------------------------
-function line2multiseg(M::Matrix{<:Real}; is3D::Bool=false, color::GMTcpt=GMTcpt(), auto_color::Bool=false, lt=nothing, color_col::Int=0)
+function line2multiseg(M::Matrix{T}; is3D::Bool=false, color::GMTcpt=GMTcpt(), auto_color::Bool=false, lt=nothing, color_col::Int=0)::Vector{GMTdataset{T,2}} where {T<:Real}
 	# Take a 2D or 3D poly-line and break it into an array of DS, one for each line segment
 	# AUTO_COLOR -> color from 1:size(M,1)
 	(!isempty(color) && size(M,2) < 3) && error("For a varying color the input data must have at least 3 columns")
@@ -1225,13 +1227,13 @@ function hlp_var_thk(lt, n_ds)
 	polyval(p, linspace(1, nth, n_ds))
 end
 
-function line2multiseg(D::GMTdataset; is3D::Bool=false, color::GMTcpt=GMTcpt(), auto_color::Bool=false, lt=nothing, color_col::Int=0)
+function line2multiseg(D::GMTdataset{T,2}; is3D::Bool=false, color::GMTcpt=GMTcpt(), auto_color::Bool=false, lt=nothing, color_col::Int=0) where {T<:Real}
 	Dm = line2multiseg(D.data, is3D=is3D, color=color, auto_color=auto_color, lt=lt, color_col=color_col)
 	Dm[1].proj4, Dm[1].wkt, Dm[1].ds_bbox, Dm[1].colnames = D.proj4, D.wkt, D.ds_bbox, D.colnames
 	Dm
 end
 
-function line2multiseg(D::Vector{<:GMTdataset}; is3D::Bool=false, color::GMTcpt=GMTcpt(), auto_color::Bool=false, lt=nothing, color_col::Int=0)
+function line2multiseg(D::Vector{<:GMTdataset{T,2}}; is3D::Bool=false, color::GMTcpt=GMTcpt(), auto_color::Bool=false, lt=nothing, color_col::Int=0) where {T<:Real}
 	Dm = line2multiseg(D[1], is3D=is3D, color=color, auto_color=auto_color, lt=lt, color_col=color_col)
 	Dm[1].proj4, Dm[1].wkt, Dm[1].colnames = D[1].proj4, D[1].wkt, D[1].colnames
 	bb_min = bb_max = D[1].ds_bbox
@@ -1586,7 +1588,7 @@ Get the fourth layer of the multi-layered 'I' GMTimage object
 I = slicecube(I, 4)
 ```
 """
-function slicecube(I::GMTimage, layer::Union{Int, AbstractVector{<:Int}})
+function slicecube(I::GMTimage{T,3}, layer::Union{Int, AbstractVector{<:Int}}) where T
 	isvec = !isa(layer, Int)
 	first_layer = isa(layer, Int) ? layer : layer[1]
 	last_layer  = isa(layer, Int) ? layer : layer[end]
@@ -1604,8 +1606,8 @@ function slicecube(I::GMTimage, layer::Union{Int, AbstractVector{<:Int}})
 	GMTimage(I.proj4, I.wkt, I.epsg, I.geog, range, copy(I.inc), I.registration, I.nodata, "Gray", I.metadata, names, copy(I.x), copy(I.y), [0.], mat, zeros(Int32,3), String[], 0, Array{UInt8,2}(undef,1,1), I.layout, I.pad)
 end
 
-function slicecube(G::GMTgrid, slice::Union{Int, AbstractVector{<:Int}}; axis="z",
-                   x::Union{VecOrMat{<:Real}, Tuple}=Float64[], y::Union{VecOrMat{<:Real}, Tuple}=Float64[])
+function slicecube(G::GMTgrid{T,3}, slice::Union{Int, AbstractVector{<:Int}}; axis="z",
+                   x::Union{VecOrMat{<:Real}, Tuple}=Float64[], y::Union{VecOrMat{<:Real}, Tuple}=Float64[]) where T
 	# Method that slices grid cubes. SLICE is the row|col|layer number. AXIS picks the axis to be sliced
 	# This method lets us slice a cube along any or all of the x|y|z axis
 	(ndims(G) < 3 || size(G,3) < 2) && error("This is not a cube grid.")
@@ -1658,8 +1660,8 @@ function helper_slicecube(G, x, y)
 	return colmajor, ix, iy, ixp, iyp
 end
 
-function slicecube(G::GMTgrid, slice::AbstractFloat; axis="z",
-                   x::Union{VecOrMat{<:Real}, Tuple}=Float64[], y::Union{VecOrMat{<:Real}, Tuple}=Float64[])
+function slicecube(G::GMTgrid{T,3}, slice::AbstractFloat; axis="z",
+                   x::Union{VecOrMat{<:Real}, Tuple}=Float64[], y::Union{VecOrMat{<:Real}, Tuple}=Float64[]) where T
 	# Method that slices grid cubes. SLICE is the x|y|z coordinate where to slice. AXIS picks the axis to be sliced
 	# So far horizontal slices are unique (single slice) but vertical slices can slice sub-cubes.
 	(ndims(G) < 3 || size(G,3) < 2) && error("This is not a cube grid.")
@@ -1812,8 +1814,8 @@ function xyzw2cube(fname::AbstractString; zcol::Int=4, datatype::DataType=Float3
 end
 
 # Version with a GMTdataset
-function xyzw2cube(D::GMTdataset; zcol::Int=4, datatype::DataType=Float32, tit::String="",
-                   names::Vector{String}=String[], varnames::Vector{String}=String[])
+function xyzw2cube(D::GMTdataset{T,N}; zcol::Int=4, datatype::DataType=Float32, tit::String="",
+                   names::Vector{String}=String[], varnames::Vector{String}=String[]) where {T<:Real,N}
 
 	(size(D,2) < 4) && error("The dataset must contain at least 4 columns (x,y,z,w)")
 	mima_X, mima_Y = D.bbox[1:2], D.bbox[3:4]
@@ -2284,18 +2286,24 @@ end
 # This is the way I found to find if a matrix is transposed. There must be better ways but couldn't find them.
 istransposed(mat) = !isempty(fields(mat)) && (fields(mat)[1] == :parent)
 
-mat2grid(mat, xx, yy, zz=Float64[];
-         reg=nothing, hdr=Float64[], proj4::String="", proj::String="", wkt::String="", epsg::Int=0, geog::Int=-1, title::String="", tit::String="", rem::String="", cmd::String="", names::Vector{String}=String[], scale::Real=1f0, offset::Real=0f0, layout::String="", is_transposed::Bool=false, x_unit::String="", y_unit::String="", v_unit::String="", z_unit::String="") =
-	mat2grid(mat; x=xx, y=yy, v=zz, reg=reg, hdr=hdr, proj4=proj4, proj=proj, wkt=wkt, epsg=epsg, geog=geog,
-	         title=title, tit=tit, rem=rem, cmd=cmd, names=names, scale=scale, offset=offset, layout=layout, is_transposed=is_transposed, x_unit=x_unit, y_unit=y_unit, v_unit=v_unit, z_unit=z_unit)
-
-function mat2grid(mat; reg=nothing, x=Float64[], y=Float64[], v=Float64[], hdr=Float64[], proj4::String="", proj::String="",
-                  wkt::String="", epsg::Int=0, geog::Int=-1, title::String="", tit::String="", rem::String="", cmd::String="",
-                  names::Vector{String}=String[], scale::Real=1f0, offset::Real=0f0, layout::String="", is_transposed::Bool=false,
-                  x_unit::String="x", y_unit::String="y", v_unit::String="v", z_unit::String="z", eqc=false)
+function mat2grid(mat, xx, yy, zz=Float64[]; reg=nothing, hdr=Float64[], proj4::String="", proj::String="",
+                  wkt::String="", epsg::Int=0, geog::Int=-1, title::String="", tit::String="", rem::String="",
+                  cmd::String="", names::Vector{String}=String[], scale::Real=1f0, offset::Real=0f0, layout::String="",
+                  is_transposed::Bool=false, x_unit::String="", y_unit::String="", v_unit::String="", z_unit::String="")
 
 	israsters(mat) && return rasters2grid(mat, scale=scale, offset=offset)
 	(fields(mat) == (:x, :y, :density)) && return kde2grid(mat)		# A KernelDensity type
+
+	mat2grid(mat; x=xx, y=yy, v=zz, reg=reg, hdr=hdr, proj4=proj4, proj=proj, wkt=wkt, epsg=epsg, geog=geog, title=title,
+	         tit=tit, rem=rem, cmd=cmd, names=names, scale=scale, offset=offset, layout=layout, is_transposed=is_transposed,
+             x_unit=x_unit, y_unit=y_unit, v_unit=v_unit, z_unit=z_unit)
+end
+
+function mat2grid(mat::Array{T,N}; reg=nothing, x=Float64[], y=Float64[], v=Float64[], hdr=Float64[], proj4::String="", proj::String="",
+                  wkt::String="", epsg::Int=0, geog::Int=-1, title::String="", tit::String="", rem::String="", cmd::String="",
+                  names::Vector{String}=String[], scale::Real=1f0, offset::Real=0f0, layout::String="", is_transposed::Bool=false,
+                  x_unit::String="x", y_unit::String="y", v_unit::String="v", z_unit::String="z", eqc=false) where {T,N}
+
 	(isempty(proj4) && !isempty(proj)) && (proj4 = proj)	# Allow both proj4 or proj keywords
 	if (!isempty(proj4) && !startswith(proj4, "+proj=") && !startswith(proj4, "proj="))
 		proj4 = "+proj=" * proj4		# NOW I SHOULD TEST THIS IS A VALID PROJ4 STRING. BUT HOW?

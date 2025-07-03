@@ -990,7 +990,7 @@ function lonlat2xy(xy::Vector{<:Real}, t_srs_=nothing; t_srs=nothing, s_srs=prj4
 end
 lonlat2xy(x::Real, y::Real, t_srs_=nothing; t_srs=nothing, s_srs=prj4WGS84) = lonlat2xy([x y], t_srs_; t_srs=t_srs, s_srs=s_srs)
 
-function lonlat2xy(xy::Matrix{<:Real}, t_srs_=nothing; t_srs=nothing, s_srs=prj4WGS84)
+function lonlat2xy(xy::Matrix{T}, t_srs_=nothing; t_srs=nothing, s_srs=prj4WGS84) where {T <: Real}
 	(t_srs_ !== nothing) && (t_srs = t_srs_)
 	isa(s_srs, Int) && (s_srs = epsg2wkt(s_srs))
 	isa(t_srs, Int) && (t_srs = epsg2wkt(t_srs))
@@ -1002,7 +1002,7 @@ function lonlat2xy(xy::Matrix{<:Real}, t_srs_=nothing; t_srs=nothing, s_srs=prj4
 end
 
 lonlat2xy(D::GMTdataset, t_srs_=nothing; t_srs=nothing, s_srs=prj4WGS84) = lonlat2xy([D], t_srs_; t_srs=t_srs, s_srs=s_srs)
-function lonlat2xy(D::Vector{<:GMTdataset}, t_srs_=nothing; t_srs=nothing, s_srs=prj4WGS84)
+function lonlat2xy(D::Vector{<:GMTdataset{T,2}}, t_srs_=nothing; t_srs=nothing, s_srs=prj4WGS84) where {T<:Real}
 	(t_srs_ !== nothing) && (t_srs = t_srs_)
 	isa(t_srs, Int) && (t_srs = epsg2wkt(t_srs))
 	isa(s_srs, Int) && (s_srs = epsg2wkt(s_srs))
@@ -1129,7 +1129,7 @@ Return a vector of GMTdatasets from a vector of WKT strings.
 """
 function readgeom(wkt::Vector{String})
 	n_ds = length(wkt)
-	D = Vector{GMTdataset}(undef, n_ds)
+	D = Vector{GMTdataset{Float64,2}}(undef, n_ds)
 	for k = 1:n_ds
 		D[k] = gd2gmt(fromWKT(wkt[k]))
 	end

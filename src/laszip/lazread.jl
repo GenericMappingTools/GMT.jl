@@ -2,7 +2,7 @@ Base.@kwdef struct lasout_types
 	stored::String = ""
 	grd::GMTgrid = GMTgrid()
 	ds::GMTdataset = GMTdataset()
-	dsv::Vector{GMTdataset{Float64}} = [GMTdataset()]
+	dsv::Vector{GMTdataset{Float64,2}} = [GMTdataset()]
 	function lasout_types(stored, grd, ds, dsv)
 		stored = !isempty(grd) ? "grd" : (!isempty(ds) ? "ds" : (!isempty(dsv) ? "dsv" : ""))
 		new(stored, grd, ds, dsv)

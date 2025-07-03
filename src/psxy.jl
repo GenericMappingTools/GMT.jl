@@ -156,7 +156,7 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 	opt_W::String = add_opt_pen(d, [:W :pen], opt="W")
 	arg1, opt_W, got_color_line_grad, made_it_vector = helper_psxy_line(d, cmd, opt_W, is3D, arg1, arg2, arg3)
 
-	arg1, cmd = check_ribbon(d, arg1, cmd, opt_W)	# Do this check here, after -W is known and before parsing -G & -L
+	isa(arg1, GDtype) && (arg1, cmd = check_ribbon(d, arg1, cmd, opt_W))	# Do this check here, after -W is known and before parsing -G & -L
 
 	mcc, bar_ok = false, (sub_module == "bar" && !check_bar_group(arg1))
 	if (!got_color_line_grad && !is_gridtri && (arg1 !== nothing && !isa(arg1, GMTcpt)) && ((!got_Zvars && !is_ternary) || bar_ok))
@@ -259,7 +259,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 # If the input is a GMTdataset and one of its columns is a Time column, automatically set the -fT
-function set_fT(D::GMTdataset, cmd::String, opt_f::String)
+function set_fT(D::GMTdataset{T,N}, cmd::String, opt_f::String)::String where {T,N}
 	if ((Tc = get(D.attrib, "Timecol", "")) != "")
 		tc::Int = parse(Int, Tc) - 1
 		_opt_f = (opt_f == "") ? " -f$(tc)T" : opt_f * ",$(tc)T"
@@ -284,7 +284,7 @@ function parse_grid2tri_case(d, cmd, caller, is3D, isFV, O, arg1)
 	(opt_p == "" && !is3D && !O) && (CURRENT_VIEW[1] = "")	# Make sure it empty under these conditions
 	(opt_p == "") ? (opt_p = CURRENT_VIEW[1]; cmd *= opt_p)	: (CURRENT_VIEW[1] = opt_p) # Save for eventual use in other modules.
 
-	if (is3D && isFV)			# case of 3D faces
+	if (is3D && isFV)				# case of 3D faces
 		arg1 = (is_in_dict(d, [:replicate]) !== nothing) ? replicant(arg1, d) : deal_faceverts(arg1, d; del=find_in_dict(d, [:nocull])[1] === nothing)
 		(!O && !haskey(d, :aspect3) && is_in_dict(d, [:JZ :Jz :zsize :zscale]) === nothing && !isgeog(arg1)) && (d[:aspect3] = "equal")
 		(!O && !haskey(d, :aspect3) && isgeog(arg1)) && (d[:aspect] = "equal")
@@ -296,12 +296,12 @@ function parse_grid2tri_case(d, cmd, caller, is3D, isFV, O, arg1)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_Ebars(d, cmd, arg1)
+function parse_Ebars(d::Dict{Symbol, Any}, cmd::String, arg1)
 	got_Ebars = false
 	val, symb = find_in_dict(d, [:E :error :errorbars :error_bars], false)
 	if (val !== nothing)
 		if isa(val, String)
-			cmd *= " -E" * val
+			cmd::String *= " -E" * val
 		else
 			_mat = (arg1 === nothing) ? arg1 : isa(arg1, GMTdataset) ? arg1.data : arg1[1].data
 			cmd, mat_t = add_opt(add_opt, (d, cmd, "E", [symb]),
@@ -316,7 +316,7 @@ function parse_Ebars(d, cmd, arg1)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_color_request(d, cmd, N_args, arg1, arg2)
+function parse_color_request(d::Dict{Symbol, Any}, cmd::String, N_args::Int, arg1, arg2)
 	opt_Z, args, n, got_Zvars = add_opt(d, "", "Z", [:Z :level :levels], :data, Any[arg1, arg2], (outline="_o", nofill="_f"))
 	(opt_Z == " -Z" && n == 0) && error("The 'level' option (Z) must be set a single value, a file name or a vector os reals.")
 	if (isa(arg1, Vector{<:GMTdataset}) && ((ind_att = findfirst('=', opt_Z)) !== nothing))
@@ -353,7 +353,7 @@ function set_avatar_defaults(d, cmd, mcc, caller, got_usr_R, opt_B, opt_Gsymb, o
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_plot_G_L(d, cmd, g_bar_fill, is_ternary)
+function parse_plot_G_L(d::Dict{Symbol, Any}, cmd::String, g_bar_fill::Vector{String}, is_ternary::Bool)
 	opt_G::String = ""
 	if (isempty(g_bar_fill))					# Otherwise bar fill colors are dealt with somewhere else
 		((opt_G = add_opt_fill("", d, [:G :fill], 'G')) != "") && (cmd *= opt_G)	# Also keep track if -G was set
@@ -374,7 +374,7 @@ function parse_plot_G_L(d, cmd, g_bar_fill, is_ternary)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_plot_callers(d, gmt_proggy, caller, is3D, O, arg1)
+function parse_plot_callers(d::Dict{Symbol, Any}, gmt_proggy::String, caller::String, is3D::Bool, O::Bool, arg1)
 	isFV = (isa(arg1, GMTfv) || isa(arg1, Vector{GMTfv}))
 	(arg1 !== nothing && !isa(arg1, GDtype) && !isa(arg1, Matrix{<:Real}) && !isFV) &&
 		(arg1 = tabletypes2ds(arg1, ((val = find_in_dict(d, [:interp])[1]) !== nothing) ? interp=val : interp=0))
@@ -407,9 +407,9 @@ function parse_plot_callers(d, gmt_proggy, caller, is3D, O, arg1)
 end
 
 # ---------------------------------------------------------------------------------------------------
-plt_txt_attrib!(D::GMTdataset, d::Dict, _cmd::Vector{String}) = plt_txt_attrib!([D], d, _cmd)
-function plt_txt_attrib!(D::Vector{<:GMTdataset}, d::Dict, _cmd::Vector{String})
-	# Plot TEXT attributed labels and serve as function barrier agains to f Anys
+plt_txt_attrib!(D::GMTdataset{T,N}, d::Dict{Symbol, Any}, _cmd::Vector{String}) where {T,N} = plt_txt_attrib!([D], d, _cmd)
+function plt_txt_attrib!(D::Vector{<:GMTdataset{T,N}}, d::Dict{Symbol, Any}, _cmd::Vector{String}) where {T,N}
+	# Plot TEXT attributed labels and serve as function barrier agains the f Any's (not sure if succeeds)
 	((val = find_in_dict(d, [:labels])[1]) === nothing) && return nothing
 
 	s_val::String = string(val)
@@ -422,13 +422,13 @@ function plt_txt_attrib!(D::Vector{<:GMTdataset}, d::Dict, _cmd::Vector{String})
 	if ((fnt = add_opt(d, "", "", [:font], (angle="+a", font=("+f", font)); del=false)) != "")
 		(fnt[1] != '+') && (fnt = "+f" * fnt)
 		delete!(d, :font)
-		ct.text = make_attrtbl(D, att=ts)[1]
+		ct.text = vec(make_attrtbl(D, att=ts)[1])
 	else
 		nc::Int = round(Int, sqrt(length(D)))				# A crude guess of the number of columns
 		fnt = (nc < 5) ? "7p" : (nc < 9 ? "5p" : "4p")		# A simple heuristic
 		outline = fnt * ",black=~0.75p,white "				# Apply the outline trick
 		fnt = "+f"
-		ct.text = outline .* make_attrtbl(D, att=ts)[1]
+		ct.text = outline .* vec(make_attrtbl(D, att=ts)[1])
 	end
 	(CTRL.pocket_call[1] === nothing) ? (CTRL.pocket_call[1] = ct) : (CTRL.pocket_call[2] = ct)
 	append!(_cmd, ["pstext -R -J -F" * fnt * "+jMC"])
@@ -510,7 +510,7 @@ function if_multicols(d, arg1, is3D::Bool)
 	MULTI_COL[1] && (d2[:multi] = true)			# MULTI_COL was set in cat_2_arg2() when 2nd arg had 2 or more cols.
 	arg1 = ds2ds(arg1; is3D=is3D, d2...)		# Pass a 'd' copy and remove possible kw that are also parsed in psxy
 	delete!(d, [[:multi, :multicol, :multicols], [:lt, :linethick], [:ls, :linestyle], [:fill], [:fillalpha], [:color]])
-	MULTI_COL[1] = false							# If it was true, its jobe is done.
+	MULTI_COL[1] = false						# If it was true, its jobe is done.
 	return arg1
 end
 
@@ -545,6 +545,7 @@ function check_grouping!(d, arg1)
 end
 
 # ---------------------------------------------------------------------------------------------------
+#=
 function check_ribbon(d, arg1, cmd::String, opt_W::String)
 	((val = find_in_dict(d, [:ribbon :band])[1]) === nothing) && return arg1, cmd
 	add_2 = true
@@ -561,6 +562,7 @@ function check_ribbon(d, arg1, cmd::String, opt_W::String)
 	else
 		error("Wrong data type for ribbon/band $(typeof(val))")
 	end
+	ec1, ec2, add_2 = helper_check_ribbon(val)
 	if (isa(arg1, Vector{<:GMTdataset}))
 		if (add_2)
 			for k = 1:numel(arg1)  add2ds!(arg1[k], ec2; names=["Zbnd1","Zbnd2"])  end
@@ -573,6 +575,49 @@ function check_ribbon(d, arg1, cmd::String, opt_W::String)
 	d[:L] = (add_2) ? "+D" : "+d"
 	(!occursin(cmd, "-W") && opt_W == "") && (cmd *= " -W0.5p")		# Do not leave without a line specification
 	return arg1, cmd
+end
+=#
+
+function check_ribbon(d, arg1::GMTdataset{T,N}, cmd::String, opt_W::String) where {T,N}
+	((val = find_in_dict(d, [:ribbon :band])[1]) === nothing) && return arg1, cmd
+	ec1, ec2, add_2 = helper_check_ribbon(val)		# Function barrier agains Anys
+	(add_2) ? add2ds!(arg1, ec2; names=["Zbnd1","Zbnd2"]) : add2ds!(arg1, ec1; name="Zbnd")
+	d[:L] = (add_2) ? "+D" : "+d"
+	(!occursin(cmd, "-W") && opt_W == "") && (cmd *= " -W0.5p")		# Do not leave without a line specification
+	return arg1, cmd
+end
+
+function check_ribbon(d, arg1::Vector{<:GMTdataset{T,N}}, cmd::String, opt_W::String) where {T,N}
+	((val = find_in_dict(d, [:ribbon :band])[1]) === nothing) && return arg1, cmd
+	ec1, ec2, add_2 = helper_check_ribbon(val)		# Function barrier agains Anys
+	if (add_2)
+		for k = 1:numel(arg1)  add2ds!(arg1[k], ec2; names=["Zbnd1","Zbnd2"])  end
+	else
+		for k = 1:numel(arg1)  add2ds!(arg1[k], ec1; name="Zbnd")  end
+	end
+	d[:L] = (add_2) ? "+D" : "+d"
+	(!occursin(cmd, "-W") && opt_W == "") && (cmd *= " -W0.5p")		# Do not leave without a line specification
+	return arg1, cmd
+end
+
+function helper_check_ribbon(val)::Tuple{Vector{Float64}, Matrix{Float64}, Bool}
+	# Isolate here the fact that 'val' is a Any
+	add_2 = true
+	ec1, ec2 = Float64[], Matrix{Float64}[]
+	if isa(val, Real)
+		ec1 = repeat([float(val)::Float64], size(arg1,1)::Int)
+		add_2 = false
+	elseif (isa(val, VecOrMat{<:Real}) || isa(val, Tuple{<:Real, <:Real}))
+		(length(val)::Int == 2) ? (ec2 = repeat([float(val[1])::Float64 float(val[2])::Float64], size(arg1,1)::Int)) :
+		                           ec2 = [Float64.(vec(val)) Float64.(vec(val))]
+	elseif isa(val, Tuple{Vector{<:Real}, Vector{<:Real}})
+		ec2 = [Float64.(val[1]) Float64.(val[2])]
+	elseif (isa(val, Matrix{<:Real}) && size(val,2) == 2)
+		ec2 = val
+	else
+		error("Wrong data type for ribbon/band $(typeof(val))")
+	end
+	ec1, ec2, add_2
 end
 
 # ---------------------------------------------------------------------------------------------------

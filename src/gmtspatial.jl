@@ -50,10 +50,23 @@ Parameters
     end points in the directions implied by the line ends.
 
 """
-function gmtspatial(cmd0::String="", arg1=nothing, arg2 = nothing; kwargs...)
+gmtspatial(cmd0::String, arg1=nothing; kw...) = gmtspatial_helper(cmd0, arg1, nothing; kw...)
+gmtspatial(arg1; kw...) = gmtspatial_helper("", arg1, nothing; kw...)
+gmtspatial(arg1, arg2; kw...) = gmtspatial_helper("", arg1, arg2; kw...)
 
+# ---------------------------------------------------------------------------------------------------
+function gmtspatial_helper(cmd0::String, arg1, arg2; kw...)
 	(cmd0 == "" && arg1 === nothing && arg2 === nothing && length(kwargs) == 0) && return gmt("gmtspatial")
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+	d = init_module(false, kw...)[1]			# Also checks if the user wants ONLY the HELP mode
+	isa(arg1, Matrix) && (arg1 = mat2ds(arg1))
+	_gmtspatial_helper(cmd0, arg1, arg2, d)
+end
+
+#function gmtspatial(cmd0::String="", arg1=nothing, arg2 = nothing; kwargs...)
+function _gmtspatial_helper(cmd0::String, arg1, arg2, d::Dict)::Union{GMTdataset{Float64,2}, Vector{<:GMTdataset{Float64,2}}}
+
+	#(cmd0 == "" && arg1 === nothing && arg2 === nothing && length(kwargs) == 0) && return gmt("gmtspatial")
+	#d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	arg3 = nothing;     arg4 = nothing
 
 	cmd, = parse_common_opts(d, "", [:R :V_params :b :d :e :f :g :h :i :o :yx])
@@ -88,6 +101,7 @@ function gmtspatial(cmd0::String="", arg1=nothing, arg2 = nothing; kwargs...)
 		D.data = D.data[ind, :]
 		!isempty(D.text) && (D.text = D.text[ind])
 	end
+
 	if contains(cmd, "-N+i")
 		D.colnames = ["x","y","polID"]
 		sz = hasID ? 0 : size(D,1)
@@ -105,4 +119,4 @@ function gmtspatial(cmd0::String="", arg1=nothing, arg2 = nothing; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-gmtspatial(arg1, arg2=nothing; kw...) = gmtspatial("", arg1, arg2; kw...)
+#gmtspatial(arg1, arg2=nothing; kw...) = gmtspatial("", arg1, arg2; kw...)
