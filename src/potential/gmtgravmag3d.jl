@@ -114,8 +114,7 @@ function gravmag3d_helper(arg1, d::Dict{Symbol,Any})
 	end
 
 	(!occursin(" -F", cmd) && !occursin(" -G", cmd)) && (cmd *= " -G")
-
-	finish_PS_module(d, "gmtgravmag3d " * cmd, "", true, false, false, arg1, arg2, arg3)
+	prep_and_call_finish_PS_module(d, "gmtgravmag3d " * cmd, "", true, false, false, arg1, arg2, arg3)
 end
 
 const gmtgravmag3d = gravmag3d		# Alias

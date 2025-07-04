@@ -55,5 +55,5 @@ function mbimport(cmd0::String=""; kwargs...)
 	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:N :color_amp], 'N', N_args, arg1, nothing)
 
 	cmd = "mbimport -I" * cmd0 * cmd				# In any case we need this
-	finish_PS_module(d, cmd, "", true, false, false, arg1, arg2)
+	prep_and_call_finish_PS_module(d, cmd, "", true, false, false, arg1, arg2)
 end

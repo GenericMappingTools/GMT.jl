@@ -205,7 +205,7 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 
 	arg1, opt_S = parse_opt_S(d, arg1, is3D)
 	if (opt_S == "" && isa(arg1, GDtype) && !contains(cmd, " -S"))	# Let datasets with point/multipoint geometries plot points
-		geom = isa(arg1, Vector) ? arg1[1].geom : arg1.geom
+		geom::Int = isa(arg1, Vector) ? arg1[1].geom : arg1.geom
 		((geom == wkbPoint || geom == wkbMultiPoint) && caller != "bar") && (opt_S = " -Sp2p")
 	end
 
@@ -250,7 +250,7 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 	isa(arg1, GDtype) && plt_txt_attrib!(arg1, d, _cmd)			# Function barrier to plot TEXT attributed labels (in case)
 
 	finish = (is_ternary && occursin(" -M",_cmd[1])) ? false : true		# But this case (-M) is bugged still in 6.2.0
-	R = finish_PS_module(d, _cmd, "", K, O, finish, arg1, arg2, arg3, arg4)
+	R = prep_and_call_finish_PS_module(d, _cmd, "", K, O, finish, arg1, arg2, arg3, arg4)
 	LEGEND_TYPE[1].Vd = 0					# Because for nested calls with legends this was still > 0, which screwed later
 	CTRL.pocket_d[1] = d					# Store d that may be not empty with members to use in other modules
 	(opt_B == " -B") && gmt_restart()		# For some Fking mysterious reason (see Ex45)
@@ -813,7 +813,7 @@ function helper_fish_bgs(val)::String
 		                                 isa(arg2, GMTcpt) ? gmt("makecpt -T0/256/1 -C" * opt_H, arg2) :
 							        	 gmt("makecpt -T0/256/1 -C" * string(arg2)::String * opt_I * opt_H)
 		image_cpt!(I, C)
-		CTRL.pocket_call[3] = I					# This signals finish_PS_module() to run _cmd first
+		CTRL.pocket_call[3] = I			# This signals finish_PS_module() to run _cmd first
 	end
 	FIG_MARGIN[1] = 0
 	return fname

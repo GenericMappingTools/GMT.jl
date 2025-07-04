@@ -146,7 +146,7 @@ function contour_helper(cmd0::String, arg1; first=true, kwargs...)
 #	end
 
 	_cmd = finish_PS_nested(d, [gmt_proggy * cmd])
-	return finish_PS_module(d, _cmd, "-D", K, O, true, arg1, arg2, arg3)
+	prep_and_call_finish_PS_module(d, _cmd, "-D", K, O, true, arg1, arg2, arg3)
 end
 
 # ---------------------------------------------------------------------------------------------------

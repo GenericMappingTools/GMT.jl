@@ -186,5 +186,5 @@ function common_mecas(cmd0, arg1, d, proggy, first, K, O)
 	cmd, arg1, arg2, = add_opt_cpt(d, cmd, [:Z :C :color :cmap], 'Z', N_args, arg1, arg2)
 	cmd *= opt_pen(d, 'W', [:W :pen])
 
-	finish_PS_module(d, proggy * cmd, "", K, O, true, arg1, arg2)
+	prep_and_call_finish_PS_module(d, proggy * cmd, "", K, O, true, arg1, arg2)
 end

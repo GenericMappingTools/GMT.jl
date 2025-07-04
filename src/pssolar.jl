@@ -55,15 +55,15 @@ function solar(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	cmd  = add_opt(d, cmd, "T", [:T :terminators], (term="",date="+d",TZ="+z"))
 	cmd *= opt_pen(d, 'W', [:W :pen])
 
-	opt_extra = "";		do_finish = true
+	opt_extra = "";		finish = true
 	if (occursin("-I", cmd) || occursin("-I", cmd0))
-		opt_extra = "-I";		do_finish = false;	cmd = replace(cmd, opt_J => "")
+		opt_extra = "-I";		finish = false;	cmd = replace(cmd, opt_J => "")
 	end
 	_cmd = (opt_extra != "-I" && (!occursin("-M", cmd) && !occursin("-M", cmd0)) && (!occursin("-T", cmd) && !occursin("-T", cmd0))) ?
 	finish_PS_nested(d, [gmt_proggy * cmd]) : [gmt_proggy * cmd]
 	(length(_cmd) > 1 && startswith(_cmd[2], (IamModern[1]) ? "coast" : "pscoast") && !contains(_cmd[1], " -R") &&
 		contains(_cmd[2], " -R ")) && (_cmd[2] = replace(_cmd[2], "-R" => "-Rd"))		# Apparently solar defaults to -Rd but only internally in C
-	return finish_PS_module(d, _cmd, opt_extra, K, O, do_finish, arg1)
+	prep_and_call_finish_PS_module(d, _cmd, opt_extra, K, O, finish, arg1)
 end
 
 # ---------------------------------------------------------------------------------------------------

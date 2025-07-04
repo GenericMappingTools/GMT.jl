@@ -77,7 +77,7 @@ function colorbar(arg1::Union{Nothing, GMTcpt}=nothing; first=true, kwargs...)
 	(opt_B != "" && !contains(cmd, " -L")) && (cmd *= opt_B)					# If no -B & no -L, add default -B
 	isempty(opt_D) && (cmd *= " -DJMR")			#  So that we can call it with just a CPT
 
-	r = finish_PS_module(d, gmt_proggy * cmd, "", K, O, true, arg1)
+	r = prep_and_call_finish_PS_module(d, gmt_proggy * cmd, "", K, O, true, arg1)
 	(!isa(r,String)) && gmt("destroy")      # Probably because of the rasters in cpt
 	return r
 end

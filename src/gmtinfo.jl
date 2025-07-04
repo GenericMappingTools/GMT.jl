@@ -39,7 +39,7 @@ Parameters
 - $(opt_write)
 - $(opt_append)
 
-To see the full documentation type: ``@? grdmask``
+To see the full documentation type: ``@? gmtinfo``
 """
 gmtinfo(cmd0::String; kwargs...) = gmtinfo_helper(cmd0, nothing; kwargs...)
 gmtinfo(arg1; kwargs...)         = gmtinfo_helper("", arg1; kwargs...)

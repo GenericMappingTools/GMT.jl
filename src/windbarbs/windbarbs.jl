@@ -43,7 +43,7 @@ function windbarbs(arg1; first=true, kwargs...)
 	_cmd = [gmt_proggy * cmd]
 	_cmd = frame_opaque(_cmd, gmt_proggy, opt_B, opt_R, opt_J)		# No -t in frame
 	_cmd = finish_PS_nested(d, _cmd)
-	finish_PS_module(d, _cmd, "", K, O, true, arg1, arg2)
+	prep_and_call_finish_PS_module(d, _cmd, "", K, O, true, arg1, arg2)
 end
 
 function windbarbs(arg1::Union{String, GMTgrid}, arg2::Union{String, GMTgrid}; first=true, kwargs...)
@@ -53,5 +53,5 @@ function windbarbs(arg1::Union{String, GMTgrid}, arg2::Union{String, GMTgrid}; f
 	delete!(d, :barbs)			# Because if we used 'Q', 'barbs' was still in the dictionary
 	cmd[1] = parse_these_opts(cmd[1], d, [[:A :polar], [:T :signs :sign_scale], [:Z :azim :azimuth :azimuths]])
 
-	finish_PS_module(d, cmd, "", first, !first, true, arg1, arg2, arg3)
+	prep_and_call_finish_PS_module(d, cmd, "", first, !first, true, arg1, arg2, arg3)
 end

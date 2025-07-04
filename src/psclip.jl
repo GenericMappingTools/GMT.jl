@@ -37,7 +37,7 @@ clip(; kwargs...)              = clip_helper("", nothing; first=false, kwargs...
 # ---------------------------------------------------------------------------------------------------
 function clip_helper(cmd0::String, arg1; first=true, kwargs...)
 
-	gmt_proggy = (IamModern[1]) ? "clip " : "psclip "
+	proggy = (IamModern[1]) ? "clip " : "psclip "
 
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
@@ -49,7 +49,7 @@ function clip_helper(cmd0::String, arg1; first=true, kwargs...)
 	# If file name sent in, read it and compute a tight -R if this was not provided 
 	cmd, arg1, = read_data(d, cmd0, cmd, arg1, opt_R)
 
-	finish_PS_module(d, gmt_proggy * cmd, "", K, O, true, arg1)
+	prep_and_call_finish_PS_module(d, proggy * cmd, "", K, O, true, arg1)
 end
 
 # ---------------------------------------------------------------------------------------------------

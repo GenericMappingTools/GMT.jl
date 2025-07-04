@@ -4386,13 +4386,29 @@ end
 #validate_VMr(arg)::VMr = return isa(arg, VMr) ? arg : VMr[]
 
 # ---------------------------------------------------------------------------------------------------
+function prep_and_call_finish_PS_module(d::Dict{Symbol, Any}, cmd, opt_extra::String, K::Bool, O::Bool, finish::Bool,
+                                        arg1=nothing, arg2=nothing, arg3=nothing, arg4=nothing, arg5=nothing)
+	# This is a helper to avoid the long list of args in the finish_PS_module() call
+	case = (arg5 !== nothing) ? 5 : (arg4 !== nothing) ? 4 : (arg3 !== nothing) ? 3 : (arg2 !== nothing) ? 2 : (arg1 !== nothing) ? 1 : 0  
+	if     (case == 0)  R = finish_PS_module(d, cmd, opt_extra, K, O, finish)
+	elseif (case == 1)  R = finish_PS_module(d, cmd, opt_extra, K, O, finish, arg1)
+	elseif (case == 2)  R = finish_PS_module(d, cmd, opt_extra, K, O, finish, arg1, arg2)
+	elseif (case == 3)  R = finish_PS_module(d, cmd, opt_extra, K, O, finish, arg1, arg2, arg3)
+	elseif (case == 4)  R = finish_PS_module(d, cmd, opt_extra, K, O, finish, arg1, arg2, arg3, arg4)
+	else                R = finish_PS_module(d, cmd, opt_extra, K, O, finish, arg1, arg2, arg3, arg4, arg5)
+	end
+end
+
+# ---------------------------------------------------------------------------------------------------
 finish_PS_module(d::Dict, cmd::String, opt_extra::String, K::Bool, O::Bool, finish::Bool, args...) =
 	finish_PS_module(d, [cmd], opt_extra, K, O, finish, args...)
 function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bool, O::Bool, finish::Bool, args...)
 	# FNAME_EXT hold the extension when not PS
 	# OPT_EXTRA is used by grdcontour -D or pssolar -I to not try to create and view an img file
 
-	#while (length(args) > 1 && args[end] === nothing)  pop!(args)  end		# Remove trailing nothings
+	#if ((n = findlast(args .!= nothing)) !== nothing)
+		#args = args[1:n]
+	#end
 	
 	reverse_plot_axes!(cmd)		# If CTRL.pocket_J[4] != "   " there is some work to do. Otherwise return unchanged
 

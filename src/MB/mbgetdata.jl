@@ -42,5 +42,5 @@ function mbgetdata(cmd0::String=""; kwargs...)
 	cmd = add_opt(d, cmd, "C", [:C :datatype :data_type], (sidescan="_0", amplitude="_a"))
 
 	cmd = "mbgetdata -I" * cmd0 * cmd				# In any case we need this
-	finish_PS_module(d, cmd, "", true, false, false)
+	prep_and_call_finish_PS_module(d, cmd, "", true, false, false)
 end
