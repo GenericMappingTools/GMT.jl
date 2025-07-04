@@ -62,7 +62,7 @@ function image_helper(cmd0::String, arg1; first=true, kwargs...)
 
 	cmd, _, arg1 = find_data(d, cmd0, cmd, arg1)		# Find how data was transmitted
 
-	return finish_PS_module(d, gmt_proggy * cmd, "", K, O, true, arg1)
+	prep_and_call_finish_PS_module(d, gmt_proggy * cmd, "", K, O, true, arg1)
 end
 
 # ---------------------------------------------------------------------------------------------------

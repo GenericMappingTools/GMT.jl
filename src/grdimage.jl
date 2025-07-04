@@ -119,7 +119,7 @@ function _grdimage(cmd0::String, arg1, arg2, arg3, O::Bool, K::Bool, d::Dict)
 		(length(opt_J) > 3 && (opt_J[4] != 'X' && opt_J[4] != 'x')) && (cmd *= "r")	# GMT crashes when just -D and proj
 	end
 
-	do_finish = false
+	finish = false
 	_cmd = ["grdimage " * cmd]
 	_cmd = frame_opaque(_cmd, opt_B, opt_R, opt_J; bot=false)		# No -t in frame
 	if (!occursin("-A", cmd))			# -A means that we are requesting the image directly
@@ -133,13 +133,13 @@ function _grdimage(cmd0::String, arg1, arg2, arg3, O::Bool, K::Bool, d::Dict)
 		if (startswith(_cmd[end], "inset_") && isa(CTRL.pocket_call[4], String))
 			_cmd = zoom_reactangle(_cmd, false)
 		end
-		do_finish = true
+		finish = true
 	end
 
 	if (length(_cmd) > 1 && cmd0 != "")		# In these cases no -R is passed so the nested calls set an unknown -R
 		for k = 2:lastindex(_cmd)  _cmd[k] = replace(_cmd[k], "-R " => "-R" * cmd0 * " ")  end
 	end
-	finish_PS_module(d, _cmd, "", K, O, do_finish, arg1, arg2, arg3, arg4)
+	prep_and_call_finish_PS_module(d, _cmd, "", K, O, finish, arg1, arg2, arg3, arg4)
 end
 
 # ---------------------------------------------------------------------------------------------------

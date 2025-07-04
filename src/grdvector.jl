@@ -145,7 +145,7 @@ function grdvector(arg1, arg2; first=true, kwargs...)
 	_cmd = frame_opaque(_cmd, opt_B, opt_R, opt_J)		# No -t in frame
 	_cmd = finish_PS_nested(d, _cmd)
 	isbarbs && return d, _cmd, arg1, arg2, arg3				# If called by winbarbs return what we have
-    finish_PS_module(d, _cmd, "", K, O, true, arg1, arg2, arg3)
+	prep_and_call_finish_PS_module(d, _cmd, "", K, O, true, arg1, arg2, arg3)
 end
 
 # ---------------------------------------------------------------------------------------------------

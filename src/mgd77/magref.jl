@@ -103,7 +103,7 @@ function magref_helper(arg1::GDtype, d::Dict{Symbol,Any})
 
 	cmd = "mgd77magref" * cmd
 	(dbg_print_cmd(d, cmd) !== nothing) && return cmd
-	finish_PS_module(d, cmd, "", true, false, false, arg1)
+	prep_and_call_finish_PS_module(d, cmd, "", true, false, false, arg1)
 end
 
 const mgd77magref = magref		# Alias

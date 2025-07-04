@@ -255,7 +255,7 @@ function histogram_helper(cmd0::String, arg1; first=true, kwargs...)
 	_cmd = fish_bg(d, _cmd)					# See if we have a "pre-command" (background img)
 
 	# Plot the histogram
-	out1 = finish_PS_module(d, _cmd, "", K, O, true, arg1, arg2)
+	out1 = prep_and_call_finish_PS_module(d, _cmd, "", K, O, true, arg1, arg2)
 
 	# And if wished, plot the two vertical lines with the limits annotated in them
 	if (limit_L !== nothing)
@@ -288,17 +288,17 @@ function three_histos(d::Dict, I::GMTimage{UInt8, 3}, cmd, gmt_proggy, O, opt_T,
 
 	hst, _cmd = loc_histo(view(I, :, :, 1), _cmd, opt_T, opt_Z)
 	_cmd = replace(_cmd, "-G#0072BD" => "-Gred")
-	finish_PS_module(d, [_cmd], "", true, O, true, hst);
+	prep_and_call_finish_PS_module(d, [_cmd], "", true, O, true, hst)
 	O = true
 	hst, = loc_histo(view(I, :, :, 2), _cmd, "", "")
 	_cmd = replace(_cmd, "-Gred" => "-Ggreen")
 	(opt_B == DEF_FIG_AXES_BAK) && (_cmd = replace(_cmd, opt_B => " -Baf -BWsen"))
-	finish_PS_module(d, [_cmd * " -Y$(H)c"], "", true, O, true, hst)
+	prep_and_call_finish_PS_module(d, [_cmd * " -Y$(H)c"], "", true, O, true, hst)
 	hst, = loc_histo(view(I, :, :, 3), _cmd, "", "")
 	_cmd = replace(_cmd, "-Ggreen" => "-Gblue")
 
 	(d[:show] = show_; d[:fmt] = fmt_; d[:savefig] = savefig_)		# 
-	out = finish_PS_module(d, [_cmd * " -Y$(H)c"], "", true, O, true, hst)
+	prep_and_call_finish_PS_module(d, [_cmd * " -Y$(H)c"], "", true, O, true, hst)
 end
 
 # ---------------------------------------------------------------------------------------------------

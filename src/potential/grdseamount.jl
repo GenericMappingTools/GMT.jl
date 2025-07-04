@@ -38,5 +38,5 @@ function grdseamount_helper(arg1::GDtype, d::Dict{Symbol,Any})
 		end
 	end
 
-	finish_PS_module(d, "grdseamount " * cmd, "", true, false, false, arg1, arg2, arg3)
+	prep_and_call_finish_PS_module(d, "grdseamount " * cmd, "", true, false, false, arg1, arg2, arg3)
 end

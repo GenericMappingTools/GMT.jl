@@ -112,7 +112,7 @@ function rose_helper(cmd0::String, arg1; first=true, kwargs...)
 
 	_cmd = [gmt_proggy * cmd]
 	_cmd = frame_opaque(_cmd, opt_B, opt_R, opt_J)		# No -t in frame
-	return finish_PS_module(d, _cmd, "", K, O, true, arg1, arg2)
+	prep_and_call_finish_PS_module(d, _cmd, "", K, O, true, arg1, arg2)
 end
 
 # ---------------------------------------------------------------------------------------------------

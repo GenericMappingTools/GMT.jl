@@ -165,7 +165,7 @@ function _coast(cmd0::String, O::Bool, K::Bool, clip::StrSymb, d::Dict)
 		end
 	end
 
-	R = finish_PS_module(d, _cmd, "", K, O, finish)
+	R = prep_and_call_finish_PS_module(d, _cmd, "", K, O, finish)
 	CTRL.pocket_d[1] = d					# Store d that may be not empty with members to use in other modules
 	!isa(R, GDtype) && return R				# If R is not a GMTdataset we are done.
 

@@ -68,7 +68,7 @@ function logo(cmd0::String=""; first=true, kwargs...)
 				savefig = val
 			end
 		end
-		ret::Union{Nothing, String} = finish_PS_module(d, "psxy " * c * cmd, "", K, O, true, t)
+		ret::Union{Nothing, String} = prep_and_call_finish_PS_module(d, "psxy " * c * cmd, "", K, O, true, t)
 		(ret !== nothing && startswith(ret, "psxy")) && return ret
 		if (do_GMTjulia)
 			letter_height = 0.75 * r2 / 2.54 * 72 		# Make the letters 75% of the cicle's diameter
@@ -81,7 +81,7 @@ function logo(cmd0::String=""; first=true, kwargs...)
 		end
 	else
 		(!occursin("-D", cmd)) && (cmd = " -Dx0/0+w5c " * cmd)
-		return finish_PS_module(d, "gmtlogo " * cmd, "", K, O, true)
+		return prep_and_call_finish_PS_module(d, "gmtlogo " * cmd, "", K, O, true)
 	end
 end
 
