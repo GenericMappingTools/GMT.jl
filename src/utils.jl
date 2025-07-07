@@ -1444,6 +1444,10 @@ Compute the region for a map of user specified projection, scale, width and heig
 A tuple with the region in the form of "xmin/xmax/ymin/ymax" and the projection string used.
 Use this ooutput as input on all odules that require a `region` and `projection`.
 
+### Credits
+Stolen fom Tim Hume's idea posted in the GMT forum:
+https://forum.generic-mapping-tools.org/t/script-to-create-a-map-with-defined-width-and-height/5909/17?u=joaquim
+
 ### Example
 ```julia
 opt_R, opt_J = mapsize2region(proj=(name=:tmerc, center=-177), scale="1:10000000", clon=-177, clat=-21, width=15, height=10)
