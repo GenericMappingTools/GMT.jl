@@ -1,7 +1,3 @@
-# From equations in "THE LOXODROME ON AN ELLIPSOID"
-# http://www.mygeodesy.id.au/documents/Loxodrome%20on%20Ellipsoid.pdf
-
-
 """
     function loxodrome_inverse(lon1, lat1, lon2, lat2, a=6378137.0, f=0.0033528106647474805)
 
@@ -15,6 +11,9 @@ Args:
 - `lon1, lat1, lon2, lat2`: - longitude and latitude of starting and end points (degrees).
 - `a` - major axis of the ellipsoid (meters). Default values for WGS84
 - `f` - flattening od the ellipsoid (default = 1 / 298.257223563)
+
+### References:
+- [The Loxodrome on an Ellipsoid](http://www.mygeodesy.id.au/documents/Loxodrome%20on%20Ellipsoid.pdf)
 
 ### Returns
 - Distance (meters) and azimuth from P1 to P2
@@ -58,6 +57,9 @@ Args:
 - `a` - major axis of the ellipsoid (meters). Default values for WGS84
 - `f` - flattening od the ellipsoid (default = 1 / 298.257223563)
 
+### References:
+- [The Loxodrome on an Ellipsoid](http://www.mygeodesy.id.au/documents/Loxodrome%20on%20Ellipsoid.pdf)
+
 ### Returns
 - [lon lat] of destination after moving for [distance] metres in [azimuth] direction.
 
@@ -72,14 +74,13 @@ function loxodrome_direct(lon, lat, azim, dist, a=6378137.0, f=0.003352810664747
 	e2 = f * (2 - f)
 	m1 = meridian_dist(lat, a, e2)
 	m2 = dist * cos(azim) + m1
-	dm = m2 - m1
 
 	A0, A2, A4, A6, A8, A10 = f_phi_coeff(e2)
 	ae2 = a * (1 - e2)
 	phi_n, dphi = lat, 1e3
 	n = 0
 	while (dphi > 1e-10 && n < 6)
-		phi_n1 = phi_n - (ae2 * f_phi(phi_n, A0, A2, A4, A6, A8, A10) - dm) / (ae2 * f_prime_phi(phi_n, A0, A2, A4, A6, A8, A10))
+		phi_n1 = phi_n - (ae2 * f_phi(phi_n, A0, A2, A4, A6, A8, A10) - m2) / (ae2 * f_prime_phi(phi_n, A0, A2, A4, A6, A8, A10))
 		dphi = abs(phi_n1 - phi_n)
 		phi_n = phi_n1
 		n += 1

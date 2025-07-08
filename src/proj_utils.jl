@@ -546,6 +546,9 @@ In later case each line segment is descretized at `step` increments,
 - `proj`  - If line data is in Cartesians but with a known projection pass in a PROJ4 string
 - `epsg`  - Same as `proj` but using an EPSG code
 
+### References:
+- [The Loxodrome on an Ellipsoid](http://www.mygeodesy.id.au/documents/Loxodrome%20on%20Ellipsoid.pdf)
+
 ### Returns
 A Mx2 matrix with the lon lat of the points along the loxodrome when input is a matrix or the 2 pairs of points.
 A GMTdataset when the input is GMTdataset.
