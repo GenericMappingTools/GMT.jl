@@ -31,6 +31,7 @@
 	loxo = loxodrome([0 0; 30 50], step=500, unit=:k);
 	loxo = loxodrome(mat2ds([0 0; 30 50]), step=500, unit=:k);
 	loxo = loxodrome(0, 0, 30, 50, step=500, unit=:k);
+	@test loxodrome_direct(10, 10, 22.778079, 1000000) == [13.589868324643346 18.33324428165521]
 	orto = geodesic(mat2ds([0 0; 30 50]), step=500, unit=:k);
 	orto = geodesic([mat2ds([0 0; 30 50])], step=500, unit=:k);
 	geodesic(mat2ds([0 0; 15 25; 30 50]), step=500, unit=:k)
