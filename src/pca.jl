@@ -83,7 +83,7 @@ end
   
 ### Returns
   
-- `score`: The principal components.
+- `score`: The principal components scores.
 - `coeff`: The principal component coefficients for the matrix X. Rows of X correspond to observations and
   columns correspond to variables. The coefficient matrix is npc-by-n. Each column of coeff contains coefficients
   for one principal component, and the columns are in descending order of component variance.
@@ -105,7 +105,7 @@ The ``truecolor(Ipca)`` (from ``RemoteS``) will show a false color image made of
 This method takes a ``GMTgrid`` cube and returns another grid, of type `DT` (``Float32`` by default), with principal
 components in decreasing order of explained variance.
 """
-function pca(X::Union{GMTdataset, Matrix{<:Real}}; DT::DataType=Float32, npc::Int=0)
+function pca(X::AbstractArray{T}; DT::DataType=Float32, npc::Int=0) where T<:Real
 	eltype(X) <: Integer ? princomp!(DT.(X), npc) : princomp!(copy(X), npc)
 end
 
@@ -270,4 +270,22 @@ function helper_kmeans(X, k=5; seeds=nothing, maxiter=100, tol=1e-7, V=false)
 	end
 	V == 1 && (toc(); println("\tN iterations = ",n, "\tTol = ", change))
 	return dist, centers
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    z = zscores(x::AbstractArray{T}) -> AbstractArray{Float64}
+
+Compute the z-scores of an array `x` with mean `μ` and standard deviation `σ`.
+z-scores are the signed number of standard deviations above the mean that an
+observation lies, i.e. ``(x - μ) / σ``.
+"""
+function zscores(x::AbstractArray{T}) where T<:Real
+	# Minimalist z-scores function to avoid adding StatsBase.jl as a dependency.
+	dim = findfirst(size(x) != 1)		# Find the first dimension that is not 1
+	mu = mean(x, dims=dim)
+	sigma = std(x, dims=dim)
+	sigma0 = sigma
+	sigma0[sigma0 .== 0] .= 1
+	(x .- mu) ./ sigma0
 end
