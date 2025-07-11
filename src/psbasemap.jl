@@ -3,8 +3,6 @@
 
 Plot base maps and frames.
 
-See full GMT (not the `jl` one) docs at [`psbasemap`]($(GMTdoc)basemap.html)
-
 Parameters
 ----------
 
@@ -44,15 +42,20 @@ Parameters
 
 To see the full documentation type: ``@? basemap``
 """
-function basemap(; first=true, kwargs...)
+basemap(; first=true, kwargs...) = helper_basemap(; first=first, kwargs...)
+basemap!(; kwargs...) = helper_basemap(; first=false, kwargs...)
+function helper_basemap(; first=true, kw...)
+	d, K, O = init_module(first, kw...)		# Also checks if the user wants ONLY the HELP mode
+	helper_basemap(O, K, d)
+end
 
-	gmt_proggy = (IamModern[1]) ? "basemap "  : "psbasemap "
+function helper_basemap(O::Bool, K::Bool, d::Dict{Symbol, Any})
 
-	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
+	proggy = (IamModern[1]) ? "basemap "  : "psbasemap "
 
 	cmd, = parse_BJR(d, "", "", O, " -JX" * split(DEF_FIG_SIZE, '/')[1] * "/0")
 	cmd, = parse_JZ(d, cmd)
-	cmd, = parse_common_opts(d, cmd, [:F :UVXY :bo :c :f :p :t :params :margin]; first=first)
+	cmd, = parse_common_opts(d, cmd, [:F :UVXY :bo :c :f :p :t :params :margin]; first=!O)
 	cmd  = parse_these_opts(cmd, d, [[:A :polygon]])
 	cmd  = parse_Td(d, cmd)
 	cmd  = parse_Tm(d, cmd)
@@ -61,13 +64,11 @@ function basemap(; first=true, kwargs...)
 	                        #(map=("g", arg2str, 1), outside=("J", nothing, 1), inside=("j", nothing, 1), norm=("n", arg2str, 1), paper=("x", arg2str, 1), anchor=("", arg2str, 2), width="+w", size="+w", justify="+j", offset=("+o", arg2str), save="+s", translate="_+t", units="_+u"), 'j')
 	#(!IamModern[1] && opt_D != "") && (cmd *= opt_D)
 	#(IamModern[1] && opt_D != "") && @warn("The `inset` option is not available in modern mode. Please use the `inset()` function.")
-	_cmd = finish_PS_nested(d, [gmt_proggy * cmd])
+	_cmd = finish_PS_nested(d, [proggy * cmd])
 	CTRL.pocket_d[1] = d		# Store d that may be not empty with members to use in other modules
 	prep_and_call_finish_PS_module(d, _cmd, "", K, O, true)
 end
 
 # ---------------------------------------------------------------------------------------------------
-basemap!(; kw...) = basemap(; first=false, kw...)
-
 const psbasemap  = basemap 		# Alias
 const psbasemap! = basemap!		# Alias
