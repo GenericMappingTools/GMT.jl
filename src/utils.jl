@@ -825,7 +825,7 @@ end
 
 # ----------------------------------------------------------------------------------------------------------
 """
-    gidx, gnames = grp2idx(s::AbstracVector)
+    gidx, gnames = grp2idx(S::AbstracVector)
 
 Creates an index Vector{Vector} from the grouping variable S. S can be an AbstracVector of elements
 for which the `==` method is defined. It returns a Vector of Vectors with the indices of the elements

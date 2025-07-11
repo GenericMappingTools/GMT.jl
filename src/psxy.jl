@@ -545,39 +545,6 @@ function check_grouping!(d, arg1)
 end
 
 # ---------------------------------------------------------------------------------------------------
-#=
-function check_ribbon(d, arg1, cmd::String, opt_W::String)
-	((val = find_in_dict(d, [:ribbon :band])[1]) === nothing) && return arg1, cmd
-	add_2 = true
-	if isa(val, Real)
-		ec1::Vector{Float64} = repeat([float(val)::Float64], size(arg1,1)::Int)
-		add_2 = false
-	elseif (isa(val, VecOrMat{<:Real}) || isa(val, Tuple{<:Real, <:Real}))
-		(length(val)::Int == 2) ? (ec2::Matrix{Float64} = repeat([float(val[1])::Float64 float(val[2])::Float64], size(arg1,1)::Int)) :
-		                           ec2 = [Float64.(vec(val)) Float64.(vec(val))]
-	elseif isa(val, Tuple{Vector{<:Real}, Vector{<:Real}})
-		ec2 = [Float64.(val[1]) Float64.(val[2])]
-	elseif (isa(val, Matrix{<:Real}) && size(val,2) == 2)
-		ec2 = val
-	else
-		error("Wrong data type for ribbon/band $(typeof(val))")
-	end
-	ec1, ec2, add_2 = helper_check_ribbon(val)
-	if (isa(arg1, Vector{<:GMTdataset}))
-		if (add_2)
-			for k = 1:numel(arg1)  add2ds!(arg1[k], ec2; names=["Zbnd1","Zbnd2"])  end
-		else
-			for k = 1:numel(arg1)  add2ds!(arg1[k], ec1; name="Zbnd")  end
-		end
-	else
-		(add_2) ? add2ds!(arg1, ec2; names=["Zbnd1","Zbnd2"]) : add2ds!(arg1, ec1; name="Zbnd")
-	end
-	d[:L] = (add_2) ? "+D" : "+d"
-	(!occursin(cmd, "-W") && opt_W == "") && (cmd *= " -W0.5p")		# Do not leave without a line specification
-	return arg1, cmd
-end
-=#
-
 function check_ribbon(d, arg1::GMTdataset{T,N}, cmd::String, opt_W::String) where {T,N}
 	((val = find_in_dict(d, [:ribbon :band])[1]) === nothing) && return arg1, cmd
 	ec1, ec2, add_2 = helper_check_ribbon(val)		# Function barrier agains Anys

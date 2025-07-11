@@ -99,5 +99,8 @@
 	marginalhist!(randn(2001,2), aspect=:equal)
 	try marginalhist("lixo", Vd=dbg2); catch end
 	try marginalhist!("lixo", Vd=dbg2); catch end
+
+	biplot(TESTSDIR * "iris.dat")
+
 	GMT.resetGMT()
 end

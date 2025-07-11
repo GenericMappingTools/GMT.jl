@@ -2081,3 +2081,136 @@ function pick_justify(angs)::Vector{String}
 	end
 	return justs[t]
 end
+
+# ------------------------------------------------------------------------------------------------------
+"""
+    biplot(name::String | D::GMTDataset; arrow::Tuple=(0.3, 0.5, 0.75, "#0072BD"), cmap=:categorical,
+           colorbar::Bool=true, marker=:point,ms="auto", obsnumbers::Bool=false, PC=(1,2),
+           varlabels=:yes, xlabel="", ylabel="", kw...)
+
+Create a 2D biplot of the Principal Component Analysis (PCA) of a two-dimensional chart that
+represents the relationship between the rows and columns of a table.
+
+- `cmd0`: The name of a 2D data table file readable with ``gmtread()``, or a ``GMTdataset`` with the data.
+- `arrow`: a tuple with the following values: (len, shape, width, color). If this default is used we scale them by fig size.
+   - `len`: the length of the arrow head in cm. Default is 0.3.
+   - `shape`: the shape of the arrow. Default is 0.5.
+   - `width`: the width of the arrow stem in points. Default is 0.75.
+   - `color`: the color of the arrow. Default is "#0072BD".
+- `cmap`: a String or Symbol with the name of a GMT colormap. 
+   - Or a string with "matlab" or "distinct"
+   - Or "alphabet" for colormaps with distinct colors.
+   - Or a comma separated string with color names; either normal names ("red,green") or hex color codes ("#ff0000,#00ff00").
+   - Or "none" for plotting all points in black color. A single color in hexadecimal format plots all points in that color.
+   Default is "categorical".
+- `colorbar`: whether to plot a colorbar. Default is true.
+- `marker`: a String or Symbol with the name of a GMT marker symbol. Default is "point".
+- `ms`: a String or Symbol with the name of a GMT marker size. Default is "auto" (also scales sizes with the size of the plot).
+- `obsnumbers`: whether to plot observation numbers on the plot. Default is false. Note that in this case we are not able
+   to plot colored numbers by category, so we plot the symbols as well (use `cmap="none"` if you don't want this).
+- `PC`: a tuple with the principal components to plot. Default is (1, 2). For example PC=(2,3) plots
+   the 2nd and 3rd principal components.
+- `varlabels`: whether to plot variable labels. The default is :yes and it prints as labels the column names
+   if the input GMTdataset. Is it hasn't column names, then it prints "A,B,C,...". Give a string vector to plot custom labels.
+- `xlabel`: a String with the x-axis label. Default is "", which prints "PC[PC[1]]".
+- `ylabel`: a String with the y-axis label. Default is "", which prints "PC[PC[2]]".
+- `kw...`: Any additional keyword argument to be passed to the ``plot()`` function.
+
+### Examples
+
+```julia
+biplot(TESTSDIR * "iris.dat", show=true)
+
+# Plot a 6 cm fig with observarion numbers
+biplot(TESTSDIR * "iris.dat", figsize=6, obsnumbers=true, show=true)
+```
+"""
+biplot(cmd0::String; first::Bool=true, PC=(1,2), xlabel="", ylabel="", varlabels=:yes, cmap=:categorical, marker=:point,
+       ms="auto", obsnumbers::Bool=false, colorbar::Bool=true, arrow::Tuple=(0.3, 0.5, 0.75, "#0072BD"), kw...) =
+	biplot(gmtread(cmd0)::GMTdataset{Float64,2}; first=first, PC=PC, xlabel=xlabel, ylabel=ylabel, varlabels=varlabels,
+           cmap=cmap, marker=marker, ms=ms, obsnumbers=obsnumbers, colorbar=colorbar, arrow=arrow, kw...)
+
+function biplot(D::GMTdataset{T,2}; first::Bool=true, PC=(1,2), cmap=:categorical, xlabel="", ylabel="",
+                varlabels=:yes, marker=:point, ms="auto", obsnumbers::Bool=false, colorbar::Bool=true,
+                arrow::Tuple=(0.3, 0.5, 0.75, "#0072BD"), kw...) where {T<:Real}
+	xlab = (xlabel == "") ? "PC$(PC[1])" : xlabel
+	ylab = (ylabel == "") ? "PC$(PC[2])" : ylabel
+	labels = isa(varlabels, Vector{<:String}) ? varlabels : String[]
+	if (lowercase(string(varlabels)) != "no")
+		labels = startswith(D.colnames[1], "col.") ? string.(collect('A':'Z')[1:size(D,2)]) : D.colnames[1:size(D,2)]
+	end
+	Z = zscores(D)
+	scores, coefs, _, explained, = pca(Z)
+	biplot(Float64.(coefs[:,[PC[1], PC[2]]]), Float64.(scores[:,[PC[1], PC[2]]]), Float64.(explained[[PC[1], PC[2]]]),
+	       labels, D.text, obsnumbers, xlab, ylab, lowercase(string(cmap)), string(marker), string(ms), colorbar,
+           (Float64.(arrow[1:3])..., string(arrow[4])), first, KW(kw))
+end
+
+function biplot(coefs::Matrix{Float64}, scores::Matrix{Float64}, explained::Vector{Float64}, varlabels::Vector{<:String},
+	            obslabels::Vector{<:String}, obsnumb::Bool, xlabel::String, ylabel::String, cmap::String, marker::String,
+                ms::String, colorbar::Bool, arrow_pars::Tuple{Float64, Float64, Float64, String}, first::Bool, d::Dict{Symbol,Any})
+
+	!isempty(varlabels) && (length(varlabels) != size(coefs, 1)) &&
+		error("The number of varlabels ($(length(varlabels))) does not match the number of rows in data ($(size(coefs, 1)))")
+
+	show = find_in_dict(d, [:show])[1] !== nothing;		fmt = find_in_dict(d, [:fmt])[1];	(fmt === nothing) && (fmt = FMT[1]);
+	savefig = find_in_dict(d, [:savefig :figname :name])[1];
+	signs = sign.(coefs[findmax(abs, coefs, dims=1)[2]])
+	coefs = coefs .* signs				# Make sure that at each column the largest coefficient is positive.
+
+	# Scale the scores so they fit on the plot, and change their sign according to the sign convention for the coefs.
+	maxlen = sqrt(maximum(sum(coefs.^2, dims=2)))
+	scores = maxlen .* scores ./ maximum(abs, scores) .* signs 		# Normalize the scores to the max of the coefficients
+
+	if ((val = find_in_dict(d, [:figsize :fig_size], false)[1]) !== nothing)
+		figsize::Float64 = isa(val, Tuple) ? val[1] : val 
+	else
+		figsize = 15.0;		d[:aspect] = "equal"
+	end
+
+	d[:R], d[:marker] = "-1/1/-1/1", marker
+	d[:ms] = (ms == "auto") ? @sprintf("%.1fp", figsize / 15 * 3) : ms		# Scale ms to figsize
+	d[:B] = "afg"
+	if (xlabel != "")
+		!isempty(explained) && (xlabel = xlabel * "\" (" * string(round(explained[1], digits=1)) * "%)\"")
+		!isempty(explained) && (ylabel = ylabel * "\" (" * string(round(explained[2], digits=1)) * "%)\"")
+		d[:B] *= " x+l" * xlabel * " y+l" * ylabel
+	end
+
+	if (cmap != "none" && !(cmap[1] == '#' && !contains(cmap, ',')))
+		gidx, gnames = grp2idx(obslabels)			# Find the groups and their indices
+		ind_grps = ones(length(obslabels))
+		for i = 1:numel(gidx), j = 1:length(gidx[i]), ind_grps[gidx[i][j]] = i  end
+		d[:zcolor] = ind_grps
+		
+		if ((cmap == "matlab") || (cmap == "distinct") || (cmap == "alphabet"))		# Distinct colornames
+			cmap = join((cmap == "matlab") ? matlab_cycle_colors[1:length(gidx)] : (cmap == "distinct") ? simple_distinct[1:length(gidx)] : alphabet_colors[1:length(gidx)], ",")
+		end
+		d[:C] = makecpt(cmap=cmap, range=join(gnames,","))
+		colorbar && (d[:colorbar] = true)
+	end
+
+	scores = mat2ds(scores, text=obslabels)
+	common_plot_xyz("", scores, "biplot", first, false, d)
+	obsnumb && text!(scores, F=@sprintf("+f%.1fp+r1", figsize/15*8))	# Plot also the observation numbers
+	(arrow_pars == (0.3, 0.5, 0.75, "#0072BD") && figsize != 15) &&		# If default arrow_pars, scale them by fig size
+		(arrow_pars = (max(arrow_pars[1]*figsize/15*0.3, 0.1), arrow_pars[2], arrow_pars[3]*figsize/15*0.75, arrow_pars[4]))
+	feather!([fill(0.0, size(coefs, 1)) coefs[:,1:2]], endpt=true, arrow=(len=arrow_pars[1], shape=arrow_pars[2]),
+	         lw=arrow_pars[3], lc=arrow_pars[4], fill=arrow_pars[4])
+
+	if (!isempty(varlabels))
+		text!(mat2ds(coefs, text=varlabels), F=@sprintf("+f%.1fp", (figsize / (15/9) + 1)),
+		      D=@sprintf("%.2fc", max(figsize/15*0.15, 0.05)))
+	end
+	show && showfig(fmt=fmt, savefig=savefig)
+end
+
+biplot!(D::GMTdataset{T,2}; PC=(1,2), cmap=:categorical, xlabel="", ylabel="", varlabels=:yes, marker=:point, ms="auto",
+        obsnumbers::Bool=false, colorbar::Bool=true, arrow::Tuple=(0.3, 0.5, 0.75, "#0072BD"), kw...) where {T<:Real} =
+	biplot(D; first=false, PC=PC, cmap=cmap, xlabel=xlabel, ylabel=ylabel, varlabels=varlabels,
+	       marker=marker, ms=ms, obsnumbers=obsnumbers, colorbar=colorbar, arrow=arrow, kw...)
+
+biplot!(cmd0::String; PC=(1,2), xlabel="", ylabel="", varlabels=:yes, cmap=:categorical, marker=:point,
+        ms="auto", obsnumbers::Bool=false, colorbar::Bool=true, arrow::Tuple=(0.3, 0.5, 0.75, "#0072BD"), kw...) =
+	biplot(cmd0; first=false, PC=PC, xlabel=xlabel, ylabel=ylabel, varlabels=varlabels, cmap=cmap,
+	       marker=marker, ms=ms, obsnumbers=obsnumbers, colorbar=colorbar, arrow=arrow, kw...)

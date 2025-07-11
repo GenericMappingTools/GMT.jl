@@ -165,13 +165,13 @@ export
 
 	add2PSfile, append2fig, isoutlier, linearfitxy, regiongeog, streamlines, peaks, polygonlevels, randinpolygon, polyfit, polyval,
 
-	ablines, ablines!, density, density!, boxplot, boxplot!, cornerplot, cornerplot!, cubeplot, cubeplot!, ecdfplot, ecdfplot!,
+	ablines, ablines!, biplot, biplot!, density, density!, boxplot, boxplot!, cornerplot, cornerplot!, cubeplot, cubeplot!, ecdfplot, ecdfplot!,
 	fill_between, fill_between!, marginalhist, marginalhist!, parallelplot, parallelplot!, piechart, piechart!, plotlinefit, plotlinefit!,
 	qqplot, qqplot!, qqnorm, qqnorm!, remotegrid, sealand, squeeze, terramar, violin, violin!, viz, vizpdf, windbarbs, whereami,
 
 	maregrams, pastplates, seismicity, ecmwf, era5time, era5vars, listecmwfvars, meteostat, weather, wmsinfo, wmstest, wmsread,
 
-	VSdisp, mad, info, kmeans, pca, mosaic, quadbounds, quadkey, geocoder, getprovider,
+	VSdisp, mad, info, kmeans, pca, mosaic, quadbounds, quadkey, geocoder, getprovider, zscores,
 
 	bwhitmiss, binarize, bwareaopen, bwperim, bwskell, isodata, padarray, rgb2gray, rgb2lab, rgb2YCbCr, rgb2ycbcr, grid2img,
 	img2grid, grays2cube, grays2rgb, imclose, imcomplement, imcomplement!, imdilate, imerode, imfilter, imopen, imsegment,

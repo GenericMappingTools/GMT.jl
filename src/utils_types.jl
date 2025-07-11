@@ -264,7 +264,7 @@ function _mat2ds(mat::Array{T,N}, txt::Union{String,Vector{String}}, hdr::Vector
 		else
 			for k = 1:n_ds  _hdr[k] *= _lts[k] * string(",", _color[((k % n_colors) != 0) ? k % n_colors : n_colors])  end
 		end
-	else						# Here we just overriding the GMT -W default that is too thin.
+	else						# Here we are overriding the GMT -W default that is too thin.
 		if (isempty(_hdr))
 			_hdr = Vector{String}(undef, n_ds)
 			for k = 1:n_ds  _hdr[k]  = _lts[k]  end
