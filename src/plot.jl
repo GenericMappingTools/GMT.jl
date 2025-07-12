@@ -2093,7 +2093,7 @@ represents the relationship between the rows and columns of a table.
 
 - `cmd0`: The name of a 2D data table file readable with ``gmtread()``, or a ``GMTdataset`` with the data.
 - `arrow`: a tuple with the following values: (len, shape, width, color). If this default is used we scale them by fig size.
-   - `len`: the length of the arrow head in cm. Default is 0.3.
+   - `len`: the length of the arrowhead in cm. Default is 0.3.
    - `shape`: the shape of the arrow. Default is 0.5.
    - `width`: the width of the arrow stem in points. Default is 0.75.
    - `color`: the color of the arrow. Default is "#0072BD".
@@ -2108,7 +2108,7 @@ represents the relationship between the rows and columns of a table.
 - `ms`: a String or Symbol with the name of a GMT marker size. Default is "auto" (also scales sizes with the size of the plot).
 - `obsnumbers`: whether to plot observation numbers on the plot. Default is false. Note that in this case we are not able
    to plot colored numbers by category, so we plot the symbols as well (use `cmap="none"` if you don't want this).
-- `PC`: a tuple with the principal components to plot. Default is (1, 2). For example PC=(2,3) plots
+- `PC`: a tuple with the principal components to plot. Default is (1, 2). For example, PC=(2,3) plots
    the 2nd and 3rd principal components.
 - `varlabels`: whether to plot variable labels. The default is :yes and it prints as labels the column names
    if the input GMTdataset. Is it hasn't column names, then it prints "A,B,C,...". Give a string vector to plot custom labels.
@@ -2168,9 +2168,15 @@ function biplot(coefs::Matrix{Float64}, scores::Matrix{Float64}, explained::Vect
 		figsize = 15.0;		d[:aspect] = "equal"
 	end
 
-	d[:R], d[:marker] = "-1/1/-1/1", marker
+	mima, mima_c = extrema(scores), extrema(coefs)
+	mima = (min(mima[1], mima_c[1]), max(mima[2], mima_c[2]))
+	r = round_wesn([mima[1], mima[2], mima_c[1], mima_c[2]])
+	r[1] = -max(-r[1], r[2]);	r[2] = -r[1];	r[3] = -max(-r[3], r[4]);	r[4] = -r[3]
+	d[:R] = @sprintf("%.1f/%.1f/%.1f/%.1f", r[1], r[2], r[3], r[4])
+	d[:marker] = marker
 	d[:ms] = (ms == "auto") ? @sprintf("%.1fp", figsize / 15 * 3) : ms		# Scale ms to figsize
 	d[:B] = "afg"
+
 	if (xlabel != "")
 		!isempty(explained) && (xlabel = xlabel * "\" (" * string(round(explained[1], digits=1)) * "%)\"")
 		!isempty(explained) && (ylabel = ylabel * "\" (" * string(round(explained[2], digits=1)) * "%)\"")
