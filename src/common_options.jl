@@ -4390,7 +4390,7 @@ function prep_and_call_finish_PS_module(d::Dict{Symbol, Any}, cmd, opt_extra::St
                                         arg1=nothing, arg2=nothing, arg3=nothing, arg4=nothing, arg5=nothing)
 	# This is a helper to avoid the long list of args in the finish_PS_module() call
 	case = (arg5 !== nothing) ? 5 : (arg4 !== nothing) ? 4 : (arg3 !== nothing) ? 3 : (arg2 !== nothing) ? 2 : (arg1 !== nothing) ? 1 : 0  
-	if     (case == 0)  R = finish_PS_module(d, cmd, opt_extra, K, O, finish)
+	if     (case == 0)  R = finish_PS_module(d, cmd, opt_extra, K, O, finish, nothing)	# Need that nothing in a colorbar=true corner case
 	elseif (case == 1)  R = finish_PS_module(d, cmd, opt_extra, K, O, finish, arg1)
 	elseif (case == 2)  R = finish_PS_module(d, cmd, opt_extra, K, O, finish, arg1, arg2)
 	elseif (case == 3)  R = finish_PS_module(d, cmd, opt_extra, K, O, finish, arg1, arg2, arg3)

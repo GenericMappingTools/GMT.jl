@@ -545,7 +545,7 @@ function check_grouping!(d, arg1)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function check_ribbon(d, arg1::GMTdataset{T,N}, cmd::String, opt_W::String) where {T,N}
+function check_ribbon(d::Dict{Symbol, Any}, arg1::GMTdataset{T,N}, cmd::String, opt_W::String) where {T,N}
 	((val = find_in_dict(d, [:ribbon :band])[1]) === nothing) && return arg1, cmd
 	ec1, ec2, add_2 = helper_check_ribbon(val)		# Function barrier agains Anys
 	(add_2) ? add2ds!(arg1, ec2; names=["Zbnd1","Zbnd2"]) : add2ds!(arg1, ec1; name="Zbnd")
@@ -554,7 +554,7 @@ function check_ribbon(d, arg1::GMTdataset{T,N}, cmd::String, opt_W::String) wher
 	return arg1, cmd
 end
 
-function check_ribbon(d, arg1::Vector{<:GMTdataset{T,N}}, cmd::String, opt_W::String) where {T,N}
+function check_ribbon(d::Dict{Symbol, Any}, arg1::Vector{<:GMTdataset{T,N}}, cmd::String, opt_W::String) where {T,N}
 	((val = find_in_dict(d, [:ribbon :band])[1]) === nothing) && return arg1, cmd
 	ec1, ec2, add_2 = helper_check_ribbon(val)		# Function barrier agains Anys
 	if (add_2)

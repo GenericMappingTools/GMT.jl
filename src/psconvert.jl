@@ -68,11 +68,17 @@ Parameters
 
 To see the full documentation type: ``@? psconvert``
 """
-function psconvert(cmd0::String="", arg1=nothing; kwargs...)
+psconvert(cmd0::String; kwargs...)  = psconvert_helper(cmd0, nothing; kwargs...)
+psconvert(arg1::GMTps; kwargs...)   = psconvert_helper("", arg1; kwargs...)
+function psconvert_helper(cmd0::String="", arg1=nothing; kwargs...)
+	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+	psconvert_helper(cmd0, arg1, d)
+end
+
+function psconvert_helper(cmd0::String, arg1, d::Dict{Symbol,Any})
 
 	if (!isempty(cmd0)) && (arg1 === nothing)  arg1 = cmd0  end
 
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd::String = add_opt(d, "", "A", [:A :adjust :crop])
 	(cmd == " -A") && (cmd = cmd * "1p")			# If just -A default to -A1p
 	cmd = parse_these_opts(cmd, d, [[:D :out_dir :output_dir], [:E :dpi], [:F :out_name :output_name],
@@ -111,7 +117,7 @@ function psconvert(cmd0::String="", arg1=nothing; kwargs...)
 
 	# In case DATA holds a file name, copy it into cmd.
 	if (cmd0 != "" || arg1 !== nothing)						# Data was passed as file name
-		cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)		# Find how data was transmitted
+		cmd, _, arg1 = find_data(d, cmd0, cmd, arg1)		# Find how data was transmitted
 	end
 
 	(isempty(cmd)) && (cmd = "-A1p -Tj -Qg4 -Qt4")   	# Means no options were used. Allowed case
@@ -120,6 +126,3 @@ function psconvert(cmd0::String="", arg1=nothing; kwargs...)
 	if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end
 	gmt("psconvert " * cmd, arg1)
 end
-
-# ---------------------------------------------------------------------------------------------------
-psconvert(arg1::GMTps; kw...) = psconvert("", arg1; kw...)

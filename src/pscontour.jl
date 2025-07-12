@@ -3,7 +3,7 @@
 
 Reads a table data and produces a raw contour plot by triangulation.
 
-See full GMT (not the `GMT.jl` one) docs at [`contour`]($(GMTdoc)contour.html)
+See full GMT (not the `GMT.jl` one) docsat [`contour`]($(GMTdoc)contour.html)
 
 Parameters
 ----------
@@ -77,16 +77,19 @@ contour(arg1; kwargs...)          = contour_helper("", arg1; kwargs...)
 contour!(cmd0::String; kwargs...) = contour_helper(cmd0, nothing; first=false, kwargs...)
 contour!(arg1; kwargs...)         = contour_helper("", arg1; first=false, kwargs...)
 
-# ---------------------------------------------------------------------------------------------------
-function contour_helper(cmd0::String, arg1; first=true, kwargs...)
-
-    gmt_proggy = (IamModern[1]) ? "contour " : "pscontour "
-
+function contour_helper(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
+	contour_helper(cmd0, arg1, O, K, d)
+end
+
+# ---------------------------------------------------------------------------------------------------
+function contour_helper(cmd0::String, arg1, O::Bool, K::Bool, d::Dict{Symbol,Any})
+
+    proggy = (IamModern[1]) ? "contour " : "pscontour "
 	dict_auto_add!(d)			# The ternary module may send options via another channel
 
 	cmd, _, _, opt_R = parse_BJR(d, "", "", O, " -JX" * split(DEF_FIG_SIZE, '/')[1] * "/0")
-	cmd, = parse_common_opts(d, cmd, [:UVXY :bo :c :d :do :e :p :t :params :margin]; first=first)
+	cmd, = parse_common_opts(d, cmd, [:UVXY :bo :c :d :do :e :p :t :params :margin]; first=!O)
 	cmd  = parse_these_opts(cmd, d, [[:D :dump], [:I :fill :colorize], [:N :no_clip], [:Q :cut], [:S :skip]])
 	cmd *= add_opt_pen(d, [:L :mesh], opt="L")
 	cmd, opt_W = parse_contour_AGTW(d, cmd)
@@ -145,7 +148,7 @@ function contour_helper(cmd0::String, arg1; first=true, kwargs...)
 #		end
 #	end
 
-	_cmd = finish_PS_nested(d, [gmt_proggy * cmd])
+	_cmd = finish_PS_nested(d, [proggy * cmd])
 	prep_and_call_finish_PS_module(d, _cmd, "-D", K, O, true, arg1, arg2, arg3)
 end
 

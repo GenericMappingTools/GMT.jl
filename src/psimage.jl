@@ -3,8 +3,6 @@
 
 Place images or EPS files on maps.
 
-See full GMT (not the `GMT.jl` one) docs at [`psimage`]($(GMTdoc)image.html)
-
 Parameters
 ----------
 
@@ -42,15 +40,18 @@ image(arg1; kwargs...)          = image_helper("", arg1; kwargs...)
 image!(cmd0::String; kwargs...) = image_helper(cmd0, nothing; first=false, kwargs...)
 image!(arg1; kwargs...)         = image_helper("", arg1; first=false, kwargs...)
 
-# ---------------------------------------------------------------------------------------------------
-function image_helper(cmd0::String, arg1; first=true, kwargs...)
-
-	gmt_proggy = (IamModern[1]) ? "image "  : "psimage "
-
+function image_helper(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
+	image_helper(cmd0, arg1, O, K, d)
+end
+
+# ---------------------------------------------------------------------------------------------------
+function image_helper(cmd0::String, arg1, O::Bool, K::Bool, d::Dict{Symbol,Any})
+
+	proggy = (IamModern[1]) ? "image "  : "psimage "
 
 	cmd = parse_BJR(d, "", "", O, " -JX" * split(DEF_FIG_SIZE, '/')[1] * "/0")[1]
-	cmd = parse_common_opts(d, cmd, [:F :UVXY :JZ :c :p :t :params :margin]; first=first)[1]
+	cmd = parse_common_opts(d, cmd, [:F :UVXY :JZ :c :p :t :params :margin]; first=!O)[1]
 	cmd = parse_these_opts(cmd, d,  [[:I :invert], [:M :monochrome]])
 	((val = find_in_dict(d, [:G :bitcolor :bit_color])[1]) !== nothing && isa(val, String)) && (cmd *= string(" -G", val))
 	((val = find_in_dict(d, [:bit_bg])[1]) !== nothing) && (cmd = add_opt_fill(val, cmd, " -G") * "+b")
@@ -62,7 +63,7 @@ function image_helper(cmd0::String, arg1; first=true, kwargs...)
 
 	cmd, _, arg1 = find_data(d, cmd0, cmd, arg1)		# Find how data was transmitted
 
-	prep_and_call_finish_PS_module(d, gmt_proggy * cmd, "", K, O, true, arg1)
+	prep_and_call_finish_PS_module(d, proggy * cmd, "", K, O, true, arg1)
 end
 
 # ---------------------------------------------------------------------------------------------------

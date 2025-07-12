@@ -75,19 +75,21 @@ histogram(arg1; kwargs...)          = histogram_helper("", arg1; kwargs...)
 histogram!(cmd0::String; kwargs...) = histogram_helper(cmd0, nothing; first=false, kwargs...)
 histogram!(arg1; kwargs...)         = histogram_helper("", arg1; first=false, kwargs...)
 
+function histogram_helper(cmd0::String="", arg1=nothing; first=true, kwargs...)
+	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
+	if (cmd0 != "" && is_in_dict(d, [:auto :thresholds :zoom]) !== nothing)	# To do auto-limits for stretch we must load data
+		arg1 = gmtread(cmd0);		cmd0 = ""
+	end
+	histogram_helper(cmd0, arg1, O, K, d)
+end
+
 # ---------------------------------------------------------------------------------------------------
-function histogram_helper(cmd0::String, arg1; first=true, kwargs...)
+function histogram_helper(cmd0::String, arg1, O::Bool, K::Bool, d::Dict{Symbol,Any})
 
 	arg2 = nothing		# May be needed if GMTcpt type is sent in via C
 	N_args = (arg1 === nothing) ? 0 : 1
 
-	gmt_proggy = (IamModern[1]) ? "histogram " : "pshistogram "
-
-	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
-
-	if (cmd0 != "" && is_in_dict(d, [:auto :thresholds :zoom]) !== nothing)	# To do auto-limits for stretch we must load data
-		arg1 = gmtread(cmd0);		cmd0 = ""
-	end
+	proggy = (IamModern[1]) ? "histogram " : "pshistogram "
 
 	cmd::String = ""
 	opt_Z = add_opt(d, "", "Z", [:Z :kind], (counts = "_0", count = "_0", freq = "_1", frequency = "_1",
@@ -110,12 +112,12 @@ function histogram_helper(cmd0::String, arg1; first=true, kwargs...)
 			(opt_T != "") && (cmd *= " -T" * opt_T)
 		end
 		cmd = parse_V(d, cmd)
-		return gmt(gmt_proggy * cmd, arg1)
+		return gmt(proggy * cmd, arg1)
 	end
 
 	cmd, opt_B, opt_J, opt_R ::String= parse_BJR(d, cmd, "histogram", O, " -JX14c/14c")
 	cmd = parse_JZ(d, cmd)[1]
-	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :c :e :f :p :t :w :params :margin]; first=first)[1]
+	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :c :e :f :p :t :w :params :margin]; first=!O)[1]
 	cmd = parse_these_opts(cmd, d, [[:A :horizontal], [:F :center], [:Q :cumulative], [:S :stairs]])
 	nofill = ((symb = is_in_dict(d, [:G :fill])) !== nothing && d[symb] == "") ? true : false	# To know if no fill was asked
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
@@ -177,7 +179,7 @@ function histogram_helper(cmd0::String, arg1; first=true, kwargs...)
 
 	# If we have a RGB image, plot 3 histograms and end right now
 	if (isa(arg1, GMTimage{UInt8, 3}))
-		(arg1.layout != "" && arg1.layout[3] == 'B') && return three_histos(d, arg1, cmd, gmt_proggy, O, opt_T, opt_Z, opt_B, opt_R, opt_J)
+		(arg1.layout != "" && arg1.layout[3] == 'B') && return three_histos(d, arg1, cmd, proggy, O, opt_T, opt_Z, opt_B, opt_R, opt_J)
 		@warn("Three histograms of pixel interleaving of RGB images not yet implemented.")
 	end
 
@@ -250,7 +252,7 @@ function histogram_helper(cmd0::String, arg1; first=true, kwargs...)
 	out2 = nothing;		Vd_ = 0				# Backup values
 	(haskey(d, :Vd)) && (Vd_ = d[:Vd])
 
-	_cmd = [gmt_proggy * cmd]				# In any case we need this
+	_cmd = [proggy * cmd]				# In any case we need this
 	(length(opt_R) > 5) && (_cmd = frame_opaque(_cmd, opt_B, opt_R, opt_J))		# No -t in frame
 	_cmd = fish_bg(d, _cmd)					# See if we have a "pre-command" (background img)
 
@@ -272,7 +274,7 @@ function histogram_helper(cmd0::String, arg1; first=true, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function three_histos(d::Dict, I::GMTimage{UInt8, 3}, cmd, gmt_proggy, O, opt_T, opt_Z, opt_B, opt_R, opt_J)
+function three_histos(d::Dict, I::GMTimage{UInt8, 3}, cmd, proggy, O, opt_T, opt_Z, opt_B, opt_R, opt_J)
 	fmt_ = FMT[1];		show_ = false;	savefig_ = nothing
 	haskey(d, :show) && (show_ = (d[:show] != 0))				# Backup the :show val
 	d[:show] = false
@@ -282,7 +284,7 @@ function three_histos(d::Dict, I::GMTimage{UInt8, 3}, cmd, gmt_proggy, O, opt_T,
 	s = split(opt_J, '/')
 	H = (CTRL.limits[8] == 0.0) ? 5.0 : (parse(Float64, isletter(s[2][end]) ? s[2][1:end-1] : s[2]) / 3.0)
 	cmd = replace(cmd, opt_J => s[1] * "/$H")
-	_cmd = gmt_proggy * cmd				# In any case we need this
+	_cmd = proggy * cmd				# In any case we need this
 	(length(opt_R) > 5) && (_cmd = frame_opaque(_cmd, opt_B, opt_R, opt_J))		# No -t in frame
 	_cmd = fish_bg(d, [_cmd])[1]					# See if we have a "pre-command" (background img)
 
