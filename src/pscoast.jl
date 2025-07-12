@@ -77,9 +77,9 @@ To see the full documentation type: ``@? coast``
 """
 function coast(cmd0::String=""; clip::StrSymb="", first=true, kwargs...)
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
-	_coast(cmd0, O, K, clip, d)
+	_coast(cmd0, O, K, string(clip), d)
 end
-function _coast(cmd0::String, O::Bool, K::Bool, clip::StrSymb, d::Dict)
+function _coast(cmd0::String, O::Bool, K::Bool, clip::String, d::Dict)
 
 	gmt_proggy = (IamModern[1]) ? "coast "  : "pscoast "
 	first = !O
@@ -128,10 +128,9 @@ function _coast(cmd0::String, O::Bool, K::Bool, clip::StrSymb, d::Dict)
 	cmd  = add_opt_fill(cmd, d, [:S :water :ocean], 'S')
 
 	if (clip !== "")
-		_clip::String = string(clip)
-		if     (_clip == "land")    cmd *= " -Gc"
-		elseif (_clip == "water" || _clip == "ocean") cmd *= " -Sc"
-		elseif (_clip == "end")     cmd = " -Q";	O = true		# clip = end can never be a first command
+		if     (clip == "land")    cmd *= " -Gc"
+		elseif (clip == "water" || clip == "ocean") cmd *= " -Sc"
+		elseif (clip == "end")     cmd = " -Q";	O = true		# clip = end can never be a first command
 		else
 			@warn("The 'clip' argument can only be a string with 'land', 'water' or 'end'. Ignoring it.")
 		end
