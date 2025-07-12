@@ -262,7 +262,7 @@ function circgeo(lonlat::Matrix{<:Real}; radius::Real=0., proj::String="", s_srs
 	end
 	n_shapes = size(lonlat, 1)
 	if (n_shapes > 1)	# Multiple shapes require a GMTdataset output
-		D = Array{GMTdataset}(undef, n_shapes)
+		D = Vector{GMTdataset{Float64,2}}(undef, n_shapes)
 		for k = 1:n_shapes
 			D[k] = geod(lonlat[k,:], azim, radius; proj=proj, s_srs=s_srs, epsg=epsg, dataset=true, unit=unit)[1]
 		end
