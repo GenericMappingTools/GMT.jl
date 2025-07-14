@@ -1,8 +1,8 @@
 Base.@kwdef struct lasout_types
 	stored::String = ""
-	grd::GMTgrid = GMTgrid()
-	ds::GMTdataset = GMTdataset()
-	dsv::Vector{GMTdataset{Float64,2}} = [GMTdataset()]
+	grd::GMTgrid{Float32, 2} = GMTgrid{Float32, 2}()
+	ds::GMTdataset = GMTdataset{Float64,2}()
+	dsv::Vector{GMTdataset} = [GMTdataset()]
 	function lasout_types(stored, grd, ds, dsv)
 		stored = !isempty(grd) ? "grd" : (!isempty(ds) ? "ds" : (!isempty(dsv) ? "dsv" : ""))
 		new(stored, grd, ds, dsv)
@@ -37,7 +37,7 @@ Read data from a LIDAR laz (laszip compressed) or las format file.
 
 To read the x,y,z,t data from file "lixo.laz" do:
 ```julia
-	xyz, t = lazread("lixo.laz", "xyzt")
+	xyz, t = lazread("lixo.laz", out="xyzt")
 ```
 """
 function lazread(fname::AbstractString; out::String="xyz", type::DataType=Float64, class=0, startstop="1:end")
@@ -54,6 +54,7 @@ function lazread(fname::AbstractString; out::String="xyz", type::DataType=Float6
 
 	# Input parsing -------------------------------------------------------------------------------------
 	argout, firstPT, lastPT = parse_inputs_las2dat(header, point, reader, out, class, startstop)
+	(argout == "") && return lasout_types()		# RETURN HERE. NOTHING TO DO
 	totalNP::Int = lastPT - firstPT + 1
 	# ---------------------------------------------------------------------------------------------------
 
@@ -69,12 +70,12 @@ function lazread(fname::AbstractString; out::String="xyz", type::DataType=Float6
 		elseif (startswith(argout, "xyzt"))  n_col = 4
 		elseif (startswith(argout, "xy"))    n_col = 2
 		elseif (startswith(argout, "z"))     n_col = 1
+		else                                 n_col = 0
 		end
 		xyz = zeros(fType, totalNP, n_col)
-		(occursin('i', argout))	&& (intens = zeros(UInt16,  totalNP, 1))
-		#(occursin('t', argout))	&& (tempo  = zeros(Float64, totalNP, 1))
-		(occursin('c', argout))	&& (class  = zeros(Int8,    totalNP, 1))
-		(occursin('n', argout))	&& (n_ret  = zeros(Int8,    totalNP, 1))
+		(occursin('i', argout))	&& (intens = zeros(UInt16, totalNP, 1))
+		(occursin('c', argout))	&& (class  = zeros(Int8,   totalNP, 1))
+		(occursin('n', argout))	&& (n_ret  = zeros(Int8,   totalNP, 1))
 		if (occursin('R', argout) || occursin('G', argout) || occursin('B', argout))
 			RGB = occursin('I', argout) ? zeros(UInt16, totalNP, 4) : zeros(UInt16, totalNP, 3)
 		end
@@ -106,6 +107,12 @@ function lazread(fname::AbstractString; out::String="xyz", type::DataType=Float6
 			xyz[k,1] = pt.Z
 		end
 		coords = 3:3
+	elseif (argout == "xyt")
+		@inbounds for k = 1:totalNP
+			laszip_read_point(reader[])
+			pt = unsafe_load(point[])
+			xyz[k,1] = pt.X;	xyz[k,2] = pt.Y;	xyz[k,3] = pt.gps_time
+		end
 	elseif (argout == "xyzt")
 		@inbounds for k = 1:totalNP
 			laszip_read_point(reader[])
@@ -132,7 +139,7 @@ function lazread(fname::AbstractString; out::String="xyz", type::DataType=Float6
 			pt = unsafe_load(point[])
 			xyz[k,1]  = pt.X;	xyz[k,2]  = pt.Y;	xyz[k,3]  = pt.Z
 			intens[k] = pt.intensity
-			if (header->point_data_format > 5)
+			if (header.point_data_format > 5)
 				class[k] = (pt.extended_classification != 0) ? pt.extended_classification : pt.classification
 			else
 				class[k]  = pt.classification
@@ -143,66 +150,53 @@ function lazread(fname::AbstractString; out::String="xyz", type::DataType=Float6
 			laszip_read_point(reader[])
 			pt = unsafe_load(point[])
 			xyz[k,1]  = pt.X;	xyz[k,2]  = pt.Y;	xyz[k,3]  = pt.Z
-			if (header->point_data_format > 5)
+			if (header.point_data_format > 5)
 				class[k] = (pt.extended_classification != 0) ? pt.extended_classification : pt.classification
 			else
 				class[k]  = pt.classification
 			end
 		end
+	elseif ((startswith(argout, "xyz") || startswith(argout, "xy")) && occursin(r"[RGBI]", argout))
+		nc = 0
+		contains(argout, "R") && (nc+=1); contains(argout, "G") && (nc+=1); contains(argout, "B") && (nc+=1); contains(argout, "I") && (nc+=1)
+		if startswith(argout, "xyz")
+			@inbounds for k = firstPT:lastPT
+				laszip_read_point(reader[])
+				pt = unsafe_load(point[])
+				xyz[k,1]  = pt.X;	xyz[k,2]  = pt.Y;	xyz[k,3]  = pt.Z
+				for n = 1:nc  RGB[k,n] = pt.rgb[n]  end 
+			end
+		else
+			@inbounds for k = firstPT:lastPT
+				laszip_read_point(reader[])
+				pt = unsafe_load(point[])
+				xyz[k,1]  = pt.X;	xyz[k,2]  = pt.Y;
+				for n = 1:nc  RGB[k,n] = pt.rgb[n]  end 
+			end
+			coords = 1:2
+		end
 	elseif (argout == "RGB")
 		@inbounds for k = firstPT:lastPT
 			laszip_read_point(reader[])
 			pt = unsafe_load(point[])
-			RGB[k,1] = pt.rgb.d1;	RGB[k,2] = pt.rgb.d2;	RGB[k,3] = pt.rgb.d3
+			RGB[k,1] = pt.rgb[1];	RGB[k,2] = pt.rgb[2];	RGB[k,3] = pt.rgb[3]
 		end
 		coords = 1:0
 	elseif (argout == "RGBI")
 		@inbounds for k = 1:totalNP
 			laszip_read_point(reader[])
 			pt = unsafe_load(point[])
-			RGB[k,1] = pt.rgb.d1;	RGB[k,2] = pt.rgb.d2;	RGB[k,3] = pt.rgb.d3
-			RGB[k,4] = pt.rgb.d4
+			RGB[k,1] = pt.rgb[1];	RGB[k,2] = pt.rgb[2];	RGB[k,3] = pt.rgb[3]
+			RGB[k,4] = pt.rgb[4]
 		end
 		coords = 1:0
 	elseif (argout != "g")
 		# OK, here we have the generic but less efficient code (lots of IFs inside loops)
 		# AND THIS IS STILL NOT TAKEN INTO ACOUNT ON OUTPUT. SO BASICALLY IS A NON-WORKING CODE
-		#=
-		for k = 1:totalNP
-			laszip_read_point(reader[])
-			pt = unsafe_load(point[])
-			for n = 1:GMT.numel(argout)
-				if (argout[n] == 'x')
-					xyz[k,1] = pt.X
-				elseif (argout[n] == 'y')
-					xyz[k,2] = pt.Y
-				elseif (argout[n] == 'z')
-					xyz[k,3] = pt.Z
-				elseif (argout[n] == 'i')
-					intens[k] = pt.intensity
-				elseif (argout[n] == 't')
-					tempo[k]  = pt.gps_time
-				elseif (argout[n] == 'c')
-					if (header->point_data_format > 5)
-						class[k] = (pt.extended_classification != 0) ? pt.extended_classification : pt.classification
-					else
-						class[k]  = pt.classification
-					end
-				elseif (argout[n] == 'n')
-					n_ret = (header->point_data_format > 5) ? pt.extended_number_of_returns : pt.number_of_returns
-				elseif (argout[n] == 'R' || argout[n] == 'G' || argout[n] == 'B')
-					RGB[k,1] = pt.rgb.d1
-					RGB[k,2] = pt.rgb.d2
-					RGB[k,3] = pt.rgb.d3
-					(size(RGB,2) == 4) && (RGB[k,4] = pt.rgb.d4)
-				end
-			end
-		end
-		=#
 	end
 
 	if (argout == "g")
-		G::GMTgrid = rebuild_grid(header, reader, point, just_z)
+		G::GMTgrid{Float32, 2} = rebuild_grid(header, reader, point, just_z)
 	else
 		xyz = apply_scale_offset(header, xyz, coords, totalNP)
 	end
@@ -213,14 +207,20 @@ function lazread(fname::AbstractString; out::String="xyz", type::DataType=Float6
 	# Destroy the reader
 	(laszip_destroy(reader[]) != 0) && msgerror(reader[], "destroying laszip reader")
 
-	if (argout == "xyz" || argout == "xy" || argout == "z" || argout == "xyzt")
+	if (argout == "xyz" || argout == "xy" || argout == "z" || argout == "xyt" || argout == "xyzt")
 		lasout_types(ds=mat2ds(xyz))
 	elseif (argout == "xyzi")
 		lasout_types(dsv = [mat2ds(xyz), mat2ds(intens)])	
+	elseif (argout == "xyzc")
+		lasout_types(dsv = [mat2ds(xyz), mat2ds(class)])	
 	elseif (argout == "xyzti")
 		lasout_types(dsv = [mat2ds(xyz), mat2ds(intens)])	
+	elseif ((startswith(argout, "xyz") || startswith(argout, "xy")) && occursin(r"[RGBI]", argout))
+		colnames = string.(split(argout[size(xyz,2)+1:end], ""))
+		lasout_types(dsv = [mat2ds(xyz), mat2ds(RGB, colnames=colnames)])	
 	elseif (argout == "RGB" || argout == "RGBI")
-		lasout_types(ds=mat2ds(RGB))
+		colnames = (argout == "RGB") ? ["R", "G", "B"] : ["R", "G", "B", "I"]
+		lasout_types(ds=mat2ds(RGB, colnames=colnames))
 	elseif (argout == "g")			# The disgised GRID case
 		lasout_types(grd=G)
 	else
@@ -240,7 +240,6 @@ function get_header_and_reader(fname::AbstractString)
 	end
 
     header_ptr = Ref{Ptr{laszip_header}}()
-	laszip_get_header_pointer(reader[], header_ptr)
 	if (laszip_get_header_pointer(reader[], header_ptr) != 0)		# Get header pointer
 		msgerror(reader, "getting header pointer from laszip reader")
 	end
@@ -249,7 +248,7 @@ function get_header_and_reader(fname::AbstractString)
 end
 
 # --------------------------------------------------------------------------------
-function rebuild_grid(header, reader, point, z)::GMTgrid
+function rebuild_grid(header, reader, point, z)::GMTgrid{Float32, 2}
 # Recreate a 2D array plus a 1x9 header vector as used by GMT
 	n = 1
 	@inbounds for k = 1:header.number_of_point_records
@@ -349,7 +348,10 @@ function parse_inputs_las2dat(header, point, reader, outpar, class, startstop)
 	out = zeros(Int8,11)
 	n_inClass = 0
 	firstPT::Int = 1
-	lastPT::Int  = header.number_of_point_records
+	npt_recs::Int  = header.number_of_point_records
+	(npt_recs == 0 && header.version_major >= 1 && header.version_minor >= 4) &&
+		(npt_recs = header.extended_number_of_point_records)
+	lastPT::Int  = npt_recs
 
 	i = 1
 	for k in eachindex(outpar)
@@ -388,7 +390,7 @@ function parse_inputs_las2dat(header, point, reader, outpar, class, startstop)
 			end
 		elseif (outpar[k] == 't')
 			if (header.point_data_format != 1 && header.point_data_format != 3 &&
-				header.point_data_format != 4 && header.point_data_format != 5)
+				header.point_data_format != 4 && header.point_data_format != 5 && header.point_data_format != 8)
 				@warn("requested 't' but points do not have gps time. Ignoring it.")
 			else
 				out[i] = 't';		i += 1
@@ -422,8 +424,8 @@ function parse_inputs_las2dat(header, point, reader, outpar, class, startstop)
 		else
 			lastPT  = parse(Int,startstop)
 		end
-		if (firstPT > header.number_of_point_records)	firstPT = 1		end
-		if (lastPT  > header.number_of_point_records)	lastPT = header.number_of_point_records		end
+		(firstPT > npt_recs) && (firstPT = 1)
+		(lastPT  > npt_recs) && (lastPT = npt_recs)
 	end
 	# --------------------------------------------------------------------------------------------------------
 
@@ -447,7 +449,7 @@ function lazinfo(fname::AbstractString; veronly=false)
 		return
 	end
 
-	header, reader, is_compressed = get_header_and_reader(fname)
+	header, reader, = get_header_and_reader(fname)
 	(laszip_close_reader(reader[]) != 0) && msgerror(reader[], "closing laszip reader")		# Close reader
 	(laszip_destroy(reader[]) != 0) && msgerror(reader[], "destroying laszip reader")		# Destroy reader
 
