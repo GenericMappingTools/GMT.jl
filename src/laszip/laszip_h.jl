@@ -94,9 +94,11 @@ Base.@kwdef mutable struct laszip_point
 	extended_return_number::UInt8 = UInt8(0)
 	extended_number_of_returns::UInt8 = UInt8(0)
 # for 8 byte alignment of the GPS time
-	dummy::NTuple{7,UInt8} = ntuple(i -> UInt8(0), 7)
-	gps_time::Float64 = Float64(0.0)
+	#dummy::NTuple{7,UInt8} = ntuple(i -> UInt8(0), 7)
+	dummy::NTuple{3,UInt16} = ntuple(i -> UInt8(0), 3)
 	rgb::NTuple{4,UInt16} = ntuple(i -> UInt16(0), 4)
+	gps_time::Float64 = Float64(0.0)
+	#rgb::NTuple{4,UInt16} = ntuple(i -> UInt16(0), 4)
 	wave_packet::NTuple{29,UInt8} = ntuple(i -> UInt8(0), 29)
 	num_extra_bytes::Int32 = Int32(0)
 	extra_bytes::Ptr{UInt8} = pointer("")
