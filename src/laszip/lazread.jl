@@ -218,8 +218,7 @@ function lazread(fname::String, out::String, type::DataType, class::Int, startst
 	(laszip_destroy(reader[]) != 0) && msgerror(reader[], "destroying laszip reader")
 
 	if (argout == "xyz" || argout == "xy" || argout == "z" || argout == "xyt" || argout == "xyzt")
-		return make_grid_from_xyz(xyz, opt_RI)
-		!do_grid ? lasout_types(ds=mat2ds(xyz)) : lasout_types(ds=make_grid_from_xyz(xyz, opt_RI))
+		!do_grid ? lasout_types(ds=mat2ds(xyz)) : lasout_types(grd=make_grid_from_xyz(xyz, opt_RI))
 	elseif (argout == "xyzi")
 		lasout_types(dsv = [mat2ds(xyz), mat2ds(intens)])	
 	elseif (argout == "xyzc")
