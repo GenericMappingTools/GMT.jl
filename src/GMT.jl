@@ -424,10 +424,12 @@ using GMT.Laszip
 	#arrows([0 8.2 0 6], limits=(-2,4,0,9), arrow=(len=2,stop=1,shape=0.5,fill=:red), axis=:a, pen="6p");
 	theme()
 	plot(rand(5,2))
+	GMT.finish_PS_nested(Dict{Symbol, Any}(), ["psbasemap  -Rd -JX15c/0 -Baf -BWSen"])
 	resetGMT()
 end
 
 #Base.precompile(Tuple{typeof(upGMT),Bool, Bool})		# Here it doesn't print anything.
+#Base.precompile(Tuple{Dict{Symbol, Any}, Vector{String}})		# Here it doesn't print anything.
 
 function __init__(test::Bool=false)
 	clear_sessions(3600)		# Delete stray sessions dirs older than 1 hour
