@@ -40,7 +40,17 @@ To read the x,y,z,t data from file "lixo.laz" do:
 	xyz, t = lazread("lixo.laz", out="xyzt")
 ```
 """
-function lazread(fname::AbstractString; out::String="xyz", type::DataType=Float64, class=0, startstop="1:end")
+function lazread(fname::AbstractString; out::AbstractString="xyz", type::DataType=Float64, class::Int=0, startstop="1:end", kw...)
+	d = GMT.KW(kw)
+	do_grid = (find_in_dict(d, [:grid, :grd])[1]  !== nothing)
+	do_img  = (find_in_dict(d, [:image, :img])[1] !== nothing)
+	opt_RI, = GMT.parse_RIr(d, "")
+	do_grid && (out = "xyz")
+	(do_img && out == "xyz") && (out = "xyRGB")		# If want other color combinations must specify them explicitly.
+	(do_grid || do_img) && (type = Float32)
+	lazread(string(fname), string(out), type, class, startstop, do_grid, do_img, opt_RI)
+end
+function lazread(fname::String, out::String, type::DataType, class::Int, startstop::String, do_grid::Bool, do_img::Bool, opt_RI::String)
 
 	(isempty(out)) && error("Empty output vars string is BIG ERROR. Bye, Bye.")
 
@@ -58,7 +68,7 @@ function lazread(fname::AbstractString; out::String="xyz", type::DataType=Float6
 	totalNP::Int = lastPT - firstPT + 1
 	# ---------------------------------------------------------------------------------------------------
 
-	fType = Float64
+	fType = (do_grid || do_img) ? Float32 : Float64
 	(!occursin('t', argout) && type == Float32) && (fType = Float32)	# A time selection implies Float64
 
 	if (header.global_encoding == 32768)
@@ -208,7 +218,8 @@ function lazread(fname::AbstractString; out::String="xyz", type::DataType=Float6
 	(laszip_destroy(reader[]) != 0) && msgerror(reader[], "destroying laszip reader")
 
 	if (argout == "xyz" || argout == "xy" || argout == "z" || argout == "xyt" || argout == "xyzt")
-		lasout_types(ds=mat2ds(xyz))
+		return make_grid_from_xyz(xyz, opt_RI)
+		!do_grid ? lasout_types(ds=mat2ds(xyz)) : lasout_types(ds=make_grid_from_xyz(xyz, opt_RI))
 	elseif (argout == "xyzi")
 		lasout_types(dsv = [mat2ds(xyz), mat2ds(intens)])	
 	elseif (argout == "xyzc")
@@ -226,6 +237,48 @@ function lazread(fname::AbstractString; out::String="xyz", type::DataType=Float6
 	else
 		error("Unknown argout type")
 	end
+end
+
+# --------------------------------------------------------------------------------
+function make_grid_from_xyz(xyz, opt_RI)
+	cmd = "blockmedian "
+	if ((opt_R = GMT.scan_opt(opt_RI, "-R", true) == ""))
+		mima_x = extrema(view(xyz, :, 1));		dx = mima_x[2] - mima_x[1]
+		mima_y = extrema(view(xyz, :, 2));		dy = mima_y[2] - mima_y[1]
+		opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g", mima_x[1], mima_x[2], mima_y[1], mima_y[2])
+		inc = sqrt(size(xyz,1) / (dx*dy))		# Very crude estimate of the increment in case it was not provided.
+		@show(inc, opt_R)
+	end
+	if ((opt_I = GMT.scan_opt(opt_RI, "-I", true) == ""))
+		opt_I = @sprintf(" -I%.8g", inc)		#
+	end
+	G = gmt(cmd * opt_R * opt_I * " -Az", xyz)
+end
+
+# --------------------------------------------------------------------------------
+function make_img_from_xyz(xy, RGB, opt_RI)
+	cmd = "blockmedian "
+	if ((opt_R = GMT.scan_opt(opt_RI, "-R", true) == ""))
+		mima_x = extrema(view(xyz, :, 1));		dx = mima_x[2] - mima_x[1]
+		mima_y = extrema(view(xyz, :, 2));		dy = mima_y[2] - mima_y[1]
+		opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g", mima_x[1], mima_x[2], mima_y[1], mima_y[2])
+		inc = sqrt(size(xyz,1) / (dx*dy))		# Very crude estimate of the increment in case it was not provided.
+	end
+	if ((opt_I = GMT.scan_opt(opt_RI, "-I", true) == ""))
+		opt_I = @sprintf(" -I%.8g", inc)		#
+	end
+
+	G = gmt(cmd * opt_R * opt_I * " -Az", [xy RGB[:,1]])
+	img = Array{UInt8}(undef, size(G,1), size(G,2), 3)
+	It = rescale(G, stretch=true, type=UInt8)
+	img[:,:,1] .= It[:, :]
+	G = gmt(cmd * opt_R * opt_I * " -Az", [xy RGB[:,2]])
+	It = rescale(G, stretch=true, type=UInt8)
+	img[:,:,2] .= It[:, :]
+	G = gmt(cmd * opt_R * opt_I * " -Az", [xy RGB[:,3]])
+	It = rescale(G, stretch=true, type=UInt8)
+	img[:,:,3] .= It[:, :]
+	mat2img(img, G)
 end
 
 # --------------------------------------------------------------------------------

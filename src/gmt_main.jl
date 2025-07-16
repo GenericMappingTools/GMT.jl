@@ -1528,10 +1528,10 @@ function clear_sessions(age::Int=0)
 		dirs = readdir(sp)
 		isempty(dirs) && return nothing
 		session_dirs = filter(x->startswith(x, "gmt_session."), dirs)
-		n = datetime2unix(now(UTC))
+		n = datetime2unix(now())
 		for sd in session_dirs
 			fp = joinpath(sp, sd)
-			(n - mtime(fp) > age) && rm(fp, recursive = true)	# created age seconds before
+			(age == 0 || (n - mtime(fp)) > age) && rm(fp, recursive = true)	# created age seconds before
 		end
 	catch
 	end

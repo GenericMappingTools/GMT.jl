@@ -4406,10 +4406,6 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 	# FNAME_EXT hold the extension when not PS
 	# OPT_EXTRA is used by grdcontour -D or pssolar -I to not try to create and view an img file
 
-	#if ((n = findlast(args .!= nothing)) !== nothing)
-		#args = args[1:n]
-	#end
-	
 	reverse_plot_axes!(cmd)		# If CTRL.pocket_J[4] != "   " there is some work to do. Otherwise return unchanged
 
 	(!O && CTRL.returnPS[1]) && (CTRL.returnPS[1] = false)	# Ensure that a first call starts in the write to file mode
@@ -4979,7 +4975,7 @@ Scans the CMD string for the OPT option. Note, OPT must be at least a 2 chars -X
 """
 function scan_opt(cmd::AbstractString, opt::String, keepX::Bool=false)::String
 	len = length(opt)
-	out::String = ((ind = findfirst(opt, cmd)) !== nothing) ? (ind[end] == length(cmd)) ? "" : strtok(cmd[ind[1]+len:end])[1] : ""
+	out::String = ((ind = findfirst(opt, cmd)) !== nothing) ? (ind[end] == length(cmd)) ? "" : string(strtok(cmd[ind[1]+len:end])[1]) : ""
 	(out != "" && cmd[ind[1]+len] == ' ') && (out = "")		# Because seeking -R in a " -R -JX" would ret "-JX"
 	(keepX && out != "") && (out = string(' ', opt, out))	# Keep the option flag in output
 	return out
