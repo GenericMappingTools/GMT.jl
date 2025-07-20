@@ -660,7 +660,7 @@ function rescale(A::String; low=0.0, up=1.0, inputmin=NaN, inputmax=NaN, stretch
 	GI = gmtread(A)
 	rescale(GI; low=low, up=up, inputmin=inputmin, inputmax=inputmax, stretch=stretch, type=type)
 end
-function rescale(A::GItype; low=0.0, up=1.0, inputmin=NaN, inputmax=NaN, stretch=false, type=nothing)
+function rescale(A::AbstractArray; low=0.0, up=1.0, inputmin=NaN, inputmax=NaN, stretch=false, type=nothing)
 	(type !== nothing && (!isa(type, DataType) || !(type <: Unsigned))) && error("The 'type' variable must be an Unsigned DataType")
 	((!isnan(inputmin) || !isnan(inputmax)) && stretch == 1) && @warn("The `stretch` option overrules `inputmin|max`.")
 	low, up = Float64(low), Float64(up)

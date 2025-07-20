@@ -2549,5 +2549,5 @@ end
 function hlp_desnany_vstr_2(d, s)::Vector{String}
 	((alpha_val = find_in_dict(d, s)[1]) === nothing) && return String[]
 	(eltype(alpha_val) <: AbstractFloat && maximum(alpha_val) <= 1) && (alpha_val = string.(collect(alpha_val) .* 100))
-	alpha_val
+	return isa(alpha_val, String) ? [alpha_val] : vec(string.(alpha_val))
 end
