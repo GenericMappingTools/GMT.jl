@@ -241,11 +241,13 @@ function _mat2ds(mat::Array{T,N}, txt::Union{String,Vector{String}}, hdr::Vector
 	_fill::Vector{String} = helper_ds_fill(d)
 
 	# ---  Here we deal with line colors and line thickness.
-	if ((val = find_in_dict(d, [:lt :linethick :linethickness])[1]) !== nothing)
-		if     (isa(val, AbstractString))  _lt::Vector{Float64} = [size_unit(val)]
-		elseif (isa(val, Vector{String}))  _lt = size_unit(val)
-		else                               _lt = isa(val, Real) ? [val] : vec(Float64.(val))
-		end
+	#if ((val = find_in_dict(d, [:lt :linethick :linethickness])[1]) !== nothing)
+		#if     (isa(val, AbstractString))  _lt::Vector{Float64} = [size_unit(val)]
+		#elseif (isa(val, Vector{String}))  _lt = size_unit(val)
+		#else                               _lt = isa(val, Real) ? [val] : vec(Float64.(val))
+		#end
+	_lt = hlp_desnany_vfloat(d, [:lt, :linethick, :linethickness])
+	if (!isempty(_lt))
 		_lts::Vector{String} = Vector{String}(undef, n_ds)
 		n_thick::Integer = length(_lt)
 		for k = 1:n_ds
@@ -301,36 +303,21 @@ function _mat2ds(mat::Array{T,N}, txt::Union{String,Vector{String}}, hdr::Vector
 		end
 	end
 
-	if ((val = find_in_dict(d, [:front])[1]) !== nothing)
-		_lf::Vector{String} = isa(val, Vector{String}) ? val : [string(val)]	# Second case is free to error 
+	#if ((val = find_in_dict(d, [:front])[1]) !== nothing)
+		#_lf::Vector{String} = isa(val, Vector{String}) ? val : [string(val)]	# Second case is free to error 
+	_lf = hlp_desnany_vstr(d, [:front])
+	if (!isempty(_lf))
 		n_thick = length(_lf)		# Save to reuse var since data type does not change
 		for k = 1:n_ds
 			_hdr[k] *= " -Sf" * _lf[((k % n_thick) != 0) ? k % n_thick : n_thick]
 		end
 	end
-
-	#=
-	ref_attrib, ref_coln = Dict(), String[]
-	if ((val = find_in_dict(d, [:ref])[1]) !== nothing)		# ref has to be a D but we'll not test it
-		Dt::GMTdataset = val		# To try to escape the f... Any's
-		prj, wkt, epsg = Dt.proj4, Dt.wkt, Dt.epsg
-		ref_attrib, ref_coln = Dt.attrib, Dt.colnames
-	end
-
-	prj::String = ((proj = find_in_dict(d, [:proj :proj4])[1]) !== nothing) ? proj : ""
-	(prj == "geo" || prj == "geog") && (prj = prj4WGS84)
-	(prj != "" && !startswith(prj, "+proj=")) && (prj = "+proj=" * prj)
-	wkt::String = ((wk = find_in_dict(d, [:wkt])[1]) !== nothing) ? wk : ""
-	(prj == "" && wkt != "") && (prj = wkt2proj(wkt))
-	epsg::Int = ((ep = find_in_dict(d, [:epsg])[1]) !== nothing) ? ep : 0
-	(prj == "" && epsg != 0) && (prj = epsg2proj(wkt))
-	(wkt == "" && epsg != 0) && (prj = epsg2wkt(wkt))
-	=#
 	
 	prj, wkt, epsg, ref_attrib, ref_coln = helper_set_crs(d)
 
 	is_geog::Bool = isgeog(prj)
-	coln::Vector{String} = ((val = find_in_dict(d, [:colnames])[1]) === nothing) ? String[] : (isa(val, String) ? [val] : val)
+	#coln::Vector{String} = ((val = find_in_dict(d, [:colnames])[1]) === nothing) ? String[] : (isa(val, String) ? [val] : val)
+	coln = hlp_desnany_vstr(d, [:colnames])
 
 	function fill_colnames(coln::Vector{String}, nc::Int, is_geog::Bool)	# Fill the column names vector
 		if isempty(coln)
@@ -342,7 +329,8 @@ function _mat2ds(mat::Array{T,N}, txt::Union{String,Vector{String}}, hdr::Vector
 
 	att::DictSvS = ((v = find_in_dict(d, [:attrib])[1]) !== nothing && isa(v, Dict)) ? v : DictSvS()
 	!isempty(att) && !isa(att, Dict{String, Union{String, Vector{String}}}) && error("Attributs must be a Dict{String, Union{String, Vector{String}}}")
-	txtcol::Vector{String} = ((val = find_in_dict(d, [:txtcol :textcol])[1]) !== nothing) ? val : String[]
+	#txtcol::Vector{String} = ((val = find_in_dict(d, [:txtcol :textcol])[1]) !== nothing) ? val : String[]
+	txtcol = hlp_desnany_vstr(d, [:txtcol, :textcol])
 
 	D = Vector{GMTdataset{isempty(xx) ? eltype(mat) : Float64, 2}}(undef, n_ds)
 
@@ -681,8 +669,11 @@ function helper_ds_fill(d::Dict; del::Bool=true, symbs=[:fill :fillcolor], nc=0)
 			_fill = (nc <= 8) ? copy(matlab_cycle_colors) : copy(simple_distinct)
 		end
 		n_colors::Int = length(_fill)
-		if ((alpha_val = find_in_dict(d, [:fillalpha])[1]) !== nothing)
-			(eltype(alpha_val) <: AbstractFloat && maximum(alpha_val) <= 1) && (alpha_val = collect(alpha_val) .* 100)
+
+		#if ((alpha_val = find_in_dict(d, [:fillalpha])[1]) !== nothing)
+			#(eltype(alpha_val) <: AbstractFloat && maximum(alpha_val) <= 1) && (alpha_val = collect(alpha_val) .* 100)
+		alpha_val = hlp_desnany_vstr_2(d, [:fillalpha])
+		if (!isempty(alpha_val))
 			_alpha::Vector{String} = Vector{String}(undef, n_colors)
 			na::Int = min(length(alpha_val), n_colors)
 			for k = 1:na  _alpha[k] = join(string('@',alpha_val[k]))  end
@@ -2538,3 +2529,25 @@ function mksymbol(f::Function, cmd0::String="", arg1=nothing; kwargs...)
 	return nothing
 end
 mksymbol(f::Function, arg1; kw...) = mksymbol(f, "", arg1; kw...)
+
+# ---------------------------------------------------------------------------------------------------
+function hlp_desnany_vstr(d, s)::Vector{String}
+	((val = find_in_dict(d, s)[1]) === nothing) ? String[] : (isa(val, String) ? [val] : val)
+end
+
+# ---------------------------------------------------------------------------------------------------
+function hlp_desnany_vfloat(d, s)::Vector{Float64}
+	((val = find_in_dict(d, s)[1]) === nothing) && return Float64[]
+	if     (isa(val, AbstractString))  lt::Vector{Float64} = [size_unit(val)]
+	elseif (isa(val, Vector{String}))  lt = size_unit(val)
+	else                               lt = isa(val, Real) ? [val] : vec(Float64.(val))
+	end
+	lt
+end
+
+# ---------------------------------------------------------------------------------------------------
+function hlp_desnany_vstr_2(d, s)::Vector{String}
+	((alpha_val = find_in_dict(d, s)[1]) === nothing) && return String[]
+	(eltype(alpha_val) <: AbstractFloat && maximum(alpha_val) <= 1) && (alpha_val = string.(collect(alpha_val) .* 100))
+	alpha_val
+end

@@ -167,12 +167,24 @@ function parse_R(d::Dict, cmd::String; O::Bool=false, del::Bool=true, RIr::Bool=
 
 	opt_R = merge_R_and_xyzlims(d, opt_R)	# Let a -R be partially changed by the use of optional xyzlim
 
+	already_know = false					# To signal if we already know the grid limits in numeric
 	if (RIr)
+		val_str::String = isa(val, String) ? val : ""
 		if (isa(val, GItype))
 			opt_I = parse_I(d, "", [:I :inc :increment :spacing], "I", true)
 			(opt_I == "") ? (cmd *= " -I" * arg2str(val.inc))::String : (cmd *= opt_I)
 			opt_r = parse_r(d, "")[2]
 			(opt_r == "") && (cmd *= " -r" * ((val.registration == 0) ? "g" : "p"))
+		elseif (!isempty(val_str) && ((t = guess_T_from_ext(val_str)) == " -Tg" || t == " -Ti"))		# A file name
+			info::Matrix{Float64} = gmt("grdinfo -C " * val_str).data			# Get the grid info
+			opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g", info[1,1], info[1,2], info[1,3], info[1,4])
+			(opt_I = parse_I(d, "", [:I :inc :increment :spacing], "I", true)) == "" &&
+				(opt_I = @sprintf(" -I%.8g/%.8g", info[7], info[8]))	# The grid increment
+			(opt_r = parse_r(d, "")[2]) == "" && (cmd *= " -r" * ((info[11] == 0) ? "g" : "p"))
+			cmd *= opt_I
+			CTRL.limits[7:10] = info[1:4]
+			all(CTRL.limits[1:4] .== 0) && (CTRL.limits[1:4] = info[1:4])
+			already_know = true				# Signal that we already know the grid limits in numeric
 		else				# Here we must parse the -I and -r separately.
 			cmd = parse_I(d, cmd, [:I :inc :increment :spacing], "I", del)
 			cmd = parse_r(d, cmd, del)[1]
@@ -180,7 +192,7 @@ function parse_R(d::Dict, cmd::String; O::Bool=false, del::Bool=true, RIr::Bool=
 	end
 
 	(O && opt_R == "") && (opt_R = " -R")
-	if (opt_R != "" && opt_R != " -R" && !IamInset[1] && !noGlobalR)	# Save limits in numeric
+	if (!already_know && opt_R != "" && opt_R != " -R" && !IamInset[1] && !noGlobalR)	# Save limits in numeric
 		bak = IamModern[1]
 		try
 			limits = opt_R2num(opt_R)

@@ -637,7 +637,7 @@ end
 
 # --------------------------------------------------------------------------------------------------
 """
-    R = rescale(A; low=0.0, up=1.0; inputmin=nothing, inputmax=nothing, stretch=false, type=nothing)
+    R = rescale(A; low=0.0, up=1.0; inputmin=NaN, inputmax=NaN, stretch=false, type=nothing)
 
 - `A`: is either a GMTgrid, GMTimage, Matrix{AbstractArray} or a file name. In later case the file is read
    with a call to `gmtread` that automatically decides how to read it based on the file extension ... not 100% safe.
@@ -656,24 +656,24 @@ end
 Returns a GMTgrid if `A` is a GMTgrid of floats, a GMTimage if `A` is a GMTimage and `type` is used or
 an array of Float32|64 otherwise.
 """
-function rescale(A::String; low=0.0, up=1.0, inputmin=nothing, inputmax=nothing, stretch=false, type=nothing)
+function rescale(A::String; low=0.0, up=1.0, inputmin=NaN, inputmax=NaN, stretch=false, type=nothing)
 	GI = gmtread(A)
 	rescale(GI; low=low, up=up, inputmin=inputmin, inputmax=inputmax, stretch=stretch, type=type)
 end
-function rescale(A::AbstractArray; low=0.0, up=1.0, inputmin=nothing, inputmax=nothing, stretch=false, type=nothing)
+function rescale(A::GItype; low=0.0, up=1.0, inputmin=NaN, inputmax=NaN, stretch=false, type=nothing)
 	(type !== nothing && (!isa(type, DataType) || !(type <: Unsigned))) && error("The 'type' variable must be an Unsigned DataType")
-	((inputmin !== nothing || inputmax !== nothing) && stretch == 1) && @warn("The `stretch` option overrules `inputmin|max`.")
-	low = Float64(low)
-	up  = Float64(up)
+	((!isnan(inputmin) || !isnan(inputmax)) && stretch == 1) && @warn("The `stretch` option overrules `inputmin|max`.")
+	low, up = Float64(low), Float64(up)
+	_inputmin::Float64, _inputmax::Float64 = Float64(inputmin), Float64(inputmax)
 	if (stretch == 1)
-		inputmin, inputmax = histogram(A, getauto=true)
+		_inputmin, _inputmax = histogram(A, getauto=true)
 	elseif (isa(stretch, Tuple) || (isvector(stretch) && length(stretch) == 2))
-		inputmin, inputmax = stretch[1], stretch[2]
+		_inputmin, _inputmax = stretch[1], stretch[2]
 	end
-	(inputmin === nothing) && (mi::Float64 = (isa(A, GItype)) ? A.range[5] : minimum_nan(A))
-	(inputmax === nothing) && (ma::Float64 = (isa(A, GItype)) ? A.range[6] : maximum_nan(A))
-	_inmin::Float64 = convert(Float64, (inputmin === nothing) ? mi : inputmin)
-	_inmax::Float64 = convert(Float64, (inputmax === nothing) ? ma : inputmax)
+	(isnan(inputmin)) && (mi::Float64 = (isa(A, GItype)) ? A.range[5] : minimum_nan(A))
+	(isnan(inputmax)) && (ma::Float64 = (isa(A, GItype)) ? A.range[6] : maximum_nan(A))
+	_inmin::Float64 = (isnan(inputmin)) ? mi : _inputmin
+	_inmax::Float64 = (isnan(inputmax)) ? ma : _inputmax
 	d1 = _inmax - _inmin
 	(d1 <= 0.0) && error("Stretch range has inputmin > inputmax.")
 	d2 = up - low

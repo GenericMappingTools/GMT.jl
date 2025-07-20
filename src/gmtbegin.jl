@@ -10,7 +10,7 @@ As an alternative use 'fmt' as a string or symbol containing the format (ps, pdf
 By default name="GMTplot" and fmt="ps"
 """
 function gmtbegin(name::String=""; fmt=nothing, verbose=nothing)
-	resetGMT()			# Reset everything to a fresh GMT session. That is reset all global variables to their initial state
+	DidOneGmtCmd[1] && resetGMT()		# Reset everything to a fresh GMT session. That is reset all global variables to their initial state
 	cmd = "begin"       # Default name (GMTplot.ps) is set in gmt_main()
 	(name != "") && (cmd *= " " * get_format(name, fmt))
 	(verbose !== nothing) && (cmd *= " -V" * string(verbose))
