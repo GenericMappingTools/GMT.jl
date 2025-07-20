@@ -50,6 +50,7 @@ function lazread(fname::AbstractString; out::AbstractString="xyz", type::DataTyp
 	(do_grid || do_img) && (type = Float32)
 	lazread(string(fname), string(out), type, class, startstop, do_grid, do_img, opt_RI)
 end
+
 function lazread(fname::String, out::String, type::DataType, class::Int, startstop::String, do_grid::Bool, do_img::Bool, opt_RI::String)
 
 	(isempty(out)) && error("Empty output vars string is BIG ERROR. Bye, Bye.")
@@ -226,6 +227,7 @@ function lazread(fname::String, out::String, type::DataType, class::Int, startst
 	elseif (argout == "xyzti")
 		lasout_types(dsv = [mat2ds(xyz), mat2ds(intens)])	
 	elseif ((startswith(argout, "xyz") || startswith(argout, "xy")) && occursin(r"[RGBI]", argout))
+		do_img && return make_img_from_xyz(xyz, RGB, opt_RI)
 		colnames = string.(split(argout[size(xyz,2)+1:end], ""))
 		lasout_types(dsv = [mat2ds(xyz), mat2ds(RGB, colnames=colnames)])	
 	elseif (argout == "RGB" || argout == "RGBI")
@@ -240,44 +242,39 @@ end
 
 # --------------------------------------------------------------------------------
 function make_grid_from_xyz(xyz, opt_RI)
-	cmd = "blockmedian "
-	if ((opt_R = GMT.scan_opt(opt_RI, "-R", true) == ""))
-		mima_x = extrema(view(xyz, :, 1));		dx = mima_x[2] - mima_x[1]
-		mima_y = extrema(view(xyz, :, 2));		dy = mima_y[2] - mima_y[1]
-		opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g", mima_x[1], mima_x[2], mima_y[1], mima_y[2])
-		inc = sqrt(size(xyz,1) / (dx*dy))		# Very crude estimate of the increment in case it was not provided.
-		@show(inc, opt_R)
-	end
-	if ((opt_I = GMT.scan_opt(opt_RI, "-I", true) == ""))
-		opt_I = @sprintf(" -I%.8g", inc)		#
-	end
-	G = gmt(cmd * opt_R * opt_I * " -Az", xyz)
+	opt_R, opt_I, opt_r = laz_get_RIr(xyz, opt_RI)
+	G = gmt("blockmedian -Az" * opt_R * opt_I * opt_r, xyz)
 end
 
 # --------------------------------------------------------------------------------
 function make_img_from_xyz(xy, RGB, opt_RI)
-	cmd = "blockmedian "
-	if ((opt_R = GMT.scan_opt(opt_RI, "-R", true) == ""))
+	opt_R, opt_I, opt_r = laz_get_RIr(xy, opt_RI)
+	cmd = "blockmedian -Az" * opt_R * opt_I * opt_r
+	G = gmt(cmd, [xy RGB[:,1]])
+	img = Array{UInt8}(undef, size(G,1), size(G,2), 3)
+	for k = 1:3
+		(k > 1) && (G = gmt(cmd, [xy RGB[:,k]]))
+		It = rescale(G, stretch=true, type=UInt8)
+		img[:,:,k] .= It[:, :]
+	end
+	
+	mat2img(img, G)
+end
+
+# --------------------------------------------------------------------------------
+function laz_get_RIr(xyz, opt_RI)
+	if ((opt_R = GMT.scan_opt(opt_RI, "-R", true)) == "")
 		mima_x = extrema(view(xyz, :, 1));		dx = mima_x[2] - mima_x[1]
 		mima_y = extrema(view(xyz, :, 2));		dy = mima_y[2] - mima_y[1]
 		opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g", mima_x[1], mima_x[2], mima_y[1], mima_y[2])
-		inc = sqrt(size(xyz,1) / (dx*dy))		# Very crude estimate of the increment in case it was not provided.
+		inc = sqrt(size(xyz,1) / (dx*dy))/2		# Very crude estimate of the increment in case it was not provided.
 	end
-	if ((opt_I = GMT.scan_opt(opt_RI, "-I", true) == ""))
+	if ((opt_I = GMT.scan_opt(opt_RI, "-I", true)) == "")
 		opt_I = @sprintf(" -I%.8g", inc)		#
 	end
-
-	G = gmt(cmd * opt_R * opt_I * " -Az", [xy RGB[:,1]])
-	img = Array{UInt8}(undef, size(G,1), size(G,2), 3)
-	It = rescale(G, stretch=true, type=UInt8)
-	img[:,:,1] .= It[:, :]
-	G = gmt(cmd * opt_R * opt_I * " -Az", [xy RGB[:,2]])
-	It = rescale(G, stretch=true, type=UInt8)
-	img[:,:,2] .= It[:, :]
-	G = gmt(cmd * opt_R * opt_I * " -Az", [xy RGB[:,3]])
-	It = rescale(G, stretch=true, type=UInt8)
-	img[:,:,3] .= It[:, :]
-	mat2img(img, G)
+	opt_r = GMT.scan_opt(opt_RI, "-r", true)
+	@show(opt_RI)
+	return opt_R, opt_I, opt_r
 end
 
 # --------------------------------------------------------------------------------
