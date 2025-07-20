@@ -64,6 +64,7 @@ const global CURRENT_VIEW   = [""]			# To store the current viewpoint (-p)
 const global MULTI_COL   = Vector{Bool}(undef, 1);MULTI_COL[1] = false	# To allow plottig multiple columns at once.
 const global IamModern   = Vector{Bool}(undef, 1);IamModern[1] = false		# To know if we are in modern mode
 const global FirstModern = Vector{Bool}(undef, 1);FirstModern[1] = false	# To know
+const global DidOneGmtCmd = [Bool(0)]		# To know when first gmt() call. Used in first modern mode cmd to not restart what is still fresh
 const global IamModernBySubplot = Vector{Bool}(undef, 1);	IamModernBySubplot[1] = false	# To know if set in subpot
 const global IamSubplot  = Vector{Bool}(undef, 1);IamSubplot[1]  = false	# To know if we are in subplot mode
 const global IamInset    = [false, false]									# To know if we are in Inset mode
@@ -423,6 +424,7 @@ using GMT.Laszip
 	#rm(joinpath(tempdir(), "GMTjl_custom_p_x.txt"))		# This one gets created before username is set.
 	#arrows([0 8.2 0 6], limits=(-2,4,0,9), arrow=(len=2,stop=1,shape=0.5,fill=:red), axis=:a, pen="6p");
 	theme()
+	rescale(mat2img(rand(UInt16, 16,16,3)))
 	plot(rand(5,2))
 	GMT.finish_PS_nested(Dict{Symbol, Any}(), ["psbasemap  -Rd -JX15c/0 -Baf -BWSen"])
 	resetGMT()
@@ -442,6 +444,7 @@ function __init__(test::Bool=false)
 	TMPDIR_USR[2] = replace(user, " " => "_")
 	haskey(ENV, "JULIA_GMT_MULTIFILE") && (TMPDIR_USR[3] = string("_", getpid()))
 	PSname[1] = TMPDIR_USR[1] * "/" * "GMTjl_" * TMPDIR_USR[2] * TMPDIR_USR[3] * ".ps"
+	DidOneGmtCmd[1] = false
 end
 
 """

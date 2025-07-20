@@ -9,6 +9,7 @@ function gmt(cmd::String, args...)
 	(cmd == "") && return nothing		# Building docs with Quarto leads here when examples use ModernMode
 	(cmd == "destroy") && return gmt_restart()
 	ressurectGDAL()			# Some GMT modules may have called GDALDestroyDriverManager() 
+	DidOneGmtCmd[1] = true	# Even if something errors here this keeps track that gmt() already called once
 
 	# ----------- Minimal error checking ------------------------
 	n_argin::Int = length(args)
@@ -1496,7 +1497,7 @@ function resetGMT(dorestart::Bool=true)
 	CTRL.IamInPaperMode[:] = [false, true];	IamInset[1], IamInset[2] = false, false
 	CTRL.pocket_call[1:3] .= nothing;	CTRL.pocket_R[1:2] .= "";	CTRL.figsize .= 0.0
 	CTRL.XYlabels[1] = "";	CTRL.XYlabels[2] = "";	CTRL.returnPS[1] = false
-	(dorestart) && (gmt_restart(); clear_sessions())
+	(dorestart) && (gmt_restart(); clear_sessions(); DidOneGmtCmd[1] = false)
 end
 
 # ---------------------------------------------------------------------------------------------------
