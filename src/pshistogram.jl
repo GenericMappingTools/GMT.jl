@@ -196,31 +196,7 @@ function histogram_helper(cmd0::String, arg1, O::Bool, K::Bool, d::Dict{Symbol,A
 		end
 		arg1 = hst		# We want to send the histogram, not the GMTimage
 	elseif (isa(arg1, GMTgrid) || is_subarray_float)
-		_min_max::Tuple{Float64,Float64} = (isa(arg1, GMTgrid)) ? (arg1.range[5], arg1.range[6]) : (got_min_max ? min_max : Float64.(extrema_nan(arg1))) 
-		if (opt_T != "")
-			inc = parse(Float64, opt_T) + eps()		# + EPS to avoid the extra last bin at right with 1 count only
-			n_bins = Int(ceil((_min_max[2] - _min_max[1]) / inc))
-		else
-			n_bins = Int(ceil(sqrt(length(arg1))))
-			reg = isa(arg1, GItype) ? (arg1.registration == 0 ? 1 : 0) : 1	# When called from RemoteS arg1 is a view of a layer.
-			inc = (_min_max[2] - _min_max[1]) / (n_bins - reg) + eps()
-		end
-		(!isa(inc, Real) || inc <= 0) && error("Bin width must be a > 0 number and no min/max")
-		hst = zeros(n_bins, 2)
-		if (eltype(arg1) <: AbstractFloat)		# Float arrays can have NaNs
-			have_nans = !(isa(arg1, GMTgrid) && arg1.hasnans == 1)
-			have_nans && (have_nans = any(!isfinite, arg1))
-		end
-
-		_inc = inc + 10eps()					# To avoid cases when index computing fall of by 1
-		if (have_nans)							# If we have NaNs in the grid, we need to take a slower branch
-			@inbounds for k = 1:numel(arg1)
-				!isnan(arg1[k]) && (hst[Int(floor((arg1[k] - _min_max[1]) / _inc) + 1), 2] += 1)
-			end
-		else
-			@inbounds for k = 1:numel(arg1)  hst[Int(floor((arg1[k] - _min_max[1]) / _inc) + 1), 2] += 1  end
-		end
-		@inbounds for k = 1:n_bins  hst[k,1] = _min_max[1] + inc * (k - 1)  end
+		hst, inc, _min_max = hst_floats(arg1, opt_T; min_max=got_min_max ? min_max : (0.0, 0.0))
 
 		if (do_auto || do_getauto || do_zoom)
 			which_auto = (do_auto) ? val_auto : val_getauto
@@ -357,6 +333,41 @@ function loc_histo(in, cmd::String="", opt_T::String="", opt_Z::String="")
 	(!occursin("+w", cmd)) && (cmd *= "+w")			# Pretending to be weighted is crutial for the trick
 
 	return hst, cmd * " -T0/$(n_bins * inc)/$inc"
+end
+
+# ---------------------------------------------------------------------------------------------------
+function hst_floats(arg1, opt_T::String=""; min_max=(0.0, 0.0))
+	# Compute the histogram of a grid or matrix
+	# Made a separate function to let it be called from rescale() and thus avoid calling the main histogram()
+	# that seems to be be too havy (at least according to JET)
+	_min_max::Tuple{Float64,Float64} = (isa(arg1, GMTgrid)) ?
+	                                   (arg1.range[5], arg1.range[6]) : (min_max != (0.0, 0.0) ? min_max : Float64.(extrema_nan(arg1))) 
+	if (opt_T != "")
+		inc = parse(Float64, opt_T) + eps()		# + EPS to avoid the extra last bin at right with 1 count only
+		n_bins = Int(ceil((_min_max[2] - _min_max[1]) / inc))
+	else
+		n_bins = Int(ceil(sqrt(length(arg1))))
+		reg = isa(arg1, GMTgrid) ? (1 - arg1.registration) : 1	# When called from RemoteS arg1 is a view of a layer.
+		inc = (_min_max[2] - _min_max[1]) / (n_bins - reg) + eps()
+	end
+	(!isa(inc, Real) || inc <= 0) && error("Bin width must be a > 0 number and no min/max")
+	hst = zeros(n_bins, 2)
+	have_nans = false
+	if (eltype(arg1) <: AbstractFloat)		# Float arrays can have NaNs
+		have_nans = !(isa(arg1, GMTgrid) && arg1.hasnans == 1)
+		have_nans && (have_nans = any(!isfinite, arg1))
+	end
+
+	_inc = inc + 10eps()					# To avoid cases when index computing fall of by 1
+	if (have_nans)							# If we have NaNs in the grid, we need to take a slower branch
+		@inbounds for k = 1:numel(arg1)
+			!isnan(arg1[k]) && (hst[Int(floor((arg1[k] - _min_max[1]) / _inc) + 1), 2] += 1)
+		end
+	else
+		@inbounds for k = 1:numel(arg1)  hst[Int(floor((arg1[k] - _min_max[1]) / _inc) + 1), 2] += 1  end
+	end
+	@inbounds for k = 1:n_bins  hst[k,1] = _min_max[1] + inc * (k - 1)  end
+	return hst, inc, _min_max
 end
 
 # ---------------------------------------------------------------------------------------------------
