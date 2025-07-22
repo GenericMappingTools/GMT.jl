@@ -274,7 +274,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    G = gdalgrid(indata, method::StrSymb="", options=String[]; dest="/vsimem/tmp", kw...)
+    G = gdalgrid(indata, options=String[]; dest="/vsimem/tmp", method::StrSymb="", kw...)
 
 ### Parameters
 - `indata`: The source dataset. It can be a file name, a GMTdataset, a Mx3 matrix or a GDAL dataset

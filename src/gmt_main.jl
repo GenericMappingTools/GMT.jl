@@ -236,6 +236,7 @@ function gmt(cmd::String, args...)
 end
 
 gmt_GMTdataset(cmd::String, args...)::GMTdataset{Float64,2} = gmt(cmd, args...)
+gmt_GMTgrid(cmd::String, args...)::GMTgrid{Float32,2} = gmt(cmd, args...)::GMTgrid{Float32,2}
 
 # -----------------------------------------------------------------------------------------------
 function gmt_restart(restart::Bool=true)
@@ -314,13 +315,13 @@ function parse_mem_layouts(cmd::AbstractString)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function strtok(str)
+function strtok(str)::Tuple{String,String}
 	# A Matlab like strtok function
-	(str == "") && return str
+	(str == "") && return "", ""
 	o = split(str, limit=2, keepempty=false)
 	return (length(o) == 2) ? (string(o[1]), string(o[2])) : (string(o[1]), "")
 end
-function strtok(str, delim)
+function strtok(str, delim)::Tuple{String,String}
 	o = split(str, delim, limit=2, keepempty=false)
 	return (length(o) == 2) ? (string(o[1]), string(o[2])) : (string(o[1]), "")
 end
