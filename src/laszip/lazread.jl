@@ -10,7 +10,8 @@ Base.@kwdef struct lasout_types
 end
 
 """
-    argsout = lazread(FileName::AbstractString; out::String="xyz", type::DataType=Float64, class=0, startstop="1:end")
+    argsout = lazread(FileName::AbstractString; out::String="xyz", do_grid=false, do_image=false,
+                      type::DataType=Float64, class=0, startstop="1:end")
 
 Read data from a LIDAR laz (laszip compressed) or las format file.
 
@@ -19,8 +20,18 @@ Read data from a LIDAR laz (laszip compressed) or las format file.
 ### Keyword Arguments
 
 - `out`: Select what data to output. The default is "xyz" meaning that only these three are sent out.
-   Examples include: "xyz", "xy", "yx", "z", "xyzi", "xyzt", "xyzit", "xyzti", "xyzic" "xyzc", "RGB", "RGBI"
+   Examples include: "xyz", "xy", "yx", "z", "xyzi", "xyzt", "xyzit", "xyzti", "xyzic" "xyzc",
+   "RGB", "RGBI", "xyRGB", "xyRGBI".
    where 'i' stands for intensity (UInt16), 'c' for classification (Int8) and 't' for GPS time (Float64)
+
+- `do_grid`: If true, the output is a GMTgrid. This implicitly sets `out="xyz"` and `type=Float32`.
+   The grid is built using the `nearneighbor` algorithm. It is recommended to use the `-R` and `-I` options,
+   but if not provided, the grid is built using the extent of the data and a crude estimate of the increment.
+
+- `do_image`: If true, the output is a GMTimage. This implicitly sets `out="xyRGB"` and of course it will
+   error if the laz file does not contain RGB data. If another color combination is desired, specify it
+   explicitly, e.g., `out="xyIRG"`. Like the `do_grid` option, it is recommended to use the `-R` and `-I` options,
+   to control the image extent and resolution.
 
 - `type`: The float components (xyz) may be required in Float32. The default is Float64.
 
@@ -241,19 +252,22 @@ function lazread(fname::String, out::String, type::DataType, class::Int, startst
 end
 
 # --------------------------------------------------------------------------------
-function make_grid_from_xyz(xyz, opt_RI)
+function make_grid_from_xyz(xyz, opt_RI)::GMTgrid{Float32, 2}
 	opt_R, opt_I, opt_r = laz_get_RIr(xyz, opt_RI)
 	G = gmt("blockmedian -Az" * opt_R * opt_I * opt_r, xyz)
 end
 
 # --------------------------------------------------------------------------------
-function make_img_from_xyz(xy, RGB, opt_RI)
+function make_img_from_xyz(xy, RGB, opt_RI)::GMTimage{UInt8, 3}
 	opt_R, opt_I, opt_r = laz_get_RIr(xy, opt_RI)
-	cmd = "blockmedian -Az" * opt_R * opt_I * opt_r
-	G = gmt(cmd, [xy RGB[:,1]])
+	#cmd = "blockmedian -Az" * opt_R * opt_I * opt_r
+	inc = split(opt_I[4:end], '/')[1]
+	cmd = "nearneighbor -N1 -S" * inc * opt_R * opt_I * opt_r
+	#G::GMTgrid{Float32, 2} = gmt(cmd, [xy RGB[:,1]])		# ADDING THE TYPE ANNOT ADDS 0.5 MB TO THE PRECOMPILED CACHE !!!!!
+	G = gmt_GMTgrid(cmd, [xy RGB[:,1]])
 	img = Array{UInt8}(undef, size(G,1), size(G,2), 3)
 	for k = 1:3
-		(k > 1) && (G = gmt(cmd, [xy RGB[:,k]]))
+		(k > 1) && (G = gmt_GMTgrid(cmd, [xy RGB[:,k]]))
 		It = rescale(G, stretch=true, type=UInt8)
 		img[:,:,k] .= It[:, :]
 	end
@@ -273,7 +287,6 @@ function laz_get_RIr(xyz, opt_RI)
 		opt_I = @sprintf(" -I%.8g", inc)		#
 	end
 	opt_r = GMT.scan_opt(opt_RI, "-r", true)
-	@show(opt_RI)
 	return opt_R, opt_I, opt_r
 end
 

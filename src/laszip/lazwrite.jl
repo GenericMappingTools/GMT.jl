@@ -1,11 +1,17 @@
 """
     lazwrite(FileName::AbstractString, xyz; grd_hdr=[], scaleX=nothing, scaleY=nothing, scaleZ=nothing, offX=nothing, offY=nothing, offZ=nothing)
+or
 
-Write XYZ data to a LIDAR laz (laszip compressed) or las format file.
+    lazwrite(FileName::AbstractString, G::GMTgrid; scaleX=nothing, scaleY=nothing, scaleZ=nothing, offX=nothing, offY=nothing, offZ=nothing)
+
+Write XYZ data to a LIDAR laz (laszip compressed) or las format file. The second form is used to write a GMTgrid
+to a laz file. This is a rather more compressed format that waht is achieved with netCDF, but slightly lossy.
+Use `lazread` to read the laz file back into a GMTgrid.
 
 	Where:
 		"FileName" Name of the output LIDAR file
-		xyz  A Mx3 array with the point coordinates
+		`xyz`:  A Mx3 array with the point coordinates
+		`G`:  A GMTgrid object.
 
 ### Example
 
@@ -15,7 +21,8 @@ To write the x,y,z data to file "lixo.laz" do:
 	lazwrite("lixo.laz", xyz)
 ```
 """
-function lazwrite(fname::AbstractString, G::GMTgrid; scaleX=nothing, scaleY=nothing, scaleZ=nothing, offX=nothing, offY=nothing, offZ=nothing)
+function lazwrite(fname::AbstractString, G::GMTgrid{Float32,2}; scaleX=nothing, scaleY=nothing, scaleZ=nothing,
+                  offX=nothing, offY=nothing, offZ=nothing)
 	hdr = [G.range[1:6]..., 0.0, G.inc[1:2]...]
 	lazwrite(fname, vec(G.z[:]), grd_hdr=hdr, scaleX=scaleX, scaleY=scaleY, scaleZ=scaleZ, offX=offX, offY=offY, offZ=offZ, layout=G.layout)
 end
