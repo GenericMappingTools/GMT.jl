@@ -10,6 +10,9 @@
 	
 	@test t == out
 	
+	lazwrite("lixo.laz", peaks());
+	lazread("lixo.laz")
+
 	# Remove garbage
 	rm("lixo.laz")
 
