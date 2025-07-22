@@ -666,7 +666,13 @@ function rescale(A::AbstractArray; low=0.0, up=1.0, inputmin=NaN, inputmax=NaN, 
 	low, up = Float64(low), Float64(up)
 	_inputmin::Float64, _inputmax::Float64 = Float64(inputmin), Float64(inputmax)
 	if (stretch == 1)
-		_inputmin, _inputmax = histogram(A, getauto=true)
+		#_inputmin, _inputmax = histogram(A, getauto=true)
+		if (isa(A, GMTgrid) || (typeof(A) <: SubArray{Float32}))	# These functions are defined in pshistogram, but avoid calling it.
+			hst, inc, = hst_floats(A)
+			_inputmin, _inputmax = find_histo_limits(A, nothing, inc, hst)
+		else		# Images
+			_inputmin, _inputmax = find_histo_limits(A, nothing, 20)
+		end
 	elseif (isa(stretch, Tuple) || (isvector(stretch) && length(stretch) == 2))
 		_inputmin, _inputmax = stretch[1], stretch[2]
 	end

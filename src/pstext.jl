@@ -60,7 +60,7 @@ function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 	_text(cmd0, arg1, O, K, d)
 end
-function _text(cmd0::String, arg1, O::Bool, K::Bool, d::Dict)
+function _text(cmd0::String, arg1, O::Bool, K::Bool, d::Dict{Symbol,Any})
 
 	(is_in_dict(d, [:L :list]) !== nothing) && return gmt("pstext -L")
 
@@ -69,7 +69,7 @@ function _text(cmd0::String, arg1, O::Bool, K::Bool, d::Dict)
 	N_args = (arg1 === nothing) ? 0 : 1
 	first = !O
 
-	function parse_xy(d, arg)
+	function parse_xy(d::Dict{Symbol,Any}, arg)
 		# Deal with cases (txt="Bla", x=0.5, y=0.5) or (data="Bla", x=0.5, y=0.5)
 		((x = find_in_dict(d, [:x])[1]) === nothing) &&
 			error("When the 'text' keyword is used, must provide coordinates in either a x matrix or two x,y vectors.")

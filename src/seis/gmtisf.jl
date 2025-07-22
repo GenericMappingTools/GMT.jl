@@ -27,7 +27,7 @@ Parameters
 
 This module can also be called via `gmtread`. _I.,e._ `gmtread("file.isf", opts...)_
 """
-function gmtisf(cmd0::String; kwargs...)::GMTdataset
+function gmtisf(cmd0::String; kwargs...)::GMTdataset{Float64,2}
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
@@ -35,7 +35,7 @@ function gmtisf(cmd0::String; kwargs...)::GMTdataset
 	cmd = parse_these_opts(cmd, d, [[:F :focal], [:D :date], [:N :notime]])
 	abstime::Int = ((val = find_in_dict(d, [:abstime :unixtime])[1]) !== nothing) ? Int(val) : 0
 	(abstime != 0 && contains(cmd, " -N")) && error("'abstime' and 'notime' options are mutually exclusive.")
-	out = common_grd(d, cmd0, cmd, "gmtisf ", nothing)	# Finish build cmd and run it
+	out::GMTdataset{Float64,2} = common_grd(d, cmd0, cmd, "gmtisf ", nothing)	# Finish build cmd and run it
 	nc = size(out,2)
 	colnames = (nc == 4 || nc == 9) ? ["lon", "lat", "depth", "mag"] : (nc == 7 || nc == 12) ? ["lon", "lat", "depth", "strike", "dip", "rake", "mag"] : ["lon", "lat", "depth", "strike1", "dip1", "rake1", "strike2", "dip2", "rake2", "mantissa", "exponent"]
 	(!contains(cmd, " -N")) && (append!(colnames, ["year", "month", "day", "hour", "minute"]))
@@ -45,7 +45,7 @@ function gmtisf(cmd0::String; kwargs...)::GMTdataset
 end
 
 # ---------------------------------------------------------------------------------------------------
-function isf_unixtime!(D, first_col=1)
+function isf_unixtime!(D::GMTdataset{Float64,2}, first_col=1)
 	# Convert the 5 last columns with YYYY MM DD HH MM to unix time.
 	# If first_col = 1, then the the abstime is in the first column, otherwise in the last
 	nc = size(D,2)
