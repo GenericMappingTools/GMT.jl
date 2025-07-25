@@ -1,11 +1,12 @@
 Base.@kwdef struct lasout_types
 	stored::String = ""
 	grd::GMTgrid{Float32, 2} = GMTgrid{Float32, 2}()
+	img::GMTimage = GMTimage()
 	ds::GMTdataset = GMTdataset{Float64,2}()
 	dsv::Vector{GMTdataset} = [GMTdataset()]
-	function lasout_types(stored, grd, ds, dsv)
-		stored = !isempty(grd) ? "grd" : (!isempty(ds) ? "ds" : (!isempty(dsv) ? "dsv" : ""))
-		new(stored, grd, ds, dsv)
+	function lasout_types(stored, grd, img, ds, dsv)
+		stored = !isempty(grd) ? "grd" : (!isempty(img) ? "img" : !isempty(ds) ? "ds" : (!isempty(dsv[1]) ? "dsv" : ""))
+		new(stored, grd, img, ds, dsv)
 	end
 end
 
@@ -181,19 +182,23 @@ function lazread(fname::String, out::String, type::DataType, class::Int, startst
 	elseif ((startswith(argout, "xyz") || startswith(argout, "xy")) && occursin(r"[RGBI]", argout))
 		nc = 0
 		contains(argout, "R") && (nc+=1); contains(argout, "G") && (nc+=1); contains(argout, "B") && (nc+=1); contains(argout, "I") && (nc+=1)
+		ind = ones(Int, nc)
+		for n = 1:nc		# Find the order of the requested RGBI components
+			ind[n] = (argout[2+n] == 'R') ? 1 : (argout[2+n] == 'G') ? 2 : (argout[2+n] == 'B') ? 3 : 4
+		end
 		if startswith(argout, "xyz")
 			@inbounds for k = firstPT:lastPT
 				laszip_read_point(reader[])
 				pt = unsafe_load(point[])
 				xyz[k,1]  = pt.X;	xyz[k,2]  = pt.Y;	xyz[k,3]  = pt.Z
-				for n = 1:nc  RGB[k,n] = pt.rgb[n]  end 
+				for n = 1:nc  RGB[k,n] = pt.rgb[ind[n]]  end 
 			end
 		else
 			@inbounds for k = firstPT:lastPT
 				laszip_read_point(reader[])
 				pt = unsafe_load(point[])
 				xyz[k,1]  = pt.X;	xyz[k,2]  = pt.Y;
-				for n = 1:nc  RGB[k,n] = pt.rgb[n]  end 
+				for n = 1:nc  RGB[k,n] = pt.rgb[ind[n]]  end 
 			end
 			coords = 1:2
 		end
@@ -238,7 +243,7 @@ function lazread(fname::String, out::String, type::DataType, class::Int, startst
 	elseif (argout == "xyzti")
 		lasout_types(dsv = [mat2ds(xyz), mat2ds(intens)])	
 	elseif ((startswith(argout, "xyz") || startswith(argout, "xy")) && occursin(r"[RGBI]", argout))
-		do_img && return make_img_from_xyz(xyz, RGB, opt_RI)
+		do_img && return lasout_types(img=make_img_from_xyz(xyz, RGB, opt_RI))
 		colnames = string.(split(argout[size(xyz,2)+1:end], ""))
 		lasout_types(dsv = [mat2ds(xyz), mat2ds(RGB, colnames=colnames)])	
 	elseif (argout == "RGB" || argout == "RGBI")
@@ -254,7 +259,8 @@ end
 # --------------------------------------------------------------------------------
 function make_grid_from_xyz(xyz, opt_RI)::GMTgrid{Float32, 2}
 	opt_R, opt_I, opt_r = laz_get_RIr(xyz, opt_RI)
-	G = gmt("blockmedian -Az" * opt_R * opt_I * opt_r, xyz)
+	inc = split(opt_I[4:end], '/')[1]
+	gmt("nearneighbor -Vq -N1 -S" * inc * opt_R * opt_I * opt_r, xyz)
 end
 
 # --------------------------------------------------------------------------------
@@ -262,12 +268,12 @@ function make_img_from_xyz(xy, RGB, opt_RI)::GMTimage{UInt8, 3}
 	opt_R, opt_I, opt_r = laz_get_RIr(xy, opt_RI)
 	#cmd = "blockmedian -Az" * opt_R * opt_I * opt_r
 	inc = split(opt_I[4:end], '/')[1]
-	cmd = "nearneighbor -N1 -S" * inc * opt_R * opt_I * opt_r
+	cmd = "nearneighbor -Vq -N1 -S" * inc * opt_R * opt_I * opt_r
 	#G::GMTgrid{Float32, 2} = gmt(cmd, [xy RGB[:,1]])		# ADDING THE TYPE ANNOT ADDS 0.5 MB TO THE PRECOMPILED CACHE !!!!!
-	G = gmt_GMTgrid(cmd, [xy RGB[:,1]])
+	G = GMT.gmt_GMTgrid(cmd, [xy RGB[:,1]])
 	img = Array{UInt8}(undef, size(G,1), size(G,2), 3)
 	for k = 1:3
-		(k > 1) && (G = gmt_GMTgrid(cmd, [xy RGB[:,k]]))
+		(k > 1) && (G = GMT.gmt_GMTgrid(cmd, [xy RGB[:,k]]))
 		It = rescale(G, stretch=true, type=UInt8)
 		img[:,:,k] .= It[:, :]
 	end

@@ -17,6 +17,9 @@ using InteractiveUtils
 	API = GMT.GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL);
 	GMT.GMT_Get_Ctrl(API);
 
+	println("		Entering: test_las.jl")
+	include("test_las.jl")
+
 	include("test_avatars.jl")
 	include("test_misc.jl")
 	println("		Entering: test_gd_ext.jl")
@@ -87,8 +90,8 @@ using InteractiveUtils
 	include("test_statplots.jl")
 	include("test_texture.jl")
 	include("test_pca.jl")
-	println("		Entering: test_las.jl")
-	include("test_las.jl")
+	#println("		Entering: test_las.jl")
+	#include("test_las.jl")
 
 	println("	GREENSPLINE")
 	d = [0 6.44; 1820 8.61; 2542 5.24; 2889 5.73; 3460 3.81; 4586 4.05; 6020 2.95; 6841 2.57; 7232 3.37; 10903 3.84; 11098 2.86; 11922 1.22; 12530 1.09; 14065 2.36; 14937 2.24; 16244 2.05; 17632 2.23; 19002 0.42; 20860 0.87; 22471 1.26];

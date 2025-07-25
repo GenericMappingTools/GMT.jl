@@ -2531,6 +2531,11 @@ end
 mksymbol(f::Function, arg1; kw...) = mksymbol(f, "", arg1; kw...)
 
 # ---------------------------------------------------------------------------------------------------
+function hlp_desnany_str(d, s, del=true)::String
+	((val = find_in_dict(d, s)[1]) === nothing) ? "" : string(val)
+end
+
+# ---------------------------------------------------------------------------------------------------
 function hlp_desnany_vstr(d, s)::Vector{String}
 	((val = find_in_dict(d, s)[1]) === nothing) ? String[] : (isa(val, String) ? [val] : val)
 end

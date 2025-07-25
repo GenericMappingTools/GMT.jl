@@ -93,7 +93,8 @@ function gmtread(_fname::String; kwargs...)
 		elseif ((opt_T = guess_T_from_ext(fname)) == " -Tg")  fname *= "=gd"
 		end
 	else
-		(opt_T == "") && (opt_T = add_opt(d, "", "Ti", [:img :image]))
+		_, ext = splitext(fname);		ext = lowercase(ext)	# must check the LAZ case as it also has `img` and `grd` kw
+		((opt_T == "") && (ext != ".laz" && ext != ".las")) && (opt_T = add_opt(d, "", "Ti", [:img :image]))
 	end
 
 	if (opt_T == "")  opt_T = add_opt(d, "", "Td", [:data :dataset :table])  end

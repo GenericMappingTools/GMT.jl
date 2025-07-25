@@ -156,12 +156,12 @@ A Vector of GMTdataset containing the projected (or not) world GSHHG coastlines 
 ### Example
     cl = coastlinesproj(proj="+proj=ob_tran +o_proj=moll +o_lon_p=40 +o_lat_p=50 +lon_0=60");
 """
-function coastlinesproj(; proj::StrSymb="", res="crude", coastlines::Vector{<:GMTdataset}=GMTdataset{Float64,2}[], lonlim=Float64[])
+function coastlinesproj(; proj::StrSymb="", res="crude", coastlines::Vector{<:GMTdataset}=GMTdataset{Float64,2}[], limits=Float64[])
 	# Project the GSHHG coastlines with PROJ. 'proj' must be a valid proj4 string.
 	_proj = isa(proj, Symbol) ? string(proj) : proj
 	(_proj != "" && !startswith(_proj, "+proj=")) && (_proj = "+proj=" * _proj)
-	round = (!isempty(lonlim) && (lonlim[2] - lonlim[1]) > 360) ? false : true
-	worldrectcoast(proj=_proj, res=res, coastlines=coastlines, limits=lonlim, round=round)
+	round = (!isempty(limits) && (limits[2] - limits[1]) > 360) ? false : true
+	worldrectcoast(proj=_proj, res=res, coastlines=coastlines, limits=limits, round=round)
 end
 
 # -----------------------------------------------------------------------------------------------
