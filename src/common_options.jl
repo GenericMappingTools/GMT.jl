@@ -304,7 +304,8 @@ function build_opt_R(val, symb::Symbol=Symbol())::String		# Generic function tha
 			R = " -R" * arg2str(val)
 		end
 	elseif (isa(val, GItype))
-		R = @sprintf(" -R%.15g/%.15g/%.15g/%.15g", val.range[1], val.range[2], val.range[3], val.range[4])
+		rng::Vector{Float64} = val.range
+		R = @sprintf(" -R%.15g/%.15g/%.15g/%.15g", rng[1], rng[2], rng[3], rng[4])
 	elseif (isa(val, GDtype))
 		bb::Vector{<:Float64} = isa(val, GMTdataset) ? val.bbox : val[1].ds_bbox
 		R = (symb ∈ (:region_llur, :limits_llur, :limits_diag, :region_diag)) ?
@@ -328,14 +329,14 @@ function build_opt_R(arg::NamedTuple, symb::Symbol=Symbol())::String
 				BB = join([@sprintf("%.15g/", Float64(x)) for x in vval])
 				BB = rstrip(BB, '/')		# and remove last '/'
 			end
-		elseif (isa(val, String) || isa(val, Symbol))
-			BB = string(val) 			# Whatever good stuff or shit it may contain
+		elseif (isa(val, StrSymb))
+			BB = string(val) 				# Whatever good stuff or shit it may contain
 		end
 	elseif ((val = find_in_dict(d, [:limits_diag :region_diag])[1]) !== nothing)	# Alternative way of saying "+r"
 		_val::Vector{Float64} = collect(Float64, val)
 		BB = @sprintf("%.15g/%.15g/%.15g/%.15g+r", _val[1], _val[3], _val[2], _val[4])
-	elseif ((val = find_in_dict(d, [:continent :cont])[1]) !== nothing)
-		val_::String = uppercase(string(val))
+	elseif ((val = hlp_desnany_str(d, [:continent, :cont])) !== "")
+		val_::String = uppercase(val)
 		if     (startswith(val_, "AF"))  BB = "=AF"
 		elseif (startswith(val_, "AN"))  BB = "=AN"
 		elseif (startswith(val_, "AS"))  BB = "=AS"
@@ -345,9 +346,8 @@ function build_opt_R(arg::NamedTuple, symb::Symbol=Symbol())::String
 		elseif (val_[1] == 'S')  BB = "=SA"
 		else   error("Unknown continent name")
 		end
-	elseif ((val = find_in_dict(d, [:ISO :iso])[1]) !== nothing)
-		(!isa(val, String) && !isa(val, Symbol)) && error("argument to the ISO key must be a string with country codes")
-		BB = string(val)
+	elseif ((val = hlp_desnany_str(d, [:ISO, :iso])) !== "")
+		BB = val
 	end
 
 	if ((val = find_in_dict(d, [:adjust :pad :extend :expand])[1]) !== nothing)
@@ -442,7 +442,8 @@ function parse_JZ(d::Dict, cmd::String, del::Bool=true; O::Bool=false, is3D::Boo
 	if (seek_JZ)
 		val, symb = find_in_dict(d, symbs, del)
 		if (val !== nothing)
-			opt_J = (symb == :JZ || symb == :zsize) ? " -JZ" * arg2str(val)::String : " -Jz" * arg2str(val)::String
+			zZ = (symb == :JZ || symb == :zsize) ? "Z" : "z"
+			opt_J = " -J" * zZ * arg2str(val)::String
 			cmd *= opt_J
 		end
 	end
@@ -1003,7 +1004,7 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 	extra_parse = true;		have_a_none = false
 	if ((val = find_in_dict(d, [:B :frame :axes :axis], del)[1]) !== nothing)		# These four are aliases
 		_val::String = ""
-		if (isa(val, String) || isa(val, Symbol))
+		if (isa(val, StrSymb))
 			_val = string(val)					# In case it was a symbol
 			if (_val == "none")					# User explicitly said NO AXES
 				if     (haskey(d, :xlabel))  _val = "-BS";	have_a_none = true		# Unless labels are wanted, but
@@ -4842,7 +4843,8 @@ function digests_legend_bag(d::Dict, del::Bool=true)
 	     (haskey(LEGEND_TYPE[1].optsDict, :pos) || haskey(LEGEND_TYPE[1].optsDict, :position)) ?
 		 LEGEND_TYPE[1].optsDict : Dict{Symbol,Any}()
 
-	_opt_D = (((val = find_in_dict(_d, [:pos :position], false)[1]) !== nothing) && isa(val, StrSymb)) ? string(val)::String : ""
+	#_opt_D = (((val = find_in_dict(_d, [:pos :position], false)[1]) !== nothing) && isa(val, StrSymb)) ? string(val)::String : ""
+	_opt_D = hlp_desnany_str(d, [:pos, :position], false)
 	if ((opt_D::String = parse_type_anchor(_d, "", [:_ :pos :position],
 	                                       (map=("g", arg2str, 1), outside=("J", arg2str, 1), inside=("j", arg2str, 1), norm=("n", arg2str, 1), paper=("x", arg2str, 1), anchor=("", arg2str, 2), width=("+w", arg2str), justify="+j", spacing="+l", offset=("+o", arg2str)), 'j')) == "")
 		opt_D = @sprintf("jTR+w%.3f+o0.1", symbW*1.2 + lab_width)
