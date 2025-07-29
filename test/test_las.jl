@@ -22,6 +22,11 @@
 		testfile = TESTSDIR * "/assets/test.laz"
 		if isfile(testfile)
 			# Test reading xyz
+			out = lazread(testfile, out="z")
+			out = lazread(testfile, out="xy")
+			out = lazread(testfile, out="xyt")
+			out = lazread(testfile, out="RGB")
+			out = lazread(testfile, out="RGBI")
 			out = lazread(testfile, out="xyz")
 			@test isa(out, GMT.Laszip.lasout_types)
 			@test out.stored == "ds" || out.stored == "grd"

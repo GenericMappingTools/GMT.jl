@@ -2220,3 +2220,60 @@ biplot!(cmd0::String; PC=(1,2), xlabel="", ylabel="", varlabels=:yes, cmap=:cate
         ms="auto", obsnumbers::Bool=false, colorbar::Bool=true, arrow::Tuple=(0.3, 0.5, 0.75, "#0072BD"), kw...) =
 	biplot(cmd0; first=false, PC=PC, xlabel=xlabel, ylabel=ylabel, varlabels=varlabels, cmap=cmap,
 	       marker=marker, ms=ms, obsnumbers=obsnumbers, colorbar=colorbar, arrow=arrow, kw...)
+
+# ------------------------------------------------------------------------------------------------------
+"""
+	stereonet(mat; schmidt=true, wulff=false, kw...)
+
+Plot a stereonet map in either Schmidt or Wulff projection.
+
+- `mat`: A GMTdataset or a matrix with two columns: azimuth and plunge.
+- `schmidt`: If true, use Schmidt projection. If false, use Wulff projection.
+- `wulff`: If true, use Wulff projection.
+- `kw`: Additional keyword arguments to pass to the `basemap` function. Namely, `figsize`, `figname`
+
+In case the figure produced by the dfault setting is not satisfactory, you can make one by yourself.
+For that use the `Dv, Dp = _stereonet(mat)` function to get the fault planes and poles. A good place
+to start is the `stereonet` function itself. Type ``@edit GMT.stereonet([0 0])`` to see the code.
+
+### Example
+```julia
+stereonet([90 30; 180 45; 270 60; 0 15; 30 45; 120 48; 225 27; 350 80])
+```
+"""
+function stereonet(mat::AbstractArray{T,2}; first=true, schmidt=true, wulff=false, kw...) where T<:Real
+	Dv, Dp = _stereonet(mat)
+	wulff && (schmidt = false)			# Wulff stereonet
+	prj = schmidt ? :laea : (name=:stereo, center=[0,0])# "S0/0/15c"
+	basemap(; first=first, R=:d, J=prj, B="pg5 sg20", par=(MAP_GRID_PEN_PRIMARY="0.25,gray", MAP_GRID_PEN_SECONDARY="0.25,black"), kw...)
+	plot!(Dv, lc=:red, lt=0.5)
+	plot!(Dp, mc=:blue, ms="3p", marker=:circle)
+	show = is_in_kwargs(kw, [:show]) ? kw[:show] : true
+	basemap!(J="P" * CTRL.pocket_J[2] * "+a", B="a15", show=show)
+end
+stereonet!(mat::AbstractArray{T,2}; schmidt=true, wulff=false, kw...) where T<:Real =
+	stereonet(mat; first=false, schmidt=schmidt, wulff=wulff, kw...)
+
+function _stereonet(mat::AbstractArray{T,2}) where T<:Real
+	# This function computes the fault planes and the poles. Returns a vector of GMTdataset
+	# with the fault planes and a GMTdataset with the poles.
+	@assert size(mat,2) >= 2 "Input matrix must have at least two columns: azimuth and plunge"
+	Dv = Vector{GMTdataset{Float64,2}}(undef, size(mat,1))
+	polos = Matrix{Float64}(undef, size(mat,1), 2)
+	for k = 1:size(mat,1)
+		m = [fill(90.0-mat[k,2], 180) collect(linspace(-90.0, 90, 180))]
+		x,y,z = sph2cart(m[:,1], m[:,2], 1.0, deg=true)
+		R = eulermat([mat[k,1],0,0])[2]
+		m2 = [x y z] * R
+		lon, lat, = cart2sph(m2[:,1], m2[:,2], m2[:,3], deg=true)
+		Dv[k] = mat2ds([lon lat], geom=wkbLineString)
+		
+		# Now the poles	
+		x,y,z = sph2cart(-mat[k,2], 0.0, 1.0, deg=true)
+		m2 = [x y z] * R
+		lon, lat, = cart2sph(m2[1], m2[2], m2[3], deg=true)
+		polos[k,1], polos[k,2] = lon, lat
+	end
+	set_dsBB!(Dv)
+	return Dv, mat2ds(polos, geom=wkbPoint)
+end
