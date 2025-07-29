@@ -130,6 +130,7 @@ export
 	earthtide, gravfft, gmtgravmag3d, gravmag3d, grdgravmag3d, gravprisms, grdseamount, parkermag, parkergrav,
 	pscoupe, pscoupe!, coupe, coupe!, psmeca, psmeca!, meca, meca!, psvelo, psvelo!, velo, velo!, gmtisf, getbyattrib,
 	inpolygon, inwhichpolygon, pcolor, pcolor!, triplot, triplot!, trisurf, trisurf!, grdrotater, imagesc, upGMT, boxes,
+	stereonet, stereonet!,
 
 	mgd77magref, magref,
 
