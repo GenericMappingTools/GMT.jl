@@ -2230,9 +2230,10 @@ Plot a stereonet map in either Schmidt or Wulff projection.
 - `mat`: A GMTdataset or a matrix with two columns: azimuth and plunge.
 - `schmidt`: If true, use Schmidt projection. If false, use Wulff projection.
 - `wulff`: If true, use Wulff projection.
-- `kw`: Additional keyword arguments to pass to the `basemap` function. Namely, `figsize`, `figname`
+- `kw`: Additional keyword arguments to pass to the `plot` function. Namely, `figsize`, `figname`,
+  and line & marker settings (see ``plots`` manual for details on them).
 
-In case the figure produced by the dfault setting is not satisfactory, you can make one by yourself.
+In case the produced figure is still not satisfactory, you can make one by yourself.
 For that use the `Dv, Dp = _stereonet(mat)` function to get the fault planes and poles. A good place
 to start is the `stereonet` function itself. Type ``@edit GMT.stereonet([0 0])`` to see the code.
 
@@ -2242,13 +2243,23 @@ stereonet([90 30; 180 45; 270 60; 0 15; 30 45; 120 48; 225 27; 350 80])
 ```
 """
 function stereonet(mat::AbstractArray{T,2}; first=true, schmidt=true, wulff=false, kw...) where T<:Real
-	Dv, Dp = _stereonet(mat)
+	d = KW(kw)
+	show = (find_in_dict(d, [:show])[1] !== nothing) ? false : true		# DEfault is 'true'.
 	wulff && (schmidt = false)			# Wulff stereonet
+
+	Dv, Dp = _stereonet(mat)
 	prj = schmidt ? :laea : (name=:stereo, center=[0,0])# "S0/0/15c"
-	basemap(; first=first, R=:d, J=prj, B="pg5 sg20", par=(MAP_GRID_PEN_PRIMARY="0.25,gray", MAP_GRID_PEN_SECONDARY="0.25,black"), kw...)
-	plot!(Dv, lc=:red, lt=0.5)
-	plot!(Dp, mc=:blue, ms="3p", marker=:circle)
-	show = is_in_kwargs(kw, [:show]) ? kw[:show] : true
+	(is_in_dict(d, [:lc :linecolor]) === nothing) && (d[:lc] = "red")
+	(is_in_dict(d, [:lt :linethickness]) === nothing) && (d[:lt] = 0.5)
+	d[:par] = (MAP_GRID_PEN_PRIMARY="0.25,gray", MAP_GRID_PEN_SECONDARY="0.25,black")
+	d[:B], d[:R], d[:J] = "pg5 sg20", :d, prj
+	_common_plot_xyz("", Dv, "plot", false, true, false, d)		# Plot the fault planes
+
+	(is_in_dict(d, [:marker :Marker :shape]) === nothing) && (d[:marker] = "circ")
+	(is_in_dict(d, [:mec :markeredgecolor :MarkerEdgeColor]) === nothing) && (d[:mec] = "0.0p,black")
+	(is_in_dict(d, [:mc :markercolor]) === nothing) && (d[:mc] = "blue")
+	(is_in_dict(d, [:ms :markersize :MarkerSize :size]) === nothing) && (d[:ms] = "3p")
+	_common_plot_xyz("", Dp, "plot", true, true, false, d)		# Plot the poles
 	basemap!(J="P" * CTRL.pocket_J[2] * "+a", B="a15", show=show)
 end
 stereonet!(mat::AbstractArray{T,2}; schmidt=true, wulff=false, kw...) where T<:Real =
