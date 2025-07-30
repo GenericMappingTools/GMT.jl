@@ -180,7 +180,8 @@ function gmtread(_fname::String; kwargs...)
 			fname = joinpath(readlines(`gmt --show-userdir`)[1], "cache", fname[2:end])
 			!isfile(fname) && error("File $fname does not exist in cache.")
 		elseif (opt_T == " -Toz")					# Means we got a zipped ogr file
-			fname, opt_T = "/vsizip/" * fname, " -To"
+			opt_T = " -To"
+			!startswith(fname, "/vsizip/") && (fname = "/vsizip/" * fname)
 		elseif (opt_T == "obj")						# Means we got a .obj file. Read it and leave
 			return read_obj(fname)
 		elseif (opt_T == "las")						# Means we got a .laz or .las file. Read it and leave
@@ -447,8 +448,8 @@ function guess_T_from_ext(fname::String; write::Bool=false, text_only::Bool=fals
 	(ext == "obj") && return "obj"	# To be read by read_obj() internal function.
 	(ext == "laz" || ext == "las") && return "las"	# To be read by lazwrite()
 	if (ext == "zip")				# Accept ogr zipped files, e.g., *.shp.zip
+		startswith(fname, "/vsizip/") && ((info = gdalinfo(fname)) != "") && return " -Toz"	# A bit risky but allows reading zipped ogr files
 		((out = guess_T_from_ext(fn)) == " -To") && return " -Toz"
-		((info = gdalinfo("/vsizip/"*fname)) != "") && return " -Toz"	# A bit risky but allows reading zipped ogr files
 	end
 
 	_kml = (!write || !text_only) ? "kml" : "*"		# When it's text_only, we are writting an output gmt2kml
