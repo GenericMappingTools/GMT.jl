@@ -353,8 +353,7 @@ function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::St
 	end
 	((outname = GMT.add_opt(d, "", "", [:outgrid :outfile :save])) != "") && (dest = outname)
 	default_gdopts!(f, dataset, opts, dest)	# Assign some default options in function of the driver and data type
-	((val = find_in_dict(d, [:meta])[1]) !== nothing && isa(val,Vector{String})) &&
-		Gdal.GDALSetMetadata(dataset.ptr, val, C_NULL)		# Metadata must be in the form NAME=.....
+	((meta = GMT.hlp_desnany_vstr(d, [:meta])) != "") && Gdal.GDALSetMetadata(dataset.ptr, meta, C_NULL)	# Metadata must have form NAME=.....
 
 	CPLPushErrorHandler(@cfunction(CPLQuietErrorHandler, Cvoid, (UInt32, Cint, Cstring)))
 	#setconfigoption("CPL_LOG_ERRORS", "ON")

@@ -2669,6 +2669,7 @@ end
 		DRIVER_MANAGER[] = DriverManager()
 		CPLSetConfigOption("GDAL_HTTP_UNSAFESSL", "YES")
 		isdir(GDAL_DATA_DIR) && CPLSetConfigOption("GDAL_DATA", GDAL_DATA_DIR)
+		#CPLSetConfigOption("GDAL_NUM_THREADS", "ALL_CPUS")
 	end
 
 """
