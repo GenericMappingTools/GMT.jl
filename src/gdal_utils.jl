@@ -692,7 +692,7 @@ function gmt2gd(D::Vector{<:GMTdataset}; save::String="", geometry::String="")
 		isline = !ispolyg						# Otherwise make a Line/MultiLine
 	end
 
-	ds = Gdal.create(getdriver("MEMORY"));
+	ds = Gdal.create(getdriver("MEM"));
 	#ds = Gdal.create(getdriver("ESRI Shapefile"), filename="/vsimem/mem.shp")
 	if     (D[1].proj4 != "")  sr = Gdal.importPROJ4(D[1].proj4)
 	elseif (D[1].wkt   != "")  sr = Gdal.importWKT(D[1].wkt)
