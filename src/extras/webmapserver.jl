@@ -148,10 +148,18 @@ A GMTimage
 """
 function wmsread(wms::WMS; layer=0, time::String="", kw...)::GMTimage
 	layer_n = get_layer_number(wms, layer)
-	str, dim_x, dim_y = wms_helper(wms; layer=layer_n, time=time, kw...)
+	str, dim_x, dim_y, lims_bak = wms_helper(wms; layer=layer_n, time=time, kw...)
+	(dim_x == 0 || dim_y == 0) && (@warn("This request returned an empty image."); return GMTimage())
 	opts = ["-outsize", "$(dim_x)", "$(dim_y)"]
 	((Vd = find_in_kwargs(kw, [:Vd])[1]) !== nothing) && (println(str, "\n", opts); (Vd == 2) && return nothing) 
-	gdaltranslate(str, opts)
+	I = gdaltranslate(str, opts)
+	(I === nothing) && (@warn("This request returned an empty image."); return GMTimage())
+	if (lims_bak != zeros(4))		# No limits were set, so we can return the image as is
+		gdwopts = ["-t_srs","+proj=latlong +datum=WGS84", "-r","cubic"]
+		append!(gdwopts, ["-te"], ["$(lims_bak[1])"], ["$(lims_bak[3])"], ["$(lims_bak[2])"], ["$(lims_bak[4])"])
+		I = gdalwarp(I, gdwopts)::GMTimage{UInt8, 3}
+	end
+	return I
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -186,7 +194,7 @@ Either a the GetMap request string (when `size=false`) or the resulting image/gr
 """
 function wmstest(wms::WMS; layer=0, size::Bool=false, kw...)
 	layer_n = get_layer_number(wms, layer)
-	str, dim_x, dim_y = wms_helper(wms; layer=layer_n, kw...)
+	str, dim_x, dim_y, = wms_helper(wms; layer=layer_n, kw...)
 	return (size) ? (dim_y, dim_x) : str
 end
 
@@ -211,7 +219,9 @@ function wms_helper(wms::WMS; layer=0, kw...)
 	d = KW(kw)
 	((reg = find_in_dict(d, [:R :region :limits], false)[1]) === nothing) && error("Must provide the `region` option.")
 
-	SRS::String = find_in_dict(d, [:geog :force_geog :forcegeog])[1] !== nothing ? "EPSG:4326" : wms.layer[layer_n].srs
+	#SRS::String = find_in_dict(d, [:geog :force_geog :forcegeog], false)[1] !== nothing ? "EPSG:4326" : wms.layer[layer_n].srs
+	SRS::String = wms.layer[layer_n].srs
+	srs_is_geog = (contains(SRS, "4326") || contains(SRS, ":84"))
 
 	if (isa(reg, Tuple) || isa(reg, VMr))
 		len::Int = length(reg)				# reg is a damn Any
@@ -219,8 +229,7 @@ function wms_helper(wms::WMS; layer=0, kw...)
 		if (len == 4)
 			lims::Vector{Float64} = Float64.([reg[1], reg[2], reg[3], reg[4]])	# Make a copy to have the same name as in the other branch.
 		else
-			(contains(SRS, "4326") || contains(wms.layer[layer_n].crs, ":84")) &&
-				error("This is a Geographical layer so you cannot set the region with a center and a width.")
+			srs_is_geog && error("This is a Geographical layer so you cannot set the region with a center and a width.")
 			t_srs = epsg2proj(parse(Int, SRS[6:end]))							# Convert to proj4 because lonlat2xy() does not know EPSG
 			center::Matrix{Float64} = lonlat2xy([reg[1] reg[2]], t_srs)	# Box center in projected coordinates
 			half_w::Float64 = reg[3] / 2
@@ -230,6 +239,16 @@ function wms_helper(wms::WMS; layer=0, kw...)
 		parse_R(d, "")			# This fills CTRL.limits, which is what we need here
 		lims = CTRL.limits[1:4]
 	end
+
+	do_geo = (((lims[1] >= -180 && lims[2] <= 360) && lims[3] >= -90 && lims[4] <= 90) || is_in_dict(d, [:geog]) !== nothing)
+	lims_bak = zeros(4)
+	if (do_geo && !srs_is_geog)
+		t_srs = epsg2proj(parse(Int, SRS[6:end]))
+		t = lonlat2xy([lims[1] lims[3]; lims[2] lims[4]], t_srs)
+		lims_bak = copy(lims)		# Save the original limits
+		lims[1], lims[3], lims[2], lims[4] = t[1,1], t[1,2], t[2,1], t[2,2]
+	end
+
 	BB = @sprintf("%.12g,%.12g,%.12g,%.12g", lims[1], lims[3], lims[2], lims[4])
 	(wms.layer[layer_n].bbox[1] > lims[1] || wms.layer[layer_n].bbox[2] < lims[2] || wms.layer[layer_n].bbox[3] > lims[3] || wms.layer[layer_n].bbox[4] < lims[4]) && @warn("Requested region overflows this layer BoundingBox")
 
@@ -287,7 +306,7 @@ function wms_helper(wms::WMS; layer=0, kw...)
 	
 	str = @sprintf("WMS:%sSERVICE=WMS&VERSION=%s&REQUEST=GetMap&LAYERS=%s&SRS=%s&BBOX=%s%s%s%s%s%s%s%s", wms.OnlineResource, wms.version, wms.layer[layer_n].name, SRS, BB, FMT, TILSZ, OVCNT, MINRES, TILED, TRANS, TIME)
 
-	return str, dim_x, dim_y
+	return str, dim_x, dim_y, lims_bak
 end
 
 # ---------------------------------------------------------------------------------------------------
