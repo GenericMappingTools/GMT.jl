@@ -985,12 +985,12 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 		return dataset
 	end
 
-	function createlayer(; name::AbstractString="", dataset::AbstractDataset=create(getdriver("Memory")),
+	function createlayer(; name::AbstractString="", dataset::AbstractDataset=create(getdriver("MEM")),
 		geom::UInt32=wkbUnknown, spatialref::AbstractSpatialRef=SpatialRef(), options=Ptr{Cstring}(C_NULL))
 		return IFeatureLayer(GDALDatasetCreateLayer(dataset.ptr, name, spatialref.ptr, geom, options),
 							 ownedby=dataset, spatialref=spatialref)
 	end
-	#= function unsafe_createlayer(; name::AbstractString="", dataset::AbstractDataset=create(getdriver("Memory")),
+	#= function unsafe_createlayer(; name::AbstractString="", dataset::AbstractDataset=create(getdriver("MEM")),
 		geom::UInt32=wkbUnknown, spatialref::AbstractSpatialRef=SpatialRef(), options=Ptr{Cstring}(C_NULL))
 	return FeatureLayer(GDAL.gdaldatasetcreatelayer(dataset.ptr, name, spatialref.ptr, geom, options))
 	end =#
@@ -1716,7 +1716,7 @@ end
 		#isfloat = (find_in_kwargs(kw, [:float])[1] !== nothing) ? true : false		# Float Didnt't look convincing
 		nbd = (find_in_kwargs(kw, [:band])[1] !== nothing) ? kw[:band] : 1
 		bd = getband(dataset, nbd)
-		ds = Gdal.create(Gdal.getdriver("MEMORY"))
+		ds = Gdal.create(Gdal.getdriver("MEM"))
 		layer = createlayer(name="polygonized", dataset=ds, geom=Gdal.wkbPolygon)
 		addfielddefn!(layer, "Px", OFTString, nwidth = 32)
 		#isfloat ? GDALPolygonize(bd.ptr, mask, layer.ptr, 0, options, progress, C_NULL) :
@@ -2139,7 +2139,7 @@ end
 	"""
 	function wrapgeom(geom::AbstractGeometry, proj::String="")
 		(proj != "" && !startswith(proj, "+proj=")) && error("Projection info must be in proj4 format.")
-		ds = create(getdriver("MEMORY"))
+		ds = create(getdriver("MEM"))
 		sr = (proj == "") ? ISpatialRef(C_NULL) : importPROJ4(proj)
 		layer = createlayer(name="layer1", dataset=ds, geom=getgeomtype(geom), spatialref=sr)
 		feature = unsafe_createfeature(layer)
