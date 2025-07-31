@@ -279,6 +279,7 @@
 	GMT.polygonlevels(D, ["a", "b", "c"], [1,2,missing], att="nome");
 	GMT.edit_segment_headers!(D, [1], "0");
 	GMT.getbyattrib(D, att="nome", val="a");
+	getbyattrib(coast(M=true, DCW=:PT), _nps=10, _area=10, _region=(-10.,-5,30,45));
 	filter(D, nome="a", nome2="b");
 	filter(D, nome=("a","b"));
 	findall(D, nome="a");

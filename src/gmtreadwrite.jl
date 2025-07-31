@@ -449,7 +449,8 @@ function guess_T_from_ext(fname::String; write::Bool=false, text_only::Bool=fals
 	(ext == "laz" || ext == "las") && return "las"	# To be read by lazwrite()
 	if (ext == "zip")				# Accept ogr zipped files, e.g., *.shp.zip
 		startswith(fname, "/vsizip/") && ((info = gdalinfo(fname)) != "") && return " -Toz"	# A bit risky but allows reading zipped ogr files
-		((out = guess_T_from_ext(fn)) == " -To") && return " -Toz"
+		((info = gdalinfo("/vsizip/" * fname)) != "") && return " -Toz"
+		((out = guess_T_from_ext(fn)) == " -To") && return " -Toz"	# Case of, for example, .shp.zip
 	end
 
 	_kml = (!write || !text_only) ? "kml" : "*"		# When it's text_only, we are writting an output gmt2kml
