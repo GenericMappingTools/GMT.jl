@@ -1,6 +1,9 @@
 # ---------------------------------------------------------------------------------------------------
 """
     zvals = polygonlevels(D::GDtype, ids::VecOrMat{String}, vals::Vector{<:Real}; kw...) -> Vector{Float64}
+or
+
+    zvals = polygonlevels(D::GDtype, idvals::GMTdataset; kw...) -> Vector{Float64}
 
 Create a vector with `zvals` to use in `plot` and where length(zvals) == length(D)
 
@@ -13,6 +16,9 @@ The elements of `zvals` are made up from the `vals`.
             with two elements) that will be matched against the two elements of each line of `ids`.
             The idea here is to match two conditions: `att[1] == ids[n,1] && att[2] == ids[n,2]`
 - `vals`:   is a vector with the numbers to be used in plot `level` to color the polygons.
+- `idvals`: is a GMTdataset with the `text` field containing the ids to match against the `ids` strings.
+            The first column of `id_vals` must contain the values to be used in `vals`. This is a comodity
+            function when both the `ids` and `vals` are store in a GMTdataset.
 
 ### Kwargs
 - `attrib` or `att`: Select which attribute to use when matching with contents of the `ids` strings.
@@ -25,11 +31,16 @@ Returns a Vector{Float64} with the same length as the number of segments in D. I
 made up from the contents of `vals` but may be repeated such that each polygon of the same family, i.e.
 with the same `ids`, has the same value.
 """
+function polygonlevels(D::Vector{<:GMTdataset}, id_vals::GMTdataset; kw...)
+	# This method uses 'ids' from the ext column of 'id_vals' and the 'vals' from first column in the 'id_vals' 
+	isempty(id_vals.text) && error("The `id_vals` dataset must have a text field with the ids to match.")
+	polygonlevels(D, id_vals.text, view(id_vals,:,1); kw...)	
+end
 function polygonlevels(D::Vector{<:GMTdataset}, user_ids::VecOrMat{<:AbstractString}, vals; kw...)
 	# Damn missings are so annoying. And the f types too. Can't restrict it to Vector{Union{Missing, <:Real}}
 	# This method works for both Vector or Matrix 'user_ids'.
 	DT = eltype(vals);
-	(DT != Union{Missing, Float64} && DT != Union{Missing, Float32} && DT != Union{Missing, Int}) && @warn("Probable error in data type ($DT)")
+	!(DT in (Float64, Float32, Int)) && (DT != Union{Missing, Float64} && DT != Union{Missing, Float32} && DT != Union{Missing, Int}) && @warn("Probable error in data type ($DT)")
 	inds, _vals = ismissing.(vals), collect(skipmissing(vals))
 	any(inds) && (user_ids = isa(user_ids, Matrix) ? user_ids[:,.!inds] : user_ids[.!inds])
 	polygonlevels(D, user_ids, _vals; kw...)
@@ -160,23 +171,34 @@ Note, this assumes that `D` has its `attrib` fields set with usable information.
 NOTE: Instead of ``getbyattrib`` one case use instead ``filter`` (...,`index=false`) or ``findall`` (..., `index=true`)
 
 ### Parameters
+
 - `attrib name(s)=value(s)`: Easier to explain by examples: `NAME="Antioquia"`, select all elements that have
-  that attribute/value combination. `NAME=("Antioquia", "Caldas"), pick elements that have those `NAME` attributes.
+  that attribute/value combination. `NAME=("Antioquia", "Caldas")`, pick elements that have those `NAME` attributes.
   Add as many as wished. If using two `kwargs` the second works as a condition. ``(..., NAME=("Antioquia", "Caldas"), feature_id=0)``
   means select all elements from ``Antioquia`` and ``Caldas`` that have the attribute `feature_id` = 0.
+
+  A second set of attributes can be used to select elements by region, number of polygon vertices and area.
+  For that, name the keyword with a leading underscore, e.g. `_region`, `_nps`, `_area`. Their values are
+  passed respectively a 4 elements tuple and numbers. E.g. `_region=(-8.0, -7.0, 37.0, 38.0)`, `_nps=100`, `_area=10`.
+  Areas are in square km when input is in geographic coordinates, otherwise squre data unites.
+
 - `invert, or reverse, or not`: If `true` return all segments that do NOT match the query condition(s).
+
 - `attrib` or `att`: (OLD SYNTAX) A NamedTuple with the attribname, attribvalue as in `att=(NAME_2="value",)`.
   Use more elements if wishing to do a composite match. E.g. `att=(NAME_1="val1", NAME_2="val2")` in which
   case only segments matching the two conditions are returned.
+
 - `index`: Use this `positional` argument = `true` to return only the segment indices that match the `att` condition(s).
 
 ### Returns
 Either a vector of GMTdataset, or a vector of Int with the indices of the segments that match the query condition.
 Or `nothing` if the query results in an empty GMTdataset 
 
-## Example:
+## Examples
 
     D = filter(D, NAME_2="Porto");
+
+    D = filter(D, _region="(-8.0, -7.0, 37.0, 38.0)", _nps=100);
 """
 function getbyattrib(D::Vector{<:GMTdataset}, ind_::Bool; kw...)::Vector{Int}
 	# This method does the work but it's not the one normally used by the public.
@@ -189,21 +211,22 @@ function getbyattrib(D::Vector{<:GMTdataset}, ind_::Bool; kw...)::Vector{Int}
 			((val = find_in_kwargs(kw, [:val :value])[1])  === nothing) && error("Must provide the `attribute` VALUE.")
 		end
 		atts, vals = isa(_att, NamedTuple) ? (string.(keys(_att)), string.(values(_att))) : ((string(_att),), (string(val),))
+		_keys = repeat(" ", length(kw))
 	else
 		# FCK unbelievable case. Julia can be f. desparing. It took me an whole afternoon to make this work.
 		#d = KW(kw); Keys = keys(d);
 		#Keys[1] => Internal Error: MethodError: no method matching getindex(::Base.KeySet{Symbol, Dict{Symbol, Any}}, ::Int64)
 		count, kk = 0, 1
 		v = values(kw)
+		_keys = string.(keys(kw))
 		for k = 1:numel(kw)
-			count += (isa(values(v[k]), Tuple) || isa(values(v[k]), Vector{String})) ? length(values(v[k])) : 1
+			count += (_keys[k][1] != '_') && (isa(values(v[k]), Tuple) || isa(values(v[k]), Vector{String})) ? length(values(v[k])) : 1
 		end
 		atts, vals = Vector{String}(undef, count), Vector{String}(undef, count)
 
-		_keys = string.(keys(kw))
 		for k = 1:numel(kw)
 			vv = values(v[k])
-			if (isa(vv, Tuple))
+			if (isa(vv, Tuple) && (_keys[k][1] != '_'))
 				atts[kk:kk+length(vv)-1] .= _keys[k]
 				vals[kk:kk+length(vv)-1] .= string.(vv)
 				kk += length(vv) 
@@ -219,13 +242,44 @@ function getbyattrib(D::Vector{<:GMTdataset}, ind_::Bool; kw...)::Vector{Int}
 		end
 	end
 
+	function clip_region(D, _region, _tf)		# Clip by region
+		xc_1, yc_1 = (_region[1] + _region[2]) /2, (_region[3] + _region[4]) /2
+		width1, height1 = _region[2] - _region[1], _region[4] - _region[3]
+		for k = 1:numel(D)
+			xc_2, yc_2 = (D[k].bbox[1] + D[k].bbox[2]) /2, (D[k].bbox[3] + D[k].bbox[4]) /2
+			width2, height2 = D[k].bbox[2] - D[k].bbox[1], D[k].bbox[4] - D[k].bbox[3]
+			_tf[k] = rect_overlap(xc_1, yc_1, xc_2, yc_2, width1, height1, width2, height2)[1]
+		end
+		_tf
+	end
+	function clip_np(D, nps_, _tf)				# Clip by number of points
+		for k = 1:numel(D)  _tf[k] = size(D[k].data,1) >= nps_  end
+		_tf
+	end
+	function clip_area(D, areas_, area_, _tf)				# Clip by number of points
+		for k = 1:numel(D)  _tf[k] = areas_[k] >= area_  end
+		_tf
+	end
+
+	(ind = findfirst(atts .== "_region")) !== nothing && (lims = parse.(Float64, split(vals[ind][2:end-1], ", ")))
+	(ind = findfirst(atts .== "_nps"))    !== nothing && (nps  = parse.(Float64, vals[ind]))
+	(ind = findfirst(atts .== "_area"))   !== nothing && (area = parse.(Float64, vals[ind]); areas::Vector{Float64} = gmtspatial(D, area=true).data[:,3])
+
 	indices::Vector{Int} = Int[]
 	ky = keys(D[1].attrib)
 	for n = 1:numel(atts)
-		((ind = findfirst(ky .== atts[n])) === nothing) && continue
+		special = (length(_keys) >= n && _keys[n][1] == '_')	# _keys can be shorter than atts
+		(!special && (ind = findfirst(ky .== atts[n])) === nothing) && continue
 		tf = fill(false, length(D))
-		for k = 1:length(D)
-			(!isempty(D[k].attrib) && (D[k].attrib[atts[n]] == vals[n])) && (tf[k] = true)
+		if (special)
+			if     (atts[n] == "_region") tf = clip_region(D, lims, tf)
+			elseif (atts[n] == "_area")   tf = clip_area(D, areas, area, tf)
+			else                          tf = clip_np(D, nps, tf)
+			end
+		else
+			for k = 1:length(D)
+				(!isempty(D[k].attrib) && (D[k].attrib[atts[n]] == vals[n])) && (tf[k] = true)
+			end
 		end
 		(invert) && (tf .= .!tf)
 		if (n == 1)  indices = findall(tf)

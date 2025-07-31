@@ -1317,6 +1317,11 @@ function rect_overlap(xc_1, yc_1, xc_2, yc_2, width1, height1, width2, height2)
 end
 
 # ----------------------------------------------------------------------------
+#function inbbox(x, y, bbox)
+	#return (x >= bbox[1] && x <= bbox[2] && y >= bbox[3] && y <= bbox[4]) ? true : false
+#end
+
+# ----------------------------------------------------------------------------
 """
     n = facenorm(M::AbstractMatrix{<:Real}; normalize=true, zfact=1.0)
 
