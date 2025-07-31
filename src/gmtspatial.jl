@@ -3,8 +3,6 @@
 
 Geospatial operations on points, lines and polygons.
 
-See full GMT (not the `GMT.jl` one) docs at [`gmtspatial`]($(GMTdoc)gmtspatial.html)
-
 Parameters
 ----------
 
@@ -62,11 +60,8 @@ function gmtspatial_helper(cmd0::String, arg1, arg2; kw...)
 	_gmtspatial_helper(cmd0, arg1, arg2, d)
 end
 
-#function gmtspatial(cmd0::String="", arg1=nothing, arg2 = nothing; kwargs...)
 function _gmtspatial_helper(cmd0::String, arg1, arg2, d::Dict)::Union{GMTdataset{Float64,2}, Vector{<:GMTdataset{Float64,2}}}
 
-	#(cmd0 == "" && arg1 === nothing && arg2 === nothing && length(kwargs) == 0) && return gmt("gmtspatial")
-	#d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	arg3 = nothing;     arg4 = nothing
 
 	cmd, = parse_common_opts(d, "", [:R :V_params :b :d :e :f :g :h :i :o :yx])
