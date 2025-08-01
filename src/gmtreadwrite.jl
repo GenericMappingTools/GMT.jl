@@ -84,6 +84,7 @@ function gmtread(_fname::String; kwargs...)
 	cmd = parse_common_opts(d, cmd, [:V_params :f])[1]
 	cmd, opt_bi = parse_bi(d, cmd)
 	proggy = "read "						# When reading an entire grid cube, this will change to 'grdinterpolate'
+	doTimeCheck = true						# By default check for time columns in text files
 
 	# Process these first so they may take precedence over defaults set below
 	opt_T = add_opt(d, "", "Tg", [:grd :grid])
@@ -103,11 +104,10 @@ function gmtread(_fname::String; kwargs...)
 	if (opt_T == "")  opt_T = add_opt(d, "", "To", [:ogr])  end
 
 	ogr_layer::Int32 = Int32(0)			# Used only with ogrread. Means by default read only the first layer
-	if ((_varname = find_in_dict(d, [:varname])[1]) !== nothing) # See if we have a nc varname / layer request
-		varname::String = string(_varname)
+	if ((varname = hlp_desnany_str(d, [:varname])) != "")	# See if we have a nc varname / layer request
 		(opt_T == "") && (opt_T = " -Tg")		# Though not used in if 'gdal', it still avoids going into needless tests below
 		if (via_gdal || contains(varname, '/'))	# This branch is fragile
-			fname = sneak_in_SUBDASETS(fname, varname)	# Get the composed name (fname + subdaset and driver)
+			fname = sneak_in_SUBDASETS(fname, varname)		# Get the composed name (fname + subdaset and driver)
 			proggy = "gdalread"
 			gdopts::String = ""
 			if ((val1 = find_in_dict(d, [:layer :layers :band :bands])[1]) !== nothing)
@@ -117,6 +117,7 @@ function gmtread(_fname::String; kwargs...)
 			end
 		else
 			fname *= "?" * varname
+			doTimeCheck = false					# We do not want to check for time columns in this case (would error out)
 			if ((val = find_in_dict(d, [:layer :layers :band :bands])[1]) !== nothing)
 				if     (isa(val, Real))           fname *= @sprintf("[%d]", val-1)
 				elseif (isa(val, AbstractArray))  fname *= @sprintf("[%d,%d]", val[1]-1, val[2]-1)	# A 4D array
@@ -269,7 +270,7 @@ function gmtread(_fname::String; kwargs...)
 		isa(o, Vector{<:GMTdataset}) && fish_attrib_in_header!(o)
 
 		# Try guess if ascii file has time columns and if yes leave trace of it in GMTdadaset metadata.
-		(opt_bi == "" && !isISF && isa(o, GDtype)) && file_has_time!(fname, o, corder, opt_h)
+		(doTimeCheck && opt_bi == "" && !isISF && isa(o, GDtype)) && file_has_time!(fname, o, corder, opt_h)
 
 		# Function barrier to check if we should assign a default CPT to this grid and set the 'hasnans' field
 		function check_set_default_cpt!(G::GMTgrid, fname::String)
