@@ -179,10 +179,10 @@ function helper_set_crs(d)
 	end
 
 	ref_attrib, ref_coln = Dict(), String[]
-	prj::String = ((proj = find_in_dict(d, [:proj :proj4])[1]) !== nothing) ? proj : ""
+	prj = hlp_desnany_str(d, [:proj, :proj4])
 	(prj == "geo" || prj == "geog") && (prj = prj4WGS84)
 	(prj != "" && !startswith(prj, "+proj=")) && (prj = "+proj=" * prj)
-	wkt::String = ((wk = find_in_dict(d, [:wkt])[1]) !== nothing) ? wk : ""
+	wkt = hlp_desnany_str(d, [:wkt])
 	(prj == "" && wkt != "") && (prj = wkt2proj(wkt))
 	epsg::Int = ((ep = find_in_dict(d, [:epsg])[1]) !== nothing) ? ep : 0
 	(prj == "" && wkt == "" && epsg != 0) && (prj = epsg2proj(epsg))
@@ -2514,7 +2514,7 @@ end
 function mksymbol(f::Function, cmd0::String="", arg1=nothing; kwargs...)
 	# Make a fig and convert it to EPS so it can be used as a custom symbol in plot(3)
 	d = KW(kwargs)
-	t::String = ((val = find_in_dict(d, [:symbname :symb_name :symbol])[1]) !== nothing) ? string(val) : "GMTsymbol"
+	t::String = ((val = hlp_desnany_str(d, [:symbname, :symb_name, :symbol])) !== "") ? val : "GMTsymbol"
 	(t == "GMTsymbol" && (f == flower_minho || f == matchbox)) && (t = string(f))
 	!haskey(d, :name) && (d[:name] = t * ".eps")
 	if (f == flower_minho || f == matchbox)			# Special case for the Flower Minho symbol
@@ -2532,7 +2532,7 @@ mksymbol(f::Function, arg1; kw...) = mksymbol(f, "", arg1; kw...)
 
 # ---------------------------------------------------------------------------------------------------
 function hlp_desnany_str(d, s, del=true)::String
-	((val = find_in_dict(d, s)[1]) === nothing) ? "" : string(val)
+	((val = find_in_dict(d, s, del)[1]) === nothing) ? "" : string(val)
 end
 
 # ---------------------------------------------------------------------------------------------------
