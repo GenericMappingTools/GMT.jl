@@ -67,6 +67,6 @@ function gmtconvert_helper(cmd0::String, arg1, d::Dict{Symbol,Any})
 	                                 [:I :invert :reverse], [:L :list_only], [:N :sort], [:Q :segments], [:S :select_hdr], [:T :suppress :skip], [:W :word2num], [:Z :transpose]])
 
 	out = common_grd(d, cmd0, cmd, "gmtconvert ", arg1)		# Finish build cmd and run it
-	(!contains(cmd, " -b") && isa(out, GDtype) && cmd0 != "") && file_has_time!(cmd0, out)  # Try to guess if time columns
+	(!contains(cmd, " -b") && isa(out, GDtype) && cmd0 != "" && guess_T_from_ext(cmd0) == " -Td") && file_has_time!(cmd0, out)  # Try to guess if time columns
 	return out
 end
