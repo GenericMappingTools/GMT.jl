@@ -194,18 +194,18 @@ function gmtread(_fname::String; kwargs...)
 	end
 
 	if (opt_T == " -Ti" || opt_T == " -Tg")			# See if we have a mem layout request
-		if ((val = find_in_dict(d, [:layout :mem_layout])[1]) !== nothing)
-			(opt_T == " -Ti" && startswith(string(val)::String, "TRB")) && return gdaltranslate(fname)
+		if ((lay = hlp_desnany_str(d, [:layout, :mem_layout])) != "")
+			(opt_T == " -Ti" && startswith(lay, "TRB")) && return gdaltranslate(fname)
 			# MUST TAKE SOME ACTION HERE. FOR IMAGES I THINK ONLY THE "I" FOR IMAGES.JL IS REALLY POSSIBLE
-			cmd = (opt_T == " -Ti") ? cmd * " -%" * arg2str(val) : cmd * " -&" * arg2str(val)
+			cmd = (opt_T == " -Ti") ? cmd * " -%" * lay : cmd * " -&" * lay
 		end
 	end
 
 	if (opt_T != " -To")			# All others but OGR
 		if (proggy == "read ")
-			((val = find_in_dict(d, [:stride])[1]) !== nothing) && (cmd *= " -Em" * arg2str(val)::String; proggy = "gmtconvert ")
-			((val = find_in_dict(d, [:q :inrows :inrow])[1]) !== nothing) && (cmd *= " -q" * arg2str(val)::String; proggy = "gmtconvert ")
-			((val = find_in_dict(d, [:d :nodata])[1]) !== nothing) && (cmd *= " -di" * arg2str(val)::String; proggy = "gmtconvert ")
+			((val2 = hlp_desnany_str(d, [:stride])) != "")             && (cmd *= " -Em" * val2; proggy = "gmtconvert ")
+			((val2 = hlp_desnany_str(d, [:q, :inrows, :inrow])) != "") && (cmd *= " -q"  * val2; proggy = "gmtconvert ")
+			((val2 = hlp_desnany_str(d, [:d, :nodata])) != "")         && (cmd *= " -di" * val2; proggy = "gmtconvert ")
 			cmd *= opt_T
 		end
 
@@ -606,8 +606,8 @@ function gmtwrite(fname::AbstractString, data; kwargs...)
 	cmd = cmd * opt_T
 
 	if (opt_T == " -Ti" || opt_T == " -Tg")		# See if we have a mem layout request
-		if ((val = find_in_dict(d, [:layout :mem_layout])[1]) !== nothing)
-			cmd = (opt_T == " -Ti") ? cmd * " -%" * arg2str(val) : cmd * " -&" * arg2str(val)
+		if ((lay = hlp_desnany_str(d, [:layout, :mem_layout])) != "")
+			cmd = (opt_T == " -Ti") ? cmd * " -%" * lay : cmd * " -&" * lay
 		end
 	end
 
@@ -642,14 +642,13 @@ function parse_grd_format(d::Dict)::String
 			break
 		end
 	end
-	if ((val = find_in_dict(d, [:scale])[1]) !== nothing)   out *= "+s" * arg2str(val)  end
-	if ((val = find_in_dict(d, [:offset])[1]) !== nothing)  out *= "+o" * arg2str(val)  end
-	if ((val = find_in_dict(d, [:nan :novalue :invalid :missing])[1]) !== nothing)
-		out *= "+n" * arg2str(val)
-	end
-	if ((val = find_in_dict(d, [:driver])[1]) !== nothing)
-		out *= ":" * arg2str(val)
-		((val = find_in_dict(d, [:datatype])[1]) !== nothing) && (out *= "/" * arg2str(val))
+
+	((val = hlp_desnany_str(d, [:scale])) != "")  && (out *= "+s" * val)
+	((val = hlp_desnany_str(d, [:offset])) != "") && (out *= "+o" * val)
+	((val = hlp_desnany_str(d, [:nan, :novalue, :invalid, :missing])) != "") && (out *= "+n" * val)
+	if ((val = hlp_desnany_str(d, [:driver])) != "")
+		out *= ":" * val
+		((val = hlp_desnany_str(d, [:datatype])) != "") && (out *= "/" * val)
 	end
 	delete!(d, [:id, :gdal])
 	return out

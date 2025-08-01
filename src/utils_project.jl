@@ -185,7 +185,7 @@ A Vector of GMTdataset containing the projected world GSHHG coastlines at resolu
 function worldrectcoast(; proj::StrSymb="", res="crude", coastlines::Vector{<:GMTdataset}=GMTdataset{Float64,2}[], limits=Float64[], round=false)
 	# Project also the coastlines to go along with the grid created by worldrectangular
 	_proj  = isa(proj, Symbol) ? string(proj) : proj	# Make it a string
-	cl     = (isempty(coastlines)) ? coast(dump=:true, res=res, region=:global) : coastlines
+	cl     = (isempty(coastlines)) ? coast(dump=:true, res=res, region=length(limits)==4 ? limits : :global) : coastlines
 	(_proj == "" && isempty(limits)) && return cl		# No proj required nor extending the coastlines
 	(round || isempty(limits)) && return lonlat2xy(cl, t_srs=_proj)		# No extensiom so we are donne.
 	(_proj != "" && !contains(_proj, " +over")) && (_proj *= " +over")
@@ -282,7 +282,8 @@ function worldrectgrid(D::GDtype; width=(30,20), grid=Vector{Vector{Real}}[], an
 	prj = getproj(D, proj4=true)
 	worldrectgrid(proj=prj, width=width, grid=grid, annot_x=annot_x)
 end
-function worldrectgrid(; proj::StrSymb="", width=(30,20), grid=Vector{Vector{Real}}[], annot_x::Union{Vector{Int},Vector{Float64}}=Int[], pm=0, worldrect=true, pad=60)
+function worldrectgrid(; proj::StrSymb="", width=(30,20), grid=Vector{Vector{Real}}[],
+                         annot_x::Union{Vector{Int},Vector{Float64}}=Int[], pm=0.0, worldrect=true, pad=60)
 	# Create a grid of lines in 'proj' coordinates. Input are meridians and parallels at steps
 	# determined by 'width' and centered at 'pm'. 'pm' can be transmitted via argument or contained in 'proj'
 	# 'worldrect=false' means we don't extend beyound  the [-180 180]+pm as we do for worldrectangular.
