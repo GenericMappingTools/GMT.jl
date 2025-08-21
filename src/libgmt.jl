@@ -427,6 +427,28 @@ function gmt_free_mem(API::Ptr{Cvoid}, mem)
 	ccall((:gmt_free_func, libgmt), Cvoid, (Cstring, Ptr{Cvoid}, Bool, Cstring), GMT_, mem, true, "Julia")
 end
 
+function gmt_centroid_area(API::Ptr{Cvoid}, D, geo::Int=0)::Matrix{Float64}
+	if (isa(D, Vector))
+		mat = Matrix{Float64}(undef, length(D), 3)
+		for k in eachindex(D)
+			t = gmt_centroid_area(API::Ptr{Cvoid}, D[k].data[:,1], D[k].data[:,2], geo)
+			mat[k, 1], mat[k, 2], mat[k, 3] = t[1], t[2], t[3]
+		end
+		mat
+	else
+		gmt_centroid_area(API::Ptr{Cvoid}, D.data[:,1], D.data[:,2], geo)
+	end
+end
+
+function gmt_centroid_area(API::Ptr{Cvoid}, x::Vector{Float64}, y::Vector{Float64}, geo::Int=0)::Matrix{Float64}
+	# geo = 0 for Cartesian, !=0 for geographic
+	pos = [0.0 0.0 0.0]
+	area = ccall((:gmt_centroid_area, libgmt), Cdouble, (Cstring, Ptr{Cdouble}, Ptr{Cdouble}, UInt64, Int32, Ptr{Cdouble}),
+	             GMT_Get_Ctrl(API), x, y, length(x), geo, pos)
+	pos[3] = abs(area)
+	return pos
+end
+
 #=
 function get_common_R(API::Ptr{Cvoid})
 	R = COMMON_R((false,false,false,false), false, 0, 0, 0, (0., 0., 0., 0., 0., 0.), (0., 0., 0., 0.), (0., 0.), map(UInt8, (string(repeat(" ",256))...,)))
