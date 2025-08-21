@@ -171,12 +171,11 @@ Project a geographical grid/image in the Lee Oblated Stereographic projection ce
 
 
 ### Returns
-A grid or an image and optionally the coastlines ... or errors. Not many projections support the procedure
-implemented in this function.
-The working or not is controlled by PROJ's `+over` option https://proj.org/usage/projections.html#longitude-wrapping
+A grid or an image and optionally the coastlines.
 
 ### Example:
-   G,cl = leepacific("@earth_relief_10m_g")
+   G,cl = leepacific("@earth_relief_10m_g");
+   grid = worldrectgrid(G);
    grdimage(G, shade=true, plot=(data=cl,), cmap=:geo, B=:none)
    plotgrid!(G, grid, show=true)
 """

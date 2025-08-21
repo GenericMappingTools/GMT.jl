@@ -418,18 +418,19 @@ function plt_txt_attrib!(D::Vector{<:GMTdataset{T,N}}, d::Dict{Symbol, Any}, _cm
 	((_ind = findfirst('=', s_val)) === nothing) && (_ind = findfirst(':', s_val))
 	ind::Int = _ind											# Because it fck insists _ind is a Any
 	ts::String = s_val[ind+1:end]
-	ct::GMTdataset = gmtspatial(D, centroid=true)			# Texts will be plotted at the polygons centroids
+	t = vec(make_attrtbl(D, att=ts)[1])
 	if ((fnt = add_opt(d, "", "", [:font], (angle="+a", font=("+f", font)); del=false)) != "")
 		(fnt[1] != '+') && (fnt = "+f" * fnt)
 		delete!(d, :font)
-		ct.text = vec(make_attrtbl(D, att=ts)[1])
 	else
 		nc::Int = round(Int, sqrt(length(D)))				# A crude guess of the number of columns
 		fnt = (nc < 5) ? "7p" : (nc < 9 ? "5p" : "4p")		# A simple heuristic
 		outline = fnt * ",black=~0.75p,white "				# Apply the outline trick
 		fnt = "+f"
-		ct.text = outline .* vec(make_attrtbl(D, att=ts)[1])
+		t = outline .* t
 	end
+	ct::GMTdataset{Float64,2} = mat2ds(gmt_centroid_area(G_API[1], D, Int(isgeog(D))))
+	ct.text = t												# Texts will be plotted at the polygons centroids
 	(CTRL.pocket_call[1] === nothing) ? (CTRL.pocket_call[1] = ct) : (CTRL.pocket_call[2] = ct)
 	append!(_cmd, ["pstext -R -J -F" * fnt * "+jMC"])
 	return nothing

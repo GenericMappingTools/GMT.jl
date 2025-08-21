@@ -263,7 +263,7 @@ function getbyattrib(D::Vector{<:GMTdataset}, ind_::Bool; kw...)::Vector{Int}
 
 	(ind = findfirst(atts .== "_region")) !== nothing && (lims = parse.(Float64, split(vals[ind][2:end-1], ", ")))
 	(ind = findfirst(atts .== "_nps"))    !== nothing && (nps  = parse.(Float64, vals[ind]))
-	(ind = findfirst(atts .== "_area"))   !== nothing && (area = parse.(Float64, vals[ind]); areas::Vector{Float64} = gmtspatial(D, area=true).data[:,3])
+	(ind = findfirst(atts .== "_area"))   !== nothing && (area = parse.(Float64, vals[ind]); areas = gmt_centroid_area(G_API[1], D, Int(isgeog(D)))[:,3])
 
 	indices::Vector{Int} = Int[]
 	ky = keys(D[1].attrib)
