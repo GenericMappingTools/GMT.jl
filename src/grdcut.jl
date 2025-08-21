@@ -177,6 +177,7 @@ function axes2pix(xy, dims, x, y, reg=0, layout::String="TC")
 	one_or_zero = (reg == 0) ? 1.0 : 0.0
 	slope = (dims[col_dim] - one_or_zero) / (x[end] - x[1]);	isnan(slope) && (slope = 1.0)	# Vertical slices of a cube
 	pix_x = round.(Int, slope .* (xy[:,1] .- x[1]) .+ [1.0, one_or_zero])
+	pix_x[1] < 1 && (pix_x[1] = 1)		# Happened in worldrectangular() when the grid x limits returned by gdalwarp were not suitable
 	slope = (dims[row_dim] - one_or_zero) / (y[end] - y[1]);	isnan(slope) && (slope = 1.0)
 	pix_y = round.(Int, slope .* (xy[:,2] .- y[1]) .+ [1.0, one_or_zero])
 

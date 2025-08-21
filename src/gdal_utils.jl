@@ -102,6 +102,7 @@ function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int
 	end
 	hdr = [x_min, x_max, y_min, y_max, z_min, z_max, Float64(!is_grid), x_inc, y_inc]
 	prj = getproj(dataset)
+	prjwkt = startswith(prj, "PROJCS") ? prj : ""
 	(prj != "" && !startswith(prj, "+proj")) && (prj = toPROJ4(importWKT(prj)))
 	(prj == "") && (prj = seek_wkt_in_gdalinfo(gdalinfo(dataset)))
 	is_tp = (layout == "")				# if == "" array is rowmajor and hence transposed
@@ -117,7 +118,7 @@ function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int
 	end
 	if (is_grid)
 		#(eltype(mat) == Float64) && (mat = Float32.(mat))
-		O = mat2grid(mat; hdr=hdr, v=vvalues, v_unit=vname, proj4=prj, names=desc, is_transposed=is_tp)
+		O = mat2grid(mat; hdr=hdr, v=vvalues, v_unit=vname, proj4=prj, wkt=prjwkt, names=desc, is_transposed=is_tp)
 		O.layout = (layout == "") ? "TRB" : layout
 		isa(mat, Matrix{<:Complex}) && (append!(O.range, [z_im_min, z_im_max]))	# Stick the imaginary part limits in the range
 		if (orig_is_UInt16)
@@ -130,7 +131,7 @@ function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int
 			end
 		end
 	else
-		O = mat2img(mat; hdr=hdr, proj4=prj, noconv=true, names=desc, is_transposed=is_tp)
+		O = mat2img(mat; hdr=hdr, proj4=prj, wkt=prjwkt, noconv=true, names=desc, is_transposed=is_tp)
 		got_fill_val && (O.nodata = fill_val)
 		O.layout = (layout == "") ? (size(O, 3) == 4 ? "TRBA" : "TRBa") : (layout[end] != 'a' ? layout * "a" : layout)
 		if (n_colors > 0)
@@ -1048,6 +1049,7 @@ function xy2lonlat(xy::Matrix{<:Real}, s_srs_=""; s_srs="", t_srs=prj4WGS84)
 	isa(t_srs, Int) && (t_srs = epsg2wkt(t_srs))
 	(s_srs == "") && error("Must specify at least the source referencing system.")
 	D = ogr2ogr(xy, ["-s_srs", s_srs, "-t_srs", t_srs, "-overwrite"])
+	isa(D, Vector) && contains(s_srs, "=lee_os") && length(D) > 1 && return [D[1][1,1] D[1][1,2]; D[2][2,1] D[2][2,2]]	# GDAL BUG?
 	return D.data		# Return only the array because that's what was sent in
 end
 

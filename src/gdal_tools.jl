@@ -360,8 +360,8 @@ function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::St
 
 	if (f == gdalfillnodata!)			# This guy has its own peculiarities
 		f(dataset; d...)
-		o = gd2gmt(dataset)
-		indata.z, indata.hasnans, indata.layout = o.z, 1, o.layout
+		D = gd2gmt(dataset)
+		indata.z, indata.hasnans, indata.layout = D.z, 1, D.layout
 		return nothing
 	elseif (f == gdalsievefilter)
 		o = f(dataset; d...)

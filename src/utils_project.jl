@@ -75,41 +75,53 @@ function worldrectangular(GI::GItype; proj::StrSymb="+proj=vandg +over", pm=0, l
 	_proj = isa(proj, Symbol) ? string(proj) : proj
 	(latlim === nothing && latlims !== nothing) && (latlim = latlims)	# To accept both latlim & latlims
 	autolat = false
-	isa(latlim, StrSymb) && (autolat = true; latlim = nothing)
-	_latlim = (latlim === nothing) ? (-90,90) : (isa(latlim, Real) ? (-latlim, latlim) : extrema(latlim))
+	is_lee_os = contains(_proj, "lee_os")
+	if (!is_lee_os)
+		isa(latlim, StrSymb) && (autolat = true; latlim = nothing)
+		_latlim = (latlim === nothing) ? (-90,90) : (isa(latlim, Real) ? (-latlim, latlim) : extrema(latlim))
+	else
+		_latlim = latlims
+	end
 	(_latlim[1] == _latlim[2]) && error("Your two triming latitudes ('latlim') are equal.")
 	(_latlim[1] < -90 || _latlim[2] > 90) && error("Don't kid, latlim does not have real latitude limits.")
 	!startswith(_proj, "+proj=") && (_proj = "+proj=" * _proj)
-	!contains(_proj, " +over") && (_proj *= " +over")
+	!is_lee_os && !contains(_proj, " +over") && (_proj *= " +over")		# lee_os is an exception in this function
 	(pm > 180) && (pm -= 360);		(pm < -180) && (pm += 360)
-	# The pad is an attempt to minimize the empties that may occur in the corners for some projs
-	pad = (contains(proj, "wintri") && pad == 0) ? 120 : pad	# Winkel Tripel needs more
-	(pad == 0) && (pad = 90)		# The default value
-	res = (isa(coast, Symbol) || isa(coast, String)) ? string(coast) : (coast == 1 ? "crude" : "none")
+	res = (isa(coast, Symbol) || isa(coast, String)) ? string(coast) : (coast == 1 ? (is_lee_os ? "low" : "crude") : "none")
 	coastlines = (res == "none" && isa(coast, GDtype)) ? coast : GMTdataset{Float64,2}[]	# See if we have an costlines argin.
 	(isempty(coastlines) && !isa(coast, Bool) && res[1] != 'c' && res[1] != 'l' && res[1] != 'i'  && res[1] != 'h') && error("Bad input for the 'coast' option.")
 
-	if (pm >= 0)
-		Gr = grdcut(GI, R=(-180,-180+pad+pm, -90,90))		# Cut on West to be added at East
-		Gr.range[1], Gr.range[2] = 180, 180+pad+pm			# pretend it is beyound 180
-		if (pm < pad)
-			Gl = grdcut(GI, R=(180-(pad-pm), 180, -90,90))					# Cut from East
-			Gl.range[1], Gl.range[2] = Gl.range[1]-360., Gl.range[2]-360.	# To be added on the West
+	if (!is_lee_os)
+		# The pad is an attempt to minimize the empties that may occur in the corners for some projs
+		pad = (contains(proj, "wintri") && pad == 0) ? 120 : pad	# Winkel Tripel needs more
+		(pad == 0) && (pad = 90)		# The default value
+		if (pm >= 0)
+			Gr = grdcut(GI, R=(-180,-180+pad+pm, -90,90))		# Cut on West to be added at East
+			Gr.range[1], Gr.range[2] = 180, 180+pad+pm			# pretend it is beyound 180
+			if (pm < pad)
+				Gl = grdcut(GI, R=(180-(pad-pm), 180, -90,90))					# Cut from East
+				Gl.range[1], Gl.range[2] = Gl.range[1]-360., Gl.range[2]-360.	# To be added on the West
+			else
+				Gl = grdcut(GI, R=(-180+pm-pad, 180, -90,90))	# Trim original at the West
+			end
 		else
-			Gl = grdcut(GI, R=(-180+pm-pad, 180, -90,90))	# Trim original at the West
+			Gl = grdcut(GI, R=(180-(pad-pm), 180, -90,90))		# Cut on East to be added at West
+			Gl.range[1], Gl.range[2] = -180-(pad-pm), -180		# pretend it is beyound -180
+			if (pm > -pad)
+				Gr = grdcut(GI, R=(-180, -180+(pad+pm), -90,90))				# Cut from West
+				Gr.range[1], Gr.range[2] = Gr.range[1]+360., Gr.range[2]+360.	# To be added on the East
+			else
+				Gr = grdcut(GI, R=(-180, 180+pad+pm, -90,90))	# Trim original at the East
+			end
 		end
+		if (pm >= 0 && pm < pad) || (pm < 0 && pm > -pad)  G = grdpaste(Gl,GI); G = grdpaste(G,Gr)
+		else                                               G = grdpaste(Gl,Gr)
+		end
+		west, east = -180.0, 180.0
 	else
-		Gl = grdcut(GI, R=(180-(pad-pm), 180, -90,90))			# Cut on East to be added at West
-		Gl.range[1], Gl.range[2] = -180-(pad-pm), -180			# pretend it is beyound -180
-		if (pm > -pad)
-			Gr = grdcut(GI, R=(-180, -180+(pad+pm), -90,90))				# Cut from West
-			Gr.range[1], Gr.range[2] = Gr.range[1]+360., Gr.range[2]+360.	# To be added on the East
-		else
-			Gr = grdcut(GI, R=(-180, 180+pad+pm, -90,90))	# Trim original at the East
-		end
-	end
-	if (pm >= 0 && pm < pad) || (pm < 0 && pm > -pad)  G = grdpaste(Gl,GI); G = grdpaste(G,Gr)
-	else                                               G = grdpaste(Gl,Gr)
+		G = GI
+		#west, east = 90.0, 300.0
+		west, east = G.range[1]+20, G.range[2]-30		# Use the range of the input grid, that should ...
 	end
 
 	(pm != 0) && (_proj *= " +pm=$pm")
@@ -117,7 +129,7 @@ function worldrectangular(GI::GItype; proj::StrSymb="+proj=vandg +over", pm=0, l
 	lims_geog = G.range
 	G = gdalwarp(G, ["-t_srs", _proj])
 
-	xy = lonlat2xy([-180.0+pm 0; 180+pm 0], t_srs=_proj)
+	xy = lonlat2xy([west+pm 0; east+pm 0], t_srs=_proj)
 	pix_x = axes2pix(xy, size(G), [G.x[1], G.x[end]], [G.y[1], G.y[end]], G.registration, G.layout)[1]
 	if (autolat)
 		t = G[pix_x[1], :]		# The column corresponding to lon = -180
@@ -133,12 +145,56 @@ function worldrectangular(GI::GItype; proj::StrSymb="+proj=vandg +over", pm=0, l
 
 	G = grdcut(G, R=(G.x[pix_x[1]], G.x[pix_x[2]], yb, yt))
 	G.remark = "pad=$pad"		# Use this as a pocket to use in worldrectgrid()
-	return (res != "none" || !isempty(coastlines)) ? (G, worldrectcoast(proj=_proj, res=res, coastlines=coastlines, limits=lims_geog)) : G
+	if (is_lee_os)
+		cl = (isempty(coastlines)) ? pscoast(dump=:true, res=res, region=lims_geog) : coastlines
+		cl = lonlat2xy(cl, t_srs=_proj)
+	else
+		cl = worldrectcoast(proj=_proj, res=res, coastlines=coastlines, limits=lims_geog)
+	end
+	return (res != "none" || !isempty(coastlines)) ? (G, cl) : G
 end
 
 # -----------------------------------------------------------------------------------------------
 """
-    cl = coastlinesproj(proj="?", res="crude", coastlines=nothing)
+    GI[,coast] = leepacific(fname::String; latlims=nothing, lonlims=nothing, coast=true)
+
+Project a geographical grid/image in the Lee Oblated Stereographic projection centered on the Pacific Ocean.
+
+- `GI`: A GMTgrid or GMTimage data type. `GI` can also be a string with a file name of a grid or image.
+   NOTE: This grid/image should have longitudes covering the range 90 to 300 degrees (here lon in [0 360] is better)
+- `latlims`: Latitudes used in `region` when reading the grid/image. The default is (-90, 75).
+- `lonlims`: Longitudes used in `region` when reading the grid/image. You cannot deviate mutch from (90,300).
+- `coast`: Return also the coastlines projected with `proj`. Pass `coast=res`, where `res` is one of
+   GMT coastline resolutions (*e.g.* :crude, :low, :intermediate). `coast=true` is <==> `coast=:crude`
+   Pass `coast=D`, where `D` is vector of GMTdataset containing coastline polygons with a provenience
+   other than the GSHHG GMT database. If `coast=false` the funtion returns only the projected grid/image.
+
+
+### Returns
+A grid or an image and optionally the coastlines ... or errors. Not many projections support the procedure
+implemented in this function.
+The working or not is controlled by PROJ's `+over` option https://proj.org/usage/projections.html#longitude-wrapping
+
+### Example:
+   G,cl = leepacific("@earth_relief_10m_g")
+   grdimage(G, shade=true, plot=(data=cl,), cmap=:geo, B=:none)
+   plotgrid!(G, grid, show=true)
+"""
+function leepacific(fname::String; region=(90.0, 300.0, -90.0, 75.0), latlims=nothing, lonlims=nothing, coast=true)
+	reg = Float64.(collect(region))
+	lonlims !== nothing && (reg[1] = lonlims[1]; reg[2] = lonlims[2])	# Use the lonlims if given
+	latlims !== nothing && (reg[3] = latlims[1]; reg[4] = latlims[2])	# Use the lonlims if given
+	while(reg[1] < 0)  reg[1] += 180.0; reg[2] += 180.0  end
+	G = gmtread(fname, R=[reg[1]-20.0, reg[2]+30.0, reg[3], reg[4]])
+	worldrectangular(G, proj="+proj=lee_os", latlims=(latlims===nothing) ? (-90,75) : latlims, coast=coast)
+end
+function leepacific(GI::GItype; latlims=nothing, coast=true)
+	worldrectangular(GI, proj="+proj=lee_os", latlims=(latlims===nothing) ? (-90,75) : latlims, coast=coast)
+end
+
+# -----------------------------------------------------------------------------------------------
+"""
+    cl = coastlinesproj(proj="?", res="crude", coastlines=nothing, limits=Float64[])
 
 Extract the coastlines from GMT's GSHHG database and project them using PROJ (NOT the GMT projection machinery).
 This allows the use of many of the PROJ projections that are not available from pure GMT.
@@ -151,7 +207,7 @@ This allows the use of many of the PROJ projections that are not available from 
    coastlines that expand more than 360 degrees (`worldrectangular` uses this).
 
 ### Returns
-A Vector of GMTdataset containing the projected (or not) world GSHHG coastlines at resolution `res`.
+A Vector of GMTdataset containing the projected world GSHHG coastlines at resolution `res`.
 
 ### Example
     cl = coastlinesproj(proj="+proj=ob_tran +o_proj=moll +o_lon_p=40 +o_lat_p=50 +lon_0=60");
@@ -188,7 +244,6 @@ function worldrectcoast(; proj::StrSymb="", res="crude", coastlines::Vector{<:GM
 	cl     = (isempty(coastlines)) ? coast(dump=:true, res=res, region=length(limits)==4 ? limits : :global) : coastlines
 	(_proj == "" && isempty(limits)) && return cl		# No proj required nor extending the coastlines
 	(round || isempty(limits)) && return lonlat2xy(cl, t_srs=_proj)		# No extensiom so we are donne.
-	(_proj != "" && !contains(_proj, " +over")) && (_proj *= " +over")
 
 	pm = (contains(_proj, "+pm=")) ? parse(Float64, string(split(split(_proj, "+pm=")[2])[1])) : 0.0
 	pad = !isempty(limits) ? ((limits[2] - limits[1]) - 360.0) / 2 : 0.9
@@ -272,15 +327,15 @@ the `GI` metadata.
 A Vector of GMTdataset containing the projected meridians and parallels. `grat[i]` attributes store
 information about that element lon,lat. 
 """
-function worldrectgrid(G_I::GItype; width=(30,20), grid=Vector{Vector{Real}}[], annot_x::Union{Vector{Int},Vector{Float64}}=Int[])
+function worldrectgrid(G_I::GItype; width=(30,20), grid=Vector{Vector{Real}}[], annot_x::Union{Vector{Int},Vector{Float64}}=Int[], worldrect=true)
 	prj = getproj(G_I, proj4=true)
 	pad = contains(G_I.remark, "pad=") ? parse(Int,G_I.remark[5:end]) : 60
-	worldrectgrid(proj=prj, width=width, pad=pad, grid=grid, annot_x=annot_x)
+	worldrectgrid(proj=prj, width=width, pad=pad, grid=grid, annot_x=annot_x, worldrect=worldrect)
 end
-function worldrectgrid(D::GDtype; width=(30,20), grid=Vector{Vector{Real}}[], annot_x::Union{Vector{Int},Vector{Float64}}=Int[])
+function worldrectgrid(D::GDtype; width=(30,20), grid=Vector{Vector{Real}}[], annot_x::Union{Vector{Int},Vector{Float64}}=Int[], worldrect=true)
 	# Normally called only by graticules, not directly
 	prj = getproj(D, proj4=true)
-	worldrectgrid(proj=prj, width=width, grid=grid, annot_x=annot_x)
+	worldrectgrid(proj=prj, width=width, grid=grid, annot_x=annot_x, worldrect=worldrect)
 end
 function worldrectgrid(; proj::StrSymb="", width=(30,20), grid=Vector{Vector{Real}}[],
                          annot_x::Union{Vector{Int},Vector{Float64}}=Int[], pm=0.0, worldrect=true, pad=60)
@@ -290,6 +345,8 @@ function worldrectgrid(; proj::StrSymb="", width=(30,20), grid=Vector{Vector{Rea
 
 	_proj = isa(proj, Symbol) ? string(proj) : proj
 	_proj == "" && error("Input has no projection info")
+	is_lee_os = contains(_proj, "lee_os")
+	is_lee_os && (worldrect = false)
 	!startswith(_proj, "+proj=") && (_proj = "+proj=" * _proj)
 	(contains(_proj, "+pm=")) && (pm = parse(Float64, string(split(split(proj, "+pm=")[2])[1])))
 	(pm != 0 && !contains(_proj, "+pm=")) && (_proj *= " +pm=$pm")
@@ -341,8 +398,9 @@ function worldrectgrid(; proj::StrSymb="", width=(30,20), grid=Vector{Vector{Rea
 		end
 		for p = parallels
 			Dgrid[n+=1] = mat2ds(lonlat2xy([parallel fill(p, length(parallel))], t_srs=_proj), attrib=Dict("para_b" => "$p,$(parallel[1])", "para_e" => "$p,$(parallel[end])", "annot" => "n", "n_meridians" => "$(length(meridians))", "n_parallels" => "$(length(parallels))"))
+			is_lee_os && 0 <= p <= 20 && (Dgrid[n].data[30:end-24,1] .= NaN)		# lee_os proj has problems at low lats. Line reenters domain.
 		end
-		!worldrect && check_gaps(Dgrid, length(meridians)+1, length(Dgrid))		# Try this only with non-worldrect
+		!is_lee_os && !worldrect && check_gaps(Dgrid, length(meridians)+1, length(Dgrid))		# Try this only with non-worldrect
 	else					# Cartesian graticules
 		for m = meridians
 			Dgrid[n+=1] = mat2ds([fill(m,length(meridian)) meridian], attrib=Dict("merid_b" => "$m,-90", "merid_e" => "$m,90", "n_meridians" => "$(length(meridians))", "n_parallels" => "$(length(parallels))"))

@@ -858,9 +858,9 @@ function parse_proj(p::NamedTuple)::Tuple{String, Bool}
 	# may be absent, but not BOTH, an create a GMT -J syntax string (note: for some projections 'center'
 	# maybe a scalar but the validity of that is not checked here).
 	d = nt2dict(p)					# Convert to Dict
-	if ((val = find_in_dict(d, [:name])[1]) !== nothing)
-		prj::String, mnemo = parse_proj(string(val)::String)
-		if (prj != "Cyl_stere" && prj == string(val)::String)
+	if ((val = hlp_desnany_str(d, [:name])) != "")
+		prj::String, mnemo = parse_proj(val)
+		if (prj != "Cyl_stere" && prj == val)
 			@warn("Very likely the projection name ($prj) is unknown to me. Expect troubles")
 		end
 	else
@@ -892,7 +892,7 @@ function parse_proj(p::NamedTuple)::Tuple{String, Bool}
 	end
 
 	# Piggy-back `center`. Things can be wrong here is user does stupid things like using zone & parallels
-	((val = find_in_dict(d, [:zone])[1]) !== nothing) && (center = string(val))
+	((val = hlp_desnany_str(d, [:zone])) !== "") && (center = val)
 
 	if     (center == "" && parallels != "")  center = "0/0" * parallels
 	elseif (center != "")                     center *= parallels			# even if par == ""
@@ -1626,7 +1626,7 @@ function parse_r(d::Dict, cmd::String, del::Bool=true)
 	# Accept both numeric (0 or != 0) and string/symbol arguments
 	opt_val::String = ""
 	if ((val = find_in_dict(d, [:r :reg :registration], del)[1]) !== nothing)
-		(isa(val, String) || isa(val, Symbol)) && (opt_val = string(" -r",val)[1:4])
+		(isa(val, StrSymb)) && (opt_val = string(" -r",val)[1:4])
 		(isa(val, Integer)) && (opt_val = (val == 0) ? " -rg" : " -rp")
 		cmd *= opt_val
 	end
@@ -1656,8 +1656,8 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_append(d::Dict, cmd::String)::String
-	if ((val = find_in_dict(d, [:append], true)[1]) !== nothing)
-		cmd *=  " >> " * val::String
+	if ((val = hlp_desnany_str(d, [:append])) !== "")
+		cmd *=  " >> " * val
 	end
 	return cmd
 end
@@ -1943,7 +1943,7 @@ function opt_pen(d::Dict, opt::Char, symbs::VMs)::String
 		out = string(" -", opt, pen)
 	else
 		if ((val = find_in_dict(d, symbs)[1]) !== nothing)
-			if (isa(val, String) || isa(val, Real) || isa(val, Symbol))
+			if (isa(val, StrSymb) || isa(val, Real))
 				out = string(" -", opt, val)
 			elseif (isa(val, Tuple))	# Like this it can hold the pen, not extended atts
 				out = string(" -", opt, parse_pen(val))
@@ -2263,7 +2263,7 @@ function prepare2geotif(d::Dict, cmd::Vector{String}, opt_T::String, O::Bool)::T
 			return cmd, opt_T
 		end
 		cmd[1] = helper2geotif(cmd[1])
-		if (isa(val, String) || isa(val, Symbol))	# A transparent KML
+		if (isa(val, StrSymb))			# A transparent KML
 			if (startswith(string(val)::String, "trans"))  opt_T = " -TG -W+k"
 			else                                           opt_T = string(" -TG -W+k", val)		# Whatever 'val' is
 			end
@@ -2287,7 +2287,7 @@ function add_opt_1char(cmd::String, d::Dict, symbs::Vector{Matrix{Symbol}}; del:
 	for opt in symbs
 		((val = find_in_dict(d, opt, del)[1]) === nothing) && continue
 		args::String = ""
-		if (isa(val, String) || isa(val, Symbol))
+		if (isa(val, StrSymb))
 			((args = arg2str(val)) != "") && (args = string(args[1]))
 		elseif (isa(val, Tuple))
 			for k = 1:numel(val)
