@@ -980,7 +980,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function build_run_cmd(cmd, opt_B, opt_Gsymb, opt_ML, opt_S, opt_W, opt_Wmarker, opt_UVXY, opt_c)::Vector{String}
 	# Build the executble command vector
-	if (opt_W != "" && opt_S == "") 						# We have a line/polygon request
+	if (opt_W != "" && opt_S == "") 							# We have a line/polygon request
 		_cmd = [cmd * opt_W * opt_UVXY]
 
 	elseif (opt_W == "" && (opt_S != "" || opt_Gsymb != ""))	# We have a symbol request
@@ -988,10 +988,10 @@ function build_run_cmd(cmd, opt_B, opt_Gsymb, opt_ML, opt_S, opt_W, opt_Wmarker,
 		(opt_ML != "") && (cmd *= opt_ML)					# If we have a symbol outline pen
 		_cmd = [cmd * opt_S * opt_Gsymb * opt_UVXY]
 
-	elseif (opt_W != "" && opt_S != "")						# We have both line/polygon and a symbol
+	elseif (opt_W != "" && opt_S != "")							# We have both line/polygon and a symbol
 		(occursin(opt_Gsymb, cmd)) && (opt_Gsymb = "")
 		c = lowercase(opt_S[4])
-		if (c == 'v' || c == 'm' || c == 'w' || c == '=')	# Are there more cases where the pen applies to the symbol?
+		if (c == 'v' || c == 'm' || c == 'w' || c == '=' || c == 'q')	# Are there more cases where the pen applies to the symbol?
 			_cmd = [cmd * opt_W * opt_S * opt_Gsymb * opt_UVXY]
 		else
 			(opt_Wmarker != "") && (opt_Wmarker = " -W" * opt_Wmarker)		# Set Symbol edge color
@@ -999,7 +999,7 @@ function build_run_cmd(cmd, opt_B, opt_Gsymb, opt_ML, opt_S, opt_W, opt_Wmarker,
 			(opt_B != " " && opt_B != "") && (cmd = replace(cmd, opt_B => ""))	# Some themes make opt_B = " "
 			cmd2 = cmd * opt_S * opt_Gsymb * opt_Wmarker	# Don't repeat option -B
 			(opt_c != "")  && (cmd2 = replace(cmd2, opt_c => ""))  				# Not in scond call (subplots)
-			(opt_ML != "") && (cmd2 = cmd2 * opt_ML)				# If we have a symbol outline pen
+			(opt_ML != "") && (cmd2 = cmd2 * opt_ML)			# If we have a symbol outline pen
 			_cmd = [cmd1; cmd2]
 		end
 

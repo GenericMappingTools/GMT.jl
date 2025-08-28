@@ -144,6 +144,7 @@ function worldrectangular(GI::GItype; proj::StrSymb="+proj=vandg +over", pm=0, l
 	end
 
 	G = grdcut(G, R=(G.x[pix_x[1]], G.x[pix_x[2]], yb, yt))
+	POSTMAN[1]["Grange"] = @sprintf("%.10g %.10g %.10g %.10g", G.range[1], G.range[2], G.range[3], G.range[4])	# To be used by plotgrid!
 	G.remark = "pad=$pad"		# Use this as a pocket to use in worldrectgrid()
 	if (is_lee_os)
 		cl = (isempty(coastlines)) ? pscoast(dump=:true, res=res, region=lims_geog) : coastlines
@@ -162,33 +163,32 @@ Project a geographical grid/image in the Lee Oblated Stereographic projection ce
 
 - `GI`: A GMTgrid or GMTimage data type. `GI` can also be a string with a file name of a grid or image.
    NOTE: This grid/image should have longitudes covering the range 90 to 300 degrees (here lon in [0 360] is better)
-- `latlims`: Latitudes used in `region` when reading the grid/image. The default is (-90, 75).
+- `latlims`: Latitudes used in `region` when reading the grid/image. The default is (-87, 75).
 - `lonlims`: Longitudes used in `region` when reading the grid/image. You cannot deviate mutch from (90,300).
+   Actually, while a bug in GDAL is not fixed, you should not change the default values.
 - `coast`: Return also the coastlines projected with `proj`. Pass `coast=res`, where `res` is one of
    GMT coastline resolutions (*e.g.* :crude, :low, :intermediate). `coast=true` is <==> `coast=:crude`
    Pass `coast=D`, where `D` is vector of GMTdataset containing coastline polygons with a provenience
    other than the GSHHG GMT database. If `coast=false` the funtion returns only the projected grid/image.
-
 
 ### Returns
 A grid or an image and optionally the coastlines.
 
 ### Example:
    G,cl = leepacific("@earth_relief_10m_g");
-   grid = worldrectgrid(G);
    grdimage(G, shade=true, plot=(data=cl,), cmap=:geo, B=:none)
-   plotgrid!(G, grid, show=true)
+   plotgrid!(G_, show=true)
 """
 function leepacific(fname::String; region=(90.0, 300.0, -90.0, 75.0), latlims=nothing, lonlims=nothing, coast=true)
 	reg = Float64.(collect(region))
 	lonlims !== nothing && (reg[1] = lonlims[1]; reg[2] = lonlims[2])	# Use the lonlims if given
 	latlims !== nothing && (reg[3] = latlims[1]; reg[4] = latlims[2])	# Use the lonlims if given
 	while(reg[1] < 0)  reg[1] += 180.0; reg[2] += 180.0  end
-	G = gmtread(fname, R=[reg[1]-20.0, reg[2]+30.0, reg[3], reg[4]])
-	worldrectangular(G, proj="+proj=lee_os", latlims=(latlims===nothing) ? (-90,75) : latlims, coast=coast)
+	G = gmtread(fname, R=[reg[1]-14.0, reg[2]+19.0, reg[3], reg[4]])
+	worldrectangular(G, proj="+proj=lee_os", latlims=(latlims===nothing) ? (-87,75) : latlims, coast=coast)
 end
 function leepacific(GI::GItype; latlims=nothing, coast=true)
-	worldrectangular(GI, proj="+proj=lee_os", latlims=(latlims===nothing) ? (-90,75) : latlims, coast=coast)
+	worldrectangular(GI, proj="+proj=lee_os", latlims=(latlims===nothing) ? (-87,75) : latlims, coast=coast)
 end
 
 # -----------------------------------------------------------------------------------------------
@@ -327,7 +327,7 @@ A Vector of GMTdataset containing the projected meridians and parallels. `grat[i
 information about that element lon,lat. 
 """
 function worldrectgrid(G_I::GItype; width=(30,20), grid=Vector{Vector{Real}}[], annot_x::Union{Vector{Int},Vector{Float64}}=Int[], worldrect=true)
-	prj = getproj(G_I, proj4=true)
+	prj = getproj(G_I, proj4=true)::String
 	pad = contains(G_I.remark, "pad=") ? parse(Int,G_I.remark[5:end]) : 60
 	worldrectgrid(proj=prj, width=width, pad=pad, grid=grid, annot_x=annot_x, worldrect=worldrect)
 end
@@ -342,7 +342,7 @@ function worldrectgrid(; proj::StrSymb="", width=(30,20), grid=Vector{Vector{Rea
 	# determined by 'width' and centered at 'pm'. 'pm' can be transmitted via argument or contained in 'proj'
 	# 'worldrect=false' means we don't extend beyound  the [-180 180]+pm as we do for worldrectangular.
 
-	_proj = isa(proj, Symbol) ? string(proj) : proj
+	_proj::String = isa(proj, Symbol) ? string(proj) : proj
 	_proj == "" && error("Input has no projection info")
 	is_lee_os = contains(_proj, "lee_os")
 	is_lee_os && (worldrect = false)
@@ -362,8 +362,8 @@ function worldrectgrid(; proj::StrSymb="", width=(30,20), grid=Vector{Vector{Rea
 		meridians, parallels = Float64.(grid[1]), Float64.(grid[2])
 	end
 
-	meridian  = [-90:0.25:-89.25; -89.0:1:-80; -78.0:2:78; 80:1:89; 89.25:0.25:90]	# Attempt to have less points, but ...
-	parallel  = -180.0-pad+pm:5:180+pad+pm
+	meridian  = [-90:0.25:-80; -79.0:1:79; 80:0.25:90]			# Attempt to have less points, but ...
+	parallel  = -180.0-pad+pm:2.5:180+pad+pm
 
 	function check_gaps(D, n1, n2, testone=true)
 		# Some projections have projected graticules that are broken and lines go left-right like crazy.
@@ -383,7 +383,7 @@ function worldrectgrid(; proj::StrSymb="", width=(30,20), grid=Vector{Vector{Rea
 				D[n].data = [D[n].data[1:ind[1],:]; NaN NaN; D[n].data[ind[1]+1:ind[2],:]; NaN NaN; D[n].data[ind[2]+1:end,:]]
 			end
 		end
-		testone && check_gaps(D, 1, n1-1, false)		# If parallels were broken there good chances that meridians are too.
+		testone && check_gaps(D, 1, n1-1, false)		# If parallels were broken there's good chances that meridians are too.
 		return nothing
 	end
 
@@ -393,23 +393,25 @@ function worldrectgrid(; proj::StrSymb="", width=(30,20), grid=Vector{Vector{Rea
 		for m = meridians
 			_m = m;	(_m < -180) && (_m += 360.);	(_m > 180) && (_m -= 360.)	
 			an = isempty(annot_x) ? true : _m in annot_x
-			Dgrid[n+=1] = mat2ds(lonlat2xy([fill(m,length(meridian)) meridian], t_srs=_proj), attrib=Dict("merid_b" => "$m,-90", "merid_e" => "$m,90", "annot" => an ? "y" : "n", "n_meridians" => "$(length(meridians))", "n_parallels" => "$(length(parallels))"))
+			label = [@sprintf("-L%.f\\260", abs(_m)) * (_m < 0 ? "W" : (_m > 0 ? "E" : ""))]	# For inner (quoted lines) annotations.
+			Dgrid[n+=1] = mat2ds(lonlat2xy([fill(m,length(meridian)) meridian], t_srs=_proj), attrib=Dict("merid_b" => "$m,-90", "merid_e" => "$m,90", "annot" => an ? "y" : "n", "n_meridians" => "$(length(meridians))", "n_parallels" => "$(length(parallels))"), hdr=label)
 		end
 		for p = parallels
-			Dgrid[n+=1] = mat2ds(lonlat2xy([parallel fill(p, length(parallel))], t_srs=_proj), attrib=Dict("para_b" => "$p,$(parallel[1])", "para_e" => "$p,$(parallel[end])", "annot" => "n", "n_meridians" => "$(length(meridians))", "n_parallels" => "$(length(parallels))"))
-			is_lee_os && 0 <= p <= 20 && (Dgrid[n].data[30:end-24,1] .= NaN)		# lee_os proj has problems at low lats. Line reenters domain.
+			label = [@sprintf("-L%.f\\260", abs(p)) * (p < 0 ? "S" : (p > 0 ? "N" : ""))]
+			Dgrid[n+=1] = mat2ds(lonlat2xy([parallel fill(p, length(parallel))], t_srs=_proj), attrib=Dict("para_b" => "$p,$(parallel[1])", "para_e" => "$p,$(parallel[end])", "annot" => "n", "n_meridians" => "$(length(meridians))", "n_parallels" => "$(length(parallels))"), hdr=label)
+			is_lee_os && 0 <= p <= 20 && (Dgrid[n].data[60:end-50,1] .= NaN)		# lee_os proj has problems at low lats. Line reenters domain.
 		end
 		!is_lee_os && !worldrect && check_gaps(Dgrid, length(meridians)+1, length(Dgrid))		# Try this only with non-worldrect
 	else					# Cartesian graticules
 		for m = meridians
-			Dgrid[n+=1] = mat2ds([fill(m,length(meridian)) meridian], attrib=Dict("merid_b" => "$m,-90", "merid_e" => "$m,90", "n_meridians" => "$(length(meridians))", "n_parallels" => "$(length(parallels))"))
+			label = [@sprintf("-L%.8g", m)]
+			Dgrid[n+=1] = mat2ds([fill(m,length(meridian)) meridian], attrib=Dict("merid_b" => "$m,-90", "merid_e" => "$m,90", "n_meridians" => "$(length(meridians))", "n_parallels" => "$(length(parallels))"), hdr=label)
 		end
 		for p = parallels
-			Dgrid[n+=1] = mat2ds([parallel fill(p, length(parallel))], attrib=Dict("para_b" => "$p,$(parallel[1])", "para_e" => "$p,$(parallel[end])", "n_meridians" => "$(length(meridians))", "n_parallels" => "$(length(parallels))"))
+			label = [@sprintf("-L%.8g", p)]
+			Dgrid[n+=1] = mat2ds([parallel fill(p, length(parallel))], attrib=Dict("para_b" => "$p,$(parallel[1])", "para_e" => "$p,$(parallel[end])", "n_meridians" => "$(length(meridians))", "n_parallels" => "$(length(parallels))"), hdr=label)
 		end
 	end
-	#Dgrid[1].attrib["n_meridians"] = "$(length(meridians))"
-	#Dgrid[1].attrib["n_parallels"] = "$(length(parallels))"
 	Dgrid[1].proj4 = _proj
 	set_dsBB!(Dgrid, false)
 	return Dgrid
@@ -417,7 +419,7 @@ end
 
 # -----------------------------------------------------------------------------------------------
 """
-    plotgrid!(GI, grid; annot=true, sides="WESN", fmt="", figname="", show=false)
+    plotgrid!(GI, grid; annot=true, sides="WESN", kw...)
 
 Plot grid lines on top of an image created with the `worldrectangular` function.
 
@@ -428,40 +430,58 @@ Plot grid lines on top of an image created with the `worldrectangular` function.
 - `sides`: Which sides of plot to annotate. `W` or `L` means annotate the left side and so on for any
    combination of "WESNLRBT". To not annotate a particular side just omit that character. *e.g.*
    `sides="WS"` will annotate only the left and bottom axes.
-- `figname`: To create a figure in local directory and with a name `figname`. If `figname` has an extension
-   that is used to select the fig format. *e.g.* `figname=fig.pdf` creates a PDF file localy called 'fig.pdf' 
-- `fmt`: Create the raster figure in format `format`. Default is `fmt=:png`. To get it in PDF do `fmt=:pdf`
-- `show`: If `true`, finish and display the figure.
+- `kw...`: Other keyword arguments passed to `plot()` like `show=true`, `fmt="png"`, `name="myfig"`, etc.
+
+---
+    plotgrid!(GI; inner=false, kw...)
+
+Similar to the above but the graticules ``grid`` are created automatically based on the projection info in `GI`.
+
+- `inner`: A boolean that if true will annotate the grid lines inside the plot area instead of on the sides.
+   `annot` and `sides` arguments are ignored when `inner=true`.
+---
 """
-function plotgrid!(GI::GItype, Dgrat::Vector{<:GMTdataset}; annot=true, sides::String="WESN", fmt="", savefig="", figname="", name="", show=false)
+function plotgrid!(GI::GItype, Dgrat::Vector{<:GMTdataset}; annot=true, sides::String="WESN", kw...)
 	# Make an image of the grid G_I overlaid with the graticules in Dgrat
-	prj = getproj(GI, proj4=true)
+	d = KW(kw)
+	show = (find_in_dict(d, [:show])[1] !== nothing)
+	fmt::String = (find_in_dict(d, [:fmt])[1] !== nothing) ? d[:fmt]::String : FMT[1]
+	symb = find_in_dict(d, [:name :savefig :figname])[2]
+	name::String = (symb != Symbol()) ? d[symb]::String : ""
+
+	prj = getproj(GI, proj4=true)::String
+	is_lee_os = contains(prj, "lee_os")
 	bot = [GI.range[1] GI.range[3]; GI.range[2] GI.range[3]]
 	top = [GI.range[1] GI.range[4]; GI.range[2] GI.range[4]]
-	n_meridians = parse(Int16, Dgrat[1].attrib["n_meridians"])
-	n_parallels = parse(Int16, Dgrat[1].attrib["n_parallels"])
-	lon_S, lon_N = Matrix{Float64}(undef, n_meridians,3), Matrix{Float64}(undef, n_meridians,3)
+	n_meridians::Int = parse(Int, Dgrat[1].attrib["n_meridians"])
+	n_parallels::Int = parse(Int, Dgrat[1].attrib["n_parallels"])
+	lon_S::Matrix{Float64}, lon_N::Matrix{Float64} = Matrix{Float64}(undef, n_meridians,3), Matrix{Float64}(undef, n_meridians,3)
 	k1, k2 = 0, 0
 	sides = uppercase(sides)
 	annot_N = contains(sides,'N') || contains(sides,'T')
 	annot_S = contains(sides,'S') || contains(sides,'B')
 	annot_W = contains(sides,'W') || contains(sides,'L')
 	annot_E = contains(sides,'E') || contains(sides,'R')
-	for k = 1:n_meridians
-		if (annot_S)
-			t = gmtspatial((Dgrat[k], bot), intersections=:e)
+	(is_lee_os && annot_E) && (right = [GI.range[2] GI.range[3]; GI.range[2] GI.range[4]])
+
+	if (annot_S)
+		for k = 1:n_meridians
+			t = gmtspatial((Dgrat[k], bot), intersections=:e)::GMTdataset{Float64,2}
 			isempty(t) && continue
 			lon_S[k1+=1,2], lon_S[k1,1] = round(xy2lonlat(t[1,1:2], s_srs=prj)[1], digits=0), t[1]
 			lon_S[k1,3] = Dgrat[k].attrib["annot"] == "y"	# Do annot or tick only?
 		end
+	end
 
-		if (annot_N)
-			t = gmtspatial((Dgrat[k], top), intersections=:e)
+	if (annot_N)
+		for k = 1:n_meridians
+			t = gmtspatial((Dgrat[k], top), intersections=:e)::GMTdataset{Float64,2}
 			isempty(t) && continue
 			lon_N[k2+=1,2], lon_N[k2,1] = round(xy2lonlat(t[1,1:2], s_srs=prj)[1], digits=0), t[1]
 			lon_N[k2,3] = Dgrat[k].attrib["annot"] == "y"
 		end
 	end
+
 	(annot_S && k1 != size(lon_S,1)) && (lon_S = lon_S[1:k1, :])	# Remove rows not filled
 	(annot_N && k2 != size(lon_N,1)) && (lon_N = lon_N[1:k2, :])
 	for k = 1:size(lon_S,1)
@@ -474,38 +494,86 @@ function plotgrid!(GI::GItype, Dgrat::Vector{<:GMTdataset}; annot=true, sides::S
 	end
 
 	left = [GI.range[1] GI.range[3]; GI.range[1] GI.range[4]]
-	lat = Matrix{Float64}(undef, n_parallels,2)
+	lat::Matrix{Float64} = Matrix{Float64}(undef, n_parallels,2)
+	latE::Matrix{Float64} = Matrix{Float64}(undef, n_parallels,2)
 	n = 0
 	if (annot_W || annot_E)
 		for k = n_meridians+1:length(Dgrat)
-			t = gmtspatial((Dgrat[k], left), intersections=:e)
+			t = gmtspatial((Dgrat[k], left), intersections=:e)::GMTdataset{Float64,2}
 			isempty(t) && continue
 			lat[n+=1,2], lat[n,1] = round(xy2lonlat(t[1,1:2], s_srs=prj)[2], digits=0), t[2]
 		end
 		(annot_W && n != size(lat,1)) && (lat = lat[1:n, :])	# Remove rows not filled because parallels did not cross E-W boundary
+
+		if (is_lee_os && annot_E)			# Lee lat annotations are not parallel on W & E sides
+			n = 0
+			for k = n_meridians+1:length(Dgrat)
+				t = gmtspatial((Dgrat[k], right), intersections=:e)::GMTdataset{Float64,2}
+				isempty(t) && continue
+				latE[n+=1,2], latE[n,1] = round(xy2lonlat(t[1,1:2], s_srs=prj)[2], digits=0), t[2]
+			end
+			(n != size(latE,1)) && (latE = latE[1:n, :])	# Remove rows not filled because parallels did not cross E boundary
+		end
 	end
 
-	plot!(Dgrat)
+	_common_plot_xyz("", Dgrat, "plotgrid", true, true, false, d)
 	if (annot == 1)
-		(annot_W || annot_E) && (txt = [@sprintf("a %d", lat[k,2]) for k = 1:size(lat,1)])
+		if (is_lee_os && annot_E)			# Lee OS East side needs different treatment from West side
+			t0 = view(latE,:,2)				# To avoid a Core.Box caused in next line
+			txt = [@sprintf("a %d", t0[k]) for k = 1:size(latE,1)]
+			(!isempty(txt)) && basemap!(yaxis=(custom=(pos=latE[:,1], type=txt),), par=(FONT_ANNOT_PRIMARY="+7",), B="E")
+			annot_E = false					# So that it won't be done again below
+		end
+		t1 = view(lat,:,2)					# To avoid a Core.Box caused in next line
+		(annot_W || annot_E) && (txt = [@sprintf("a %d", t1[k]) for k = 1:size(lat,1)])
 		ax = (annot_W && annot_E) ? "WE" : annot_W ? "W" : "E"	# Which axis to annot
 		(annot_W && !isempty(txt)) && basemap!(yaxis=(custom=(pos=lat[:,1], type=txt),), par=(FONT_ANNOT_PRIMARY="+7",), B=ax)
 
 		if (annot_N)
-			txt = [@sprintf("a %d", lon_N[k,2]) for k = 1:size(lon_N,1)]
+			t2 = view(lon_N,:,2)			# To avoid a Core.Box caused in next line
+			txt = [@sprintf("a %d", t2[k]) for k = 1:size(lon_N,1)]
 			for k = 1:numel(txt) if lon_N[k,3] == 0 (txt[k] = "f") end  end
 			basemap!(xaxis=(custom=(pos=lon_N[:,1], type=txt),), par=(FONT_ANNOT_PRIMARY="+7",), B="N")
 		end
 		if (annot_S)
-			txt = [@sprintf("a %d", lon_S[k,2]) for k = 1:size(lon_S,1)]
+			t3 = view(lon_S,:,2)
+			txt = [@sprintf("a %d", t3[k]) for k = 1:size(lon_S,1)]
 			for k = 1:numel(txt) if lon_S[k,3] == 0 (txt[k] = "f") end  end
 			basemap!(xaxis=(custom=(pos=lon_S[:,1], type=txt),), par=(FONT_ANNOT_PRIMARY="+7",), B="S")
 		end
 	end
-	_fmt = (fmt == "") ? FMT[1] : string(fmt)
-	_name = (name != "") ? string(name) : figname != "" ? string(figname) : savefig != "" ? string(savefig) : ""
-	(show == 1) ? showfig(; fmt=_fmt, name=_name) : nothing
+	(show) ? showfig(; fmt=fmt, name=name) : nothing
 end
+
+# -----------------------------------------------------------------------------------------------
+function plotgrid!(GI::GItype; inner=false, annot=true, sides::String="WESN", kw...)
+	# Wrapper method to let call plotgrid!(GI [,inner=true], show=true)
+	grid = worldrectgrid(GI)
+	if (inner)  plotgrid!(grid; kw...)
+	else        plotgrid!(GI, grid; annot=annot, sides=sides, kw...)
+	end
+end
+
+# -----------------------------------------------------------------------------------------------
+function plotgrid(Dgrat::Vector{<:GMTdataset}; first=true, kw...)
+	temp::String = "GMTjl_annots_" * TMPDIR_USR[2] * TMPDIR_USR[3]
+	fname = joinpath(TMPDIR_USR[1], temp * ".txt")
+	((val = get(POSTMAN[1], "Grange", nothing)) === nothing) && error("Cannot find 'Grange' in POSTMAN. Was 'worldrectgrid' used to create the graticules?")
+	x0, x1, y0, y1 = parse.(Float64, split(val))
+	fig_dims = gmt("mapproject -W" * CTRL.pocket_R[1] * CTRL.pocket_J[1]).data::Matrix{Float64}
+	shift = 0.004 * fig_dims[3]
+	x0 += shift;	x1 -= shift;	y0 += shift;	y1 -= shift
+	fid = open(fname, "w")
+	println(fid, ">\n", x0, " ", y0, "\n", x0, " ", y1)
+	println(fid, ">\n", x0, " ", y1, "\n", x1, " ", y1)
+	println(fid, ">\n", x1, " ", y1, "\n", x1, " ", y0)
+	println(fid, ">\n", x1, " ", y0, "\n", x0, " ", y0)
+	close(fid)
+	R = common_plot_xyz("", Dgrat, "plotgrid", first, false; S="qx"*fname*"+r0.3c:+f7,Helvetica,gray10+Lh", kw...)
+	rm(fname)
+	return R
+end
+plotgrid!(Dgrat::Vector{<:GMTdataset}; kw...) = plotgrid(Dgrat; first=false, kw...)
 
 # -----------------------------------------------------------------------------------------------
 """

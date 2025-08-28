@@ -9,6 +9,7 @@
 	G = worldrectangular("@earth_relief_10m_g", pm=-100);
 	G,cl = worldrectangular("@earth_relief_10m_g", latlim=90, coast=true);
 	G,cl = leepacific("@earth_relief_10m_g");
+	plotgrid!(G)
 
 	grid = worldrectgrid(G, annot_x=[-180,-150,0,150,180])
 	plot([0 0])		# Just to have a PS for the next have where to append

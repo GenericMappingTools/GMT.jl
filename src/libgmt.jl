@@ -428,25 +428,35 @@ function gmt_free_mem(API::Ptr{Cvoid}, mem)
 end
 
 function gmt_centroid_area(API::Ptr{Cvoid}, D, geo::Int=0)::Matrix{Float64}
-	if (isa(D, Vector))
+	if (isa(D, Vector))		# 'D' is a vector of GMTdatasets but that type is not yet known here.
 		mat = Matrix{Float64}(undef, length(D), 3)
 		for k in eachindex(D)
-			t = gmt_centroid_area(API::Ptr{Cvoid}, D[k].data[:,1], D[k].data[:,2], geo)
+			ref1, ref2, nr = pointercols(D[k])
+			t = gmt_centroid_area(API, ref1, ref2, geo, nr)
 			mat[k, 1], mat[k, 2], mat[k, 3] = t[1], t[2], t[3]
 		end
 		mat
 	else
-		gmt_centroid_area(API::Ptr{Cvoid}, D.data[:,1], D.data[:,2], geo)
+		ref1, ref2, nr = pointercols(D)
+		gmt_centroid_area(API, ref1, ref2, geo, nr)
 	end
 end
 
-function gmt_centroid_area(API::Ptr{Cvoid}, x::Vector{Float64}, y::Vector{Float64}, geo::Int=0)::Matrix{Float64}
+function gmt_centroid_area(API::Ptr{Cvoid}, x, y, geo::Int=0, n::Int=0)::Matrix{Float64}
 	# geo = 0 for Cartesian, !=0 for geographic
+	@assert isa(x, Vector{Float64}) || isa(x, Ptr{Float64}) || isa(x, Ref{Float64}) "Bad type for x"
+	!isa(x, Vector{Float64}) && (n == 0) && error("Must provide 'n' when x is not a Vector")
+	(n == 0) && (n = length(x))
 	pos = [0.0 0.0 0.0]
 	area = ccall((:gmt_centroid_area, libgmt), Cdouble, (Cstring, Ptr{Cdouble}, Ptr{Cdouble}, UInt64, Int32, Ptr{Cdouble}),
-	             GMT_Get_Ctrl(API), x, y, length(x), geo, pos)
+	             GMT_Get_Ctrl(API), x, y, n, geo, pos)
 	pos[3] = abs(area)
 	return pos
+end
+
+function pointercols(D::AbstractArray{Float64,2}, cols=(1,2))
+	nr = size(D, 1)
+	return Ref(D[:], (cols[1]-1)*nr + 1), Ref(D[:], (cols[2]-cols[1])*nr + 1), nr
 end
 
 #=
