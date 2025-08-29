@@ -35,7 +35,7 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 	cmd, is_gridtri, arg1 = parse_grid2tri_case(d, cmd, caller, is3D, isFV, O, arg1)
 	
 	isa(arg1, GMTdataset) && (arg1 = with_xyvar(d, arg1))		# See if we have a column request based on column names
-	if ((val = find_in_dict(d, [:decimate])[1]) !== nothing)	# Asked for a clever data decimation?
+	if ((val = hlp_desnany_int(d, [:decimate])) !== -999)		# Asked for a clever data decimation?
 		dec_factor::Int = (val == 1) ? 10 : val
 		arg1 = lttb(arg1, dec_factor)
 	end
@@ -176,8 +176,7 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 	end
 
 	opt_Wmarker::String = ""
-	if ((val = find_in_dict(d, [:mec :markeredgecolor :MarkerEdgeColor])[1]) !== nothing)
-		tmec::String = arg2str(val)
+	if ((tmec = hlp_desnany_arg2str(d, [:mec :markeredgecolor :MarkerEdgeColor])) !== "")
 		!contains(tmec, "p,") && (tmec = "0.25p," * tmec)	# If not provided, default to a line thickness of 0.25p
 		opt_Wmarker = tmec
 	end
@@ -377,7 +376,7 @@ end
 function parse_plot_callers(d::Dict{Symbol, Any}, gmt_proggy::String, caller::String, is3D::Bool, O::Bool, arg1)
 	isFV = (isa(arg1, GMTfv) || isa(arg1, Vector{GMTfv}))
 	(arg1 !== nothing && !isa(arg1, GDtype) && !isa(arg1, Matrix{<:Real}) && !isFV) &&
-		(arg1 = tabletypes2ds(arg1, ((val = find_in_dict(d, [:interp])[1]) !== nothing) ? interp=val : interp=0))
+		(arg1 = tabletypes2ds(arg1, ((val = hlp_desnany_int(d, [:interp])) !== -999) ? interp=val : interp=0))
 	(caller != "bar") && (arg1 = if_multicols(d, arg1, is3D))	# Repeat because DataFrames or ODE's have skipped first round
 	(!O) && (LEGEND_TYPE[1] = legend_bag())		# Make sure that we always start with an empty one
 
@@ -400,7 +399,7 @@ function parse_plot_callers(d::Dict{Symbol, Any}, gmt_proggy::String, caller::St
 			sub_module = caller
 			# Needs to be processed here to distinguish from the more general 'fill'
 			(caller == "bar") && (g_bar_fill = helper_gbar_fill(d))
-			opt_A = (caller == "lines" && ((val = find_in_dict(d, [:stairs_step])[1]) !== nothing)) ? string(val) : ""
+			opt_A = (caller == "lines" && ((val = hlp_desnany_str(d, [:stairs_step])) !== "")) ? val : ""
 		end
 	end
 	return cmd, isFV, caller, sub_module, gmt_proggy, opt_A, g_bar_fill, arg1
@@ -410,30 +409,41 @@ end
 plt_txt_attrib!(D::GMTdataset{T,N}, d::Dict{Symbol, Any}, _cmd::Vector{String}) where {T,N} = plt_txt_attrib!([D], d, _cmd)
 function plt_txt_attrib!(D::Vector{<:GMTdataset{T,N}}, d::Dict{Symbol, Any}, _cmd::Vector{String}) where {T,N}
 	# Plot TEXT attributed labels and serve as function barrier agains the f Any's (not sure if succeeds)
-	((val = find_in_dict(d, [:labels])[1]) === nothing) && return nothing
-
-	s_val::String = string(val)
-	!(startswith(s_val, "att") && (contains(s_val, '=') || contains(s_val, ':'))) &&
-		error("The labels option must be 'labels=att=???' or 'labels=attrib=???'")
-	((_ind = findfirst('=', s_val)) === nothing) && (_ind = findfirst(':', s_val))
-	ind::Int = _ind											# Because it fck insists _ind is a Any
-	ts::String = s_val[ind+1:end]
-	t = vec(make_attrtbl(D, att=ts)[1])
-	if ((fnt = add_opt(d, "", "", [:font], (angle="+a", font=("+f", font)); del=false)) != "")
+	((s_val = hlp_desnany_str(d, [:labels])) === "") && return nothing
+		
+	if ((fnt = add_opt(d, "", "", [:font], (angle="+a", font=("+f", font)); del=false)) !== "")
 		(fnt[1] != '+') && (fnt = "+f" * fnt)
 		delete!(d, :font)
-	else
-		nc::Int = round(Int, sqrt(length(D)))				# A crude guess of the number of columns
-		fnt = (nc < 5) ? "7p" : (nc < 9 ? "5p" : "4p")		# A simple heuristic
-		outline = fnt * ",black=~0.75p,white "				# Apply the outline trick
-		fnt = "+f"
-		t = outline .* t
 	end
-	ct::GMTdataset{Float64,2} = mat2ds(gmt_centroid_area(G_API[1], D, Int(isgeog(D))))
-	ct.text = t												# Texts will be plotted at the polygons centroids
-	(CTRL.pocket_call[1] === nothing) ? (CTRL.pocket_call[1] = ct) : (CTRL.pocket_call[2] = ct)
+
+	if (length(D) == 1 && D[1].geom == wkbPoint)	# Points only. Expected to have a text column
+		(CTRL.pocket_call[1] === nothing) ? (CTRL.pocket_call[1] = D[1]) : (CTRL.pocket_call[2] = D[1])
+		(fnt === "") && (fnt = "+f6p")
+	else
+		ts = fish_attrib_in_str(s_val)
+		t = vec(make_attrtbl(D, att=ts)[1])
+		if (fnt === "")
+			nc::Int = round(Int, sqrt(length(D)))				# A crude guess of the number of columns
+			fnt = (nc < 5) ? "7p" : (nc < 9 ? "5p" : "4p")		# A simple heuristic
+			outline = fnt * ",black=~0.75p,white "				# Apply the outline trick
+			fnt = "+f"
+			t = outline .* t
+		end
+		ct::GMTdataset{Float64,2} = mat2ds(gmt_centroid_area(G_API[1], D, Int(isgeog(D))), geom=wkbPoint)
+		ct.text = t												# Texts will be plotted at the polygons centroids
+		(CTRL.pocket_call[1] === nothing) ? (CTRL.pocket_call[1] = ct) : (CTRL.pocket_call[2] = ct)
+	end
 	append!(_cmd, ["pstext -R -J -F" * fnt * "+jMC"])
 	return nothing
+end
+
+# ---------------------------------------------------------------------------------------------------
+function fish_attrib_in_str(s::String)::String
+	# Fish the contents of 'labels="attrib=???"'
+	!(startswith(s, "att") && (contains(s, '=') || contains(s, ':'))) &&
+		error("The labels option must be 'labels=\"att=???\"' or 'labels=\"attrib=???\"'")
+	((ind = findfirst('=', s)) === nothing) && (ind = findfirst(':', s))
+	s[ind+1:end]
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -502,7 +512,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function if_multicols(d, arg1, is3D::Bool)
 	# If the input is a GMTdataset and 'multicol' is asked, split the DS into a vector of DS's
-	(!MULTI_COL[1] && find_in_dict(d, [:multi :multicol :multicols], false)[1] === nothing)  && return arg1
+	(!MULTI_COL[1] && is_in_dict(d, [:multi :multicol :multicols]) === nothing) && return arg1
 	is3D && (delete!(d, [:multi, :multicol, :multicols]); @warn("'multile coluns' in 3D plots are not allowed. Ignoring."))
 	(isdataframe(arg1) || isODE(arg1)) && return arg1
 	(isa(arg1, Vector{<:GMTdataset}) && (size(arg1,2) > 2+is3D)) && return arg1		# Play safe
@@ -616,7 +626,7 @@ function with_xyvar(d::Dict, arg1::GMTdataset, no_x::Bool=false)::Union{GMTdatas
 		end
 		isempty(ycv) && error("yvar option is non-sense.")
 		(minimum(ycv) < 1 || maximum(ycv) > size(arg1,2)) && error("Col names not found in GMTdataset col names or exceed col count.")
-		domulticol = ((val = find_in_dict(d::Dict, [:nomulticol])[1]) === nothing) ? true : false
+		domulticol = ((is_in_dict(d::Dict, [:nomulticol]; del=true)) === nothing) ? true : false
 		(domulticol) && (ismulticol = true)
 	end
 
@@ -954,10 +964,10 @@ function parse_opt_S(d::Dict, arg1, is3D::Bool=false)
 			opt_S = " -S" * helper_arrows(d)
 		end
 	else
-		val, symb = find_in_dict(d, [:ms :markersize :MarkerSize :size])
-		(val !== nothing) && @warn("option *$(symb)* is ignored when either 'S' or 'symbol' options are used")
-		val, symb = find_in_dict(d, [:marker :Marker :shape])
-		(val !== nothing) && @warn("option *$(symb)* is ignored when either 'S' or 'symbol' options are used")
+		symb = is_in_dict(d, [:ms :markersize :MarkerSize :size]; del=true)
+		(symb !== nothing) && @warn("option *$(symb)* is ignored when either 'S' or 'symbol' options are used")
+		symb = is_in_dict(d, [:marker :Marker :shape]; del=true)
+		(symb !== nothing) && @warn("option *$(symb)* is ignored when either 'S' or 'symbol' options are used")
 	end
 	return arg1, opt_S
 end
@@ -1058,12 +1068,12 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill::Vector{Strin
 	is_waterfall = false
 	is_hbar = occursin("-SB", cmd)				# An horizontal bar plot
 
-	if ((val = find_in_dict(d, [:stack :stacked])[1]) !== nothing)
+	if ((val = hlp_desnany_str(d, [:stack :stacked])) !== "")
 		# Take this (two groups of 3 bars) [0 1 2 3; 1 2 3 4]  and compute this (the same but stacked)
 		# [0 1 0; 0 3 1; 0 6 3; 1 2 0; 1 5 2; 1 9 4]
 		# Taking for example the first group, [0 1 0; 0 3 1; 0 6 3] this means:
 		# [|x=0 base=0, y=1|; |x=0 base=1, y=3|; |x=0, base=3, y=6]
-		is_waterfall = startswith(string(val)::String, "water")
+		is_waterfall = startswith(val, "water")
 		nl::Int = size(_arg,2)-1				# N layers in stack
 		tmp = zeros(size(_arg,1)*nl, 3)
 
@@ -1245,23 +1255,23 @@ function make_color_column(d::Dict, cmd::String, opt_i::String, len_cmd::Int, N_
 	# See if we got a CPT. If yes, there is quite some work to do if no color column provided in input data.
 	# N_ARGS will be == n_prev+1 when a -Ccpt was used. Otherwise they are equal.
 
-	mz, the_kw = find_in_dict(d, [:zcolor :markerz :mz])
-	if ((!(N_args > n_prev || len_cmd < length(cmd)) && mz === nothing) && !bar_ok)		# No color request, so return right away
+	mz, the_kw = find_in_dict(d, [:zcolor :markerz :mz :level])
+	no_mz = (the_kw === Symbol())			# Means, no zcolor request 
+	if ((!(N_args > n_prev || len_cmd < length(cmd)) && no_mz) && !bar_ok)		# No color request, so return right away
 		return cmd, arg1, arg2, N_args, false
 	end
 
 	# Filled polygons with -Z don't need extra col
-	((val = find_in_dict(d, [:G :fill], false)[1]) == "+z") && return cmd, arg1, arg2, N_args, false
+	((val = hlp_desnany_str(d, [:G :fill], false)) == "+z") && return cmd, arg1, arg2, N_args, false
 
 	n_rows, n_col = get_sizes(arg1)		# Deal with the matrix, DS & Vec{DS} cases
-	#(isa(mz, Int) && mz <= n_col && mz == 3+is3D) && return cmd, arg1, nothing, N_args, false	# zcolor column is already in place
-	(isa(mz, Bool) && mz) && (mz = 1:n_rows)
+	(isa(mz, Bool) && mz) && (mz = collect(1:n_rows))
 
-	if ((mz !== nothing && length(mz)::Int != n_rows) || (mz === nothing && opt_i != ""))
+	if ((!no_mz && length(mz)::Int != n_rows) || (no_mz && opt_i != ""))
 		warn1 = string("Probably color column in '", the_kw, "' has incorrect dims (", length(mz), " vs $n_rows). Ignoring it.")
 		warn2 = "Plotting with color table requires adding one more column to the dataset but your 'incols'
 		option didn't do it, so you won't get what you expect. Try incols=\"0-1,1\" for 2D or \"=0-2,2\" for 3D plots"
-		(mz !== nothing) ? @warn(warn1) : @warn(warn2)
+		(!no_m) ? @warn(warn1) : @warn(warn2)
 		return cmd, arg1, arg2, N_args, true
 	end
 
@@ -1278,14 +1288,14 @@ function make_color_column(d::Dict, cmd::String, opt_i::String, len_cmd::Int, N_
 		return cmd, arg1, arg2, 2, true
 	end
 
-	make_color_column_(d, cmd, len_cmd, N_args, n_prev, is3D, got_Ebars, arg1, arg2, mz, n_col)
+	make_color_column_(d, cmd, len_cmd, N_args, n_prev, is3D, got_Ebars, arg1, arg2, !no_mz, mz, n_col)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function make_color_column_(d::Dict, cmd::String, len_cmd::Int, N_args::Int, n_prev::Int, is3D::Bool, got_Ebars::Bool, arg1, arg2, mz, n_col::Int)
+function make_color_column_(d::Dict, cmd::String, len_cmd::Int, N_args::Int, n_prev::Int, is3D::Bool, got_Ebars::Bool, arg1, arg2, have_mz, mz, n_col::Int)
 	# Broke this out of make_color_column() to try to limit effect of invalidations but with questionable results.
 	if (n_col <= 2+is3D)
-		if (mz !== nothing)
+		if (have_mz)
 			if (isa(arg1,GMTdataset))
 				add2ds!(arg1, mz; name="Zcolor")
 			elseif (isa(arg1, Vector{<:GMTdataset}))
@@ -1298,7 +1308,7 @@ function make_color_column_(d::Dict, cmd::String, len_cmd::Int, N_args::Int, n_p
 			end
 		end
 	else
-		if (mz !== nothing)				# Here we must insert the color col right after the coords
+		if (have_mz)				# Here we must insert the color col right after the coords
 			if (isa(arg1,GMTdataset))
 				add2ds!(arg1, mz, 3+is3D; name="Zcolor")
 			elseif (isa(arg1, Vector{<:GMTdataset}))
@@ -1310,7 +1320,7 @@ function make_color_column_(d::Dict, cmd::String, len_cmd::Int, N_args::Int, n_p
 	end
 
 	if (N_args == n_prev)				# No cpt transmitted, so need to compute one
-		if (mz !== nothing)   mi::Float64, ma::Float64 = extrema(mz)
+		if (have_mz)   mi::Float64, ma::Float64 = extrema(mz)
 		else
 			the_col = min(n_col,3)+is3D
 			(the_col > n_col) && (the_col = n_col)	# Shitty logic before may have lead to this need.
@@ -1533,7 +1543,8 @@ function check_caller(d::Dict, cmd::String, opt_S::String, opt_W::String, caller
 				bar_type = 2;	delete!(d, :hbar)
 			end
 			if (bar_type == 0 || bar_opts == "")	# bar_opts == "" means only bar=true or hbar=true was used
-				gap::Float64 = ((val = find_in_dict(d, [:bargap])[1]) === nothing) ? 0.8 : (val > 1 ? (1.0 - val/100) : (1-val))		# Gap between bars in a group
+				val = hlp_desnany_float(d, [:bargap])
+				gap = (isnan(val)) ? 0.8 : (val > 1 ? (1.0 - val/100) : (1-val))		# Gap between bars in a group
 				opt = (haskey(d, :width)) ? add_opt(d, "", "",  [:width]) : "$gap"	# 0.8 is the default
 				_Stype = (bar_type == 2) ? " -SB" : " -Sb"
 				cmd *= _Stype * opt * "u"
