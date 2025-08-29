@@ -63,11 +63,11 @@ function gravmag3d_helper(cmd0::String, arg1; kwargs...)
 		arg1 = v
 	end
 	isa(arg1, Matrix{<:AbstractFloat}) && (arg1 = mat2ds(arg1))		# Ensure we always send a GMTdataset
-	gravmag3d_helper(arg1, d)
+	_gravmag3d_helper(arg1, d)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function gravmag3d_helper(arg1, d::Dict{Symbol,Any})
+function _gravmag3d_helper(arg1, d::Dict{Symbol,Any})
 	
 	cmd = parse_common_opts(d, "", [:G :RIr :V_params :bi :f])[1]
 	cmd = parse_these_opts(cmd, d, [[:C :density], [:E :thickness], [:L :z_obs :observation_level], [:S :radius], [:Z :level :reference_level]])

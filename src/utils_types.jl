@@ -207,7 +207,11 @@ end
 function _mat2ds(mat::Array{T,N}, txt::Union{String,Vector{String}}, hdr::Vector{String}, geom::Int, d::Dict)::GDtype where {T<:Real, N}
 
 	(!isempty(txt)) && return text_record(mat, txt,  hdr)
-	((_text = find_in_dict(d, [:text])[1]) !== nothing) && return text_record(mat, _text, hdr)
+	if ((_text = find_in_dict(d, [:text])[1]) !== nothing && !isempty(_text))
+		Dt = text_record(mat, _text, hdr);	Dt.geom = geom
+		return Dt
+	end
+
 	is3D = (find_in_dict(d, [:is3D])[1] === nothing) ? false : true		# Should account for is3D == false?
 	isa(mat, Vector) && (mat = reshape(mat, length(mat), 1))
 
@@ -486,7 +490,7 @@ function add2ds!(D::GMTdataset{T,2}, mat, ind::Int=0; name::AbstractString="", n
 	if (!isempty(D.colnames))
 		t_col = (!isempty(D.text) && length(D.colnames) > size(D,2)) ? D.colnames[end] : ""
 	end
-	if (ind == 0 || ind == size(D,2))
+	if (ind == 0)
 		if (!isempty(D.colnames))
 			(size(D,2) > length(D.colnames)) && (append!(D.colnames, ["Bug"]))		# I fck cant get rid of this
 			D.colnames = !isempty(t_col) ? [D.colnames[1:size(D,2)]..., _names..., t_col] :	[D.colnames[1:size(D,2)]..., _names...]
@@ -496,8 +500,8 @@ function add2ds!(D::GMTdataset{T,2}, mat, ind::Int=0; name::AbstractString="", n
 		D.data = hcat(isvector(mat) ? mat[:] : mat, D.data)
 		!isempty(D.colnames) && (D.colnames = [_names..., D.colnames...])
 	else
-		D.data = isvector(mat) ? hcat(D.data[:,1:ind-1], mat[:], D.data[:,ind+1:end]) : hcat(D.data[:,1:ind-1], mat, D.data[:,ind+1:end])
-		!isempty(D.colnames) && (D.colnames = [D.colnames[1:ind-1]..., _names..., D.colnames[ind+1:end]...])
+		D.data = isvector(mat) ? hcat(D.data[:,1:ind-1], mat[:], D.data[:,ind:end]) : hcat(D.data[:,1:ind-1], mat, D.data[:,ind:end])
+		!isempty(D.colnames) && (D.colnames = [D.colnames[1:ind-1]..., _names..., D.colnames[ind:end]...])
 	end
 	set_dsBB!(D)
 	return nothing
@@ -2533,6 +2537,9 @@ mksymbol(f::Function, arg1; kw...) = mksymbol(f, "", arg1; kw...)
 # ---------------------------------------------------------------------------------------------------
 function hlp_desnany_str(d, s, del=true)::String
 	((val = find_in_dict(d, s, del)[1]) === nothing) ? "" : string(val)
+end
+function hlp_desnany_arg2str(d, s, del=true)::String
+	((val = find_in_dict(d, s, del)[1]) === nothing) ? "" : arg2str(val)
 end
 
 # ---------------------------------------------------------------------------------------------------
