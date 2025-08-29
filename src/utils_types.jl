@@ -2548,6 +2548,16 @@ function hlp_desnany_vstr(d, s)::Vector{String}
 end
 
 # ---------------------------------------------------------------------------------------------------
+function hlp_desnany_int(d, s, default::Int=-999)::Int
+	((val = find_in_dict(d, s)[1]) === nothing) ? default : (isa(val, Bool) ? Int(val) : parse(Int, val))
+end
+
+# ---------------------------------------------------------------------------------------------------
+function hlp_desnany_float(d, s)::Float64
+	((val = find_in_dict(d, s)[1]) === nothing) ? NaN : Float64(val)
+end
+
+# ---------------------------------------------------------------------------------------------------
 function hlp_desnany_vfloat(d, s)::Vector{Float64}
 	((val = find_in_dict(d, s)[1]) === nothing) && return Float64[]
 	if     (isa(val, AbstractString))  lt::Vector{Float64} = [size_unit(val)]
