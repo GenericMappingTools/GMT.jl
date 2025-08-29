@@ -1510,7 +1510,7 @@ function parse_c(d::Dict, cmd::String)::Tuple{String, String}
 	if ((val = find_in_dict(d, [:c :panel])[1]) !== nothing)
 		if (isa(val, Tuple) || isa(val, Array{<:Real}) || isa(val, Integer))
 			opt_val = arg2str(val .- 1, ',')
-		elseif (isa(val, String) || isa(val, Symbol))
+		elseif (isa(val, StrSymb))
 			_val::String = string(val)		# In case it was a symbol
 			if ((ind = findfirst(",", _val)) !== nothing)	# Shit, user really likes complicating
 				opt_val = string(parse(Int, val[1:ind[1]-1]) - 1, ',', parse(Int, _val[ind[1]+1:end]) - 1)
@@ -1648,8 +1648,8 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_write(d::Dict, cmd::String)::String
-	if ((val = find_in_dict(d, [:write :savefile :|>], true)[1]) !== nothing)
-		cmd *=  " > " * val::String
+	if ((val = hlp_desnany_str(d, [:write :savefile :|>])) !== "")
+		cmd *=  " > " * val
 	end
 	return cmd
 end
@@ -1744,7 +1744,7 @@ function parse_common_opts(d::Dict, cmd::String, opts::VMs; first::Bool=true, is
 			CURRENT_VIEW[1] = ""		# Ensure we start empty
 		end
 	end
-	((val = find_in_dict(d, [:pagecolor])[1]) !== nothing) && (cmd *= string(" --PS_PAGE_COLOR=", val)::String)
+	((val = hlp_desnany_str(d, [:pagecolor])) !== "") && (cmd *= string(" --PS_PAGE_COLOR=", val)) 
 	return cmd, o
 end
 
@@ -1753,7 +1753,7 @@ function parse_theme(d::Dict, del::Bool=true)
 	# This must always be processed before parse_B so it's the first call in that function
 	if ((val = find_in_dict(d, [:theme], del)[1]) !== nothing)
 		isa(val, NamedTuple) && theme(string(val[1])::String; nt2dict(val)...)
-		(isa(val, String) || isa(val, Symbol)) && theme(string(val)::String)
+		(isa(val, StrSymb)) && theme(string(val)::String)
 	end
 end
 
@@ -2223,7 +2223,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function finish_PS(d::Dict, cmd::String, output::String, K::Bool, O::Bool)::String
-	if (!O && ((val = find_in_dict(d, [:P :portrait])[1]) === nothing))  cmd *= " -P"  end
+	if (!O && ((val = hlp_desnany_str(d, [:P :portrait])) === ""))  cmd *= " -P"  end
 
 	opt = (K && !O) ? " -K" : ((K && O) ? " -K -O" : "")
 
@@ -2666,7 +2666,7 @@ function add_opt_cpt(d::Dict, cmd::String, symbs::VMs, opt::Char, N_args::Int=0,
 		cmd, arg1, arg2, N_args = helper_add_cpt(cmd, opt, N_args, arg1, arg2, CURRENT_CPT[1], false)
 	end
 	if (occursin(" -C", cmd))
-		if ((val = find_in_dict(d, [:hinge])[1]) !== nothing)       cmd *= string("+h", val)::String  end
+		if ((val = hlp_desnany_str(d, [:hinge])) !== "")       cmd *= string("+h", val)  end
 		if ((val = find_in_dict(d, [:meter2unit])[1]) !== nothing)  cmd *= "+U" * parse_unit_unit(val)::String  end
 		if ((val = find_in_dict(d, [:unit2meter])[1]) !== nothing)  cmd *= "+u" * parse_unit_unit(val)::String  end
 	end
@@ -2906,7 +2906,7 @@ end
 
 # ---------------------------
 function parse_unit_unit(str)::String
-	!isa(str, StrSymb) && error("Argument data type must be String or Symbol but was: $(typeof(str))")
+	@assert isa(str, StrSymb) error("Argument data type must be String or Symbol but was: $(typeof(str))")
 	if (isa(str, Symbol))  str = string(str)  end
 
 	if     (str == "e" || str == "meter")  out = "e";
@@ -3313,8 +3313,8 @@ function vector_attrib(d::Dict)::String
 		end
 	end
 
-	if ((val = find_in_dict(d, [:half :half_arrow])[1]) !== nothing)
-		cmd = (val == "left" || val == :left) ? cmd * "+l" : cmd * "+r"
+	if ((val = hlp_desnany_str(d, [:half :half_arrow])) !== "")
+		cmd = (val == "left") ? cmd * "+l" : cmd * "+r"
 	end
 
 	if (haskey(d, :fill))
@@ -3364,8 +3364,8 @@ function vector4_attrib(; kwargs...)::String
 	# Old GMT4 vectors (still supported in GMT6)
 	d = KW(kwargs)
 	cmd::String = "t"
-	if ((val = find_in_dict(d, [:align :center])[1]) !== nothing)
-		c::Char = string(val)[1]
+	if ((val = hlp_desnany_str(d, [:align :center])) !== "")
+		c::Char = val[1]
 		if     (c == 'h' || c == 'b')  cmd = "h"		# Head
 		elseif (c == 'm' || c == 'c')  cmd = "b"		# Middle
 		elseif (c == 'p')              cmd = "s"		# Point
@@ -3519,10 +3519,10 @@ function helper_decorated(d::Dict, compose=false)
 		end
 	end
 	if (cmd == "" && optD == "")
-		optD = ((val = find_in_dict(d, [:n_labels :n_symbols])[1]) !== nothing) ? string("n",val) : "n1"
+		optD = ((val = hlp_desnany_str(d, [:n_labels :n_symbols])) !== "") ? string("n",val) : "n1"
 	end
 	if (cmd == "")
-		if ((val = find_in_dict(d, [:N_labels :N_symbols])[1]) !== nothing)
+		if ((val = hlp_desnany_str(d, [:N_labels :N_symbols])) !== "")
 			optD = string("N", val);
 		end
 	end
@@ -3581,8 +3581,8 @@ function fname_out(d::Dict, del::Bool=false)
 	# Create a file name in the TMP dir when OUT holds only a known extension. The name is: GMT_user.ext
 
 	EXT::String = FMT[1];	fname::AbstractString = ""
-	if ((val = find_in_dict(d, [:savefig :figname :name], del)[1]) !== nothing)
-		fname, EXT = splitext(string(val)::String)
+	if ((val = hlp_desnany_str(d, [:savefig :figname :name], del)) !== "")
+		fname, EXT = splitext(val)
 		EXT = (EXT == "") ? FMT[1] : EXT[2:end]
 	end
 	if (EXT == FMT[1] && haskey(d, :fmt))
@@ -4063,9 +4063,9 @@ end
 # ---------------------------------------------------------------------------------------------------
 function write_data(d::Dict, cmd::String)::String
 	# Check if we need to save to file (redirect stdout)
-	if     ((val = find_in_dict(d, [:|>])[1])     !== nothing)  cmd = string(cmd, " > ", val)
-	elseif ((val = find_in_dict(d, [:write])[1])  !== nothing)  cmd = string(cmd, " > ", val)
-	elseif ((val = find_in_dict(d, [:append])[1]) !== nothing)  cmd = string(cmd, " >> ", val)
+	if     ((val = hlp_desnany_str(d, [:|>]))  !== "")     cmd = string(cmd, " > ", val)
+	elseif ((val = hlp_desnany_str(d, [:write]))  !== "")  cmd = string(cmd, " > ", val)
+	elseif ((val = hlp_desnany_str(d, [:append])) !== "")  cmd = string(cmd, " >> ", val)
 	end
 	return cmd
 end
@@ -4103,8 +4103,9 @@ function dbg_print_cmd(d::Dict, cmd::Vector{String})
 
 	if (SHOW_KWARGS[1])  SHOW_KWARGS[1] = false; return ""  end	# If in HELP mode
 
-	if ( ((Vd = find_in_dict(d, [:Vd])[1]) !== nothing) || CONVERT_SYNTAX[1])
+	if ( ((val = find_in_dict(d, [:Vd])[1]) !== nothing) || CONVERT_SYNTAX[1])
 		(CONVERT_SYNTAX[1]) && return update_cmds_history(cmd)	# For movies mainly.
+		Vd::Int = Int(val)
 		(Vd <= 0) && (d[:Vd] = 0)		# Later, if Vd == 0, do not print the "not consumed" warnings
 		(Vd <= 0) && return nothing
 
@@ -4190,7 +4191,7 @@ function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K:
 
 	if (opt_T != "")
 		(K) && close_PS_file(fname_ps)			# Close the PS file first
-		((val = find_in_dict(d, [:dpi :DPI])[1]) !== nothing) && (opt_T *= string(" -E", val))
+		((val = hlp_desnany_str(d, [:dpi :DPI])) !== "") && (opt_T *= " -E" *  val)
 		gmt(pscvt_cmd * fname_ps * opt_T * " *")
 		reset_theme()
 		out::String = fname_ps[1:end-2] * fname_ext
@@ -4680,8 +4681,8 @@ function put_in_legend_bag(d::Dict, cmd, arg, O::Bool=false, opt_l::String="")
 			elseif (_valLabel !== nothing)
 				valLabel_vec = [string.(_valLabel)...]		# We may have shits here
 			end
-			if ((ribs = find_in_dict(dd, [:ribbon :band], false)[1]) !== nothing)
-				(valLabel != "") && (valLabel_vec = [valLabel, string(ribs)::String]; valLabel="")	# *promote* valLabel
+			if ((ribs = hlp_desnany_str(dd, [:ribbon :band], false)) !== "")
+				(valLabel != "") && (valLabel_vec = [valLabel, ribs]; valLabel="")	# *promote* valLabel
 				have_ribbon = true
 			end
 

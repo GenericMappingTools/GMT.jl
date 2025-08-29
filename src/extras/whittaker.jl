@@ -42,7 +42,7 @@ plot(t, v, legend="Noisy", plot=(data=[t _v], lc=:green, lt=1, legend="Original"
 plot!(t, z, lc=:red, lt=1, legend="Degree 3", show=1)
 ```
 """
-function whittaker(D::GMTdataset, lambda, d=2; weights=nothing)
+function whittaker(D::GMTdataset, lambda::Real, d::Int=2; weights=nothing)
 	indNaN = isnan.(view(D.data, :, 2))
 	gotNaN = any(indNaN)
 	if (!gotNaN)
@@ -59,7 +59,7 @@ function whittaker(D::GMTdataset, lambda, d=2; weights=nothing)
 end
 
 # ------------------------------------------------------------------------------------
-function whittaker(x::AbstractVecOrMat{<:Real}, y::AbstractVecOrMat{<:Real}, lambda, d=2; weights=nothing, checkedNaN::Bool=false)
+function whittaker(x::AbstractVecOrMat{<:Real}, y::AbstractVecOrMat{<:Real}, lambda::Real, d::Int=2; weights=nothing, checkedNaN::Bool=false)
 	y, gotNaN, indNaN, weights = helper_whits(y, weights, checkedNaN)	# Check NaNs and take measures if yes
 	m = length(y)
 	D = ddmat(x, d)
