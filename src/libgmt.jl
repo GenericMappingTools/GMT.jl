@@ -427,23 +427,31 @@ function gmt_free_mem(API::Ptr{Cvoid}, mem)
 	ccall((:gmt_free_func, libgmt), Cvoid, (Cstring, Ptr{Cvoid}, Bool, Cstring), GMT_, mem, true, "Julia")
 end
 
-function gmt_centroid_area(API::Ptr{Cvoid}, D, geo::Int=0)::Matrix{Float64}
+function gmt_centroid_area(API::Ptr{Cvoid}, D, geo::Int=0; ca::Int=3)::Matrix{Float64}
+	# geo = 0 for Cartesian, !=0 for geographic
+	# ca = 3 for (x,y,area), 2 for (x,y), 1 for area only
+	mat = Matrix{Float64}(undef, length(D), ca)
 	if (isa(D, Vector))		# 'D' is a vector of GMTdatasets but that type is not yet known here.
-		mat = Matrix{Float64}(undef, length(D), 3)
 		for k in eachindex(D)
 			ref1, ref2, nr = pointercols(D[k])
 			t = gmt_centroid_area(API, ref1, ref2, geo, nr)
-			mat[k, 1], mat[k, 2], mat[k, 3] = t[1], t[2], t[3]
+			if (ca == 3)      mat[k, 1], mat[k, 2], mat[k, 3] = t[1], t[2], t[3]	# To avoid allocs
+			elseif (ca == 2)  mat[k, 1], mat[k, 2] = t[1], t[2]
+			else              mat[k] = t[3]
+			end
 		end
-		mat
 	else
 		ref1, ref2, nr = pointercols(D)
-		gmt_centroid_area(API, ref1, ref2, geo, nr)
+		t = gmt_centroid_area(API, ref1, ref2, geo, nr)[inds]
+		mat = bla(mat, t, ca, 1)
+		if (ca == 3) mat[1], mat[2], mat[3] = t[1], t[2], t[3] elseif (ca == 2) mat[1], mat[2] = t[1], t[2] else mat[1] = t[3] end
 	end
+	return mat
 end
 
-function gmt_centroid_area(API::Ptr{Cvoid}, x, y, geo::Int=0, n::Int=0)::Matrix{Float64}
+function gmt_centroid_area(API::Ptr{Cvoid}, x, y, geo::Int=0, n::Int=0; ca::Int=3)::Matrix{Float64}
 	# geo = 0 for Cartesian, !=0 for geographic
+	# ca = 3 for (x,y,area), 2 for (x,y), 1 for area only
 	@assert isa(x, Vector{Float64}) || isa(x, Ptr{Float64}) || isa(x, Ref{Float64}) "Bad type for x"
 	!isa(x, Vector{Float64}) && (n == 0) && error("Must provide 'n' when x is not a Vector")
 	(n == 0) && (n = length(x))
@@ -451,7 +459,7 @@ function gmt_centroid_area(API::Ptr{Cvoid}, x, y, geo::Int=0, n::Int=0)::Matrix{
 	area = ccall((:gmt_centroid_area, libgmt), Cdouble, (Cstring, Ptr{Cdouble}, Ptr{Cdouble}, UInt64, Int32, Ptr{Cdouble}),
 	             GMT_Get_Ctrl(API), x, y, n, geo, pos)
 	pos[3] = abs(area)
-	return pos
+	return (ca == 3) ? pos : (ca == 2) ? pos[1:1,1:2] : pos[1:1,3:3]
 end
 
 function pointercols(D::AbstractArray{Float64,2}, cols=(1,2))
