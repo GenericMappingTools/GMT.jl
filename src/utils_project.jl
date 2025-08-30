@@ -44,7 +44,7 @@ end
 
 # -----------------------------------------------------------------------------------------------
 """
-    GI[,coast] = worldrectangular(GI; proj::String="+proj=vandg", pm=0, latlim=:auto, coast=false)
+    GI[,coast] = worldrectangular(fname::String|GI::GItype; proj::String="+proj=vandg", pm=0, latlim=:auto, coast=false)
 
 Try to create a rectangular map out miscellaneous and not cylindrical projections.
 
@@ -60,7 +60,7 @@ Try to create a rectangular map out miscellaneous and not cylindrical projection
    other than the GSHHG GMT database.
 
 ### Returns
-A grid or an image and optionally the coastlines ... or errors. Not many projections support the procedure
+A grid or an image and optionally the coastlines. Not many projections support the procedure
 implemented in this function.
 The working or not is controlled by PROJ's `+over` option https://proj.org/usage/projections.html#longitude-wrapping
 
@@ -157,12 +157,12 @@ end
 
 # -----------------------------------------------------------------------------------------------
 """
-    GI[,coast] = leepacific(fname::String; latlims=nothing, lonlims=nothing, coast=true)
+    GI[,coast] = leepacific(fname::String|GI::GItype; latlims=nothing, lonlims=nothing, coast=true)
 
 Project a geographical grid/image in the Lee Oblated Stereographic projection centered on the Pacific Ocean.
 
-- `GI`: A GMTgrid or GMTimage data type. `GI` can also be a string with a file name of a grid or image.
-   NOTE: This grid/image should have longitudes covering the range 90 to 300 degrees (here lon in [0 360] is better)
+- `GI/fname`: A GMTgrid or GMTimage data type. `GI` can also be a string with a file name of a grid or image.
+   NOTE: This grid/image should (ideally) have longitudes covering the range 76 to 319 degrees (here lon in [0 360] is better)
 - `latlims`: Latitudes used in `region` when reading the grid/image. The default is (-87, 75).
 - `lonlims`: Longitudes used in `region` when reading the grid/image. You cannot deviate mutch from (90,300).
    Actually, while a bug in GDAL is not fixed, you should not change the default values.
@@ -171,13 +171,17 @@ Project a geographical grid/image in the Lee Oblated Stereographic projection ce
    Pass `coast=D`, where `D` is vector of GMTdataset containing coastline polygons with a provenience
    other than the GSHHG GMT database. If `coast=false` the funtion returns only the projected grid/image.
 
+Note: This function uses ``worldrectangular`` with the `+proj=lee_os` projection. If one wants to add
+other elements to the map (points, lines, etc) one must projectem first with the `+proj=lee_os` projection
+(use ``lonlat2xy`` or ``mapproject`` to that purpose).
+
 ### Returns
 A grid or an image and optionally the coastlines.
 
 ### Example:
    G,cl = leepacific("@earth_relief_10m_g");
    grdimage(G, shade=true, plot=(data=cl,), cmap=:geo, B=:none)
-   plotgrid!(G_, show=true)
+   plotgrid!(G, show=true)
 """
 function leepacific(fname::String; region=(90.0, 300.0, -90.0, 75.0), latlims=nothing, lonlims=nothing, coast=true)
 	reg = Float64.(collect(region))

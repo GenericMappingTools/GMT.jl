@@ -362,15 +362,13 @@ Parameters
     + **x**, **cross**
     + **y**, **y_dash**
 	
-    and select their sizes with the **markersize** or **size** keyword [default is 8p].
+    and select their sizes with the `markersize` or `size` keyword [default is 8p].
     The marker size can be a scalar or a vector with same size numeber of rows of data. Units are
     points unless specified otherwise with (for example for cm) *par=(PROJ_LENGTH_UNIT=:c,)*	
 - **W** | **pen** | **markeredgecolor** | **mec** :: [Type => Str]
 
     Set pen attributes for lines or the outline of symbols
 - $(opt_savefig)
-
-[`GMT man page`]($(GMTdoc)plot.html)
 """
 function scatter(f::Function, range_x=nothing; first=true, kw...)
 	rang = gen_coords4funs(range_x, "x"; kw...)
@@ -394,6 +392,19 @@ scatter!(arg1, arg2; kw...) = common_plot_xyz("", cat_2_arg2(arg1, arg2, true), 
 
 bubblechart  = scatter		# Alias that supposedly only plots circles
 bubblechart! = scatter!
+
+function scatter(D::Vector{<:GMTdataset{Float64,2}}; first=true, kw...)
+	d = KW(kw)
+	labels = String[]
+	if ((s_val = hlp_desnany_str(d, [:labels], false)) !== "")
+		ts = fish_attrib_in_str(s_val)
+		labels = [D[k].attrib[ts] for k = 1:length(D)]
+	end
+	Dc = mat2ds(gmt_centroid_area(G_API[1], D, Int(isgeog(D)), ca=2), geom=wkbPoint, text=labels)
+	(is_in_dict(d, [:marker, :Marker, :shape]) === nothing) && (d[:marker] = "circ")
+	(is_in_dict(d, [:ms :markersize :MarkerSize :size]) === nothing) && (d[:ms] = "12p")
+	_common_plot_xyz("", Dc, "bubble", !first, true, false, d)
+end
 
 # ------------------------------------------------------------------------------------------------------
 scatter3(cmd0::String="", arg1=nothing; kw...)  = common_plot_xyz(cmd0, mat2ds(arg1), "scatter3",  true, true; kw...)
