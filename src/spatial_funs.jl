@@ -178,9 +178,14 @@ NOTE: Instead of ``getbyattrib`` one case use instead ``filter`` (...,`index=fal
   means select all elements from ``Antioquia`` and ``Caldas`` that have the attribute `feature_id` = 0.
 
   A second set of attributes can be used to select elements by region, number of polygon vertices and area.
-  For that, name the keyword with a leading underscore, e.g. `_region`, `_nps`, `_area`. Their values are
+  For that, name the keyword with a leading underscore, e.g. `_region`, `_nps`, `_area`, `_unique`. Their values are
   passed respectively a 4 elements tuple and numbers. E.g. `_region=(-8.0, -7.0, 37.0, 38.0)`, `_nps=100`, `_area=10`.
-  Areas are in square km when input is in geographic coordinates, otherwise squre data unites.
+  Areas are in square km when input is in geographic coordinates, otherwise square data units. The `_unique` case is
+  a bit special and is meant to be used when more than one polygon share the same attribute value (e.g. countries with islands).
+  In that case, set the value of `_unique` to the name of the attribute that is shared by the polygons (e.g. `_unique="NAME"`).
+  By default (e.g. `_unique=true`), the attribute name is `Feature_ID` which is the one used by GMT when creating unique
+  IDs for polygons read from OGR formats (.shp, .geojson, etc). The uniqueness is determined by selecting the polygon
+  with the largest area.
 
 - `invert, or reverse, or not`: If `true` return all segments that do NOT match the query condition(s).
 
@@ -208,7 +213,7 @@ function getbyattrib(D::Vector{<:GMTdataset}, ind_::Bool; kw...)::Vector{Int}
 	invert = (find_in_kwargs(kw, [:invert :not :revert :reverse])[1] !== nothing)
 	if ((_att = find_in_kwargs(kw, [:att :attrib])[1]) !== nothing)		# For backward compat.
 		if !isa(_att, NamedTuple)
-			((val = find_in_kwargs(kw, [:val :value])[1])  === nothing) && error("Must provide the `attribute` VALUE.")
+			((val = find_in_kwargs(kw, [:val :value])[1]) === nothing) && error("Must provide the `attribute` VALUE.")
 		end
 		atts, vals = isa(_att, NamedTuple) ? (string.(keys(_att)), string.(values(_att))) : ((string(_att),), (string(val),))
 		_keys = repeat(" ", length(kw))
@@ -224,6 +229,7 @@ function getbyattrib(D::Vector{<:GMTdataset}, ind_::Bool; kw...)::Vector{Int}
 		end
 		atts, vals = Vector{String}(undef, count), Vector{String}(undef, count)
 
+		attrib_name = "Feature_ID"			# The default name for the _unique attribute name
 		for k = 1:numel(kw)
 			vv = values(v[k])
 			if (isa(vv, Tuple) && (_keys[k][1] != '_'))
@@ -236,6 +242,11 @@ function getbyattrib(D::Vector{<:GMTdataset}, ind_::Bool; kw...)::Vector{Int}
 				kk += length(vv) 
 			else
 				atts[kk], vals[kk] = _keys[k], string(vv)
+				if (atts[kk] == "_unique")
+					# If we can't parse the arg as a number then it must be an attribute name. If not, an error will be raised later.
+					(vals[kk] != "true" && (tryparse(Int, vals[kk]) === nothing) && (tryparse(Float64, vals[kk]) === nothing)) && (attrib_name = vals[kk])
+					vals[kk] = "0"	# If _unique the value doesn't matter but must be parseable to float
+				end
 				kk += 1
 			end
 			(k == 1) && (dounion = kk)		# Index that separates the unions from the interceptions
@@ -256,14 +267,30 @@ function getbyattrib(D::Vector{<:GMTdataset}, ind_::Bool; kw...)::Vector{Int}
 		for k = 1:numel(D)  _tf[k] = size(D[k].data,1) >= nps_  end
 		_tf
 	end
-	function clip_area(D, areas_, area_, _tf)				# Clip by number of points
+	function clip_area(D, areas_, area_, _tf)	# Clip by number of points
 		for k = 1:numel(D)  _tf[k] = areas_[k] >= area_  end
+		_tf
+	end
+	function clip_unique(D, areas_, _tf, name)	# Clip by uniqueness by using the areas to select the largest by group.
+		att_tbl, att_names = make_attrtbl(D, true)
+		((ind_name = findfirst(att_names .== name)) === nothing) && error("Attribute name $name not found in dataset.")
+		_, ind = gunique(att_tbl[:,ind_name])
+		for k = 1:numel(ind)  _tf[ind[k]] = true  end	# Set the unique values to true.
+		k = 1
+		while (k <= numel(ind)-1)
+			((ind[k+=1] - ind[k-1]) == 1) && continue
+			n_start, n_end = ind[k - 1], ind[k] - 1
+			# Here we have a group (from n_start to n_end) of the same type of attribute
+			this_ind = argmax(view(areas_,n_start:n_end,1)) + n_start - 1	# Get the index of the largest area
+			_tf[n_start], _tf[this_ind] = false, true				# Turn off the first and turn on the largest of this group
+		end
 		_tf
 	end
 
 	(ind = findfirst(atts .== "_region")) !== nothing && (lims = parse.(Float64, split(vals[ind][2:end-1], ", ")))
 	(ind = findfirst(atts .== "_nps"))    !== nothing && (nps  = parse.(Float64, vals[ind]))
-	(ind = findfirst(atts .== "_area"))   !== nothing && (area = parse.(Float64, vals[ind]); areas = gmt_centroid_area(G_API[1], D, Int(isgeog(D)))[:,3])
+	((ind = findfirst(atts .== "_area"))  !== nothing || (ind = findfirst(atts .== "_unique")) !== nothing) && 
+		(area = parse.(Float64, vals[ind]); areas = gmt_centroid_area(G_API[1], D, Int(isgeog(D)), ca=1); isgeog(D) && (areas .*= 1e-6))	# areas in km^2 if geographic coords
 
 	indices::Vector{Int} = Int[]
 	ky = keys(D[1].attrib)
@@ -274,6 +301,7 @@ function getbyattrib(D::Vector{<:GMTdataset}, ind_::Bool; kw...)::Vector{Int}
 		if (special)
 			if     (atts[n] == "_region") tf = clip_region(D, lims, tf)
 			elseif (atts[n] == "_area")   tf = clip_area(D, areas, area, tf)
+			elseif (atts[n] == "_unique") tf = clip_unique(D, areas, tf, attrib_name)
 			else                          tf = clip_np(D, nps, tf)
 			end
 		else
@@ -301,7 +329,18 @@ function getbyattrib(D::Vector{<:GMTdataset}; indices=false, kw...)::Union{Nothi
 end
 
 # ---------------------------------------------------------------------------------------------------
+"""
+    filter(D::Vector{<:GMTdataset}; kw...)
+
+See `? getbyattrib`
+"""
 Base.:filter(D::Vector{<:GMTdataset}; kw...) = getbyattrib(D; kw...)
+# ---------------------------------------------------------------------------------------------------
+"""
+    findall(D::Vector{<:GMTdataset}; kw...)
+
+See `? getbyattrib`
+"""
 Base.:findall(D::Vector{<:GMTdataset}; kw...) = getbyattrib(D, true; kw...)
 
 # ---------------------------------------------------------------------------------------------------
