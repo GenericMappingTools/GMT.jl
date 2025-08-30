@@ -148,6 +148,7 @@
 	@test gmtselect([1 2], C="aa+d0", Vd=dbg2) == "gmtselect  -Caa+d0"
 	@test gmtselect([1 2], C=(pts=[1 2],dist=10), L=(line=[1 2;3 4], dist=10), Vd=dbg2) == "gmtselect  -C+d10 -L+d10"
 	cl = coast(dump=:true, res=:c, region=:global);
+	@test length(coast(M=true, DCW="WD+z")) > 0
 	cc = GMT.clipbyrect(cl, (-180,0,-90,90));
 
 	println("	GMTSET")

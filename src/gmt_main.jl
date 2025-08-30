@@ -624,8 +624,11 @@ function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})::GDtype
 	if (!isempty(POSTMAN[1]))
 		min_pts = (get(POSTMAN[1], "minpts", "") != "") ? parse(Int, POSTMAN[1]["minpts"]) - 1 : 0
 		(min_pts > 0) && delete!(POSTMAN[1], "minpts")
-		DCWnames = (get(POSTMAN[1], "DCWnames", "") != "") ? true : false		# If DCW country names will turn into attribs
-		(DCWnames) && delete!(POSTMAN[1], "DCWnames")
+		if ((t = get(POSTMAN[1], "DCWnames", "")) != "")	# If DCW country names will turn into attribs
+			codelen = parse(Int, t)
+			delete!(POSTMAN[1], "DCWnames")
+		end
+		DCWnames = (t !== "") ? true : false
 		plusZzero = (get(POSTMAN[1], "plusZzero", "") != "") ? true : false		# To eventually add an extra column with 0's
 		(plusZzero) && delete!(POSTMAN[1], "plusZzero")
 	else
@@ -687,7 +690,7 @@ function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})::GDtype
 					Darr[seg_out].header = hdrstr
 				else
 					(DCWnames && (ind = findfirst(" Segment", hdrstr)) !== nothing) &&
-						(Darr[seg_out].attrib["NAME"] = hdrstr[2:ind[1]-1])
+						(Darr[seg_out].attrib["CODE"] = hdrstr[4:4+codelen-1]; Darr[seg_out].attrib["NAME"] = hdrstr[7+codelen-2:ind[1]-1])
 				end
 			end
 			if (seg == 1)
