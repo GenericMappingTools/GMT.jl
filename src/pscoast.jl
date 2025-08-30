@@ -94,6 +94,7 @@ function _coast(cmd0::String, O::Bool, K::Bool, clip::String, d::Dict)
 	cmd = add_opt(d, "", "M", [:M :dump])
 	have_opt_M = (cmd != "")
 	cmd = parse_E_coast(d, [:E, :DCW], cmd)		# Process first to avoid warning about "guess"
+	twoORfour = have_opt_M && contains(cmd, "+z") && contains(cmd, '.') ? "4" : "2"		# To use in gmt_main to decide CODE attrib
 	if (cmd != "")								# Check for a minimum of points that segments must have
 		if ((val = find_in_dict(d, [:minpts])[1]) !== nothing)  POSTMAN[1]["minpts"] = string(val)::String
 		elseif (get(POSTMAN[1], "minpts", "") != "")            delete!(POSTMAN[1], "minpts")
@@ -104,7 +105,7 @@ function _coast(cmd0::String, O::Bool, K::Bool, clip::String, d::Dict)
 	toTrack::Union{String, GMTgrid} = ""
 	if (have_opt_M)
 		O = true
-		POSTMAN[1]["DCWnames"] = "s"		# When dumping, we want to add the country name as attribute
+		POSTMAN[1]["DCWnames"] = twoORfour		# When dumping, we want to add the country name as attribute
 		if ((val = find_in_dict(d, [:Z])[1]) !== nothing)
 			toTrack = (isa(val, GMTgrid) || (isa(val, String) && length(val) > 4)) ? val : ""
 			toTrack == "" && (POSTMAN[1]["plusZzero"] = "y")# If toTrack the extra column is added by the grdtrack call below
@@ -213,12 +214,13 @@ end
 function parse_E_coast(d::Dict, symbs::Vector{Symbol}, cmd::String)
 	(SHOW_KWARGS[1]) && return print_kwarg_opts(symbs, "NamedTuple | Tuple | Dict | String")
 	if ((val = find_in_dict(d, symbs, false)[1]) !== nothing)
-		if (isa(val, String) || isa(val, Symbol))	# Simple case, ex E="PT,+gblue" or E=:PT
+		if (isa(val, StrSymb))						# Simple cases, ex E="PT,+gblue" or E=:PT
 			t::String = string(" -E", val)
 			startswith(t, " -EWD") && (t = " -E=" * t[4:end])		# Let E="WD" work
 			(t == " -E") && (delete!(d, [:E, :DCW]); return cmd)	# This lets use E="" like earthregions may do
 			(!contains(cmd, " -M") && is_in_dict(d, [:R :region :limits :region_llur :limits_llur :limits_diag :region_diag]) === nothing) &&
 				(d[:R] = t[4:end])					# Must also see what to do for the other elseif branches
+			contains(cmd, " -M") && !contains(t, "+") && (t *= "+z")# If Dump always add country names as attribs
 			!contains(t, "+") && (t *= "+p0.5")		# If only code(s), append pen
 			cmd *= t
 		elseif (isa(val, NamedTuple) || isa(val, AbstractDict))

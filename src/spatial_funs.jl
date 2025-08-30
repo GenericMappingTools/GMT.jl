@@ -184,7 +184,9 @@ NOTE: Instead of ``getbyattrib`` one case use instead ``filter`` (...,`index=fal
   a bit special and is meant to be used when more than one polygon share the same attribute value (e.g. countries with islands).
   In that case, set the value of `_unique` to the name of the attribute that is shared by the polygons (e.g. `_unique="NAME"`).
   By default (e.g. `_unique=true`), the attribute name is `Feature_ID` which is the one used by GMT when creating unique
-  IDs for polygons read from OGR formats (.shp, .geojson, etc). The uniqueness is determined by selecting the polygon
+  IDs for polygons read from OGR formats (.shp, .geojson, etc). If this attrib name is not found, we search for `CODE` which is
+  the one assigned by GMT when extracting polygons from the internal GMT coasts database. If none of these is found,
+  it is users responsibility to provide a valid attribute name. The uniqueness is determined by selecting the polygon
   with the largest area.
 
 - `invert, or reverse, or not`: If `true` return all segments that do NOT match the query condition(s).
@@ -245,6 +247,9 @@ function getbyattrib(D::Vector{<:GMTdataset}, ind_::Bool; kw...)::Vector{Int}
 				if (atts[kk] == "_unique")
 					# If we can't parse the arg as a number then it must be an attribute name. If not, an error will be raised later.
 					(vals[kk] != "true" && (tryparse(Int, vals[kk]) === nothing) && (tryparse(Float64, vals[kk]) === nothing)) && (attrib_name = vals[kk])
+					if (get(D[1].attrib, attrib_name, "") === "")
+						attrib_name = (get(D[1].attrib, "CODE", "") !== "") ? "CODE" : error("Attribute name '$attrib_name' or 'CODE' not found in dataset.")
+					end
 					vals[kk] = "0"	# If _unique the value doesn't matter but must be parseable to float
 				end
 				kk += 1
@@ -276,13 +281,19 @@ function getbyattrib(D::Vector{<:GMTdataset}, ind_::Bool; kw...)::Vector{Int}
 		((ind_name = findfirst(att_names .== name)) === nothing) && error("Attribute name $name not found in dataset.")
 		_, ind = gunique(att_tbl[:,ind_name])
 		for k = 1:numel(ind)  _tf[ind[k]] = true  end	# Set the unique values to true.
+
+		if (numel(ind) == 1)					# The single group case is simpler but must be dealt separately.
+			 _tf[1] = false; _tf[argmax(areas_)] = true
+			 return _tf
+		end
+
 		k = 1
 		while (k <= numel(ind)-1)
 			((ind[k+=1] - ind[k-1]) == 1) && continue
 			n_start, n_end = ind[k - 1], ind[k] - 1
 			# Here we have a group (from n_start to n_end) of the same type of attribute
 			this_ind = argmax(view(areas_,n_start:n_end,1)) + n_start - 1	# Get the index of the largest area
-			_tf[n_start], _tf[this_ind] = false, true				# Turn off the first and turn on the largest of this group
+			_tf[n_start], _tf[this_ind] = false, true	# Turn off the first and turn on the largest of this group
 		end
 		_tf
 	end
