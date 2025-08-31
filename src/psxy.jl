@@ -1271,7 +1271,7 @@ function make_color_column(d::Dict, cmd::String, opt_i::String, len_cmd::Int, N_
 		warn1 = string("Probably color column in '", the_kw, "' has incorrect dims (", length(mz), " vs $n_rows). Ignoring it.")
 		warn2 = "Plotting with color table requires adding one more column to the dataset but your 'incols'
 		option didn't do it, so you won't get what you expect. Try incols=\"0-1,1\" for 2D or \"=0-2,2\" for 3D plots"
-		(!no_m) ? @warn(warn1) : @warn(warn2)
+		(!no_mz) ? @warn(warn1) : @warn(warn2)
 		return cmd, arg1, arg2, N_args, true
 	end
 
