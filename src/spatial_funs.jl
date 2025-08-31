@@ -5,7 +5,7 @@ or
 
     zvals = polygonlevels(D::GDtype, idvals::GMTdataset; kw...) -> Vector{Float64}
 
-Create a vector with `zvals` to use in `plot` and where length(zvals) == length(D)
+Create a vector with `zvals` to use in `plot` when creating choropleth maps and where length(zvals) == length(D)
 
 The elements of `zvals` are made up from the `vals`.
 
@@ -24,6 +24,9 @@ The elements of `zvals` are made up from the `vals`.
 - `attrib` or `att`: Select which attribute to use when matching with contents of the `ids` strings.
 - `nocase` or `insensitive`: Perform a case insensitive comparision between the contents of
                `ids` and the attribute specified with `attrib`. Default compares as case sensistive.
+- `starts,ends,contains`: Sometimes the attribute value is only part of the string in `ids`.
+			Use one of these options to specify how to match. E.g. `ends=true` selects all attributes
+			that ends with a match in `ids`. Default is the exact match.
 - `repeat`: Replicate the previously known value until it finds a new segment ID for the case
             when a polygon have no attributes (may happen for the islands in a country).
 
@@ -48,28 +51,25 @@ end
 function polygonlevels(D::Vector{<:GMTdataset}, user_ids::Vector{<:AbstractString}, vals::Vector{<:Real}; kw...)::Vector{Float64}
 	@assert((n_user_ids = length(user_ids)) == length(vals))
 	((att = find_in_kwargs(kw, [:att :attrib])[1]) === nothing) && error("Must provide the `attribute` NAME.")
-	nocase = (find_in_kwargs(kw, [:nocase :insensitive])[1] === nothing) ? true : false
-	repeat = (find_in_kwargs(kw, [:repeat])[1] === nothing) ? false : true
+	nocase = !is_in_kwargs(kw, [:nocase :insensitive])	# i.e. case insensitive
+	repeat = is_in_kwargs(kw, [:repeat])
+	ends   = is_in_kwargs(kw, [:ends])
+	starts = is_in_kwargs(kw, [:starts])
+	contains_ = is_in_kwargs(kw, [:contains])
+	fun = starts ? startswith : ends ? endswith : contains_ ? contains : Base.:(==)
+	exact = !(starts || ends || contains_)
 
 	n_seg = length(D)
 	zvals = fill(NaN, n_seg)
-	if (nocase)
-		for m = 1:n_seg
-			isempty(D[m].attrib) && (repeat && (zvals[m] = zvals[m-1]); continue)
-			for k = 1:n_user_ids
-				if (D[m].attrib[att] == user_ids[k])
-					zvals[m] = vals[k];		break
-				end
-			end
-		end
-	else
-		for m = 1:n_seg
-			isempty(D[m].attrib) && (repeat && (zvals[m] = zvals[m-1]); continue)
-			t = lowercase(D[m].attrib[att])
-			for k = 1:n_user_ids
-				if (t == lowercase(user_ids[k]))
-					zvals[m] = vals[k];		break
-				end
+
+	for m = 1:n_seg
+		isempty(D[m].attrib) && (repeat && (zvals[m] = zvals[m-1]); continue)
+		t = (nocase) ? D[m].attrib[att] : lowercase(D[m].attrib[att])
+		for k = 1:n_user_ids
+			to_comp = (nocase) ? user_ids[k] : lowercase(user_ids[k])
+			condition = (exact) ? (t == to_comp) : fun(t, to_comp)
+			if (condition)
+				zvals[m] = vals[k];		break
 			end
 		end
 	end
