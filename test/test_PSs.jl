@@ -72,7 +72,7 @@ r = coast(region=:g, proj="A300/30/14c", axis=:g, resolution=:crude, title="Hell
 r = coast(R=:g, N=((level=1,pen=(2,:green)), (level=3,pen=(4,:blue, "--"))), Vd=dbg2);
 @test startswith(r, "pscoast  -Rg -JN180.0/" * split(GMT.DEF_FIG_SIZE, '/')[1] * " -Baf -BWSen -N1/2,green -N3/4,blue,--")
 r = coast(proj=:Mercator, DCW=((country="GB,IT,FR", fill=:blue, pen=(0.25,:red)), (country="ES,PT,GR", fill=:yellow)), Vd=dbg2);
-@test startswith(r, "pscoast  -EGB,IT,FR+gblue+p0.25,red -EES,PT,GR+gyellow -Vq")
+@test startswith(r, "pscoast  -EGB,IT,FR+gblue+p0.25,red -EES,PT,GR+gyellow")
 @test_throws ErrorException("In Overlay mode you cannot change a fig scale and NOT repeat the projection") coast!(region=(-20,60,-90,90), scale=0.03333, Vd=dbg2)
 r = coast(DCW=(:AT, "red"), Vd=dbg2)
 @test startswith(r, "pscoast  -EAT+gred")

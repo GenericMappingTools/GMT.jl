@@ -2549,7 +2549,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function hlp_desnany_int(d, s, default::Int=-999)::Int
-	((val = find_in_dict(d, s)[1]) === nothing) ? default : (isa(val, Bool) ? Int(val) : parse(Int, val))
+	((val = find_in_dict(d, s)[1]) === nothing) ? default : (isa(val, Real) ? round(Int, val) : parse(Int, val))
 end
 
 # ---------------------------------------------------------------------------------------------------

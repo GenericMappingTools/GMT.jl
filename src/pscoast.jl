@@ -84,20 +84,20 @@ function _coast(cmd0::String, O::Bool, K::Bool, clip::String, d::Dict)
 	gmt_proggy = (IamModern[1]) ? "coast "  : "pscoast "
 	first = !O
 
-	if ((val = find_in_dict(d, [:getR :getregion :get_region], false)[1]) !== nothing)
+	if ((val = hlp_desnany_str(d, [:getR :getregion :get_region], false)) !== "")
 		t::String = string(gmt_proggy, " -E", val)
-		((Vd = find_in_dict(d, [:Vd], false)[1]) !== nothing) && (Vd_::Int = Vd; Vd_ == 1 ? println(t) : Vd_ > 1 ? (return t) : nothing)
+		((Vd = hlp_desnany_int(d, [:Vd])) !== -999) && (Vd == 1 ? println(t) : Vd > 1 ? (return t) : nothing)
 		t = parse_V(d::Dict, t)
 		return gmt(t).text[1]::String
 	end
 
 	cmd = add_opt(d, "", "M", [:M :dump])
-	have_opt_M = (cmd != "")
 	cmd = parse_E_coast(d, [:E, :DCW], cmd)		# Process first to avoid warning about "guess"
+	have_opt_M = contains(cmd, " -M")
 	twoORfour = have_opt_M && contains(cmd, "+z") && contains(cmd, '.') ? "4" : "2"		# To use in gmt_main to decide CODE attrib
 	if (cmd != "")								# Check for a minimum of points that segments must have
-		if ((val = find_in_dict(d, [:minpts])[1]) !== nothing)  POSTMAN[1]["minpts"] = string(val)::String
-		elseif (get(POSTMAN[1], "minpts", "") != "")            delete!(POSTMAN[1], "minpts")
+		if ((val = hlp_desnany_str(d, [:minpts])) !== "")  POSTMAN[1]["minpts"] = val
+		elseif (get(POSTMAN[1], "minpts", "") != "")       delete!(POSTMAN[1], "minpts")
 		end
 	end
 
@@ -214,22 +214,32 @@ end
 function parse_E_coast(d::Dict, symbs::Vector{Symbol}, cmd::String)
 	(SHOW_KWARGS[1]) && return print_kwarg_opts(symbs, "NamedTuple | Tuple | Dict | String")
 	if ((val = find_in_dict(d, symbs, false)[1]) !== nothing)
-		if (isa(val, StrSymb))						# Simple cases, ex E="PT,+gblue" or E=:PT
+		if (isa(val, StrSymb))							# Simple cases, ex E="PT,+gblue" or E=:PT
 			t::String = string(" -E", val)
 			startswith(t, " -EWD") && (t = " -E=" * t[4:end])		# Let E="WD" work
 			(t == " -E") && (delete!(d, [:E, :DCW]); return cmd)	# This lets use E="" like earthregions may do
-			(!contains(cmd, " -M") && is_in_dict(d, [:R :region :limits :region_llur :limits_llur :limits_diag :region_diag]) === nothing) &&
-				(d[:R] = t[4:end])					# Must also see what to do for the other elseif branches
-			contains(cmd, " -M") && !contains(t, "+") && (t *= "+z")# If Dump always add country names as attribs
-			!contains(t, "+") && (t *= "+p0.5")		# If only code(s), append pen
+			contains(cmd, " -M") && !contains(t, "+z") && (t *= "+z")# If Dump always add country names as attribs
+			!contains(t, "+") && (t *= "+p0.5")			# If only code(s), append pen
+			@label jump_here							# Jump here when E=(states="GB",)
+			if (length(t) >= 6 && t[4] == '+')			# A country states request. Check that is valid.
+				ct = t[5:6]								# The country code
+				((ind = findfirst(ct .== ("AR", "AU", "BR", "CA", "CN", "GB", "IN", "NO", "RU", "US"))) === nothing) &&
+					error("ERROR: country states are only available for AR, AU, BR, CA, CN, GB, IN, NO, RU, and US. You passed '$ct'")
+				D = gmt("pscoast -E+L")
+				M = !contains(cmd, " -M") ? " -M" : ""	# Let -M not be set when E=+code and set it here
+				t = M * " -E" * join(stack(split.(D.text[findall(startswith.(D.text, ct))], '\t'))[1,:], ",") * "+z"	# The shit is out comes as ["GB.ENG\tEngland", ...]
+			end
 			cmd *= t
+			(!contains(cmd, " -M") && !contains(cmd, "+L") && !contains(cmd, "+l") &&
+				is_in_dict(d, [:R :region :limits :region_llur :limits_llur :limits_diag :region_diag]) === nothing) && (d[:R] = t[4:end])
 		elseif (isa(val, NamedTuple) || isa(val, AbstractDict))
-			cmd = add_opt(d, cmd, "E", [:DCW :E], (country="", name="", continent="=", pen=("+p", add_opt_pen),
+			cmd = add_opt(d, cmd, "E", [:DCW :E], (country="", name="", continent="=", states="+", pen=("+p", add_opt_pen),
 			                                       fill=("+g", add_opt_fill), file=("+f"), inside=("_+c"), outside=("_+C"), adjust_r=("+r", arg2str), adjust_R=("+R", arg2str), adjust_e=("+e", arg2str), headers=("_+z")))
+			startswith(cmd, " -E+") && (t = cmd; cmd = ""; @goto jump_here)	# Jum to where this case is processed.
 		elseif (isa(val, Tuple))
 			cmd = parse_dcw(cmd, val)
 		end
-		cmd *= " -Vq"				# Suppress annoying warnings regarding filling syntax with +r<dpi>
+		!contains(cmd, " -M") && (cmd *= " -Vq")		# Suppress annoying warnings regarding filling syntax with +r<dpi>
 		delete!(d, symbs)
 	end
 	return cmd
