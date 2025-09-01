@@ -184,7 +184,7 @@ function helper_set_crs(d)
 	(prj != "" && !startswith(prj, "+proj=")) && (prj = "+proj=" * prj)
 	wkt = hlp_desnany_str(d, [:wkt])
 	(prj == "" && wkt != "") && (prj = wkt2proj(wkt))
-	epsg::Int = ((ep = find_in_dict(d, [:epsg])[1]) !== nothing) ? ep : 0
+	epsg::Int = ((ep = hlp_desnany_int(d, [:epsg])) !== -999) ? ep : 0
 	(prj == "" && wkt == "" && epsg != 0) && (prj = epsg2proj(epsg))
 	return prj, wkt, epsg, ref_attrib, ref_coln
 end
@@ -212,12 +212,12 @@ function _mat2ds(mat::Array{T,N}, txt::Union{String,Vector{String}}, hdr::Vector
 		return Dt
 	end
 
-	is3D = (find_in_dict(d, [:is3D])[1] === nothing) ? false : true		# Should account for is3D == false?
+	is3D = (is_in_dict(d, [:is3D]; del=true) === nothing) ? false : true		# Should account for is3D == false?
 	isa(mat, Vector) && (mat = reshape(mat, length(mat), 1))
 
 	val = find_in_dict(d, [:multi :multicol])[1]
 	multi = (val === nothing) ? false : ((val) ? true : false)	# Like this it will error if val is not Bool
-	segnan = (find_in_dict(d, [:segnan :nanseg])[1] !== nothing) ? true : false		# A classic GMT multi-segment sep with NaNs
+	segnan = (is_in_dict(d, [:segnan :nanseg]; del=true) !== nothing) ? true : false	# A classic GMT multi-segment sep with NaNs
 	segnan && (multi = true)
 
 	if ((x = find_in_dict(d, [:x])[1]) !== nothing)
@@ -405,7 +405,7 @@ function _mat2ds(mat::Array{T,N}, txt::Union{String,Vector{String}}, hdr::Vector
 	CTRL.pocket_d[1] = d		# Store d that may be not empty with members to use in other functions
 	set_dsBB!(D)				# Compute and set the global BoundingBox for this dataset
 	#return (find_in_kwargs(kwargs, [:letsingleton])[1] !== nothing) ? D : (length(D) == 1 && !multi) ? D[1] : D
-	return (find_in_dict(d, [:letsingleton])[1] !== nothing) ? D : (length(D) == 1 && !multi) ? D[1] : D
+	return (is_in_dict(d, [:letsingleton]; del=true) !== nothing) ? D : (length(D) == 1 && !multi) ? D[1] : D
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -617,11 +617,11 @@ function ds2ds(D::GMTdataset{T,2}, is3D::Bool, d::Dict)::Vector{<:GMTdataset{T,2
 	#multi = 'r'		# Default split by rows
 	#if ((val = find_in_dict(d, [:multi :multicol], false)[1]) !== nothing)  multi = 'c'  end		# Then by columns
 	# Split by rows or columns
-	multi = ((find_in_dict(d, [:multi :multicol], false)[1]) !== nothing) ? 'c' : 'r'
+	multi = ((is_in_dict(d, [:multi :multicol]; del=false)) !== nothing) ? 'c' : 'r'
 	_fill = (multi == 'r') ? helper_ds_fill(d) : String[]		# In the columns case all is dealt in mat2ds.
 
 	n_colors = length(_fill)
-	if ((val = find_in_dict(d, [:color_wrap])[1]) !== nothing)	# color_wrap is a kind of private option for bar-stack
+	if ((val = hlp_desnany_int(d, [:color_wrap])) !== -999)		# color_wrap is a kind of private option for bar-stack
 		n_colors::Int = Int(val)
 	end
 
@@ -1304,9 +1304,9 @@ function helper_mat2img(mat, x::Vector{Float64}, y::Vector{Float64}, v::Vector{F
 	end
 
 	mem_layout = (size(mat,3) == 1) ? "TCBa" : "TCBa"		# Just to have something. Likely wrong for 3D
-	((val = find_in_dict(d, [:layout :mem_layout])[1]) !== nothing) && (mem_layout = string(val)::String)
-	_names::Vector{String} = ((val = find_in_dict(d, [:names])[1]) !== nothing) ? val : String[]
-	_meta::Vector{String}  = ((val = find_in_dict(d, [:metadata])[1]) !== nothing) ? val : String[]
+	((val = hlp_desnany_str(d, [:layout :mem_layout])) !== "") && (mem_layout = val)
+	_names::Vector{String} = hlp_desnany_vstr(d, [:names])
+	_meta::Vector{String}  = hlp_desnany_vstr(d, [:metadata])
 
 	GMTimage(proj4, wkt, 0, -1, hdr[1:6], [x_inc, y_inc], reg, NaN32, color_interp, _meta, _names,
 	         x,y,v,mat, colormap, labels, n_colors, Array{UInt8,2}(undef,1,1), mem_layout, 0)
@@ -1381,7 +1381,7 @@ function mat2img(mat::Union{AbstractMatrix{UInt16},AbstractArray{UInt16,3}}; x=F
 	d = KW(kw)
 	x::Vector{Float64} = vec(x);	y::Vector{Float64} = vec(y);	v::Vector{Float64} = vec(v);
 	hdr::Vector{Float64} = vec(hdr)
-	if ((val = find_in_dict(d, [:noconv])[1]) !== nothing)		# No conversion to UInt8 is wished
+	if ((is_in_dict(d, [:noconv])) !== nothing)		# No conversion to UInt8 is wished
 		return mat2img16(mat; x=x, y=y, v=v, hdr=hdr, proj4=proj4, wkt=wkt, d...)
 	end
 
@@ -2543,13 +2543,13 @@ function hlp_desnany_arg2str(d, s, del=true)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function hlp_desnany_vstr(d, s)::Vector{String}
-	((val = find_in_dict(d, s)[1]) === nothing) ? String[] : (isa(val, String) ? [val] : val)
+function hlp_desnany_vstr(d, s, del=true)::Vector{String}
+	((val = find_in_dict(d, s, del)[1]) === nothing) ? String[] : (isa(val, String) ? [val] : val)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function hlp_desnany_int(d, s, default::Int=-999)::Int
-	((val = find_in_dict(d, s)[1]) === nothing) ? default : (isa(val, Real) ? round(Int, val) : parse(Int, val))
+function hlp_desnany_int(d, s, default::Int=-999; del=false)::Int
+	((val = find_in_dict(d, s, del)[1]) === nothing) ? default : (isa(val, Real) ? round(Int, val) : parse(Int, val))
 end
 
 # ---------------------------------------------------------------------------------------------------
