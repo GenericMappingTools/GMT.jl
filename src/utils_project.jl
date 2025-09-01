@@ -150,7 +150,8 @@ function worldrectangular(GI::GItype; proj::StrSymb="+proj=vandg +over", pm=0, l
 		cl = (isempty(coastlines)) ? pscoast(dump=:true, res=res, region=lims_geog) : coastlines
 		cl = lonlat2xy(cl, t_srs=_proj)
 	else
-		cl = worldrectcoast(proj=_proj, res=res, coastlines=coastlines, limits=lims_geog)
+		_res = (res == "none") ? "crude" : res		# To shut up a pscoast warning
+		cl = worldrectcoast(proj=_proj, res=_res, coastlines=coastlines, limits=lims_geog)
 	end
 	return (res != "none" || !isempty(coastlines)) ? (G, cl) : G
 end
