@@ -215,12 +215,12 @@ function _show(io::IO,
 				 header                      = (names_str, types_str),
 				 header_alignment            = alignment,
 				 hlines                      = [:header],
-				 highlighters                = (_PRETTY_TABLES_HIGHLIGHTER,),
+				 #highlighters                = (_PRETTY_TABLES_HIGHLIGHTER,),
 				 maximum_columns_width       = maximum_columns_width,
 				 newline_at_end              = false,
 				 show_subheader              = !eltypes,
 				 row_label_alignment         = :r,
-				 row_label_crayon            = Crayon(),
+				 #row_label_crayon            = Crayon(),
 				 row_label_column_title      = string(rowlabel),
 				 row_labels                  = row_names,
 				 row_number_alignment        = :r,
@@ -328,7 +328,7 @@ function _pretty_tables_highlighter_func(data, i::Integer, j::Integer)
     end
 end
 
-const _PRETTY_TABLES_HIGHLIGHTER = Highlighter(_pretty_tables_highlighter_func, Crayon(foreground = :dark_gray))
+#const _PRETTY_TABLES_HIGHLIGHTER = Highlighter(_pretty_tables_highlighter_func, Crayon(foreground = :dark_gray))
 
 # Default DataFrames formatter for text backend.
 #
