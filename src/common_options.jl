@@ -2853,8 +2853,9 @@ function get_color(val::Tuple)::String
 	for k = 1:numel(val)
 		if (isa(val[k], Tuple) && (length(val[k]) == 3))
 			s = 1.0
-			if (val[k][1] <= 1 && val[k][2] <= 1 && val[k][3] <= 1)  s = 255.0  end	# colors in [0 1]
-			out *= @sprintf("%.0f/%.0f/%.0f,", val[k][1]*s, val[k][2]*s, val[k][3]*s)
+			v1::Float64 = Float64(val[k][1]);	v2::Float64 = Float64(val[k][2]);	v3::Float64 = Float64(val[k][3]);
+			if (v1 <= 1 && v2 <= 1 && v3 <= 1)  s = 255.0  end	# colors in [0 1]
+			out *= @sprintf("%.0f/%.0f/%.0f,", v1*s, v2*s, v3*s)
 		elseif (isa(val[k], Symbol) || isa(val[k], String) || isa(val[k], Real))
 			out *= string(val[k],",")::String
 		else

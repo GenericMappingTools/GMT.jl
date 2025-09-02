@@ -2,7 +2,7 @@ module GMT
 
 using Printf, Dates, Statistics, Downloads, SparseArrays
 using Tables: Tables
-using PrettyTables
+#using PrettyTables
 using PrecompileTools
 using LinearAlgebra
 using InteractiveUtils
@@ -322,6 +322,7 @@ include("splitxyz.jl")
 include("streamlines.jl")
 include("surface.jl")
 include("subplot.jl")
+include("PrettyTables.jl")
 include("show_pretty_datasets.jl")
 include("solids.jl")
 include("statplots.jl")
