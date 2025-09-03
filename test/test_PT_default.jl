@@ -296,17 +296,10 @@ end
 └────────────┘
 """
 
-    result = pretty_table(
-        String,
-        vec;
-        header = (["Header"], ["Sub-header"])
-    )
+    result = pretty_table(String, vec; header = (["Header"], ["Sub-header"]))
     @test result == expected
 
-    @test_throws Exception pretty_table(
-        vec;
-        header = ["1", "1"]
-    )
+    @test_throws Exception pretty_table( vec; header = ["1", "1"])
 end
 
 @testset "Print missing, nothing, and #undef" begin
@@ -360,4 +353,17 @@ data = Any[1    false      1.0     0x01 ;
     io_result = String(take!(io))
 
     @test io_result == ("\e[1F\e[2K"^(num_lines) * result)
+
+    GMT._next_string_state('a', :escape_state_begin)
+    GMT._next_string_state('a', :escape_state_opening)
+    GMT._next_string_state('a', :escape_state_1)
+    GMT._next_string_state('a', :escape_state_2)
+    GMT._next_string_state('a', :escape_state_3)
+    GMT._next_string_state('a', :escape_hyperlink_opening)
+    GMT._next_string_state('a', :escape_hyperlink_1)
+    GMT._next_string_state('a', :escape_hyperlink_2)
+    GMT._next_string_state('a', :escape_hyperlink_1)
+    GMT._next_string_state('a', :escape_hyperlink_3)
+    GMT._next_string_state('a', :escape_hyperlink_end)
+    GMT._next_string_state('a', :escape_state_end)
 end

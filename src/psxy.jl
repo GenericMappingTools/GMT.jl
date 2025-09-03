@@ -22,7 +22,7 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 
 	arg2, arg3, arg4 = nothing, nothing, nothing
 	N_args::Int = (arg1 === nothing) ? 0 : 1
-	is_ternary = (caller == "ternary") ? true : false
+	is_ternary = (caller == "ternary")
 	if     (is3D)       gmt_proggy = (IamModern[1]) ? "plot3d "  : "psxyz "
 	elseif (is_ternary) gmt_proggy = (IamModern[1]) ? "ternary " : "psternary "
 	else		        gmt_proggy = (IamModern[1]) ? "plot "    : "psxy "
@@ -32,7 +32,7 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 	cmd, isFV, caller, sub_module, gmt_proggy, opt_A, g_bar_fill, arg1 = parse_plot_callers(d, gmt_proggy, caller, is3D, O, arg1)
 
 	# --------------------- Check the grid2tri cases --------------------
-	cmd, is_gridtri, arg1 = parse_grid2tri_case(d, cmd, caller, is3D, isFV, O, arg1)
+	cmd, is_gridtri, arg1 = parse_grid2tri_case(d, cmd, caller, is3D, isFV, O, arg1)	# FORCES RECOMPILE
 	
 	isa(arg1, GMTdataset) && (arg1 = with_xyvar(d, arg1))		# See if we have a column request based on column names
 	if ((val = hlp_desnany_int(d, [:decimate])) !== -999)		# Asked for a clever data decimation?
@@ -63,7 +63,7 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 		(isa(arg1, GMTdataset) && size(arg1,2) > 1 && !isempty(arg1.colnames)) && (CTRL.XYlabels[1] = arg1.colnames[1]; CTRL.XYlabels[2] = arg1.colnames[2])
 		isa(arg1, Vector{<:GMTdataset}) && !isempty(arg1[1].colnames) && (CTRL.XYlabels[1] = arg1[1].colnames[1]; CTRL.XYlabels[2] = arg1[1].colnames[2])
 		if (is_ternary)  cmd, opt_J = parse_J(d, cmd, default=def_J)
-		else             cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd, caller, O, def_J)
+		else             cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd, caller, O, def_J)	# FORCES RECOMPILE
 		end
 		# Current parse_B does not add a default -Baz when 3D AND -J has a projection. More or less fix that.
 		if (is3D && opt_B != "" && !contains(opt_B, " -Bz"))
@@ -75,14 +75,14 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 
 	axis_equal = is_axis_equal(d)		# See if the user asked for an equal aspect ratio
 	cmd, opt_JZ = parse_JZ(d, cmd; O=O, is3D=is3D)
-	cmd, = parse_common_opts(d, cmd, [:a :e :f :g :t :w :margin :params]; first=first)
+	cmd, _ = parse_common_opts(d, cmd, [:a :e :f :g :t :w :margin :params]; first=first)	# FORCES RECOMPILE
 	cmd, opt_l = parse_l(d, cmd)		# Parse this one (legend) aside so we can use it in classic mode
 	cmd, opt_f = parse_f(d, cmd)		# Parse this one (-f) aside so we can check against D.attrib
 	cmd  = parse_these_opts(cmd, d, [[:D :shift :offset], [:I :intens], [:N :no_clip :noclip], [:T]])
 	parse_ls_code!(d::Dict)				# Check for linestyle codes (must be before the GMTsyntax_opt() call)
 	cmd  = GMTsyntax_opt(d, cmd)[1]		# See if an hardcore GMT syntax string has been passed by mk_styled_line!
 	(is_ternary) && (cmd = add_opt(d, cmd, "M", [:M :dump]))
-	opt_UVXY = parse_UVXY(d, "")		# Need it separate to not risk to double include it.
+	opt_UVXY = parse_UVXY(d, "")		# FORCES RECOMPILE	# Need it separate to not risk to double include it.
 	cmd, opt_c = parse_c(d, cmd)		# Need opt_c because we may need to remove it from double calls
 
 	if (isa(arg1, GDtype) && !contains(opt_f, "T") && !contains(opt_f, "t") && !contains(opt_R, "T") && !contains(opt_R, "t"))
@@ -632,9 +632,9 @@ function with_xyvar(d::Dict, arg1::GMTdataset, no_x::Bool=false)::Union{GMTdatas
 
 	function getcolvar(d::Dict, var::VMs)::Int
 		((_val = find_in_dict(d::Dict, var)[1]) === nothing) && return 0
-		!(isa(_val, Integer) || isa(_val, String) || isa(_val, Symbol)) && error("$(var) can only be an Int, a String or a Symbol but was a $(typeof(_val))")
-		c = isa(_val, Integer) ? _val : ((_ind = findfirst(string(_val)::String .== arg1.colnames)) !== nothing ? _ind : 0)
-		(c < 1 || c > size(arg1,2)) && error("$(var) Col name not found in GMTdataset col names or exceed col count.")
+		!(isa(_val, Int) || isa(_val, StrSymb)) && error("$(_val) can only be an Int, a String or a Symbol but was a $(typeof(_val))")
+		c::Int = isa(_val, Int) ? _val : ((_ind = findfirst(string(_val)::String .== arg1.colnames)) !== nothing ? _ind : 0)
+		(c < 1 || c > size(arg1,2)) && error("$(_val) Col name not found in GMTdataset col names or exceed col count.")
 		return c
 	end
 
