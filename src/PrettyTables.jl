@@ -829,15 +829,8 @@ function _print_table_with_text_back_end(
 
 	# -- Column Alignment Regex ------------------------------------------------------------
 
-	_apply_alignment_anchor_regex!(ptable, table_str, actual_columns_width,
-		# Configurations.
-		alignment_anchor_fallback,
-		alignment_anchor_fallback_override,
-		alignment_anchor_regex,
-		columns_width,
-		maximum_columns_width,
-		minimum_columns_width
-	)
+	_apply_alignment_anchor_regex!(ptable, table_str, actual_columns_width, alignment_anchor_fallback,
+		alignment_anchor_fallback_override, alignment_anchor_regex, columns_width, maximum_columns_width, minimum_columns_width)
 
 	# If the user wants all the columns with the same size, select the larger.
 	if equal_columns_width
@@ -863,8 +856,7 @@ function _print_table_with_text_back_end(
 	# -- Process the Title -----------------------------------------------------------------
 
 	title_tokens = _tokenize_title(title, display.size[2], table_width,
-		title_alignment, title_autowrap, title_same_width_as_table
-	)
+		title_alignment, title_autowrap, title_same_width_as_table)
 
 	# == Print the Table ===================================================================
 
@@ -1221,6 +1213,61 @@ function _print_title!(display::Display, title_tokens::Vector{String})
 	_nl!(display)
 
 	return nothing
+end
+
+function _str_autowrap(tokens_raw::Vector{String}, width::Int = 0)
+    width <= 0 && error("If `autowrap` is true, then the width must not be positive.")
+    tokens = String[]
+
+    for token in tokens_raw
+        sub_tokens = String[]
+        length_tok = length(token)
+
+        # Get the list of valid indices to handle UTF-8 strings. In this case, the n-th
+        # character of the string can be accessed by `token[tok_ids[n]]`.
+        tok_ids = collect(eachindex(token))
+
+        if length_tok > width
+            # First, let's analyze from the beginning of the token up to the field width.
+            #
+            # k₀ is the character that will start the sub-token.
+            # k₁ is the character that will end the sub-token.
+            k₀ = 1
+            k₁ = k₀ + width - 1
+
+            while k₀ <= length_tok
+                # Check if the remaining string fit in the available space.
+                if k₁ == length_tok
+                    push!(sub_tokens, token[tok_ids[k₀:k₁]])
+
+                else
+                    # If the remaining string does not fit into the available space, then we
+                    # search for spaces to crop.
+                    Δ = 0
+                    for k = k₁:-1:k₀
+                        if token[tok_ids[k]] == ' '
+                            # If a space is found, then select `k₁` as this character and
+                            # use `Δ` to remove it when printing, so that we hide the space.
+                            k₁ = k
+                            Δ  = 1
+                            break
+                        end
+                    end
+
+                    push!(sub_tokens, token[tok_ids[k₀:k₁-Δ]])
+                end
+
+                # Move to the next analysis window.
+                k₀ = k₁+1
+                k₁ = clamp(k₀ + width - 1, 0, length_tok)
+            end
+            push!(tokens, sub_tokens...)
+        else
+            push!(tokens, token)
+        end
+    end
+
+    return tokens
 end
 
 # Split the table title into tokens considering the line break character.
@@ -2833,9 +2880,7 @@ function ProcessedTable(data::Any, header::Any;
 		end
 	end
 
-	if max_num_of_columns > 0
-		max_num_of_columns = min(max_num_of_columns, num_data_columns)
-	end
+	(max_num_of_columns > 0) && (max_num_of_columns = min(max_num_of_columns, num_data_columns))
 
 	return ProcessedTable(
 		data = data,
@@ -2860,15 +2905,11 @@ function _add_column!(ptable::ProcessedTable, new_column::AbstractVector, new_he
 	# data.
 	num_rows, ~ = _data_size(ptable)
 
-	if num_rows != length(new_column)
-		error("The size of the new column does not match the size of the table.")
-	end
+	(num_rows != length(new_column)) && error("The size of the new column does not match the size of the table.")
 
 	# The symbol cannot be `:__ORIGINAL_DATA__` because it is used to identified
 	# if a column is part of the original data.
-	if id == :__ORIGINAL_DATA__
-		error("The new column identification symbol cannot be `:__ORIGINAL_DATA__`.")
-	end
+	(id == :__ORIGINAL_DATA__) && error("The new column identification symbol cannot be `:__ORIGINAL_DATA__`.")
 
 	push!(ptable._additional_column_id, id)
 	push!(ptable._additional_data_columns, new_column)
@@ -3022,9 +3063,7 @@ end
 
 # Parse the table `cell` of type `T` and return a vector of `String` with the parsed cell
 # text, one component per line.
-function _text_parse_cell(
-	@nospecialize(io::IOContext),
-	cell::Any;
+function _text_parse_cell(@nospecialize(io::IOContext), cell::Any;
 	autowrap::Bool = true,
 	cell_data_type::DataType = Nothing,
 	cell_first_line_only::Bool = false,
@@ -3223,10 +3262,7 @@ function _get_column_alignment(ptable::ProcessedTable, j::Int)
 
 		# The apparently unnecessary conversion to `Symbol` avoids type instability.
 		ptable_data_alignment = ptable._data_alignment
-
-		alignment = ptable_data_alignment isa Symbol ?
-			Symbol(ptable_data_alignment) :
-			Symbol(ptable_data_alignment[jr])
+		alignment = ptable_data_alignment isa Symbol ?  Symbol(ptable_data_alignment) : Symbol(ptable_data_alignment[jr])
 
 		return alignment
 	else

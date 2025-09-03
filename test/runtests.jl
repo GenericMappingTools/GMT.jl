@@ -21,6 +21,9 @@ using InteractiveUtils
 	include("test_PT_column_width.jl")
 	include("test_PT_default.jl")
 	include("test_PT_table_lines.jl")
+	include("test_PT_line_breaks.jl")
+	include("test_PT_row_numbers.jl")
+	include("test_PT_titles.jl")
 
 	include("test_avatars.jl")
 	include("test_misc.jl")
