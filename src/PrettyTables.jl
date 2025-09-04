@@ -49,9 +49,7 @@ function crop_width_to_fit_string_in_field(str::AbstractString, field_width::Int
 	if add_continuation_char
 		cont_str_width = textwidth(continuation_char)
 
-		if add_space_in_continuation_char
-			cont_str_width += 1
-		end
+		add_space_in_continuation_char && (cont_str_width += 1)
 
 		Δ += cont_str_width
 
@@ -743,9 +741,7 @@ function _print_table_with_text_back_end(
 	# Check which columns must have fixed sizes.
 	columns_width isa Integer && (columns_width = fill(columns_width, num_columns))
 
-	if length(columns_width) != num_columns
-		error("The length of `columns_width` must be the same as the number of columns.")
-	end
+	(length(columns_width) != num_columns) && error("The length of `columns_width` must be the same as the number of columns.")
 
 	# The number of lines that must be skipped from printing ellipsis must be greater of equal 0.
 	(ellipsis_line_skip < 0) && (ellipsis_line_skip = 0)
@@ -1351,9 +1347,7 @@ function _is_cell_alignment_overridden(ptable::ProcessedTable, i::Int, j::Int)
 
 			# Search for alignment overrides in this cell.
 			for f in ptable._data_cell_alignment
-				alignment_override =
-					f(_getdata(ptable.data), ir, jr)::Union{Nothing, Symbol}
-
+				alignment_override = f(_getdata(ptable.data), ir, jr)::Union{Nothing, Symbol}
 				if _is_alignment_valid(alignment_override)
 					return true
 				end
@@ -1991,9 +1985,7 @@ function _update_column_width(column_width::Int, largest_cell_width::Int, column
 		end
 
 		# Make sure that the minimum column width is respected.
-		if (minimum_column_width > 0) && (minimum_column_width > column_width)
-			column_width = minimum_column_width
-		end
+		(minimum_column_width > 0) && (minimum_column_width > column_width) && (column_width = minimum_column_width)
 	else
 		column_width = column_width_specification
 	end
@@ -2027,11 +2019,7 @@ end
 
 # Return the available rows in `display`. If there is no row limit, this function returns -1.
 function _available_rows(display::Display)
-	if display.size[1] > 0
-		return display.size[1] - display.row
-	else
-		return -1
-	end
+	return (display.size[1] > 0) ? (display.size[1] - display.row) : -1
 end
 
 # Draw the continuation row when the table has filled the vertical space available. This
@@ -2574,11 +2562,7 @@ function _print_omitted_cell_summary(display::Display, num_omitted_cols::Int, nu
 	if show_omitted_cell_summary && ((num_omitted_cols + num_omitted_rows) > 0)
 		cs_str = _get_omitted_cell_string(num_omitted_rows, num_omitted_cols)
 
-		if display.size[2] > 0
-			table_display_width = min(table_width, display.size[2])
-		else
-			table_display_width = table_width
-		end
+		table_display_width = (display.size[2] > 0) ? min(table_width, display.size[2]) : table_width
 
 		if textwidth(cs_str) < table_display_width
 			cs_str = align_string(cs_str, table_display_width, :r)

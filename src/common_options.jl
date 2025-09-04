@@ -2846,7 +2846,7 @@ function get_color(val)::String
 	# Parse a color input.
 	# color1,color2[,color3,…] colorn can be a r/g/b triplet, a color name, or an HTML hexadecimal color (e.g. #aabbcc)
 	(isa(val, AbstractString) || isa(val, Symbol) || isa(val, Real)) && return isa(val, Bool) ? "" : string(val)
-	error("\tGET_COLOR: got an unsupported data type: $(typeof(val))")
+	error("\tGET_COLOR: got an unsupported data type")
 end
 function get_color(val::Tuple)::String
 	out::String = ""
@@ -2899,7 +2899,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_units(val)::String
 	# Parse a units string in the form d|e|f|k|n|M|n|s or expanded
-	(isa(val, String) || isa(val, Symbol) || isa(val, Real)) && return string(val)
+	(isa(val, StrSymb) || isa(val, Real)) && return string(val)
 
 	!(isa(val, Tuple) && (length(val) == 2)) && error("PARSE_UNITS, got and unsupported data type: $(typeof(val))")
 	return string(val[1], parse_unit_unit(val[2]))
@@ -3379,9 +3379,9 @@ function vector4_attrib(; kwargs...)::String
 		if (isa(val, NamedTuple) || isa(val, AbstractDict))
 			ha::String = "0.075c";	hl::String = "0.3c";	hw::String = "0.25c"
 			dh = isa(val, NamedTuple) ? nt2dict(val) : val
-			haskey(dh, :arrowwidth) && (ha = string(dh[:arrowwidth]))
-			haskey(dh, :headlength) && (hl = string(dh[:headlength]))
-			haskey(dh, :headwidth)  && (hw = string(dh[:headwidth]))
+			haskey(dh, :arrowwidth) && (ha = string(dh[:arrowwidth])::String)
+			haskey(dh, :headlength) && (hl = string(dh[:headlength])::String)
+			haskey(dh, :headwidth)  && (hw = string(dh[:headwidth])::String)
 			hh::String = ha * '/' * hl * '/' * hw
 		elseif (isa(val, Tuple) && length(val) == 3)  hh = arg2str(val)
 		elseif (isa(val, String))                     hh = val		# No checking

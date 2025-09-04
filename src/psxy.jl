@@ -44,7 +44,7 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 
 	if (is_ternary)
 		opt_B::String = ""
-		if (haskey(d, :B))						# Not necessarely the case when ternary!
+		if (haskey(d, :B))								# Not necessarely the case when ternary!
 			cmd, opt_B = string(cmd, d[:B]), d[:B]		# B option was parsed in plot/ternary
 			delete!(d, :B)
 		end

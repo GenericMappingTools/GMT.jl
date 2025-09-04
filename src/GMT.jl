@@ -372,7 +372,7 @@ using GMT.Laszip
 #include("ImageFeatures/ImageFeatures.jl")
 #using GMT.ImageFeatures
 
-@setup_workload let
+@compile_workload let
 	G_API[1] = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS)
 	GMT.parse_B(Dict(:frame => (annot=10, title="Ai Ai"), :grid => (pen=2, x=10, y=20)), "", " -Baf -BWSen");
 	GMT.parse_R(Dict(:xlim => (1,2), :ylim => (3,4), :zlim => (5,6)), "");
