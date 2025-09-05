@@ -1016,9 +1016,9 @@ function helper_geoglimits(prj::String, region::Vector{Float64})::Vector{Float64
 	Gdal.CPLPushErrorHandler(@cfunction(Gdal.CPLQuietErrorHandler, Cvoid, (UInt32, Cint, Cstring)))
 	opts = ["-s_srs", prj, "-t_srs", prj4WGS84, "-overwrite"]
 	ds = Gdal.get_gdaldataset([region[1] region[3]], opts, false)[1]
-	o1 = Gdal.gdalvectortranslate(ds, opts; dest="/vsimem/tmp", gdataset=true)
+	o1 = Gdal.gdalvectortranslate(ds, opts; dest="/vsimem/tmp", gdataset=true)::GMT.Gdal.IDataset
 	ds = Gdal.get_gdaldataset([region[2] region[4]], opts, false)[1]
-	o2 = Gdal.gdalvectortranslate(ds, opts; dest="/vsimem/tmp", gdataset=true)
+	o2 = Gdal.gdalvectortranslate(ds, opts; dest="/vsimem/tmp", gdataset=true)::GMT.Gdal.IDataset
 	if (o1.ptr == C_NULL || o2.ptr == C_NULL)		# Diagonals failed, probably a Mollweide or alike projection
 		t = xy2lonlat([region[1] min(0,region[4]); region[2] min(0,region[4]);
 		               0 region; 0 region], s_srs=prj, t_srs=prj4WGS84)

@@ -67,8 +67,9 @@ does not need explicit coordinates to place the text.
   - `segnan` or `nanseg`: Boolean. If true make a multi-segment made out of segments separated by NaNs.
   - `datatype`: Keep the original data type of `mat`. Default converts to Float64.
   - `geom`: The data geometry. By default, we set `wkbUnknown` but try to do some basic guess.
-  - `proj` or `proj4`:  A proj4 string for dataset SRS.
-  - `wkt`:  A WKT SRS.
+  - `proj` or `proj4`: A proj4 string for dataset SRS. Default is empty. To set it to lon,lat in WGS84 use ``proj=prj4WGS84``
+  - `wkt`:  A WKT SRS string.
+  - `epsg`: An integer EPSG code. _e.g._ ``epsg=4326`` for lon,lat in WGS84. Default is 0.
   - `colnames`: Optional string vector with names for each column of `mat`.
   - `attrib`: Optional dictionary{String, String} with attributes of this dataset.
   - `ref:` Pass in a reference GMTdataset from which we'll take the georeference info as well as `attrib` and `colnames`

@@ -25,7 +25,7 @@ data = Any[1    false      1.0     0x01 ;
 │      6 │   true │    6.0 │      6 │
 └────────┴────────┴────────┴────────┘
 """
-    result = pretty_table(String, data)
+    result = prettytable(String, data)
     @test result == expected
 
     # Without a newline at end.
@@ -41,7 +41,7 @@ data = Any[1    false      1.0     0x01 ;
 │      6 │   true │    6.0 │      6 │
 └────────┴────────┴────────┴────────┘"""
 
-    result = pretty_table(String, data, newline_at_end = false)
+    result = prettytable(String, data, newline_at_end = false)
     @test result == expected
 end
 
@@ -68,7 +68,7 @@ data = Any[1    false      1.0     0x01 ;
 :      6 :   true :    6.0 :      6 :
 :........:........:........:........:
 """
-    result = pretty_table(String, data, tf = GMT.tf_ascii_dots)
+    result = prettytable(String, data, tf = GMT.tf_ascii_dots)
     @test result == expected
 
     # == ascii_rounded =====================================================================
@@ -85,7 +85,7 @@ data = Any[1    false      1.0     0x01 ;
 |      6 |   true |    6.0 |      6 |
 '--------'--------'--------'--------'
 """
-    result = pretty_table(String, data, tf = GMT.tf_ascii_rounded)
+    result = prettytable(String, data, tf = GMT.tf_ascii_rounded)
     @test result == expected
 
     # == borderless ========================================================================
@@ -100,7 +100,7 @@ data = Any[1    false      1.0     0x01 ;
        5    false      5.0        5
        6     true      6.0        6
 """
-    result = pretty_table(String, data, tf = GMT.tf_borderless)
+    result = prettytable(String, data, tf = GMT.tf_borderless)
     @test result == expected
 
     # == compact ===========================================================================
@@ -117,7 +117,7 @@ data = Any[1    false      1.0     0x01 ;
        6     true      6.0        6
  -------- -------- -------- --------
 """
-    result = pretty_table(String, data, tf = GMT.tf_compact)
+    result = prettytable(String, data, tf = GMT.tf_compact)
     @test result == expected
 
     # == matrix ============================================================================
@@ -132,7 +132,7 @@ data = Any[1    false      1.0     0x01 ;
 │ 6   true  6.0  6 │
 └                  ┘
 """
-    result = pretty_table(String, data, tf = GMT.tf_matrix, show_header = false)
+    result = prettytable(String, data, tf = GMT.tf_matrix, show_header = false)
     @test result == expected
 
     # == simple ============================================================================
@@ -149,7 +149,7 @@ data = Any[1    false      1.0     0x01 ;
        6     true      6.0        6
 ========= ======== ======== =========
 """
-    result = pretty_table(String, data, tf = GMT.tf_simple)
+    result = prettytable(String, data, tf = GMT.tf_simple)
     @test result == expected
 
     # == unicode_rounded ===================================================================
@@ -166,7 +166,7 @@ data = Any[1    false      1.0     0x01 ;
 │      6 │   true │    6.0 │      6 │
 ╰────────┴────────┴────────┴────────╯
 """
-    result = pretty_table(String, data, tf = GMT.tf_unicode_rounded)
+    result = prettytable(String, data, tf = GMT.tf_unicode_rounded)
     @test result == expected
 
     # == Custom formats ====================================================================
@@ -183,7 +183,7 @@ data = Any[1    false      1.0     0x01 ;
 """
 
     tf = GMT.TextFormat(hlines = [:header])
-    result = pretty_table(String, data, tf = tf)
+    result = prettytable(String, data, tf = tf)
     @test result == expected
 
     expected = """
@@ -199,7 +199,7 @@ data = Any[1    false      1.0     0x01 ;
 """
 
     tf = GMT.TextFormat(hlines = [:begin,:end])
-    result = pretty_table(String, data, tf = tf)
+    result = prettytable(String, data, tf = tf)
     @test result == expected
 end
 
@@ -227,7 +227,7 @@ end
 └───────┴────────┘
 """
 
-    result = pretty_table(String, dict, sortkeys = true)
+    result = prettytable(String, dict, sortkeys = true)
     @test result == expected
 end
 
@@ -253,7 +253,7 @@ end
 └────────┘
 """
 
-    result = pretty_table(String, vec)
+    result = prettytable(String, vec)
     @test result == expected
 
     expected = """
@@ -274,7 +274,7 @@ end
 └─────┴────────┘
 """
 
-    result = pretty_table(String, vec; alignment = :c, show_row_number = true)
+    result = prettytable(String, vec; alignment = :c, show_row_number = true)
     @test result == expected
 
     expected = """
@@ -296,10 +296,10 @@ end
 └────────────┘
 """
 
-    result = pretty_table(String, vec; header = (["Header"], ["Sub-header"]))
+    result = prettytable(String, vec; header = (["Header"], ["Sub-header"]))
     @test result == expected
 
-    @test_throws Exception pretty_table( vec; header = ["1", "1"])
+    @test_throws Exception prettytable( vec; header = ["1", "1"])
 end
 
 @testset "Print missing, nothing, and #undef" begin
@@ -320,7 +320,7 @@ end
 └─────────┴─────────┴────────┘
 """
 
-    result = pretty_table(String, matrix)
+    result = prettytable(String, matrix)
     @test result == expected
 end
 
@@ -332,7 +332,7 @@ data = Any[1    false      1.0     0x01 ;
            5    false      5.0     0x05 ;
            6     true      6.0     0x06 ;]
 
-    result = pretty_table(
+    result = prettytable(
         String,
         data;
         header = (["A", "B", "C", "D"], ["E", "F", "G", "H"]),
@@ -342,7 +342,7 @@ data = Any[1    false      1.0     0x01 ;
     num_lines = length(findall(x->x == '\n', result))
 
     io = IOBuffer()
-    pretty_table(
+    prettytable(
         io,
         data;
         header = (["A", "B", "C", "D"], ["E", "F", "G", "H"]),

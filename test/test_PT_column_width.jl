@@ -30,7 +30,7 @@ data = Any[1    false      1.0     0x01 ;
 └──────┴───────┴──────┴──────┘
 """
 
-    result = pretty_table(
+    result = prettytable(
         String,
         data;
         header = header,
@@ -53,7 +53,7 @@ data = Any[1    false      1.0     0x01 ;
 └────┴────┴────┴────┘
 """
 
-    result = pretty_table(
+    result = prettytable(
         String,
         data;
         header = header,
@@ -77,7 +77,7 @@ data = Any[1    false      1.0     0x01 ;
 └────┴───────┴────────┴──────────┘
 """
 
-    result = pretty_table(
+    result = prettytable(
         String,
         data;
         header = header,
@@ -100,7 +100,7 @@ data = Any[1    false      1.0     0x01 ;
 └──────────┴──────────┴──────────┴──────────┘
 """
 
-    result = pretty_table(
+    result = prettytable(
         String,
         data;
         header = header,
@@ -124,7 +124,7 @@ data = Any[1    false      1.0     0x01 ;
 └───┴─────┴─────┴───┘
 """
 
-    result = pretty_table(
+    result = prettytable(
         String,
         data;
         header = header,
@@ -147,7 +147,7 @@ data = Any[1    false      1.0     0x01 ;
 └───┴────┴─────┴──────┘
 """
 
-    result = pretty_table(
+    result = prettytable(
         String,
         data;
         header = header,
@@ -171,7 +171,7 @@ data = Any[1    false      1.0     0x01 ;
 └───┴─────┴────┴───┘
 """
 
-    result = pretty_table(
+    result = prettytable(
         String,
         data;
         header = header,
@@ -194,7 +194,7 @@ data = Any[1    false      1.0     0x01 ;
 └─────┴─────┴─────┴─────┘
 """
 
-    result = pretty_table(
+    result = prettytable(
         String,
         data;
         header = header,

@@ -28,7 +28,7 @@ This is a very very long title that will be displayed above the table.
 │      6 │   true │    6.0 │      6 │
 └────────┴────────┴────────┴────────┘
 """
-    result = pretty_table(String, data, title = title)
+    result = prettytable(String, data, title = title)
     @test result == expected
 
     expected = """
@@ -44,7 +44,7 @@ This is a very very long title that …
 │      6 │   true │    6.0 │      6 │
 └────────┴────────┴────────┴────────┘
 """
-    result = pretty_table(
+    result = prettytable(
         String,
         data;
         title = title,
@@ -66,7 +66,7 @@ will be displayed above the table.
 │      6 │   true │    6.0 │      6 │
 └────────┴────────┴────────┴────────┘
 """
-    result = pretty_table(
+    result = prettytable(
         String,
         data;
         title = title,
@@ -89,7 +89,7 @@ will be displayed above the table.
 │      6 │   true │    6.0 │      6 │
 └────────┴────────┴────────┴────────┘
 """
-    result = pretty_table(
+    result = prettytable(
         String,
         data;
         title = title,
@@ -113,7 +113,7 @@ will be displayed above the table.
 │      6 │   true │    6.0 │      6 │
 └────────┴────────┴────────┴────────┘
 """
-    result = pretty_table(
+    result = prettytable(
         String,
         data;
         title = title,
@@ -149,7 +149,7 @@ That has two lines.
 └────────┴────────┴────────┴───────
         1 column and 3 rows omitted
 """
-    result = pretty_table(
+    result = prettytable(
         String,
         data;
         crop = :both,
@@ -171,7 +171,7 @@ That has two lines.
 └────────┴────────┴────────┴───────
         1 column and 4 rows omitted
 """
-    result = pretty_table(
+    result = prettytable(
         String,
         data;
         crop = :both,

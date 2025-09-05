@@ -26,7 +26,7 @@ data = Any[1    false      1.0     0x01 ;
 │ 6      │ true   │ 6.0    │ 6      │
 └────────┴────────┴────────┴────────┘
 """
-    result = pretty_table(String, data; alignment = :l)
+    result = prettytable(String, data; alignment = :l)
     @test result == expected
 
     # == Center ============================================================================
@@ -42,7 +42,7 @@ data = Any[1    false      1.0     0x01 ;
 │   6    │  true  │  6.0   │   6    │
 └────────┴────────┴────────┴────────┘
 """
-    result = pretty_table(String, data; alignment = :c)
+    result = prettytable(String, data; alignment = :c)
     @test result == expected
 
     # == Per Column Configuration ==========================================================
@@ -59,7 +59,7 @@ data = Any[1    false      1.0     0x01 ;
 │ 6      │   true │  6.0   │      6 │
 └────────┴────────┴────────┴────────┘
 """
-    result = pretty_table(String, data; alignment = [:l, :r, :c, :r])
+    result = prettytable(String, data; alignment = [:l, :r, :c, :r])
     @test result == expected
 
     # == Cell Override =====================================================================
@@ -76,7 +76,7 @@ data = Any[1    false      1.0     0x01 ;
 │ 6      │   true │  6.0   │ 6      │
 └────────┴────────┴────────┴────────┘
 """
-    result = pretty_table(
+    result = prettytable(
         String,
         data;
         alignment = [:l, :r, :c, :r],
@@ -110,7 +110,7 @@ data = Any[1    false      1.0     0x01 ;
 └───────────┴───────────┴───────────┴───────────┘
 """
 
-    result = pretty_table(
+    result = prettytable(
         String,
         data;
         header = header,
@@ -142,7 +142,7 @@ data = Any[1    false      1.0     0x01 ;
 └───────────┴───────────┴───────────┴───────────┘
 """
 
-    result = pretty_table(
+    result = prettytable(
         String, data;
         header = header,
         alignment = [:l, :r, :c, :r],
@@ -183,7 +183,7 @@ end
 └────────────┴────────────┴──────────────┴──────────────┴────────────────┴────────────────┴────────────────┘
 """
 
-    result = pretty_table(
+    result = prettytable(
         String,
         matrix;
         alignment_anchor_regex = Dict(0 => [r"\."])
@@ -191,7 +191,7 @@ end
 
     @test result == expected
 
-    result = pretty_table(
+    result = prettytable(
         String,
         matrix;
         alignment_anchor_regex = Dict(i => [r"\."] for i in 1:7)
@@ -213,7 +213,7 @@ end
 └───────────┴───────────┴─────────────┴─────────────┴───────────────┴───────────────┴───────────────┘
 """
 
-    result = pretty_table(
+    result = prettytable(
         String,
         matrix;
         alignment_anchor_regex = Dict(0 => [r"\.", r"^"])
@@ -237,7 +237,7 @@ end
 └─────┴─────────┴─────────┴─────────┴─────────────┴──────────┴──────────┴──────────┘
 """
 
-    result = pretty_table(
+    result = prettytable(
         String,
         matrix,
         alignment_anchor_regex = Dict(4 => [r"\.", r"^"]),
@@ -260,7 +260,7 @@ end
 └─────┴───┴─────────┴─────────┴─────────┴─────────────┴──────────┴──────────┴──────────┘
 """
 
-    result = pretty_table(
+    result = prettytable(
         String,
         matrix,
         alignment_anchor_regex = Dict(4 => [r"\.", r"^"]),
@@ -286,7 +286,7 @@ end
 └─────────┴─────────┴─────────┴──────────────────────┴──────────┴──────────┴──────────┘
 """
 
-    result = pretty_table(
+    result = prettytable(
         String,
         matrix;
         alignment_anchor_regex = Dict(4 => [r"\.", r"^"]),
@@ -309,7 +309,7 @@ end
 └─────────┴─────────┴─────────┴──────────────────────┴──────────┴──────────┴──────────┘
 """
 
-    result = pretty_table(
+    result = prettytable(
         String,
         matrix;
         alignment = :c,
@@ -333,7 +333,7 @@ end
 └─────────┴─────────┴─────────┴──────────────────────┴──────────┴──────────┴──────────┘
 """
 
-    result = pretty_table(
+    result = prettytable(
         String,
         matrix;
         alignment = :l,
@@ -359,7 +359,7 @@ end
 └─────────────────┴─────────────────┴─────────────────┴─────────────────┴─────────────────┴─────────────────┴─────────────────┘
 """
 
-    result = pretty_table(
+    result = prettytable(
         String,
         matrix;
         alignment_anchor_regex = Dict(4 => [r"\.", r"^"]),
@@ -382,7 +382,7 @@ end
 └─────────┴─────────┴─────────┴────────────┴──────────┴──────────┴──────────┘
 """
 
-    result = pretty_table(
+    result = prettytable(
         String,
         matrix;
         alignment_anchor_regex = Dict(4 => [r"\.", r"^"]),
@@ -407,7 +407,7 @@ end
 └──────────┴──────────┴───────────┴──────────┴────────────┴────────────┴────────────┘
 """
 
-    result = pretty_table(
+    result = prettytable(
         String,
         matrix;
         alignment_anchor_regex = Dict(i => [r"\."] for i in 1:7),
@@ -430,7 +430,7 @@ end
 └──────────────┴──────────────┴──────────────┴─────────────┴────────────┴───────────┴─────────────┘
 """
 
-    result = pretty_table(
+    result = prettytable(
         String,
         matrix;
         alignment_anchor_regex = Dict(i => [r"\."] for i in 1:7),
@@ -453,7 +453,7 @@ end
 └────────────┴──────────┴──────────────┴─────────────┴────────────────┴────────────────┴────────────────┘
 """
 
-    result = pretty_table(
+    result = prettytable(
         String,
         matrix;
         alignment_anchor_regex = Dict(0 => [r"\."]),
@@ -476,7 +476,7 @@ end
 └──────────┴──────────┴───────────┴─────────────┴────────────────┴────────────┴────────────┘
 """
 
-    result = pretty_table(
+    result = prettytable(
         String,
         matrix;
         alignment_anchor_regex = Dict(0 => [r"\."]),
@@ -502,7 +502,7 @@ end
 └─────┴──────────┴──────────┴───────────┴─────────────┴────────────────┴────────────┴────────────┘
 """
 
-    result = pretty_table(
+    result = prettytable(
         String,
         matrix;
         alignment_anchor_regex = Dict(0 => [r"\."]),
@@ -527,7 +527,7 @@ end
 └───────┴──────────┴──────────┴───────────┴─────────────┴────────────────┴────────────┴────────────┘
 """
 
-    result = pretty_table(
+    result = prettytable(
         String,
         matrix;
         alignment_anchor_regex = Dict(0 => [r"\."]),

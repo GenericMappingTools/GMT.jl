@@ -202,6 +202,8 @@ export
 	Date, DateTime, Year, Month, Week, Day, Hour, Minute, Second, year, month, week, day, hour, minute, second, now, today,
 	bissextile,
 
+	prettytable,
+
 	@?, @G, @dir
 
 include("common_docs.jl")

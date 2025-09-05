@@ -346,6 +346,7 @@ end
 See `? getbyattrib`
 """
 Base.:filter(D::Vector{<:GMTdataset}; kw...) = getbyattrib(D; kw...)
+
 # ---------------------------------------------------------------------------------------------------
 """
     findall(D::Vector{<:GMTdataset}; kw...)
