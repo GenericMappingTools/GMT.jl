@@ -25,7 +25,7 @@ data = Any[1    false      1.0     0x01 ;
 │   6 │ 6      │   true │  6.0   │      6 │
 └─────┴────────┴────────┴────────┴────────┘
 """
-    result = pretty_table(
+    result = prettytable(
         String,
         data;
         alignment       = [:l, :r, :c, :r],
@@ -46,7 +46,7 @@ data = Any[1    false      1.0     0x01 ;
 └─────┴────────┴────────┴────────┴────────┘
 """
 
-    result = pretty_table(
+    result = prettytable(
         String,
         data;
         alignment = [:l, :r, :c, :r],
@@ -68,6 +68,6 @@ data = Any[1    false      1.0     0x01 ;
 └───┴────────┴────────┴────────┴────────┘
 """
 
-    result = pretty_table( String, data; alignment=[:l, :r, :c, :r], row_number_alignment=:c, row_number_column_title="#", show_row_number=true)
+    result = prettytable( String, data; alignment=[:l, :r, :c, :r], row_number_alignment=:c, row_number_column_title="#", show_row_number=true)
     @test result == expected
 end

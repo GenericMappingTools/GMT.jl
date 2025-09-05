@@ -27,7 +27,7 @@ data = Any[1    false      1.0     0x01 ;
 │      6 │   true │    6.0 │      6 │
 └────────┴────────┴────────┴────────┘
 """
-    result = pretty_table(
+    result = prettytable(
         String,
         data;
         body_hlines = vcat(findall(x->x == true, data[:,2]))
@@ -48,7 +48,7 @@ data = Any[1    false      1.0     0x01 ;
 │      6 │   true │    6.0 │      6 │
 └────────┴────────┴────────┴────────┘
 """
-    result = pretty_table(
+    result = prettytable(
         String,
         data;
         body_hlines = vcat(findall(x -> x == true, data[:, 2])),
@@ -68,7 +68,7 @@ data = Any[1    false      1.0     0x01 ;
 │ 6 │  true │ 6.0 │ 6 │
 └───┴───────┴─────┴───┘
 """
-    result = pretty_table(
+    result = prettytable(
         String,
         data;
         show_header = false,
@@ -96,7 +96,7 @@ data = Any[1    false      1.0     0x01 ;
 └────────┴────────┴────────┴────────┘
 """
 
-    result = pretty_table(String, data; hlines = :all)
+    result = prettytable(String, data; hlines = :all)
     @test result == expected
 
     expected = """
@@ -109,7 +109,7 @@ data = Any[1    false      1.0     0x01 ;
 │      6 │   true │    6.0 │      6 │
 """
 
-    result = pretty_table(String, data; hlines = :none)
+    result = prettytable(String, data; hlines = :none)
     @test result == expected
 end
 
@@ -135,7 +135,7 @@ data = Any[1    false      1.0     0x01 ;
 ────────────────────────
 """
 
-    result1 = pretty_table(
+    result1 = prettytable(
         String,
         data;
         header = (
@@ -144,7 +144,7 @@ data = Any[1    false      1.0     0x01 ;
         ),
         vlines = []
     )
-    result2 = pretty_table(
+    result2 = prettytable(
         String, data;
         header = (
             ["C1",  "C2",   "C3",    "C4"],
@@ -169,7 +169,7 @@ data = Any[1    false      1.0     0x01 ;
 └────────────────────────┘
 """
 
-    result1 = pretty_table(
+    result1 = prettytable(
         String,
         data;
         header = (
@@ -178,7 +178,7 @@ data = Any[1    false      1.0     0x01 ;
         ),
         vlines = [:begin, :end]
     )
-    result2 = pretty_table(
+    result2 = prettytable(
         String,
         data;
         header = (
@@ -204,7 +204,7 @@ data = Any[1    false      1.0     0x01 ;
 └─────┴────────────────────────┘
 """
 
-    result = pretty_table(
+    result = prettytable(
         String,
         data;
         header = (
@@ -230,7 +230,7 @@ data = Any[1    false      1.0     0x01 ;
 └─────┴────────────┴────────────────────────┘
 """
 
-    result = pretty_table(
+    result = prettytable(
         String,
         data;
         header = (
@@ -258,7 +258,7 @@ data = Any[1    false      1.0     0x01 ;
        2 columns and 3 rows omitted
 """
 
-    result = pretty_table(
+    result = prettytable(
         String,
         data;
         header = (

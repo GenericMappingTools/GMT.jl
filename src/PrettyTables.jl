@@ -7,7 +7,7 @@
 # and no longer need a > 10 MB PT precomp cache DLL.
 ############################################################################################
 
-export pretty_table
+#export pretty_table
 
 #const _REGEX_ANSI_SEQUENCES = r"\x1B(?:]8;;[^\x1B]*\x1B\\|[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])"
 
@@ -293,6 +293,8 @@ function pretty_table(@nospecialize(io::IO), @nospecialize(data::Any); header::U
 
 	return _print_table(io, pdata; header = pheader, kwargs...)
 end
+
+const prettytable = pretty_table	# Alias
 
 # --------------------------------------------------------------------------------
 @kwdef struct TextFormat
@@ -1040,13 +1042,7 @@ function _check_hline(ptable::ProcessedTable, hlines::Vector{Int}, body_hlines::
 end
 
 function _check_hline(ptable::ProcessedTable, hlines::Symbol, body_hlines::AbstractVector, i::Int)
-	if hlines == :all
-		return true
-	elseif hlines == :none
-		return _check_hline(ptable, Int[], body_hlines, i)
-	else
-		error("`hlines` must be `:all`, `:none`, or a vector of integers.")
-	end
+	return (hlines == :all) ? true : (hlines == :none) ? _check_hline(ptable, Int[], body_hlines, i) : error("`hlines` must be `:all`, `:none`, or a vector of integers.")
 end
 
 function _check_vline(ptable::ProcessedTable, vlines::AbstractVector, j::Int)
@@ -1064,13 +1060,7 @@ function _check_vline(ptable::ProcessedTable, vlines::AbstractVector, j::Int)
 end
 
 function _check_vline(ptable::ProcessedTable, vlines::Symbol, j::Int)
-	if vlines == :all
-		return true
-	elseif vlines == :none
-		return false
-	else
-		error("`vlines` must be `:all`, `:none`, or a vector of integers.")
-	end
+	return (vlines == :all) ? true : (vlines == :none) ? false : error("`vlines` must be `:all`, `:none`, or a vector of integers.")
 end
 
 function _count_hlines(ptable::ProcessedTable, hlines::Vector{Int}, body_hlines::Vector{Int})
@@ -2551,8 +2541,7 @@ function _print_custom_text_cell!(display::Display, cell_data::CustomTextCell, c
 	# Write it to the display.
 	_write_to_display!(display, rendered_str, suffix, new_lstr + textwidth(suffix))
 
-	# Print the padding character after the cell and return if the display has reached
-	# end-of-line.
+	# Print the padding character after the cell and return if the display has reached end-of-line.
 	return _p!(display, " ", false, 1)
 end
 
@@ -2805,9 +2794,8 @@ function ProcessedTable(data::Any, header::Any;
 		elseif show_header
 			num_header_columns = length(first(header))
 
-			if num_data_columns != num_header_columns
+			(num_data_columns != num_header_columns) &&
 				error("The number of columns in the header ($num_header_columns) must be equal to that of the table ($num_data_columns).")
-			end
 
 			num_header_rows = show_subheader ? length(header) : 1
 		end
