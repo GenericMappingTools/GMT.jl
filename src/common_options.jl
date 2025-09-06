@@ -29,7 +29,7 @@ delete!(d, [:a, :b])
 delete!(d, [[:a, :b], [:c]])
 delete!(d, [[:a :b] [:c]])
 """
-function Base.delete!(d::Dict, symbs::Array{T, N}) where {T, N}
+function Base.delete!(d::Dict{Symbol,Any}, symbs::Array{T, N}) where {T, N}
     for symb in symbs
         delete!(d, symb)
     end
@@ -4447,6 +4447,11 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 		CTRL.pocket_call[3] = nothing		# Reset
 		fi = 2		# First index, the one that the args... respect, start at 2
 	end
+
+	# The case 'viz(G, clip=Dna, plot=(data=Di, lc=:white), colorbar=true)' raised this changes (dangerous)
+	first_was_psclip = (startswith(cmd[1], "psclip"))
+	k2_no_pocket = !first_was_psclip		# Used only when k=2 and it needs to be FALSE when first comm is 'psclip'
+
 	n_cmds = length(cmd)
 	for k = fi:n_cmds
 		is_psscale = (startswith(cmd[k], "psscale") || startswith(cmd[k], "colorbar"))
@@ -4464,9 +4469,9 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 		if (k >= 1+fi && is_psscale && args1_isnot_C)		# Ex: imshow(I, cmap=C, colorbar=true)
 			P = finish_PS_module_barr_1(d, cmd, k, args[1])
 			continue
-		elseif (k >= 1+fi && (is_pscoast || is_basemap || is_plot) && (args1_is_I || args1_is_G || args1_is_D))
+		elseif (k >= 1+fi && !first_was_psclip && (is_pscoast || is_basemap || is_plot) && (args1_is_I || args1_is_G || args1_is_D))
 			orig_J, orig_R = finish_PS_module_barr_2(d, args[1], cmd, k, is_plot, orig_J)
-		elseif (k >= 1+fi && !is_psscale && !is_pscoast && !is_basemap && !is_text && (CTRL.pocket_call[1] !== nothing))
+		elseif (k >= 1+fi && k2_no_pocket && !is_psscale && !is_pscoast && !is_basemap && !is_text && (CTRL.pocket_call[1] !== nothing))
 			# For nested calls that need to pass data
 			P = gmt(cmd[k], get_pocket_call())
 			continue
@@ -4480,6 +4485,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 			rm(TMPDIR_USR[1] * "/" * finset)						# Crutial to delete after use to not be picked in a eventual next round
 			continue
 		end
+		(k == 2) && (k2_no_pocket = true)		# For other k's this has to be neutral.
 		# Allow also plot data from a nested call to plot
 		cond = !(k > fi && is_plot && (CTRL.pocket_call[1] !== nothing))
 		# Next line means cases like 'plot(D, marker=:circ, ms="4p", lt=0.5, plot=(data=...))' where data in 'D'

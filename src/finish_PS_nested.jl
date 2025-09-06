@@ -14,7 +14,7 @@ function helper_finish_PS_nested(cmd::Vector{String}, cmd2::Vector{String})::Vec
 		opt_R = scan_opt(cmd[1], "-R", true)
 		opt_J = scan_opt(cmd[1], "-J", true)
 		extra::String = strtok(cmd2[1])[2] * " "		# When psclip recieved extra arguments
-		t::String =  extra * opt_R * " " * opt_J
+		t::String = extra * opt_R * " " * opt_J
 		(!contains(cmd2[1], "pscoast")) && (t = "psclip " * t)
 		opt_B::String, opt_B1::String = "", ""
 		ind = findall(" -B", cmd[1])
@@ -35,7 +35,7 @@ function helper_finish_PS_nested(cmd::Vector{String}, cmd2::Vector{String})::Vec
 				CTRL.pocket_B[1] = CTRL.pocket_B[2] = ""	# Empty these guys
 			end
 		end
-		cmd = [t; cmd; "psclip -C" * opt_B1]
+		cmd = [t; cmd; cmd2[2:length(cmd2)]; "psclip -C" * opt_B1]
 	else
 		append!(cmd, cmd2)
 	end
