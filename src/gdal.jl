@@ -1824,7 +1824,8 @@ end
 		gdalvectortranslate([ds], opts; dest=dest, gdataset=gdataset, save=save)
 	gdalvectortranslate(ds::IDataset, opts::Vector{String}=String[]; dest="/vsimem/tmp", gdataset=false, save="") =
 		gdalvectortranslate([Dataset(ds.ptr)], opts; dest=dest, gdataset=gdataset, save=save)
-	gdalvectortranslate(ds::GMTdataset, opts::Vector{String}=String[]; dest="/vsimem/tmp", gdataset=false, save="") = 				gdalvectortranslate([ds], opts; dest=dest, gdataset=gdataset, save=save)
+	gdalvectortranslate(ds::GMTdataset, opts::Vector{String}=String[]; dest="/vsimem/tmp", gdataset=false, save="") =
+		gdalvectortranslate([ds], opts; dest=dest, gdataset=gdataset, save=save)
 	function gdalvectortranslate(ds::Vector{GMTdataset}, opts::Vector{String}=String[]; dest="/vsimem/tmp", gdataset=false, save="")
 		o = gdalvectortranslate(gmt2gd(ds), opts; dest=dest, gdataset=gdataset, save=save)
 		(!isa(o, GDtype) && dest == "/vsimem/tmp") && deletedatasource(o, "/vsimem/tmp")	# WTF do I need to do this?
@@ -2643,7 +2644,7 @@ end
 
 	export
 		bwareaopen, getband, getdriver, getlayer, getproj, getgeom, getgeotransform, toPROJ4, toWKT, importPROJ4,
-		importWKT, importEPSG, gdalinfo, gdalwarp, gdaldem, gdaltranslate, gdalgrid, gdalvectortranslate, ogr2ogr,
+		importWKT, importEPSG, gdalinfo, gdalwarp, gdaldem, gdaltranslate, gdalgrid, ogr2ogr, gdalvectortranslate,
 		gdalrasterize, gdalbuildvrt, readraster, setgeotransform!, setproj!, destroy, arcellipse, arccircle,
 		delaunay, dither, buffer, centroid, intersection, intersects, polyunion, fromWKT, fillnodata!, fillnodata,
 		concavehull, convexhull, difference, symdifference, distance, geomarea, geodesicarea, pointalongline, polygonize,
