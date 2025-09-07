@@ -188,6 +188,7 @@ export
 	Ginnerjoin, Gouterjoin, Gleftjoin, Grightjoin, Gcrossjoin, Gsemijoin, Gantijoin, spatialjoin,
 	groupby, stats,
 
+	anaglyph,
 	lazinfo, lazread, lazwrite, lasread, laswrite,
 	okada,
 	haralick,
@@ -337,6 +338,7 @@ include("xyz2grd.jl")
 include("utils.jl")
 include("utils_project.jl")
 include("choropleth_utils.jl")
+include("extras/anaglyph.jl")
 include("extras/hampel_outliers.jl")
 include("extras/isoutlier.jl")
 include("extras/lowess.jl")
