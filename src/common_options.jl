@@ -1321,25 +1321,25 @@ function consolidate_Baxes(opt_B::String)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-title(; str::AbstractString="",  font=nothing, offset=0) = titles_e_comp(str, font, offset)
-subtitle(; str::AbstractString="", font=nothing, offset=0) = titles_e_comp(str, font, offset, "s")
-xlabel(; str::AbstractString="", font=nothing, offset=0) = titles_e_comp(str, font, offset, "x")
-ylabel(; str::AbstractString="", font=nothing, offset=0) = titles_e_comp(str, font, offset, "y")
-zlabel(; str::AbstractString="", font=nothing, offset=0) = titles_e_comp(str, font, offset, "z")
-function titles_e_comp(str::AbstractString, fnt, offset, tipo::String="")::Tuple{String, String}
-	f::String = (fnt !== nothing) ? font(fnt) : ""
+title(; str::AbstractString="",  font="", offset=0) = titles_e_comp(str, font, offset, "")
+subtitle(; str::AbstractString="", font="", offset=0) = titles_e_comp(str, font, offset, "s")
+xlabel(; str::AbstractString="", font="", offset=0) = titles_e_comp(str, font, offset, "x")
+ylabel(; str::AbstractString="", font="", offset=0) = titles_e_comp(str, font, offset, "y")
+zlabel(; str::AbstractString="", font="", offset=0) = titles_e_comp(str, font, offset, "z")
+function titles_e_comp(str::AbstractString, fnt, offset, tipo::String)::Tuple{String, String}
+	f::String = (fnt !== "") ? font(fnt) : ""
 	o::String = (offset != 0) ? string(offset) : ""
-	(str == "") && return str, ""
-	if (tipo == "")
-		r2 = (f != "") ? " --FONT_TITLE=" * f : ""
-		(o != "") && (r2 *= " --MAP_TITLE_OFFSET=" * o)
+	(str === "") && return str, ""
+	if (tipo === "")
+		r2 = (f !== "") ? " --FONT_TITLE=" * f : ""
+		(o !== "") && (r2 *= " --MAP_TITLE_OFFSET=" * o)
 	elseif (tipo == "s")
-		r2 = (f != "") ? " --FONT_SUBTITLE=" * f : ""
+		r2 = (f !== "") ? " --FONT_SUBTITLE=" * f : ""
 	else
-		r2 = (f != "") ? " --FONT_LABEL=" * f : ""
-		(o != "") && (r2 *= " --MAP_LABEL_OFFSET=" * o)
+		r2 = (f !== "") ? " --FONT_LABEL=" * f : ""
+		(o !== "") && (r2 *= " --MAP_LABEL_OFFSET=" * o)
 	end
-	replace(str_with_blancs(str), ' '=>'\x7f'), r2
+	return replace(str_with_blancs(str), ' ' => '\x7f'), r2
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -4162,7 +4162,7 @@ Finish the PostScript file and convert&display the figure.
 - `figname`: To create a figure in local directory and with a name `figname`. If `figname` has an extension,
    that is used to select the fig format. *e.g.* `figname=fig.pdf` creates a PDF file localy called 'fig.pdf' 
 """
-function showfig(d::Dict, fname_ps::String, fname_ext::String, opt_T::String, K::Bool=false, fname::String="")
+function showfig(d::Dict{Symbol, Any}, fname_ps::String, fname_ext::String, opt_T::String, K::Bool=false, fname::String="")
 	# Take a PS file, convert it with psconvert (unless opt_T == "" meaning file is PS)
 	# and display it in default system viewer
 	# FNAME_EXT holds the extension when not PS
