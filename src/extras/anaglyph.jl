@@ -16,8 +16,8 @@ Generate an anaglyph image from the input grid `G`.
 An anaglyph image suitable for viewing with red-cyan glasses.
 
 ### Example
-```julia
-	I = anaglyph("@earth_relief_01d.grd", region="-13/-5.5/35/44")
+```
+	I = anaglyph("@earth_relief_30s.grd", region="-13/-5.5/35/44")
 ```
 """
 function anaglyph(fname::String, vscale=1, sscale=2; kw...)

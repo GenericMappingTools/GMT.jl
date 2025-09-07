@@ -41,4 +41,7 @@
 	I = gmtread(GMT.TESTSDIR * "assets/coins.jpg");
 	binarize(I, band=1);
 	binarize(I, [30, 80]);
+
+	# Anaglyph
+	anaglyph("@earth_relief_10m", region=(-10.5, -5, 35, 44));
 end

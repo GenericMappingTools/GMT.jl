@@ -51,8 +51,8 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_Q_grdgrad(d::Dict, symbs::Array{<:Symbol}, cmd::String)
 	(SHOW_KWARGS[1]) && return print_kwarg_opts(symbs, "String")
-    if ((val = find_in_dict(d, symbs)[1]) !== nothing)
-		val = string(val)[1]
+    if ((val_ = hlp_desnany_str(d, symbs)) !== "")
+		val = val_[1]
 		(val == 's') && (val = 'c')
 		(val == 'c' || val == 'r' || val == 'R') && (cmd *= " -Q" * val)
     end
