@@ -195,7 +195,7 @@ end
 Base.:<=(I::GMTimage{T}, val::Real) where T <: Unsigned = mat2img(collect(I.image .<= val), I)
 
 # ---------------------------------------------------------------------------------------------------
-function Base.:>(G1::GMTgrid, val::Number)
+function Base.:<(val::Number, G1::GMTgrid)
 	epsg, geog, range, inc, registration, nodata, x, y, v, pad = dup_G_meta(G1)
 	G2 = GMTgrid(G1.proj4, G1.wkt, epsg, geog, range, inc, registration, nodata, "", "", "", "", G1.names, x, y, v,
 	             UInt8.(G1.z .> val), G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, G1.hasnans)
@@ -203,10 +203,10 @@ function Base.:>(G1::GMTgrid, val::Number)
 	return G2
 end
 # For images
-Base.:>(I::GMTimage{T}, val::Real) where T <: Unsigned = mat2img(collect(I.image .> val), I)
+Base.:<(val::Real, I::GMTimage{T}) where T <: Unsigned = mat2img(collect(I.image .> val), I)
 
 # ---------------------------------------------------------------------------------------------------
-function Base.:>=(G1::GMTgrid, val::Number)
+function Base.:<=(val::Number, G1::GMTgrid)
 	epsg, geog, range, inc, registration, nodata, x, y, v, pad = dup_G_meta(G1)
 	G2 = GMTgrid(G1.proj4, G1.wkt, epsg, geog, range, inc, registration, nodata, "", "", "", "", G1.names, x, y, v,
 	             UInt8.(G1.z .>= val), G1.x_unit, G1.y_unit, G1.v_unit, G1.z_unit, G1.layout, 1f0, 0f0, pad, G1.hasnans)
@@ -214,7 +214,7 @@ function Base.:>=(G1::GMTgrid, val::Number)
 	return G2
 end
 # For images
-Base.:>=(I::GMTimage{T}, val::Real) where T <: Unsigned = mat2img(collect(I.image .>= val), I)
+Base.:<=(val::Real, I::GMTimage{T}) where T <: Unsigned = mat2img(collect(I.image .>= val), I)
 
 # ---------------------------------------------------------------------------------------------------
 """
