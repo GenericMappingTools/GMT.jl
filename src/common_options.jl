@@ -1089,32 +1089,29 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 
 	function titlices(d::Dict, arg, fun::Function)
 		# Helper function to deal with setting title & cousins while controling also Font & Offset 
-		if (haskey(d, Symbol(fun)))
-			if isa(arg, StrSymb)	
-				farg = arg
-				if (string(arg) == "auto")
-					farg = (fun == xlabel) ? CTRL.XYlabels[1] : (fun == ylabel) ? CTRL.XYlabels[2] : "auto"
-					(farg == "") && (farg = "auto")		# Can't take the risk of letting go a "". GMT would (Ghrr) error
-				end
-				_tt, a_par = replace(str_with_blancs(farg), ' '=>'\x7f'), ""
-				_tt = replace(_tt, ">" => "\\076")		# Avoid the shit of the shells taking precedence in parsing the > and < symbols
-				_tt = replace(_tt, "<" => "\\074")
-			else
-				_tt, a_par = fun(;arg...)
+		if isa(arg, StrSymb)	
+			farg = arg
+			if (string(arg) == "auto")
+				farg = (fun == xlabel) ? CTRL.XYlabels[1] : (fun == ylabel) ? CTRL.XYlabels[2] : "auto"
+				(farg == "") && (farg = "auto")		# Can't take the risk of letting go a "". GMT would (Ghrr) error
 			end
-			delete!(d, Symbol(fun));
-			_tt, a_par
+			_tt, a_par = replace(str_with_blancs(farg), ' '=>'\x7f'), ""
+			_tt = replace(_tt, ">" => "\\076")		# Avoid the shit of the shells taking precedence in parsing the > and < symbols
+			_tt = replace(_tt, "<" => "\\074")
+		else
+			_tt, a_par = fun(; arg...)
 		end
+		_tt, a_par
 	end
 
 	# Let the :title and x|y_label be given on main kwarg list. Risky if used with NamedTuples way.
 	t::String = ""		# Use the trick to replace blanks by Char(127) (invisible) and undo it in extra_parse
 	extra_par::String, tt::String, ep::String = "", "", ""
-	if (haskey(d, :title) && d[:title] != "")     tt, extra_par = titlices(d, d[:title], title); t *= "+t" * tt  end
-	if (haskey(d, :subtitle) && d[:subtitle] != "") tt, ep = titlices(d, d[:subtitle], subtitle);t *= "+s" * tt;   extra_par *= ep  end
-	if (haskey(d, :xlabel) && d[:xlabel] != "")   tt, ep = titlices(d, d[:xlabel], xlabel);      t *= " x+l" * tt; extra_par *= ep  end
-	if (haskey(d, :ylabel) && d[:ylabel] != "")   tt, ep = titlices(d, d[:ylabel], ylabel);      t *= " y+l" * tt; extra_par *= ep  end
-	if (haskey(d, :zlabel) && d[:zlabel] != "")   tt, ep = titlices(d, d[:zlabel], zlabel);      t *= " z+l" * tt; extra_par *= ep  end
+	if ((v = find_in_dict(d, [:title])[1]) !== nothing && v !== "")    tt, extra_par = titlices(d, v, title); t *= "+t" * tt  end
+	if ((v = find_in_dict(d, [:subtitle])[1]) !== nothing && v !== "") tt, ep = titlices(d, v, subtitle); t *= "+s" * tt;   extra_par *= ep  end
+	if ((v = find_in_dict(d, [:xlabel])[1]) !== nothing && v !== "")   tt, ep = titlices(d, v, xlabel);   t *= " x+l" * tt; extra_par *= ep  end
+	if ((v = find_in_dict(d, [:ylabel])[1]) !== nothing && v !== "")   tt, ep = titlices(d, v, ylabel);   t *= " y+l" * tt; extra_par *= ep  end
+	if ((v = find_in_dict(d, [:zlabel])[1]) !== nothing && v !== "")   tt, ep = titlices(d, v, zlabel);   t *= " z+l" * tt; extra_par *= ep  end
 	delete!(d, :title); delete!(d, :subtitle); delete!(d, :xlabel); delete!(d, :ylabel); delete!(d, :zlabel)# If == "" they were still there
 
 	if (t != "")
