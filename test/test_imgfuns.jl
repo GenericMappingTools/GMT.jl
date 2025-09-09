@@ -43,5 +43,6 @@
 	binarize(I, [30, 80]);
 
 	# Anaglyph
-	anaglyph("@earth_relief_10m", region=(-10.5, -5, 35, 44));
+	anaglyph("@earth_relief_10m", region=(-10, -6, 36, 42));
+	anaglyph("@earth_relief_10m", region=(-10, -6, 36, 42), view3d=true);
 end
