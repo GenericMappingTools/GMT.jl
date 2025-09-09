@@ -13,11 +13,11 @@ Generate an anaglyph image from the input grid `G`.
 - `G`: The input GMTgrid or filename of data to be processed.
 
 ### Kwargs
-- `vscale`: Terrain vertical scale factor (default: 1).
-- `sscale`: Stereo separation scale factor (default: 2).
+- `vscale`: Terrain vertical scale factor (default: 1). Applyies only to first method.
+- `sscale`: Stereo separation scale factor (default: 2). . Applyies only to first method.
 - `R`: Region of interest when reading a grid from disk (default: entire grid).
    Ignored when `G` is a GMTgrid.
-- `view3d`: If true, selects an alternative method that generates 2 3D views using the `grdview` program 
+- `view3d`: If true, selects an alternative and slower method that generates 2 3D views using the `grdview` program 
    and construct the anaglyph from those two images (default: false).
 - `zsize`: z-axis size of the 3D view. Same as in `grdview` (default: 4 cm).
 - `azim`: Azimuth of the 3D view (default: 190).
@@ -69,12 +69,8 @@ function anaglyph(G::GMTgrid; vscale=1, sscale=2, view3d=false, zsize=4, azim=19
 
 	sh = imagesc(gra(G, m_scale))		# A gray-scale image
 
-	if isgeog(G)
-		deg2m = 111194.9
-		p_size = sqrt((G.inc[1] * deg2m) * (G.inc[2] * deg2m * cosd((G.range[3] + G.range[4]) * 0.5)))
-	else
-		p_size = G.inc[1] * G.inc[2]
-	end
+	deg2m = 111194.9
+	p_size = isgeog(G) ? sqrt((G.inc[1] * deg2m) * (G.inc[2] * deg2m * cosd((G.range[3] + G.range[4]) * 0.5))) : G.inc[1] * G.inc[2]
 
 	z_min, z_max = G.range[5], G.range[6] + 1
 	alpha = tand(25) * sscale / p_size
