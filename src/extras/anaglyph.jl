@@ -1,33 +1,55 @@
 """
-	I = anaglyph(G|fname, vscale=1, sscale=2; kw...)
+	I = anaglyph(G|fname; vscale=1, sscale=2, kw...)
+
+---
+
+	I = anaglyph(G|fname; view3d::Bool=false, zsize=4, azim=190, dazim=2, cmap="gray", kw...)
+
+---
 
 Generate an anaglyph image from the input grid `G`.
 
 ### Args
 - `G`: The input GMTgrid or filename of data to be processed.
-- `vscale`: Vertical scale factor (default: 1).
-- `sscale`: Stereo separation scale factor (default: 2).
 
 ### Kwargs
+- `vscale`: Terrain vertical scale factor (default: 1).
+- `sscale`: Stereo separation scale factor (default: 2).
 - `R`: Region of interest when reading a grid from disk (default: entire grid).
-  Ignored when `G` is a GMTgrid.
+   Ignored when `G` is a GMTgrid.
+- `view3d`: If true, selects an alternative method that generates 2 3D views using the `grdview` program 
+   and construct the anaglyph from those two images (default: false).
+- `zsize`: z-axis size of the 3D view. Same as in `grdview` (default: 4 cm).
+- `azim`: Azimuth of the 3D view (default: 190).
+- `dazim`: Azimuth step (default: 2). It means, create the anaglyph from the pair of images obtained
+   with `azim` and `azim - dazim`.
+- `cmap`: Color map (default: "gray").
 
 ### Returns
 An anaglyph image suitable for viewing with red-cyan glasses.
 
+### Credits
+The method that uses the grid's gradient is based on an ancient program called ManipRaster by Tierrt Souriot.
+The second method, the one that uses the `grdview` program, was proposed by Tim Hume in the GMT forum.
+(https://forum.generic-mapping-tools.org/t/bringing-the-third-dimension-to-gmt-stereograms/6189)
+
 ### Example
-```julia
+```
 	I = anaglyph("@earth_relief_30s", region="-13/-5.5/35/44")
 ```
 """
-function anaglyph(fname::String, vscale=1, sscale=2; kw...)
+function anaglyph(fname::String; vscale=1, sscale=2, view3d::Bool=false, zsize=4, azim=190, dazim=2, cmap="gray", kw...)
+
 	d = KW(kw)
 	opt_R::String = parse_R(d, "")[2]
 	G = (opt_R === "") ? gmtread(fname) : gmtread(fname, R=opt_R[4:end])
 	!isa(G, GMTgrid) && error("Input must be a GMTgrid")
-	anaglyph(G, vscale, sscale)
+	return view3d ? anaglyph_3d(G, zsize=zsize, azim=azim, dazim=dazim, cmap=cmap) : anaglyph(G, vscale, sscale)
 end
-function anaglyph(G::GMTgrid, vscale=1, sscale=2; kw...)
+
+function anaglyph(G::GMTgrid; vscale=1, sscale=2, view3d=false, zsize=4, azim=190, dazim=2, cmap="gray")
+
+	view3d && return anaglyph_3d(G, zsize=zsize, azim=azim, dazim=dazim, cmap=cmap)
 
 	m_scale = -vscale / 50	# Amp factor
 
@@ -88,4 +110,29 @@ function anaglyph(G::GMTgrid, vscale=1, sscale=2; kw...)
 		left .= UInt8(0);	right .= UInt8(0)
 	end
 	mat2img(argg, G)
+end
+
+# ---------------------------------------------------------------------------------------------------
+function anaglyph_3d(G::GMTgrid; zsize=4, azim=190, dazim=2, cmap="gray")
+
+	p_left, p_right = "$(azim)/30/0", "$(azim - dazim)/30/0"
+	pato = TMPDIR_USR[1] * "/" * "GMTjl_" * TMPDIR_USR[2] * TMPDIR_USR[3]
+	grdview(G, J="Q20c", JZ="$zsize", B=:none, C=string(cmap), Q=:i, p=p_left, I=true, figname=pato * ".jpg")
+	Il = gdalread(pato * ".jpg", "-b 1", layout="TCBa")
+	nr_l, nc_l = size(Il,1), size(Il,2)
+	grdview(G, J="Q20c", JZ="$zsize", B=:none, C=string(cmap), Q=:i, p=p_right, I=true, figname=pato * ".jpg")
+	Ir = gdalread(pato * ".jpg", layout="TCBa")
+	nr_r, nc_r = size(Ir,1), size(Ir,2)
+
+	center_left  = (nr_l ÷ 2 + 1, nc_l ÷ 2 + 1)
+	center_right = (nr_r ÷ 2 + 1, nc_r ÷ 2 + 1)
+
+	nc, nr = round(Int, min(nc_l, nc_r)*0.85), round(Int, min(nr_l, nr_r)*0.85)
+	nc2, nr2 = div(nc, 2), div(nr, 2)
+
+	im_right = Ir[center_right[1]-nr2:center_right[1]+nr2 , center_right[2]-nc2:center_right[2]+nc2, :]
+	im_left  = Il[center_left[1]-nr2:center_left[1]+nr2 , center_left[2]-nc2:center_left[2]+nc2]
+	im_right[:,:,1] = im_left
+	im_right[:,:,2] = im_right[:,:,3]
+	mat2img(im_right)
 end

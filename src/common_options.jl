@@ -4193,7 +4193,7 @@ function showfig(d::Dict{Symbol, Any}, fname_ps::String, fname_ext::String, opt_
 		gmt(pscvt_cmd * fname_ps * opt_T * " *")
 		reset_theme()
 		out::String = fname_ps[1:end-2] * fname_ext
-		(fname != "") && (out = mv(out, fname, force=true))
+		(fname != "" && fname != out) && (out = mv(out, fname, force=true))
 	elseif (fname_ps != "")
 		(K) && close_PS_file(fname_ps)			# Close the PS file first
 		out = (fname != "") ? mv(fname_ps, fname, force=true) : fname_ps
