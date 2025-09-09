@@ -44,7 +44,7 @@ function anaglyph(fname::String; vscale=1, sscale=2, view3d::Bool=false, zsize=4
 	opt_R::String = parse_R(d, "")[2]
 	G = (opt_R === "") ? gmtread(fname) : gmtread(fname, R=opt_R[4:end])
 	!isa(G, GMTgrid) && error("Input must be a GMTgrid")
-	return view3d ? anaglyph_3d(G, zsize=zsize, azim=azim, dazim=dazim, cmap=cmap) : anaglyph(G, vscale, sscale)
+	return view3d ? anaglyph_3d(G, zsize=zsize, azim=azim, dazim=dazim, cmap=cmap) : anaglyph(G, vscale=vscale, sscale=sscale)
 end
 
 function anaglyph(G::GMTgrid; vscale=1, sscale=2, view3d=false, zsize=4, azim=190, dazim=2, cmap="gray")
