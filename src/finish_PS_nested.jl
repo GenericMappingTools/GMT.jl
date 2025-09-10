@@ -132,7 +132,7 @@ function add_opt_module_barr1(nt, symb::Symbol)::Union{String, Vector{String}}
 			r = clip!(""; Vd=2, nt...)
 			is_coast = false
 		end
-		r = r[1:findfirst(" -K", r)[1]];	# Remove the "-K -O >> ..."
+		((ff = findfirst(" -K", r)) !== nothing) && (r = r[1:ff[1]])	# Remove the "-K -O >> ..."
 		opt_R = scan_opt(r, "-R", true)
 		r = replace(r, opt_R * " -J" => "")	# Mus fish -R first because now all -R are complete (not just -R)
 		r = (is_coast) ? "clip " * r : "clip " * strtok(r)[2]	# coast case returns a "clip pscoast ..." string that caller can parse 

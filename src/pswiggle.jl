@@ -86,5 +86,6 @@ function wiggle_helper(cmd0::String, arg1; first=true, kw...)
 
 	_cmd = [gmt_proggy * cmd]
 	_cmd = frame_opaque(_cmd, gmt_proggy, opt_B, opt_R, opt_J)		# No -t in frame
+	((r = check_dbg_print_cmd(d, _cmd)) !== nothing) && return r
 	prep_and_call_finish_PS_module(d, _cmd, "", K, O, true, arg1)
 end

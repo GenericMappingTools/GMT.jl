@@ -90,8 +90,9 @@ function legend(cmd0::String="", arg1=nothing; first::Bool=true, kwargs...)
 	#!contains(opt_D, "+w") && error("The `position` argument MUST contain the legend's width specification.")
 	cmd *= opt_D
 	isa(arg1, NamedTuple) && (arg1 = text_record(Base.invokelatest(mk_legend, arg1)))
-	if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end
-	r = prep_and_call_finish_PS_module(d, gmt_proggy * cmd, "", K, O, true, arg1)
+	cmd = gmt_proggy * cmd
+	((r = check_dbg_print_cmd(d, cmd)) !== nothing) && return r
+	r = prep_and_call_finish_PS_module(d, cmd, "", K, O, true, arg1)
 	gmt("destroy")
 	return r
 end

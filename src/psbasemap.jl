@@ -66,6 +66,7 @@ function helper_basemap(O::Bool, K::Bool, d::Dict{Symbol, Any})
 	#(IamModern[1] && opt_D != "") && @warn("The `inset` option is not available in modern mode. Please use the `inset()` function.")
 	_cmd = finish_PS_nested(d, [proggy * cmd])
 	CTRL.pocket_d[1] = d		# Store d that may be not empty with members to use in other modules
+	((r = check_dbg_print_cmd(d, _cmd)) !== nothing) && return r
 	prep_and_call_finish_PS_module(d, _cmd, "", K, O, true)
 end
 
