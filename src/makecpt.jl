@@ -60,7 +60,7 @@ function makecpt(cmd0::String="", arg1=nothing; kwargs...)::Union{String, GMTcpt
 end
 function makecpt(cmd0::String, arg1, d::Dict)::Union{String, GMTcpt}
 
-	cmd, = parse_common_opts(d, "", [:V_params])
+	cmd = parse_V_params(d, "")
 
 	# This deals with the special case of, for example, "makecpt(G, cmap=:gray"). Here, we recieve (makecpt(G,...) is comp)
 	# a (C=nothing, cmap=:gray) and because 'C' is searched first we would loose the cmap=:gray. Solution is to delete :C
@@ -76,11 +76,21 @@ function makecpt(cmd0::String, arg1, d::Dict)::Union{String, GMTcpt}
 	cmd = "makecpt " * cmd
 	(dbg_print_cmd(d, cmd) !== nothing) && return cmd
 	(arg1 === nothing && !isempty(Tvec)) && (arg1 = Tvec; Tvec = Float64[])
-	_r = gmt(cmd, arg1, !isempty(Tvec) ? Tvec : nothing)
+	_r = gmt_GMTcpt(cmd, arg1, !isempty(Tvec) ? Tvec : nothing)
 	r::GMTcpt = (_r !== nothing) ? _r : GMTcpt()	# _r === nothing when we save CPT on disk.
 	@assert (r isa GMTcpt)
 	(got_N && !isempty(r)) && (r.bfn = ones(3,3))	# Cannot remove the bfn like in plain GMT so make it all whites
 	CTRL.pocket_d[1] = d					# Store d that may be not empty with members to use in other modules
+	CURRENT_CPT[1] = r
+	return r
+end
+
+function makecpt_raw(cmd::String)::GMTcpt
+	# Raw version that already knows what the command is and has no input data.
+	!startswith(cmd, "makecpt ") && (cmd = "makecpt " * cmd)
+	_r = gmt_GMTcpt(cmd, nothing)
+	r::GMTcpt = (_r !== nothing) ? _r : GMTcpt()	# _r === nothing when we save CPT on disk.
+	(contains(cmd, " -N") && !isempty(r)) && (r.bfn = ones(3,3))	# Cannot remove the bfn like in plain GMT so make it all whites
 	CURRENT_CPT[1] = r
 	return r
 end
