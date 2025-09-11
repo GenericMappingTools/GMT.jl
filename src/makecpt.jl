@@ -60,7 +60,7 @@ function makecpt(cmd0::String="", arg1=nothing; kwargs...)::Union{String, GMTcpt
 end
 function makecpt(cmd0::String, arg1, d::Dict)::Union{String, GMTcpt}
 
-	cmd, = parse_common_opts(d, "", [:V_params])
+	cmd = parse_V_params(d, "")
 
 	# This deals with the special case of, for example, "makecpt(G, cmap=:gray"). Here, we recieve (makecpt(G,...) is comp)
 	# a (C=nothing, cmap=:gray) and because 'C' is searched first we would loose the cmap=:gray. Solution is to delete :C

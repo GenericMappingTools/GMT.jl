@@ -229,13 +229,11 @@ function gmt(cmd::String, args...)
 		return out[1], out[2]
 	elseif (n_out == 3)
 		return out[1], out[2], out[3]
-	else
-		return out
 	end
 
 end
 
-gmt_GMTdataset(cmd::String, args...)::GMTdataset{Float64,2} = gmt(cmd, args...)
+gmt_GMTdataset(cmd::String, args...)::Union{GMTdataset{Float64,2}, Vector{<:GMTdataset{Float64,2}}} = gmt(cmd, args...)
 gmt_GMTgrid(cmd::String, args...)::GMTgrid{Float32,2} = gmt(cmd, args...)::GMTgrid{Float32,2}
 
 # -----------------------------------------------------------------------------------------------

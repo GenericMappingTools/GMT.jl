@@ -97,7 +97,7 @@ end
 function GMTsyntax_opt(d::Dict, cmd::String, del::Bool=true)::Tuple{String, String}
 	o::String = ""
 	if haskey(d, :compact)
-		o = d[:compact]
+		o = d[:compact]::String
 		(o == "") && (delete!(d, :compact); return cmd, "")
 		cmd = (o[1] == ' ') ? cmd * o : cmd * " " * o
 		del && delete!(d, :compact)
@@ -239,22 +239,16 @@ function merge_R_and_xyzlims(d::Dict, opt_R::String)::String
 	xlim, ylim, zlim = parse_lims(d, 'x'), parse_lims(d, 'y'), parse_lims(d, 'z')
 =#
 	function fetch_xyz_lims(d::Dict, symbs)::String
-		return ((val = find_in_dict(d, symbs, false)[1]) !== nothing) ? @sprintf("%.15g/%.15g", val[1], val[2]) : ""
+		((val = find_in_dict(d, symbs, false)[1]) === nothing) && return ""
+		f1::Float64, f2::Float64 = Float64(val[1]), Float64(val[2])		# Avoid sending Anys to printf. The pure horror acording to JET
+		return @sprintf("%.15g/%.15g", f1, f2)
 	end
 
 	xlim::String = fetch_xyz_lims(d, [:xlim :xlims :xlimits])
 	ylim::String = fetch_xyz_lims(d, [:ylim :ylims :ylimits])
 	zlim::String = fetch_xyz_lims(d, [:zlim :zlims :zlimits])
 
-#=
-	xlim::String = ((val = find_in_dict(d, [:xlim :xlims :xlimits], false)[1]) !== nothing) ?
-	                sprintf("%.15g/%.15g", val[1], val[2]) : ""
-	ylim::String = ((val = find_in_dict(d, [:ylim :ylims :ylimits], false)[1]) !== nothing) ?
-	                sprintf("%.15g/%.15g", val[1], val[2]) : ""
-	zlim::String = ((val = find_in_dict(d, [:zlim :zlims :zlimits], false)[1]) !== nothing) ?
-	                sprintf("%.15g/%.15g", val[1], val[2]) : ""
-=#
-	(xlim == "" && ylim == "" && zlim == "") && return opt_R
+	(xlim === "" && ylim === "" && zlim === "") && return opt_R
 
 	function clear_xyzlims(d::Dict, xlim, ylim, zlim)
 		# When calling this fun, if they exist they were used too so must remove them
@@ -1452,7 +1446,7 @@ function parse_UXY(cmd::String, d::Dict, aliases, opt::Char)::String
 	end
 	# If -X|Y assume it's a new fig so plot any legend that may be trailing around.
 	# This may screw but also screws if we don't do it. 
-	(symb in [:X :xshift :x_offset :Y :yshift :y_offset]) && digests_legend_bag(d)
+	(symb in [:X :xshift :x_offset :Y :yshift :y_offset]) && digests_legend_bag(d)	# FORCES RECOMPILE
 	return cmd
 end
 
@@ -2926,8 +2920,8 @@ function data_type(val)
 end
 
 # ---------------------------------------------------------------------------------------------------
-axis(nt::NamedTuple, D::Dict=Dict(); x::Bool=false, y::Bool=false, z::Bool=false, secondary::Bool=false) = axis(D; x=x, y=y, z=z, secondary=secondary, nt...)
-function axis(D::Dict=Dict(); x::Bool=false, y::Bool=false, z::Bool=false, secondary::Bool=false, kwargs...)::Tuple{String, Vector{Bool}}
+axis(nt::NamedTuple, D::Dict=Dict{Symbol,Any}(); x::Bool=false, y::Bool=false, z::Bool=false, secondary::Bool=false) = axis(D; x=x, y=y, z=z, secondary=secondary, nt...)
+function axis(D::Dict=Dict{Symbol,Any}(); x::Bool=false, y::Bool=false, z::Bool=false, secondary::Bool=false, kwargs...)::Tuple{String, Vector{Bool}}
 	d = KW(kwargs)			# These kwargs always come from the fields of a NamedTuple 
 	axis(D, x, y, z, secondary, d)
 end
@@ -3091,7 +3085,7 @@ function axis(D::Dict, x::Bool, y::Bool, z::Bool, secondary::Bool, d::Dict)::Tup
 		end
 	end
 	consume_used(d, [:corners, :internal, :cube, :noframe, :pole, :title, :subtitle, :seclabel, :label, :xlabel, :ylabel, :zlabel, :Yhlabel, :alabel, :blabel, :clabel, :annot, :annot_unit, :ticks, :ticks_unit, :prefix, :suffix, :grid, :slanted, :custom, :customticks, :pi, :scale, :phase_add, :phase_sub])
-	(length(d) > 0) && println("Warning: the following sub-options were not consumed in 'frame' => ", keys(d))
+	(length(d) > 0) && println("Warning: the following sub-options were not consumed in 'frame' => ", "$(keys(d))") # WTF ???. keys(d) alone FORCES RECOMPILATION OF THE ENTIRE plot() PROGRAM
 	# ----------------------------------------------------
 
 	return opt, [have_Baxes, (opt_Bframe != "")]
