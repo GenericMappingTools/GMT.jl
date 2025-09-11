@@ -67,12 +67,12 @@ function add_opt_module(d::Dict)::Vector{String}
 		elseif (isa(val, NamedTuple))
 			r = add_opt_module_barr1(val, symb)
 		elseif (isa(val, Real) && (val != 0))		# Allow setting coast=true || colorbar=true
-			r = add_opt_module_barr2(symb)
+			r = add_opt_module_barr2(symb)			# FORCES RECOMPILE
 		elseif (symb == :colorbar && (isa(val, StrSymb)))
 			t::Char = lowercase(string(val)[1])		# Accept "Top, Bot, Left" but default to Right
 			anc = (t == 't') ? "TC" : (t == 'b' ? "BC" : (t == 'l' ? "LM" : "RM"))
 			#offsets = get_colorbar_pos(anc)
-			r = colorbar!(pos=(anchor=anc,), B="af", Vd=2)
+			r = colorbar!(pos=(anchor=anc,), B="af", Vd=2)		# FORCES RECOMPILE
 		elseif (symb == :clip)
 			if (isa(val, String) || isa(val, Symbol))	# Accept also "land", "water" or "ocean" or DCW country codes(s) or a hard -E string
 				_str::String = string(val)					# Shoot the Any

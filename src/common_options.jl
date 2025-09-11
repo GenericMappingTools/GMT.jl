@@ -1658,8 +1658,8 @@ function parse_helper(cmd::String, d::Dict, symbs::VMs, opt::String, sep='/')::T
 	# Helper function to the parse_?() global options.
 	(SHOW_KWARGS[1]) && return (print_kwarg_opts(symbs, "(Common option not yet expanded)"),"")
 	opt_val::String = ""
-	if ((val = find_in_dict(d, symbs, true)[1]) !== nothing)
-		opt_val = opt * arg2str(val, sep)
+	if ((val = hlp_desnany_arg2str(d, symbs; sep=sep)) !== "")
+		opt_val = string(opt, val)
 		cmd *= opt_val
 	end
 	return cmd, opt_val
@@ -2616,7 +2616,7 @@ function add_opt_cpt(d::Dict, cmd::String, symbs::VMs, opt::Char, N_args::Int=0,
 				(n > 1) ? gmt("grd2cpt -E$n+c -C" * cptname, arg1) : gmt("grd2cpt -C" * cptname, arg1)
 			end
 		else
-			gmt("makecpt " * opt_T * " -C" * cptname)
+			makecpt_raw("makecpt " * opt_T * " -C" * cptname)
 		end
 	end
 
@@ -2626,7 +2626,7 @@ function add_opt_cpt(d::Dict, cmd::String, symbs::VMs, opt::Char, N_args::Int=0,
 			cmd, arg1, arg2, N_args = helper_add_cpt(cmd, opt, N_args, arg1, arg2, val, store)
 		else
 			if (opt_T != "")
-				cpt::GMTcpt = makecpt(opt_T * " -C" * get_color(val))
+				cpt = makecpt_raw("makecpt " * opt_T * " -C" * get_color(val))
 				cmd, arg1, arg2, N_args = helper_add_cpt(cmd, opt, N_args, arg1, arg2, cpt, store)
 			else
 				c = get_color(val)
@@ -2634,7 +2634,7 @@ function add_opt_cpt(d::Dict, cmd::String, symbs::VMs, opt::Char, N_args::Int=0,
 				cmd *= opt_C
 				if (store && c != "" && tryparse(Float32, c) === nothing)	# Because if !== nothing then it's a number and -Cn is not valid
 					try			# Wrap in try because not always (e.g. grdcontour -C) this is a makecpt callable
-						r = isa(arg1, GMTgrid) ?  makecpt(arg1, C=c) : makecpt(opt_C * " -Vq")
+						r = isa(arg1, GMTgrid) ?  makecpt(arg1, C=c) : makecpt_raw("makecpt -Vq " * opt_C)
 						CURRENT_CPT[1] = (r !== nothing) ? r : GMTcpt()
 					catch
 					end
@@ -2656,11 +2656,13 @@ function add_opt_cpt(d::Dict, cmd::String, symbs::VMs, opt::Char, N_args::Int=0,
 	elseif (in_bag && !isempty(CURRENT_CPT[1]))		# If everything else has failed and we have one in the Bag, return it
 		cmd, arg1, arg2, N_args = helper_add_cpt(cmd, opt, N_args, arg1, arg2, CURRENT_CPT[1], false)
 	end
+
 	if (occursin(" -C", cmd))
 		if ((val = hlp_desnany_str(d, [:hinge])) !== "")       cmd *= string("+h", val)  end
 		if ((val = find_in_dict(d, [:meter2unit])[1]) !== nothing)  cmd *= "+U" * parse_unit_unit(val)::String  end
 		if ((val = find_in_dict(d, [:unit2meter])[1]) !== nothing)  cmd *= "+u" * parse_unit_unit(val)::String  end
 	end
+
 	return cmd, arg1, arg2, N_args
 end
 # ---------------------
@@ -3665,7 +3667,7 @@ end
 
 # ------------------------------------------------------------------------
 # Function barrier to avoid mysterious invalidations and recompilations.
-function read_data_barr_1(d, arg_is_nothing)
+function read_data_barr_1(d, arg_is_nothing::Bool)
 	arg = nothing
 	if (haskey(d, :data))
 		arg = mat2ds(d[:data]);		delete!(d, [:data])
@@ -4095,9 +4097,8 @@ function dbg_print_cmd(d::Dict, cmd::Vector{String})
 
 	if (SHOW_KWARGS[1])  SHOW_KWARGS[1] = false; return ""  end	# If in HELP mode
 
-	if ( ((val = find_in_dict(d, [:Vd])[1]) !== nothing) || CONVERT_SYNTAX[1])
+	if ( ((Vd = hlp_desnany_int(d, [:Vd], del=true)) !== -999) || CONVERT_SYNTAX[1])
 		(CONVERT_SYNTAX[1]) && return update_cmds_history(cmd)	# For movies mainly.
-		Vd::Int = Int(val)
 		(Vd <= 0) && (d[:Vd] = 0)		# Later, if Vd == 0, do not print the "not consumed" warnings
 		(Vd <= 0) && return nothing
 

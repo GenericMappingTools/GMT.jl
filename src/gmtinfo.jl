@@ -52,7 +52,15 @@ end
 # ---------------------------------------------------------------------------------------------------
 function gmtinfo_helper(cmd0::String, arg1, d::Dict{Symbol,Any})::Union{String, GMTdataset}
 
-	cmd, = parse_common_opts(d, "", [:V_params :e :f :i :o :r :w :yx])
+	#cmd, = parse_common_opts(d, "", [:V_params :e :f :i :o :r :w :yx])
+	cmd = parse_V_params(d, "")
+	cmd = parse_e(d, cmd)[1]
+	cmd = parse_f(d, cmd)[1]
+	cmd = parse_i(d, cmd)[1]
+	cmd = parse_o(d, cmd)[1]
+	cmd = parse_r(d, cmd)[1]
+	cmd = parse_w(d, cmd)[1]
+	cmd = parse_swap_xy(d, cmd)[1]
 	(endswith(cmd, "-:")) && (cmd *= "i")    # Need to be -:i not -: to not swap output too
 	cmd = parse_these_opts(cmd, d, [[:A :ranges], [:C :numeric :per_column], [:D :center], [:E :get_record], [:F :counts],
 	                                [:L :common_limits], [:S :for_error_bars]])

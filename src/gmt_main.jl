@@ -233,6 +233,7 @@ function gmt(cmd::String, args...)
 
 end
 
+gmt_GMTcpt(cmd::String, args...)::GMTcpt = gmt(cmd, args...)::GMTcpt
 gmt_GMTdataset(cmd::String, args...)::Union{GMTdataset{Float64,2}, Vector{<:GMTdataset{Float64,2}}} = gmt(cmd, args...)
 gmt_GMTgrid(cmd::String, args...)::GMTgrid{Float32,2} = gmt(cmd, args...)::GMTgrid{Float32,2}
 
