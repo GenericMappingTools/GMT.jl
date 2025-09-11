@@ -2539,8 +2539,8 @@ mksymbol(f::Function, arg1; kw...) = mksymbol(f, "", arg1; kw...)
 function hlp_desnany_str(d, s, del=true)::String
 	((val = find_in_dict(d, s, del)[1]) === nothing) ? "" : string(val)
 end
-function hlp_desnany_arg2str(d, s, del=true)::String
-	((val = find_in_dict(d, s, del)[1]) === nothing) ? "" : arg2str(val)
+function hlp_desnany_arg2str(d, s, del=true; sep='/')::String
+	((val = find_in_dict(d, s, del)[1]) === nothing) ? "" : arg2str(val, sep)
 end
 
 # ---------------------------------------------------------------------------------------------------

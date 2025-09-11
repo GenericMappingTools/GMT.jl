@@ -194,7 +194,7 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 			else
 				mima = [extrema(last_non_nothing(arg1, arg2, arg3))...]	# Why 'last'?
 			end
-			r = makecpt(@sprintf("-T%f/%f/65+n -Cturbo -Vq", mima[1]-eps(1e10), mima[2]+eps(1e10)))::GMTcpt
+			r = makecpt_raw(@sprintf("makecpt -T%f/%f/65+n -Cturbo -Vq", mima[1]-eps(1e10), mima[2]+eps(1e10)))
 		else
 			r = CURRENT_CPT[1]
 		end
@@ -1043,7 +1043,7 @@ end
 check_bar_group(arg1) = ( (isa(arg1, Vector{<:GMTdataset}) ? size(arg1[1],2) > 2 : size(arg1,2) > 2) )::Bool
 
 # ---------------------------------------------------------------------------------------------------
-function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill::Vector{String}, got_Ebars::Bool, got_usr_R::Bool, arg1)::Tuple{String, Vector{<:GMTdataset}, String}
+function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill::Vector{String}, got_Ebars::Bool, got_usr_R::Bool, arg1)#::Tuple{String, Vector{<:GMTdataset}, String}
 	# Convert input array into a multi-segment Dataset where each segment is an element of a bar group
 	# Example, plot two groups of 3 bars each: bar([0 1 2 3; 1 2 3 4], xlabel="BlaBla")
 
@@ -1201,7 +1201,7 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill::Vector{Strin
 	end
 
 	if (!got_usr_R)									# Need to recompute -R
-		info::GMTdataset = gmt("gmtinfo -C", _argD)
+		info::GMTdataset = gmt("gmtinfo -C", _argD)		# FORCES RECOMPILE
 		data::Matrix{<:Float64} = info.data
 		(data[3] > 0.0) && (data[3] = 0.0)	# If not negative then must be 0
 		if (!is_hbar)
@@ -1232,7 +1232,7 @@ function recompute_R_4bars!(cmd::String, opt_R::String, arg1)
 	sub_b = ((ind = findfirst("+", opt_S)) !== nothing) ? opt_S[ind[1]:end] : ""	# The +Base modifier
 	(sub_b != "") && (opt_S = opt_S[1:ind[1]-1])# Strip it because we need to (re)find Bar width
 	bw = (isletter(opt_S[end])) ? parse(Float64, opt_S[3:end-1]) : parse(Float64, opt_S[2:end])	# Bar width
-	info = gmt("gmtinfo -C", arg1)		# FORCES RECOMPILE
+	info = gmt("gmtinfo -C", arg1)::GMTdataset{Float64, 2}		# FORCES RECOMPILE
 	dx::Float64 = (info.data[2] - info.data[1]) * 0.005 + bw/2;
 	dy::Float64 = (info.data[4] - info.data[3]) * 0.005;
 	info.data[1] -= dx;	info.data[2] += dx;	info.data[4] += dy;
@@ -1763,8 +1763,9 @@ function sort_visible_triangles(Dv::Vector{<:GMTdataset}; del_hidden=false, zfac
 	(del_hidden != 1 && contains(Dv[1].comment[1], "vwall")) && (del_hidden = true)	# If have vwalls, need to del invis
 	if (del_hidden == 1)		# Remove the triangles that are not visible from the normal view_vec
 		bak_view = CURRENT_VIEW[1]	# Save because mapproject will reset it to "" (parsing on a module that has first = true)
-		t = isgeog(Dv) ? mapproject(Dv, J="t$((Dv[1].ds_bbox[1] + Dv[1].ds_bbox[2])/2)/1:1", C=true, F=true) : Dv	# FORCES RECOMPILE
+		#t = isgeog(Dv) ? mapproject(Dv, J="t$((Dv[1].ds_bbox[1] + Dv[1].ds_bbox[2])/2)/1:1", C=true, F=true) : Dv	# FORCES RECOMPILE
 		#t = isgeog(Dv) ? gmt_GMTdataset("mapproject " * "-Jt$((Dv[1].ds_bbox[1] + Dv[1].ds_bbox[2])/2)/1:1 -C -F") : Dv
+		t = Dv
 		CURRENT_VIEW[1] = bak_view 
 		view_vec = [sin_az * cosd(elev), cos_az * cosd(elev), sin_el]
 		is_vis = [dot(facenorm(t[k].data, zfact=zfact, normalize=false), view_vec) > 0 for k in eachindex(t)]
