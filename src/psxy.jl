@@ -63,7 +63,7 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 		(isa(arg1, GMTdataset) && size(arg1,2) > 1 && !isempty(arg1.colnames)) && (CTRL.XYlabels[1] = arg1.colnames[1]; CTRL.XYlabels[2] = arg1.colnames[2])
 		isa(arg1, Vector{<:GMTdataset}) && !isempty(arg1[1].colnames) && (CTRL.XYlabels[1] = arg1[1].colnames[1]; CTRL.XYlabels[2] = arg1[1].colnames[2])
 		if (is_ternary)  cmd, opt_J = parse_J(d, cmd, default=def_J)
-		else             cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd, caller, O, def_J)	# FORCES RECOMPILE
+		else             cmd, opt_B, opt_J, opt_R = parse_BJR(d, cmd, caller, O, def_J)
 		end
 		# Current parse_B does not add a default -Baz when 3D AND -J has a projection. More or less fix that.
 		if (is3D && opt_B != "" && !contains(opt_B, " -Bz"))
@@ -194,7 +194,7 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 			else
 				mima = [extrema(last_non_nothing(arg1, arg2, arg3))...]	# Why 'last'?
 			end
-			r = makecpt(@sprintf("-T%f/%f/65+n -Cturbo -Vq", mima[1]-eps(1e10), mima[2]+eps(1e10)))
+			r = makecpt(@sprintf("-T%f/%f/65+n -Cturbo -Vq", mima[1]-eps(1e10), mima[2]+eps(1e10)))::GMTcpt
 		else
 			r = CURRENT_CPT[1]
 		end
@@ -215,14 +215,15 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 	(made_it_vector && opt_S == "") && (cmd *= " -Sv+s")	# No set opt_S because it results in 2 separate commands
 
 	# See if any of the scatter, bar, lines, etc... was the caller and if yes, set sensible defaults.
-	_cmd = set_avatar_defaults(d, cmd, mcc, caller, got_usr_R, opt_B, opt_Gsymb, opt_ML, opt_R, opt_S, opt_W, sub_module, g_bar_fill, opt_Wmarker, opt_UVXY, opt_c, O, arg1)
+	_cmd = set_avatar_defaults(d, cmd, mcc, caller, got_usr_R, opt_B, opt_Gsymb, opt_ML, opt_R, opt_S, opt_W,
+	                           sub_module, g_bar_fill, opt_Wmarker, opt_UVXY, opt_c, O, arg1)	# FORCES RECOMPILE
 
 	(got_Zvars && opt_S == "" && opt_W == "" && !occursin(" -G", _cmd[1])) && (_cmd[1] *= " -W0.5")
 	(opt_W == "" && caller == "feather") && (_cmd[1] *= " -W0.1")		# feathers are normally many so better they are thin
 
 	# Let matrices with more data columns, and for which Color info was NOT set, plot multiple lines at once
 	if (!mcc && sub_module == "bar" && check_bar_group(arg1))	# !mcc because the bar-groups all have mcc = false
-		_cmd[1], arg1, cmd2::String = bar_group(d, _cmd[1], opt_R, g_bar_fill, got_Ebars, got_usr_R, arg1)
+		_cmd[1], arg1, cmd2::String = bar_group(d, _cmd[1], opt_R, g_bar_fill, got_Ebars, got_usr_R, arg1)	# FORCES RECOMPILE
 		(cmd2 != "") && (length(_cmd) == 1 ? (_cmd = [cmd2; _cmd[1]]) :
 			(@warn("Can't plot the connector when 'bar' is already a nested call."); CTRL.pocket_call[3] = nothing))
 	end
@@ -346,7 +347,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function set_avatar_defaults(d, cmd, mcc, caller, got_usr_R, opt_B, opt_Gsymb, opt_ML, opt_R, opt_S, opt_W, sub_module, g_bar_fill, opt_Wmarker, opt_UVXY, opt_c, O, arg1)::Vector{String}
 	cmd  = check_caller(d, cmd, opt_S, opt_W, sub_module, g_bar_fill, O)
-	(mcc && caller == "bar" && !got_usr_R && opt_R != " -R") && (cmd = recompute_R_4bars!(cmd, opt_R, arg1))	# Often needed
+	(mcc && caller == "bar" && !got_usr_R && opt_R != " -R") && (cmd = recompute_R_4bars!(cmd, opt_R, arg1))	# Often needed  FORCES RECOMPILE
 	_cmd = build_run_cmd(cmd, opt_B, opt_Gsymb, opt_ML, opt_S, opt_W, opt_Wmarker, opt_UVXY, opt_c)
 	return _cmd
 end
@@ -1012,7 +1013,6 @@ function build_run_cmd(cmd, opt_B, opt_Gsymb, opt_ML, opt_S, opt_W, opt_Wmarker,
 			(opt_ML != "") && (cmd2 = cmd2 * opt_ML)			# If we have a symbol outline pen
 			_cmd = [cmd1; cmd2]
 		end
-
 	else
 		_cmd = [cmd * opt_UVXY]
 	end
@@ -1232,13 +1232,14 @@ function recompute_R_4bars!(cmd::String, opt_R::String, arg1)
 	sub_b = ((ind = findfirst("+", opt_S)) !== nothing) ? opt_S[ind[1]:end] : ""	# The +Base modifier
 	(sub_b != "") && (opt_S = opt_S[1:ind[1]-1])# Strip it because we need to (re)find Bar width
 	bw = (isletter(opt_S[end])) ? parse(Float64, opt_S[3:end-1]) : parse(Float64, opt_S[2:end])	# Bar width
-	info = gmt("gmtinfo -C", arg1)
+	info = gmt("gmtinfo -C", arg1)		# FORCES RECOMPILE
 	dx::Float64 = (info.data[2] - info.data[1]) * 0.005 + bw/2;
 	dy::Float64 = (info.data[4] - info.data[3]) * 0.005;
 	info.data[1] -= dx;	info.data[2] += dx;	info.data[4] += dy;
 	info.data = round_wesn(info.data)		# Add a pad if not-tight
 	new_opt_R::String = @sprintf(" -R%.15g/%.15g/%.15g/%.15g", info.data[1], info.data[2], 0, info.data[4])
 	cmd = replace(cmd, opt_R => new_opt_R)
+	return cmd
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -1762,7 +1763,8 @@ function sort_visible_triangles(Dv::Vector{<:GMTdataset}; del_hidden=false, zfac
 	(del_hidden != 1 && contains(Dv[1].comment[1], "vwall")) && (del_hidden = true)	# If have vwalls, need to del invis
 	if (del_hidden == 1)		# Remove the triangles that are not visible from the normal view_vec
 		bak_view = CURRENT_VIEW[1]	# Save because mapproject will reset it to "" (parsing on a module that has first = true)
-		t = isgeog(Dv) ? mapproject(Dv, J="t$((Dv[1].ds_bbox[1] + Dv[1].ds_bbox[2])/2)/1:1", C=true, F=true) : Dv
+		t = isgeog(Dv) ? mapproject(Dv, J="t$((Dv[1].ds_bbox[1] + Dv[1].ds_bbox[2])/2)/1:1", C=true, F=true) : Dv	# FORCES RECOMPILE
+		#t = isgeog(Dv) ? gmt_GMTdataset("mapproject " * "-Jt$((Dv[1].ds_bbox[1] + Dv[1].ds_bbox[2])/2)/1:1 -C -F") : Dv
 		CURRENT_VIEW[1] = bak_view 
 		view_vec = [sin_az * cosd(elev), cos_az * cosd(elev), sin_el]
 		is_vis = [dot(facenorm(t[k].data, zfact=zfact, normalize=false), view_vec) > 0 for k in eachindex(t)]
@@ -1770,7 +1772,8 @@ function sort_visible_triangles(Dv::Vector{<:GMTdataset}; del_hidden=false, zfac
 	end
 
 	# ---------------------- Now sort by distance to the viewer ----------------------
-	Dc = gmtspatial(Dv, Q=true, o="0,1")	# Should this directly in Julia and avoid calling GMT (=> a copy of Dv)
+	#Dc = gmtspatial(Dv, Q=true, o="0,1")	# Should this directly in Julia and avoid calling GMT (=> a copy of Dv)
+	Dc::GMTdataset{Float64,2} = mat2ds(gmt_centroid_area(G_API[1], Dv, Int(isgeog(Dv)), ca=2), geom=wkbPoint)
 	dists = [(Dc.data[1,1] * sin_az + Dc.data[1,2] * cos_az, (Dv[1].bbox[5] + Dv[1].bbox[6]) / 2 * sin_el)]
 	for k = 2:size(Dc, 1)
 		push!(dists, (Dc.data[k,1] * sin_az + Dc.data[k,2] * cos_az, (Dv[k].bbox[5] + Dv[k].bbox[6]) / 2 * sin_el))
