@@ -140,6 +140,8 @@ function _grdcontour_helper(cmd0::String, arg1, O::Bool, K::Bool, d::Dict)
 	_cmd = ["grdcontour " * cmd]
 	_cmd = frame_opaque(_cmd, "grdcontour", opt_B, opt_R, opt_J)		# No -t in frame
 	_cmd = finish_PS_nested(d, _cmd)
+	((r = check_dbg_print_cmd(d, _cmd)) !== nothing) && return r
+	(length(_cmd) == 1 && contains(_cmd[1], " -D")) && return gmt(_cmd[1], arg1, arg2, arg3)	# The dump case is different
 	prep_and_call_finish_PS_module(d, _cmd, opt_extra, K, O, finish, arg1, arg2, arg3)
 end
 

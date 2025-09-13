@@ -4393,8 +4393,20 @@ end
 #validate_VMr(arg)::VMr = return isa(arg, VMr) ? arg : VMr[]
 
 # ---------------------------------------------------------------------------------------------------
+function check_dbg_print_cmd(d::Dict{Symbol, Any}, cmd)::Union{Nothing, String, Vector{String}}
+	if ((r = dbg_print_cmd(d, cmd)) !== nothing)
+		if (CTRL.pocket_J[4] != "   ")		# If CTRL.pocket_J[4] != "   " there is some work to do.
+			isa(r, String) && (r = [r])		# It has to be because reverse_plot_axes!() expects a vector
+			reverse_plot_axes!(r)
+		end
+		return length(r) == 1 ? r[1] : r
+	end
+	return nothing
+end
+
+# ---------------------------------------------------------------------------------------------------
 function prep_and_call_finish_PS_module(d::Dict{Symbol, Any}, cmd, opt_extra::String, K::Bool, O::Bool, finish::Bool,
-                                        arg1=nothing, arg2=nothing, arg3=nothing, arg4=nothing, arg5=nothing)
+                                        arg1=nothing, arg2=nothing, arg3=nothing, arg4=nothing, arg5=nothing)#::Union{Nothing, GMTps, GMTimage}
 	# This is a helper to avoid the long list of args in the finish_PS_module() call
 	case = (arg5 !== nothing) ? 5 : (arg4 !== nothing) ? 4 : (arg3 !== nothing) ? 3 : (arg2 !== nothing) ? 2 : (arg1 !== nothing) ? 1 : 0  
 	if     (case == 0)  R = finish_PS_module(d, cmd, opt_extra, K, O, finish, nothing)	# Need that nothing in a colorbar=true corner case
@@ -4409,7 +4421,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 finish_PS_module(d::Dict, cmd::String, opt_extra::String, K::Bool, O::Bool, finish::Bool, args...) =
 	finish_PS_module(d, [cmd], opt_extra, K, O, finish, args...)
-function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bool, O::Bool, finish::Bool, args...)
+function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bool, O::Bool, finish::Bool, args...)#::Union{Nothing, GMTps, GMTimage}
 	# FNAME_EXT hold the extension when not PS
 	# OPT_EXTRA is used by grdcontour -D or pssolar -I to not try to create and view an img file
 
@@ -4780,7 +4792,7 @@ function put_in_legend_bag(d::Dict, cmd, arg, O::Bool=false, opt_l::String="")
 end
 
 # --------------------------------------------------------------------------------------------------
-function digests_legend_bag(d::Dict, del::Bool=true)
+function digests_legend_bag(d::Dict{Symbol, Any}, del::Bool=true)
 	# Plot a legend if the leg or legend keywords were used. Legend info is stored in LEGEND_TYPE global variable
 	(size(LEGEND_TYPE[1].label, 1) == 0) && return nothing
 
@@ -4879,8 +4891,8 @@ function digests_legend_bag(d::Dict, del::Bool=true)
 	end
 
 	_d = (haskey(dd, :box) && dd[:box] !== nothing) ? dd : haskey(LEGEND_TYPE[1].optsDict, :box) ? LEGEND_TYPE[1].optsDict : Dict{Symbol, Any}()
-	if ((opt_F::String = add_opt(_d, "", "", [:box],
-		(clearance="+c", fill=("+g", add_opt_fill), inner="+i", pen=("+p", add_opt_pen), rounded="+r", shade="+s"); del=false)) == "")
+	opt_F::String = add_opt(_d, "", "", [:box], (clearance="+c", fill=("+g", add_opt_fill), inner="+i", pen=("+p", add_opt_pen), rounded="+r", shade="+s"); del=false)		# FORCES RECOMPILE plot
+	if (opt_F == "")
 		opt_F = "+p0.5+gwhite"
 	else
 		if (opt_F == "none")
@@ -4899,6 +4911,10 @@ function digests_legend_bag(d::Dict, del::Bool=true)
 
 	return nothing
 end
+
+#function add_opt2(d::Dict, cmd::String, opt::String, symbs::VMs, mapa; grow_mat=nothing, del::Bool=true, expand::Bool=false, expand_str::Bool=false)::String
+	#return cmd
+#end
 
 # ---------------------------------------------------------------------------------------------------
 function get_legend_font(d::Dict, fs=0; modern::Bool=false)::String

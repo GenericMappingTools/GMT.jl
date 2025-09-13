@@ -233,6 +233,7 @@ function histogram_helper(cmd0::String, arg1, O::Bool, K::Bool, d::Dict{Symbol,A
 	_cmd = fish_bg(d, _cmd)					# See if we have a "pre-command" (background img)
 
 	# Plot the histogram
+	((r = check_dbg_print_cmd(d, _cmd)) !== nothing) && return r
 	out1 = prep_and_call_finish_PS_module(d, _cmd, "", K, O, true, arg1, arg2)
 
 	# And if wished, plot the two vertical lines with the limits annotated in them

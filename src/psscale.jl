@@ -48,7 +48,13 @@ Plots gray scales or color scales on maps.
 To see the full documentation type: ``@? colorbar``
 """
 function colorbar(arg1::Union{Nothing, GMTcpt}=nothing; first=true, kwargs...)
+	dbg_cmd, d, cmd, arg1, K, O = colorbar_parser(arg1; first=first, kwargs...)
+	(dbg_cmd !== nothing) && return dbg_cmd
+	r = prep_and_call_finish_PS_module(d, cmd, "", K, O, true, arg1)
+	(!isa(r,String)) && gmt("destroy")      # Probably because of the rasters in cpt
+end
 
+function colorbar_parser(arg1::Union{Nothing, GMTcpt}=nothing; first=true, kwargs...)
 	gmt_proggy = (IamModern[1]) ? "colorbar "  : "psscale "
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
@@ -77,9 +83,9 @@ function colorbar(arg1::Union{Nothing, GMTcpt}=nothing; first=true, kwargs...)
 	(opt_B != "" && !contains(cmd, " -L")) && (cmd *= opt_B)					# If no -B & no -L, add default -B
 	isempty(opt_D) && (cmd *= " -DJMR")			#  So that we can call it with just a CPT
 
-	r = prep_and_call_finish_PS_module(d, gmt_proggy * cmd, "", K, O, true, arg1)
-	(!isa(r,String)) && gmt("destroy")      # Probably because of the rasters in cpt
-	return r
+	cmd = gmt_proggy * cmd
+	r = check_dbg_print_cmd(d, cmd)
+	return r, d, cmd, arg1, K, O
 end
 
 # ---------------------------------------------------------------------------------------------------

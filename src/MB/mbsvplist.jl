@@ -34,5 +34,6 @@ function mbsvplist(cmd0::String=""; kwargs...)
 	(!occursin("-:", cmd)) && (cmd = " -:" * cmd)		# Means that the default here (contrary to C version) is speed-dept
 
 	cmd = "mbsvplist -I" * cmd0 * cmd				# In any case we need this
+	((r = check_dbg_print_cmd(d, cmd)) !== nothing) && return r
 	prep_and_call_finish_PS_module(d, cmd, "", true, false, false)
 end

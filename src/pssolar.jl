@@ -63,6 +63,8 @@ function solar(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	finish_PS_nested(d, [gmt_proggy * cmd]) : [gmt_proggy * cmd]
 	(length(_cmd) > 1 && startswith(_cmd[2], (IamModern[1]) ? "coast" : "pscoast") && !contains(_cmd[1], " -R") &&
 		contains(_cmd[2], " -R ")) && (_cmd[2] = replace(_cmd[2], "-R" => "-Rd"))		# Apparently solar defaults to -Rd but only internally in C
+	((r = check_dbg_print_cmd(d, _cmd)) !== nothing) && return r
+	(length(_cmd) == 1 && (contains(_cmd[1], " -I") || contains(_cmd[1], " -M"))) && return gmt(_cmd[1], arg1)	# The dump case is different
 	prep_and_call_finish_PS_module(d, _cmd, opt_extra, K, O, finish, arg1)
 end
 

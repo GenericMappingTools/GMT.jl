@@ -75,15 +75,15 @@
 	D = [mat2ds([0 0; 0 1; 1 1; 1 0.3; 0 0])[1], mat2ds([1 1; 1 2; 2 2; 2 1; 1 1])[1]];
 	C = makecpt(cmap = :hot, range = (0, 5));
 	r = psxy!(D, C=C, Z=[1,4], pen=2, Vd=2)
-	@test contains(r, " -G+z -L -W2 -K")
+	@test contains(r, " -G+z -L -W2")
 	r = psxy!(D, C=C, Z=[1,4], pen=(pen=2, zlevels=true), Vd=2)
-	@test contains(r, " -G+z -L -W2+z -K")
+	@test contains(r, " -G+z -L -W2+z")
 	r = psxy!(D, C=C, Z=(data=[1,4], outline=true, nofill=true), Vd=2)
-	@test contains(r, " -W0.5+z -K")
+	@test contains(r, " -W0.5+z")
 	r = psxy!(D, C=C, Z=(data=[1,4], outline=true), Vd=2)
-	@test contains(r, " -G+z -L -W0.5+z -K")
+	@test contains(r, " -G+z -L -W0.5+z")
 	r = psxy!(D, C=C, Z=(data=[1,4], nofill=true), Vd=2)
-	@test contains(r, " -W0.5+z -K")
+	@test contains(r, " -W0.5+z")
 
 	D = [mat2ds(rand(5,2), attrib=Dict("a"=>"1")), mat2ds(rand(5,2), attrib=Dict("a"=>"3"))];
 	@test contains(plot(D, Z="att=a", Vd=2), " -Z -C -G+z")
