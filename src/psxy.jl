@@ -32,7 +32,8 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 	cmd, isFV, caller, sub_module, gmt_proggy, opt_A, g_bar_fill, arg1 = parse_plot_callers(d, gmt_proggy, caller, is3D, O, arg1)
 
 	# --------------------- Check the grid2tri cases --------------------
-	cmd, is_gridtri, arg1 = parse_grid2tri_case(d, cmd, caller, is3D, isFV, O, arg1)	# FORCES RECOMPILE
+	#cmd, is_gridtri, arg1 = parse_grid2tri_case(d, cmd, caller, is3D, isFV, O, arg1)	# FORCES RECOMPILE
+	is_gridtri = false
 	
 	isa(arg1, GMTdataset) && (arg1 = with_xyvar(d, arg1))		# See if we have a column request based on column names
 	if ((val = hlp_desnany_int(d, [:decimate])) !== -999)		# Asked for a clever data decimation?
@@ -76,6 +77,7 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 	axis_equal = is_axis_equal(d)		# See if the user asked for an equal aspect ratio
 	cmd, opt_JZ = parse_JZ(d, cmd; O=O, is3D=is3D)
 	cmd, _ = parse_common_opts(d, cmd, [:a :e :f :g :t :w :margin :params]; first=first)	# FORCES RECOMPILE
+#=
 	cmd, opt_l = parse_l(d, cmd)		# Parse this one (legend) aside so we can use it in classic mode
 	cmd, opt_f = parse_f(d, cmd)		# Parse this one (-f) aside so we can check against D.attrib
 	cmd  = parse_these_opts(cmd, d, [[:D :shift :offset], [:I :intens], [:N :no_clip :noclip], [:T]])
@@ -255,6 +257,7 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 	CTRL.pocket_d[1] = d					# Store d that may be not empty with members to use in other modules
 	(opt_B == " -B") && gmt_restart()		# For some Fking mysterious reason (see Ex45)
 	return R
+=#
 end
 
 # ---------------------------------------------------------------------------------------------------

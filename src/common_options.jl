@@ -4879,8 +4879,8 @@ function digests_legend_bag(d::Dict, del::Bool=true)
 	end
 
 	_d = (haskey(dd, :box) && dd[:box] !== nothing) ? dd : haskey(LEGEND_TYPE[1].optsDict, :box) ? LEGEND_TYPE[1].optsDict : Dict{Symbol, Any}()
-	if ((opt_F::String = add_opt(_d, "", "", [:box],
-		(clearance="+c", fill=("+g", add_opt_fill), inner="+i", pen=("+p", add_opt_pen), rounded="+r", shade="+s"); del=false)) == "")
+	opt_F::String = add_opt2(_d, "", "", [:box], (clearance="+c", fill=("+g", add_opt_fill), inner="+i", pen=("+p", add_opt_pen), rounded="+r", shade="+s"); del=false)		# FORCES RECOMPILATION
+	if (opt_F == "")
 		opt_F = "+p0.5+gwhite"
 	else
 		if (opt_F == "none")
@@ -4898,6 +4898,10 @@ function digests_legend_bag(d::Dict, del::Bool=true)
 	LEGEND_TYPE[1] = legend_bag()			# Job done, now empty the bag
 
 	return nothing
+end
+
+function add_opt2(d::Dict, cmd::String, opt::String, symbs::VMs, mapa; grow_mat=nothing, del::Bool=true, expand::Bool=false, expand_str::Bool=false)::String
+	return cmd
 end
 
 # ---------------------------------------------------------------------------------------------------
