@@ -76,19 +76,46 @@ Parameters
 To see the full documentation type: ``@? coast``
 """
 function coast(cmd0::String=""; clip::StrSymb="", first=true, kwargs...)
-	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
-	_coast(cmd0, O, K, string(clip), d)
-end
-function _coast(cmd0::String, O::Bool, K::Bool, clip::String, d::Dict)
+	dbg_cmd, d, cmd, K, O, finish, get_largest, toTrack = coast_parser(first, string(clip); kwargs...)
+	(dbg_cmd !== nothing) && return dbg_cmd
 
+	# Have a big possible break here to allow PS_nested call only the parsing part and hence fck the Julia recompilation eagerness
+
+	# Don't call finish_PS_module if -M because it returns a GDtype instead of a PS
+	R = (length(cmd) == 1 && contains(cmd[1], " -M")) ? gmt(cmd[1]) : prep_and_call_finish_PS_module(d, cmd, "", K, O, finish)
+	CTRL.pocket_d[1] = d					# Store d that may be not empty with members to use in other modules
+	!isa(R, GDtype) && return R				# If R is not a GMTdataset we are done.
+
+	if (get_largest)
+		ind = argmax(size.(R))
+		R = [R[ind]]						# Keep it a vector to be consistent with the other Dump cases
+		R[1].proj4, R[1].geom = prj4WGS84, wkbPolygon
+	end
+
+	if (toTrack != "")						# Mean, get a Z column by interpolating the coastlines over a grid.
+		_R::GDtype = grdtrack(toTrack, R, f="g", s="+a")
+		!isempty(_R) && (R = _R)
+	end
+
+	geom = occursin(" -M", cmd[1]) ? (occursin(" -E", cmd[1]) ? wkbPolygon : wkbLineString) : wkbUnknown
+	n_cols = isa(R, Vector{<:GMTdataset}) ? size(R[1].data, 2) : size(R.data, 2)
+	cnames = (n_cols == 2) ? ["Lon", "Lat"] : ["Lon", "Lat", "Z"]
+	isa(R, Vector{<:GMTdataset}) && (for k = 1:numel(R)  R[k].colnames = cnames; R[k].geom = geom  end; R[1].proj4 = prj4WGS84)
+	isa(R, GMTdataset) && (R.colnames = cnames; R.geom = geom; R.proj4 = prj4WGS84)
+	R
+end
+
+function coast_parser(first::Bool, clip::String; kwargs...)
+
+	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 	gmt_proggy = (IamModern[1]) ? "coast "  : "pscoast "
-	first = !O
 
 	if ((val = hlp_desnany_str(d, [:getR :getregion :get_region], false)) !== "")
 		t::String = string(gmt_proggy, " -E", val)
-		((Vd = hlp_desnany_int(d, [:Vd])) !== -999) && (Vd == 1 ? println(t) : Vd > 1 ? (return t) : nothing)
+		resto = d, "", K, O, true, false, ""
+		((Vd = hlp_desnany_int(d, [:Vd])) !== -999) && (Vd == 1 ? println(t) : Vd > 1 ? (return t, resto...) : nothing)
 		t = parse_V(d::Dict, t)
-		return gmt(t).text[1]::String
+		return gmt(t).text[1]::String, resto...
 	end
 
 	cmd = add_opt(d, "", "M", [:M :dump])
@@ -151,8 +178,8 @@ function _coast(cmd0::String, O::Bool, K::Bool, clip::String, d::Dict)
 	finish = !occursin(" -M",cmd) && !occursin("-E+l", cmd) && !occursin("-E+L", cmd) ? true : false	# Otherwise the dump would be redirected to GMT_user.ps
 
 	# Just let D = coast(R=:PT, dump=true) work without any furthers shits (plain GMT doesn't let it)
-	(occursin(" -M",cmd) && !occursin("-E", cmd) && !occursin("-I", cmd) && !occursin("-N", cmd) && !occursin("-W", cmd) && !occursin("-A", cmd)) &&
-		(cmd *= " -W -A0/1/1")
+	(occursin(" -M",cmd) && !occursin("-E", cmd) && !occursin("-I", cmd) && !occursin("-N", cmd) &&
+		!occursin("-W", cmd) && !occursin("-A", cmd)) && (cmd *= " -W -A0/1/1")
 
 	get_largest = (!finish && occursin(" -E", cmd) && (find_in_dict(d, [:biggest :largest])[1] !== nothing))
 	_cmd = (finish) ? finish_PS_nested(d, [gmt_proggy * cmd]) : [gmt_proggy * cmd]
@@ -165,29 +192,8 @@ function _coast(cmd0::String, O::Bool, K::Bool, clip::String, d::Dict)
 		end
 	end
 
-	((r = check_dbg_print_cmd(d, _cmd)) !== nothing) && return r
-	# Don't call finish_PS_module if -M because it returns a GDtype instead of a PS
-	R = (length(_cmd) == 1 && contains(_cmd[1], " -M")) ? gmt(_cmd[1]) : prep_and_call_finish_PS_module(d, _cmd, "", K, O, finish)
-	CTRL.pocket_d[1] = d					# Store d that may be not empty with members to use in other modules
-	!isa(R, GDtype) && return R				# If R is not a GMTdataset we are done.
-
-	if (get_largest)
-		ind = argmax(size.(R))
-		R = [R[ind]]						# Keep it a vector to be consistent with the other Dump cases
-		R[1].proj4, R[1].geom = prj4WGS84, wkbPolygon
-	end
-
-	if (toTrack != "")						# Mean, get a Z column by interpolating the coastlines over a grid.
-		_R::GDtype = grdtrack(toTrack, R, f="g", s="+a")
-		!isempty(_R) && (R = _R)
-	end
-
-	geom = occursin(" -M", cmd) ? (occursin(" -E", cmd) ? wkbPolygon : wkbLineString) : wkbUnknown
-	n_cols = isa(R, Vector{<:GMTdataset}) ? size(R[1].data, 2) : size(R.data, 2)
-	cnames = (n_cols == 2) ? ["Lon", "Lat"] : ["Lon", "Lat", "Z"]
-	isa(R, Vector{<:GMTdataset}) && (for k = 1:numel(R)  R[k].colnames = cnames; R[k].geom = geom  end; R[1].proj4 = prj4WGS84)
-	isa(R, GMTdataset) && (R.colnames = cnames; R.geom = geom; R.proj4 = prj4WGS84)
-	R
+	r = check_dbg_print_cmd(d, _cmd)
+	return r, d, _cmd, K, O, finish, get_largest, toTrack
 end
 
 # ---------------------------------------------------------------------------------------------------

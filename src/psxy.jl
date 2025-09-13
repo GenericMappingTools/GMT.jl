@@ -241,16 +241,16 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 		append!(_cmd, [ins])		# and add it at the end
 	end
 	if (startswith(_cmd[end], "inset_") && isa(CTRL.pocket_call[4], String))
-		_cmd = zoom_reactangle(_cmd, true)
+		_cmd = zoom_reactangle(_cmd, true)		# FORCES RECOMPILE
 	end
 
-	_cmd = fish_bg(d, _cmd)					# See if we have a "pre-command"
-	_cmd = fish_pagebg(d, _cmd, autoJZ=(is3D && axis_equal))	# Last arg tells if JZ was computed automatically
+	_cmd = fish_bg(d, _cmd)					# See if we have a "pre-command"	# FORCES RECOMPILE
+	_cmd = fish_pagebg(d, _cmd, autoJZ=(is3D && axis_equal))	# Last arg tells if JZ was computed automatically	# FORCES RECOMPILE
 
 	isa(arg1, GDtype) && plt_txt_attrib!(arg1, d, _cmd)			# Function barrier to plot TEXT attributed labels (in case)
 
 	finish = (is_ternary && occursin(" -M",_cmd[1])) ? false : true		# But this case (-M) is bugged still in 6.2.0
-	((r = check_dbg_print_cmd(d, _cmd)) !== nothing) && return r
+	((r = check_dbg_print_cmd(d, _cmd)) !== nothing) && return r		# FORCES RECOMPILE
 	R = prep_and_call_finish_PS_module(d, _cmd, "", K, O, finish, arg1, arg2, arg3, arg4)
 	LEGEND_TYPE[1].Vd = 0					# Because for nested calls with legends this was still > 0, which screwed later
 	CTRL.pocket_d[1] = d					# Store d that may be not empty with members to use in other modules
@@ -789,9 +789,9 @@ function helper_fish_bgs(val)::String
 	if (!gotfname)
 		((arg2 !== nothing) && isa(arg2, String) && (arg2[1] == '-')) && (arg2 = arg2[2:end]; opt_I = " -I")
 		opt_H = (IamModern[1]) ? " -H" : ""
-		C::GMTcpt = (arg2 === nothing) ? gmt("makecpt -T0/256/1 -G0.25/0.94 -Cgray"*opt_I*opt_H) :	# The default gray scale
-		                                 isa(arg2, GMTcpt) ? gmt("makecpt -T0/256/1 -C" * opt_H, arg2) :
-							        	 gmt("makecpt -T0/256/1 -C" * string(arg2)::String * opt_I * opt_H)
+		C::GMTcpt = (arg2 === nothing) ? makecpt_raw("makecpt -T0/256/1 -G0.25/0.94 -Cgray"*opt_I*opt_H) :	# The default gray scale
+		                                 isa(arg2, GMTcpt) ? makecpt(arg2, T="0/256/1 " * opt_H, C=true) :
+							        	 makecpt_raw("makecpt -T0/256/1 -C" * string(arg2)::String * opt_I * opt_H)
 		image_cpt!(I, C)
 		CTRL.pocket_call[3] = I			# This signals finish_PS_module() to run _cmd first
 	end
@@ -1613,11 +1613,10 @@ function zoom_reactangle(_cmd, isplot::Bool)
 	# to the inset window. This is used only (so far) from nested inset() call with auto-zoom.
 	Rs::String = CTRL.pocket_call[4]	# Don't use it directly because it's a Any
 	R = parse.(Float64, split(Rs, "/"))
-	l1, l2 = connect_rectangles(R, CTRL.pocket_call[5])
+	l1, l2 = connect_rectangles(R, CTRL.pocket_call[5])		# FORCES RECOMPILE
 	lc = (isplot) ? "gray" : "black"
 	lw = (isplot) ? [0.5, 0.75, 0.75] : [0.5, 0.5, 0.5]
-	Drec = mat2ds([[R[1] R[3]; R[1] R[4]; R[2] R[4]; R[2] R[3]; R[1] R[3]], l1, l2], lc=lc,
-	              ls=["","dash","dash"], lw=lw)
+	Drec = mat2ds([[R[1] R[3]; R[1] R[4]; R[2] R[4]; R[2] R[3]; R[1] R[3]], l1, l2], lc=lc, ls=["","dash","dash"], lw=lw)
 	put_pocket_call(Drec)				# Store it in CTRL.pocket_call
 	ins = pop!(_cmd)					# Remove the inset call
 	append!(_cmd, ["psxy -R -J -W0.4p"])
@@ -1773,7 +1772,6 @@ function sort_visible_triangles(Dv::Vector{<:GMTdataset}; del_hidden=false, zfac
 	end
 
 	# ---------------------- Now sort by distance to the viewer ----------------------
-	#Dc = gmtspatial(Dv, Q=true, o="0,1")	# Should this directly in Julia and avoid calling GMT (=> a copy of Dv)
 	Dc::GMTdataset{Float64,2} = mat2ds(gmt_centroid_area(G_API[1], Dv, Int(isgeog(Dv)), ca=2), geom=wkbPoint)
 	dists = [(Dc.data[1,1] * sin_az + Dc.data[1,2] * cos_az, (Dv[1].bbox[5] + Dv[1].bbox[6]) / 2 * sin_el)]
 	for k = 2:size(Dc, 1)

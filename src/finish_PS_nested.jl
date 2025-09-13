@@ -71,8 +71,7 @@ function add_opt_module(d::Dict)::Vector{String}
 		elseif (symb == :colorbar && (isa(val, StrSymb)))
 			t::Char = lowercase(string(val)[1])		# Accept "Top, Bot, Left" but default to Right
 			anc = (t == 't') ? "TC" : (t == 'b' ? "BC" : (t == 'l' ? "LM" : "RM"))
-			#offsets = get_colorbar_pos(anc)
-			r = colorbar!(pos=(anchor=anc,), B="af", Vd=2)		# FORCES RECOMPILE
+			r = colorbar_parser(pos=(anchor=anc,), B="af", first=false, Vd=2)[1]
 		elseif (symb == :clip)
 			if (isa(val, String) || isa(val, Symbol))	# Accept also "land", "water" or "ocean" or DCW country codes(s) or a hard -E string
 				_str::String = string(val)					# Shoot the Any
@@ -101,9 +100,9 @@ end
 # Add to split code from above in these 2 function barriers to avoid all finish_PS_nested() invalidations
 function add_opt_module_barr2(symb::Symbol)::Union{String, Vector{String}}
 	r::Union{String, Vector{String}} = ""
-	if     (symb == :coast)    r = coast!(W=0.5, A="200/0/2", Vd=2)
-	elseif (symb == :colorbar) r = colorbar!(pos=(anchor="RM",), B="af", Vd=2)
-	elseif (symb == :logo)     r = logo!(Vd=2)
+	if     (symb == :coast)    r = coast_parser(false, "", W=0.5, A="200/0/2", Vd=2)[1]		# coast!(W=0.5, A="200/0/2", Vd=2)
+	elseif (symb == :colorbar) r = colorbar_parser(pos=(anchor="RM",), B="af", first=false, Vd=2)[1]
+	elseif (symb == :logo)     r = "gmtlogo  -Dx0/0+w5c  -R0.12/0.78/0.2/0.72 -J"; 	# logo!(Vd=2) ??? Only this? no options?
 	end
 	return r
 end

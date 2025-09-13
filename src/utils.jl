@@ -1282,7 +1282,7 @@ function connect_rectangles(R1::Vector{Float64}, R2::Vector{Float64})
 	end
 
 	c, nf = [false, false, false, false], 0
-	!auto_cross[1] && (size(intersection(lines[1], rec2),1) == 1) && (nf += 1; c[1] = true)
+	!auto_cross[1] && (size(intersection(lines[1], rec2),1) == 1) && (nf += 1; c[1] = true)		# FORCES RECOMPILE
 	!auto_cross[2] && (size(intersection(lines[2], rec2),1) == 1) && (nf += 1; c[2] = true)
 	(nf < 2 && !auto_cross[3] && size(intersection(lines[3], rec2),1) == 1) && (nf += 1; c[3] = true)
 	(nf < 2 && !auto_cross[4] && size(intersection(lines[4], rec2),1) == 1) && (nf += 1; c[4] = true)

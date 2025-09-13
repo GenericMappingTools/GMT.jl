@@ -4891,8 +4891,8 @@ function digests_legend_bag(d::Dict{Symbol, Any}, del::Bool=true)
 	end
 
 	_d = (haskey(dd, :box) && dd[:box] !== nothing) ? dd : haskey(LEGEND_TYPE[1].optsDict, :box) ? LEGEND_TYPE[1].optsDict : Dict{Symbol, Any}()
-	if ((opt_F::String = add_opt(_d, "", "", [:box],
-		(clearance="+c", fill=("+g", add_opt_fill), inner="+i", pen=("+p", add_opt_pen), rounded="+r", shade="+s"); del=false)) == "")
+	opt_F::String = add_opt(_d, "", "", [:box], (clearance="+c", fill=("+g", add_opt_fill), inner="+i", pen=("+p", add_opt_pen), rounded="+r", shade="+s"); del=false)		# FORCES RECOMPILE plot
+	if (opt_F == "")
 		opt_F = "+p0.5+gwhite"
 	else
 		if (opt_F == "none")
@@ -4906,11 +4906,15 @@ function digests_legend_bag(d::Dict{Symbol, Any}, del::Bool=true)
 	if (LEGEND_TYPE[1].Vd > 0)  d[:Vd] = LEGEND_TYPE[1].Vd;  dbg_print_cmd(d, leg[1:kk])  end	# Vd=2 wont work
 	(LEGEND_TYPE[1].Vd > 0) && println("F=",opt_F, " D=",opt_D, " font=",fnt)
 	gmt_restart()		# Some things with the themes may screw
-	legend!(text_record(leg[1:kk]), F=opt_F, D=opt_D, par=(:FONT_ANNOT_PRIMARY, fnt))		# FORCES RECOMPILE plot
+	legend!(text_record(leg[1:kk]), F=opt_F, D=opt_D, par=(:FONT_ANNOT_PRIMARY, fnt))
 	LEGEND_TYPE[1] = legend_bag()			# Job done, now empty the bag
 
 	return nothing
 end
+
+#function add_opt2(d::Dict, cmd::String, opt::String, symbs::VMs, mapa; grow_mat=nothing, del::Bool=true, expand::Bool=false, expand_str::Bool=false)::String
+	#return cmd
+#end
 
 # ---------------------------------------------------------------------------------------------------
 function get_legend_font(d::Dict, fs=0; modern::Bool=false)::String
