@@ -188,5 +188,5 @@ function common_mecas(cmd0, arg1, d, proggy, first, K, O)
 
 	cmd = proggy * cmd
 	((r = check_dbg_print_cmd(d, cmd)) !== nothing) && return r
-	prep_and_call_finish_PS_module(d, proggy * cmd, "", K, O, true, arg1, arg2)
+	prep_and_call_finish_PS_module(d, cmd, "", K, O, true, arg1, arg2)
 end

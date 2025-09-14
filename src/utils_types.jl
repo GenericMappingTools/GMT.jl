@@ -2282,7 +2282,7 @@ end
 # This is the way I found to find if a matrix is transposed. There must be better ways but couldn't find them.
 istransposed(mat) = !isempty(fields(mat)) && (fields(mat)[1] == :parent)
 
-function mat2grid(mat, xx, yy, zz=Float64[]; reg=nothing, hdr=Float64[], proj4::String="", proj::String="",
+function mat2grid(mat, xx=Float64[], yy=Float64[], zz=Float64[]; reg=nothing, hdr=Float64[], proj4::String="", proj::String="",
                   wkt::String="", epsg::Int=0, geog::Int=-1, title::String="", tit::String="", rem::String="",
                   cmd::String="", names::Vector{String}=String[], scale::Real=1f0, offset::Real=0f0, layout::String="",
                   is_transposed::Bool=false, x_unit::String="", y_unit::String="", v_unit::String="", z_unit::String="")
