@@ -87,6 +87,7 @@ end
 
 function makecpt_raw(cmd::String)::GMTcpt
 	# Raw version that already knows what the command is and has no input data.
+	(IamModern[1]) && (cmd *= " -H")
 	!startswith(cmd, "makecpt ") && (cmd = "makecpt " * cmd)
 	_r = gmt_GMTcpt(cmd, nothing)
 	r::GMTcpt = (_r !== nothing) ? _r : GMTcpt()	# _r === nothing when we save CPT on disk.
