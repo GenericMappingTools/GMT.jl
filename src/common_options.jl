@@ -576,7 +576,7 @@ function fish_size_from_J(opt_J; onlylinear::Bool=true, opt_R::String="")
 				CTRL.figsize[k] = isletter(dim[k][end]) ? parse(Float64, dim[k][1:end-1]) * fact(dim[k][end]) : parse(Float64, dim[k])
 			end
 		else
-			CTRL.figsize[1], CTRL.figsize[2] = gmt("mapproject -W " * opt_R * opt_J).data
+			CTRL.figsize[1], CTRL.figsize[2] = gmt("mapproject -W " * opt_R * opt_J).data::Matrix{Float64}
 		end
 	end
 	if (!isuppercase(opt_J[4]) || isscale)		# Shit, a scale. Hopefuly, -R was already parsed and CTRL.limits is known
@@ -585,7 +585,7 @@ function fish_size_from_J(opt_J; onlylinear::Bool=true, opt_R::String="")
 				t = parse.(Float64, split(dim[1], ':'))
 				CTRL.figsize[1] = t[2] / t[1]
 			else
-				CTRL.figsize[1], CTRL.figsize[2] = gmt("mapproject -W " * opt_R * opt_J).data
+				CTRL.figsize[1], CTRL.figsize[2] = gmt("mapproject -W " * opt_R * opt_J).data::Matrix{Float64}
 			end
 		end
 		CTRL.figsize[1] *= (CTRL.limits[8] - CTRL.limits[7])	# Prey
@@ -595,12 +595,12 @@ function fish_size_from_J(opt_J; onlylinear::Bool=true, opt_R::String="")
 	return nothing
 end
 
-function get_figsize(opt_R::String="", opt_J::String="")
+function get_figsize(opt_R::String="", opt_J::String="")::Tuple{Float64, Float64}
 	# Compute the current fig dimensions in paper coords using the know -R -J
 	(opt_R == "" || opt_R == " -R") && (opt_R = CTRL.pocket_R[1])
 	(opt_J == "" || opt_J == " -J") && (opt_J = CTRL.pocket_J[1])
 	((opt_R == "" || opt_J == "") && !IamModern[1]) && error("One or both of 'limits' ($opt_R) or 'proj' ($opt_J) is empty. Cannot compute fig size.")
-	Dwh = gmt("mapproject -W " * opt_R * opt_J)
+	Dwh = gmt("mapproject -W " * opt_R * opt_J).data::Matrix{Float64}
 	return Dwh[1], Dwh[2]		# Width, Height
 end
 

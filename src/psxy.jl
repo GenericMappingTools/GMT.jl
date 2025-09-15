@@ -32,7 +32,7 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 	cmd, isFV, caller, sub_module, gmt_proggy, opt_A, g_bar_fill, arg1 = parse_plot_callers(d, gmt_proggy, caller, is3D, O, arg1)
 
 	# --------------------- Check the grid2tri cases --------------------
-	cmd, is_gridtri, arg1 = parse_grid2tri_case(d, cmd, caller, is3D, isFV, O, arg1)	# FORCES RECOMPILE
+	cmd, is_gridtri, arg1 = parse_grid2tri_case(d, cmd, caller, is3D, isFV, O, arg1)
 	
 	isa(arg1, GMTdataset) && (arg1 = with_xyvar(d, arg1))		# See if we have a column request based on column names
 	if ((val = hlp_desnany_int(d, [:decimate])) !== -999)		# Asked for a clever data decimation?
@@ -1763,8 +1763,8 @@ function sort_visible_triangles(Dv::Vector{<:GMTdataset}; del_hidden=false, zfac
 	(del_hidden != 1 && contains(Dv[1].comment[1], "vwall")) && (del_hidden = true)	# If have vwalls, need to del invis
 	if (del_hidden == 1)		# Remove the triangles that are not visible from the normal view_vec
 		bak_view = CURRENT_VIEW[1]	# Save because mapproject will reset it to "" (parsing on a module that has first = true)
-		t = isgeog(Dv) ? mapproject(Dv, J="t$((Dv[1].ds_bbox[1] + Dv[1].ds_bbox[2])/2)/1:1", C=true, F=true) : Dv	# FORCES RECOMPILE
-		#t = isgeog(Dv) ? gmt_GMTdataset("mapproject " * "-Jt$((Dv[1].ds_bbox[1] + Dv[1].ds_bbox[2])/2)/1:1 -C -F") : Dv
+		#t = isgeog(Dv) ? mapproject(Dv, J="t$((Dv[1].ds_bbox[1] + Dv[1].ds_bbox[2])/2)/1:1", C=true, F=true) : Dv	# FORCES RECOMPILE
+		t::Vector{<:GMTdataset} = isgeog(Dv) ? gmt("mapproject -Jt$((Dv[1].ds_bbox[1] + Dv[1].ds_bbox[2])/2)/1:1 -C -F", Dv) : Dv
 		CURRENT_VIEW[1] = bak_view 
 		view_vec = [sin_az * cosd(elev), cos_az * cosd(elev), sin_el]
 		is_vis = [dot(facenorm(t[k].data, zfact=zfact, normalize=false), view_vec) > 0 for k in eachindex(t)]
