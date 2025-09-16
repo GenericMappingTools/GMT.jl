@@ -99,7 +99,6 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 	end
 
 	cmd, arg1, opt_R, _, opt_i = read_data(d, cmd0, cmd, arg1, opt_R, is3D)		# FORCES RECOMPILE
-	#opt_i = ""
 
 	# We still need to set the right -JZ when the aspect is set to :equal (or :data). We couldn't do it
 	# before because only after parsing -R we know the full 3 sides sizes
@@ -257,8 +256,6 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 	CTRL.pocket_d[1] = d					# Store d that may be not empty with members to use in other modules
 	(opt_B == " -B") && gmt_restart()		# For some Fking mysterious reason (see Ex45)
 	return R
-#=
-=#
 end
 
 # ---------------------------------------------------------------------------------------------------
