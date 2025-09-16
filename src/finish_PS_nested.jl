@@ -107,7 +107,7 @@ function add_opt_module_barr2(symb::Symbol)::Union{String, Vector{String}}
 	elseif (symb == :colorbar) r = "psscale -R -J -Baf -DJRM -C"
 	elseif (symb == :logo)     r = "gmtlogo -Dx0/0+w5c -R -J"; 	# logo!(Vd=2)
 	end
-	(r !== "") && (r = replace(r, "-R" => CTRL.pocket_R[1]))
+	(r !== "" && CTRL.pocket_R[1] !== "") && (r = replace(r, "-R" => CTRL.pocket_R[1]))
 	return r
 end
 
