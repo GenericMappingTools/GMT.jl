@@ -87,7 +87,9 @@ function mask(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	end
 
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
-	prep_and_call_finish_PS_module(d, gmt_proggy * cmd, "", K, O, true, arg1)
+	cmd = gmt_proggy * cmd
+	((r = check_dbg_print_cmd(d, cmd)) !== nothing) && return r
+	prep_and_call_finish_PS_module(d, cmd, "", K, O, true, arg1)
 end
 
 # ---------------------------------------------------------------------------------------------------

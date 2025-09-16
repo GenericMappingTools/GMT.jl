@@ -35,5 +35,7 @@ function mblevitus(cmd0::String=""; kwargs...)
 	((val = find_in_dict(d, [:z :z_down])[1]) === nothing) && (cmd *= " -z")	# Means here default is Z-up
 	(!occursin("-:", cmd)) && (cmd = "-:" * cmd)		# Means that the default here (contrary to C version) is speed-dept
 
-	prep_and_call_finish_PS_module(d, "mblevitus " * cmd, "", true, false, false)
+	cmd = "mblevitus " * cmd
+	((r = check_dbg_print_cmd(d, cmd)) !== nothing) && return r
+	prep_and_call_finish_PS_module(d, cmd, "", true, false, false)
 end

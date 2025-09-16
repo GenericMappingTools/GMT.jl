@@ -85,10 +85,11 @@ function makecpt(cmd0::String, arg1, d::Dict)::Union{String, GMTcpt}
 	return r
 end
 
-function makecpt_raw(cmd::String)::GMTcpt
+function makecpt_raw(cmd::String, arg1=nothing)::GMTcpt
 	# Raw version that already knows what the command is and has no input data.
+	(IamModern[1] && !contains(cmd, " -H")) && (cmd *= " -H")
 	!startswith(cmd, "makecpt ") && (cmd = "makecpt " * cmd)
-	_r = gmt_GMTcpt(cmd, nothing)
+	_r = gmt_GMTcpt(cmd, arg1)
 	r::GMTcpt = (_r !== nothing) ? _r : GMTcpt()	# _r === nothing when we save CPT on disk.
 	(contains(cmd, " -N") && !isempty(r)) && (r.bfn = ones(3,3))	# Cannot remove the bfn like in plain GMT so make it all whites
 	CURRENT_CPT[1] = r

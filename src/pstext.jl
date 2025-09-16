@@ -166,11 +166,11 @@ function _text(cmd0::String, arg1, O::Bool, K::Bool, d::Dict{Symbol,Any})
 
 	_cmd = [gmt_proggy * cmd]
 	_cmd = frame_opaque(_cmd, gmt_proggy, opt_B, opt_R, opt_J)		# No -t in frame
-	r = prep_and_call_finish_PS_module(d, _cmd, "", K, O, true, arg1, arg2)
-	if (isa(r, String) && startswith(r, gmt_proggy))	# It's a string when called with Vd = 2 and it may be a nested call
-		isa(arg1, GDtype) && (CTRL.pocket_call[1] = arg1)
+	if ((r = check_dbg_print_cmd(d, _cmd)) !== nothing)
+		isa(arg1, GDtype) && (CTRL.pocket_call[1] = arg1)	# For the case this is a nested call
+		return r
 	end
-	return r
+	prep_and_call_finish_PS_module(d, _cmd, "", K, O, true, arg1, arg2)
 end
 
 # ---------------------------------------------------------------------------------------------------

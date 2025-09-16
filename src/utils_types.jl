@@ -1454,7 +1454,7 @@ function mat2img(mat::Union{GMTgrid,Matrix{<:AbstractFloat}}; x=Float64[], y=Flo
 	# This is the same as Matlab's imagesc() ... plus some extras.
 
 	if (isa(mat, GMTgrid) && (opt_R::String = parse_R(KW(kw), "")[2]) != "")
-		mat = grdcut(mat, R=opt_R[4:end])
+		mat = grdcut(mat, R=opt_R[4:end])		# FORCES RECOMPILE plot()
 	end
 
 	mi, ma = (isa(mat,GMTgrid)) ? mat.range[5:6] : extrema(mat)
@@ -1519,14 +1519,14 @@ issuing an error. In this case `clim` can be a two elements vector to specify th
 The default is to let `histogram` guess these values.
 """
 function imagesc(mat::Union{GMTgrid,Matrix{<:AbstractFloat}}; x=Float64[], y=Float64[], hdr=Float64[],
-	             proj4::String="", wkt::String="", GI::Union{GItype,Nothing}=nothing, clim=[0,255], cmap=GMTcpt(), kw...)
+	             proj4::String="", wkt::String="", GI::Union{GItype,Nothing}=nothing, clim=[0,255], cmap=GMTcpt(), kw...)::GMTimage
 	
 	# Call 'rescale' and return if the kw 'stretch' is used
 	((stretch = find_in_kwargs(kw, [:stretch])[1]) !== nothing) && return rescale(mat, stretch=stretch, type=UInt8)
 	mat2img(mat; x=x, y=y, hdr=hdr, proj4=proj4, wkt=wkt, GI=GI, clim=clim, cmap=cmap, kw...)
 end
 
-function imagesc(I::GMTimage{<:UInt16}; clim=0)
+function imagesc(I::GMTimage{<:UInt16}; clim=0)::GMTimage
 	# User probably meant to use 'rescale(I,stretch=1,type=UInt8)' instead of 'imagesc(I)' for scaling a
 	# UInt16 GMTimage directly, so do it instead of erroring as we used to do.
 	return clim == 0 ? rescale(I, stretch=true, type=UInt8) : rescale(I, stretch=[clim[1],clim[2]], type=UInt8)
@@ -2282,7 +2282,7 @@ end
 # This is the way I found to find if a matrix is transposed. There must be better ways but couldn't find them.
 istransposed(mat) = !isempty(fields(mat)) && (fields(mat)[1] == :parent)
 
-function mat2grid(mat, xx, yy, zz=Float64[]; reg=nothing, hdr=Float64[], proj4::String="", proj::String="",
+function mat2grid(mat, xx=Float64[], yy=Float64[], zz=Float64[]; reg=nothing, hdr=Float64[], proj4::String="", proj::String="",
                   wkt::String="", epsg::Int=0, geog::Int=-1, title::String="", tit::String="", rem::String="",
                   cmd::String="", names::Vector{String}=String[], scale::Real=1f0, offset::Real=0f0, layout::String="",
                   is_transposed::Bool=false, x_unit::String="", y_unit::String="", v_unit::String="", z_unit::String="")

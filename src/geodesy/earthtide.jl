@@ -17,11 +17,13 @@ function earthtide(; kwargs...)
 	cmd = "earthtide " * parse_common_opts(d, "", [:R :I :V_params :r])[1]
 	cmd = parse_opt_range(d, cmd, "T")[1]
 	if ((opt_S = add_opt(d, "", "S", [:S :sun_moon])) != "")
-		(dbg_print_cmd(d, cmd) !== nothing) && return cmd * opt_S
-		return prep_and_call_finish_PS_module(d, cmd * opt_S, "", true, false, false)
+		cmd *= opt_S
+		((r = check_dbg_print_cmd(d, cmd)) !== nothing) && return r
+		return gmt(cmd)
 	elseif ((opt_L = add_opt(d, "", "L", [:L :location])) != "")
-		(dbg_print_cmd(d, cmd) !== nothing) && return cmd * opt_L
-		R = prep_and_call_finish_PS_module(d, cmd * opt_L, "", true, false, false)
+		cmd *= opt_L
+		((r = check_dbg_print_cmd(d, cmd)) !== nothing) && return r
+		R = gmt(cmd)
 		R.colnames = ["Time", "East", "North", "Vertical"]
 		R.attrib = Dict("Timecol" => "1")
 		return R

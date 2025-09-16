@@ -13,8 +13,8 @@ Generate an anaglyph image from the input grid `G`.
 - `G`: The input GMTgrid or filename of data to be processed.
 
 ### Kwargs
-- `vscale`: Terrain vertical scale factor (default: 1). Applyies only to first method.
-- `sscale`: Stereo separation scale factor (default: 2). . Applyies only to first method.
+- `vscale`: Terrain vertical scale factor (default: 1). Applies only to first method.
+- `sscale`: Stereo separation scale factor (default: 2). Applies only to first method.
 - `R`: Region of interest when reading a grid from disk (default: entire grid).
    Ignored when `G` is a GMTgrid.
 - `view3d`: If true, selects an alternative and slower method that generates 2 3D views using the `grdview` program 

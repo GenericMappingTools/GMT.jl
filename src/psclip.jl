@@ -49,7 +49,9 @@ function clip_helper(cmd0::String, arg1; first=true, kwargs...)
 	# If file name sent in, read it and compute a tight -R if this was not provided 
 	cmd, arg1, = read_data(d, cmd0, cmd, arg1, opt_R)
 
-	prep_and_call_finish_PS_module(d, proggy * cmd, "", K, O, true, arg1)
+	cmd = proggy * cmd
+	((r = check_dbg_print_cmd(d, cmd)) !== nothing) && return r
+	prep_and_call_finish_PS_module(d, cmd, "", K, O, true, arg1)
 end
 
 # ---------------------------------------------------------------------------------------------------

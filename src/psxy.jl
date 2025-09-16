@@ -32,7 +32,7 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 	cmd, isFV, caller, sub_module, gmt_proggy, opt_A, g_bar_fill, arg1 = parse_plot_callers(d, gmt_proggy, caller, is3D, O, arg1)
 
 	# --------------------- Check the grid2tri cases --------------------
-	cmd, is_gridtri, arg1 = parse_grid2tri_case(d, cmd, caller, is3D, isFV, O, arg1)	# FORCES RECOMPILE
+	cmd, is_gridtri, arg1 = parse_grid2tri_case(d, cmd, caller, is3D, isFV, O, arg1)
 	
 	isa(arg1, GMTdataset) && (arg1 = with_xyvar(d, arg1))		# See if we have a column request based on column names
 	if ((val = hlp_desnany_int(d, [:decimate])) !== -999)		# Asked for a clever data decimation?
@@ -75,14 +75,14 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 
 	axis_equal = is_axis_equal(d)		# See if the user asked for an equal aspect ratio
 	cmd, opt_JZ = parse_JZ(d, cmd; O=O, is3D=is3D)
-	cmd, _ = parse_common_opts(d, cmd, [:a :e :f :g :t :w :margin :params]; first=first)	# FORCES RECOMPILE
+	cmd, _ = parse_common_opts(d, cmd, [:a :e :f :g :t :w :margin :params]; first=first)
 	cmd, opt_l = parse_l(d, cmd)		# Parse this one (legend) aside so we can use it in classic mode
 	cmd, opt_f = parse_f(d, cmd)		# Parse this one (-f) aside so we can check against D.attrib
 	cmd  = parse_these_opts(cmd, d, [[:D :shift :offset], [:I :intens], [:N :no_clip :noclip], [:T]])
 	parse_ls_code!(d::Dict)				# Check for linestyle codes (must be before the GMTsyntax_opt() call)
 	cmd  = GMTsyntax_opt(d, cmd)[1]		# See if an hardcore GMT syntax string has been passed by mk_styled_line!
 	(is_ternary) && (cmd = add_opt(d, cmd, "M", [:M :dump]))
-	opt_UVXY = parse_UVXY(d, "")		# FORCES RECOMPILE	# Need it separate to not risk to double include it.
+	opt_UVXY = parse_UVXY(d, "")		# Feed it separate to not risk to double include it.
 	cmd, opt_c = parse_c(d, cmd)		# Need opt_c because we may need to remove it from double calls
 
 	if (isa(arg1, GDtype) && !contains(opt_f, "T") && !contains(opt_f, "t") && !contains(opt_R, "T") && !contains(opt_R, "t"))
@@ -98,7 +98,7 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 		opt_R = '/' * BOX_STR[1][4:ind[1]] * "?/?"		# Will become /x_min/x_max/?/?
 	end
 
-	cmd, arg1, opt_R, _, opt_i = read_data(d, cmd0, cmd, arg1, opt_R, is3D)
+	cmd, arg1, opt_R, _, opt_i = read_data(d, cmd0, cmd, arg1, opt_R, is3D)		# FORCES RECOMPILE
 
 	# We still need to set the right -JZ when the aspect is set to :equal (or :data). We couldn't do it
 	# before because only after parsing -R we know the full 3 sides sizes
@@ -216,14 +216,14 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 
 	# See if any of the scatter, bar, lines, etc... was the caller and if yes, set sensible defaults.
 	_cmd = set_avatar_defaults(d, cmd, mcc, caller, got_usr_R, opt_B, opt_Gsymb, opt_ML, opt_R, opt_S, opt_W,
-	                           sub_module, g_bar_fill, opt_Wmarker, opt_UVXY, opt_c, O, arg1)	# FORCES RECOMPILE
+	                           sub_module, g_bar_fill, opt_Wmarker, opt_UVXY, opt_c, O, arg1)
 
 	(got_Zvars && opt_S == "" && opt_W == "" && !occursin(" -G", _cmd[1])) && (_cmd[1] *= " -W0.5")
 	(opt_W == "" && caller == "feather") && (_cmd[1] *= " -W0.1")		# feathers are normally many so better they are thin
 
 	# Let matrices with more data columns, and for which Color info was NOT set, plot multiple lines at once
 	if (!mcc && sub_module == "bar" && check_bar_group(arg1))	# !mcc because the bar-groups all have mcc = false
-		_cmd[1], arg1, cmd2::String = bar_group(d, _cmd[1], opt_R, g_bar_fill, got_Ebars, got_usr_R, arg1)	# FORCES RECOMPILE
+		_cmd[1], arg1, cmd2::String = bar_group(d, _cmd[1], opt_R, g_bar_fill, got_Ebars, got_usr_R, arg1)
 		(cmd2 != "") && (length(_cmd) == 1 ? (_cmd = [cmd2; _cmd[1]]) :
 			(@warn("Can't plot the connector when 'bar' is already a nested call."); CTRL.pocket_call[3] = nothing))
 	end
@@ -241,15 +241,16 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 		append!(_cmd, [ins])		# and add it at the end
 	end
 	if (startswith(_cmd[end], "inset_") && isa(CTRL.pocket_call[4], String))
-		_cmd = zoom_reactangle(_cmd, true)
+		_cmd = zoom_reactangle(_cmd, true)		# FORCES RECOMPILE
 	end
 
-	_cmd = fish_bg(d, _cmd)					# See if we have a "pre-command"
-	_cmd = fish_pagebg(d, _cmd, autoJZ=(is3D && axis_equal))	# Last arg tells if JZ was computed automatically
+	_cmd = fish_bg(d, _cmd)					# See if we have a "pre-command"	# FORCES RECOMPILE
+	_cmd = fish_pagebg(d, _cmd, autoJZ=(is3D && axis_equal))	# Last arg tells if JZ was computed automatically	# FORCES RECOMPILE
 
 	isa(arg1, GDtype) && plt_txt_attrib!(arg1, d, _cmd)			# Function barrier to plot TEXT attributed labels (in case)
 
 	finish = (is_ternary && occursin(" -M",_cmd[1])) ? false : true		# But this case (-M) is bugged still in 6.2.0
+	((r = check_dbg_print_cmd(d, _cmd)) !== nothing) && return r		# FORCES RECOMPILE
 	R = prep_and_call_finish_PS_module(d, _cmd, "", K, O, finish, arg1, arg2, arg3, arg4)
 	LEGEND_TYPE[1].Vd = 0					# Because for nested calls with legends this was still > 0, which screwed later
 	CTRL.pocket_d[1] = d					# Store d that may be not empty with members to use in other modules
@@ -347,7 +348,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function set_avatar_defaults(d, cmd, mcc, caller, got_usr_R, opt_B, opt_Gsymb, opt_ML, opt_R, opt_S, opt_W, sub_module, g_bar_fill, opt_Wmarker, opt_UVXY, opt_c, O, arg1)::Vector{String}
 	cmd  = check_caller(d, cmd, opt_S, opt_W, sub_module, g_bar_fill, O)
-	(mcc && caller == "bar" && !got_usr_R && opt_R != " -R") && (cmd = recompute_R_4bars!(cmd, opt_R, arg1))	# Often needed  FORCES RECOMPILE
+	(mcc && caller == "bar" && !got_usr_R && opt_R != " -R") && (cmd = recompute_R_4bars!(cmd, opt_R, arg1))	# Often needed
 	_cmd = build_run_cmd(cmd, opt_B, opt_Gsymb, opt_ML, opt_S, opt_W, opt_Wmarker, opt_UVXY, opt_c)
 	return _cmd
 end
@@ -780,17 +781,17 @@ function helper_fish_bgs(val)::String
 		else											# A pre-set fun name
 			fun::String = string(arg1)
 			(fun[1] == '-') && (fun = fun[2:end]; opt_I = " -I")
-			I::GMTimage = imagesc(mat2grid(fun))
+			I::GMTimage = imagesc(mat2grid(fun))		# FORCES RECOMPILE
 		end
 	elseif (isa(arg1, GMTgrid) || isa(arg1, GMTimage))
-		I = isa(arg1, GMTgrid) ? imagesc(arg1) : val
+		I = isa(arg1, GMTgrid) ? imagesc(arg1) : val	# FORCES RECOMPILE
 	end
 	if (!gotfname)
 		((arg2 !== nothing) && isa(arg2, String) && (arg2[1] == '-')) && (arg2 = arg2[2:end]; opt_I = " -I")
 		opt_H = (IamModern[1]) ? " -H" : ""
-		C::GMTcpt = (arg2 === nothing) ? gmt("makecpt -T0/256/1 -G0.25/0.94 -Cgray"*opt_I*opt_H) :	# The default gray scale
-		                                 isa(arg2, GMTcpt) ? gmt("makecpt -T0/256/1 -C" * opt_H, arg2) :
-							        	 gmt("makecpt -T0/256/1 -C" * string(arg2)::String * opt_I * opt_H)
+		C::GMTcpt = (arg2 === nothing) ? makecpt_raw("makecpt -T0/256/1 -G0.25/0.94 -Cgray"*opt_I*opt_H) :	# The default gray scale
+		                                 isa(arg2, GMTcpt) ? makecpt_raw("makecpt -T0/256/1 -C" * opt_H, arg2) :
+							        	 makecpt_raw("makecpt -T0/256/1 -C" * string(arg2)::String * opt_I * opt_H)
 		image_cpt!(I, C)
 		CTRL.pocket_call[3] = I			# This signals finish_PS_module() to run _cmd first
 	end
@@ -1200,9 +1201,9 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill::Vector{Strin
 		end
 	end
 
+	set_dsBB!(_argD)
 	if (!got_usr_R)									# Need to recompute -R
-		info::GMTdataset = gmt("gmtinfo -C", _argD)		# FORCES RECOMPILE
-		data::Matrix{<:Float64} = info.data
+		data::Vector{Float64} = (isa(_argD, Vector)) ? _argD[1].ds_bbox[1:4] : _argD.ds_bbox[1:4]
 		(data[3] > 0.0) && (data[3] = 0.0)	# If not negative then must be 0
 		if (!is_hbar)
 			dx::Float64 = (data[2] - data[1]) * 0.005 + new_bw/2;
@@ -1232,12 +1233,13 @@ function recompute_R_4bars!(cmd::String, opt_R::String, arg1)
 	sub_b = ((ind = findfirst("+", opt_S)) !== nothing) ? opt_S[ind[1]:end] : ""	# The +Base modifier
 	(sub_b != "") && (opt_S = opt_S[1:ind[1]-1])# Strip it because we need to (re)find Bar width
 	bw = (isletter(opt_S[end])) ? parse(Float64, opt_S[3:end-1]) : parse(Float64, opt_S[2:end])	# Bar width
-	info = gmt("gmtinfo -C", arg1)::GMTdataset{Float64, 2}		# FORCES RECOMPILE
-	dx::Float64 = (info.data[2] - info.data[1]) * 0.005 + bw/2;
-	dy::Float64 = (info.data[4] - info.data[3]) * 0.005;
-	info.data[1] -= dx;	info.data[2] += dx;	info.data[4] += dy;
-	info.data = round_wesn(info.data)		# Add a pad if not-tight
-	new_opt_R::String = @sprintf(" -R%.15g/%.15g/%.15g/%.15g", info.data[1], info.data[2], 0, info.data[4])
+	#info::Vector{Float64} = vec(gmt("gmtinfo -C", arg1).data)	# FORCES RECOMPILE
+	info::Vector{Float64} = (isa(arg1, Vector)) ? arg1[1].ds_bbox[1:4] : arg1.ds_bbox[1:4]
+	dx::Float64 = (info[2] - info[1]) * 0.005 + bw/2;
+	dy::Float64 = (info[4] - info[3]) * 0.005;
+	info[1] -= dx;	info[2] += dx;	info[4] += dy;
+	info = round_wesn(info)		# Add a pad if not-tight
+	new_opt_R::String = @sprintf(" -R%.15g/%.15g/%.15g/%.15g", info[1], info[2], 0, info[4])
 	cmd = replace(cmd, opt_R => new_opt_R)
 	return cmd
 end
@@ -1612,11 +1614,10 @@ function zoom_reactangle(_cmd, isplot::Bool)
 	# to the inset window. This is used only (so far) from nested inset() call with auto-zoom.
 	Rs::String = CTRL.pocket_call[4]	# Don't use it directly because it's a Any
 	R = parse.(Float64, split(Rs, "/"))
-	l1, l2 = connect_rectangles(R, CTRL.pocket_call[5])
+	l1, l2 = connect_rectangles(R, CTRL.pocket_call[5])		# FORCES RECOMPILE
 	lc = (isplot) ? "gray" : "black"
 	lw = (isplot) ? [0.5, 0.75, 0.75] : [0.5, 0.5, 0.5]
-	Drec = mat2ds([[R[1] R[3]; R[1] R[4]; R[2] R[4]; R[2] R[3]; R[1] R[3]], l1, l2], lc=lc,
-	              ls=["","dash","dash"], lw=lw)
+	Drec = mat2ds([[R[1] R[3]; R[1] R[4]; R[2] R[4]; R[2] R[3]; R[1] R[3]], l1, l2], lc=lc, ls=["","dash","dash"], lw=lw)
 	put_pocket_call(Drec)				# Store it in CTRL.pocket_call
 	ins = pop!(_cmd)					# Remove the inset call
 	append!(_cmd, ["psxy -R -J -W0.4p"])
@@ -1763,8 +1764,8 @@ function sort_visible_triangles(Dv::Vector{<:GMTdataset}; del_hidden=false, zfac
 	(del_hidden != 1 && contains(Dv[1].comment[1], "vwall")) && (del_hidden = true)	# If have vwalls, need to del invis
 	if (del_hidden == 1)		# Remove the triangles that are not visible from the normal view_vec
 		bak_view = CURRENT_VIEW[1]	# Save because mapproject will reset it to "" (parsing on a module that has first = true)
-		t = isgeog(Dv) ? mapproject(Dv, J="t$((Dv[1].ds_bbox[1] + Dv[1].ds_bbox[2])/2)/1:1", C=true, F=true) : Dv	# FORCES RECOMPILE
-		#t = isgeog(Dv) ? gmt_GMTdataset("mapproject " * "-Jt$((Dv[1].ds_bbox[1] + Dv[1].ds_bbox[2])/2)/1:1 -C -F") : Dv
+		#t = isgeog(Dv) ? mapproject(Dv, J="t$((Dv[1].ds_bbox[1] + Dv[1].ds_bbox[2])/2)/1:1", C=true, F=true) : Dv	# FORCES RECOMPILE
+		t::Vector{<:GMTdataset} = isgeog(Dv) ? gmt("mapproject -Jt$((Dv[1].ds_bbox[1] + Dv[1].ds_bbox[2])/2)/1:1 -C -F", Dv) : Dv
 		CURRENT_VIEW[1] = bak_view 
 		view_vec = [sin_az * cosd(elev), cos_az * cosd(elev), sin_el]
 		is_vis = [dot(facenorm(t[k].data, zfact=zfact, normalize=false), view_vec) > 0 for k in eachindex(t)]
@@ -1772,7 +1773,6 @@ function sort_visible_triangles(Dv::Vector{<:GMTdataset}; del_hidden=false, zfac
 	end
 
 	# ---------------------- Now sort by distance to the viewer ----------------------
-	#Dc = gmtspatial(Dv, Q=true, o="0,1")	# Should this directly in Julia and avoid calling GMT (=> a copy of Dv)
 	Dc::GMTdataset{Float64,2} = mat2ds(gmt_centroid_area(G_API[1], Dv, Int(isgeog(Dv)), ca=2), geom=wkbPoint)
 	dists = [(Dc.data[1,1] * sin_az + Dc.data[1,2] * cos_az, (Dv[1].bbox[5] + Dv[1].bbox[6]) / 2 * sin_el)]
 	for k = 2:size(Dc, 1)

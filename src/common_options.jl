@@ -576,7 +576,7 @@ function fish_size_from_J(opt_J; onlylinear::Bool=true, opt_R::String="")
 				CTRL.figsize[k] = isletter(dim[k][end]) ? parse(Float64, dim[k][1:end-1]) * fact(dim[k][end]) : parse(Float64, dim[k])
 			end
 		else
-			CTRL.figsize[1], CTRL.figsize[2] = gmt("mapproject -W " * opt_R * opt_J).data
+			CTRL.figsize[1], CTRL.figsize[2] = gmt("mapproject -W " * opt_R * opt_J).data::Matrix{Float64}
 		end
 	end
 	if (!isuppercase(opt_J[4]) || isscale)		# Shit, a scale. Hopefuly, -R was already parsed and CTRL.limits is known
@@ -585,7 +585,7 @@ function fish_size_from_J(opt_J; onlylinear::Bool=true, opt_R::String="")
 				t = parse.(Float64, split(dim[1], ':'))
 				CTRL.figsize[1] = t[2] / t[1]
 			else
-				CTRL.figsize[1], CTRL.figsize[2] = gmt("mapproject -W " * opt_R * opt_J).data
+				CTRL.figsize[1], CTRL.figsize[2] = gmt("mapproject -W " * opt_R * opt_J).data::Matrix{Float64}
 			end
 		end
 		CTRL.figsize[1] *= (CTRL.limits[8] - CTRL.limits[7])	# Prey
@@ -595,12 +595,12 @@ function fish_size_from_J(opt_J; onlylinear::Bool=true, opt_R::String="")
 	return nothing
 end
 
-function get_figsize(opt_R::String="", opt_J::String="")
+function get_figsize(opt_R::String="", opt_J::String="")::Tuple{Float64, Float64}
 	# Compute the current fig dimensions in paper coords using the know -R -J
 	(opt_R == "" || opt_R == " -R") && (opt_R = CTRL.pocket_R[1])
 	(opt_J == "" || opt_J == " -J") && (opt_J = CTRL.pocket_J[1])
 	((opt_R == "" || opt_J == "") && !IamModern[1]) && error("One or both of 'limits' ($opt_R) or 'proj' ($opt_J) is empty. Cannot compute fig size.")
-	Dwh = gmt("mapproject -W " * opt_R * opt_J)
+	Dwh = gmt("mapproject -W " * opt_R * opt_J).data::Matrix{Float64}
 	return Dwh[1], Dwh[2]		# Width, Height
 end
 
@@ -1426,7 +1426,7 @@ function parse_type_anchor(d::Dict, cmd::String, symbs::VMs, mapa::NamedTuple, d
 	(SHOW_KWARGS[1]) && return print_kwarg_opts(symbs, mapa)	# Just print the kwargs of this option call
 	got_str = false
 	for s in symbs		# Check if arg value is a string. If yes, ignore 'def_CS'
-		(haskey(d, s) && isa(d[s], String)) && (got_str = true; break)
+		(haskey(d, s) && isa(d[s], StrSymb)) && (got_str = true; break)
 	end
 	opt::String = add_opt(d, "", "", symbs, mapa; del=del)
 	if (!got_str && opt != "" && opt[1] != 'j' && opt[1] != 'J' && opt[1] != 'g' && opt[1] != 'n' && opt[1] != 'x')
@@ -1446,7 +1446,7 @@ function parse_UXY(cmd::String, d::Dict, aliases, opt::Char)::String
 	end
 	# If -X|Y assume it's a new fig so plot any legend that may be trailing around.
 	# This may screw but also screws if we don't do it. 
-	(symb in [:X :xshift :x_offset :Y :yshift :y_offset]) && digests_legend_bag(d)	# FORCES RECOMPILE
+	#(symb in [:X :xshift :x_offset :Y :yshift :y_offset]) && digests_legend_bag(d)	# FORCES RECOMPILE
 	return cmd
 end
 
@@ -4393,8 +4393,20 @@ end
 #validate_VMr(arg)::VMr = return isa(arg, VMr) ? arg : VMr[]
 
 # ---------------------------------------------------------------------------------------------------
+function check_dbg_print_cmd(d::Dict{Symbol, Any}, cmd)::Union{Nothing, String, Vector{String}}
+	if ((r = dbg_print_cmd(d, cmd)) !== nothing)
+		if (CTRL.pocket_J[4] != "   ")		# If CTRL.pocket_J[4] != "   " there is some work to do.
+			isa(r, String) && (r = [r])		# It has to be because reverse_plot_axes!() expects a vector
+			reverse_plot_axes!(r)
+		end
+		return length(r) == 1 ? r[1] : r
+	end
+	return nothing
+end
+
+# ---------------------------------------------------------------------------------------------------
 function prep_and_call_finish_PS_module(d::Dict{Symbol, Any}, cmd, opt_extra::String, K::Bool, O::Bool, finish::Bool,
-                                        arg1=nothing, arg2=nothing, arg3=nothing, arg4=nothing, arg5=nothing)
+                                        arg1=nothing, arg2=nothing, arg3=nothing, arg4=nothing, arg5=nothing)#::Union{Nothing, GMTps, GMTimage}
 	# This is a helper to avoid the long list of args in the finish_PS_module() call
 	case = (arg5 !== nothing) ? 5 : (arg4 !== nothing) ? 4 : (arg3 !== nothing) ? 3 : (arg2 !== nothing) ? 2 : (arg1 !== nothing) ? 1 : 0  
 	if     (case == 0)  R = finish_PS_module(d, cmd, opt_extra, K, O, finish, nothing)	# Need that nothing in a colorbar=true corner case
@@ -4409,7 +4421,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 finish_PS_module(d::Dict, cmd::String, opt_extra::String, K::Bool, O::Bool, finish::Bool, args...) =
 	finish_PS_module(d, [cmd], opt_extra, K, O, finish, args...)
-function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bool, O::Bool, finish::Bool, args...)
+function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bool, O::Bool, finish::Bool, args...)#::Union{Nothing, GMTps, GMTimage}
 	# FNAME_EXT hold the extension when not PS
 	# OPT_EXTRA is used by grdcontour -D or pssolar -I to not try to create and view an img file
 
@@ -4780,7 +4792,7 @@ function put_in_legend_bag(d::Dict, cmd, arg, O::Bool=false, opt_l::String="")
 end
 
 # --------------------------------------------------------------------------------------------------
-function digests_legend_bag(d::Dict, del::Bool=true)
+function digests_legend_bag(d::Dict{Symbol, Any}, del::Bool=true)
 	# Plot a legend if the leg or legend keywords were used. Legend info is stored in LEGEND_TYPE global variable
 	(size(LEGEND_TYPE[1].label, 1) == 0) && return nothing
 
@@ -4879,8 +4891,8 @@ function digests_legend_bag(d::Dict, del::Bool=true)
 	end
 
 	_d = (haskey(dd, :box) && dd[:box] !== nothing) ? dd : haskey(LEGEND_TYPE[1].optsDict, :box) ? LEGEND_TYPE[1].optsDict : Dict{Symbol, Any}()
-	if ((opt_F::String = add_opt(_d, "", "", [:box],
-		(clearance="+c", fill=("+g", add_opt_fill), inner="+i", pen=("+p", add_opt_pen), rounded="+r", shade="+s"); del=false)) == "")
+	opt_F::String = add_opt(_d, "", "", [:box], (clearance="+c", fill=("+g", add_opt_fill), inner="+i", pen=("+p", add_opt_pen), rounded="+r", shade="+s"); del=false)		# FORCES RECOMPILE plot
+	if (opt_F == "")
 		opt_F = "+p0.5+gwhite"
 	else
 		if (opt_F == "none")
@@ -4899,6 +4911,10 @@ function digests_legend_bag(d::Dict, del::Bool=true)
 
 	return nothing
 end
+
+#function add_opt2(d::Dict, cmd::String, opt::String, symbs::VMs, mapa; grow_mat=nothing, del::Bool=true, expand::Bool=false, expand_str::Bool=false)::String
+	#return cmd
+#end
 
 # ---------------------------------------------------------------------------------------------------
 function get_legend_font(d::Dict, fs=0; modern::Bool=false)::String

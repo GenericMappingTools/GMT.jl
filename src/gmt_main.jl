@@ -233,7 +233,7 @@ function gmt(cmd::String, args...)
 
 end
 
-gmt_GMTcpt(cmd::String, args...)::GMTcpt = gmt(cmd, args...)::GMTcpt
+gmt_GMTcpt(cmd::String, args...)::Union{GMTcpt, Nothing} = gmt(cmd, args...)::Union{GMTcpt, Nothing}
 gmt_GMTdataset(cmd::String, args...)::Union{GMTdataset{Float64,2}, Vector{<:GMTdataset{Float64,2}}} = gmt(cmd, args...)
 gmt_GMTgrid(cmd::String, args...)::GMTgrid{Float32,2} = gmt(cmd, args...)::GMTgrid{Float32,2}
 
@@ -602,7 +602,7 @@ function get_PS(API::Ptr{Nothing}, object::Ptr{Nothing})::GMTps
 
 	P::GMT_POSTSCRIPT = unsafe_load(convert(Ptr{GMT_POSTSCRIPT}, object))
 	P.data == C_NULL && return GMTps()		# A bug in pstext.c causes coming here when pstext -L is used
-	out = GMTps(unsafe_string(P.data), Int(P.n_bytes), Int(P.mode), [])	# NEED TO FILL THE COMMENT
+	out = GMTps(unsafe_string(P.data), Int(P.n_bytes), Int(P.mode), String[])	# NEED TO FILL THE COMMENT
 end
 
 # ---------------------------------------------------------------------------------------------------
