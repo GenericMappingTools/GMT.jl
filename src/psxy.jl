@@ -75,14 +75,14 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 
 	axis_equal = is_axis_equal(d)		# See if the user asked for an equal aspect ratio
 	cmd, opt_JZ = parse_JZ(d, cmd; O=O, is3D=is3D)
-	cmd, _ = parse_common_opts(d, cmd, [:a :e :f :g :t :w :margin :params]; first=first)	# FORCES RECOMPILE
+	cmd, _ = parse_common_opts(d, cmd, [:a :e :f :g :t :w :margin :params]; first=first)
 	cmd, opt_l = parse_l(d, cmd)		# Parse this one (legend) aside so we can use it in classic mode
 	cmd, opt_f = parse_f(d, cmd)		# Parse this one (-f) aside so we can check against D.attrib
 	cmd  = parse_these_opts(cmd, d, [[:D :shift :offset], [:I :intens], [:N :no_clip :noclip], [:T]])
 	parse_ls_code!(d::Dict)				# Check for linestyle codes (must be before the GMTsyntax_opt() call)
 	cmd  = GMTsyntax_opt(d, cmd)[1]		# See if an hardcore GMT syntax string has been passed by mk_styled_line!
 	(is_ternary) && (cmd = add_opt(d, cmd, "M", [:M :dump]))
-	opt_UVXY = parse_UVXY(d, "")		# FORCES RECOMPILE	# Need it separate to not risk to double include it.
+	opt_UVXY = parse_UVXY(d, "")		# Feed it separate to not risk to double include it.
 	cmd, opt_c = parse_c(d, cmd)		# Need opt_c because we may need to remove it from double calls
 
 	if (isa(arg1, GDtype) && !contains(opt_f, "T") && !contains(opt_f, "t") && !contains(opt_R, "T") && !contains(opt_R, "t"))
@@ -98,7 +98,7 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 		opt_R = '/' * BOX_STR[1][4:ind[1]] * "?/?"		# Will become /x_min/x_max/?/?
 	end
 
-	cmd, arg1, opt_R, _, opt_i = read_data(d, cmd0, cmd, arg1, opt_R, is3D)
+	cmd, arg1, opt_R, _, opt_i = read_data(d, cmd0, cmd, arg1, opt_R, is3D)		# FORCES RECOMPILE
 
 	# We still need to set the right -JZ when the aspect is set to :equal (or :data). We couldn't do it
 	# before because only after parsing -R we know the full 3 sides sizes
@@ -781,16 +781,16 @@ function helper_fish_bgs(val)::String
 		else											# A pre-set fun name
 			fun::String = string(arg1)
 			(fun[1] == '-') && (fun = fun[2:end]; opt_I = " -I")
-			I::GMTimage = imagesc(mat2grid(fun))
+			I::GMTimage = imagesc(mat2grid(fun))		# FORCES RECOMPILE
 		end
 	elseif (isa(arg1, GMTgrid) || isa(arg1, GMTimage))
-		I = isa(arg1, GMTgrid) ? imagesc(arg1) : val
+		I = isa(arg1, GMTgrid) ? imagesc(arg1) : val	# FORCES RECOMPILE
 	end
 	if (!gotfname)
 		((arg2 !== nothing) && isa(arg2, String) && (arg2[1] == '-')) && (arg2 = arg2[2:end]; opt_I = " -I")
 		opt_H = (IamModern[1]) ? " -H" : ""
 		C::GMTcpt = (arg2 === nothing) ? makecpt_raw("makecpt -T0/256/1 -G0.25/0.94 -Cgray"*opt_I*opt_H) :	# The default gray scale
-		                                 isa(arg2, GMTcpt) ? makecpt(arg2, T="0/256/1 " * opt_H, C=true) :
+		                                 isa(arg2, GMTcpt) ? makecpt_raw("makecpt -T0/256/1 -C" * opt_H, arg2) :
 							        	 makecpt_raw("makecpt -T0/256/1 -C" * string(arg2)::String * opt_I * opt_H)
 		image_cpt!(I, C)
 		CTRL.pocket_call[3] = I			# This signals finish_PS_module() to run _cmd first
@@ -1201,9 +1201,9 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill::Vector{Strin
 		end
 	end
 
+	set_dsBB!(_argD)
 	if (!got_usr_R)									# Need to recompute -R
-		info::GMTdataset = gmt("gmtinfo -C", _argD)		# FORCES RECOMPILE
-		data::Matrix{<:Float64} = info.data
+		data::Vector{Float64} = (isa(_argD, Vector)) ? _argD[1].ds_bbox[1:4] : _argD.ds_bbox[1:4]
 		(data[3] > 0.0) && (data[3] = 0.0)	# If not negative then must be 0
 		if (!is_hbar)
 			dx::Float64 = (data[2] - data[1]) * 0.005 + new_bw/2;
@@ -1233,12 +1233,13 @@ function recompute_R_4bars!(cmd::String, opt_R::String, arg1)
 	sub_b = ((ind = findfirst("+", opt_S)) !== nothing) ? opt_S[ind[1]:end] : ""	# The +Base modifier
 	(sub_b != "") && (opt_S = opt_S[1:ind[1]-1])# Strip it because we need to (re)find Bar width
 	bw = (isletter(opt_S[end])) ? parse(Float64, opt_S[3:end-1]) : parse(Float64, opt_S[2:end])	# Bar width
-	info = gmt("gmtinfo -C", arg1)::GMTdataset{Float64, 2}		# FORCES RECOMPILE
-	dx::Float64 = (info.data[2] - info.data[1]) * 0.005 + bw/2;
-	dy::Float64 = (info.data[4] - info.data[3]) * 0.005;
-	info.data[1] -= dx;	info.data[2] += dx;	info.data[4] += dy;
-	info.data = round_wesn(info.data)		# Add a pad if not-tight
-	new_opt_R::String = @sprintf(" -R%.15g/%.15g/%.15g/%.15g", info.data[1], info.data[2], 0, info.data[4])
+	#info::Vector{Float64} = vec(gmt("gmtinfo -C", arg1).data)	# FORCES RECOMPILE
+	info::Vector{Float64} = (isa(arg1, Vector)) ? arg1[1].ds_bbox[1:4] : arg1.ds_bbox[1:4]
+	dx::Float64 = (info[2] - info[1]) * 0.005 + bw/2;
+	dy::Float64 = (info[4] - info[3]) * 0.005;
+	info[1] -= dx;	info[2] += dx;	info[4] += dy;
+	info = round_wesn(info)		# Add a pad if not-tight
+	new_opt_R::String = @sprintf(" -R%.15g/%.15g/%.15g/%.15g", info[1], info[2], 0, info[4])
 	cmd = replace(cmd, opt_R => new_opt_R)
 	return cmd
 end

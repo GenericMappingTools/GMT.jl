@@ -1446,7 +1446,7 @@ function parse_UXY(cmd::String, d::Dict, aliases, opt::Char)::String
 	end
 	# If -X|Y assume it's a new fig so plot any legend that may be trailing around.
 	# This may screw but also screws if we don't do it. 
-	(symb in [:X :xshift :x_offset :Y :yshift :y_offset]) && digests_legend_bag(d)	# FORCES RECOMPILE
+	#(symb in [:X :xshift :x_offset :Y :yshift :y_offset]) && digests_legend_bag(d)	# FORCES RECOMPILE
 	return cmd
 end
 

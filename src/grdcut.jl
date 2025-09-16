@@ -67,15 +67,15 @@ function grdcut_helper(cmd0::String, arg1; kwargs...)::Union{Nothing, GMTgrid, G
 
 	# Images in file or any file but with a gdal request are read-and-cut but GDAL
 	if (cmd0 != "" && (guess_T_from_ext(cmd0) == " -Ti" || (find_in_dict(d, [:usegdal :gdal])[1]) !== nothing))
-		(dbg_print_cmd(d, cmd) !== nothing) && return "grdcut $cmd0 " * cmd		# Vd=2 cause this return
+		(dbg_print_cmd(d, cmd) !== nothing) && return "grdcut $cmd0 " * cmd		# Vd=2 cause this return	# FORCES RECOMPILE plot()
 		t = split(scan_opt(cmd, "-R"), '/')
 		opts = ["-projwin", t[1], t[4], t[2], t[3]]		# -projwin <ulx> <uly> <lrx> <lry>
-		R = cut_with_gdal(cmd0, opts, outname)
+		R = cut_with_gdal(cmd0, opts, outname)		# FORCES RECOMPILE plot()
 	else
 		# If only cut, call crop directly
 		do_crop_here = ((oJ = scan_opt(cmd, "-J")) != "" && in(oJ[1], "xXQq"))	# Try to catch cases where -J does not need to go via grdcut
 		R = ((do_crop_here || cmd == opt_R) && (arg1 !== nothing && arg2 === nothing)) ? crop(arg1; R=opt_R2num(opt_R))[1] :
-			common_grd(d, cmd0, cmd, "grdcut ", arg1, arg2)	# Finish build cmd and run it
+			common_grd(d, cmd0, cmd, "grdcut ", arg1, arg2)	# Finish build cmd and run it	# FORCES RECOMPILE plot()
 	end
 	(R !== nothing && ((prj = planets_prj4(cmd0)) != "")) && (R.proj4 = prj)	# Get cached (@moon_..., etc) planets proj4
 	return R
