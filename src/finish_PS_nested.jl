@@ -67,11 +67,12 @@ function add_opt_module(d::Dict)::Vector{String}
 		elseif (isa(val, NamedTuple))
 			r = add_opt_module_barr1(val, symb)
 		elseif (isa(val, Real) && (val != 0))		# Allow setting coast=true || colorbar=true
-			r = add_opt_module_barr2(symb)			# FORCES RECOMPILE
+			r = add_opt_module_barr2(symb)
 		elseif (symb == :colorbar && (isa(val, StrSymb)))
 			t::Char = lowercase(string(val)[1])		# Accept "Top, Bot, Left" but default to Right
 			anc = (t == 't') ? "TC" : (t == 'b' ? "BC" : (t == 'l' ? "LM" : "RM"))
-			r = colorbar_parser(pos=(anchor=anc,), B="af", first=false, Vd=2)[1]
+			#r = colorbar_parser(pos=(anchor=anc,), B="af", first=false, Vd=2)[1]	# It's fcking RECOMPILE again
+			r = replace("psscale -R -J -Baf -C -DJ" * anc, "-R" => CTRL.pocket_R[1])
 		elseif (symb == :clip)
 			if (isa(val, String) || isa(val, Symbol))	# Accept also "land", "water" or "ocean" or DCW country codes(s) or a hard -E string
 				_str::String = string(val)					# Shoot the Any
@@ -100,10 +101,13 @@ end
 # Add to split code from above in these 2 function barriers to avoid all finish_PS_nested() invalidations
 function add_opt_module_barr2(symb::Symbol)::Union{String, Vector{String}}
 	r::Union{String, Vector{String}} = ""
-	if     (symb == :coast)    r = coast_parser(false, "", W=0.5, A="200/0/2", Vd=2)[1]		# coast!(W=0.5, A="200/0/2", Vd=2)
-	elseif (symb == :colorbar) r = colorbar_parser(pos=(anchor="RM",), B="af", first=false, Vd=2)[1]
-	elseif (symb == :logo)     r = "gmtlogo  -Dx0/0+w5c  -R0.12/0.78/0.2/0.72 -J"; 	# logo!(Vd=2) ??? Only this? no options?
+	#if     (symb == :coast)    r = coast_parser(false, "", W=0.5, A="200/0/2", Vd=2)[1]		# coast!(W=0.5, A="200/0/2", Vd=2)
+	#elseif (symb == :colorbar) r = colorbar_parser(pos=(anchor="RM",), B="af", first=false, Vd=2)[1]
+	if     (symb == :coast)    r = "pscoast -R -J -A200/0/2 -W0.5 -Da"		# coast!(W=0.5, A="200/0/2", Vd=2)
+	elseif (symb == :colorbar) r = "psscale -R -J -Baf -DJRM -C"
+	elseif (symb == :logo)     r = "gmtlogo -Dx0/0+w5c -R -J"; 	# logo!(Vd=2)
 	end
+	(r !== "") && (r = replace(r, "-R" => CTRL.pocket_R[1]))
 	return r
 end
 

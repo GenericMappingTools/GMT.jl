@@ -99,6 +99,7 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 	end
 
 	cmd, arg1, opt_R, _, opt_i = read_data(d, cmd0, cmd, arg1, opt_R, is3D)		# FORCES RECOMPILE
+	#opt_i = ""
 
 	# We still need to set the right -JZ when the aspect is set to :equal (or :data). We couldn't do it
 	# before because only after parsing -R we know the full 3 sides sizes
@@ -216,14 +217,14 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 
 	# See if any of the scatter, bar, lines, etc... was the caller and if yes, set sensible defaults.
 	_cmd = set_avatar_defaults(d, cmd, mcc, caller, got_usr_R, opt_B, opt_Gsymb, opt_ML, opt_R, opt_S, opt_W,
-	                           sub_module, g_bar_fill, opt_Wmarker, opt_UVXY, opt_c, O, arg1)	# FORCES RECOMPILE
+	                           sub_module, g_bar_fill, opt_Wmarker, opt_UVXY, opt_c, O, arg1)
 
 	(got_Zvars && opt_S == "" && opt_W == "" && !occursin(" -G", _cmd[1])) && (_cmd[1] *= " -W0.5")
 	(opt_W == "" && caller == "feather") && (_cmd[1] *= " -W0.1")		# feathers are normally many so better they are thin
 
 	# Let matrices with more data columns, and for which Color info was NOT set, plot multiple lines at once
 	if (!mcc && sub_module == "bar" && check_bar_group(arg1))	# !mcc because the bar-groups all have mcc = false
-		_cmd[1], arg1, cmd2::String = bar_group(d, _cmd[1], opt_R, g_bar_fill, got_Ebars, got_usr_R, arg1)	# FORCES RECOMPILE
+		_cmd[1], arg1, cmd2::String = bar_group(d, _cmd[1], opt_R, g_bar_fill, got_Ebars, got_usr_R, arg1)
 		(cmd2 != "") && (length(_cmd) == 1 ? (_cmd = [cmd2; _cmd[1]]) :
 			(@warn("Can't plot the connector when 'bar' is already a nested call."); CTRL.pocket_call[3] = nothing))
 	end
@@ -256,6 +257,8 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 	CTRL.pocket_d[1] = d					# Store d that may be not empty with members to use in other modules
 	(opt_B == " -B") && gmt_restart()		# For some Fking mysterious reason (see Ex45)
 	return R
+#=
+=#
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -348,7 +351,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function set_avatar_defaults(d, cmd, mcc, caller, got_usr_R, opt_B, opt_Gsymb, opt_ML, opt_R, opt_S, opt_W, sub_module, g_bar_fill, opt_Wmarker, opt_UVXY, opt_c, O, arg1)::Vector{String}
 	cmd  = check_caller(d, cmd, opt_S, opt_W, sub_module, g_bar_fill, O)
-	(mcc && caller == "bar" && !got_usr_R && opt_R != " -R") && (cmd = recompute_R_4bars!(cmd, opt_R, arg1))	# Often needed  FORCES RECOMPILE
+	(mcc && caller == "bar" && !got_usr_R && opt_R != " -R") && (cmd = recompute_R_4bars!(cmd, opt_R, arg1))	# Often needed
 	_cmd = build_run_cmd(cmd, opt_B, opt_Gsymb, opt_ML, opt_S, opt_W, opt_Wmarker, opt_UVXY, opt_c)
 	return _cmd
 end
