@@ -903,7 +903,7 @@ function image_init(API::Ptr{Nothing}, img_box)::Ptr{GMT_IMAGE}
 		return I
 	end
 
-	!isa(img_box, GMTimage) && error("image_init: input  is not a IMAGE container type")
+	!isa(img_box, GMTimage) && error("image_init: input is not a IMAGE container type")
 	image_init(API, img_box)
 end
 
