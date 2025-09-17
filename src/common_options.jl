@@ -4198,7 +4198,7 @@ function showfig(d::Dict{Symbol, Any}, fname_ps::String, fname_ext::String, opt_
 	if (haskey(d, :show) && d[:show] != 0)
 		if ((isdefined(Main, :IJulia) && Main.IJulia.inited) || (isdefined(Main, :VSCodeServer) && get(ENV, "DISPLAY_IN_VSC", "") != "no"))
 			#https://stackoverflow.com/questions/70620607/how-can-i-programmatically-check-that-i-am-running-code-in-a-notebook-in-julia
-			(fname == "") ? display("image/png", read(out)) : @warn("In Jupyter you can only visualize png files. File $fname was saved in disk though.")
+			(fname == "") ? display(MIME"image/png", read(out)) : @warn("In Jupyter you can only visualize png files. File $fname was saved in disk though.")
 		elseif (isPluto)
 			retPluto = true
 		elseif (!isFranklin[1])			# !isFranklin is true when building the docs and there we don't want displays.
