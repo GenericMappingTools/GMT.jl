@@ -802,7 +802,7 @@ function grid_init(API::Ptr{Nothing}, X::GMT_RESOURCE, grd_box, pad::Int=2, cube
 		convert(Ptr{GMT_GRID}, GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_IS_OUTPUT, NULL, NULL, NULL, 0, 0, NULL))
 
 	israsters(grd_box) && (grd_box::GMTgrid = rasters2grid(grd_box))
-	!isa(grd_box, GMTgrid) && error("grd_init: input ($(typeof(grd_box))) is not a GRID container type")
+	!isa(grd_box, GMTgrid) && error("grd_init: input  is not a GRID container type")
 	grid_init(API, X, grd_box, pad, cube)
 end
 
@@ -903,7 +903,7 @@ function image_init(API::Ptr{Nothing}, img_box)::Ptr{GMT_IMAGE}
 		return I
 	end
 
-	!isa(img_box, GMTimage) && error("image_init: input ($(typeof(img_box))) is not a IMAGE container type")
+	!isa(img_box, GMTimage) && error("image_init: input is not a IMAGE container type")
 	image_init(API, img_box)
 end
 
@@ -1579,7 +1579,7 @@ Shows information about the `D` GMTdataset (or vector of them).
 
 ### `info(any)`
 
-Runs ``show(stdout, "text/plain", any)`` which prints all elements of `any`. Good for printing the entire vector or matrix.
+Runs ``show(stdout, MIME"text/plain", any)`` which prints all elements of `any`. Good for printing the entire vector or matrix.
 """
 function info(GI::GItype, showdata::Bool=true; data=true, full=false, crs::Bool=false)
 	isempty(GI) && return println("Empty object")
