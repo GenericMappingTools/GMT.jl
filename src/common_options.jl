@@ -3806,9 +3806,8 @@ function _read_data(d::Dict, cmd::String, arg, opt_R::String="", is3D::Bool=fals
 
 	if (!CONVERT_SYNTAX[1] && get_info && !have_info)
 		wesn_f64 = gmt("gmtinfo -C" * opt_i * opt_di * opt_yx, arg).data
-		if (wesn_f64[1] > wesn_f64[2])			# Workaround a bug/feature in GMT when -: is arround
-			wesn_f64[2], wesn_f64[1] = wesn_f64[1], wesn_f64[2]
-		end
+		# Workaround a bug/feature in GMT when -: is arround
+		if (wesn_f64[1] > wesn_f64[2])  wesn_f64[2], wesn_f64[1] = wesn_f64[1], wesn_f64[2]  end
 	elseif (!have_info)
 		wesn_f64 = [NaN NaN NaN NaN]			# Need something to return
 	end

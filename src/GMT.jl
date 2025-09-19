@@ -431,7 +431,7 @@ using GMT.Laszip
 	#arrows([0 8.2 0 6], limits=(-2,4,0,9), arrow=(len=2,stop=1,shape=0.5,fill=:red), axis=:a, pen="6p");
 	theme()
 	#rescale(mat2img(rand(UInt16, 16,16,3)))
-	GMT.finish_PS_nested(Dict{Symbol, Any}(), ["psbasemap  -Rd -JX15c/0 -Baf -BWSen"])
+	#GMT.finish_PS_nested(Dict{Symbol, Any}(), ["psbasemap  -Rd -JX15c/0 -Baf -BWSen"])
 	plot(rand(5,2))
 	resetGMT()
 end
