@@ -3709,7 +3709,6 @@ function _read_data(d::Dict, cmd::String, arg, opt_R::String="", is3D::Bool=fals
 		arg, got_datetime = mat2ds(convert(Matrix{Float64}, arg)), true
 	end
 
-	have_info = false
 	no_R = (opt_R == "" || opt_R[1] == '/' || opt_R == " -Rtight")
 	prj::String = (isa(arg, GDtype)) ? getproj(arg, proj4=true) : ""
 	is_geo = isgeog(prj)
@@ -3720,7 +3719,8 @@ function _read_data(d::Dict, cmd::String, arg, opt_R::String="", is3D::Bool=fals
 		(geom == 3) && (opt_R = " -Rtight")
 	end
 
-	function get_gmtinfo(opt_i, opt_di, opt_yx, ds_bbox)::Matrix{Float64}
+	wesn_f64::Matrix{Float64} = [NaN NaN NaN NaN]		# Need something to return
+	if (!CONVERT_SYNTAX[1] && ((!IamModern[1] && no_R) || get_info))
 		if (opt_i == "" && opt_di == "" && opt_yx == "" && !isempty(ds_bbox))
 			wesn_f64 = reshape(copy(ds_bbox), 1, length(ds_bbox))
 		else
@@ -3728,22 +3728,10 @@ function _read_data(d::Dict, cmd::String, arg, opt_R::String="", is3D::Bool=fals
 		end
 		# Workaround a bug/feature in GMT when -: is arround
 		if (wesn_f64[1] > wesn_f64[2])  wesn_f64[2], wesn_f64[1] = wesn_f64[1], wesn_f64[2]  end
-		return wesn_f64
 	end
 
 	if (!CONVERT_SYNTAX[1] && !IamModern[1] && no_R)	# Here 'arg' can no longer be a file name (string)
-		wesn_f64 = get_gmtinfo(opt_i, opt_di, opt_yx, ds_bbox)
-		#=
-		if (opt_i == "" && opt_di == "" && opt_yx == "" && !isempty(ds_bbox))
-			wesn_f64::Matrix{Float64} = reshape(copy(ds_bbox), 1, length(ds_bbox))
-		else
-			wesn_f64 = gmt("gmtinfo -C" * opt_i * opt_di * opt_yx, arg).data		# Avoid bloody Any's
-		end
-		# Workaround a bug/feature in GMT when -: is arround
-		if (wesn_f64[1] > wesn_f64[2])  wesn_f64[2], wesn_f64[1] = wesn_f64[1], wesn_f64[2]  end
-		=#
 		(length(wesn_f64) == 2) && (is_onecol = true)
-		have_info = true
 		if (opt_R != "" && opt_R[1] == '/')			# Modify what will be reported as a -R string
 			rs = split(opt_R, '/')
 			if (!occursin("?", opt_R))
@@ -3816,15 +3804,6 @@ function _read_data(d::Dict, cmd::String, arg, opt_R::String="", is3D::Bool=fals
 		end
 		(opt_R != " -Rtight" && !is_onecol) && (opt_R = merge_R_and_xyzlims(d, opt_R))	# We may have some hanging xyzlim requests
 		(!is_onecol) && (cmd *= opt_R)			# The onecol case (for histogram) has an imcomplete -R
-	end
-
-	if (!CONVERT_SYNTAX[1] && get_info && !have_info)
-		#wesn_f64 = gmt("gmtinfo -C" * opt_i * opt_di * opt_yx, arg).data
-		## Workaround a bug/feature in GMT when -: is arround
-		#if (wesn_f64[1] > wesn_f64[2])  wesn_f64[2], wesn_f64[1] = wesn_f64[1], wesn_f64[2]  end
-		wesn_f64 = get_gmtinfo(opt_i, opt_di, opt_yx, ds_bbox)
-	elseif (!have_info)
-		wesn_f64 = [NaN NaN NaN NaN]			# Need something to return
 	end
 
 	return cmd, arg, opt_R, wesn_f64, opt_i
