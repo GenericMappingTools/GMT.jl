@@ -382,8 +382,8 @@
 
 	@test_throws ErrorException("Only integer or floating point types allowed in input. Not this: Char") GMT.dataset_init(GMT.G_API[1], ' ', [0])
 
-	GMT.show_non_consumed(Dict(:lala => 0), "prog");
-	GMT.dbg_print_cmd(Dict(:lala => 0, :Vd=>2), "prog");
+	GMT.show_non_consumed(Dict{Symbol,Any}(:lala => 0), "prog");
+	GMT.dbg_print_cmd(Dict{Symbol,Any}(:lala => 0, :Vd=>2), "prog");
 
 	GMT.justify("aiai")		# A warning
 

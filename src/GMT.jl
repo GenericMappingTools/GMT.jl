@@ -378,10 +378,10 @@ using GMT.Laszip
 
 @compile_workload let
 	G_API[1] = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS)
-	GMT.parse_B(Dict(:frame => (annot=10, title="Ai Ai"), :grid => (pen=2, x=10, y=20)), "", " -Baf -BWSen");
-	GMT.parse_R(Dict(:xlim => (1,2), :ylim => (3,4), :zlim => (5,6)), "");
-	GMT.parse_J(Dict(:J => "X", :scale => "1:10"), "");
-	#GMT.parse_opt_S(Dict(:size => [1 2]), rand(4));
+	GMT.parse_B(Dict{Symbol, Any}(:frame => (annot=10, title="Ai Ai"), :grid => (pen=2, x=10, y=20)), "", " -Baf -BWSen");
+	GMT.parse_R(Dict{Symbol, Any}(:xlim => (1,2), :ylim => (3,4), :zlim => (5,6)), "");
+	GMT.parse_J(Dict{Symbol, Any}(:J => "X", :scale => "1:10"), "");
+	#GMT.parse_opt_S(Dict{Symbol, Any}(:size => [1 2]), rand(4));
 	GMT.parse_opt_S(Dict{String, Any}(), mat2ds(rand(4,2)));
 	GMT.build_opt_J(:X5);
 	GMT.theme("dark")
