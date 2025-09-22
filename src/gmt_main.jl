@@ -1579,7 +1579,7 @@ Shows information about the `D` GMTdataset (or vector of them).
 
 ### `info(any)`
 
-Runs ``show(stdout, MIME"text/plain", any)`` which prints all elements of `any`. Good for printing the entire vector or matrix.
+Runs ``show(stdout, MIME"text/plain"(), any)`` which prints all elements of `any`. Good for printing the entire vector or matrix.
 """
 function info(GI::GItype, showdata::Bool=true; data=true, full=false, crs::Bool=false)
 	isempty(GI) && return println("Empty object")
