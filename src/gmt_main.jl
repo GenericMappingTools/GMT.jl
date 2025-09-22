@@ -1637,7 +1637,7 @@ function info(D::GDtype; crs::Bool=false, attribs=false, att::StrSymb="")
 	end
 	return nothing
 end
-info(any) = show(stdout, "text/plain", any)		# Show the f all of whatever 'any' is
+info(any) = show(stdout, MIME"text/plain"(), any)		# Show the f all of whatever 'any' is
 
 # ---------------------------------------------------------------------------------------------------
 Base.:show(io::IO, G::GMTgrid) = info(G, false)
