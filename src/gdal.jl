@@ -2649,7 +2649,7 @@ end
 		delaunay, dither, buffer, centroid, intersection, intersects, polyunion, fromWKT, fillnodata!, fillnodata,
 		concavehull, convexhull, difference, symdifference, distance, geomarea, geodesicarea, pointalongline, polygonize,
 		simplify, boundary, crosses, disjoint, equals, envelope, envelope3d, geomlength, overlaps, touches, within,
-		wkbUnknown, wkbPoint, wkbPointZ, wkbLineString, wkbLineStringZ, wkbPolygon, wkbPolygonZM, wkbMultiPoint,
+		wkbUnknown, wkbPoint, wkbPointZ, wkbPointZM, wkbLineString, wkbLineStringZ, wkbPolygon, wkbPolygonZM, wkbMultiPoint,
 		wkbMultiPointZ, wkbMultiLineString, wkbMultiPolygon, wkbGeometryCollection, wkbPoint25D, wkbLineString25D,
 		wkbPolygon25D, wkbMultiPoint25D, wkbMultiLineString25D, wkbMultiPolygon25D, wkbGeometryCollection25D
 
