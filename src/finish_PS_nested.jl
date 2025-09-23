@@ -111,7 +111,7 @@ function add_opt_module_barr2(symb::Symbol)::Union{String, Vector{String}}
 	return r
 end
 
-function add_opt_module_barr1(nt, symb::Symbol)::Union{String, Vector{String}}
+function add_opt_module_barr1(nt::NamedTuple, symb::Symbol)::Union{String, Vector{String}}
 	r::Union{String, Vector{String}} = ""
 	if     (symb == :coast)     r = coast!(; Vd=2, nt...)
 	elseif (symb == :basemap)   r = basemap!(; Vd=2, nt...)

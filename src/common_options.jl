@@ -2925,7 +2925,7 @@ end
 axis(nt::NamedTuple, D::Dict{Symbol,Any}=Dict{Symbol,Any}(); x::Bool=false, y::Bool=false, z::Bool=false, secondary::Bool=false) = axis(D; x=x, y=y, z=z, secondary=secondary, nt...)
 function axis(D::Dict{Symbol,Any}=Dict{Symbol,Any}(); x::Bool=false, y::Bool=false, z::Bool=false, secondary::Bool=false, kwargs...)::Tuple{String, Vector{Bool}}
 	d = KW(kwargs)			# These kwargs always come from the fields of a NamedTuple 
-	axis(D, x, y, z, secondary, d)
+	invokelatest(axis, D, x, y, z, secondary, d)
 end
 function axis(D::Dict{Symbol,Any}, x::Bool, y::Bool, z::Bool, secondary::Bool, d::Dict{Symbol,Any})::Tuple{String, Vector{Bool}}
 	# Build the (terrible) -B option

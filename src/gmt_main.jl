@@ -719,26 +719,26 @@ function GMTJL_Set_Object(API::Ptr{Nothing}, X::GMT_RESOURCE, ptr, pad)::GMT_RES
 	# Create the object container and hook as X->object
 
 	if (X.family == GMT_IS_GRID)			# Get a grid from Julia or a dummy one to hold GMT output
-		X.object =  grid_init(API, X, ptr, pad, false)
+		X.object =  invokelatest(grid_init, API, X, ptr, pad, false)
 	elseif (X.family == GMT_IS_CUBE)		# Get a grid from Julia or a dummy one to hold GMT output
-		X.object =  grid_init(API, X, ptr, pad, true)
+		X.object =  invokelatest(grid_init, API, X, ptr, pad, true)
 	elseif (X.family == GMT_IS_IMAGE)		# Get an image from Julia or a dummy one to hold GMT output
-		X.object = image_init(API, ptr)
+		X.object = invokelatest(image_init, API, ptr)
 	elseif (X.family == GMT_IS_DATASET)		# Get a dataset from Julia or a dummy one to hold GMT output
 		actual_family = [GMT_IS_DATASET]	# Default but may change to matrix
 		if (ptr !== nothing && isa(ptr, GMTdataset))
-			if (isempty(ptr.text) && isempty(ptr.header))  X.object = dataset_init(API, ptr.data, actual_family)
-			else                    X.object = dataset_init(API, [ptr], X.direction)	# When TEXT still need to go here
+			if (isempty(ptr.text) && isempty(ptr.header))  X.object = invokelatest(dataset_init, API, ptr.data, actual_family)
+			else                    X.object = invokelatest(dataset_init, API, [ptr], X.direction)	# When TEXT still need to go here
 			end
 		elseif (isa(ptr, Vector{<:GMTdataset}))
-			X.object = dataset_init(API, ptr, X.direction)
+			X.object = invokelatest(dataset_init, API, ptr, X.direction)
 		elseif (isa(ptr, GMTfv) || isa(ptr, Vector{GMTfv}))
-			X.object = dataset_init_FV(API, ptr)
+			X.object = invokelatest(dataset_init_FV, API, ptr)
 		else
 			if (X.direction == GMT_OUT)		# Here we accept ptr === nothing
 				X.object = convert(Ptr{GMT_DATASET}, GMT_Create_Data(API, GMT_IS_DATASET, GMT_IS_PLP, GMT_IS_OUTPUT, NULL, NULL, NULL, 0, 0, NULL))
 			else
-				X.object = (ptr !== nothing) ? dataset_init(API, ptr, actual_family) : error("'ptr' = nothing in call to dataset_init()")
+				X.object = (ptr !== nothing) ? invokelatest(dataset_init, API, ptr, actual_family) : error("'ptr' = nothing in call to dataset_init()")
 			end
 		end
 		X.family = actual_family[1]
@@ -1713,7 +1713,7 @@ Base.:show(io::IO, mime::MIME"image/png", wp::WrapperPluto) = write(io, read(wp.
 # ---------- For Tables -----------------------------------------------------------------------------
 #Base.:names(D::GDtype) = isa(D, Vector) ? D[1].colnames : D.colnames
 Base.:names(D::GMTdataset) = D.colnames
-Base.:names(D::Vector{<:GMTdataset})::Vector{String} = D[1].colnames::Vector{String}
+Base.:names(D::Vector{GMTdataset{Float64,2}})::Vector{String} = D[1].colnames::Vector{String}
 
 # ---------- For fck stop printing UInts in hexadecinal ---------------------------------------------
 #Base.show(io::IO, x::T) where {T<:Union{UInt, UInt128, UInt64, UInt32, UInt16, UInt8}} = Base.print(io, x)
