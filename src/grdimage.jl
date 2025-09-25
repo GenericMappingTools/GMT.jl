@@ -42,13 +42,13 @@ To see the full documentation type: ``@? grdimage``
 """
 function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; first=true, kwargs...)
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
-	_grdimage(cmd0, arg1, arg2, arg3, O, K, d)
+	(cmd0 != "" && arg1 === nothing && haskey(d, :inset)) && (arg1 = gmtread(cmd0); cmd0 = "")
+	invokelatest(_grdimage, cmd0, arg1, arg2, arg3, O, K, d)
 end
 function _grdimage(cmd0::String, arg1, arg2, arg3, O::Bool, K::Bool, d::Dict)
 
 	arg4 = nothing		# For the r,g,b + intensity case
 	first = !O
-	(cmd0 != "" && arg1 === nothing && haskey(d, :inset)) && (arg1 = gmtread(cmd0); cmd0 = "")
 	common_insert_R!(d, O, cmd0, arg1)			# Set -R in 'd' out of grid/images (with coords) if limits was not used
 	
 	# Remote files with no -R are all global. Set CTRL.limits so we can guess the projection.
@@ -152,8 +152,8 @@ function common_insert_R!(d::Dict, O::Bool, cmd0, I_G; is3D=false)
 
 	# When grdview and -p is used we must set also Z lims in -R. If p does not have 'elev' we do nothing 
 	function add_Zlims_in_R(d, opt_R, zmin, zmax)
-		((val = find_in_dict(d, [:p :view :perspective], false)[1]) === nothing) && return opt_R	# Nothing to change
-		!contains(arg2str(val), '/') && return opt_R	# Just p=azim, nothing to change in -R
+		((_val = find_in_dict(d, [:p :view :perspective], false)[1]) === nothing) && return opt_R	# Nothing to change
+		!contains(arg2str(_val), '/') && return opt_R	# Just p=azim, nothing to change in -R
 		t = round_wesn([zmin zmin zmax zmax])			# Raw numbers gives uggly limits
 		return @sprintf("%s/%.15g/%.15g", opt_R, t[1], t[4])
 	end
@@ -173,7 +173,7 @@ function common_insert_R!(d::Dict, O::Bool, cmd0, I_G; is3D=false)
 	elseif (val !== nothing)
 		if (isa(val, StrSymb))
 			s = string(val)::String
-			d[:R] = (s == "global" || s == "d") ? (-180,180,-90,90) : (s == "global360" || s == "g") ? (0,360,-90,90) : val
+			d[:R] = (s == "global" || s == "d") ? (-180.,180.,-90.,90.) : (s == "global360" || s == "g") ? (0.,360.,-90.,90.) : val
 		elseif (isa(val, Tuple) || isa(val, VMr))
 			d[:R] = val
 		end
@@ -184,6 +184,7 @@ function common_insert_R!(d::Dict, O::Bool, cmd0, I_G; is3D=false)
 		delete!(d, [:region, :limits])
 	end
 	(opt_R != "") && (CTRL.pocket_R[1] = " -R" * opt_R)
+	return nothing
 end
 function isimgsize(GI)::Bool
 	width, height = getsize(GI)

@@ -2,7 +2,6 @@ module GMT
 
 using Printf, Dates, Statistics, Downloads, SparseArrays
 using Tables: Tables
-#using PrettyTables
 using PrecompileTools
 using LinearAlgebra
 using InteractiveUtils
@@ -378,17 +377,16 @@ using GMT.Laszip
 
 @compile_workload let
 	G_API[1] = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS)
-	GMT.parse_B(Dict{Symbol, Any}(:frame => (annot=10, title="Ai Ai"), :grid => (pen=2, x=10, y=20)), "", " -Baf -BWSen");
-	GMT.parse_R(Dict{Symbol, Any}(:xlim => (1,2), :ylim => (3,4), :zlim => (5,6)), "");
-	GMT.parse_J(Dict{Symbol, Any}(:J => "X", :scale => "1:10"), "");
-	#GMT.parse_opt_S(Dict{Symbol, Any}(:size => [1 2]), rand(4));
-	GMT.parse_opt_S(Dict{String, Any}(), mat2ds(rand(4,2)));
-	GMT.build_opt_J(:X5);
+	#GMT.parse_B(Dict{Symbol, Any}(:frame => (annot=10, title="Ai Ai"), :grid => (pen=2, x=10, y=20)), "", " -Baf -BWSen");
+	#GMT.parse_R(Dict{Symbol, Any}(:xlim => (1,2), :ylim => (3,4), :zlim => (5,6)), "");
+	#GMT.parse_J(Dict{Symbol, Any}(:J => "X", :scale => "1:10"), "");
+	#GMT.parse_opt_S(Dict{String, Any}(), mat2ds(rand(4,2)));
+	#GMT.build_opt_J(:X5);
 	GMT.theme("dark")
 	GMT.theme_modern()
 	mat2ds([9 8; 9 8], x=[0 7], pen=["5p,black", "4p,white,20p_20p"], multi=true);
-	GMT.cat_2_arg2(rand(3), mat2ds(rand(3,2)));
-	GMT.cat_2_arg2(mat2ds(rand(3,2)), mat2ds(rand(3,2)));
+	#GMT.cat_2_arg2(rand(3), mat2ds(rand(3,2)));
+	#GMT.cat_2_arg2(mat2ds(rand(3,2)), mat2ds(rand(3,2)));
 	#GMT.cat_3_arg2(rand(3),rand(3),rand(3));
 	makecpt(T=(0,10))
 	t = joinpath(tempdir(), "lixo.dat");
@@ -408,6 +406,7 @@ using GMT.Laszip
 	grdcontour(Glix);
 	grd2cpt(Glix);
 	grd2xyz(Glix);
+	viz(Glix, show=false);
 	#grdlandmask(R="-10/4/37/45", res=:c, inc=0.1);
 	#grdmask([10 20; 40 40; 70 20; 10 20], R="0/100/0/100", out_edge_in=[100 0 0], I=2);
 	#grdsample(Glix, inc=0.5);
@@ -431,7 +430,6 @@ using GMT.Laszip
 	#arrows([0 8.2 0 6], limits=(-2,4,0,9), arrow=(len=2,stop=1,shape=0.5,fill=:red), axis=:a, pen="6p");
 	theme()
 	#rescale(mat2img(rand(UInt16, 16,16,3)))
-	#GMT.finish_PS_nested(Dict{Symbol, Any}(), ["psbasemap  -Rd -JX15c/0 -Baf -BWSen"])
 	plot(rand(5,2))
 	resetGMT()
 end

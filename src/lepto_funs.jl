@@ -318,7 +318,7 @@ end
 Fill sinks in a grid.
 
 This function uses the ``imfill`` function to find how to fill sinks in a grid. But since ``imfill``
-operates on UInt8 matrices only the vertical (z) descrimination of the grid is reduced to 256 levels,
+operates on UInt8 matrices only, the vertical (z) descrimination of the grid is reduced to 256 levels,
 which is not that much.
 
 ### Args
