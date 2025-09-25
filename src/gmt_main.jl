@@ -913,7 +913,7 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage)::Ptr{GMT_IMAGE}
 
 	n_rows = size(Img.image, 1);		n_cols = size(Img.image, 2);		n_bands = size(Img.image, 3)
 	if (Img.layout[2] == 'R' && Img.layout[3] == 'B')  n_rows, n_cols = n_cols, n_rows  end
-	(n_bands == 1 &&Img.layout[2] == 'R' && Img.layout[3] == 'B') && (Img.layout = Img.layout[1:2] * "Pa")
+	(n_bands == 1 && Img.layout[2] == 'R' && Img.layout[3] == 'B') && (Img.layout = Img.layout[1:2] * "Pa")
 
 	family = GMT_IS_IMAGE
 	if (n_bands == 2 || n_bands == 4)			# Then we want the alpha layer together with data
