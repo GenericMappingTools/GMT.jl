@@ -407,6 +407,8 @@ using GMT.Laszip
 	grd2cpt(Glix);
 	grd2xyz(Glix);
 	viz(Glix, show=false);
+	histogram(randn(100),T=0.1,center=true, Z=:counts)
+	histogram(I);
 	#grdlandmask(R="-10/4/37/45", res=:c, inc=0.1);
 	#grdmask([10 20; 40 40; 70 20; 10 20], R="0/100/0/100", out_edge_in=[100 0 0], I=2);
 	#grdsample(Glix, inc=0.5);

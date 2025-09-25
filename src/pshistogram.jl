@@ -80,7 +80,7 @@ function histogram_helper(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	if (cmd0 != "" && is_in_dict(d, [:auto :thresholds :zoom]) !== nothing)	# To do auto-limits for stretch we must load data
 		arg1 = gmtread(cmd0);		cmd0 = ""
 	end
-	histogram_helper(cmd0, arg1, O, K, d)
+	invokelatest(histogram_helper, cmd0, arg1, O, K, d)
 end
 
 # ---------------------------------------------------------------------------------------------------

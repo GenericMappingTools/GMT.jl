@@ -112,7 +112,7 @@ function gmtread(_fname::String; kwargs...)
 			gdopts::String = ""
 			if ((val1 = find_in_dict(d, [:layer :layers :band :bands])[1]) !== nothing)
 				if (isa(val1, Real))               gdopts = string(" -b ", val1)
-				elseif (isa(val1, AbstractArray))  gdopts = join([string(" -b ", val1[i]) for i in 1:numel(val1)])
+				elseif (isa(val1, AbstractArray))  gdopts = " -b " * join(string.(val1), " -b ")
 				end
 			end
 		else
@@ -139,12 +139,7 @@ function gmtread(_fname::String; kwargs...)
 					Gdal.GDALClose(ds.ptr); return nothing)
 				if (isa(val, String) || isa(val, Symbol) || isa(val, Real))
 					bd_str::String = string(val)::String
-					if (via_gdal)
-						gdopts = ""
-						if (isa(val, Real))               gdopts = string(" -b ", val)
-						elseif (isa(val, AbstractArray))  gdopts = join([string(" -b ", val[i]) for i in 1:numel(val)])
-						end
-					end
+					(via_gdal) && (gdopts = string(" -b ", bd_str))
 					if (bd_str == "all")
 						proggy = via_gdal ? "gdalread" : "grdinterpolate "
 					else

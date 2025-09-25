@@ -77,12 +77,24 @@ Examples
 """
 function contourf(cmd0::String="", arg1=nothing, arg2=nothing; first=true, kwargs...)
 	d = KW(kwargs)
-	contourf(cmd0, arg1, arg2, first==1, d)
-end
-#function contourf(cmd0::String="", arg1=nothing, arg2=nothing; first=true, kwargs...)
-function contourf(cmd0::String, arg1, arg2, first::Bool, d::Dict)
 
-	#d = KW(kwargs)
+	if (cmd0 != "")		# Then it must be a file name. Of what?
+		if     ((val = find_in_dict(d, [:grd :grid])[1]) !== nothing) X = gmtread(cmd0, grd=true)
+		elseif ((val = find_in_dict(d, [:data :dataset :table])[1]) !== nothing) X = gmtread(cmd0, data=true)
+		elseif ((val = find_in_dict(d, [:ogr])[1]) !== nothing)  X = gmtread(cmd0, ogr=true)
+		else                                                     X = gmtread(cmd0, ignore_grd=1) # Try luck with guessing
+		end
+		if (X !== nothing)		# X === nothing when a recognized grid was passed by name
+			if (arg1 !== nothing)  arg2 = arg1  end		# Then arg1 MUST be a CPT
+			arg1 = X
+			cmd0 = ""
+		end
+	end
+	invokelatest(contourf, cmd0, arg1, arg2, first==1, d)
+end
+
+function contourf(cmd0::String, arg1, arg2, first::Bool, d::Dict{Symbol,Any})
+
 	dict_auto_add!(d)					# The ternary module may send options via another channel
 	CPT_arg::GMTcpt = (isa(arg1, GMTcpt)) ? arg1 : (isa(arg2, GMTcpt) ? arg2 : GMTcpt())	# Fish a CPT, if any.
 
@@ -107,6 +119,7 @@ function contourf(cmd0::String, arg1, arg2, first::Bool, d::Dict)
 		end
 	end
 
+#=
 	if (cmd0 != "")		# Then it must be a file name. Of what?
 		if     ((val = find_in_dict(d, [:grd :grid])[1]) !== nothing) X = gmtread(cmd0, grd=true)
 		elseif ((val = find_in_dict(d, [:data :dataset :table])[1]) !== nothing) X = gmtread(cmd0, data=true)
@@ -119,6 +132,7 @@ function contourf(cmd0::String, arg1, arg2, first::Bool, d::Dict)
 			cmd0 = ""
 		end
 	end
+=#
 
 	if (isa(arg1, GMTgrid) || cmd0 != "")
 		# All of these are grdcontour options also, so must fish them, store and use later.
