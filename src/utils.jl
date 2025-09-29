@@ -440,7 +440,7 @@ end
 
 # --------------------------------------------------------------------------------------------------
 function peaks(n::Int=49; N::Int=49, grid::Bool=true, pixreg::Bool=false)
-	(N != n) && (N = n)
+	(n != 49 && N == 49) && (N = n)
 	x,y = meshgrid(range(-3,stop=3,length=N))
 
 	z = 3 * (1 .- x).^2 .* exp.(-(x.^2) .- (y .+ 1).^2) .- 10*(x./5 .- x.^3 .- y.^5) .* exp.(-x.^2 .- y.^2)
@@ -540,7 +540,7 @@ function tic()
 end
 
 function _toq()
-	_ = time_ns()
+	t1 = time_ns()
 	timers = get(task_local_storage(), :TIMERS, ())
 	(timers === ()) && error("`toc()` without `tic()`")
 	t0 = timers[1]::UInt64
