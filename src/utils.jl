@@ -527,31 +527,31 @@ end
 function accumarray(subs, val::Number, sz=(maximum(subs),))
 	A = zeros(eltype(val), sz...)
 	@inbounds for i = 1:numel(subs)
-		A[subs[i]] += val[i]
+		A[subs[i]] += val
 	end
 	A
 end
 
 # --------------------------------------------------------------------------------------------------
 function tic()
-    t0 = time_ns()
-    task_local_storage(:TIMERS, (t0, get(task_local_storage(), :TIMERS, ())))
-    return t0
+	t0 = time_ns()
+	task_local_storage(:TIMERS, (t0, get(task_local_storage(), :TIMERS, ())))
+	return t0
 end
 
 function _toq()
-    t1 = time_ns()
-    timers = get(task_local_storage(), :TIMERS, ())
-    (timers === ()) && error("`toc()` without `tic()`")
-    t0 = timers[1]::UInt64
-    task_local_storage(:TIMERS, timers[2])
-    (t1-t0)/1e9
+	_ = time_ns()
+	timers = get(task_local_storage(), :TIMERS, ())
+	(timers === ()) && error("`toc()` without `tic()`")
+	t0 = timers[1]::UInt64
+	task_local_storage(:TIMERS, timers[2])
+	(t1-t0)/1e9
 end
 
 function toc(V=true)
-    t = _toq()
-    (V) && println("elapsed time: ", t, " seconds")
-    return t
+	t = _toq()
+	(V) && println("elapsed time: ", t, " seconds")
+	return t
 end
 
 # --------------------------------------------------------------------------------------------------
