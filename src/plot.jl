@@ -99,12 +99,15 @@ Parameters
 - $(opt_savefig)
 """
 function plot(arg1; first=true, kw...)
+	d = KW(kw)
+	_plot(arg1, first, d)
+end
+function _plot(arg1, first, d)
 	# First check if arg1 is a GMTds of a linear fit and if yes, call the plotlinefit() fun
-	if (isa(arg1, GDtype) && find_in_kwargs(kw, [:linefit :regress])[1] !== nothing)
+	if (isa(arg1, GDtype) && is_in_dict(d, [:linefit :regress]; del=false) !== nothing)
 		att = isa(arg1, GMTdataset) ? arg1.attrib : arg1[1].attrib
-		(get(att, "linearfit", "") != "") && return plotlinefit(arg1; first=first, kw...)
-		# If it didn't return above, see if we have a 'groupvar' request and if yest perform regression on grouos
-		d = KW(kw)
+		(get(att, "linearfit", "") != "") && return plotlinefit(arg1; first=first, d...)
+		# If it didn't return above, see if we have a 'groupvar' request and if yes perform regression on grouops
 		arg1 = with_xyvar(d, arg1)		# But first check if we have a column selection
 		gidx, gnames = get_group_indices(d, arg1)
 		cycle_colors = (numel(gidx) <= 7) ? matlab_cycle_colors : simple_distinct	# Will blow if > 20
@@ -119,7 +122,7 @@ function plot(arg1; first=true, kw...)
 			return plotlinefit(Dv; first=first, d...)
 		end
 	end
-	common_plot_xyz("", Tables.istable(arg1) ? arg1 : cat_1_arg(arg1, true), "plot", first, false; kw...)
+	common_plot_xyz("", Tables.istable(arg1) ? arg1 : cat_1_arg(arg1, true), "plot", first, false, d)
 end
 plot!(arg1; kw...) = plot(arg1; first=false, kw...)
 
@@ -464,9 +467,12 @@ function bar(cmd0::String="", arg=nothing; first=true, kw...)
 	(cmd0 != "" && arg === nothing) && (arg = gmtread(cmd0))
 	isa(arg, GMTdataset) && (arg::Matrix{<:Float64} = arg.data)
 	isa(arg, Vector{<:GMTdataset}) && (arg = arg[1].data; @warn("Multi-segments not allowed in 'bar'. Keeping only first segment."))
+	invokelatest(_bar, arg, first, d)
+end
+function _bar(arg, first::Bool, d::Dict{Symbol,Any})
 
 	do_cat = ((haskey(d, :stack) || haskey(d, :stacked)) && isvector(arg) && length(arg) > 2) ? false : true
-	is_waterfall = ((val = find_in_kwargs(kw, [:stack :stacked])[1]) !== nothing && startswith(string(val), "water"))
+	is_waterfall = ((val = hlp_desnany_str(d, [:stack :stacked])) !== "" && startswith(val, "water"))
 	if (is_waterfall)
 		isa(arg, Vector) && (arg = reshape(arg, 1, length(arg)))		# Waterfall stacks must be matrices
 		(arg[1] != 0) && (arg = hcat(repeat([1.0],size(arg,1)), arg))	# If first el != 0 assume coord is missing
@@ -2264,13 +2270,13 @@ function stereonet(mat::AbstractArray{T,2}; first=true, schmidt=true, wulff=fals
 	(is_in_dict(d, [:lt :linethickness]) === nothing) && (d[:lt] = 0.5)
 	d[:par] = (MAP_GRID_PEN_PRIMARY="0.25,gray", MAP_GRID_PEN_SECONDARY="0.25,black")
 	d[:B], d[:R], d[:J] = "pg5 sg20", :d, prj
-	_common_plot_xyz("", Dv, "plot", false, true, false, d)		# Plot the fault planes
+	common_plot_xyz("",  Dv, "plot", first, false, d)		# Plot the fault planes
 
 	(is_in_dict(d, [:marker :Marker :shape]) === nothing) && (d[:marker] = "circ")
 	(is_in_dict(d, [:mec :markeredgecolor :MarkerEdgeColor]) === nothing) && (d[:mec] = "0.0p,black")
 	(is_in_dict(d, [:mc :markercolor]) === nothing) && (d[:mc] = "blue")
 	(is_in_dict(d, [:ms :markersize :MarkerSize :size]) === nothing) && (d[:ms] = "3p")
-	_common_plot_xyz("", Dp, "plot", true, true, false, d)		# Plot the poles
+	common_plot_xyz("",  Dp, "stereonet", false, false, d)		# Plot the poles
 	basemap!(J="P" * CTRL.pocket_J[2] * "+a", B="a15", show=show)
 end
 stereonet!(mat::AbstractArray{T,2}; schmidt=true, wulff=false, kw...) where T<:Real =
