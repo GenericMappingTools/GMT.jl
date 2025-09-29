@@ -433,6 +433,14 @@ using GMT.Laszip
 	theme()
 	#rescale(mat2img(rand(UInt16, 16,16,3)))
 	plot(rand(5,2))
+	
+	# This one is really unbelievable. It executes only ONE F NEW LINE:
+	# "bar(arg1, arg2; first=true, kw...) = common_plot_xyz("", cat_2_arg2(arg1, arg2, true), "bar", first, false; kw...)"
+	# but it causes recompilation of a big chunk of common_plot_xyz() that should have been **ALL** precompiled
+	# by the "plot(rand(5,2))" above. But no, another 3 MB of ... landed in the precompiled cache.
+	# I'm commenting this because we can't afford adding (3)MEGABYTES for just one TINNY function.
+	#bar(1:5, (20, 35, 30, 35, 27), width=0.5, color=:lightblue, limits=(0.5,5.5,0,40))
+	
 	resetGMT()
 end
 

@@ -176,6 +176,9 @@ plotlinefit(D, band_ab=true, band_ci=true, legend=true, show=1)
 """
 function plotlinefit(D::Vector{<:GMTdataset}; first::Bool=true, kw...)
 	d = KW(kw)
+	_plotlinefit(D, first, d)
+end
+function _plotlinefit(D::Vector{<:GMTdataset}, first::Bool, d::Dict{Symbol,Any})
 	N_clusters = numel(D) 
 	cycle_colors = (N_clusters <= 7) ? matlab_cycle_colors : simple_distinct	# Will blow if > 20
 
@@ -213,11 +216,14 @@ end
 # --------------------------------------------------------------------------------------------------
 plotlinefit(m::Matrix{<:Real}; first::Bool=true, grp::Bool=false, kw...) = plotlinefit(linearfitxy(m); first=first, grp=grp, kw...)
 function plotlinefit(D::GMTdataset; first::Bool=true, grp::Bool=false, kw...)
+	d = KW(kw)
+	_plotlinefit(D, first, grp, d)
+end
+function _plotlinefit(D::GMTdataset, first::Bool, grp::Bool, d::Dict{Symbol,Any})
 	# Plot fit line, data points and confidence intervals (some optional) from GMTds created by linearfitxy.
 	# `grp=true` only when originally called from plotlinefit(D::Vector{<:GMTdataset})
 	
 	(get(D.attrib, "a", "") == "" || get(D.attrib, "b", "") == "") && (@warn("Input must be the result of linearfitxy"); return nothing)
-	d = KW(kw)
 	
 	function do_ribs(d, symbs, def_color::String)
 		do_rib, rib_cor = false, ""
