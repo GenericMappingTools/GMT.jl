@@ -238,3 +238,16 @@ function pixConvolveRGBSep(pixs, kelx, kely)
 	ccall((:pixConvolveRGBSep, liblept), Ptr{Pix}, (Ptr{Pix}, Ptr{L_Kernel}, Ptr{L_Kernel}), pixs, kelx, kely)
 end
 
+#=
+function pixSelectiveConnCompFill(pixs, connectivity, minw, minh)
+	ccall((:pixSelectiveConnCompFill, liblept), Ptr{Pix}, (Ptr{Pix}, Cint, Cint, Cint), pixs, connectivity, minw, minh)
+end
+=#
+
+function pixLocalExtrema(pixs, maxmin, minmax, ppixmin, ppixmax)
+	ccall((:pixLocalExtrema, liblept), Cint, (Ptr{Pix}, Cint, Cint, Ptr{Ptr{Pix}}, Ptr{Ptr{Pix}}), pixs, maxmin, minmax, ppixmin, ppixmax)
+end
+
+function pixRemoveBorderConnComps(pixs, connectivity)
+	ccall((:pixRemoveBorderConnComps, liblept), Ptr{Pix}, (Ptr{Pix}, Cint), pixs, connectivity)
+end

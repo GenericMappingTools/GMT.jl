@@ -246,6 +246,9 @@
 	GMT.logspace(1,5);
 	GMT.fakedata(50,1);
 	GMT.meshgrid(1:5, 1:5, 1:5);
+	GMT.ndgrid(1:5, 1:5);
+	GMT.accumarray([1 3 4 2 4 1], 1:6);
+	GMT.accumarray([1 3 4 2 4 1], 2);
 	GMT.cart2pol(5,0);
 	GMT.pol2cart(5,0);
 	GMT.sph2cart([0.7854 0.7854], [0.6155 -0.6155], [1.7321 1.7321]);

@@ -116,3 +116,10 @@ J = imsegment(I, colors=7);
 I = gmtread(TESTSDIR * "assets/moon.png");
 J = imfilter(I, [1 0 -1; 2 0 -2; 1 0 -1]);
 J = imfilter(I, [1 0 -1; 2 0 -2; 1 0 -1], sep=true);
+
+G = peaks();
+imregionalmin(G);
+imregionalmax(G);
+
+I = gmtread(TESTSDIR * "assets/circles.png");
+J = imclearborder(I)

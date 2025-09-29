@@ -11,7 +11,11 @@ Inputs can be UInt8 or Boolean matrices or GMTimages.
 """
 function img2pix(mat::Matrix{<:Integer}, bpp=8; layout="TRBa")::Sppix
 	@assert isa(layout, String) && length(layout) >= 3
-	img2pix(mat2img(mat, layout=layout), bpp=bpp)
+	img2pix(mat2img(mat, layout=layout), bpp)
+end
+function img2pix(mat::BitMatrix, bpp=1; layout="TRBa")::Sppix
+	@assert isa(layout, String) && length(layout) >= 3
+	img2pix(mat2img(collect(mat), layout=layout), 1)
 end
 function img2pix(I::GMTimage, bpp=8)::Sppix		# Minimalist. Still doesn't have a colormap and not yet RGB(A)
 	# The Leptonoica library has (in fact it almost hasn't) an awfull documentation.
@@ -1039,6 +1043,56 @@ function imfilter(I::GMTimage, kernel::Matrix{<:Real}; normalize::Int=1, sep::Bo
 	end
 
 	(ppix == C_NULL) && (@warn("Convolution filter operation failed"); return GMTimage())
+	pix2img(Sppix(ppix))
+end
+
+"""
+    J = imregionalmin(GI|mat; maxmin::Int=0)
+"""
+function imregionalmin(G::Union{GMTgrid, Matrix{<:AbstractFloat}}; maxmin::Int=0)::GMTimage{UInt8, 2}
+	I = imagesc(G, cpt="gray")
+	imregionalmin(I; maxmin=maxmin)
+end
+
+function imregionalmin(I; maxmin::Int=0)::GMTimage{UInt8, 2}
+	(eltype(I) == Bool || eltype(I) == UInt8 || size(I,3) == 1) || error("Only 2D UInt8 or Boolean images are supported")
+	ppixI = img2pix(I)
+	ppixmin = Ref(img2pix(zeros(UInt8, size(I))).ptr)
+	r = pixLocalExtrema(ppixI.ptr, maxmin, 0, ppixmin, C_NULL)
+	(r == 1) && (@warn("imregionalmin filter operation failed"); return GMTimage())
+	pix2img(Sppix(ppixmin[]))
+end
+
+"""
+    J = imregionalmax(GI|mat; minmax::Int=0)
+"""
+function imregionalmax(G::Union{GMTgrid, Matrix{<:AbstractFloat}}; minmax::Int=0)::GMTimage{UInt8, 2}
+	I = imagesc(G, cpt="gray")
+	imregionalmax(I; minmax=minmax)
+end
+
+function imregionalmax(I; minmax::Int=0)::GMTimage{UInt8, 2}
+	(eltype(I) == Bool || eltype(I) == UInt8 || size(I,3) == 1) || error("Only 2D UInt8 or Boolean images are supported")
+	ppixI = img2pix(I)
+	ppixmax = Ref(img2pix(zeros(UInt8, size(I))).ptr)
+	r = pixLocalExtrema(ppixI.ptr, 0, minmax, C_NULL, ppixmax)
+	(r == 1) && (@warn("imregionalmin filter operation failed"); return GMTimage())
+	pix2img(Sppix(ppixmax[]))
+end
+
+"""
+    J = imclearborder(I; conn::Int=4)
+
+Suppress connected components that touch the image border.
+"""
+function imclearborder(I; conn::Int=4)::GMTimage{UInt8, 2}
+	bpp = (eltype(I) == Bool || I.range[6] == 1) ? 1 : 8
+	(bpp == 8 && I.range[6] == 255 && I.n_colors == 0 && rem(sum(I.image), 255) == 0) && (bpp = 1)	# A bit risky but not much
+	(bpp != 1 || size(I,3) != 1) && error("Only Black&White 2D images are supported")
+	ppixI = img2pix(I, bpp)
+
+	ppix = pixRemoveBorderConnComps(ppixI.ptr, conn)
+	(ppix == C_NULL) && (@warn("imclearborder filter operation failed"); return GMTimage())
 	pix2img(Sppix(ppix))
 end
 
