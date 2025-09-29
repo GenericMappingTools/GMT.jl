@@ -408,15 +408,15 @@ end
 function helper1_boxplot(kwargs)
 	d = KW(kwargs)
 	str::String = "Y"
-	str = (find_in_dict(d, [:horizontal :hbar])[1] !== nothing) ? "X" : "Y"
+	str = (is_in_dict(d, [:horizontal :hbar], del=true) !== nothing) ? "X" : "Y"
 	isVert = (str == "Y")
 	(isVert && (val = find_in_dict(d, [:hor])[1] == true)) && (isVert=false; str="X")	# A private violins opt
-	(find_in_dict(d, [:notch])[1] !== nothing) && (str *= "+n")
+	(is_in_dict(d, [:notch]; del=true) !== nothing) && (str *= "+n")
 	if ((val = (find_in_dict(d, [:boxwidth :cap])[1])) !== nothing)
 		str *= string("+w",val)
-		(GMTver >= v"6.5" && !contains(str,"/") && find_in_dict(d, [:byviolin])[1] !== nothing) && (str *= "/0")
+		(!contains(str,"/") && is_in_dict(d, [:byviolin]; del=true) !== nothing) && (str *= "/0")
 	end
-	(GMTver >= v"6.5" && find_in_dict(d, [:byviolin])[1] !== nothing) && (str *= "+w7p/0")
+	(is_in_dict(d, [:byviolin]; del=true) !== nothing) && (str *= "+w7p/0")
 	pen = ((optW::String = add_opt_pen(d, [:W :pen :boxpen])) != "") ? optW : "0.5p"	# GMT BUG. Plain -W is ignored
 	(haskey(d, :byviolin)) && (delete!(d, :byviolin))	# Only consumed by GMT >= 6.5
 	str *= "+p" * pen
@@ -430,7 +430,7 @@ function helper1_boxplot(kwargs)
 		end
 	end
 	_fill::String = string(((val = find_in_dict(d, [:G :fill], false)[1]) !== nothing) ? val : "")
-	w = ((val = find_in_dict(d, [:weights])[1]) !== nothing) ? Float64.(val) : Float64[]
+	w::Vector{Float64} = ((val = find_in_dict(d, [:weights])[1]) !== nothing) ? Float64.(val) : Float64[]
 	
 	return d, isVert, _fill, showOL, OLcmd, w
 end
@@ -466,19 +466,19 @@ function helper2_boxplot(data::Union{Vector{Vector{T}}, AbstractMatrix{T}}, x::V
 		                       [q50 _x[k]+off_in_grp q0 q25 q75 q100 length(t)]	# Add n_pts even when not used (no notch)
 	end
 	D = mat2ds(mat, color=cor)
-	Dol = !isempty(matOL) ? mat2ds(matOL) : GMTdataset()
+	Dol::GMTdataset{Float64,2} = !isempty(matOL) ? mat2ds(matOL) : GMTdataset{Float64,2}()
 	(outliers) && (D.ds_bbox[5] = mi; D.ds_bbox[12] = ma)	# With the outliers limits too
 	return D, Dol
 end
 
 # ----------------------------------------------------------------------------------------------------------
-function agrupa_from_vec(vec::Vector{<:Real}, grp::AbstractVector)
+function agrupa_from_vec(vec::Vector{<:Real}, grp::AbstractVector)::Tuple{Vector{Vector{Float64}}, AbstractVector}
 	# Take the vector VEC and break it into chunks as selected by the categorical vector GRP, then group
 	# them into a matrix MxN_groups whe M is the size of the longest chunk. Remainings are filled with NaNs
 	(length(grp) != length(vec)) && error("Categorical group vector must be of same size as the 'data' vector.")
 	g = unique(grp)
 	x = [sum(grp .== g[k]) for k = 1:numel(g)]
-	mat = [zeros(x[k]) for k = 1:length(g)]
+	mat::Vector{Vector{Float64}} = [zeros(x[k]) for k = 1:length(g)]
 	for k = 1:numel(g)
 		ind = findall(grp .== g[k])
 		mat[k] = vec[ind]

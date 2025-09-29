@@ -439,11 +439,12 @@ end
 
 
 # --------------------------------------------------------------------------------------------------
-function peaks(; N=49, grid::Bool=true, pixreg::Bool=false)
+function peaks(n::Int=49; N::Int=49, grid::Bool=true, pixreg::Bool=false)
+	(N != n) && (N = n)
 	x,y = meshgrid(range(-3,stop=3,length=N))
 
-	z = 3 * (1 .- x).^2 .* exp.(-(x.^2) - (y .+ 1).^2) - 10*(x./5 - x.^3 - y.^5) .* exp.(-x.^2 - y.^2)
-	    - 1/3 * exp.(-(x .+ 1).^2 - y.^2)
+	z = 3 * (1 .- x).^2 .* exp.(-(x.^2) .- (y .+ 1).^2) .- 10*(x./5 .- x.^3 .- y.^5) .* exp.(-x.^2 .- y.^2)
+	    .- 1/3 * exp.(-(x .+ 1).^2 .- y.^2)
 
 	if (grid)
 		inc = y[2]-y[1]
@@ -500,6 +501,35 @@ function meshgrid(vx::AbstractVector{T}, vy::AbstractVector{T}, vz::AbstractVect
 	on = ones(Int, n)
 	oo = ones(Int, o)
 	(vx[om, :, oo], vy[:, on, oo], vz[om, on, :])
+end
+
+function ndgrid(v1::AbstractVector{T}, v2::AbstractVector{T}) where {T}
+	# From https://github.com/ChrisRackauckas/VectorizedRoutines.jl/blob/master/src/matlab.jl
+	m, n = length(v1), length(v2)
+	v1 = reshape(v1, m, 1)
+	v2 = reshape(v2, 1, n)
+	(repeat(v1, 1, n), repeat(v2, m, 1))
+end
+
+"""
+  accumarray(subs, val, sz=(maximum(subs),))
+
+  See MATLAB's documentation for more details.
+  """
+function accumarray(subs, val, sz=(maximum(subs),))
+	A = zeros(eltype(val), sz...)
+	@inbounds for i = 1:numel(val)
+		A[subs[i]] += val[i]
+	end
+	A
+end
+
+function accumarray(subs, val::Number, sz=(maximum(subs),))
+	A = zeros(eltype(val), sz...)
+	@inbounds for i = 1:numel(subs)
+		A[subs[i]] += val[i]
+	end
+	A
 end
 
 # --------------------------------------------------------------------------------------------------

@@ -177,7 +177,7 @@ export
 	bwhitmiss, binarize, bwareaopen, bwperim, bwskell, isodata, padarray, rgb2gray, rgb2lab, rgb2YCbCr, rgb2ycbcr, grid2img,
 	img2grid, grays2cube, grays2rgb, imclose, imcomplement, imcomplement!, imdilate, imerode, imfilter, imopen, imsegment,
 	imsobel, imtophat, imbothat, imhdome, imhmin, imhmax, immorphgrad, imrankfilter, strel, 
-	imfill, imreconstruct, fillsinks, fillsinks!,
+	imfill, imreconstruct, fillsinks, fillsinks!, imregionalmin, imregionalmax, imclearborder,
 
 	findpeaks, makeDCWs, mksymbol, circfit,
 
@@ -412,7 +412,7 @@ using GMT.Laszip
 	#grdlandmask(R="-10/4/37/45", res=:c, inc=0.1);
 	#grdmask([10 20; 40 40; 70 20; 10 20], R="0/100/0/100", out_edge_in=[100 0 0], I=2);
 	#grdsample(Glix, inc=0.5);
-	#grdtrend(Glix, model=3);
+	grdtrend(Glix, model=3);
 	grdtrack(Glix, [1 1]);
 	coast(R=:g, proj=:guess, W=(level=1,pen=(2,:green)));
 	#gridit(rand(10,3), preproc=true, I=0.1);
