@@ -2802,6 +2802,18 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 	return cmd, N_used, arg1, arg2, arg3
 end
 
+# This function is a mini makecpt. Put it here so that we can call it from a future GMTcore module that will split from "modules"
+function makecpt_raw(cmd::String, arg1=nothing)::GMTcpt
+	# Raw version that already knows what the command is and has no input data.
+	(IamModern[1] && !contains(cmd, " -H")) && (cmd *= " -H")
+	!startswith(cmd, "makecpt ") && (cmd = "makecpt " * cmd)
+	_r = gmt_GMTcpt(cmd, arg1)
+	r::GMTcpt = (_r !== nothing) ? _r : GMTcpt()	# _r === nothing when we save CPT on disk.
+	(contains(cmd, " -N") && !isempty(r)) && (r.bfn = ones(3,3))	# Cannot remove the bfn like in plain GMT so make it all whites
+	CURRENT_CPT[1] = r
+	return r
+end
+
 #=
 function get_colorbar_pos(anchor)
 	hack_modern_session(GMT.CTRL.pocket_R[1], GMT.CTRL.pocket_J[1] * GMT.CTRL.pocket_J[3], " -Baf -Bza", fullremove=true)	# Start a modern session
@@ -4191,7 +4203,7 @@ function showfig(d::Dict{Symbol, Any}, fname_ps::String, fname_ext::String, opt_
 	if (haskey(d, :show) && d[:show] != 0)
 		if ((isdefined(Main, :IJulia) && Main.IJulia.inited) || (isdefined(Main, :VSCodeServer) && get(ENV, "DISPLAY_IN_VSC", "") != "no"))
 			#https://stackoverflow.com/questions/70620607/how-can-i-programmatically-check-that-i-am-running-code-in-a-notebook-in-julia
-			(fname == "") ? display(MIME"image/png"(), read(out)) : @warn("In Jupyter you can only visualize png files. File $fname was saved in disk though.")
+			(fname == "" || endswith(fname, ".png")) ? display(MIME"image/png"(), read(out)) : @warn("In Jupyter you can only visualize png files. File $fname was saved in disk though.")
 		elseif (isPluto)
 			retPluto = true
 		elseif (!isFranklin[1])			# !isFranklin is true when building the docs and there we don't want displays.
