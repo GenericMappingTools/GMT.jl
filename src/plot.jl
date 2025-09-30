@@ -493,8 +493,8 @@ function bar(f::Function, range_x=nothing; first=true, kw...)
 end
 bar!(f::Function, rang=nothing; kw...) = bar(f, rang; first=false, kw...)
 
-bar(arg1, arg2; first=true, kw...)  = common_plot_xyz("", cat_2_arg2(arg1, arg2, true), "bar", first, false; kw...)
-bar!(arg1, arg2; kw...) = common_plot_xyz("", cat_2_arg2(arg1, arg2, true), "bar", false, false; kw...)
+bar(arg1, arg2; first=true, kw...)  = common_plot_xyz("", cat_2_arg2(arg1, Float64.(arg2), true), "bar", first, false; kw...)
+bar!(arg1, arg2; kw...) = common_plot_xyz("", cat_2_arg2(arg1, Float64.(arg2), true), "bar", false, false; kw...)
 bar(arg; kw...)  = bar("", arg; kw...)
 bar!(arg; kw...) = common_plot_xyz("", cat_1_arg(arg, true), "bar", false, false; kw...)
 # ------------------------------------------------------------------------------------------------------
@@ -2251,38 +2251,44 @@ Plot a stereonet map in either Schmidt or Wulff projection.
   and line & marker settings (see ``plots`` manual for details on them).
 
 In case the produced figure is still not satisfactory, you can make one by yourself.
-For that use the `Dv, Dp = _stereonet(mat)` function to get the fault planes and poles. A good place
+For that use the `Dv, Dp = stereonet_data(mat)` function to get the fault planes and poles. A good place
 to start is the `stereonet` function itself. Type ``@edit GMT.stereonet([0 0])`` to see the code.
 
 ### Example
 ```julia
-stereonet([90 30; 180 45; 270 60; 0 15; 30 45; 120 48; 225 27; 350 80])
+stereonet([90 30; 180 45; 270 60; 0 15; 30 45; 120 48; 225 27; 350 80], show=true)
 ```
 """
 function stereonet(mat::AbstractArray{T,2}; first=true, schmidt=true, wulff=false, kw...) where T<:Real
 	d = KW(kw)
-	show = (find_in_dict(d, [:show])[1] !== nothing) ? false : true		# DEfault is 'true'.
+	_stereonet(mat, first, schmidt, wulff, d)
+end
+function _stereonet(mat::AbstractArray{T,2}, first::Bool, schmidt::Bool, wulff::Bool, d) where T<:Real
+	show = ((val = find_in_dict(d, [:show])[1]) !== nothing && val != 0)
+	savefig = find_in_dict(d, [:savefig :figname :name])[1];
+	Vd = get(d, :Vd, 0)
 	wulff && (schmidt = false)			# Wulff stereonet
 
-	Dv, Dp = _stereonet(mat)
+	Dv, Dp = stereonet_data(mat)
 	prj = schmidt ? :laea : (name=:stereo, center=[0,0])# "S0/0/15c"
 	(is_in_dict(d, [:lc :linecolor]) === nothing) && (d[:lc] = "red")
 	(is_in_dict(d, [:lt :linethickness]) === nothing) && (d[:lt] = 0.5)
 	d[:par] = (MAP_GRID_PEN_PRIMARY="0.25,gray", MAP_GRID_PEN_SECONDARY="0.25,black")
 	d[:B], d[:R], d[:J] = "pg5 sg20", :d, prj
 	common_plot_xyz("",  Dv, "plot", first, false, d)		# Plot the fault planes
+	(Vd != 0) && (d[:Vd] = Vd)
 
 	(is_in_dict(d, [:marker :Marker :shape]) === nothing) && (d[:marker] = "circ")
 	(is_in_dict(d, [:mec :markeredgecolor :MarkerEdgeColor]) === nothing) && (d[:mec] = "0.0p,black")
 	(is_in_dict(d, [:mc :markercolor]) === nothing) && (d[:mc] = "blue")
 	(is_in_dict(d, [:ms :markersize :MarkerSize :size]) === nothing) && (d[:ms] = "3p")
 	common_plot_xyz("",  Dp, "stereonet", false, false, d)		# Plot the poles
-	basemap!(J="P" * CTRL.pocket_J[2] * "+a", B="a15", show=show)
+	basemap!(J="P" * CTRL.pocket_J[2] * "+a", B="a15", show=show, savefig=savefig)
 end
 stereonet!(mat::AbstractArray{T,2}; schmidt=true, wulff=false, kw...) where T<:Real =
 	stereonet(mat; first=false, schmidt=schmidt, wulff=wulff, kw...)
 
-function _stereonet(mat::AbstractArray{T,2}) where T<:Real
+function stereonet_data(mat::AbstractArray{T,2}) where T<:Real
 	# This function computes the fault planes and the poles. Returns a vector of GMTdataset
 	# with the fault planes and a GMTdataset with the poles.
 	@assert size(mat,2) >= 2 "Input matrix must have at least two columns: azimuth and plunge"
