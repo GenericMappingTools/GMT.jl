@@ -9,7 +9,10 @@ Make static color palette tables (CPTs). The second form accepts a name of one o
 - **A** | **alpha** | **transparency** :: [Type => Str]
 
     Sets a constant level of transparency (0-100) for all color slices.
-- $(opt_C)
+- **C** | **color** | **colormap** | **cmap** | **colorscale** :: [Type => Str]
+
+    Give a CPT name or specify -Ccolor1,color2[,color3,...] to build a linear continuous CPT from those
+    colors automatically.
 - **D** | **bg** | **background** :: [Type => Str | []]			`Arg = [i|o]`
 
     Select the back- and foreground colors to match the colors for lowest and highest
@@ -85,16 +88,6 @@ function makecpt(cmd0::String, arg1, d::Dict)::Union{String, GMTcpt}
 	return r
 end
 
-function makecpt_raw(cmd::String, arg1=nothing)::GMTcpt
-	# Raw version that already knows what the command is and has no input data.
-	(IamModern[1] && !contains(cmd, " -H")) && (cmd *= " -H")
-	!startswith(cmd, "makecpt ") && (cmd = "makecpt " * cmd)
-	_r = gmt_GMTcpt(cmd, arg1)
-	r::GMTcpt = (_r !== nothing) ? _r : GMTcpt()	# _r === nothing when we save CPT on disk.
-	(contains(cmd, " -N") && !isempty(r)) && (r.bfn = ones(3,3))	# Cannot remove the bfn like in plain GMT so make it all whites
-	CURRENT_CPT[1] = r
-	return r
-end
 
 function makecpt(G::GMTgrid; equalize=false, kw...)		# A version that works on grids.
 	# equalize = true uses default grd2cpt. equalize=n uses grd2cpt -Tn
