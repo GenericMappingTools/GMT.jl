@@ -59,10 +59,10 @@ To read the x,y,z,t data from file "lixo.laz" do:
 ```
 """
 function lazread(fname::AbstractString; out::AbstractString="xyz", type::DataType=Float64, class::Int=0, startstop="1:end", kw...)
-	d = GMT.KW(kw)
+	d = KW(kw)
 	do_grid = (find_in_dict(d, [:grid, :grd])[1]  !== nothing)
 	do_img  = (find_in_dict(d, [:image, :img])[1] !== nothing)
-	opt_RI, = GMT.parse_RIr(d, "")
+	opt_RI, = parse_RIr(d, "")
 	do_grid && (out = "xyz")
 	(do_img && out == "xyz") && (out = "xyRGB")		# If want other color combinations must specify them explicitly.
 	(do_grid || do_img) && (type = Float32)
@@ -276,10 +276,10 @@ function make_img_from_xyz(xy, RGB, opt_RI)::GMTimage{UInt8, 3}
 	inc = split(opt_I[4:end], '/')[1]
 	cmd = "nearneighbor -Vq -N1 -S" * inc * opt_R * opt_I * opt_r
 	#G::GMTgrid{Float32, 2} = gmt(cmd, [xy RGB[:,1]])		# ADDING THE TYPE ANNOT ADDS 0.5 MB TO THE PRECOMPILED CACHE !!!!!
-	G = GMT.gmt_GMTgrid(cmd, [xy RGB[:,1]])
+	G = gmt_GMTgrid(cmd, [xy RGB[:,1]])
 	img = Array{UInt8}(undef, size(G,1), size(G,2), 3)
 	for k = 1:3
-		(k > 1) && (G = GMT.gmt_GMTgrid(cmd, [xy RGB[:,k]]))
+		(k > 1) && (G = gmt_GMTgrid(cmd, [xy RGB[:,k]]))
 		It = rescale(G, stretch=true, type=UInt8)
 		img[:,:,k] .= It[:, :]
 	end
@@ -289,16 +289,16 @@ end
 
 # --------------------------------------------------------------------------------
 function laz_get_RIr(xyz, opt_RI)
-	if ((opt_R = GMT.scan_opt(opt_RI, "-R", true)) == "")
+	if ((opt_R = scan_opt(opt_RI, "-R", true)) == "")
 		mima_x = extrema(view(xyz, :, 1));		dx = mima_x[2] - mima_x[1]
 		mima_y = extrema(view(xyz, :, 2));		dy = mima_y[2] - mima_y[1]
 		opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g", mima_x[1], mima_x[2], mima_y[1], mima_y[2])
 		inc = sqrt(size(xyz,1) / (dx*dy))/2		# Very crude estimate of the increment in case it was not provided.
 	end
-	if ((opt_I = GMT.scan_opt(opt_RI, "-I", true)) == "")
+	if ((opt_I = scan_opt(opt_RI, "-I", true)) == "")
 		opt_I = @sprintf(" -I%.8g", inc)		#
 	end
-	opt_r = GMT.scan_opt(opt_RI, "-r", true)
+	opt_r = scan_opt(opt_RI, "-r", true)
 	return opt_R, opt_I, opt_r
 end
 
@@ -354,7 +354,7 @@ function rebuild_grid(header, reader, point, z)::GMTgrid{Float32, 2}
 		pop!(z);	pop!(z)
 	end
 
-	mima = GMT.extrema_nan(z)
+	mima = extrema_nan(z)
 	z_ = reshape(z, n_rows, n_cols)
 	h[5:6] .= mima
 

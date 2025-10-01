@@ -71,7 +71,7 @@ Fill selected raster regions by interpolation from the edges.
 The modified input `data`
 """
 function fillnodata!(indata::GItype; nodata=nothing, kwargs...)
-	d = GMT.KW(kwargs)
+	d = KW(kwargs)
 	d[:nodata] = (nodata !== nothing) ? nodata : isa(indata, GItype) ? indata.nodata : NaN
 	helper_run_GDAL_fun(gdalfillnodata!, indata, "", String[], "", d...)
 end
@@ -126,10 +126,10 @@ Its natural use is to digitize masks images.
 - `sort`: If true, will sort polygons by pixel count. Default is the order that GDAL decides internally.
 """
 function polygonize(data::GItype; gdataset=nothing, kwargs...)
-	d = GMT.KW(kwargs)
+	d = KW(kwargs)
 	(gdataset === nothing) && (d[:gdataset] = true)
 	m_per_deg = 2pi * 6371000 / 360;	m_per_deg_2 = m_per_deg^2
-	_isgeog = GMT.isgeog(data)
+	_isgeog = isgeog(data)
 	min_area::Float64 = ((val = find_in_dict(d, [:min_area :minarea])[1]) !== nothing) ? Float64(val) : 0.0
 	max_area::Float64 = ((val = find_in_dict(d, [:max_area :maxarea])[1]) !== nothing) ? Float64(val) : 0.0
 
@@ -144,30 +144,30 @@ function polygonize(data::GItype; gdataset=nothing, kwargs...)
 			cell_area = Float64(val)::Float64 * data.inc[1] * data.inc[2]
 		end
 		s_area = string(cell_area)
-		isempty(GMT.POSTMAN[1]) ? (GMT.POSTMAN[1] = Dict("min_polygon_area" => s_area)) : GMT.POSTMAN[1]["min_polygon_area"] = s_area
-		(max_area > 0.0) && (GMT.POSTMAN[1]["max_polygon_area"] = string(cell_area2))
-		_isgeog && (GMT.POSTMAN[1]["polygon_isgeog"] = "1")
+		isempty(POSTMAN[1]) ? (POSTMAN[1] = Dict("min_polygon_area" => s_area)) : POSTMAN[1]["min_polygon_area"] = s_area
+		(max_area > 0.0) && (POSTMAN[1]["max_polygon_area"] = string(cell_area2))
+		_isgeog && (POSTMAN[1]["polygon_isgeog"] = "1")
 	end
 
 	o = helper_run_GDAL_fun(gdalpolygonize, data, "", String[], "", d...)
 
 	if (gdataset === nothing)						# Should be doing this for GDAL objects too but need to learn how to.
-		GMT.POSTMAN[1]["polygonize"] = "y"			# To inform gd2gmt() that it should check if last Di is the whole area.
-		(find_in_dict(d, [:sort])[1] !== nothing) && (GMT.POSTMAN[1]["sort_polygons"] = "y")
+		POSTMAN[1]["polygonize"] = "y"			# To inform gd2gmt() that it should check if last Di is the whole area.
+		(find_in_dict(d, [:sort])[1] !== nothing) && (POSTMAN[1]["sort_polygons"] = "y")
 		if ((val = find_in_dict(d, [:simplify])[1]) !== nothing)
 			s_val::String = string(val)
 			# If simplify=auto, then use the cell side to estimate the simplification tolerance.
 			s_val[1] == 'a' && (s_val = _isgeog ? string(data.inc[1] * m_per_deg) : string(data.inc[1]))
-			GMT.POSTMAN[1]["simplify"] = s_val
+			POSTMAN[1]["simplify"] = s_val
 		end
 		prj = getproj(data)
 		D = gd2gmt(o);
 		!isempty(D) && (isa(D, Vector) ? (D[1].proj4 = prj) : (D.proj4 = prj))
-		delete!(GMT.POSTMAN[1], "min_polygon_area")	# In case it was set above
-		delete!(GMT.POSTMAN[1], "polygon_isgeog")
+		delete!(POSTMAN[1], "min_polygon_area")	# In case it was set above
+		delete!(POSTMAN[1], "polygon_isgeog")
 		return D
 	end
-	delete!(GMT.POSTMAN[1], "min_polygon_area")
+	delete!(POSTMAN[1], "min_polygon_area")
 	o
 end
 
@@ -202,7 +202,7 @@ contiguous (connected). The work is done by the GDAL ``GDALSieveFilter`` functio
    membership purposes or 8 indicating they are. The default is 4.
 """
 function bwareaopen(I::Union{GMTimage{UInt8,2}, GMTimage{Bool,2}}; keepwhites::Bool=false, keepblacks::Bool=false, kwargs...)::GMTimage
-	d = GMT.KW(kwargs)
+	d = KW(kwargs)
 	# When the memory layout is column major, the gmt2gd step has to make a data copy, so we better forget the
 	# possibility an insitu gdalsievefilter operation and do a copy right away when layout is row major. 
 	Ic::GMTimage{UInt8,2} = helper_run_GDAL_fun(gdalsievefilter, I.layout[2] == 'C' ? I : deepcopy(I), "", String[], "", d...)
@@ -210,9 +210,9 @@ function bwareaopen(I::Union{GMTimage{UInt8,2}, GMTimage{Bool,2}}; keepwhites::B
 	white = (I.range[6] == 1) ? UInt8(1) : UInt8(255)
 	black = UInt8(0)
 	if (keepwhites)
-		for k = 1:GMT.numel(Ic)  @inbounds (I[k] == white) && (Ic[k] = white)  end
+		for k = 1:numel(Ic)  @inbounds (I[k] == white) && (Ic[k] = white)  end
 	else
-		for k = 1:GMT.numel(Ic)  @inbounds (I[k] == black) && (Ic[k] = black)  end
+		for k = 1:numel(Ic)  @inbounds (I[k] == black) && (Ic[k] = black)  end
 	end
 	return Ic
 end
@@ -246,7 +246,7 @@ A GMT grid or Image, or a GDAL dataset (or nothing if file was writen on disk).
 function gdaldem(indata, method::String, opts::Vector{String}=String[]; dest="/vsimem/tmp", kwargs...)
 	opts = gdal_opts2vec(opts)		# Guarantied to return a Vector{String}
 	if (method == "hillshade")		# So far the only method that accept kwarg options
-		d = GMT.KW(kwargs)
+		d = KW(kwargs)
 		band = ((val = find_in_dict(d, [:band])[1]) !== nothing) ? string(val)::String : "1"
 		append!(opts, ["-compute_edges", "-b", band])
 		if ((val = find_in_dict(d, [:scale])[1]) === nothing)
@@ -324,7 +324,7 @@ end
 function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::String="", kwargs...)::Union{GItype, GDtype, Gdal.AbstractDataset, Nothing}
 	# Helper function to run the GDAL function under 'some protection' and returning obj or saving in file
 
-	GMT.ressurectGDAL()				# Another black-hole plug attempt.
+	ressurectGDAL()				# Another black-hole plug attempt.
 	opts = gdal_opts2vec(opts)		# Guarantied to return a Vector{String}
 	d, opts, got_GMT_opts = GMT_opts_to_GDAL(f, opts, kwargs...)
 	Vd::Int = ((val = find_in_dict(d, [:Vd])[1]) !== nothing) ? val : 0		# More gymns to avoid Anys
@@ -332,7 +332,7 @@ function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::St
 
 	# For gdaldem color-relief we need a further arg that is the name of a cpt. So save one on disk
 	_cmap = C_NULL
-	if (f == gdaldem && ((cmap = find_in_dict(d, GMT.CPTaliases)[1])) !== nothing)
+	if (f == gdaldem && ((cmap = find_in_dict(d, CPTaliases)[1])) !== nothing)
 		_cmap = TMPDIR_USR[1] * "/GMTjl_cpt_" * TMPDIR_USR[2] * TMPDIR_USR[3] * ".cpt"
 		if ((isa(cmap, String) && (lowercase(splitext(cmap)[2][2:end]) == "cpt")) || isa(cmap, GMTcpt))
 			save_cpt4gdal(cmap, _cmap)	# GDAL pretend to recognise CPTs but it almost doesn't
@@ -351,9 +351,10 @@ function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::St
 		y_min > parse(Float64, opts[ind+4]) && error("Requested y_min " * opts[ind+4] * " is outside dataset extent")
 		y_max < parse(Float64, opts[ind+2]) && error("Requested y_max " * opts[ind+2] * " is outside dataset extent")
 	end
-	((outname = GMT.add_opt(d, "", "", [:outgrid :outfile :save])) != "") && (dest = outname)
+	((outname = add_opt(d, "", "", [:outgrid :outfile :save])) != "") && (dest = outname)
 	default_gdopts!(f, dataset, opts, dest)	# Assign some default options in function of the driver and data type
-	((meta = GMT.hlp_desnany_vstr(d, [:meta])) != "") && Gdal.GDALSetMetadata(dataset.ptr, meta, C_NULL)	# Metadata must have form NAME=.....
+	((val = find_in_dict(d, [:meta])[1]) !== nothing && isa(val, Vector{String})) &&
+		Gdal.GDALSetMetadata(dataset.ptr, val, C_NULL)		# Metadata must be in the form NAME=.....
 
 	CPLPushErrorHandler(@cfunction(CPLQuietErrorHandler, Cvoid, (UInt32, Cint, Cstring)))
 	#setconfigoption("CPL_LOG_ERRORS", "ON")
@@ -418,8 +419,8 @@ end
 # ---------------------------------------------------------------------------------------------------
 function GMT_opts_to_GDAL(f::Function, opts::Vector{String}, kwargs...)
 	# Helper function to process some GMT options and turn them into GDAL syntax
-	d = GMT.init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
-	if ((opt_R = GMT.parse_R(d, "")[1]) != "")
+	d = KW(kwargs)
+	if ((opt_R = parse_R(d, "")[1]) != "")
 		s = split(opt_R[4:end], '/')
 		if (f != gdalgrid)
 			if haskey(d, :srcwin)					# projwin & srcwin have different syntax
@@ -434,12 +435,12 @@ function GMT_opts_to_GDAL(f::Function, opts::Vector{String}, kwargs...)
 	end
 
 	x_srs = (f == gdaltranslate) ? "-a_srs" : "-t_srs"		# But don't know if there are others that take -a_srs instead of -t_srs
-	if ((opt_J = GMT.parse_J(d, "", default=" ")[1]) != "")
+	if ((opt_J = parse_J(d, "", default=" ")[1]) != "")
 		ind = findfirst("+width=", opt_J)					# We don't want the width here.
 		(ind !== nothing) && (opt_J = opt_J[1:ind[1]-1])
 		append!(opts, [x_srs, opt_J[4:end]])
 	end
-	if ((opt_I = GMT.parse_I(d, "", [:I :inc :increment :spacing], "I", true)) != "")	# Need the 'I' to not fall into parse_I() exceptions
+	if ((opt_I = parse_I(d, "", [:I :inc :increment :spacing], "I", true)) != "")	# Need the 'I' to not fall into parse_I() exceptions
 		t = split(opt_I[4:end], '/')
 		(length(t) == 1) ? append!(opts, ["-tr", t[1], t[1]]) : append!(opts, ["-tr", t[1], t[2]])
 	end

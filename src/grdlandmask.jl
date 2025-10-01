@@ -8,7 +8,7 @@ are over land or over water. The nodes defined by the selected region and lattic
 set according to one of two criteria: (1) land vs water, or (2) the more detailed (hierarchical)
 ocean vs land vs lake vs island vs pond.
 
-See full GMT (not the `GMT.jl` one) docs at [`grdlandmask`]($(GMTdoc)grdlandmask.html)
+See full GMT docs at [`grdlandmask`]($(GMTdoc)grdlandmask.html)
 
 Parameters
 ----------

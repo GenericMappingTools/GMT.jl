@@ -5,7 +5,7 @@ Reads randomly-spaced x,y[,z] (or file) and performs Delaunay
 triangulation, i.e., it finds how the points should be connected to give the most equilateral
 triangulation possible. 
 
-See full GMT (not the `GMT.jl` one) docs at [`triangulate`]($(GMTdoc)triangulate.html)
+See full GMT docs at [`triangulate`]($(GMTdoc)triangulate.html)
 
 Parameters
 ----------
@@ -142,7 +142,7 @@ function triplot(in::Matrix; onlyedges::Bool=false, noplot::Bool=false, first::B
 	isa(D, Vector{<:GMTdataset}) && (for k = 1:numel(D)  D[k].geom = wkbPolygon  end)
 	isa(D, GMTdataset) && (D.geom = wkbPolygon)
 	(noplot || Vd > 1) && return D
-	GMT.common_plot_xyz("", D, "plot", first, false, d)
+	common_plot_xyz("", D, "plot", first, false, d)
 end
 
 triplot!(in::Matrix; onlyedges::Bool=false, noplot::Bool=false, kw...) = triplot(in; onlyedges=onlyedges, noplot=noplot, first=false, kw...)
@@ -159,7 +159,7 @@ Since this is a `plot3d` _avatar_ all options in this function are those of the 
 
 ### Example
 ```julia
-    x,y,z = GMT.peaks(N=45, grid=false);
+    x,y,z = peaks(N=45, grid=false);
 	trisurf([x[:] y[:] z[:]], pen=0.5, show=true)
 ```
 """

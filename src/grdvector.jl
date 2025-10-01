@@ -5,7 +5,7 @@ Takes two 2-D grid files which represents the x- and y-components of a vector fi
 a vector field plot by drawing vectors with orientation and length according to the information
 in the files. Alternatively, polar coordinate r, theta grids may be given instead.
 
-See full GMT (not the `GMT.jl` one) docs at [`grdvector`]($(GMTdoc)grdvector.html)
+See full GMT docs at [`grdvector`]($(GMTdoc)grdvector.html)
 
 Parameters
 ----------

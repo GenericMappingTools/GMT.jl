@@ -5,7 +5,7 @@ Reads randomly-spaced (x,y,z) triples and produces a binary grid file of gridded
 	
 		(1 - T) * L (L (z)) + T * L (z) = 0
 
-See full GMT (not the `GMT.jl` one) docs at [`greenspline`]($(GMTdoc)greenspline.html)
+See full GMT docs at [`greenspline`]($(GMTdoc)greenspline.html)
 
 Parameters
 ----------

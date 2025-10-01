@@ -104,7 +104,7 @@ call the GMT lib and works only on in-memory array (i.e., no disk files).
 A grid or an image, depending on the input type, plus two 1x2 matrices with the indices of the cropped zone.
 
 ## Example
-	G = GMT.peaks();
+	G = peaks();
 	crop(G, region=(-2,2,-2,2))
 """
 function crop(arg::GItype; kw...)

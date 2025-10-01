@@ -3,7 +3,7 @@
 
 Create animation sequences and movies.
 
-See full GMT (not the `GMT.jl` one) docs at [`movie`]($(GMTdoc)movie.html)
+See full GMT docs at [`movie`]($(GMTdoc)movie.html)
 
 
 Parameters

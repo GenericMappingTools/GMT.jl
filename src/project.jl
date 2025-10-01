@@ -3,7 +3,7 @@
 
 Project data onto lines or great circles, generate tracks, or translate coordinates.
 
-See full GMT (not the `GMT.jl` one) docs at [`project`]($(GMTdoc)project.html)
+See full GMT docs at [`project`]($(GMTdoc)project.html)
 
 Parameters
 ----------

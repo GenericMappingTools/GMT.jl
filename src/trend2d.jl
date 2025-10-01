@@ -3,7 +3,7 @@
 
 Fit a [weighted] [robust] polynomial model for z = f(x,y) to xyz[w] data.
 
-See full GMT (not the `GMT.jl` one) docs at [`trend2d`]($(GMTdoc)trend2d.html)
+See full GMT docs at [`trend2d`]($(GMTdoc)trend2d.html)
 
 Parameters
 ----------

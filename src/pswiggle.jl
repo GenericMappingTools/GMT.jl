@@ -3,7 +3,7 @@
 
 Reads (length,azimuth) pairs from file and plot a windwiggle diagram.
 
-See full GMT (not the `GMT.jl` one) docs at [`pswiggle`]($(GMTdoc)wiggle.html)
+See full GMT docs at [`pswiggle`]($(GMTdoc)wiggle.html)
 
 Parameters
 ----------

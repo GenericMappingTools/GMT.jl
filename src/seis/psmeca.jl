@@ -3,7 +3,7 @@
 
 Plot focal mechanisms.
 
-See full GMT (not the `GMT.jl` one) docs at [`meca`]($(GMTdoc)supplements/seis/meca.html)
+See full GMT docs at [`meca`]($(GMTdoc)supplements/seis/meca.html)
 
 Parameters
 ----------
@@ -96,7 +96,7 @@ const psmeca! = meca!			# Alias
 
 Plot cross-sections of focal mechanisms.
 
-See full GMT (not the `GMT.jl` one) docs at [`pscoupe`]($(GMTdoc)coupe.html).
+See full GMT docs at [`pscoupe`]($(GMTdoc)coupe.html).
 Essentially the same as **meca** plus **A**. Run `gmthelp(coupe)` to see the list of options.
 """
 coupe(cmd0::String; kwargs...)  = coupe_helper(cmd0, nothing; kwargs...)

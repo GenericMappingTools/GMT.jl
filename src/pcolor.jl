@@ -51,7 +51,7 @@ by setting the `rotx` (ot `slanted`) keywords.
 
 ```julia
     # Create an example grid
-	G = GMT.peaks(N=21);
+	G = peaks(N=21);
 
 	pcolor(G, outline=(0.5,:dot), show=true)
 

@@ -3,7 +3,7 @@
 
 Delaunay or Voronoi construction of spherical lon,lat data
 
-See full GMT (not the `GMT.jl` one) docs at [`sphtriangulate`]($(GMTdoc)sphtriangulate.html)
+See full GMT docs at [`sphtriangulate`]($(GMTdoc)sphtriangulate.html)
 
 Parameters
 ----------

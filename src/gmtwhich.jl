@@ -3,7 +3,7 @@
 
 Find full path to specified files
 
-See full GMT (not the `GMT.jl` one) docs at [`gmtwhich`]($(GMTdoc)gmtwhich.html)
+See full GMT docs at [`gmtwhich`]($(GMTdoc)gmtwhich.html)
 
 Parameters
 ----------

@@ -4,7 +4,7 @@
 Combine grids ``grid1`` and ``grid2`` into ``grid3`` by pasting them together along their common edge.
 Both grids must have the same dx, dy and have one edge in common.
 
-See full GMT (not the `GMT.jl` one) docs at [`grdpaste`]($(GMTdoc)grdpaste.html)
+See full GMT docs at [`grdpaste`]($(GMTdoc)grdpaste.html)
 
 Parameters
 ----------

@@ -257,7 +257,7 @@ function gd2gmt(dataset::Gdal.AbstractDataset)
 	# This method is for OGR formats only
 	(Gdal.GDALGetRasterCount(dataset.ptr) >= 1) && return gd2gmt(dataset; pad=0)
 
-	drv = get(POSTMAN[1], "GDALdriver", "");	(drv != "") && delete!(GMT.POSTMAN[1], "GDALdriver")
+	drv = get(POSTMAN[1], "GDALdriver", "");	(drv != "") && delete!(POSTMAN[1], "GDALdriver")
 	(startswith(drv, "XLS") || drv == "CSV") && return helper_read_XLSCSV(dataset)
 
 	min_area = (get(POSTMAN[1], "min_polygon_area", "") != "") ? parse(Float64, POSTMAN[1]["min_polygon_area"]) : 0.0
@@ -308,13 +308,13 @@ function gd2gmt(dataset::Gdal.AbstractDataset)
 	set_dsBB!(D, false)					# Compute and set the global BoundingBox for this dataset
 	if (get(POSTMAN[1], "polygonize", "") != "") && isapprox(D[1].ds_bbox, D[end].bbox)	# Last one is often an error (the whole area)
 		pop!(D)
-		delete!(GMT.POSTMAN[1], "polygonize")
+		delete!(POSTMAN[1], "polygonize")
 		ds -= 1
 	end
 	if (get(POSTMAN[1], "sort_polygons", "") != "")		# polygonize requested that the polygons go out in growing order
 		(polyg_area = deleteat!(polyg_area, ds:length(polyg_area)))
 		if (isempty(polyg_area))
-			delete!(GMT.POSTMAN[1], "sort_polygons");	delete!(GMT.POSTMAN[1], "simplify")
+			delete!(POSTMAN[1], "sort_polygons");	delete!(POSTMAN[1], "simplify")
 			return GMTdataset()
 		end
 
@@ -322,7 +322,7 @@ function gd2gmt(dataset::Gdal.AbstractDataset)
 		isapprox(D[1].ds_bbox, D[ind[1]].bbox) && (popat!(ind, 1))	# Some times the almost full area polygon was not cought yet.
 		n_polys = length(ind)
 		if (n_polys == 0)
-			delete!(GMT.POSTMAN[1], "sort_polygons");	delete!(GMT.POSTMAN[1], "simplify")
+			delete!(POSTMAN[1], "sort_polygons");	delete!(POSTMAN[1], "simplify")
 			return GMTdataset()
 		end
 
@@ -341,11 +341,11 @@ function gd2gmt(dataset::Gdal.AbstractDataset)
 			(maximum(polyg_area) > 100000) && (polyg_area ./= 1e6; att_area_name = "area_km2")	# If large, convert to km^2
 		end
 		for k = 1:n_polys  D[k].attrib[att_area_name] = string(polyg_area[ind[k]])  end
-		delete!(GMT.POSTMAN[1], "sort_polygons")
+		delete!(POSTMAN[1], "sort_polygons")
 	end
-	if ((tol = get(GMT.POSTMAN[1], "simplify", "")) != "")		# The caller requested a line simplification step
+	if ((tol = get(POSTMAN[1], "simplify", "")) != "")		# The caller requested a line simplification step
 		D = gmtsimplify(D, T=tol, f = p_isgeog ? "g" : "c")
-		delete!(GMT.POSTMAN[1], "simplify")					# Used, so clean it.
+		delete!(POSTMAN[1], "simplify")					# Used, so clean it.
 	end
 	return (length(D) == 1) ? D[1] : D
 end
@@ -355,7 +355,7 @@ end
 # would not be able to extract the data from the 'dataset'
 function helper_read_XLSCSV(dataset::Gdal.AbstractDataset)::GDtype
 	if (get(POSTMAN[1], "meteostat", "") != "")
-		delete!(GMT.POSTMAN[1], "meteostat")
+		delete!(POSTMAN[1], "meteostat")
 		return read_meteostat(dataset)
 	end
 

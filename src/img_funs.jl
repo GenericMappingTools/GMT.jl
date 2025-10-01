@@ -25,7 +25,7 @@ An integer value that lies in the range [0 255].
 
 ### Example
 ```jldoctest
-I = gmtread(GMT.TESTSDIR * "assets/coins.jpg");
+I = gmtread(TESTSDIR * "assets/coins.jpg");
 level = isodata(I, band=1)
 119
 ```
@@ -93,7 +93,7 @@ A new ``GMTimage``.
 
 ### Example
 ```jldoctest
-I = gmtread(GMT.TESTSDIR * "assets/coins.jpg");
+I = gmtread(TESTSDIR * "assets/coins.jpg");
 Ibw = binarize(I, band=1)
 # Show the two side-by-side
 grdimage(I, figsize=6)
@@ -137,7 +137,7 @@ A new ``GMTimage{UInt8, 2}``.
 
 ### Example
 ```jldoctest
-I = gmtread(GMT.TESTSDIR * "assets/bunny_cenora.jpg");
+I = gmtread(TESTSDIR * "assets/bunny_cenora.jpg");
 Igray = rgb2gray(I)
 
 # Show the two side-by-side
@@ -200,7 +200,7 @@ A RGB ``GMTimage`` or up to three ``GMTimages`` grayscales images with the lumin
 ```julia
 
 # Read an RGB image
-I = gmtread(GMT.TESTSDIR * "assets/seis_section_rgb.jpg");
+I = gmtread(TESTSDIR * "assets/seis_section_rgb.jpg");
 Iycbcr = rgb2YCbCr(I);
 
 # The Cb and Cr components
@@ -377,7 +377,7 @@ A RGB ``GMTimage`` or up to three ``GMTimages`` grayscales images with the L, a*
 ### Example
 ```julia
 # Read an RGB image and compute the Lab transform.
-I = gmtread(GMT.TESTSDIR * "assets/seis_section_rgb.jpg");
+I = gmtread(TESTSDIR * "assets/seis_section_rgb.jpg");
 Ilab = rgb2lab(I);
 
 # The L, a* and b* components

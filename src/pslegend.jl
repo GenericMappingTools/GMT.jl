@@ -3,7 +3,7 @@
 
 Make legends that can be overlaid on maps. It reads specific legend-related information from input or file file.
 
-See full GMT (not the `GMT.jl` one) docs at [`legend`]($(GMTdoc)legend.html)
+See full GMT docs at [`legend`]($(GMTdoc)legend.html)
 
 Parameters
 ----------
@@ -98,7 +98,7 @@ function legend(cmd0::String="", arg1=nothing; first::Bool=true, kwargs...)
 end
 
 #=
-GMT.mk_legend(gap="-0.1i", header=(text="My Map Legend", font=(24,"Times-Roman")), hline=(pen=1, offset="0.2i"), ncolumns=2, vline=(pen=1, offset=0), symbol=(marker=:circ, size="0.15i", dx_left="0.1i", fill="p300/12", dx_right="0.3i", text="This circle is hachured"), Symbol1=(marker=:ellipse, size="0.15i", dx_left="0.1i", fill=:yellow, dx_right="0.3i", text="This ellipse is yellow"), Symbol2=(marker=:wedge, size="0.15i", dx_left="0.1i", fill=:green, dx_right="0.3i", text="This wedge is green"), hline2=(pen=1, offset="0.2i"), ncolumns2=2, map_scale=(lon=5,lat=5,length="600+u+f"), gap2="0.05i", image=(width="3i", fname="@SOEST_block4.png",justify=:CT), gap3="0.05i", label=(txt="Smith et al., @%5%J. Geophys. Res., 99@%%", justify=:R, font=(9, "Times-Roman")), gap4="0.1i", text1="Let us just try some simple text that can go on a few lines.", text2="There is no easy way to predetermine how many lines may be required")
+mk_legend(gap="-0.1i", header=(text="My Map Legend", font=(24,"Times-Roman")), hline=(pen=1, offset="0.2i"), ncolumns=2, vline=(pen=1, offset=0), symbol=(marker=:circ, size="0.15i", dx_left="0.1i", fill="p300/12", dx_right="0.3i", text="This circle is hachured"), Symbol1=(marker=:ellipse, size="0.15i", dx_left="0.1i", fill=:yellow, dx_right="0.3i", text="This ellipse is yellow"), Symbol2=(marker=:wedge, size="0.15i", dx_left="0.1i", fill=:green, dx_right="0.3i", text="This wedge is green"), hline2=(pen=1, offset="0.2i"), ncolumns2=2, map_scale=(lon=5,lat=5,length="600+u+f"), gap2="0.05i", image=(width="3i", fname="@SOEST_block4.png",justify=:CT), gap3="0.05i", label=(txt="Smith et al., @%5%J. Geophys. Res., 99@%%", justify=:R, font=(9, "Times-Roman")), gap4="0.1i", text1="Let us just try some simple text that can go on a few lines.", text2="There is no easy way to predetermine how many lines may be required")
 =#
 
 function legend_help(test::Bool=false)

@@ -4,7 +4,7 @@
 Reads a series of (x,y[,z]) records [or optionally (x,y,z,d,h)] and splits this into separate lists
 of (x,y[,z]) series, such that each series has a nearly constant azimuth through the x,y plane.
 
-See full GMT (not the `GMT.jl` one) docs at [`gmtsplit`]($(GMTdoc)gmtsplit.html)
+See full GMT docs at [`gmtsplit`]($(GMTdoc)gmtsplit.html)
 
 Parameters
 ----------

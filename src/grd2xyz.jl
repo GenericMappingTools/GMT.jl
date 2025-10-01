@@ -3,7 +3,7 @@
 
 Reads one 2-D grid and returns xyz-triplets.
 
-See full GMT (not the `GMT.jl` one) docs at [`grd2xyz`]($(GMTdoc)grd2xyz.html)
+See full GMT docs at [`grd2xyz`]($(GMTdoc)grd2xyz.html)
 
 Parameters
 ----------

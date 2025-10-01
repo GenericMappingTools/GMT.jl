@@ -4,7 +4,7 @@
 Reads a grid that presumably has unfilled holes that the user wants to fill in some fashion.
 Holes are identified by NaN values but this criteria can be changed.
 
-See full GMT (not the `GMT.jl` one) docs at [`grdfill`]($(GMTdoc)grdfill.html)
+See full GMT docs at [`grdfill`]($(GMTdoc)grdfill.html)
 
 Parameters
 ----------

@@ -5,7 +5,7 @@ Plots the GMT logo on a map. By default, the GMT logo is 5 cm wide and 2.5 cm hi
 positioned relative to the current plot origin. Use various options to change this and to place
 a transparent or opaque rectangular map panel behind the GMT logo.
 
-See full GMT (not the `GMT.jl` one) docs at [`gmtlogo`]($(GMTdoc)gmtlogo.html)
+See full GMT docs at [`gmtlogo`]($(GMTdoc)gmtlogo.html)
 
 Parameters
 ----------

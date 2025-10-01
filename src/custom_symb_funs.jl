@@ -17,7 +17,7 @@ function flower_minho(; name::String="flower_minho", width=14, fmt="", format=""
 		figsize=(width,0),             # Fig size. Second arg = 0 means compute the height keeping aspect ratio
 		frame=:none,                   # Do not plot the frame
 		p=opt_p)
-	plot!(x, y, fill=(pattern=GMT.TESTSDIR * "tiling2.jpg", dpi=dpi), name = name * _fmt)
+	plot!(x, y, fill=(pattern=TESTSDIR * "tiling2.jpg", dpi=dpi), name = name * _fmt)
 	(show == 1) && showfig()
 end
 

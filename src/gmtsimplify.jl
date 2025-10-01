@@ -3,7 +3,7 @@
 
 Line reduction using the Douglas-Peucker algorithm.
 
-See full GMT (not the `GMT.jl` one) docs at [`gmtsimplify`]($(GMTdoc)gmtsimplify.html)
+See full GMT docs at [`gmtsimplify`]($(GMTdoc)gmtsimplify.html)
 
 Parameters
 ----------

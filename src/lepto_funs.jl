@@ -24,7 +24,7 @@ function img2pix(I::GMTimage, bpp=8)::Sppix		# Minimalist. Still doesn't have a 
 	# function is the key. It seems to deal well with the difficulty of the data padding per row.
 	# However, the same does not work for 1 bpp (binary) images. The trick is to create a 8 bpp image with the
 	# the same number of bits per row as the 1 bpp image, work on the bits and then convert to 1 bpp.
-	width, height = GMT.getsize(I)
+	width, height = getsize(I)
 	n_bands = size(I,3)
 	(n_bands >= 3 && !(I.layout[2] == 'R' && (I.layout[3] == 'B' || I.layout[3] == 'P'))) &&
 		error("Only Row-major memory layout is supported for RGB(A) images.")
@@ -175,11 +175,11 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    pal = getPixCPT(ppix::Ptr{GMT.Pix})::Matrix{Int32}
+    pal = getPixCPT(ppix::Ptr{Pix})::Matrix{Int32}
 
 Get the color palette from a Pix object and return it as a 256x4 matrix (or [0 0 0] if no colormap).
 """
-function getPixCPT(ppix::Ptr{GMT.Pix})::Matrix{Int32}
+function getPixCPT(ppix::Ptr{Pix})::Matrix{Int32}
 	(unsafe_load(ppix).colormap == C_NULL) && return zeros(Int32, 1, 3)		# No colormap
 	P = convert(Ptr{Pix}, ppix)
 	Pi::Pix = unsafe_load(P)				# We now have a Pix structure
@@ -296,18 +296,18 @@ BW2 = imfill(Ibw);
 function imfill(mat::Matrix{<:Integer}; conn=4, is_transposed=true, layout="TRBa")
 	@assert conn == 4 || conn == 8 "Only conn=4 or conn=8 are supported"
     mask = padarray(mat, ones(Int, 1, ndims(mat)), padval=-Inf)		# 'mask' is always a matrix
-	GMT.imcomplement!(mask)
+	imcomplement!(mask)
     marker = copy(mask)
 
 	marker[2:end-1, 2:end-1] .= typemin(eltype(mat))
     I2 = imreconstruct(marker, mask, conn=conn, is_transposed=is_transposed, layout=layout)
-	GMT.imcomplement!(I2)
+	imcomplement!(I2)
 	I2 = I2[2:end-1, 2:end-1]
 	(eltype(mat) <: Bool) && (I2 = collect(I2 .== 255))
 	return I2
 end
 function imfill(I::GMTimage; conn=4)::GMTimage
-	mat2img(imfill(I.image; conn=conn, is_transposed=(GMT.getsize(I) == size(I) && I.layout[2] == 'R'), layout=I.layout), I)
+	mat2img(imfill(I.image; conn=conn, is_transposed=(getsize(I) == size(I) && I.layout[2] == 'R'), layout=I.layout), I)
 end
 function imfill(mat::BitMatrix; conn=4, is_transposed=true, layout="TRBa")
 	# This method can be improved to use the Leptonica function pixSeedfillBinary()
@@ -333,14 +333,14 @@ which is not that much.
 - `region`: Limit the action to a region of the grid specified by `region`. See for example the ``coast``
   manual for and extended doc on this keword, but note that here only `region` is accepted and not `R`, etc...
 - `saco::Bool`: Save the lines (GMTdataset ~contours) used to fill the sinks in a global variable called
-  GMT.SACO. This is intended to avoid return them all the time when function ends. This global variable
+  SACO. This is intended to avoid return them all the time when function ends. This global variable
   is a ``[Dict{String,Union{AbstractArray, Vector{AbstractArray}}}()]``, so to access its contents you must use:
 
-  ``D = get(GMT.SACO[1], "saco", nothing)``, where ``D`` is now a GMTdataset or a vector of them.
+  ``D = get(SACO[1], "saco", nothing)``, where ``D`` is now a GMTdataset or a vector of them.
 
   NOTE: It is the user's responsibility to empty this global variable when it is no longer needed.
 
-  You do that with: ``delete!(GMT.SACO[1], "saco")``
+  You do that with: ``delete!(SACO[1], "saco")``
 - `insitu::Bool`: If `true`, modify the grid in place. Default is `false`.
   Alternatively, use the conventional form ``fillsinks!(G; conn=4)``.
 
@@ -359,7 +359,7 @@ Now save the filling contours and make a plot that overlayes them
 G2 = fillsinks(G);
 G2 = fillsinks(G, saco=true);
 grdimage(G2)
-plot!(get(GMT.SACO[1], "saco", nothing), color=:white, show=true)
+plot!(get(SACO[1], "saco", nothing), color=:white, show=true)
 ```
 """
 function fillsinks(G::GMTgrid; conn=4, region=nothing, saco=false, insitu=false)
@@ -370,7 +370,7 @@ function fillsinks(G::GMTgrid; conn=4, region=nothing, saco=false, insitu=false)
 	if (saco == 1)
 		Dtrk = grdtrack(G, D)
 		means = isa(D, Vector) ? median.(Dtrk) : median(Dtrk)
-		GMT.SACO[1] = Dict("saco" => Dtrk)			# Save the grdtrack interpolated lines for eventual external use.
+		SACO[1] = Dict("saco" => Dtrk)			# Save the grdtrack interpolated lines for eventual external use.
 	else
 		means = isa(D, Vector) ? median.(grdtrack(G, D, o=2)) : median(grdtrack(G, D, o=2))	# The mean of each interpolated contour
 	end

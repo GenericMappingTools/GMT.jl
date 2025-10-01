@@ -4,7 +4,7 @@
 reads (x,y) pairs from files [or standard input] and generates PostScript code that will plot lines,
 polygons, or symbols at those locations on a map.
 
-See full GMT (not the `GMT.jl` one) docs at [`psxy`]($(GMTdoc)plot.html)
+See full GMT docs at [`psxy`]($(GMTdoc)plot.html)
 
 Parameters
 ----------
@@ -210,7 +210,7 @@ plot3d(arg1::Array; kwargs...)
 reads (x,y,z) triplets and generates PostScript code that will plot lines,
 polygons, or symbols at those locations in 3-D.
 
-See full GMT (not the `GMT.jl` one) docs at [`plot3d`]($(GMTdoc)plot3d.html)
+See full GMT docs at [`plot3d`]($(GMTdoc)plot3d.html)
 
 Parameters
 ----------
@@ -1772,7 +1772,7 @@ const psternary! = ternary!           # Aliases
 
 Plot event symbols and labels for a moment in time
 
-See full GMT (not the `GMT.jl` one) docs at [`events`]($(GMTdoc)events.html)
+See full GMT docs at [`events`]($(GMTdoc)events.html)
 
 Parameters
 ----------
@@ -2252,7 +2252,7 @@ Plot a stereonet map in either Schmidt or Wulff projection.
 
 In case the produced figure is still not satisfactory, you can make one by yourself.
 For that use the `Dv, Dp = stereonet_data(mat)` function to get the fault planes and poles. A good place
-to start is the `stereonet` function itself. Type ``@edit GMT.stereonet([0 0])`` to see the code.
+to start is the `stereonet` function itself. Type ``@edit stereonet([0 0])`` to see the code.
 
 ### Example
 ```julia

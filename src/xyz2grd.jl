@@ -3,7 +3,7 @@
 
 Convert data table to a grid file. 
 
-See full GMT (not the `GMT.jl` one) docs at [`xyz2grd`]($(GMTdoc)xyz2grd.html)
+See full GMT docs at [`xyz2grd`]($(GMTdoc)xyz2grd.html)
 
 Parameters
 ----------

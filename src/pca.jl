@@ -200,7 +200,7 @@ rows the `d`-dimensional data point.
 
 ### Example
 ```jldoctest
-    D = gmtread(GMT.TESTSDIR * "iris.dat");
+    D = gmtread(TESTSDIR * "iris.dat");
 	Dk = kmeans(D, k=3)		# Unsupervised segment data into 3 clusters.
 ```
 """

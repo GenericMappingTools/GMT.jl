@@ -4,7 +4,7 @@
 Take the 2-D forward Fast Fourier Transform and perform one or more mathematical operations
 in the frequency domain before transforming back to the space domain.
 
-See full GMT (not the `GMT.jl` one) docs at [`grdfft`]($(GMTdoc)grdfft.html)
+See full GMT docs at [`grdfft`]($(GMTdoc)grdfft.html)
 
 Parameters
 ----------

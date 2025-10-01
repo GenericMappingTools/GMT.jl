@@ -5,7 +5,7 @@ Reads a grid file and interpolates it to create a new grid file with either: a
 different registration; or a new grid-spacing or number of nodes, and perhaps
 also a new sub-region
 
-See full GMT (not the `GMT.jl` one) docs at [`grdsample`]($(GMTdoc)grdsample.html)
+See full GMT docs at [`grdsample`]($(GMTdoc)grdsample.html)
 
 Parameters
 ----------

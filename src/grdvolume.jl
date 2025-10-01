@@ -3,7 +3,7 @@
 
 Reads one 2-D grid and returns xyz-triplets.
 
-See full GMT (not the `GMT.jl` one) docs at [`grdvolume`]($(GMTdoc)grdvolume.html)
+See full GMT docs at [`grdvolume`]($(GMTdoc)grdvolume.html)
 
 Parameters
 ----------

@@ -3,7 +3,7 @@
 
 Time domain filtering of 1-D data tables.
 
-See full GMT (not the `GMT.jl` one) docs at [`gmtvector`]($(GMTdoc)gmtvector.html)
+See full GMT docs at [`gmtvector`]($(GMTdoc)gmtvector.html)
 
 Parameters
 ----------

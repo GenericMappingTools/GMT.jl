@@ -3,7 +3,7 @@
 
 Manage figure subplot configuration and selection.
 
-See full GMT (not the `GMT.jl` one) docs at [`subplot`](http://docs.generic-mapping-tools.org/latest/subplot.html)
+See full GMT docs at [`subplot`](http://docs.generic-mapping-tools.org/latest/subplot.html)
 
 Parameters
 ----------

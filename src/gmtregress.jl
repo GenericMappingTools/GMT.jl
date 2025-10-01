@@ -3,7 +3,7 @@
 
 Linear regression of 1-D data sets.
 
-See full GMT (not the `GMT.jl` one) docs at [`regress`]($(GMTdoc)gmtregress.html)
+See full GMT docs at [`regress`]($(GMTdoc)gmtregress.html)
 
 Parameters
 ----------
