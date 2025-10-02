@@ -80,7 +80,7 @@ function rasterzones!(GI::GItype, shapes::GDtype, fun::Function; isRaster=true, 
 			set_dsBB!(Dt, false)	# Compute the BB for all polygons in this feature
 			# TODO. Eventualy check if only some polygoms are outside and drop them.
 			!within(Dt[1].ds_bbox, GI.range) && continue
-			_GI, pix_x, pix_y = GMT.crop(GI, region=Dt[1].ds_bbox)
+			_GI, pix_x, pix_y = crop(GI, region=Dt[1].ds_bbox)
 			((mask = maskgdal(Dt, size(_GI, col_dim), size(_GI, row_dim), touches=touches, layout=layout)) === nothing) && continue
 
 			if (isRaster)  mask_GI!(GI, _GI, pix_x, pix_y, mask, n_layers)
@@ -92,7 +92,7 @@ function rasterzones!(GI::GItype, shapes::GDtype, fun::Function; isRaster=true, 
 		!isRaster && (mat = zeros(length(shapes), n_layers))
 		for k = 1:numel(shapes)
 			!within(shapes[k].bbox, GI.range) && continue		# Catch any exterior polygon before it errors
-			_GI, pix_x, pix_y = GMT.crop(GI, region=shapes[k].bbox)
+			_GI, pix_x, pix_y = crop(GI, region=shapes[k].bbox)
 			_GI === nothing && continue  	# Skip this polygon if it's completely outside the grid or just too small
 			((mask = maskgdal(shapes[k], size(_GI, col_dim), size(_GI, row_dim), touches=touches, layout=layout)) === nothing) && continue
 
@@ -248,7 +248,7 @@ function colorzones!(shapes::GDtype, fun::Function; img::GMTimage=nothing, url::
 	isa(shapes, GMTdataset) && (shapes = [shapes])
 	for k = 1:numel(shapes)
 		!within(k) && continue				# Catch any exterior polygon before it errors
-		_img = (url != "") ? wmsread(wms, layer=layer_n, region=shapes[k], pixelsize=pixelsize) : GMT.crop(img, region=shapes[k])[1]
+		_img = (url != "") ? wmsread(wms, layer=layer_n, region=shapes[k], pixelsize=pixelsize) : crop(img, region=shapes[k])[1]
 		_img === nothing && continue		# Catch crop shits (for example, polygons too small)
 
 		mk = gdalrasterize(shapes[k],

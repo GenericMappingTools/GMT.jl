@@ -41,7 +41,7 @@ velocity components. `startX`, `startY` and `startZ` can be scalar or vector coo
 Returns a Vector{GMTdataset} with the streamlines.
 
 ### Example
-    x,y = GMT.meshgrid(-10:10);
+    x,y = meshgrid(-10:10);
     u = 2 .* x .* y;
     v = y .^2 - x .^ 2;
     U = mat2grid(u, x[1,:], y[:,1]);
