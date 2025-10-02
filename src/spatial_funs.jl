@@ -646,7 +646,7 @@ function Base.:in(D1::GMTdataset, D2::GMTdataset)::Union{Bool, Int, Vector{Int}}
 	(!is2Pol && indPoint == 0 && indPol == 0) && error("Input arguments must have a Point and Polygon geometries, or both be Polygons.")
 	if     (indPoint == 1 && indPol == 2)  inwhichpolygon([D2], D1.data)
 	elseif (indPoint == 2 && indPol == 1)  inwhichpolygon([D1], D2.data)
-	else   GMT.contains(D1, D2)		# Returns `true` if D1 contains D2.
+	else   contains(D1, D2)		# Returns `true` if D1 contains D2.
 	end
 end
 

@@ -79,8 +79,8 @@ function imshow(arg1, x::AbstractVector{Float64}=Float64[], y::AbstractVector{Fl
 			isFV3D = (isa(arg1, GMTfv) && size(arg1.verts, 2) > 2)
 		end
 		CTRL.limits[1:4] = ginfo[1:4];		CTRL.limits[7:10] = ginfo[1:4]
-		call_plot3 = ((isa(arg1, GMTdataset) && arg1.geom == Gdal.wkbPolygonZM) ||
-		              (isa(arg1, Vector{<:GMTdataset}) && arg1[1].geom == Gdal.wkbPolygonZM) ||
+		call_plot3 = ((isa(arg1, GMTdataset) && arg1.geom == wkbPolygonZM) ||
+		              (isa(arg1, Vector{<:GMTdataset}) && arg1[1].geom == wkbPolygonZM) ||
 					  isFV3D) ? true : false			# Should evolve into a fun that detects the several plot3d cases.
 		!call_plot3 && (call_plot3 = isplot3(kw))
 		return (call_plot3) ? plot3d(arg1; show=see, kw...) : plot(arg1; show=see, kw...)

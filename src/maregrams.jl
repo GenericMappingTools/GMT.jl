@@ -112,7 +112,7 @@ function maregrams(x::Real, y::Real; days=2, starttime::String="", printurl::Boo
 	# Find the closest station to input x,y
 	@assert -180 <= x <= 360 && -90 <= y <= 90  "Coordinates must be between -180 and 360 and -90 and 90."
 	d = read_maregrams()
-	dists = mapproject(d[:pos], G="$x/$y", o=2)
+	dists = gmt("mapproject -G$(x)/$(y) -o2", d[:pos])
 	ind = argmin(dists)
 	maregrams(code=d[:code][ind], days=days, starttime=starttime, printurl=printurl)
 end

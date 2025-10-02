@@ -42,7 +42,7 @@ This form takes a grid (or the file name of one) as input an paints it's cell wi
 ---
     pcolor(GorD; kwargs...)
 
-If `GorD` is either a GMTgrid or a GMTdataset containing a Pearson correlation matrix obtained with ``GMT.cor()``,
+If `GorD` is either a GMTgrid or a GMTdataset containing a Pearson correlation matrix obtained with ``cor()``,
 the processing recieves a special treatment. In this case, other than the `labels` keyword, user is also
 interested in seing if the automatic choice of x-annotaions angle is correct. If not, one can force it
 by setting the `rotx` (ot `slanted`) keywords.
@@ -73,7 +73,7 @@ by setting the `rotx` (ot `slanted`) keywords.
 Display a Pearson's correlation matrix
 
 ```julia
-pcolor(GMT.cor(rand(4,4)), labels=:y, colorbar=1, show=true)
+pcolor(cor(rand(4,4)), labels=:y, colorbar=1, show=true)
 ```
 """
 function pcolor(X_::VMr, Y_::VMr, C::Union{Nothing, AbstractMatrix{<:Real}}=nothing; first::Bool=true, kwargs...)
@@ -155,7 +155,7 @@ function pcolor(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	(cmd0 != "") && (arg1 = gmtread(cmd0))
 	(isa(arg1, Matrix)) && (arg1 = mat2grid(Float32.(arg1)))
 	isdataframe(arg1) && (arg1 = df2ds(arg1))
-	if ((arg1 == arg1' && arg1[1] == 1 && arg1[end] == 1))		# A corr matrix (computed with GMT.cor())
+	if ((arg1 == arg1' && arg1[1] == 1 && arg1[end] == 1))		# A corr matrix (computed with cor())
 		return pcolor(mat2ds(arg1.z); first=first, kwargs...)
 	elseif (isa(arg1, GMTdataset))		# Arrive here when arg1 was originally a DataFrame
 		return pcolor(arg1; first=first, kwargs...)
@@ -177,7 +177,7 @@ function pcolor(D::GMTdataset; first=true, kwargs...)
 	end
 	d[:xticks] = (colnames, ang)
 	d[:yticks] = colnames[end:-1:1]
-	if (D == D' && D[1] == 1 && D[end] == 1)		# A correlation matrix (that computed with GMT.cor())
+	if (D == D' && D[1] == 1 && D[end] == 1)		# A correlation matrix (that computed with cor())
 		(is_in_dict(d, CPTaliases) === nothing) && (d[:C] = makecpt(T=(-1,1.0,0.1), C="tomato,azure1,dodgerblue4", Z=true))
 		for n = 1:size(z,2), m = 1:size(z,1)
 			m < n && (z[m,n] = NaN)					# Since the matrix is symmetric, remove the upper triangle

@@ -1006,21 +1006,21 @@ function geocoder(address::String; options=String[])::GDtype
 	# Get the geocoder info for a given address. Adapted from https://www.itopen.it/geocoding-with-gdal/
 
 	_ops = isempty(options) ? C_NULL : options	# The default is ["SERVICE", "OSM_NOMINATIM"]
-	hSession = GMT.Gdal.OGRGeocodeCreateSession(_ops)
-	hLayer = GMT.Gdal.OGRGeocode(hSession, address, C_NULL, [""])
-	hFDefn = GMT.Gdal.OGR_L_GetLayerDefn(hLayer)
-	hFeature = GMT.Gdal.OGR_L_GetNextFeature(hLayer)
-	count = GMT.Gdal.OGR_FD_GetFieldCount(hFDefn)
+	hSession = Gdal.OGRGeocodeCreateSession(_ops)
+	hLayer = Gdal.OGRGeocode(hSession, address, C_NULL, [""])
+	hFDefn = Gdal.OGR_L_GetLayerDefn(hLayer)
+	hFeature = Gdal.OGR_L_GetNextFeature(hLayer)
+	count = Gdal.OGR_FD_GetFieldCount(hFDefn)
 	(count == 0) && (@warn("No result found for the address $address"); return GMTdataset())
 	dic = Dict{String,String}()
 	for k = 0:count-1
-		hFieldDefn = GMT.Gdal.OGR_FD_GetFieldDefn(hFDefn,k)
-		((val = GMT.Gdal.OGR_F_GetFieldAsString(hFeature, k)) != "") && (dic[GMT.Gdal.OGR_Fld_GetNameRef(hFieldDefn)] = val)
+		hFieldDefn = Gdal.OGR_FD_GetFieldDefn(hFDefn,k)
+		((val = Gdal.OGR_F_GetFieldAsString(hFeature, k)) != "") && (dic[Gdal.OGR_Fld_GetNameRef(hFieldDefn)] = val)
 	end
 
 	BB = parse.(Float64, split(dic["boundingbox"], ","))
-	GMT.Gdal.OGRGeocodeFreeResult(hLayer)
-	GMT.Gdal.OGRGeocodeDestroySession(hSession)
+	Gdal.OGRGeocodeFreeResult(hLayer)
+	Gdal.OGRGeocodeDestroySession(hSession)
 	D::GDtype = mat2ds([parse(Float64, dic["lon"]) parse(Float64, dic["lat"])], attrib=dic, proj4=prj4WGS84, geom=wkbPoint)
 	D.ds_bbox = [BB[3], BB[4], BB[1], BB[2]]
 	return D
