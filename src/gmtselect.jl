@@ -3,7 +3,7 @@
 
 Select data table subsets based on multiple spatial criteria.
 
-See full GMT (not the `GMT.jl` one) docs at [`gmtselect`]($(GMTdoc)gmtselect.html)
+See full GMT docs at [`gmtselect`]($(GMTdoc)gmtselect.html)
 
 Parameters
 ----------

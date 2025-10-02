@@ -3,7 +3,7 @@
 
 Forward and inverse map transformations, datum conversions and geodesy.
 
-See full GMT (not the `GMT.jl` one) docs at [`mapproject`]($(GMTdoc)mapproject.html)
+See full GMT docs at [`mapproject`]($(GMTdoc)mapproject.html)
 
 Parameters
 ----------

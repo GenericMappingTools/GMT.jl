@@ -3,7 +3,7 @@
 
 Reads a table data and produces a raw contour plot by triangulation.
 
-See full GMT (not the `GMT.jl` one) docsat [`contour`]($(GMTdoc)contour.html)
+See full GMT docsat [`contour`]($(GMTdoc)contour.html)
 
 Parameters
 ----------

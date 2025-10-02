@@ -3,7 +3,7 @@
 
 Compute grids or time-series of solid Earth tides.
 
-See full GMT (not the `GMT.jl` one) docs at [`earthtide`]($(GMTdoc)supplements/geodesy/earthtide.html)
+See full GMT docs at [`earthtide`]($(GMTdoc)supplements/geodesy/earthtide.html)
 
 ```julia
 	G = earthtide();

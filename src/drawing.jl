@@ -85,7 +85,7 @@ function helper_shapes(x, y, cmd; Vd=0, kw...)
 	if (CTRLshapes.first[1])
 		CTRLshapes.fname[1] = GMT.PSname[1]
 		if ((val = find_in_dict(d, [:units])[1]) !== nothing)
-			_cmd, opt_B = GMT.parse_B(d, "", DEF_FIG_AXES[1])
+			_cmd, opt_B = parse_B(d, "", DEF_FIG_AXES[1])
 			cmd *= " --PROJ_LENGTH_UNIT=p"
 			opt_J = " -Jx1"
 			if ((val = find_in_dict(d, [:paper])[1]) !== nothing)
@@ -97,7 +97,7 @@ function helper_shapes(x, y, cmd; Vd=0, kw...)
 			end
 			CTRLshapes.points[1] = true
 		else
-			_cmd, opt_B, opt_J, opt_R = GMT.parse_BJR(d, "", "", false, " ")
+			_cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", false, " ")
 			(opt_R == "")  && (opt_R = " -R0/21/0/29")
 			(opt_J == " ") && (opt_J = " -Jx1")
 		end
@@ -138,8 +138,8 @@ function helper_shapes(x, y, cmd; Vd=0, kw...)
 	CTRLshapes.points[1] = false
 	out, opt_T, EXT, fname, = GMT.fname_out(d, true)
 	#show_non_consumed(d, cmd)
-	GMT.close_PS_file(CTRLshapes.fname[1])
-	GMT.showfig(d, CTRLshapes.fname[1], EXT, opt_T, false, fname)
+	close_PS_file(CTRLshapes.fname[1])
+	showfig(d, CTRLshapes.fname[1], EXT, opt_T, false, fname)
 end
 
 """

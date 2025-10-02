@@ -5,7 +5,7 @@ Clip the range of grid values. will set values < low to below and/or values > hi
 You can also specify one or more intervals where all values should be set to ``between``,
 or replace individual values.
 
-See full GMT (not the `GMT.jl` one) docs at [`grdclip`]($(GMTdoc)grdclip.html)
+See full GMT docs at [`grdclip`]($(GMTdoc)grdclip.html)
 
 Parameters
 ----------

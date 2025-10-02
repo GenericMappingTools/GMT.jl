@@ -4,7 +4,7 @@
 Reads a listing of grid files and blend parameters, or up to 2 GTMgrid types, and creates
 a grid by blending the other grids using cosine-taper weights.
 
-See full GMT (not the `GMT.jl` one) docs at [`grdblend`]($(GMTdoc)grdblend.html)
+See full GMT docs at [`grdblend`]($(GMTdoc)grdblend.html)
 
 Parameters
 ----------

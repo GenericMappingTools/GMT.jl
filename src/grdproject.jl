@@ -3,7 +3,7 @@
 
 Project a geographical gridded data set onto a rectangular grid or do the inverse projection.
 
-See full GMT (not the `GMT.jl` one) docs at [`grdproject`]($(GMTdoc)grdproject.html)
+See full GMT docs at [`grdproject`]($(GMTdoc)grdproject.html)
 
 Parameters
 ----------

@@ -3,7 +3,7 @@
 
 Adjust individual GMT defaults settings in the current directory’s gmt.conf file.
 
-See full GMT (not the `GMT.jl` one) docs at [`gmtset`]($(GMTdoc)gmtset.html)
+See full GMT docs at [`gmtset`]($(GMTdoc)gmtset.html)
 
 Parameters
 ----------

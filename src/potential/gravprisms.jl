@@ -3,7 +3,7 @@
 
 Compute the gravity/magnetic anomaly of a 3-D body by the method of Okabe.
 
-See full GMT (not the `GMT.jl` one) docs at [`gravprisms`]($(GMTdoc)supplements/potential/gravprisms.html)
+See full GMT docs at [`gravprisms`]($(GMTdoc)supplements/potential/gravprisms.html)
 
 Parameters
 ----------

@@ -1756,7 +1756,7 @@ end
 	gdalrasterinterpolate(src::IDataset, dfPL::Matrix{Float64}; method=GRIORA_Cubic) =
 		gdalrasterinterpolate(Dataset(src.ptr), dfPL; method=method)
 
-	function gdalrasterinterpolate(fname::AbstractString, D::GMT.GDtype; method=GRIORA_Cubic)
+	function gdalrasterinterpolate(fname::AbstractString, D::GDtype; method=GRIORA_Cubic)
 		x_min, x_max, y_min, y_max, x_inc, y_inc, xsize, ysize, nbands = gdal_get_limits(fname)
 		pl = [((D[:,1] .- x_min) / x_inc .+ 0.5) ((ysize-1) .- (D[:,2] .- y_min) / y_inc .+ 0.5)]
 		gdalrasterinterpolate(read(fname), pl; method=method)
@@ -2044,7 +2044,7 @@ end
 		phr = Ref{Cint}(); pmin = Ref{Cint}(); psec = Ref{Cint}(); ptz=Ref{Cint}()
 		result = Bool(OGR_F_GetFieldAsDateTime(feature.ptr, i, pyr, pmth, pday, phr, pmin, psec, ptz))
 		(result == false) && error("Failed to fetch datetime at index $i")
-		return GMT.DateTime(pyr[], pmth[], pday[], phr[], pmin[], psec[])
+		return DateTime(pyr[], pmth[], pday[], phr[], pmin[], psec[])
 	end
 
 	layerdefn(layer::AbstractFeatureLayer) = IFeatureDefnView(OGR_L_GetLayerDefn(layer.ptr))
@@ -2656,7 +2656,7 @@ end
 
 	const DRIVER_MANAGER = Ref{DriverManager}()
 	const GDALVERSION = Ref{VersionNumber}()
-	if (GMT.isJLL)
+	if (isJLL)
 		const GDAL_DATA_DIR = dirname(libgdal) * "/../share/gdal"
 	else				# When using the GMT installer
 		const GDAL_DATA_DIR = dirname(libgdal) * "/../share/GDAL_DATA"

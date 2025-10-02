@@ -4,7 +4,7 @@
 Performs Delaunay triangulation on x,y[,z] data, i.e., it find how the points should be connected
 to give the most equilateral triangulation possible. 
 
-See full GMT (not the `GMT.jl` one) docs at [`triangulate`]($(GMTdoc)triangulate.html)
+See full GMT docs at [`triangulate`]($(GMTdoc)triangulate.html)
 
 Parameters
 ----------
@@ -60,7 +60,7 @@ Examples
 --------
 
 ```julia
-    G = GMT.peaks();
+    G = peaks();
     C = makecpt(T=(-7,9,2));
 
     contourf(G, show=1)

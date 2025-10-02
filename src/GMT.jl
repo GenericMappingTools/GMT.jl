@@ -90,7 +90,7 @@ const global CTRL = CTRLstruct(zeros(13), zeros(6), [true], [false],
                                [:arrows, :bubblechart, :basemap, :band, :clip, :coast, :colorbar, :grdcontour, :hband, :hlines, :inset, :logo, :lines, :grdvector, :plot, :plot3, :quiver, :scatter, :scatter3, :stairs, :text, :vlines, :vband], fill(nothing, 6), ["","",""], ["","", "", "   "], ["",""], ["",""], [false,true], [C_NULL], [Dict()])
 const global CTRLshapes = CTRLstruct2([true], [true], [""])			# Used in sub-module Drawing
 const prj4WGS84 = "+proj=longlat +datum=WGS84 +units=m +no_defs"	# This is used in many places
-const CPTaliases = [:C :color :cmap :colormap :colorscale]
+const global CPTaliases = [:C :color :cmap :colormap :colorscale]
 const global VMs = Union{Vector{Symbol}, Matrix{Symbol}}
 const global VMr = Union{AbstractVector{<:Real}, Matrix{<:Real}}
 const global DictSvS = Dict{String, Union{String, Vector{String}}}
@@ -106,10 +106,10 @@ if isdefined(Base, :Experimental) && isdefined(Base.Experimental, Symbol("@optle
 end
 
 export
-	GMTgrid, GMTimage, GMTdataset, GMTfv, GMTcpt, GItype, GDtype, GMTver, FMT, TMPDIR_USR, TESTSDIR, gmt, libgdal,
-	arrows, arrows!, bar, bar!, bar3, bar3!, band, band!, bubblechart, bubblechart!, feather, feather!, hband, hband!,
-	hlines, hlines!, lines, lines!, legend, legend!, quiver, quiver!, radar, radar!, stairs, stairs!, stem, stem!,vlines,
-	vlines!, vband, vband!, hspan, hspan!, vspan, vspan!,
+	KW, GMTgrid, GMTimage, GMTdataset, GMTfv, GMTcpt, GItype, GDtype, GMTver, FMT, TMPDIR_USR, TESTSDIR, gmt,
+	gmt_GMTgrid, libgdal, arrows, arrows!, bar, bar!, bar3, bar3!, band, band!, bubblechart, bubblechart!,
+	feather, feather!, hband, hband!, hlines, hlines!, lines, lines!, legend, legend!, quiver, quiver!, radar,
+	radar!, stairs, stairs!, stem, stem!,vlines, vlines!, vband, vband!, hspan, hspan!, vspan, vspan!,
 	basemap, basemap!, blockmean, blockmedian, blockmode, clip, clip!,
 	coast, coast!, colorbar, colorbar!, colorscale, colorscale!, contour, contour!, contourf, contourf!, events,
 	filter1d, fitcircle, gmt2kml, gmtbinstats, binstats,
@@ -130,6 +130,9 @@ export
 	pscoupe, pscoupe!, coupe, coupe!, psmeca, psmeca!, meca, meca!, psvelo, psvelo!, velo, velo!, gmtisf, getbyattrib,
 	inpolygon, inwhichpolygon, pcolor, pcolor!, triplot, triplot!, trisurf, trisurf!, grdrotater, imagesc, upGMT, boxes,
 	stereonet, stereonet!,
+	
+	add_opt, isgeog, numel, scan_opt, extrema_nan, parse_RIr, close_PS_file, getsize, parse_B, parse_BJR, parse_I,
+	parse_J, parse_R, ressurectGDAL, CPTaliases, isJLL, POSTMAN,
 
 	mgd77magref, magref,
 
@@ -392,7 +395,7 @@ using GMT.Laszip
 	t = joinpath(tempdir(), "lixo.dat");
 	gmtwrite(t,[0.0 0; 1 1]);
 	gmtread(t);
-	gmtread(GMT.TESTSDIR * "assets/burro_cenora.jpg");
+	gmtread(TESTSDIR * "assets/burro_cenora.jpg");
 	rm(t)
 	D = mat2ds(rand(3,3), colnames=["Time","b","c"]); D.attrib = Dict("Timecol" => "1");
 	D[:Time];	D["Time", "b"];

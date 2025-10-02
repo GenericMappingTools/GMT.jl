@@ -3,7 +3,7 @@
 
 Calculate and plot the day-night terminator and the civil, nautical and astronomical twilights.
 
-See full GMT (not the `GMT.jl` one) docs at [`solar`]($(GMTdoc)solar.html)
+See full GMT docs at [`solar`]($(GMTdoc)solar.html)
 
 Parameters
 ----------

@@ -3,7 +3,7 @@
 
 Reads (length,azimuth) pairs and plot a windrose diagram (polar histograms).
 
-See full GMT (not the `GMT.jl` one) docs at [`psrose`]($(GMTdoc)rose.html)
+See full GMT docs at [`psrose`]($(GMTdoc)rose.html)
 
 Parameters
 ----------

@@ -45,7 +45,7 @@ terramar(f1::Function, arg1, t1::NamedTuple, f2::Function, arg2, t2::NamedTuple;
 function helper_sealand(whichfun::String, f1::Function, arg1, t1::NamedTuple, f2::Function, arg2, t2::NamedTuple; kw...)
 	d = KW(kw)
 	see = ((val = find_in_dict(d, [:show])[1]) !== nothing) ? ((val == 1) ? true : false) : false
-	fname = ((val = find_in_dict(d, [:savefig :figname :name])[1]) !== nothing) ? string(val)::String : nothing
+	fname = find_in_dict(d, [:savefig :figname :name])[1];
 	f1(arg1; t1...)
 	lo = (whichfun == "sealand") ? :land : :ocean		# Clipping land or oceans?
 	coast!(clip=lo)

@@ -3,7 +3,7 @@
 
 kml2gmt - Extract GMT table data from Google Earth KML files
 
-See full GMT (not the `GMT.jl` one) docs at [`kml2gmt`]($(GMTdoc)kml2gmt.html)
+See full GMT docs at [`kml2gmt`]($(GMTdoc)kml2gmt.html)
 
 Parameters
 ----------

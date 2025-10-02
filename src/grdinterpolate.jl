@@ -3,7 +3,7 @@
 
 Interpolate a 3-D cube, 2-D grids or 1-D series from a 3-D data cube or stack of 2-D grids.
 
-See full GMT (not the `GMT.jl` one) docs at [`grdinterpolate`]($(GMTdoc)/grdinterpolate.html)
+See full GMT docs at [`grdinterpolate`]($(GMTdoc)/grdinterpolate.html)
 
 Parameters
 ----------

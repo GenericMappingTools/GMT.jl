@@ -4,7 +4,7 @@
 Compute the directional derivative in a given direction, or to find the direction [and the magnitude]
 of the vector gradient of the data.
 
-See full GMT (not the `GMT.jl` one) docs at [`grdgradient`]($(GMTdoc)grdgradient.html)
+See full GMT docs at [`grdgradient`]($(GMTdoc)grdgradient.html)
 
 Parameters
 ----------

@@ -38,7 +38,7 @@ It does't return anything but the input `GI` is modified.
 ## Example
     Take the Peaks grid and replace the elements that fall inside a triangle at the center by their average.
 
-	G = GMT.peaks();
+	G = peaks();
 	D = mat2ds([-1 -1; 0 1; 1 -1; -1 -1]);
 	rasterzones!(G, D, mean)
 

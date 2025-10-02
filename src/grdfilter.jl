@@ -4,7 +4,7 @@
 Filter a grid file in the time domain using one of the selected convolution or non-convolution 
 isotropic or rectangular filters and compute distances using Cartesian or Spherical geometries.
 
-See full GMT (not the `GMT.jl` one) docs at [`grdfilter`]($(GMTdoc)grdfilter.html)
+See full GMT docs at [`grdfilter`]($(GMTdoc)grdfilter.html)
 
 Parameters
 ----------

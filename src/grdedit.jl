@@ -6,7 +6,7 @@ values provided on the command line.
 
 If single input is a G GMTgrid object, it will update the z_min|max values of the G.range member
 
-See full GMT (not the `GMT.jl` one) docs at [`grdedit`]($(GMTdoc)grdedit.html)
+See full GMT docs at [`grdedit`]($(GMTdoc)grdedit.html)
 
 Parameters
 ----------

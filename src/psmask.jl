@@ -3,7 +3,7 @@
 
 Clip or mask map areas with no data table coverage
 
-See full GMT (not the `GMT.jl` one) docs at [`psmask`]($(GMTdoc)mask.html)
+See full GMT docs at [`psmask`]($(GMTdoc)mask.html)
 
 Parameters
 ----------

@@ -4,7 +4,7 @@
 Find the data values which divide a given grid file into patches of equal area. One common use of
 grdhisteq is in a kind of histogram equalization of an image.
 
-See full GMT (not the `GMT.jl` one) docs at [`grdhisteq`]($(GMTdoc)grdhisteq.html)
+See full GMT docs at [`grdhisteq`]($(GMTdoc)grdhisteq.html)
 
 Parameters
 ----------
