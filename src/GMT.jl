@@ -107,7 +107,7 @@ end
 
 export
 	KW, GMTgrid, GMTimage, GMTdataset, GMTfv, GMTcpt, GItype, GDtype, GMTver, FMT, TMPDIR_USR, TESTSDIR, gmt,
-	gmt_GMTgrid, libgdal, arrows, arrows!, bar, bar!, bar3, bar3!, band, band!, bubblechart, bubblechart!,
+	gmt_GMTgrid, libgdal, arrows, arrows!, bar, bar!, bar3, bar3!, band, band!, bubblechart, bubblechart!, crop,
 	feather, feather!, hband, hband!, hlines, hlines!, lines, lines!, legend, legend!, quiver, quiver!, radar,
 	radar!, stairs, stairs!, stem, stem!,vlines, vlines!, vband, vband!, hspan, hspan!, vspan, vspan!,
 	basemap, basemap!, blockmean, blockmedian, blockmode, clip, clip!,
@@ -131,7 +131,7 @@ export
 	inpolygon, inwhichpolygon, pcolor, pcolor!, triplot, triplot!, trisurf, trisurf!, grdrotater, imagesc, upGMT, boxes,
 	stereonet, stereonet!,
 	
-	add_opt, isgeog, numel, scan_opt, extrema_nan, parse_RIr, close_PS_file, getsize, parse_B, parse_BJR, parse_I,
+	add_opt, isgeog, numel, scan_opt, extrema_nan, parse_RIr, close_PS_file, getsize, meshgrid, parse_B, parse_BJR, parse_I,
 	parse_J, parse_R, ressurectGDAL, CPTaliases, isJLL, POSTMAN,
 
 	mgd77magref, magref,
@@ -227,6 +227,7 @@ include("common_options.jl")
 const global LEGEND_TYPE = [legend_bag()]	# To store Legends info
 include("beziers.jl")
 include("circfit.jl")
+include("crop.jl")
 include("custom_symb_funs.jl")
 include("gmtbegin.jl")
 include("blendimg.jl")

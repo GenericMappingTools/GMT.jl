@@ -105,7 +105,7 @@ function mask(GI::GItype, D::GDtype; touches=false, inverse::Bool=false)
     geog1, geog2 = isgeog(prj1), isgeog(prj2)
 	(prj1 != "" && prj2 != "" && prj1 != prj2 && !(geog1 && geog2)) &&   # Tricky these geog
         (D = (geog1) ? xy2lonlat(D, t_srs=prj1) : lonlat2xy(D, t_srs=prj1))
-	_GI = GMT.crop(GI, region = isa(D, GMTdataset) ? D.bbox : D[1].ds_bbox)[1]
+	_GI = crop(GI, region = isa(D, GMTdataset) ? D.bbox : D[1].ds_bbox)[1]
 	height, width = dims(_GI)
 	maska = maskgdal(D, width, height, region=_GI.range, touches=touches, layout=_GI.layout, inverse=!inverse)	# !inverse to mask oceans by default
 	(isa(GI, GMTgrid)) && (_GI[maska] .= NaN)
