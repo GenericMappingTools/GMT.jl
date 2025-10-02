@@ -239,6 +239,6 @@ function auto_contour_interval(range)
 end
 
 # ---------------------------------------------------------------------------------------------------
-contourf!(cmd0::String="", arg1=nothing, arg2=nothing; kw...) = contourf(cmd0, arg1, arg2, false, KW(kw))
+contourf!(cmd0::String="", arg1=nothing, arg2=nothing; kw...) = contourf(cmd0, arg1, arg2; first=false, kw...)
 contourf(arg1, arg2=nothing; kw...) = contourf("", arg1, arg2, true, KW(kw))
 contourf!(arg1, arg2=nothing; kw...) = contourf("", arg1, arg2, false, KW(kw))

@@ -359,7 +359,8 @@ function buffergeo(line::Matrix{<:Real}; width=0, unit=:m, np=120, flatstart=fal
 	# be able to use GMT's mapproject to find only the points that are at the exact 'width' distance from the
 	# line, but at this moment there seems to be an issue in GMT and distances are shorter. However we can
 	# do some cheap statistics to get read of the more inner points a get an almost perfec buffer.
-	Ddist2line = mapproject(D, L=(line=line, unit=:e))		# Find the distance from buffer points to input line
+	#Ddist2line = mapproject(D, L=(line=line, unit=:e))		# Find the distance from buffer points to input line
+	Ddist2line = gmt("mapproject -L+ue", D, line)		# Find the distance from buffer points to input line
 	if (isa(Ddist2line, GMTdataset))
 		d_mean = mean(view(Ddist2line.data, :, 3))
 		ind = view(Ddist2line.data, :, 3) .>= d_mean
@@ -486,7 +487,7 @@ function geodesic_long(lonlat1::VMr, lonlat2::VMr; step=0.0, np=180, proj::Strin
 	dest2, = geod(lonlat1, azA, 40050, unit=:km, proj=proj, epsg=epsg)	# Destination of a point after the perimeter
 	t = geodesic([dest1[1] dest1[2]; dest2[1] dest2[2]], step=1000, proj=proj, epsg=epsg)	# Temp geodesic arround the perimeter point
 	gmtwrite(_name, t);				# Workaround a bug in <= 6.4.0
-	x = mapproject([lonlat1[1] lonlat1[2]], L=_name)	# Assume the closest point to A corresponds to full perimeter.
+	x = gmt("mapproject -L$_name", [lonlat1[1] lonlat1[2]])	# Assume the closest point to A corresponds to full perimeter.
 	d, = invgeod(dest1, [x[4] x[5]], proj=proj, epsg=epsg)	# Distance from dest1 to the point where the geodesic does a full perimeter.
 	dtot = 39950000 + d				# Total length of this geodesic (A bit in excess probably due to geodesics not closing)
 	(step != 0) && (np = round(Int, dtot / step) + 1)	# Takes precedence over 'np' because that one has a default value.
@@ -494,7 +495,7 @@ function geodesic_long(lonlat1::VMr, lonlat2::VMr; step=0.0, np=180, proj::Strin
 	function get_mindist(az)
 		D = geod(lonlat1, az, linspace(0,dtot,360), proj=proj, epsg=epsg)[1]
 		gmtwrite(_name, D);
-		mapproject([lonlat2[1] lonlat2[2]], L=_name)	# Find closest point to B in the passing by geodesic
+		gmt("mapproject -L$_name", [lonlat2[1] lonlat2[2]])		# Find closest point to B in the passing by geodesic.
 	end
 
 	# Using the azimuth computed from the shortest distance between A & B will always give only an aproximation
@@ -512,7 +513,7 @@ function geodesic_long(lonlat1::VMr, lonlat2::VMr; step=0.0, np=180, proj::Strin
 	az = (dt < d0) ? az + (d0 / dd) * daz : az - (d0 / dd) * daz
 
 	d = geod(lonlat1, az, dtot-distAB)[1]				# First estimate of the arrival point
-	D = mapproject(lonlat2, G=(d[1], d[2]))				# Distance between estimation and true point
+	D = gmt("mapproject -G$(d[1])/$(d[2])", (isa(lonlat2, Vector{<:Real})) ? reshape(lonlat2, 1, :) : lonlat2)	# Distance between estimation and true point
 	total_len = dtot - distAB - D[end]					# Correct 'dtot' that was estimated in excess.
 	p,a = geod(lonlat1, az, linspace(0,total_len,np))	# Possibly because the path is slightly hellicoidal.
 	prj = (proj != "" && (contains(proj,"=lon") || contains(proj,"=lat"))) ? proj : prj4WGS84
