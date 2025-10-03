@@ -472,7 +472,7 @@ end
 function _bar(arg, first::Bool, d::Dict{Symbol,Any})
 
 	do_cat = ((haskey(d, :stack) || haskey(d, :stacked)) && isvector(arg) && length(arg) > 2) ? false : true
-	is_waterfall = ((val = hlp_desnany_str(d, [:stack :stacked])) !== "" && startswith(val, "water"))
+	is_waterfall = ((val = hlp_desnany_str(d, [:stack :stacked], false)) !== "" && startswith(val, "water"))
 	if (is_waterfall)
 		isa(arg, Vector) && (arg = reshape(arg, 1, length(arg)))		# Waterfall stacks must be matrices
 		(arg[1] != 0) && (arg = hcat(repeat([1.0],size(arg,1)), arg))	# If first el != 0 assume coord is missing

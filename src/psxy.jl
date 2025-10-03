@@ -36,7 +36,7 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 	cmd, is_gridtri, arg1 = parse_grid2tri_case(d, cmd, caller, is3D, isFV, O, arg1)
 	
 	isa(arg1, GMTdataset) && (arg1 = with_xyvar(d, arg1))		# See if we have a column request based on column names
-	if ((val = hlp_desnany_int(d, [:decimate])) !== -999)		# Asked for a clever data decimation?
+	if ((val = hlp_desnany_int(d, [:decimate], del=true)) !== -999)		# Asked for a clever data decimation?
 		dec_factor::Int = (val == 1) ? 10 : val
 		arg1 = lttb(arg1, dec_factor)
 	end

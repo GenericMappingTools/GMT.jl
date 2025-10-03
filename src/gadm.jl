@@ -47,7 +47,7 @@ function gadm(country, subregions...; children::Bool=false, names::Bool=false, c
 	reportlevels && return nlayers
 
 	function _filterlayer(layer, layer_name, level, value, all::Bool=false)
-		filtered = Vector{GMT.Gdal.Feature}(undef,0)
+		filtered = Vector{Gdal.Feature}(undef,0)
 		# They Fck changed this between version 3.6 and 4.5. Before, it was always NAME_0, Name_1, ...
 		key = "NAME_$(level)"
 		if (level == 0)

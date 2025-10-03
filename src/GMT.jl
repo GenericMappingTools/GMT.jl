@@ -132,7 +132,7 @@ export
 	stereonet, stereonet!,
 	
 	add_opt, isgeog, numel, scan_opt, extrema_nan, parse_RIr, close_PS_file, getsize, meshgrid, parse_B, parse_BJR, parse_I,
-	parse_J, parse_R, ressurectGDAL, CPTaliases, isJLL, POSTMAN,
+	parse_J, parse_R, ressurectGDAL, CPTaliases, isJLL, POSTMAN, PSname,
 
 	mgd77magref, magref,
 

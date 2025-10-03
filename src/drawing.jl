@@ -83,7 +83,7 @@ function helper_shapes(x, y, cmd; Vd=0, kw...)
 	((isa(first, Bool) && !first) || (isa(first, Int) && first == 0)) && (CTRLshapes.first[1] = false)
 
 	if (CTRLshapes.first[1])
-		CTRLshapes.fname[1] = GMT.PSname[1]
+		CTRLshapes.fname[1] = PSname[1]
 		if ((val = find_in_dict(d, [:units])[1]) !== nothing)
 			_cmd, opt_B = parse_B(d, "", DEF_FIG_AXES[1])
 			cmd *= " --PROJ_LENGTH_UNIT=p"
