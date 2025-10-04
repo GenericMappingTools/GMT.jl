@@ -111,13 +111,19 @@ end
 # ---------------------------------------------------------------------------------------------------
 function anaglyph_3d(G::GMTgrid; zsize=4, azim=190, dazim=2, cmap="gray")
 
+	# We do this more convoluted call to grdview to avoid calling it directly (unknown in future GMT_base module)
 	p_left, p_right = "$(azim)/30/0", "$(azim - dazim)/30/0"
-	pato = TMPDIR_USR[1] * "/" * "GMTjl_" * TMPDIR_USR[2] * TMPDIR_USR[3]
-	grdview(G, J="Q20c", JZ="$zsize", B=:none, C=string(cmap), Q=:i, p=p_left, I=true, figname=pato * ".jpg")
-	Il = gdalread(pato * ".jpg", "-b 1", layout="TCBa")
+	pato = TMPDIR_USR[1] * "/" * "GMTjl_" * TMPDIR_USR[2] * TMPDIR_USR[3] * ".jpg"
+	opt_R = @sprintf("%.15g/%.15g/%.15g/%.15g/%.15g/%.15g", G.range[1], G.range[2], G.range[3], G.range[4], G.range[5], G.range[6])
+	#grdview(G, J="Q20c", JZ="$zsize", B=:none, C=string(cmap), Q=:i, p=p_left, I=true, figname=pato)
+	cmd = ["grdview -R$opt_R -JQ20c -JZ$zsize -C$cmap -Qi -p$p_left -I+a-45+nt1"]
+	prep_and_call_finish_PS_module(Dict{Symbol, Any}(:figname => pato), cmd, "", true, false, true, G)
+	Il = gdalread(pato, "-b 1", layout="TCBa")
 	nr_l, nc_l = size(Il,1), size(Il,2)
-	grdview(G, J="Q20c", JZ="$zsize", B=:none, C=string(cmap), Q=:i, p=p_right, I=true, figname=pato * ".jpg")
-	Ir = gdalread(pato * ".jpg", layout="TCBa")
+	#grdview(G, J="Q20c", JZ="$zsize", B=:none, C=string(cmap), Q=:i, p=p_right, I=true, figname=pato)
+	cmd = ["grdview -R$opt_R -JQ20c -JZ$zsize -C$cmap -Qi -p$p_right -I+a-45+nt1"]
+	prep_and_call_finish_PS_module(Dict{Symbol, Any}(:figname => pato), cmd, "", true, false, true, G)
+	Ir = gdalread(pato, layout="TCBa")
 	nr_r, nc_r = size(Ir,1), size(Ir,2)
 
 	center_left  = (nr_l ÷ 2 + 1, nc_l ÷ 2 + 1)

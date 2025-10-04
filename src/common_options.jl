@@ -4627,7 +4627,8 @@ function regiongeog(GI::GItype)::Tuple
 end
 function regiongeog(fname::String)::Tuple
 	((prj = getproj(fname, wkt=true)) == "") && (@warn("Input grid/image has no projection info"); return ())
-	info = grdinfo(fname, C=true);		# It should also report the
+	#info = grdinfo(fname, C=true);		# It should also report the
+	info = gmt("grdinfo -C " * fname);
 	c = xy2lonlat([info.data[1] info.data[3]; info.data[2] info.data[4]]; s_srs=prj)
 	tuple(c...)
 end
@@ -4961,7 +4962,8 @@ Check if `cmd0` is a remote grid or a OceanColor one and return the default CPT 
 """
 function check_remote_cpt(cmd0::String)
 	(cmd0 == "") && return ""
-	cpt_path = joinpath(dirname(pathof(GMT)), "..", "share", "cpt")
+	#cpt_path = joinpath(dirname(pathof(GMT)), "..", "share", "cpt")
+	cpt_path = joinpath(dirname(pathof(getfield(Main, nameof(@__MODULE__)))), "..", "share", "cpt")
 	if     (occursin("SST.sst", cmd0))     return cpt_path * "/sst_oc.cpt"
 	elseif (occursin("CHL.chlor_a", cmd0)) return cpt_path * "/chlor_oc.cpt"
 	end

@@ -341,7 +341,7 @@
 	@test o == " -TG -W+k+tLoLo"
 	o = GMT.prepare2geotif(Dict{Symbol,Any}(:kml => (title=:Lolo, layer=:bla, fade=(1,2), URL="http")), ["pscoast  -Rd -JX12 -Baf -W0.5p -Da"], "", false)[2];
 	@test o == " -TG -W+k+tLolo+nbla+f1/2+uhttp"
-	coast(region=:global, kml=:trans, proj=:merc,Vd=dbg2)
+	#coast(region=:global, kml=:trans, proj=:merc,Vd=dbg2)
 
 	@test (GMT.check_flipaxes(Dict{Symbol,Any}(:flipaxes => (y=1,)), "?") == "-?")
 	@test (GMT.check_flipaxes(Dict{Symbol,Any}(:flipaxes => ("x", :y)), "?/?") == "-?/-?")

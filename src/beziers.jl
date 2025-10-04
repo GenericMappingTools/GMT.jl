@@ -62,7 +62,8 @@ function bezier(D::GMTdataset; t=nothing, np::Int=0, pure=false, firstcurve=true
 	is_geo = isgeog(D)
 	if (is_geo)
 		mat::Matrix{Float64} = (size(D.data, 2) == 2) ? [D.data fill(0, size(D.data, 1))] : D.data
-		mat = mapproject(mat, E=true).data						# Convert to ECEF
+		#mat = mapproject(mat, E=true).data						# Convert to ECEF
+		mat = gmt("mapproject -E", mat).data					# Convert to ECEF
 	else
 		mat = D.data
 	end
@@ -70,7 +71,8 @@ function bezier(D::GMTdataset; t=nothing, np::Int=0, pure=false, firstcurve=true
 		@warn("pure option not allowed for more than 4 control points. Reverting to 'impure'"))
 	
 	out::Matrix{Float64} = bezier(mat; t=t, np=np, pure=pure, firstcurve=firstcurve)
-	is_geo && (out = mapproject(out, E=true, I=true).data)		# Convert back to geographic
+	#is_geo && (out = mapproject(out, E=true, I=true).data)		# Convert back to geographic
+	is_geo && (out = gmt("mapproject -E -I", out).data)			# Convert back to geographic
 	return mat2ds(out, D)::GMTdataset{Float64, 2}
 end
 

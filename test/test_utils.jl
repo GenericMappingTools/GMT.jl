@@ -42,6 +42,4 @@
 
 	@test !bissextile(100)
 	@test bissextile(-4)
-
-	@test mapsize2region(proj=(name=:tmerc, center=-177), scale="1:10000000", clon=-177, clat=-21, width=15, height=10)[2] == "t-177/1:10000000"
 end

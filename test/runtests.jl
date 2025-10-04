@@ -60,6 +60,10 @@ using InteractiveUtils
 	catch err
 		@warn("Failed the WMS test. Error was:\n $err")
 	end
+	
+	println("	MAPSIZE2REGION")
+	# This fck one is extremly irritating. It errors with different errors depending on where is executed. Even with a resetGMT().
+	@test mapsize2region(proj=(name=:tmerc, center=-177), scale="1:10000000", clon=-177, clat=-21, width=15, height=10)[2] == "t-177/1:10000000"
 
 	include("test_isoutlier.jl")
 	include("test_okadas.jl")
