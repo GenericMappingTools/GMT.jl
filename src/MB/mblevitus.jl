@@ -37,5 +37,5 @@ function mblevitus(cmd0::String=""; kwargs...)
 
 	cmd = "mblevitus " * cmd
 	((r = check_dbg_print_cmd(d, cmd)) !== nothing) && return r
-	prep_and_call_finish_PS_module(d, cmd, "", true, false, false)
+	common_grd(d, cmd)		# Finish build cmd and run it
 end
