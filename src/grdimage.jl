@@ -217,10 +217,6 @@ function common_insert_R!(d::Dict, O::Bool, cmd0, I_G; is3D=false)
 	(opt_R != "") && (CTRL.pocket_R[1] = " -R" * opt_R)
 	return nothing
 end
-function isimgsize(GI)::Bool
-	width, height = getsize(GI)
-	(GI.range[2] - GI.range[1]) == width && (GI.range[4] - GI.range[3]) == height
-end
 
 # ---------------------------------------------------------------------------------------------------
 function common_shade(d::Dict, cmd::String, arg1, arg2, arg3, arg4, prog)

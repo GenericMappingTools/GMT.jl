@@ -566,7 +566,8 @@ function randinpolygon(Din::GDtype; density=0.1, np::Int=0)
 			x = rand(DT, _np) * _dx .+ x0
 			y = rand(DT, _np) * _dy .+ y0
 		end
-		gmtselect([x y], polygon=_D)
+		#gmtselect([x y], polygon=_D, Vd=1)
+		gmt("gmtselect -F", [x y], _D)
 	end
 
 	isgeo = isgeog(Din)

@@ -97,8 +97,9 @@ function isoutlier(D::GMTdataset{<:Real,2}; critic=3.0, method::Symbol=:median, 
 	(threshold === nothing && width <= 0) && error("Must provide the window length of via the `width` option or use the `threshold` option.")
 	if (width > 0)
 		method in [:median, :mean] || throw(ArgumentError("Unknown method: $method. Here use only one of :median or :mean"))
-		(method == :mean) && (method = boxcar)		# :boxcar is the name in GMT for 'mean'
-		Dres = filter1d(D, filter=(type=method, width=width, highpass=true), E=true)
+		_method = (method == :mean) ? :boxcar : method		# :boxcar is the name in GMT for 'mean'
+		#Dres = filter1d(D, filter=(type=_method, width=width, highpass=true), E=true, Vd=1)
+		Dres = gmt("filter1d -E -F" * string(_method)[1] * "$(width)+h", D)
 		isoutlier(view(Dres.data, :, 2), critic=critic, method=method, threshold=threshold)
 	else
 		isoutlier(view(D.data, :, 2), critic=critic, method=method, threshold=threshold)

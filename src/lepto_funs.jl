@@ -368,11 +368,13 @@ function fillsinks(G::GMTgrid; conn=4, region=nothing, saco=false, insitu=false)
 	d = (I .== I2')
 	D = polygonize(d)
 	if (saco == 1)
-		Dtrk = grdtrack(G, D)
+		Dtrk = gmt("grdtrack -G -n+a", D, G)
 		means = isa(D, Vector) ? median.(Dtrk) : median(Dtrk)
 		SACO[1] = Dict("saco" => Dtrk)			# Save the grdtrack interpolated lines for eventual external use.
 	else
-		means = isa(D, Vector) ? median.(grdtrack(G, D, o=2)) : median(grdtrack(G, D, o=2))	# The mean of each interpolated contour
+		#Dtrk = grdtrack(G, D, o=2)
+		Dtrk = gmt("grdtrack -G -n+a -o2", D, G)
+		means = isa(D, Vector) ? median.(Dtrk) : median(Dtrk)	# The mean of each interpolated contour
 	end
 	_G = (insitu == 1) ? G : deepcopy(G)
 

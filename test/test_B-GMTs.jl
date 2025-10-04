@@ -17,7 +17,7 @@
 	D = blockmode(region=[0 2 0 2], inc=1,  reg=true, d);
 
 	println("	CONTOURF")
-	G = GMT.peaks();
+	G = peaks();
 	gmtwrite("lixo.grd", G)
 	C = makecpt(T=(-7,9,2));
 	contourf("lixo.grd", Vd=dbg2)
