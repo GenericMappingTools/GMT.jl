@@ -158,7 +158,7 @@ function seek_custom_symb(marca::AbstractString, with_k::Bool=false)::String
 	s = split(marca, '/')
 	ind_s = with_k ? 2 : 1
 	symbname = s[1][ind_s:end]
-	cus_path = joinpath(dirname(pathof(GMT))[1:end-4], "share", "custom")
+	cus_path = joinpath(dirname(pathof(getfield(Main, nameof(@__MODULE__))))[1:end-4], "share", "custom")
 
 	fullname = find_this_file(cus_path, symbname)
 	if (fullname == "")

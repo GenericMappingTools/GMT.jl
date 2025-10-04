@@ -4912,7 +4912,15 @@ function digests_legend_bag(d::Dict{Symbol, Any}, del::Bool=true)
 	if (LEGEND_TYPE[1].Vd > 0)  d[:Vd] = LEGEND_TYPE[1].Vd;  dbg_print_cmd(d, leg[1:kk])  end	# Vd=2 wont work
 	(LEGEND_TYPE[1].Vd > 0) && println("F=",opt_F, " D=",opt_D, " font=",fnt)
 	gmt_restart()		# Some things with the themes may screw
-	legend!(text_record(leg[1:kk]), F=opt_F, D=opt_D, par=(:FONT_ANNOT_PRIMARY, fnt))
+	
+	#legend!(text_record(leg[1:kk]), F=opt_F, D=opt_D, par=(:FONT_ANNOT_PRIMARY, fnt), Vd=1)
+	# This reproduces the actualy visited lines of the above legend!() command but let it work in GMT_base (if ...)
+	proggy = (IamModern[1]) ? "legend"  : "pslegend"
+	opt_R = " -R"
+	(!IamModern[1] && !CTRL.IamInPaperMode[1] && opt_R == " -R" && CTRL.pocket_R[1] != "") && (opt_R = CTRL.pocket_R[1])
+	prep_and_call_finish_PS_module(Dict{Symbol, Any}(), [proggy * " -J $opt_R -F$(opt_F) -D$(opt_D) --FONT_ANNOT_PRIMARY=$fnt"],
+	                               "", true, true, true, text_record(leg[1:kk]))
+
 	LEGEND_TYPE[1] = legend_bag()			# Job done, now empty the bag
 
 	return nothing
