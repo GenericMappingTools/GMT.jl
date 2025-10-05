@@ -43,5 +43,5 @@ function mbgetdata(cmd0::String=""; kwargs...)
 
 	cmd = "mbgetdata -I" * cmd0 * cmd				# In any case we need this
 	((r = check_dbg_print_cmd(d, cmd)) !== nothing) && return r
-	prep_and_call_finish_PS_module(d, cmd, "", true, false, false)
+	common_grd(d, cmd)		# Finish build cmd and run it
 end

@@ -400,7 +400,7 @@ function _earthregions(name::String, proj::String, grid::Bool, dataset::String, 
 	collections = ["NatEarth", "UN", "Mainlands", "IHO", "Wiki", "Lakes"]
 	collect_dcw = ["DCW", "NatEarth", "UN", "Mainlands", "IHO", "Wiki", "Lakes"]
 
-	pato::String = joinpath(dirname(pathof(GMT))[1:end-4], "share", "named_regions", "")
+	pato::String = joinpath(dirname(pathof(getfield(Main, nameof(@__MODULE__))))[1:end-4], "share", "named_regions", "")
 
 	coll_name = any(name .== collect_dcw) ? name : ""	# Check if 'name' is a collection name
 	code = (coll_name == "") ? name : ""				# If not, than it must be a code

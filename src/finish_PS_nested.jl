@@ -145,7 +145,7 @@ function add_opt_module_barr1(nt::NamedTuple, symb::Symbol)::Union{String, Vecto
 		ind_pocket = (CTRL.pocket_call[1] === nothing) ? 1 : 2
 		(haskey(_d, :data)) && (CTRL.pocket_call[ind_pocket] = _d[:data]; delete!(_d, :data))
 		this_symb = CTRL.callable[findfirst(symb .== CTRL.callable)]
-		fn::Function = getfield(GMT, Symbol(string(this_symb, "!")))
+		fn::Function = getfield(getfield(Main, nameof(@__MODULE__)), Symbol(string(this_symb, "!")))	# GMT = getfield(Main, nameof(@__MODULE__))
 		if (this_symb in [:vband, :hband, :vspan, :hspan])
 			r = fn(CTRL.pocket_call[ind_pocket]; nested=true, Vd=2, nt...)
 		else
