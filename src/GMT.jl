@@ -213,7 +213,7 @@ include("common_docs.jl")
 include("libgmt_h.jl")
 include("libgmt.jl")
 include("gmt_types.jl")
-include("gdal.jl")
+include("gdal/gdal.jl")
 include("gdal_utils.jl")
 include("proj_utils.jl")
 const global MatGDsGd = Union{Matrix{<:AbstractFloat}, GMTdataset, Vector{<:GMTdataset}, Gdal.AbstractDataset}
@@ -286,6 +286,8 @@ include("img_funs.jl")
 include("imgtiles.jl")
 include("imshow.jl")
 include("kml2gmt.jl")
+include("libleptonica.jl")
+include("lepto_funs.jl")
 include("linefit.jl")
 include("loxodromics.jl")
 include("makecpt.jl")
@@ -342,6 +344,7 @@ include("xyz2grd.jl")
 include("utils.jl")
 include("utils_project.jl")
 include("choropleth_utils.jl")
+include("drawing/Drawing.jl")
 include("extras/anaglyph.jl")
 include("extras/hampel_outliers.jl")
 include("extras/isoutlier.jl")
@@ -352,6 +355,7 @@ include("extras/okada.jl")
 include("extras/weather.jl")
 include("extras/webmapserver.jl")
 include("extras/whittaker.jl")
+include("laszip/Laszip.jl")
 include("seis/psmeca.jl")
 include("seis/gmtisf.jl")
 include("geodesy/psvelo.jl")
@@ -369,19 +373,14 @@ include("potential/grdseamount.jl")
 include("spotter/grdrotater.jl")
 include("windbarbs/windbarbs.jl")
 include("zscale.jl")
-include("drawing.jl")
 include("get_enums.jl")
 
-include("libleptonica.jl")
-include("lepto_funs.jl")
-
-include("laszip/Laszip.jl")
 
 using .Gdal
 using .Laszip
 
 #include("ImageFeatures/ImageFeatures.jl")
-#using GMT.ImageFeatures
+#using .ImageFeatures
 
 @compile_workload begin
 	G_API[1] = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS)
