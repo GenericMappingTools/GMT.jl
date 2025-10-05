@@ -216,7 +216,6 @@ include("gmt_types.jl")
 include("gdal.jl")
 include("gdal_utils.jl")
 include("proj_utils.jl")
-using GMT.Gdal
 const global MatGDsGd = Union{Matrix{<:AbstractFloat}, GMTdataset, Vector{<:GMTdataset}, Gdal.AbstractDataset}
 const global CURRENT_CPT = [GMTcpt()]		# To store the current palette
 
@@ -377,7 +376,9 @@ include("libleptonica.jl")
 include("lepto_funs.jl")
 
 include("laszip/Laszip.jl")
-using GMT.Laszip
+
+using .Gdal
+using .Laszip
 
 #include("ImageFeatures/ImageFeatures.jl")
 #using GMT.ImageFeatures
@@ -416,9 +417,9 @@ using GMT.Laszip
 	viz(Glix, show=false);
 	histogram(randn(100),T=0.1,center=true, Z=:counts)
 	histogram(I);
-	#grdlandmask(R="-10/4/37/45", res=:c, inc=0.1);
-	#grdmask([10 20; 40 40; 70 20; 10 20], R="0/100/0/100", out_edge_in=[100 0 0], I=2);
-	#grdsample(Glix, inc=0.5);
+	grdlandmask(R="-10/4/37/45", res=:c, inc=0.1);
+	grdmask([10 20; 40 40; 70 20; 10 20], R="0/100/0/100", out_edge_in=[100 0 0], I=2);
+	grdsample(Glix, inc=0.5);
 	grdtrend(Glix, model=3);
 	grdtrack(Glix, [1 1]);
 	coast(R=:g, proj=:guess, W=(level=1,pen=(2,:green)));

@@ -78,9 +78,9 @@ function helper_shapes(x, y, cmd; Vd=0, kw...)
 	# Helper function that takes care to all symbols plotting
 	d = KW(kw)
 	# Se if we are asked to force the start a new drawing (first= true) or bypass the CTRLshapes.first control
-	first = find_in_dict(d, [:first])[1]
-	((isa(first, Bool) && first)  || (isa(first, Int) && first != 0)) && (CTRLshapes.first[1] = true)
-	((isa(first, Bool) && !first) || (isa(first, Int) && first == 0)) && (CTRLshapes.first[1] = false)
+	_first = find_in_dict(d, [:first])[1]
+	first = (_first !== nothing) && (_first == 1)
+	CTRLshapes.first[1] = first
 
 	if (CTRLshapes.first[1])
 		CTRLshapes.fname[1] = PSname[1]
@@ -103,11 +103,12 @@ function helper_shapes(x, y, cmd; Vd=0, kw...)
 		end
 		(opt_B == DEF_FIG_AXES[1]) && (opt_B = "")			# We don't want a default -B here
 		opt_O, opt_P = "", " -P"
-		out, opt_T, EXT, = GMT.fname_out(d)
 	else
 		opt_R, opt_J, opt_B, opt_O, opt_P = " -R", " -J", "", " -O", ""
 		(CTRLshapes.points[1]) && (cmd *= " --PROJ_LENGTH_UNIT=p")
 	end
+
+	out, opt_T, EXT, fname, = GMT.fname_out(d, true)
 
 	redirect = (CTRLshapes.first[1]) ? " > " : " >> "
 	if (length(kw) == 0)
@@ -119,6 +120,7 @@ function helper_shapes(x, y, cmd; Vd=0, kw...)
 		d[:B] = "none"
 		cmd = GMT.common_plot_xyz("", nothing, cmd, CTRLshapes.first[1], false; d...)
 		(CTRLshapes.first[1] && opt_B != "") && (cmd = replace(cmd, "psxy" => "psxy" * opt_B))
+		cmd = GMT.finish_PS(d, cmd, out, true, !first)
 	end
 	(0 < Vd < 2) && println(cmd);	(Vd > 1) && return cmd
 
@@ -136,7 +138,6 @@ function helper_shapes(x, y, cmd; Vd=0, kw...)
 
 	CTRLshapes.first[1] = true				# Better reset it right now in case next command errors
 	CTRLshapes.points[1] = false
-	out, opt_T, EXT, fname, = GMT.fname_out(d, true)
 	#show_non_consumed(d, cmd)
 	close_PS_file(CTRLshapes.fname[1])
 	showfig(d, CTRLshapes.fname[1], EXT, opt_T, false, fname)
