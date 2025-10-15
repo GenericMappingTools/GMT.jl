@@ -990,7 +990,7 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage)::Ptr{GMT_IMAGE}
 			img = copy(Img.image)
 			GMT_Change_Layout(API, GMT_IS_IMAGE, "BRP", 0, I, img);	# Convert to BRP. Not 100% on the > 2 though.
 		elseif (!mem_owned_by_gmt && size(img,3) == 1 && Img.layout[2] == 'C')
-			img = fliplr(img')
+			img = (Img.layout[1] == 'T') ? collect(img') : fliplr(img')	# T(o) case doesn't need a fliud (that is a fliplr because transposition)
 		end
 		Ib.data = pointer(img)
 		unsafe_store!(I, Ib)

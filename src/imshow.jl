@@ -62,8 +62,8 @@ function imshow(arg1, x::AbstractVector{Float64}=Float64[], y::AbstractVector{Fl
 			!is_image && (Gg = arg1)
 			#snif_GI_set_CTRLlimits(arg1)			# Set CTRL.limits to be eventually used by J=:guess
 		end
-	elseif (isa(arg1, Array{UInt8}) || isa(arg1, Array{UInt16,3}))
-		Gi = mat2img(arg1; kw...)
+	elseif (isa(arg1, Array{UInt8}) || isa(arg1, Array{UInt16,3}) || isa(arg1, Array{Bool}) || isa(arg1, BitMatrix))
+		Gi = isa(arg1, BitMatrix) ? mat2img(collect(arg1); kw...) : mat2img(arg1; kw...)
 		call_img = true
 	elseif (isa(arg1, GDtype) || isa(arg1, GMTfv) || isa(arg1, Vector{GMTfv}) || (isa(arg1, AbstractVecOrMat{<:Real}) && size(arg1,2) <= 4) || (isa(arg1, Gdal.AbstractDataset) || isa(arg1, Gdal.AbstractGeometry)))
 		(isa(arg1, Gdal.AbstractDataset) || isa(arg1, Gdal.AbstractGeometry)) && (arg1 = gd2gmt(arg1))
