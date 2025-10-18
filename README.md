@@ -3,9 +3,9 @@ GMT.jl
 
 Julia wrapper for the Generic Mapping Tools [GMT](https://github.com/GenericMappingTools/gmt)
 
-| **Documentation**                       | **Code coverage**              | **Discourse Forum**   | **Collaboration** |
-|:---------------------------------------:|:------------------------------:|:---------------------:|:---------------------:|
-| [![][docs-latest-img]][docs-latest-url] | [![][codecov-img]][codecov-url] | [![][forum-img]][forum-url] | [![][colprac-img]][colprac-url] |
+| **Documentation**                       | **Code coverage**              | **Discourse Forum**   | **Collaboration** | **Downlods** |
+|:---------------------------------------:|:------------------------------:|:---------------------:|:---------------------:|:--------:|
+| [![][docs-latest-img]][docs-latest-url] | [![][codecov-img]][codecov-url] | [![][forum-img]][forum-url] | [![][colprac-img]][colprac-url] | [![Downloads](https://img.shields.io/badge/dynamic/json?url=http%3A%2F%2Fjuliapkgstats.com%2Fapi%2Fv1%2Fmonthly_downloads%2FGMT&query=total_requests&suffix=%2Fmonth&label=Downloads)](http://juliapkgstats.com/pkg/GMT) |
 
 [docs-latest-img]: https://img.shields.io/badge/docs-latest-blue.svg
 [docs-latest-url]: https://genericmappingtools.github.io/GMTjl_doc/
