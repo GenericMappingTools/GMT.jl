@@ -62,6 +62,40 @@ end
 	@test filled_gmt.image[1, 1] == 255
 end
 
+#=
+@testset "bwconncomp tests" begin
+	I = gdalread(TESTSDIR * "assets/packman.png");
+	cc1 = bwconncomp(I);
+	@test cc1.num_objects == 2
+	I = gdalread(TESTSDIR * "assets/packman.png", layout="BCBa");
+	cc2 = bwconncomp(I);
+	@test cc2.num_objects == 2
+	@test cc1.bboxs == cc2.bboxs
+	#I = gdalread(TESTSDIR * "assets/packman.png", layout="TCBa");	# Need to fix bug in gdalread for this to work
+	#cc2 = bwconncomp(I);
+	#@test cc2.num_objects == 2
+	#@test cc1.bboxs == cc2.bboxs
+
+	mat = zeros(Bool,8,9); mat[2:5,2:3] .= true; mat[4:5,4] .= true; mat[5:8,6:8] .= true; mat[4,7] = true;
+	gdalwrite("c2.png", mat2img(mat))
+	I = gdalread("c2.png");		# Comes in with layout TRBa
+	cc = bwconncomp(I);
+	@test cc.num_objects == 2
+	I2 = cc2bw(cc);
+	@test I == I2
+
+	I = mat2img(mat);			# Comes in with layout TCBa
+	cc = bwconncomp(I);
+	I2 = cc2bw(cc);
+	@test I == I2
+
+	I = mat2img(flipud(mat)); I.layout = "BCBa";
+	cc = bwconncomp(I);
+	I2 = cc2bw(cc);
+	@test I == I2
+end
+=#
+
 G = peaks();
 G2 = fillsinks(G);
 
@@ -76,6 +110,14 @@ BW2 = imfill(BW1);
 I = gmtread(TESTSDIR * "assets/chip.png");
 imerode(I, sel=strel("disk", 10));
 imdilate(I, sel=strel("disk", 10));
+
+x = [0.0 0 0 0 0; 0 1 1 0 0; 0 1 1 0 0; 0 0 0 0 0];
+resp = ones(size(x));	resp[:,end] .= 0;
+@test imdilate(x) == resp
+@test all(imerode(x, Bool[0 1 0; 1 1 1; 0 1 0]) .== 0)
+
+I = gmtread(TESTSDIR * "assets/text.png");
+bwconncomp(I);
 
 I = gmtread(TESTSDIR * "assets/packman.png");
 imopen(I, sel=strel("box", 20));

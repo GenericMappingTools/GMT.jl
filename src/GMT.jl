@@ -177,10 +177,11 @@ export
 
 	VSdisp, mad, info, kmeans, pca, mosaic, quadbounds, quadkey, geocoder, getprovider, zscores,
 
-	bwhitmiss, binarize, bwareaopen, bwperim, bwskell, isodata, padarray, rgb2gray, rgb2lab, rgb2YCbCr, rgb2ycbcr, grid2img,
-	img2grid, grays2cube, grays2rgb, imclose, imcomplement, imcomplement!, imdilate, imerode, imfilter, imopen, imsegment,
-	imsobel, imtophat, imbothat, imhdome, imhmin, imhmax, immorphgrad, imrankfilter, strel, 
-	imfill, imreconstruct, fillsinks, fillsinks!, imregionalmin, imregionalmax, imclearborder,
+	bwhitmiss, binarize, bwareaopen, bwconncomp, bwdist, bwlabel, bwperim, bwskell, cc2bw, graydist, isodata,
+	padarray, rgb2gray, rgb2lab, rgb2YCbCr, rgb2ycbcr, grid2img, img2grid, grays2cube, grays2rgb, imclose,
+	imcomplement, imcomplement!, imdilate, imerode, imfilter, imopen, imsegment, imsobel, imtophat, imbothat,
+	imhdome, imhmin, imhmax, immorphgrad, imrankfilter, strel, imfill, imreconstruct, fillsinks, fillsinks!,
+	imregionalmin, imregionalmax, imclearborder,
 
 	findpeaks, makeDCWs, mksymbol, circfit,
 
@@ -453,6 +454,7 @@ end
 
 #Base.precompile(Tuple{typeof(upGMT),Bool, Bool})		# Here it doesn't print anything.
 #Base.precompile(Tuple{Dict{Symbol, Any}, Vector{String}})		# Here it doesn't print anything.
+#Base.precompile(Tuple{typeof(Base.vect), Array{String, 1}, Vararg{Array{String, 1}}})
 
 function __init__(test::Bool=false)
 	clear_sessions(3600)		# Delete stray sessions dirs older than 1 hour

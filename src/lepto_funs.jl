@@ -92,17 +92,20 @@ function img2pix(I::GMTimage, bpp=8)::Sppix		# Minimalist. Still doesn't have a 
 					end
 				end
 			end
-		else					# Column major
+		else					# Column major. More complicated, we cannot escape to traverse the matrix I row-wise
+			m = 1 : height : height*width		# Column major indices for each row of I. This is what makes it slower (not Julia natural order)
+			l = (I.layout[1] == 'T') ? (0:height-1) : (height-1:-1:0)	# Top down or bottom up
 			for i = 1:h[]
+				k = 0
 				line = unsafe_wrap(Array, lineptrs[i], w[])
 				for j = cols_iter
 					for n = 7:-1:0
-						UInt8(I.image[i,j]) != 0 && (line[j] = line[j] | UInt8(1) << UInt8(n))
+						UInt8(I.image[m[k+=1] + l[i]]) != 0 && (line[j] = line[j] | UInt8(1) << UInt8(n))
 					end
 				end
 				if (resto != 0)
 					for n = resto-1:-1:0
-						(I.image[i,width] != 0) && (line[_width] = line[_width] | UInt8(1) << UInt8(n))
+						(I.image[m[k+=1] + l[i]] != 0) && (line[_width] = line[_width] | UInt8(1) << UInt8(n))
 					end
 				end
 			end
@@ -113,6 +116,7 @@ function img2pix(I::GMTimage, bpp=8)::Sppix		# Minimalist. Still doesn't have a 
 		pixSetDepth(ppix, bpp)
 		pixSetWidth(ppix, width)		# Set the true width
 	end
+	#pixWrite("lep_lixo.png", ppix, 3)
 	return Sppix(ppix)
 end
 
@@ -199,7 +203,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    I = imreconstruct(marker::Union{Matrix{Bool}, Matrix{UInt8}}, Imask::GMTimage{<:UInt8, 2}; conn=4, insitu=true)
+    I = imreconstruct(marker::Union{Matrix{Bool}, Matrix{UInt8}}, mask::GMTimage{<:UInt8, 2}; conn=4, insitu=true)
 
 Perform morphological reconstruction of the image `marker` under the image `mask`.
 
@@ -315,9 +319,13 @@ function imfill(mat::BitMatrix; conn=4, is_transposed=true, layout="TRBa")
 	r .== 1
 end
 
+function imfill(G::GMTgrid; conn=4)
+	fillsinks(G; conn=conn)
+end
+
 # ---------------------------------------------------------------------------------------------------
 """
-	fillsinks(G::GMTgrid; conn=4, region=nothing, saco=false, insitu=false)
+	fillsinks(G::GMTgrid|Matrix; conn=8)
 
 Fill sinks in a grid.
 
@@ -329,7 +337,7 @@ which is not that much.
 - `G::GMTgrid`: The input grid to process.
 
 ### Kwargs
-- `conn::Int`: Connectivity for sink filling (4 or 8). Default is 4.
+- `conn::Int`: Connectivity for sink filling (4 or 8). Default is 8.
 - `region`: Limit the action to a region of the grid specified by `region`. See for example the ``coast``
   manual for and extended doc on this keword, but note that here only `region` is accepted and not `R`, etc...
 - `saco::Bool`: Save the lines (GMTdataset ~contours) used to fill the sinks in a global variable called
@@ -362,13 +370,35 @@ grdimage(G2)
 plot!(get(SACO[1], "saco", nothing), color=:white, show=true)
 ```
 """
-function fillsinks(G::GMTgrid; conn=4, region=nothing, saco=false, insitu=false)
+function fillsinks(GI::GItype; conn=8, region=nothing, saco=false, insitu=false)
+
+	infa = eltype(GI) <: AbstractFloat ? -Inf : typemin(eltype(GI))
+	for k = 1:numel(GI)  GI[k] *= -1  end
+	marker = deepcopy(GI)
+	if (isa(GI, GMTgrid) && eltype(GI) <: AbstractFloat && GI.hasnans != 1)
+		ind_nans = isnan.(GI)
+		have_nans = any(ind_nans)
+		have_nans && (marker[ind_nans] .= infa)
+	end
+	for j = 2:size(GI,2)-1, i = 2:size(GI,1)-1
+		marker[i,j] = infa
+	end
+	fs = imreconstruct(marker,GI; conn=conn)
+	for k = 1:numel(GI)  GI[k] *= -1; fs[k] *= -1  end
+	(isa(GI, GMTgrid) && GI.hasnans != 1) && (ind_nans = isnan.(GI))
+	isa(fs, GItype) && (fs.range[5] = minimum(fs))		# Minimum might have changed
+	(isa(GI, GMTgrid) && eltype(GI) <: AbstractFloat && GI.hasnans != 1 && have_nans) && (fs[ind_nans] .= NaN; fs.hasnans = 2)
+	return fs
+end
+
+#=
 	I = imagesc(G, region=region)
 	I2 = imfill(I, conn=conn)
-	d = (I .== I2')
+	d = (G.layout[2] == 'C') ? (I .== I2') : (I .== I2)		# Row or Col major have different treatment
 	D = polygonize(d)
+
 	if (saco == 1)
-		Dtrk = gmt("grdtrack -G -n+a", D, G)
+		Dtrk = gmt("grdtrack -G -n+a -o2", D, G)
 		means = isa(D, Vector) ? median.(Dtrk) : median(Dtrk)
 		SACO[1] = Dict("saco" => Dtrk)			# Save the grdtrack interpolated lines for eventual external use.
 	else
@@ -379,37 +409,51 @@ function fillsinks(G::GMTgrid; conn=4, region=nothing, saco=false, insitu=false)
 	_G = (insitu == 1) ? G : deepcopy(G)
 
 	function filled_ranges(G, D)
-		x0, y0, dx, dy = G.range[1], G.range[3], G.inc[1], G.inc[2]
-		col_1 = round(Int, (D.bbox[1] - x0) / dx) + 1
-		col_2 = round(Int, (D.bbox[2] - x0) / dx) + 1
-		row_1 = round(Int, (D.bbox[3] - y0) / dy) + 1
-		row_2 = round(Int, (D.bbox[4] - y0) / dy) + 1
-		return x0, y0, dx, dy, col_1, col_2, row_1, row_2
+		_col_1 = round(Int, (D.bbox[1] - G.range[1]) / G.inc[1]) + 1
+		_col_2 = round(Int, (D.bbox[2] - G.range[1]) / G.inc[1]) + 1
+		_row_1 = round(Int, (D.bbox[3] - G.range[3]) / G.inc[2]) + 1
+		_row_2 = round(Int, (D.bbox[4] - G.range[3]) / G.inc[2]) + 1
+		return _col_1, _col_2, _row_1, _row_2
 	end
 
-	if (isa(D, Vector))
-		for k = 1:numel(D)
-			x0, y0, dx, dy, col_1, col_2, row_1, row_2 = filled_ranges(G, D[k])
-			Threads.@threads for i = col_1:col_2
-				t = (i-1)*dx+x0
-				for j = row_1:row_2
-					@inbounds pip(t, (j-1)*dy+y0, D[k].data) >= 0 && (_G.z[j,i] = means[k])
-				end
+	function fill_it_Col(_D, this_mean, x0, y0, dx, dy, col_1, col_2, row_1, row_2)
+		# Fill the interior of the polygon _D with the value 'this_mean'. Version for column-major grids
+		Threads.@threads for i = col_1:col_2
+			t = (i-1)*dx + x0
+			for j = row_1:row_2
+				@inbounds pip(t, (j-1)*dy + y0, _D.data) >= 0 && (_G.z[j,i] = this_mean)
 			end
+		end
+	end
+
+	function fill_it_Row(_D, this_mean, x0, y0, dx, dy, col_1, col_2, row_1, row_2, n_rows)
+		# Fill the interior of the polygon _D with the value 'this_mean'. Version for row-major grids
+		Threads.@threads for j = row_1:row_2
+			jj = is_top_down ? n_rows - j + 1 : j	# Top down, must flip indices
+			ty = (j-1)*dy + y0
+			for i = col_1:col_2
+				@inbounds pip((i-1)*dx + x0, ty, _D.data) >= 0 && (_G.z[i,jj] = this_mean)
+			end
+		end
+	end
+
+	is_col_major, is_top_down = (G.layout[2] == 'C'), (G.layout[1] == 'T')
+	if (isa(D, Vector))
+		for k = 1:numel(D)			# Loop over the polygons that delimit the sinks
+			col_1, col_2, row_1, row_2 = filled_ranges(G, D[k])
+			is_col_major ? fill_it_Col(D[k], means[k], G.range[1], G.range[3], G.inc[1], G.inc[2], col_1, col_2, row_1, row_2) :
+			               fill_it_Row(D[k], means[k], G.range[1], G.range[3], G.inc[1], G.inc[2], col_1, col_2, row_1, row_2, size(G.z,2))
 		end
 	else
-		x0, y0, dx, dy, col_1, col_2, row_1, row_2 = filled_ranges(G, D)
-		Threads.@threads for i = col_1:col_2
-			t = (i-1)*dx+x0
-			for j = row_1:row_2
-				@inbounds pip(t, (j-1)*dy+y0, D.data) >= 0 && (_G.z[j,i] = means)
-			end
-		end
+		col_1, col_2, row_1, row_2 = filled_ranges(G, D)
+		is_col_major ? fill_it_Col(D, means, G.range[1], G.range[3], G.inc[1], G.inc[2], col_1, col_2, row_1, row_2) :
+		               fill_it_Row(D, means, G.range[1], G.range[3], G.inc[1], G.inc[2], col_1, col_2, row_1, row_2, size(G.z,2))
 	end
 	_G.range[5] = minimum_nan(_G.z)
 	return _G
 end
-fillsinks!(G::GMTgrid; conn=4, region=nothing, saco=false) = fillsinks(G; conn=conn, region=region, saco=saco, insitu=true)
+fillsinks!(G::GMTgrid; conn=8, region=nothing, saco=false) = fillsinks(G; conn=conn, region=region, saco=saco, insitu=true)
+=#
 
 # ---------------------------------------------------------------------------------------------------
 """
@@ -447,6 +491,12 @@ grdimage!(J2, figsize=6, xshift=-6.1, yshift=-6.1)
 grdimage!(J3, figsize=6, xshift=-6.1, show=true)
 ```
 """
+function imerode(G::AbstractArray{T, 2}; hsize=3, vsize=3, sel=nothing) where T <: Union{Integer, AbstractFloat}
+	s = (sel === nothing) ? ones(T, hsize, vsize) : convert(Array{T, 2}, sel)
+	imerode_higher(G, s)
+end
+imerode(G::AbstractArray{T, 2}, sel::Matrix{<:Real}) where T <: Union{Integer, AbstractFloat} = imerode(G, sel=sel)
+
 function imerode(I::Union{GMTimage{<:UInt8, 2}, GMTimage{<:Bool, 2}}; hsize=3, vsize=3, sel=nothing)::GMTimage
 	helper_morph(I, hsize, vsize, "erode", sel)
 end
@@ -483,6 +533,12 @@ grdimage(I, figsize=7)
 grdimage!(J, figsize=7, xshift=7.1, show=true)
 ```
 """
+function imdilate(G::AbstractArray{T, 2}; hsize=3, vsize=3, sel=nothing) where T <: Union{Integer, AbstractFloat}
+	s = (sel === nothing) ? ones(T, hsize, vsize) : convert(Array{T, 2}, sel) # strel(sel)
+	imdilate_higher(G, s)
+end
+imdilate(G::AbstractArray{T, 2}, sel::Matrix{<:Real}) where T <: Union{Integer, AbstractFloat} = imdilate(G, sel=sel)
+
 function imdilate(I::Union{GMTimage{<:UInt8, 2}, GMTimage{<:Bool, 2}}; hsize=3, vsize=3, sel=nothing)::GMTimage
 	helper_morph(I, hsize, vsize, "dilate", sel)
 end
@@ -522,6 +578,8 @@ grdimage(I, figsize=7)
 grdimage!(J, figsize=7, xshift=7.1, show=true)
 ```
 """
+imopen(G::GMTgrid{<:AbstractFloat, 2}; hsize=3, vsize=3, sel=nothing)::GMTimage{UInt8, 2} =
+	imopen(imagesc(G), hsize=hsize, vsize=vsize, sel=sel)
 function imopen(I::Union{GMTimage{<:UInt8, 2}, GMTimage{<:Bool, 2}}; hsize=3, vsize=3, sel=nothing)::GMTimage
 	helper_morph(I, hsize, vsize, "open", sel)
 end
@@ -561,6 +619,8 @@ grdimage(I, figsize=7)
 grdimage!(J, figsize=7, xshift=7.1, show=true)
 ```
 """
+imclose(G::GMTgrid{<:AbstractFloat, 2}; hsize=3, vsize=3, sel=nothing)::GMTimage{UInt8, 2} =
+	imclose(imagesc(G), hsize=hsize, vsize=vsize, sel=sel)
 function imclose(I::Union{GMTimage{<:UInt8, 2}, GMTimage{<:Bool, 2}}; hsize=3, vsize=3, sel=nothing)::GMTimage
 	helper_morph(I, hsize, vsize, "close", sel)
 end
@@ -1088,11 +1148,7 @@ end
 Suppress connected components that touch the image border.
 """
 function imclearborder(I; conn::Int=4)::GMTimage{UInt8, 2}
-	bpp = (eltype(I) == Bool || I.range[6] == 1) ? 1 : 8
-	(bpp == 8 && I.range[6] == 255 && I.n_colors == 0 && rem(sum(I.image), 255) == 0) && (bpp = 1)	# A bit risky but not much
-	(bpp != 1 || size(I,3) != 1) && error("Only Black&White 2D images are supported")
-	ppixI = img2pix(I, bpp)
-
+	ppixI = get_ppixI(I)
 	ppix = pixRemoveBorderConnComps(ppixI.ptr, conn)
 	(ppix == C_NULL) && (@warn("imclearborder filter operation failed"); return GMTimage())
 	pix2img(Sppix(ppix))
@@ -1111,6 +1167,111 @@ function decompose_2D(h)
 	hy = u[:,1] * sqrt(s[1])
 	hx = (conj(v[:,1]) * sqrt(s[1]))
 	return hy, hx
+end
+
+function bwcountconncomp(I; conn::Int=8)::Cint
+	ppixI = get_ppixI(I)
+	pcount = Ref{Cint}(0)
+	pixCountConnComp(ppixI.ptr, conn, pcount) > 0 && error("bwconncomp operation failed")
+	return pcount[]
+end
+
+# A type to store the output of bwconncomp function
+Base.@kwdef struct GMTConComp
+	connectivity::Int=0					# 4 or 8
+	num_objects::Int=0					# Number of connected components found
+	image_size::Tuple{Int,Int}=(0,0)	# Size of the image
+	range::Vector{Float64}=Float64[]
+	inc::Vector{Float64}=Float64[]
+	registration::Int=0
+	x::Vector{Float64}=Float64[]		# X coordinates of the image
+	y::Vector{Float64}=Float64[]		# Y coordinates of the image
+	layout::String=""					# Layout of the image used to find the components
+	proj4::String=""
+	wkt::String=""
+	epsg::Int=0
+	bboxs::Vector{GMTdataset{Float64,2}}=GMTdataset{Float64,2}[]	# The bounding boxes as datasets
+	pixel_list::Vector{Vector{Int32}}=Vector{Int32}[]		# The list of pixel indices for each component
+end
+
+"""
+	CC = bwconncomp(I; conn=8)
+
+Find and counts the connected components CC in the binary image BW.
+
+The CC output structure contains the total number of connected components, such as regions
+of interest (ROIs), in the image and the pixel indices assigned to each component.
+`bwconncomp` uses a default connectivity of 8.
+
+- `I`: A 2D binary GMTimage or matrix (matrix of `Bool` or `UInt8` with values 0 and 1 or 0 and 255).
+- `conn`: Connectivity value used to identify the connected components in I (4 or 8). Default is 8.
+
+### Returns
+A `GMTConComp` structure with the following fields:
+- `connectivity`: Connectivity value used to identify the connected components in I (4 or 8).
+- `num_objects`: Number of connected components found.
+- `image_size`: Size of the image.
+- `range`: Range of the image.
+- `inc`: Increment of the image.
+- `registration`: Registration of the image.
+- `x`: X coordinates of the image.
+- `y`: Y coordinates of the image.
+- `layout`: Layout of the image used to find the components.
+- `proj4`: Projection definition of the image used to find the components.
+- `wkt`: Well-known text definition of the image used to find the components.
+- `epsg`: EPSG code of the image used to find the components.
+- `bboxs`: The bounding boxes as a vector of GMTdataset.
+- `pixel_list`: A vevtor of vectors with the list of linear pixel indices for each component.
+"""
+bwconncomp(mat::BitMatrix; conn::Int=8) = bwconncomp(mat2img(collect(mat)); conn=conn)
+bwconncomp(mat::Matrix{<:Bool}; conn::Int=8) = bwconncomp(mat2img(mat); conn=conn)
+bwconncomp(G::GMTgrid{Bool, 2}; conn::Int=8) = bwconncomp(mat2img(G.z, G); conn=conn)
+function bwconncomp(I::GMTimage; conn::Int=8)
+	ppixI  = get_ppixI(I)
+	pcount = Ref{Cint}(0)
+	pixCountConnComp(ppixI.ptr, conn, pcount) > 0 && error("bwconncomp operation failed")
+	pboxa = pixConnComp(ppixI.ptr, C_NULL, conn)
+
+	# This is what we would have to do to get the ConnComp as individual images, but Leptonica
+	# is bugged in that last col has zeros instead of the actual CC data.
+	#pixa = pixaCreate(0)
+	#ppixa = Ref(pixa)
+	#pboxa = pixConnComp(ppixI.ptr, ppixa, conn)
+	#pixa = ppixa[]
+	#ppix = unsafe_load(unsafe_load(pixa).pix, 1)
+	#return pix2img(Sppix(ppix))
+
+	boxa  = unsafe_load(pboxa)
+	D = Vector{GMTdataset{Float64,2}}(undef, boxa.n)
+	pixel_list = [Int32[] for _ in 1:boxa.n]
+	width, height = getsize(I)
+	@inbounds for k = 1:boxa.n
+		b = unsafe_load(unsafe_load(boxa.box, k))				# A Box, x,y counting seem to be 0-based
+		y2 = I.y[Int32(width - b.y)]
+		y1 = I.y[Int32(width - b.y - b.h)]
+		x1, x2 = I.x[b.x + I.registration], I.x[b.x + b.w + I.registration]	# Still not very clear where/why +1's are needed
+		D[k] = mat2ds([x1 y1; x1 y2; x2 y2; x2 y1; x1 y1])		# The bounding box
+		D[k].bbox = [x1, x2, y1, y2]		# (xmin, xmax, ymin, ymax)
+		if (I.layout[2] == 'C')				# Column major
+			jj = (I.layout[1] == 'T') ? (b.y+1:b.y+b.h) : (height-b.y:-1:height - b.y - b.h + 1)
+			@inbounds for i = b.x+1:b.x+b.w, j = jj
+				(I[j,i] != 0) && append!(pixel_list[k], (i-1) * height + j)
+			end
+		else								# Row major
+			@inbounds for j = b.y+1:b.y+b.h, i = b.x+1:b.x+b.w	# Oddly here we do not need to care about 'T' or 'B'
+				(I[i,j] != 0) && append!(pixel_list[k], (j-1) * width + i)
+			end
+		end
+	end
+	set_dsBB!(D, true)	# Add the bounding box
+	GMTConComp(conn, pcount[], size(I), I.range, I.inc, I.registration, I.x, I.y, I.layout, I.proj4, I.wkt, I.epsg, D, pixel_list)
+end
+
+function get_ppixI(I)
+	bpp = (eltype(I) == Bool || I.range[6] == 1) ? 1 : 8
+	(bpp == 8 && I.range[6] == 255 && I.n_colors == 0 && rem(sum(I.image), 255) == 0) && (bpp = 1)	# A bit risky but not much
+	(bpp != 1 || size(I,3) != 1) && error("Only Black&White 2D images are supported")
+	img2pix(I, bpp)
 end
 
 # =====================================================================================================
@@ -1258,4 +1419,227 @@ function Base.show(io::IO, ::MIME"text/plain", sel::Sel)::Nothing
 		mat[n,:] .= unsafe_wrap(Array, p[n], sel.sx)
 	end
 	println(io, display(mat))
+end
+
+# ---------------------------------------------------------------------------------------------------
+# Written by Claude
+"""
+    imdilate(img::AbstractArray{T}, se::AbstractArray) where T <: AbstractFloat
+
+Perform grayscale morphological dilation on a floating point array.
+
+# Arguments
+- `img`: Input image (2D array of floating point values)
+- `se`: Structuring element (2D array, typically binary or grayscale)
+
+# Returns
+- Dilated image of the same size as input
+
+# Example
+```julia
+# Create a simple image
+img = Float64[0 0 0 0 0;
+              0 1 1 0 0;
+              0 1 1 0 0;
+              0 0 0 0 0]
+
+# 3x3 square structuring element
+se = ones(3, 3)
+
+# Perform dilation
+result = imdilate(img, se)
+```
+"""
+function imdilate_higher(img::AbstractArray{T}, se::AbstractArray=ones(T, 3, 3)) where T <: Union{Integer, AbstractFloat}
+	# Get dimensions
+	img_rows, img_cols = size(img)
+	se_rows, se_cols = size(se)
+	
+	# Calculate structuring element center (origin)
+	center_r = (se_rows + 1) ÷ 2
+	center_c = (se_cols + 1) ÷ 2
+	
+	# Initialize output
+	out = fill(typemin(T), size(img))
+	
+	# Perform dilation
+	@inbounds for i in 1:img_rows
+		@inbounds for j in 1:img_cols
+			max_val = typemin(T)
+			found_valid = false
+			
+			# Apply structuring element
+			@inbounds for si in 1:se_rows
+				@inbounds for sj in 1:se_cols
+					# Skip if SE element is zero (not part of structuring element)
+					(se[si, sj] == 0) && continue
+					
+					# Calculate corresponding input image position
+					# We're looking at where this SE pixel maps back to in the input
+					offset_r = si - center_r
+					offset_c = sj - center_c
+					img_i = i - offset_r
+					img_j = j - offset_c
+					
+					# Check bounds
+					if img_i >= 1 && img_i <= img_rows && img_j >= 1 && img_j <= img_cols
+						
+						# For binary SE (values are 1), just take max of image values
+						# For grayscale SE, add SE value to image value
+						if se[si, sj] == 1
+							val = img[img_i, img_j]
+						else
+							val = img[img_i, img_j] + se[si, sj] - 1
+						end
+						
+						max_val = max(max_val, val)
+						found_valid = true
+					end
+				end
+			end
+			
+			# If we found at least one valid value, use it; otherwise leave as minimum
+			if found_valid
+				out[i, j] = max_val
+			else
+				out[i, j] = typemin(T)
+			end
+		end
+	end
+	
+	return out
+end
+
+#=
+"""
+	strel_disk(r::Int)
+
+Create a disk-shaped structuring element with radius r.
+Equivalent to MATLAB's strel('disk', r).
+"""
+function strel_disk(r::Int)
+	size = 2r + 1
+	se = zeros(Float64, size, size)
+	center = r + 1
+	
+	for i in 1:size
+		for j in 1:size
+			if sqrt((i - center)^2 + (j - center)^2) <= r
+				se[i, j] = 1.0
+			end
+		end
+	end
+	
+	return se
+end
+=#
+
+# ---------------------------------------------------------------------------------------------------
+"""
+	imerode(img::Array{T}, se::Array{Bool}) where T <: AbstractFloat
+
+Perform morphological erosion on a float array using a binary structuring element.
+
+# Arguments
+- `img::Array{T}`: Input image (1D, 2D, or 3D float array)
+- `se::Array{Bool}`: Binary structuring element (same dimensionality as img)
+
+# Returns
+- Eroded image of the same size and type as input
+
+# Example
+```julia
+# 2D erosion with cross-shaped structuring element
+img = rand(Float64, 100, 100)
+se = Bool[0 1 0; 1 1 1; 0 1 0]
+eroded = imerode(img, se)
+```
+"""
+function imerode_higher(img::AbstractArray{T}, se::AbstractArray=ones(T, 3, 3)) where T <: Union{Integer, AbstractFloat}
+	# Check dimensions match
+	(ndims(img) != ndims(se)) && error("Image and structuring element must have same number of dimensions")
+	
+	img_size, se_size = size(img), size(se)
+	
+	se_center = (se_size .+ 1) .÷ 2		# Calculate center of structuring element
+	
+	# Initialize output
+	output = similar(img)
+	
+	# Get coordinates of structuring element
+	se_coords = findall(se .> 0)
+	
+	# Perform erosion
+	if ndims(img) == 1
+		erode_1d!(output, img, se_coords, se_center, img_size)
+	elseif ndims(img) == 2
+		erode_2d!(output, img, se_coords, se_center, img_size)
+	elseif ndims(img) == 3
+		erode_3d!(output, img, se_coords, se_center, img_size)
+	else
+		error("Only 1D, 2D, and 3D arrays are supported")
+	end
+	
+	return output
+end
+
+function erode_1d!(output, img, se_coords, se_center, img_size)
+	for i in 1:img_size[1]
+		min_val = typemax(eltype(img))
+		
+		for se_idx in se_coords
+			di = se_idx[1] - se_center[1]
+			ni = i + di
+			
+			if 1 <= ni <= img_size[1]
+				min_val = min(min_val, img[ni])
+			end
+			# Outside boundary: ignore (equivalent to padding with +Inf)
+		end
+		
+		output[i] = min_val
+	end
+end
+
+function erode_2d!(output, img, se_coords, se_center, img_size)
+	tm = typemax(eltype(img))
+	@inbounds for j in 1:img_size[2], i in 1:img_size[1]
+		min_val = tm
+		
+		@inbounds for se_idx in se_coords
+			di = se_idx[1] - se_center[1]
+			dj = se_idx[2] - se_center[2]
+			ni = i + di
+			nj = j + dj
+			
+			if 1 <= ni <= img_size[1] && 1 <= nj <= img_size[2]
+				min_val = min(min_val, img[ni, nj])
+			end
+			# Outside boundary: ignore (equivalent to padding with +Inf)
+		end
+		
+		output[i, j] = min_val
+	end
+end
+
+function erode_3d!(output, img, se_coords, se_center, img_size)
+	for k in 1:img_size[3], j in 1:img_size[2], i in 1:img_size[1]
+		min_val = typemax(eltype(img))
+		
+		for se_idx in se_coords
+			di = se_idx[1] - se_center[1]
+			dj = se_idx[2] - se_center[2]
+			dk = se_idx[3] - se_center[3]
+			ni = i + di
+			nj = j + dj
+			nk = k + dk
+			
+			if 1 <= ni <= img_size[1] && 1 <= nj <= img_size[2] && 1 <= nk <= img_size[3]
+				min_val = min(min_val, img[ni, nj, nk])
+			end
+			# Outside boundary: ignore (equivalent to padding with +Inf)
+		end
+		
+		output[i, j, k] = min_val
+	end
 end
