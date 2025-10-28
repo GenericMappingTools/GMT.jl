@@ -78,6 +78,68 @@ struct Pix
 	data::Ptr{Cuint}
 end
 
+
+"""
+    Box
+
+Basic rectangle
+
+| Field    | Note                              |
+| :------- | :-------------------------------- |
+| x        | left coordinate                   |
+| y        | top coordinate                    |
+| w        | box width                         |
+| h        | box height                        |
+| refcount | reference count (1 if no clones)  |
+"""
+struct Box
+	x::Cint
+	y::Cint
+	w::Cint
+	h::Cint
+	refcount::Cint
+end
+
+"""
+    Boxa
+
+Array of [`Box`](@ref)
+
+| Field    | Note                              |
+| :------- | :-------------------------------- |
+| n        | number of box in ptr array        |
+| nalloc   | number of box ptrs allocated      |
+| refcount | reference count (1 if no clones)  |
+| box      | box ptr array                     |
+"""
+struct Boxa
+	n::Cint
+	nalloc::Cint
+	refcount::Cint
+	box::Ptr{Ptr{Box}}
+end
+
+"""
+    Pixa
+
+Array of pix
+
+| Field    | Note                                    |
+| :------- | :-------------------------------------- |
+| n        | number of [`Pix`](@ref) in ptr array    |
+| nalloc   | number of [`Pix`](@ref) ptrs allocated  |
+| refcount | reference count (1 if no clones)        |
+| pix      | the array of ptrs to pix                |
+| boxa     | array of boxes                          |
+"""
+struct Pixa
+	n::Cint
+	nalloc::Cint
+	refcount::Cint
+	pix::Ptr{Ptr{Pix}}
+	boxa::Ptr{Boxa}
+end
+
 """
     Sel
 
@@ -251,3 +313,19 @@ end
 function pixRemoveBorderConnComps(pixs, connectivity)
 	ccall((:pixRemoveBorderConnComps, liblept), Ptr{Pix}, (Ptr{Pix}, Cint), pixs, connectivity)
 end
+
+function pixConnComp(pixs, ppixa, connectivity)
+	ccall((:pixConnComp, liblept), Ptr{Boxa}, (Ptr{Pix}, Ptr{Ptr{Pixa}}, Cint), pixs, ppixa, connectivity)
+end
+
+function pixCountConnComp(pixs, connectivity, pcount)
+	ccall((:pixCountConnComp, liblept), Cint, (Ptr{Pix}, Cint, Ptr{Cint}), pixs, connectivity, pcount)
+end
+
+function pixaCreate(n)
+	ccall((:pixaCreate, liblept), Ptr{Pixa}, (Cint,), n)
+end
+
+#function pixWritePng(filename, pix, gamma)
+	#ccall((:pixWritePng, liblept), Cint, (Cstring, Ptr{Pix}, Cfloat), filename, pix, gamma)
+#end
