@@ -29,20 +29,13 @@ it's often useful to assign less work to it to account for the time spent schedu
 
 # Examples
 
-```jldoctest; setup=:(using TiledIteration)
+```julia
 julia> collect(SplitAxis(1:16, 4))
 4-element Vector{UnitRange{$Int}}:
  1:4
  5:8
  9:12
  13:16
-
-julia> collect(SplitAxis(1:16, 3.5))
-4-element Vector{UnitRange{$Int}}:
- 1:1
- 2:6
- 7:11
- 12:16
 ```
 
 In the latter case all the ranges except the first have length 5; consequently, only one element remains for the first chunk.
@@ -72,7 +65,7 @@ See [`SplitAxis`](@ref) for further details.
 
 # Examples
 
-```jldoctest; setup=:(using TiledIteration)
+```julia
 julia> A = rand(3, 16);
 
 julia> collect(SplitAxes(axes(A), 4))

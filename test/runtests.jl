@@ -17,6 +17,7 @@ using InteractiveUtils
 	API = GMT.GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL);
 	GMT.GMT_Get_Ctrl(API);
 
+	include("test_imgmorph.jl")
 	include("test_PT_alignments.jl")
 	include("test_PT_column_width.jl")
 	include("test_PT_default.jl")

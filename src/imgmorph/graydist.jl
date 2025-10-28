@@ -5,6 +5,10 @@ function graydist(I::AbstractMatrix, ind::Union{Vector{Int}, Int}, method="quasi
 	isa(ind, Int) ? (mask[ind] = true) : (mask[ind] .= true)
 	return graydist(I, mask, method)
 end
+function graydist(I::AbstractMatrix, i::Integer, j::Integer, method="quasi-euclidean")
+	ind = LinearIndices(I)[i, j]
+	graydist(I, ind, method)
+end
 # ----------------------------------------------------------------------------------------
 """
     graydist(I::AbstractArray{T,2}, mask::AbstractArray{Bool,2}, method="quasi-euclidean") where T

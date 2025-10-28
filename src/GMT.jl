@@ -177,7 +177,7 @@ export
 
 	VSdisp, mad, info, kmeans, pca, mosaic, quadbounds, quadkey, geocoder, getprovider, zscores,
 
-	bwhitmiss, binarize, bwareaopen, bwconncomp, bwdist, bwlabel, bwperim, bwskell, cc2bw, graydist, isodata,
+	bwhitmiss, binarize, bwareaopen, bwconncomp, bwdist, bwdist_idx, bwlabel, bwperim, bwskell, cc2bw, graydist, isodata,
 	padarray, rgb2gray, rgb2lab, rgb2YCbCr, rgb2ycbcr, grid2img, img2grid, grays2cube, grays2rgb, imclose,
 	imcomplement, imcomplement!, imdilate, imerode, imfilter, imopen, imsegment, imsobel, imtophat, imbothat,
 	imhdome, imhmin, imhmax, immorphgrad, imrankfilter, strel, imfill, imreconstruct, fillsinks, fillsinks!,
@@ -362,6 +362,7 @@ include("seis/gmtisf.jl")
 include("geodesy/psvelo.jl")
 include("geodesy/earthtide.jl")
 include("imgmorph/bwdist.jl")
+include("imgmorph/cc2bw.jl")
 include("imgmorph/graydist.jl")
 include("MB/mbimport.jl")
 include("MB/mbgetdata.jl")

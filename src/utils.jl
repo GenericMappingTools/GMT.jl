@@ -981,7 +981,7 @@ The coefficients in p are in ascending powers, and the length of p is n+1.
 The `xscale` parameter is useful when needing to get coeficients in different x units. For example when converting
 months or seconds into years.
 """
-polyfit(D::GMTdataset, n::Int=size(x,1)-1; xscale=1) = polyfit(view(D.data, :,1), view(D.data, :,2), n, xscale=xscale)
+polyfit(D::GMTdataset, n::Int=size(D,1)-1; xscale=1) = polyfit(view(D.data, :,1), view(D.data, :,2), n, xscale=xscale)
 function polyfit(x, y, n::Int=length(x)-1; xscale=1)
 	@assert length(x) == length(y) "X,Y sizes mismatch"
 	@assert 1 <= n <= length(x) - 1  "Order of polynome must be between 1 and length(x)-1"
@@ -1225,6 +1225,10 @@ isclockwise(poly, (1.0,0.1,0.0))
 function isclockwise(poly::Matrix{<:AbstractFloat}, view=(0.0,0.0,1.0))
 	dot(facenorm(poly, normalize=false), [view[1], view[2], view[3]]) <= 0.0
 end
+
+# ------------------------------------------------------------------------------------------------------
+"""Check if value is scalar"""
+isscalar(x) = length(x) == 1
 
 # ------------------------------------------------------------------------------------------------------
 """
@@ -1539,3 +1543,9 @@ function Base.eof(fp::GzFile)
 	ret != 0 ? true : false
 end
 =#
+
+# ----------------------------------------------------------------------------------------
+#include("flowobj.jl")
+#include("tanakacontour.jl")
+#include("shufflelabel.jl")
+
