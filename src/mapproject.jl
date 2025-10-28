@@ -45,10 +45,10 @@ Parameters
 - **S** | **supress** :: [Type => Bool]
 
     Suppress points that fall outside the region.
-- **T** | **change_datum** :: [Type => Str]    ``Arg = [h]from[/to]``
+- **T** | **datum** :: [Type => Str]    ``Arg = [h]from[/to]``
 
     Coordinate conversions between datums from and to using the standard Molodensky transformation.
-- **W** | **map_size** | **mapsize** :: [Type => Str | []]    ``Arg = [w|h]``
+- **W** | **mapsize** | **map_size** :: [Type => Str | []]    ``Arg = [w|h]``
 
     Prints map width and height on standard output. No input files are read.
 - **Z** | **traveltime** | **travel_times** :: [Type => Str | Number]    ``Arg = [speed][+a][+i][+f][+tepoch]``
@@ -75,8 +75,8 @@ function mapproject(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:R :V_params :b :d :e :f :g :h :i :j :o :p :s :yx])
 	cmd  = parse_these_opts(cmd, d, [[:C :center], [:E :geod2ecef :ecef], [:I :inverse], [:S :supress],
-	                                 [:T :change_datum], [:W :map_size :mapsize], [:Z :traveltime :travel_times]])
-	cmd  = add_opt_1char(cmd, d, [[:D :lengthunit :override_units], [:F :one2one], [:Q :list], [:N :geod2aux]])
+	                                 [:T :datum :change_datum], [:W :mapsize :map_size], [:Z :traveltime :travel_times]])
+	cmd  = add_opt_1char(cmd, d, [[:D :lengthunit], [:F :one2one], [:Q :list], [:N :geod2aux]])
 
 	cmd = add_opt(d, cmd, "A", [:A :azim :azimuth],
 	              (fixed_pt=("", arg2str), back=("b", nothing, 1), back_geocentric=("B", nothing, 1), forward=("f", nothing, 1), forward_geocentric=("F", nothing, 1), orientation=("o", nothing, 1), orientation_geocentric=("O", nothing, 1), unit="+u1", var_pt="_+v"))

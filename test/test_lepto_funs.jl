@@ -117,7 +117,8 @@ resp = ones(size(x));	resp[:,end] .= 0;
 @test all(imerode(x, Bool[0 1 0; 1 1 1; 0 1 0]) .== 0)
 
 I = gmtread(TESTSDIR * "assets/text.png");
-bwconncomp(I);
+CC = bwconncomp(I);
+bw = cc2bw(CC);
 
 I = gmtread(TESTSDIR * "assets/packman.png");
 imopen(I, sel=strel("box", 20));
