@@ -398,4 +398,8 @@
 	remotegrid("earth_relief", "5m") == "@earth_relief_05m"
 	remotegrid("mag", "1d", reg="p") == "@earth_mag_01d_p"
 
+	println("	GMTREAD_CONVERT")
+	gmtread("@earth_relief_05m", R=[400000, 500000, 4500000, 4540000], J="+proj=utm +zone=29");
+	gmtread("@earth_relief_05m", R=[400000, 500000, 4500000, 4540000], J="+proj=utm +zone=29", convert=true, layout="TRB");
+	gmtread("@earth_relief_05m", R=[400000, 500000, 4500000, 4540000], J=32629, convert=true);
 end

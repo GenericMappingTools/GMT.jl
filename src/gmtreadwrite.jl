@@ -59,6 +59,19 @@ Specify data type (with *type*=true, e.g. `img=true`).  Choose among:
 
   Use ``layers=:all`` to read all levels of a 3D cube netCDF file.
 
+- `R` | `region` | `limits`: A numeric vector (or a Tuple) or a string defining the region of interest.
+  If numeric, it must have four elements: `[xmin, xmax, ymin, ymax]`.
+  If string, it must be in the form `xmin/xmax/ymin/ymax`. Default is to read entire file extent.
+
+  When reading remote files via the '@' mechanism, the region can be given in projected coordinates,
+  provided that the `proj` option is also given and describing system used in `R`.
+
+- `J` | `proj` | `projection`: When `region` is given in projected coordinates, this option must be
+  provided, otherwise it is ignored. The syntax is the same as in all modules that use the `proj` option.
+
+- `convert`: In case that both the `region` and `proj` options are used, this option (any value will do)
+  can be used to request that the grid be converted to the new projection defined by `proj`.
+
 - $(_opt_R)
 - $(opt_V)
 - $(_opt_bi)
@@ -85,6 +98,7 @@ function gmtread(_fname::String; kwargs...)
 	cmd, opt_bi = parse_bi(d, cmd)
 	proggy = "read "						# When reading an entire grid cube, this will change to 'grdinterpolate'
 	doTimeCheck = true						# By default check for time columns in text files
+	opt_J = ""								# Will hold a grdproject proj string if `proj` and `convert`options are used.
 
 	# Process these first so they may take precedence over defaults set below
 	opt_T = add_opt(d, "", "Tg", [:grd :grid])
@@ -163,8 +177,7 @@ function gmtread(_fname::String; kwargs...)
 		elseif ((fname[1] == '@' && any(contains.(fname, ["_relief", "_age", "_dist", "_faa", "_gebco", "_geoid", "_mag", "_mask", "_mdt", "_mss", "_synbath", "_wdmam"]))) || startswith(fname, "@srtm_"))
 			opt_T = " -Tg"
 		end
-		# To shut up a f annoying GMT warning.
-		#(opt_T == " -Tg") && startswith(fname, "@earth_") && !endswith(fname, "_g") && !endswith(fname, "_p") && (fname *= "_g")
+		if (opt_T != "") cmd, opt_J = parse_R_projected(d, cmd, opt_R)  end	# See if we have a non-geographic region request 
 	end
 
 	(opt_T == "" && opt_bi != "") && (opt_T = " -Td")	# If asked to read binary, must be a 'data' file.
@@ -210,7 +223,21 @@ function gmtread(_fname::String; kwargs...)
 		if (isISF)
 			o = gmtisf(fname; d...)
 		else
-			o = (proggy == "gdalread") ? gdalread(fname, gdopts) : gmt(proggy * fname * cmd)
+			lay = ""					# May need to temporarily change the layout
+			if (opt_J !== "")			# Means that we will ne to project after reading, so do it with TRB (or should it be BRB?)
+				((ind = findfirst(" -&", cmd)) !== nothing) && (lay = cmd[ind[1]:ind[1]+5])
+				(lay !== "") && (cmd = replace(cmd, lay => ""))		# Remove layout from cmd
+			end
+			layout = (opt_J !== "") ? " -&TRB" : ""		# If we are going to project, read in row major order
+			o = (proggy == "gdalread") ? gdalread(fname, gdopts) : gmt(proggy * fname * cmd * layout)
+			if (opt_J !== "")			# Project the grid
+				o = gmt("grdproject" * lay * opt_J, o)
+				if contains(opt_J, "+proj")		# Only projections given (or consructed to) in GMT syntax are not saved in grid's metadata
+					o.proj4 = replace(opt_J[4:end], "+" => " +")	# Set the proj4 string and reset the spaces
+				elseif (isdigit(opt_J[4]) && isdigit(opt_J[8]))
+					o.epsg = parse(Int, opt_J[4:8])
+				end
+			end
 		end
 		(isempty(o)) && (@warn("\tfile \"$fname\" is empty or has no data after the header.\n"); return GMTdataset())
 		((prj = planets_prj4(fname)) != "") && (o.proj4 = prj)		# Get cached (@moon_..., etc) planets proj4
@@ -294,6 +321,18 @@ function gmtread(_fname::String; kwargs...)
 	ressurectGDAL()				# Because GMT called GDALDestroyDriverManager()
 	GMT_Destroy_Session(API2)
 	return O
+end
+
+# ---------------------------------------------------------------------------------
+function parse_R_projected(d, cmd, opt_R)
+	# If opt_R is non geographic, convert to geographic via mapproject and return new cmd
+	((opt_J = parse_J(d, "")[1]) === "") && return cmd, ""		# Nothing to do
+	opt_J = contains(opt_J, "+width") ? opt_J[1:end-10] : (isdigit(opt_J[4]) && isdigit(opt_J[end])) ? opt_J * " -F -C" : opt_J[1:3] * lowercase(opt_J[4]) * opt_J[5:end-3] * "1:1 -F -C"	# Remove +width or size
+	xmin, xmax, ymin, ymax = opt_R2num(opt_R)
+	Rgeog = gmt("mapproject -I" * opt_J, [xmin ymin; xmax ymax])
+	new_R = @sprintf(" -R%f/%f/%f/%f", Rgeog[1,1], Rgeog[2,1], Rgeog[1,2], Rgeog[2,2])
+	out_J = (find_in_dict(d, [:convert])[1] !== nothing) ? opt_J : ""
+	return (opt_R === "") ? new_R : replace(cmd, opt_R => new_R), out_J
 end
 
 # ---------------------------------------------------------------------------------
