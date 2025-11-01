@@ -1190,8 +1190,10 @@ Base.@kwdef struct GMTConComp
 	proj4::String=""
 	wkt::String=""
 	epsg::Int=0
-	bboxs::Vector{GMTdataset{Float64,2}}=GMTdataset{Float64,2}[]	# The bounding boxes as datasets
-	pixel_list::Vector{Vector{Int32}}=Vector{Int32}[]		# The list of pixel indices for each component
+	bbox::Vector{GMTdataset{Float64,2}}=GMTdataset{Float64,2}[]		# The bounding boxes as datasets
+	pixel_list::Vector{Vector{Int32}}=Vector{Int32}[]				# The list of pixel indices for each component
+	centroid::Matrix{Float64}=Matrix{Float64}(undef, 0, 0)			# The centroids of each component
+	area::Vector{Float64}=Float64[]									# The areas of each component
 end
 
 """
@@ -1220,8 +1222,10 @@ A `GMTConComp` structure with the following fields:
 - `proj4`: Projection definition of the image used to find the components.
 - `wkt`: Well-known text definition of the image used to find the components.
 - `epsg`: EPSG code of the image used to find the components.
-- `bboxs`: The bounding boxes as a vector of GMTdataset.
-- `pixel_list`: A vevtor of vectors with the list of linear pixel indices for each component.
+- `bbox`: The bounding boxes as a vector of GMTdataset.
+- `pixel_list`: A vector of vectors with the list of linear pixel indices for each component.
+- `centroid`: A vector of Float64 Tuples with the x,y coordinates of the centroids for each component.
+- `area`: A vector of Float64 with the areas of each component. This area is approximated by the mean lat for geog images.
 """
 bwconncomp(mat::BitMatrix; conn::Int=8) = bwconncomp(mat2img(collect(mat)); conn=conn)
 bwconncomp(mat::Matrix{<:Bool}; conn::Int=8) = bwconncomp(mat2img(mat); conn=conn)
@@ -1241,30 +1245,53 @@ function bwconncomp(I::GMTimage; conn::Int=8)
 	#ppix = unsafe_load(unsafe_load(pixa).pix, 1)
 	#return pix2img(Sppix(ppix))
 
-	boxa  = unsafe_load(pboxa)
-	D = Vector{GMTdataset{Float64,2}}(undef, boxa.n)
+	is_geog    = isgeog(I)
+	cellsize   = I.inc[1] * I.inc[2] 
+	boxa       = unsafe_load(pboxa)
+	D          = Vector{GMTdataset{Float64,2}}(undef, boxa.n)
+	centroid   = Matrix{Float64}(undef, boxa.n, 2)
+	area       = Vector{Float64}(undef, boxa.n)
 	pixel_list = [Int32[] for _ in 1:boxa.n]
 	width, height = getsize(I)
+	is_col_maj  = (I.layout[2] == 'C')
+	is_top_down = (I.layout[1] == 'T')
+
 	@inbounds for k = 1:boxa.n
-		b = unsafe_load(unsafe_load(boxa.box, k))				# A Box, x,y counting seem to be 0-based
-		y2 = I.y[Int32(width - b.y)]
-		y1 = I.y[Int32(width - b.y - b.h)]
-		x1, x2 = I.x[b.x + I.registration], I.x[b.x + b.w + I.registration]	# Still not very clear where/why +1's are needed
-		D[k] = mat2ds([x1 y1; x1 y2; x2 y2; x2 y1; x1 y1])		# The bounding box
-		D[k].bbox = [x1, x2, y1, y2]		# (xmin, xmax, ymin, ymax)
-		if (I.layout[2] == 'C')				# Column major
-			jj = (I.layout[1] == 'T') ? (b.y+1:b.y+b.h) : (height-b.y:-1:height - b.y - b.h + 1)
-			@inbounds for i = b.x+1:b.x+b.w, j = jj
-				(I[j,i] != 0) && append!(pixel_list[k], (i-1) * height + j)
+		b  = unsafe_load(unsafe_load(boxa.box, k))				# A Box, x,y counting seem to be 0-based
+		y2 = I.y[Int32(height - b.y) + 1]
+		y1 = I.y[Int32(height - b.y - b.h) + 1]
+		x1, x2 = I.x[b.x + I.registration], I.x[b.x + b.w + I.registration]
+		D[k]   = mat2ds([x1 y1; x1 y2; x2 y2; x2 y1; x1 y1])	# The bounding box
+		D[k].bbox = [x1, x2, y1, y2]			# (xmin, xmax, ymin, ymax)
+		half_pix_x, half_pix_y = I.registration * I.inc[1]/2, I.registration * I.inc[2]/2
+		im, jm = 0.0, 0.0
+
+		if (is_col_maj)							# Column major
+			jj = (is_top_down) ? (b.y+1:b.y+b.h) : (height-b.y:-1:height - b.y - b.h + 1)
+			@inbounds for i in b.x+1:b.x+b.w	# Xaxis
+				@inbounds for j in jj
+					(I[j,i] != 0) && (append!(pixel_list[k], (i-1) * height + j); jm += j; im += i)
+				end
 			end
-		else								# Row major
-			@inbounds for j = b.y+1:b.y+b.h, i = b.x+1:b.x+b.w	# Oddly here we do not need to care about 'T' or 'B'
-				(I[i,j] != 0) && append!(pixel_list[k], (j-1) * width + i)
+			n_px = length(pixel_list[k])
+			t = (is_top_down) ? (I.range[4] - half_pix_y) - (jm / n_px - 1)*I.inc[2] : (I.range[3] + half_pix_x) + (jm / n_px - 1)*I.inc[2]
+			centroid[k,1:2] .= (I.range[1] + half_pix_x) + (im / n_px - 1)*I.inc[1], t
+		else									# Row major
+			@inbounds for j = b.y+1:b.y+b.h		# Yaxis.
+				@inbounds for i = b.x+1:b.x+b.w
+					(I[i,j] != 0) && (append!(pixel_list[k], (j-1) * width + i); im += i; jm += j)
+				end
 			end
+			n_px = length(pixel_list[k])
+			t = (is_top_down) ? (I.range[2] - half_pix_y) - (jm / n_px - 1)*I.inc[1] : (I.range[1] + half_pix_y) + (jm / n_px - 1)*I.inc[1]
+			centroid[k,1:2] .= (I.range[3] + half_pix_x) + (im / n_px - 1)*I.inc[2], t
 		end
+		lat_fact = (is_geog) ? cosd(centroid[k][2]) : 1.0		# Big approximation for the geog case but exact solution is too complex here
+		area[k] = n_px * cellsize * lat_fact
 	end
 	set_dsBB!(D, true)	# Add the bounding box
-	GMTConComp(conn, pcount[], size(I), I.range, I.inc, I.registration, I.x, I.y, I.layout, I.proj4, I.wkt, I.epsg, D, pixel_list)
+	GMTConComp(conn, pcount[], size(I), I.range, I.inc, I.registration, I.x, I.y, I.layout, I.proj4, I.wkt, I.epsg,
+	           D, pixel_list, centroid, area)
 end
 
 function get_ppixI(I)

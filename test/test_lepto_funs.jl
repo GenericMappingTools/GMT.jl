@@ -62,7 +62,7 @@ end
 	@test filled_gmt.image[1, 1] == 255
 end
 
-#=
+##
 @testset "bwconncomp tests" begin
 	I = gdalread(TESTSDIR * "assets/packman.png");
 	cc1 = bwconncomp(I);
@@ -70,13 +70,16 @@ end
 	I = gdalread(TESTSDIR * "assets/packman.png", layout="BCBa");
 	cc2 = bwconncomp(I);
 	@test cc2.num_objects == 2
-	@test cc1.bboxs == cc2.bboxs
-	#I = gdalread(TESTSDIR * "assets/packman.png", layout="TCBa");	# Need to fix bug in gdalread for this to work
-	#cc2 = bwconncomp(I);
-	#@test cc2.num_objects == 2
-	#@test cc1.bboxs == cc2.bboxs
+	@test cc1.bbox == cc2.bbox
+	I = gdalread(TESTSDIR * "assets/packman.png", layout="TCBa");
+	cc2 = bwconncomp(I);
+	@test cc2.num_objects == 2
+	@test cc1.bbox == cc2.bbox		# This guy fails
 
-	mat = zeros(Bool,8,9); mat[2:5,2:3] .= true; mat[4:5,4] .= true; mat[5:8,6:8] .= true; mat[4,7] = true;
+	# LEPTONICA is BUGGED. This trims last column of second object
+	#mat = zeros(Bool,8,10); mat[2:5,2:3] .= true; mat[4:5,4] .= true; mat[5:8,7:9] .= true; mat[4,8] = true;
+	# But this one (moving second obj one pixel to the left) works
+	mat = zeros(Bool,8,10); mat[2:5,2:3] .= true; mat[4:5,4] .= true; mat[5:8,6:8] .= true; mat[4,7] = true;
 	gdalwrite("c2.png", mat2img(mat))
 	I = gdalread("c2.png");		# Comes in with layout TRBa
 	cc = bwconncomp(I);
@@ -94,7 +97,7 @@ end
 	I2 = cc2bw(cc);
 	@test I == I2
 end
-=#
+##
 
 G = peaks();
 G2 = fillsinks(G);
