@@ -342,6 +342,7 @@ function getbyattrib(D::Vector{<:GMTdataset}; indices=false, kw...)::Union{Nothi
 	# This is the intended public method. It returns a subset of the selected segments
 	ind = getbyattrib(D, true; kw...)
 	isempty(ind)   && return nothing
+	(indices == 1) && return ind
 	o = D[ind]
 	set_dsBB!(o, false)
 	o[1].proj4, o[1].wkt, o[1].epsg = D[1].proj4, D[1].wkt, D[1].epsg
