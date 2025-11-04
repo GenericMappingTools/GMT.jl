@@ -178,13 +178,16 @@ NOTE: Instead of ``getbyattrib`` one case use instead ``filter`` (...,`index=fal
   means select all elements from ``Antioquia`` and ``Caldas`` that have the attribute `feature_id` = 0.
 
   A second set of attributes can be used to select elements by region, number of polygon vertices and area.
-  For that, name the keyword with a leading underscore, e.g. `_region`, `_nps`, `_area`, `_unique`. Their values are
-  passed respectively a 4 elements tuple and numbers. E.g. `_region=(-8.0, -7.0, 37.0, 38.0)`, `_nps=100`, `_area=10`.
-  Areas are in square km when input is in geographic coordinates, otherwise square data units. The `_unique` case is
-  a bit special and is meant to be used when more than one polygon share the same attribute value (e.g. countries with islands).
-  In that case, set the value of `_unique` to the name of the attribute that is shared by the polygons (e.g. `_unique="NAME"`).
-  By default (e.g. `_unique=true`), the attribute name is `Feature_ID` which is the one used by GMT when creating unique
-  IDs for polygons read from OGR formats (.shp, .geojson, etc). If this attrib name is not found, we search for `CODE` which is
+  For that, name the keyword with a leading underscore, e.g. `_region`, `_nps`, `_area`, `_aspect`, `_unique`. Their values
+  are passed respectively a 4 elements tuple and numbers. E.g. `_region=(-8.0, -7.0, 37.0, 38.0)`, `_nps=100`, `_area=10`,
+  `_aspect=0.5`. Areas are in square km when input is in geographic coordinates, otherwise square data units.
+  The aspect ratio passed to the `_aspect` option is width/height of the bounding box, not of the polygon itself.
+  Values <= 1, == 1 and >= 1 select polygons with aspect ratios less than, equal to and greater than the specified value.
+  The `_unique` case is a bit special and is meant to be used when more than one polygon share the same attribute
+  value (e.g. countries with islands).  In that case, set the value of `_unique` to the name of the attribute that
+  is shared by the polygons (e.g. `_unique="NAME"`).  By default (e.g. `_unique=true`), the attribute name is `Feature_ID`
+  which is the one used by GMT when creating unique IDs for polygons read from OGR formats (.shp, .geojson, etc).
+  If this attrib name is not found, we search for `CODE` which is
   the one assigned by GMT when extracting polygons from the internal GMT coasts database. If none of these is found,
   it is users responsibility to provide a valid attribute name. The uniqueness is determined by selecting the polygon
   with the largest area.
@@ -210,7 +213,7 @@ Or `nothing` if the query results in an empty GMTdataset
 function getbyattrib(D::Vector{<:GMTdataset}, ind_::Bool; kw...)::Vector{Int}
 	# This method does the work but it's not the one normally used by the public.
 	# It returns the indices of the selected segments.
-	(isempty(D[1].attrib)) && (@warn("This datset does not have an `attrib` field and is hence unusable here."); return Int[])
+	(isempty(D[1].attrib) && !is_in_kwargs(kw, [:_aspect])) && (@warn("This datset does not have an `attrib` field and is hence unusable here."); return Int[])
 	dounion = Int(1e9)		# Just a big number
 	invert = (find_in_kwargs(kw, [:invert :not :revert :reverse])[1] !== nothing)
 	if ((_att = find_in_kwargs(kw, [:att :attrib])[1]) !== nothing)		# For backward compat.
@@ -276,6 +279,11 @@ function getbyattrib(D::Vector{<:GMTdataset}, ind_::Bool; kw...)::Vector{Int}
 		for k = 1:numel(D)  _tf[k] = areas_[k] >= area_  end
 		_tf
 	end
+	function clip_aspect(D, ratio, _tf)			# Clip by BBox aspect ratio
+		fun = (ratio >= 1) ? (>=) : (ratio == 1) ? (==) : <=
+		for k = 1:numel(D)  dd = diff(D[k].bbox); _tf[k] = fun(dd[1] / dd[3], ratio)  end
+		_tf
+	end
 	function clip_unique(D, areas_, _tf, name)	# Clip by uniqueness by using the areas to select the largest by group.
 		att_tbl, att_names = make_attrtbl(D, true)
 		((ind_name = findfirst(att_names .== name)) === nothing) && error("Attribute name $name not found in dataset.")
@@ -300,6 +308,7 @@ function getbyattrib(D::Vector{<:GMTdataset}, ind_::Bool; kw...)::Vector{Int}
 
 	(ind = findfirst(atts .== "_region")) !== nothing && (lims = parse.(Float64, split(vals[ind][2:end-1], ", ")))
 	(ind = findfirst(atts .== "_nps"))    !== nothing && (nps  = parse.(Float64, vals[ind]))
+	(ind = findfirst(atts .== "_aspect")) !== nothing && (ratio = parse(Float64, vals[ind]))
 	((ind = findfirst(atts .== "_area"))  !== nothing || (ind = findfirst(atts .== "_unique")) !== nothing) && 
 		(area = parse.(Float64, vals[ind]); areas = gmt_centroid_area(G_API[1], D, Int(isgeog(D)), ca=1); isgeog(D) && (areas .*= 1e-6))	# areas in km^2 if geographic coords
 
@@ -312,6 +321,7 @@ function getbyattrib(D::Vector{<:GMTdataset}, ind_::Bool; kw...)::Vector{Int}
 		if (special)
 			if     (atts[n] == "_region") tf = clip_region(D, lims, tf)
 			elseif (atts[n] == "_area")   tf = clip_area(D, areas, area, tf)
+			elseif (atts[n] == "_aspect") tf = clip_aspect(D, ratio, tf)
 			elseif (atts[n] == "_unique") tf = clip_unique(D, areas, tf, attrib_name)
 			else                          tf = clip_np(D, nps, tf)
 			end
@@ -346,6 +356,7 @@ end
 See `? getbyattrib`
 """
 Base.:filter(D::Vector{<:GMTdataset}; kw...) = getbyattrib(D; kw...)
+Base.:filter(D::Vector{<:GMTdataset}, index::Bool; kw...) = getbyattrib(D, index; kw...)
 
 # ---------------------------------------------------------------------------------------------------
 """

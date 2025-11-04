@@ -113,6 +113,20 @@ end
 
 # ----------------------------------------------------------------------------------------------------------
 """
+    ind = ind2bool(x::Vector{<:Integer} [, maxind::Int=0]) -> BitVector
+
+Convert a vector of indices `x` to a boolean vector `ind` where positions in `x` are true.
+
+If `maxind` is provided, the output boolean vector will have length `maxind`, otherwise its length will be `maximum(x)`.
+"""
+function ind2bool(indices::Vector{<:Integer}, maxind::Int=0)::BitVector
+	bool_vec = (maxind > 0) ? falses(maxind) : falses(maximum(indices))
+	bool_vec[indices] .= true
+	return bool_vec
+end
+
+# ----------------------------------------------------------------------------------------------------------
+"""
     ind = uniqueind(x)
 
 Return the index `ind` such that x[ind] gets the unique values of x. No sorting is done
