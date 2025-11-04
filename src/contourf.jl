@@ -97,6 +97,8 @@ function contourf(cmd0::String, arg1, arg2, first::Bool, d::Dict{Symbol,Any})
 
 	dict_auto_add!(d)					# The ternary module may send options via another channel
 	CPT_arg::GMTcpt = (isa(arg1, GMTcpt)) ? arg1 : (isa(arg2, GMTcpt) ? arg2 : GMTcpt())	# Fish a CPT, if any.
+	do_tanaka = ((val = find_in_dict(d, [:tanaka])[1]) !== nothing)
+	do_tanaka && (azim::Float64 = Float64(val); (azim == 1.0) && (azim = 315))	# To allow also tanaka = 1
 
 	CPT::GMTcpt = GMTcpt();		C_contours = "";	C_int = 0;
 	if ((val = find_in_dict(d, [:C :cont :contour :contours :levels])[1]) !== nothing)
@@ -194,8 +196,7 @@ function contourf(cmd0::String, arg1, arg2, first::Bool, d::Dict{Symbol,Any})
 		if (opt_T !== nothing)  d[:T] = opt_T  end
 		if (opt_S !== nothing)  d[:S] = opt_S  end
 		if (opt_W !== nothing)  d[:W] = opt_W  end
-		#grdcontour(cmd0, arg1; first=false, d...)
-		grdcontour_helper(cmd0, arg1; first=false, d...)
+		do_tanaka ? tanakacontour(arg1, d, azim) : grdcontour_helper(cmd0, arg1; first=false, d...)
 	else
 		if (!isempty(CPT_arg))
 			d[:C] = CPT_arg;
@@ -209,7 +210,7 @@ function contourf(cmd0::String, arg1, arg2, first::Bool, d::Dict{Symbol,Any})
 		d[:I] = true
 		(C_int != 0 && opt_W === nothing) && (opt_W = "0.25p")
 		(opt_W !== nothing) && (d[:W] = opt_W)
-		contour(arg1; first=first, d...)
+		do_tanaka ? tanakacontour(arg1, d, azim) : contour(arg1; first=first, d...)
 	end
 
 end
@@ -242,3 +243,35 @@ end
 contourf!(cmd0::String="", arg1=nothing, arg2=nothing; kw...) = contourf(cmd0, arg1, arg2; first=false, kw...)
 contourf(arg1, arg2=nothing; kw...) = contourf("", arg1, arg2, true, KW(kw))
 contourf!(arg1, arg2=nothing; kw...) = contourf("", arg1, arg2, false, KW(kw))
+
+# ---------------------------------------------------------------------------------------------------
+function tanakacontour(G, d, azim)
+	# Tanaka contours are contour lines whose thickness and intensity vary based
+	# on illumination direction, creating an illusion of 3D relief. Illuminated
+	# slopes get lighter/thinner lines, shaded slopes get darker/thicker lines.
+
+	illum = grdgradient(G, azimuth=azim, norm="e0.5+a0.5")	# Means result is in 0-1 range
+	cont = append!(d[:C].range[:,1], d[:C].range[end])		# Contour levels from CPT
+	C = grdcontour(G, cont=cont, dump=true)
+	n_contours = length(C)
+	delete!(d, [:C])
+	gray = makecpt(cmap=:gray, range=(-0.6,1.05))
+	min_lw, diff_lw = 0.8, 0.7				# max_lw = min_lw + diff_lw, the thikest line width at the darkest sides
+
+	sampled = grdtrack(C, grid=illum)		# Sample illumination values along this contour
+	for contour = 1:n_contours				# Process each contour segment
+		# Draw contour segments with varying properties
+		n_pts = size(C[contour].data, 1)
+		lw = Vector{Float64}(undef, n_pts-1)
+		for i in 1:n_pts-1
+			# Average illumination for this contour
+			C[contour].data[i, 3] = (sampled[contour][i, 4] + sampled[contour][i+1, 4]) * 0.5
+						
+			# Line width: thicker in shadow, thinner in light
+			lw[i] = min_lw + (1.0 - C[contour].data[i, 3]) * diff_lw
+		end
+		D = line2multiseg(C[contour].data, lt=lw, color=gray)
+		(contour < n_contours) ? plot!(D) : plot!(D; d...)		# Different call for last to include all options in 'd'
+	end
+	gmt_restart()		# Something in GMT API is fck badly. Each repeated call takes longer, so limit the damages with this.
+end
