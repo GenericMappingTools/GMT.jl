@@ -144,7 +144,7 @@ function worldrectangular(GI::GItype; proj::StrSymb="+proj=vandg +over", pm=0, l
 	end
 
 	G = grdcut(G, R=(G.x[pix_x[1]], G.x[pix_x[2]], yb, yt))
-	POSTMAN[1]["Grange"] = @sprintf("%.10g %.10g %.10g %.10g", G.range[1], G.range[2], G.range[3], G.range[4])	# To be used by plotgrid!
+	POSTMAN[]["Grange"] = @sprintf("%.10g %.10g %.10g %.10g", G.range[1], G.range[2], G.range[3], G.range[4])	# To be used by plotgrid!
 	G.remark = "pad=$pad"		# Use this as a pocket to use in worldrectgrid()
 	if (is_lee_os)
 		cl = (isempty(coastlines)) ? pscoast(dump=:true, res=res, region=lims_geog) : coastlines
@@ -563,7 +563,7 @@ end
 function plotgrid(Dgrat::Vector{<:GMTdataset}; first=true, kw...)
 	temp::String = "GMTjl_annots_" * TMPDIR_USR[2] * TMPDIR_USR[3]
 	fname = joinpath(TMPDIR_USR[1], temp * ".txt")
-	((val = get(POSTMAN[1], "Grange", nothing)) === nothing) && error("Cannot find 'Grange' in POSTMAN. Was 'worldrectgrid' used to create the graticules?")
+	((val = get(POSTMAN[], "Grange", nothing)) === nothing) && error("Cannot find 'Grange' in POSTMAN. Was 'worldrectgrid' used to create the graticules?")
 	x0, x1, y0, y1 = parse.(Float64, split(val))
 	fig_dims = gmt("mapproject -W" * CTRL.pocket_R[1] * CTRL.pocket_J[1]).data::Matrix{Float64}
 	shift = 0.004 * fig_dims[3]

@@ -32,7 +32,7 @@ This function can be called alone, e.g. `theme("dark")` or as an option in the `
 function theme(name="modern"; kwargs...)
 	# Provide the support for themes
 
-	(!isa(G_API[1], Ptr{Nothing}) || G_API[1] == C_NULL) && (G_API[1] = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS))
+	(!isa(G_API[], Ptr{Nothing}) || G_API[] == C_NULL) && (G_API[] = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS))
 
 	d = KW(kwargs)
 	font::String = ((val = find_in_dict(d, [:font])[1]) !== nothing) ? string(val) : ""
@@ -59,8 +59,8 @@ function theme(name="modern"; kwargs...)
 	(find_in_dict(d, [:noticks :no_ticks])[1] !== nothing) && helper_theme_noticks()		# No ticks
 	(find_in_dict(d, [:inner_ticks :innerticks])[1] !== nothing) &&  helper_theme_inticks()	# Inner ticks
 	if (find_in_dict(d, [:gray_grid :graygrid])[1] !== nothing)
-		gmtlib_setparameter(G_API[1], "MAP_GRID_PEN_PRIMARY", "auto,gray")
-		gmtlib_setparameter(G_API[1], "MAP_GRID_PEN_SECONDARY", "auto,gray")
+		gmtlib_setparameter(G_API[], "MAP_GRID_PEN_PRIMARY", "auto,gray")
+		gmtlib_setparameter(G_API[], "MAP_GRID_PEN_SECONDARY", "auto,gray")
 	end
 
 	isOn = true				# Means this theme will be reset to the default (modern) in showfig()
@@ -96,7 +96,7 @@ function parse_theme_names(name::String)
 			contains(name, "V") && (t1 = "xag -Bya")		# Only vertical grid lines
 		end
 		if contains(name, "Graph")							# Add a vector to the end of each axis
-			gmtlib_setparameter(G_API[1], "MAP_FRAME_TYPE", "graph")
+			gmtlib_setparameter(G_API[], "MAP_FRAME_TYPE", "graph")
 			name *= "XY"									# Must be if already there, no problems
 		end
 		t2 = contains(name, "XY") ? "WS" : (contains(name, "YY")) ? "WE" : (contains(name, "XX")) ? "SN" : "WSrt"
@@ -104,7 +104,7 @@ function parse_theme_names(name::String)
 
 		if (name[2] == '0')
 			if (length(name) == 2)  t1, t2 = " ", ""		# Really no axes no annotations/ticks
-			else                    gmtlib_setparameter(G_API[1], "MAP_FRAME_PEN", "0.001,white@100") # No axes, but need this sad trick
+			else                    gmtlib_setparameter(G_API[], "MAP_FRAME_PEN", "0.001,white@100") # No axes, but need this sad trick
 			end
 		end
 
@@ -112,8 +112,8 @@ function parse_theme_names(name::String)
 		if     (contains(name, "nt") || contains(name, "NT"))  helper_theme_noticks()	# No ticks
 		elseif (contains(name, "it") || contains(name, "IT"))  helper_theme_inticks()	# Inside ticks
 		end
-		gmtlib_setparameter(G_API[1], "MAP_GRID_PEN_PRIMARY", "auto,gray")
-		gmtlib_setparameter(G_API[1], "MAP_GRID_PEN_SECONDARY", "auto,gray")
+		gmtlib_setparameter(G_API[], "MAP_GRID_PEN_PRIMARY", "auto,gray")
+		gmtlib_setparameter(G_API[], "MAP_GRID_PEN_SECONDARY", "auto,gray")
 		return true
 	end
 	return false
@@ -122,14 +122,14 @@ end
 # ---------------------------------------------------------------------------------------------------
 function helper_theme_inticks()
 	# Inside ticks. Fixed length because GMT has no way to set it auto
-	gmtlib_setparameter(G_API[1], "MAP_TICK_LENGTH_PRIMARY", "-4p")
-	gmtlib_setparameter(G_API[1], "MAP_TICK_LENGTH_SECONDARY", "-12p")
+	gmtlib_setparameter(G_API[], "MAP_TICK_LENGTH_PRIMARY", "-4p")
+	gmtlib_setparameter(G_API[], "MAP_TICK_LENGTH_SECONDARY", "-12p")
 end
 
 # ---------------------------------------------------------------------------------------------------
 function helper_theme_noticks()
-	gmtlib_setparameter(G_API[1], "MAP_TICK_LENGTH_PRIMARY", "0/0")
-	gmtlib_setparameter(G_API[1], "MAP_TICK_LENGTH_SECONDARY", "0/0")
+	gmtlib_setparameter(G_API[], "MAP_TICK_LENGTH_PRIMARY", "0/0")
+	gmtlib_setparameter(G_API[], "MAP_TICK_LENGTH_SECONDARY", "0/0")
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -144,44 +144,44 @@ end
 function fonts_colors_settings(fonts, colors, bg_color)
 	# This function serves mainly the dark theme but can be used by any other theme that
 	# wants to change font and/or colors.
-	gmtlib_setparameter(G_API[1], "FONT_ANNOT_PRIMARY", "auto,$(fonts[1]),$(colors[1])")
-	gmtlib_setparameter(G_API[1], "FONT_ANNOT_SECONDARY", "auto,$(fonts[1]),$(colors[1])")
-	gmtlib_setparameter(G_API[1], "FONT_HEADING", "auto,$(fonts[2]),$(colors[1])")
-	gmtlib_setparameter(G_API[1], "FONT_LABEL", "auto,$(fonts[1]),$(colors[1])")
-	gmtlib_setparameter(G_API[1], "FONT_LOGO", "auto,$(fonts[3]),$(colors[1])")
-	gmtlib_setparameter(G_API[1], "FONT_TAG", "auto,$(fonts[1]),$(colors[1])")
-	gmtlib_setparameter(G_API[1], "FONT_TITLE", "auto,$(fonts[2]),$(colors[1])")
-	gmtlib_setparameter(G_API[1], "MAP_DEFAULT_PEN", "0.25p,$(colors[1])")
-	gmtlib_setparameter(G_API[1], "MAP_FRAME_PEN", "0.75,$(colors[1])")
-	gmtlib_setparameter(G_API[1], "MAP_GRID_PEN_PRIMARY", "auto,$(colors[1])")
-	gmtlib_setparameter(G_API[1], "MAP_GRID_PEN_SECONDARY", "auto,$(colors[2])")
-	gmtlib_setparameter(G_API[1], "MAP_TICK_PEN_PRIMARY", "auto,$(colors[1])")
-	gmtlib_setparameter(G_API[1], "MAP_TICK_PEN_SECONDARY", "auto,$(colors[2])")
-	gmtlib_setparameter(G_API[1], "PS_PAGE_COLOR", "$bg_color")
+	gmtlib_setparameter(G_API[], "FONT_ANNOT_PRIMARY", "auto,$(fonts[1]),$(colors[1])")
+	gmtlib_setparameter(G_API[], "FONT_ANNOT_SECONDARY", "auto,$(fonts[1]),$(colors[1])")
+	gmtlib_setparameter(G_API[], "FONT_HEADING", "auto,$(fonts[2]),$(colors[1])")
+	gmtlib_setparameter(G_API[], "FONT_LABEL", "auto,$(fonts[1]),$(colors[1])")
+	gmtlib_setparameter(G_API[], "FONT_LOGO", "auto,$(fonts[3]),$(colors[1])")
+	gmtlib_setparameter(G_API[], "FONT_TAG", "auto,$(fonts[1]),$(colors[1])")
+	gmtlib_setparameter(G_API[], "FONT_TITLE", "auto,$(fonts[2]),$(colors[1])")
+	gmtlib_setparameter(G_API[], "MAP_DEFAULT_PEN", "0.25p,$(colors[1])")
+	gmtlib_setparameter(G_API[], "MAP_FRAME_PEN", "0.75,$(colors[1])")
+	gmtlib_setparameter(G_API[], "MAP_GRID_PEN_PRIMARY", "auto,$(colors[1])")
+	gmtlib_setparameter(G_API[], "MAP_GRID_PEN_SECONDARY", "auto,$(colors[2])")
+	gmtlib_setparameter(G_API[], "MAP_TICK_PEN_PRIMARY", "auto,$(colors[1])")
+	gmtlib_setparameter(G_API[], "MAP_TICK_PEN_SECONDARY", "auto,$(colors[2])")
+	gmtlib_setparameter(G_API[], "PS_PAGE_COLOR", "$bg_color")
 end
 
 # ---------------------------------------------------------------------------------------------------
 function theme_modern()
 	# Set the MODERN mode settings
-	swapmode(G_API[1], classic=false)		# Set GMT->current.setting.run_mode = GMT_MODERN
-	resetdefaults(G_API[1])					# Set the modern mode settings (will clear eventual gmt.conf contents)
-	gmtlib_setparameter(G_API[1], "MAP_FRAME_PEN", "0.75")
-	gmtlib_setparameter(G_API[1], "FONT_TITLE", "auto,Times-Roman,black")
-	gmtlib_setparameter(G_API[1], "FONT_HEADING", "auto,Times-Roman,black")
-	gmtlib_setparameter(G_API[1], "FONT_SUBTITLE", "auto,Times-Roman,black")
-	#!IamModern[] && swapmode(G_API[1], classic=true)	# Reset GMT->current.setting.run_mode = GMT_CLASSIC
+	swapmode(G_API[], classic=false)		# Set GMT->current.setting.run_mode = GMT_MODERN
+	resetdefaults(G_API[])					# Set the modern mode settings (will clear eventual gmt.conf contents)
+	gmtlib_setparameter(G_API[], "MAP_FRAME_PEN", "0.75")
+	gmtlib_setparameter(G_API[], "FONT_TITLE", "auto,Times-Roman,black")
+	gmtlib_setparameter(G_API[], "FONT_HEADING", "auto,Times-Roman,black")
+	gmtlib_setparameter(G_API[], "FONT_SUBTITLE", "auto,Times-Roman,black")
+	#!IamModern[] && swapmode(G_API[], classic=true)	# Reset GMT->current.setting.run_mode = GMT_CLASSIC
 	if (IamModern[])
-		gmtlib_setparameter(G_API[1], "MAP_ORIGIN_X", "0")	# Workarround GMT bug.
-		gmtlib_setparameter(G_API[1], "MAP_ORIGIN_Y", "0")
+		gmtlib_setparameter(G_API[], "MAP_ORIGIN_X", "0")	# Workarround GMT bug.
+		gmtlib_setparameter(G_API[], "MAP_ORIGIN_Y", "0")
 	end
-	gmt_getdefaults(G_API[1])			# Read back eventual gmt.conf file whose contents we wipped out above
+	gmt_getdefaults(G_API[])			# Read back eventual gmt.conf file whose contents we wipped out above
 	return nothing
 end
 
 # ---------------------------------------------------------------------------------------------------
 function theme_classic()
-	swapmode(G_API[1], classic=true)	# Set GMT->current.setting.run_mode = GMT_CLASSIC
-	resetdefaults(G_API[1])
+	swapmode(G_API[], classic=true)	# Set GMT->current.setting.run_mode = GMT_CLASSIC
+	resetdefaults(G_API[])
 end
 
 # ---------------------------------------------------------------------------------------------------

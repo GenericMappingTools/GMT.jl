@@ -139,7 +139,7 @@ function _grdimage(cmd0::String, arg1, arg2, arg3, O::Bool, K::Bool, d::Dict)
 
 	set_defcpt!(d, cmd0, arg1)	# When dealing with a remote grid assign it a default CPT
 	(isa(arg1, GMTgrid) && arg1.cpt != "") && (d[:this_cpt] = arg1.cpt)
-	(haskey(d, :this_cpt) && isfile(d[:this_cpt])) && (CURRENT_CPT[1] = gmtread(d[:this_cpt]))
+	(haskey(d, :this_cpt) && isfile(d[:this_cpt])) && (CURRENT_CPT[] = gmtread(d[:this_cpt]))
 
 	cmd, _, arg1, arg2, arg3 = common_get_R_cpt(d, cmd0, cmd, opt_R, got_fname, arg1, arg2, arg3, "grdimage")
 	cmd, arg1, arg2, arg3, arg4 = common_shade(d, cmd, arg1, arg2, arg3, arg4, "grdimage")

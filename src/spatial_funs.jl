@@ -310,7 +310,7 @@ function getbyattrib(D::Vector{<:GMTdataset}, ind_::Bool; kw...)::Vector{Int}
 	(ind = findfirst(atts .== "_nps"))    !== nothing && (nps  = parse.(Float64, vals[ind]))
 	(ind = findfirst(atts .== "_aspect")) !== nothing && (ratio = parse(Float64, vals[ind]))
 	((ind = findfirst(atts .== "_area"))  !== nothing || (ind = findfirst(atts .== "_unique")) !== nothing) && 
-		(area = parse.(Float64, vals[ind]); areas = gmt_centroid_area(G_API[1], D, Int(isgeog(D)), ca=1); isgeog(D) && (areas .*= 1e-6))	# areas in km^2 if geographic coords
+		(area = parse.(Float64, vals[ind]); areas = gmt_centroid_area(G_API[], D, Int(isgeog(D)), ca=1); isgeog(D) && (areas .*= 1e-6))	# areas in km^2 if geographic coords
 
 	indices::Vector{Int} = Int[]
 	ky = keys(D[1].attrib)

@@ -430,7 +430,7 @@ function hack_modern_session(opt_R, opt_J, opt_B=" -Blrbt"; fullremove=false)
 	opt_J == "" && throw(ArgumentError("The 'proj' option cannot be empty in hack_modern_session()"))
 	gmt("begin")
 	gmt("basemap " * opt_R * opt_J * opt_B)
-	API = unsafe_load(convert(Ptr{GMTAPI_CTRL}, G_API[1]))
+	API = unsafe_load(convert(Ptr{GMTAPI_CTRL}, G_API[]))
 	session_dir = unsafe_string(API.gwf_dir)
 	fname = session_dir * filesep * "gmt_0.ps-"
 	rm(fname)						# To remove PS headers and such

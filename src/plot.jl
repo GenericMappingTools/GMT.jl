@@ -403,7 +403,7 @@ function scatter(D::Vector{<:GMTdataset{Float64,2}}; first=true, kw...)
 		ts = fish_attrib_in_str(s_val)
 		labels = [D[k].attrib[ts] for k = 1:length(D)]
 	end
-	Dc = mat2ds(gmt_centroid_area(G_API[1], D, Int(isgeog(D)), ca=2), geom=wkbPoint, text=labels)
+	Dc = mat2ds(gmt_centroid_area(G_API[], D, Int(isgeog(D)), ca=2), geom=wkbPoint, text=labels)
 	(is_in_dict(d, [:marker, :Marker, :shape]) === nothing) && (d[:marker] = "circ")
 	(is_in_dict(d, [:ms :markersize :MarkerSize :size]) === nothing) && (d[:ms] = "12p")
 	_common_plot_xyz("", Dc, "bubble", !first, true, false, d)
@@ -1701,7 +1701,7 @@ function ternary(cmd0::String="", arg1=nothing; first::Bool=true, image::Bool=fa
 	if ((val = find_in_dict(d, [:par :conf :params], false)[1]) === nothing)
 		d[:par] = (MAP_GRID_PEN_PRIMARY="thinnest,gray",)
 	end
-	(G_API[1] == C_NULL) && gmt_restart()	# Force having a valid API. We can't afford otherwise here.
+	(G_API[] == C_NULL) && gmt_restart()	# Force having a valid API. We can't afford otherwise here.
 	r = common_plot_xyz("", mat2ds(arg1), "ternary", first, false, d)
 	# With the following trick we leave the -R history in 0/1/0/1 and so we can append with plot, text, etc
 	gmt("psxy -Scp -R0/1/0/1 -JX -O -Vq > " * joinpath(TMPDIR_USR[1], "lixo_" * TMPDIR_USR[2] * TMPDIR_USR[3] * ".ps"), [0. 0.])

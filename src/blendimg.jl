@@ -342,7 +342,7 @@ function lelandshade(G::GMTgrid; detail=1.0, contrast=2.0, uint16=false, intensi
 		_cpt = iscptmaster ? cmap : nothing
 		if (cmap != "")
 			cpt = cmap
-			isa(cpt, GMTcpt) && (CURRENT_CPT[1] = cpt)
+			isa(cpt, GMTcpt) && (CURRENT_CPT[] = cpt)
 		elseif (equalize == 0)
 			cpt = makecpt(G; C=_cpt, Vd=-1, kw...)		# The 'nothing' branch will pick G's cpt
 		else

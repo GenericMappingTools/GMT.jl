@@ -380,7 +380,7 @@
 	@test GMT.set_aspect_ratio("square", "", true) == "15c/15c"
 	@test GMT.set_aspect_ratio(nothing, "", true, true) == "15c/0"
 
-	@test_throws ErrorException("Only integer or floating point types allowed in input. Not this: Char") GMT.dataset_init(GMT.G_API[1], ' ', [0])
+	@test_throws ErrorException("Only integer or floating point types allowed in input. Not this: Char") GMT.dataset_init(GMT.G_API[], ' ', [0])
 
 	GMT.show_non_consumed(Dict{Symbol,Any}(:lala => 0), "prog");
 	GMT.dbg_print_cmd(Dict{Symbol,Any}(:lala => 0, :Vd=>2), "prog");

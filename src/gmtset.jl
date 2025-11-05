@@ -33,7 +33,7 @@ function gmtset(; kwargs...)
 	for k = 1:length(d)
 		(key[k] == :Vd)	&& continue
 		cmd *= " " * string(key[k]) * " " * string(d[key[k]])
-		gmtlib_setparameter(G_API[1], string(key[k]), string(d[key[k]]))
+		gmtlib_setparameter(G_API[], string(key[k]), string(d[key[k]]))
 		delete!(d, key[k])
 	end
 	GMTCONF[] = true

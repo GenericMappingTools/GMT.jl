@@ -257,14 +257,14 @@ function gd2gmt(dataset::Gdal.AbstractDataset)
 	# This method is for OGR formats only
 	(Gdal.GDALGetRasterCount(dataset.ptr) >= 1) && return gd2gmt(dataset; pad=0)
 
-	drv = get(POSTMAN[1], "GDALdriver", "");	(drv != "") && delete!(POSTMAN[1], "GDALdriver")
+	drv = get(POSTMAN[], "GDALdriver", "");	(drv != "") && delete!(POSTMAN[], "GDALdriver")
 	(startswith(drv, "XLS") || drv == "CSV") && return helper_read_XLSCSV(dataset)
 
-	min_area = (get(POSTMAN[1], "min_polygon_area", "") != "") ? parse(Float64, POSTMAN[1]["min_polygon_area"]) : 0.0
-	max_area = (get(POSTMAN[1], "max_polygon_area", "") != "") ? parse(Float64, POSTMAN[1]["max_polygon_area"]) : 0.0
-	p_isgeog = (get(POSTMAN[1], "polygon_isgeog", "") != "") ? true : false
+	min_area = (get(POSTMAN[], "min_polygon_area", "") != "") ? parse(Float64, POSTMAN[]["min_polygon_area"]) : 0.0
+	max_area = (get(POSTMAN[], "max_polygon_area", "") != "") ? parse(Float64, POSTMAN[]["max_polygon_area"]) : 0.0
+	p_isgeog = (get(POSTMAN[], "polygon_isgeog", "") != "") ? true : false
 	D, ds, get_area = Vector{GMTdataset{Float64, 2}}(undef, Gdal.ngeom(dataset)), 1, false
-	(get(POSTMAN[1], "sort_polygons", "") != "") && (polyg_area = zeros(length(D));		get_area = true)
+	(get(POSTMAN[], "sort_polygons", "") != "") && (polyg_area = zeros(length(D));		get_area = true)
 	proj = ""		# Fk local vars inside for 
 	for k = 1:Gdal.nlayer(dataset)
 		layer = getlayer(dataset, k-1)
@@ -306,15 +306,15 @@ function gd2gmt(dataset::Gdal.AbstractDataset)
 	D[1].colnames = startswith(proj, "+proj=longlat") ? ["lon","lat", ["z$i" for i=1:size(D[1].data,2)-2]...] :
 	                ["x","y", ["z$i" for i=1:size(D[1].data,2)-2]...]	
 	set_dsBB!(D, false)					# Compute and set the global BoundingBox for this dataset
-	if (get(POSTMAN[1], "polygonize", "") != "") && isapprox(D[1].ds_bbox, D[end].bbox)	# Last one is often an error (the whole area)
+	if (get(POSTMAN[], "polygonize", "") != "") && isapprox(D[1].ds_bbox, D[end].bbox)	# Last one is often an error (the whole area)
 		pop!(D)
-		delete!(POSTMAN[1], "polygonize")
+		delete!(POSTMAN[], "polygonize")
 		ds -= 1
 	end
-	if (get(POSTMAN[1], "sort_polygons", "") != "")		# polygonize requested that the polygons go out in growing order
+	if (get(POSTMAN[], "sort_polygons", "") != "")		# polygonize requested that the polygons go out in growing order
 		(polyg_area = deleteat!(polyg_area, ds:length(polyg_area)))
 		if (isempty(polyg_area))
-			delete!(POSTMAN[1], "sort_polygons");	delete!(POSTMAN[1], "simplify")
+			delete!(POSTMAN[], "sort_polygons");	delete!(POSTMAN[], "simplify")
 			return GMTdataset()
 		end
 
@@ -322,7 +322,7 @@ function gd2gmt(dataset::Gdal.AbstractDataset)
 		isapprox(D[1].ds_bbox, D[ind[1]].bbox) && (popat!(ind, 1))	# Some times the almost full area polygon was not cought yet.
 		n_polys = length(ind)
 		if (n_polys == 0)
-			delete!(POSTMAN[1], "sort_polygons");	delete!(POSTMAN[1], "simplify")
+			delete!(POSTMAN[], "sort_polygons");	delete!(POSTMAN[], "simplify")
 			return GMTdataset()
 		end
 
@@ -341,11 +341,11 @@ function gd2gmt(dataset::Gdal.AbstractDataset)
 			(maximum(polyg_area) > 100000) && (polyg_area ./= 1e6; att_area_name = "area_km2")	# If large, convert to km^2
 		end
 		for k = 1:n_polys  D[k].attrib[att_area_name] = string(polyg_area[ind[k]])  end
-		delete!(POSTMAN[1], "sort_polygons")
+		delete!(POSTMAN[], "sort_polygons")
 	end
-	if ((tol = get(POSTMAN[1], "simplify", "")) != "")		# The caller requested a line simplification step
+	if ((tol = get(POSTMAN[], "simplify", "")) != "")		# The caller requested a line simplification step
 		D = gmtsimplify(D, T=tol, f = p_isgeog ? "g" : "c")
-		delete!(POSTMAN[1], "simplify")					# Used, so clean it.
+		delete!(POSTMAN[], "simplify")					# Used, so clean it.
 	end
 	return (length(D) == 1) ? D[1] : D
 end
@@ -354,8 +354,8 @@ end
 # This function is made apart because XLS and CSVs have geometries and the calling functio, as is,
 # would not be able to extract the data from the 'dataset'
 function helper_read_XLSCSV(dataset::Gdal.AbstractDataset)::GDtype
-	if (get(POSTMAN[1], "meteostat", "") != "")
-		delete!(POSTMAN[1], "meteostat")
+	if (get(POSTMAN[], "meteostat", "") != "")
+		delete!(POSTMAN[], "meteostat")
 		return read_meteostat(dataset)
 	end
 
@@ -514,8 +514,8 @@ function coords_resque(dataset)
 	# and does not assign it a geotransform. In such case we try to fish the coordinates from
 	# info obtained by gdalinfo.
 	# Shit is that here file name is lost (it's = /vsimem/tmp) so we must use a copy save in a global.
-	info = gdalinfo(POSTMAN[1]["nc_name"])		# We have saved the netcdf name in the POSTMAN dict
-	delete!(POSTMAN[1], "nc_name")				# Clean it
+	info = gdalinfo(POSTMAN[]["nc_name"])		# We have saved the netcdf name in the POSTMAN dict
+	delete!(POSTMAN[], "nc_name")				# Clean it
 
 	ind = findfirst("Files: ", info)[end]
 	k = ind + 1
@@ -870,7 +870,7 @@ function gdalread(fname::AbstractString, optsP=String[]; opts=String[], gdataset
 	check = (ind === nothing || ind[1] < 3) ? true : false
 	check && startswith(fname, "/vsi") && (check = false)		# Don't check existence of /VSI.../ files
 	(check && !isfile(fname)) && error("Input file '$fname' does not exist.")	# Breaks when passing a SUBDATASET
-	startswith(fname, "NETCDF:") && (POSTMAN[1] = Dict("nc_name" => fname))		# For cases where GDAL fcks and doest have a geotransform
+	startswith(fname, "NETCDF:") && (POSTMAN[] = Dict("nc_name" => fname))		# For cases where GDAL fcks and doest have a geotransform
 	(isempty(optsP) && !isempty(opts)) && (optsP = opts)		# Accept either Positional or KW argument
 	_optsP::Vector{String} = isa(optsP, String) ? string.(split(optsP)) : optsP
 	ressurectGDAL();
@@ -883,8 +883,8 @@ function gdalread(fname::AbstractString, optsP=String[]; opts=String[], gdataset
 	else
 		(ds_t.ptr == C_NULL) && (ds_t = Gdal.read(fname, flags = Gdal.GDAL_OF_VECTOR | Gdal.GDAL_OF_VERBOSE_ERROR, I=false))
 		optsP = (isempty(optsP)) ? ["-overwrite"] : (isa(optsP, String) ? ["-overwrite " * optsP] : append!(optsP, ["-overwrite"]))
-		POSTMAN[1]["GDALdriver"] = Gdal.shortname(getdriver(ds_t))			# Used when read XLS files
-		startswith(fname, "/vsigzip") && contains(fname, ".meteostat") && (POSTMAN[1]["meteostat"] = "y")	# Escape route for Meteostat files
+		POSTMAN[]["GDALdriver"] = Gdal.shortname(getdriver(ds_t))			# Used when read XLS files
+		startswith(fname, "/vsigzip") && contains(fname, ".meteostat") && (POSTMAN[]["meteostat"] = "y")	# Escape route for Meteostat files
 		ds = ogr2ogr(ds_t, optsP; gdataset=true, kw...)
 		(ds.ptr != C_NULL) && Gdal.deletedatasource(ds, "/vsimem/tmp")		# WTF I need to do this?
 	end

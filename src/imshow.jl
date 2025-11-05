@@ -199,7 +199,7 @@ function imshow(arg1::GItype; kw...)
 				grdimage("", fun(arg1[:,:,1], arg1); d...)
 				for k = 2:n_levels
 					!isempty(tits) && (d[:title] = rt[k])
-					CURRENT_CPT[1] = GMTcpt()	# Force creating a new CPT for next layer
+					CURRENT_CPT[] = GMTcpt()	# Force creating a new CPT for next layer
 					grdimage("", fun(arg1[:,:,k], arg1); panel=:next, d...)
 				end
 			subplot(see ? :show : :end)
