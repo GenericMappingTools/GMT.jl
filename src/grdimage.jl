@@ -154,14 +154,14 @@ function _grdimage(cmd0::String, arg1, arg2, arg3, O::Bool, K::Bool, d::Dict)
 	_cmd = ["grdimage " * cmd]
 	_cmd = frame_opaque(_cmd, opt_B, opt_R, opt_J; bot=false)		# No -t in frame
 	if (!occursin("-A", cmd))			# -A means that we are requesting the image directly
-		(haskey(d, :inset)) && (CTRL.pocket_call[4] = arg1)			# If 'inset', it may be needed from next call
+		(haskey(d, :inset)) && (pocket_call[][4] = arg1)			# If 'inset', it may be needed from next call
 		(isa(arg1, GMTgrid) && is_in_dict(d, [:contour :contours]) !== nothing) && (d[:grdcontour] = arg1)	# Still very rudimentar
 		_cmd = finish_PS_nested(d, _cmd)
 		if ((ind = findfirst(startswith.(_cmd, "inset_"))) !== nothing)	# inset commands must be the last ones
 			ins = popat!(_cmd, ind)		# Remove the 'inset' command
 			append!(_cmd, [ins])		# and add it at the end
 		end
-		if (startswith(_cmd[end], "inset_") && isa(CTRL.pocket_call[4], String))
+		if (startswith(_cmd[end], "inset_") && isa(pocket_call[][4], String))
 			_cmd = zoom_reactangle(_cmd, false)
 		end
 		finish = true

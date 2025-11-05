@@ -11,11 +11,13 @@ const psxyz! = plot3d!
 function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::Bool; kwargs...)
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 	(cmd0 != "" && arg1 === nothing && is_in_dict(d, [:groupvar :hue]) !== nothing) && (arg1 = gmtread(cmd0); cmd0 = "")
-	invokelatest(_common_plot_xyz, cmd0, arg1, caller, O, K, is3D, d)
+	_common_plot_xyz(cmd0, arg1, caller, O, K, is3D, d)
+	#invokelatest(_common_plot_xyz, cmd0, arg1, caller, O, K, is3D, d)
 end
 function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::Bool, d::Dict{Symbol, Any})
 	(cmd0 != "" && arg1 === nothing && is_in_dict(d, [:groupvar :hue]) !== nothing) && (arg1 = gmtread(cmd0); cmd0 = "")
 	invokelatest(_common_plot_xyz, cmd0, arg1, caller, !first, true, is3D, d)
+	#invokelatest(_common_plot_xyz, cmd0, arg1, caller, !first, true, is3D, d)
 end
 function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, is3D::Bool, d::Dict{Symbol, Any})
 	first = !O
@@ -226,14 +228,14 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 	if (!mcc && sub_module == "bar" && check_bar_group(arg1))	# !mcc because the bar-groups all have mcc = false
 		_cmd[1], arg1, cmd2::String = bar_group(d, _cmd[1], opt_R, g_bar_fill, got_Ebars, got_usr_R, arg1)
 		(cmd2 != "") && (length(_cmd) == 1 ? (_cmd = [cmd2; _cmd[1]]) :
-			(@warn("Can't plot the connector when 'bar' is already a nested call."); CTRL.pocket_call[3] = nothing))
+			(@warn("Can't plot the connector when 'bar' is already a nested call."); pocket_call[][3] = nothing))
 	end
 
 	(!IamModern[]) && put_in_legend_bag(d, _cmd, arg1, O, opt_l)
 
 	_cmd = gmt_proggy .* _cmd				# In any case we need this
 	_cmd = frame_opaque(_cmd, opt_B, opt_R, opt_J, opt_JZ)	# No -t in -B
-	(haskey(d, :inset)) && (CTRL.pocket_call[4] = arg1)		# If 'inset', it may be needed from next call
+	(haskey(d, :inset)) && (pocket_call[][4] = arg1)		# If 'inset', it may be needed from next call
 	_cmd = finish_PS_nested(d, _cmd)						# If we have an 'inset', this makes a long tour plotting that inset.
 
 	# If we have a zoom inset call must plot the zoom rectangle and lines connecting it to the inset window.
@@ -241,7 +243,7 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 		ins = popat!(_cmd, ind)		# Remove the 'inset' command
 		append!(_cmd, [ins])		# and add it at the end
 	end
-	if (startswith(_cmd[end], "inset_") && isa(CTRL.pocket_call[4], String))
+	if (startswith(_cmd[end], "inset_") && isa(pocket_call[][4], String))
 		_cmd = zoom_reactangle(_cmd, true)		# FORCES RECOMPILE
 	end
 
@@ -420,7 +422,7 @@ function plt_txt_attrib!(D::Vector{<:GMTdataset{T,N}}, d::Dict{Symbol, Any}, _cm
 	end
 
 	if (length(D) == 1 && D[1].geom == wkbPoint)	# Points only. Expected to have a text column
-		(CTRL.pocket_call[1] === nothing) ? (CTRL.pocket_call[1] = D[1]) : (CTRL.pocket_call[2] = D[1])
+		(pocket_call[][1] === nothing) ? (pocket_call[][1] = D[1]) : (pocket_call[][2] = D[1])
 		(fnt === "") && (fnt = "+f6p")
 	else
 		ts = fish_attrib_in_str(s_val)
@@ -434,7 +436,7 @@ function plt_txt_attrib!(D::Vector{<:GMTdataset{T,N}}, d::Dict{Symbol, Any}, _cm
 		end
 		ct::GMTdataset{Float64,2} = mat2ds(gmt_centroid_area(G_API[], D, Int(isgeog(D))), geom=wkbPoint)
 		ct.text = t												# Texts will be plotted at the polygons centroids
-		(CTRL.pocket_call[1] === nothing) ? (CTRL.pocket_call[1] = ct) : (CTRL.pocket_call[2] = ct)
+		(pocket_call[][1] === nothing) ? (pocket_call[][1] = ct) : (pocket_call[][2] = ct)
 	end
 	append!(_cmd, ["pstext -R -J -F" * fnt * "+jMC"])
 	return nothing
@@ -794,7 +796,7 @@ function helper_fish_bgs(val)::String
 		                                 isa(arg2, GMTcpt) ? makecpt_raw("makecpt -T0/256/1 -C" * opt_H, arg2) :
 							        	 makecpt_raw("makecpt -T0/256/1 -C" * string(arg2)::String * opt_I * opt_H)
 		image_cpt!(I, C)
-		CTRL.pocket_call[3] = I			# This signals finish_PS_module() to run _cmd first
+		pocket_call[][3] = I			# This signals finish_PS_module() to run _cmd first
 	end
 	FIG_MARGIN[] = 0
 	return fname
@@ -1119,7 +1121,7 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill::Vector{Strin
 					con[(k-1)*3+1:(k-1)*3+2, :] = [tmp[k]+bw2 tmp[k,2]; tmp[k+1]-bw2 tmp[k+1,3]]
 					(_arg[k+2] == 0) && (con[(k-1)*3+2, 2] = tmp[k+1,2])	# 'total' bars are always 0->top
 				end
-				CTRL.pocket_call[3] = con
+				pocket_call[][3] = con
 				cmd2 = add_opt_pen(d, [:connector], opt="W")
 			end
 		end
@@ -1436,13 +1438,13 @@ end
 function zoom_reactangle(_cmd, isplot::Bool)
 	# Generate a rectangle delimiting the zoom on a region of interest plus the connection lines
 	# to the inset window. This is used only (so far) from nested inset() call with auto-zoom.
-	Rs::String = CTRL.pocket_call[4]	# Don't use it directly because it's a Any
+	Rs::String = pocket_call[][4]	# Don't use it directly because it's a Any
 	R = parse.(Float64, split(Rs, "/"))
-	l1, l2 = connect_rectangles(R, CTRL.pocket_call[5])		# FORCES RECOMPILE
+	l1, l2 = connect_rectangles(R, pocket_call[][5])		# FORCES RECOMPILE
 	lc = (isplot) ? "gray" : "black"
 	lw = (isplot) ? [0.5, 0.75, 0.75] : [0.5, 0.5, 0.5]
 	Drec = mat2ds([[R[1] R[3]; R[1] R[4]; R[2] R[4]; R[2] R[3]; R[1] R[3]], l1, l2], lc=lc, ls=["","dash","dash"], lw=lw)
-	put_pocket_call(Drec)				# Store it in CTRL.pocket_call
+	put_pocket_call(Drec)				# Store it in pocket_call[]
 	ins = pop!(_cmd)					# Remove the inset call
 	append!(_cmd, ["psxy -R -J -W0.4p"])
 	append!(_cmd, [ins])				# Add the inset call again
