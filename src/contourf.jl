@@ -254,7 +254,7 @@ function tanakacontour(G, d, azim)
 	cont = append!(d[:C].range[:,1], d[:C].range[end])		# Contour levels from CPT
 	C = grdcontour(G, cont=cont, dump=true)
 	n_contours = length(C)
-	delete!(d, [:C])
+	delete!(d, [:C]);	delete!(d, [:title]);	# If passed, it was used already
 	gray = makecpt(cmap=:gray, range=(-0.6,1.05))
 	min_lw, diff_lw = 0.8, 0.7				# max_lw = min_lw + diff_lw, the thikest line width at the darkest sides
 
