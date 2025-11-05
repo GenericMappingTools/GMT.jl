@@ -1004,7 +1004,7 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 				if     (haskey(d, :xlabel))  _val = "-BS";	have_a_none = true		# Unless labels are wanted, but
 				elseif (haskey(d, :ylabel))  _val = "-BW";	have_a_none = true		# GMT Bug forces using tricks
 				elseif (haskey(d, :title))   _val = "";		have_a_none = true
-				else   POSTMAN[1]["noframe"] = "y"; return cmd, ""
+				else   POSTMAN[]["noframe"] = "y"; return cmd, ""
 				end
 			elseif (_val == "noannot" || _val == "bare")
 				return cmd * " -B0", " -B0"
@@ -2226,7 +2226,7 @@ function finish_PS(d::Dict, cmd::String, output::String, K::Bool, O::Bool)::Stri
 	else
 		if ((K && !O) || (!K && !O) || O)  cmd *= opt  end
 	end
-	!O && !startswith(cmd, "psxy") && (LEGEND_TYPE[1] = legend_bag())	# Make sure that we always start with an empty one
+	!O && !startswith(cmd, "psxy") && (LEGEND_TYPE[] = legend_bag())	# Make sure that we always start with an empty one
 	return cmd
 end
 
@@ -2637,11 +2637,11 @@ function add_opt_cpt(d::Dict, cmd::String, symbs::VMs, opt::Char, N_args::Int=0,
 				if (store && c != "" && tryparse(Float32, c) === nothing)	# Because if !== nothing then it's a number and -Cn is not valid
 					try			# Wrap in try because not always (e.g. grdcontour -C) this is a makecpt callable
 						r = isa(arg1, GMTgrid) ?  makecpt(arg1, C=c) : makecpt_raw("makecpt -Vq " * opt_C)
-						CURRENT_CPT[1] = (r !== nothing) ? r : GMTcpt()
+						CURRENT_CPT[] = (r !== nothing) ? r : GMTcpt()
 					catch
 					end
-				elseif (in_bag && !isempty(CURRENT_CPT[1]))	# If we have something in Bag, return it
-					cmd, arg1, arg2, N_args = helper_add_cpt(cmd, "", N_args, arg1, arg2, CURRENT_CPT[1], false)
+				elseif (in_bag && !isempty(CURRENT_CPT[]))	# If we have something in Bag, return it
+					cmd, arg1, arg2, N_args = helper_add_cpt(cmd, "", N_args, arg1, arg2, CURRENT_CPT[], false)
 				end
 			end
 		end
@@ -2655,8 +2655,8 @@ function add_opt_cpt(d::Dict, cmd::String, symbs::VMs, opt::Char, N_args::Int=0,
 			cpt.bfn[3, :] = [1.0 1.0 1.0]	# Some deep bug, in occasions, returns grays on 2nd and on calls
 		end
 		cmd, arg1, arg2, N_args = helper_add_cpt(cmd, opt, N_args, arg1, arg2, cpt, store)
-	elseif (in_bag && !isempty(CURRENT_CPT[1]))		# If everything else has failed and we have one in the Bag, return it
-		cmd, arg1, arg2, N_args = helper_add_cpt(cmd, opt, N_args, arg1, arg2, CURRENT_CPT[1], false)
+	elseif (in_bag && !isempty(CURRENT_CPT[]))		# If everything else has failed and we have one in the Bag, return it
+		cmd, arg1, arg2, N_args = helper_add_cpt(cmd, opt, N_args, arg1, arg2, CURRENT_CPT[], false)
 	end
 
 	if (occursin(" -C", cmd))
@@ -2671,7 +2671,7 @@ end
 function helper_add_cpt(cmd::String, opt, N_args::Int, arg1, arg2, val::GMTcpt, store::Bool)
 	# Helper function to avoid repeating 3 times the same code in add_opt_cpt
 	(N_args == 0) ? arg1 = val : arg2 = val;	N_args += 1
-	if (store)  global CURRENT_CPT[1] = val  end
+	if (store)  global CURRENT_CPT[] = val  end
 	((isa(opt, Char) || (isa(opt, String) && opt != "")) && !contains(cmd, " -"*opt)) && (cmd *= " -" * opt)
 	return cmd, arg1, arg2, N_args
 end
@@ -2743,7 +2743,7 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 
 	if (isa(arg1, GItype) || (cmd0 != "" && cmd0[1] != '@'))
 		val, symb = find_in_dict(d, CPTaliases, false)
-		if (isempty(CURRENT_CPT[1]) && val === nothing)
+		if (isempty(CURRENT_CPT[]) && val === nothing)
 			# If no cpt name sent in, then compute (later) a default cpt
 			if (isa(arg1, GMTgrid) && ((val = find_in_dict(d, [:percent :pct])[1])) !== nothing)
 				lh = quantile(any(!isfinite, arg1) ? skipnan(vec(arg1)) : vec(arg1), [(100 - val)/200, (1 - (100 - val)/200)])
@@ -2812,7 +2812,7 @@ function makecpt_raw(cmd::String, arg1=nothing)::GMTcpt
 	_r = gmt_GMTcpt(cmd, arg1)
 	r::GMTcpt = (_r !== nothing) ? _r : GMTcpt()	# _r === nothing when we save CPT on disk.
 	(contains(cmd, " -N") && !isempty(r)) && (r.bfn = ones(3,3))	# Cannot remove the bfn like in plain GMT so make it all whites
-	CURRENT_CPT[1] = r
+	CURRENT_CPT[] = r
 	return r
 end
 
@@ -2821,7 +2821,7 @@ function get_colorbar_pos(anchor)
 	hack_modern_session(CTRL.pocket_R[1], CTRL.pocket_J[1] * CTRL.pocket_J[3], " -Baf -Bza", fullremove=true)	# Start a modern session
 	justify = anchor == "TC" ? 10 : (anchor == "BC" ? 2 : (anchor == "LM" ? 5 : 7))
 	p_offset = pointer([0.0, 0.0])
-	GMT_ = GMT_Get_Ctrl(G_API[1])
+	GMT_ = GMT_Get_Ctrl(G_API[])
 	ccall((:gmt_auto_offsets_for_colorbar, libgmt), Cvoid, (Cstring, Ptr{Cdouble}, Int32, Ptr{Cvoid}), GMT_, p_offset, justify, pointer([NULL]))
 	gmtend(reset=false)									# hack_modern_session() issued the opening gmtbegin() call
 	offset = [unsafe_load(p_offset,1), unsafe_load(p_offset,2)]
@@ -4114,7 +4114,7 @@ function dbg_print_cmd(d::Dict, cmd::Vector{String})
 			CTRL.pocket_call[3] = nothing	# This is mostly for testing purposes, but potentially needed elsewhere.
 			CTRL.limits[1:12] = zeros(12)
 			# Some times an automtic CPT has been generated by the Vd'ed cmd but when that happens MUST debug it
-			#CURRENT_CPT[1] = GMTcpt()		# Can't do this because it would f. plot(..., colorbar=true)
+			#CURRENT_CPT[] = GMTcpt()		# Can't do this because it would f. plot(..., colorbar=true)
 		end
 		if (length(d) > 0)
 			dd = deepcopy(d)		# Make copy so that we can harmlessly delete those below
@@ -4122,7 +4122,7 @@ function dbg_print_cmd(d::Dict, cmd::Vector{String})
 			prog = isa(cmd, String) ? split(cmd)[1] : split(cmd[1])[1]
 			(length(dd) > 0) && println("Warning: the following options were not consumed in $prog => ", keys(dd))
 		end
-		(size(LEGEND_TYPE[1].label, 1) != 0) && (LEGEND_TYPE[1].Vd = Vd)	# So that autolegend can also work
+		(size(LEGEND_TYPE[].label, 1) != 0) && (LEGEND_TYPE[].Vd = Vd)	# So that autolegend can also work
 		(Vd == 1) && println("\t", length(cmd) == 1 ? cmd[1] : cmd)
 		(Vd >= 2) && return length(cmd) == 1 ? cmd[1] : cmd
 	end
@@ -4168,7 +4168,7 @@ function showfig(d::Dict{Symbol, Any}, fname_ps::String, fname_ext::String, opt_
 	# OPT_T holds the psconvert -T option, again when not PS
 	# FNAME is for when using the savefig option
 
-	global CURRENT_CPT[1] = GMTcpt()			# Reset to empty when fig is finalized
+	global CURRENT_CPT[] = GMTcpt()			# Reset to empty when fig is finalized
 
 	digests_legend_bag(d)						# Plot the legend if requested
 
@@ -4237,7 +4237,7 @@ end
 function desconf(resetdef::Bool=true)
 	# Undo the gmtset() doing and delete eventual gmt.conf files in current dir.
 	!GMTCONF[] && return nothing			# No gmtset was used in classic or outside a modern mode block	
-	resetdef && resetdefaults(G_API[1])		# Set the modern mode settings (will clear eventual gmt.conf contents)
+	resetdef && resetdefaults(G_API[])		# Set the modern mode settings (will clear eventual gmt.conf contents)
 	isfile("gmt.conf") && rm("gmt.conf")	# If gmt.conf file is to be kept, save it at ~.gmt/gmt.conf
 	GMTCONF[] = false
 	return nothing
@@ -4250,7 +4250,7 @@ function showfig(; kwargs...)
 	d = KW(kwargs)
 	(!haskey(d, :show)) && (d[:show] = true)				# The default is to show
 	CTRL.limits .= 0.0;		CTRL.proj_linear[1] = true;		# Reset these for safety
-	!isempty(LEGEND_TYPE[1].optsDict) && (d[:legend] = dict2nt(LEGEND_TYPE[1].optsDict))	# Recover opt settings
+	!isempty(LEGEND_TYPE[].optsDict) && (d[:legend] = dict2nt(LEGEND_TYPE[].optsDict))	# Recover opt settings
 	digests_legend_bag(d)									# Plot the legend if requested
 	arg = (isPSclosed[]) ? "" : "psxy -R0/1/0/1 -JX0.001c -T -O"		# In Modern the PS is already closed
 	finish_PS_module(d, arg, "", false, true, true)
@@ -4267,7 +4267,7 @@ function helper_showfig4modern(show::String="show")::Bool
 	IamModern[] = false
 	call_display = false
 	(isJupyter[] && show != "") && (show = ""; call_display = true)
-	(isFranklin[] || show == "") ? gmt("end") : (gmt("end " * show); CURRENT_CPT[1] = GMTcpt())	# isFranklin = true for docs
+	(isFranklin[] || show == "") ? gmt("end") : (gmt("end " * show); CURRENT_CPT[] = GMTcpt())	# isFranklin = true for docs
 	isPSclosed[] = true
 	desconf(false)		# FALSE because modern mode calls do a gmt_restart() in the gmt() main function.
 	call_display && showfig()		# Fragile. How to assert that modern_fname is not empty?
@@ -4571,19 +4571,19 @@ function finish_PS_module_barr_last(d::Dict{Symbol, Any}, cmd::Vector{String}, f
 		if (fname_ext == "" && opt_extra == "")		# Return result as an GMTimage
 			P = showfig(d, output, fname_ext, "", K)
 			CTRL.limits .= 0.0
-			LEGEND_TYPE[1] = legend_bag()
+			LEGEND_TYPE[] = legend_bag()
 			gmt_restart()							# Returning a PS screws the session
 		elseif ((haskey(d, :show) && d[:show] != 0) || fname != "" || opt_T != "")
 			P = showfig(d, output, fname_ext, opt_T, K, fname)	# Return something here for the case we are in Pluto
 			(typeof(P) == Base.Process) && (P = nothing)		# Don't want spurious message on REPL when plotting
 			CTRL.IamInPaperMode[2] = true			# Means, next time a paper mode is used offset XY only on first call 
 			CTRL.limits .= 0.0
-			LEGEND_TYPE[1] = legend_bag()
+			LEGEND_TYPE[] = legend_bag()
 		end
 	elseif ((haskey(d, :show) && d[:show] != 0))	# Let modern mode also call show=true
 		helper_showfig4modern()
 		CTRL.limits .= 0.0
-		LEGEND_TYPE[1] = legend_bag()
+		LEGEND_TYPE[] = legend_bag()
 	end
 	CTRL.XYlabels[1] = "";	CTRL.XYlabels[2] = "";	# Reset these in case they weren't empty
 	show_non_consumed(d, cmd)
@@ -4651,7 +4651,7 @@ end
 function show_non_consumed(d::Dict{Symbol, Any}, cmd)
 	# First delete some that could not have been delete earlier (from legend for example)
 	delete!(d, [[:fmt], [:show], [:leg, :legend, :l], [:box_pos], [:leg_pos], [:P, :portrait], [:this_cpt], [:linefit, :linearfit]])
-	!isempty(CURRENT_CPT[1]) && delete!(d, [[:percent], [:clim]])	# To not (wrongly) complain about these
+	!isempty(CURRENT_CPT[]) && delete!(d, [[:percent], [:clim]])	# To not (wrongly) complain about these
 	if (!haskey(d, :Vd) && length(d) > 0)		# Vd, if exists, must be a Vd=0 to signal no warnings.
 		prog = isa(cmd, String) ? split(cmd)[1] : split(cmd[1])[1]
 		println("Warning: the following options were not consumed in $prog => ", keys(d))
@@ -4749,11 +4749,11 @@ function put_in_legend_bag(d::Dict, cmd, arg, O::Bool=false, opt_l::String="")
 		for k = 1:numel(pens)  pens[k] *= extra_opt  end
 		if ((ind = findfirst(arg.colnames .== "Zcolor")) !== nothing)
 			rgb = [0.0, 0.0, 0.0, 0.0]
-			P::Ptr{GMT_PALETTE} = palette_init(G_API[1], CURRENT_CPT[1])	# A pointer to a GMT CPT
-			gmt_get_rgb_from_z(G_API[1], P, arg[gindex[1],ind], rgb)
+			P::Ptr{GMT_PALETTE} = palette_init(G_API[], CURRENT_CPT[])	# A pointer to a GMT CPT
+			gmt_get_rgb_from_z(G_API[], P, arg[gindex[1],ind], rgb)
 			cmd_[1] *= " -G" * arg2str(rgb.*255)
 			for k = 1:numel(pens)
-				gmt_get_rgb_from_z(G_API[1], P, arg[gindex[k+1],ind]+10eps(), rgb)
+				gmt_get_rgb_from_z(G_API[], P, arg[gindex[k+1],ind]+10eps(), rgb)
 				pens[k] *= @sprintf(" -G%.0f/%.0f/%.0f", rgb[1]*255, rgb[2]*255, rgb[3]*255)
 			end
 		end
@@ -4781,19 +4781,19 @@ function put_in_legend_bag(d::Dict, cmd, arg, O::Bool=false, opt_l::String="")
 		for k = 1:nDs  lab[k] = string('y',k)  end
 	end
 
-	(!O) && (LEGEND_TYPE[1] = legend_bag())		# Make sure that we always start with an empty one
+	(!O) && (LEGEND_TYPE[] = legend_bag())		# Make sure that we always start with an empty one
 
-	if (size(LEGEND_TYPE[1].label, 1) == 0)		# First time
-		LEGEND_TYPE[1] = legend_bag(lab, [cmd_[1]], length(cmd_) == 1 ? [""] : [cmd_[2]], opt_l, dd, 0)
+	if (size(LEGEND_TYPE[].label, 1) == 0)		# First time
+		LEGEND_TYPE[] = legend_bag(lab, [cmd_[1]], length(cmd_) == 1 ? [""] : [cmd_[2]], opt_l, dd, 0)
 		# Forgot about the logic of the above and it errors when first arg is a GMTdataset vec,
 		# so do this till a decent fix gets invented.
-		(length(lab) > 1) && (LEGEND_TYPE[1] = legend_bag(lab, cmd_, cmd_, opt_l, dd, 0))
+		(length(lab) > 1) && (LEGEND_TYPE[] = legend_bag(lab, cmd_, cmd_, opt_l, dd, 0))
 	else
-		append!(LEGEND_TYPE[1].cmd, [cmd_[1]])
-		append!(LEGEND_TYPE[1].cmd2, (length(cmd_) > 1) ? [cmd_[2]] : [""])
-		append!(LEGEND_TYPE[1].label, lab)
+		append!(LEGEND_TYPE[].cmd, [cmd_[1]])
+		append!(LEGEND_TYPE[].cmd2, (length(cmd_) > 1) ? [cmd_[2]] : [""])
+		append!(LEGEND_TYPE[].label, lab)
 		# If font, pos, etc are only given at end and no show() is used, they would get lost and not visible by showfig()
-		isempty(LEGEND_TYPE[1].optsDict) && (LEGEND_TYPE[1].optsDict = dd)
+		isempty(LEGEND_TYPE[].optsDict) && (LEGEND_TYPE[].optsDict = dd)
 	end
 
 	return nothing
@@ -4802,44 +4802,44 @@ end
 # --------------------------------------------------------------------------------------------------
 function digests_legend_bag(d::Dict{Symbol, Any}, del::Bool=true)
 	# Plot a legend if the leg or legend keywords were used. Legend info is stored in LEGEND_TYPE global variable
-	(size(LEGEND_TYPE[1].label, 1) == 0) && return nothing
+	(size(LEGEND_TYPE[].label, 1) == 0) && return nothing
 
 	dd::Dict{Symbol, Any} = ((val = find_in_dict(d, [:leg :legend :l], false)[1]) !== nothing && isa(val, NamedTuple)) ? nt2dict(val) : Dict{Symbol, Any}()
 
 	kk, fs = 0, 8				# Font size in points
 	symbW = 0.65				# Symbol width. Default to 0.75 cm (good for lines but bad for symbols)
-	nl, count_no = length(LEGEND_TYPE[1].label), 0
+	nl, count_no = length(LEGEND_TYPE[].label), 0
 	leg::Vector{String} = Vector{String}(undef, 3nl)
-	all(contains.(LEGEND_TYPE[1].cmd, "-S")) && (symbW = 0.25)	# When all entries are symbols shrink the 'symbW'
+	all(contains.(LEGEND_TYPE[].cmd, "-S")) && (symbW = 0.25)	# When all entries are symbols shrink the 'symbW'
 
-	#lab_width = maximum(length.(LEGEND_TYPE[1].label[:])) * fs / 72 * 2.54 * 0.50 + 0.25	# Guess label width in cm
+	#lab_width = maximum(length.(LEGEND_TYPE[].label[:])) * fs / 72 * 2.54 * 0.50 + 0.25	# Guess label width in cm
 	# Problem is that we may have a lot more chars in label than those effectively printed (PS octal chars etc)
 	n_max_chars = 0
-	for k = 1:numel(LEGEND_TYPE[1].label)
-		s = split(LEGEND_TYPE[1].label[k], "`")		# Means that after the '`' comes the this string char counting
-		n_chars = (length(s) == 2) ? (LEGEND_TYPE[1].label[k] = s[1]; parse(Int,s[2])) : length(LEGEND_TYPE[1].label[k])
+	for k = 1:numel(LEGEND_TYPE[].label)
+		s = split(LEGEND_TYPE[].label[k], "`")		# Means that after the '`' comes the this string char counting
+		n_chars = (length(s) == 2) ? (LEGEND_TYPE[].label[k] = s[1]; parse(Int,s[2])) : length(LEGEND_TYPE[].label[k])
 		n_max_chars = max(n_chars, n_max_chars)
 	end
 	lab_width = n_max_chars * fs / 72 * 2.54 * 0.50 + 0.25	# Guess label width in cm
 
 	for k = 1:nl						# Loop over number of entries
-		(LEGEND_TYPE[1].label[k] == " ") && (count_no += 1;	continue)	# Sometimes we may want to open a leg entry but not plot it
-		if ((symb = scan_opt(LEGEND_TYPE[1].cmd[k], "-S")) == "")  symb = "-"
+		(LEGEND_TYPE[].label[k] == " ") && (count_no += 1;	continue)	# Sometimes we may want to open a leg entry but not plot it
+		if ((symb = scan_opt(LEGEND_TYPE[].cmd[k], "-S")) == "")  symb = "-"
 		else                                                       symbW_ = symb[2:end];
 		end
-		((fill = scan_opt(LEGEND_TYPE[1].cmd[k], "-G")) == "") && (fill = "-")
-		pen  = scan_opt(LEGEND_TYPE[1].cmd[k], "-W");
+		((fill = scan_opt(LEGEND_TYPE[].cmd[k], "-G")) == "") && (fill = "-")
+		pen  = scan_opt(LEGEND_TYPE[].cmd[k], "-W");
 		(pen == "" && symb[1] != '-' && fill != "-") ? pen = "-" : (pen == "" ? pen = "0.25p" : pen = pen)
 		if (symb[1] == '-')
 			leg[kk += 1] = @sprintf("S %.3fc %s %.2fc %s %s %.2fc %s",
-			                symbW/2, symb[1], symbW, fill, pen, symbW+0.14, LEGEND_TYPE[1].label[k])
-			if ((symb2 = scan_opt(LEGEND_TYPE[1].cmd2[k], "-S")) != "")		# A line + a symbol
+			                symbW/2, symb[1], symbW, fill, pen, symbW+0.14, LEGEND_TYPE[].label[k])
+			if ((symb2 = scan_opt(LEGEND_TYPE[].cmd2[k], "-S")) != "")		# A line + a symbol
 				leg[kk += 1] = "G -1l"			# Go back one line before plotting the overlaying symbol
 				xx = split(pen, ',')
 				if (length(xx) == 2)  fill = xx[2]
-				else                  fill = ((c = scan_opt(LEGEND_TYPE[1].cmd2[k], "-G")) != "") ? c : "black"
+				else                  fill = ((c = scan_opt(LEGEND_TYPE[].cmd2[k], "-G")) != "") ? c : "black"
 				end
-				penS = scan_opt(LEGEND_TYPE[1].cmd2[k], "-W");
+				penS = scan_opt(LEGEND_TYPE[].cmd2[k], "-W");
 				leg[kk += 1] = @sprintf("S - %s %s %s %s - %s", symb2[1], symb2[2:end], fill, penS, "")
 			end
 		elseif (symb[1] == '~' || symb[1] == 'q' || symb[1] == 'f')
@@ -4848,9 +4848,9 @@ function digests_legend_bag(d::Dict{Symbol, Any}, del::Bool=true)
 				(ind === nothing) && error("Error: missing colon (:) in decorated string opt.")
 				symb = string(symb[1],"n1", symb[ind[1]:end])
 			end
-			leg[kk += 1] = @sprintf("S - %s %s %s %s - %s", symb, symbW, fill, pen, LEGEND_TYPE[1].label[k])
+			leg[kk += 1] = @sprintf("S - %s %s %s %s - %s", symb, symbW, fill, pen, LEGEND_TYPE[].label[k])
 		else
-			leg[kk += 1] = @sprintf("S - %s %s %s %s - %s", symb[1], symbW_, fill, pen, LEGEND_TYPE[1].label[k])	# Who is this?
+			leg[kk += 1] = @sprintf("S - %s %s %s %s - %s", symb[1], symbW_, fill, pen, LEGEND_TYPE[].label[k])	# Who is this?
 		end
 	end
 	(count_no > 0) && (resize!(leg, nl-count_no))
@@ -4858,10 +4858,10 @@ function digests_legend_bag(d::Dict{Symbol, Any}, del::Bool=true)
 	fnt = get_legend_font(dd, fs)	# Parse the eventual 'font' or 'fontsize' options
 
 	# Because we accept extended settings either from first or last legend() commands we must seek which
-	# one may have the desired keyword. First command is stored in 'LEGEND_TYPE[1].optsDict' and last in 'dd'
+	# one may have the desired keyword. First command is stored in 'LEGEND_TYPE[].optsDict' and last in 'dd'
 	_d::Dict{Symbol,Any} = (haskey(dd, :pos) || haskey(dd, :position)) ? dd :
-	     (haskey(LEGEND_TYPE[1].optsDict, :pos) || haskey(LEGEND_TYPE[1].optsDict, :position)) ?
-		 LEGEND_TYPE[1].optsDict : Dict{Symbol,Any}()
+	     (haskey(LEGEND_TYPE[].optsDict, :pos) || haskey(LEGEND_TYPE[].optsDict, :position)) ?
+		 LEGEND_TYPE[].optsDict : Dict{Symbol,Any}()
 
 	#_opt_D = (((val = find_in_dict(_d, [:pos :position], false)[1]) !== nothing) && isa(val, StrSymb)) ? string(val)::String : ""
 	_opt_D = hlp_desnany_str(d, [:pos, :position], false)
@@ -4876,7 +4876,7 @@ function digests_legend_bag(d::Dict{Symbol, Any}, del::Bool=true)
 			opt_D *= "+j" * opt_D[2] * (opt_D[3] == 'L' ? 'R' : 'L')
 			if (!occursin("+o", opt_D))
 				# Try to find a -Baxes token and see if 'axes' contains an annotated axis on the same side as the legend
-				s = split(LEGEND_TYPE[1].cmd[1], " -B")
+				s = split(LEGEND_TYPE[].cmd[1], " -B")
 				for t in s
 					t[1] == '-' && continue				# This one can't be of any interest
 					ss = split(split(t)[1],'+')[1]		# If we have an annotated or with ticks guestimate an offset
@@ -4898,7 +4898,7 @@ function digests_legend_bag(d::Dict{Symbol, Any}, del::Bool=true)
 		(!occursin("+o", opt_D)) && (opt_D *= "+o" * offset)
 	end
 
-	_d = (haskey(dd, :box) && dd[:box] !== nothing) ? dd : haskey(LEGEND_TYPE[1].optsDict, :box) ? LEGEND_TYPE[1].optsDict : Dict{Symbol, Any}()
+	_d = (haskey(dd, :box) && dd[:box] !== nothing) ? dd : haskey(LEGEND_TYPE[].optsDict, :box) ? LEGEND_TYPE[].optsDict : Dict{Symbol, Any}()
 	opt_F::String = add_opt(_d, "", "", [:box], (clearance="+c", fill=("+g", add_opt_fill), inner="+i", pen=("+p", add_opt_pen), rounded="+r", shade="+s"); del=false)		# FORCES RECOMPILE plot
 	if (opt_F == "")
 		opt_F = "+p0.5+gwhite"
@@ -4911,8 +4911,8 @@ function digests_legend_bag(d::Dict{Symbol, Any}, del::Bool=true)
 		end
 	end
 	
-	if (LEGEND_TYPE[1].Vd > 0)  d[:Vd] = LEGEND_TYPE[1].Vd;  dbg_print_cmd(d, leg[1:kk])  end	# Vd=2 wont work
-	(LEGEND_TYPE[1].Vd > 0) && println("F=",opt_F, " D=",opt_D, " font=",fnt)
+	if (LEGEND_TYPE[].Vd > 0)  d[:Vd] = LEGEND_TYPE[].Vd;  dbg_print_cmd(d, leg[1:kk])  end	# Vd=2 wont work
+	(LEGEND_TYPE[].Vd > 0) && println("F=",opt_F, " D=",opt_D, " font=",fnt)
 	gmt_restart()		# Some things with the themes may screw
 	
 	#legend!(text_record(leg[1:kk]), F=opt_F, D=opt_D, par=(:FONT_ANNOT_PRIMARY, fnt), Vd=1)
@@ -4923,7 +4923,7 @@ function digests_legend_bag(d::Dict{Symbol, Any}, del::Bool=true)
 	prep_and_call_finish_PS_module(Dict{Symbol, Any}(), [proggy * " -J $opt_R -F$(opt_F) -D$(opt_D) --FONT_ANNOT_PRIMARY=$fnt"],
 	                               "", true, true, true, text_record(leg[1:kk]))
 
-	LEGEND_TYPE[1] = legend_bag()			# Job done, now empty the bag
+	LEGEND_TYPE[] = legend_bag()			# Job done, now empty the bag
 
 	return nothing
 end

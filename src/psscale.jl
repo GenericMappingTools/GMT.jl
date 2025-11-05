@@ -74,8 +74,8 @@ function colorbar_parser(arg1::Union{Nothing, GMTcpt}=nothing; first=true, kwarg
 	cmd *= opt_D
 	cmd, arg1, = add_opt_cpt(d, cmd, CPTaliases, 'C', 0, arg1)
 	if (!isa(arg1, GMTcpt) && !occursin("-C", cmd))	# If given no CPT, try to see if we have a current one stored in global
-		if (!isempty(CURRENT_CPT[1]))
-			cmd *= " -C";	arg1 = CURRENT_CPT[1]
+		if (!isempty(CURRENT_CPT[]))
+			cmd *= " -C";	arg1 = CURRENT_CPT[]
 		end
 	end
 

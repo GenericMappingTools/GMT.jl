@@ -144,30 +144,30 @@ function polygonize(data::GItype; gdataset=nothing, kwargs...)
 			cell_area = Float64(val)::Float64 * data.inc[1] * data.inc[2]
 		end
 		s_area = string(cell_area)
-		isempty(POSTMAN[1]) ? (POSTMAN[1] = Dict("min_polygon_area" => s_area)) : POSTMAN[1]["min_polygon_area"] = s_area
-		(max_area > 0.0) && (POSTMAN[1]["max_polygon_area"] = string(cell_area2))
-		_isgeog && (POSTMAN[1]["polygon_isgeog"] = "1")
+		isempty(POSTMAN[]) ? (POSTMAN[] = Dict("min_polygon_area" => s_area)) : POSTMAN[]["min_polygon_area"] = s_area
+		(max_area > 0.0) && (POSTMAN[]["max_polygon_area"] = string(cell_area2))
+		_isgeog && (POSTMAN[]["polygon_isgeog"] = "1")
 	end
 
 	o = helper_run_GDAL_fun(gdalpolygonize, data, "", String[], "", d...)
 
 	if (gdataset === nothing)						# Should be doing this for GDAL objects too but need to learn how to.
-		POSTMAN[1]["polygonize"] = "y"			# To inform gd2gmt() that it should check if last Di is the whole area.
-		(find_in_dict(d, [:sort])[1] !== nothing) && (POSTMAN[1]["sort_polygons"] = "y")
+		POSTMAN[]["polygonize"] = "y"			# To inform gd2gmt() that it should check if last Di is the whole area.
+		(find_in_dict(d, [:sort])[1] !== nothing) && (POSTMAN[]["sort_polygons"] = "y")
 		if ((val = find_in_dict(d, [:simplify])[1]) !== nothing)
 			s_val::String = string(val)
 			# If simplify=auto, then use the cell side to estimate the simplification tolerance.
 			s_val[1] == 'a' && (s_val = _isgeog ? string(data.inc[1] * m_per_deg) : string(data.inc[1]))
-			POSTMAN[1]["simplify"] = s_val
+			POSTMAN[]["simplify"] = s_val
 		end
 		prj = getproj(data)
 		D = gd2gmt(o);
 		!isempty(D) && (isa(D, Vector) ? (D[1].proj4 = prj) : (D.proj4 = prj))
-		delete!(POSTMAN[1], "min_polygon_area")	# In case it was set above
-		delete!(POSTMAN[1], "polygon_isgeog")
+		delete!(POSTMAN[], "min_polygon_area")	# In case it was set above
+		delete!(POSTMAN[], "polygon_isgeog")
 		return D
 	end
-	delete!(POSTMAN[1], "min_polygon_area")
+	delete!(POSTMAN[], "min_polygon_area")
 	o
 end
 

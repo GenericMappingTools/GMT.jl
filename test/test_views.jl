@@ -15,7 +15,7 @@ grdimage(rand(Float32, 128, 128)*255, rand(Float32, 128, 128)*255, rand(Float32,
 grdimage(data=(Gr,Gg,Gb), J=:X10, I=mat2grid(rand(Float32,128,128)), Vd=dbg2)
 grdimage(rand(Float32, 128, 128), shade=(default=30,), coast=(W=1,), Vd=dbg2)
 grdimage(rand(Float32, 128, 128), colorbar=(color=:rainbow, pos=(anchor=:RM,length=8)), Vd=dbg2)
-GMT.CURRENT_CPT[1] = GMTcpt()
+GMT.CURRENT_CPT[] = GMTcpt()
 grdimage(rand(Float32, 128, 128), percent=90, Vd=dbg2)
 grdimage(rand(Float32, 128, 128), clim=[0.1, 0.9], Vd=dbg2)
 grdimage("@earth_relief_01d_g", percent=98, Vd=dbg2)
@@ -85,7 +85,7 @@ imshow(I,Vd=dbg2)
 imshow(mat2ds([0 0; 10 0; 10 10; 11 10]), Vd=dbg2)
 imshow(makecpt(1,5, cmap=:polar), Vd=dbg2)
 imshow(:gray, Vd=dbg2)
-GMT.CURRENT_CPT[1] = GMT.GMTcpt()		# The fact that I need to do this because prev line did no "show", shows a subtle bug.
+GMT.CURRENT_CPT[] = GMT.GMTcpt()		# The fact that I need to do this because prev line did no "show", shows a subtle bug.
 X4 = mat2grid(rand(Float32,32,32,4), title="lixo");
 viz(X4, colorbar=true, show=false)
 GMT.mat2grid("ackley");

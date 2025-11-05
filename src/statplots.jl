@@ -1509,7 +1509,7 @@ function marginalhist(arg1::Union{GDtype, Matrix{<:Real}}; first=true, kwargs...
 				l = CTRL.figsize[1] <= 6 ? 3 : CTRL.figsize[1] <= 20 ? CTRL.figsize[1] / 4 : CTRL.figsize[1] * 0.2
 				colorbar(pos=(inside=:TL,length=(l,0.25), horizontal=true, offset=(0.2,0.2)), B=(ylabel=:Count, annot=:a), par=("FONT_ANNOT_PRIMARY","7p"), Vd=Vd)
 			end
-			#gmt("psscale -Bpa -Bpy+lCount -DjTL+w3/0.25+h+o0.2/0.2 -C --FONT_ANNOT_PRIMARY=7p", CURRENT_CPT[1])
+			#gmt("psscale -Bpa -Bpy+lCount -DjTL+w3/0.25+h+o0.2/0.2 -C --FONT_ANNOT_PRIMARY=7p", CURRENT_CPT[])
 		end
 	subplot(endwith)
 end

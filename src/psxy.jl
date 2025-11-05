@@ -189,7 +189,7 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 	(got_Zvars && (do_Z_fill || opt_G != "") && opt_L == "") && (cmd *= " -L")	# GMT requires -L when -Z fill or -G
 
 	if ((do_Z_fill || do_Z_outline || (got_color_line_grad && !is3D)) && !occursin("-C", cmd))
-		if (isempty(CURRENT_CPT[1]))
+		if (isempty(CURRENT_CPT[]))
 			if (got_color_line_grad)		# Use the fact that we have min/max already stored
 				mima::Vector{Float64} = (arg1.ds_bbox[5+2*is3D]::Float64, arg1.ds_bbox[6+2*is3D]::Float64)
 			else
@@ -197,7 +197,7 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 			end
 			r = makecpt_raw(@sprintf("makecpt -T%f/%f/65+n -Cturbo -Vq", mima[1]-eps(1e10), mima[2]+eps(1e10)))
 		else
-			r = CURRENT_CPT[1]
+			r = CURRENT_CPT[]
 		end
 		(arg1 === nothing) ? arg1 = r : ((arg2 === nothing) ? arg2 = r : (arg3 === nothing ? arg3 = r : arg4 = r))
 		cmd *= " -C"
@@ -253,7 +253,7 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 	finish = (is_ternary && occursin(" -M",_cmd[1])) ? false : true		# But this case (-M) is bugged still in 6.2.0
 	((r = check_dbg_print_cmd(d, _cmd)) !== nothing) && return r		# FORCES RECOMPILE
 	R = prep_and_call_finish_PS_module(d, _cmd, "", K, O, finish, arg1, arg2, arg3, arg4)
-	LEGEND_TYPE[1].Vd = 0					# Because for nested calls with legends this was still > 0, which screwed later
+	LEGEND_TYPE[].Vd = 0					# Because for nested calls with legends this was still > 0, which screwed later
 	CTRL.pocket_d[1] = d					# Store d that may be not empty with members to use in other modules
 	(opt_B == " -B") && gmt_restart()		# For some Fking mysterious reason (see Ex45)
 	return R
@@ -381,7 +381,7 @@ function parse_plot_callers(d::Dict{Symbol, Any}, gmt_proggy::String, caller::St
 	(arg1 !== nothing && !isa(arg1, GDtype) && !isa(arg1, Matrix{<:Real}) && !isFV) &&
 		(arg1 = tabletypes2ds(arg1, ((val = hlp_desnany_int(d, [:interp])) !== -999) ? interp=val : interp=0))
 	(caller != "bar") && (arg1 = if_multicols(d, arg1, is3D))	# Repeat because DataFrames or ODE's have skipped first round
-	(!O) && (LEGEND_TYPE[1] = legend_bag())		# Make sure that we always start with an empty one
+	(!O) && (LEGEND_TYPE[] = legend_bag())		# Make sure that we always start with an empty one
 
 	cmd::String = "";	sub_module::String = ""	# Will change to "scatter", etc... if called by sub-modules
 	opt_A::String = ""							# For the case the caller was in fact "stairs"
@@ -432,7 +432,7 @@ function plt_txt_attrib!(D::Vector{<:GMTdataset{T,N}}, d::Dict{Symbol, Any}, _cm
 			fnt = "+f"
 			t = outline .* t
 		end
-		ct::GMTdataset{Float64,2} = mat2ds(gmt_centroid_area(G_API[1], D, Int(isgeog(D))), geom=wkbPoint)
+		ct::GMTdataset{Float64,2} = mat2ds(gmt_centroid_area(G_API[], D, Int(isgeog(D))), geom=wkbPoint)
 		ct.text = t												# Texts will be plotted at the polygons centroids
 		(CTRL.pocket_call[1] === nothing) ? (CTRL.pocket_call[1] = ct) : (CTRL.pocket_call[2] = ct)
 	end
@@ -861,8 +861,8 @@ function helper_psxy_line_barr1(cmd::String, is3D::Bool, arg1, arg2, arg3)::GMTc
 			CPTname = scan_opt(cmd, "-C")
 			cpt::GMTcpt = gmtread(CPTname, cpt=true)
 		end
-	elseif (!isempty(CURRENT_CPT[1]))
-		cpt = CURRENT_CPT[1]
+	elseif (!isempty(CURRENT_CPT[]))
+		cpt = CURRENT_CPT[]
 	else
 		mima = (size(arg1,2) == 2) ? (1,size(arg1,1)) : (arg1.ds_bbox[5+0*is3D], arg1.ds_bbox[6+0*is3D])
 		cpt = gmt(@sprintf("makecpt -T%f/%f/65+n -Cturbo -Vq", mima[1]-eps(1e10), mima[2]+eps(1e10)))
@@ -1286,7 +1286,7 @@ function make_color_column(d::Dict, cmd::String, opt_i::String, len_cmd::Int, N_
 			for k = 1:numel(arg1)  add2ds!(arg1[k], 1:n_rows; name="Zcolor")  end		# Will error if the n_rows varies
 		end
 		arg2::GMTcpt = gmt(string("makecpt -T1/$(n_rows+1)/1 -C" * join(bar_fill, ",")))
-		CURRENT_CPT[1] = arg2
+		CURRENT_CPT[] = arg2
 		(!occursin(" -C", cmd)) && (cmd *= " -C")	# Need to inform that there is a cpt to use
 		find_in_dict(d, [:G :fill])					# Deletes the :fill. Not used anymore
 		return cmd, arg1, arg2, 2, true
@@ -1339,7 +1339,7 @@ function make_color_column_(d::Dict, cmd::String, len_cmd::Int, N_args::Int, n_p
 			just_C  = just_C[1:ind[1]-1]
 		end
 		arg2 = gmt(string("makecpt -T", mi-0.001*abs(mi), '/', ma+0.001*abs(ma), " ", just_C) * (IamModern[] ? " -H" : ""))
-		CURRENT_CPT[1] = arg2
+		CURRENT_CPT[] = arg2
 		if (occursin(" -C", cmd))  cmd = cmd[1:len_cmd+3]  end		# Strip the cpt name
 		if (reset_i != "")  cmd *= reset_i  end		# Reset -i, in case it existed
 
@@ -1391,8 +1391,8 @@ function check_caller(d::Dict, cmd::String, opt_S::String, opt_W::String, caller
 	end
 
 	if (occursin('3', caller))
-		(!occursin(" -B", cmd) && !O && (get(POSTMAN[1], "noframe", "") == ""))  && (cmd *= DEF_FIG_AXES3[])	# For overlays default is no axes
-		(get(POSTMAN[1], "noframe", "") != "") && delete!(POSTMAN[1], "noframe")
+		(!occursin(" -B", cmd) && !O && (get(POSTMAN[], "noframe", "") == ""))  && (cmd *= DEF_FIG_AXES3[])	# For overlays default is no axes
+		(get(POSTMAN[], "noframe", "") != "") && delete!(POSTMAN[], "noframe")
 	end
 
 	return cmd
@@ -1502,7 +1502,7 @@ function sort_visible_faces(FV::GMTfv, azim, elev; del::Bool=true)::Tuple{GMTfv,
 	projs = Float64[]
 
 	if (!isempty(FV.color_vwall))
-		P::Ptr{GMT_PALETTE} = palette_init(G_API[1], gmt("makecpt -T0/1 -C" * FV.color_vwall));	# A pointer to a GMT CPT
+		P::Ptr{GMT_PALETTE} = palette_init(G_API[], gmt("makecpt -T0/1 -C" * FV.color_vwall));	# A pointer to a GMT CPT
 		rgb = [0.0, 0.0, 0.0, 0.0]
 	end
 
@@ -1540,7 +1540,7 @@ function sort_visible_faces(FV::GMTfv, azim, elev; del::Bool=true)::Tuple{GMTfv,
 				end
 				push!(_projs, this_proj)	# But need the normals as stated at the begining of this function
 				if (have_colorwall)
-					gmt_get_rgb_from_z(G_API[1], P, this_proj, rgb)
+					gmt_get_rgb_from_z(G_API[], P, this_proj, rgb)
 					FV.color[k][face] = @sprintf("-G#%.2x%.2x%.2x", round(Int, rgb[1]*255), round(Int, rgb[2]*255), round(Int, rgb[3]*255)) 
 				end
 			end
@@ -1597,7 +1597,7 @@ function sort_visible_triangles(Dv::Vector{<:GMTdataset}; del_hidden=false, zfac
 	end
 
 	# ---------------------- Now sort by distance to the viewer ----------------------
-	Dc::GMTdataset{Float64,2} = mat2ds(gmt_centroid_area(G_API[1], Dv, Int(isgeog(Dv)), ca=2), geom=wkbPoint)
+	Dc::GMTdataset{Float64,2} = mat2ds(gmt_centroid_area(G_API[], Dv, Int(isgeog(Dv)), ca=2), geom=wkbPoint)
 	dists = [(Dc.data[1,1] * sin_az + Dc.data[1,2] * cos_az, (Dv[1].bbox[5] + Dv[1].bbox[6]) / 2 * sin_el)]
 	for k = 2:size(Dc, 1)
 		push!(dists, (Dc.data[k,1] * sin_az + Dc.data[k,2] * cos_az, (Dv[k].bbox[5] + Dv[k].bbox[6]) / 2 * sin_el))
@@ -1746,17 +1746,17 @@ function replicant_worker(FV::GMTfv, xyz, azim, elev, cval, cpt, scales)
 		end
 	end
 
-	P::Ptr{GMT_PALETTE} = palette_init(G_API[1], cpt)	# A pointer to a GMT CPT
+	P::Ptr{GMT_PALETTE} = palette_init(G_API[], cpt)	# A pointer to a GMT CPT
 	rgb = [0.0, 0.0, 0.0, 0.0]
 	cor = [0.0, 0.0, 0.0]
 	D2 = Vector{GMTdataset{promote_type(eltype(xyz), eltype(scales), eltype(t)),2}}(undef, size(xyz, 1) * n_faces_tot)
 
 	# ---------- Now we do the replication
 	for k = 1:size(xyz, 1)								# Loop over number of positions. For each of these we have a new body
-		gmt_get_rgb_from_z(G_API[1], P, cval[k], rgb)
+		gmt_get_rgb_from_z(G_API[], P, cval[k], rgb)
 		for face = 1:n_faces_tot						# Loop over number of faces of the base body
 			cor[1], cor[2], cor[3] = rgb[1], rgb[2], rgb[3]
-			gmt_illuminate(G_API[1], normals[face], cor)
+			gmt_illuminate(G_API[], normals[face], cor)
 			txt = @sprintf("-G%.0f/%.0f/%.0f", cor[1]*255, cor[2]*255, cor[3]*255)
 			D2[(k-1)*n_faces_tot+face] = GMTdataset(data=(D1[face].data * scales[k] .+ xyz[k:k,1:3]), header=txt)
 		end

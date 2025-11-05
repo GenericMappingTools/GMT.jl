@@ -53,7 +53,7 @@ else
 	const GMTdevdate = Date(devdate, dateformat"y.m.d")		# 'devdate' comes from reading 'deps.jl'
 end
 
-const global G_API = [C_NULL]
+const G_API = Ref{Ptr{Cvoid}}(C_NULL)
 const PSname = Ref{String}("")					# The PS file (filled in __init__) where, in classic mode, all lands.
 const global TMPDIR_USR = [tempdir(), "", ""]	# Save the tmp dir and user name (also filled in __init__)
 const global TESTSDIR = joinpath(dirname(pathof(GMT))[1:end-4], "test", "")	# To have easy access to test files
@@ -78,7 +78,7 @@ const noGrdCopy   = Ref{Bool}(false)		# If true, grids are sent without transpos
 const GMTCONF     = Ref{Bool}(false)		# Flag if gmtset was used and must be 'unused'
 const FMT = Ref{String}("png")                         # The default plot format
 const BOX_STR = Ref{String}("")                        # Used in plotyy to know -R of first call
-const global POSTMAN = [Dict{String,String}()]     # To pass messages to functions (start with get_dataset) 
+const POSTMAN = Ref{Dict{String,String}}(Dict{String,String}())     # To pass messages to functions (start with get_dataset) 
 #const global SACO = [Dict{String,Union{AbstractArray, Vector{AbstractArray}}}()]  # When funs (fillsinks) want to return extra data but not via the return mechanism
 const DEF_FIG_SIZE  = "15c/10c"                    # Default fig size for plot like programs. Approx 16/11
 const DEF_FIG_AXES_BAK     = " -Baf -BWSen"        # Default fig axes for plot like programs
@@ -219,13 +219,13 @@ include("gdal/gdal.jl")
 include("gdal_utils.jl")
 include("proj_utils.jl")
 const global MatGDsGd = Union{Matrix{<:AbstractFloat}, GMTdataset, Vector{<:GMTdataset}, Gdal.AbstractDataset}
-const global CURRENT_CPT = [GMTcpt()]		# To store the current palette
+const CURRENT_CPT = Ref{GMTcpt}(GMTcpt())		# To store the current palette
 
 include("gmt_main.jl")
 include("utils_types.jl")
 include("grd_operations.jl")
 include("common_options.jl")
-const global LEGEND_TYPE = [legend_bag()]	# To store Legends info
+const LEGEND_TYPE = Ref{legend_bag}(legend_bag())	# To store Legends info
 include("beziers.jl")
 include("circfit.jl")
 include("crop.jl")
@@ -380,7 +380,6 @@ include("windbarbs/windbarbs.jl")
 include("zscale.jl")
 include("get_enums.jl")
 
-
 using .Gdal
 using .Laszip
 
@@ -388,7 +387,7 @@ using .Laszip
 #using .ImageFeatures
 
 @compile_workload begin
-	G_API[1] = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS)
+	G_API[] = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS)
 	#GMT.parse_B(Dict{Symbol, Any}(:frame => (annot=10, title="Ai Ai"), :grid => (pen=2, x=10, y=20)), "", " -Baf -BWSen");
 	#GMT.parse_R(Dict{Symbol, Any}(:xlim => (1,2), :ylim => (3,4), :zlim => (5,6)), "");
 	#GMT.parse_J(Dict{Symbol, Any}(:J => "X", :scale => "1:10"), "");
@@ -462,7 +461,7 @@ end
 
 function __init__(test::Bool=false)
 	clear_sessions(3600)		# Delete stray sessions dirs older than 1 hour
-	G_API[1] = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS)	# (0.010179 sec)
+	G_API[] = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS)	# (0.010179 sec)
 	theme_modern()				# Set the MODERN theme and some more gmtlib_setparameter() calls
 	haskey(ENV, "JULIA_GMT_IMGFORMAT") && (FMT[] = ENV["JULIA_GMT_IMGFORMAT"])
 	f = joinpath(GMTuserdir[1], "theme_jl.txt")

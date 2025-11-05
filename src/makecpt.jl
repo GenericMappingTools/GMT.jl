@@ -84,7 +84,7 @@ function makecpt(cmd0::String, arg1, d::Dict)::Union{String, GMTcpt}
 	@assert (r isa GMTcpt)
 	(got_N && !isempty(r)) && (r.bfn = ones(3,3))	# Cannot remove the bfn like in plain GMT so make it all whites
 	CTRL.pocket_d[1] = d					# Store d that may be not empty with members to use in other modules
-	CURRENT_CPT[1] = r
+	CURRENT_CPT[] = r
 	return r
 end
 

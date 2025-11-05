@@ -85,7 +85,7 @@ function mapproject(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
     cmd, args, n, = add_opt(d, cmd, "L", [:L :dist2line], :line, Array{Any,1}([arg1, arg2]),
                             (unit="+u1", cartesian="_+uc", project="_+uC", fractional_pt="_+p"))
-	contains(cmd, "-L") && gmtlib_setparameter(G_API[1], "GMT_COMPATIBILITY", "4")  # GMT<=6.4 bug
+	contains(cmd, "-L") && gmtlib_setparameter(G_API[], "GMT_COMPATIBILITY", "4")  # GMT<=6.4 bug
 
 	if (n > 0)
 		arg1, arg2 = args[:]

@@ -123,8 +123,8 @@ function coast_parser(first::Bool, clip::String; kwargs...)
 	have_opt_M = contains(cmd, " -M")
 	twoORfour = have_opt_M && contains(cmd, "+z") && contains(cmd, '.') ? "4" : "2"		# To use in gmt_main to decide CODE attrib
 	if (cmd != "")								# Check for a minimum of points that segments must have
-		if ((val = hlp_desnany_str(d, [:minpts])) !== "")  POSTMAN[1]["minpts"] = val
-		elseif (get(POSTMAN[1], "minpts", "") != "")       delete!(POSTMAN[1], "minpts")
+		if ((val = hlp_desnany_str(d, [:minpts])) !== "")  POSTMAN[]["minpts"] = val
+		elseif (get(POSTMAN[], "minpts", "") != "")       delete!(POSTMAN[], "minpts")
 		end
 	end
 
@@ -132,10 +132,10 @@ function coast_parser(first::Bool, clip::String; kwargs...)
 	toTrack::Union{String, GMTgrid} = ""
 	if (have_opt_M)
 		O = true
-		POSTMAN[1]["DCWnames"] = twoORfour		# When dumping, we want to add the country name as attribute
+		POSTMAN[]["DCWnames"] = twoORfour		# When dumping, we want to add the country name as attribute
 		if ((val = find_in_dict(d, [:Z])[1]) !== nothing)
 			toTrack = (isa(val, GMTgrid) || (isa(val, String) && length(val) > 4)) ? val : ""
-			toTrack == "" && (POSTMAN[1]["plusZzero"] = "y")# If toTrack the extra column is added by the grdtrack call below
+			toTrack == "" && (POSTMAN[]["plusZzero"] = "y")# If toTrack the extra column is added by the grdtrack call below
 		end
 	end
 	
