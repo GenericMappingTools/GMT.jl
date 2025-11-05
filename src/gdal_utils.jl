@@ -77,12 +77,12 @@ function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int
 	end
 	all(isempty.(desc)) && (desc = String[])
 
-	(layout != "" && layout[2] == 'R') && (mat = reshape(mat, size(mat,2), size(mat,1), size(mat,3)))
 	(!isa(mat, Matrix) && size(mat,3) == 1) && (mat = reshape(mat, size(mat,1), size(mat,2)))	# Fck pain
 	if (layout != "" && !startswith(layout, "TRB"))	# From GDAL it always come as a TR but not sure about the interleave
-		if     (startswith(layout, "BR"))  mat = reverse(mat, dims=1)		# Just flipUD
+		if     (startswith(layout, "BR"))  #mat = reverse(mat, dims=1)		# Just flipUD. WTF is this wrong (the flip)?
 		elseif (startswith(layout, "TC"))  mat = (size(mat,3) == 1) ? collect(mat') : permutedims(mat, [2,1,3])
 		elseif (startswith(layout, "BC"))  mat = (size(mat,3) == 1) ? reverse(mat', dims=1) : reverse(permutedims(mat, [2,1,3]), dims=1)
+		elseif (startswith(layout, "TR"))	# Let the TRP's pass silently
 		else   @warn("Unsuported layout ($(layout)) change")
 		end
 		layout = layout[1:2] * "B"		# Till further knowledge, assume it's always Band interleaved
@@ -105,7 +105,7 @@ function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int
 	prjwkt = startswith(prj, "PROJCS") ? prj : ""
 	(prj != "" && !startswith(prj, "+proj")) && (prj = toPROJ4(importWKT(prj)))
 	(prj == "") && (prj = seek_wkt_in_gdalinfo(gdalinfo(dataset)))
-	is_tp = (layout == "")				# if == "" array is rowmajor and hence transposed
+	is_tp = (layout == "" || layout != "" && layout[2] == 'R')				# if == "" array is rowmajor and hence transposed
 	vname, vvalues = "", Float64[]
 	if (n_dsbands > 1 && ((meta = Gdal.getmetadata(dataset)) != String[]))	# For cubes, try to find the v coordinates
 		if ((ind = findfirst(startswith.(meta, "NETCDF_DIM_EXTRA="))) !== nothing)
