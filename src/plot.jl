@@ -1563,7 +1563,7 @@ function helper_hvband(mat::Matrix{<:Real}, tipo="v"; width=false, height=false,
 		D[k] = GMTdataset((tipo == "v") ? [c t 0] : [t c 0], Float64[], Float64[], DictSvS(), String[], String[], hdr, String[], "", "", 0, 0)
 	end
 
-	haskey(d, :nested) && (CTRL.pocket_call[1] = D; delete!(d, :nested)) # Happens only when called nested from plot
+	haskey(d, :nested) && (pocket_call[][1] = D; delete!(d, :nested)) # Happens only when called nested from plot
 
 	d[:S] = bB						# Add -Sb|B, otherwise headers are not scanned.
 	got_pattern && (d[:G] = "p1")	# Patterns fck the session. Use this to inform gmt() that session must be recreated
@@ -1704,7 +1704,7 @@ function ternary(cmd0::String="", arg1=nothing; first::Bool=true, image::Bool=fa
 	(G_API[] == C_NULL) && gmt_restart()	# Force having a valid API. We can't afford otherwise here.
 	r = common_plot_xyz("", mat2ds(arg1), "ternary", first, false, d)
 	# With the following trick we leave the -R history in 0/1/0/1 and so we can append with plot, text, etc
-	gmt("psxy -Scp -R0/1/0/1 -JX -O -Vq > " * joinpath(TMPDIR_USR[1], "lixo_" * TMPDIR_USR[2] * TMPDIR_USR[3] * ".ps"), [0. 0.])
+	gmt("psxy -Scp -R0/1/0/1 -JX -O -Vq > " * joinpath(TMPDIR_USR.dir, "lixo_" * TMPDIR_USR.username * TMPDIR_USR.pid_suffix * ".ps"), [0. 0.])
 	CTRL.pocket_R[1] = " -R0/1/0/1"		# Since we now always explicitly set -R, we must save it in CTRL.pocket_R
 	return r
 end

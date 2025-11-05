@@ -12,8 +12,7 @@ struct CTRLstruct
 	figsize::Vector{Float64}		# To store the current fig size (xsize,ysize[,zsize]). Needed, for example, in hexbin
 	proj_linear::Vector{Bool}		# To know if images sent to GMT need Pad
 	returnPS::Vector{Bool}			# To know if returning the PS to Julia
-	callable::Array{Symbol}			# Modules that can be called inside other modules
-	pocket_call::Vector{Any}		# To temporarily store data needed by modules sub-calls. Put in [3] for pre-calls
+	callable::Vector{Symbol}		# Modules that can be called inside other modules
 	pocket_B::Vector{String}		# To temporarily store opt_B grid and fill color to be reworked in psclip
 	pocket_J::Vector{String}		# To temporarily store opt_J and fig size to eventualy flip directions (y + down, etc)
 									# = [opt_J width opt_Jz codes-to-tell-which-axis-to-reverse]
@@ -21,13 +20,24 @@ struct CTRLstruct
 	XYlabels::Vector{String}		# To temporarily store the x,y col names to let x|y labels know what to plot (if "auto")
 	IamInPaperMode::Vector{Bool}	# A 2 elem vec to know if we are in under-the-hood paper mode. 2nd traces if first call
 	gmt_mem_bag::Vector{Ptr{Cvoid}}	# To temporarily store a GMT owned memory to be freed in gmt()
-	pocket_d::Vector{Dict}			# To pass the Dict of kwargs, after consumption, to other modules.
+	pocket_d::Vector{Dict{Symbol,Any}}			# To pass the Dict of kwargs, after consumption, to other modules.
 end
 
-struct CTRLstruct2
-	first::Vector{Bool}				# Signal that we are starting a new plot (used to set params)
-	points::Vector{Bool}			# If maps are using points as coordinates
-	fname::Vector{String}			# Store the full name of PS being constructed
+mutable struct CTRLstruct2
+	first::Bool						# Signal that we are starting a new plot (used to set params)
+	points::Bool					# If maps are using points as coordinates
+	fname::String					# Store the full name of PS being constructed
+end
+
+mutable struct TMPDIRInfo
+	dir::String						# Temporary directory path
+	username::String				# Username (spaces replaced with underscores)
+	pid_suffix::String				# PID suffix for multi-process support
+end
+
+mutable struct InsetInfo
+	active::Bool					# Whether currently in inset mode
+	has_J::Bool						# Whether -J projection option was provided (GMT bug #7005 workaround)
 end
 
 depfile = joinpath(dirname(@__FILE__),"..","deps","deps.jl")	# File with shared lib names
@@ -55,7 +65,7 @@ end
 
 const G_API = Ref{Ptr{Cvoid}}(C_NULL)
 const PSname = Ref{String}("")					# The PS file (filled in __init__) where, in classic mode, all lands.
-const global TMPDIR_USR = [tempdir(), "", ""]	# Save the tmp dir and user name (also filled in __init__)
+const TMPDIR_USR = TMPDIRInfo(tempdir(), "", "")	# Save the tmp dir and user name (also filled in __init__)
 const global TESTSDIR = joinpath(dirname(pathof(GMT))[1:end-4], "test", "")	# To have easy access to test files
 const IMG_MEM_LAYOUT = Ref{String}("")			# "TCP"	 For Images.jl. The default is "TRBa"
 const GRD_MEM_LAYOUT = Ref{String}("")			# "BRP" is the default for GMT PS images.
@@ -66,7 +76,7 @@ const FirstModern = Ref{Bool}(false)	# To know
 const DidOneGmtCmd = Ref{Bool}(false)		# To know when first gmt() call. Used in first modern mode cmd to not restart what is still fresh
 const IamModernBySubplot = Ref{Bool}(false)	# To know if set in subpot
 const IamSubplot  = Ref{Bool}(false)	# To know if we are in subplot mode
-const global IamInset    = [false, false]									# To know if we are in Inset mode
+const IamInset = InsetInfo(false, false)									# To know if we are in Inset mode
 const usedConfPar = Ref{Bool}(false)	# Hacky solution for the session's memory trouble
 const ThemeIsOn   = Ref{Bool}(false)		# To know if we have an active plot theme
 const CONVERT_SYNTAX = Ref{Bool}(false)	# To only convert to hard core GMT syntax (like Vd=2)
@@ -87,8 +97,9 @@ const DEF_FIG_AXES  = Ref{String}(DEF_FIG_AXES_BAK)    # This one may be be chan
 const DEF_FIG_AXES3 = Ref{String}(DEF_FIG_AXES3_BAK)   #		""
 const FIG_MARGIN = Ref{Int}(1)                      # Figure margin in points after convertion by 'psconvert'. Accessible 'margin' common option
 const global CTRL = CTRLstruct(zeros(13), zeros(6), [true], [false],
-                               [:arrows, :bubblechart, :basemap, :band, :clip, :coast, :colorbar, :grdcontour, :hband, :hlines, :inset, :logo, :lines, :grdvector, :plot, :plot3, :quiver, :scatter, :scatter3, :stairs, :text, :vlines, :vband], fill(nothing, 6), ["","",""], ["","", "", "   "], ["",""], ["",""], [false,true], [C_NULL], [Dict()])
-const global CTRLshapes = CTRLstruct2([true], [true], [""])			# Used in sub-module Drawing
+                               [:arrows, :bubblechart, :basemap, :band, :clip, :coast, :colorbar, :grdcontour, :hband, :hlines, :inset, :logo, :lines, :grdvector, :plot, :plot3, :quiver, :scatter, :scatter3, :stairs, :text, :vlines, :vband], ["","",""], ["","", "", "   "], ["",""], ["",""], [false,true], [C_NULL], [Dict()])
+const pocket_call = Ref{Vector{Any}}(Any[nothing, nothing, nothing, nothing, nothing, nothing])	# Extracted from CTRL to isolate type instability
+const CTRLshapes = CTRLstruct2(true, true, "")			# Used in sub-module Drawing
 const prj4WGS84 = "+proj=longlat +datum=WGS84 +units=m +no_defs"	# This is used in many places
 const global CPTaliases = [:C :color :cmap :colormap :colorscale]
 const global VMs = Union{Vector{Symbol}, Matrix{Symbol}}
@@ -467,9 +478,9 @@ function __init__(test::Bool=false)
 	f = joinpath(GMTuserdir[1], "theme_jl.txt")
 	(isfile(f)) && (theme(readline(f));	ThemeIsOn[] = false)	# False because we don't want it reset in showfig()
 	user = (Sys.isunix() || Sys.isapple()) ? Libc.getpwuid(Libc.getuid(), true).username : Sys.iswindows() ? ENV["USERNAME"] : ""
-	TMPDIR_USR[2] = replace(user, " " => "_")
-	haskey(ENV, "JULIA_GMT_MULTIFILE") && (TMPDIR_USR[3] = string("_", getpid()))
-	PSname[] = TMPDIR_USR[1] * "/" * "GMTjl_" * TMPDIR_USR[2] * TMPDIR_USR[3] * ".ps"
+	TMPDIR_USR.username = replace(user, " " => "_")
+	haskey(ENV, "JULIA_GMT_MULTIFILE") && (TMPDIR_USR.pid_suffix = string("_", getpid()))
+	PSname[] = TMPDIR_USR.dir * "/" * "GMTjl_" * TMPDIR_USR.username * TMPDIR_USR.pid_suffix * ".ps"
 	DidOneGmtCmd[] = false
 end
 

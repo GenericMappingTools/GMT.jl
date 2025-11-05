@@ -561,8 +561,8 @@ end
 
 # -----------------------------------------------------------------------------------------------
 function plotgrid(Dgrat::Vector{<:GMTdataset}; first=true, kw...)
-	temp::String = "GMTjl_annots_" * TMPDIR_USR[2] * TMPDIR_USR[3]
-	fname = joinpath(TMPDIR_USR[1], temp * ".txt")
+	temp::String = "GMTjl_annots_" * TMPDIR_USR.username * TMPDIR_USR.pid_suffix
+	fname = joinpath(TMPDIR_USR.dir, temp * ".txt")
 	((val = get(POSTMAN[], "Grange", nothing)) === nothing) && error("Cannot find 'Grange' in POSTMAN. Was 'worldrectgrid' used to create the graticules?")
 	x0, x1, y0, y1 = parse.(Float64, split(val))
 	fig_dims = gmt("mapproject -W" * CTRL.pocket_R[1] * CTRL.pocket_J[1]).data::Matrix{Float64}

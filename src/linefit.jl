@@ -312,7 +312,7 @@ function _plotlinefit(D::GMTdataset, first::Bool, grp::Bool, d::Dict{Symbol,Any}
 	(do_legends && grp) && (d[:legend] = D.attrib["group_name"])
 	# Plot the data points by default as small filled blue [if default] circles.
 	if (inset !== nothing)
-		CTRL.pocket_call[4] = D			# Don't know what happens if multi-segments
+		pocket_call[][4] = D			# Don't know what happens if multi-segments
 		kk = keys(inset)
 		if (kk[1] == :zoom)				# If not set by user, replicate the scatter options (NOT TEST THE ALIAS)
 			_mk = (:marker in kk) ? NamedTuple() : (marker=mk,)

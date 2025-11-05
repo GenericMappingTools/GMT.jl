@@ -80,10 +80,10 @@ function helper_shapes(x, y, cmd; Vd=0, kw...)
 	# Se if we are asked to force the start a new drawing (first= true) or bypass the CTRLshapes.first control
 	_first = find_in_dict(d, [:first])[1]
 	first = (_first !== nothing) && (_first == 1)
-	CTRLshapes.first[1] = first
+	CTRLshapes.first = first
 
-	if (CTRLshapes.first[1])
-		CTRLshapes.fname[1] = PSname[]
+	if (CTRLshapes.first)
+		CTRLshapes.fname = PSname[]
 		if ((val = find_in_dict(d, [:units])[1]) !== nothing)
 			_cmd, opt_B = parse_B(d, "", DEF_FIG_AXES[])
 			cmd *= " --PROJ_LENGTH_UNIT=p"
@@ -95,7 +95,7 @@ function helper_shapes(x, y, cmd; Vd=0, kw...)
 			else
 				opt_R, ps_media = " -R0/594/0/841", " --PS_MEDIA=1194x1441"	# add 600 pt to PS_MEDIA to account 4 the 20 cm
 			end
-			CTRLshapes.points[1] = true
+			CTRLshapes.points = true
 		else
 			_cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", false, " ")
 			(opt_R == "")  && (opt_R = " -R0/21/0/29")
@@ -105,42 +105,42 @@ function helper_shapes(x, y, cmd; Vd=0, kw...)
 		opt_O, opt_P = "", " -P"
 	else
 		opt_R, opt_J, opt_B, opt_O, opt_P = " -R", " -J", "", " -O", ""
-		(CTRLshapes.points[1]) && (cmd *= " --PROJ_LENGTH_UNIT=p")
+		(CTRLshapes.points) && (cmd *= " --PROJ_LENGTH_UNIT=p")
 	end
 
 	out, opt_T, EXT, fname, = GMT.fname_out(d, true)
 
-	redirect = (CTRLshapes.first[1]) ? " > " : " >> "
+	redirect = (CTRLshapes.first) ? " > " : " >> "
 	if (length(kw) == 0)
-		cmd = "psxy" * cmd * opt_R * opt_J * opt_B * opt_P * opt_O * " -K" * redirect * CTRLshapes.fname[1]
+		cmd = "psxy" * cmd * opt_R * opt_J * opt_B * opt_P * opt_O * " -K" * redirect * CTRLshapes.fname
 	else
 		d[:Vd] = 2
 		(opt_J != " -J" && length(opt_J) > 3) && (d[:J] = opt_J[4:end])	# Dirty trick to force assign the J we want
 		(opt_R != " -R" && length(opt_R) > 3) && (d[:R] = opt_R[4:end])
 		d[:B] = "none"
-		cmd = GMT.common_plot_xyz("", nothing, cmd, CTRLshapes.first[1], false; d...)
-		(CTRLshapes.first[1] && opt_B != "") && (cmd = replace(cmd, "psxy" => "psxy" * opt_B))
+		cmd = GMT.common_plot_xyz("", nothing, cmd, CTRLshapes.first, false; d...)
+		(CTRLshapes.first && opt_B != "") && (cmd = replace(cmd, "psxy" => "psxy" * opt_B))
 		cmd = GMT.finish_PS(d, cmd, out, true, !first)
 	end
 	(0 < Vd < 2) && println(cmd);	(Vd > 1) && return cmd
 
-	if (CTRLshapes.first[1])
-		if (CTRLshapes.points[1])  cmd *= ps_media		# When units are points we always set a specific paper size
+	if (CTRLshapes.first)
+		if (CTRLshapes.points)  cmd *= ps_media		# When units are points we always set a specific paper size
 		elseif (EXT != "ps")       cmd *= " --PS_MEDIA=32767x32767"		# Exptend to a larger paper size
 		end
 	end
 
 	in_data = (length(x) == 1) ? [x y] : [x[:] y[:]]
 	gmt(cmd, in_data)
-	CTRLshapes.first[1] = false				# To signal next calls that they have to append
+	CTRLshapes.first = false				# To signal next calls that they have to append
 	fim = ((find_in_dict(d, [:show :fmt :savefig :figname :name], false)[1]) !== nothing) ? true : false
 	(!fim) && return nothing
 
-	CTRLshapes.first[1] = true				# Better reset it right now in case next command errors
-	CTRLshapes.points[1] = false
+	CTRLshapes.first = true				# Better reset it right now in case next command errors
+	CTRLshapes.points = false
 	#show_non_consumed(d, cmd)
-	close_PS_file(CTRLshapes.fname[1])
-	showfig(d, CTRLshapes.fname[1], EXT, opt_T, false, fname)
+	close_PS_file(CTRLshapes.fname)
+	showfig(d, CTRLshapes.fname, EXT, opt_T, false, fname)
 end
 
 """

@@ -317,7 +317,7 @@ function mosaic(lon::Vector{<:Float64}, lat::Vector{<:Float64}; pt_radius=637813
 	f = joinpath(GMTuserdir[1], "tiles_cache_dir.txt")
 	if (cache == "")
 		(isfile(f)) && (cache = readline(f))
-		length(cache) < 3 && (cache = joinpath(TMPDIR_USR[1], "cache_" * TMPDIR_USR[2] * TMPDIR_USR[3]))
+		length(cache) < 3 && (cache = joinpath(TMPDIR_USR.dir, "cache_" * TMPDIR_USR.username * TMPDIR_USR.pid_suffix))
 	else
 		(cache == "gmt") && (cache = joinpath(GMTuserdir[1], "cache_tileserver"))	# cache it in ~/.gmt
 		(isfile(f)) && rm(f)			# Remove old cache location

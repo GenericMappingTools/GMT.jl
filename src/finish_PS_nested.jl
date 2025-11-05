@@ -83,11 +83,11 @@ function add_opt_module(d::Dict)::Vector{String}
 				else   @error("Invalid string for clip option: $_str")
 				end
 			else
-				(CTRL.pocket_call[1] === nothing) ? (CTRL.pocket_call[1] = val) : (CTRL.pocket_call[2] = val)
+				(pocket_call[][1] === nothing) ? (pocket_call[][1] = val) : (pocket_call[][2] = val)
 				r = "clip"
 			end
 		elseif (symb == :grdcontour)
-			(CTRL.pocket_call[1] === nothing) ? (CTRL.pocket_call[1] = val) : (CTRL.pocket_call[2] = val)
+			(pocket_call[][1] === nothing) ? (pocket_call[][1] = val) : (pocket_call[][2] = val)
 			r = "grdcontour -J -R"
 		end
 		delete!(d, symb)
@@ -129,7 +129,7 @@ function add_opt_module_barr1(nt::NamedTuple, symb::Symbol)::Union{String, Vecto
 			(!contains(opt_E, "+c") && !contains(opt_E, "+C")) && (r = replace(r, opt_E => opt_E * "+c"))
 			is_coast = true
 		else
-			(CTRL.pocket_call[1] === nothing) ? (CTRL.pocket_call[1] = nt[1]) : (CTRL.pocket_call[2] = nt[1])
+			(pocket_call[][1] === nothing) ? (pocket_call[][1] = nt[1]) : (pocket_call[][2] = nt[1])
 			k,v = keys(nt), values(nt)
 			nt = NamedTuple{Tuple(Symbol.(k[2:end]))}(v[2:end])		# Fck, what a craziness to remove 1 el from a nt
 			r = clip!(""; Vd=2, nt...)
@@ -142,12 +142,12 @@ function add_opt_module_barr1(nt::NamedTuple, symb::Symbol)::Union{String, Vecto
 	else
 		!(symb in CTRL.callable) && error("Nested Fun call $symb not in the callable nested functions list")
 		_d::Dict{Symbol, Any} = nt2dict(nt)
-		ind_pocket = (CTRL.pocket_call[1] === nothing) ? 1 : 2
-		(haskey(_d, :data)) && (CTRL.pocket_call[ind_pocket] = _d[:data]; delete!(_d, :data))
+		ind_pocket = (pocket_call[][1] === nothing) ? 1 : 2
+		(haskey(_d, :data)) && (pocket_call[][ind_pocket] = _d[:data]; delete!(_d, :data))
 		this_symb = CTRL.callable[findfirst(symb .== CTRL.callable)]
 		fn::Function = getfield(getfield(Main, nameof(@__MODULE__)), Symbol(string(this_symb, "!")))	# GMT = getfield(Main, nameof(@__MODULE__))
 		if (this_symb in [:vband, :hband, :vspan, :hspan])
-			r = fn(CTRL.pocket_call[ind_pocket]; nested=true, Vd=2, nt...)
+			r = fn(pocket_call[][ind_pocket]; nested=true, Vd=2, nt...)
 		else
 			r = fn(; Vd=2, nt...)
 		end

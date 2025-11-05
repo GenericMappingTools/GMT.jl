@@ -34,7 +34,7 @@ function gmt(cmd::String, args...)
 	isPSclosed[] = false				# Only a gmtend() call sets this to true
 	if (g_module == "begin")			# Use this default fig name instead of "gmtsession"
 		fig_ext::String = (isFranklin[]) ? " png" : (isJupyter[]) ? " " * FMT[] : FMT[]
-		(r == "") && (r = (isFranklin[] || isJupyter[]) ? (TMPDIR_USR[1] * "/" * "GMTjl_" * TMPDIR_USR[2] * TMPDIR_USR[3] * fig_ext) : "GMTplot " * fig_ext)
+		(r == "") && (r = (isFranklin[] || isJupyter[]) ? (TMPDIR_USR.dir * "/" * "GMTjl_" * TMPDIR_USR.username * TMPDIR_USR.pid_suffix * fig_ext) : "GMTplot " * fig_ext)
 		# Here we must account for the fact that we may have started from a CLASSIC session. Then, the session dir does
 		# not exist yet and in consequence when GMT_begin calls gmt_manage_workflow it will wrongly assume we are in CLASSIC
 		# mode and write a gmt.conf in the session dir with classic instead of modern defaults. Solution is to create it now.
@@ -1493,12 +1493,12 @@ function resetGMT(dorestart::Bool=true)
 	IamModern[] = false;	FirstModern[] = false;		IamSubplot[] = false;	usedConfPar[] = false;
 	MULTI_COL[] = false;	CONVERT_SYNTAX[] = false;	CURRENT_VIEW[] = "";	SHOW_KWARGS[] = false;
 	IMG_MEM_LAYOUT[] = "";	GRD_MEM_LAYOUT[] = "";		CTRL.limits .= 0.0;	CTRL.proj_linear[1] = true;
-	CTRLshapes.fname[1] = "";CTRLshapes.first[1] = true; CTRLshapes.points[1] = false;
+	CTRLshapes.fname = "";CTRLshapes.first = true; CTRLshapes.points = false;
 	CURRENT_CPT[]  = GMTcpt();		LEGEND_TYPE[] = legend_bag();	ressurectGDAL()
 	DEF_FIG_AXES[] = DEF_FIG_AXES_BAK;		DEF_FIG_AXES3[] = DEF_FIG_AXES3_BAK;
 	CTRL.pocket_J[1], CTRL.pocket_J[2], CTRL.pocket_J[3], CTRL.pocket_J[4] = "", "", "", "   ";
-	CTRL.IamInPaperMode[:] = [false, true];	IamInset[1], IamInset[2] = false, false
-	CTRL.pocket_call[1:3] .= nothing;	CTRL.pocket_R[1:2] .= "";	CTRL.figsize .= 0.0
+	CTRL.IamInPaperMode[:] = [false, true];	IamInset.active, IamInset.has_J = false, false
+	pocket_call[][1:3] .= nothing;	CTRL.pocket_R[1:2] .= "";	CTRL.figsize .= 0.0
 	CTRL.XYlabels[1] = "";	CTRL.XYlabels[2] = "";	CTRL.returnPS[1] = false
 	(dorestart) && (gmt_restart(); clear_sessions(); DidOneGmtCmd[] = false)
 end
