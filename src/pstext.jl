@@ -64,7 +64,7 @@ function _text(cmd0::String, arg1, O::Bool, K::Bool, d::Dict{Symbol,Any})
 
 	(is_in_dict(d, [:L :list]) !== nothing) && return gmt("pstext -L")
 
-    gmt_proggy = (IamModern[1]) ? "text " : "pstext "
+    gmt_proggy = (IamModern[]) ? "text " : "pstext "
 
 	N_args = (arg1 === nothing) ? 0 : 1
 	first = !O

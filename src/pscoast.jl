@@ -108,7 +108,7 @@ end
 function coast_parser(first::Bool, clip::String; kwargs...)
 
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
-	gmt_proggy = (IamModern[1]) ? "coast "  : "pscoast "
+	gmt_proggy = (IamModern[]) ? "coast "  : "pscoast "
 
 	if ((val = hlp_desnany_str(d, [:getR :getregion :get_region], false)) !== "")
 		t::String = string(gmt_proggy, " -E", val)
@@ -143,7 +143,7 @@ function coast_parser(first::Bool, clip::String; kwargs...)
 		cmd, = parse_R(d, cmd, O=O, del=true, RIr=false,  noGlobalR=have_opt_M)	# If have_opt_M we don't set the -R limits in globals
 		if (!have_opt_M)									# If Dump no -R & -B
 			cmd = parse_J(d, cmd, default="guess", map=true, O=O)[1]
-			cmd = parse_B(d, cmd, (O ? "" : (IamModern[1]) ? "" : DEF_FIG_AXES[1]))[1]
+			cmd = parse_B(d, cmd, (O ? "" : (IamModern[]) ? "" : DEF_FIG_AXES[]))[1]
 		end
 	end
 	common = have_opt_M ? [:UVXY :bo :params] : [:F :JZ :UVXY :bo :c :p :t :params :margin]
@@ -166,9 +166,9 @@ function coast_parser(first::Bool, clip::String; kwargs...)
 
 	# Parse these three options that can be made to respond to same code
 	cmd = parse_INW_coast(d, [[:I :rivers], [:N :borders], [:W :shore :shorelines :coast :coastlines]], cmd, "INW")
-	(SHOW_KWARGS[1]) && print_kwarg_opts([:I :rivers],  "NamedTuple | Tuple | Dict | String")
-	(SHOW_KWARGS[1]) && print_kwarg_opts([:N :borders], "NamedTuple | Tuple | Dict | String")
-	(SHOW_KWARGS[1]) && print_kwarg_opts([:W :shore :shorelines :coast],   "NamedTuple | Tuple | Dict | String")
+	(SHOW_KWARGS[]) && print_kwarg_opts([:I :rivers],  "NamedTuple | Tuple | Dict | String")
+	(SHOW_KWARGS[]) && print_kwarg_opts([:N :borders], "NamedTuple | Tuple | Dict | String")
+	(SHOW_KWARGS[]) && print_kwarg_opts([:W :shore :shorelines :coast],   "NamedTuple | Tuple | Dict | String")
 
 	if (!occursin(" -C",cmd) && !occursin(" -E",cmd) && !occursin(" -G",cmd) && !occursin(" -I",cmd) &&
 		!occursin(" -M",cmd) && !occursin(" -N",cmd) && !occursin(" -Q",cmd) && !occursin(" -S",cmd) && !occursin(" -W",cmd))
@@ -185,7 +185,7 @@ function coast_parser(first::Bool, clip::String; kwargs...)
 	_cmd = (finish) ? finish_PS_nested(d, [gmt_proggy * cmd]) : [gmt_proggy * cmd]
 
 	# This bit is for insets that call coast and this one further down calls another module (e.g. plot)
-	if (IamModern[1] && length(_cmd) > 1 && contains(_cmd[1], "? "))
+	if (IamModern[] && length(_cmd) > 1 && contains(_cmd[1], "? "))
 		spli = split(_cmd[2], " -J")
 		if (length(spli) > 1)
 			_cmd[2] = replace(_cmd[2], " -J" * split(spli[2])[1] => "")
@@ -220,7 +220,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_E_coast(d::Dict, symbs::Vector{Symbol}, cmd::String)
-	(SHOW_KWARGS[1]) && return print_kwarg_opts(symbs, "NamedTuple | Tuple | Dict | String")
+	(SHOW_KWARGS[]) && return print_kwarg_opts(symbs, "NamedTuple | Tuple | Dict | String")
 	if ((val = find_in_dict(d, symbs, false)[1]) !== nothing)
 		if (isa(val, StrSymb))							# Simple cases, ex E="PT,+gblue" or E=:PT
 			t::String = string(" -E", val)

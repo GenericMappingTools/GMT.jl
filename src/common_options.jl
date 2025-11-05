@@ -9,7 +9,7 @@ dict2nt(d::AbstractDict)::NamedTuple = NamedTuple{Tuple(Symbol.(keys(d)))}(value
 
 function find_in_dict(d::Dict, symbs::VMs, del::Bool=true, help_str::String="")
 	# See if D contains any of the symbols in SYMBS. If yes, return corresponding value
-	(SHOW_KWARGS[1] && help_str != "") && return (print_kwarg_opts(symbs, help_str), Symbol())
+	(SHOW_KWARGS[] && help_str != "") && return (print_kwarg_opts(symbs, help_str), Symbol())
 	for symb in symbs
 		if (haskey(d, symb))
 			val = d[symb]				# SHIT is that 'val' is always a ANY
@@ -46,7 +46,7 @@ end
 
 function find_in_kwargs(p, symbs::VMs, del::Bool=true, primo::Bool=true, help_str::String="")
 	# See if P contains any of the symbols in SYMBS. If yes, return corresponding value
-	(SHOW_KWARGS[1] && help_str != "") && return (print_kwarg_opts(symbs, help_str), Symbol())
+	(SHOW_KWARGS[] && help_str != "") && return (print_kwarg_opts(symbs, help_str), Symbol())
 	_k = keys(p)
 	for symb in symbs
 		if ((ind = findfirst(_k .== symb)) !== nothing)
@@ -65,7 +65,7 @@ Check if `d` contains any of the symbols in `symbs`. If yes, return the used sym
 else return nothing.
 """
 function is_in_dict(d::Dict, symbs::VMs, help_str::String=""; del::Bool=false)::Union{Symbol, Nothing}
-	(SHOW_KWARGS[1] && help_str != "") && return print_kwarg_opts(symbs, help_str)
+	(SHOW_KWARGS[] && help_str != "") && return print_kwarg_opts(symbs, help_str)
 	for symb in symbs
 		if (haskey(d, symb))
 			del && delete!(d, symb)
@@ -130,8 +130,8 @@ function parse_paper(d::Dict)
 	o = (CTRL.IamInPaperMode[2]) ? " -X-5c -Y-5c" : ""	# Take care to only offset once
 	(o != "") && (CTRL.IamInPaperMode[2] = false)
 
-	proggy = (IamModern[1]) ? "plot -T" : "psxy -T"
-	t::String = IamModern[1] ? "" : o * " -O -K >> " * PSname[1]::String
+	proggy = (IamModern[]) ? "plot -T" : "psxy -T"
+	t::String = IamModern[] ? "" : o * " -O -K >> " * PSname[]::String
 	gmt(proggy * opt_R * opt_J * opt_B * t)
 	CTRL.IamInPaperMode[1] = true
 	return nothing
@@ -144,7 +144,7 @@ Reset the -R -J previous to the paper mode setting
 """
 function leave_paper_mode()
 	!CTRL.IamInPaperMode[1] && return nothing
-	t::String = IamModern[1] ? "" : " -O -K >> " * PSname[1]::String
+	t::String = IamModern[] ? "" : " -O -K >> " * PSname[]::String
 	CTRL.IamInPaperMode[1] && gmt("psxy -T " * CTRL.pocket_R[1] * CTRL.pocket_J[1] * CTRL.pocket_J[3] * t)
 	CTRL.IamInPaperMode[1] = false
 	return nothing
@@ -157,12 +157,12 @@ function parse_R(d::Dict, cmd::String; O::Bool=false, del::Bool=true, RIr::Bool=
 	# The RIr option is to assign also the -I and -r when R was given a GMTgrid|image value. This is a
 	# workaround for a GMT bug that ignores this behaviour when from externals.
 
-	(SHOW_KWARGS[1]) && return (print_kwarg_opts([:R :region :limits], "GMTgrid | NamedTuple |Tuple | Array | String"), "")
+	(SHOW_KWARGS[]) && return (print_kwarg_opts([:R :region :limits], "GMTgrid | NamedTuple |Tuple | Array | String"), "")
 
 	opt_R::String = ""
 	val, symb = find_in_dict(d, [:R :region :limits :region_llur :limits_llur :limits_diag :region_diag], del)
 
-	(val === nothing && IamModern[1] && !RIr) && return cmd, ""
+	(val === nothing && IamModern[] && !RIr) && return cmd, ""
 	opt_R = build_opt_R(val, symb)
 
 	opt_R = merge_R_and_xyzlims(d, opt_R)	# Let a -R be partially changed by the use of optional xyzlim
@@ -193,7 +193,7 @@ function parse_R(d::Dict, cmd::String; O::Bool=false, del::Bool=true, RIr::Bool=
 
 	(O && opt_R == "") && (opt_R = " -R")
 	if (!already_know && opt_R != "" && opt_R != " -R" && !IamInset[1] && !noGlobalR)	# Save limits in numeric
-		bak = IamModern[1]
+		bak = IamModern[]
 		try
 			limits = opt_R2num(opt_R)
 			CTRL.limits[7:7+length(limits)-1] = limits		# The plot limits
@@ -206,13 +206,13 @@ function parse_R(d::Dict, cmd::String; O::Bool=false, del::Bool=true, RIr::Bool=
 			end
 		catch err
 			CTRL.limits .= 0.0
-			IamModern[1] = bak
+			IamModern[] = bak
 		end
 		(opt_R != " -R") && (CTRL.pocket_R[1] = opt_R)
 	end
 
 	# I've seen grdview! screwing with "-R" so we should probably always explicitly set -R. Let's try carefully.
-	(!IamModern[1] && !CTRL.IamInPaperMode[1] && opt_R == " -R" && CTRL.pocket_R[1] != "") && (opt_R = CTRL.pocket_R[1])
+	(!IamModern[] && !CTRL.IamInPaperMode[1] && opt_R == " -R" && CTRL.pocket_R[1] != "") && (opt_R = CTRL.pocket_R[1])
 	cmd = cmd * opt_R
 	return cmd, opt_R
 end
@@ -411,7 +411,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_JZ(d::Dict, cmd::String, del::Bool=true; O::Bool=false, is3D::Bool=false)::Tuple{String,String}
 	symbs = [:JZ :Jz :zsize :zscale]
-	(SHOW_KWARGS[1]) && return (print_kwarg_opts(symbs, "String | Number"), "")
+	(SHOW_KWARGS[]) && return (print_kwarg_opts(symbs, "String | Number"), "")
 	opt_J::String = "";		seek_JZ = true
 	if ((val = find_in_dict(d, [:aspect3])[1]) !== nothing)
 		o = scan_opt(cmd, "-J")
@@ -481,13 +481,13 @@ function parse_J(d::Dict, cmd::String; default::String="", map::Bool=true, O::Bo
 	# Default to 15c if no size is provided.
 	# If MAP == false, do not try to append a fig size
 
-	(SHOW_KWARGS[1]) && return (print_kwarg_opts([:J :proj :projection], "NamedTuple | String"), "")
+	(SHOW_KWARGS[]) && return (print_kwarg_opts([:J :proj :projection], "NamedTuple | String"), "")
 
 	opt_J::String = "";		mnemo::Bool = false
 	if ((val = find_in_dict(d, [:J :proj :projection], del)[1]) !== nothing)
 		isa(val, AbstractDict) && (val = Base.invokelatest(dict2nt,val))
 		opt_J, mnemo = build_opt_J(val)		# mnemo = true when the projection name used a mnemonic for the projection
-	elseif (IamModern[1] && ((val = is_in_dict(d, [:figscale :fig_scale :scale :figsize :fig_size])) === nothing))
+	elseif (IamModern[] && ((val = is_in_dict(d, [:figscale :fig_scale :scale :figsize :fig_size])) === nothing))
 		# Subplots do not rely in the classic default mechanism
 		(IamInset[1] && !IamInset[2] && !contains(cmd, " -J")) && (cmd *= CTRL.pocket_J[1]::String) 	# Workaround GMT bug (#7005)
 		return cmd, ""
@@ -508,14 +508,14 @@ function parse_J(d::Dict, cmd::String; default::String="", map::Bool=true, O::Bo
 		if ((s = helper_append_figsize(d, opt_J, O, del)) != "")		# Takes care of both fig scales and fig sizes
 			opt_J = s
 		elseif (default != "" && opt_J == " -JX")
-			opt_J = IamSubplot[1] ? " -JX?" : (default != "guess" ? default : opt_J) 	# -JX was a working default
+			opt_J = IamSubplot[] ? " -JX?" : (default != "guess" ? default : opt_J) 	# -JX was a working default
 		elseif (occursin("+width=", opt_J))		# OK, a proj4 string, don't touch it. Size already in.
 		elseif (occursin("+proj", opt_J))		# A proj4 string but no size info. Use default size
 			opt_J *= "+width=" * string(split(DEF_FIG_SIZE, '/')[1])::String
 		elseif (mnemo)							# Proj name was obtained from a name mnemonic and no size. So use default
 			opt_J = append_figsize(d, opt_J)
 		elseif (!isdigit(opt_J[end]) && (length(opt_J) < 6 || (isletter(opt_J[5]) && !isdigit(opt_J[6]))) )
-			if (!IamSubplot[1])
+			if (!IamSubplot[])
 				if (((val = find_in_dict(d, [:aspect], del)[1]) !== nothing) || haskey(d, :aspect3))
 					opt_J *= set_aspect_ratio(val, "", true, haskey(d, :aspect3))::String
 				elseif (!occursin("?", opt_J))
@@ -599,7 +599,7 @@ function get_figsize(opt_R::String="", opt_J::String="")::Tuple{Float64, Float64
 	# Compute the current fig dimensions in paper coords using the know -R -J
 	(opt_R == "" || opt_R == " -R") && (opt_R = CTRL.pocket_R[1])
 	(opt_J == "" || opt_J == " -J") && (opt_J = CTRL.pocket_J[1])
-	((opt_R == "" || opt_J == "") && !IamModern[1]) && error("One or both of 'limits' ($opt_R) or 'proj' ($opt_J) is empty. Cannot compute fig size.")
+	((opt_R == "" || opt_J == "") && !IamModern[]) && error("One or both of 'limits' ($opt_R) or 'proj' ($opt_J) is empty. Cannot compute fig size.")
 	Dwh = gmt("mapproject -W " * opt_R * opt_J).data::Matrix{Float64}
 	return Dwh[1], Dwh[2]		# Width, Height
 end
@@ -610,8 +610,8 @@ function helper_append_figsize(d::Dict, opt_J::String, O::Bool, del::Bool=true):
 	val::String = arg2str(val_)
 	if (occursin("scale", arg2str(symb)))		# We have a fig SCALE request
 		(O && opt_J == " -J") && error("In Overlay mode you cannot change a fig scale and NOT repeat the projection")
-		if     (IamSubplot[1] && val == "auto")       val = "?"
-		elseif (IamSubplot[1] && val == "auto,auto")  val = "?/?"
+		if     (IamSubplot[] && val == "auto")       val = "?"
+		elseif (IamSubplot[] && val == "auto,auto")  val = "?/?"
 		end
 		if (opt_J == " -JX")
 			val = check_flipaxes(d, val)
@@ -633,8 +633,8 @@ function append_figsize(d::Dict, opt_J::String, width::String="", scale::Bool=fa
 	# use the DEF_FIG_SIZE, otherwise use WIDTH that can be a size or a scale.
 
 	if (width == "")
-		width::String = (IamSubplot[1]) ? "?" : split(DEF_FIG_SIZE, '/')[1]		# In subplot "?" is auto width
-	elseif (IamSubplot[1] && (width == "auto" || width == "auto,auto"))	# In subplot one can say figsize="auto" or figsize="auto,auto"
+		width::String = (IamSubplot[]) ? "?" : split(DEF_FIG_SIZE, '/')[1]		# In subplot "?" is auto width
+	elseif (IamSubplot[] && (width == "auto" || width == "auto,auto"))	# In subplot one can say figsize="auto" or figsize="auto,auto"
 		width = (width == "auto") ? "?" : "?/?"
 	elseif (((val = find_in_dict(d, [:aspect])[1]) !== nothing) || haskey(d, :aspect3))
 		(occursin("/", width)) && @warn("Ignoring the 'aspect' request because fig's Width and Height already provided.")
@@ -662,7 +662,7 @@ function append_figsize(d::Dict, opt_J::String, width::String="", scale::Bool=fa
 				elseif (ax == 'y')  error("Can't select Y scaling and provide X dimension only")
 				else
 					width *= flag
-					(ax == 'l' && flag == 'l') && (width = IamModern[1] ? width * "/?l" : width * "/l")	# The loglog case
+					(ax == 'l' && flag == 'l') && (width = IamModern[] ? width * "/?l" : width * "/l")	# The loglog case
 					(width[1] == '?' && !contains(width, '/')) && (width *= "/?")
 				end
 			end
@@ -986,12 +986,12 @@ end
 function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tuple{String,String}
 	# opt_B is used to transmit a default value. If not empty the Bframe part must be at the end and only one -B...
 
-	(SHOW_KWARGS[1]) && return (print_kwarg_opts([:B :frame :axes :axis :xaxis :yaxis :zaxis :axis2 :xaxis2 :yaxis2], "NamedTuple | String"), "")
+	(SHOW_KWARGS[]) && return (print_kwarg_opts([:B :frame :axes :axis :xaxis :yaxis :zaxis :axis2 :xaxis2 :yaxis2], "NamedTuple | String"), "")
 
 	opt_B::String = opt_B__	# Otherwise opt_B is core Boxed??
 	parse_theme(d)			# Must be first because some themes change DEF_FIG_AXES
-	DEF_FIG_AXES_::String  = (IamModern[1]) ? "" : DEF_FIG_AXES[1]		# DEF_FIG_AXES is a global const
-	DEF_FIG_AXES3_::String = (IamModern[1]) ? "" : DEF_FIG_AXES3[1]		# DEF_FIG_AXES is a global const
+	DEF_FIG_AXES_::String  = (IamModern[]) ? "" : DEF_FIG_AXES[]		# DEF_FIG_AXES is a global const
+	DEF_FIG_AXES3_::String = (IamModern[]) ? "" : DEF_FIG_AXES3[]		# DEF_FIG_AXES is a global const
 
 	have_Bframe, got_Bstring, have_axes::Bool = false, false, false	# To know if the axis() function returns a -B<frame> setting
 
@@ -1015,14 +1015,14 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 			elseif (startswith(_val, "auto"))
 				is3D = false
 				if     (occursin("XYZg", _val)) _val = " -Bafg -Bzafg -B+" * "w";  is3D = true
-				elseif (occursin("XYZ", _val))  _val = DEF_FIG_AXES3[1];		is3D = true
+				elseif (occursin("XYZ", _val))  _val = DEF_FIG_AXES3[];		is3D = true
 				elseif (occursin("XYg", _val))  _val = " -Bafg -BWSen"
-				elseif (occursin("XY", _val))   _val = DEF_FIG_AXES[1]
+				elseif (occursin("XY", _val))   _val = DEF_FIG_AXES[]
 				elseif (occursin("Xg", _val))   _val = " -Bafg -BwSen"
 				elseif (occursin("X",  _val))   _val = " -Baf -BwSen"
 				elseif (occursin("Yg", _val))   _val = " -Bafg -BWsen"
 				elseif (occursin("Y",  _val))   _val = " -Baf -BWsen"
-				elseif (_val == "auto")         _val = DEF_FIG_AXES[1]		# 2D case
+				elseif (_val == "auto")         _val = DEF_FIG_AXES[]		# 2D case
 				end
 				cmd = guess_WESN(d, cmd)
 			elseif (length(_val) <= 5 && !occursin(" ", _val) && occursin(r"[WESNwesnzZ]", _val))
@@ -1137,7 +1137,7 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 		end
 	end
 
-	if (extra_parse && (opt_B != DEF_FIG_AXES[1] && opt_B != DEF_FIG_AXES3[1]))
+	if (extra_parse && (opt_B != DEF_FIG_AXES[] && opt_B != DEF_FIG_AXES3[]))
 		# This is old code that takes care to break a string in tokens and prefix with a -B to each token
 		tok = Vector{String}(undef, 10)
 		k = 1;		r = opt_B;		found = false
@@ -1196,7 +1196,7 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 	end
 	(got_ticks && opt_B == this_opt_B) && (opt_B *= (contains(opt_B, "-Bpz") ? DEF_FIG_AXES3_ : DEF_FIG_AXES_))	# When only x|y|z ticks were requested.
 
-	if (DEF_FIG_AXES[1] != DEF_FIG_AXES_BAK && opt_B != DEF_FIG_AXES[1])	# Consolidation only under themes
+	if (DEF_FIG_AXES[] != DEF_FIG_AXES_BAK && opt_B != DEF_FIG_AXES[])	# Consolidation only under themes
 		if (opt_B != "" && !got_Bstring && CTRL.proj_linear[1] && !occursin(DEF_FIG_AXES_, opt_B) &&
 			!(occursin("pxc", opt_B) || occursin("pyc", opt_B)))
 			# By using DEF_FIG_AXES_ this has no effect in modern mode.
@@ -1284,7 +1284,7 @@ function consolidate_Baxes(opt_B::String)::String
 		occursin("-Bg", opt_B) && (opt_B = replace(opt_B, "-Bg" => ""))
 	end
 
-	sdef = split(DEF_FIG_AXES[1])			# sdef[1] should contain only axes settings
+	sdef = split(DEF_FIG_AXES[])			# sdef[1] should contain only axes settings
 	occursin("a", sdef[1]) && (opt_B = helper_consolidate_B(opt_B, "a", have_Bpxa, have_Bpya))
 	occursin("f", sdef[1]) && (opt_B = helper_consolidate_B(opt_B, "f", have_Bpxf, have_Bpyf))
 	occursin("g", sdef[1]) && (opt_B = helper_consolidate_B(opt_B, "g", have_Bpxg, have_Bpyg))
@@ -1382,11 +1382,11 @@ function parse_BJR(d::Dict, cmd::String, caller::String, O::Bool, defaultJ::Stri
 
 	parse_theme(d)		# Must be first because some themes change DEF_FIG_AXES
 	is3D = (is_in_dict(d, [:JZ :Jz :zscale :zsize]) !== nothing)
-	DEF_FIG_AXES_::String = (IamModern[1]) ? "" : is3D ? DEF_FIG_AXES3[1] : DEF_FIG_AXES[1]	# DEF_FIG_AXES is global
+	DEF_FIG_AXES_::String = (IamModern[]) ? "" : is3D ? DEF_FIG_AXES3[] : DEF_FIG_AXES[]	# DEF_FIG_AXES is global
 
 	if (caller != "" && occursin("-JX", opt_J))		# e.g. plot() sets 'caller'
 		if (occursin("3", caller) || caller == "grdview")
-			DEF_FIG_AXES3_::String = (IamModern[1]) ? "" : DEF_FIG_AXES3[1]
+			DEF_FIG_AXES3_::String = (IamModern[]) ? "" : DEF_FIG_AXES3[]
 			cmd, opt_B = parse_B(d, cmd, (O ? "" : DEF_FIG_AXES3_), del)
 		else
 			xx::String = (O ? "" : caller != "ternary" ? DEF_FIG_AXES_ : string(split(DEF_FIG_AXES_)[1]))
@@ -1423,7 +1423,7 @@ function parse_type_anchor(d::Dict, cmd::String, symbs::VMs, mapa::NamedTuple, d
 	# SYMBS: [:D :pos :position] | ...
 	# MAPA is the NamedTuple of suboptions
 	# def_CS is the default "Coordinate system". Colorbar has 'J', logo has 'g', many have 'j'
-	(SHOW_KWARGS[1]) && return print_kwarg_opts(symbs, mapa)	# Just print the kwargs of this option call
+	(SHOW_KWARGS[]) && return print_kwarg_opts(symbs, mapa)	# Just print the kwargs of this option call
 	got_str = false
 	for s in symbs		# Check if arg value is a string. If yes, ignore 'def_CS'
 		(haskey(d, s) && isa(d[s], StrSymb)) && (got_str = true; break)
@@ -1516,7 +1516,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_d(d::Dict, cmd::String, symbs::VMs=[:d :nodata])
-	(SHOW_KWARGS[1]) && return (print_kwarg_opts(symbs, "$(symbs[2])=val"),"")
+	(SHOW_KWARGS[]) && return (print_kwarg_opts(symbs, "$(symbs[2])=val"),"")
 	parse_helper(cmd, d, [:d :nodata], " -d")
 end
 parse_di(d::Dict, cmd::String) = parse_d(d, cmd, [:di :nodata_in])
@@ -1545,7 +1545,7 @@ function parse_l(d::Dict, cmd::String, del::Bool=false)
 	elseif (cmd_ != "")
 		cmd_ = " -l" * str_with_blancs(cmd_[4:end])
 	end
-	(IamModern[1]) && (cmd *= cmd_; delete!(d, [:l :legend]))	# Otherwise we still need it in legend bag
+	(IamModern[]) && (cmd *= cmd_; delete!(d, [:l :legend]))	# Otherwise we still need it in legend bag
 	return cmd, cmd_
 end
 
@@ -1656,7 +1656,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_helper(cmd::String, d::Dict, symbs::VMs, opt::String, sep='/')::Tuple{String, String}
 	# Helper function to the parse_?() global options.
-	(SHOW_KWARGS[1]) && return (print_kwarg_opts(symbs, "(Common option not yet expanded)"),"")
+	(SHOW_KWARGS[]) && return (print_kwarg_opts(symbs, "(Common option not yet expanded)"),"")
 	opt_val::String = ""
 	if ((val = hlp_desnany_arg2str(d, symbs; sep=sep)) !== "")
 		opt_val = string(opt, val)
@@ -1667,7 +1667,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_common_opts(d::Dict, cmd::String, opts::VMs; first::Bool=true, is3D::Bool=false)::Tuple{String, String}
-	(SHOW_KWARGS[1]) && return (print_kwarg_opts(opts, "(Common options)"),"")	# Just print the options
+	(SHOW_KWARGS[]) && return (print_kwarg_opts(opts, "(Common options)"),"")	# Just print the options
 
 	ignore_J, ignore_R, ignore_p, ignore_t = false, false, false, false
 	cmd, _cmd = GMTsyntax_opt(d, cmd)		# See if an hardcore GMT syntax string has been passed
@@ -1689,7 +1689,7 @@ function parse_common_opts(d::Dict, cmd::String, opts::VMs; first::Bool=true, is
 		elseif (opt == :F)  cmd  = parse_F(d, cmd)
 		elseif (opt == :UVXY)     cmd = parse_UVXY(d, cmd)
 		elseif (opt == :V_params) cmd = parse_V_params(d, cmd)
-		elseif (opt == :margin && haskey(d, :margin)) FIG_MARGIN[1] = d[:margin]; delete!(d, :margin)
+		elseif (opt == :margin && haskey(d, :margin)) FIG_MARGIN[] = d[:margin]; delete!(d, :margin)
 		elseif (opt == :a)  cmd, o = parse_a(d, cmd)
 		elseif (opt == :b)  cmd, o = parse_b(d, cmd)
 		elseif (opt == :c)  cmd, o = parse_c(d, cmd)
@@ -1722,17 +1722,17 @@ function parse_common_opts(d::Dict, cmd::String, opts::VMs; first::Bool=true, is
 	end
 	if (opt_p !== nothing)		# Restrict the contents of this block to when -p was used
 		if (opt_p != "")
-			if (opt_p == " -pnone")  CURRENT_VIEW[1] = "";	cmd = cmd[1:end-7];	opt_p = ""
+			if (opt_p == " -pnone")  CURRENT_VIEW[] = "";	cmd = cmd[1:end-7];	opt_p = ""
 			elseif (startswith(opt_p, " -pa") || startswith(opt_p, " -pd"))
-				CURRENT_VIEW[1] = " -p217.5/30";
-				cmd = replace(cmd, opt_p => "") * CURRENT_VIEW[1]::String		# auto, def, 3d
+				CURRENT_VIEW[] = " -p217.5/30";
+				cmd = replace(cmd, opt_p => "") * CURRENT_VIEW[]::String		# auto, def, 3d
 			else
-				CURRENT_VIEW[1] = opt_p
+				CURRENT_VIEW[] = opt_p
 			end
-		elseif (!first && CURRENT_VIEW[1] != "")
-			cmd *= CURRENT_VIEW[1]::String
+		elseif (!first && CURRENT_VIEW[] != "")
+			cmd *= CURRENT_VIEW[]::String
 		elseif (first)
-			CURRENT_VIEW[1] = ""		# Ensure we start empty
+			CURRENT_VIEW[] = ""		# Ensure we start empty
 		end
 	end
 	((val = hlp_desnany_str(d, [:pagecolor])) !== "") && (cmd *= string(" --PS_PAGE_COLOR=", val)) 
@@ -1818,7 +1818,7 @@ function parse_params(d::Dict, cmd::String; del::Bool=true)::String
 	elseif (isa(val, Tuple))
 		_cmd *= " --" * string(val[1])::String * "=" * string(val[2])::String
 	end
-	usedConfPar[1] = true
+	usedConfPar[] = true
 	return _cmd
 end
 
@@ -1826,7 +1826,7 @@ end
 function add_opt_pen(d::Dict, symbs::Union{Nothing, VMs}; opt::String="", del::Bool=true)::String
 	# Build a pen option. Input can be either a full hard core string or spread in lw (or lt), lc, ls, etc or a tuple
 
-	(SHOW_KWARGS[1]) && return print_kwarg_opts(symbs, "NamedTuple | Tuple | String | Number")	# Just print the options
+	(SHOW_KWARGS[]) && return print_kwarg_opts(symbs, "NamedTuple | Tuple | String | Number")	# Just print the options
 
 	if (opt != "")  opt = " -" * opt  end		# Will become -W<pen>, for example
 	out::String = ""
@@ -1907,7 +1907,7 @@ end
 # ------------------------------------------------------------------------------------------------------
 function helper_arrows(d::Dict; del::Bool=true)::String
 	# Helper function to set the vector head attributes
-	(SHOW_KWARGS[1]) && return print_kwarg_opts([:arrow :vector :arrow4 :vector4 :vecmap :geovec :geovector], "NamedTuple | String")
+	(SHOW_KWARGS[]) && return print_kwarg_opts([:arrow :vector :arrow4 :vector4 :vecmap :geovec :geovector], "NamedTuple | String")
 
 	val, symb = find_in_dict(d, [:arrow :vector :arrow4 :vector4 :vecmap :geovec :geovector], del)
 	(val === nothing) && return ""
@@ -1926,7 +1926,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function opt_pen(d::Dict, opt::Char, symbs::VMs)::String
 	# Create an option string of the type -Wpen
-	(SHOW_KWARGS[1]) && return print_kwarg_opts(symbs, "Tuple | String | Number")	# Just print the options
+	(SHOW_KWARGS[]) && return print_kwarg_opts(symbs, "Tuple | String | Number")	# Just print the options
 
 	out::String = ""
 	pen = build_pen(d)						# Either a full pen string or empty ("")
@@ -2203,7 +2203,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function finish_PS(d::Dict, cmd::Vector{String}, output::String, K::Bool, O::Bool)::Vector{String}
 	# Finish a PS creating command. All PS creating modules should use this.
-	IamModern[1] && return cmd  			# In Modern mode this fun does not play
+	IamModern[] && return cmd  			# In Modern mode this fun does not play
 	for k = 1:length(cmd)
 		if (!occursin(" >", cmd[k]))	# Nested calls already have the redirection set
 			cmd[k] = (k == 1) ? finish_PS(d, cmd[k], output, K, O) : finish_PS(d, cmd[k], output, true, true)
@@ -2274,7 +2274,7 @@ function add_opt_1char(cmd::String, d::Dict, symbs::Vector{Matrix{Symbol}}; del:
 	# If DEL == true we remove the found key.
 	# The keyword value must be a string, symbol or a tuple of them. We only retain the first character of each item
 	# Ex:  GMT.add_opt_1char("", Dict(:N => ("abc", "sw", "x"), :Q=>"datum"), [[:N :geod2aux], [:Q :list]]) == " -Nasx -Qd"
-	(SHOW_KWARGS[1]) && return print_kwarg_opts(symbs, "Str | Symb | Tuple")
+	(SHOW_KWARGS[]) && return print_kwarg_opts(symbs, "Str | Symb | Tuple")
 	for opt in symbs
 		((val = find_in_dict(d, opt, del)[1]) === nothing) && continue
 		args::String = ""
@@ -2325,7 +2325,7 @@ function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, mapa; grow_mat=n
 	# If 'expand_str=true' then the keys of MAPA can be used as values of SYMBS and are replaced by vals of MAPA
 	#    Example (hitogram -Z): add_opt(d, "", "Z", [:Z :kind], (counts="0", freq="1",...)) Z=freq => -Z1
 	#  But this only works when sub-options have default values. i.e. they are aliases
-	(SHOW_KWARGS[1]) && return print_kwarg_opts(symbs, mapa)	# Just print the kwargs of this option call
+	(SHOW_KWARGS[]) && return print_kwarg_opts(symbs, mapa)	# Just print the kwargs of this option call
 
 	if ((val = find_in_dict(d, symbs, del)[1]) === nothing)
 		if (expand && isa(mapa, NamedTuple))
@@ -2548,7 +2548,7 @@ function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, need_symb::Symbo
 	# ARGS is a 1-to-3 array of GMT types in which some may be NOTHING. If the value is an array, it will be
 	# stored in first non-empty element of ARGS.
 	# Example where this is used (plot -Z):  Z=(outline=true, data=[1, 4])
-	(SHOW_KWARGS[1]) && print_kwarg_opts(symbs)		# Just print the kwargs of this option call
+	(SHOW_KWARGS[]) && print_kwarg_opts(symbs)		# Just print the kwargs of this option call
 
 	N_used::Int = 0;		got_one = false
 	val, symb = find_in_dict(d, symbs, false)
@@ -2607,7 +2607,7 @@ function add_opt_cpt(d::Dict, cmd::String, symbs::VMs, opt::Char, N_args::Int=0,
 	# OPT_T, when != "", contains a min/max/n_slices/+n string to calculate a cpt with n_slices colors between [min max]
 	# IN_BAG, if true means that, if not empty, we return the contents of `CURRENT_CPT`
 
-	(SHOW_KWARGS[1]) && return print_kwarg_opts(symbs, "GMTcpt | Tuple | Array | String | Number"), arg1, arg2, N_args
+	(SHOW_KWARGS[]) && return print_kwarg_opts(symbs, "GMTcpt | Tuple | Array | String | Number"), arg1, arg2, N_args
 
 	function equalize(d, arg1, cptname::String, opt_T::String)::GMTcpt
 		if ((isa(arg1, GMTgrid) || isa(arg1, String)) && (val_eq = find_in_dict(d, [:equalize])[1]) !== nothing)
@@ -2646,7 +2646,7 @@ function add_opt_cpt(d::Dict, cmd::String, symbs::VMs, opt::Char, N_args::Int=0,
 			end
 		end
 	elseif (def && opt_T != "")						# Requested use of the default color map
-		if (IamModern[1])  opt_T *= " -H"  end		# Piggy back this otherwise we get no CPT back in Modern
+		if (IamModern[])  opt_T *= " -H"  end		# Piggy back this otherwise we get no CPT back in Modern
 		if (haskey(d, :this_cpt) && d[:this_cpt] != "")		# A specific CPT name was requested
 			cpt_name::String = d[:this_cpt]			# Because of the terrible invalidations
 			cpt = equalize(d, arg1, cpt_name, opt_T);	delete!(d, :this_cpt)
@@ -2684,7 +2684,7 @@ end
 add_opt_fill(d::Dict, symbs::VMs, opt="") = add_opt_fill("", d, symbs, opt)
 function add_opt_fill(cmd::String, d::Dict, symbs::VMs, opt="", del::Bool=true)::String
 	# Deal with the area fill attributes option. Normally, -G
-	(SHOW_KWARGS[1]) && return print_kwarg_opts(symbs, "NamedTuple | Tuple | Array | String | Number")
+	(SHOW_KWARGS[]) && return print_kwarg_opts(symbs, "NamedTuple | Tuple | Array | String | Number")
 	((val = find_in_dict(d, symbs, del)[1]) === nothing) && return cmd
 	isa(val, AbstractDict) && (val = Base.invokelatest(dict2nt, val))
 	(val == true && symbs == [:G :fill]) && (val="#0072BD")		# Let fill=true mean a default color
@@ -2762,7 +2762,7 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 			cpt_opt_T = @sprintf(" -T%.12g/%.12g/256+n", range[5] - 1e-6*abs(range[5]), range[6] + 1e-6*abs(range[6]))
 			delete!(d, symb)
 		end
-		if (opt_R == "" && (!IamModern[1] || (IamModern[1] && FirstModern[1])))	# No -R ovewrite by accident
+		if (opt_R == "" && (!IamModern[] || (IamModern[] && FirstModern[])))	# No -R ovewrite by accident
 			cmd *= @sprintf(" -R%.14g/%.14g/%.14g/%.14g", range[1], range[2], range[3], range[4])
 		end
 	elseif (cmd0 != "" && cmd0[1] == '@')			# No reason not to let @grids use clim=[...]
@@ -2800,14 +2800,14 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 		N_used = (arg1 !== nothing) + (arg2 !== nothing)
 	end
 
-	if (IamModern[1] && FirstModern[1])  FirstModern[1] = false;  end
+	if (IamModern[] && FirstModern[])  FirstModern[] = false;  end
 	return cmd, N_used, arg1, arg2, arg3
 end
 
 # This function is a mini makecpt. Put it here so that we can call it from a future GMTcore module that will split from "modules"
 function makecpt_raw(cmd::String, arg1=nothing)::GMTcpt
 	# Raw version that already knows what the command is and has no input data.
-	(IamModern[1] && !contains(cmd, " -H")) && (cmd *= " -H")
+	(IamModern[] && !contains(cmd, " -H")) && (cmd *= " -H")
 	!startswith(cmd, "makecpt ") && (cmd = "makecpt " * cmd)
 	_r = gmt_GMTcpt(cmd, arg1)
 	r::GMTcpt = (_r !== nothing) ? _r : GMTcpt()	# _r === nothing when we save CPT on disk.
@@ -3588,12 +3588,12 @@ end
 function fname_out(d::Dict, del::Bool=false)
 	# Create a file name in the TMP dir when OUT holds only a known extension. The name is: GMT_user.ext
 
-	EXT::String = FMT[1];	fname::AbstractString = ""
+	EXT::String = FMT[];	fname::AbstractString = ""
 	if ((val = hlp_desnany_str(d, [:savefig :figname :name], del)) !== "")
 		fname, EXT = splitext(val)
-		EXT = (EXT == "") ? FMT[1] : EXT[2:end]
+		EXT = (EXT == "") ? FMT[] : EXT[2:end]
 	end
-	if (EXT == FMT[1] && haskey(d, :fmt))
+	if (EXT == FMT[] && haskey(d, :fmt))
 		EXT = string(d[:fmt])::String
 		(del) && delete!(d, :fmt)
 	end
@@ -3604,7 +3604,7 @@ function fname_out(d::Dict, del::Bool=false)
 		(del) && delete!(d, :ps)
 		CTRL.returnPS[1] = true		# Reset to false only when showfig or save file
 	else
-		ret_ps = CTRL.returnPS[1] ? (!IamModern[1] ? true : false) : false	# To know if we want to save PS in mem
+		ret_ps = CTRL.returnPS[1] ? (!IamModern[] ? true : false) : false	# To know if we want to save PS in mem
 	end
 
 	opt_T::String = "";
@@ -3626,7 +3626,7 @@ function fname_out(d::Dict, del::Bool=false)
 	end
 
 	(fname != "") && (fname *= "." * EXT)
-	def_name::String = PSname[1]		# "GMT_user.ps" in TMP dir
+	def_name::String = PSname[]		# "GMT_user.ps" in TMP dir
 	return def_name, opt_T, EXT, fname, ret_ps
 end
 
@@ -3652,7 +3652,7 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", i
 
 	(fname == "") && return _read_data(d, cmd, arg, opt_R, is3D, get_info, opt_i, opt_di, opt_yx)
 
-	if (((!IamModern[1] && opt_R == "") || get_info) && !CONVERT_SYNTAX[1])		# Must read file to find -R
+	if (((!IamModern[] && opt_R == "") || get_info) && !CONVERT_SYNTAX[])		# Must read file to find -R
 		arg::GDtype = gmt("read -Td " * opt_i * opt_bi * opt_di * opt_h * " " * fname)
 		helper_set_colnames!(arg)				# Set colnames if file has a comment line supporting it
 		# gmtread does not accept -: so we may need to swap the first two column names
@@ -3667,14 +3667,14 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", i
 	end
 
 	no_R = (opt_R == "" || opt_R[1] == '/' || opt_R == " -Rtight")
-	if (!CONVERT_SYNTAX[1] && !IamModern[1] && no_R)
+	if (!CONVERT_SYNTAX[] && !IamModern[] && no_R)
 		wesn_f64::Matrix{Float64} = gmt("gmtinfo -C" * opt_bi * opt_i * opt_di * opt_h * opt_yx * " " * fname).data	#
 		opt_R::String = @sprintf(" -R%.12g/%.12g/%.12g/%.12g", wesn_f64[1], wesn_f64[2], wesn_f64[3], wesn_f64[4])
 		(is3D) && (opt_R = @sprintf("%s/%.12g/%.12g", opt_R, wesn_f64[5], wesn_f64[6]))
 		cmd *= opt_R
 	end
 
-	(SHOW_KWARGS[1]) && return cmd, arg, opt_R, [NaN NaN NaN NaN], ""		# In HELP mode we do nothing here
+	(SHOW_KWARGS[]) && return cmd, arg, opt_R, [NaN NaN NaN NaN], ""		# In HELP mode we do nothing here
 
 	_read_data(d, cmd, arg, opt_R, is3D, get_info, opt_i, opt_di, opt_yx)
 end
@@ -3703,7 +3703,7 @@ function _read_data(d::Dict, cmd::String, arg, opt_R::String="", is3D::Bool=fals
 	# In case DATA holds a file name, read that data and put it in ARG
 	# Also compute a tight -R if this was not provided. This forces reading a the `fname` file if provided.
 
-	(IamModern[1] && FirstModern[1]) && (FirstModern[1] = false)
+	(IamModern[] && FirstModern[]) && (FirstModern[] = false)
 
 	# This convoluted code was the way found to avoid that 1.12 @trace_compile stopped complained that 'read_data'
 	# was invalidated to start with and recompiled it again. The culprit a the line with 'arg = mat2ds(d[:data])'
@@ -3734,7 +3734,7 @@ function _read_data(d::Dict, cmd::String, arg, opt_R::String="", is3D::Bool=fals
 	end
 
 	wesn_f64::Matrix{Float64} = [NaN NaN NaN NaN]		# Need something to return
-	if (!CONVERT_SYNTAX[1] && ((!IamModern[1] && no_R) || get_info))
+	if (!CONVERT_SYNTAX[] && ((!IamModern[] && no_R) || get_info))
 		if (opt_i == "" && opt_di == "" && opt_yx == "" && !isempty(ds_bbox))
 			wesn_f64 = reshape(copy(ds_bbox), 1, length(ds_bbox))
 		else
@@ -3744,7 +3744,7 @@ function _read_data(d::Dict, cmd::String, arg, opt_R::String="", is3D::Bool=fals
 		if (wesn_f64[1] > wesn_f64[2])  wesn_f64[2], wesn_f64[1] = wesn_f64[1], wesn_f64[2]  end
 	end
 
-	if (!CONVERT_SYNTAX[1] && !IamModern[1] && no_R)	# Here 'arg' can no longer be a file name (string)
+	if (!CONVERT_SYNTAX[] && !IamModern[] && no_R)	# Here 'arg' can no longer be a file name (string)
 		(length(wesn_f64) == 2) && (is_onecol = true)
 		if (opt_R != "" && opt_R[1] == '/')			# Modify what will be reported as a -R string
 			rs = split(opt_R, '/')
@@ -4000,7 +4000,7 @@ end
 function find_data(d::Dict, cmd0::String, cmd::String, args...)
 	# ...
 
-	(SHOW_KWARGS[1]) && return cmd, 0, nothing		# In HELP mode we do nothing here
+	(SHOW_KWARGS[]) && return cmd, 0, nothing		# In HELP mode we do nothing here
 
 	got_fname = 0;		data_kw = nothing
 	if (haskey(d, :data))  data_kw = d[:data];  delete!(d, :data)  end
@@ -4086,7 +4086,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function common_grd(d::Dict, cmd::String, args...)
 	# This chunk of code is shared by several grdxxx & other modules, so wrap it in a function
-	IamModern[1] && (cmd = replace(cmd, " -R " => " "))
+	IamModern[] && (cmd = replace(cmd, " -R " => " "))
 	(haskey(d, :Vd) && d[:Vd] > 2) && show_args_types(args...)
 	show_non_consumed(d, cmd)
 	(dbg_print_cmd(d, cmd) !== nothing) && return cmd		# Vd=2 cause this return
@@ -4102,10 +4102,10 @@ function dbg_print_cmd(d::Dict, cmd::Vector{String})
 	# Print the gmt command when the Vd>=1 kwarg was used.
 	# In case of CONVERT_SYNTAX = true, just put the cmds in a global var 'cmds_history' used in movie
 
-	if (SHOW_KWARGS[1])  SHOW_KWARGS[1] = false; return ""  end	# If in HELP mode
+	if (SHOW_KWARGS[])  SHOW_KWARGS[] = false; return ""  end	# If in HELP mode
 
-	if ( ((Vd = hlp_desnany_int(d, [:Vd], del=true)) !== -999) || CONVERT_SYNTAX[1])
-		(CONVERT_SYNTAX[1]) && return update_cmds_history(cmd)	# For movies mainly.
+	if ( ((Vd = hlp_desnany_int(d, [:Vd], del=true)) !== -999) || CONVERT_SYNTAX[])
+		(CONVERT_SYNTAX[]) && return update_cmds_history(cmd)	# For movies mainly.
 		(Vd <= 0) && (d[:Vd] = 0)		# Later, if Vd == 0, do not print the "not consumed" warnings
 		(Vd <= 0) && return nothing
 
@@ -4177,8 +4177,8 @@ function showfig(d::Dict{Symbol, Any}, fname_ps::String, fname_ext::String, opt_
 		opt_T = " -Tg"; fname_ext = "png"		# In Jupyter or Pluto, png only
 	end
 
-	pscvt_cmd = "psconvert -A$(FIG_MARGIN[1])p" * " -Qg4 -Qt4 "		# The default is "psconvert -A1p -Qg4 -Qt4 "
-	(FIG_MARGIN[1] != 1) && (FIG_MARGIN[1] = 1)	# Reset the default
+	pscvt_cmd = "psconvert -A$(FIG_MARGIN[])p" * " -Qg4 -Qt4 "		# The default is "psconvert -A1p -Qg4 -Qt4 "
+	(FIG_MARGIN[] != 1) && (FIG_MARGIN[] = 1)	# Reset the default
 	if (fname_ps != "" && isPluto)				# A patch attempt to an undebugable Pluto thing
 		(K) && close_PS_file(fname_ps)			# Close the PS file first
 		gmt(pscvt_cmd * fname_ps * " -Tg *")
@@ -4187,7 +4187,7 @@ function showfig(d::Dict{Symbol, Any}, fname_ps::String, fname_ext::String, opt_
 	end
 
 	# When we are in Jupyter or Pluto, the image may already be in a raster format by a previous call to 'gmt end'
-	(isJupyter[1] || isPluto) && (fname_ps = TMPDIR_USR[1] * "/" * "GMTjl_" * TMPDIR_USR[2] * TMPDIR_USR[3] * "." * FMT[1];	opt_T = "")
+	(isJupyter[] || isPluto) && (fname_ps = TMPDIR_USR[1] * "/" * "GMTjl_" * TMPDIR_USR[2] * TMPDIR_USR[3] * "." * FMT[];	opt_T = "")
 
 	if (opt_T != "")
 		(K) && close_PS_file(fname_ps)			# Close the PS file first
@@ -4208,15 +4208,15 @@ function showfig(d::Dict{Symbol, Any}, fname_ps::String, fname_ext::String, opt_
 			(fname == "" || endswith(fname, ".png")) ? display(MIME"image/png"(), read(out)) : @warn("In Jupyter you can only visualize png files. File $fname was saved in disk though.")
 		elseif (isPluto)
 			retPluto = true
-		elseif (!isFranklin[1])			# !isFranklin is true when building the docs and there we don't want displays.
+		elseif (!isFranklin[])			# !isFranklin is true when building the docs and there we don't want displays.
 			display_file(out)
 		end
 		reset_theme()
 	end
 	CTRL.limits .= 0.0;		CTRL.figsize .= 0.0;	CTRL.proj_linear[1] = true;		# Reset these for safety
 	CTRL.pocket_J[1], CTRL.pocket_J[2], CTRL.pocket_J[3], CTRL.pocket_J[4] = "", "", "", "   ";
-	CTRL.pocket_R[1:2] .= "";	isJupyter[1] = false;	CTRL.pocket_call .= nothing
-	CURRENT_VIEW[1] = ""
+	CTRL.pocket_R[1:2] .= "";	isJupyter[] = false;	CTRL.pocket_call .= nothing
+	CURRENT_VIEW[] = ""
 	return retPluto ? WrapperPluto(out) : nothing	# retPluto should make it all way down to base so that Plut displays it
 end
 
@@ -4228,18 +4228,18 @@ function display_file(out)
 end
 
 function reset_theme()
-	if (ThemeIsOn[1])
-		theme_modern();		ThemeIsOn[1] = false
-		DEF_FIG_AXES[1] = DEF_FIG_AXES_BAK;		DEF_FIG_AXES3[1] = DEF_FIG_AXES3_BAK;
+	if (ThemeIsOn[])
+		theme_modern();		ThemeIsOn[] = false
+		DEF_FIG_AXES[] = DEF_FIG_AXES_BAK;		DEF_FIG_AXES3[] = DEF_FIG_AXES3_BAK;
 	end
 	desconf()
 end
 function desconf(resetdef::Bool=true)
 	# Undo the gmtset() doing and delete eventual gmt.conf files in current dir.
-	!GMTCONF[1] && return nothing			# No gmtset was used in classic or outside a modern mode block	
+	!GMTCONF[] && return nothing			# No gmtset was used in classic or outside a modern mode block	
 	resetdef && resetdefaults(G_API[1])		# Set the modern mode settings (will clear eventual gmt.conf contents)
 	isfile("gmt.conf") && rm("gmt.conf")	# If gmt.conf file is to be kept, save it at ~.gmt/gmt.conf
-	GMTCONF[1] = false
+	GMTCONF[] = false
 	return nothing
 end
 
@@ -4252,23 +4252,23 @@ function showfig(; kwargs...)
 	CTRL.limits .= 0.0;		CTRL.proj_linear[1] = true;		# Reset these for safety
 	!isempty(LEGEND_TYPE[1].optsDict) && (d[:legend] = dict2nt(LEGEND_TYPE[1].optsDict))	# Recover opt settings
 	digests_legend_bag(d)									# Plot the legend if requested
-	arg = (isPSclosed[1]) ? "" : "psxy -R0/1/0/1 -JX0.001c -T -O"		# In Modern the PS is already closed
+	arg = (isPSclosed[]) ? "" : "psxy -R0/1/0/1 -JX0.001c -T -O"		# In Modern the PS is already closed
 	finish_PS_module(d, arg, "", false, true, true)
 end
 function helper_showfig4modern(show::String="show")::Bool
 	# Called with show=?? by subplot() and with no args by finish_PS_module()
 	# If called from modern mode, do the equivalent of classic to close and show fig
 	# Use show="" in modern when only wanting to finish plot but NOT display it.
-	!IamModern[1] && return false		# Only subplot() calls go beyond this point
+	!IamModern[] && return false		# Only subplot() calls go beyond this point
 	try
-		IamSubplot[1] && gmt("subplot end");		IamSubplot[1] = false
+		IamSubplot[] && gmt("subplot end");		IamSubplot[] = false
 	catch erro;		println(erro)
 	end
-	IamModern[1] = false
+	IamModern[] = false
 	call_display = false
-	(isJupyter[1] && show != "") && (show = ""; call_display = true)
-	(isFranklin[1] || show == "") ? gmt("end") : (gmt("end " * show); CURRENT_CPT[1] = GMTcpt())	# isFranklin = true for docs
-	isPSclosed[1] = true
+	(isJupyter[] && show != "") && (show = ""; call_display = true)
+	(isFranklin[] || show == "") ? gmt("end") : (gmt("end " * show); CURRENT_CPT[1] = GMTcpt())	# isFranklin = true for docs
+	isPSclosed[] = true
 	desconf(false)		# FALSE because modern mode calls do a gmt_restart() in the gmt() main function.
 	call_display && showfig()		# Fragile. How to assert that modern_fname is not empty?
 	return true
@@ -4300,7 +4300,7 @@ Add commands to the GMT PostScript file while it is not yet finished.
 This option is for PostScript gurus that want/need to mess with the PS plot file in the middle of its construction.
 """
 function add2PSfile(txt::Union{String, Vector{String}}; isfile::Bool=false)
-	fid = open(PSname[1], "a")
+	fid = open(PSname[], "a")
 	isfile && (write(fid, read(txt)); close(fid);	return nothing)
 	if (isa(txt, String))
 		write(fid, "\n$txt\n")
@@ -4442,12 +4442,12 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 
 	(haskey(d, :Vd) && d[:Vd] > 2) && show_args_types(args...)
 	if ((r = dbg_print_cmd(d, cmd)) !== nothing)  return length(r) == 1 ? r[1] : r  end
-	IMG_MEM_LAYOUT[1] = add_opt(d, "", "", [:layout])
-	(IMG_MEM_LAYOUT[1] == "images") && (IMG_MEM_LAYOUT[1] = "I   ")		# Special layout for Images.jl
+	IMG_MEM_LAYOUT[] = add_opt(d, "", "", [:layout])
+	(IMG_MEM_LAYOUT[] == "images") && (IMG_MEM_LAYOUT[] = "I   ")		# Special layout for Images.jl
 
-	if (fname_ext != "ps" && !IamModern[1] && !O)		# Exptend to a larger paper size
+	if (fname_ext != "ps" && !IamModern[] && !O)		# Exptend to a larger paper size
 		cmd[1] *= " --PS_MEDIA=32767x32767"				# In Modern mode GMT takes care of this.
-	elseif (fname_ext == "ps" && !IamModern[1] && !O)	# First time that a return PS is asked
+	elseif (fname_ext == "ps" && !IamModern[] && !O)	# First time that a return PS is asked
 		cmd[1] *= " --PS_MEDIA=1194x1441"				# add 600 pt to A4 to account for the 20 cm
 	end
 
@@ -4507,7 +4507,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 		# If we had a double frame to plot Geog on a Cartesian plot we must reset memory to original -J & -R so
 		# that appending other plots to same fig can continue to work and not fail because proj had become Geog.
 		apenda = ((orig_J != "") && !CTRL.returnPS[1]) ? " >> " : ""
-		IamModern[1] && (orig_J = "")	# setting orig_J to "" is a way of avoiding next line that is not for modern mode.
+		IamModern[] && (orig_J = "")	# setting orig_J to "" is a way of avoiding next line that is not for modern mode.
 		(orig_J != "") && (gmt("psxy -T -J" * orig_J * " -R" * orig_R * " -O -K" * apenda * output);  orig_J = "")
 	end
 	CTRL.pocket_call[1] = nothing;	CTRL.pocket_call[2] = nothing		# For the case it was not yet empty
@@ -4567,7 +4567,7 @@ function finish_PS_module_barr_2(d, arg1, cmd, k, is_plot, orig_J)
 end
 
 function finish_PS_module_barr_last(d::Dict{Symbol, Any}, cmd::Vector{String}, fname, fname_ext, opt_extra, output, opt_T, K, P)
-	if (!IamModern[1])
+	if (!IamModern[])
 		if (fname_ext == "" && opt_extra == "")		# Return result as an GMTimage
 			P = showfig(d, output, fname_ext, "", K)
 			CTRL.limits .= 0.0
@@ -4644,7 +4644,7 @@ a PS file that has NOT been closed. Posterior calls to plotting methods will app
 Useful when creating figures that use a common base map that may be heavy (slow) to compute.
 """
 function append2fig(fname::String)
-	mv(fname, PSname[1], force=true); nothing
+	mv(fname, PSname[], force=true); nothing
 end
 
 # --------------------------------------------------------------------------------------------------
@@ -4917,9 +4917,9 @@ function digests_legend_bag(d::Dict{Symbol, Any}, del::Bool=true)
 	
 	#legend!(text_record(leg[1:kk]), F=opt_F, D=opt_D, par=(:FONT_ANNOT_PRIMARY, fnt), Vd=1)
 	# This reproduces the actualy visited lines of the above legend!() command but let it work in GMT_base (if ...)
-	proggy = (IamModern[1]) ? "legend"  : "pslegend"
+	proggy = (IamModern[]) ? "legend"  : "pslegend"
 	opt_R = " -R"
-	(!IamModern[1] && !CTRL.IamInPaperMode[1] && opt_R == " -R" && CTRL.pocket_R[1] != "") && (opt_R = CTRL.pocket_R[1])
+	(!IamModern[] && !CTRL.IamInPaperMode[1] && opt_R == " -R" && CTRL.pocket_R[1] != "") && (opt_R = CTRL.pocket_R[1])
 	prep_and_call_finish_PS_module(Dict{Symbol, Any}(), [proggy * " -J $opt_R -F$(opt_F) -D$(opt_D) --FONT_ANNOT_PRIMARY=$fnt"],
 	                               "", true, true, true, text_record(leg[1:kk]))
 
@@ -4995,7 +4995,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function common_get_R_cpt(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fname::Int, arg1, arg2, arg3, prog::String)
 	# Used by several proggys
-	if (CONVERT_SYNTAX[1])		# Here we cannot risk to execute any code. Just parsing. Movie stuff
+	if (CONVERT_SYNTAX[])		# Here we cannot risk to execute any code. Just parsing. Movie stuff
 		cmd, = add_opt_cpt(d, cmd, CPTaliases, 'C')
 		N_used = !isempty_(arg1) + !isempty_(arg2) + !isempty_(arg3)
 	else
@@ -5076,7 +5076,7 @@ end
 
 # --------------------------------------------------------------------------------------------------
 function help_show_options(d::Dict)
-	if (find_in_dict(d, [:help])[1] !== nothing)  SHOW_KWARGS[1] = true  end	# Put in HELP mode
+	if (find_in_dict(d, [:help])[1] !== nothing)  SHOW_KWARGS[] = true  end	# Put in HELP mode
 end
 
 # --------------------------------------------------------------------------------------------------
@@ -5104,7 +5104,7 @@ end
 
 # --------------------------------------------------------------------------------------------------
 function gmthelp(opt)
-	SHOW_KWARGS[1] = true
+	SHOW_KWARGS[] = true
 	if (isa(opt, Array{Symbol}))
 		for o in opt  gmthelp(o)  end
 	else
@@ -5116,7 +5116,7 @@ function gmthelp(opt)
 			println("   LastError ==>  '$err'")
 		end
 	end
-	SHOW_KWARGS[1] = false
+	SHOW_KWARGS[] = false
 	return nothing
 end
 

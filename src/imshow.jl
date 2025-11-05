@@ -273,9 +273,9 @@ const viz = imshow			# Alias
 
 # --------------------------------------------------------------------------------
 function vizpdf(args...; kwargs...)
-	fmt_bak = FMT[1]
-	FMT[1] = "pdf"
+	fmt_bak = FMT[]
+	FMT[] = "pdf"
 	R = imshow(args...; kwargs...)
-	FMT[1] = fmt_bak
+	FMT[] = fmt_bak
 	return R
 end

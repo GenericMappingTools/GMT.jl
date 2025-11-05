@@ -48,7 +48,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function image_helper(cmd0::String, arg1, O::Bool, K::Bool, d::Dict{Symbol,Any})
 
-	proggy = (IamModern[1]) ? "image "  : "psimage "
+	proggy = (IamModern[]) ? "image "  : "psimage "
 
 	cmd = parse_BJR(d, "", "", O, " -JX" * split(DEF_FIG_SIZE, '/')[1] * "/0")[1]
 	cmd = parse_common_opts(d, cmd, [:F :UVXY :JZ :c :p :t :params :margin]; first=!O)[1]

@@ -11,7 +11,7 @@ See full GMT docs at [`velo`]($(GMTdoc)supplements/seis/velo.html)
 """
 function velo(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
-    proggy = (IamModern[1]) ? "velo "  : "psvelo "
+    proggy = (IamModern[]) ? "velo "  : "psvelo "
 
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
@@ -31,7 +31,7 @@ function velo(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	elseif (haskey(d, :Sr) || haskey(d, :vel_rotated))  symbs = [:Sr :vel_rotated]
 	elseif (haskey(d, :Sw) || haskey(d, :wedges))       symbs = [:Sw :wedges]
 	elseif (haskey(d, :Sx) || haskey(d, :cross_scale))  symbs = [:Sx :cross_scale]
-	elseif (SHOW_KWARGS[1])  symbs = [:Se :vel_NE :Sn :barscale :Sr :vel_rotated :Sw :wedges :Sx :cross_scale]
+	elseif (SHOW_KWARGS[])  symbs = [:Se :vel_NE :Sn :barscale :Sr :vel_rotated :Sw :wedges :Sx :cross_scale]
 	else  error("Must select one convention (S options. Run gmthelp(velo) to learn about them)")
 	end
 	cmd = add_opt(d, cmd, string(symbs[1]), symbs)

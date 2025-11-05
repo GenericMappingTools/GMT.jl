@@ -56,10 +56,10 @@ function grdrotater(cmd0::String="", arg1=nothing; kwargs...)
 
 	cmd, _, arg1 = find_data(d, cmd0, cmd, arg1)	# Find how data was transmitted
 	cmd, arg1, arg2 = arg_in_slot(d, cmd, [:F :rot_polyg :rot_polygon], Union{Matrix, GDtype}, arg1, nothing)
-	(SHOW_KWARGS[1]) && print_kwarg_opts([:F :rot_polyg :rot_polygon], " Inside area for rotation [String or GMTdataset]")
+	(SHOW_KWARGS[]) && print_kwarg_opts([:F :rot_polyg :rot_polygon], " Inside area for rotation [String or GMTdataset]")
 
 	cmd, arg1, arg2, arg3 = arg_in_slot(d, cmd, [:T :ages], Union{Matrix, GDtype}, arg1, arg2, nothing)
-	(SHOW_KWARGS[1]) && print_kwarg_opts([:T :ages], " Sets the desired reconstruction times. [Number, String or GMTdataset]")
+	(SHOW_KWARGS[]) && print_kwarg_opts([:T :ages], " Sets the desired reconstruction times. [Number, String or GMTdataset]")
 
 	common_grd(d, cmd0, cmd, "grdrotater ", arg1, arg2, arg3)		# Finish build cmd and run it
 end

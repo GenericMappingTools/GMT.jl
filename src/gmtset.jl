@@ -36,7 +36,7 @@ function gmtset(; kwargs...)
 		gmtlib_setparameter(G_API[1], string(key[k]), string(d[key[k]]))
 		delete!(d, key[k])
 	end
-	GMTCONF[1] = true
+	GMTCONF[] = true
 
 	cmd = "gmtset " * cmd
 	(dbg_print_cmd(d, cmd) !== nothing) && return cmd	# But here the gmtlib_setparameter doing cannot be undone

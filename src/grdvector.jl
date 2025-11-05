@@ -69,7 +69,7 @@ function grdvector(arg1, arg2; first=true, kwargs...)
 	def_J = " -JX" * split(DEF_FIG_SIZE, '/')[1] * "/0"
 	cmd, opt_J = parse_J(d, cmd, default=def_J, map=true, O=O)
 	parse_theme(d)		# Must be first because some themes change DEF_FIG_AXES
-	DEF_FIG_AXES_::String = (IamModern[1]) ? "" : DEF_FIG_AXES[1]	# DEF_FIG_AXES is a global const
+	DEF_FIG_AXES_::String = (IamModern[]) ? "" : DEF_FIG_AXES[]	# DEF_FIG_AXES is a global const
 	cmd, opt_B = parse_B(d, cmd, (O ? "" : DEF_FIG_AXES_))
 
 	cmd = parse_common_opts(d, cmd, [:UVXY :f :p :t :margin :params]; first=first)[1]
@@ -152,7 +152,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_Q_grdvec(d::Dict, symbs::Array{<:Symbol}, len::String="", stop::String="", norm::String="")::String
 	# LEN, STOP & NORM are default values (if != "")
-	(SHOW_KWARGS[1]) && return print_kwarg_opts(symbs, "NamedTuple | String")
+	(SHOW_KWARGS[]) && return print_kwarg_opts(symbs, "NamedTuple | String")
 	cmd::String = ""
 	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
 		if (isa(val, String))

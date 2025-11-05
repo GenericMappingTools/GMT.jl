@@ -85,7 +85,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function contour_helper(cmd0::String, arg1, O::Bool, K::Bool, d::Dict{Symbol,Any})
 
-    proggy = (IamModern[1]) ? "contour " : "pscontour "
+    proggy = (IamModern[]) ? "contour " : "pscontour "
 	dict_auto_add!(d)			# The ternary module may send options via another channel
 
 	cmd, _, _, opt_R = parse_BJR(d, "", "", O, " -JX" * split(DEF_FIG_SIZE, '/')[1] * "/0")

@@ -40,8 +40,8 @@ function theme(name="modern"; kwargs...)
 	color::String = ((val = find_in_dict(d, [:fg_color])[1]) !== nothing) ? string(val) : ""
 	
 	# Some previous calls may have changed these and a new theme option may be caught with the pens down
-	DEF_FIG_AXES[1]  = DEF_FIG_AXES_BAK		# So that we always start with the defaults
-	DEF_FIG_AXES3[1] = DEF_FIG_AXES3_BAK
+	DEF_FIG_AXES[]  = DEF_FIG_AXES_BAK		# So that we always start with the defaults
+	DEF_FIG_AXES3[] = DEF_FIG_AXES3_BAK
 
 	_name::String = string(name)
 	if (_name == "classic")
@@ -70,7 +70,7 @@ function theme(name="modern"; kwargs...)
 		(_name == "reset") ? theme_modern() : write(f, _name)
 		isOn = false		# So we wont reset defaults in showfig()
 	end
-	ThemeIsOn[1] = isOn
+	ThemeIsOn[] = isOn
 	return nothing
 end
 
@@ -108,7 +108,7 @@ function parse_theme_names(name::String)
 			end
 		end
 
-		DEF_FIG_AXES[1] = t1 * t2
+		DEF_FIG_AXES[] = t1 * t2
 		if     (contains(name, "nt") || contains(name, "NT"))  helper_theme_noticks()	# No ticks
 		elseif (contains(name, "it") || contains(name, "IT"))  helper_theme_inticks()	# Inside ticks
 		end
@@ -169,8 +169,8 @@ function theme_modern()
 	gmtlib_setparameter(G_API[1], "FONT_TITLE", "auto,Times-Roman,black")
 	gmtlib_setparameter(G_API[1], "FONT_HEADING", "auto,Times-Roman,black")
 	gmtlib_setparameter(G_API[1], "FONT_SUBTITLE", "auto,Times-Roman,black")
-	#!IamModern[1] && swapmode(G_API[1], classic=true)	# Reset GMT->current.setting.run_mode = GMT_CLASSIC
-	if (IamModern[1])
+	#!IamModern[] && swapmode(G_API[1], classic=true)	# Reset GMT->current.setting.run_mode = GMT_CLASSIC
+	if (IamModern[])
 		gmtlib_setparameter(G_API[1], "MAP_ORIGIN_X", "0")	# Workarround GMT bug.
 		gmtlib_setparameter(G_API[1], "MAP_ORIGIN_Y", "0")
 	end

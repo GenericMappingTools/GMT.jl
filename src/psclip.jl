@@ -37,7 +37,7 @@ clip(; kwargs...)              = clip_helper("", nothing; first=false, kwargs...
 # ---------------------------------------------------------------------------------------------------
 function clip_helper(cmd0::String, arg1; first=true, kwargs...)
 
-	proggy = (IamModern[1]) ? "clip " : "psclip "
+	proggy = (IamModern[]) ? "clip " : "psclip "
 
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 

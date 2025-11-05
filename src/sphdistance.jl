@@ -57,8 +57,8 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_QN_sphdst(d::Dict, symbs::Array{Array{Symbol,2},1}, cmd::String, arg1, arg2)
-	(SHOW_KWARGS[1]) && print_kwarg_opts(symbs[1], "Vector{GMTdataset} | GMTdataset | Array | Number | String")
-	(SHOW_KWARGS[1]) && return print_kwarg_opts(symbs[3], "Vector{GMTdataset} | GMTdataset | Array | Number | String")
+	(SHOW_KWARGS[]) && print_kwarg_opts(symbs[1], "Vector{GMTdataset} | GMTdataset | Array | Number | String")
+	(SHOW_KWARGS[]) && return print_kwarg_opts(symbs[3], "Vector{GMTdataset} | GMTdataset | Array | Number | String")
 	N_used = (arg1 === nothing) ?  0 : 1
 	flags ="QN"			# Process option -Q & -N
 	for k = 1:2

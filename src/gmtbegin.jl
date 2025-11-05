@@ -10,14 +10,14 @@ As an alternative use 'fmt' as a string or symbol containing the format (ps, pdf
 By default name="GMTplot" and fmt="ps"
 """
 function gmtbegin(name::String=""; fmt=nothing, verbose=nothing)
-	DidOneGmtCmd[1] && resetGMT()		# Reset everything to a fresh GMT session. That is reset all global variables to their initial state
+	DidOneGmtCmd[] && resetGMT()		# Reset everything to a fresh GMT session. That is reset all global variables to their initial state
 	cmd = "begin"       # Default name (GMTplot.ps) is set in gmt_main()
 	(name != "") && (cmd *= " " * get_format(name, fmt))
 	(verbose !== nothing) && (cmd *= " -V" * string(verbose))
-	IamSubplot[1] = false
-	FirstModern[1] = true			# To know if we need to compute -R in plot. Due to a GMT6.0 BUG
-	isJupyter[1] = isdefined(Main, :IJulia)		# show fig relies on this
-	!isJupyter[1] && (isJupyter[1] = (isdefined(Main, :VSCodeServer) && get(ENV, "DISPLAY_IN_VSC", "") != ""))
+	IamSubplot[] = false
+	FirstModern[] = true			# To know if we need to compute -R in plot. Due to a GMT6.0 BUG
+	isJupyter[] = isdefined(Main, :IJulia)		# show fig relies on this
+	!isJupyter[] && (isJupyter[] = (isdefined(Main, :VSCodeServer) && get(ENV, "DISPLAY_IN_VSC", "") != ""))
 	gmt(cmd)
 	return nothing
 end
@@ -31,14 +31,14 @@ function gmtend(arg=nothing; show=false, verbose=nothing, reset::Bool=true)
 	# To show either do gmtend(whatever) or gmt(show=true)
 	cmd = "end"
 	(verbose !== nothing) && (cmd *= " -V" * string(verbose))
-	if (IamSubplot[1])		# This should never happen. Unless user error of calling gmtend() before time.
+	if (IamSubplot[])		# This should never happen. Unless user error of calling gmtend() before time.
 		@warn("ERROR USING SUBPLOT. You should not call gmtend() before subplot(:end)")
 		gmt("subplot end")
 	end
-	((arg !== nothing || show != 0) && !isFranklin[1]) ? (helper_showfig4modern("show")) : gmt(cmd)
+	((arg !== nothing || show != 0) && !isFranklin[]) ? (helper_showfig4modern("show")) : gmt(cmd)
 	reset && resetGMT()
-	!reset && (IamModern[1] = false;	FirstModern[1] = false)
-	isPSclosed[1] = true
+	!reset && (IamModern[] = false;	FirstModern[] = false)
+	isPSclosed[] = true
 	return nothing
 end
  
@@ -51,7 +51,7 @@ Set attributes for the current modern mode session figure.
 - 'opts' Sets one or more comma-separated options (and possibly arguments) that can be passed to psconvert when preparing this figure.
 """
 function gmtfig(name::String; fmt=nothing, opts="")
-	(!IamModern[1]) && error("Not in modern mode. Must run 'gmtbegin' first")
+	(!IamModern[]) && error("Not in modern mode. Must run 'gmtbegin' first")
  
 	cmd = "figure"       # Default name (GMTplot.ps) is set in gmt_main()
 	(name == "") && error("figure name cannot be empty")
@@ -81,12 +81,12 @@ function inset(fim::StrSymb=""; stop=false, kwargs...)
 
 	if (!stop)
 		(dbg_print_cmd(d, cmd) !== nothing) && return cmd	# Vd=2 cause this return
-		(!IamModern[1]) && error("Not in modern mode. Must run 'gmtbegin' first")
+		(!IamModern[]) && error("Not in modern mode. Must run 'gmtbegin' first")
 		IamInset[1] = true
 		contains(cmd, " -J") && (IamInset[2] = true)		# 'true' means we don't fetch the CTRL.pocket_J[1] to prevent GMT bug #7005
 		gmt("inset begin " * cmd);
 	else
-		(!IamModern[1]) && error("Not in modern mode. Must run 'gmtbegin' first")
+		(!IamModern[]) && error("Not in modern mode. Must run 'gmtbegin' first")
 		IamInset[1], IamInset[2] = false, false
 		gmt("inset end");
 		(do_show || haskey(d, :show)) && gmt("end" * show)
@@ -104,10 +104,10 @@ function get_format(name, fmt=nothing, d=nothing)
 		fname *= " " * string(fmt)::String      # No checking
 	elseif (d !== nothing)
 		if (haskey(d, :fmt))  fname *= " " * string(d[:fmt])::String
-		else                  fname *= " " * FMT[1]::String		# Then use default format
+		else                  fname *= " " * FMT[]::String		# Then use default format
 		end
 	else
-		fname *= " " * FMT[1]::String
+		fname *= " " * FMT[]::String
 	end
 	return fname
 end

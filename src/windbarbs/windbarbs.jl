@@ -25,7 +25,7 @@ Plot wind barbs in either 2D or 3D, from table data or two u,v grids.
 windbarbs(cmd0::String=""; first=true, kwargs...) = windbarbs(gmtread(cmd0, data=true); first=first, kwargs...)
 function windbarbs(arg1; first=true, kwargs...)
 
-	gmt_proggy = (IamModern[1]) ? "barb " : "psbarb "
+	gmt_proggy = (IamModern[]) ? "barb " : "psbarb "
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O)

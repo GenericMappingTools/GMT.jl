@@ -450,7 +450,7 @@ function plotgrid!(GI::GItype, Dgrat::Vector{<:GMTdataset}; annot=true, sides::S
 	# Make an image of the grid G_I overlaid with the graticules in Dgrat
 	d = KW(kw)
 	show = (find_in_dict(d, [:show])[1] !== nothing)
-	fmt::String = (find_in_dict(d, [:fmt])[1] !== nothing) ? d[:fmt]::String : FMT[1]
+	fmt::String = (find_in_dict(d, [:fmt])[1] !== nothing) ? d[:fmt]::String : FMT[]
 	symb = find_in_dict(d, [:name :savefig :figname])[2]
 	name::String = (symb != Symbol()) ? d[symb]::String : ""
 
@@ -721,7 +721,7 @@ function sideplot(; plane=:xz, vsize=8, depth=NaN, kw...)
 	opt_JZ::String = parse_JZ(d, "")[2]
 	zsize = (opt_JZ == "") ? vsize : parse(Float64, opt_JZ[5:end])
 
-	o::String = (is_in_dict(d, [:p :view :perspective]) !== nothing) ? parse_p(d, "")[2] : CURRENT_VIEW[1]
+	o::String = (is_in_dict(d, [:p :view :perspective]) !== nothing) ? parse_p(d, "")[2] : CURRENT_VIEW[]
 	spli = split(o[4:end], '/')
 	(length(spli) < 2) && error("The 'view' option must contain (azim,elev,z) or just (azim,elev)")
 	azim, elev = parse(Float64, spli[1]), parse(Float64, spli[2])

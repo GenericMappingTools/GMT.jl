@@ -44,11 +44,11 @@ To see the full documentation type: ``@? legend``
 """
 function legend(cmd0::String="", arg1=nothing; first::Bool=true, kwargs...)
 
-    gmt_proggy = (IamModern[1]) ? "legend "  : "pslegend "
+    gmt_proggy = (IamModern[]) ? "legend "  : "pslegend "
 
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
-	if (cmd0 == "" && arg1 === nothing && !IamModern[1])
+	if (cmd0 == "" && arg1 === nothing && !IamModern[])
 		first && error("Need input data or file for legend")
 		# Here we have a bit of a convoluted case. This section is for the case where 'legend' is called without
 		# input data and relies on the data stored in previous commands by using the 'legend' keyword. That is,
@@ -77,7 +77,7 @@ function legend(cmd0::String="", arg1=nothing; first::Bool=true, kwargs...)
 	# Trouble here is that 'legend' may be called from modern mode (inside gmtbegin()), case in which so far we want to
 	# maintain the GMT default of using the gmt.conf font settings (and scalings), or from the GMT.jl classic-but-modern
 	# where the default is 8 pts. This allows for the user to set options 'fontsize' or 'font' to override the defaults.
-	((fnt = get_legend_font(d, IamModern[1] ? 0 : 8; modern=IamModern[1])) != "") && (cmd *= " --FONT_ANNOT_PRIMARY=" * fnt)
+	((fnt = get_legend_font(d, IamModern[] ? 0 : 8; modern=IamModern[])) != "") && (cmd *= " --FONT_ANNOT_PRIMARY=" * fnt)
 
 	cmd, = parse_common_opts(d, cmd, [:F :c :p :q :t :JZ :UVXY :params]; first=first)
 
@@ -85,7 +85,7 @@ function legend(cmd0::String="", arg1=nothing; first::Bool=true, kwargs...)
 	                         (map=("g", arg2str, 1), outside=("J", arg2str, 1), inside=("j", arg2str, 1), norm=("n", arg2str, 1), paper=("x", arg2str, 1), anchor=("", arg2str, 2), width=("+w", arg2str), justify="+j", spacing="+l", offset=("+o", arg2str)), 'j')
 	cmd  = parse_these_opts(cmd, d, [[:C :clearance], [:M :source], [:S :scale], [:T :leg_file]])
 
-	SHOW_KWARGS[1] && legend_help()
+	SHOW_KWARGS[] && legend_help()
 	(opt_D == "") && error("The `position` argument is mandatory.")
 	#!contains(opt_D, "+w") && error("The `position` argument MUST contain the legend's width specification.")
 	cmd *= opt_D

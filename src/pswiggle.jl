@@ -67,7 +67,7 @@ const pswiggle! = wiggle!			# Alias
 
 # ---------------------------------------------------------------------------------------------------
 function wiggle_helper(cmd0::String, arg1; first=true, kw...)
-	gmt_proggy = (IamModern[1]) ? "wiggle "  : "pswiggle "
+	gmt_proggy = (IamModern[]) ? "wiggle "  : "pswiggle "
 
 	d, K, O = init_module(first, kw...)		# Also checks if the user wants ONLY the HELP mode
 

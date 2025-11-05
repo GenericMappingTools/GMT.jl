@@ -82,7 +82,7 @@ meca!(arg1; kwargs...)         = meca_helper("", arg1; first=false, kwargs...)
 # ---------------------------------------------------------------------------------------------------
 function meca_helper(cmd0::String, arg1; first=true, kwargs...)
 
-    proggy = (IamModern[1]) ? "meca "  : "psmeca "
+    proggy = (IamModern[]) ? "meca "  : "psmeca "
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 	common_mecas(cmd0, arg1, d, proggy, first, K, O)
 end
@@ -107,7 +107,7 @@ coupe!(arg1; kwargs...)         = coupe_helper("", arg1; first=false, kwargs...)
 # ---------------------------------------------------------------------------------------------------
 function coupe_helper(cmd0::String, arg1; first=true, kwargs...)
 
-    proggy = (IamModern[1]) ? "coupe "  : "pscoupe "
+    proggy = (IamModern[]) ? "coupe "  : "pscoupe "
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 	common_mecas(cmd0, arg1, d, proggy, first, K, O)
 end
@@ -141,7 +141,7 @@ function common_mecas(cmd0, arg1, d, proggy, first, K, O)
 		if (cmd_ == "")
 			cmd_ = add_opt(d, "", "Ad", [:Ad :cross_xy_azim], (x1="", y1="", strike="", length="", dip="", width="", dmin="", dmax="", frame="_+f"))
 		end
-		(cmd_ == "" && !SHOW_KWARGS[1]) && error("Specifying cross-section type is mandatory")
+		(cmd_ == "" && !SHOW_KWARGS[]) && error("Specifying cross-section type is mandatory")
 		cmd *= cmd_
 	end
 
@@ -172,7 +172,7 @@ function common_mecas(cmd0, arg1, d, proggy, first, K, O)
 		d[_val] = true
 	elseif (n_cols >= 7 && n_cols < 10)  d[:Sa] = true; symbs = [:Sa]		# Implicit Aki
 	elseif (n_cols >= 11 && n_cols < 14) d[:Sc] = true; symbs = [:Sc]		# Implicit CMT
-	elseif (SHOW_KWARGS[1])  symbs = [:Sa :aki :Sc :CMT :gcmt :Sm :mt :Sd :mt_closest :moment_closest :Sz :mt_deviatoric :moment_deviatoric :Sp :partial :Sx :principal :principal_axis :Sy :principal_closest :St :principal_deviatoric]
+	elseif (SHOW_KWARGS[])  symbs = [:Sa :aki :Sc :CMT :gcmt :Sm :mt :Sd :mt_closest :moment_closest :Sz :mt_deviatoric :moment_deviatoric :Sp :partial :Sx :principal :principal_axis :Sy :principal_closest :St :principal_deviatoric]
 	else  error("Must select one convention")
 	end
 	cmd_ = add_opt(d, "", string(symbs[1]), symbs, (scale="", angle="+a", font=("+f", font), justify="+j",

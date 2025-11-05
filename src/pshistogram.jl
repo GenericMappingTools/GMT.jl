@@ -89,7 +89,7 @@ function histogram_helper(cmd0::String, arg1, O::Bool, K::Bool, d::Dict{Symbol,A
 	arg2 = nothing		# May be needed if GMTcpt type is sent in via C
 	N_args = (arg1 === nothing) ? 0 : 1
 
-	proggy = (IamModern[1]) ? "histogram " : "pshistogram "
+	proggy = (IamModern[]) ? "histogram " : "pshistogram "
 
 	cmd::String = ""
 	opt_Z = add_opt(d, "", "Z", [:Z :kind], (counts = "_0", count = "_0", freq = "_1", frequency = "_1",
@@ -123,7 +123,7 @@ function histogram_helper(cmd0::String, arg1, O::Bool, K::Bool, d::Dict{Symbol,A
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
 	cmd = add_opt(d, cmd, "D", [:D :annot :annotate :counts], (beneath = "_+b", font = "+f", offset = "+o", vertical = "_+r"))
 	cmd = parse_INW_coast(d, [[:N :distribution :normal]], cmd, "N")
-	(SHOW_KWARGS[1]) && print_kwarg_opts(symbs, "NamedTuple | Tuple | Dict | String")
+	(SHOW_KWARGS[]) && print_kwarg_opts(symbs, "NamedTuple | Tuple | Dict | String")
 
 	cmd = add_opt(d, cmd, "E", [:E :width], (width = "", off = "+o", offset = "+o"))
 	
@@ -217,7 +217,7 @@ function histogram_helper(cmd0::String, arg1, O::Bool, K::Bool, d::Dict{Symbol,A
 	end
 
 	# The following looks a bit messy but it's needed to auto plotting verical lines with the limits
-	show_ = false;		fmt_ = FMT[1];		savefig_ = nothing
+	show_ = false;		fmt_ = FMT[];		savefig_ = nothing
 	if (limit_L !== nothing)
 		haskey(d, :show) && (show_ = (d[:show] != 0))				# Backup the :show val
 		d[:show] = false
@@ -252,7 +252,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function three_histos(d::Dict, I::GMTimage{UInt8, 3}, cmd, proggy, O, opt_T, opt_Z, opt_B, opt_R, opt_J)
-	fmt_ = FMT[1];		show_ = false;	savefig_ = nothing
+	fmt_ = FMT[];		show_ = false;	savefig_ = nothing
 	haskey(d, :show) && (show_ = (d[:show] != 0))				# Backup the :show val
 	d[:show] = false
 	haskey(d, :fmt) && (fmt_ = d[:fmt]; delete!(d, :fmt))		# Backup the :fmt val

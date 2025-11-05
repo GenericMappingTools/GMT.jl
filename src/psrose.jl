@@ -80,7 +80,7 @@ rose!(arg1; kwargs...)         = rose_helper("", arg1; first=false, kwargs...)
 # ---------------------------------------------------------------------------------------------------
 function rose_helper(cmd0::String, arg1; first=true, kwargs...)
 
-    gmt_proggy = (IamModern[1]) ? "rose "  : "psrose "
+    gmt_proggy = (IamModern[]) ? "rose "  : "psrose "
 
 	arg2 = nothing		# May be needed if GMTcpt type is sent in via C
 	N_args = (arg1 === nothing) ? 0 : 1
