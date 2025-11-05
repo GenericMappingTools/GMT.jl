@@ -158,7 +158,7 @@ function plotyy(arg1, arg2; first=true, kw...)
 	d = KW(kw)
 	(haskey(d, :xlabel)) ? (xlabel = string(d[:xlabel])::String;	delete!(d, :xlabel)) : xlabel = ""	# Only to used at the end
 	(haskey(d, :seclabel)) ? (seclabel = string(d[:seclabel])::String;	delete!(d, :seclabel)) : seclabel = ""
-	fmt = ((val = find_in_dict(d, [:fmt])[1]) !== nothing) ? arg2str(val)::String : FMT[1]::String
+	fmt = ((val = find_in_dict(d, [:fmt])[1]) !== nothing) ? arg2str(val)::String : FMT[]::String
 	savefig = ((val = find_in_dict(d, [:savefig :figname :name])[1]) !== nothing) ? arg2str(val)::String : nothing
 	Vd = ((val = find_in_dict(d, [:Vd])[1]) !== nothing) ? val : 0
 
@@ -953,7 +953,7 @@ function stem(cmd0::String="", arg1=nothing; first=true, kwargs...)
 		_show = d[:show] != 0;		d[:show]=false		# Backup the :show val
 	end
 
-	MULTI_COL[1] = false		# Some cat_2_arg2 paths set it to true, wich cannot happen in this function
+	MULTI_COL[] = false		# Some cat_2_arg2 paths set it to true, wich cannot happen in this function
 	have_baseline = ((find_in_dict(d, [:nobaseline])[1]) === nothing)
 	out1, out2 = common_plot_xyz("", mat2ds(arg1), "stem", first, false, d), nothing
 	(have_baseline) && (out2 = hlines!(0.0, show=_show))	# See if we have a no-baseline request
@@ -1255,7 +1255,7 @@ function quiver(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	len = ((val = find_in_dict(d, [:ms :markersize :MarkerSize :size])[1]) !== nothing) ? arg2str(val) : "8p"
 	d[:S] = "v$(len)+e+s"
 
-	MULTI_COL[1] = false		# Some cat_2_arg2 paths set it to true, wich cannot happen in this function 
+	MULTI_COL[] = false		# Some cat_2_arg2 paths set it to true, wich cannot happen in this function 
 	common_plot_xyz("", mat2ds(arg1), "quiver", first, false, d)
 end
 function quiver(arg1, arg2, arg3, arg4; first=true, kw...)
@@ -1410,7 +1410,7 @@ function band(cmd0::String="", arg1=nothing; first=true, width=0.0, envelope=fal
 	# Above we made some -L guessings but users may want to apply finer control, so let them access all options
 	_L = add_opt(d, "", "", [:L :polygon], (sym="_+d", asym="_+D", envelope="_+b", pen=("+p",add_opt_pen)))
 	d[:L] = (_L != "") ? _L : opt_L
-	MULTI_COL[1] = false		# Some cat_2_arg2 paths set it to true, wich cannot happen in this function 
+	MULTI_COL[] = false		# Some cat_2_arg2 paths set it to true, wich cannot happen in this function 
 
 	common_plot_xyz("", mat2ds(arg1), "lines", first, false, d)
 end
@@ -1879,7 +1879,7 @@ function cat_2_arg2(arg1, arg2, toDS::Bool=false)::Union{Matrix{<:Real}, GMTdata
 	if (size(arg1,1) == 1 && size(arg1,2) != 1)  arg1 = arg1[:]  end
 	if (size(arg2,1) == 1 && size(arg2,2) != 1)  arg2 = arg2[:]  end
 	arg = toDS ? mat2ds(hcat(arg1, arg2)) : hcat(arg1, arg2)
-	if (size(arg,2) > 2)  global MULTI_COL[1] = true  end
+	if (size(arg,2) > 2)  global MULTI_COL[] = true  end
 	return arg
 end
 function cat_2_arg2(arg1::GMTdataset, arg2::VMr, toDS::Bool=false)::GMTdataset
@@ -2170,7 +2170,7 @@ function biplot(coefs::Matrix{Float64}, scores::Matrix{Float64}, explained::Vect
 	!isempty(varlabels) && (length(varlabels) != size(coefs, 1)) &&
 		error("The number of varlabels ($(length(varlabels))) does not match the number of rows in data ($(size(coefs, 1)))")
 
-	show = find_in_dict(d, [:show])[1] !== nothing;		fmt = find_in_dict(d, [:fmt])[1];	(fmt === nothing) && (fmt = FMT[1]);
+	show = find_in_dict(d, [:show])[1] !== nothing;		fmt = find_in_dict(d, [:fmt])[1];	(fmt === nothing) && (fmt = FMT[]);
 	savefig = find_in_dict(d, [:savefig :figname :name])[1];
 	signs = sign.(coefs[findmax(abs, coefs, dims=1)[2]])
 	coefs = coefs .* signs				# Make sure that at each column the largest coefficient is positive.

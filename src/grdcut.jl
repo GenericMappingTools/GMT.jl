@@ -63,7 +63,7 @@ function grdcut_helper(cmd0::String, arg1; kwargs...)::Union{Nothing, GMTgrid, G
 	                        (crop2cutline="_+c", invert="_+i"))
 	(!contains(cmd, "-F") && opt_R == "") && error("Must provide the cutting limits. Either 'region' or 'clip'")
 	if (n > 0)  arg1, arg2 = args[:]  end
-	(SHOW_KWARGS[1]) && return print_kwarg_opts([:img :usegdal :gdal], "Any")		# Just print the options
+	(SHOW_KWARGS[]) && return print_kwarg_opts([:img :usegdal :gdal], "Any")		# Just print the options
 
 	# Images in file or any file but with a gdal request are read-and-cut but GDAL
 	if (cmd0 != "" && (guess_T_from_ext(cmd0) == " -Ti" || (find_in_dict(d, [:usegdal :gdal])[1]) !== nothing))

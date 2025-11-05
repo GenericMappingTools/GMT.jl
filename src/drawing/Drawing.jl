@@ -83,9 +83,9 @@ function helper_shapes(x, y, cmd; Vd=0, kw...)
 	CTRLshapes.first[1] = first
 
 	if (CTRLshapes.first[1])
-		CTRLshapes.fname[1] = PSname[1]
+		CTRLshapes.fname[1] = PSname[]
 		if ((val = find_in_dict(d, [:units])[1]) !== nothing)
-			_cmd, opt_B = parse_B(d, "", DEF_FIG_AXES[1])
+			_cmd, opt_B = parse_B(d, "", DEF_FIG_AXES[])
 			cmd *= " --PROJ_LENGTH_UNIT=p"
 			opt_J = " -Jx1"
 			if ((val = find_in_dict(d, [:paper])[1]) !== nothing)
@@ -101,7 +101,7 @@ function helper_shapes(x, y, cmd; Vd=0, kw...)
 			(opt_R == "")  && (opt_R = " -R0/21/0/29")
 			(opt_J == " ") && (opt_J = " -Jx1")
 		end
-		(opt_B == DEF_FIG_AXES[1]) && (opt_B = "")			# We don't want a default -B here
+		(opt_B == DEF_FIG_AXES[]) && (opt_B = "")			# We don't want a default -B here
 		opt_O, opt_P = "", " -P"
 	else
 		opt_R, opt_J, opt_B, opt_O, opt_P = " -R", " -J", "", " -O", ""

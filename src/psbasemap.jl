@@ -51,7 +51,7 @@ end
 
 function helper_basemap(O::Bool, K::Bool, d::Dict{Symbol, Any})
 
-	proggy = (IamModern[1]) ? "basemap "  : "psbasemap "
+	proggy = (IamModern[]) ? "basemap "  : "psbasemap "
 
 	cmd, = parse_BJR(d, "", "", O, " -JX" * split(DEF_FIG_SIZE, '/')[1] * "/0")
 	cmd, = parse_JZ(d, cmd)
@@ -62,8 +62,8 @@ function helper_basemap(O::Bool, K::Bool, d::Dict{Symbol, Any})
 	cmd  = parse_L(d, cmd)
 	#opt_D = parse_type_anchor(d, "", [:D :inset :inset_box],
 	                        #(map=("g", arg2str, 1), outside=("J", nothing, 1), inside=("j", nothing, 1), norm=("n", arg2str, 1), paper=("x", arg2str, 1), anchor=("", arg2str, 2), width="+w", size="+w", justify="+j", offset=("+o", arg2str), save="+s", translate="_+t", units="_+u"), 'j')
-	#(!IamModern[1] && opt_D != "") && (cmd *= opt_D)
-	#(IamModern[1] && opt_D != "") && @warn("The `inset` option is not available in modern mode. Please use the `inset()` function.")
+	#(!IamModern[] && opt_D != "") && (cmd *= opt_D)
+	#(IamModern[] && opt_D != "") && @warn("The `inset` option is not available in modern mode. Please use the `inset()` function.")
 	_cmd = finish_PS_nested(d, [proggy * cmd])
 	CTRL.pocket_d[1] = d		# Store d that may be not empty with members to use in other modules
 	((r = check_dbg_print_cmd(d, _cmd)) !== nothing) && return r

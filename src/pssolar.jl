@@ -41,7 +41,7 @@ To see the full documentation type: ``@? solar``
 """
 function solar(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
-	gmt_proggy = (IamModern[1]) ? "solar " : "pssolar "
+	gmt_proggy = (IamModern[]) ? "solar " : "pssolar "
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
 	def_J = (isempty(d)) ? " -JG0/0/14c" : " -JX14cd/0d"
@@ -61,7 +61,7 @@ function solar(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	end
 	_cmd = (opt_extra != "-I" && (!occursin("-M", cmd) && !occursin("-M", cmd0)) && (!occursin("-T", cmd) && !occursin("-T", cmd0))) ?
 	finish_PS_nested(d, [gmt_proggy * cmd]) : [gmt_proggy * cmd]
-	(length(_cmd) > 1 && startswith(_cmd[2], (IamModern[1]) ? "coast" : "pscoast") && !contains(_cmd[1], " -R") &&
+	(length(_cmd) > 1 && startswith(_cmd[2], (IamModern[]) ? "coast" : "pscoast") && !contains(_cmd[1], " -R") &&
 		contains(_cmd[2], " -R ")) && (_cmd[2] = replace(_cmd[2], "-R" => "-Rd"))		# Apparently solar defaults to -Rd but only internally in C
 	((r = check_dbg_print_cmd(d, _cmd)) !== nothing) && return r
 	(length(_cmd) == 1 && (contains(_cmd[1], " -I") || contains(_cmd[1], " -M"))) && return gmt(_cmd[1], arg1)	# The dump case is different

@@ -62,7 +62,7 @@ To see the full documentation type: ``@? mask``
 """
 function mask(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
-    gmt_proggy = (IamModern[1]) ? "mask "  : "psmask "
+    gmt_proggy = (IamModern[]) ? "mask "  : "psmask "
 
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 

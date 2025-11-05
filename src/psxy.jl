@@ -24,9 +24,9 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 	arg2, arg3, arg4 = nothing, nothing, nothing
 	N_args::Int = (arg1 === nothing) ? 0 : 1
 	is_ternary = (caller == "ternary")
-	if     (is3D)       gmt_proggy = (IamModern[1]) ? "plot3d "  : "psxyz "
-	elseif (is_ternary) gmt_proggy = (IamModern[1]) ? "ternary " : "psternary "
-	else		        gmt_proggy = (IamModern[1]) ? "plot "    : "psxy "
+	if     (is3D)       gmt_proggy = (IamModern[]) ? "plot3d "  : "psxyz "
+	elseif (is_ternary) gmt_proggy = (IamModern[]) ? "ternary " : "psternary "
+	else		        gmt_proggy = (IamModern[]) ? "plot "    : "psxy "
 	end
 
 	# ------------- Parse whose caller and some other initializations
@@ -60,7 +60,7 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 		@inbounds (!is_ternary && isa(arg1, GMTdataset) && length(arg1.ds_bbox) >= 4) && (CTRL.limits[1:4] = arg1.ds_bbox[1:4])
 		@inbounds (!is_ternary && isa(arg1, Vector{<:GMTdataset}) && length(arg1[1].ds_bbox) >= 4) && (CTRL.limits[1:4] = arg1[1].ds_bbox[1:4])
 		(!is_ternary && CTRL.limits[7:10] == [0,0,0,0]) && (CTRL.limits[7:10] = CTRL.limits[1:4])	# Start with plot=data limits
-		(!IamModern[1] && haskey(d, :hexbin) && !haskey(d, :aspect)) && (d[:aspect] = :equal)	# Otherwise ... gaps between hexagons
+		(!IamModern[] && haskey(d, :hexbin) && !haskey(d, :aspect)) && (d[:aspect] = :equal)	# Otherwise ... gaps between hexagons
 		(isa(arg1, GMTdataset) && size(arg1,2) > 1 && !isempty(arg1.colnames)) && (CTRL.XYlabels[1] = arg1.colnames[1]; CTRL.XYlabels[2] = arg1.colnames[2])
 		isa(arg1, Vector{<:GMTdataset}) && !isempty(arg1[1].colnames) && (CTRL.XYlabels[1] = arg1[1].colnames[1]; CTRL.XYlabels[2] = arg1[1].colnames[2])
 		if (is_ternary)  cmd, opt_J = parse_J(d, cmd, default=def_J)
@@ -95,8 +95,8 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 	(opt_R == "" && sub_module == "bar") && (opt_R = "/-0.4/0.4/0")		# Make sure y_min = 0
 	if (O && caller == "plotyy")
 		cmd = replace(cmd, opt_R => "")					# Must remove old opt_R because a new one will be constructed
-		ind = collect(findall("/", BOX_STR[1])[2])		# 'BOX_STR' was set in first call
-		opt_R = '/' * BOX_STR[1][4:ind[1]] * "?/?"		# Will become /x_min/x_max/?/?
+		ind = collect(findall("/", BOX_STR[])[2])		# 'BOX_STR' was set in first call
+		opt_R = '/' * BOX_STR[][4:ind[1]] * "?/?"		# Will become /x_min/x_max/?/?
 	end
 
 	cmd, arg1, opt_R, _, opt_i = read_data(d, cmd0, cmd, arg1, opt_R, is3D)		# FORCES RECOMPILE
@@ -110,7 +110,7 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 	(cmd0 != "" && isa(arg1, GMTdataset)) && (arg1 = with_xyvar(d, arg1))	# If we read a file, see if requested cols
 	(!got_usr_R && opt_R != "") && (CTRL.pocket_R[1] = opt_R)	# Still on time to store it.
 	(N_args == 0 && arg1 !== nothing) && (N_args = 1)	# arg1 might have started as nothing and got values above
-	(!O && caller == "plotyy") && (BOX_STR[1] = opt_R)	# This needs modifications (in plotyy) by second call
+	(!O && caller == "plotyy") && (BOX_STR[] = opt_R)	# This needs modifications (in plotyy) by second call
 
 	check_grouping!(d, arg1)			# See about request to do row groupings (and legends for that case)
 
@@ -229,7 +229,7 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 			(@warn("Can't plot the connector when 'bar' is already a nested call."); CTRL.pocket_call[3] = nothing))
 	end
 
-	(!IamModern[1]) && put_in_legend_bag(d, _cmd, arg1, O, opt_l)
+	(!IamModern[]) && put_in_legend_bag(d, _cmd, arg1, O, opt_l)
 
 	_cmd = gmt_proggy .* _cmd				# In any case we need this
 	_cmd = frame_opaque(_cmd, opt_B, opt_R, opt_J, opt_JZ)	# No -t in -B
@@ -280,11 +280,11 @@ function parse_grid2tri_case(d, cmd, caller, is3D, isFV, O, arg1)
 
 	if (!O && occursin('3', caller) && is_in_dict(d, [:p :view :perspective]) === nothing)
 		d[:p] = "217.5/30"			# Need this before parse_BJR() so MAP_FRAME_AXES can be guessed.
-		CURRENT_VIEW[1] = " -p217.5/30"
+		CURRENT_VIEW[] = " -p217.5/30"
 	end
 	cmd, opt_p = parse_p(d, cmd)	# Parse this one (view angle) aside so we can use it to remove invisible faces (3D)
-	(opt_p == "" && !is3D && !O) && (CURRENT_VIEW[1] = "")	# Make sure it empty under these conditions
-	(opt_p == "") ? (opt_p = CURRENT_VIEW[1]; cmd *= opt_p)	: (CURRENT_VIEW[1] = opt_p) # Save for eventual use in other modules.
+	(opt_p == "" && !is3D && !O) && (CURRENT_VIEW[] = "")	# Make sure it empty under these conditions
+	(opt_p == "") ? (opt_p = CURRENT_VIEW[]; cmd *= opt_p)	: (CURRENT_VIEW[] = opt_p) # Save for eventual use in other modules.
 
 	if (is3D && isFV)				# case of 3D faces
 		arg1 = (is_in_dict(d, [:replicate]) !== nothing) ? replicant(arg1, d) : deal_faceverts(arg1, d; del=find_in_dict(d, [:nocull])[1] === nothing)
@@ -451,8 +451,8 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function get_numeric_view()::Tuple{Float64, Float64}
-	isempty(CURRENT_VIEW[1]) && error("No perspective setting available yet (CURRENT_VIEW is empty)")
-	spl = split(CURRENT_VIEW[1][4:end], '/')
+	isempty(CURRENT_VIEW[]) && error("No perspective setting available yet (CURRENT_VIEW is empty)")
+	spl = split(CURRENT_VIEW[][4:end], '/')
 	azim = parse(Float64, spl[1])
 	elev = length(spl) > 1 ? parse(Float64, spl[2]) : 90.0
 	return azim, elev
@@ -506,25 +506,25 @@ function frame_opaque(cmd::Vector{String}, oB::String, oR::String, oJ::String, o
 	(oY != "") && (cmd[1] = replace(cmd[1], oY => ""))
 	p = scan_opt(cmd[1], "-p", true)
 	if bot		# Eventual grid will go UNDER the plot
-		[(IamModern[1] ? "basemap" : "psbasemap") * " " * oB * " " * oR * " " * oJ * " " * oJZ * oX * oY * p; cmd]
+		[(IamModern[] ? "basemap" : "psbasemap") * " " * oB * " " * oR * " " * oJ * " " * oJZ * oX * oY * p; cmd]
 	else		# Eventual grid will go ABOVE the image
-		[cmd; (IamModern[1] ? "basemap" : "psbasemap") * " " * oB * " " * oR * " " * oJ * " " * oJZ * oX * oY * p]
+		[cmd; (IamModern[] ? "basemap" : "psbasemap") * " " * oB * " " * oR * " " * oJ * " " * oJZ * oX * oY * p]
 	end
 end
 
 # ---------------------------------------------------------------------------------------------------
 function if_multicols(d, arg1, is3D::Bool)
 	# If the input is a GMTdataset and 'multicol' is asked, split the DS into a vector of DS's
-	(!MULTI_COL[1] && is_in_dict(d, [:multi :multicol :multicols]) === nothing) && return arg1
+	(!MULTI_COL[] && is_in_dict(d, [:multi :multicol :multicols]) === nothing) && return arg1
 	is3D && (delete!(d, [:multi, :multicol, :multicols]); @warn("'multile coluns' in 3D plots are not allowed. Ignoring."))
 	(isdataframe(arg1) || isODE(arg1)) && return arg1
 	(isa(arg1, Vector{<:GMTdataset}) && (size(arg1,2) > 2+is3D)) && return arg1		# Play safe
 	d2 = copy(d)
 	!haskey(d, :color) && (d2[:color] = true)	# Default to lines color cycling
-	MULTI_COL[1] && (d2[:multi] = true)			# MULTI_COL was set in cat_2_arg2() when 2nd arg had 2 or more cols.
+	MULTI_COL[] && (d2[:multi] = true)			# MULTI_COL was set in cat_2_arg2() when 2nd arg had 2 or more cols.
 	arg1 = ds2ds(arg1; is3D=is3D, d2...)		# Pass a 'd' copy and remove possible kw that are also parsed in psxy
 	delete!(d, [[:multi, :multicol, :multicols], [:lt, :linethick], [:ls, :linestyle], [:fill], [:fillalpha], [:color]])
-	MULTI_COL[1] = false						# If it was true, its jobe is done.
+	MULTI_COL[] = false						# If it was true, its jobe is done.
 	return arg1
 end
 
@@ -736,7 +736,7 @@ function fish_pagebg(d::Dict, cmd::Vector{String}; autoJZ::Bool=true)::Vector{St
 		CTRL.pocket_J[3] = @sprintf(" -JZ%.4g%c", z, cw)
 		cmd[ind_cmd] = replace(cmd[ind_cmd], opt_JZ => CTRL.pocket_J[3])
 	end
-	proggy = IamModern[1] ? "image " : "psimage "
+	proggy = IamModern[] ? "image " : "psimage "
 	[proggy * fname * CTRL.pocket_J[1] * CTRL.pocket_R[1] * opt_U * " -Dx0/0+w"*Wt*cw, cmd...]
 end
 
@@ -767,7 +767,7 @@ function fish_bg(d::Dict, cmd::Vector{String})::Vector{String}
 	fname = helper_fish_bgs(val)
 
 	opt_p = scan_opt(cmd[1], "-p", true);		opt_c = scan_opt(cmd[1], "-c", true)
-	opt_D = (IamModern[1]) ? " -Dr " : " -D "	# Found this difference by experience. It might break in future GMTs
+	opt_D = (IamModern[]) ? " -Dr " : " -D "	# Found this difference by experience. It might break in future GMTs
 	["grdimage" * opt_D * fname * CTRL.pocket_J[1] * opt_p * opt_c, cmd...]
 end
 
@@ -789,14 +789,14 @@ function helper_fish_bgs(val)::String
 	end
 	if (!gotfname)
 		((arg2 !== nothing) && isa(arg2, String) && (arg2[1] == '-')) && (arg2 = arg2[2:end]; opt_I = " -I")
-		opt_H = (IamModern[1]) ? " -H" : ""
+		opt_H = (IamModern[]) ? " -H" : ""
 		C::GMTcpt = (arg2 === nothing) ? makecpt_raw("makecpt -T0/256/1 -G0.25/0.94 -Cgray"*opt_I*opt_H) :	# The default gray scale
 		                                 isa(arg2, GMTcpt) ? makecpt_raw("makecpt -T0/256/1 -C" * opt_H, arg2) :
 							        	 makecpt_raw("makecpt -T0/256/1 -C" * string(arg2)::String * opt_I * opt_H)
 		image_cpt!(I, C)
 		CTRL.pocket_call[3] = I			# This signals finish_PS_module() to run _cmd first
 	end
-	FIG_MARGIN[1] = 0
+	FIG_MARGIN[] = 0
 	return fname
 end
 
@@ -1338,7 +1338,7 @@ function make_color_column_(d::Dict, cmd::String, len_cmd::Int, N_args::Int, n_p
 			reset_i = just_C[ind[1]:end]
 			just_C  = just_C[1:ind[1]-1]
 		end
-		arg2 = gmt(string("makecpt -T", mi-0.001*abs(mi), '/', ma+0.001*abs(ma), " ", just_C) * (IamModern[1] ? " -H" : ""))
+		arg2 = gmt(string("makecpt -T", mi-0.001*abs(mi), '/', ma+0.001*abs(ma), " ", just_C) * (IamModern[] ? " -H" : ""))
 		CURRENT_CPT[1] = arg2
 		if (occursin(" -C", cmd))  cmd = cmd[1:len_cmd+3]  end		# Strip the cpt name
 		if (reset_i != "")  cmd *= reset_i  end		# Reset -i, in case it existed
@@ -1391,7 +1391,7 @@ function check_caller(d::Dict, cmd::String, opt_S::String, opt_W::String, caller
 	end
 
 	if (occursin('3', caller))
-		(!occursin(" -B", cmd) && !O && (get(POSTMAN[1], "noframe", "") == ""))  && (cmd *= DEF_FIG_AXES3[1])	# For overlays default is no axes
+		(!occursin(" -B", cmd) && !O && (get(POSTMAN[1], "noframe", "") == ""))  && (cmd *= DEF_FIG_AXES3[])	# For overlays default is no axes
 		(get(POSTMAN[1], "noframe", "") != "") && delete!(POSTMAN[1], "noframe")
 	end
 
@@ -1580,17 +1580,17 @@ and `x` and `y` are in degrees, case in which an automatic projection takes plac
 if we want that the normal compuations makes sense.
 """
 function sort_visible_triangles(Dv::Vector{<:GMTdataset}; del_hidden=false, zfact=1.0)
-	azim, elev = parse.(Float64, split(CURRENT_VIEW[1][4:end], '/'))
+	azim, elev = parse.(Float64, split(CURRENT_VIEW[][4:end], '/'))
 	sin_az, cos_az, sin_el = sind(azim), cosd(azim), sind(elev)
 	prj, wkt, epsg = Dv[1].proj4, Dv[1].wkt, Dv[1].epsg
 	top_comment = Dv[1].comment		# save this for later restore as it can be used by tri_z() to detect vertical walls
 
 	(del_hidden != 1 && contains(Dv[1].comment[1], "vwall")) && (del_hidden = true)	# If have vwalls, need to del invis
 	if (del_hidden == 1)		# Remove the triangles that are not visible from the normal view_vec
-		bak_view = CURRENT_VIEW[1]	# Save because mapproject will reset it to "" (parsing on a module that has first = true)
+		bak_view = CURRENT_VIEW[]	# Save because mapproject will reset it to "" (parsing on a module that has first = true)
 		#t = isgeog(Dv) ? mapproject(Dv, J="t$((Dv[1].ds_bbox[1] + Dv[1].ds_bbox[2])/2)/1:1", C=true, F=true) : Dv	# FORCES RECOMPILE
 		t::Vector{<:GMTdataset} = isgeog(Dv) ? gmt("mapproject -Jt$((Dv[1].ds_bbox[1] + Dv[1].ds_bbox[2])/2)/1:1 -C -F", Dv) : Dv
-		CURRENT_VIEW[1] = bak_view 
+		CURRENT_VIEW[] = bak_view 
 		view_vec = [sin_az * cosd(elev), cos_az * cosd(elev), sin_el]
 		is_vis = [dot(facenorm(t[k].data, zfact=zfact, normalize=false), view_vec) > 0 for k in eachindex(t)]
 		Dv = Dv[is_vis]
@@ -1675,7 +1675,7 @@ viz(FV, replicate=(centers=rand(10,3)*10, scales=0.1))
 """
 function replicant(FV::GMTfv; kwargs...)		# For direct calls to replicat()
 	d = KW(kwargs)
-	(is_in_dict(d, [:p :view :perspective]) === nothing) && (CURRENT_VIEW[1] = " -p217.5/30")
+	(is_in_dict(d, [:p :view :perspective]) === nothing) && (CURRENT_VIEW[] = " -p217.5/30")
 	replicant(FV, d)
 end
 

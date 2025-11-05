@@ -84,7 +84,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_G_grdtrk(d::Dict, symbs::Vector{<:Symbol}, cmd::String, arg1, arg2)
 
-	(SHOW_KWARGS[1]) && return (print_kwarg_opts(symbs, "GMTgrid | Tuple | String"), nothing,arg1,arg2)
+	(SHOW_KWARGS[]) && return (print_kwarg_opts(symbs, "GMTgrid | Tuple | String"), nothing,arg1,arg2)
 
 	if ((grid_tuple = find_in_dict(d, symbs)[1]) !== nothing)
 		if (isa(grid_tuple, Tuple))

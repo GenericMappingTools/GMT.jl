@@ -54,38 +54,38 @@ else
 end
 
 const global G_API = [C_NULL]
-const global PSname = [""]					# The PS file (filled in __init__) where, in classic mode, all lands.
+const PSname = Ref{String}("")					# The PS file (filled in __init__) where, in classic mode, all lands.
 const global TMPDIR_USR = [tempdir(), "", ""]	# Save the tmp dir and user name (also filled in __init__)
 const global TESTSDIR = joinpath(dirname(pathof(GMT))[1:end-4], "test", "")	# To have easy access to test files
-const global IMG_MEM_LAYOUT = [""]			# "TCP"	 For Images.jl. The default is "TRBa"
-const global GRD_MEM_LAYOUT = [""]			# "BRP" is the default for GMT PS images.
-const global CURRENT_VIEW   = [""]			# To store the current viewpoint (-p)
-const global MULTI_COL   = Vector{Bool}(undef, 1);MULTI_COL[1] = false	# To allow plottig multiple columns at once.
-const global IamModern   = Vector{Bool}(undef, 1);IamModern[1] = false		# To know if we are in modern mode
-const global FirstModern = Vector{Bool}(undef, 1);FirstModern[1] = false	# To know
-const global DidOneGmtCmd = [Bool(0)]		# To know when first gmt() call. Used in first modern mode cmd to not restart what is still fresh
-const global IamModernBySubplot = Vector{Bool}(undef, 1);	IamModernBySubplot[1] = false	# To know if set in subpot
-const global IamSubplot  = Vector{Bool}(undef, 1);IamSubplot[1]  = false	# To know if we are in subplot mode
+const IMG_MEM_LAYOUT = Ref{String}("")			# "TCP"	 For Images.jl. The default is "TRBa"
+const GRD_MEM_LAYOUT = Ref{String}("")			# "BRP" is the default for GMT PS images.
+const CURRENT_VIEW = Ref{String}("")			# To store the current viewpoint (-p)
+const MULTI_COL   = Ref{Bool}(false)	# To allow plottig multiple columns at once.
+const IamModern   = Ref{Bool}(false)		# To know if we are in modern mode
+const FirstModern = Ref{Bool}(false)	# To know
+const DidOneGmtCmd = Ref{Bool}(false)		# To know when first gmt() call. Used in first modern mode cmd to not restart what is still fresh
+const IamModernBySubplot = Ref{Bool}(false)	# To know if set in subpot
+const IamSubplot  = Ref{Bool}(false)	# To know if we are in subplot mode
 const global IamInset    = [false, false]									# To know if we are in Inset mode
-const global usedConfPar = Vector{Bool}(undef, 1);usedConfPar[1] = false	# Hacky solution for the session's memory trouble
-const global ThemeIsOn   = Vector{Bool}(undef, 1);ThemeIsOn[1] = false		# To know if we have an active plot theme
-const global CONVERT_SYNTAX = Vector{Bool}(undef, 1);CONVERT_SYNTAX[1] = false	# To only convert to hard core GMT syntax (like Vd=2)
-const global SHOW_KWARGS = Vector{Bool}(undef, 1);SHOW_KWARGS[1] = false	# To just print the kwargs of a option call)
-const global isFranklin  = Vector{Bool}(undef, 1);isFranklin[1] = false		# Only set/unset by the Docs building scripts.
-const global isJupyter   = [Bool(0)]										# Jupyter and Modern need special treatment (Quarto).
-const global isPSclosed  = [Bool(0)]										# Modern mode will close the PS at the end. We need to know that
-const global noGrdCopy   = Vector{Bool}(undef, 1);noGrdCopy[1] = false		# If true, grids are sent without transpose/copy
-const global GMTCONF     = Vector{Bool}(undef, 1);GMTCONF[1] = false		# Flag if gmtset was used and must be 'unused' 
-const global FMT = ["png"]                         # The default plot format
-const global BOX_STR = [""]                        # Used in plotyy to know -R of first call
+const usedConfPar = Ref{Bool}(false)	# Hacky solution for the session's memory trouble
+const ThemeIsOn   = Ref{Bool}(false)		# To know if we have an active plot theme
+const CONVERT_SYNTAX = Ref{Bool}(false)	# To only convert to hard core GMT syntax (like Vd=2)
+const SHOW_KWARGS = Ref{Bool}(false)	# To just print the kwargs of a option call)
+const isFranklin  = Ref{Bool}(false)		# Only set/unset by the Docs building scripts.
+const isJupyter   = Ref{Bool}(false)										# Jupyter and Modern need special treatment (Quarto).
+const isPSclosed  = Ref{Bool}(false)										# Modern mode will close the PS at the end. We need to know that
+const noGrdCopy   = Ref{Bool}(false)		# If true, grids are sent without transpose/copy
+const GMTCONF     = Ref{Bool}(false)		# Flag if gmtset was used and must be 'unused'
+const FMT = Ref{String}("png")                         # The default plot format
+const BOX_STR = Ref{String}("")                        # Used in plotyy to know -R of first call
 const global POSTMAN = [Dict{String,String}()]     # To pass messages to functions (start with get_dataset) 
-const global SACO = [Dict{String,Union{AbstractArray, Vector{AbstractArray}}}()]  # When funs (fillsinks) want to return extra data but not via the return mechanism
+#const global SACO = [Dict{String,Union{AbstractArray, Vector{AbstractArray}}}()]  # When funs (fillsinks) want to return extra data but not via the return mechanism
 const DEF_FIG_SIZE  = "15c/10c"                    # Default fig size for plot like programs. Approx 16/11
 const DEF_FIG_AXES_BAK     = " -Baf -BWSen"        # Default fig axes for plot like programs
 const DEF_FIG_AXES3_BAK    = " -Baf -Bza"          # 		"" but for 3D views
-const global DEF_FIG_AXES  = [DEF_FIG_AXES_BAK]    # This one may be be changed by theme()
-const global DEF_FIG_AXES3 = [DEF_FIG_AXES3_BAK]   #		""
-const global FIG_MARGIN = [1]                      # Figure margin in points after convertion by 'psconvert'. Accessible 'margin' common option
+const DEF_FIG_AXES  = Ref{String}(DEF_FIG_AXES_BAK)    # This one may be be changed by theme()
+const DEF_FIG_AXES3 = Ref{String}(DEF_FIG_AXES3_BAK)   #		""
+const FIG_MARGIN = Ref{Int}(1)                      # Figure margin in points after convertion by 'psconvert'. Accessible 'margin' common option
 const global CTRL = CTRLstruct(zeros(13), zeros(6), [true], [false],
                                [:arrows, :bubblechart, :basemap, :band, :clip, :coast, :colorbar, :grdcontour, :hband, :hlines, :inset, :logo, :lines, :grdvector, :plot, :plot3, :quiver, :scatter, :scatter3, :stairs, :text, :vlines, :vband], fill(nothing, 6), ["","",""], ["","", "", "   "], ["",""], ["",""], [false,true], [C_NULL], [Dict()])
 const global CTRLshapes = CTRLstruct2([true], [true], [""])			# Used in sub-module Drawing
@@ -464,14 +464,14 @@ function __init__(test::Bool=false)
 	clear_sessions(3600)		# Delete stray sessions dirs older than 1 hour
 	G_API[1] = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS)	# (0.010179 sec)
 	theme_modern()				# Set the MODERN theme and some more gmtlib_setparameter() calls
-	haskey(ENV, "JULIA_GMT_IMGFORMAT") && (FMT[1] = ENV["JULIA_GMT_IMGFORMAT"])
+	haskey(ENV, "JULIA_GMT_IMGFORMAT") && (FMT[] = ENV["JULIA_GMT_IMGFORMAT"])
 	f = joinpath(GMTuserdir[1], "theme_jl.txt")
-	(isfile(f)) && (theme(readline(f));	ThemeIsOn[1] = false)	# False because we don't want it reset in showfig()
+	(isfile(f)) && (theme(readline(f));	ThemeIsOn[] = false)	# False because we don't want it reset in showfig()
 	user = (Sys.isunix() || Sys.isapple()) ? Libc.getpwuid(Libc.getuid(), true).username : Sys.iswindows() ? ENV["USERNAME"] : ""
 	TMPDIR_USR[2] = replace(user, " " => "_")
 	haskey(ENV, "JULIA_GMT_MULTIFILE") && (TMPDIR_USR[3] = string("_", getpid()))
-	PSname[1] = TMPDIR_USR[1] * "/" * "GMTjl_" * TMPDIR_USR[2] * TMPDIR_USR[3] * ".ps"
-	DidOneGmtCmd[1] = false
+	PSname[] = TMPDIR_USR[1] * "/" * "GMTjl_" * TMPDIR_USR[2] * TMPDIR_USR[3] * ".ps"
+	DidOneGmtCmd[] = false
 end
 
 """

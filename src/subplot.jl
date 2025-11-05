@@ -38,7 +38,7 @@ Parameters
 """
 function subplot(fim=nothing; stop=false, kwargs...)
 
-	FirstModern[1] = true			# To know if we need to compute -R in plot. Due to a GMT6.0 BUG
+	FirstModern[] = true			# To know if we need to compute -R in plot. Due to a GMT6.0 BUG
  
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
@@ -60,7 +60,7 @@ function subplot(fim=nothing; stop=false, kwargs...)
 	cmd = add_opt(d, cmd, "Fs", [:Fs :panels_size :panel_size :panel_sizes])
 	cmd = add_opt(d, cmd, "Ff", [:Ff :splot_size])
 
-	if ((val = find_in_dict(d, [:F :dims :dimensions :size :sizes], false)[1]) !== nothing || SHOW_KWARGS[1])
+	if ((val = find_in_dict(d, [:F :dims :dimensions :size :sizes], false)[1]) !== nothing || SHOW_KWARGS[])
 		if (isa(val, NamedTuple) && haskey(nt2dict(val), :width))	# Preferred way
 			cmd *= " -F" * helper_sub_F(val)		# VAL = (width=x, height=x, fwidth=(...), fheight=(...))
 			delete!(d, [:F, :dims, :dimensions, :size, :sizes])
@@ -90,17 +90,17 @@ function subplot(fim=nothing; stop=false, kwargs...)
 		cmd = guess_panels_size(cmd, val_grid)					# For limitted grid dims, guess panel sizes if not provided
 		(dbg_print_cmd(d, cmd) !== nothing) && return cmd		# Vd=2 cause this return
 
-		isJupyter[1] = isdefined(Main, :IJulia)					# show fig relies on this and at time of "gmt begin" this must be known.
-		!isJupyter[1] && (isJupyter[1] = (isdefined(Main, :VSCodeServer) && get(ENV, "DISPLAY_IN_VSC", "") != ""))
+		isJupyter[] = isdefined(Main, :IJulia)					# show fig relies on this and at time of "gmt begin" this must be known.
+		!isJupyter[] && (isJupyter[] = (isdefined(Main, :VSCodeServer) && get(ENV, "DISPLAY_IN_VSC", "") != ""))
 
-		if (!IamModern[1])			# If we are not in modern mode, issue a gmt("begin") first
+		if (!IamModern[])			# If we are not in modern mode, issue a gmt("begin") first
 			# Default name (GMTplot.ps) is set in gmt_main()
 			fname = ((val_ = find_in_dict(d, [:fmt])[1]) !== nothing) ? string("GMTplot ", val_) : ""
 			if ((val_ = find_in_dict(d, [:figname :name :savefig])[1]) !== nothing)
 				fname = get_format(string(val_), nothing, d)		# Get the fig name and format.
 			end
 			gmt("begin " * fname)
-			IamModernBySubplot[1] = true	# We need this to know if subplot(:end) should call gmtend() or not
+			IamModernBySubplot[] = true	# We need this to know if subplot(:end) should call gmtend() or not
 		end
 		try
 			gmt("subplot begin " * cmd);
@@ -111,21 +111,21 @@ function subplot(fim=nothing; stop=false, kwargs...)
 			gmt("gmtset  MAP_FRAME_TYPE fancy")
 		catch; resetGMT()
 		end
-		IamSubplot[1], IamModern[1] = true, true
+		IamSubplot[], IamModern[] = true, true
 	elseif (do_set)
-		(!IamSubplot[1]) && error("Cannot call subplot(set, ...) before setting dimensions")
+		(!IamSubplot[]) && error("Cannot call subplot(set, ...) before setting dimensions")
 		_, pane = parse_c(d, cmd)
 		cmd = pane * cmd				# Here we don't want the "-c" part
 		cmd = add_opt(d, cmd, "A", [:fixedlabel]) * opt_C			# Also add the eventual this panel -C clearance option
 		if (dbg_print_cmd(d, cmd) !== nothing)  return cmd  end		# Vd=2 cause this return
 		gmt("subplot set " * cmd)
 	else
-		if (IamModernBySubplot[1])
-			IamModernBySubplot[1] = false
+		if (IamModernBySubplot[])
+			IamModernBySubplot[] = false
 			show = (do_show || haskey(d, :show)) ? " show" : ""
 			helper_showfig4modern(show)
 		else
-			gmt("subplot end");	IamSubplot[1] = false
+			gmt("subplot end");	IamSubplot[] = false
 		end
 	end
 	CTRL.pocket_d[1] = d		# Store d that may be not empty with members to use in other modules (e.g., cornerplot)

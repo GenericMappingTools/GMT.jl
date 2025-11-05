@@ -55,14 +55,14 @@ function colorbar(arg1::Union{Nothing, GMTcpt}=nothing; first=true, kwargs...)
 end
 
 function colorbar_parser(arg1::Union{Nothing, GMTcpt}=nothing; first=true, kwargs...)
-	gmt_proggy = (IamModern[1]) ? "colorbar "  : "psscale "
+	gmt_proggy = (IamModern[]) ? "colorbar "  : "psscale "
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
 	parse_paper(d)		# See if user asked to temporarily pass into paper mode coordinates
 
 	isBnone = (get(d, :B, nothing) == :none)
 	cmd = parse_BJR(d, "", "", O, "")[1]
-	opt_B = (!contains(cmd, " -B") && !IamModern[1] && !isBnone) ? DEF_FIG_AXES[1] : ""
+	opt_B = (!contains(cmd, " -B") && !IamModern[] && !isBnone) ? DEF_FIG_AXES[] : ""
 	cmd = parse_JZ(d, cmd; O=O, is3D=(CTRL.pocket_J[3] != ""))[1]		# We can't use parse_J(d)[1]
 	cmd = parse_common_opts(d, cmd, [:F :UVXY :params :margin :c :p :t]; first=first)[1]
 	cmd = parse_these_opts(cmd, d, [[:G :truncate], [:I :shade], [:M :monochrome], [:N :dpi],

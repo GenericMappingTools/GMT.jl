@@ -72,7 +72,7 @@ function grdview_helper(cmd0::String, arg1, O::Bool, K::Bool, d::Dict)
 		(cmd = replace(cmd, opt_B => ""))			# Dont plot axes for plain images if that was not required
 
 	cmd, = parse_common_opts(d, cmd, [:UVXY :margin :c :f :n :p :t :params]; first=first)
-	!first && !contains(cmd, " -p") && (cmd *= CURRENT_VIEW[1])		# Inherit current view
+	!first && !contains(cmd, " -p") && (cmd *= CURRENT_VIEW[])		# Inherit current view
 	cmd  = add_opt(d, cmd, "S", [:S :smooth])
 	if ((val = find_in_dict(d, [:N :plane])[1]) !== nothing)
 		cmd *= " -N" * parse_arg_and_pen(val, "+g", false)
@@ -117,7 +117,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_G_grdview(d::Dict, symbs::Array{<:Symbol}, cmd0::String, cmd::String, arg1, arg2, arg3, arg4, arg5)
-	(SHOW_KWARGS[1]) && return print_kwarg_opts(symbs, "GMTgrid | Tuple | String"), arg1, arg2, arg3, arg4, arg5
+	(SHOW_KWARGS[]) && return print_kwarg_opts(symbs, "GMTgrid | Tuple | String"), arg1, arg2, arg3, arg4, arg5
 	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
 		function intern!(cmd, val, arg1, arg2, arg3, arg4)
 			opt = isa(val, GMTgrid) ? 'G' : 'z'		# 'z' is the fake option that works as a backdoor for images

@@ -112,7 +112,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_E_mkcpt(d::Dict, symbs::Array{<:Symbol}, cmd::String, arg1)
-	(SHOW_KWARGS[1]) && return print_kwarg_opts(symbs, "Number")
+	(SHOW_KWARGS[]) && return print_kwarg_opts(symbs, "Number")
 	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
 		(arg1 === nothing && cmd[1] == ' ') && error("E option requires that a data table is provided as well")
 		cmd *= " -E" * arg2str(val)::String
@@ -128,9 +128,9 @@ function helper_cpt(d::Dict, cmd::String)
 	cmd, Tvec = parse_opt_range(d, cmd, "T")
 	!isempty(Tvec) && (cmd *= arg2str(Tvec, ','); Tvec = Float64[]) # Work arround a semi-bug in GMT that is (< 6.5) unable to recognize num lists.
 	if ((val = find_in_dict(d, [:name :save])[1]) !== nothing)
-		(IamModern[1]) && (cmd *= " -H")
+		(IamModern[]) && (cmd *= " -H")
 		cmd *=  " > " * string(val)::String
-	elseif (IamModern[1])  cmd *= " -H"
+	elseif (IamModern[])  cmd *= " -H"
 	end
 	return cmd, Tvec
 end
@@ -138,7 +138,7 @@ end
 # -------------------------------------------------------------------------------------------
 function parse_opt_range(d::Dict, cmd::String, opt::String="")::Tuple{String, Vector{Float64}}
 	symbs = [:T :range :inc :bin]
-	(SHOW_KWARGS[1]) && return print_kwarg_opts(symbs, "Tuple | Array | String | Number"), Float64[]	# Just print the options
+	(SHOW_KWARGS[]) && return print_kwarg_opts(symbs, "Tuple | Array | String | Number"), Float64[]	# Just print the options
 	Tvec::Vector{Float64} = Float64[]
 	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
 		if (isa(val, Tuple))

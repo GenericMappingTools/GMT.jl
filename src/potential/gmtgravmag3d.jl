@@ -89,7 +89,7 @@ function _gravmag3d_helper(arg1, d::Dict{Symbol,Any})
 			cmd = add_opt(d, cmd, "M", [:M :body], (shape="+s", params=","))
 		end
 		opt = " -Ts"
-	elseif (SHOW_KWARGS[1])  opt = "" 
+	elseif (SHOW_KWARGS[])  opt = "" 
 	else   error("Missing one of 'index', 'raw_triang' or 'str' data")
 	end
 	

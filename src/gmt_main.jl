@@ -9,7 +9,7 @@ function gmt(cmd::String, args...)
 	(cmd == "") && return nothing		# Building docs with Quarto leads here when examples use ModernMode
 	(cmd == "destroy") && return gmt_restart()
 	ressurectGDAL()			# Some GMT modules may have called GDALDestroyDriverManager() 
-	DidOneGmtCmd[1] = true	# Even if something errors here this keeps track that gmt() already called once
+	DidOneGmtCmd[] = true	# Even if something errors here this keeps track that gmt() already called once
 
 	# ----------- Minimal error checking ------------------------
 	n_argin::Int = length(args)
@@ -31,10 +31,10 @@ function gmt(cmd::String, args...)
 	# First argument is the command string, e.g., "blockmean -R0/5/0/5 -I1" or just "help"
 	g_module::String, r = strtok(cmd)
 
-	isPSclosed[1] = false				# Only a gmtend() call sets this to true
+	isPSclosed[] = false				# Only a gmtend() call sets this to true
 	if (g_module == "begin")			# Use this default fig name instead of "gmtsession"
-		fig_ext::String = (isFranklin[1]) ? " png" : (isJupyter[1]) ? " " * FMT[1] : FMT[1]
-		(r == "") && (r = (isFranklin[1] || isJupyter[1]) ? (TMPDIR_USR[1] * "/" * "GMTjl_" * TMPDIR_USR[2] * TMPDIR_USR[3] * fig_ext) : "GMTplot " * fig_ext)
+		fig_ext::String = (isFranklin[]) ? " png" : (isJupyter[]) ? " " * FMT[] : FMT[]
+		(r == "") && (r = (isFranklin[] || isJupyter[]) ? (TMPDIR_USR[1] * "/" * "GMTjl_" * TMPDIR_USR[2] * TMPDIR_USR[3] * fig_ext) : "GMTplot " * fig_ext)
 		# Here we must account for the fact that we may have started from a CLASSIC session. Then, the session dir does
 		# not exist yet and in consequence when GMT_begin calls gmt_manage_workflow it will wrongly assume we are in CLASSIC
 		# mode and write a gmt.conf in the session dir with classic instead of modern defaults. Solution is to create it now.
@@ -43,7 +43,7 @@ function gmt(cmd::String, args...)
 		!isdir(sess) && mkdir(sess)
 		gmtlib_setparameter(G_API[1], "MAP_ORIGIN_X", "0")	# Workarround GMT bug.
 		gmtlib_setparameter(G_API[1], "MAP_ORIGIN_Y", "0")
-		IamModern[1] = true
+		IamModern[] = true
 	elseif (g_module == "end")			# Last command of a MODERN session
 		(r == "") && (r = "-Vq")		# Cannot have a no-args for this case otherwise it prints help
 		gmtlib_setparameter(G_API[1], "MAP_ORIGIN_X", "20c")
@@ -90,10 +90,10 @@ function gmt(cmd::String, args...)
 		isJLL && (r *= " -G" * GSbin)
 	end
 	if (occursin("-%", r) || occursin("-&", r))			# It has also a mem layout request
-		r, IMG_MEM_LAYOUT[1], GRD_MEM_LAYOUT[1] = parse_mem_layouts(r)
-		(IMG_MEM_LAYOUT[1] != "") && (mem_layout::String = IMG_MEM_LAYOUT[1];	mem_kw = "API_IMAGE_LAYOUT")
-		(GRD_MEM_LAYOUT[1] != "") && (mem_layout = GRD_MEM_LAYOUT[1];	mem_kw = "API_GRID_LAYOUT")
-		(IMG_MEM_LAYOUT[1] != "" && mem_layout[end] != 'a')  && (mem_layout *= "a")
+		r, IMG_MEM_LAYOUT[], GRD_MEM_LAYOUT[] = parse_mem_layouts(r)
+		(IMG_MEM_LAYOUT[] != "") && (mem_layout::String = IMG_MEM_LAYOUT[];	mem_kw = "API_IMAGE_LAYOUT")
+		(GRD_MEM_LAYOUT[] != "") && (mem_layout = GRD_MEM_LAYOUT[];	mem_kw = "API_GRID_LAYOUT")
+		(IMG_MEM_LAYOUT[] != "" && mem_layout[end] != 'a')  && (mem_layout *= "a")
 		GMT_Set_Default(G_API[1], mem_kw, mem_layout);	# Tell module to give us the image/grid with this mem layout
 	end
 
@@ -112,7 +112,7 @@ function gmt(cmd::String, args...)
 				r *= " -Tc"
 			end
 		end
-		r, IMG_MEM_LAYOUT[1], GRD_MEM_LAYOUT[1] = parse_mem_layouts(r)
+		r, IMG_MEM_LAYOUT[], GRD_MEM_LAYOUT[] = parse_mem_layouts(r)
 	elseif (occursin("read", g_module) && (occursin("-Ti", r) || occursin("-Tg", r)))
 		need2destroy = true
 	end
@@ -150,13 +150,13 @@ function gmt(cmd::String, args...)
 	#println(g_module * " " * unsafe_string(GMT_Create_Cmd(G_API[1], LL)))	# Uncomment when need to confirm argins
 
 	# 5. Assign input sources (from Julia to GMT) and output destinations (from GMT to Julia)
-	(g_module == "grdpaste") && (noGrdCopy[1] = true)	# Signal grid_init() that it should not make a grid copy
+	(g_module == "grdpaste") && (noGrdCopy[] = true)	# Signal grid_init() that it should not make a grid copy
 	for k = 1:n_items									# Number of GMT containers involved in this module call */
 		if (X[k].direction == GMT_IN && n_argin == 0) error("GMT: Expects a Matrix for input") end
 		ptr = (X[k].direction == GMT_IN) ? args[X[k].pos+1] : nothing
 		GMTJL_Set_Object(G_API[1], X[k], ptr, pad)		# Set object pointer
 	end
-	(g_module == "grdpaste") && (noGrdCopy[1] = false)
+	(g_module == "grdpaste") && (noGrdCopy[] = false)
 
 	# 6. Run GMT module; give usage message if errors arise during parsing
 	status = GMT_Call_Module(G_API[1], g_module, GMT_MODULE_OPT, LL)
@@ -208,13 +208,13 @@ function gmt(cmd::String, args...)
 	# 9. Destroy linked option list
 	GMT_Destroy_Options(G_API[1], pLL)
 
-	#if (IamModern[1])  gmt_put_history(G_API[1]);	end	# Needed, otherwise history is not updated
-	(IamModern[1] && g_module != "begin") && gmt_restart()		# Needed, otherwise history is not updated
+	#if (IamModern[])  gmt_put_history(G_API[1]);	end	# Needed, otherwise history is not updated
+	(IamModern[] && g_module != "begin") && gmt_restart()		# Needed, otherwise history is not updated
 
-	IMG_MEM_LAYOUT[1] = "";		GRD_MEM_LAYOUT[1] = ""		# Reset to not afect next readings
+	IMG_MEM_LAYOUT[] = "";		GRD_MEM_LAYOUT[] = ""		# Reset to not afect next readings
 
 	# GMT6.1.0 f up and now we must be very careful to not let the GMT breaking screw us
-	(need2destroy && !IamModern[1]) && gmt_restart()
+	(need2destroy && !IamModern[]) && gmt_restart()
 
 	ressurectGDAL()		# Some GMT modules may have called GDALDestroyDriverManager() and some GDAL module may come after us.
 	(contains(cmd, " -Gp") || contains(cmd, " -GP")) && gmt_restart()	# Apparently patterns are screwing the session
@@ -291,26 +291,26 @@ function parse_mem_layouts(cmd::AbstractString)
 # See if a specific grid or image mem layout is requested. If found return its value and also
 # strip the corresponding option from the CMD string (otherwise GMT would scream)
 # The specific codes "-%" and "-&" are set in gmtreadwrite
-	GRD_MEM_LAYOUT[1] = "";	IMG_MEM_LAYOUT[1] = ""
+	GRD_MEM_LAYOUT[] = "";	IMG_MEM_LAYOUT[] = ""
 
 	if ((ind = findfirst( "-%", cmd)) !== nothing)
-		IMG_MEM_LAYOUT[1], resto = strtok(cmd[ind[1]+2:end])
-		if (length(IMG_MEM_LAYOUT[1]) < 3 || length(IMG_MEM_LAYOUT[1]) > 4)
-			error("Memory layout option must have 3 characters and not $(IMG_MEM_LAYOUT[1])")
+		IMG_MEM_LAYOUT[], resto = strtok(cmd[ind[1]+2:end])
+		if (length(IMG_MEM_LAYOUT[]) < 3 || length(IMG_MEM_LAYOUT[]) > 4)
+			error("Memory layout option must have 3 characters and not $(IMG_MEM_LAYOUT[])")
 		end
 		cmd = cmd[1:ind[1]-1] * " " * resto 	# Remove the -L pseudo-option because GMT would bail out
 	end
-	if (isempty(IMG_MEM_LAYOUT[1]))				# Only if because we can't have a double request
+	if (isempty(IMG_MEM_LAYOUT[]))				# Only if because we can't have a double request
 		if ((ind = findfirst( "-&", cmd)) !== nothing)
-			GRD_MEM_LAYOUT[1], resto = strtok(cmd[ind[1]+2:end])
-			if (length(GRD_MEM_LAYOUT[1]) < 2)
-				error("Memory layout option must have at least 2 chars and not $(GRD_MEM_LAYOUT[1])")
+			GRD_MEM_LAYOUT[], resto = strtok(cmd[ind[1]+2:end])
+			if (length(GRD_MEM_LAYOUT[]) < 2)
+				error("Memory layout option must have at least 2 chars and not $(GRD_MEM_LAYOUT[])")
 			end
 			cmd = cmd[1:ind[1]-1] * " " * resto 	# Remove the -L pseudo-option because GMT would bail out
 		end
 	end
-	IMG_MEM_LAYOUT[1] = string(IMG_MEM_LAYOUT[1]);	GRD_MEM_LAYOUT[1] = string(GRD_MEM_LAYOUT[1]);	# We don't want substrings
-	return cmd, IMG_MEM_LAYOUT[1], GRD_MEM_LAYOUT[1]
+	IMG_MEM_LAYOUT[] = string(IMG_MEM_LAYOUT[]);	GRD_MEM_LAYOUT[] = string(GRD_MEM_LAYOUT[]);	# We don't want substrings
+	return cmd, IMG_MEM_LAYOUT[], GRD_MEM_LAYOUT[]
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -395,7 +395,7 @@ function get_grid(API::Ptr{Nothing}, object, cube::Bool)::GMTgrid
 			end
 			layout = "BCB";
 		end
-	elseif (GRD_MEM_LAYOUT[1] == "" || startswith(GRD_MEM_LAYOUT[1], "BC"))
+	elseif (GRD_MEM_LAYOUT[] == "" || startswith(GRD_MEM_LAYOUT[], "BC"))
 		for col = 1:nx
 			for row = 1:ny
 				ij = ((row-1) + padTop) * mx + col + padLeft		# Was GMT_IJP(row, col, mx, padTop, padLeft)
@@ -403,9 +403,9 @@ function get_grid(API::Ptr{Nothing}, object, cube::Bool)::GMTgrid
 			end
 		end
 		layout = "BCB";
-	elseif (GRD_MEM_LAYOUT[1][2] == 'R')		# Store array in Row Major
+	elseif (GRD_MEM_LAYOUT[][2] == 'R')		# Store array in Row Major
 		ind_y = 1:ny		# Start assuming "TR"
-		if (startswith(GRD_MEM_LAYOUT[1], "BR"))  ind_y = ny:-1:1  end	# Bottom up
+		if (startswith(GRD_MEM_LAYOUT[], "BR"))  ind_y = ny:-1:1  end	# Bottom up
 		k = 1
 		for row = ind_y
 			tt = ((row-1) + padTop) * mx + padLeft
@@ -414,7 +414,7 @@ function get_grid(API::Ptr{Nothing}, object, cube::Bool)::GMTgrid
 				k = k + 1
 			end
 		end
-		layout = GRD_MEM_LAYOUT[1][1:2]*'B';
+		layout = GRD_MEM_LAYOUT[][1:2]*'B';
 	else
 		# Was t[GMT_IJP(row, col, mx, padTop, padLeft)
 		#[z[row,col] = t[((row-1) + padTop) * mx + col + padLeft] for row = 1:ny, col = 1:nx]
@@ -425,7 +425,7 @@ function get_grid(API::Ptr{Nothing}, object, cube::Bool)::GMTgrid
 		end
 		layout = "TCB";
 	end
-	GRD_MEM_LAYOUT[1] = ""		# Reset because this variable is global
+	GRD_MEM_LAYOUT[] = ""		# Reset because this variable is global
 
 	# Return grids via a float matrix in a struct
 	rng, inc = (gmt_hdr.n_bands > 1) ? (fill(NaN,8), fill(NaN,3)) : (fill(NaN,6), fill(NaN,2))
@@ -479,10 +479,10 @@ function get_image(API::Ptr{Nothing}, object)::GMTimage
 	Y  = collect(range(wesn[3], stop=wesn[4], length=(ny + gmt_hdr.registration)))
 
 	layout = join([Char(gmt_hdr.mem_layout[k]) for k=1:4])		# This is damn diabolic (and GMT is lying for cubes)
-	if (occursin("0", IMG_MEM_LAYOUT[1]) || occursin("1", IMG_MEM_LAYOUT[1]))	# WTF is 0 or 1?
+	if (occursin("0", IMG_MEM_LAYOUT[]) || occursin("1", IMG_MEM_LAYOUT[]))	# WTF is 0 or 1?
 		t = deepcopy(unsafe_wrap(Array, data, ny * nx * nz))
 	else
-		if (IMG_MEM_LAYOUT[1] != "")  layout = IMG_MEM_LAYOUT[1][1:3] * layout[4]  end	# 4rth is data determined
+		if (IMG_MEM_LAYOUT[] != "")  layout = IMG_MEM_LAYOUT[][1:3] * layout[4]  end	# 4rth is data determined
 		if (layout != "" && layout[1] == 'I')		# The special layout for using this image in Images.jl
 			o = (nz == 1) ? (ny, nx) : (nz, ny, nx)
 		else
@@ -811,7 +811,7 @@ function grid_init(API::Ptr{Nothing}, X::GMT_RESOURCE, Grid::GMTgrid, pad::Int=2
 # We are given a Julia grid and use it to fill the GMT_GRID structure
 
 	mode = (Grid.layout != "" && Grid.layout[2] == 'R') ? GMT_CONTAINER_ONLY : GMT_CONTAINER_AND_DATA
-	noGrdCopy[1] && (mode = GMT_CONTAINER_ONLY)
+	noGrdCopy[] && (mode = GMT_CONTAINER_ONLY)
 	(mode == GMT_CONTAINER_ONLY) && (pad = Grid.pad)		# Here we must follow what the Grid says it has
 	n_bds = size(Grid.z, 3);
 	_cube = (cube || n_bds > 1)
@@ -896,8 +896,8 @@ function image_init(API::Ptr{Nothing}, img_box)::Ptr{GMT_IMAGE}
 
 	if (isempty_(img_box))			# Just tell image_init() to allocate an empty container
 		I = convert(Ptr{GMT_IMAGE}, GMT_Create_Data(API, GMT_IS_IMAGE, GMT_IS_SURFACE, GMT_IS_OUTPUT, NULL, NULL, NULL, 0, 0, NULL))
-		if (IMG_MEM_LAYOUT[1] != "")
-			mem_layout = length(IMG_MEM_LAYOUT[1]) == 3 ? IMG_MEM_LAYOUT[1] * "a" : IMG_MEM_LAYOUT[1]
+		if (IMG_MEM_LAYOUT[] != "")
+			mem_layout = length(IMG_MEM_LAYOUT[]) == 3 ? IMG_MEM_LAYOUT[] * "a" : IMG_MEM_LAYOUT[]
 			GMT_Set_Default(API, "API_IMAGE_LAYOUT", mem_layout);
 		end
 		return I
@@ -1490,17 +1490,17 @@ end
 # ---------------------------------------------------------------------------------------------------
 function resetGMT(dorestart::Bool=true)
 	# Reset everything to a fresh GMT session. That is reset all global variables to their initial state
-	IamModern[1] = false;	FirstModern[1] = false;		IamSubplot[1] = false;	usedConfPar[1] = false;
-	MULTI_COL[1] = false;	CONVERT_SYNTAX[1] = false;	CURRENT_VIEW[1] = "";	SHOW_KWARGS[1] = false;
-	IMG_MEM_LAYOUT[1] = "";	GRD_MEM_LAYOUT[1] = "";		CTRL.limits .= 0.0;	CTRL.proj_linear[1] = true;
+	IamModern[] = false;	FirstModern[] = false;		IamSubplot[] = false;	usedConfPar[] = false;
+	MULTI_COL[] = false;	CONVERT_SYNTAX[] = false;	CURRENT_VIEW[] = "";	SHOW_KWARGS[] = false;
+	IMG_MEM_LAYOUT[] = "";	GRD_MEM_LAYOUT[] = "";		CTRL.limits .= 0.0;	CTRL.proj_linear[1] = true;
 	CTRLshapes.fname[1] = "";CTRLshapes.first[1] = true; CTRLshapes.points[1] = false;
 	CURRENT_CPT[1]  = GMTcpt();		LEGEND_TYPE[1] = legend_bag();	ressurectGDAL()
-	DEF_FIG_AXES[1] = DEF_FIG_AXES_BAK;		DEF_FIG_AXES3[1] = DEF_FIG_AXES3_BAK;
+	DEF_FIG_AXES[] = DEF_FIG_AXES_BAK;		DEF_FIG_AXES3[] = DEF_FIG_AXES3_BAK;
 	CTRL.pocket_J[1], CTRL.pocket_J[2], CTRL.pocket_J[3], CTRL.pocket_J[4] = "", "", "", "   ";
 	CTRL.IamInPaperMode[:] = [false, true];	IamInset[1], IamInset[2] = false, false
 	CTRL.pocket_call[1:3] .= nothing;	CTRL.pocket_R[1:2] .= "";	CTRL.figsize .= 0.0
 	CTRL.XYlabels[1] = "";	CTRL.XYlabels[2] = "";	CTRL.returnPS[1] = false
-	(dorestart) && (gmt_restart(); clear_sessions(); DidOneGmtCmd[1] = false)
+	(dorestart) && (gmt_restart(); clear_sessions(); DidOneGmtCmd[] = false)
 end
 
 # ---------------------------------------------------------------------------------------------------
