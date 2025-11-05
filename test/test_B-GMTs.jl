@@ -32,6 +32,7 @@
 	C = makecpt(range=(0,10,1));
 	contourf(d, C, limits=(-0.5,9.5,0,5), pen=0.25, labels=(line=(:min,:max),), Vd=dbg2)
 	contourf(d, C=C, limits=(-0.5,9.5,0,5), pen=0.25, labels=(line=(:min,:max),), Vd=dbg2)
+	contourf(G, tanaka=true)
 
 	println("	EARTHTIDE")
 	earthtide();

@@ -1176,7 +1176,7 @@ function line2multiseg(M::Matrix{T}; is3D::Bool=false, color::GMTcpt=GMTcpt(), a
 	_lt = (lt === nothing) ? Float64[] : vec(Float64.(lt))
 	if (!isempty(_lt))
 		nth = length(_lt)
-		if (nth < size(M,1))
+		if (nth < n_ds)
 			if (nth == 2)  th::Vector{Float64} = collect(linspace(_lt[1], _lt[2], n_ds))	# If we have only 2 thicknesses.
 			else           th = hlp_var_thk(lt, n_ds)
 			end
@@ -1219,7 +1219,7 @@ function hlp_var_thk(lt, n_ds)
 	# The cmd "vec(gmt_GMTdataset("sample1d -T -o1", [collect(1:nth) _lt], collect(linspace(1,nth,n_ds))).data)" causes
 	# function invalidation (Fck Julia) that goes up the stack chain. So we approx it with a 2nd order polynomial interp.
 	nth = length(lt)
-	p = polyfit(1:nth, lt)
+	p = polyfit(1:nth, lt, 2)
 	polyval(p, linspace(1, nth, n_ds))
 end
 
