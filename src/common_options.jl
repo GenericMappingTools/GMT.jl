@@ -2332,7 +2332,7 @@ function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, mapa; grow_mat=n
 			cmd = add_opt(d, cmd, opt, mapa)
 		end
 		return cmd
-	elseif (val == true || val === "")		# Just the flag
+	elseif (val === true || val === "")					# Just the flag. With the === we avoid the case 1 == true
 		return string(cmd, " -", opt)
 	elseif (expand_str && isa(mapa, NamedTuple))		# Use the mapa KEYS as possibe values of 'val'
 		cmd_ = ""
