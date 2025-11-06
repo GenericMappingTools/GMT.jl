@@ -706,7 +706,7 @@ end
 function helper_ecmwf_vars(single::Bool, pressure::Bool, prefix::String)::Tuple{Dict{String, Vector{String}}, String}
 	pressure && (single = false);	!single && (pressure = true)
 	dim_char = (single) ? "2" : "3";	title_str = ((single) ? "\nSingle" : "\nPressure")
-	return include(joinpath(dirname(pathof(getfield(Main, nameof(@__MODULE__)))), "extras/" * prefix * "vars" * dim_char * "d.jl")), title_str
+	return include(joinpath(dirname(pathof(GMTmodule[])), "extras/" * prefix * "vars" * dim_char * "d.jl")), title_str
 end
 	
 # ---------------------------------------------------------------------------------------------------------------
