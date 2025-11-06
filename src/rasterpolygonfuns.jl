@@ -242,8 +242,8 @@ function colorzones!(shapes::GDtype, fun::Function; img::GMTimage=nothing, url::
 	(url != "") && (layer_n = get_layer_number(wms, layer))
 	#layout = ""		# GDAL always returns TRB, so if img has a different one, we must convert (arg in gdalrasterize).
 	#(img !== nothing && !startswith(img.layout, "TR")) && (layout = img.layout)
-	#row_dim, col_dim = (img.layout == "" || img.layout[2] == 'C') ? (1,2) : (2,1)	# If RowMajor the array is disguised 
-	row_dim, col_dim = (1,2)
+	row_dim, col_dim = (img.layout == "" || img.layout[2] == 'C') ? (1,2) : (2,1)	# If RowMajor the array is disguised 
+	#row_dim, col_dim = (1,2)
 
 	isa(shapes, GMTdataset) && (shapes = [shapes])
 	for k = 1:numel(shapes)

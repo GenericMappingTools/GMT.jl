@@ -177,7 +177,7 @@ function gmtread(_fname::String; kwargs...)
 		elseif ((fname[1] == '@' && any(contains.(fname, ["_relief", "_age", "_dist", "_faa", "_gebco", "_geoid", "_mag", "_mask", "_mdt", "_mss", "_synbath", "_wdmam"]))) || startswith(fname, "@srtm_"))
 			opt_T = " -Tg"
 		end
-		if (opt_T != "") cmd, opt_J = parse_R_projected(d, cmd, opt_R)  end	# See if we have a non-geographic region request 
+		if (opt_T !== "" && opt_R !== "") cmd, opt_J = parse_R_projected(d, cmd, opt_R)  end	# See if we have a non-geographic region request 
 	end
 
 	(opt_T == "" && opt_bi != "") && (opt_T = " -Td")	# If asked to read binary, must be a 'data' file.
