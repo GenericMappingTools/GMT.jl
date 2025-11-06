@@ -4972,8 +4972,7 @@ Check if `cmd0` is a remote grid or a OceanColor one and return the default CPT 
 """
 function check_remote_cpt(cmd0::String)
 	(cmd0 == "") && return ""
-	#cpt_path = joinpath(dirname(pathof(GMT)), "..", "share", "cpt")
-	cpt_path = joinpath(dirname(pathof(getfield(Main, nameof(@__MODULE__)))), "..", "share", "cpt")
+	cpt_path = joinpath(dirname(pathof(GMTmodule[])), "..", "share", "cpt")		# GMTmodule[] = GMT. But needed as variable somewhere
 	if     (occursin("SST.sst", cmd0))     return cpt_path * "/sst_oc.cpt"
 	elseif (occursin("CHL.chlor_a", cmd0)) return cpt_path * "/chlor_oc.cpt"
 	end
