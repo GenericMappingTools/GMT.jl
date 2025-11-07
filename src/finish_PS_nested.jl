@@ -103,9 +103,10 @@ function add_opt_module_barr2(symb::Symbol)::Union{String, Vector{String}}
 	r::Union{String, Vector{String}} = ""
 	#if     (symb == :coast)    r = coast_parser(false, "", W=0.5, A="200/0/2", Vd=2)[1]		# coast!(W=0.5, A="200/0/2", Vd=2)
 	#elseif (symb == :colorbar) r = colorbar_parser(pos=(anchor="RM",), B="af", first=false, Vd=2)[1]
-	if     (symb == :coast)    r = "pscoast -R -J -A200/0/2 -W0.5 -Da"		# coast!(W=0.5, A="200/0/2", Vd=2)
-	elseif (symb == :colorbar) r = "psscale -R -J -Baf -DJRM -C"
-	elseif (symb == :logo)     r = "gmtlogo -Dx0/0+w5c -R -J"; 	# logo!(Vd=2)
+	opt_RJ = !IamModern[] ? "-R -J" : ""
+	if     (symb == :coast)    r = "pscoast $opt_RJ -A200/0/2 -W0.5 -Da"		# coast!(W=0.5, A="200/0/2", Vd=2)
+	elseif (symb == :colorbar) r = "psscale $opt_RJ -Baf -DJRM -C"
+	elseif (symb == :logo)     r = "gmtlogo -Dx0/0+w5c $opt_RJ"; 	# logo!(Vd=2)
 	end
 	(r !== "" && CTRL.pocket_R[1] !== "") && (r = replace(r, "-R" => CTRL.pocket_R[1]))
 	return r
