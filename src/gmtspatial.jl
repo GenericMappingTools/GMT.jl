@@ -66,7 +66,7 @@ function _gmtspatial_helper(cmd0::String, arg1, arg2, d::Dict)::Union{GMTdataset
 
 	cmd, = parse_common_opts(d, "", [:R :V_params :b :d :e :f :g :h :i :o :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :nn :nearest_neighbor], [:C :clip], [:E :handedness], [:F :force_polygons],
-	                                 [:I :intersections], [:Q :centroid :area :length], [:W :extend]])
+	                                 [:I :intersections], [:L :tilelines], [:Q :centroid :area :length], [:W :extend]])
 	cmd = add_opt(d, cmd, "S", [:S :polygons :polyg_process], (buffer="b", holes="_h", intersection ="_i", dateline="_s", union="_u"))
 
 	cmd, args, n, = add_opt(d, cmd, "D", [:D :duplicates], :data, [arg1, arg2], (amax="+a", dmax="+d", cmax="+c", Cmax="+c", fact="+s", ortho="_+p"))
