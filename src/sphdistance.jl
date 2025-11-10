@@ -48,7 +48,7 @@ function sphdistance(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
-	cmd, = parse_common_opts(d, "", [:G :RIr :V_params :b :d :e :h :i :yx])
+	cmd, = parse_common_opts(d, "", [:G :RIr :V_params :b :d :e :h :i :j :yx])
 	cmd  = parse_these_opts(cmd, d, [[:C :save_mem], [:D :duplicates], [:E :quantity], [:L :dist_unit]])
 	cmd, arg1, arg2 = parse_QN_sphdst(d, [[:Q :voronoi], [:N :nodes]], cmd, arg1, arg2)
 

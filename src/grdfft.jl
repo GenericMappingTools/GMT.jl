@@ -4,8 +4,6 @@
 Take the 2-D forward Fast Fourier Transform and perform one or more mathematical operations
 in the frequency domain before transforming back to the space domain.
 
-See full GMT docs at [`grdfft`]($(GMTdoc)grdfft.html)
-
 Parameters
 ----------
 
@@ -36,6 +34,8 @@ Parameters
 
     Integrate the field, i.e., compute integral_over_z (field * dz). This is equivalent to divide
     by kr in the frequency domain (kr is radial wave number).
+- **M** | **mgal45**
+
 - **N** | **inquire** :: [Type => Str]         ``Arg = [a|f|m|r|s|nx/ny][+a|[+d|h|l][+e|n|m][+twidth][+v][+w[suffix]][+z[p]]``
 
     Choose or inquire about suitable grid dimensions for FFT and set optional parameters. Control the FFT dimension:
@@ -53,7 +53,7 @@ function grdfft(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 	cmd, = parse_common_opts(d, "", [:G :V_params :f])
 	is_geog = contains(cmd, " -fg")
 	cmd  = parse_these_opts(cmd, d, [[:A :azim], [:C :upward], [:D :dfdz], [:E :radial_power], [:F :filter],
-	                                 [:I :integrate], [:N :inquire], [:S :scale]])
+	                                 [:I :integrate], [:M :mgal45], [:N :inquire], [:Q :no_wavenumber], [:S :scale]])
 
 	cmd, _, arg1, arg2 = find_data(d, cmd0, cmd, arg1, arg2)
 	(isa(arg1, Matrix{<:Real})) && (arg1 = mat2grid(arg1))

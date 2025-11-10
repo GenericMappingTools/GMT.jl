@@ -62,6 +62,7 @@ function colorbar_parser(arg1::Union{Nothing, GMTcpt}=nothing; first=true, kwarg
 
 	isBnone = (get(d, :B, nothing) == :none)
 	cmd = parse_BJR(d, "", "", O, "")[1]
+	contains(cmd, "Bpx+l") && (cmd = replace(cmd, "Bpx+" => "Bpxaf+"))	# Because a simple -Bx would make annots at every color transition
 	opt_B = (!contains(cmd, " -B") && !IamModern[] && !isBnone) ? DEF_FIG_AXES[] : ""
 	cmd = parse_JZ(d, cmd; O=O, is3D=(CTRL.pocket_J[3] != ""))[1]		# We can't use parse_J(d)[1]
 	cmd = parse_common_opts(d, cmd, [:F :UVXY :params :margin :c :p :t]; first=first)[1]
