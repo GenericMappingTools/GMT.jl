@@ -361,11 +361,11 @@ A ``GMTgrid`` or a ``GMTimage`` if `dataset` is used or ``nothing`` otherwise.
 To see the plots produced by these examples type: ``@? earthregions``
 """
 function earthregions(name::String=""; proj="guess", grid::Bool=false, dataset="", res="", exact::Bool=false,
-                      registration="", country::Bool=false, round=0, Vd::Int=0)
-	_earthregions(name, string(proj), grid, string(dataset), string(res), exact, string(registration), country, round, Vd)
+                      registration="", country::Bool=false, round=0, show=true, Vd::Int=0)
+	_earthregions(name, string(proj), grid, string(dataset), string(res), exact, string(registration), country, round, show==1, Vd)
 end
 
-function _earthregions(name::String, proj::String, grid::Bool, dataset::String, res::String, exact::Bool, registration::String, country::Bool, round, Vd::Int)
+function _earthregions(name::String, proj::String, grid::Bool, dataset::String, res::String, exact::Bool, registration::String, country::Bool, round, show::Bool, Vd::Int)
 
 	(name == "") && (println("Available collections:\n\t" * join(["DCW", "NatEarth", "UN", "Mainlands", "IHO", "Wiki", "Lakes"], ", ")); return)
 
@@ -447,7 +447,7 @@ function _earthregions(name::String, proj::String, grid::Bool, dataset::String, 
 
 	_type = string(type)
 	if (_type == "map")
-		coast(R=lim, G="tomato", S="lightblue", proj=proj, E=opt_E, Vd=Vd, show=true)
+		coast(R=lim, G="tomato", S="lightblue", proj=proj, E=opt_E, Vd=Vd, show=show)
 	else
 		regist = (registration != "") ? "_" * registration[1] : ""	# If user want to screw (no p or g), let it do.
 		(res != "" && regist == "") && (regist = isImg ? "_p" : "_g") 

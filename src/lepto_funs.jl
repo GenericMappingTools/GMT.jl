@@ -1210,6 +1210,7 @@ A `GMTConComp` structure with the following fields:
 """
 bwconncomp(mat::BitMatrix; conn::Int=8) = bwconncomp(mat2img(collect(mat)); conn=conn)
 bwconncomp(mat::Matrix{<:Bool}; conn::Int=8) = bwconncomp(mat2img(mat); conn=conn)
+bwconncomp(mat::Matrix{<:Integer}; conn::Int=8) = bwconncomp(mat2img(collect(mat .!= 0)); conn=conn)
 bwconncomp(G::GMTgrid{Bool, 2}; conn::Int=8) = bwconncomp(mat2img(G.z, G); conn=conn)
 function bwconncomp(I::GMTimage; conn::Int=8)
 	ppixI  = get_ppixI(I)

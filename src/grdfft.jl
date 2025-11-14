@@ -52,8 +52,9 @@ function grdfft(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
 
 	cmd, = parse_common_opts(d, "", [:G :V_params :f])
 	is_geog = contains(cmd, " -fg")
-	cmd  = parse_these_opts(cmd, d, [[:A :azim], [:C :upward], [:D :dfdz], [:E :radial_power], [:F :filter],
+	cmd  = parse_these_opts(cmd, d, [[:A :azim], [:C :upward], [:D :dfdz], [:F :filter],
 	                                 [:I :integrate], [:M :mgal45], [:N :inquire], [:Q :no_wavenumber], [:S :scale]])
+	cmd = add_opt(d, cmd, "E", [:E :radial_power], (dir="_r", normalize="_+n", wavelength=""))
 
 	cmd, _, arg1, arg2 = find_data(d, cmd0, cmd, arg1, arg2)
 	(isa(arg1, Matrix{<:Real})) && (arg1 = mat2grid(arg1))
