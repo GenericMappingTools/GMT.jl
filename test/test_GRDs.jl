@@ -87,7 +87,7 @@
 
 	println("	GRDFFT")
 	grdfft(G, upward=800); 	# Use G of previous test
-	grdfft(G, G, E=[]);
+	grdfft(G, G, E=true);
 
 	println("	GRDFIL")
 	grdmask([3 3], R="0/6/0/6", I=1, N="10/NaN/NaN", S=0);

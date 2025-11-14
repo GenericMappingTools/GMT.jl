@@ -331,15 +331,15 @@
 	r = coast(region=:global, proj=:Winkel, par=(MAP=1,), grid=(pen=:red,), Vd=2)
 	@test occursin("--MAP=1 --MAP_GRID_PEN_PRIMARY=red", r)
 
-	r,o = GMT.prepare2geotif(Dict{Symbol,Any}(:geotif => :trans), ["pscoast  -Rd -JX12cd/0 -Baf -BWSen -W0.5p -Da"], "", false);
+	r,o = GMT.prepare2geotif(Dict{Symbol,Any}(:geotif => :trans), ["pscoast  -Rd -JX15cd/0 -Baf -BWSen -W0.5p -Da"], "", false);
 	@test startswith(r[1],"pscoast  -Rd -JX30cd/0 -W0.5p -Da  -B0 --MAP_FRAME_TYPE=inside --MAP_FRAME_PEN=0.1,254")
 	@test o == " -TG -W+g"
-	r,o = GMT.prepare2geotif(Dict{Symbol,Any}(:kml => :trans), ["pscoast  -Rd -JX12cd/0 -Baf -BWSen -W0.5p -Da"], "", false);
+	r,o = GMT.prepare2geotif(Dict{Symbol,Any}(:kml => :trans), ["pscoast  -Rd -JX15cd/0 -Baf -BWSen -W0.5p -Da"], "", false);
 	@test startswith(r[1],"pscoast  -Rd -JX30cd/0 -W0.5p -Da  -B0 --MAP_FRAME_TYPE=inside --MAP_FRAME_PEN=0.1,254")
 	@test o == " -TG -W+k"
-	o = GMT.prepare2geotif(Dict{Symbol,Any}(:kml => "+tLoLo"), ["pscoast  -Rd -JX12cd/0 -Baf -W0.5p -Da"], "", false)[2];
+	o = GMT.prepare2geotif(Dict{Symbol,Any}(:kml => "+tLoLo"), ["pscoast  -Rd -JX15cd/0 -Baf -W0.5p -Da"], "", false)[2];
 	@test o == " -TG -W+k+tLoLo"
-	o = GMT.prepare2geotif(Dict{Symbol,Any}(:kml => (title=:Lolo, layer=:bla, fade=(1,2), URL="http")), ["pscoast  -Rd -JX12 -Baf -W0.5p -Da"], "", false)[2];
+	o = GMT.prepare2geotif(Dict{Symbol,Any}(:kml => (title=:Lolo, layer=:bla, fade=(1,2), URL="http")), ["pscoast  -Rd -JX15 -Baf -W0.5p -Da"], "", false)[2];
 	@test o == " -TG -W+k+tLolo+nbla+f1/2+uhttp"
 	#coast(region=:global, kml=:trans, proj=:merc,Vd=dbg2)
 
