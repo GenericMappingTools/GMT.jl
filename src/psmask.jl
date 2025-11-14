@@ -66,7 +66,7 @@ function mask(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
-	cmd, _, _, opt_R = parse_BJR(d, "", "", O, " -JX12c/12c")
+	cmd, _, _, opt_R = parse_BJR(d, "", "", O, " -JX15c/15c")
 	cmd, = parse_common_opts(d, cmd, [:I :UVXY :JZ :c :e :p :r :t :w :params]; first=first)
 	cmd  = parse_these_opts(cmd, d, [[:C :endclip :end_clip_path], [:D :dump], [:L :nodegrid], [:N :invert :inverse],
 	                                 [:Q :cut :cut_number], [:S :search_radius], [:T :tiles]])

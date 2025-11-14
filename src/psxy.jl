@@ -1389,7 +1389,7 @@ function check_caller(d::Dict, cmd::String, opt_S::String, opt_W::String, caller
 			delete!(d, :noshade)
 		end
 		if (!occursin(" -G", cmd) && !occursin(" -C", cmd))  cmd *= " -G0/115/190"	end
-		if (!occursin(" -J", cmd))  cmd *= " -JX12c/0"  end
+		if (!occursin(" -J", cmd))  cmd *= " -JX15c/0"  end
 	end
 
 	if (occursin('3', caller))
