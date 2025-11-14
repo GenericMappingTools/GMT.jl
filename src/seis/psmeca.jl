@@ -18,7 +18,7 @@ Parameters
 - **C** | **color** | **cmap** :: [Type => Number | Str | GMTcpt]
 
     Give a CPT and let compressive part color be determined by the z-value in the third column. 
-- **D** | **depth_limits** :: [Type => Str | Tuple]
+- **D** | **depth_limits** | **depth_range** :: [Type => Str | Tuple]
 
     Plots events between depmin and depmax.
 - **E** | **fill_extensive** | **extensionfill** :: [Type => Str | Number]
@@ -31,7 +31,7 @@ Parameters
 
     Selects shade, color or pattern for filling the sectors [Default is no fill].
 - $(opt_P)
-- **L** | **outline_pen** | **pen_outline** :: [Type => Str | Number | Tuple]
+- **L** | **pen_outline** :: [Type => Str | Number | Tuple]
 
     Draws the “beach ball” outline with pen attributes instead of with the default pen set by **pen**
 - **M** | **same_size** | **samesize** :: [Type => Bool]
@@ -81,7 +81,6 @@ meca!(arg1; kwargs...)         = meca_helper("", arg1; first=false, kwargs...)
 
 # ---------------------------------------------------------------------------------------------------
 function meca_helper(cmd0::String, arg1; first=true, kwargs...)
-
     proggy = (IamModern[]) ? "meca "  : "psmeca "
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 	common_mecas(cmd0, arg1, d, proggy, first, K, O)
@@ -106,7 +105,6 @@ coupe!(arg1; kwargs...)         = coupe_helper("", arg1; first=false, kwargs...)
 
 # ---------------------------------------------------------------------------------------------------
 function coupe_helper(cmd0::String, arg1; first=true, kwargs...)
-
     proggy = (IamModern[]) ? "coupe "  : "pscoupe "
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 	common_mecas(cmd0, arg1, d, proggy, first, K, O)
@@ -122,34 +120,42 @@ function common_mecas(cmd0, arg1, d, proggy, first, K, O)
 	arg2 = nothing		# May be needed if GMTcpt type is sent in via C
 	N_args = (arg1 === nothing) ? 0 : 1
 
+	def_J = (occursin("meca", proggy)) ? " -JX15cd/0d" : " -JX15c/10c"
+	cmd, _, _, opt_R = parse_BJR(d, "", "", O, def_J)
+	cmd, = parse_common_opts(d, cmd, [:UVXY :c :di :e :p :t :params]; first=first)
 	if (occursin("meca", proggy))
-		cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX12cd/0d")
-		cmd, = parse_common_opts(d, cmd, [:UVXY :c :di :e :p :t :params]; first=first)
-		(haskey(d, :A) || haskey(d, :offset) && GMTver <= v"6.4.0" && isa(arg1, GDtype)) &&
-			@warn("Due to a GMT bug (fixed in GMT > 6.4.0) plotting with offsets works only when data is in a disk file.")
-		cmd  = parse_these_opts(cmd, d, [[:A :offset], [:D :depth_limits]])
+		cmd  = add_opt(d, cmd, "D", [:D :depth_limits :depth_range :zrang])
+		cmd  = add_opt(d, cmd, "A", [:A :offset], (fill=("+g", add_opt_fill), offset="+o", pen=("+p", add_opt_pen), size="+s"))
 	else
-		cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX14c/10c")
-		cmd, = parse_common_opts(d, cmd, [:UVXY :c :di :e :p :t :params]; first=first)
-		cmd_ = add_opt(d, "", "Aa", [:Aa :cross_ll_pts], (lon1="", lat1="", lon2="", lat2="", dip="", width="", dmin="", dmax="", frame="_+f"))
+		cmd_ = add_opt(d, "", "Aa", [:Aa :cross_ll_pts], (lon1="", lat1="", lon2="", lat2="", dip="", width="", dmin="", dmax="", frame="_+f"); del=false)
 		if (cmd_ == "")
-			cmd_ = add_opt(d, "", "Ab", [:Ab :cross_ll_azim], (lon1="", lat1="", strike="", length="", dip="", width="", dmin="", dmax="", frame="_+f"))
+			cmd_ = add_opt(d, "", "Ab", [:Ab :cross_ll_azim], (lon1="", lat1="", strike="", length="", dip="", width="", dmin="", dmax="", frame="_+f"); del=false)
 		end
 		if (cmd_ == "")
-			cmd_ = add_opt(d, "", "Ac", [:Ac :cross_xy_pts], (x1="", y1="", x2="", y2="", dip="", width="", dmin="", dmax="", frame="_+f"))
+			cmd_ = add_opt(d, "", "Ac", [:Ac :cross_xy_pts], (x1="", y1="", x2="", y2="", dip="", width="", dmin="", dmax="", frame="_+f"); del=false)
 		end
 		if (cmd_ == "")
-			cmd_ = add_opt(d, "", "Ad", [:Ad :cross_xy_azim], (x1="", y1="", strike="", length="", dip="", width="", dmin="", dmax="", frame="_+f"))
+			cmd_ = add_opt(d, "", "Ad", [:Ad :cross_xy_azim], (x1="", y1="", strike="", length="", dip="", width="", dmin="", dmax="", frame="_+f"); del=false)
 		end
 		(cmd_ == "" && !SHOW_KWARGS[]) && error("Specifying cross-section type is mandatory")
 		cmd *= cmd_
+
+		#Now do the [+c[n|t]][+ddip][+r[a|e|dx]][+wwidth][+z[s]a|e|dz|min/max]
+		cmd = add_opt(d, cmd, "", [:Aa :cross_ll_pts :Ab :cross_ll_azim :Ac :cross_xy_pts :Ad :cross_xy_azim],
+		              (report="+c", dip="+d", region="+r", width="+w", zrange="+z"))
+		cmd = add_opt(d, cmd, "D", [:D :offset], (dist_is_geog="+c", fill=("+g", add_opt_fill), offset="+o", pen=("+p", add_opt_pen), size="+s"))
 	end
 
 	cmd = add_opt_fill(cmd, d, [:E :fill_extensive :extensionfill], 'E')
-	cmd  = parse_these_opts(cmd, d, [[:L :outline_pen :pen_outline], [:M :same_size :samesize],
-	                                 [:N :no_clip :noclip], [:T :nodal]])
-	cmd  = parse_these_opts(cmd, d, [[:Fa :PT_axes], [:Fe :T_axis_color], [:Fg :P_axis_color], [:Fo :psvelo],
-	                                 [:Fp :P_axis_pen], [:Fr :label_box], [:Ft :T_axis_pen], [:Fz :zero_trace]])
+	cmd = parse_these_opts(cmd, d, [[:H :scale], [:I :intens :intensity], [:L :pen_outline], [:M :same_size :samesize],
+	                                [:N :no_clip :noclip], [:T :nodal]])
+	cmd = parse_these_opts(cmd, d, [[:Fa :PT_axes], [:Fo :psvelo]])
+	cmd = add_opt_fill(cmd, d, [:Fe :T_axis_color], "Fe")
+	cmd = add_opt_fill(cmd, d, [:Fg :P_axis_color], "Fg")
+	cmd = add_opt_fill(cmd, d, [:Fr :label_box], "Fr")
+	cmd *= add_opt_pen(d, [:Fp :P_axis_pen], opt="Fp")
+	cmd *= add_opt_pen(d, [:Ft :T_axis_pen], opt="Ft")
+	cmd *= add_opt_pen(d, [:Fz :zero_trace], opt="Fz")
 	cmd = add_opt_fill(cmd, d, [:G :fill :compressionfill], 'G')
 	#(occursin("coupe", proggy)) && (cmd = add_opt(d, cmd, "Q", [:Q]))
 
@@ -175,6 +181,7 @@ function common_mecas(cmd0, arg1, d, proggy, first, K, O)
 	elseif (SHOW_KWARGS[])  symbs = [:Sa :aki :Sc :CMT :gcmt :Sm :mt :Sd :mt_closest :moment_closest :Sz :mt_deviatoric :moment_deviatoric :Sp :partial :Sx :principal :principal_axis :Sy :principal_closest :St :principal_deviatoric]
 	else  error("Must select one convention")
 	end
+
 	cmd_ = add_opt(d, "", string(symbs[1]), symbs, (scale="", angle="+a", font=("+f", font), justify="+j",
 	               radius_moment="_+l", same_size="_+m", refmag="+s", offset="+o"))
 	if (length(cmd_) != 0 && (length(cmd_) == 4 || cmd_[5] == '+'))		# If scale not given search for the 'scale' kwarg
