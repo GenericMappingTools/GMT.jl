@@ -1034,7 +1034,7 @@ Check if the string `s` is a XYZ or quadtree tile name. Useful for parse_R() and
 than extract the tile limits and associated resolution.
 """
 function istilename(s::AbstractString)::Bool
-	(count_chars(s, ',') == 2) && return true
+	(count_chars(s, ',') == 2 && isdigit(s[end])) && return true	# Test also if the last char is a digit (to distinguish from country codes)
 	contains(s, "-R") && occursin(r"^[0-3]+$", s[findfirst('R', s)+1:end]) && return true	# Accepts also that 's' is an opt_R
 	occursin(r"^[0-3]+$", s) && return true
 	return false
