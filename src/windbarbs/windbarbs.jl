@@ -31,7 +31,7 @@ function windbarbs(arg1; first=true, kwargs...)
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O)
 	cmd = parse_common_opts(d, cmd, [:UVXY :a :bi :di :e :f :h :i :p :t :yx :params]; first=first)[1]
 	cmd = parse_these_opts(cmd, d, [[:D :offset], [:I :intens], [:N :no_clip :noclip]])
-	cmd = add_opt(d, cmd, "Q", [:Q :barbs], (len=("", arg2str, 1), length=("", arg2str, 1), angle="+a", fill="+g", pen="+p", just="+j", speed="+s", width="+w", uv="+z", cartesian="+z"))
+	cmd = add_opt(d, cmd, "Q", [:Q :barbs], (len=("", arg2str, 1), length=("", arg2str, 1), angle="+a", fill=("+g", add_opt_fill), pen=("+p", add_opt_pen), just="+j", speed="+s", width="+w", uv="+z", cartesian="+z"))
 	cmd *= opt_pen(d, 'W', [:W :pen])
 	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
 	cmd, arg1, arg2, = add_opt_cpt(d, cmd, CPTaliases, 'C', 1, arg1)
@@ -50,7 +50,7 @@ end
 function windbarbs(arg1::Union{String, GMTgrid}, arg2::Union{String, GMTgrid}; first=true, kwargs...)
 	d, cmd, arg1, arg2, arg3 = grdvector(arg1, arg2; first=first, barbs=true, kwargs...)	# arg3 is a possible CPT
 	cmd[1] = replace(cmd[1], "grdvector" => "grdbarb")
-	cmd[1] = add_opt(d, cmd[1], "Q", [:Q :barbs], (len=("", arg2str, 1), length=("", arg2str, 1), angle="+a", fill="+g", pen="+p", just="+j", justify="+j", speed="+s", width="+w"))
+	cmd[1] = add_opt(d, cmd[1], "Q", [:Q :barbs], (len=("", arg2str, 1), length=("", arg2str, 1), angle="+a", fill=("+g", add_opt_fill), pen=("+p", add_opt_pen), just="+j", justify="+j", speed="+s", width="+w"))
 	delete!(d, :barbs)			# Because if we used 'Q', 'barbs' was still in the dictionary
 	cmd[1] = parse_these_opts(cmd[1], d, [[:A :polar], [:T :signs :sign_scale], [:Z :azim :azimuth :azimuths]])
 
