@@ -15,23 +15,23 @@ function velo(cmd0::String="", arg1=nothing; first=true, kwargs...)
 
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
-	cmd, _, _, opt_R = parse_BJR(d, "", "", O, " -JX12cd/0d")
+	cmd, _, _, opt_R = parse_BJR(d, "", "", O, " -JX15cd/0d")
 	cmd, = parse_common_opts(d, cmd, [:UVXY :di :e :p :t :params]; first=first)
 
-	if ((val = find_in_dict(d, [:A :arrow])[1]) !== nothing)
+	if ((val = find_in_dict(d, [:A :arrow :arrows])[1]) !== nothing)
 		cmd = (isa(val, String)) ? cmd * " -A" * val : cmd * " -A" * vector_attrib(val) 
 	end
 
-	cmd = add_opt_fill(cmd, d, [:E :fill_wedges], 'E')
+	cmd = add_opt_fill(cmd, d, [:E :fill_wedges :uncertaintyfill], 'E')
 	cmd = add_opt_fill(cmd, d, [:G :fill :fill_symbols], 'G')
 	cmd = parse_these_opts(cmd, d, [[:D :sigma_scale], [:L :outlines], [:N :no_clip :noclip]])
 
-	if     (haskey(d, :Se) || haskey(d, :vel_NE))       symbs = [:Se :vel_NE]
-	elseif (haskey(d, :Sn) || haskey(d, :barscale))     symbs = [:Sn :barscale]
-	elseif (haskey(d, :Sr) || haskey(d, :vel_rotated))  symbs = [:Sr :vel_rotated]
+	if     (haskey(d, :Se) || haskey(d, :velo_NE))      symbs = [:Se :vel_NE]
+	elseif (haskey(d, :Sn) || haskey(d, :aniso))        symbs = [:Sn :barscale]
+	elseif (haskey(d, :Sr) || haskey(d, :velo_rotated)) symbs = [:Sr :vel_rotated]
 	elseif (haskey(d, :Sw) || haskey(d, :wedges))       symbs = [:Sw :wedges]
-	elseif (haskey(d, :Sx) || haskey(d, :cross_scale))  symbs = [:Sx :cross_scale]
-	elseif (SHOW_KWARGS[])  symbs = [:Se :vel_NE :Sn :barscale :Sr :vel_rotated :Sw :wedges :Sx :cross_scale]
+	elseif (haskey(d, :Sx) || haskey(d, :strain))       symbs = [:Sx :strain]
+	elseif (SHOW_KWARGS[])  symbs = [:Se :velo_NE :Sn :aniso :Sr :velo_rotated :Sw :wedges :Sx :strain]
 	else  error("Must select one convention (S options. Run gmthelp(velo) to learn about them)")
 	end
 	cmd = add_opt(d, cmd, string(symbs[1]), symbs)
