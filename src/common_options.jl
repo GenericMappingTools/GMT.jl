@@ -2238,7 +2238,7 @@ function prepare2geotif(d::Dict, cmd::Vector{String}, opt_T::String, O::Bool)::T
 		# Strip all -B's and add convenient settings for creating GeoTIFF's and KLM's
 		opts = split(cmd, " ");		cmd  = ""
 		for opt in opts
-			if     (startswith(opt, "-JX12c"))  cmd *= "-JX30cd/0 "		# Default size is too small
+			if     (startswith(opt, "-JX15c"))  cmd *= "-JX30cd/0 "		# Default size is too small
 			elseif (!startswith(opt, "-B"))     cmd *= opt * " "
 			end
 		end
