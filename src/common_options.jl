@@ -1658,8 +1658,8 @@ function parse_helper(cmd::String, d::Dict, symbs::VMs, opt::String, sep='/')::T
 	# Helper function to the parse_?() global options.
 	(SHOW_KWARGS[]) && return (print_kwarg_opts(symbs, "(Common option not yet expanded)"),"")
 	opt_val::String = ""
-	if ((val = hlp_desnany_arg2str(d, symbs; sep=sep)) !== "")
-		opt_val = string(opt, val)
+	if ((val = find_in_dict(d, symbs, true)[1]) !== nothing)
+		opt_val = opt * arg2str(val, sep)
 		cmd *= opt_val
 	end
 	return cmd, opt_val
