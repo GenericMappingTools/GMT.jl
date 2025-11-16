@@ -77,8 +77,9 @@ function subplot(fim=nothing; stop=false, kwargs...)
 		elseif (t == "show")  stop, do_show = true, true
 		elseif (t == "set")   do_set = true
 		end
-	elseif (haskey(d, :show) && d[:show] != 0)					# Let this form work too
-		do_show, stop = true, true
+	elseif (haskey(d, :show))					# Let this form work too
+		do_show = (d[:show] != 0)
+		stop = true
 	else
 		if (!stop && length(kwargs) == 0)  stop = true  end		# To account for the subplot() call case
 	end
@@ -122,7 +123,7 @@ function subplot(fim=nothing; stop=false, kwargs...)
 	else
 		if (IamModernBySubplot[])
 			IamModernBySubplot[] = false
-			show = (do_show || haskey(d, :show)) ? " show" : ""
+			show = (do_show) ? " show" : ""
 			helper_showfig4modern(show)
 		else
 			gmt("subplot end");	IamSubplot[] = false

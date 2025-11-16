@@ -449,7 +449,7 @@ Similar to the above but the graticules ``grid`` are created automatically based
 function plotgrid!(GI::GItype, Dgrat::Vector{<:GMTdataset}; annot=true, sides::String="WESN", kw...)
 	# Make an image of the grid G_I overlaid with the graticules in Dgrat
 	d = KW(kw)
-	show = (find_in_dict(d, [:show])[1] !== nothing)
+	show = ((val = find_in_dict(d, [:show])[1]) !== nothing && val != 0)
 	fmt::String = (find_in_dict(d, [:fmt])[1] !== nothing) ? d[:fmt]::String : FMT[]
 	symb = find_in_dict(d, [:name :savefig :figname])[2]
 	name::String = (symb != Symbol()) ? d[symb]::String : ""
