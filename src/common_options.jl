@@ -4736,7 +4736,7 @@ function put_in_legend_bag(d::Dict, cmd, arg, O::Bool=false, opt_l::String="")
 	isempty(k_vec) && (k_vec = [1])		# Don't let it be empty
 	for k = 1:max(1,nDs-1)
 		t::String = isa(arg, GMTdataset) ? scan_opt(arg.header, "-W") : scan_opt(arg[k_vec[k]].header, "-W")
-		if     (t == "")          pens[k] = " -W0."
+		if     (t == "")          pens[k] = " -W" * penT			# Was " -W0."
 		elseif (t[1] == ',')      pens[k] = " -W" * penT * t		# Can't have, e.g., ",,230/159/0" => Crash
 		elseif (occursin(",",t))  pens[k] = " -W" * t  
 		else                      pens[k] = " -W" * penT * ',' * t	# Not sure what this case covers now
@@ -4751,10 +4751,12 @@ function put_in_legend_bag(d::Dict, cmd, arg, O::Bool=false, opt_l::String="")
 			rgb = [0.0, 0.0, 0.0, 0.0]
 			P::Ptr{GMT_PALETTE} = palette_init(G_API[], CURRENT_CPT[])	# A pointer to a GMT CPT
 			gmt_get_rgb_from_z(G_API[], P, arg[gindex[1],ind], rgb)
-			cmd_[1] *= " -G" * arg2str(rgb.*255)
+			cmd_[1] *= " -G" * arg2str(rgb[1:3].*255)
+			(rgb[4] > 0.0) && (cmd_[1] *= "@$(rgb[4]*100)")				# Add transparency if any
 			for k = 1:numel(pens)
 				gmt_get_rgb_from_z(G_API[], P, arg[gindex[k+1],ind]+10eps(), rgb)
 				pens[k] *= @sprintf(" -G%.0f/%.0f/%.0f", rgb[1]*255, rgb[2]*255, rgb[3]*255)
+				(rgb[4] > 0.0) && (pens[k] *= "@$(rgb[4]*100)")
 			end
 		end
 	end
@@ -4825,7 +4827,7 @@ function digests_legend_bag(d::Dict{Symbol, Any}, del::Bool=true)
 	for k = 1:nl						# Loop over number of entries
 		(LEGEND_TYPE[].label[k] == " ") && (count_no += 1;	continue)	# Sometimes we may want to open a leg entry but not plot it
 		if ((symb = scan_opt(LEGEND_TYPE[].cmd[k], "-S")) == "")  symb = "-"
-		else                                                       symbW_ = symb[2:end];
+		else                                                      symbW_ = symb[2:end];
 		end
 		((fill = scan_opt(LEGEND_TYPE[].cmd[k], "-G")) == "") && (fill = "-")
 		pen  = scan_opt(LEGEND_TYPE[].cmd[k], "-W");
