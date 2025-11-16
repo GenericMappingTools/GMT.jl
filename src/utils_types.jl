@@ -42,9 +42,10 @@ same number of elements as rows in `mat`). Use `x=:ny` to generate a coords arra
 Alternatively, if `mat` is a string or vector of strings we return a dataset with NaN's in the place of
 the coordinates. This form is useful to pass to `text` when using the `region_justify` option that
 does not need explicit coordinates to place the text.
-  - `txt`: Return a Text record which is a Dataset with data = Mx2 and text in third column. The ``text``
-     can be an array with same size as `mat` rows or a string (will be repeated n_rows times.) 
-  - `x`:   An optional vector with the _xx_ coordinates
+  - `txt`: (A POSITIONAL arg) Return a Text record which is a Dataset with data = Mx2 and text in third column. The ``text``
+     can be an array with same size as `mat` rows or a string (will be repeated n_rows times.). The keywords `txt` or `text`
+	 are also accepted in alternative to this (positional) `txt` argument.
+  - `x`: An optional vector with the _xx_ coordinates
   - `hdr`: optional String vector with either one or n_rows multi-element headers.
   - `lc` or `linecolor` or `color`: optional array of strings/symbols with color names/values. Its length can be
      smaller than n_cols, case in which colors will be cycled. If `color` is not an array of strings, e.g.
@@ -52,15 +53,15 @@ does not need explicit coordinates to place the text.
      want the same color repeated for many lines pass color as a vector. *e.g,* `color=[color]`
   - `linethick` or `lt`: for selecting different line thicknesses. Works like `color`, but should be 
      a vector of numbers, or just a single number that is then applied to all lines.
-  - `fill`:  Optional string array (or a String of comma separated color names, or a Tuple of color names)
-             with color names or array of "patterns".
+  - `fill`: Optional string array (or a String of comma separated color names, or a Tuple of color names)
+            with color names or array of "patterns".
   - `fillalpha` : When `fill` option is used, we can set the transparency of filled polygons with this
      option that takes in an array (vec or 1-row matrix) with numeric values between [0-1] or ]1-100],
      where 100 (or 1) means full transparency.
-  - `is3D`:  If input 'mat' contains at least x,y,z (?).
+  - `is3D`: If input 'mat' contains at least x,y,z (?).
   - `ls` or `linestyle`:  Line style. A string or an array of strings with `length = size(mat,2)` with line styles.
-  - `front`:  Front Line style. A string or an array of strings with `length = size(mat,2)` with front line styles.
-  - `pen`:  A full pen setting. A string or an array of strings with `length = size(mat,2)` with pen settings.
+  - `front`: Front Line style. A string or an array of strings with `length = size(mat,2)` with front line styles.
+  - `pen`: A full pen setting. A string or an array of strings with `length = size(mat,2)` with pen settings.
      This differs from `lt` in the sense that `lt` does not directly set the line thickness.
   - `multi` or `multicol`: When number of columns in `mat` > 2, or == 2 and x != nothing, make an multisegment Dataset
      with first column and 2, first and 3, etc. Convenient when want to plot a matrix where each column is a line. 
@@ -68,11 +69,13 @@ does not need explicit coordinates to place the text.
   - `datatype`: Keep the original data type of `mat`. Default converts to Float64.
   - `geom`: The data geometry. By default, we set `wkbUnknown` but try to do some basic guess.
   - `proj` or `proj4`: A proj4 string for dataset SRS. Default is empty. To set it to lon,lat in WGS84 use ``proj=prj4WGS84``
-  - `wkt`:  A WKT SRS string.
+  - `wkt`: A WKT SRS string.
   - `epsg`: An integer EPSG code. _e.g._ ``epsg=4326`` for lon,lat in WGS84. Default is 0.
   - `colnames`: Optional string vector with names for each column of `mat`.
   - `attrib`: Optional dictionary{String, String} with attributes of this dataset.
-  - `ref:` Pass in a reference GMTdataset from which we'll take the georeference info as well as `attrib` and `colnames`
+  - `ref:`Pass in a reference GMTdataset from which we'll take the georeference info as well as `attrib` and `colnames`
+  - `txt` or `text`: Vector{String} with text to add into the .text field, but this forces the return of a Text record.
+     See what is said above about the `txt` positional argument.
   - `txtcol` or `textcol`: Vector{String} with text to add into the .text field. Warning: no testing is done
      to check if ``length(txtcol) == size(mat,1)`` as it must.
 """
@@ -207,9 +210,11 @@ function mat2ds(mat::Array{T,N}, txt::Union{String,Vector{String}}=String[];
 end
 function _mat2ds(mat::Array{T,N}, txt::Union{String,Vector{String}}, hdr::Vector{String}, geom::Int, d::Dict)::GDtype where {T<:Real, N}
 
+	coln = hlp_desnany_vstr(d, [:colnames])
 	(!isempty(txt)) && return text_record(mat, txt,  hdr)
-	if ((_text = find_in_dict(d, [:text])[1]) !== nothing && !isempty(_text))
-		Dt = text_record(mat, _text, hdr);	Dt.geom = geom
+	if ((_text = find_in_dict(d, [:text :txt])[1]) !== nothing && !isempty(_text))
+		Dt = text_record(mat, _text, hdr);	Dt.geom = geom;
+		!isempty(coln) && (Dt.colnames = coln)
 		return Dt
 	end
 
@@ -321,8 +326,6 @@ function _mat2ds(mat::Array{T,N}, txt::Union{String,Vector{String}}, hdr::Vector
 	prj, wkt, epsg, ref_attrib, ref_coln = helper_set_crs(d)
 
 	is_geog::Bool = isgeog(prj)
-	#coln::Vector{String} = ((val = find_in_dict(d, [:colnames])[1]) === nothing) ? String[] : (isa(val, String) ? [val] : val)
-	coln = hlp_desnany_vstr(d, [:colnames])
 
 	function fill_colnames(coln::Vector{String}, nc::Int, is_geog::Bool)	# Fill the column names vector
 		if isempty(coln)
@@ -334,7 +337,6 @@ function _mat2ds(mat::Array{T,N}, txt::Union{String,Vector{String}}, hdr::Vector
 
 	att::DictSvS = ((v = find_in_dict(d, [:attrib])[1]) !== nothing && isa(v, Dict)) ? v : DictSvS()
 	!isempty(att) && !isa(att, Dict{String, Union{String, Vector{String}}}) && error("Attributs must be a Dict{String, Union{String, Vector{String}}}")
-	#txtcol::Vector{String} = ((val = find_in_dict(d, [:txtcol :textcol])[1]) !== nothing) ? val : String[]
 	txtcol = hlp_desnany_vstr(d, [:txtcol, :textcol])
 
 	D = Vector{GMTdataset{isempty(xx) ? eltype(mat) : Float64, 2}}(undef, n_ds)
@@ -2545,7 +2547,13 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function hlp_desnany_vstr(d, s, del=true)::Vector{String}
-	((val = find_in_dict(d, s, del)[1]) === nothing) ? String[] : (isa(val, String) ? [val] : val)
+	r = ((val = find_in_dict(d, s, del)[1]) === nothing) ? String[] : (isa(val, String) ? [val] : val)
+	if (!isempty(r) && isa(val, Tuple))		# Accept also Tuples of strings or symbols
+		et = eltype(val)
+		(et == String) && return collect(val)
+		(et == Symbol) && return collect(string.(val))
+	end
+	return r
 end
 
 # ---------------------------------------------------------------------------------------------------
