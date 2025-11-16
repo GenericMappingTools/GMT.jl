@@ -73,6 +73,7 @@ function grd2cpt_helper(cmd0::String, arg1; kw...)
 
 	cmd, = parse_common_opts(d, "", [:R :V_params :b :h :t])
 	cmd, Tvec = helper_cpt(d, cmd)
+	cmd = add_opt(d, cmd, "S", [:S :symetric])
 	!isempty(Tvec) && error("grd2cpt does not accept an array argument in the 'range' option")
 	if ((val = find_in_dict(d, [:E :nlevels])[1]) !== nothing)  cmd *= " -E" * arg2str(val)  end
 	got_N = (is_in_dict(d, [:N :no_bg :nobg], del=true) !== nothing)
