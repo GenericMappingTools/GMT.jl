@@ -45,7 +45,7 @@ Parameters
 
 ### Example. Compute the gravity effect of the Gorringe bank.
 ```julia
-	G = grdgravmag3d("@earth_relief_10m", region=(-12.5,-10,35.5,37.5), density=2700, inc=0.05, pad=0.5, z_level=:bottom, f=:g);
+	G = grdgravmag3d("@earth_relief_10m", region=(-12.5,-10,35.5,37.5), density=2700, inc=0.05, pad=0.5, level=:bottom, f=:g);
 	imshow(G)
 ```
 """

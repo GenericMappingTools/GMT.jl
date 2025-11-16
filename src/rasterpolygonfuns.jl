@@ -55,6 +55,20 @@ function rasterzones!(GI::GItype, shapes::GDtype, fun::Function; isRaster=true, 
 		t = (band > 0) ? skipnan(GI_[mask, band]) : skipnan(GI_[mask])
 		return (eltype(GI_) <: Integer) ? round(eltype(GI_), fun(t)) : fun(t)
 	end
+	function get_the_mask(D, nx, ny, touches, layout)::Union{Nothing, Matrix{Bool}}
+		# Compute the mask matrix
+		local mask
+		opts = ["-of", "MEM", "-ts","$(nx)","$(ny)", "-burn", "1", "-ot", "Byte"]
+		(touches == 1) && append!(opts, ["-at"])
+		try
+			mk = gdalrasterize(D, opts, layout=layout)	# This may fail if the polygon is degenerated.
+			mask = reinterpret(Bool, mk.image)
+			(!any(mask)) && return nothing				# If mask is all falses stop before it errors
+		catch
+			return nothing
+		end
+		return mask
+	end
 	function mask_GI!(GI, _GI, pix_x, pix_y, mask, n_layers) # Apply the mask to a Grid/Image
 		if (n_layers == 1)
 			_GI[mask] .= maskit(_GI, mask, 0)
@@ -81,7 +95,10 @@ function rasterzones!(GI::GItype, shapes::GDtype, fun::Function; isRaster=true, 
 			# TODO. Eventualy check if only some polygoms are outside and drop them.
 			!within(Dt[1].ds_bbox, GI.range) && continue
 			_GI, pix_x, pix_y = crop(GI, region=Dt[1].ds_bbox)
-			((mask = maskgdal(Dt, size(_GI, col_dim), size(_GI, row_dim), touches=touches, layout=layout)) === nothing) && continue
+			#((mask = maskgdal(Dt, size(_GI, col_dim), size(_GI, row_dim), touches=touches, layout=layout)) === nothing) && continue
+			#(_GI.layout != "" && _GI.layout[2] == 'C') && (mask = mask')	# mask is always TRB
+			### REVERT TO USE AGAIN get_the_mask() Result is wrong with maskgdal() MUST INVESTIGATE WHY
+			((mask = get_the_mask(Dt, size(_GI, col_dim), size(_GI, row_dim), touches, layout)) === nothing) && continue
 
 			if (isRaster)  mask_GI!(GI, _GI, pix_x, pix_y, mask, n_layers)
 			else           for n = 1:n_layers   mat[k,n] = maskit(_GI, mask, n-1)   end
@@ -94,9 +111,10 @@ function rasterzones!(GI::GItype, shapes::GDtype, fun::Function; isRaster=true, 
 			!within(shapes[k].bbox, GI.range) && continue		# Catch any exterior polygon before it errors
 			_GI, pix_x, pix_y = crop(GI, region=shapes[k].bbox)
 			_GI === nothing && continue  	# Skip this polygon if it's completely outside the grid or just too small
-			((mask = maskgdal(shapes[k], size(_GI, col_dim), size(_GI, row_dim), touches=touches, layout=layout)) === nothing) && continue
+			#((mask = maskgdal(shapes[k], size(_GI, col_dim), size(_GI, row_dim), touches=touches, layout=layout)) === nothing) && continue
+			#(_GI.layout != "" && _GI.layout[2] == 'C') && (mask = mask')	# mask is always TRB
+			((mask = get_the_mask(shapes[k], size(_GI, col_dim), size(_GI, row_dim), touches, layout)) === nothing) && continue
 
-			(_GI.layout != "" && _GI.layout[2] == 'C') && (mask = mask')	# mask is always TRB
 			if (isRaster)  mask_GI!(GI, _GI, pix_x, pix_y, mask, n_layers)
 			else           for n = 1:n_layers   mat[k,n] = maskit(_GI, mask, n-1)   end
 			end

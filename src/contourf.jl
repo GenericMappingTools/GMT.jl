@@ -72,7 +72,7 @@ Examples
     contourf(G, C, annot=:none, show=1)
 
     d = [0 2 5; 1 4 5; 2 0.5 5; 3 3 9; 4 4.5 5; 4.2 1.2 5; 6 3 1; 8 1 5; 9 4.5 5];
-    contourf(d, limits=(-0.5,9.5,0,5), pen=0.25, labels=(line=(:min,:max),), show=1)
+    contourf(d, limits=(-0.5,9.5,0,5), pen=0.25, labels=(line=(:min,:max),), show=true)
 ```
 """
 function contourf(cmd0::String="", arg1=nothing, arg2=nothing; first=true, kwargs...)
@@ -161,8 +161,8 @@ function contourf(cmd0::String, arg1, arg2, first::Bool, d::Dict{Symbol,Any})
 			CPT = CPT_arg
 		end
 
-		show = false;	fmt = nothing;	savefig = ""
-		if ((val = find_in_dict(d, [:show])[1]) !== nothing)  show = true  end
+		fmt = nothing;	savefig = ""
+		show = ((val = find_in_dict(d, [:show])[1]) !== nothing && val != 0)
 		if ((val = find_in_dict(d, [:fmt])[1])  !== nothing)  fmt  = val   end
 		if ((val = find_in_dict(d, [:savefig :figname :name])[1]) !== nothing)  savefig = val  end
 

@@ -151,7 +151,7 @@ plotyy(arg1, arg2; kwargs...)
 
 Example:
 ```julia
-plotyy([1 1; 2 2], [1.5 1.5; 3 3], R="0.8/3/0/5", title="Ai", ylabel=:Bla, xlabel=:Ble, seclabel=:Bli, show=1)
+plotyy([1 1; 2 2], [1.5 1.5; 3 3], R="0.8/3/0/5", title="Ai", ylabel=:Bla, xlabel=:Ble, seclabel=:Bli, show=true)
 ```
 """
 function plotyy(arg1, arg2; first=true, kw...)
@@ -185,7 +185,7 @@ function plotyy(arg1, arg2; first=true, kw...)
 	end
 	(Vd != 0) && (d[:Vd] = Vd)
 	d[:lc] = "#0072BD"
-	(haskey(d, :show)) ? (delete!(d, :show);  do_show = true) : do_show = false
+	do_show = ((val = find_in_dict(d, [:show])[1]) !== nothing && val != 0)
 	d[:par] = (MAP_FRAME_PEN="#0072BD", MAP_TICK_PEN="#0072BD", FONT_ANNOT_PRIMARY="#0072BD", FONT_LABEL="#0072BD")
 	r1 = common_plot_xyz("", cat_1_arg(arg1, true), "plotyy", first, false, d)
 
@@ -2040,7 +2040,7 @@ function piechart(x::VecOrMat; first::Bool=true, kw...)
 	fs = font(d, [:font])						# See if we have a font (size & others) specification	
 	fs = (fs != "") ? fs : string(round(ms / (2.54/72) / 30, digits=1))	# Use a font size that is ~30 smaler than pie diameter
 
-	do_show = (val = find_in_dict(d, [:show])[1]) !== nothing ? true : false
+	do_show = ((val = find_in_dict(d, [:show])[1]) !== nothing && val != 0)
 	one_not_exploded ? _common_plot_xyz("", Dv, "plot", !first, true, false, d) : _common_plot_xyz("", [0 0 0 0], "plot", !first, true, false, d)
 
 	# Compute the h-v scales
