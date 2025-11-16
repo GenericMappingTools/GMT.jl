@@ -58,7 +58,9 @@ function logo(cmd0::String=""; first=true, kwargs...)
 		if (!occursin("-R", cmd))  cmd = @sprintf("-R0/%f/0/%f ", 2r, 2r) * cmd  end
 		if (!occursin("-J", cmd))  cmd = " -Jx1 " * cmd  end
 		do_show = false
-		if (do_GMTjulia && haskey(d, :show))  delete!(d, :show);  do_show = true  end	# Too soon
+		if (do_GMTjulia)
+			do_show = ((val = find_in_dict(d, [:show])[1]) !== nothing && val != 0)		# Too soon
+		end
 		fmt::AbstractString = ""
 		if (do_GMTjulia)
 			# Too soon to set the format. Need to finish the PS first
@@ -70,6 +72,7 @@ function logo(cmd0::String=""; first=true, kwargs...)
 		end
 		cmd = "psxy " * c * cmd
 		((_r = check_dbg_print_cmd(d, cmd)) !== nothing && startswith(_r, "psxy")) && return _r
+		prep_and_call_finish_PS_module(d, cmd, "", K, O, true, t)
 		if (do_GMTjulia)
 			letter_height = 0.75 * r2 / 2.54 * 72 		# Make the letters 75% of the cicle's diameter
 			opt_F::String = @sprintf("+f%d,NewCenturySchlbk-Italic",letter_height)
