@@ -365,6 +365,10 @@ function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::St
 		indata.z, indata.hasnans, indata.layout = D.z, 1, D.layout
 		return nothing
 	elseif (f == gdalsievefilter)
+		# Next two lines are a black-hole hack for gdalsievefilter crashes that started at Julia 1.12 (?)
+		# If called like bwareaopen(I); it crashed, even though in gdal.jl/gdalsievefilter a default threshold value of 10
+		# was assigned. If, however, called like bwareaopen(I, 10); it works (the thresh value doesn't matter). Fck crazzy.
+		thresh = get(d, :thresh, 4);	d[:thresh] = thresh
 		o = f(dataset; d...)
 		return gd2gmt(o.ownedby)	# 'o' is a IRasterBand
 	else
