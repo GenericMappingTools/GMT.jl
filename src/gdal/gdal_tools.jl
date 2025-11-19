@@ -324,13 +324,17 @@ function gdalvectortranslate(indata, opts=String[]; dest="/vsimem/tmp", kwargs..
 	helper_run_GDAL_fun(gdalvectortranslate, indata, dest, opts, "", kwargs...)
 end
 
-# ---------------------------------------------------------------------------------------------------
-function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::String="", kw...)::Union{GItype, GDtype, Gdal.AbstractDataset, Nothing}
-	# Helper function to run the GDAL function under 'some protection' and returning obj or saving in file
-
-	ressurectGDAL()				# Another black-hole plug attempt.
+function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::String="", kwargs...)::Union{GItype, GDtype, Gdal.AbstractDataset, Nothing}
+	ressurectGDAL()					# Another black-hole plug attempt.
 	opts = gdal_opts2vec(opts)		# Guarantied to return a Vector{String}
-	d, opts, got_GMT_opts = GMT_opts_to_GDAL(f, opts, kw...)
+	d, opts_vs, got_GMT_opts = GMT_opts_to_GDAL(f, opts, kwargs...)
+	_helper_run_GDAL_fun(f, indata, dest, opts_vs, method, got_GMT_opts, d)
+end
+
+# ---------------------------------------------------------------------------------------------------
+function _helper_run_GDAL_fun(f, indata, dest, opts, method, got_GMT_opts, d)::Union{GItype, GDtype, Gdal.AbstractDataset, Nothing}
+	# This second level helper function reduces the number of multiple compiles. Here, only 'indata' may have different types.
+
 	Vd::Int = ((val = find_in_dict(d, [:Vd])[1]) !== nothing) ? val : 0		# More gymns to avoid Anys
 	(Vd > 0) && println(opts)
 
