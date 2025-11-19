@@ -971,6 +971,42 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
+    Ir = imresize(I::GMTimage{T,N}, newdims=tuple(); newdims=::Union{Real, Tuple{<:Real}, Vector{<:Real}}, method="nearest") -> GMTimage{T,N}
+
+Resize image I to new dimensions.
+
+The input image `I` can be a grayscale, RGB, binary GMTimage or a MxN integer matrix.
+
+The new dimensions can be specified either as positional or kwarg argument `newdims`. If `newdims` is a scalar Float,
+it returns image `Ir` that is scale times the size of image `I`. If it is an integer it means the new rows size and
+columns are computed so that aspect ratio is preserved. If `newdims` is a Tuple or a Vector, the same logic applies,
+but now the 2 dimensions are specified separately.
+
+By default, imresize uses `bicubic` interpolation. Other supported methods are: `nearest`, `bilinear`, `cubic`,
+`cubicspline`, `lanczos`, `average`, `rms`, `mode`. Pass this choice via the `method` kwarg.
+
+Returns the resized image `Ir` of the same type as input `I`.
+"""
+imresize(mat::Matrix{<:Integer}, _newdims::Union{Real, Tuple{<:Real}, Vector{<:Real}}=Int[];
+	newdims::Union{Real, Tuple{<:Real}, Vector{<:Real}}=Int[], method::Union{String, Symbol}="cubic") =
+	imresize(mat2img(mat), _newdims; newdims=newdims, method=method).image
+function imresize(I::GMTimage{T,N}, _newdims::Union{Real, Tuple{<:Real}, Vector{<:Real}}=Int[];
+	newdims::Union{Real, Tuple{<:Real}, Vector{<:Real}}=Int[], method::Union{String, Symbol}="cubic")::GMTimage{T,N} where {T,N}
+
+	@assert !isempty(_newdims) || !isempty(newdims) "Must provide new dimensions either as positional or keyword argument."
+	_new = !isempty(_newdims) ? _newdims : newdims
+	resamp = string(method)
+	!in(resamp, ("nearest", "bilinear", "cubic", "cubicspline", "lanczos", "average", "rms", "mode")) &&
+		error("Resampling method '$resamp' not recognized. Valid methods are: nearest, bilinear, cubic, cubicspline, lanczos, average, rms, mode.")
+	pct = ""		# May become "%"
+	(eltype(_new) <: AbstractFloat) && (_new = round.(Int, _new .* 100); pct = "%")
+	opts = (length(_new) == 1) ? ["-outsize", "0", string(_new,pct), "-r", resamp] :
+	                             ["-outsize", string(_new[2],pct), string(_new[1],pct), "-r", resamp]
+	gdaltranslate(I, opts)
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
     lonlat2xy(lonlat::Matrix{<:Real}; t_srs, s_srs="+proj=longlat +datum=WGS84")
 or
 

@@ -19,6 +19,8 @@ on the input type). To force the return of a GDAL dataset use the option `gdatas
 - `meta=metadata`, where `metadata` is a string vector with the form "NAME=...." for each of
   its elements. This data will be recognized by GDAL as Metadata.
 The `kwargs` may also contain the GMT region (-R), proj (-J), inc (-I) and `save=fname` options.
+And it may also contain a `options=...` argument that is equivalent to the `options` positional argument,
+  with the exception that the value may also be a Tuple.
 
 ### Returns
 A GMT grid or Image, or a GDAL dataset (or nothing if file was writen on disk).
@@ -308,10 +310,12 @@ end
     ogr2ogr(indata, options=String[]; dest="/vsimem/tmp", kwargs...)
 
 ### Parameters
-* `indata` The source dataset.
-* `options` List of options (potentially including filename and open
+* `indata`: The source dataset.
+* `options`: List of options (potentially including filename and open
             options). The accepted options are the ones of the gdalwarp utility.
-* `kw` are kwargs that may contain the GMT region (-R), proj (-J), inc (-I) and `save=fname` options
+* `kw`: are kwargs that may contain the GMT region (-R), proj (-J), inc (-I) and `save=fname` options.
+  It may also contain a `options=...` argument that is equivalent to the `options` positional argument,
+  with the exception that the value may also be a Tuple.
 
 ### Returns
 A GMT dataset, or a GDAL dataset (or nothing if file was writen on disk).
@@ -321,12 +325,12 @@ function gdalvectortranslate(indata, opts=String[]; dest="/vsimem/tmp", kwargs..
 end
 
 # ---------------------------------------------------------------------------------------------------
-function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::String="", kwargs...)::Union{GItype, GDtype, Gdal.AbstractDataset, Nothing}
+function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::String="", kw...)::Union{GItype, GDtype, Gdal.AbstractDataset, Nothing}
 	# Helper function to run the GDAL function under 'some protection' and returning obj or saving in file
 
 	ressurectGDAL()				# Another black-hole plug attempt.
 	opts = gdal_opts2vec(opts)		# Guarantied to return a Vector{String}
-	d, opts, got_GMT_opts = GMT_opts_to_GDAL(f, opts, kwargs...)
+	d, opts, got_GMT_opts = GMT_opts_to_GDAL(f, opts, kw...)
 	Vd::Int = ((val = find_in_dict(d, [:Vd])[1]) !== nothing) ? val : 0		# More gymns to avoid Anys
 	(Vd > 0) && println(opts)
 
@@ -424,6 +428,12 @@ end
 function GMT_opts_to_GDAL(f::Function, opts::Vector{String}, kwargs...)
 	# Helper function to process some GMT options and turn them into GDAL syntax
 	d = KW(kwargs)
+
+	# See if 'opts' is a kwarg
+	if isempty(opts) && ((val = GMT.hlp_desnany_vstr(d, [:opts])) !== String[])
+		opts = gdal_opts2vec(val)		# Must call this guy again. Guarantied to return a Vector{String}
+	end
+
 	if ((opt_R = parse_R(d, "")[1]) != "")
 		s = split(opt_R[4:end], '/')
 		if (f != gdalgrid)
