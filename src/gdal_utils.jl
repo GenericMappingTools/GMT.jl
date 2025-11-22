@@ -987,11 +987,11 @@ By default, imresize uses `bicubic` interpolation. Other supported methods are: 
 
 Returns the resized image `Ir` of the same type as input `I`.
 """
-imresize(mat::Matrix{<:Integer}, _newdims::Union{Real, Tuple{<:Real}, Vector{<:Real}}=Int[];
-	newdims::Union{Real, Tuple{<:Real}, Vector{<:Real}}=Int[], method::Union{String, Symbol}="cubic") =
+imresize(mat::Matrix{<:Integer}, _newdims::Union{Real, Tuple{Real, Real}, Vector{<:Real}}=Int[];
+	newdims::Union{Real, Tuple{Real, Real}, Vector{<:Real}}=Int[], method::Union{String, Symbol}="cubic") =
 	imresize(mat2img(mat), _newdims; newdims=newdims, method=method).image
-function imresize(I::GMTimage{T,N}, _newdims::Union{Real, Tuple{<:Real}, Vector{<:Real}}=Int[];
-	newdims::Union{Real, Tuple{<:Real}, Vector{<:Real}}=Int[], method::Union{String, Symbol}="cubic")::GMTimage{T,N} where {T,N}
+function imresize(I::GMTimage{T,N}, _newdims::Union{Real, Tuple{Real, Real}, Vector{<:Real}}=Int[];
+	newdims::Union{Real, Tuple{Real, Real}, Vector{<:Real}}=Int[], method::Union{String, Symbol}="cubic")::GMTimage{T,N} where {T,N}
 
 	@assert !isempty(_newdims) || !isempty(newdims) "Must provide new dimensions either as positional or keyword argument."
 	_new = !isempty(_newdims) ? _newdims : newdims
