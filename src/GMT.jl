@@ -192,7 +192,7 @@ export
 	padarray, rgb2gray, rgb2lab, rgb2YCbCr, rgb2ycbcr, grid2img, img2grid, grays2cube, grays2rgb, imclose,
 	imcomplement, imcomplement!, imdilate, imerode, imfilter, imopen, imsegment, imsobel, imtophat, imbothat,
 	imhdome, imhmin, imhmax, immorphgrad, imrankfilter, strel, imfill, imreconstruct, fillsinks, fillsinks!,
-	imregionalmin, imregionalmax, imclearborder,
+	imresize, imregionalmin, imregionalmax, imclearborder,
 
 	findpeaks, makeDCWs, mksymbol, circfit,
 
