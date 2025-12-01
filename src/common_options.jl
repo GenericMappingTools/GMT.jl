@@ -5147,14 +5147,17 @@ macro var"?"(name)
 					 :polygonlevels,:rasterzones!,:regiongeog,:rescale, :slicecube,:sph2cart,:stackgrids,:ter2cart,:theme,
 					 :uniqueind,:vecangles,:weather,:whereami,:wmsinfo, :wmsread,:wmstest,:worldrectgrid,:worldrectcoast,
 					 :worldrectangular,:xyzw2cube,:yeardecimal,:zonal_stats, :cube,:cylinder,:dodecahedron,:ellipse3D,
-					 :flatfv,:fv2fv,:icosahedron,:loft,:sphere, :octahedron,:tetrahedron,:torus,:replicant,:revolve,
-					 :binarize,:bwareaopen,:bwhitmiss,:bwperim,:bwskell,:fillsinks,:imbothat,:imclose,:imcomplement,:imdilate,
-					 :imerode,:imfill,:imfilter,:imhdome,:imhmin,:imhmax,:immorphgrad,:imopen,:imrankfilter,:imreconstruct,
-					 :imsegment,:imsobel,:imtophat,:isodata, :padarray,:strel,:rgb2gray,:rgb2lab,:rgb2ycbcr	
+					 :flatfv,:fv2fv,:icosahedron,:loft,:sphere, :octahedron,:tetrahedron,:torus,:replicant,:revolve
 					]
 					dir = "utilities/"
+			elseif sym in [:binarize, :bwareaopen, :bwconncomp, :bwdist, :bwhitmiss, :bwperim, :bwskell, :cc2bw, :imdilate,
+						 :imerode, :imopen, :imclose, :imtophat, :imbothat, :immorphgrad, :strel, :imfilter, :imrankfilter,
+						 :imsobel, :graydist, :padarray, :imfill, :imreconstruct, :imsegment, :isodata, :imregionalmax,
+						 :imregionalmin, :imhmin, :imhmax, :imhdome, :fillsinks, :rgb2gray, :rgb2lab, :rgb2ycbcr, :imcomplement
+						]
+						dir = "imgproc/"
 			end
-			s = string("https://www.generic-mapping-tools.org/GMTjl_doc/documentation/", dir, $name,"/")
+			s = string("https://www.generic-mapping-tools.org/GMTjl_doc/documentation/", dir, $name,".html")
 			display_file(s)
 		catch err
 			try 
