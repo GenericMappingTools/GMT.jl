@@ -390,10 +390,10 @@ end
 
 # -------------------------------------------------------------------------------------------------
 """
-    function geodesic(D; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0, longest::Bool=false)
+    geodesic(D; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0, longest::Bool=false)
 or
 
-    function geodesic(lon1, lat1, lon2, lat2; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0, longest::Bool=false)
+    geodesic(lon1, lat1, lon2, lat2; step=0, unit=:m, np=0, proj::String="", epsg::Integer=0, longest::Bool=false)
 
 Generate geodesic line(s) (shortest distace) on an ellipsoid. Input data can be two or more points.
 In later case each line segment is descretized at `step` increments,

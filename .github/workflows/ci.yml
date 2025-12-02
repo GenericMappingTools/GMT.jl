@@ -30,7 +30,7 @@ jobs:
           #- '~1.11.0-0'
           #- '~1.12.0-0'
           - '~1.13.0-0'
-          #- 'nightly'
+          - 'nightly'
         os:
           - ubuntu-latest
           #- ubuntu-20.04

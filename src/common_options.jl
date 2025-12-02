@@ -5141,7 +5141,7 @@ macro var"?"(name)
 			dir = "modules/"
 			if sym in [:ablines,:append2fig,:blendimg,:cart2pol,:cart2sph,:colorzones,:cpt4dcw,:crop,:cubeplot,:coastlinesproj,
 			         :cubeslice,:date2doy,:delrows!,:doy2date,:ecmwf,:era5time,era5vars,:gadm,:geocoder,:geodetic2enu,
-					 :getbyattrib,:gmtread,:gmtwrite, :graticules,:gridit,:gunique,hampel,:imagesc,:inwhichpolygon,:image_alpha!,
+					 :getbyattrib,:getprovider,:gmtread,:gmtwrite, :graticules,:gridit,:gunique,hampel,:imagesc,:inwhichpolygon,:image_alpha!,
 					 :image_cpt!,:imshow,:ind2rgb, :info,:isnodata,:isoutlier,:lelandshade,:linearfitxy,:listecmwfvars,
 					 :lowess,:magic,:mat2ds,:mat2grid,:mat2img, :mosaic,:ODE2ds,:orbits,:pca,:plotgrid!,:plotyy,:pol2cart,
 					 :polygonlevels,:rasterzones!,:regiongeog,:rescale, :slicecube,:sph2cart,:stackgrids,:ter2cart,:theme,
