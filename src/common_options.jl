@@ -5139,15 +5139,17 @@ macro var"?"(name)
 			sym = Symbol($name)
 			getfield(Main, sym)
 			dir = "modules/"
-			if sym in [:ablines,:append2fig,:blendimg,:cart2pol,:cart2sph,:colorzones,:cpt4dcw,:crop,:cubeplot,:coastlinesproj,
+			if sym in [:ablines,:append2fig,:bezier,:blendimg,:cart2pol,:cart2sph,:circfit,:colorzones,:cpt4dcw,:crop,
+			         :cubeplot,:coastlinesproj,
 			         :cubeslice,:date2doy,:delrows!,:doy2date,:ecmwf,:era5time,era5vars,:gadm,:geocoder,:geodetic2enu,
-					 :getbyattrib,:getprovider,:gmtread,:gmtwrite, :graticules,:gridit,:gunique,hampel,:imagesc,:inwhichpolygon,:image_alpha!,
-					 :image_cpt!,:imshow,:ind2rgb, :info,:isnodata,:isoutlier,:lelandshade,:linearfitxy,:listecmwfvars,
-					 :lowess,:magic,:mat2ds,:mat2grid,:mat2img, :mosaic,:ODE2ds,:orbits,:pca,:plotgrid!,:plotyy,:pol2cart,
-					 :polygonlevels,:rasterzones!,:regiongeog,:rescale, :slicecube,:sph2cart,:stackgrids,:ter2cart,:theme,
-					 :uniqueind,:vecangles,:weather,:whereami,:wmsinfo, :wmsread,:wmstest,:worldrectgrid,:worldrectcoast,
-					 :worldrectangular,:xyzw2cube,:yeardecimal,:zonal_stats, :cube,:cylinder,:dodecahedron,:ellipse3D,
-					 :flatfv,:fv2fv,:icosahedron,:loft,:sphere, :octahedron,:tetrahedron,:torus,:replicant,:revolve
+			         :getbyattrib,:getprovider,:gmtread,:gmtwrite, :graticules,:gridit,:gunique,hampel,:imagesc,:inwhichpolygon,
+			         :image_alpha!, :image_cpt!,:imshow,:ind2rgb, :info,:isnodata,:isoutlier,:lazinfo,:lazread,:lazwrite,:lasread,
+			         :laswrite,:lelandshade,:linearfitxy,:listecmwfvars,
+			         :lowess,:magic,:mat2ds,:mat2grid,:mat2img, :mosaic,:ODE2ds,:okada,:orbits,:pca,:plotgrid!,:plotyy,:pol2cart,
+			         :polygonlevels,:rasterzones!,:regiongeog,:rescale, :slicecube,:sph2cart,:stackgrids,:ter2cart,:theme,
+			         :uniqueind,:vecangles,:weather,:whereami,:wmsinfo, :wmsread,:wmstest,:worldrectgrid,:worldrectcoast,
+			         :worldrectangular,:xyzw2cube,:yeardecimal,:zonal_stats, :cube,:cylinder,:dodecahedron,:ellipse3D,
+			         :flatfv,:fv2fv,:icosahedron,:loft,:sphere, :octahedron,:tetrahedron,:torus,:replicant,:revolve
 					]
 					dir = "utilities/"
 			elseif sym in [:binarize, :bwareaopen, :bwconncomp, :bwdist, :bwhitmiss, :bwperim, :bwskell, :cc2bw, :imdilate,
