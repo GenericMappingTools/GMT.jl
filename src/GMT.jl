@@ -241,6 +241,7 @@ include("beziers.jl")
 include("circfit.jl")
 include("crop.jl")
 include("custom_symb_funs.jl")
+include("doc_source_links.jl")
 include("gmtbegin.jl")
 include("blendimg.jl")
 include("blocks.jl")
@@ -452,6 +453,7 @@ using .Laszip
 	#kmeans(rand(100,3), 3, maxiter=10);
 	#rm(joinpath(tempdir(), "GMTjl_custom_p_x.txt"))		# This one gets created before username is set.
 	#arrows([0 8.2 0 6], limits=(-2,4,0,9), arrow=(len=2,stop=1,shape=0.5,fill=:red), axis=:a, pen="6p");
+	GMT.doc_source_links("psbasemap"; silent=true)
 	theme()
 	#rescale(mat2img(rand(UInt16, 16,16,3)))
 	plot(rand(5,2))

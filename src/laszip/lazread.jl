@@ -11,8 +11,8 @@ Base.@kwdef struct lasout_types
 end
 
 """
-    out = lazread(FileName::AbstractString; out::String="xyz", do_grid=false, do_image=false,
-                  type::DataType=Float64, class=0, startstop="1:end")
+    out = lazread(FileName::AbstractString; out::String="xyz", grid=false, image=false,
+                  type::DataType=Float64, class=0, startstop="1:end", kw...)
 
 Read data from a LIDAR laz (laszip compressed) or las format file.
 
@@ -22,19 +22,20 @@ Read data from a LIDAR laz (laszip compressed) or las format file.
 
 - `out`: Select what data to output. The default is "xyz" meaning that only these three are sent out.
    Examples include: "xyz", "xy", "yx", "z", "xyzi", "xyzt", "xyzit", "xyzti", "xyzic" "xyzc",
-   "RGB", "RGBI", "xyRGB", "xyRGBI".
-   where 'i' stands for intensity (UInt16), 'c' for classification (Int8) and 't' for GPS time (Float64)
+   "RGB", "RGBI", "xyRGB", "xyRGBI". Where 'i' stands for intensity (UInt16), 'c' for classification
+   (Int8) and 't' for GPS time (Float64) and "R","G","B","I" for the color components.
 
 - `grid`: If true, the output is a GMTgrid. This implicitly sets `out="xyz"` and `type=Float32`.
-   The grid is built using the `nearneighbor` algorithm. It is recommended to use the `-R` and `-I` options,
+   The grid is built using the `nearneighbor` algorithm. It is recommended to use the `region` and `inc` options,
    but if not provided, the grid is built using the extent of the data and a crude estimate of the increment.
 
 - `image`: If true, the output is a GMTimage. This implicitly sets `out="xyRGB"` and of course it will
    error if the laz file does not contain RGB data. If another color combination is desired, specify it
-   explicitly, e.g., `out="xyIRG"`. Like the `do_grid` option, it is recommended to use the `-R` and `-I` options,
+   explicitly, e.g., `out="xyIRG"`. Like the `grid` option, it is recommended to use the `region` and `inc` options,
    to control the image extent and resolution.
 
-- `type`: The float components (xyz) may be required in Float32. The default is Float64.
+- `type`: The float components (xyz) may be required in Float32. The default is Float64. And images may
+   may be requested to be UInt16 (default is UInt8).
 
 - `startstop="start:stop"`: A string that restricts the output to the points from start to stop.
 
@@ -48,7 +49,7 @@ indicating what data is stored in output. `grd` is a GMTgrid if `grid` is true o
 `img` is a GMTimage if `image` was set to true and the laz file contains RGB data.
 `ds` is a `GMTdataset` with the xyz data, and `dsv`is a vector of GMTdataset if input opion `out` was set
 to something else than "xyz" or "xy". The reason for assembling the output in a Type is make the output of
-`lazread` be type stable. Use ``getproperty(out, Symbol(out.stored))`` toget the normal GMT types directly, or,
+`lazread` be type stable. Use ``getproperty(out, Symbol(out.stored))`` to get the normal GMT types directly, or,
 do the reading via ``gmtread`` that will do this for you.
 
 ### Example
@@ -65,7 +66,6 @@ function lazread(fname::AbstractString; out::AbstractString="xyz", type::DataTyp
 	opt_RI, = parse_RIr(d, "")
 	do_grid && (out = "xyz")
 	(do_img && out == "xyz") && (out = "xyRGB")		# If want other color combinations must specify them explicitly.
-	(do_grid || do_img) && (type = Float32)
 	lazread(string(fname), string(out), type, class, startstop, do_grid, do_img, opt_RI)
 end
 
@@ -87,14 +87,18 @@ function lazread(fname::String, out::String, type::DataType, class::Int, startst
 	totalNP::Int = lastPT - firstPT + 1
 	# ---------------------------------------------------------------------------------------------------
 
-	fType = (do_grid || do_img) ? Float32 : Float64
-	(!occursin('t', argout) && type == Float32) && (fType = Float32)	# A time selection implies Float64
+	fType = (do_grid || do_img) ? Float32 : Float64		# This type is for xyz only
+	_type = (do_grid || do_img) ? Float32 : type		# dumb var just to avoid changing too much below
+	(!occursin('t', argout) && _type == Float32) && (fType = Float32)	# A time selection implies Float64
 
 	if (header.global_encoding == 32768)
 		argout = "g"
 		just_z = Vector{Float32}(undef, lastPT * 3)		# Grids are always in Float32
+		n_upper = 0			# This var must exist later
 	else
 		# ------ Pre-allocations ---------------------------------------------------------------------
+		n_upper = count(isuppercase, argout)
+		((do_grid || do_img) && (n_upper == length(argout)) && !contains(opt_RI, "-R")) && (argout = "xy" * argout)	# grid or img need xy coords
 		if (startswith(argout, "xyz") || startswith(argout, "xyt"))  n_col = 3
 		elseif (startswith(argout, "xyzt"))  n_col = 4
 		elseif (startswith(argout, "xy"))    n_col = 2
@@ -105,8 +109,14 @@ function lazread(fname::String, out::String, type::DataType, class::Int, startst
 		(occursin('i', argout))	&& (intens = zeros(UInt16, totalNP, 1))
 		(occursin('c', argout))	&& (class  = zeros(Int8,   totalNP, 1))
 		(occursin('n', argout))	&& (n_ret  = zeros(Int8,   totalNP, 1))
-		if (occursin('R', argout) || occursin('G', argout) || occursin('B', argout))
-			RGB = occursin('I', argout) ? zeros(UInt16, totalNP, 4) : zeros(UInt16, totalNP, 3)
+		if (n_upper > 0)
+			RGB = zeros(UInt16, totalNP, n_upper)
+			ind_colors = zeros(Int, n_upper)
+			ind_in_str = findall(isuppercase.(collect(argout)))		# length(ind_in_str) == length(ind_colors) == n_upper
+			for k = 1:n_upper
+				c = argout[ind_in_str[k]]
+				ind_colors[k] = (c == 'R') ? 1 : (c == 'G') ? 2 : (c == 'B') ? 3 : 4
+			end
 		end
 	end
 	#-------------------------------------------------------------------------------------------------
@@ -208,19 +218,13 @@ function lazread(fname::String, out::String, type::DataType, class::Int, startst
 			end
 			coords = 1:2
 		end
-	elseif (argout == "RGB")
+	elseif (n_upper > 0)
 		@inbounds for k = firstPT:lastPT
 			laszip_read_point(reader[])
 			pt = unsafe_load(point[])
-			RGB[k,1] = pt.rgb[1];	RGB[k,2] = pt.rgb[2];	RGB[k,3] = pt.rgb[3]
-		end
-		coords = 1:0
-	elseif (argout == "RGBI")
-		@inbounds for k = 1:totalNP
-			laszip_read_point(reader[])
-			pt = unsafe_load(point[])
-			RGB[k,1] = pt.rgb[1];	RGB[k,2] = pt.rgb[2];	RGB[k,3] = pt.rgb[3]
-			RGB[k,4] = pt.rgb[4]
+			@inbounds for j = 1:n_upper
+				RGB[k,j] = pt.rgb[ind_colors[j]]
+			end
 		end
 		coords = 1:0
 	elseif (argout != "g")
@@ -241,7 +245,7 @@ function lazread(fname::String, out::String, type::DataType, class::Int, startst
 	(laszip_destroy(reader[]) != 0) && msgerror(reader[], "destroying laszip reader")
 
 	if (argout == "xyz" || argout == "xy" || argout == "z" || argout == "xyt" || argout == "xyzt")
-		!do_grid ? lasout_types(ds=mat2ds(xyz)) : lasout_types(grd=make_grid_from_xyz(xyz, opt_RI))
+		!do_grid ? lasout_types(ds=mat2ds(xyz)) : lasout_types(grd=make_grid_from_xyz(xyz, opt_RI, header))
 	elseif (argout == "xyzi")
 		lasout_types(dsv = [mat2ds(xyz), mat2ds(intens)])	
 	elseif (argout == "xyzc")
@@ -249,38 +253,41 @@ function lazread(fname::String, out::String, type::DataType, class::Int, startst
 	elseif (argout == "xyzti")
 		lasout_types(dsv = [mat2ds(xyz), mat2ds(intens)])	
 	elseif ((startswith(argout, "xyz") || startswith(argout, "xy")) && occursin(r"[RGBI]", argout))
-		do_img && return lasout_types(img=make_img_from_xyz(xyz, RGB, opt_RI))
+		do_img && return lasout_types(img=make_img_from_xyz(xyz, RGB, opt_RI, header, type))
 		colnames = string.(split(argout[size(xyz,2)+1:end], ""))
 		lasout_types(dsv = [mat2ds(xyz), mat2ds(RGB, colnames=colnames)])	
 	elseif (argout == "RGB" || argout == "RGBI")
+		do_img && return lasout_types(img=make_img_from_xyz(xyz, RGB, opt_RI, header, type))
 		colnames = (argout == "RGB") ? ["R", "G", "B"] : ["R", "G", "B", "I"]
 		lasout_types(ds=mat2ds(RGB, colnames=colnames))
 	elseif (argout == "g")			# The disgised GRID case
 		lasout_types(grd=G)
 	else
-		error("Unknown argout type")
+		error("Unknown output variables combination requested.")
 	end
 end
 
 # --------------------------------------------------------------------------------
-function make_grid_from_xyz(xyz, opt_RI)::GMTgrid{Float32, 2}
-	opt_R, opt_I, opt_r = laz_get_RIr(xyz, opt_RI)
+function make_grid_from_xyz(xyz, opt_RI, header)::GMTgrid{Float32, 2}
+	opt_R, opt_I, opt_r = laz_get_RIr(xyz, opt_RI, header)
 	inc = split(opt_I[4:end], '/')[1]
 	gmt("nearneighbor -Vq -N1 -S" * inc * opt_R * opt_I * opt_r, xyz)
 end
 
 # --------------------------------------------------------------------------------
-function make_img_from_xyz(xy, RGB, opt_RI)::GMTimage{UInt8, 3}
-	opt_R, opt_I, opt_r = laz_get_RIr(xy, opt_RI)
+function make_img_from_xyz(xy, RGB, opt_RI, header, type)::GMTimage
+	opt_R, opt_I, opt_r = laz_get_RIr(xy, opt_RI, header)
 	#cmd = "blockmedian -Az" * opt_R * opt_I * opt_r
 	inc = split(opt_I[4:end], '/')[1]
 	cmd = "nearneighbor -Vq -N1 -S" * inc * opt_R * opt_I * opt_r
 	#G::GMTgrid{Float32, 2} = gmt(cmd, [xy RGB[:,1]])		# ADDING THE TYPE ANNOT ADDS 0.5 MB TO THE PRECOMPILED CACHE !!!!!
 	G = gmt_GMTgrid(cmd, [xy RGB[:,1]])
-	img = Array{UInt8}(undef, size(G,1), size(G,2), 3)
-	for k = 1:3
+	nBands = size(RGB,2)
+	imType = (type == UInt16) ? UInt16 : UInt8		# The type of the output image. Default is UInt8 but can be UInt16
+	img = (nBands == 1) ? Array{imType}(undef, size(G,1), size(G,2)) : Array{imType}(undef, size(G,1), size(G,2), nBands)
+	for k = 1:nBands
 		(k > 1) && (G = gmt_GMTgrid(cmd, [xy RGB[:,k]]))
-		It = rescale(G, stretch=true, type=UInt8)
+		It = rescale(G, stretch=true, type=imType)
 		img[:,:,k] .= It[:, :]
 	end
 	
@@ -288,11 +295,11 @@ function make_img_from_xyz(xy, RGB, opt_RI)::GMTimage{UInt8, 3}
 end
 
 # --------------------------------------------------------------------------------
-function laz_get_RIr(xyz, opt_RI)
+function laz_get_RIr(xyz, opt_RI, header)
 	if ((opt_R = scan_opt(opt_RI, "-R", true)) == "")
-		mima_x = extrema(view(xyz, :, 1));		dx = mima_x[2] - mima_x[1]
-		mima_y = extrema(view(xyz, :, 2));		dy = mima_y[2] - mima_y[1]
-		opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g", mima_x[1], mima_x[2], mima_y[1], mima_y[2])
+		dx = header.max_x - header.min_x
+		dy = header.max_y - header.min_y
+		opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g", header.min_x, header.max_x, header.min_y, header.max_y)
 		inc = sqrt(size(xyz,1) / (dx*dy))/2		# Very crude estimate of the increment in case it was not provided.
 	end
 	if ((opt_I = scan_opt(opt_RI, "-I", true)) == "")
