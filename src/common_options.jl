@@ -1534,8 +1534,11 @@ function parse_f(d::Dict, cmd::String)
 	cmd, opt_f = parse_helper(cmd, d, [:f :geog :colinfo :coltypes :coltype], " -f")
 	if contains(opt_f, '/')				# Case when -fi and -fo were both set
 		s = split(opt_f, '/')
-		new_f = s[1] * " -f" * s[2]
+		s1 = s[1][1] == 'i' ? s[1] : "i" * s[1]		# Allow setting, or not, the i|o
+		s2 = s[2][1] == 'o' ? s[2] : "o" * s[2]
+		new_f = s1 * " -f" * s2
 		cmd = replace(cmd, opt_f => new_f)
+		opt_f = new_f
 	end
 	return cmd, opt_f
 end
