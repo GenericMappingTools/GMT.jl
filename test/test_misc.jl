@@ -200,7 +200,7 @@
 	GMT.GMT_Get_Default(API, "API_VERSION", "        ");
 	D = gmtconvert([1.0 2 3; 2 3 4], a="2=lolo+gPOINT");	# There's a bug in GMT for this. No data points are printed
 	gmtwrite("lixo.gmt", D)
-	@test gmtconvert([1.0 2 3; 2 3 4], binary_out="3f", write="a.bin", Vd=2) == "gmtconvert  > a.bin -bo3f"
+	@test gmtconvert([1.0 2 3; 2 3 4], binary_out="3f", write="a.bin", Vd=2) == "gmtconvert  -bo3f > a.bin"
 	@test gmtconvert([1.0 2 3; 2 3 4], binary_out="3f", append="a.bin", Vd=2) == "gmtconvert  >> a.bin -bo3f"
 	rm("lixo.gmt")
 

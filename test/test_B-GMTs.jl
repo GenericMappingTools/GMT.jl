@@ -66,6 +66,13 @@
 	println("	GMTCONVERT")
 	gmtconvert([1.1 2; 3 4], o=0)
 
+	result = sample1d([0 0; 4 1], inc=0.5);
+	D1 = gmtconvert(result, f="i0t/o0T", par=(TIME_EPOCH="1969-07-21T02:56:00", TIME_UNIT=:d));
+	gmtconvert(result, f="i0t/o0T", par=(TIME_EPOCH="1969-07-21T02:56:00", TIME_UNIT=:d), savefile="tmp.txt")
+	D2 = gmtread("tmp.txt");
+	@test all(D1.data .== D2.data)
+	rm("tmp.txt")
+
 	println("	GMTGRAVMAG3D")
 	gmtgravmag3d(M=(shape=:prism, params=(1,1,1,5)), I=1.0, R="-15/15/-15/15", H="10/60/10/-10/40", Vd=dbg2);
 	#D = gravmag3d(region="-15/15/-15/15", I=0.1, mag_params="10/60/10/-10/40", body=(shape=:prism, params="1/1/1/-5/-10/1"), F=[-14 -14; 14 14]);
