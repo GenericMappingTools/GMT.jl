@@ -1532,6 +1532,11 @@ function parse_f(d::Dict, cmd::String)
 	# For plotting time (-ft) in X one must add 'T' to -JX but that is boring and difficult to automatize
 	# GMT6.3 now has it internal but previous versions no. So do that job here.
 	cmd, opt_f = parse_helper(cmd, d, [:f :geog :colinfo :coltypes :coltype], " -f")
+	if contains(opt_f, '/')				# Case when -fi and -fo were both set
+		s = split(opt_f, '/')
+		new_f = s[1] * " -f" * s[2]
+		cmd = replace(cmd, opt_f => new_f)
+	end
 	return cmd, opt_f
 end
 
