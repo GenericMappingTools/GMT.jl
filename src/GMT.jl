@@ -480,6 +480,7 @@ function __init__(test::Bool=false)
 	f = joinpath(GMTuserdir[1], "theme_jl.txt")
 	(isfile(f)) && (theme(readline(f));	ThemeIsOn[] = false)	# False because we don't want it reset in showfig()
 	user = (Sys.isunix() || Sys.isapple()) ? Libc.getpwuid(Libc.getuid(), true).username : Sys.iswindows() ? ENV["USERNAME"] : ""
+	!isascii(user) && (user = string(hash(user), base = 16)[1:8])	# For non-ASCII user names
 	TMPDIR_USR.username = replace(user, " " => "_")
 	haskey(ENV, "JULIA_GMT_MULTIFILE") && (TMPDIR_USR.pid_suffix = string("_", getpid()))
 	PSname[] = TMPDIR_USR.dir * "/" * "GMTjl_" * TMPDIR_USR.username * TMPDIR_USR.pid_suffix * ".ps"
