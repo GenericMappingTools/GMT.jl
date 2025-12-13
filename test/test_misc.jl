@@ -77,6 +77,16 @@
 	I1 ⊻ I2;
 	!I1;
 
+	I = mat2img(reshape(collect(UInt16(11):UInt16(26)), 4,4), noconv=true);
+	I2 = I - 11;
+	@test eltype(I2) == UInt16
+	I2 = I - 12
+	@test eltype(I2) == Float32
+	I2 = I + 11;
+	@test eltype(I2) == UInt16
+	I2 = I + typemax(UInt16)
+	@test eltype(I2) == Float32
+
 	@test GMT.bin2dec("10111") == 23
 	@test GMT.dec2bin(23) == "10111"
 	@test GMT.sub2ind((3,3), [1 2 3 1], [2 2 2 3]) == [4  5  6  7]

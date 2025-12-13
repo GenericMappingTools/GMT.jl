@@ -32,9 +32,24 @@ function Base.:+(G1::GMTgrid, shift::Real)
 	G2.range[5:6] .+= shift
 	return G2
 end
+
 # Now for images
-Base.:+(G1::GMTimage{T}, shift::Real) where T <: Unsigned = img2grid(G1) + shift
-Base.:+(shift::Real, G1::GMTimage{T}) where T <: Unsigned = img2grid(G1) + shift
+Base.:+(G1::GMTimage{T}, shift::AbstractFloat) where T <: Unsigned = img2grid(G1) + shift
+function Base.:+(G1::GMTimage{T}, shift::Integer) where T <: Unsigned
+	_shift = Int64(shift)
+	shift_typed = convert(eltype(G1.image), _shift)
+	if ((G1.range[5] + _shift) >= typemin(eltype(G1)) && (G1.range[6] + _shift) <= typemax(eltype(G1)))
+		# All values will fit in the same type of G1
+		mat = (!isfinite(G1.nodata)) ? G1.image .+ shift_typed : similar(G1.image)
+		if (isfinite(G1.nodata))
+			nodata = convert(eltype(G1.image), G1.nodata)
+			@inbounds for k in eachindex(mat) mat[k] = ifelse((G1.image[k] != G1.nodata), G1.image[k] + shift_typed, nodata)  end
+		end
+		return mat2img(mat, G1, nodata=G1.nodata)
+	else				# Values will overflow, so make it a Float32 grid
+		return img2grid(G1) + shift
+	end
+end
 
 # ---------------------------------------------------------------------------------------------------
 function Base.:-(G1::GMTgrid, G2::GMTgrid)
@@ -63,9 +78,24 @@ function Base.:-(G1::GMTgrid, shift::Real)
 	G2.range[5:6] .-= shift
 	return G2
 end
+
 # Now for images
-Base.:-(G1::GMTimage{T}, shift::Real) where T <: Unsigned = img2grid(G1) - shift
-Base.:-(shift::Real, G1::GMTimage{T}) where T <: Unsigned = img2grid(G1) - shift
+Base.:-(G1::GMTimage{T}, shift::AbstractFloat) where T <: Unsigned = img2grid(G1) - shift
+function Base.:-(G1::GMTimage{T}, shift::Integer) where T <: Unsigned
+	_shift = Int64(shift)
+	shift_typed = convert(eltype(G1.image), _shift)
+	if ((G1.range[5] - _shift) >= typemin(eltype(G1)) && (G1.range[6] - _shift) <= typemax(eltype(G1)))
+		# All values will fit in the same type of G1
+		mat = (!isfinite(G1.nodata)) ? G1.image .- shift_typed : similar(G1.image)
+		if (isfinite(G1.nodata))
+			nodata = convert(eltype(G1.image), G1.nodata)
+			@inbounds for k in eachindex(mat) mat[k] = ifelse((G1.image[k] != G1.nodata), G1.image[k] - shift_typed, nodata)  end
+		end
+		return mat2img(mat, G1, nodata=G1.nodata)
+	else				# Values will overflow, so make it a Float32 grid
+		return img2grid(G1) - shift
+	end
+end
 
 # ---------------------------------------------------------------------------------------------------
 function Base.:*(G1::GMTgrid, G2::GMTgrid)

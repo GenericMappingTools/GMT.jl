@@ -95,10 +95,14 @@ function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int
 	x_min, x_max, y_min, y_max, x_inc, y_inc = getregion(dataset, pad=pad, xSize=xSize, ySize=ySize, gridreg=is_grid, sds=sds)
 
 	if !(eltype(mat) <: Complex)
-		z_min::Float64, z_max::Float64 = (is_grid) ? extrema_nan(mat) : extrema(mat)
+		if (!got_fill_val || !isfinite(fill_val))
+			z_min::Float64, z_max::Float64 = (is_grid) ? extrema_nan(mat) : extrema(mat)
+		else
+			z_min, z_max = extrema_nodataval(mat, fill_val)
+		end
 		isnan(z_min) && (z_min, z_max = extrema_nan(mat))	# Convoluted nc UInt16 layers with scalefactors can result in NaNs
 	else
-		z_min, z_max, z_im_min, z_im_max = extrema(mat)
+		z_min, z_max, z_im_min, z_im_max = extrema(mat)		# SHOULD DO THE SAME AS ABOVE
 	end
 	hdr = [x_min, x_max, y_min, y_max, z_min, z_max, Float64(!is_grid), x_inc, y_inc]
 	prj = getproj(dataset)

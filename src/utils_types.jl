@@ -1379,7 +1379,7 @@ function mat2img(mat::Union{AbstractMatrix{UInt16},AbstractArray{UInt16,3}}; x=F
 	# stretch = [v1 v2 v3 v4 v5 v6] scales firts band >= v1 && <= v2 to [0 255], second >= v3 && <= v4, same for third
 	# If the img8 argument is used, it should contain a pre-allocated UInt8 array with the exact same size as MAT.
 	# The 'scale_only' kw option makes it return just the scaled array an no GMTimage creation (useful when img8 is a view).
-	# Use the keyword NOCONV to return GMTimage UInt16 type. I.e., no conversion to UInt8
+	# Use the keyword `noconv=true` to return GMTimage UInt16 type. I.e., no conversion to UInt8
 
 	d = KW(kw)
 	x::Vector{Float64} = vec(x);	y::Vector{Float64} = vec(y);	v::Vector{Float64} = vec(v);
@@ -1536,8 +1536,8 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 # This method creates a new GMTimage but retains all the header data from the IMG object
-function mat2img(mat, I::GMTimage; names::Vector{String}=String[], metadata::Vector{String}=String[])
-	range = copy(I.range);	(size(mat,3) == 1) && (range[5:6] .= extrema(mat))
+function mat2img(mat, I::GMTimage; names::Vector{String}=String[], metadata::Vector{String}=String[], nodata=NaN)
+	range = copy(I.range);	(size(mat,3) == 1) && (range[5:6] .= !isfinite(nodata) ? extrema(mat) : extrema_nodataval(mat, nodata))
 	GMTimage(I.proj4, I.wkt, I.epsg, I.geog, range, copy(I.inc), I.registration, NaN32, I.color_interp, metadata, names, copy(I.x), copy(I.y), zeros(size(mat,3)), mat, copy(I.colormap), String[], I.n_colors, Array{UInt8,2}(undef,1,1), I.layout, 0)
 end
 function mat2img(mat, G::GMTgrid; names::Vector{String}=String[], metadata::Vector{String}=String[])

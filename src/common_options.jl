@@ -5160,6 +5160,9 @@ macro var"?"(name)
 			         :flatfv,:fv2fv,:icosahedron,:loft,:sphere, :octahedron,:tetrahedron,:torus,:replicant,:revolve
 					]
 					dir = "utilities/"
+			elseif sym in [:gd2gmt, :gmt2gd, 
+						]
+						dir = "gdalfuns/"
 			elseif sym in [:binarize, :bwareaopen, :bwconncomp, :bwdist, :bwhitmiss, :bwperim, :bwskell, :cc2bw, :imdilate,
 						 :imerode, :imopen, :imclose, :imtophat, :imbothat, :immorphgrad, :strel, :imfilter, :imrankfilter,
 						 :imsobel, :graydist, :padarray, :imfill, :imreconstruct, :imsegment, :isodata, :imregionalmax,

@@ -16,7 +16,7 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 end
 function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::Bool, d::Dict{Symbol, Any})
 	(cmd0 != "" && arg1 === nothing && is_in_dict(d, [:groupvar :hue]) !== nothing) && (arg1 = gmtread(cmd0); cmd0 = "")
-	invokelatest(_common_plot_xyz, cmd0, arg1, caller, !first, true, is3D, d)
+	_common_plot_xyz(cmd0, arg1, caller, !first, true, is3D, d)
 	#invokelatest(_common_plot_xyz, cmd0, arg1, caller, !first, true, is3D, d)
 end
 function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, is3D::Bool, d::Dict{Symbol, Any})
