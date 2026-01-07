@@ -956,7 +956,7 @@ function parse_opt_S(d::Dict, arg1, is3D::Bool=false)
 			opt_S = " -S" * marca
 			# If data comes from a file, then no automatic symbol size is added
 			op = lowercase(marca[1])
-			def_size::String = (op == 'p') ? "2p" : "7p"	# 'p' stands for symbol points, not units. Att 7p used in seismicity() 
+			def_size::String = (marca[1] == 'P') ? "" : ((op == 'p') ? "2p" : "7p")	# 'p' stands for symbol points, not units. Att 7p used in seismicity() 
 			(!more_cols && arg1 !== nothing && !isa(arg1, GMTcpt) && !occursin(op, "bekmrvw")) && (opt_S *= def_size)
 		elseif (haskey(d, :hexbin))
 			inc::Float64 = parse(Float64, arg1.attrib["hexbin"])
@@ -1000,13 +1000,13 @@ function build_run_cmd(cmd, opt_B, opt_Gsymb, opt_ML, opt_S, opt_W, opt_Wmarker,
 
 	elseif (opt_W == "" && (opt_S != "" || opt_Gsymb != ""))	# We have a symbol request
 		(opt_Wmarker != "" && opt_W == "") && (opt_Gsymb *= " -W" * opt_Wmarker)	# reuse var name
-		(opt_ML != "") && (cmd *= opt_ML)					# If we have a symbol outline pen
+		(opt_ML != "") && (cmd *= opt_ML)						# If we have a symbol outline pen
 		_cmd = [cmd * opt_S * opt_Gsymb * opt_UVXY]
 
 	elseif (opt_W != "" && opt_S != "")							# We have both line/polygon and a symbol
 		(occursin(opt_Gsymb, cmd)) && (opt_Gsymb = "")
 		c = lowercase(opt_S[4])
-		if (c == 'v' || c == 'm' || c == 'w' || c == '=' || c == 'q')	# Are there more cases where the pen applies to the symbol?
+		if (c == 'v' || c == 'm' || c == 'w' || c == '=' || c == 'q' || c == 'p')	# Are there more cases where the pen applies to the symbol?
 			_cmd = [cmd * opt_W * opt_S * opt_Gsymb * opt_UVXY]
 		else
 			(opt_Wmarker != "") && (opt_Wmarker = " -W" * opt_Wmarker)		# Set Symbol edge color

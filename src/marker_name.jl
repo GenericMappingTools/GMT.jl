@@ -14,6 +14,7 @@ function get_marker_name(d::Dict, arg1, symbs::Vector{Symbol}, is3D::Bool, del::
 				elseif (o == "j" || startswith(o, "rot"))  opt = "j";  N = 3
 				elseif (o == "M" || startswith(o, "Mat"))  opt = "M";  N = 3
 				elseif (o == "m" || startswith(o, "mat"))  opt = "m";  N = 3
+				elseif (o == "P" || startswith(o, "sph"))  opt = "P";  N = 1
 				elseif (o == "R" || startswith(o, "Rec"))  opt = "R";  N = 3
 				elseif (o == "r" || startswith(o, "rec"))  opt = "r";  N = 2
 				elseif (o == "V" || startswith(o, "Vec"))  opt = "V";  N = 2
@@ -23,6 +24,7 @@ function get_marker_name(d::Dict, arg1, symbs::Vector{Symbol}, is3D::Bool, del::
 				elseif (o == "W" || o == "Pie" || o == "Web" || o == "Wedge")  opt = "W";  N = 2
 				end
 				if (N > 0)  marca, arg1, msg = helper_markers(opt, t[2], arg1, N, cst)  end
+				(marca == "P") && (marca = "P$(t[2])")
 				(msg != "") && error(msg)
 				if (length(t) == 3 && isa(t[3], NamedTuple))
 					if (marca == "w" || marca == "W")	# Ex (spiderweb): marker=(:pie, [...], (inner=1,))
@@ -41,6 +43,7 @@ function get_marker_name(d::Dict, arg1, symbs::Vector{Symbol}, is3D::Bool, del::
 				elseif (key == :K || key == :Custom)  opt = "K"
 				elseif (key == :k || key == :custom)  opt = "k"
 				elseif (key == :M || key == :Matang)  opt = "M"
+				elseif (key == :P || key == :sphere)  opt = "P"
 				elseif (key == :m || key == :matang)  opt = "m"
 				elseif (key == :geovec)  opt = "="
 				end
@@ -54,6 +57,10 @@ function get_marker_name(d::Dict, arg1, symbs::Vector{Symbol}, is3D::Bool, del::
 					marca = opt * add_opt(t, (size=("", arg2str, 1), arrow=("", vector_attrib)))
 				elseif (opt == "k" || opt == "K")
 					marca = opt * add_opt(t, (custom="", size="/"))
+				elseif (opt == "P")
+					marca = opt * add_opt(t, (sphere=("", arg2str, 1), size=("", arg2str, 2), azim="+a", elev="+e", flat="_+f", nofill="_+n", no_fill="_+n"))
+					(marca == "P") && (marca = "P7p")					# Default size 7p if none given
+					(marca[2] == '+') && (marca = "P7p" * marca[2:end])	# 	iden
 				end
 			else
 				t1::String = string(t)
@@ -63,7 +70,9 @@ function get_marker_name(d::Dict, arg1, symbs::Vector{Symbol}, is3D::Bool, del::
 				elseif (t1 == "a" || t1 == "*" || t1 == "star")  marca = "a"
 				elseif (t1 == "k" || t1 == "custom")    marca = "k"
 				elseif (t1 == "x" || t1 == "cross")     marca = "x"
-				elseif (is3D && (t1 == "u" || t1 == "cube"))  marca = "u"	# Must come before next line
+				elseif (is3D)
+					(t1 == "P" || t1 == "sphere") && (marca = "P")
+					(t1 == "u" || t1 == "cube") && (marca = "u")		# Must come before next line
 				elseif (t1[1] == 'c')                   marca = "c"
 				elseif (t1[1] == 'd')                   marca = "d"		# diamond
 				elseif (t1 == "g" || t1 == "octagon")   marca = "g"

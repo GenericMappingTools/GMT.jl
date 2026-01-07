@@ -227,6 +227,13 @@
 	scatter3!(x -> sin(x), y -> cos(y), 0:pi/50:10pi, Vd=dbg2)
 	scatter3!(x -> sin(x)*cos(10x), y -> sin(y)*sin(10y), z -> cos(z), 0:pi/100:pi, Vd=dbg2)
 
+	plot3([3 3 3], R="0/6/0/6/0/6", JZ=4, p="135/45", S="P2c", G=:blue, W="0.2p,red", Vd=dbg2)
+	plot3([3 3 3], R="0/6/0/6/0/6", JZ=4, p="135/45", marker=(:sphe, 2), G=:blue, W="0.2p,red", Vd=dbg2)
+	plot3([3 3 3], R="0/6/0/6/0/6", JZ=4, p="135/45", marker=:sphere, mc=:blue, mec="0.2p,red", ms=2, Vd=dbg2)
+	plot3([3 3 3], R="0/6/0/6/0/6", JZ=4, p="135/45", marker=(sphere=true, flat=true, azim=19), mc=:blue, mec="0.2p,red", Vd=dbg2)
+	plot3([3 3 3], R="0/6/0/6/0/6", JZ=4, p="135/45", marker=(sphere=3, flat=true, azim=19), mc=:blue, mec="0.2p,red", Vd=dbg2)
+	plot3([3 3 3], R="0/6/0/6/0/6", JZ=4, p="135/45", marker=(sphere=true, size=6, flat=true, azim=19), mc=:blue, mec="0.2p,red", Vd=dbg2)
+
 	println("	ARROWS")
 	arrows([0 8.2 0 6], R="-2/4/0/9", arrow=(len=2,stop=1,shape=0.5,fill=:red), J=:X14, B=:a, pen="6p")
 	arrows([0 8.2 0 6], R="-2/4/0/9", arrow=(len=2,start=:arrow,stop=:tail,shape=0.5), J=:X14, B=:a, pen="6p")
