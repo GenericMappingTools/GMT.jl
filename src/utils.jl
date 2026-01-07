@@ -247,6 +247,7 @@ end
 # --------------------------------------------------------------------------------------------------
 # Incredibly Julia ignores the NaN nature and incredibly min(1,NaN) = NaN, so need to ... fck
 extrema_nan(A::AbstractArray{<:AbstractFloat}) = minimum_nan(A), maximum_nan(A)
+extrema_nodataval(A::AbstractArray{<:Real}, val) = minimum_nodataval(A, val), maximum_nodataval(A, val)
 extrema_nan(A) = extrema(A)
 
 """
@@ -298,6 +299,20 @@ function maximum_nan(A::AbstractArray{<:AbstractFloat})
 	return ma
 end
 maximum_nan(A) = maximum(A)
+
+# Cases where a specific no-data value is used and therefore should be excluded from min/max calculations
+function minimum_nodataval(A::AbstractArray{<:Real}, val)
+	(val == typemax(eltype(A))) && return minimum(A)	# No need to check for no-data value
+	mi = typemax(eltype(A))
+	@inbounds for k in eachindex(A) mi = ifelse((A[k] != val), min(mi, A[k]), mi)  end
+	return mi
+end
+function maximum_nodataval(A::AbstractArray{<:Real}, val)
+	(val == typemin(eltype(A))) && return maximum(A)	# No need to check for no-data value
+	ma = typemin(eltype(A))
+	@inbounds for k in eachindex(A) ma = ifelse((A[k] != val), max(ma, A[k]), ma)  end
+	return ma
+end
 
 function findmax_nan(x::AbstractVector{T}) where T
 	# Since Julia doesn't ignore NaNs and prefer to return wrong results findmax is useless when data
@@ -1563,3 +1578,31 @@ end
 #include("tanakacontour.jl")
 #include("shufflelabel.jl")
 
+function cut_icons(; nome="", size=350)
+	nomes = "basemap blockmean blockmode blockmedian clip coast colorbar contour dimfilter events filter1d fitcircle gmt2kml gmtbinstats gmtconnect gmtconvert gmtdefaults gmtinfo gmtlogo gmtmath gmtregress gmtselect gmtset gmtsplit gmtspatial gmtvector gmtwhich grd2cpt grd2kml grd2xyz grdblend grdclip grdcontour grdconver grdcut grdedit grdfft grdfill grdfilter grdgradient grdhisteq grdimage grdinfo grdinterpolate grdlandmask grdmask grdmath grdmix grdpaste grdproject grdsample grdtrack grdtrend grdvector grdview grdvolume greenspline histogram image inset kml2gmt legend mapproject mask movie nearneighbor plot plot3d project psconvert rose sample1d simplify solar spectrum1d sphinterpolate sphdistance sphtriangulate sph2grd splitxyz subplot surface ternary text trend1d trend2d triangulate wiggle xyz2grd"
+
+	nomes = "band bar bar3 biplot boxplot bubblechart cornerplot ecdfplot feather fill_between lines marginalhist parallelplot scatter stem stairs triplot"
+
+	nomes = "coupe earthtide flexure gmtflexure gmtisf gpsgridder gravfft gravmag3d gravprisms grdflexure grdgravmag3d grdpmodeler grdredpol grdrotater grdseamount grdspotter hotspotter polar img2grd magref meca mgd77convert mgd77track rotconverter rotsmoother sac talwani2d talwani3d velo windbarbs originater pmodeler polespotter segy2grd segy segyz backtracker"
+
+	nomes = "ablines anaglyph append2fig arrows bezier coastlinesproj cart2pol cart2sph cpt4dcw contourf colorzones crop cubeplot lazread lazwrite decorated earthregions ecdfplot ecmwf ecmwf findpeaks gadm hband hlines imagesc maregrams meteosat mosaic okada orbits parkergrav parkermag pastplates pca pcolor piechart plotlinefit plotyy qqplot quiver radar scatter3 sealand seismicity slicecube stackgrids stereonet streamlines trisurf vband violin vlines weather wmsread whittaker geocoder inpolygon isoutlier linearfitxy mat2ds mat2grid mat2img leepacific lelandshade remotegrid theme whereami zonal_stats geodetic2enu gmtread gmtwrite graticules gridit hampel imshow ind2rgb inwhichpolygon rasterzones worldrectangular xyzw2cube date2doy doy2date getbyattrib info isnodata ode2ds regiongeog rescale worldrectcoast worldrectgrid gunique polygonlevels sph2cart uniqueind vecangles getprovider mapsize2region wmsinfo"
+
+	nomes = "autocor blendimg! era5vars grid2tri grightjoin isclockwise isotime2unix kmeans lazinfo listecmwfvars yeardecimal"
+	#nomes = "gmt_core gmt_data gmt_grids gmt_jlext gmt_plot gmt_sup"
+
+	nome !== "" && (nomes = nome)
+	pato = "C:/v/doc_t/GMTjl_doc/quarto_site/documentation/modules/assets/" 
+	pato_in = pato * "e/"
+
+	for name in split(nomes)
+		name_out = pato * name * "_logo.jpg"
+		name_in  = pato_in * name * ".png"
+		I = gdalread(name_in)
+		Iw = binarize(I)
+		CC = bwconncomp(Iw)
+		Ic = gdaltranslate(I, R=CC.bbox[1].ds_bbox)
+		Ir = imresize(Ic, size)
+		gmtwrite(name_out, mat2img(Ir[:,:,1:3],Ir))
+		println("Created: " * name_out)
+	end
+end
