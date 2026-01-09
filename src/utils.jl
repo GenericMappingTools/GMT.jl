@@ -1323,7 +1323,8 @@ function getres(GI::GItype; geog::Bool=false, cart::Bool=false, TMB::Bool=false)
 		three = [GI.range[1] GI.range[3]; GI.range[1]+GI.inc[1] GI.range[3]+GI.inc[2];		# Cell at bottom
 		         GI.range[1] mean_y; GI.range[1]+GI.inc[1] mean_y+GI.inc[2];				# Cell at middle
 		         GI.range[1] GI.range[4]-GI.inc[2]; GI.range[1]+GI.inc[1] GI.range[4]]		# Cell at top
-		c = geog ? xy2lonlat(three, s_srs=prj) : lonlat2xy(three, t_srs="+proj=laea +lat_0=$(mean_y) +lon_0=$(GI.range[1]) +units=m +no_defs")
+		#c = geog ? xy2lonlat(three, s_srs=prj) : lonlat2xy(three, t_srs="+proj=laea +lat_0=$(mean_y) +lon_0=$(GI.range[1]) +units=m +no_defs")
+		c = geog ? xy2lonlat(three, s_srs=prj) : mapproject(three, J="a$(GI.range[1])/$(mean_y)/1:1", C=true, F=true)
 		res_y  = abs(c[2,2] - c[1,2])			# Resolution in Y direction (meridian) should be constant
 		res_x1 = abs(c[2,1] - c[1,1])			# Resolution in X direction at bottom
 		res_x2 = abs(c[4,1] - c[3,1])			# Resolution in X direction at middle
