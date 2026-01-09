@@ -152,9 +152,8 @@ export
 
 	blendimg!, lonlat2xy, xy2lonlat, df2ds, mat2ds, mat2grid, mat2img, slicecube, cubeslice, linspace, logspace, fileparts,
 	fields, flipud, fliplr, flipdim, flipdim!, grdinterpolate, pow, tic, toc, theme, tern2cart, geodetic2enu, cpt4dcw,
-	getregion, gd2gmt, gmt2gd, gdalread, gdalshade, gdalwrite, gadm, xyzw2cube, coastlinesproj, graticules, orbits, orbits!,
-	plotgrid!, leepacific, worldrectangular, worldrectgrid,
-	togglemask,
+	getregion, getattribs, getattrib, getres, gd2gmt, gmt2gd, gdalread, gdalshade, gdalwrite, gadm, xyzw2cube,
+	coastlinesproj, graticules, orbits, orbits!, plotgrid!, leepacific, worldrectangular, worldrectgrid, togglemask,
 
 	earthregions, gridit, grid2tri, magic, rescale, stackgrids, delrows, setgrdminmax!, meshgrid, cart2pol, pol2cart,
 	cart2sph, sph2cart,
@@ -175,7 +174,6 @@ export
 
 	colorzones!, rasterzones!, rasterzones, lelandshade, texture_img, crop, doy2date, date2doy, yeardecimal, ISOtime2unix,
 	median, mean, quantile, std, nanmean, nanstd, skipnan, zonal_statistics, zonal_stats,
-	
 	autocor, autocor!, autocov, autocov!, conv, xcorr, xcov,
 
 	add2PSfile, append2fig, isoutlier, linearfitxy, regiongeog, streamlines, peaks, polygonlevels, randinpolygon, polyfit, polyval,
