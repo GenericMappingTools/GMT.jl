@@ -1234,22 +1234,50 @@ end
 
 # ------------------------------------------------------------------------------------------------------
 """
-    atts = getattribs(D::GDtype) -> Vector{String}
+	getattribs(D::GDtype)::Vector{String}
 
-Takes an argument `D` of type `GMTdataset` or a vector of them and returns a
-`Vector` of `String` with the names of the attributes.
+Extract attribute keys from a GMT data object as a vector of strings.
+
+# Arguments
+- `D::GDtype`: A GMT dataset or collection of datasets
+
+# Returns
+- `Vector{String}`: A vector of attribute key names
+
+# Details
+If `D` is a `GMTdataset`, returns keys from its `attrib` dictionary.
+Otherwise, returns keys from the `attrib` dictionary of the first element in `D`.
+
+# Example
+```julia
+att = getattribs(D)
+```
 """
 function getattribs(D::GDtype)::Vector{String}
 	return isa(D, GMTdataset) ? string.(keys(D.attrib)) : string.(keys(D[1].attrib))
 end
 
 """
-	value = getattrib(D::GDtype, name::Union{String,Symbol}, n::Int=1) -> Union{String, Vector{String}}
+	att = getattrib(D::GDtype, name::Union{String,Symbol}, n::Int=1) -> Union{String, Vector{String}}
 
-Takes an argument `D` of type `GMTdataset` (or a vector of them) and a `name`
-and returns a `String` or `Vector{String}` with the value of the attribute `name`. When
-`D` is a vector of datasets, the optional argument `n` indicates from which dataset to get
-the attribute.
+Retrieve an attribute value from a GMT dataset or vector of datasets.
+
+# Arguments
+- `D::GDtype`: A GMT dataset (`GMTdataset`) or a vector of GMT datasets
+- `name::Union{String,Symbol}`: The name of the attribute to retrieve
+- `n::Int=1`: The index of the dataset in case `D` is a vector (default: 1)
+
+# Returns
+- `Union{String, Vector{String}}`: The value of the requested attribute
+
+# Raises
+- `error`: If `n` is out of bounds when `D` is a vector
+- `error`: If the attribute `name` is not found in the dataset
+
+# Examples
+```julia
+getattrib(D, :pop)
+```
 """
 function getattrib(D::GDtype, name::Union{String,Symbol}, n::Int=1)::Union{String, Vector{String}}
 	isa(D, Vector) && (n < 1 || n > length(D)) && error("Dataset index n=$(n) out of bounds.")
@@ -1260,7 +1288,7 @@ end
 
 # ------------------------------------------------------------------------------------------------------
 """
-	res = getres(GI::GItype; geog::Bool=false, cart::Bool=false, TMB=false) -> Vector{Float64}
+	res = getres(GI::GItype; geog::Bool=false, cart::Bool=false, TMB::Bool=false) -> Vector{Float64}
 
 Report the resolution of a grid or image object.
 
@@ -1270,7 +1298,7 @@ Report the resolution of a grid or image object.
 # Keywords
 - `geog::Bool=false`: If true, return resolution in geographic coordinates (lon/lat).
 - `cart::Bool=false`: If true, return resolution in cartesian coordinates.
-- `TMB=false`: If true, return resolutions at three latitude bands (bottom, middle, top) plus Y resolution.
+- `TMB::Bool=false`: If true, return resolutions at three latitude bands (bottom, middle, top) plus Y resolution.
 
 # Returns
 - `Vector{Float64}`: A vector containing the resolution increments. 
@@ -1284,7 +1312,7 @@ Report the resolution of a grid or image object.
 # Warnings
 - Emits a warning if projection information is not available when `geog` or `cart` is requested.
 """
-function getres(GI::GItype; geog::Bool=false, cart::Bool=false, TMB=false)::Vector{Float64}
+function getres(GI::GItype; geog::Bool=false, cart::Bool=false, TMB::Bool=false)::Vector{Float64}
 	res = GI.inc
 	if (geog || cart)
 		((prj = getproj(GI, wkt=true)) == "") && (@warn("Input grid/image has no projection info"); return res)
