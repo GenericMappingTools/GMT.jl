@@ -956,7 +956,8 @@ function parse_opt_S(d::Dict, arg1, is3D::Bool=false)
 			opt_S = " -S" * marca
 			# If data comes from a file, then no automatic symbol size is added
 			op = lowercase(marca[1])
-			def_size::String = (marca[1] == 'P') ? "" : ((op == 'p') ? "2p" : "7p")	# 'p' stands for symbol points, not units. Att 7p used in seismicity() 
+			def_size::String = (marca[1] == 'P') ? "" : ((op == 'p') ? "2p" : "7p")	# 'p' stands for symbol points, not units. Att 7p used in seismicity()
+			(marca == "P") && (def_size = "7p")	# Marker can arrive here with or without size, hence this apparently contradictory line 
 			(!more_cols && arg1 !== nothing && !isa(arg1, GMTcpt) && !occursin(op, "bekmrvw")) && (opt_S *= def_size)
 		elseif (haskey(d, :hexbin))
 			inc::Float64 = parse(Float64, arg1.attrib["hexbin"])

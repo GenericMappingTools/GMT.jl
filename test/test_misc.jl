@@ -411,7 +411,14 @@
 	remotegrid("mag", "1d", reg="p") == "@earth_mag_01d_p"
 
 	println("	GMTREAD_CONVERT")
-	gmtread("@earth_relief_05m", R=[400000, 500000, 4500000, 4540000], J="+proj=utm +zone=29");
+	G = gmtread("@earth_relief_05m", R=[400000, 500000, 4500000, 4540000], J="+proj=utm +zone=29");
 	gmtread("@earth_relief_05m", R=[400000, 500000, 4500000, 4540000], J="+proj=utm +zone=29", convert=true, layout="TRB");
 	gmtread("@earth_relief_05m", R=[400000, 500000, 4500000, 4540000], J=32629, convert=true);
+
+	getres(G, cart=true);		# Use this grid to exercise getres
+	getres(G);
+
+	D = mat2ds(rand(5,2), attrib=Dict("Timecol" => "1"), colnames=["Time","a"]);
+	@test getattribs(D) == ["Timecol"]
+	getattrib(D, :Timecol)
 end

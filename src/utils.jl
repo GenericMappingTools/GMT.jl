@@ -1233,6 +1233,110 @@ function getface(FV::GMTfv, face=1, n=1; view=false)
 end
 
 # ------------------------------------------------------------------------------------------------------
+"""
+	getattribs(D::GDtype)::Vector{String}
+
+Extract attribute keys from a GMT data object as a vector of strings.
+
+# Arguments
+- `D::GDtype`: A GMT dataset or collection of datasets
+
+# Returns
+- `Vector{String}`: A vector of attribute key names
+
+# Details
+If `D` is a `GMTdataset`, returns keys from its `attrib` dictionary.
+Otherwise, returns keys from the `attrib` dictionary of the first element in `D`.
+
+# Example
+```julia
+att = getattribs(D)
+```
+"""
+function getattribs(D::GDtype)::Vector{String}
+	return isa(D, GMTdataset) ? string.(keys(D.attrib)) : string.(keys(D[1].attrib))
+end
+
+"""
+	att = getattrib(D::GDtype, name::Union{String,Symbol}, n::Int=1) -> Union{String, Vector{String}}
+
+Retrieve an attribute value from a GMT dataset or vector of datasets.
+
+# Arguments
+- `D::GDtype`: A GMT dataset (`GMTdataset`) or a vector of GMT datasets
+- `name::Union{String,Symbol}`: The name of the attribute to retrieve
+- `n::Int=1`: The index of the dataset in case `D` is a vector (default: 1)
+
+# Returns
+- `Union{String, Vector{String}}`: The value of the requested attribute
+
+# Raises
+- `error`: If `n` is out of bounds when `D` is a vector
+- `error`: If the attribute `name` is not found in the dataset
+
+# Examples
+```julia
+getattrib(D, :pop)
+```
+"""
+function getattrib(D::GDtype, name::Union{String,Symbol}, n::Int=1)::Union{String, Vector{String}}
+	isa(D, Vector) && (n < 1 || n > length(D)) && error("Dataset index n=$(n) out of bounds.")
+	ky = isa(D, GMTdataset) ? string.(keys(D.attrib)) : string.(keys(D[1].attrib))
+	findfirst(==(string(name)), ky) === nothing && error("Attribute '$(name)' not found.")
+	return isa(D, GMTdataset) ? D.attrib[string(name)] : D[n].attrib[string(name)]
+end
+
+# ------------------------------------------------------------------------------------------------------
+"""
+	res = getres(GI::GItype; geog::Bool=false, cart::Bool=false, TMB::Bool=false) -> Vector{Float64}
+
+Report the resolution of a grid or image object.
+
+# Arguments
+- `GI::GItype`: The grid/image object to analyze.
+
+# Keywords
+- `geog::Bool=false`: If true, return resolution in geographic coordinates (lon/lat).
+- `cart::Bool=false`: If true, return resolution in cartesian coordinates.
+- `TMB::Bool=false`: If true, return resolutions at three latitude bands (bottom, middle, top) plus Y resolution.
+
+# Returns
+- `Vector{Float64}`: A vector containing the resolution increments. 
+  - If `geog` or `cart` is false: returns `GI.inc` as-is.
+  - If `geog=true` and grid is in cartesian: returns geographic resolution.
+  - If `cart=true` and grid is in geographic: returns cartesian resolution.
+  - If `TMB=true`: returns `[res_x1, res_x2, res_x3, res_y]` (resolutions at three latitude bands).
+  - Otherwise: returns `[res_x, res_y]`.
+  - Preserves Z and T increments (if present) by appending `res[3:end]`.
+
+# Warnings
+- Emits a warning if projection information is not available when `geog` or `cart` is requested.
+"""
+function getres(GI::GItype; geog::Bool=false, cart::Bool=false, TMB::Bool=false)::Vector{Float64}
+	res = GI.inc
+	if (geog || cart)
+		((prj = getproj(GI, wkt=true)) == "") && (@warn("Input grid/image has no projection info"); return res)
+		(geog && (GI.geog > 0  ||  isgeog(GI))) && return res		# Already in geographic
+		(cart && (GI.geog == 0 || !isgeog(GI))) && return res		# Already in cartesian
+
+		mean_y = mean(GI.range[3:4])
+		three = [GI.range[1] GI.range[3]; GI.range[1]+GI.inc[1] GI.range[3]+GI.inc[2];		# Cell at bottom
+		         GI.range[1] mean_y; GI.range[1]+GI.inc[1] mean_y+GI.inc[2];				# Cell at middle
+		         GI.range[1] GI.range[4]-GI.inc[2]; GI.range[1]+GI.inc[1] GI.range[4]]		# Cell at top
+		#c = geog ? xy2lonlat(three, s_srs=prj) : lonlat2xy(three, t_srs="+proj=laea +lat_0=$(mean_y) +lon_0=$(GI.range[1]) +units=m +no_defs")
+		c = geog ? xy2lonlat(three, s_srs=prj) : mapproject(three, J="a$(GI.range[1])/$(mean_y)/1:1", C=true, F=true)
+		res_y  = abs(c[2,2] - c[1,2])			# Resolution in Y direction (meridian) should be constant
+		res_x1 = abs(c[2,1] - c[1,1])			# Resolution in X direction at bottom
+		res_x2 = abs(c[4,1] - c[3,1])			# Resolution in X direction at middle
+		res_x3 = abs(c[6,1] - c[5,1])			# Resolution in X direction at top
+		r = TMB ? [res_x1, res_x2, res_x3, res_y] : [res_x1, res_y]
+		(length(res) > 2) && append!(r, res[3:end])	# Preserve Z and T increments if present
+		return r
+	end
+	return res
+end
+
+# ------------------------------------------------------------------------------------------------------
 function isimgsize(GI)::Bool
 	# To find out if coordinates are in fact image sizes, which is used to NOT plot axes when plotting images.
 	width, height = getsize(GI)
@@ -1578,6 +1682,7 @@ end
 #include("tanakacontour.jl")
 #include("shufflelabel.jl")
 
+#=
 function cut_icons(; nome="", size=350)
 	nomes = "basemap blockmean blockmode blockmedian clip coast colorbar contour dimfilter events filter1d fitcircle gmt2kml gmtbinstats gmtconnect gmtconvert gmtdefaults gmtinfo gmtlogo gmtmath gmtregress gmtselect gmtset gmtsplit gmtspatial gmtvector gmtwhich grd2cpt grd2kml grd2xyz grdblend grdclip grdcontour grdconver grdcut grdedit grdfft grdfill grdfilter grdgradient grdhisteq grdimage grdinfo grdinterpolate grdlandmask grdmask grdmath grdmix grdpaste grdproject grdsample grdtrack grdtrend grdvector grdview grdvolume greenspline histogram image inset kml2gmt legend mapproject mask movie nearneighbor plot plot3d project psconvert rose sample1d simplify solar spectrum1d sphinterpolate sphdistance sphtriangulate sph2grd splitxyz subplot surface ternary text trend1d trend2d triangulate wiggle xyz2grd"
 
@@ -1606,3 +1711,4 @@ function cut_icons(; nome="", size=350)
 		println("Created: " * name_out)
 	end
 end
+=#
