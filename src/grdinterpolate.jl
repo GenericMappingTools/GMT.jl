@@ -122,7 +122,7 @@ function grdinterp_helper(cmd0::String, arg1; allcols::Bool=false, gdal=false, k
 		common_grd(d, "grdinterpolate " * cmd, arg1..., arg2)
 	else
 		if (cmd0 != "" && !contains(cmd, " -R") && val !== nothing)		# Since GMT will read layer-by-layer, better to limit to the region framing the points
-			D = grdinfo(cmd0, C=true)
+			D = gmt_grdinfo_C(cmd0)
 			x_min = max(D[1], pts.ds_bbox[1]-D[9]*3);	x_max = min(D[2], pts.ds_bbox[2]+D[9]*3)
 			y_min = max(D[3], pts.ds_bbox[3]-D[10]*3);	y_max = min(D[4], pts.ds_bbox[4]+D[10]*3)
 			cmd *= " -R$x_min/$x_max/$y_min/$y_max"

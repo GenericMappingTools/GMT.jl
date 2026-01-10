@@ -796,7 +796,7 @@ function helper_flatfv(I::Union{GMTimage, AbstractString}, shape, level, thickne
 	function crop_if_possible(I::Union{GMTimage, AbstractString}, shape)
 		# If the image is referenced crop it to the 'shape's bounding box
 		if isa(I, AbstractString)
-			D = grdinfo(I, C=1)
+			D = gmt_grdinfo_C(I)
 			isnoref = (D[2] - D[1] == D[9] && D[7] == 1) && (D[4] - D[3] == D[10] && D[8] == 1)
 		else
 			isnoref = isimgsize(I)		# A function from grdimage.jl
