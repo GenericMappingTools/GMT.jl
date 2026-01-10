@@ -236,6 +236,8 @@ end
 gmt_GMTcpt(cmd::String, args...)::Union{GMTcpt, Nothing} = gmt(cmd, args...)::Union{GMTcpt, Nothing}
 gmt_GMTdataset(cmd::String, args...)::Union{GMTdataset{Float64,2}, Vector{<:GMTdataset{Float64,2}}} = gmt(cmd, args...)
 gmt_GMTgrid(cmd::String, args...)::GMTgrid{Float32,2} = gmt(cmd, args...)::GMTgrid{Float32,2}
+gmt_grdinfo_C(name::String)::GMTdataset{Float64, 2} = gmt("grdinfo -C " * name)::GMTdataset{Float64, 2}
+gmt_grdinfo_C(GI::GItype)::GMTdataset{Float64, 2} = gmt("grdinfo -C ", GI)::GMTdataset{Float64, 2}
 
 # -----------------------------------------------------------------------------------------------
 function gmt_restart(restart::Bool=true)

@@ -178,8 +178,8 @@ function parse_Q_grdvec(d::Dict, symbs::Array{<:Symbol}, len::String="", stop::S
 end
 
 # ---------------------------------------------------------------------------------------------------
-get_grdinfo(grd::String,  opt_R::String) = gmt("grdinfo -C" * opt_R * " " * grd).data
-get_grdinfo(grd::GMTgrid, opt_R::String) = gmt("grdinfo -C" * opt_R, grd).data
+get_grdinfo(grd::String,  opt_R::String) = gmt_grdinfo_C(opt_R * " " * grd).data
+get_grdinfo(grd::GMTgrid, opt_R::String)::Matrix{Float64} = gmt("grdinfo -C" * opt_R, grd).data
 
 # ---------------------------------------------------------------------------------------------------
 grdvector!(arg1, arg2; kw...) = grdvector(arg1, arg2; first=false, kw...)

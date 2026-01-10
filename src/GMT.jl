@@ -163,6 +163,7 @@ export
 	ogr2ogr, gdalrasterize, gdalbuildvrt, readgeom, readraster, setgeotransform!, setnodata!, setproj!, destroy,
 	delaunay, dither, buffer, centroid, intersection, intersects, polyunion, overlaps, fromWKT, fillnodata!, fillnodata,
 	concavehull, convexhull, difference, symdifference, distance, geodesicarea, geomarea, pointalongline, polygonize, simplify,
+	boundary, crosses, disjoint, envelope, envelope3d, equals, touches, uniqueind, within, 
 	
 	wkbUnknown, wkbPoint, wkbPointZ, wkbLineString, wkbLineStringZ, wkbPolygon, wkbPolygonZM, wkbMultiPoint, wkbMultiPointZ,
 	wkbMultiLineString, wkbMultiPolygon, wkbGeometryCollection, wkbPoint25D, wkbLineString25D, wkbPolygon25D, wkbMultiPoint25D,
@@ -197,8 +198,7 @@ export
 	gunique, sortslicesperm,
 	hampel, hampel!, lowess, whittaker,
 
-	Ginnerjoin, Gouterjoin, Gleftjoin, Grightjoin, Gcrossjoin, Gsemijoin, Gantijoin, spatialjoin,
-	groupby, stats,
+	Ginnerjoin, Gouterjoin, Gleftjoin, Grightjoin, Gcrossjoin, Gsemijoin, Gantijoin, spatialjoin, groupby, stats,
 
 	anaglyph,
 	lazinfo, lazread, lazwrite, lasread, laswrite,
@@ -424,6 +424,7 @@ using .Laszip
 	grdview(rand(Float32,32,32), Vd=2);
 	grdinfo(mat2grid(rand(Float32,4,4)));
 	Glix=gmt("grdmath", "-R0/10/0/10 -I2 X");
+	gmt_grdinfo_C(Glix);
 	grdcontour(Glix);
 	grd2cpt(Glix);
 	grd2xyz(Glix);

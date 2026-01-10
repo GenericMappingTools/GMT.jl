@@ -251,7 +251,7 @@ function snif_GI_set_CTRLlimits(G_I)::Bool
 	(isa(G_I, String) && (G_I[1] == '@' || startswith(G_I, "http"))) && return false	# Remotes are very dangerous to sniff in
 
 	# Do not call grdinfo over grid/images already in memory
-	range::Vector{Float64} = isa(G_I, String) ? vec(grdinfo(G_I, C=:n).data) : G_I.range[1:6]
+	range::Vector{Float64} = isa(G_I, String) ? vec(gmt_grdinfo_C(G_I).data) : G_I.range[1:6]
 	if ((isa(G_I, String) && range[2] != range[9] && range[4] != range[10]) ||
 		(!isa(G_I, String) && range[2] != size(G_I, 2) && range[4] != size(G_I, 1)))
 		CTRL.limits[1:4], CTRL.limits[7:10] = range[1:4], range[1:4]

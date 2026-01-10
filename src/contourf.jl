@@ -151,7 +151,7 @@ function contourf(cmd0::String, arg1, arg2, first::Bool, d::Dict{Symbol,Any})
 		#isa(arg2, GMTcpt) ? d[:N] = arg2 : (isa(arg1, GMTcpt) ? d[:N] = arg1 : d[:N] = true)
 		if (isempty(CPT) && isempty(CPT_arg))
 			if (cmd0 != "")
-				info = grdinfo(cmd0 * " -C")
+				info = gmt_grdinfo_C(cmd0)
 				C_inc, min, max = gen_contour_vals(info.data[5:6], C_int)
 			else
 				C_inc, min, max = gen_contour_vals(arg1, C_int)

@@ -488,7 +488,7 @@ by `grdinfo`. An unfortunate consequence of using either GMT or GDAL to inquire 
 `x_inc, y_inc` when reading with GDAL, and `z_min, z_max` when reading with GMT.
 """
 function getregion(input; pad=0, xSize=0, ySize=0, gridreg::Bool=false, sds::Int=0, GMT=false)::NTuple{6, Float64}
-	(GMT == 1 && isa(input, String)) && return vec(grdinfo(input, C=:n).data)
+	(GMT == 1 && isa(input, String)) && return vec(gmt_grdinfo_C(input).data)
 	dataset = gd2gmt_helper(input, sds; short=true)[1]
 	(xSize == 0) && (xSize = Gdal.width(dataset))
 	(ySize == 0) && (ySize = Gdal.height(dataset))

@@ -80,6 +80,3 @@ function grdinfo_helper(cmd0::String, arg1; kwargs...)::Union{GMTdataset, String
 	end
 	return R
 end
-
-# ---------------------------------------------------------------------------------------------------
-#grdinfo(arg1; kw...) = grdinfo("", arg1; kw...)

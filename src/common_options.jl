@@ -176,7 +176,7 @@ function parse_R(d::Dict, cmd::String; O::Bool=false, del::Bool=true, RIr::Bool=
 			opt_r = parse_r(d, "")[2]
 			(opt_r == "") && (cmd *= " -r" * ((val.registration == 0) ? "g" : "p"))
 		elseif (!isempty(val_str) && ((t = guess_T_from_ext(val_str)) == " -Tg" || t == " -Ti"))		# A file name
-			info::Matrix{Float64} = gmt("grdinfo -C " * val_str).data			# Get the grid info
+			info::Matrix{Float64} = gmt_grdinfo_C(val_str).data			# Get the grid info
 			opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g", info[1,1], info[1,2], info[1,3], info[1,4])
 			(opt_I = parse_I(d, "", [:I :inc :increment :spacing], "I", true)) == "" &&
 				(opt_I = @sprintf(" -I%.8g/%.8g", info[7], info[8]))	# The grid increment
@@ -388,8 +388,8 @@ function opt_R2num(opt_R::String)::Vector{Float64}
 		CTRL.pocket_R[2] = "$inc"
 	elseif (opt_R != " -R" && opt_R != " -Rtight")	# One of those complicated -R forms. Ask GMT the limits (but slow. It takes 0.2 s)
 		# If opt_R is not a grid's name, we are f.
-		((ind = findfirst("-R@", opt_R)) !== nothing) && return gmt("grdinfo " * opt_R[ind[3]:end] * " -C")[1:4]	# should be a cache file
-		(((f = guess_T_from_ext(opt_R)) == " -Tg") || f == " -Ti") && return gmt("grdinfo " * opt_R * " -C")[1:4]	# any local file
+		((ind = findfirst("-R@", opt_R)) !== nothing) && return gmt_grdinfo_C(opt_R[ind[3]:end])[1:4]	# should be a cache file
+		(((f = guess_T_from_ext(opt_R)) == " -Tg") || f == " -Ti") && return gmt_grdinfo_C(opt_R)[1:4]	# any local file
 
 		(opt_R == " -R=WD") && return [-180.0, 180., -90., 90.]		# World map. Shit is if [0 360] is wanted.
 		kml::GMTdataset{Float64, 2} = gmt("gmt2kml " * opt_R, [0 0])	# for example, opt_R = " -RPT"
@@ -2740,7 +2740,7 @@ function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fn
 	if (isa(arg1, GItype))			# GMT bug, -R will not be stored in gmt.history
 		range::Vector{Float64} = isa(arg1.range, Float64) ? vec(arg1.range) : vec(arg1.range[1:6])	# Beyond 6 can be a Time
 	elseif (cmd0 != "" && cmd0[1] != '@')
-		info = grdinfo(cmd0 * " -C");	range = vec(info.data)
+		info = gmt_grdinfo_C(cmd0);	range = vec(info.data)
 	end
 
 	cpt_opt_T = ""
@@ -4637,8 +4637,7 @@ function regiongeog(GI::GItype)::Tuple
 end
 function regiongeog(fname::String)::Tuple
 	((prj = getproj(fname, wkt=true)) == "") && (@warn("Input grid/image has no projection info"); return ())
-	#info = grdinfo(fname, C=true);		# It should also report the
-	info = gmt("grdinfo -C " * fname);
+	info = gmt_grdinfo_C(fname)
 	c = xy2lonlat([info.data[1] info.data[3]; info.data[2] info.data[4]]; s_srs=prj)
 	tuple(c...)
 end
