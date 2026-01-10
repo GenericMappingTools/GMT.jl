@@ -21,6 +21,9 @@ Parameters
 
     Iteratively increase the number of model parameters, starting at one, until n_model is reached
     or the reduction in variance of the model is not significant at the conf_level level.
+- **T** | **equi_space** :: [Type => Str | List]     ``Arg = [min/max/]inc[+a|n]] or file|list``
+
+    Evaluate the best-fit regression model at the equidistant points implied by the arguments.
 - **W** | **weights** :: [Type => Str | []]     ``Arg = [+s]``
 
     Weights are supplied in input column 3. Do a weighted least squares fit [or start with
@@ -42,7 +45,7 @@ function trend1d(cmd0::String="", arg1=nothing; kwargs...)
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
 	cmd, = parse_common_opts(d, "", [:V_params :b :d :e :f :h :i :w :yx])
-	cmd  = parse_these_opts(cmd, d, [[:C :condition_number], [:I :conf_level :confidence_level], [:F :out :output], [:W :weights]])
+	cmd  = parse_these_opts(cmd, d, [[:C :condition_number], [:I :conf_level :confidence_level], [:F :out :output], [:T :equi_space], [:W :weights]])
 	opt_F = scan_opt(cmd, "-F")
 	((val = find_in_dict(d, [:N :model], false)[1]) === nothing) && error("The option 'model' must be specified")
 	if (isa(val, Tuple) && isa(val[1], NamedTuple))
