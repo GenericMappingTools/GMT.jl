@@ -119,16 +119,18 @@ end
 function parse_G_grdview(d::Dict, symbs::Array{<:Symbol}, cmd0::String, cmd::String, arg1, arg2, arg3, arg4, arg5)
 	(SHOW_KWARGS[]) && return print_kwarg_opts(symbs, "GMTgrid | Tuple | String"), arg1, arg2, arg3, arg4, arg5
 	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
+
 		function intern!(cmd, val, arg1, arg2, arg3, arg4)
 			opt = isa(val, GMTgrid) ? 'G' : 'z'		# 'z' is the fake option that works as a backdoor for images
-			cmd, N_used = put_in_slot(cmd, opt, arg1, arg2, arg3, arg4)
-			if     (N_used == 1)  arg1 = val
-			elseif (N_used == 2)  arg2 = val
-			elseif (N_used == 3)  arg3 = val
-			elseif (N_used == 4)  arg4 = val
+			cmd, _N_used = put_in_slot(cmd, opt, arg1, arg2, arg3, arg4)
+			if     (_N_used == 1)  arg1 = val
+			elseif (_N_used == 2)  arg2 = val
+			elseif (_N_used == 3)  arg3 = val
+			elseif (_N_used == 4)  arg4 = val
 			end
 			return cmd, arg1, arg2, arg3, arg4
 		end
+
 		if (isa(val, String) || isa(val, GMTimage))
 			val_str::String = isa(val, String) ? val : ""
 			val_I::GMTimage = (val_str == "") ? val : GMTimage()

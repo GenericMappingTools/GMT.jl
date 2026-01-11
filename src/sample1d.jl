@@ -122,20 +122,20 @@ function sample1d_helper(cmd0::String, arg1, d::Dict{Symbol,Any})
 		tmp = tempname() * ".dat"
 		cmd = cmd * opt_g * " > " * tmp
 		gmt(cmd)
-		r = gmtread(tmp)
+		o = gmtread(tmp)
 		rm(tmp);	(input_tmp != "") && rm(input_tmp)
 		if (have_nonans)							# Remove NaNs if requested
-			if isa(r, GMTdataset)
-				indNaN = isnan.(view(r.data, :, 2))
-				any(indNaN) && (r = mat2ds(r.data, (.!indNaN, :)))
+			if isa(o, GMTdataset)
+				indNaN = isnan.(view(o.data, :, 2))
+				any(indNaN) && (o = mat2ds(o.data, (.!indNaN, :)))
 			else
-				for k = 1:numel(r)
-					indNaN = isnan.(view(r[k].data, :, 2))
-					any(indNaN) && (r[k] = mat2ds(r[k], (.!indNaN, :)))
+				for k = 1:numel(o)
+					indNaN = isnan.(view(o[k].data, :, 2))
+					any(indNaN) && (o[k] = mat2ds(o[k], (.!indNaN, :)))
 				end
 			end
 		end
-		return r
+		return o
 	end
 
 	# Tricky this one. If we use defaults, sample1d will not interpolate through NaNs. Need to use --IO_NAN_RECORDS=skip
@@ -164,7 +164,13 @@ function sample1d_helper(cmd0::String, arg1, d::Dict{Symbol,Any})
 		end
 		colnames = isa(arg1, GMTdataset) ? arg1.colnames : arg1[1].colnames
 		have_cumdist && append!(colnames, ["cumdist"])
-		isa(arg1, GMTdataset) ? (r.attrib = arg1.attrib) : [r[k].attrib = arg1[1].attrib for k = 1:numel(r)]	# Keep the attribs
+		if (isa(arg1, GMTdataset))
+			r.attrib = arg1.attrib		# Keep the attribs
+		else
+			for k = 1:numel(r)
+				r[k].attrib = arg1[1].attrib
+			end
+		end
 	else		# Input was a file name
 		nc = isa(r, GMTdataset) ? size(r, 2) : size(r[1], 2)
 		colnames = [@sprintf("Z%d", k) for k = 1:nc]

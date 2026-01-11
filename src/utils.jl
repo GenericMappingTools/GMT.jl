@@ -1234,7 +1234,7 @@ end
 
 # ------------------------------------------------------------------------------------------------------
 """
-	getattribs(D::GDtype)::Vector{String}
+	att = getattribs(D::GDtype) -> Vector{String}
 
 Extract attribute keys from a GMT data object as a vector of strings.
 
