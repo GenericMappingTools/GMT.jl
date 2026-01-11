@@ -137,7 +137,7 @@ export
 	rose!, sample1d, scatter, scatter!, scatter3, scatter3!, solar, solar!, spectrum1d, sphdistance, sphinterpolate,
 	sphtriangulate, surface, ternary, ternary!, text, text!, text_record, trend1d, trend2d, triangulate, gmtsplit,
 	decorated, vector_attrib, wiggle, wiggle!, xyz2grd, gmtbegin, gmtend, gmthelp, subplot, gmtfig, inset, showfig,
-	earthtide, gravfft, gmtgravmag3d, gravmag3d, grdgravmag3d, gravprisms, grdseamount, parkermag, parkergrav,
+	earthtide, gmt2grd, gravfft, gmtgravmag3d, gravmag3d, grdgravmag3d, gravprisms, grdseamount, parkermag, parkergrav,
 	pscoupe, pscoupe!, coupe, coupe!, psmeca, psmeca!, meca, meca!, psvelo, psvelo!, velo, velo!, gmtisf, getbyattrib,
 	inpolygon, inwhichpolygon, pcolor, pcolor!, triplot, triplot!, trisurf, trisurf!, grdrotater, imagesc, upGMT, boxes,
 	stereonet, stereonet!,
@@ -162,8 +162,8 @@ export
 	importPROJ4, importWKT, importEPSG, gdalinfo, gdalwarp, gdaldem, gdaltranslate, gdalgrid, gdalvectortranslate,
 	ogr2ogr, gdalrasterize, gdalbuildvrt, readgeom, readraster, setgeotransform!, setnodata!, setproj!, destroy,
 	delaunay, dither, buffer, centroid, intersection, intersects, polyunion, overlaps, fromWKT, fillnodata!, fillnodata,
-	concavehull, convexhull, difference, symdifference, distance, geodesicarea, geomarea, pointalongline, polygonize, simplify,
-	boundary, crosses, disjoint, envelope, envelope3d, equals, touches, uniqueind, within, 
+	concavehull, convexhull, difference, symdifference, distance, geodesicarea, geomarea, geomlength, pointalongline,
+	polygonize, simplify, boundary, crosses, disjoint, envelope, envelope3d, equals, touches, within, 
 	
 	wkbUnknown, wkbPoint, wkbPointZ, wkbLineString, wkbLineStringZ, wkbPolygon, wkbPolygonZM, wkbMultiPoint, wkbMultiPointZ,
 	wkbMultiLineString, wkbMultiPolygon, wkbGeometryCollection, wkbPoint25D, wkbLineString25D, wkbPolygon25D, wkbMultiPoint25D,
@@ -195,7 +195,7 @@ export
 
 	findpeaks, makeDCWs, mksymbol, circfit,
 
-	gunique, sortslicesperm,
+	gunique, uniqueind, sortslicesperm,
 	hampel, hampel!, lowess, whittaker,
 
 	Ginnerjoin, Gouterjoin, Gleftjoin, Grightjoin, Gcrossjoin, Gsemijoin, Gantijoin, spatialjoin, groupby, stats,

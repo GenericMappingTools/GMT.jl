@@ -1717,7 +1717,7 @@ function parse_B4ternary!(d::Dict, first::Bool=true)
 		opt_Bs = split(opt_B)							# This drops the leading ' '
 		x::String = (opt_Bs[1][3] == 'p') ? opt_Bs[1][4:end] : opt_Bs[1][3:end]
 		d[:B] = " -Ba$(x)+l" * string(val[1])::String * " -Bb$(x)+l" * string(val[2])::String * " -Bc$(x)+l" * string(val[3])::String
-		[d[:B] *= " " * opt_Bs[k] for k = 2:numel(opt_Bs)]		# Append the remains, if any.
+		for k = 2:numel(opt_Bs)  d[:B] *= " " * opt_Bs[k]  end	# Append the remains, if any.
 	else		# Ui, try to parse a string like this: " -Bpag8+u\" %\" -Ba+la -Bb+lb -Bc+lc"
 		(!first && opt_B == " -Bafg") && return			# Do not use the default -B on overlays.
 		opt_Bs = split(opt_B, " -B")[2:end]				# 2:end because surprisingly the first is = ""
@@ -1727,7 +1727,7 @@ function parse_B4ternary!(d::Dict, first::Bool=true)
 			else
 				x = opt_Bs[1][2:end]
 				d[:B] = " -Ba$(x)" * opt_Bs[2][2:end] * " -Bb$(x)" * opt_Bs[3][2:end] * " -Bc$(x)" * opt_Bs[4][2:end]
-				[d[:B] *= " -B" * opt_Bs[k] for k = 5:numel(opt_Bs)]		# Append the remains, if any.
+				for k = 5:numel(opt_Bs)  d[:B] *= " -B" * opt_Bs[k]  end	# Append the remains, if any.
 			end
 		end
 	end

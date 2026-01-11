@@ -277,7 +277,10 @@ function gd2gmt(dataset::Gdal.AbstractDataset)
 		while ((feature = Gdal.nextfeature(layer)) !== nothing)
 			n = Gdal.nfield(feature)
 			attrib = DictSvS()
-			[attrib[Gdal.getname(Gdal.getfielddefn(feature, i))] = string(Gdal.getfield(feature, i)) for i = 0:n-1]
+			#[attrib[Gdal.getname(Gdal.getfielddefn(feature, i))] = string(Gdal.getfield(feature, i)) for i = 0:n-1]
+			for i = 0:n-1  
+				attrib[Gdal.getname(Gdal.getfielddefn(feature, i))] = string(Gdal.getfield(feature, i))
+			end
 
 			for j = 0:Gdal.ngeom(feature)-1
 				geom = Gdal.getgeom(feature, j)
@@ -757,15 +760,18 @@ function gmt2gd(D::Vector{<:GMTdataset}; save::String="", geometry::String="")
 			for k = 1:length(D)
 				x,y,z = helper_gmt2gd_xyz(D[k], n_cols)
 				if (n_cols == 2)
-					[Gdal.addgeom!(geom, Gdal.createpoint(x[n], y[n])) for n = 1:lastindex(x)]
+					#[Gdal.addgeom!(geom, Gdal.createpoint(x[n], y[n])) for n = 1:lastindex(x)]
+					for n = 1:lastindex(x)  Gdal.addgeom!(geom, Gdal.createpoint(x[n], y[n]))  end
 				else
-					[Gdal.addgeom!(geom, Gdal.createpoint(x[n], y[n], z[n])) for n = 1:lastindex(x)]
+					#[Gdal.addgeom!(geom, Gdal.createpoint(x[n], y[n], z[n])) for n = 1:lastindex(x)]
+					for n = 1:lastindex(x)  Gdal.addgeom!(geom, Gdal.createpoint(x[n], y[n], z[n]))  end
 				end
 			end
 		elseif (D[1].geom == wkbMultiPointZ || D[1].geom == Gdal.wkbMultiPoint25D)
 			for k = 1:length(D)
 				x,y,z = helper_gmt2gd_xyz(D[k], n_cols)
-				[Gdal.addgeom!(geom, Gdal.createpoint(x[n], y[n], z[n])) for n = 1:lastindex(x)]
+				#[Gdal.addgeom!(geom, Gdal.createpoint(x[n], y[n], z[n])) for n = 1:lastindex(x)]
+				for n = 1:lastindex(x)  Gdal.addgeom!(geom, Gdal.createpoint(x[n], y[n], z[n]))  end
 			end
 		else
 			x,y,z = helper_gmt2gd_xyz(D[1], n_cols)

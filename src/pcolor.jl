@@ -100,8 +100,10 @@ function pcolor(X_::VMr, Y_::VMr, C::Union{Nothing, AbstractMatrix{<:Real}}, fir
 	if (isvector(X) && gridreg)		# Expand X,Y to make them pix reg
 		X,Y = copy(X_), copy(Y_)
 		xinc, yinc = X[2]-X[1], Y[2]-Y[1];		xinc2, yinc2 = xinc/2, yinc/2
-		[X[k] -= xinc2 for k = 1:numel(X)];	append!(X, X[end]+xinc)
-		[Y[k] -= yinc2 for k = 1:numel(Y)];	append!(Y, Y[end]+yinc)
+		for k = 1:numel(X)
+			X[k] -= xinc2;	Y[k] -= yinc2
+		end
+		append!(X, X[end]+xinc);	append!(Y, Y[end]+yinc)
 	end
 
 	D, k = Vector{GMTdataset{Float64,2}}(undef, length(C)), 0
@@ -109,7 +111,8 @@ function pcolor(X_::VMr, Y_::VMr, C::Union{Nothing, AbstractMatrix{<:Real}}, fir
 		for col = 1:length(X)-1, row = 1:length(Y)-1	# Gdal.wkbPolygon = 3
 			if (k == 0) 
 				D[k+=1] = mat2ds([X[col] Y[row]; X[col] Y[row+1]; X[col+1] Y[row+1]; X[col+1] Y[row]; X[col] Y[row]]; geom=3, d...)
-			else        D[k+=1] = mat2ds([X[col] Y[row]; X[col] Y[row+1]; X[col+1] Y[row+1]; X[col+1] Y[row]; X[col] Y[row]]; geom=3)
+			else
+				D[k+=1] = mat2ds([X[col] Y[row]; X[col] Y[row+1]; X[col+1] Y[row+1]; X[col+1] Y[row]; X[col] Y[row]]; geom=3)
 			end
 		end
 		D[1].ds_bbox = [X[1], X[end], Y[1], Y[end]]
