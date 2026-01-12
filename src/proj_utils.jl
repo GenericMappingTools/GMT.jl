@@ -615,7 +615,7 @@ function helper_gdirect(projPJ_ptr, lonlat, azim, dist, proj_string, isgeog, dat
 		if (!isa(dist, Vector{<:Vector}))				# If not, make it a Vector{Vector} to use the same algo below
 			isa(dist, Matrix) && (dist = vec(dist))		# Because we accepted also 1-row or 1-col matrices
 			Vdist = Vector{Vector{Float64}}(undef, n_lines)
-			[Vdist[k] = dist for k = 1:n_lines]
+			for k = 1:n_lines  Vdist[k] = dist  end 
 		else
 			(length(dist) != n_lines) && (proj_destroy(projPJ_ptr);error("Number of distance vectors MUST be equal to number of azimuths"))
 			Vdist = dist

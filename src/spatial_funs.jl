@@ -146,7 +146,9 @@ function dsget_segment_ids(D)::Tuple{Vector{AbstractString}, Vector{Int}}
 	else                n = 1;			d = Dict(1 => D.header)
 	end
 	tf::Vector{Bool} = Vector{Bool}(undef,n)			# pre-allocate
-	[tf[k] = (d[k] !== "" && d[k][1] != ' ') ? true : false for k = 1:n];	# Mask of non-empty headers
+	for k = 1:n			# Mask of non-empty headers
+		tf[k] = (d[k] !== "" && d[k][1] != ' ') ? true : false
+	end
 	ind::Vector{Int} = 1:n
 	ind = ind[tf]			# OK, now we have the indices of the segments with headers != ""
 	ids = Vector{AbstractString}(undef,length(ind))		# pre-allocate
@@ -287,18 +289,18 @@ function getbyattrib(D::Vector{<:GMTdataset}, ind_::Bool; kw...)::Vector{Int}
 	function clip_unique(D, areas_, _tf, name)	# Clip by uniqueness by using the areas to select the largest by group.
 		att_tbl, att_names = make_attrtbl(D, true)
 		((ind_name = findfirst(att_names .== name)) === nothing) && error("Attribute name $name not found in dataset.")
-		_, ind = gunique(att_tbl[:,ind_name])
-		for k = 1:numel(ind)  _tf[ind[k]] = true  end	# Set the unique values to true.
+		_, _ind = gunique(att_tbl[:,ind_name])
+		for k = 1:numel(_ind)  _tf[_ind[k]] = true  end	# Set the unique values to true.
 
-		if (numel(ind) == 1)					# The single group case is simpler but must be dealt separately.
+		if (numel(_ind) == 1)					# The single group case is simpler but must be dealt separately.
 			 _tf[1] = false; _tf[argmax(areas_)] = true
 			 return _tf
 		end
 
 		k = 1
-		while (k <= numel(ind)-1)
-			((ind[k+=1] - ind[k-1]) == 1) && continue
-			n_start, n_end = ind[k - 1], ind[k] - 1
+		while (k <= numel(_ind)-1)
+			((_ind[k+=1] - _ind[k-1]) == 1) && continue
+			n_start, n_end = _ind[k - 1], _ind[k] - 1
 			# Here we have a group (from n_start to n_end) of the same type of attribute
 			this_ind = argmax(view(areas_,n_start:n_end,1)) + n_start - 1	# Get the index of the largest area
 			_tf[n_start], _tf[this_ind] = false, true	# Turn off the first and turn on the largest of this group
@@ -690,7 +692,10 @@ function spatialjoin(D1::GMTdataset, D2::Vector{<:GMTdataset}; pred::Function=in
 	function fill_atts_vec(D2, ind, atts_vec, att_names, isleft=true)
 		[atts_vec[l] = Vector{String}(undef, length(ind)) for l = 1:length(att_names)]
 		for k = 1:numel(ind)						# Loop over number of points in D1
-			(isleft && ind[k] == 0) && ([atts_vec[l][k] = "" for l = 1:length(att_names)];	continue)	# Skip if not joined
+			if (isleft && ind[k] == 0)				# Skip if not joined
+				for l = 1:length(att_names)  atts_vec[l][k] = ""  end
+				continue
+			end
 			dic = D2[ind[k]].attrib					# Get the attributes Dict from this D2 polygon
 			for l = 1:numel(att_names)				# Loop over the attributes
 				atts_vec[l][k] = dic[att_names[l]]

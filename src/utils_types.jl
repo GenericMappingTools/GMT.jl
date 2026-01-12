@@ -433,7 +433,12 @@ function mat2ds(D::GMTdataset{T,N}, inds)::GMTdataset{T,N} where {T<:Real, N}
 	i = findall(startswith.(_D.colnames, "Time"))
 	isempty(i) && return _D						# No TIME columns. We are done
 	(length(i) == 1) ? (Tc::String = "$(i[1])") : _i = i[2:end]
-	_D.attrib["Timecol"] = (length(i) == 1) ? Tc : [Tc *= ",$k" for k in _i]
+	#_D.attrib["Timecol"] = (length(i) == 1) ? Tc : [Tc *= ",$k" for k in _i]
+	(length(i) == 1) && (_D.attrib["Timeinfo"] = Tc)
+	if (length(i) > 1)
+		for k in _i  Tc *= ",$k"  end
+	end
+	(length(i) >= 1) && (_D.attrib["Timeinfo"] = Tc)
 	(get(D.attrib, "linearfit", "") != "") && (		# A linefit, keep the attribs.
 		_D.attrib["Goodness_of_fit"] = D.attrib["Goodness_of_fit"];
 		_D.attrib["sigma95_b"] = D.attrib["sigma95_b"];
@@ -1942,7 +1947,9 @@ function stackgrids(names::Vector{String}, v=nothing; zcoord=nothing, zdim_name:
 		if isempty(_v)
 			[write(fid, name, "\n") for name in names]
 		else
-			[write(fid, names[k], "\t", string(_v[k]), "\n") for k = 1:length(names)]
+			for k = 1:length(names)
+				write(fid, names[k], "\t", string(_v[k]), "\n")
+			end
 		end
 		close(fid)
 		return nothing

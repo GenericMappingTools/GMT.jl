@@ -252,7 +252,7 @@ function colorzones!(shapes::GDtype, fun::Function; img::GMTimage=nothing, url::
 	(img !== nothing && url != "") && error("Make up your mind. Pass ONLY one of grid/image or a WMS URL.")
 	(url != "" && (layer == 0 || pixelsize == 0)) && error("When passing a WMS URL must also provide the layer and the pixelsize.")
 
-	function within(k)		# Check if the polygon BB is contained inside the image's region.
+	function within(shapes, img, k)		# Check if the polygon BB is contained inside the image's region.
 		shapes[k].bbox[1] >= img.range[1] && shapes[k].bbox[2] <= img.range[2] && shapes[k].bbox[3] >= img.range[3] && shapes[k].bbox[4] <= img.range[4]
 	end
 
@@ -265,7 +265,7 @@ function colorzones!(shapes::GDtype, fun::Function; img::GMTimage=nothing, url::
 
 	isa(shapes, GMTdataset) && (shapes = [shapes])
 	for k = 1:numel(shapes)
-		!within(k) && continue				# Catch any exterior polygon before it errors
+		!within(shapes, img, k) && continue	# Catch any exterior polygon before it errors
 		_img = (url != "") ? wmsread(wms, layer=layer_n, region=shapes[k], pixelsize=pixelsize) : crop(img, region=shapes[k])[1]
 		_img === nothing && continue		# Catch crop shits (for example, polygons too small)
 

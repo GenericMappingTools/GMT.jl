@@ -406,25 +406,28 @@ function helper_set_colnames!(o::GDtype, corder::Vector{Int}=Int[])
 end
 
 # ---------------------------------------------------------------------------------
+# When col n has date and col n+1 has time, change the col date to a date-time column
+# Had to move these functions outside of file_has_time!() because otherwise they were CoreBoxed !!!!!!!!!!!!!.
+function join_date_time_cols!(D::GMTdataset, n)
+	nada = zero(eltype(D))
+	@inbounds for k = 1:size(D,1)
+		D[k,n-1] += D[k,n] * 3600.0		# Multiply only by 60*60 because GMT 'thinks' hh:mm:ss is an angle and not a time
+		D[k,n] = nada
+	end
+	return nothing
+end
+
+function join_date_time_cols!(D::Vector{<:GMTdataset}, n)
+	for i = 1:numel(D)  join_date_time_cols!(D[i], n)  end 
+end
+
+# ---------------------------------------------------------------------------------
 function file_has_time!(fname::String, D::GDtype, corder::Vector{Int}=Int[], opt_h::String="")
 	# Try guess if 'fname' file has time columns and if yes leave trace of it in D's metadata.
 	# We do that by scanning the first valid line in file.
 	# 'corder' is a vector of ints filled with column orders specified by -i. If no -i that it is empty
 
 	startswith(fname, "http") && return nothing			# We can't "open(fname)" beloow
-	
-	# When col n has date and col n+1 has time, change the col date to a date-time column
-	function join_date_time_cols!(D::GMTdataset, n)
-		nada = zero(eltype(D))
-		@inbounds for k = 1:size(D,1)
-			D[k,n-1] += D[k,n] * 3600.0		# Multiply only by 60*60 because GMT 'thinks' hh:mm:ss is an angle and not a time
-			D[k,n] = nada
-		end
-		return nothing
-	end
-	function join_date_time_cols!(D::Vector{<:GMTdataset}, n)
-		for i = 1:numel(D)  join_date_time_cols!(D[i], n)  end 
-	end
 
 	#line1 = split(collect(Iterators.take(eachline(fname), 1))[1])	# Read first line and cut it in tokens
 	isone = isa(D, GMTdataset) ? true : false
