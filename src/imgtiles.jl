@@ -630,7 +630,7 @@ function getprovider(arg, zoom::Int; date::String="", key="")
 	fs = fields(arg)
 	!(length(fs) == 2 && (fs[1] == :url && fs[2] == :options)) && error("Argument for this method must be a TileProviders provider.")
 
-	function geturl(provider)		# This function was "borrowed"/modified from TileProviders.jl
+	function geturl(provider, zoom)		# This function was "borrowed"/modified from TileProviders.jl
 		ops = provider.options
 		zoom > get(ops, :max_zoom, 19) && (@warn("zoom ($(zoom)) is larger than max_zoom ($(ops[:max_zoom]))"); zoom = ops[:max_zoom])
 		subdomain = haskey(ops, :subdomains) ? string(rand(ops[:subdomains]), ".") : ""		# Choose a random subdomain
@@ -644,7 +644,7 @@ function getprovider(arg, zoom::Int; date::String="", key="")
 		return replace(provider.url, replacements...)
 	end
 
-	url = geturl(arg)
+	url = geturl(arg, zoom)
 	ind = findfirst("0/0/0", url)		# Will strip this part and let the manin mosaic() fun fill it with its due.
 	code = string(arg.options[:name])	# A unique subdir name for the cache directory.
 	((v = get(arg.options, :variant, "")) !== "") && (code *= filesep * v)

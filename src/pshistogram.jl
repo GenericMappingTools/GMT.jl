@@ -167,11 +167,11 @@ function histogram_helper(cmd0::String, arg1, O::Bool, K::Bool, d::Dict{Symbol,A
 	do_getauto = ((val_getauto = find_in_dict(d, [:getauto :getthresholds])[1]) !== nothing) ? true : false
 	do_zoom = ((find_in_dict(d, [:zoom])[1]) !== nothing) ? true : false	# Automatic zoom to interesting region
 
-	function if_zoom(cmd, opt_R, limit_L, hst)
+	function if_zoom(cmd, opt_R, limit_L, limit_R, hst)
 		isempty(hst) && error("No histogram data to compute the region limits.")
-		mm = extrema(hst, dims=1)			# 1×2 Array{Tuple{UInt16,UInt16},2}
+		_mm = extrema(hst, dims=1)			# 1×2 Array{Tuple{UInt16,UInt16},2}
 		x_max = min(limit_R * 1.15, hst[end,1])		# 15% to the right but not fall the cliff
-		opt_R_ = " -R$(limit_L * 0.85)/$x_max/0/$(mm[2][2] * 1.1) "
+		opt_R_ = " -R$(limit_L * 0.85)/$x_max/0/$(_mm[2][2] * 1.1) "
 		(opt_R != " ") && @warn("'zoom' option overrides the requested region limits and sets its own")
 		cmd = replace(cmd, opt_R => opt_R_, count=1)
 		return cmd, opt_R_					# opt_R_ will be needed further down in vline
@@ -192,7 +192,7 @@ function histogram_helper(cmd0::String, arg1, O::Bool, K::Bool, d::Dict{Symbol,A
 			which_auto = (do_auto) ? val_auto : val_getauto
 			limit_L, limit_R = find_histo_limits(arg1, which_auto, 20)
 			(do_getauto) && return [Int(limit_L), Int(limit_R)]	# If only want the histogram limits, we are done then.
-			if (do_zoom)  cmd, opt_R = if_zoom(cmd, opt_R, limit_L, hst)  end
+			if (do_zoom)  cmd, opt_R = if_zoom(cmd, opt_R, limit_L, limit_R, hst)  end
 		end
 		arg1 = hst		# We want to send the histogram, not the GMTimage
 	elseif (isa(arg1, GMTgrid) || is_subarray_float)
@@ -203,7 +203,7 @@ function histogram_helper(cmd0::String, arg1, O::Bool, K::Bool, d::Dict{Symbol,A
 			limit_L, limit_R = find_histo_limits(arg1, which_auto, inc, hst)
 			(do_getauto) && return [limit_L, limit_R]	# If only want the histogram limits, we are done then.
 			limit_L, limit_R = round(limit_L, digits=4), round(limit_R, digits=4)	# Don't plot an ugly number of decimals
-			if (do_zoom)  cmd, opt_R = if_zoom(cmd, opt_R, limit_L, hst)  end
+			if (do_zoom)  cmd, opt_R = if_zoom(cmd, opt_R, limit_L, limit_R, hst)  end
 		end
 
 		cmd = (opt_Z == "") ? cmd * " -Z0" : cmd * opt_Z
