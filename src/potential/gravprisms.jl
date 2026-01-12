@@ -64,11 +64,11 @@ function gravprisms(cmd0::String="", arg1::GDtype=GMTdataset(); kwargs...)
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
 	function fish_grids(d, Gs, cmd, symbs, opt, N)
-		if ((val = find_in_dict(d, symbs)[1]) !== nothing)
-			if (isa(val, Real) || isa(val, String))
-				cmd *= string(" -", opt, val)::String
+		if ((_val = find_in_dict(d, symbs)[1]) !== nothing)
+			if (isa(_val, Real) || isa(_val, String))
+				cmd *= string(" -", opt, _val)::String
 			else
-				isa(val, GMTgrid) ? (Gs[N+=1] = val; cmd *= " -D") : error("Invalid type $(typeof(val)) for option $opt")
+				isa(_val, GMTgrid) ? (Gs[N+=1] = _val; cmd *= " -D") : error("Invalid type $(typeof(_val)) for option $opt")
 			end
 		end
 		return cmd, N

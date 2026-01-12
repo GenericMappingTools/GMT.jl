@@ -67,7 +67,9 @@ function filter1d_helper(cmd0::String, arg1; kwargs...)
 	r = common_grd(d, cmd0, cmd, "filter1d ", arg1)		# Finish build cmd and run it
 	if (isa(arg1, GDtype))								# Keep the attribs if they existed in arg1
 		isa(arg1, GMTdataset) && !isempty(arg1.attrib) && (r.attrib = arg1.attrib)
-		isa(arg1, Vector) && !isempty(arg1[1].attrib) && [r[k].attrib = arg1[1].attrib for k = 1:length(arg1)]
+		if (isa(arg1, Vector) && !isempty(arg1[1].attrib))
+			for k = 1:length(arg1)  r[k].attrib = arg1[1].attrib  end
+		end
 	end
 	return r
 end

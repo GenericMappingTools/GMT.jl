@@ -54,8 +54,8 @@ function anaglyph(G::GMTgrid; vscale=1, sscale=2, view3d=false, zsize=4, azim=19
 	m_scale = -vscale / 50	# Amp factor
 
 	function gra(G, scale)
-		azim,elev = 0.0, 30.0
-		s = [sind(azim) * cosd(elev); cosd(azim) * cosd(elev); sind(elev)]
+		_azim,elev = 0.0, 30.0
+		s = [sind(_azim) * cosd(elev); cosd(_azim) * cosd(elev); sind(elev)]
 		data = zeros(Float32, size(G))
 		@inbounds Threads.@threads for c = 2:size(G,1)-1
 			@inbounds for r = 2:size(G,2)-1

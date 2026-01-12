@@ -319,7 +319,7 @@ function ecmwf_fc(; filename="", levlist="", kw...)
 	function which_name(d::Dict, thisvar::String, name::String, filename::AbstractString, EXT::String)::String
 		# Select which name to use for saving the file. NAME is the composed (long) name. The others are user choices.
 		(filename != "") && return filename					# This one takes priority
-		fname_prefix::String = ((val = find_in_dict(d, [:prefix], false)[1]) !== nothing) ? string(val)::String * "_$(thisvar)$(EXT)" : ""
+		fname_prefix::String = ((_val = find_in_dict(d, [:prefix], false)[1]) !== nothing) ? string(_val)::String * "_$(thisvar)$(EXT)" : ""
 		return (fname_prefix != "") ? fname_prefix : name	# 'fname_prefix' takes priority if exists.
 	end
 

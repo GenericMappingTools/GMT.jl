@@ -79,14 +79,14 @@ function gadm(country, subregions...; children::Bool=false, names::Bool=false, c
 
 	function _getlayer(plevel)
 		# Get layer of the desired `level` from the `data`.
-		nlayers = Gdal.nlayer(data)
-		for l = 0:nlayers - 1
+		_nlayers = Gdal.nlayer(data)
+		for l = 0:_nlayers - 1
 			layer = Gdal.getlayer(data, l)
 			lname = Gdal.getname(layer)
 			llevel = last(split(lname, "_"))
 			string(plevel) == llevel && return layer, lname
 		end
-		error("Asked data for a level ($(plevel+1)) that is lower than lowest data level ($(nlayers))")
+		error("Asked data for a level ($(plevel+1)) that is lower than lowest data level ($(_nlayers))")
 	end
 
 	function _get_attrib(feature)

@@ -376,9 +376,6 @@
 	add2PSfile("Bla")
 	add2PSfile(["Bla", "Bla"])
 
-	GMT.funcurve(GMT.square, [1 10])
-	@test_throws ErrorException("Function tan not implemented in funcurve().") GMT.funcurve(tan, [1 10]);
-
 	println("	DRAWING")
 	circle(0,0,1,first=true,Vd=dbg2);
 	cross(0,0,1,Vd=dbg2);

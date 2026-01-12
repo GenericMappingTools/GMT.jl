@@ -227,8 +227,8 @@ function _plotlinefit(D::GMTdataset, first::Bool, grp::Bool, d::Dict{Symbol,Any}
 	
 	function do_ribs(d, symbs, def_color::String)
 		do_rib, rib_cor = false, ""
-		if ((val = find_in_dict(d, symbs)[1]) !== nothing)	# Either 'true' or ribbon color
-			rib_cor = (val == 1) ? def_color : string(val)::String 
+		if ((_val = find_in_dict(d, symbs)[1]) !== nothing)	# Either 'true' or ribbon color
+			rib_cor = (_val == 1) ? def_color : string(_val)::String 
 			do_rib = (rib_cor != "")
 		end
 		return do_rib, rib_cor

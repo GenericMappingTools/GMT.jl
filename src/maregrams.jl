@@ -71,9 +71,10 @@ function maregrams(; list=false, code="", name="", days=2, starttime::String="",
 	(n_lines <= 0) && (println("This station has no data or a file tranfer error occured."); return GMTdataset())
 
 	mat = Matrix{Float64}(undef, n_lines, 2)
-	n = -2
 	var_in_mareg = ["prs(m)"]
 	open(file, "r") do io
+		n = -2
+		local ind
 		for line in eachline(io)
 			if ((n += 1) <= 0)					# To jump the first two (header) lines
 				(n == -1) && continue			# Header line with station name
@@ -123,8 +124,11 @@ function read_maregrams(fname=TESTSDIR * "/assets/maregs_online.csv")
 	names = Vector{String}(undef, 378)
 	codes = Vector{String}(undef, 378)
 	countries = Vector{String}(undef, 378)
-	n = -1
+	#fid = open(fname)
+	#iter = eachline(fid)
+		#for line in iter
 	open(fname, "r") do io
+		n = -1
         for line in eachline(io)
 			x, y, name, code, country = split(line, ",")
 			((n += 1) == 0) && continue						# The header line
@@ -132,5 +136,6 @@ function read_maregrams(fname=TESTSDIR * "/assets/maregs_online.csv")
 			names[n], codes[n], countries[n] = name, code, country
 		end
 	end
+	#close(fid)
 	Dict(:pos => mat, :name => names, :code => codes, :country => countries)
 end

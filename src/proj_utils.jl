@@ -167,8 +167,12 @@ function invgeod(lonlat1::Matrix{<:Real}, lonlat2::Matrix{<:Real}; proj::String=
 			az2 += 180;		(az2 > 180) && (az2 -= 360)
 		else
 			az1 .+= 180;	az2 .+= 180
-			[(az1[k] > 180) && (az1[k] -= 360) for k = 1:lastindex(az1)]
-			[(az2[k] > 180) && (az2[k] -= 360) for k = 1:lastindex(az2)]
+			@inbounds for k = 1:lastindex(az1)
+				(az1[k] > 180) && (az1[k] -= 360)
+			end
+			@inbounds for k = 1:lastindex(az2)
+				(az2[k] > 180) && (az2[k] -= 360)
+			end
 		end
 	end
 	return size(d,1) == 1 ? (d[1], az1[1], az2[1]) : (d, az1, az2)
@@ -493,8 +497,8 @@ function geodesic_long(lonlat1::VMr, lonlat2::VMr; step=0.0, np=180, proj::Strin
 	(step != 0) && (np = round(Int, dtot / step) + 1)	# Takes precedence over 'np' because that one has a default value.
 
 	function get_mindist(az)
-		D = geod(lonlat1, az, linspace(0,dtot,360), proj=proj, epsg=epsg)[1]
-		gmtwrite(_name, D);
+		_D = geod(lonlat1, az, linspace(0,dtot,360), proj=proj, epsg=epsg)[1]
+		gmtwrite(_name, _D);
 		gmt("mapproject -L$_name", [lonlat2[1] lonlat2[2]])		# Find closest point to B in the passing by geodesic.
 	end
 

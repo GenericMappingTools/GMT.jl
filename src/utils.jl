@@ -6,34 +6,43 @@ getdecimal(x::Number) = x - trunc(Int, x)
 """ Return an ierator over data skipping non-finite values"""
 skipnan(itr) = Iterators.filter(el->isfinite(el), itr)
 
-square(x) = x ^ 2
 pow(b,e)  = b ^ e
 
 """
-    y = funcurve(f::Function, lims::VMr, n=100) -> Vector{Float64}
-	
-Geneate a curve between lims[1] and lims[2] having the form of function 'f'
+	funcurve(f::Function, lims, n=100)::Tuple{Vector{Float64}, Vector{Float64}}
 
-### Args
-- `f`: A function among: `exp`, `log`, `log10`, `exp10`, `sqrt`, `square`
-- `lims`: limits of `x` in `y = f(x)`
-- `n`: number of points in the generated curve.
+Evaluate a function over a range and return the computed points.
 
-### Example
+# Arguments
+- `f::Function`: The one dimensional function to be evaluated. This can be the named of a built-in function
+   (_e.g._, `exp`), a custom or an anonymous function.
+- `lims`: The limits defining the range over which to evaluate the function.
+  That is, the limits of `x` in `y = f(x)`. This can be a tuple or a vector with two elements.
+- `n::Int`: Number of points to evaluate (default: 100)
+
+# Returns
+- `Tuple{Vector{Float64}, Vector{Float64}}`: A tuple containing two vectors of Float64 values
+  representing the x-coordinates and corresponding function values
+
+# Example
 ```julia
-	x = funcurve(exp, [1, 10], 10)
+x, y = funcurve(exp, [0, 10])
+```
+
+Another example with a custom function (an anonymous function in this case):
+```julia
+x, y = funcurve(x->x^2, (0, 10))
+```
+
+Visualize the result with:
+```julia
+viz(x,y)
 ```
 """
-function funcurve(f::Function, lims::VMr, n=100)::Vector{Float64}
-	if     (f == exp)    x::Vector{Float64} = vec(log.(Float64.(lims)))
-	elseif (f == log)    x = vec(exp.(Float64.(lims)))
-	elseif (f == log10)  x = vec(exp10.(Float64.(lims)))
-	elseif (f == exp10)  x = vec(log10.(Float64.(lims)))
-	elseif (f == sqrt)   x = vec(square.(Float64.(lims)))
-	elseif (f == square) x = vec(sqrt.(Float64.(lims)))
-	else   error("Function $f not implemented in funcurve().")
-	end
-	f.(linspace(x[1], x[2], n))
+function funcurve(f::Function, lims, n::Integer=100)::Tuple{Vector{Float64}, Vector{Float64}}
+	x = collect(linspace(lims[1], lims[2], n))
+	y = f.(x)
+	return x, y
 end
 
 #=

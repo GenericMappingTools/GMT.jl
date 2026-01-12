@@ -946,7 +946,7 @@ function parse_opt_S(d::Dict, arg1, is3D::Bool=false)
 				elseif (isa(val, Tuple) && isa(val[1], Function) && isa(val[2], VMr))	# ~useless size=(fun, [2,20]) but no col size
 					val2::Tuple = val
 					sc = _scale(eltype(val2[2]) <: Integer)
-					arg1 = hcat(arg1, funcurve(val2[1], vec(Float64.(val2[2] .* sc)), size(arg1,1)))
+					arg1 = hcat(arg1, funcurve(val2[1], vec(Float64.(val2[2] .* sc)), size(arg1,1))[2])
 				end
 			elseif (string(val)::String != "indata")	# WTF is "indata"?
 				marca *= arg2str(val)::String

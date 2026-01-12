@@ -690,7 +690,10 @@ function spatialjoin(D1::GMTdataset, D2::Vector{<:GMTdataset}; pred::Function=in
 	atts_vec = Vector{Vector{String}}(undef, length(att_names))
 
 	function fill_atts_vec(D2, ind, atts_vec, att_names, isleft=true)
-		[atts_vec[l] = Vector{String}(undef, length(ind)) for l = 1:length(att_names)]
+		#[atts_vec[l] = Vector{String}(undef, length(ind)) for l = 1:length(att_names)]
+		for l = 1:length(att_names)
+			atts_vec[l] = Vector{String}(undef, length(ind))
+		end
 		for k = 1:numel(ind)						# Loop over number of points in D1
 			if (isleft && ind[k] == 0)				# Skip if not joined
 				for l = 1:length(att_names)  atts_vec[l][k] = ""  end
@@ -705,8 +708,10 @@ function spatialjoin(D1::GMTdataset, D2::Vector{<:GMTdataset}; pred::Function=in
 	end
 
 	if (kind == :left)
-		atts_vec = fill_atts_vec(D2, ind, atts_vec, att_names)
-		[D1.attrib[att_names[l]] = atts_vec[l] for l = 1:numel(att_names)]	# Add the new attributes to D1.attrib
+		#[D1.attrib[att_names[l]] = atts_vec[l] for l = 1:numel(att_names)]	# Add the new attributes to D1.attrib
+		for l = 1:numel(att_names)					# Add the new attributes to D1.attrib
+			D1.attrib[att_names[l]] = atts_vec[l]
+		end
 		return D1
 	else
 		(kind != :inner) && error("Only :left or :inner joins are supported")
@@ -714,7 +719,10 @@ function spatialjoin(D1::GMTdataset, D2::Vector{<:GMTdataset}; pred::Function=in
 		deleteat!(ind, findall(ind .== 0))			# Remove points that are not joined
 		atts_vec = fill_atts_vec(D2, ind, atts_vec, att_names, false)
 		D = mat2ds(D1, (ind_retain,:))				# TODO: Make this case a view
-		[D.attrib[att_names[l]] = atts_vec[l] for l = 1:numel(att_names)]	# Add the new attributes to D.attrib
+		#[D.attrib[att_names[l]] = atts_vec[l] for l = 1:numel(att_names)]	# Add the new attributes to D.attrib
+		for l = 1:numel(att_names)					# Add the new attributes to D.attrib
+			D.attrib[att_names[l]] = atts_vec[l]
+		end	
 		return D
 	end
 end
