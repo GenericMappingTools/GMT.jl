@@ -1993,7 +1993,11 @@ function piechart(x::VecOrMat; first::Bool=true, kw...)
 		data[k, 4] = data[k-1, 3]
 	end
 	
-	mid_angs = [(data[k, 3] + data[k, 4]) / 2 for k = 1:numel(x)]		# Compute the bissections angles
+	#mid_angs = [(data[k, 3] + data[k, 4]) / 2 for k = 1:numel(x)]		# Compute the bissections angles
+	mid_angs = Vector{Float64}(undef, length(x))
+	@inbounds for k = 1:numel(x)				# Compute the bissections angles
+		mid_angs[k] = (data[k, 3] + data[k, 4]) / 2
+	end
 
 	do_explode = false
 	non_exploded = ones(Bool, length(X))		# Default to no explosion

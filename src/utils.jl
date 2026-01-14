@@ -606,7 +606,7 @@ function isnodata(array::AbstractArray, val=0)
 	else                    indNaN = fill(false, nrows, ncols)
 	end
 	@inbounds Threads.@threads for k = 1:nrows * ncols * nlayers	# 5x faster than: indNaN = (I.image .== 0)
-		(array[k] == val) && (indNaN[k] = true)
+		(array[k] == val) && (indNaN[k] = true)	# With Threads.@threads it insists indNaN is a CoreBox but it's 2x faster
 	end
 	indNaN
 end
