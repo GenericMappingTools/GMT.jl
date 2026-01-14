@@ -1429,6 +1429,7 @@ function parse_type_anchor(d::Dict, cmd::String, symbs::VMs, mapa::NamedTuple, d
 		(haskey(d, s) && isa(d[s], StrSymb)) && (got_str = true; break)
 	end
 	opt::String = add_opt(d, "", "", symbs, mapa; del=del)
+	(!isempty(opt) && symbs[1] == :D && def_CS == 'J' && opt[1] == '+') && (opt = "RM" * opt) # Special case in colorbar whith +e (triangs)
 	if (!got_str && opt != "" && opt[1] != 'j' && opt[1] != 'J' && opt[1] != 'g' && opt[1] != 'n' && opt[1] != 'x')
 		opt = def_CS * opt
 	end

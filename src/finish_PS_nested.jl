@@ -69,10 +69,20 @@ function add_opt_module(d::Dict)::Vector{String}
 		elseif (isa(val, Real) && (val != 0))		# Allow setting coast=true || colorbar=true
 			r = add_opt_module_barr2(symb)
 		elseif (symb == :colorbar && (isa(val, StrSymb)))
-			t::Char = lowercase(string(val)[1])		# Accept "Top, Bot, Left" but default to Right
-			anc = (t == 't') ? "TC" : (t == 'b' ? "BC" : (t == 'l' ? "LM" : "RM"))
-			#r = colorbar_parser(pos=(anchor=anc,), B="af", first=false, Vd=2)[1]	# It's fcking RECOMPILE again
-			r = replace("psscale -R -J -Baf -C -DJ" * anc, "-R" => CTRL.pocket_R[1])
+			# Accepts Top/TopTri[High|Low], Bottom/BottomTri, Left/LeftTri, Right/RightTri or triangles (caseless)
+			val_str::String = lowercase(string(val))
+			opt_RJ = !IamModern[] ? CTRL.pocket_R[1] * " -J" : ""
+			anc = "RM";		tris = ""		# Default anchor Right Middle and no triangles
+			if (contains(val_str, "tri") && !isempty(CURRENT_CPT[]))	# Sets CPT.bfn to match colormap end colors
+				CURRENT_CPT[].bfn[1,:] .= CURRENT_CPT[].colormap[1,:]
+				CURRENT_CPT[].bfn[2,:] .= CURRENT_CPT[].colormap[end,:]
+				tris = contains(val_str, "high") ? "+ef" : contains(val_str, "low") ? "+eb" : "+e"
+			end
+			if (!startswith(val_str, "tri"))			# Means that not just triangles were requested
+				t::Char = val_str[1]					# Accept "Top, Bot, Left" but default to Right
+				anc = (t == 't') ? "TC" : (t == 'b' ? "BC" : (t == 'l' ? "LM" : "RM"))
+			end
+			r = "psscale $opt_RJ -Baf -C -DJ"  * anc * tris
 		elseif (symb == :clip)
 			if (isa(val, String) || isa(val, Symbol))	# Accept also "land", "water" or "ocean" or DCW country codes(s) or a hard -E string
 				_str::String = string(val)					# Shoot the Any

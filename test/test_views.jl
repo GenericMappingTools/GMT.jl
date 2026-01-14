@@ -87,7 +87,7 @@ imshow(makecpt(1,5, cmap=:polar), Vd=dbg2)
 imshow(:gray, Vd=dbg2)
 GMT.CURRENT_CPT[] = GMT.GMTcpt()		# The fact that I need to do this because prev line did no "show", shows a subtle bug.
 X4 = mat2grid(rand(Float32,32,32,4), title="lixo");
-viz(X4, colorbar=true, show=false)
+viz(X4, colorbar=:TopTriangles, show=false)
 GMT.mat2grid("ackley");
 GMT.mat2grid("egg");
 GMT.mat2grid("sombrero");
