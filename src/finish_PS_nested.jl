@@ -70,19 +70,9 @@ function add_opt_module(d::Dict)::Vector{String}
 			r = add_opt_module_barr2(symb)
 		elseif (symb == :colorbar && (isa(val, StrSymb)))
 			# Accepts Top/TopTri[High|Low], Bottom/BottomTri, Left/LeftTri, Right/RightTri or triangles (caseless)
-			val_str::String = lowercase(string(val))
 			opt_RJ = !IamModern[] ? CTRL.pocket_R[1] * " -J" : ""
-			anc = "RM";		tris = ""		# Default anchor Right Middle and no triangles
-			if (contains(val_str, "tri") && !isempty(CURRENT_CPT[]))	# Sets CPT.bfn to match colormap end colors
-				CURRENT_CPT[].bfn[1,:] .= CURRENT_CPT[].colormap[1,:]
-				CURRENT_CPT[].bfn[2,:] .= CURRENT_CPT[].colormap[end,:]
-				tris = contains(val_str, "high") ? "+ef" : contains(val_str, "low") ? "+eb" : "+e"
-			end
-			if (!startswith(val_str, "tri"))			# Means that not just triangles were requested
-				t::Char = val_str[1]					# Accept "Top, Bot, Left" but default to Right
-				anc = (t == 't') ? "TC" : (t == 'b' ? "BC" : (t == 'l' ? "LM" : "RM"))
-			end
-			r = "psscale $opt_RJ -Baf -C -DJ"  * anc * tris
+			anc_tris = colorbar_triangles(val)
+			r = "psscale $opt_RJ -Baf -C -DJ"  * anc_tris
 		elseif (symb == :clip)
 			if (isa(val, String) || isa(val, Symbol))	# Accept also "land", "water" or "ocean" or DCW country codes(s) or a hard -E string
 				_str::String = string(val)					# Shoot the Any
@@ -106,6 +96,23 @@ function add_opt_module(d::Dict)::Vector{String}
 		(isa(r, String) && (r != "")) && append!(out, [r])
 	end
 	return out
+end
+
+# ---------------------------------------------------------------------------------------------------
+function colorbar_triangles(val::StrSymb)::String
+	# Accepts Top/TopTri[High|Low], Bottom/BottomTri, Left/LeftTri, Right/RightTri or triangles (caseless)
+	val_str::String = lowercase(string(val))
+	anc = "RM";		tris = ""		# Default anchor Right Middle and no triangles
+	if (contains(val_str, "tri") && !isempty(CURRENT_CPT[]))	# Sets CPT.bfn to match colormap end colors
+		CURRENT_CPT[].bfn[1,:] .= CURRENT_CPT[].colormap[1,:]
+		CURRENT_CPT[].bfn[2,:] .= CURRENT_CPT[].colormap[end,:]
+		tris = contains(val_str, "high") ? "+ef" : contains(val_str, "low") ? "+eb" : "+e"
+	end
+	if (!startswith(val_str, "tri"))			# Means that not just triangles were requested
+		t::Char = val_str[1]					# Accept "Top, Bot, Left" but default to Right
+		anc = (t == 't') ? "TC" : (t == 'b' ? "BC" : (t == 'l' ? "LM" : "RM"))
+	end
+	return anc * tris
 end
 
 # Add to split code from above in these 2 function barriers to avoid all finish_PS_nested() invalidations
