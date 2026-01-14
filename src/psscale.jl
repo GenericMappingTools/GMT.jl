@@ -74,6 +74,11 @@ function colorbar_parser(arg1::Union{Nothing, GMTcpt}=nothing; first=true, kwarg
 	(!isempty(opt_D)) && (!contains(opt_D, "DJ") && !contains(opt_D, "Dj") && !contains(opt_D, "Dg")) && (cmd = replace(cmd, "-R " => ""))
 	cmd *= opt_D
 	cmd, arg1, = add_opt_cpt(d, cmd, CPTaliases, 'C', 0, arg1)
+	if (opt_D === "" && ((val = hlp_desnany_str(d, [:triangles])) !== ""))	# User asked for triangles but did not set pos
+		(val == "true") && (val = "tri")			# Means just triangles
+		anc_tris = colorbar_triangles(val)			# Returns anchor+triangles string
+		cmd *= " -DJ" * anc_tris
+	end
 	if (!isa(arg1, GMTcpt) && !occursin("-C", cmd))	# If given no CPT, try to see if we have a current one stored in global
 		if (!isempty(CURRENT_CPT[]))
 			cmd *= " -C";	arg1 = CURRENT_CPT[]
@@ -82,7 +87,7 @@ function colorbar_parser(arg1::Union{Nothing, GMTcpt}=nothing; first=true, kwarg
 
 	cmd = add_opt(d, cmd, "L", [:L :equal :equal_size], (range="i", gap=""))	# Aditive
 	(opt_B != "" && !contains(cmd, " -L")) && (cmd *= opt_B)					# If no -B & no -L, add default -B
-	isempty(opt_D) && (cmd *= " -DJMR")			#  So that we can call it with just a CPT
+	(isempty(opt_D) && !contains(cmd, " -D")) && (cmd *= " -DJMR")				#  So that we can call it with just a CPT
 
 	cmd = gmt_proggy * cmd
 	r = check_dbg_print_cmd(d, cmd)
