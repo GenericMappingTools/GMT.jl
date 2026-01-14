@@ -23,7 +23,7 @@ grdimage("@earth_relief_01d_g", clim=[-4000 4000], Vd=dbg2)
 grdimage("lixo.grd", coast=true, colorbar=true, logo=true, Vd=dbg2)
 G = gmt("grdmath -Rg -fg -I5 X");
 gmtwrite("lixo.grd", G)
-grdimage("lixo.grd", proj=:Winkel, colorbar=true, coast=true)
+grdimage("lixo.grd", proj=:Winkel, colorbar=(xlabel="test", triangles=true), logo=true, coast=true)
 @test startswith(grdimage("@earth_relief", region=(-74,-59,5,15), proj=:guess,  Vd=2), "grdimage @earth_relief  -R-74/-59/5/15")
 
 G2 = mat2grid(rand(181,361), x=-180:180, y=-90:90);
