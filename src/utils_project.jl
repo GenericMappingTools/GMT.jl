@@ -370,28 +370,6 @@ function worldrectgrid(; proj::StrSymb="", width=(30,20), grid=Vector{Vector{Rea
 	meridian  = [-90:0.25:-80; -79.0:1:79; 80:0.25:90]			# Attempt to have less points, but ...
 	parallel  = -180.0-pad+pm:2.5:180+pad+pm
 
-	function check_gaps(D, n1, n2, testone=true)
-		# Some projections have projected graticules that are broken and lines go left-right like crazy.
-		# This function tries to detect the breaking points based on cheap stats. When detected, insert NaN rows
-		if (testone)					# Test if we have broken parallels
-			d = diff(D[round(Int, (n1+n2)/2)], dims=1)
-			dists = hypot.(view(d,:,1), view(d, :, 2))
-			(median(dists) > 3 * maximum(dists)) && return nothing	# (3?) This projection has no broken parallels.
-		end
-		for n = n1:n2
-			d = diff(D[n], dims=1);		dists = hypot.(view(d,:,1), view(d, :, 2))
-			ind = findall(dists .> 5*median(dists))				# 5 is an heuristic
-			isempty(ind) && continue							# This parallel is not broken
-			if (length(ind) == 1)		# A single break
-				D[n].data = [D[n].data[1:ind[1],:]; NaN NaN; D[n].data[ind[1]+1:end,:]]
-			else						# Assume there are only two breaks. If not ...
-				D[n].data = [D[n].data[1:ind[1],:]; NaN NaN; D[n].data[ind[1]+1:ind[2],:]; NaN NaN; D[n].data[ind[2]+1:end,:]]
-			end
-		end
-		testone && check_gaps(D, 1, n1-1, false)		# If parallels were broken there's good chances that meridians are too.
-		return nothing
-	end
-
 	Dgrid = Vector{GMTdataset{Float64, 2}}(undef, length(meridians)+length(parallels))
 	n = 0
 	if (_proj != "")
@@ -406,7 +384,7 @@ function worldrectgrid(; proj::StrSymb="", width=(30,20), grid=Vector{Vector{Rea
 			Dgrid[n+=1] = mat2ds(lonlat2xy([parallel fill(p, length(parallel))], t_srs=_proj), attrib=Dict("para_b" => "$p,$(parallel[1])", "para_e" => "$p,$(parallel[end])", "annot" => "n", "n_meridians" => "$(length(meridians))", "n_parallels" => "$(length(parallels))"), hdr=label)
 			is_lee_os && 0 <= p <= 20 && (Dgrid[n].data[60:end-50,1] .= NaN)		# lee_os proj has problems at low lats. Line reenters domain.
 		end
-		!is_lee_os && !worldrect && check_gaps(Dgrid, length(meridians)+1, length(Dgrid))		# Try this only with non-worldrect
+		!is_lee_os && !worldrect && check_gaps_wrld(Dgrid, length(meridians)+1, length(Dgrid))		# Try this only with non-worldrect
 	else					# Cartesian graticules
 		for m = meridians
 			label = [@sprintf("-L%.8g", m)]
@@ -421,6 +399,30 @@ function worldrectgrid(; proj::StrSymb="", width=(30,20), grid=Vector{Vector{Rea
 	set_dsBB!(Dgrid, false)
 	return Dgrid
 end
+
+
+function check_gaps_wrld(D, n1, n2, testone=true)
+	# Some projections have projected graticules that are broken and lines go left-right like crazy.
+	# This function tries to detect the breaking points based on cheap stats. When detected, insert NaN rows
+	if (testone)					# Test if we have broken parallels
+		d = diff(D[round(Int, (n1+n2)/2)], dims=1)
+		dists = hypot.(view(d,:,1), view(d, :, 2))
+		(median(dists) > 3 * maximum(dists)) && return nothing	# (3?) This projection has no broken parallels.
+	end
+	for n = n1:n2
+		d = diff(D[n], dims=1);		dists = hypot.(view(d,:,1), view(d, :, 2))
+		ind = findall(dists .> 5*median(dists))				# 5 is an heuristic
+		isempty(ind) && continue							# This parallel is not broken
+		if (length(ind) == 1)		# A single break
+			D[n].data = [D[n].data[1:ind[1],:]; NaN NaN; D[n].data[ind[1]+1:end,:]]
+		else						# Assume there are only two breaks. If not ...
+			D[n].data = [D[n].data[1:ind[1],:]; NaN NaN; D[n].data[ind[1]+1:ind[2],:]; NaN NaN; D[n].data[ind[2]+1:end,:]]
+		end
+	end
+	testone && check_gaps_wrld(D, 1, n1-1, false)		# If parallels were broken there's good chances that meridians are too.
+	return nothing
+end
+
 
 # -----------------------------------------------------------------------------------------------
 """
