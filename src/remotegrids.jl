@@ -209,7 +209,7 @@ function remotegrid(name, res_p::String=""; res::String="", reg::String="", info
 	end
 	(info == 1 && n_under > 1) && (@warn("No information for $(name) available when resolution was also specified"); return "")
 
-	function check_reg(name, grdtype, reg, ind)
+	function check_reg(name, grdtype, reg, ind, res)
 		# Check if 'reg' is valid for 'name' and 'grdtype' and set 'name' accordingly
 		_reg = lowercase(reg[1])
 		(_reg != 'p' && _reg != 'g') && error("Bad registration code $(reg). Must be one of 'grid' or 'pixel'")
@@ -225,7 +225,7 @@ function remotegrid(name, res_p::String=""; res::String="", reg::String="", info
 		ind::Int = _ind							# Fck Anys
 		(res != "5m") ? (res = thisgrid_res[ind]) : (res = "05m")	# 5m is an exception because it may be miscatch by 15m
 		name *= "_" * res
-		(reg != "") && (name = check_reg(name, thisgrid, reg, ind))
+		(reg != "") && (name = check_reg(name, thisgrid, reg, ind, res))
 	elseif (n_under == 2 && reg != "")			# name & type & res
 		ind_res::Int = findlast(name, '_')
 		thisgrid = eval(Symbol(name[1:ind_res-1]))
@@ -233,7 +233,7 @@ function remotegrid(name, res_p::String=""; res::String="", reg::String="", info
 		length(res) == 2 && (res = "0" * res)	# To allow both 01d and 1d
 		((_ind = findfirst(contains.(thisgrid_res, res))) === nothing) && error("Bad resolution code $(res). Must be one of $thisgrid_res.")
 		ind = _ind
-		name = check_reg(name, thisgrid, reg, ind)
+		name = check_reg(name, thisgrid, reg, ind, res)
 	end
 
 	return "@" * name

@@ -114,18 +114,20 @@ function bezier(p::Matrix{<:Real}; t=nothing, np::Int=0, pure=false, firstcurve=
 end
 
 function helper_bezier_cb(o::Matrix{Float64}, p::Matrix{Float64}, t, firstcurve::Bool)::Matrix{Float64}
-	# Made this function barrier to restrict the Core.box. For some incomprehensible reason, 'o' becomes
-	# a Core.box and that happens due to the appending (the 'vcats' below). Both Cthulhu and the debugger
-	# show that 'o' is no longer a Core.box when it lands on the calling function.
 	# This function is not efficient due to the matrix concatenations, but it's not expeced to cat much data.
 	for k = 5:size(p, 1)
 		oo = bezier(p[k-3,:], p[k-2,:], p[k-1,:], p[k,:]; t=t)
+		d = Vector{Float64}(undef, size(oo, 1))
 		if (firstcurve)
 			xn = o[end,1];		yn = o[end,2];		zn = o[end,3]
-			d::Vector{Float64} = [(oo[n,1] - xn)^2 + (oo[n,2] - yn)^2 + (oo[n,3] - zn)^2 for n = 1:size(oo, 1)]
+			@inbounds for n = 1:size(oo, 1)
+				d[n] = (oo[n,1] - xn)^2 + (oo[n,2] - yn)^2 + (oo[n,3] - zn)^2
+			end
 		else
 			xn = oo[1,1];		yn = oo[1,2];		zn = oo[1,3]
-			d = [(o[n,1] - xn)^2 + (o[n,2] - yn)^2 + (o[n,3] - zn)^2 for n = 1:size(oo, 1)]
+			@inbounds for n = 1:size(oo, 1)
+				d[n] = (o[n,1] - xn)^2 + (o[n,2] - yn)^2 + (o[n,3] - zn)^2
+			end
 		end
 		m = argmin(d)
 		o = firstcurve ? vcat(o, oo[m+1:end,:]) : vcat(o[1:m,:], oo)

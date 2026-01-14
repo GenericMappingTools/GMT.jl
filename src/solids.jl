@@ -349,7 +349,8 @@ Create a torus mesh with radius `r`.
 - `ny`: the number of vertices in the yy direction.
 """
 function torus(; r=2.0, R=5.0, center=(0.0, 0.0, 0.0), nx=100, ny=50)::GMTfv
-	if (R < r)  R, r = r, R  end
+	_r = (r < R) ? r : R	# Can't simply do this because of CoreBoxes: #if (R < r)  R, r = r, R  end
+	_R = (r < R) ? R : r
 	Θ, ϕ = range(-pi,pi,nx), range(-pi,pi,ny)
 	x = [(R + cos(v)) * cos(u) + center[1] for u in Θ, v in ϕ]
 	y = [(R + cos(v)) * sin(u) + center[2] for u in Θ, v in ϕ]

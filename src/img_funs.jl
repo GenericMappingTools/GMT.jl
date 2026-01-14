@@ -249,7 +249,7 @@ function helper_rgb2ycbcr(I::GMTimage{UInt8,3}, c1, c2, c3, add)
 		end
 	else
 		i = 0
-		@inbounds Threads.@threads for ij = 1:3:3nxy
+		@inbounds for ij = 1:3:3nxy
 			img[i+=1] = round(UInt8, add + c1 * _Img[ij] + c2 * _Img[ij+1] + c3 * _Img[ij+2])
 		end
 	end
