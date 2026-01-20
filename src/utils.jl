@@ -429,7 +429,7 @@ end
 Set the time column of a `D` GMTdataset (or vector of GMTdatasets) to a given time system.
 
 ### Args
-- `D``: a GMTdataset or a vector of GMTdatasets
+- `D`: a GMTdataset or a vector of GMTdatasets
 
 ### Kwargs
 - `col`: is the column number of the time column. Attention, this is a MANDATORY option
@@ -1182,7 +1182,24 @@ function whereami()
 	timezone = string(split(s[i_tz],":")[2][2:end-1])
 	region = string(split(s[i_region],":")[2][2:end-1])
 	ip = string(split(s[i_query],":")[2][2:end-2])
+	write(joinpath(GMTuserdir[1], "my_lonlat.dat"), "$lon $lat")	# Save for usage from other functions
 	mat2ds([lon lat], colnames=["Lon","Lat"], attrib=Dict("Country" => country, "City" => city, "Region" => region, "Zip" => zip, "Timezone" => timezone, "IP" => ip))
+end
+
+# ------------------------------------------------------------------------------------------------------
+"""
+	lon, lat = get_my_lonlat() -> Tuple{Float64, Float64}
+
+Get the longitude and latitude saved by `whereami()`.
+
+If the file does not exist, it calls `whereami()` to create it. File is saved in 
+`GMTuserdir[1]/my_lonlat.dat` (~/.gmt/my_lonlat.dat).
+"""
+function get_my_lonlat()::Tuple{Float64, Float64}
+	f = joinpath(GMTuserdir[1], "my_lonlat.dat")
+	(!isfile(f)) && whereami()
+	lon, lat = parse.(Float64, split(read(f, String)))
+	return lon, lat
 end
 
 # ------------------------------------------------------------------------------------------------------
@@ -1398,7 +1415,6 @@ function settimecol!(D::GDtype, Tc::VecOrMat{<:Int})
 	isa(D, Vector) ? (D[1].attrib["Timecol"] = join(Tc, ",")) : (D.attrib["Timecol"] = join(Tc, ","))
 	return nothing
 end
-const set_timecol! = settimecol!
 	
 # ------------------------------------------------------------------------------------------------------
 """

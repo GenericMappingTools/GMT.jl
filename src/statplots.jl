@@ -1,24 +1,33 @@
 """
-    D = density(x::Vector{<:Real}; nbins::Integer=200, bins::Vector{<:Real}=Vector{Real}(),
-                bandwidth=nothing, kernel::StrSymb="normal")
+    D = density(x; first::Bool=true, nbins::Integer=200, bins::Vector{<:Real}=Vector{Real}(),
+                bandwidth=nothing, kernel::StrSymb="normal", printbw::Bool=false,
+                extend=0, plot::Bool=true, kwargs...)
 
-- `x`: calculate the kernel density 'd' of a dataset X for query points 'xd' The density, by default, is
-    estimated using a gaussian kernel with a width obtained with the Silverman's rule. `x` may be
-    a vector, a matrix or Vector{Vector{Real}}.
-- `nbins`: points are queried between MIN(Y[:]) and MAX(Y[:]) where Y is the data vector.
+Calculate the kernel density 'd' of a dataset X at query points determined by `nbins` or `bins`.
+
+- `x`: A vector, a matrix or Vector{Vector{Real}}. The density, by default, is estimated using a
+   gaussian kernel with a width obtained with the Silverman's rule.
+- `nbins`: points are queried between MIN(X[:]) and MAX(X[:]) where X is the data vector.
 - `bins`: Calculates the density for the query points specified by BINS. The values are used as the
     query points directly. Default is 200 points.
 - `bandwidth`: uses the 'bandwidth' to calculate the kernel density. It must be a scalar.
     For the uniform case the bandwidth is set to 15% of the range, otherwise the bandwidth is chosen
     with the Silverman's rule.
-- `printbw`: Logical value indicating to print the computed value of the `bandwidth`.
 - `kernel`: Uses the kernel function specified by KERNEL name (a string or a symbol) to calculate the density.
     The kernel may be: 'Normal' (default) or 'Uniform'
+- `printbw`: Logical value indicating to print the computed value of the `bandwidth`.
 - `extend`: By default the density curve is computed at the `bins` locatins or between data extrema as
     mentioned above. However, this is not normally enough to go down to zero. Use this option in terms of
     number of bandwidth to expand de curve. *e.g.* `extend=2`
+- `plot`: Logical value indicating to plot the density curve. If `false` returns the GMTdataset
+- `kwargs`: Any keyword argument accepted by `plot` to customize the density plot.
+
+### Returns
+- `nothing` or a `GMTps` and plots the density curve directly if `plot=true` (the fedault) and shows it is `show=true`.
+- `D`: A GMTdataset with two columns: first the query points and second the density values.
 
 The version
+
     G = density(data, x,y; weights=nothing, bandwidth=nothing, showbw=false)
 
 Computes the smoothed kernel probability density estimate of a two-column matrix `data`. The estimate is
@@ -32,10 +41,11 @@ The `showbw` option is used to print the bandwidth used. It returns a GMTgrid of
   viz(G, figsize=(12,12), view=(225,30))
 ```
 """
-function density(x; first::Bool=true, nbins::Integer=200, bins::Vector{<:Real}=Vector{Real}(), bandwidth=nothing,
-                 kernel::StrSymb="normal", printbw::Bool=false, horizontal::Bool=false, extend=0, kwargs...)
+function density(x; first::Bool=true, nbins::Integer=200, bins::Vector{<:Real}=Vector{Real}(),
+                 bandwidth=nothing, kernel::StrSymb="normal", printbw::Bool=false, horizontal::Bool=false,
+                 extend=0, plot::Bool=true, kwargs...)
 	D = kernelDensity(x, horizontal; nbins=nbins, bins=bins, bandwidth=bandwidth, kernel=kernel, printbw=printbw, ext=extend)
-	common_plot_xyz("", D, "line", first, false; kwargs...)
+	return plot ? common_plot_xyz("", D, "line", first, false; kwargs...) : D
 end
 density!(x; nbins::Integer=200, bins::Vector{<:Real}=Vector{Real}(), bandwidth=nothing, kernel::StrSymb="normal", printbw::Bool=false, horizontal::Bool=false, extend=0, kw...) = density(x; first=false, nbins=nbins, bins=bins, bandwidth=bandwidth, kernel=kernel, printbw=printbw, horizontal=horizontal, extend=extend, kw...)
 
