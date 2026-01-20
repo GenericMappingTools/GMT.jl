@@ -158,11 +158,12 @@ function plotyy(arg1, arg2; first=true, kw...)
 	d = KW(kw)
 	(haskey(d, :xlabel)) ? (xlabel = string(d[:xlabel])::String;	delete!(d, :xlabel)) : xlabel = ""	# Only to used at the end
 	(haskey(d, :seclabel)) ? (seclabel = string(d[:seclabel])::String;	delete!(d, :seclabel)) : seclabel = ""
-	fmt = ((val = find_in_dict(d, [:fmt])[1]) !== nothing) ? arg2str(val)::String : FMT[]::String
+	fmt::String = ((val = find_in_dict(d, [:fmt])[1]) !== nothing) ? arg2str(val)::String : FMT[]::String
 	savefig = ((val = find_in_dict(d, [:savefig :figname :name])[1]) !== nothing) ? arg2str(val)::String : nothing
 	Vd = ((val = find_in_dict(d, [:Vd])[1]) !== nothing) ? val : 0
 
-	cmd::String, opt_B::String = parse_B(d, "", " -Baf -BW")
+	xaxis = find_in_dict(d, [:xaxis])[1];		xaxis2 = find_in_dict(d, [:xaxis2])[1]	# These are only for -Bx
+	opt_B::String = parse_B(d, "", " -Baf -BW")[1]		# This would not ignore :xaxis and :xaxis2 but that would screw WE axes
 	if (opt_B != " -Baf -BW")
 		if (occursin(" -Bx", opt_B) || occursin(" -By", opt_B) || occursin("+t", opt_B))
 			# OK, so here's the problem. Both title and label maybe multi-words, case in which they will have the
@@ -183,9 +184,12 @@ function plotyy(arg1, arg2; first=true, kw...)
 	else
 		d[:B] = " af W"
 	end
+
 	(Vd != 0) && (d[:Vd] = Vd)
+	lw = get(d, :lw, nothing)
 	d[:lc] = "#0072BD"
 	do_show = ((val = find_in_dict(d, [:show])[1]) !== nothing && val != 0)
+	in_conf = get(d, :conf, nothing)	# If there is a incomming one, save it to apply also to the xaxis (Date/time axis do that)
 	d[:par] = (MAP_FRAME_PEN="#0072BD", MAP_TICK_PEN="#0072BD", FONT_ANNOT_PRIMARY="#0072BD", FONT_LABEL="#0072BD")
 	r1 = common_plot_xyz("", cat_1_arg(arg1, true), "plotyy", first, false, d)
 
@@ -195,11 +199,16 @@ function plotyy(arg1, arg2; first=true, kw...)
 	d[:B] = " af E"	* seclabel		# Also remember that previous -B was consumed in first call
 	d[:lc]  = "#D95319"
 	d[:par] = (MAP_FRAME_PEN="#D95319", MAP_TICK_PEN="#D95319", FONT_ANNOT_PRIMARY="#D95319", FONT_LABEL="#D95319")
+	(lw !== nothing) && (d[:lw] = lw)
 	r2 = common_plot_xyz("", cat_1_arg(arg2, true), "plotyy", false, false, d)
 
 	(xlabel != "" && occursin(" ", xlabel)) && (xlabel = "\"" * xlabel * "\"")
 	opt_B = (xlabel != "") ? "af Sn x+l" * xlabel : "af Sn"
-	r3 = basemap!(J="", R="", B=opt_B, Vd=Vd, fmt=fmt, name=savefig, show=do_show)
+	(xaxis  !== nothing) && (dd = Dict{Symbol,Any}(:xaxis  => xaxis);  opt_B = parse_B(dd, opt_B, "")[1])
+	(xaxis2 !== nothing) && (dd = Dict{Symbol,Any}(:xaxis2 => xaxis2); opt_B = parse_B(dd, opt_B, "")[1])
+	opt_f = isa(arg1, GMTdataset) ? set_fT(arg1, "", "") : ""		# See if Timecol is present and set -f0T if yes
+	_f = (opt_f !== "") ? opt_f[4:end] : ""
+	r3 = basemap!(J="", B=opt_B, conf=in_conf, f=_f,  Vd=Vd, fmt=fmt, name=savefig, show=do_show)
 	return (Vd == 2) ? [r1;r2;r3] : nothing
 end
 # ------------------------------------------------------------------------------------------------------
