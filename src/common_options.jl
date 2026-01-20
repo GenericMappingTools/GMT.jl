@@ -197,7 +197,7 @@ function parse_R(d::Dict, cmd::String; O::Bool=false, del::Bool=true, RIr::Bool=
 		try
 			limits = opt_R2num(opt_R)
 			CTRL.limits[7:7+length(limits)-1] = limits		# The plot limits
-			(opt_R != " -Rtight" && opt_R !== nothing && limits != zeros(4) && all(CTRL.limits[1:4] .== 0)) &&
+			(!contains(opt_R, " -Rtight") && opt_R !== nothing && limits != zeros(4) && all(CTRL.limits[1:4] .== 0)) &&
 				(CTRL.limits[1:length(limits)] = limits)	# And this makes data = plot limits, IF data is empty.
 			if (istilename(opt_R))							# A XYZ or quadtree tile address (like "7829,6374,14")
 				opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g", limits[1], limits[2], limits[3], limits[4])
@@ -386,7 +386,7 @@ function opt_R2num(opt_R::String)::Vector{Float64}
 		zl::Int = contains(t, ",") ? parse(Int, t[findlast(',', t)+1:end]) : length(t)
 		inc = (360 / 2 ^ zl) / 256					# Increment in degrees at this zoom level
 		CTRL.pocket_R[2] = "$inc"
-	elseif (opt_R != " -R" && opt_R != " -Rtight")	# One of those complicated -R forms. Ask GMT the limits (but slow. It takes 0.2 s)
+	elseif (opt_R != " -R" && !contains(opt_R, " -Rtight"))	# One of those complicated -R forms. Ask GMT the limits (but slow. It takes 0.2 s)
 		# If opt_R is not a grid's name, we are f.
 		((ind = findfirst("-R@", opt_R)) !== nothing) && return gmt_grdinfo_C(opt_R[ind[3]:end])[1:4]	# should be a cache file
 		(((f = guess_T_from_ext(opt_R)) == " -Tg") || f == " -Ti") && return gmt_grdinfo_C(opt_R)[1:4]	# any local file
@@ -1148,8 +1148,7 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 			k += 1
 		end
 		# Rebuild the B option string
-		opt_B = ""
-		for n = 1:k-1  opt_B *= tok[n]  end
+		opt_B = join(tok[1:k-1])
 	end
 
 	# We can have one or all of them. Deal separatelly here to allow way code to keep working
@@ -1230,7 +1229,13 @@ function consolidate_Bframe(opt_B::String)::String
 	indFrames = findall(isBframe);	len = length(indFrames)
 	if (len > 1)
 		ss_ = sort(s[indFrames], rev=true)			# OK, now we have them sorted like ["-BWSen" "-B+gwhite"]
+		ind = findfirst("+",ss_[1])					# Check if there is a title in the first (which will be the last in opt_B)
+		if (ind !== nothing)
+			ss_1_end = ss_[1][ind[1]:end]			# Get the part after the "+" flag
+			ss_[1] = ss_[1][1:ind[1]-1]				# Get the part before the "+" flag
+		end
 		[ss_[1] *= ss_[k][3:end] for k = 2:len]		# Remove the first "-B" chars from second and on and join with first
+		(ind !== nothing) && (ss_[1] *= ss_1_end)	# Reattach the part from the '+' flag on, if any
 		s[indFrames] .= ""							# Clear the Bframe elements from the original split
 		opt_B = " " * s[1]
 		for k = 2:lastindex(s)
@@ -1667,7 +1672,7 @@ function parse_helper(cmd::String, d::Dict, symbs::VMs, opt::String, sep='/')::T
 	# Helper function to the parse_?() global options.
 	(SHOW_KWARGS[]) && return (print_kwarg_opts(symbs, "(Common option not yet expanded)"),"")
 	opt_val::String = ""
-	if ((val = find_in_dict(d, symbs, true)[1]) !== nothing)
+	if ((val = find_in_dict(d, symbs, true)[1]) !== nothing && val !== "")
 		opt_val = opt * arg2str(val, sep)
 		cmd *= opt_val
 	end
@@ -1828,6 +1833,7 @@ function parse_params(d::Dict, cmd::String; del::Bool=true)::String
 		_cmd *= " --" * string(val[1])::String * "=" * string(val[2])::String
 	end
 	usedConfPar[] = true
+	((val = is_in_dict(d, [:conf :par :params])) !== nothing) && (_cmd = parse_params(d, _cmd, del=del))	# In case par & conf
 	return _cmd
 end
 
@@ -3675,7 +3681,7 @@ function read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", i
 		cmd = fname * " " * cmd
 	end
 
-	no_R = (opt_R == "" || opt_R[1] == '/' || opt_R == " -Rtight")
+	no_R = (opt_R == "" || opt_R[1] == '/' || contains(opt_R, " -Rtight"))
 	if (!CONVERT_SYNTAX[] && !IamModern[] && no_R)
 		wesn_f64::Matrix{Float64} = gmt("gmtinfo -C" * opt_bi * opt_i * opt_di * opt_h * opt_yx * " " * fname).data	#
 		opt_R::String = @sprintf(" -R%.12g/%.12g/%.12g/%.12g", wesn_f64[1], wesn_f64[2], wesn_f64[3], wesn_f64[4])
@@ -3732,7 +3738,7 @@ function _read_data(d::Dict, cmd::String, arg, opt_R::String="", is3D::Bool=fals
 		arg, got_datetime = mat2ds(convert(Matrix{Float64}, arg)), true
 	end
 
-	no_R = (opt_R == "" || opt_R[1] == '/' || opt_R == " -Rtight")
+	no_R = (opt_R == "" || opt_R[1] == '/' || startswith(opt_R, " -Rtight"))
 	prj::String = (isa(arg, GDtype)) ? getproj(arg, proj4=true) : ""
 	is_geo = isgeog(prj)
 	ds_bbox = isa(arg, GDtype) ? (isa(arg, GMTdataset) ? arg.ds_bbox : arg[1].ds_bbox) : Float64[]
@@ -3778,7 +3784,10 @@ function _read_data(d::Dict, cmd::String, arg, opt_R::String="", is3D::Bool=fals
 				dx::Float64 = (wesn_f64[2] - wesn_f64[1]) * 0.005;	dy::Float64 = (wesn_f64[4] - wesn_f64[3]) * 0.005;
 				wesn_f64[1] -= dx;	wesn_f64[2] += dx;	wesn_f64[3] -= dy;	wesn_f64[4] += dy;
 				length(wesn_f64) == 6 && (dz::Float64 = (wesn_f64[6] - wesn_f64[5]) * 0.005; wesn_f64[5] -= dz;	wesn_f64[6] += dz;)
+				is_tight_x = (opt_R == " -Rtightx")
+				back_xs = wesn_f64[1:2]
 				wesn_f64 = round_wesn(wesn_f64, is_geo)		# Add a pad if not-tight
+				is_tight_x && (wesn_f64[1:2] = back_xs; cmd = replace(cmd, " -Rtightx" => ""))	# Restore original x limits if -Rtightx
 				if (isGMTdataset(arg))						# Needed for the guess_proj case
 					if ((wesn_f64[3] < -90 || wesn_f64[4] > 90) || ((wesn_f64[2] - wesn_f64[1]) > 360))
 						guessed_J = (prj == "") && !contains(cmd, " -J ") && !contains(cmd, " -JX") && !contains(cmd, " -Jx")
@@ -3812,6 +3821,8 @@ function _read_data(d::Dict, cmd::String, arg, opt_R::String="", is3D::Bool=fals
 		else
 			opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g", wesn_f64[1], wesn_f64[2], wesn_f64[3], wesn_f64[4])
 		end
+		contains(CTRL.pocket_R[1], " -Rtight") && (CTRL.pocket_R[1] = opt_R)
+
 		if (contains(cmd, "--TIME_EPOCH") && !contains(opt_R, "T"))		# Need to fish the time axis from -f option to add to -R
 			s = split(opt_R, '/')	# 
 			opt_f = scan_opt(cmd, "-f")
@@ -3825,7 +3836,7 @@ function _read_data(d::Dict, cmd::String, arg, opt_R::String="", is3D::Bool=fals
 			#((TU = scan_opt(cmd, "--TIME_UNIT=")) != "") && (cmd = replace(cmd, " --TIME_UNIT="*TU => ""))
 			#((TU = scan_opt(cmd, "--TIME_EPOCH=")) != "") && (cmd = replace(cmd, " --TIME_EPOCH="*TU => ""))
 		end
-		(opt_R != " -Rtight" && !is_onecol) && (opt_R = merge_R_and_xyzlims(d, opt_R))	# We may have some hanging xyzlim requests
+		(!contains(opt_R, " -Rtight") && !is_onecol) && (opt_R = merge_R_and_xyzlims(d, opt_R))	# We may have some hanging xyzlim requests
 		(!is_onecol) && (cmd *= opt_R)			# The onecol case (for histogram) has an imcomplete -R
 	end
 
