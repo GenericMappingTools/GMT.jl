@@ -32,11 +32,11 @@ function loxodrome_inverse(lon1, lat1, lon2, lat2, a=6378137.0, f=0.003352810664
 	isolat2 = isometric_lat(lat2, e2)
 	
 	# Compute changes in isometric latitude and longitude between P1 and P2
-	Az12 = atan((lon2 - lon1), (isolat2 - isolat1))		# The azimuth
+	Az12 = atan.((lon2 .- lon1), (isolat2 .- isolat1))		# The azimuth
 	# Compute distance along loxodromic curve
 	m1 = meridian_dist(lat1, a, e2)
 	m2 = meridian_dist(lat2, a, e2)
-	lox_s = (m2 - m1) / cos(Az12);
+	lox_s = (m2 .- m1) ./ cos.(Az12);
 	return lox_s, Az12 / D2R
 end
 
@@ -99,11 +99,11 @@ function loxodrome_direct(lon, lat, azim, dist, a=6378137.0, f=0.003352810664747
 end
 
 function f_phi(lat, A0, A2, A4, A6, A8, A10)
-	A0*lat - (A2/2)*sin(2*lat) + (A4/4)*sin(4*lat) - (A6/6)*sin(6*lat) + (A8/8)*sin(8*lat) - (A10/10)*sin(10*lat)
+	A0*lat .- (A2/2)*sin.(2*lat) .+ (A4/4)*sin.(4*lat) .- (A6/6)*sin.(6*lat) .+ (A8/8)*sin.(8*lat) .- (A10/10)*sin.(10*lat)
 end
 
 function f_prime_phi(lat, A0, A2, A4, A6, A8, A10)
-	A0 - A2 * cos(2*lat) + A4 * cos(4*lat) - A6 * cos(6*lat) + A8 * cos(8*lat) - A10 * cos(10*lat)
+	A0 .- A2 * cos.(2*lat) .+ A4 * cos.(4*lat) .- A6 * cos.(6*lat) .+ A8 * cos.(8*lat) .- A10 * cos.(10*lat)
 end
 
 function meridian_dist(lat, a, e2)
@@ -129,8 +129,8 @@ end
 function isometric_lat(lat, ecc2)
 	# Compute isometric latitude. ECC2 is the squared eccentricity = f*(2-f), where f is the flattening
 	ecc = sqrt(ecc2)
-	x = ecc * sin(lat)
-	y = (1-x) / (1+x)
-	z = pi/4 + lat/2
-	log(tan(z) * (y^(ecc/2)))
+	x = ecc .* sin.(lat)
+	y = (1 .- x) ./ (1 .+ x)
+	z = pi/4 .+ lat/2
+	log.(tan.(z) .* (y.^(ecc/2)))
 end
