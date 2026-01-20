@@ -88,7 +88,7 @@ function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, 
 	opt_UVXY = parse_UVXY(d, "")		# Feed it separate to not risk to double include it.
 	cmd, opt_c = parse_c(d, cmd)		# Need opt_c because we may need to remove it from double calls
 
-	if (isa(arg1, GDtype) && !contains(opt_f, "T") && !contains(opt_f, "t") && !contains(opt_R, "T") && !contains(opt_R, "t"))
+	if (isa(arg1, GDtype) && !contains(opt_f, "T") && !contains(opt_f, "t") && ((!contains(opt_R, "T") && !contains(opt_R, "t")) || contains(opt_R, "tight")))
 		cmd = isa(arg1, GMTdataset) ? set_fT(arg1, cmd, opt_f) : set_fT(arg1[1], cmd, opt_f)
 	end
 
