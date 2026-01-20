@@ -104,9 +104,12 @@ function colorbar_triangles(val::StrSymb)::String
 	val_str::String = lowercase(string(val))
 	anc = "RM";		tris = ""		# Default anchor Right Middle and no triangles
 	if (contains(val_str, "tri") && !isempty(CURRENT_CPT[]))	# Sets CPT.bfn to match colormap end colors
-		CURRENT_CPT[].bfn[1,:] .= CURRENT_CPT[].colormap[1,:]
-		CURRENT_CPT[].bfn[2,:] .= CURRENT_CPT[].colormap[end,:]
-		tris = contains(val_str, "high") ? "+ef" : contains(val_str, "low") ? "+eb" : "+e"
+		if (CURRENT_CPT[].bfn[1,:] == [0.0, 0.0, 0.0] && CURRENT_CPT[].bfn[1,:] == [1.0, 1.0, 1.0])
+			# If bfn is not set, set it to the end colors of the colormap
+			CURRENT_CPT[].bfn[1,:] .= CURRENT_CPT[].colormap[1,:]
+			CURRENT_CPT[].bfn[2,:] .= CURRENT_CPT[].colormap[end,:]
+			tris = contains(val_str, "high") ? "+ef" : contains(val_str, "low") ? "+eb" : "+e"
+		end
 	end
 	if (!startswith(val_str, "tri"))			# Means that not just triangles were requested
 		t::Char = val_str[1]					# Accept "Top, Bot, Left" but default to Right
