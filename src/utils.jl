@@ -475,6 +475,17 @@ function settimecol!(x)
 	@warn "settimecol!() is only implemented for GMTdatasets, not this type of input ($(typeof(x)))"
 end
 
+# --------------------------------------------------------------------------------------------------
+"""
+    setdecyear_time!(D::GDtype, col::Int=1)
+
+Convenient function to set column of a GMTdataset that has a decimal year to a `Time` column.
+Note that no check is made to ensure the values are indeed decimal years.
+"""
+function setdecyear_time!(D::GDtype, col::Int=1)
+	isa(D, GMTdataset) ? settimecol!(D, col=col, time_epoch="0000-01-01", time_unit="year") :
+	                     settimecol!(D[1], col=col, time_epoch="0000-01-01", time_unit="year")	
+end
 
 # --------------------------------------------------------------------------------------------------
 function peaks(n::Int=49; N::Int=49, grid::Bool=true, pixreg::Bool=false)

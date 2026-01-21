@@ -134,11 +134,12 @@ export
 	psclip, psclip!, pscoast, pscoast!, psevents, pshistogram, pshistogram!,
 	psimage, psimage!, pslegend, pslegend!, psmask, psmask!, psrose, psrose!, psscale, psscale!, pssolar, pssolar!,
 	psternary, psternary!, pstext, pstext!, pswiggle, pswiggle!, psxy, psxy!, psxyz, psxyz!, regress, resetGMT, rose,
-	rose!, sample1d, scatter, scatter!, scatter3, scatter3!, solar, solar!, spectrum1d, sphdistance, sphinterpolate,
+	rose!, sample1d, scatter, scatter!, scatter3, scatter3!, solar, solar!, analemma, enso, keeling,
+	sunsetrise, spectrum1d, sphdistance, sphinterpolate,
 	sphtriangulate, surface, ternary, ternary!, text, text!, text_record, trend1d, trend2d, triangulate, gmtsplit,
 	decorated, vector_attrib, wiggle, wiggle!, xyz2grd, gmtbegin, gmtend, gmthelp, subplot, gmtfig, inset, showfig,
 	earthtide, gmt2grd, gravfft, gmtgravmag3d, gravmag3d, grdgravmag3d, gravprisms, grdseamount, parkermag, parkergrav,
-	pscoupe, pscoupe!, coupe, coupe!, psmeca, psmeca!, meca, meca!, psvelo, psvelo!, velo, velo!, gmtisf, getbyattrib,
+	pscoupe, pscoupe!, coupe, coupe!, psmeca, psmeca!, meca, meca!, psvelo, psvelo!, sac, sac!, velo, velo!, gmtisf, getbyattrib,
 	inpolygon, inwhichpolygon, pcolor, pcolor!, triplot, triplot!, trisurf, trisurf!, grdrotater, imagesc, upGMT, boxes,
 	stereonet, stereonet!,
 	
@@ -170,7 +171,7 @@ export
 	wkbMultiLineString25D, wkbMultiPolygon25D, wkbGeometryCollection25D,
 
 	bezier, buffergeo, circgeo, epsg2proj, epsg2wkt, geod, invgeod, loxodrome, loxodrome_direct, loxodrome_inverse,
-	geodesic, orthodrome, proj2wkt, setcoords!, setfld!, setcrs!, setsrs!, settimecol!, set_timecol!, vecangles, wkt2proj,
+	geodesic, orthodrome, proj2wkt, setcoords!, setfld!, setcrs!, setsrs!, settimecol!, vecangles, wkt2proj,
 	inbbox, randgeo,
 
 	colorzones!, rasterzones!, rasterzones, lelandshade, texture_img, crop, doy2date, date2doy, yeardecimal, ISOtime2unix,
@@ -327,6 +328,7 @@ include("psmask.jl")
 include("psscale.jl")
 include("psrose.jl")
 include("pssolar.jl")
+include("analemma.jl")
 include("pstext.jl")
 include("psxy.jl")
 include("pswiggle.jl")
@@ -371,6 +373,7 @@ include("extras/whittaker.jl")
 include("laszip/Laszip.jl")
 include("seis/psmeca.jl")
 include("seis/gmtisf.jl")
+#include("seis/pssac.jl")
 include("geodesy/psvelo.jl")
 include("geodesy/earthtide.jl")
 include("imgmorph/bwdist.jl")
