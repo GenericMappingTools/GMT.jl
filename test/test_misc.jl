@@ -418,4 +418,11 @@
 	D = mat2ds(rand(5,2), attrib=Dict("Timecol" => "1"), colnames=["Time","a"]);
 	@test getattribs(D) == ["Timecol"]
 	getattrib(D, :Timecol)
+
+	println("	ANALEMMAs")
+	sunsetrise(show=false)
+	analemma(show=false)
+	keeling(show=false)
+	enso(show=false)
+
 end
