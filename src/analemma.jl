@@ -237,7 +237,7 @@ function enso(; data::Bool=false, data0::Bool=false, kwargs...)
 	try
 		resp = Downloads.download("https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt")
 	catch e
-		error("Failed to download ENSO data from NOAA: $(e)")
+		@warn("Failed to download ENSO data from NOAA: $(e)")
 		return nothing
 	end
 	lines = readlines(resp)
