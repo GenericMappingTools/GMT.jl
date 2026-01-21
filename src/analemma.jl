@@ -234,7 +234,11 @@ enso()			# Plot ENSO index
 function enso(; data::Bool=false, data0::Bool=false, kwargs...)
 
 	# Fetch data
-	resp = Downloads.download("https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt")
+	try
+		resp = Downloads.download("https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt")
+	catch e
+		error("Failed to download ENSO data from NOAA: $(e)")
+	end
 	lines = readlines(resp)
 
 	year, vals = Float64[], Float64[]
