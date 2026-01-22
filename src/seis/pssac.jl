@@ -3,8 +3,6 @@
 
 Plot seismograms in SAC format.
 
-See full GMT docs at [`sac`]($(GMTdoc)supplements/seis/sac.html)
-
 Parameters
 ----------
 
@@ -102,7 +100,7 @@ function sac_helper(cmd0::String, O::Bool, K::Bool, d::Dict{Symbol, Any})
 			cmd *= " -F" * get(pre_map, val, string(val))
 		elseif isa(val, Tuple)
 			cmd *= " -F" * join([get(pre_map, v, string(v)) for v in val])
-		elseif isa(val, Bool) && val
+		elseif (isa(val, Bool) && val)
 			cmd *= " -F"
 		else
 			cmd *= " -F" * string(val)

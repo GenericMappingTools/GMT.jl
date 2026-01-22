@@ -125,6 +125,9 @@ using InteractiveUtils
 
 	println("	SAC")
 	sac("$(TESTSDIR)/assets/ntkl.z $(TESTSDIR)/assets/onkl.z", J="X15c/4c", R="200/1600/22/27", B="x100 y1", E=:d, M=1.5)
+	sac("$(TESTSDIR)/assets/ntkl.z $(TESTSDIR)/assets/onkl.z", J="X15c/4c", R="200/1600/22/27", B="x100 y1", E=:d, M=1.5, C=(500,1100), Vd=dbg2)
+	sac("$(TESTSDIR)/assets/ntkl.z $(TESTSDIR)/assets/onkl.z", J="X15c/4c", R="-300/1100/22/27", B="x100 y1", E=:d, M=1.5, T="+t1", Vd=dbg2)
+	sac!("$(TESTSDIR)/assets/ntkl.z $(TESTSDIR)/assets/onkl.z", J="X15c/4c", R="-300/1100/22/27", B="x100 y1", E="d", M=1.5, T=(mark=1,), C=(-100,500), fill=(negative=true, color=:blue), F="r", Vd=dbg2)
 
 	#G = gmt("grdmath -R-15/15/-15/15 -I1 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");
 	#D = grd2xyz(G);
@@ -166,7 +169,9 @@ using InteractiveUtils
 	desgarbage("lixo.eps")
 	desgarbage("lixo.jpg")
 	desgarbage("lixo.pdf")
+	desgarbage("lixo.tif")
 	desgarbage("9px.tif")
+	desgarbage("GMTplot.png")
 	desgarbage("lixo_cube.nc")
 
 end

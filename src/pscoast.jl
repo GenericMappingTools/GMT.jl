@@ -148,7 +148,7 @@ function coast_parser(first::Bool, clip::String; kwargs...)
 	end
 	common = have_opt_M ? [:UVXY :bo :params] : [:F :JZ :UVXY :bo :c :p :t :params :margin]
 	cmd, = parse_common_opts(d, cmd, common; first=first)	# If -M don't touch -p
-	cmd  = parse_these_opts(cmd, d, [[:A :area], [:C :river_fill], [:D :res :resolution]])
+	cmd  = parse_these_opts(cmd, d, [[:A :area], [:D :res :resolution]])
 	cmd  = parse_Td(d, cmd)
 	cmd  = parse_Tm(d, cmd)
 	cmd  = parse_L(d, cmd)
@@ -165,7 +165,7 @@ function coast_parser(first::Bool, clip::String; kwargs...)
 	end
 
 	# Parse these three options that can be made to respond to same code
-	cmd = parse_INW_coast(d, [[:I :rivers], [:N :borders], [:W :shore :shorelines :coast :coastlines]], cmd, "INW")
+	cmd = parse_INW_coast(d, [[:C :riverfill :river_fill], [:I :rivers], [:N :borders], [:W :shore :shorelines :coast :coastlines]], cmd, "CINW")
 	(SHOW_KWARGS[]) && print_kwarg_opts([:I :rivers],  "NamedTuple | Tuple | Dict | String")
 	(SHOW_KWARGS[]) && print_kwarg_opts([:N :borders], "NamedTuple | Tuple | Dict | String")
 	(SHOW_KWARGS[]) && print_kwarg_opts([:W :shore :shorelines :coast],   "NamedTuple | Tuple | Dict | String")
@@ -203,7 +203,7 @@ function parse_INW_coast(d::Dict, symbs::Vector{Matrix{Symbol}}, cmd::String, fl
 	for k = 1:length(symbs)
 		if ((val = find_in_dict(d, symbs[k], false)[1]) !== nothing)
 			if (isa(val, NamedTuple) || isa(val, AbstractDict) || (isa(val, Tuple) && isa(val[1], NamedTuple)))  
-				cmd::String = add_opt(d, cmd, string(flags[k]), symbs[k], (type="/#", level="/#", mode="+p#", pen=("", add_opt_pen)))
+				cmd::String = add_opt(d, cmd, string(flags[k]), symbs[k], (type="/#", level="/#", lake="+l", river_lake="+r", mode="+p#", pen=("", add_opt_pen), fill=("", add_opt_fill,1)))
 			elseif (isa(val, Tuple))
 				if (flags[k] == 'W')	# The shore case is ambiguous, this shore=(1,:red) could mean -W1/red or -W1,red 
 					cmd *= " -W" * parse_pen(val)	# We take it to mean pen only. Levels must use the NT form
