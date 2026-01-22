@@ -36,7 +36,7 @@ end
 
 function _analemma(lon, lat, year, hour, cmap, lonlat::Bool, data::Bool, d)
 
-	TZ = round(Int, 90 / 15)		# Approximate time zone from longitude
+	TZ = round(Int, lon / 15)		# Approximate time zone from longitude
 	n_days = Dates.isleapyear(year) ? 366 : 365
 	ana = Matrix{Float64}(undef, n_days, 4)
 	k = lonlat ? (1,2,3,4) : (3,4,1,2)		# lonlat: lon, lat, az, el ; else: az, el, lon, lat
