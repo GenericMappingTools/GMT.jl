@@ -233,46 +233,24 @@ enso()			# Plot ENSO index
 """
 function enso(; data::Bool=false, data0::Bool=false, kwargs...)
 
-	# Fetch data
-	try
-		resp = Downloads.download("https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt")
-	catch e
-		@warn("Failed to download ENSO data from NOAA: $(e)")
-		return nothing
+	# Incredibly, Downloads.download("https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt")
+	# hangs most of times or is very slow, but gmtread that also uses curl is fast and works fine!
+	# The file, however, has this struct: SEAS  YR  TOTAL  ANOM, where SEAS is a 3-letter code for
+	# overlapping 3-month seasons (DJF, JFM, FMA, etc). Being a text we must resort to use -fa but
+	# that looses the first column (SEAS), so we read only YR and ANOM (cols 1 and 3 in -fa mode).
+	# We then reconstruct the decimal year from the row number.
+	opt_i = data ? "1,3" : "0,1,3"
+	D = gmtread("https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt", h=1, f=:a, i=opt_i)
+	if (data)
+		for k = 1:size(D, 1)  D[k, 1] += (rem(k,12) - 0.5) / 12  end
+	else
+		for k = 1:size(D, 1)  D[k, 1] = D[k, 2] + (rem(k,12) - 0.5) / 12; 	D[k, 2] = 0.0  end
 	end
-	lines = readlines(resp)
+	
+	for k = 12:12:size(D, 1)  D[k, 1] = D[k-1, 1] + 1.0/12  end		# Because rem(k,12) = 0 for decembers and the -0.5 we receeded 1 year 
+	D.ds_bbox = D.bbox = data ? [extrema(view(D,:,1))..., D.ds_bbox[end-1:end]...] :	# Must update the bbox's
+	                            [extrema(view(D,:,1))..., 0.0, 0.0, D.ds_bbox[end-1:end]...]
 
-	year, vals = Float64[], Float64[]
-
-	# ONI format: SEAS  YR  TOTAL  ANOM
-	# e.g.: DJF 1950  24.72  -1.53
-	month_map = Dict("DJF"=>1, "JFM"=>2, "FMA"=>3, "MAM"=>4, "AMJ"=>5, "MJJ"=>6,
-					 "JJA"=>7, "JAS"=>8, "ASO"=>9, "SON"=>10, "OND"=>11, "NDJ"=>12)
-
-	for line in lines
-		contains(line, "SEAS") && continue  # Skip header
-		isempty(strip(line)) && continue
-		parts = split(line)
-		length(parts) < 4 && continue
-
-		try
-			season = String(parts[1])
-			yr = parse(Float64, parts[2])
-			anom = parse(Float64, parts[4])
-
-			# Convert to decimal year
-			mon = get(month_map, season, 1)
-			dec_year = yr + (mon - 0.5) / 12
-
-			push!(year, dec_year)
-			push!(vals, anom)
-		catch
-			continue
-		end
-	end
-	rm(resp)
-
-	D = data ? mat2ds([year vals]) : mat2ds([year zeros(length(year)) vals])
 	setdecyear_time!(D)		# First column is decimal year, make a Time column
 	D.colnames[data ? 2 : 3] = "ONI"		# Will be wrong for plotting but in that case we don't care
 
