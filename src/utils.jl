@@ -1525,6 +1525,9 @@ function rect_overlap(xc_1, yc_1, xc_2, yc_2, width1, height1, width2, height2)
 	overlap = (pivalue < 0) ? true : false
 	return overlap, pivalue
 end
+# Method that uses bounding boxes [xmin, xmax, ymin, ymax]
+rect_overlap(bb1::Vector{Float64}, bb2::Vector{Float64}) =
+	((bb1[2] < bb2[1]) || (bb2[2] < bb1[1]) || (bb1[4] < bb2[3]) || (bb2[4] < bb1[3])) ? false : true
 
 # ----------------------------------------------------------------------------
 #function inbbox(x, y, bbox)
@@ -1748,3 +1751,4 @@ function cut_icons(; nome="", size=350)
 	end
 end
 =#
+include("getdcw.jl")

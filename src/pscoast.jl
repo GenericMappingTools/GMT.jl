@@ -119,7 +119,7 @@ function coast_parser(first::Bool, clip::String; kwargs...)
 	end
 
 	cmd = add_opt(d, "", "M", [:M :dump])
-	cmd = parse_E_coast(d, [:E, :DCW], cmd)		# Process first to avoid warning about "guess"
+	cmd = parse_E_coast(d, [:E, :DCW, :dcw], cmd)		# Process first to avoid warning about "guess"
 	have_opt_M = contains(cmd, " -M")
 	twoORfour = have_opt_M && contains(cmd, "+z") && contains(cmd, '.') ? "4" : "2"		# To use in gmt_main to decide CODE attrib
 	if (cmd != "")								# Check for a minimum of points that segments must have
@@ -225,8 +225,8 @@ function parse_E_coast(d::Dict, symbs::Vector{Symbol}, cmd::String)
 		if (isa(val, StrSymb))							# Simple cases, ex E="PT,+gblue" or E=:PT
 			t::String = string(" -E", val)
 			startswith(t, " -EWD") && (t = " -E=" * t[4:end])		# Let E="WD" work
-			(t == " -E") && (delete!(d, [:E, :DCW]); return cmd)	# This lets use E="" like earthregions may do
-			contains(cmd, " -M") && !contains(t, "+z") && (t *= "+z")# If Dump always add country names as attribs
+			(t == " -E") && (delete!(d, [:E, :DCW, :dcw]); return cmd)	# This lets use E="" like earthregions may do
+			contains(cmd, " -M") && !contains(t, "+z") && (t *= "+z")	# If Dump always add country names as attribs
 			!contains(t, "+") && (t *= "+p0.5")			# If only code(s), append pen
 			@label jump_here							# Jump here when E=(states="GB",)
 			if (length(t) >= 6 && t[4] == '+')			# A country states request. Check that is valid.
@@ -241,12 +241,13 @@ function parse_E_coast(d::Dict, symbs::Vector{Symbol}, cmd::String)
 			(!contains(cmd, " -M") && !contains(cmd, "+L") && !contains(cmd, "+l") &&
 				is_in_dict(d, [:R :region :limits :region_llur :limits_llur :limits_diag :region_diag]) === nothing) && (d[:R] = t[4:end])
 		elseif (isa(val, NamedTuple) || isa(val, AbstractDict))
-			cmd = add_opt(d, cmd, "E", [:DCW :E], (country="", name="", continent="=", states="+", pen=("+p", add_opt_pen),
-			                                       fill=("+g", add_opt_fill), file=("+f"), inside=("_+c"), outside=("_+C"), adjust_r=("+r", arg2str), adjust_R=("+R", arg2str), adjust_e=("+e", arg2str), headers=("_+z")))
-			startswith(cmd, " -E+") && (t = cmd; cmd = ""; @goto jump_here)	# Jum to where this case is processed.
+			cmd = add_opt(d, cmd, "E", [:DCW :dcw :E], (country="", name="", continent="=", states="+", pen=("+p", add_opt_pen),
+			                                            fill=("+g", add_opt_fill), file=("+f"), inside=("_+c"), outside=("_+C"), adjust_r=("+r", arg2str), adjust_R=("+R", arg2str), adjust_e=("+e", arg2str), headers=("_+z")))
+			startswith(cmd, " -E+") && (t = cmd; cmd = ""; @goto jump_here)		# Jump to where this case is processed.
 		elseif (isa(val, Tuple))
 			cmd = parse_dcw(cmd, val)
 		end
+		contains(cmd, " -M") && !contains(cmd, "+z") && (cmd *= "+z")	# If Dump always add country names as attribs
 		!contains(cmd, " -M") && (cmd *= " -Vq")		# Suppress annoying warnings regarding filling syntax with +r<dpi>
 		delete!(d, symbs)
 	end

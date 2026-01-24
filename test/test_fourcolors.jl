@@ -131,4 +131,7 @@
 		end
 	end
 
+	D = getdcw("PT,ES,FR", file=:ODS);
+	fourcolors(D, show=false);
+	D = getdcw("AU", states=true, file=:ODS);
 end

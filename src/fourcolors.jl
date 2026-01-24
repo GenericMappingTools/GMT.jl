@@ -1,5 +1,5 @@
 """
-    fourcolors(polys; groupby="", colors=["red", "green", "blue", "yellow"], index=false, kw...) -> Vector{Int}
+    fourcolors(polys; groupby="", colors=[:tomato, :skyblue, :lightgreen, :gold], index=false, show=true, kw...) -> Vector{Int}
 
 Apply graph coloring to assign colors to polygons such that no two adjacent polygons share the same color.
 
@@ -12,7 +12,7 @@ Apply graph coloring to assign colors to polygons such that no two adjacent poly
              Default: "CODE"
 - `ncolors`: Number of colors to use. Default: 4 (four color theorem). Use more for fewer regions
              (e.g., 7 for continents) to get distinct colors for each.
-- `colors`: Vector of color names or RGB tuples. Default: ["red", "green", "blue", "yellow"]
+- `colors`: Vector of color names or RGB tuples. Default: [:tomato, :skyblue, :lightgreen, :gold]
             If `ncolors` > length(colors), colors will cycle.
 - `index`: If true, return only the color indices without plotting. Default: false
 - `kw...`: Additional keyword arguments passed to `plot` for visualization.
@@ -20,30 +20,39 @@ Apply graph coloring to assign colors to polygons such that no two adjacent poly
 ### Returns
 - Nothing if `index=false`. Otherwise, return `Vector{Int}`: Color indices (1-ncolors) for each polygon.
 
+Note, if `index=true`, is used we get just a vector of color indices that can be used to color the polygons
+in other contexts. To help with that, we show here how we actually do the plotting internally in this function:
+```julia
+	color_idx = fourcolorsindex(D; groupby=groupby, ncolors=ncolors)
+	C = makecpt(T=(1, ncolors), C=colors)
+	plot(D; level=color_idx, cmap=C, plot=(data=D,), show=show, kw...)
+```
+
 ### Example
 ```julia
 # Color countries with 4 colors (sufficient for any map)
-polys = coast(region=:europe, dump=true, dcw="AT,DE,FR,IT,ES,PT,CH,BE,NL,PL,CZ")
+polys = getdcw("AT,DE,FR,IT,ES,PT,CH,BE,NL,PL,CZ");
 fourcolors(polys, groupby="CODE")
 
 # Color continents with 7 distinct colors
-continents = ...  # 7 continent polygons
-fourcolors(continents, ncolors=7, colors=["red","orange","yellow","green","blue","purple","brown"])
+D = getdcw("WD", file=:ODS)		# All countries
+fourcolors(D, groupby="CONTINENT", colors=["red","orange","yellow","green","blue","purple","brown"], proj=:guess, region=:global)
 ```
 """
-function fourcolors(polys; index=false, groupby="CODE", ncolors::Int=4, colors=["red", "green", "blue", "yellow"], kw...)
+function fourcolors(polys; index=false, groupby="CODE", ncolors::Int=4, colors=[:tomato, :skyblue, :lightgreen, :gold],
+				    show=true, kw...)
 	D = isa(polys, String) ? gmtread(polys) : polys
 	!isa(D, Vector{GMTdataset}) || length(D) <= 1 && error("Input must be a vector of GMTdataset polygons or a filename")
 	(index == 1) && return fourcolorsindex(D; groupby=groupby, ncolors=ncolors)
-	nc = max(ncolors, length(colors))  # Use at least as many colors as provided
+	nc = max(ncolors, length(colors))		# Use at least as many colors as provided
 	c = join(colors, ",")
-	(count_chars(c, ',') < 4) && error("At least four colors must be provided for four color theorem")
-	_fourcolors(D, groupby, nc, c, kw...)
+	(count_chars(c, ',') < 3) && error("At least four colors must be provided for four color theorem")
+	_fourcolors(D, groupby, nc, c, show==1, kw...)
 end
-function _fourcolors(D, groupby, ncolors, colors, kw...)
+function _fourcolors(D, groupby, ncolors, colors, show, kw...)
 	color_idx = fourcolorsindex(D; groupby=groupby, ncolors=ncolors)
 	C = makecpt(T=(1, ncolors), C=colors)
-	plot(D; level=color_idx, cmap=C, kw...)
+	plot(D; level=color_idx, cmap=C, plot=(data=D,), show=show, kw...)
 end
 
 
@@ -62,6 +71,14 @@ function _fourcolorsindex(polys, groupby, ncolors::Int)
 		coloring = _color_graph(adj, ncolors)
 
 	else								# Group polygons by attribute
+		ks = keys(polys[1].attrib)
+		if !(groupby in ks)				# Maybe it's a case issue?
+			if ((ind = findfirst(any.(lowercase(groupby) .== lowercase.(ks)))) !== nothing)		# Yes, we found a caseless match
+				groupby = collect(ks)[ind]
+			else
+				@warn("Attribute '$groupby' not found in polygon attributes: $(collect(ks))")
+			end
+		end
 		groups = Dict{String, Vector{Int}}()
 		n = length(polys)
 		for i in 1:n
