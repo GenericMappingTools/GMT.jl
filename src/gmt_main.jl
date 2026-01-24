@@ -691,14 +691,14 @@ function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})::GDtype
 					Darr[seg_out].header = hdrstr
 				else
 					if (DCWnames && (ind = findfirst(" -Z", hdrstr)) !== nothing)
-						Darr[seg_out].attrib["CODE"] = hdrstr[4+codelen-2:4+codelen-1]
+						Darr[seg_out].attrib["CODE"] = hdrstr[ind[end]+1+codelen-2:ind[end]+1+codelen-1]
 						if ((ind_par = findfirst(" (", hdrstr)) !== nothing)
 							# The nextind() is because Brasil states have unicode names and then all get fucked with regular ranges.
-							Darr[seg_out].attrib["NAME"] = hdrstr[7+codelen-2:nextind(hdrstr, ind_par[1]-2)]
+							Darr[seg_out].attrib["NAME"] = hdrstr[ind[end]+codelen+2:nextind(hdrstr, ind_par[1]-2)]
 							att_name = (codelen == 2) ? "CONTINENT" : "COUNTRY"
 							Darr[seg_out].attrib[att_name] = (codelen == 2) ? hdrstr[ind_par[2]+1:ind_par[2]+2] : hdrstr[ind[3]+1:ind[3]+2]
 						else
-							Darr[seg_out].attrib["NAME"] = hdrstr[7+codelen-2:end]
+							Darr[seg_out].attrib["NAME"] = hdrstr[7+codelen-2:end]	# This can't be right and should not happen. DCW has -Z
 						end
 					end
 				end
