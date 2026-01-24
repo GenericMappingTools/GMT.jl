@@ -138,8 +138,8 @@ function coast_parser(first::Bool, clip::String; kwargs...)
 			toTrack == "" && (POSTMAN[]["plusZzero"] = "y")# If toTrack the extra column is added by the grdtrack call below
 		end
 	end
-	
-	if (!occursin("-E+l", cmd) && !occursin("-E+L", cmd))	# I.e., no listings only
+
+	if (!(occursin("-E", cmd) && have_opt_M))					# I.e., no DCW parse -R
 		cmd, = parse_R(d, cmd, O=O, del=true, RIr=false,  noGlobalR=have_opt_M)	# If have_opt_M we don't set the -R limits in globals
 		if (!have_opt_M)									# If Dump no -R & -B
 			cmd = parse_J(d, cmd, default="guess", map=true, O=O)[1]
