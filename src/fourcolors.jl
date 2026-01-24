@@ -12,7 +12,7 @@ Apply graph coloring to assign colors to polygons such that no two adjacent poly
              Default: "CODE"
 - `ncolors`: Number of colors to use. Default: 4 (four color theorem). Use more for fewer regions
              (e.g., 7 for continents) to get distinct colors for each.
-- `colors`: Vector of color names or RGB tuples. Default: [:tomato, :skyblue, :lightgreen, :gold]
+- `colors`: Vector of color names or R/G/B strings. Default: [:tomato, :skyblue, :lightgreen, :gold]
             If `ncolors` > length(colors), colors will cycle.
 - `index`: If true, return only the color indices without plotting. Default: false
 - `kw...`: Additional keyword arguments passed to `plot` for visualization.
