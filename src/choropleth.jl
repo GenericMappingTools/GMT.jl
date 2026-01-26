@@ -1,6 +1,3 @@
-export choropleth
-
-
 """
     choropleth(D, ids, vals; attrib="CODE", cmap="turbo", outline=true, kw...)
     choropleth(D, att=""; attrib="", cmap="turbo", outline=true, kw...)
@@ -143,14 +140,8 @@ function helper_plot_choropleth(D, ids, vals, attrib::String, cmap, outline, _zv
 	zvals = (isempty(_zvals)) ? polygonlevels(D, ids, vals, att=attrib) : _zvals
 	pen_ouline = isa(outline, Bool) ? "0" : outline
 	C = isa(cmap, GMTcpt) ? cmap : makecpt(T=(minimum(vals), maximum(vals)), C=string(cmap))
-	plot_outline = (outline != false)
-	(!plot_outline) && return plot(D; level=zvals, cmap=C, kw...)
-	d = KW(kw)
-	do_show, fmt, savefig = get_show_fmt_savefig(d, false)
-	plot(D; level=zvals, cmap=C)
-	#plot!(D; pen=pen_ouline, fmt=fmt, savefig=savefig, show=do_show, d...)
-	d[:fmt]=fmt;	d[:savefig]=savefig;	d[:show]=do_show;	d[:pen]=pen_ouline
-	common_plot_xyz("", D, "plot", false, false, d)
+	return (outline != false) ? plot(D; level=zvals, cmap=C, plot=(data=D, pen=pen_ouline), kw...) :
+	                            plot(D; level=zvals, cmap=C, kw...)
 end
 
 # ------------------------------------------------------------------------------------------------------

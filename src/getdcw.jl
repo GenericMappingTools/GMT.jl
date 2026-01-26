@@ -1,5 +1,3 @@
-export getdcw
-
 """
     getdcw(codes; states=false, file::StrSymb="") -> Vector{GMTdataset}
 
