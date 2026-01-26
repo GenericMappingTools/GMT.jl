@@ -1751,4 +1751,21 @@ function cut_icons(; nome="", size=350)
 	end
 end
 =#
+
+# ------------------------------------------------------------------------------------------------------
+"""
+	do_show, fmt, savefig = get_show_fmt_savefig(d; show=false)
+
+Many extension/composed plotting functions need to know these but they can only apply them
+in the last plotting comand. Centralise those options fetching in this function.
+"""
+function get_show_fmt_savefig(d, show::Bool=false)
+	# 'show' carries the default of the caller for the show-or-not-show
+	do_show = ((val = find_in_dict(d, [:show])[1]) === nothing) ? show : !show
+	fmt::String = ((val = find_in_dict(d, [:fmt])[1]) !== nothing) ? arg2str(val)::String : FMT[]::String
+	savefig = ((val = find_in_dict(d, [:savefig :figname :name])[1]) !== nothing) ? arg2str(val)::String : nothing
+	return do_show, fmt, savefig
+end
+
 include("getdcw.jl")
+include("choropleth.jl")
