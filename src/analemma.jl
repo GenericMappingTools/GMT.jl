@@ -55,11 +55,11 @@ function _analemma(lon, lat, year, hour, cmap, lonlat::Bool, data::Bool, d)
 	D = mat2ds(ana)
 	data && (D.colnames = cnames; return D)
 
-	do_show = ((val = find_in_dict(d, [:show])[1]) === nothing) ? true : false	# Default is to show
+	do_show, fmt, savefig = get_show_fmt_savefig(d, true)		# Default is to show
 	C = makecpt(cmap=cmap, range=(1, n_days))
 	plot(D, marker="c", markersize="4p", cmap=C, zcolor=collect(1:n_days), colorbar=(xlabel="Day of year",),
 	     xlabel= lonlat ? "Longitude" : "Azimuth", ylabel= lonlat ? "Latitude"  : "Elevation",
-		 title=@sprintf("Analemma %02d:00 lat=%.1f", floor(Int, hour), lat), show=do_show, d...)
+		 title=@sprintf("Analemma %02d:00 lat=%.1f", floor(Int, hour), lat), fmt=fmt, savefig=savefig, show=do_show, d...)
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -138,9 +138,7 @@ function _sunsetrise(lon, lat, year::Int, TZ::Int, raise::Bool, both::Bool, data
 	yaxis_nt = (annot=15, annot_unit=:minute2, ticks=5, ticks_unit=:minute2, label=y_label)
 	par = (FORMAT_DATE_MAP="o", FORMAT_TIME_PRIMARY_MAP="abbreviated")
 
-	do_show = ((val = find_in_dict(d, [:show])[1]) === nothing) ? true : false	# Default is to show
-	fmt::String = ((val = find_in_dict(d, [:fmt])[1]) !== nothing) ? arg2str(val)::String : FMT[]::String
-	savefig = ((val = find_in_dict(d, [:savefig :figname :name])[1]) !== nothing) ? arg2str(val)::String : nothing
+	do_show, fmt, savefig = get_show_fmt_savefig(d, true)		# Default is to show
 	opt_R = ((val = find_in_dict(d, [:R :region :limits])[1]) !== nothing) ? val : "tightx"
 	both ? plotyy(Dsr, Dss, yaxis=yaxis_nt, title=title, conf=par, R=opt_R, lw=1; d...) :
 		   plot(Dsun, xaxis=xaxis_nt, yaxis=yaxis_nt, title=title, lc="#0072BD", lw="1p", conf=par, R=opt_R; d...)

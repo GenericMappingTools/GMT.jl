@@ -174,9 +174,9 @@ export
 	geodesic, orthodrome, proj2wkt, setcoords!, setfld!, setcrs!, setsrs!, settimecol!, vecangles, wkt2proj,
 	inbbox, randgeo,
 
-	colorzones!, rasterzones!, rasterzones, lelandshade, texture_img, crop, doy2date, date2doy, fourcolors, yeardecimal,
-	ISOtime2unix, median, mean, quantile, std, nanmean, nanstd, skipnan, zonal_statistics, zonal_stats,
-	autocor, autocor!, autocov, autocov!, conv, xcorr, xcov,
+	colorzones!, rasterzones!, rasterzones, lelandshade, texture_img, crop, doy2date, date2doy, choropleth, fourcolors,
+	getdcw, ISOtime2unix, median, mean, quantile, std, nanmean, nanstd, skipnan, zonal_statistics, zonal_stats,
+	autocor, autocor!, autocov, autocov!, conv, yeardecimal, xcorr, xcov,
 
 	add2PSfile, append2fig, isoutlier, linearfitxy, regiongeog, streamlines, peaks, polygonlevels, randinpolygon, polyfit, polyval,
 

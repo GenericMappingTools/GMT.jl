@@ -55,18 +55,8 @@ function logo(cmd0::String=""; first=true, kwargs...)
 		c,t,r2 = jlogo(r)			# r2 is the diameter of the inner circle
 		if (!occursin("-R", cmd))  cmd = @sprintf("-R0/%f/0/%f ", 2r, 2r) * cmd  end
 		if (!occursin("-J", cmd))  cmd = " -Jx1 " * cmd  end
-		do_show = false
-		if (do_GMTjulia)
-			do_show = ((val = find_in_dict(d, [:show])[1]) !== nothing && val != 0)		# Too soon
-		end
-		fmt::AbstractString = ""
-		if (do_GMTjulia)
-			# Too soon to set the format. Need to finish the PS first
-			((val = find_in_dict(d, [:fmt])[1]) !== nothing) && (fmt = arg2str(val))
-			savefig::AbstractString = ""
-			if ((val = find_in_dict(d, [:savefig :name :figname])[1]) !== nothing)		#  Also too early for savefig
-				savefig = val
-			end
+		if (do_GMTjulia)			# Too soon to use the show, fmt, ...
+			do_show, fmt, savefig = get_show_fmt_savefig(d, true)		# Default is to show
 		end
 		cmd = "psxy " * c * cmd
 		((_r = check_dbg_print_cmd(d, cmd)) !== nothing && startswith(_r, "psxy")) && return _r

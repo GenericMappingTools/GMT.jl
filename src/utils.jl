@@ -1761,9 +1761,9 @@ in the last plotting comand. Centralise those options fetching in this function.
 """
 function get_show_fmt_savefig(d, show::Bool=false)
 	# 'show' carries the default of the caller for the show-or-not-show
-	do_show = ((val = find_in_dict(d, [:show])[1]) === nothing) ? show : !show
+	do_show::Bool = ((val = find_in_dict(d, [:show])[1]) === nothing) ? show : (val == 1)
 	fmt::String = ((val = find_in_dict(d, [:fmt])[1]) !== nothing) ? arg2str(val)::String : FMT[]::String
-	savefig = ((val = find_in_dict(d, [:savefig :figname :name])[1]) !== nothing) ? arg2str(val)::String : nothing
+	savefig::Union{String,Nothing} = ((val = find_in_dict(d, [:savefig :figname :name])[1]) !== nothing) ? arg2str(val)::String : nothing
 	return do_show, fmt, savefig
 end
 
