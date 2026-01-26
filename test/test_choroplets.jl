@@ -12,8 +12,8 @@
 	choropleth(D, ["PT","ES","FR"], [1.0, 2.0, 3.0], cmap="bamako", outline=false)
 
 	# The example in "Tutorials"
-	D = getdcw("US", states=true, file=:ODS);
-	Df = filter(D, _region=(-125,-66,24,50), _unique=true);
-	pop = gmtread(TESTSDIR * "assets/uspop.csv");
-	choropleth(Df, pop, "NAME", show=false)
+	#D = getdcw("US", states=true, file=:ODS);
+	#Df = filter(D, _region=(-125,-66,24,50), _unique=true);
+	#pop = gmtread(TESTSDIR * "assets/uspop.csv");
+	#choropleth(Df, pop, "NAME", show=false)
 end
