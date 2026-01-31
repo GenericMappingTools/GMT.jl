@@ -50,7 +50,7 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 	(!haskey(d, :R) && any(startswith.(cmd0, ["@earth_", "@mars_", "@pluto_", "@moon_", "@venus_"]))) &&
 		(CTRL.limits[1:4] = CTRL.limits[7:10] = [-180, 180, -90, 90])
 
-	if (arg1 === nothing && haskey(d, :R) && guess_T_from_ext(cmd0) == " -Ti")
+	if (arg1 === nothing && (get(d, :R, nothing) !== nothing) && guess_T_from_ext(cmd0) == " -Ti")
 		_opt_R = d[:R]
 		t = (isa(_opt_R, Tuple) || isa(_opt_R, VMr)) ?
 			["$(_opt_R[1])", "$(_opt_R[2])", "$(_opt_R[3])", "$(_opt_R[4])"] : split(_opt_R, '/')
@@ -77,22 +77,6 @@ end
 function _grdimage(cmd0::String, arg1, arg2, arg3, O::Bool, K::Bool, d::Dict)
 
 	arg4 = nothing		# For the r,g,b + intensity case
-#=
-	common_insert_R!(d, O, cmd0, arg1)			# Set -R in 'd' out of grid/images (with coords) if limits was not used
-	
-	# Remote files with no -R are all global. Set CTRL.limits so we can guess the projection.
-	(!haskey(d, :R) && any(startswith.(cmd0, ["@earth_", "@mars_", "@pluto_", "@moon_", "@venus_"]))) &&
-		(CTRL.limits[1:4] = CTRL.limits[7:10] = [-180, 180, -90, 90])
-
-	if (arg1 === nothing && haskey(d, :R) && guess_T_from_ext(cmd0) == " -Ti")
-		_opt_R = d[:R]
-		t = (isa(_opt_R, Tuple) || isa(_opt_R, VMr)) ?
-			["$(_opt_R[1])", "$(_opt_R[2])", "$(_opt_R[3])", "$(_opt_R[4])"] : split(_opt_R, '/')
-		opts = ["-projwin", t[1], t[4], t[2], t[3]]		# -projwin <ulx> <uly> <lrx> <lry>
-		arg1 = cut_with_gdal(cmd0, opts)
-		cmd0 = ""
-	end
-=#
 
 	# Prevent that J=guess is applied to a non-geog grid/image
 	(arg1 !== nothing && (symb = is_in_dict(d, [:proj :projection])) !== nothing && (d[symb] == "guess" || d[symb] == :guess) && !isgeog(arg1)) &&
@@ -102,8 +86,11 @@ function _grdimage(cmd0::String, arg1, arg2, arg3, O::Bool, K::Bool, d::Dict)
 	(is_in_dict(d, [:A :img_out :image_out]) !== nothing) && (d[:B] = "none")	# When -A is used, -B is forbiden
 	cmd::String, opt_B::String, opt_J::String, opt_R::String = parse_BJR(d, "", "", O, " -JX" * split(DEF_FIG_SIZE, '/')[1] * "/0")
 	(startswith(opt_J, " -JX") && !contains(opt_J, "/")) && (cmd = replace(cmd, opt_J => opt_J * "/0")) # When sub-regions
-	(!has_opt_B && isa(arg1, GMTimage) && (isimgsize(arg1) || CTRL.limits[1:4] == zeros(4)) && opt_B == DEF_FIG_AXES_BAK) &&
-		(cmd = replace(cmd, opt_B => ""))			# Dont plot axes for plain images if that was not required
+	sim = (!has_opt_B && isa(arg1, GMTimage) && (isimgsize(arg1) || CTRL.limits[1:4] == zeros(4)) && opt_B == DEF_FIG_AXES_BAK)
+	if (!sim && cmd0 !== "" && !has_opt_B)
+		sim = (lowercase(splitext(cmd0)[2]) in [".jpg", ".jpeg", ".png", ".bmp", ".webp"])
+	end
+	sim && (cmd = replace(cmd, opt_B => ""))
 
 	cmd, = parse_common_opts(d, cmd, [:UVXY :params :margin :c :f :n :p :t]; first=!O)
 	cmd  = parse_these_opts(cmd, d, [[:A :img_out :image_out], [:D :img_in :image_in], [:E :dpi], [:G :bit_color],
@@ -121,21 +108,6 @@ function _grdimage(cmd0::String, arg1, arg2, arg3, O::Bool, K::Bool, d::Dict)
 			cmd, got_fname, arg1, arg2, arg3 = find_data(d, cmd0, cmd, arg1, arg2, arg3)
 		end
 	end
-
-#=
-	if (isa(arg1, Matrix{<:Real}) || isa(arg1, Array{<:Real,3}))
-		if (isa(arg1, Matrix{UInt8}) || isa(arg1, Matrix{UInt16}) || isa(arg1, Array{UInt8,3}))
-			arg1 = mat2img(arg1; d...)
-		else
-			arg1 = mat2grid(arg1)
-			(isa(arg2, Matrix{<:Real})) && (arg2 = mat2grid(arg2))
-			(isa(arg3, Matrix{<:Real})) && (arg3 = mat2grid(arg3))
-		end
-	elseif (isa(arg1, GMTimage) && size(arg1, 3) <= 3 && eltype(arg1.image) <: UInt16)
-		arg1 = mat2img(arg1; d...)
-		(haskey(d, :stretch) || haskey(d, :histo_bounds)) && delete!(d, [:histo_bounds, :stretch])
-	end
-=#
 
 	set_defcpt!(d, cmd0, arg1)	# When dealing with a remote grid assign it a default CPT
 	(isa(arg1, GMTgrid) && arg1.cpt != "") && (d[:this_cpt] = arg1.cpt)

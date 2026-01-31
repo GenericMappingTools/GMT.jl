@@ -516,6 +516,20 @@ function getregion(input; pad=0, xSize=0, ySize=0, gridreg::Bool=false, sds::Int
 end
 
 # ---------------------------------------------------------------------------------------------------
+"""
+	opr_R = getR(X, full::Bool=false)::String
+
+Return a string with the -R option made up of the region of 'X'.
+
+`X` is a GMTimage, GMTgrid or GMTdataset(s). The `full` flag adds the " -R" prefix.
+"""
+function getR(X, full::Bool=false)::String
+	x_min, x_max, y_min, y_max = getregion(X)
+	pre = full ? " -R" : ""
+	@sprintf("%s%f/%f/%f/%f", pre, x_min, x_max, y_min, y_max)
+end
+
+# ---------------------------------------------------------------------------------------------------
 function coords_resque(dataset)
 	# We come here when GDAL stuburnly finds a netcdf file indign and ignores its coordinates
 	# and does not assign it a geotransform. In such case we try to fish the coordinates from

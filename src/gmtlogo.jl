@@ -56,7 +56,7 @@ function logo(cmd0::String=""; first=true, kwargs...)
 		if (!occursin("-R", cmd))  cmd = @sprintf("-R0/%f/0/%f ", 2r, 2r) * cmd  end
 		if (!occursin("-J", cmd))  cmd = " -Jx1 " * cmd  end
 		if (do_GMTjulia)			# Too soon to use the show, fmt, ...
-			do_show, fmt, savefig = get_show_fmt_savefig(d, true)		# Default is to show
+			do_show, fmt, savefig = get_show_fmt_savefig(d, false)		# Default is to !show
 		end
 		cmd = "psxy " * c * cmd
 		((_r = check_dbg_print_cmd(d, cmd)) !== nothing && startswith(_r, "psxy")) && return _r

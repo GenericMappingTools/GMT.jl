@@ -132,7 +132,7 @@ function extract_ids_vals(D, attrib::String)
 		vals = deleteat!(vals, ind)
 		ids = deleteat!(ids, ind)
 	end
-	ids, parse.(Float64, vals)
+	ids, (tryparse(Float64, vals[1]) === nothing) ? collect(1.0:length(vals)) : parse.(Float64, vals)
 end
 
 # ------------------------------------------------------------------------------------------------------
