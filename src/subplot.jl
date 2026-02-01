@@ -3,8 +3,6 @@
 
 Manage figure subplot configuration and selection.
 
-See full GMT docs at [`subplot`](http://docs.generic-mapping-tools.org/latest/subplot.html)
-
 Parameters
 ----------
 
@@ -36,18 +34,22 @@ Parameters
 - $(opt_X)
 - $(opt_Y)
 """
-function subplot(fim=nothing; stop=false, kwargs...)
-
-	FirstModern[] = true			# To know if we need to compute -R in plot. Due to a GMT6.0 BUG
- 
+function subplot(fim::StrSymb=""; stop=false, kwargs...)
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+	subplot(lowercase(string(fim)), stop == 1, d)
+end
+
+function subplot(fim::String, stop::Bool, d::Dict{Symbol, Any})
+
+	FirstModern[] = true						# To know if we need to compute -R in plot. Due to a GMT6.0 BUG
+	has_options = (length(d) > 0)
 
 	# In case :title exists we must use and delete it to avoid double parsing
 	cmd = ((val = find_in_dict(d, [:T :title])[1]) !== nothing) ? " -T\"" * val * "\"" : ""
 	val_grid = find_in_dict(d, [:grid])[1]		# Must fish this one right now because parse_B also looks for (another) :grid
 	cmd, = parse_BJR(d, cmd, "", false, " ")
 	cmd, = parse_common_opts(d, cmd, [:V_params], first=true)
-	cmd  = parse_these_opts(cmd, d, [[:M :margin :margins]])
+	cmd  = parse_these_opts(cmd, d, [[:M :margin :margins], [:D :noframes]])
 	cmd  = add_opt(d, cmd, "A", [:A :autolabel],
                   (Anchor=("+J", arg2str), anchor=("+j", arg2str), label="", clearance=("+c", arg2str), fill=("+g", add_opt_fill), pen=("+p", add_opt_pen), offset=("+o", arg2str), roman="_+r", Roman="_+R", vertical="_+v"))
 	cmd = add_opt(d, cmd, "SC", [:SC :Sc :col_axes :colaxes :sharex],
@@ -72,16 +74,15 @@ function subplot(fim=nothing; stop=false, kwargs...)
 
 	do_set = false;		do_show = false
 	if (fim !== nothing)
-		t = lowercase(string(fim))
-		if     (t == "end" || t == "stop")  stop = true
-		elseif (t == "show")  stop, do_show = true, true
-		elseif (t == "set")   do_set = true
+		if     (fim == "end" || fim == "stop")  stop = true
+		elseif (fim == "show")  stop, do_show = true, true
+		elseif (fim == "set")   do_set = true
 		end
-	elseif (haskey(d, :show))					# Let this form work too
+	elseif (haskey(d, :show))									# Let this form work too
 		do_show = (d[:show] != 0)
 		stop = true
 	else
-		if (!stop && length(kwargs) == 0)  stop = true  end		# To account for the subplot() call case
+		if (!stop && has_options)  stop = true  end				# To account for the subplot() call case
 	end
 	# ------------------------------ End parsing inputs --------------------------------
 
