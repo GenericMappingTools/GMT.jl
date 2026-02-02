@@ -152,7 +152,7 @@ export
 	mbimport, mbgetdata, mbsvplist, mblevitus,
 
 	blendimg!, lonlat2xy, xy2lonlat, df2ds, mat2ds, mat2grid, mat2img, slicecube, cubeslice, linspace, logspace, fileparts,
-	fields, flipud, fliplr, flipdim, flipdim!, grdinterpolate, pow, tic, toc, theme, tern2cart, geodetic2enu, cpt4dcw,
+	tests, fields, flipud, fliplr, flipdim, flipdim!, grdinterpolate, pow, tic, toc, theme, tern2cart, geodetic2enu, cpt4dcw,
 	getregion, getattribs, getattrib, getres, gd2gmt, gmt2gd, gdalread, gdalshade, gdalwrite, gadm, xyzw2cube,
 	coastlinesproj, graticules, orbits, orbits!, plotgrid!, leepacific, worldrectangular, worldrectgrid, togglemask,
 
@@ -424,6 +424,7 @@ using .Laszip
 	D[:Time];	D["Time", "b"];
 	#plot(rand(5,2), marker=:point, lc=:red, ls=:dot, lw=1)
 	grdimage(rand(Float32,32,32), R="0/32/0/32");
+	grdimage(tests("coins"))
 	I = mat2img(rand(UInt8, 32, 32, 3), clim=:zscale);
 	grdimage(I, V=:q);
 	grdview(rand(Float32,32,32), Vd=2);

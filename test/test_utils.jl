@@ -42,4 +42,15 @@
 
 	@test !bissextile(100)
 	@test bissextile(-4)
+
+	println("	TESTS function")
+	# With extension - must find the file and return a non-empty path
+	@test tests("cameraman.png") == joinpath(TESTSDIR, "assets", "cameraman.png")
+	# Without extension - must find a matching file in assets/
+	@test tests("cameraman") == joinpath(TESTSDIR, "assets", "cameraman.png")
+	# Non-existent file - must warn and return ""
+	@test (@test_logs (:warn,) tests("nao_existe_xpto.dat")) == ""
+	# Non-existent file without extension
+	@test (@test_logs (:warn,) tests("nao_existe_xpto")) == ""
+
 end

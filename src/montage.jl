@@ -1,7 +1,6 @@
 export montage
 
-# This file was initially created by Claude and still needs lots of cleanings.
-
+# This file was initially created by Claude and still needs to be worked on.
 
 # ------------------------------------------------------------------------------------------
 """
@@ -21,7 +20,6 @@ Display multiple images arranged in a grid using GMT's subplot.
 - `frame`: Frame setting for panels. Default: :none
 - `indices`: Vector of indices selecting which images to display.
 - `show`: Display the result. Default: true.
-- `savefig`: Filename to save the montage.
 
 ### Example
 ```julia
@@ -36,40 +34,39 @@ montage(imgs, grid=(2,3), titles=["A","B","C","D","E","F"], panels_size=5)
 montage(rand(UInt8, 64, 64, 9), grid=(3,3), margin="0.2c")
 ```
 """
-function montage(images; grid=nothing, panels_size=nothing, margin="0.0c",
-                    title=nothing, titles=nothing, frame=nothing, indices=nothing,
-                    show::Bool=true, noR::Bool=false, kw...)
+function montage(images; grid=nothing, panels_size=nothing, margin="-0.23c",
+                 title=nothing, titles=nothing, frame=nothing, indices=nothing,
+                 show::Bool=true, noR::Bool=false, kw...)
 
 	(indices !== nothing) && (images = images[indices])	# Apply indices selection
 	((n = length(images)) == 0) && error("No images to display")
 	nrows, ncols = _montage_grid_size(n, grid)		# Calculate grid dimensions
 
-	subplot_kw = KW(kw)
-	subplot_kw[:grid] = (nrows, ncols)
-	subplot_kw[:margin] = margin
-	subplot_kw[:frame] = frame
-	(frame === nothing) && (subplot_kw[:D] = true)	# No frames around panels
-	(title !== nothing) && (subplot_kw[:title] = title)
-	subplot_kw[:Vd] = 1
+	d = KW(kw)
+	d[:grid] = (nrows, ncols)
+	d[:margin] = margin
+	(frame == "0") ? (d[:par] = (MAP_FRAME_PEN="0",); d[:frame] = frame) :
+	                 ((frame !== nothing) && (d[:B] ="0"; d[:par] = (:MAP_FRAME_PEN,parse_pen(frame))))
 
-	if panels_size !== nothing
-		subplot_kw[:panels_size] = panels_size
-	else											# Auto size based on grid
-		ps = max(3, min(8, 18 / max(nrows, ncols)))
-		subplot_kw[:panels_size] = ps
-	end
+	(frame === nothing) && (d[:D] = true)	# No frames around panels
+	(title !== nothing) && (d[:title] = title)
 
-	subplot("", false, subplot_kw)	# Create subplot (since we already have the Dict pass it directly)
+	ps = (panels_size !== nothing) ? panels_size : max(3, min(8, 18 / max(nrows, ncols)))
+	d[:panels_size] = ps
+	Vd = get(d, :Vd, 0)				# Get the Vd option that will be consumed by subplot\
+
+	subplot("", false, d)	# Create subplot (since we already have the Dict pass it directly)
 	d = CTRL.pocket_d[1]			# Fetch options not consumed by subplot.
 
 	# Plot each ... input
-	k = 0
+	d[:J] = "x?"
+	k = 0;	n_inputs = length(images)
 	for row in 1:nrows
 		for col in 1:ncols
-			k += 1
+			((k += 1) > n_inputs) && break
 			panel_title = (titles !== nothing && k <= length(titles)) ? titles[k] : nothing
 			opt_R = isa(images[k], GItype) ? (noR ? "" : getR(images[k])) : ""
-			viz(images[k], panel=(row, col), title=panel_title, R=(opt_R !== "" ? opt_R : nothing), Vd=1, show=false, d...)
+			viz(images[k]; panel=(row, col), title=panel_title, R=(opt_R !== "" ? opt_R : nothing), Vd=Vd, show=false, d...)
 		end
 	end
 	subplot(show ? :show : :end)	# End subplot
@@ -78,6 +75,7 @@ function montage(images; grid=nothing, panels_size=nothing, margin="0.0c",
 end
 
 # Calculate grid dimensions
+# ----------------------------------------------------------------------------------------------------------
 function _montage_grid_size(n, size)
 	if size === nothing || all(x -> x === nothing || x == 0 || (isa(x, AbstractFloat) && isnan(x)), size)
 		ncols = ceil(Int, sqrt(n))

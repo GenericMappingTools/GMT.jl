@@ -993,6 +993,31 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
+    tests(fname::String, subdir::String="assets") -> String
+
+Return the full path of a test file `fname` under `TESTSDIR/subdir`.
+If `fname` has no extension, search for a matching file in the subdirectory.
+If no match is found, issue a warning and return `""`.
+"""
+function tests(fname::String, subdir::String="assets")
+	dir = joinpath(TESTSDIR, subdir)
+	ext = fileparts(fname)[3]
+	if ext !== ""
+		fullpath = joinpath(dir, fname)
+		isfile(fullpath) && return fullpath
+	else
+		# Search for files whose basename (without extension) matches fname
+		isdir(dir) || (@warn("Directory $dir not found"); return "")
+		for f in readdir(dir)
+			splitext(f)[1] == fname && return joinpath(dir, f)
+		end
+	end
+	@warn("File \"$fname\" not found in $dir")
+	return ""
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
     I = eye(n=3) returns an n-by-n identity matrix with ones on the main diagonal and zeros elsewhere.
 """
 function eye(n=3)
