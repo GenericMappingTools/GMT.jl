@@ -1327,7 +1327,7 @@ function cornerplot(arg1; first::Bool=true, kwargs...)
 	d[:Vd] = Vd
 	d[:grid] = "$(ndims)x$(ndims)"
 
-	r = subplot(; d...)
+	r = subplot("", false, d)
 		d = CTRL.pocket_d[1]		# Get back what was not consumemd in subplot
 		(Vd >= 0) && (d[:Vd] = Vd)	# Restore this in case
 		(Vd == 2) && return r		# Almost useless but at least wont error
@@ -1472,7 +1472,7 @@ function marginalhist(arg1::Union{GDtype, Matrix{<:Real}}; first=true, kwargs...
 	CTRL.figsize[1] = W					# Set figsize needed to compute hexagons size
 	doDensity = (find_in_dict(d, [:density :Density])[1] !== nothing)	# For now, no control on the density computing params
 
-	r = subplot(; d...)
+	r = subplot("", false, d)
 		d = CTRL.pocket_d[1]			# Get back what was not consumemd in subplot
 		(Vd >= 0) && (d[:Vd] = Vd)		# Restore this in case
 		(Vd == 2) && return r			# Almost useless but at least wont error
