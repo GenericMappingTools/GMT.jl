@@ -72,7 +72,7 @@ function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; fir
 		(haskey(d, :stretch) || haskey(d, :histo_bounds)) && delete!(d, [:histo_bounds, :stretch])
 	end
 
-	invokelatest(_grdimage, cmd0, arg1, arg2, arg3, O, K, d)
+	_grdimage(cmd0, arg1, arg2, arg3, O, K, d)
 end
 function _grdimage(cmd0::String, arg1, arg2, arg3, O::Bool, K::Bool, d::Dict)
 
