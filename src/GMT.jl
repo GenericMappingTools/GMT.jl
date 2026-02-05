@@ -8,219 +8,175 @@ using InteractiveUtils
 using Leptonica_jll
 
 struct CTRLstruct
-	limits::Vector{Float64}			# To store the data limits. First 6 store: data limits. Second 6: plot limits, 13th +r
-	figsize::Vector{Float64}		# To store the current fig size (xsize,ysize[,zsize]). Needed, for example, in hexbin
-	proj_linear::Vector{Bool}		# To know if images sent to GMT need Pad
-	returnPS::Vector{Bool}			# To know if returning the PS to Julia
-	callable::Vector{Symbol}		# Modules that can be called inside other modules
-	pocket_B::Vector{String}		# To temporarily store opt_B grid and fill color to be reworked in psclip
-	pocket_J::Vector{String}		# To temporarily store opt_J and fig size to eventualy flip directions (y + down, etc)
-									# = [opt_J width opt_Jz codes-to-tell-which-axis-to-reverse]
-	pocket_R::Vector{String}		# To temporarily store opt_R
-	XYlabels::Vector{String}		# To temporarily store the x,y col names to let x|y labels know what to plot (if "auto")
-	IamInPaperMode::Vector{Bool}	# A 2 elem vec to know if we are in under-the-hood paper mode. 2nd traces if first call
-	gmt_mem_bag::Vector{Ptr{Cvoid}}	# To temporarily store a GMT owned memory to be freed in gmt()
-	pocket_d::Vector{Dict{Symbol,Any}}			# To pass the Dict of kwargs, after consumption, to other modules.
+    limits::Vector{Float64}# To store the data limits. First 6 store: data limits. Second 6: plot limits, 13th +r
+    figsize::Vector{Float64}# To store the current fig size (xsize,ysize[,zsize]). Needed, for example, in hexbin
+    proj_linear::Vector{Bool}# To know if images sent to GMT need Pad
+    returnPS::Vector{Bool}# To know if returning the PS to Julia
+    callable::Vector{Symbol}# Modules that can be called inside other modules
+    pocket_B::Vector{String}# To temporarily store opt_B grid and fill color to be reworked in psclip
+    pocket_J::Vector{String}# To temporarily store opt_J and fig size to eventualy flip directions (y + down, etc)
+    # = [opt_J width opt_Jz codes-to-tell-which-axis-to-reverse]
+    pocket_R::Vector{String}# To temporarily store opt_R
+    XYlabels::Vector{String}# To temporarily store the x,y col names to let x|y labels know what to plot (if "auto")
+    IamInPaperMode::Vector{Bool}# A 2 elem vec to know if we are in under-the-hood paper mode. 2nd traces if first call
+    gmt_mem_bag::Vector{Ptr{Cvoid}}# To temporarily store a GMT owned memory to be freed in gmt()
+    pocket_d::Vector{Dict{Symbol,Any}}# To pass the Dict of kwargs, after consumption, to other modules.
 end
 
 mutable struct CTRLstruct2
-	first::Bool						# Signal that we are starting a new plot (used to set params)
-	points::Bool					# If maps are using points as coordinates
-	fname::String					# Store the full name of PS being constructed
+    first::Bool# Signal that we are starting a new plot (used to set params)
+    points::Bool# If maps are using points as coordinates
+    fname::String# Store the full name of PS being constructed
 end
 
 mutable struct TMPDIRInfo
-	dir::String						# Temporary directory path
-	username::String				# Username (spaces replaced with underscores)
-	pid_suffix::String				# PID suffix for multi-process support
+    dir::String# Temporary directory path
+    username::String# Username (spaces replaced with underscores)
+    pid_suffix::String# PID suffix for multi-process support
 end
 
 mutable struct InsetInfo
-	active::Bool					# Whether currently in inset mode
-	has_J::Bool						# Whether -J projection option was provided (GMT bug #7005 workaround)
+    active::Bool# Whether currently in inset mode
+    has_J::Bool# Whether -J projection option was provided (GMT bug #7005 workaround)
 end
 
-depfile = joinpath(dirname(@__FILE__),"..","deps","deps.jl")	# File with shared lib names
-isfile(depfile) && include(depfile)		# This loads the shared libs names in the case of NON-JLL, otherwise just return
+depfile = joinpath(dirname(@__FILE__), "..", "deps", "deps.jl")# File with shared lib names
+isfile(depfile) && include(depfile)# This loads the shared libs names in the case of NON-JLL, otherwise just return
 
-if ((!(@isdefined have_jll) || have_jll == 1) && get(ENV, "SYSTEMWIDE_GMT", "") == "")	# That is, the JLL case
-	using GMT_jll, GDAL_jll, PROJ_jll, Ghostscript_jll
-	t = split(readlines(`$(GMT_jll.gmt()) "--version"`)[1],'_')
-	const GMTver = VersionNumber(t[1])
-	const GMTdevdate = (length(t) > 1) ? Date(t[end], dateformat"y.m.d") : Date("0001-01-01")	# For DEV versions
-	const GMTuserdir = [readlines(`$(GMT_jll.gmt()) "--show-userdir"`)[1]]
-	const GSbin = Ghostscript_jll.gs()[1]
-	const GMTbin = GMT_jll.gmt()[1]
-	const isJLL = true
-	fname = joinpath(GMTuserdir[1], "ghost_jll_path.txt")
-	!isdir(GMTuserdir[1]) && mkdir(GMTuserdir[1])	# When installing on a clean no GMT sys, ~/.gmt doesn't exist
-	open(fname,"w") do f
-		write(f, GSbin)								# Save this to be used by psconvert.c
-	end
+if ((!(@isdefined have_jll) || have_jll == 1) && get(ENV, "SYSTEMWIDE_GMT", "") == "")# That is, the JLL case
+    using GMT_jll, GDAL_jll, PROJ_jll, Ghostscript_jll
+    t = split(readlines(`$(GMT_jll.gmt()) "--version"`)[1], '_')
+    const GMTver = VersionNumber(t[1])
+    const GMTdevdate = (length(t) > 1) ? Date(t[end], dateformat"y.m.d") : Date("0001-01-01")# For DEV versions
+    const GMTuserdir = [readlines(`$(GMT_jll.gmt()) "--show-userdir"`)[1]]
+    const GSbin = Ghostscript_jll.gs()[1]
+    const GMTbin = GMT_jll.gmt()[1]
+    const isJLL = true
+    fname = joinpath(GMTuserdir[1], "ghost_jll_path.txt")
+    !isdir(GMTuserdir[1]) && mkdir(GMTuserdir[1])# When installing on a clean no GMT sys, ~/.gmt doesn't exist
+    open(fname, "w") do f
+        write(f, GSbin)# Save this to be used by psconvert.c
+    end
 else
-	const isJLL = false
-	const GMTver, libgmt, libgdal, libproj, GMTuserdir, GMTbin = _GMTver, _libgmt, _libgdal, _libproj, [userdir], "gmt"
-	const GMTdevdate = Date(devdate, dateformat"y.m.d")		# 'devdate' comes from reading 'deps.jl'
+    const isJLL = false
+    const GMTver, libgmt, libgdal, libproj, GMTuserdir, GMTbin = _GMTver, _libgmt, _libgdal, _libproj, [userdir], "gmt"
+    const GMTdevdate = Date(devdate, dateformat"y.m.d")# 'devdate' comes from reading 'deps.jl'
 end
 
 const G_API = Ref{Ptr{Cvoid}}(C_NULL)
-const PSname = Ref{String}("")					# The PS file (filled in __init__) where, in classic mode, all lands.
-const TMPDIR_USR = TMPDIRInfo(tempdir(), "", "")	# Save the tmp dir and user name (also filled in __init__)
-const global TESTSDIR = joinpath(dirname(pathof(GMT))[1:end-4], "test", "")	# To have easy access to test files
-const IMG_MEM_LAYOUT = Ref{String}("")			# "TCP"	 For Images.jl. The default is "TRBa"
-const GRD_MEM_LAYOUT = Ref{String}("")			# "BRP" is the default for GMT PS images.
-const CURRENT_VIEW = Ref{String}("")			# To store the current viewpoint (-p)
-const MULTI_COL   = Ref{Bool}(false)			# To allow plottig multiple columns at once.
-const IamModern   = Ref{Bool}(false)			# To know if we are in modern mode
-const FirstModern = Ref{Bool}(false)			# To know
-const DidOneGmtCmd = Ref{Bool}(false)			# To know when first gmt() call. Used in first modern mode cmd to not restart what is still fresh
-const IamModernBySubplot = Ref{Bool}(false)		# To know if set in subpot
-const IamSubplot  = Ref{Bool}(false)			# To know if we are in subplot mode
-const IamInset = InsetInfo(false, false)		# To know if we are in Inset mode
-const usedConfPar = Ref{Bool}(false)			# Hacky solution for the session's memory trouble
-const ThemeIsOn   = Ref{Bool}(false)			# To know if we have an active plot theme
-const CONVERT_SYNTAX = Ref{Bool}(false)			# To only convert to hard core GMT syntax (like Vd=2)
-const SHOW_KWARGS = Ref{Bool}(false)			# To just print the kwargs of a option call)
-const isFranklin  = Ref{Bool}(false)			# Only set/unset by the Docs building scripts.
-const isJupyter   = Ref{Bool}(false)			# Jupyter and Modern need special treatment (Quarto).
-const isPSclosed  = Ref{Bool}(false)			# Modern mode will close the PS at the end. We need to know that
-const noGrdCopy   = Ref{Bool}(false)			# If true, grids are sent without transpose/copy
-const GMTCONF     = Ref{Bool}(false)			# Flag if gmtset was used and must be 'unused'
-const FMT = Ref{String}("png")					# The default plot format
-const BOX_STR = Ref{String}("")					# Used in plotyy to know -R of first call
+const PSname = Ref{String}("")# The PS file (filled in __init__) where, in classic mode, all lands.
+const TMPDIR_USR = TMPDIRInfo(tempdir(), "", "")# Save the tmp dir and user name (also filled in __init__)
+const global TESTSDIR = joinpath(dirname(pathof(GMT))[1:end-4], "test", "")# To have easy access to test files
+const IMG_MEM_LAYOUT = Ref{String}("")# "TCP"	 For Images.jl. The default is "TRBa"
+const GRD_MEM_LAYOUT = Ref{String}("")# "BRP" is the default for GMT PS images.
+const CURRENT_VIEW = Ref{String}("")# To store the current viewpoint (-p)
+const MULTI_COL = Ref{Bool}(false)# To allow plottig multiple columns at once.
+const IamModern = Ref{Bool}(false)# To know if we are in modern mode
+const FirstModern = Ref{Bool}(false)# To know
+const DidOneGmtCmd = Ref{Bool}(false)# To know when first gmt() call. Used in first modern mode cmd to not restart what is still fresh
+const IamModernBySubplot = Ref{Bool}(false)# To know if set in subpot
+const IamSubplot = Ref{Bool}(false)# To know if we are in subplot mode
+const IamInset = InsetInfo(false, false)# To know if we are in Inset mode
+const usedConfPar = Ref{Bool}(false)# Hacky solution for the session's memory trouble
+const ThemeIsOn = Ref{Bool}(false)# To know if we have an active plot theme
+const CONVERT_SYNTAX = Ref{Bool}(false)# To only convert to hard core GMT syntax (like Vd=2)
+const SHOW_KWARGS = Ref{Bool}(false)# To just print the kwargs of a option call)
+const isFranklin = Ref{Bool}(false)# Only set/unset by the Docs building scripts.
+const isJupyter = Ref{Bool}(false)# Jupyter and Modern need special treatment (Quarto).
+const isPSclosed = Ref{Bool}(false)# Modern mode will close the PS at the end. We need to know that
+const noGrdCopy = Ref{Bool}(false)# If true, grids are sent without transpose/copy
+const GMTCONF = Ref{Bool}(false)# Flag if gmtset was used and must be 'unused'
+const FMT = Ref{String}("png")# The default plot format
+const BOX_STR = Ref{String}("")# Used in plotyy to know -R of first call
 const POSTMAN = Ref{Dict{String,String}}(Dict{String,String}())     # To pass messages to functions (start with get_dataset) 
-const DEF_FIG_SIZE  = "15c/10c"                        # Default fig size for plot like programs. Approx 16/11
-const DEF_FIG_AXES_BAK     = " -Baf -BWSen"            # Default fig axes for plot like programs
-const DEF_FIG_AXES3_BAK    = " -Baf -Bza"              # 		"" but for 3D views
-const DEF_FIG_AXES  = Ref{String}(DEF_FIG_AXES_BAK)    # This one may be be changed by theme()
+const DEF_FIG_SIZE = "15c/10c"                        # Default fig size for plot like programs. Approx 16/11
+const DEF_FIG_AXES_BAK = " -Baf -BWSen"            # Default fig axes for plot like programs
+const DEF_FIG_AXES3_BAK = " -Baf -Bza"              # 		"" but for 3D views
+const DEF_FIG_AXES = Ref{String}(DEF_FIG_AXES_BAK)    # This one may be be changed by theme()
 const DEF_FIG_AXES3 = Ref{String}(DEF_FIG_AXES3_BAK)   #		""
 const FIG_MARGIN = Ref{Int}(1)                      # Figure margin in points after convertion by 'psconvert'. Accessible 'margin' common option
 const global CTRL = CTRLstruct(zeros(13), zeros(6), [true], [false],
-                               [:arrows, :bubblechart, :basemap, :band, :clip, :coast, :colorbar, :grdcontour, :hband, :hlines, :inset, :logo, :lines, :grdvector, :plot, :plot3, :quiver, :scatter, :scatter3, :stairs, :text, :vlines, :vband], ["","",""], ["","", "", "   "], ["",""], ["",""], [false,true], [C_NULL], [Dict()])
-const pocket_call = Ref{Vector{Any}}(Any[nothing, nothing, nothing, nothing, nothing, nothing])	# Extracted from CTRL to isolate type instability
-const CTRLshapes = CTRLstruct2(true, true, "")			# Used in sub-module Drawing
-const prj4WGS84 = "+proj=longlat +datum=WGS84 +units=m +no_defs"	# This is used in many places
+    [:arrows, :bubblechart, :basemap, :band, :clip, :coast, :colorbar, :grdcontour, :hband, :hlines, :inset, :logo, :lines, :grdvector, :plot, :plot3, :quiver, :scatter, :scatter3, :stairs, :text, :vlines, :vband], ["", "", ""], ["", "", "", "   "], ["", ""], ["", ""], [false, true], [C_NULL], [Dict()])
+const pocket_call = Ref{Vector{Any}}(Any[nothing, nothing, nothing, nothing, nothing, nothing])# Extracted from CTRL to isolate type instability
+const CTRLshapes = CTRLstruct2(true, true, "")# Used in sub-module Drawing
+const prj4WGS84 = "+proj=longlat +datum=WGS84 +units=m +no_defs"# This is used in many places
 const global CPTaliases = [:C :color :cmap :colormap :colorscale]
-const global VMs = Union{Vector{Symbol}, Matrix{Symbol}}
-const global VMr = Union{AbstractVector{<:Real}, Matrix{<:Real}}
-const global DictSvS = Dict{String, Union{String, Vector{String}}}
-const global StrSymb = Union{AbstractString, Symbol}
+const global VMs = Union{Vector{Symbol},Matrix{Symbol}}
+const global VMr = Union{AbstractVector{<:Real},Matrix{<:Real}}
+const global DictSvS = Dict{String,Union{String,Vector{String}}}
+const global StrSymb = Union{AbstractString,Symbol}
 const global filesep = Sys.iswindows() ? "\\" : "/"
-const GMTmodule = Ref{Module}(GMT)		# WTF can't we have it as?: getfield(Main, nameof(@__MODULE__)) -> Error GMT not defined
+const GMTmodule = Ref{Module}(GMT)# WTF can't we have it as?: getfield(Main, nameof(@__MODULE__)) -> Error GMT not defined
 # GItype = Union{GMTgrid, GMTimage} and GDtype = Union{GMTdataset, Vector{GMTdataset}} are declared in gmt_types
 # MatGDsGd = Union{Matrix{<:AbstractFloat}, GMTdataset, Vector{GMTdataset}, Gdal.AbstractDataset}	declared down
 #const global unused_opts = [()]					# To track consumed options
 #const global unused_subopts = [()]					# To track consumed options in sub-options
 
 if isdefined(Base, :Experimental) && isdefined(Base.Experimental, Symbol("@optlevel"))
-	@eval Base.Experimental.@optlevel 1
+    @eval Base.Experimental.@optlevel 1
 end
 
 export
-	KW, GMTgrid, GMTimage, GMTdataset, GMTfv, GMTcpt, GItype, GDtype, GMTver, FMT, TMPDIR_USR, TESTSDIR, gmt,
-	gmt_GMTgrid, libgdal, arrows, arrows!, bar, bar!, bar3, bar3!, band, band!, bubblechart, bubblechart!, crop,
-	feather, feather!, hband, hband!, hlines, hlines!, lines, lines!, legend, legend!, quiver, quiver!, radar,
-	radar!, stairs, stairs!, stem, stem!,vlines, vlines!, vband, vband!, hspan, hspan!, vspan, vspan!,
-	basemap, basemap!, blockmean, blockmedian, blockmode, clip, clip!,
-	coast, coast!, colorbar, colorbar!, colorscale, colorscale!, contour, contour!, contourf, contourf!, events,
-	filter1d, fitcircle, gmt2kml, gmtbinstats, binstats, gmtconnect, gmtconvert,
-	gmtinfo, gmtlogo, gmtlogo!, gmtmath, gmtregress, gmtread, gmtselect, gmtset, gmtsimplify, gmtspatial,
-	gmtvector, gmtwrite, gmtwhich, grd2cpt, grd2kml, grd2xyz, grdblend, grdclip, grdcontour, grdcontour!, grdconvert,
-	grdcut, grdedit, grdfft, grdfill, grdfilter, grdgradient, grdhisteq, grdimage, grdimage!, grdinfo, grdinterpolate,
-	grdlandmask, grdmath, grdmask, grdpaste, grdproject, grdsample, grdtrack, grdtrend, grdvector, grdvector!,
-	grdview, grdview!, grdvolume, greenspline, histogram, histogram!, image, image!, image_alpha!, image_cpt!,
-	imshow, ind2rgb, isnodata, kml2gmt, logo, logo!, makecpt, mask, mask!, mapproject, movie, nearneighbor, plot, plot!,
-	plot3, plot3!, plot3d, plot3d!, plotyy, project, pscontour, pscontour!, psconvert, psbasemap, psbasemap!,
-	psclip, psclip!, pscoast, pscoast!, psevents, pshistogram, pshistogram!,
-	psimage, psimage!, pslegend, pslegend!, psmask, psmask!, psrose, psrose!, psscale, psscale!, pssolar, pssolar!,
-	psternary, psternary!, pstext, pstext!, pswiggle, pswiggle!, psxy, psxy!, psxyz, psxyz!, regress, resetGMT, rose,
-	rose!, sample1d, scatter, scatter!, scatter3, scatter3!, solar, solar!, analemma, enso, keeling,
-	sunsetrise, spectrum1d, sphdistance, sphinterpolate,
-	sphtriangulate, surface, ternary, ternary!, text, text!, text_record, trend1d, trend2d, triangulate, gmtsplit,
-	decorated, vector_attrib, wiggle, wiggle!, xyz2grd, gmtbegin, gmtend, gmthelp, subplot, gmtfig, inset, showfig,
-	earthtide, gmt2grd, gravfft, gmtgravmag3d, gravmag3d, grdgravmag3d, gravprisms, grdseamount, parkermag, parkergrav,
-	pscoupe, pscoupe!, coupe, coupe!, psmeca, psmeca!, meca, meca!, psvelo, psvelo!, sac, sac!, velo, velo!, gmtisf, getbyattrib,
-	inpolygon, inwhichpolygon, pcolor, pcolor!, triplot, triplot!, trisurf, trisurf!, grdrotater, imagesc, upGMT, boxes,
-	stereonet, stereonet!,
-	
-	add_opt, isgeog, numel, scan_opt, extrema_nan, parse_RIr, close_PS_file, getsize, meshgrid, parse_B, parse_BJR, parse_I,
-	parse_J, parse_R, ressurectGDAL, CPTaliases, isJLL, POSTMAN, PSname,
+    KW, GMTgrid, GMTimage, GMTdataset, GMTfv, GMTcpt, GItype, GDtype, GMTver, FMT, TMPDIR_USR, TESTSDIR, gmt,
+    gmt_GMTgrid, libgdal, arrows, arrows!, bar, bar!, bar3, bar3!, band, band!, bubblechart, bubblechart!, crop,
+    feather, feather!, hband, hband!, hlines, hlines!, lines, lines!, legend, legend!, quiver, quiver!, radar,
+    radar!, stairs, stairs!, stem, stem!, vlines, vlines!, vband, vband!, hspan, hspan!, vspan, vspan!,
+    basemap, basemap!, blockmean, blockmedian, blockmode, clip, clip!,
+    coast, coast!, colorbar, colorbar!, colorscale, colorscale!, contour, contour!, contourf, contourf!, events,
+    filter1d, fitcircle, gmt2kml, gmtbinstats, binstats, gmtconnect, gmtconvert,
+    gmtinfo, gmtlogo, gmtlogo!, gmtmath, gmtregress, gmtread, gmtselect, gmtset, gmtsimplify, gmtspatial,
+    gmtvector, gmtwrite, gmtwhich, grd2cpt, grd2kml, grd2xyz, grdblend, grdclip, grdcontour, grdcontour!, grdconvert,
+    grdcut, grdedit, grdfft, grdfill, grdfilter, grdgradient, grdhisteq, grdimage, grdimage!, grdinfo, grdinterpolate,
+    grdlandmask, grdmath, grdmask, grdpaste, grdproject, grdsample, grdtrack, grdtrend, grdvector, grdvector!,
+    grdview, grdview!, grdvolume, greenspline, histogram, histogram!, image, image!, image_alpha!, image_cpt!,
+    imshow, ind2rgb, isnodata, kml2gmt, logo, logo!, makecpt, mask, mask!, mapproject, movie, nearneighbor, plot, plot!,
+    plot3, plot3!, plot3d, plot3d!, plotyy, project, pscontour, pscontour!, psconvert, psbasemap, psbasemap!,
+    psclip, psclip!, pscoast, pscoast!, psevents, pshistogram, pshistogram!,
+    psimage, psimage!, pslegend, pslegend!, psmask, psmask!, psrose, psrose!, psscale, psscale!, pssolar, pssolar!,
+    psternary, psternary!, pstext, pstext!, pswiggle, pswiggle!, psxy, psxy!, psxyz, psxyz!, regress, resetGMT, rose,
+    rose!, sample1d, scatter, scatter!, scatter3, scatter3!, solar, solar!, analemma, enso, keeling,
+    sunsetrise, spectrum1d, sphdistance, sphinterpolate,
+    sphtriangulate, surface, ternary, ternary!, text, text!, text_record, trend1d, trend2d, triangulate, gmtsplit,
+    decorated, vector_attrib, wiggle, wiggle!, xyz2grd, gmtbegin, gmtend, gmthelp, subplot, gmtfig, inset, showfig,
+    earthtide, gmt2grd, gravfft, gmtgravmag3d, gravmag3d, grdgravmag3d, gravprisms, grdseamount, parkermag, parkergrav,
+    pscoupe, pscoupe!, coupe, coupe!, psmeca, psmeca!, meca, meca!, psvelo, psvelo!, sac, sac!, velo, velo!, gmtisf, getbyattrib,
+    inpolygon, inwhichpolygon, pcolor, pcolor!, triplot, triplot!, trisurf, trisurf!, grdrotater, imagesc, upGMT, boxes,
+    segy, segy!, segyz, segyz!, segy2grd, stereonet, stereonet!, add_opt, isgeog, numel, scan_opt, extrema_nan, parse_RIr, close_PS_file, getsize, meshgrid, parse_B, parse_BJR, parse_I,
+    parse_J, parse_R, ressurectGDAL, CPTaliases, isJLL, POSTMAN, PSname, mgd77magref, magref, find_in_dict, find_in_kwargs,
+    mbimport, mbgetdata, mbsvplist, mblevitus, blendimg!, lonlat2xy, xy2lonlat, df2ds, mat2ds, mat2grid, mat2img, slicecube, cubeslice, linspace, logspace, fileparts,
+    tests, fields, flipud, fliplr, flipdim, flipdim!, grdinterpolate, pow, tic, toc, theme, tern2cart, geodetic2enu, cpt4dcw,
+    getregion, getattribs, getattrib, getres, gd2gmt, gmt2gd, gdalread, gdalshade, gdalwrite, gadm, xyzw2cube,
+    coastlinesproj, graticules, orbits, orbits!, plotgrid!, leepacific, worldrectangular, worldrectgrid, togglemask, earthregions, gridit, grid2tri, magic, rescale, stackgrids, delrows, setgrdminmax!, meshgrid, cart2pol, pol2cart,
+    cart2sph, sph2cart, arcellipse, arccircle, getband, getdriver, getlayer, getproj, getgeom, getgeotransform, gdaldrivers, toPROJ4, toWKT,
+    importPROJ4, importWKT, importEPSG, gdalinfo, gdalwarp, gdaldem, gdaltranslate, gdalgrid, gdalvectortranslate,
+    ogr2ogr, gdalrasterize, gdalbuildvrt, readgeom, readraster, setgeotransform!, setnodata!, setproj!, destroy,
+    delaunay, dither, buffer, centroid, intersection, intersects, polyunion, overlaps, fromWKT, fillnodata!, fillnodata,
+    concavehull, convexhull, difference, symdifference, distance, geodesicarea, geomarea, geomlength, pointalongline,
+    polygonize, simplify, boundary, crosses, disjoint, envelope, envelope3d, equals, touches, within, wkbUnknown, wkbPoint, wkbPointZ, wkbLineString, wkbLineStringZ, wkbPolygon, wkbPolygonZM, wkbMultiPoint, wkbMultiPointZ,
+    wkbMultiLineString, wkbMultiPolygon, wkbGeometryCollection, wkbPoint25D, wkbLineString25D, wkbPolygon25D, wkbMultiPoint25D,
+    wkbMultiLineString25D, wkbMultiPolygon25D, wkbGeometryCollection25D, bezier, buffergeo, circgeo, epsg2proj, epsg2wkt, geod, invgeod, loxodrome, loxodrome_direct, loxodrome_inverse,
+    geodesic, orthodrome, proj2wkt, setcoords!, setfld!, setcrs!, setsrs!, settimecol!, vecangles, wkt2proj,
+    inbbox, randgeo, colorzones!, rasterzones!, rasterzones, lelandshade, texture_img, crop, doy2date, date2doy, choropleth, fourcolors,
+    getdcw, ISOtime2unix, median, mean, quantile, std, nanmean, nanstd, skipnan, zonal_statistics, zonal_stats,
+    autocor, autocor!, autocov, autocov!, conv, yeardecimal, xcorr, xcov, add2PSfile, append2fig, isoutlier, linearfitxy, regiongeog, streamlines, peaks, polygonlevels, randinpolygon, polyfit, polyval, ablines, ablines!, biplot, biplot!, density, density!, boxplot, boxplot!, cornerplot, cornerplot!, cubeplot, cubeplot!,
+    ecdfplot, ecdfplot!, fill_between, fill_between!, funcurve, marginalhist, marginalhist!, parallelplot, parallelplot!,
+    piechart, piechart!, plotlinefit, plotlinefit!, qqplot, qqplot!, qqnorm, qqnorm!, remotegrid, sealand, squeeze, terramar,
+    violin, violin!, viz, vizpdf, windbarbs, whereami, maregrams, pastplates, seismicity, ecmwf, era5time, era5vars, listecmwfvars, meteostat, weather, wmsinfo, wmstest, wmsread, VSdisp, mad, info, kmeans, pca, mosaic, quadbounds, quadkey, geocoder, getprovider, zscores, bwhitmiss, binarize, bwareaopen, bwconncomp, bwdist, bwdist_idx, bwlabel, bwperim, bwskell, cc2bw, graydist, isodata,
+    padarray, rgb2gray, rgb2lab, rgb2YCbCr, rgb2ycbcr, grid2img, img2grid, grays2cube, grays2rgb, imclose,
+    imcomplement, imcomplement!, imdilate, imerode, imfilter, imopen, imsegment, imsobel, imtophat, imbothat,
+    imhdome, imhmin, imhmax, immorphgrad, imrankfilter, strel, imfill, imreconstruct, fillsinks, fillsinks!,
+    imresize, imregionalmin, imregionalmax, imclearborder, findpeaks, makeDCWs, mksymbol, circfit, gunique, uniqueind, sortslicesperm,
+    hampel, hampel!, lowess, whittaker, Ginnerjoin, Gouterjoin, Gleftjoin, Grightjoin, Gcrossjoin, Gsemijoin, Gantijoin, spatialjoin, groupby, stats, anaglyph,
+    lazinfo, lazread, lazwrite, lasread, laswrite,
+    okada,
+    haralick,
+    mapsize2region,
+    ind2bool, cube, cylinder, circlepts, dodecahedron, ellipse3D, eulermat, flatfv, icosahedron, loft, sphere, spinmat,
+    octahedron, tetrahedron, torus, replicant, revolve, rotate, rotate!, translate, translate!, df2ds, ds2df, extrude, fv2fv, isclockwise, surf2fv, ODE2ds,
 
-	mgd77magref, magref,
-
-	find_in_dict, find_in_kwargs,
-	mbimport, mbgetdata, mbsvplist, mblevitus,
-
-	blendimg!, lonlat2xy, xy2lonlat, df2ds, mat2ds, mat2grid, mat2img, slicecube, cubeslice, linspace, logspace, fileparts,
-	tests, fields, flipud, fliplr, flipdim, flipdim!, grdinterpolate, pow, tic, toc, theme, tern2cart, geodetic2enu, cpt4dcw,
-	getregion, getattribs, getattrib, getres, gd2gmt, gmt2gd, gdalread, gdalshade, gdalwrite, gadm, xyzw2cube,
-	coastlinesproj, graticules, orbits, orbits!, plotgrid!, leepacific, worldrectangular, worldrectgrid, togglemask,
-
-	earthregions, gridit, grid2tri, magic, rescale, stackgrids, delrows, setgrdminmax!, meshgrid, cart2pol, pol2cart,
-	cart2sph, sph2cart,
-
-	arcellipse, arccircle, getband, getdriver, getlayer, getproj, getgeom, getgeotransform, gdaldrivers, toPROJ4, toWKT,
-	importPROJ4, importWKT, importEPSG, gdalinfo, gdalwarp, gdaldem, gdaltranslate, gdalgrid, gdalvectortranslate,
-	ogr2ogr, gdalrasterize, gdalbuildvrt, readgeom, readraster, setgeotransform!, setnodata!, setproj!, destroy,
-	delaunay, dither, buffer, centroid, intersection, intersects, polyunion, overlaps, fromWKT, fillnodata!, fillnodata,
-	concavehull, convexhull, difference, symdifference, distance, geodesicarea, geomarea, geomlength, pointalongline,
-	polygonize, simplify, boundary, crosses, disjoint, envelope, envelope3d, equals, touches, within, 
-	
-	wkbUnknown, wkbPoint, wkbPointZ, wkbLineString, wkbLineStringZ, wkbPolygon, wkbPolygonZM, wkbMultiPoint, wkbMultiPointZ,
-	wkbMultiLineString, wkbMultiPolygon, wkbGeometryCollection, wkbPoint25D, wkbLineString25D, wkbPolygon25D, wkbMultiPoint25D,
-	wkbMultiLineString25D, wkbMultiPolygon25D, wkbGeometryCollection25D,
-
-	bezier, buffergeo, circgeo, epsg2proj, epsg2wkt, geod, invgeod, loxodrome, loxodrome_direct, loxodrome_inverse,
-	geodesic, orthodrome, proj2wkt, setcoords!, setfld!, setcrs!, setsrs!, settimecol!, vecangles, wkt2proj,
-	inbbox, randgeo,
-
-	colorzones!, rasterzones!, rasterzones, lelandshade, texture_img, crop, doy2date, date2doy, choropleth, fourcolors,
-	getdcw, ISOtime2unix, median, mean, quantile, std, nanmean, nanstd, skipnan, zonal_statistics, zonal_stats,
-	autocor, autocor!, autocov, autocov!, conv, yeardecimal, xcorr, xcov,
-
-	add2PSfile, append2fig, isoutlier, linearfitxy, regiongeog, streamlines, peaks, polygonlevels, randinpolygon, polyfit, polyval,
-
-	ablines, ablines!, biplot, biplot!, density, density!, boxplot, boxplot!, cornerplot, cornerplot!, cubeplot, cubeplot!,
-	ecdfplot, ecdfplot!, fill_between, fill_between!, funcurve, marginalhist, marginalhist!, parallelplot, parallelplot!,
-	piechart, piechart!, plotlinefit, plotlinefit!, qqplot, qqplot!, qqnorm, qqnorm!, remotegrid, sealand, squeeze, terramar,
-	violin, violin!, viz, vizpdf, windbarbs, whereami,
-
-	maregrams, pastplates, seismicity, ecmwf, era5time, era5vars, listecmwfvars, meteostat, weather, wmsinfo, wmstest, wmsread,
-
-	VSdisp, mad, info, kmeans, pca, mosaic, quadbounds, quadkey, geocoder, getprovider, zscores,
-
-	bwhitmiss, binarize, bwareaopen, bwconncomp, bwdist, bwdist_idx, bwlabel, bwperim, bwskell, cc2bw, graydist, isodata,
-	padarray, rgb2gray, rgb2lab, rgb2YCbCr, rgb2ycbcr, grid2img, img2grid, grays2cube, grays2rgb, imclose,
-	imcomplement, imcomplement!, imdilate, imerode, imfilter, imopen, imsegment, imsobel, imtophat, imbothat,
-	imhdome, imhmin, imhmax, immorphgrad, imrankfilter, strel, imfill, imreconstruct, fillsinks, fillsinks!,
-	imresize, imregionalmin, imregionalmax, imclearborder,
-
-	findpeaks, makeDCWs, mksymbol, circfit,
-
-	gunique, uniqueind, sortslicesperm,
-	hampel, hampel!, lowess, whittaker,
-
-	Ginnerjoin, Gouterjoin, Gleftjoin, Grightjoin, Gcrossjoin, Gsemijoin, Gantijoin, spatialjoin, groupby, stats,
-
-	anaglyph,
-	lazinfo, lazread, lazwrite, lasread, laswrite,
-	okada,
-	haralick,
-	mapsize2region,
-	ind2bool,
-
-	cube, cylinder, circlepts, dodecahedron, ellipse3D, eulermat, flatfv, icosahedron, loft, sphere, spinmat,
-	octahedron, tetrahedron, torus, replicant, revolve, rotate, rotate!, translate, translate!,
-
-	df2ds, ds2df, extrude, fv2fv, isclockwise, surf2fv, ODE2ds,
-
-	# Reexport some from Dates
-	Date, DateTime, Year, Month, Week, Day, Hour, Minute, Second, year, month, week, day, hour, minute, second, now, today,
-	bissextile,
-
-	prettytable,
-
-	@?, @G, @dir
+    # Reexport some from Dates
+    Date, DateTime, Year, Month, Week, Day, Hour, Minute, Second, year, month, week, day, hour, minute, second, now, today,
+    bissextile, prettytable, @?, @G, @dir
 
 include("common_docs.jl")
 include("libgmt_h.jl")
@@ -229,14 +185,14 @@ include("gmt_types.jl")
 include("gdal/gdal.jl")
 include("gdal_utils.jl")
 include("proj_utils.jl")
-const global MatGDsGd = Union{Matrix{<:AbstractFloat}, GMTdataset, Vector{<:GMTdataset}, Gdal.AbstractDataset}
-const CURRENT_CPT = Ref{GMTcpt}(GMTcpt())		# To store the current palette
+const global MatGDsGd = Union{Matrix{<:AbstractFloat},GMTdataset,Vector{<:GMTdataset},Gdal.AbstractDataset}
+const CURRENT_CPT = Ref{GMTcpt}(GMTcpt())# To store the current palette
 
 include("gmt_main.jl")
 include("utils_types.jl")
 include("grd_operations.jl")
 include("common_options.jl")
-const LEGEND_TYPE = Ref{legend_bag}(legend_bag())	# To store Legends info
+const LEGEND_TYPE = Ref{legend_bag}(legend_bag())# To store Legends info
 include("beziers.jl")
 include("circfit.jl")
 include("crop.jl")
@@ -404,75 +360,77 @@ using .Laszip
 #using .ImageFeatures
 
 @compile_workload begin
-	G_API[] = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS)
-	#GMT.parse_B(Dict{Symbol, Any}(:frame => (annot=10, title="Ai Ai"), :grid => (pen=2, x=10, y=20)), "", " -Baf -BWSen");
-	#GMT.parse_R(Dict{Symbol, Any}(:xlim => (1,2), :ylim => (3,4), :zlim => (5,6)), "");
-	#GMT.parse_J(Dict{Symbol, Any}(:J => "X", :scale => "1:10"), "");
-	#GMT.parse_opt_S(Dict{String, Any}(), mat2ds(rand(4,2)));
-	#GMT.build_opt_J(:X5);
-	GMT.theme("dark")
-	GMT.theme_modern()
-	mat2ds([9 8; 9 8], x=[0 7], pen=["5p,black", "4p,white,20p_20p"], multi=true);
-	#GMT.cat_2_arg2(rand(3), mat2ds(rand(3,2)));
-	#GMT.cat_2_arg2(mat2ds(rand(3,2)), mat2ds(rand(3,2)));
-	#GMT.cat_3_arg2(rand(3),rand(3),rand(3));
-	makecpt(T=(0,10))
-	t = joinpath(tempdir(), "lixo.dat");
-	gmtwrite(t,[0.0 0; 1 1]);
-	gmtread(t);
-	gmtread(TESTSDIR * "assets/burro_cenora.jpg");
-	rm(t)
-	D = mat2ds(rand(3,3), colnames=["Time","b","c"]); D.attrib = Dict("Timecol" => "1");
-	D[:Time];	D["Time", "b"];
-	#plot(rand(5,2), marker=:point, lc=:red, ls=:dot, lw=1)
-	grdimage(rand(Float32,32,32), R="0/32/0/32");
-	grdimage(tests("coins"))
-	I = mat2img(rand(UInt8, 32, 32, 3), clim=:zscale);
-	grdimage(I, V=:q);
-	grdview(rand(Float32,32,32), Vd=2);
-	grdinfo(mat2grid(rand(Float32,4,4)));
-	Glix=gmt("grdmath", "-R0/10/0/10 -I2 X");
-	gmt_grdinfo_C(Glix);
-	grdcontour(Glix);
-	grd2cpt(Glix);
-	grd2xyz(Glix);
-	viz(Glix, show=false);
-	histogram(randn(100),T=0.1,center=true, Z=:counts)
-	histogram(I);
-	grdlandmask(R="-10/4/37/45", res=:c, inc=0.1);
-	grdmask([10 20; 40 40; 70 20; 10 20], R="0/100/0/100", out_edge_in=[100 0 0], I=2);
-	grdsample(Glix, inc=0.5);
-	grdtrend(Glix, model=3);
-	grdtrack(Glix, [1 1]);
-	coast(R=:g, proj=:guess, W=(level=1,pen=(2,:green)));
-	#gridit(rand(10,3), preproc=true, I=0.1);
-	#earthregions("PT", Vd=2);
-	#violin(rand(50), fmt=:ps);
-	#boxplot(rand(50), fmt=:ps);
-	#qqplot(randn(500), randn(50), fmt=:ps);
-	#ecdfplot!(randn(50), fmt=:ps);
-	#cornerplot(randn(50,3), scatter=true, fmt=:ps);
-	#marginalhist(randn(1000,2), par=(PS_MEDIA="A2",), fmt=:ps);	rm("GMTplot.ps")
-	#feather([0.0 0 2.0; 0.0 30 2; 0.0 60 2], rtheta=true, aspect="1:1", arrow=(len=0.5, shape=0.5,), fmt=:ps);
-	#orbits(mat2ds(rand(10,3)));
-	#pca(rand(Float32, 24, 4));
-	#pca(mat2img(rand(UInt8, 64,64,4)));
-	#kmeans(rand(100,3), 3, maxiter=10);
-	#rm(joinpath(tempdir(), "GMTjl_custom_p_x.txt"))		# This one gets created before username is set.
-	#arrows([0 8.2 0 6], limits=(-2,4,0,9), arrow=(len=2,stop=1,shape=0.5,fill=:red), axis=:a, pen="6p");
-	GMT.doc_source_links("psbasemap"; silent=true)
-	theme()
-	#rescale(mat2img(rand(UInt16, 16,16,3)))
-	plot(rand(5,2))
-	
-	# This one is really unbelievable. It executes only ONE F NEW LINE:
-	# "bar(arg1, arg2; first=true, kw...) = common_plot_xyz("", cat_2_arg2(arg1, arg2, true), "bar", first, false; kw...)"
-	# but it causes recompilation of a big chunk of common_plot_xyz() that should have been **ALL** precompiled
-	# by the "plot(rand(5,2))" above. But no, another 3 MB of ... landed in the precompiled cache.
-	# I'm commenting this because we can't afford adding (3)MEGABYTES for just one TINNY function.
-	#bar(1:5, (20, 35, 30, 35, 27), width=0.5, color=:lightblue, limits=(0.5,5.5,0,40))
-	
-	resetGMT()
+    G_API[] = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS)
+    #GMT.parse_B(Dict{Symbol, Any}(:frame => (annot=10, title="Ai Ai"), :grid => (pen=2, x=10, y=20)), "", " -Baf -BWSen");
+    #GMT.parse_R(Dict{Symbol, Any}(:xlim => (1,2), :ylim => (3,4), :zlim => (5,6)), "");
+    #GMT.parse_J(Dict{Symbol, Any}(:J => "X", :scale => "1:10"), "");
+    #GMT.parse_opt_S(Dict{String, Any}(), mat2ds(rand(4,2)));
+    #GMT.build_opt_J(:X5);
+    GMT.theme("dark")
+    GMT.theme_modern()
+    mat2ds([9 8; 9 8], x=[0 7], pen=["5p,black", "4p,white,20p_20p"], multi=true)
+    #GMT.cat_2_arg2(rand(3), mat2ds(rand(3,2)));
+    #GMT.cat_2_arg2(mat2ds(rand(3,2)), mat2ds(rand(3,2)));
+    #GMT.cat_3_arg2(rand(3),rand(3),rand(3));
+    makecpt(T=(0, 10))
+    t = joinpath(tempdir(), "lixo.dat")
+    gmtwrite(t, [0.0 0; 1 1])
+    gmtread(t)
+    gmtread(TESTSDIR * "assets/burro_cenora.jpg")
+    rm(t)
+    D = mat2ds(rand(3, 3), colnames=["Time", "b", "c"])
+    D.attrib = Dict("Timecol" => "1")
+    D[:Time]
+    D["Time", "b"]
+    #plot(rand(5,2), marker=:point, lc=:red, ls=:dot, lw=1)
+    grdimage(rand(Float32, 32, 32), R="0/32/0/32")
+    grdimage(tests("coins"))
+    I = mat2img(rand(UInt8, 32, 32, 3), clim=:zscale)
+    grdimage(I, V=:q)
+    grdview(rand(Float32, 32, 32), Vd=2)
+    grdinfo(mat2grid(rand(Float32, 4, 4)))
+    Glix = gmt("grdmath", "-R0/10/0/10 -I2 X")
+    gmt_grdinfo_C(Glix)
+    grdcontour(Glix)
+    grd2cpt(Glix)
+    grd2xyz(Glix)
+    viz(Glix, show=false)
+    histogram(randn(100), T=0.1, center=true, Z=:counts)
+    histogram(I)
+    grdlandmask(R="-10/4/37/45", res=:c, inc=0.1)
+    grdmask([10 20; 40 40; 70 20; 10 20], R="0/100/0/100", out_edge_in=[100 0 0], I=2)
+    grdsample(Glix, inc=0.5)
+    grdtrend(Glix, model=3)
+    grdtrack(Glix, [1 1])
+    coast(R=:g, proj=:guess, W=(level=1, pen=(2, :green)))
+    #gridit(rand(10,3), preproc=true, I=0.1);
+    #earthregions("PT", Vd=2);
+    #violin(rand(50), fmt=:ps);
+    #boxplot(rand(50), fmt=:ps);
+    #qqplot(randn(500), randn(50), fmt=:ps);
+    #ecdfplot!(randn(50), fmt=:ps);
+    #cornerplot(randn(50,3), scatter=true, fmt=:ps);
+    #marginalhist(randn(1000,2), par=(PS_MEDIA="A2",), fmt=:ps);	rm("GMTplot.ps")
+    #feather([0.0 0 2.0; 0.0 30 2; 0.0 60 2], rtheta=true, aspect="1:1", arrow=(len=0.5, shape=0.5,), fmt=:ps);
+    #orbits(mat2ds(rand(10,3)));
+    #pca(rand(Float32, 24, 4));
+    #pca(mat2img(rand(UInt8, 64,64,4)));
+    #kmeans(rand(100,3), 3, maxiter=10);
+    #rm(joinpath(tempdir(), "GMTjl_custom_p_x.txt"))		# This one gets created before username is set.
+    #arrows([0 8.2 0 6], limits=(-2,4,0,9), arrow=(len=2,stop=1,shape=0.5,fill=:red), axis=:a, pen="6p");
+    GMT.doc_source_links("psbasemap"; silent=true)
+    theme()
+    #rescale(mat2img(rand(UInt16, 16,16,3)))
+    plot(rand(5, 2))
+
+    # This one is really unbelievable. It executes only ONE F NEW LINE:
+    # "bar(arg1, arg2; first=true, kw...) = common_plot_xyz("", cat_2_arg2(arg1, arg2, true), "bar", first, false; kw...)"
+    # but it causes recompilation of a big chunk of common_plot_xyz() that should have been **ALL** precompiled
+    # by the "plot(rand(5,2))" above. But no, another 3 MB of ... landed in the precompiled cache.
+    # I'm commenting this because we can't afford adding (3)MEGABYTES for just one TINNY function.
+    #bar(1:5, (20, 35, 30, 35, 27), width=0.5, color=:lightblue, limits=(0.5,5.5,0,40))
+
+    resetGMT()
 end
 
 #Base.precompile(Tuple{typeof(upGMT),Bool, Bool})		# Here it doesn't print anything.
@@ -480,18 +438,18 @@ end
 #Base.precompile(Tuple{typeof(Base.vect), Array{String, 1}, Vararg{Array{String, 1}}})
 
 function __init__(test::Bool=false)
-	clear_sessions(3600)		# Delete stray sessions dirs older than 1 hour
-	G_API[] = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS)	# (0.010179 sec)
-	theme_modern()				# Set the MODERN theme and some more gmtlib_setparameter() calls
-	haskey(ENV, "JULIA_GMT_IMGFORMAT") && (FMT[] = ENV["JULIA_GMT_IMGFORMAT"])
-	f = joinpath(GMTuserdir[1], "theme_jl.txt")
-	(isfile(f)) && (theme(readline(f));	ThemeIsOn[] = false)	# False because we don't want it reset in showfig()
-	user = (Sys.isunix() || Sys.isapple()) ? Libc.getpwuid(Libc.getuid(), true).username : Sys.iswindows() ? ENV["USERNAME"] : ""
-	!isascii(user) && (user = string(hash(user), base = 16)[1:8])	# For non-ASCII user names
-	TMPDIR_USR.username = replace(user, " " => "_")
-	haskey(ENV, "JULIA_GMT_MULTIFILE") && (TMPDIR_USR.pid_suffix = string("_", getpid()))
-	PSname[] = TMPDIR_USR.dir * "/" * "GMTjl_" * TMPDIR_USR.username * TMPDIR_USR.pid_suffix * ".ps"
-	DidOneGmtCmd[] = false
+    clear_sessions(3600)# Delete stray sessions dirs older than 1 hour
+    G_API[] = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS)# (0.010179 sec)
+    theme_modern()# Set the MODERN theme and some more gmtlib_setparameter() calls
+    haskey(ENV, "JULIA_GMT_IMGFORMAT") && (FMT[] = ENV["JULIA_GMT_IMGFORMAT"])
+    f = joinpath(GMTuserdir[1], "theme_jl.txt")
+    (isfile(f)) && (theme(readline(f)); ThemeIsOn[] = false)# False because we don't want it reset in showfig()
+    user = (Sys.isunix() || Sys.isapple()) ? Libc.getpwuid(Libc.getuid(), true).username : Sys.iswindows() ? ENV["USERNAME"] : ""
+    !isascii(user) && (user = string(hash(user), base=16)[1:8])# For non-ASCII user names
+    TMPDIR_USR.username = replace(user, " " => "_")
+    haskey(ENV, "JULIA_GMT_MULTIFILE") && (TMPDIR_USR.pid_suffix = string("_", getpid()))
+    PSname[] = TMPDIR_USR.dir * "/" * "GMTjl_" * TMPDIR_USR.username * TMPDIR_USR.pid_suffix * ".ps"
+    DidOneGmtCmd[] = false
 end
 
 """
