@@ -1,17 +1,21 @@
 """
-	segy(cmd0::String="", arg1=nothing; kwargs...)
+	segy(cmd0::String=""; kwargs...)
 
 Plot a SEGY file as a seismic data image.
 """
-segy(cmd0::String=""; kwargs...)  = segy_helper(cmd0, nothing; kwargs...)
-segy(arg1; kwargs...)             = segy_helper("", arg1; kwargs...)
+segy!(cmd0::String; kwargs...) = segy_helper(cmd0; first=false, kwargs...)
+function segy(cmd0::String; first=true, kw...)
+	#(cmd0 === "") && error("Missing input segY file name to run this module.")
+	d, K, O = init_module(first==1, kw...)		# Also checks if the user wants ONLY the HELP mode
+	segy_helper(cmd0, O, K, d)
+end
 
 # ---------------------------------------------------------------------------------------------------
-function segy_helper(cmd0::String, arg1; first=true, kwargs...)
-	d, K, O = init_module(first, kwargs...)
+function segy_helper(cmd0::String, O::Bool, K::Bool, d::Dict{Symbol, Any})
 
-	cmd, _, _, opt_R = parse_BJR(d, "", "", O, "")
-	cmd, = parse_common_opts(d, cmd, [:V_params :UVXY :p :t :params], first)
+	cmd = ((IamModern[]) ? "segy "  : "pssegy ") * cmd0
+	cmd = parse_BJR(d, cmd, "", O, "")[1]
+	cmd = parse_common_opts(d, cmd, [:V_params :UVXY :p :t :params]; first=!O)[1]
 	cmd = segy_common(d, cmd)
 
 	# -E error tolerance (segy only)
@@ -34,27 +38,30 @@ function segy_helper(cmd0::String, arg1; first=true, kwargs...)
 	# -T trace list file (segy only)
 	cmd = add_opt(d, cmd, "T", [:T :tracelist :tracefile])
 
-	(cmd0 != "") && (cmd *= " " * cmd0)
-
-	cmd = "segy " * cmd
+	((r = check_dbg_print_cmd(d, cmd)) !== nothing) && return r
+	!isfile(cmd0) && error("segY file $cmd0 does not exist.")	# Testing here only allows pass a Vd=2 for test parsing
 	finish_PS_module(d, cmd, "", K, O, true)
 end
 
 # ---------------------------------------------------------------------------------------------------
 """
-	segyz(cmd0::String="", arg1=nothing; kwargs...)
+	segyz(cmd0::String=""; kwargs...)
 
 Plot a SEGY file in 3-D as a seismic data image.
 """
-segyz(cmd0::String=""; kwargs...)  = segyz_helper(cmd0, nothing; kwargs...)
-segyz(arg1; kwargs...)             = segyz_helper("", arg1; kwargs...)
+segyz!(cmd0::String; kwargs...) = segyz_helper(cmd0; first=false, kwargs...)
+function segyz(cmd0::String; first=true, kw...)
+	d, K, O = init_module(first==1, kw...)		# Also checks if the user wants ONLY the HELP mode
+	segyz_helper(cmd0, O, K, d)
+end
 
 # ---------------------------------------------------------------------------------------------------
-function segyz_helper(cmd0::String, arg1; first=true, kwargs...)
-	d, K, O = init_module(first, kwargs...)
+function segyz_helper(cmd0::String, O::Bool, K::Bool, d::Dict{Symbol, Any})
 
-	cmd, _, _, opt_R = parse_BJR(d, "", "", O, "")
-	cmd = parse_common_opts(d, cmd, [:Jz :V_params :UVXY :p :t :params], first)[1]
+	cmd = ((IamModern[]) ? "segyz "  : "pssegyz ") * cmd0
+	cmd = parse_BJR(d, "", "", O, "")[1]
+	cmd = parse_common_opts(d, cmd, [:V_params :UVXY :p :t :params], first=!O)[1]
+	cmd, opt_JZ = parse_JZ(d, cmd, O=O, is3D=true)
 	cmd = segy_common(d, cmd)
 
 	# -S trace location header (segyz: header_x/header_y)
@@ -80,68 +87,35 @@ function segyz_helper(cmd0::String, arg1; first=true, kwargs...)
 		end
 	end
 
-	(cmd0 != "") && (cmd *= " " * cmd0)
-
-	cmd = "segyz " * cmd
+	((r = check_dbg_print_cmd(d, cmd)) !== nothing) && return r
+	!isfile(cmd0) && error("segY file $cmd0 does not exist.")	# Testing here only allows pass a Vd=2 for test parsing
 	finish_PS_module(d, cmd, "", K, O, true)
 end
 
 # ---------------------------------------------------------------------------------------------------
 # Shared options between segy and segyz
 function segy_common(d::Dict, cmd::String)
-	# -D deviation (required)
-	cmd = add_opt(d, cmd, "D", [:D :dev :deviation])
 
-	# -F fill color
-	if ((val = find_in_dict(d, [:F :fill :color])[1]) !== nothing)
-		if isa(val, Bool) && val
-			cmd *= " -F"
-		else
-			cmd *= " -F" * arg2str(val)
-		end
-	end
+	((s = hlp_desnany_str(d, [:F :fill :color])) !== "") && (cmd *= " -F" * s)		# -F fill color
 
-	# -W wiggle trace
-	cmd = parse_these_opts(cmd, d, [[:W :wiggle]])
+	cmd = parse_these_opts(cmd, d, [[:A :byteswap :swap], [:C :clip], [:D :dev :deviation], [:I :negative :fillneg],
+	                                [:L :nsamp :nsamples], [:M :ntraces], [:N :normalize :norm], [:W :wiggle], [:Z :skipzero :nozero]])
+	!contains(cmd, " -D") && error("Option 'D' or 'dev' or 'deviation' is required")
+	!contains(cmd, " -F") && !contains(cmd, " -W") && (cmd *= " -W")
 
-	# -A byte swap
-	cmd = parse_these_opts(cmd, d, [[:A :byteswap :swap]])
-
-	# -C clip
-	cmd = add_opt(d, cmd, "C", [:C :clip])
-
-	# -I fill negative
-	cmd = parse_these_opts(cmd, d, [[:I :negative :fillneg]])
-
-	# -L samples per trace
-	cmd = add_opt(d, cmd, "L", [:L :nsamp :nsamples])
-
-	# -M number of traces
-	cmd = add_opt(d, cmd, "M", [:M :ntraces])
-
-	# -N normalize
-	cmd = parse_these_opts(cmd, d, [[:N :normalize :norm]])
-
-	# -Q adjustments
-	if ((val = find_in_dict(d, [:Q :adjust])[1]) !== nothing)
+	if ((val = find_in_dict(d, [:Q :adjust])[1]) !== nothing)		# -Q adjustments
 		if isa(val, NamedTuple)
-			haskey(val, :bias) && (cmd *= " -Qb" * string(val.bias))
-			haskey(val, :b) && (cmd *= " -Qb" * string(val.b))
-			haskey(val, :dpi) && (cmd *= " -Qi" * string(val.dpi))
-			haskey(val, :i) && (cmd *= " -Qi" * string(val.i))
-			haskey(val, :redvel) && (cmd *= " -Qu" * string(val.redvel))
-			haskey(val, :u) && (cmd *= " -Qu" * string(val.u))
-			haskey(val, :xmult) && (cmd *= " -Qx" * string(val.xmult))
-			haskey(val, :x) && (cmd *= " -Qx" * string(val.x))
-			haskey(val, :dy) && (cmd *= " -Qy" * string(val.dy))
-			haskey(val, :y) && (cmd *= " -Qy" * string(val.y))
+			for key = keys(val)
+				key in (:b, :bias)   && (cmd *= " -Qb" * string(val[key]))
+				key in (:i, :dpi)    && (cmd *= " -Qi" * string(val[key]))
+				key in (:u, :redvel) && (cmd *= " -Qu" * string(val[key]))
+				key in (:x, :xmult)  && (cmd *= " -Qx" * string(val[key]))
+				key in (:y, :dy)     && (cmd *= " -Qy" * string(val[key]))
+			end
 		else
 			cmd *= " -Q" * arg2str(val)
 		end
 	end
-
-	# -Z skip zero rms
-	cmd = parse_these_opts(cmd, d, [[:Z :skipzero :nozero]])
 
 	return cmd
 end

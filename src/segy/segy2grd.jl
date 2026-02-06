@@ -1,20 +1,20 @@
 """
-	segy2grd(cmd0::String="", arg1=nothing; kwargs...)
+	segy2grd(cmd0::String=""; kwargs...)
 
 Create a grid file from an ideographic SEGY file.
 """
-segy2grd(cmd0::String=""; kwargs...) = segy2grd_helper(cmd0, nothing; kwargs...)
-segy2grd(arg1; kwargs...)            = segy2grd_helper("", arg1; kwargs...)
+function segy2grd(cmd0::String; kwargs...)
+	d = init_module(false, kwargs...)[1]
+	segy2grd_helper(cmd0, d)
+end
 
 # ---------------------------------------------------------------------------------------------------
-function segy2grd_helper(cmd0::String, arg1; kwargs...)
-	d = init_module(false, kwargs...)[1]
+function segy2grd_helper(cmd0::String, d::Dict{Symbol, Any})
 
 	cmd, opt_R = parse_R(d, "")[1:2]
+	(opt_R === "") && error("Missing R or region option.")
 	cmd = parse_common_opts(d, cmd, [:I :V_params :bi :di :r :yx])[1]
-
-	# -G output grid (required)
-	cmd = add_opt(d, cmd, "G", [:G :outgrid :save])
+	!contains(cmd, " -I") && error("Option 'I' or 'inc' is required")
 
 	# -A add up or count
 	if ((val = find_in_dict(d, [:A :add :count])[1]) !== nothing)
@@ -29,22 +29,14 @@ function segy2grd_helper(cmd0::String, arg1; kwargs...)
 		end
 	end
 
-	# -D grid metadata
-	cmd = add_opt(d, cmd, "D", [:D :metadata :header])
+	cmd = parse_these_opts(cmd, d, [[:D :metadata :header], [:G :outgrid :save], [:L :nsamp :nsamples], [:M :ntrace]])
 
-	# -L number of samples
-	cmd = add_opt(d, cmd, "L", [:L :nsamp :nsamples])
-
-	# -M number of traces
-	cmd = add_opt(d, cmd, "M", [:M :ntraces])
-
-	# -Q scale or sample interval
-	if ((val = find_in_dict(d, [:Q :adjust])[1]) !== nothing)
+	if ((val = find_in_dict(d, [:Q :adjust])[1]) !== nothing)	# -Q scale or sample interval
 		if isa(val, NamedTuple)
-			haskey(val, :x) && (cmd *= " -Qx" * string(val.x))
-			haskey(val, :xscale) && (cmd *= " -Qx" * string(val.xscale))
-			haskey(val, :y) && (cmd *= " -Qy" * string(val.y))
-			haskey(val, :sint) && (cmd *= " -Qy" * string(val.sint))
+			for key = keys(val)
+				key in (:x, :xscale) && (cmd *= " -Qx" * string(val[key]))
+				key in (:y, :sint)   && (cmd *= " -Qy" * string(val[key]))
+			end
 		else
 			cmd *= " -Q" * arg2str(val)
 		end
@@ -64,9 +56,8 @@ function segy2grd_helper(cmd0::String, arg1; kwargs...)
 		end
 	end
 
-	(cmd0 != "") && (cmd *= " " * cmd0)
-
-	cmd = "segy2grd " * cmd
+	cmd = "segy2grd " * cmd0 * cmd
 	((r = check_dbg_print_cmd(d, cmd)) !== nothing) && return r
+	!isfile(cmd0) && error("segY file $cmd0 does not exist.")	# Testing here only allows pass a Vd=2 for test parsing
 	gmt(cmd, arg1)
 end
