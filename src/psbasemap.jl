@@ -44,8 +44,8 @@ To see the full documentation type: ``@? basemap``
 """
 basemap(; first=true, kwargs...) = helper_basemap(; first=first, kwargs...)
 basemap!(; kwargs...) = helper_basemap(; first=false, kwargs...)
-function helper_basemap(; first=true, kw...)
-	d, K, O = init_module(first, kw...)		# Also checks if the user wants ONLY the HELP mode
+function helper_basemap(; first=first, kw...)
+	d, K, O = init_module(first==1, kw...)		# Also checks if the user wants ONLY the HELP mode
 	helper_basemap(O, K, d)
 end
 
