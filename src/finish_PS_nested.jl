@@ -143,7 +143,7 @@ function add_opt_module_barr1(nt::NamedTuple, symb::Symbol)::Union{String, Vecto
 		!contains(r, " -B") && (r = replace(r, "psscale" => "psscale -Baf"))		# Add -B if not present
 	elseif (symb == :clip)		# Need lots of little shits to parse the clip options
 		if ((isa(nt, NamedTuple) && (isa(nt[1], String) || isa(nt[1], Symbol))) || isa(nt[1], NamedTuple))
-			r = (isa(nt, NamedTuple)) ? coast!(""; Vd=2, E=nt) : coast!(""; Vd=2, nt...)
+			r = (isa(nt, NamedTuple)) ? coast!(; Vd=2, E=nt) : coast!(; Vd=2, nt...)
 			opt_E = scan_opt(r, "-E")	# We are clipping so opt_E must contain eith +c or +C. If not, add +c
 			startswith(opt_E, "=land")  && (r = replace(r, " -E"*opt_E => " -Gc"))	# Stupid user mistakes. Try to recover
 			startswith(opt_E, "=ocean") && (r = replace(r, " -E"*opt_E => " -Sc"))
