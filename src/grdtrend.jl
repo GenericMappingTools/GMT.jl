@@ -24,9 +24,12 @@ Parameters
 
 To see the full documentation type: ``@? grdtrend``
 """
-function grdtrend(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
-
+function grdtrend(cmd0::String, arg1=nothing, arg2=nothing; kwargs...)
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+	grdtrend_helper(cmd0, arg1, arg2, d)
+end
+
+function grdtrend_helper(cmd0::String, arg1, arg2, d::Dict{Symbol, Any})
 
 	cmd, = parse_R(d, "")
 	cmd = parse_V_params(d, cmd)

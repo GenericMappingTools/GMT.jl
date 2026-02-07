@@ -38,11 +38,14 @@ Parameters
 """
 grd2xyz(cmd0::String; kwargs...) = grd2xyz_helper(cmd0, nothing; kwargs...)
 grd2xyz(arg1; kwargs...)         = grd2xyz_helper("", arg1; kwargs...)
+function grd2xyz_helper(cmd0::String, arg1; kwargs...)
+	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+	grd2xyz_helper(cmd0, arg1, d)
+end
 
 # ---------------------------------------------------------------------------------------------------
-function grd2xyz_helper(cmd0::String, arg1; kwargs...)
+function grd2xyz_helper(cmd0::String, arg1, d::Dict{Symbol, Any})
 
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:R :V_params :bo :d :f :h :o :s])
 	cmd  = parse_these_opts(cmd, d, [[:C :rcnumbers :row_col :rowcol], [:L :hvline], [:T :stl :STL], [:W :weight], [:Z :onecol :one_col]])
 	((val = find_in_dict(d, [:name :save])[1]) !== nothing) && (cmd *=  " > " * string(val))

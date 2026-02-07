@@ -73,7 +73,7 @@ function grdcontour_helper(cmd0::String, arg1; first=true, kw...)
 	d, K, O = init_module(first, kw...)		# Also checks if the user wants ONLY the HELP mode
 	_grdcontour_helper(cmd0, arg1, O, K, d)
 end
-function _grdcontour_helper(cmd0::String, arg1, O::Bool, K::Bool, d::Dict)
+function _grdcontour_helper(cmd0::String, arg1, O::Bool, K::Bool, d::Dict{Symbol, Any})
 	arg2, arg3 = nothing, nothing
 	dict_auto_add!(d)					# The ternary module may send options via another channel
 

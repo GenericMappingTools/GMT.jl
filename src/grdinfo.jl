@@ -47,11 +47,14 @@ To see the full documentation type: ``@? grdinfo``
 """
 grdinfo(cmd0::String; kwargs...) = grdinfo_helper(cmd0, nothing; kwargs...)
 grdinfo(arg1; kwargs...)         = grdinfo_helper("", arg1; kwargs...)
+function grdinfo_helper(cmd0::String, arg1; kwargs...)
+	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+	grdinfo_helper(cmd0, arg1, d)
+end
 
 # ---------------------------------------------------------------------------------------------------
-function grdinfo_helper(cmd0::String, arg1; kwargs...)::Union{GMTdataset, String}
+function grdinfo_helper(cmd0::String, arg1, d::Dict{Symbol, Any})::Union{GMTdataset, String}
 
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:R :V_params :f :o])
 	(is_in_dict(d, [:numeric], del=true) !== nothing) && (cmd *= " -Cn")
 	cmd  = parse_these_opts(cmd, d, [[:C :oneliner], [:D :tiles], [:E :extrema :extreme], [:F :report_ingeog],
