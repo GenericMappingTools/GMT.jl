@@ -33,16 +33,18 @@ clip!(cmd0::String; kwargs...) = clip_helper(cmd0, nothing; first=false, kwargs.
 clip!(arg1; kwargs...)         = clip_helper("", arg1; first=false, kwargs...)
 clip!(; kwargs...)             = clip_helper("", nothing; first=false, kwargs...)
 clip(; kwargs...)              = clip_helper("", nothing; first=false, kwargs...)	# For when user forgot to use clip! instead of clip
+function clip_helper(cmd0::String, arg1; first=true, kw...)
+	d, K, O = init_module(first, kw...)		# Also checks if the user wants ONLY the HELP mode
+	clip_helper(cmd0, arg1, O, K, d)
+end
 
 # ---------------------------------------------------------------------------------------------------
-function clip_helper(cmd0::String, arg1; first=true, kwargs...)
+function clip_helper(cmd0::String, arg1, O::Bool, K::Bool, d::Dict{Symbol, Any})
 
 	proggy = (IamModern[]) ? "clip " : "psclip "
 
-	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
-
 	cmd, _, _, opt_R = parse_BJR(d, "", "", O, " -JX" * split(DEF_FIG_SIZE, '/')[1] * "/0")
-	cmd, = parse_common_opts(d, cmd, [:UVXY :JZ :c :e :f :g :p :t :yx :params]; first=first)
+	cmd, = parse_common_opts(d, cmd, [:UVXY :JZ :c :e :f :g :p :t :yx :params]; first=!O)
 	cmd  = parse_these_opts(cmd, d, [[:A :steps :straightlines], [:C :endclip], [:N :invert], [:T :clipregion :clip_limits]])
 	cmd *= add_opt_pen(d, [:W :pen], opt="W")
 

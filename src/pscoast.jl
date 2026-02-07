@@ -1,11 +1,10 @@
 """
-    coast(cmd0::String=""; kwargs...)
+    coast(; kwargs...)
 
 Plot continents, shorelines, rivers, and borders on maps.
 
 Plots grayshaded, colored, or textured land-masses [or water-masses] on
-maps and [optionally] draws coastlines, rivers, and political
-boundaries. A map projection must be supplied.
+maps and [optionally] draws coastlines, rivers, and political boundaries.
 
 Parameters
 ----------
@@ -75,11 +74,13 @@ Parameters
 
 To see the full documentation type: ``@? coast``
 """
-function coast(cmd0::String=""; clip::StrSymb="", first=true, kwargs...)
-	dbg_cmd, d, cmd, K, O, finish, get_largest, toTrack = coast_parser(first, string(clip); kwargs...)
+function coast(; clip::StrSymb="", first=true, kwargs...)
+	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
+	dbg_cmd, d, cmd, O, finish, get_largest, toTrack = coast_parser(first==1, string(clip), O, d)
 	(dbg_cmd !== nothing) && return dbg_cmd
-
-	# Have a big possible break here to allow PS_nested call only the parsing part and hence fck the Julia recompilation eagerness
+	coast(cmd, K, O, finish, get_largest, toTrack, d)
+end
+function coast(cmd::Vector{String}, K::Bool, O::Bool, finish::Bool, get_largest::Bool, toTrack, d::Dict{Symbol, Any})
 
 	# Don't call finish_PS_module if -M because it returns a GDtype instead of a PS
 	R = (length(cmd) == 1 && contains(cmd[1], " -M")) ? gmt(cmd[1]) : prep_and_call_finish_PS_module(d, cmd, "", K, O, finish)
@@ -105,14 +106,13 @@ function coast(cmd0::String=""; clip::StrSymb="", first=true, kwargs...)
 	R
 end
 
-function coast_parser(first::Bool, clip::String; kwargs...)
+function coast_parser(first::Bool, clip::String, O::Bool, d::Dict{Symbol, Any})
 
-	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 	gmt_proggy = (IamModern[]) ? "coast "  : "pscoast "
 
 	if ((val = hlp_desnany_str(d, [:getR :getregion :get_region], false)) !== "")
 		t::String = string(gmt_proggy, " -E", val)
-		resto = d, "", K, O, true, false, ""
+		resto = d, "", O, true, false, ""
 		((Vd = hlp_desnany_int(d, [:Vd])) !== -999) && (Vd == 1 ? println(t) : Vd > 1 ? (return t, resto...) : nothing)
 		t = parse_V(d::Dict, t)
 		return gmt(t).text[1]::String, resto...
@@ -124,7 +124,7 @@ function coast_parser(first::Bool, clip::String; kwargs...)
 	twoORfour = have_opt_M && contains(cmd, "+z") && contains(cmd, '.') ? "4" : "2"		# To use in gmt_main to decide CODE attrib
 	if (cmd != "")								# Check for a minimum of points that segments must have
 		if ((val = hlp_desnany_str(d, [:minpts])) !== "")  POSTMAN[]["minpts"] = val
-		elseif (get(POSTMAN[], "minpts", "") != "")       delete!(POSTMAN[], "minpts")
+		elseif (get(POSTMAN[], "minpts", "") != "")        delete!(POSTMAN[], "minpts")
 		end
 	end
 
@@ -135,7 +135,7 @@ function coast_parser(first::Bool, clip::String; kwargs...)
 		POSTMAN[]["DCWnames"] = twoORfour		# When dumping, we want to add the country name as attribute
 		if ((val = find_in_dict(d, [:Z])[1]) !== nothing)
 			toTrack = (isa(val, GMTgrid) || (isa(val, String) && length(val) > 4)) ? val : ""
-			toTrack == "" && (POSTMAN[]["plusZzero"] = "y")# If toTrack the extra column is added by the grdtrack call below
+			toTrack == "" && (POSTMAN[]["plusZzero"] = "y")	# If toTrack the extra column is added by the grdtrack call below
 		end
 	end
 
@@ -193,7 +193,7 @@ function coast_parser(first::Bool, clip::String; kwargs...)
 	end
 
 	r = check_dbg_print_cmd(d, _cmd)
-	return r, d, _cmd, K, O, finish, get_largest, toTrack
+	return r, d, _cmd, O, finish, get_largest, toTrack
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -293,7 +293,7 @@ function parse_dcw(val::Tuple)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-coast!(cmd0::String=""; clip::StrSymb="", kw...) = coast(cmd0; clip=clip, first=false, kw...)
+coast!(; clip::StrSymb="", kw...) = coast(; clip=clip, first=false, kw...)
 
 const pscoast  = coast			# Alias
 const pscoast! = coast!
