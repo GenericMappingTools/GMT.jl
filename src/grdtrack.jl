@@ -9,9 +9,12 @@ That is, both of this will work: ``D = grdtrack([0 0], Grid);``  or  ``D = grdtr
 
 To see the documentation, type: ``@? grdtrack``
 """
-function grdtrack(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
-
+function grdtrack(cmd0::String, arg1=nothing, arg2=nothing; kwargs...)
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+	grdtrack_helper(cmd0, arg1, arg2, d)
+end
+
+function grdtrack_helper(cmd0::String, arg1, arg2, d::Dict{Symbol, Any})
 
 	cmd, = parse_common_opts(d, "", [:R :V_params :bi :bo :di :e :f :g :h :i :n :o :s :w :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :interp_path :resample], [:C :crossprofile :equidistant], [:D :dfile],

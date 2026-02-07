@@ -42,11 +42,14 @@ To see the full documentation type: ``@? grdlandmask``
 grdlandmask(cmd0::String; kwargs...) = grdlandmask_helper(cmd0, nothing; kwargs...)
 grdlandmask(arg1::GItype; kwargs...) = grdlandmask_helper("", arg1; kwargs...)
 grdlandmask(; kwargs...)             = grdlandmask_helper("", nothing; kwargs...)
+function grdlandmask_helper(cmd0::String, arg1; kwargs...)
+	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+	grdlandmask_helper(cmd0, arg1, d)
+end
 
 # ---------------------------------------------------------------------------------------------------
-function grdlandmask_helper(cmd0::String, arg1; kwargs...)
+function grdlandmask_helper(cmd0::String, arg1, d::Dict{Symbol, Any})
 
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
     cmd::String, prj::String = "", ""
 	if (arg1 !== nothing)
 		prj = getproj(arg1, proj4=true)

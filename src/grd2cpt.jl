@@ -65,11 +65,13 @@ To see the full documentation type: ``@? grd2cpt``
 """
 grd2cpt(cmd0::String; kwargs...) = grd2cpt_helper(cmd0, nothing; kwargs...)
 grd2cpt(arg1; kwargs...)         = grd2cpt_helper("", arg1; kwargs...)
+function grd2cpt_helper(cmd0::String, arg1; kwargs...)
+	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+	grd2cpt_helper(cmd0, arg1, d)
+end
 
 # ---------------------------------------------------------------------------------------------------
-function grd2cpt_helper(cmd0::String, arg1; kw...)
-
-	d = init_module(false, kw...)[1]			# Also checks if the user wants ONLY the HELP mode
+function grd2cpt_helper(cmd0::String, arg1, d::Dict{Symbol, Any})
 
 	cmd, = parse_common_opts(d, "", [:R :V_params :b :h :t])
 	cmd, Tvec = helper_cpt(d, cmd)
@@ -80,7 +82,7 @@ function grd2cpt_helper(cmd0::String, arg1; kw...)
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)
 	N_used = got_fname == 0 ? 1 : 0			# To know whether a cpt will go to arg1 or arg2
-    isa(arg1, GMTgrid) && ((val = find_in_kwargs(kw, CPTaliases)[1]) === nothing) && (d[:C] = (arg1.cpt != "") ? arg1.cpt : :turbo)
+    isa(arg1, GMTgrid) && ((val = is_in_dict(d, CPTaliases)) === nothing) && (d[:C] = (arg1.cpt != "") ? arg1.cpt : :turbo)
 	cmd, arg1, arg2, = add_opt_cpt(d, cmd, CPTaliases, 'C', N_used, arg1)
 
 	r = common_grd(d, "grd2cpt " * cmd, arg1, arg2)		# r may be a tuple if -E+f was used
