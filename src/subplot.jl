@@ -73,7 +73,7 @@ function subplot(fim::String, stop::Bool, d::Dict{Symbol, Any})
 	end
 
 	do_set = false;		do_show = false
-	if (fim !== nothing)
+	if (fim !== "")
 		if     (fim == "end" || fim == "stop")  stop = true
 		elseif (fim == "show")  stop, do_show = true, true
 		elseif (fim == "set")   do_set = true
@@ -82,7 +82,7 @@ function subplot(fim::String, stop::Bool, d::Dict{Symbol, Any})
 		do_show = (d[:show] != 0)
 		stop = true
 	else
-		if (!stop && has_options)  stop = true  end				# To account for the subplot() call case
+		if (!stop && !has_options)  stop = true  end			# To account for the subplot() call case
 	end
 	# ------------------------------ End parsing inputs --------------------------------
 
