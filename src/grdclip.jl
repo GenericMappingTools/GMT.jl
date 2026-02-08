@@ -5,8 +5,6 @@ Clip the range of grid values. will set values < low to below and/or values > hi
 You can also specify one or more intervals where all values should be set to ``between``,
 or replace individual values.
 
-See full GMT docs at [`grdclip`]($(GMTdoc)grdclip.html)
-
 Parameters
 ----------
 
@@ -50,11 +48,13 @@ Parameters
 """
 grdclip(cmd0::String; kwargs...) = grdclip_helper(cmd0, nothing; kwargs...)
 grdclip(arg1; kwargs...)         = grdclip_helper("", arg1; kwargs...)
+function grdclip_helper(cmd0::String, arg1; kwargs...)
+	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+	grdclip_helper(cmd0, arg1, d)
+end
 
 # ---------------------------------------------------------------------------------------------------
-function grdclip_helper(cmd0::String, arg1; kwargs...)
-
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+function grdclip_helper(cmd0::String, arg1, d::Dict{Symbol, Any})
 
 	cmd, = parse_common_opts(d, "", [:G :R :V_params])
 	cmd  = add_opt(d, cmd, "S", [:S])

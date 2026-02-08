@@ -402,7 +402,7 @@ using .Laszip
     grdsample(Glix, inc=0.5)
     grdtrend(Glix, model=3)
     grdtrack(Glix, [1 1])
-    coast(R=:g, proj=:guess, W=(level=1, pen=(2, :green)))
+    coast(R=:g, proj=:guess, W=(level=1, pen=(2, :green)), savefig=tempname()*".ps")
     #gridit(rand(10,3), preproc=true, I=0.1);
     #earthregions("PT", Vd=2);
     #violin(rand(50), fmt=:ps);

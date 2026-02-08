@@ -40,11 +40,14 @@ To see the full documentation type: ``@? grdproject``
 """
 grdproject(cmd0::String; kwargs...) = grdproject_helper(cmd0, nothing; kwargs...)
 grdproject(arg1; kwargs...)         = grdproject_helper("", arg1; kwargs...)
+function grdproject_helper(cmd0::String, arg1; kwargs...)
+	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+	grdproject_helper(cmd0, arg1, d)
+end
 
 # ---------------------------------------------------------------------------------------------------
-function grdproject_helper(cmd0::String, arg1; kwargs...)
+function grdproject_helper(cmd0::String, arg1, d::Dict{Symbol, Any})
 
-	d = init_module(false, kwargs...)[1]	        # Also checks if the user wants ONLY the HELP mode
 	cmd::String = parse_n(d, "", true)[1]			# Here we keep the GMT default to Antialiasing
 	cmd = parse_common_opts(d, cmd, [:G :R :V_params :r])[1]
 	if ((val = find_in_dict(d, [:J :proj :projection], false)[1]) !== nothing)  # Here we don't want any default value

@@ -5,8 +5,6 @@ Takes two 2-D grid files which represents the x- and y-components of a vector fi
 a vector field plot by drawing vectors with orientation and length according to the information
 in the files. Alternatively, polar coordinate r, theta grids may be given instead.
 
-See full GMT docs at [`grdvector`]($(GMTdoc)grdvector.html)
-
 Parameters
 ----------
 
@@ -55,9 +53,22 @@ Parameters
 
 To see the full documentation type: ``@? grdvector``
 """
-function grdvector(arg1, arg2; first=true, kwargs...)
+grdvector(arg1, arg2; kw...) = grdvector_helper(arg1, arg2; first=true, kw...)
+grdvector!(arg1, arg2; kw...) = grdvector_helper(arg1, arg2; first=false, kw...)
+grdvector(arg1::Matrix{<:Real}, arg2::Matrix{<:Real}; kw...) = grdvector_helper(mat2grid(arg1), mat2grid(arg2); kw...)
+grdvector!(arg1::Matrix{<:Real}, arg2::Matrix{<:Real}; kw...) = grdvector_helper(mat2grid(arg1), mat2grid(arg2); first=false, kw...)
+grdvector(arg1::Matrix{<:Real}, arg2::Matrix{<:Real}, arg3::Matrix{<:Real}, arg4::Matrix{<:Real}; kw...) = 
+	grdvector_helper(mat2grid(arg3, x=Float64.(arg1[1,:]), y=Float64.(arg2[:,1])), mat2grid(arg4, x=Float64.(arg1[1,:]), y=Float64.(arg2[:,1])); kw...)
+grdvector!(arg1::Matrix{<:Real}, arg2::Matrix{<:Real}, arg3::Matrix{<:Real}, arg4::Matrix{<:Real}; kw...) = 
+	grdvector_helper(mat2grid(arg3, x=Float64.(arg1[1,:]), y=Float64.(arg2[:,1])), mat2grid(arg4, x=Float64.(arg1[1,:]), y=Float64.(arg2[:,1])); first=false, kw...)
 
+function grdvector_helper(arg1, arg2; first=true, kwargs...)
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
+	grdvector_helper(arg1, arg2, K, O, d)
+end
+
+# ---------------------------------------------------------------------------------------------------
+function grdvector_helper(arg1, arg2, K::Bool, O::Bool, d::Dict{Symbol, Any})
 
 	# Must call parse_R first to get opt_R that is needed in the get_grdinfo() call.
 	cmd, opt_R = parse_R(d, "", O=O)
@@ -72,7 +83,7 @@ function grdvector(arg1, arg2; first=true, kwargs...)
 	DEF_FIG_AXES_::String = (IamModern[]) ? "" : DEF_FIG_AXES[]	# DEF_FIG_AXES is a global const
 	cmd, opt_B = parse_B(d, cmd, (O ? "" : DEF_FIG_AXES_))
 
-	cmd = parse_common_opts(d, cmd, [:UVXY :f :p :t :margin :params]; first=first)[1]
+	cmd = parse_common_opts(d, cmd, [:UVXY :f :p :t :margin :params]; first=!O)[1]
 	!(contains(cmd, "-V")) && (cmd *= " -Ve")	# Shut up annoying warnings if -S has no units
 	cmd = parse_these_opts(cmd, d, [[:A :polar], [:N :noclip :no_clip], [:T :sign_scale], [:Z :azimuth]])
 	opt_S = add_opt(d, "", "S", [:S :vscale :vec_scale],
@@ -180,15 +191,6 @@ end
 # ---------------------------------------------------------------------------------------------------
 get_grdinfo(grd::String,  opt_R::String) = gmt_grdinfo_C(opt_R * " " * grd).data
 get_grdinfo(grd::GMTgrid, opt_R::String)::Matrix{Float64} = gmt("grdinfo -C" * opt_R, grd).data
-
-# ---------------------------------------------------------------------------------------------------
-grdvector!(arg1, arg2; kw...) = grdvector(arg1, arg2; first=false, kw...)
-grdvector(arg1::Matrix{<:Real}, arg2::Matrix{<:Real}; kw...) = grdvector(mat2grid(arg1), mat2grid(arg2); kw...)
-grdvector!(arg1::Matrix{<:Real}, arg2::Matrix{<:Real}; kw...) = grdvector(mat2grid(arg1), mat2grid(arg2); first=false, kw...)
-grdvector(arg1::Matrix{<:Real}, arg2::Matrix{<:Real}, arg3::Matrix{<:Real}, arg4::Matrix{<:Real}; kw...) = 
-	grdvector(mat2grid(arg3, x=Float64.(arg1[1,:]), y=Float64.(arg2[:,1])), mat2grid(arg4, x=Float64.(arg1[1,:]), y=Float64.(arg2[:,1])); kw...)
-grdvector!(arg1::Matrix{<:Real}, arg2::Matrix{<:Real}, arg3::Matrix{<:Real}, arg4::Matrix{<:Real}; kw...) = 
-	grdvector(mat2grid(arg3, x=Float64.(arg1[1,:]), y=Float64.(arg2[:,1])), mat2grid(arg4, x=Float64.(arg1[1,:]), y=Float64.(arg2[:,1])); first=false, kw...)
 
 const quiver  = grdvector		# Aliases
 const quiver! = grdvector!

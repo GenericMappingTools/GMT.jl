@@ -4,8 +4,6 @@
 Filter a grid file in the time domain using one of the selected convolution or non-convolution 
 isotropic or rectangular filters and compute distances using Cartesian or Spherical geometries.
 
-See full GMT docs at [`grdfilter`]($(GMTdoc)grdfilter.html)
-
 Parameters
 ----------
 
@@ -34,13 +32,15 @@ To see the full documentation type: ``@? grdfilter``
 """
 grdfilter(cmd0::String; kwargs...) = grdfilter_helper(cmd0, nothing; kwargs...)
 grdfilter(arg1; kwargs...)         = grdfilter_helper("", arg1; kwargs...)
+function grdfilter_helper(cmd0::String, arg1; kwargs...)
+	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+	grdfilter_helper(cmd0, arg1, d)
+end
 
 # ---------------------------------------------------------------------------------------------------
-function grdfilter_helper(cmd0::String, arg1; kwargs...)
+function grdfilter_helper(cmd0::String, arg1, d::Dict{Symbol, Any})
 
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:G :RIr :V_params :f])
 	cmd  = parse_these_opts(cmd, d, [[:D :distflag :distance], [:F :filter], [:N :nans], [:T :toggle]])
-
 	common_grd(d, cmd0, cmd, "grdfilter ", arg1)		# Finish build cmd and run it
 end
