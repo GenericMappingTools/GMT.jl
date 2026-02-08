@@ -43,12 +43,15 @@ To see the full documentation type: ``@? grdcut``
 grdcut(cmd0::String; kwargs...) = grdcut_helper(cmd0, nothing; kwargs...)
 grdcut(arg1; kwargs...)         = grdcut_helper("", arg1; kwargs...)
 grdcut(; kwargs...)             = grdcut_helper("", nothing; kwargs...)		# To allow grdcut(data=..., ...)
+function grdcut_helper(cmd0::String, arg1; kwargs...)
+	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+	grdcut_helper(cmd0, arg1, d)
+end
 
 # ---------------------------------------------------------------------------------------------------
-function grdcut_helper(cmd0::String, arg1; kwargs...)::Union{Nothing, GMTgrid, GMTimage, String}
+function grdcut_helper(cmd0::String, arg1, d::Dict{Symbol, Any})::Union{Nothing, GMTgrid, GMTimage, String}
 
 	arg2 = nothing
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd::String, opt_R::String = parse_R(d, "")
     cmd, = parse_common_opts(d, cmd, [:V_params :f])
     opt_J, = parse_J(d, "")

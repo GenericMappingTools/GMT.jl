@@ -49,11 +49,17 @@ Parameters
 
 To see the full documentation type: ``@? grd2kml``
 """
-function grd2kml(cmd0::String="", arg1=nothing; kwargs...)
+grd2kml(cmd0::String; kwargs...) = grd2kml_helper(cmd0, nothing; kwargs...)
+grd2kml(arg1; kwargs...)         = grd2kml_helper("", arg1; kwargs...)
+function grd2kml_helper(cmd0::String, arg1; kwargs...)
+	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+	grd2kml_helper(cmd0, arg1, d)
+end
+
+# ---------------------------------------------------------------------------------------------------
+function grd2kml_helper(cmd0::String, arg1, d::Dict{Symbol, Any})
 
 	arg2 = nothing;     arg3 = nothing;     # for CPT and/or illum
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
-
 	cmd, = parse_common_opts(d, "", [:V_params :f :n])
 	cmd  = parse_these_opts(cmd, d, [[:A :mode], [:E :url], [:F :filter], [:H :subpixel :sub_pixel],
                                      [:L :tilesize :tile_size], [:N :prefix], [:Q :nan_t :nan_alpha], [:S :extra_layers :extralayers], [:T :title], [:W :contours]])
@@ -63,6 +69,3 @@ function grd2kml(cmd0::String="", arg1=nothing; kwargs...)
 	cmd, arg1, arg2, arg3 = common_shade(d, cmd, arg1, arg2, arg3, nothing, "grd2kml")
 	common_grd(d, "grd2kml " * cmd, arg1, arg2, arg3)		# Finish build cmd and run it
 end
-
-# ---------------------------------------------------------------------------------------------------
-grd2kml(arg1; kw...) = grd2kml("", arg1; kw...)

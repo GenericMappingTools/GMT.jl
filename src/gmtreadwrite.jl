@@ -85,12 +85,16 @@ to read a jpg image with the bands reversed
 
     I = gmtread("image.jpg", band=[2,1,0]);
 """
-function gmtread(_fname::String; kwargs...)
+function gmtread(fname::String; kwargs...)
+	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+	gmtread(fname, d)
+end
+function gmtread(fname::String, d::Dict{Symbol, Any})
 
-	endswith(_fname, ".xlsx") && return read_xls(_fname; kwargs...)		# Excel extension
+	endswith(fname, ".xlsx") && return read_xls(_fname; kwargs...)		# Excel extension
 
-	fname::String = _fname					# Because args signatures seam to worth shit in body.
-	d = init_module(false, kwargs...)[1]	# Also checks if the user wants ONLY the HELP mode
+	#fname::String = _fname					# Because args signatures seam to worth shit in body.
+	#d = init_module(false, kwargs...)[1]	# Also checks if the user wants ONLY the HELP mode
 	cmd::String, opt_R::String = parse_R(d, "")
 	cmd, opt_i = parse_i(d, cmd)
 	cmd, opt_h = parse_h(d, cmd)
@@ -194,7 +198,7 @@ function gmtread(_fname::String; kwargs...)
 		elseif (opt_T == "obj")						# Means we got a .obj file. Read it and leave
 			return read_obj(fname)
 		elseif (opt_T == "las")						# Means we got a .laz or .las file. Read it and leave
-			o_las = lazread(fname; kwargs...)
+			o_las = lazread(fname; d...)
 			return getproperty(o_las, Symbol(o_las.stored))
 		end
 	else
