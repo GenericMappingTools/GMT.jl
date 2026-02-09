@@ -1633,7 +1633,7 @@ function parse_r(d::Dict, cmd::String, del::Bool=true)
 	val = find_in_dict(d, [:r :reg :registration], del)[1]
 	dt = whatType(val)
 	dt[:nada] && return cmd, ""
-	(dt[:string] || dt[:symb]) && (opt_val = " -r" * string(val)::String[1])
+	(dt[:string] || dt[:symb]) && (opt_val = " -r" * (string(val)::String)[1])
 	((dt[:bool] && dt[:yes]) || (dt[:int] && val == 1)) && (opt_val = " -r")
 	return cmd * opt_val, opt_val
 end
