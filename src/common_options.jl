@@ -1630,12 +1630,12 @@ end
 function parse_r(d::Dict, cmd::String, del::Bool=true)
 	# Accept both numeric (0 or != 0) and string/symbol arguments
 	opt_val::String = ""
-	if ((val = find_in_dict(d, [:r :reg :registration], del)[1]) !== nothing)
-		(isa(val, StrSymb)) && (opt_val = string(" -r",val)[1:4])
-		(isa(val, Integer)) && (opt_val = (val == 0) ? " -rg" : " -rp")
-		cmd *= opt_val
-	end
-	return cmd, opt_val
+	val = find_in_dict(d, [:r :reg :registration], del)[1]
+	dt = whatType(val)
+	dt[:nada] && return cmd, ""
+	(dt[:string] || dt[:symb]) && (opt_val = " -r" * string(val)::String[1])
+	((dt[:bool] && dt[:yes]) || (dt[:int] && val == 1)) && (opt_val = " -r")
+	return cmd * opt_val, opt_val
 end
 
 # ---------------------------------------------------------------------------------------------------

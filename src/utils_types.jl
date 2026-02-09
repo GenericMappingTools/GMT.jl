@@ -2589,3 +2589,23 @@ function hlp_desnany_vstr_2(d, s)::Vector{String}
 	(eltype(alpha_val) <: AbstractFloat && maximum(alpha_val) <= 1) && (alpha_val = string.(collect(alpha_val) .* 100))
 	return isa(alpha_val, String) ? [alpha_val] : vec(string.(alpha_val))
 end
+
+# ---------------------------------------------------------------------------------------------------
+function whatType(val)
+	d = Dict{Symbol,Bool}(:bool => false, :yes => false, :int => false, :float => false, :string => false,
+	                      :symb => false, :dataset => false, :tuple => false, :ntuple => false, :vector => false,
+	                      :matrix => false, :nada => false)
+	(val === nothing) && (d[:nada] = true;  return d)
+	tp = typeof(val)
+	(tp <: Bool) && (d[:bool] = true;  d[:yes] = val; return d)
+	(tp <: Integer) && (d[:int] = true;  return d)
+	(tp <: AbstractFloat) && (d[:float] = true;  return d)
+	(tp <: AbstractString) && (d[:string] = true;  return d)
+	(tp <: Symbol) && (d[:symb] = true;  return d)
+	(tp <: GMTdataset) && (d[:dataset] = true;  return d)
+	(tp <: Vector) && (d[:vector] = true;  return d)
+	(tp <: Matrix) && (d[:matrix] = true;  return d)
+	(tp <: Tuple) && (d[:tuple] = true;  return d)
+	(tp <: NamedTuple) && (d[:ntuple] = true;  return d)
+	return d
+end
