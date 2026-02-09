@@ -76,6 +76,8 @@
 	@test r == " --MAP_FRAME_WIDTH=0.2 --IO=lixo --OI=xoli"
 	@test GMT.parse_params(Dict{Symbol,Any}(:par => (:MAP_FRAME_WIDTH,0.2)), "") == " --MAP_FRAME_WIDTH=0.2"
 	@test GMT.parse_params(Dict{Symbol,Any}(:par => ("MAP_FRAME_WIDTH",0.2)), "") == " --MAP_FRAME_WIDTH=0.2"
+	@test GMT.parse_r(Dict{Symbol, Any}(:r => true), "", false)[1] == " -r"
+	@test GMT.parse_r(Dict{Symbol, Any}(:r => :pix), "", false)[1] == " -rp"
 	@test GMT.parse_w(Dict{Symbol,Any}(:w => :y), "")[1] == " -wy"
 	@test GMT.parse_w(Dict{Symbol,Any}(:w => "year"), "")[1] == " -wy"
 	@test GMT.parse_w(Dict{Symbol,Any}(:w => 10), "")[1] == " -wc10"
@@ -444,4 +446,5 @@
 	@test GMT.scan_opt(" -R -JX -JZ4", "-JZ") == "4"
 	@test GMT.scan_opt(" -R -JX -JZ4", "-J") == "X"
 
+	GMT.whatType(typeof(1));
 end

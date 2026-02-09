@@ -32,6 +32,13 @@ Plots the orbit, or whatever the input data in `xyz` represents, about the Earth
 """
 function orbits(xyz::Matrix{<:AbstractFloat}=Array{Float64}(undef, 0, 0); first::Bool=true, radius=6371.007, height=0,
                 lon0=0, lat0=0, show=false, savefig="", figname="", name="", kw...)
+	d = KW(kw)
+	orbits(xyz, first, Float64(radius), Float64(height), Float64(lon0), Float64(lat0), show==1, savefig, figname, name, d)
+end
+#function orbits(xyz::Matrix{<:AbstractFloat}=Array{Float64}(undef, 0, 0); first::Bool=true, radius=6371.007, height=0,
+                #lon0=0, lat0=0, show=false, savefig="", figname="", name="", kw...)
+function orbits(xyz::Matrix{<:AbstractFloat}, first::Bool, radius::Float64, height::Float64, lon0::Float64,
+                lat0::Float64, show::Bool, savefig::String, figname::String, name::String, d::Dict{Symbol, Any})
 
 	!first && !contains(CTRL.pocket_J[1], "-JG") && error("Only Orthographic projection is allowed.")
 	r_lon = [cosd(-lon0) sind(-lon0) 0; -sind(-lon0) cosd(-lon0) 0; 0 0 1]
@@ -85,8 +92,7 @@ function orbits(xyz::Matrix{<:AbstractFloat}=Array{Float64}(undef, 0, 0); first:
 	end
 
 	d = Dict{Symbol, Any}()
-	first && (coast(; region=:global, projection=(name=:ortho, center=(lon0,lat0)), A=100, Vd=-1, kw...); d = CTRL.pocket_d[1])
-	!first && (d = KW(kw))						# Need that Dict
+	first && (coast(; region=:global, projection=(name=:ortho, center=(lon0,lat0)), A=100, Vd=-1, d...); d = CTRL.pocket_d[1])
 	fname = (savefig != "") ? string(savefig) : (figname != "") ? string(figname) : (name != "") ? string(name) : ""
 	(fname != "") && (d[:figname] = fname)		# If we have a figure name request
 	D = mat2dsnan([x y z])						# Because of a bug in GMT plot3 that screws when NaNs
@@ -95,8 +101,11 @@ function orbits(xyz::Matrix{<:AbstractFloat}=Array{Float64}(undef, 0, 0); first:
 	#plot3d!([x[ind_h] y[ind_h] z[ind_h]], marker=:u, ms=0.1, mc=:blue, N=true, p=(90,0.00001), show=true)
 end
 
-orbits!(xyz::Matrix{<:Real}=Array{Float64}(undef, 0, 0); radius=6371.007, height=0, lon0=0, lat0=0, show=false, kw...) = orbits(xyz; first=false, radius=radius, height=height, lon0=lon0, lat0=lat0, show=show, kw...)
+orbits!(xyz::Matrix{<:Real}=Array{Float64}(undef, 0, 0); radius=6371.007, height=0, lon0=0, lat0=0, show=false, kw...) =
+	orbits(xyz; first=false, radius=radius, height=height, lon0=lon0, lat0=lat0, show=show, kw...)
 
-orbits(D::GMTdataset; radius=6371.007, height=0, lon0=0, lat0=0, show=false, kw...) = orbits(D.data; first=true, radius=radius, height=height, lon0=lon0, lat0=lat0, show=show, kw...)
+orbits(D::GMTdataset; radius=6371.007, height=0, lon0=0, lat0=0, show=false, kw...) =
+	orbits(D.data; first=true, radius=radius, height=height, lon0=lon0, lat0=lat0, show=show, kw...)
 
-orbits!(D::GMTdataset; radius=6371.007, height=0, lon0=0, lat0=0, show=false, kw...) = orbits(D.data; first=false, radius=radius, height=height, lon0=lon0, lat0=lat0, show=show, kw...)
+orbits!(D::GMTdataset; radius=6371.007, height=0, lon0=0, lat0=0, show=false, kw...) =
+	orbits(D.data; first=false, radius=radius, height=height, lon0=lon0, lat0=lat0, show=show, kw...)
