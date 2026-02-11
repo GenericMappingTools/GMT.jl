@@ -100,9 +100,9 @@ Parameters
 """
 function plot(arg1; first=true, kw...)
 	d = KW(kw)
-	_plot(arg1, first, d)
+	_plot(arg1, first==1, d)
 end
-function _plot(arg1, first, d)
+function _plot(arg1, first::Bool, d::Dict{Symbol, Any})
 	# First check if arg1 is a GMTds of a linear fit and if yes, call the plotlinefit() fun
 	if (isa(arg1, GDtype) && is_in_dict(d, [:linefit :regress]; del=false) !== nothing)
 		att = isa(arg1, GMTdataset) ? arg1.attrib : arg1[1].attrib
