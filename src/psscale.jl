@@ -48,24 +48,24 @@ Plots gray scales or color scales on maps.
 To see the full documentation type: ``@? colorbar``
 """
 function colorbar(arg1::Union{Nothing, GMTcpt}=nothing; first=true, kwargs...)
-	dbg_cmd, d, cmd, arg1, K, O = colorbar_parser(arg1; first=first, kwargs...)
+	d, K, O = init_module(first==1, kwargs...)		# Also checks if the user wants ONLY the HELP mode
+	dbg_cmd, d, cmd, arg1 = colorbar_parser(arg1, O, d)
 	(dbg_cmd !== nothing) && return dbg_cmd
 	r = prep_and_call_finish_PS_module(d, cmd, "", K, O, true, arg1)
 	(!isa(r,String)) && gmt("destroy")      # Probably because of the rasters in cpt
 end
 
-function colorbar_parser(arg1::Union{Nothing, GMTcpt}=nothing; first=true, kwargs...)
+function colorbar_parser(arg1::Union{Nothing, GMTcpt}, O::Bool, d::Dict{Symbol, Any})
 	gmt_proggy = (IamModern[]) ? "colorbar "  : "psscale "
-	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
 	parse_paper(d)		# See if user asked to temporarily pass into paper mode coordinates
 
 	isBnone = (get(d, :B, nothing) == :none)
 	cmd = parse_BJR(d, "", "", O, "")[1]
 	contains(cmd, "Bpx+l") && (cmd = replace(cmd, "Bpx+" => "Bpxaf+"))	# Because a simple -Bx would make annots at every color transition
-	opt_B = (!contains(cmd, " -B") && !IamModern[] && !isBnone) ? DEF_FIG_AXES[] : ""
+	opt_B = (!contains(cmd, " -B") && !isBnone) ? DEF_FIG_AXES[] : ""
 	cmd = parse_JZ(d, cmd; O=O, is3D=(CTRL.pocket_J[3] != ""))[1]		# We can't use parse_J(d)[1]
-	cmd = parse_common_opts(d, cmd, [:F :UVXY :params :margin :c :p :t]; first=first)[1]
+	cmd = parse_common_opts(d, cmd, [:F :UVXY :params :margin :c :p :t]; first=!O)[1]
 	cmd = parse_these_opts(cmd, d, [[:G :truncate], [:I :shade], [:M :monochrome], [:N :dpi],
 	                                [:Q :log], [:S :appearance :nolines], [:W :scale], [:Z :zfile]])
 	opt_D = parse_type_anchor(d, "", [:D :pos :position],
@@ -91,7 +91,7 @@ function colorbar_parser(arg1::Union{Nothing, GMTcpt}=nothing; first=true, kwarg
 
 	cmd = gmt_proggy * cmd
 	r = check_dbg_print_cmd(d, cmd)
-	return r, d, cmd, arg1, K, O
+	return r, d, cmd, arg1
 end
 
 # ---------------------------------------------------------------------------------------------------
