@@ -133,7 +133,9 @@ using InteractiveUtils
 
 	println("	SEGY")
 	segy("", R="-35/6/0/30", J="x0.15i/-0.15i", D=0.35, C=8.0, F=:green, Q=(b=-1.2, x=0.1, y=0.1), S=:c, W=true, Vd=2);
+	segy!("", D=0.35, C=8.0, F=:green, Q=(b=-1.2, x=0.1, y=0.1), S=:c, W=true, Vd=2);
 	segyz("", R="-35/6/0/30/0/30", J="x0.15i/-0.15i", Jz="-0.15i", p=(175,5), D=0.35, C=8.0, F=:green, Q=(b=-1.2,), S="c/5", W=true, Vd=2);
+	segyz!("", Jz="-0.15i", p=(175,5), D=0.35, C=8.0, F=:green, Q=(b=-1.2,), S="c/5", W=true, Vd=2);
 	segy2grd("", R="-35/6/0/30", I=0.1, Vd=2);
 
 	#G = gmt("grdmath -R-15/15/-15/15 -I1 X Y HYPOT DUP 2 MUL PI MUL 8 DIV COS EXCH NEG 10 DIV EXP MUL =");

@@ -113,6 +113,7 @@ function subplot(fim::String, stop::Bool, d::Dict{Symbol, Any})
 			gmt("gmtset  MAP_FRAME_TYPE fancy")
 		catch; resetGMT()
 		end
+		remove_map_origin()		# Remove MAP_ORIGIN_X and MAP_ORIGIN_Y from the gmt.conf.0.subplot file (see comments in function)
 		IamSubplot[], IamModern[] = true, true
 	elseif (do_set)
 		(!IamSubplot[]) && error("Cannot call subplot(set, ...) before setting dimensions")
@@ -216,4 +217,31 @@ function mura_arg(arg)::Dict
 	else                                d = (isa(arg, NamedTuple)) ? nt2dict(arg) : arg
 	end
 	d
+end
+
+# --------------------------------------------------------------------------
+function remove_map_origin()
+	# Remove MAP_ORIGIN_X and MAP_ORIGIN_Y from the gmt.conf.0.subplot file
+	# The problem: GMT CLI when it creates the gmt.conf.0.subplot file, does not set MAP_ORIGIN_X and MAP_ORIGIN_Y
+	# but because we fiddle a lot with themes and make the classic mode behave like modern, we end up setting them
+	# and that has a drastic effect of burning permanently in the GMT_keyword_updated[] internal variable, AND THERE
+	# IS NO WAY TO UNSET things inside GMT_keyword_updated[] from externals. When gmt_begin() is called, the
+	# gmt.conf.0.subplot file is created and the MAP_ORIGIN_X and MAP_ORIGIN_Y are set. But this SCREWS the location
+	# of the colorbars when we have subplots because they all overlap each other. The only solution found is to remove
+	# the MAP_ORIGIN_X and MAP_ORIGIN_Y from the gmt.conf.0.subplot file.
+	# WARNING: If we ever implement the 'figure' case, this function will need to be modified to account for the
+	# figure number. As it is, the "0" in gmt.conf.0.subplot stands for figure 0.
+	API = unsafe_load(convert(Ptr{GMTAPI_CTRL}, G_API[]))
+	session_dir = unsafe_string(API.gwf_dir)
+	fname = session_dir * filesep * "gmt.conf.0.subplot"
+	!isfile(fname) && return
+	lines = readlines(fname)
+	filtered = filter(l -> !startswith(l, "MAP_ORIGIN_"), lines)
+	length(filtered) == length(lines) && return nothing		# Nothing to remove
+	open(fname, "w") do io
+		for l in filtered
+			println(io, l)
+		end
+	end
+	return nothing
 end
