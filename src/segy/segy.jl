@@ -3,7 +3,7 @@
 
 Plot a SEGY file as a seismic data image.
 """
-segy!(cmd0::String; kwargs...) = segy_helper(cmd0; first=false, kwargs...)
+segy!(cmd0::String; kwargs...) = segy(cmd0; first=false, kwargs...)
 function segy(cmd0::String; first=true, kw...)
 	#(cmd0 === "") && error("Missing input segY file name to run this module.")
 	d, K, O = init_module(first==1, kw...)		# Also checks if the user wants ONLY the HELP mode
@@ -49,7 +49,7 @@ end
 
 Plot a SEGY file in 3-D as a seismic data image.
 """
-segyz!(cmd0::String; kwargs...) = segyz_helper(cmd0; first=false, kwargs...)
+segyz!(cmd0::String; kwargs...) = segyz(cmd0; first=false, kwargs...)
 function segyz(cmd0::String; first=true, kw...)
 	d, K, O = init_module(first==1, kw...)		# Also checks if the user wants ONLY the HELP mode
 	segyz_helper(cmd0, O, K, d)
