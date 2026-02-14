@@ -575,8 +575,12 @@ Example: write the GMTgrid 'G' object into a nc file called 'lixo.grd'
 """
 gmtwrite(data; kwargs...) = gmtwrite("", data; kwargs...)
 function gmtwrite(fname::AbstractString, data; kwargs...)
-
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+	gmtwrite(fname::AbstractString, data, d)
+end
+
+function gmtwrite(fname::AbstractString, data, d::Dict{Symbol, Any})
+
 	cmd, = parse_R(d, "")
 	cmd, = parse_common_opts(d, cmd, [:V_params :f])
 	if (fname == "")
@@ -587,7 +591,7 @@ function gmtwrite(fname::AbstractString, data; kwargs...)
 	_, opt_f = parse_f(d, "")
 
 	if (isa(data, GMTgrid))
-		(endswith(fname, ".laz") || endswith(fname, ".LAZ")) && return lazwrite(fname, data; kwargs...)		# Lasz
+		(endswith(fname, ".laz") || endswith(fname, ".LAZ")) && return lazwrite(fname, data; d...)		# Lasz
 
 		# GMT doesn't write correct CF nc grids that are referenced but non-geographic. So, use GDAL in those cases
 		fmt = parse_grd_format(d)				# See if we have format requests
@@ -608,14 +612,14 @@ function gmtwrite(fname::AbstractString, data; kwargs...)
 		CTRL.proj_linear[1] = true				# To force pad=0 and julia memory (no dup) in image_init()
 		transpcmap!(data, true)
 	elseif (isa(data, GDtype))
-		isa(data, Vector) && (endswith(fname, ".stl") || endswith(fname, ".STL")) && return write_stl(fname, data; kwargs...)	# STL
-		(endswith(fname, ".laz") || endswith(fname, ".LAZ")) && return lazwrite(fname, data; kwargs...)		# Lasz
+		isa(data, Vector) && (endswith(fname, ".stl") || endswith(fname, ".STL")) && return write_stl(fname, data; d...)	# STL
+		(endswith(fname, ".laz") || endswith(fname, ".LAZ")) && return lazwrite(fname, data; d...)		# Lasz
 		opt_T = " -Td"
 		cmd, = parse_bo(d, cmd)					# Write to binary file
 		cmd = isa(data, GMTdataset) ? set_fT(data, cmd, opt_f) : set_fT(data[1], cmd, opt_f)
 	elseif (isa(data, GMTfv))
 		(endswith(fname, ".obj") || endswith(fname, ".OBJ")) && return write_obj(fname, data)
-		(endswith(fname, ".stl") || endswith(fname, ".STL")) && return write_stl(fname, data; kwargs...)
+		(endswith(fname, ".stl") || endswith(fname, ".STL")) && return write_stl(fname, data; d...)
 	elseif (isa(data, GMTcpt))
 		opt_T = " -Tc"
 	elseif (isa(data, GMTps))
@@ -631,7 +635,7 @@ function gmtwrite(fname::AbstractString, data; kwargs...)
 			opt_T = " -Ti"
 		end
 	elseif (isa(data, AbstractArray))
-		(endswith(fname, ".laz") || endswith(fname, ".LAZ")) && return dat2las(fname, data; kwargs...)		# Lasz
+		(endswith(fname, ".laz") || endswith(fname, ".LAZ")) && return dat2las(fname, data; d...)		# Lasz
 		fmt = parse_grd_format(d)				# See if we have format requests
 		if (fmt == "")							# If no format, write a dataset
 			opt_T = " -Td"
