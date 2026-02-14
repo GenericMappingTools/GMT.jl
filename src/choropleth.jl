@@ -140,7 +140,7 @@ function helper_plot_choropleth(D, ids, vals, attrib::String, cmap, outline, _zv
 	zvals = (isempty(_zvals)) ? polygonlevels(D, ids, vals, att=attrib) : _zvals
 	pen_ouline = isa(outline, Bool) ? "0" : outline
 	C = isa(cmap, GMTcpt) ? cmap : makecpt(T=(minimum(vals), maximum(vals)), C=string(cmap))
-	return (outline != false) ? plot(D; level=zvals, cmap=C, plot=(data=D, pen=pen_ouline), kw...) :
+	return (outline != false) ? plot(D; level=zvals, cmap=C, W=pen_ouline, kw...) :
 	                            plot(D; level=zvals, cmap=C, kw...)
 end
 
