@@ -66,16 +66,23 @@ function add_opt_module(d::Dict)::Vector{String}
 			r = "inset_$(n_inset)"
 		elseif (isa(val, NamedTuple))
 			r = add_opt_module_barr1(val, symb)
-		elseif (isa(val, Real) && (val != 0))		# Allow setting coast=true || colorbar=true
+		elseif (isa(val, Real) && (val != 0))			# Allow setting coast=true || colorbar=true
 			r = add_opt_module_barr2(symb)
 		elseif (symb == :colorbar && (isa(val, StrSymb)))
-			# Accepts Top/TopTri[High|Low], Bottom/BottomTri, Left/LeftTri, Right/RightTri or triangles (caseless)
+			# Accepts generic psscale opts string or limitted: Top/TopTri[High|Low], Bottom/BottomTri, Left/LeftTri, Right/RightTri or triangles (caseless)
 			opt_RJ = !IamModern[] ? CTRL.pocket_R[1] * " -J" : ""
-			anc_tris = colorbar_triangles(val)
-			r = "psscale $opt_RJ -Baf -C -DJ"  * anc_tris
+			s_val::String = string(val)							# Shoot the Any
+			if (isa(val, String) && (!contains(s_val, "tri") && !(lowercase(s_val[1]) in ('t', 'b', 'l')))) # tbl cases are dealt in colorbar_triangles() 
+				!contains(s_val, " -B") && (s_val *= " -Baf")	# Add default -B if not present
+				(lowercase(s_val[1]) in ('j', 'j', 'n', 'x')) && (s_val = " -D" * s_val)
+				r = "psscale $opt_RJ -C " * s_val
+			else
+				anc_tris = colorbar_triangles(val)
+				r = "psscale $opt_RJ -Baf -C -DJ"  * anc_tris
+			end
 		elseif (symb == :clip)
 			if (isa(val, String) || isa(val, Symbol))	# Accept also "land", "water" or "ocean" or DCW country codes(s) or a hard -E string
-				_str::String = string(val)					# Shoot the Any
+				_str::String = string(val)				# Shoot the Any
 				if     (_str == "land")                     r = "clip pscoast -Gc"
 				elseif (_str == "water" || _str == "ocean") r = "clip pscoast -Sc"
 				elseif (length(_str) == 2 || _str[1] == '=' || contains(_str, ',') || contains(_str, "+f"))
