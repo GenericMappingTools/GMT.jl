@@ -1505,13 +1505,14 @@ function resetGMT(dorestart::Bool=true)
 	MULTI_COL[] = false;	CONVERT_SYNTAX[] = false;	CURRENT_VIEW[] = "";	SHOW_KWARGS[] = false;
 	IMG_MEM_LAYOUT[] = "";	GRD_MEM_LAYOUT[] = "";		CTRL.limits .= 0.0;	CTRL.proj_linear[1] = true;
 	CTRLshapes.fname = "";CTRLshapes.first = true; CTRLshapes.points = false;
-	CURRENT_CPT[]  = GMTcpt();		LEGEND_TYPE[] = legend_bag();	ressurectGDAL()
+	CURRENT_CPT[]  = GMTcpt();		LEGEND_TYPE[] = legend_bag();	isJupyter[] = false;	ressurectGDAL()
 	DEF_FIG_AXES[] = DEF_FIG_AXES_BAK;		DEF_FIG_AXES3[] = DEF_FIG_AXES3_BAK;
 	CTRL.pocket_J[1], CTRL.pocket_J[2], CTRL.pocket_J[3], CTRL.pocket_J[4] = "", "", "", "   ";
 	CTRL.IamInPaperMode[:] = [false, true];	IamInset.active, IamInset.has_J = false, false
 	pocket_call[][1:3] .= nothing;	CTRL.pocket_R[1:2] .= "";	CTRL.figsize .= 0.0
 	CTRL.XYlabels[1] = "";	CTRL.XYlabels[2] = "";	CTRL.returnPS[1] = false
 	(dorestart) && (gmt_restart(); clear_sessions(); DidOneGmtCmd[] = false)
+	return nothing
 end
 
 # ---------------------------------------------------------------------------------------------------
