@@ -4138,7 +4138,7 @@ function dbg_print_cmd(d::Dict, cmd::Vector{String})
 		end
 		if (length(d) > 0)
 			dd = deepcopy(d)		# Make copy so that we can harmlessly delete those below
-			delete!(dd, [[:show], [:leg, :legend, :l], [:box_pos], [:leg_pos], [:fmt, :savefig, :figname, :name], [:linefit, :linearfit]])
+			delete!(dd, [[:show], [:leg, :legend, :l], [:box_pos], [:leg_pos], [:fmt, :savefig, :figname, :name], [:linefit, :linearfit], [:dpi, :DPI]])
 			prog = isa(cmd, String) ? split(cmd)[1] : split(cmd[1])[1]
 			(length(dd) > 0) && println("Warning: the following options were not consumed in $prog => ", keys(dd))
 		end

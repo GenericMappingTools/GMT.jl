@@ -95,9 +95,7 @@ function colorbar_parser(arg1::Union{Nothing, GMTcpt}, O::Bool, d::Dict{Symbol, 
 end
 
 # ---------------------------------------------------------------------------------------------------
-#colorbar(arg1; kw...) = colorbar("", arg1; first=true, kw...)
 colorbar!(arg1::Union{Nothing, GMTcpt}=nothing; kw...) = colorbar(arg1; first=false, kw...)
-#colorbar!(cmd0::String="", arg1=nothing; kw...) = colorbar(cmd0, arg1; first=false, kw...)
 
 const psscale  = colorbar         # Alias
 const psscale! = colorbar!        # Alias
