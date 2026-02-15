@@ -382,7 +382,6 @@ using .Laszip
     D.attrib = Dict("Timecol" => "1")
     D[:Time]
     D["Time", "b"]
-    #plot(rand(5,2), marker=:point, lc=:red, ls=:dot, lw=1)
     grdimage(rand(Float32, 32, 32), R="0/32/0/32")
     grdimage(tests("coins"))
     I = mat2img(rand(UInt8, 32, 32, 3), clim=:zscale)
@@ -403,6 +402,10 @@ using .Laszip
     grdtrend(Glix, model=3)
     grdtrack(Glix, [1 1])
     coast(R=:g, proj=:guess, W=(level=1, pen=(2, :green)), savefig=tempname()*".ps")
+    rescale(mat2img(rand(UInt16, 16,16,3)))
+    plot(rand(5, 2))
+    bar(1:5, (20, 35, 30, 35, 27), width=0.5, color=:lightblue, limits=(0.5,5.5,0,40))
+    sample1d([0 0; 4 1], inc=0.5);
     #gridit(rand(10,3), preproc=true, I=0.1);
     #earthregions("PT", Vd=2);
     #violin(rand(50), fmt=:ps);
@@ -420,15 +423,6 @@ using .Laszip
     #arrows([0 8.2 0 6], limits=(-2,4,0,9), arrow=(len=2,stop=1,shape=0.5,fill=:red), axis=:a, pen="6p");
     GMT.doc_source_links("psbasemap"; silent=true)
     theme()
-    #rescale(mat2img(rand(UInt16, 16,16,3)))
-    plot(rand(5, 2))
-
-    # This one is really unbelievable. It executes only ONE F NEW LINE:
-    # "bar(arg1, arg2; first=true, kw...) = common_plot_xyz("", cat_2_arg2(arg1, arg2, true), "bar", first, false; kw...)"
-    # but it causes recompilation of a big chunk of common_plot_xyz() that should have been **ALL** precompiled
-    # by the "plot(rand(5,2))" above. But no, another 3 MB of ... landed in the precompiled cache.
-    # I'm commenting this because we can't afford adding (3)MEGABYTES for just one TINNY function.
-    #bar(1:5, (20, 35, 30, 35, 27), width=0.5, color=:lightblue, limits=(0.5,5.5,0,40))
 
     resetGMT()
 end
