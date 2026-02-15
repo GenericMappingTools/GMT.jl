@@ -185,7 +185,7 @@ A grid or an image and optionally the coastlines.
    plotgrid!(G, show=true)
 """
 function leepacific(fname::String; region=(90.0, 300.0, -90.0, 75.0), latlims=nothing, lonlims=nothing, coast=true)
-	reg = Float64.(collect(region))
+	reg = Float64[region...]
 	lonlims !== nothing && (reg[1] = lonlims[1]; reg[2] = lonlims[2])	# Use the lonlims if given
 	latlims !== nothing && (reg[3] = latlims[1]; reg[4] = latlims[2])	# Use the lonlims if given
 	while(reg[1] < 0)  reg[1] += 180.0; reg[2] += 180.0  end

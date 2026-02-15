@@ -292,7 +292,7 @@ function build_opt_R(val, symb::Symbol=Symbol())::String		# Generic function tha
 	R::String = ""
 	if ((isvector(val) || isa(val, Tuple)) && (length(val) == 4 || length(val) == 6))
 		if (symb ∈ (:region_llur, :limits_llur, :limits_diag, :region_diag))
-			_val::Vector{Float64} = vec(Float64.(collect(val)))
+			_val::Vector{Float64} = Float64[val...]
 			R = " -R" * @sprintf("%.15g/%.15g/%.15g/%.15g+r", _val[1], _val[3], _val[2], _val[4])::String
 		else
 			R = " -R" * arg2str(val)
@@ -316,7 +316,7 @@ function build_opt_R(arg::NamedTuple, symb::Symbol=Symbol())::String
 	d = nt2dict(arg)					# Convert to Dict
 	if ((val = find_in_dict(d, [:limits :region])[1]) !== nothing)
 		if ((isa(val, VecOrMat{<:Real}) || isa(val, Tuple)) && (length(val) == 4 || length(val) == 6))
-			vval::Vector{Float64} = vec(Float64.(collect(val)))
+			vval::Vector{Float64} = Float64[val...]
 			if (haskey(d, :diag) || haskey(d, :diagonal))		# The diagonal case
 				BB = @sprintf("%.15g/%.15g/%.15g/%.15g+r", vval[1], vval[3], vval[2], vval[4])
 			else
