@@ -115,7 +115,7 @@ function helper_markers(opt::String, ext, arg1::GMTdataset, N::Int, cst::Bool)
 	# Example that will land and be processed here:  marker=(:Ellipse, [30 10 15])
 	# N is the number of extra columns
 	marca::String = "";	 msg = ""
-	if (size(ext,2) == N && arg1 !== nothing)	# Here ARG1 is supposed to be a matrix that will be extended.
+	if (size(ext,2) == N)	# Here ARG1 is supposed to be a matrix that will be extended.
 		S = Symbol(opt)
 		t = arg1.data	# Because we need to passa matrix to this method of add_opt()
 		marca, t = add_opt(add_opt, (Dict(S => (par=ext,)), opt, "", [S]), (par="|",), true, t)
