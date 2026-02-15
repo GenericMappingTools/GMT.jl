@@ -1272,6 +1272,18 @@ end
 
 # ------------------------------------------------------------------------------------------------------
 """
+    width, height = getsize(fname::String) -> Tuple(Int, Int)
+
+Return the width and height of the grid or image from the file `fname`.
+"""
+function getsize(fname::String)
+	!isfile(fname) && error("File $GI does not exist")
+	ds = Gdal.read(fname)
+	return Gdal.width(ds), Gdal.height(ds)
+end
+
+# ------------------------------------------------------------------------------------------------------
+"""
     nrows, ncols, nseg = getsize(D::GDtype) -> Tuple(Int, Int, Int)
 
 Return the number of rows, columns and segments in the dataset `D`.
