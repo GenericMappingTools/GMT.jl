@@ -1806,4 +1806,3 @@ end
 
 include("getdcw.jl")
 include("choropleth.jl")
-include("montage.jl")

@@ -877,6 +877,8 @@ end
 parse_opt_S(d::Dict, arg1::Union{GMTfv, Vector{GMTfv}}, is3D::Bool) = arg1, ""	# Just to have a method for FVs
 function parse_opt_S(d::Dict, arg1, is3D::Bool=false)
 
+	isempty(d) && return arg1, ""
+
 	opt_S::String, have_custom = "", false
 	is1D = isvector(arg1)
 	# First see if the requested symbol is a custom one from GMT.jl share/custom
@@ -890,12 +892,12 @@ function parse_opt_S(d::Dict, arg1, is3D::Bool=false)
 	end
 	
 	_scale(isInt::Bool) = (isInt) ? 2.54/72 : 1.0
-	function helper_varsizes(arg1, n_args, mi_sz, ma_sz, mi_val, ma_val, isInt)
+	function helper_varsizes(_arg, n_args, mi_sz, ma_sz, mi_val, ma_val, isInt)
 		if (n_args == 2)
-			arg1[arg1 .< mi_val] .= mi_sz
-			arg1[arg1 .> ma_val] .= ma_sz
+			_arg[_arg .< mi_val] .= mi_sz
+			_arg[_arg .> ma_val] .= ma_sz
 		end
-		((sc_local = _scale(isInt)) != 1.0) && (arg1 .*= sc_local)
+		((sc_local = _scale(isInt)) != 1.0) && (_arg .*= sc_local)
 	end
 
 	if (opt_S == "" || (have_custom && custom_no_size))		# OK, no symbol given via the -S option. So fish in aliases
@@ -944,9 +946,8 @@ function parse_opt_S(d::Dict, arg1, is3D::Bool=false)
 						helper_varsizes(arg1, n_args, mi_sz, ma_sz, mi_val, ma_val, isInt)
 					end
 				elseif (isa(val, Tuple) && isa(val[1], Function) && isa(val[2], VMr))	# ~useless size=(fun, [2,20]) but no col size
-					val2::Tuple = val
-					sc = _scale(eltype(val2[2]) <: Integer)
-					arg1 = hcat(arg1, funcurve(val2[1], vec(Float64.(val2[2] .* sc)), size(arg1,1))[2])
+					sc = _scale(eltype(val[2]) <: Integer)
+					arg1 = hcat(arg1, funcurve(val[1], vec(Float64.(val[2] .* sc)), size(arg1,1))[2])
 				end
 			elseif (string(val)::String != "indata")	# WTF is "indata"?
 				marca *= arg2str(val)::String
