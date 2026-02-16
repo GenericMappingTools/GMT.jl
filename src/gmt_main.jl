@@ -1370,7 +1370,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function ogr2GMTdataset(in::Ptr{OGR_FEATURES}, drop_islands=false)::Union{GMTdataset, Vector{<:GMTdataset}}
-	(in == NULL)  && return nothing
+	(in == NULL)  && return GMTdataset()
 	OGR_F::OGR_FEATURES = unsafe_load(in)
 	n_max = OGR_F.n_rows * OGR_F.n_cols * OGR_F.n_layers
 	n_total_segments = OGR_F.n_filled

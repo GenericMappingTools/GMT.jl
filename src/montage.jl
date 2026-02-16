@@ -2,7 +2,7 @@ export montage
 
 # ------------------------------------------------------------------------------------------
 """
-    montage(images; grid=nothing, panels_size=nothing, margin="0.0", title=nothing,
+    montage(images; grid=nothing, panels_size=nothing, margins="0.0", title=nothing,
             titles=nothing, frame=nothing, indices=nothing, show=true, noR=false, kw...)
 
 Display multiple images or grids arranged in a grid layout using GMT's subplot machinery.
@@ -16,7 +16,7 @@ Panel sizes are automatically computed from the aspect ratios of the input image
 - `grid`: Tuple `(nrows, ncols)` specifying grid dimensions. Default: approximately square.
 - `panels_size`: Panel size in cm — a scalar for square panels, a tuple `(w, h)`, or
   a pre-formatted string `"w1,w2,.../h1,h2,..."`. Default: auto from aspect ratios.
-- `margin`: Gap between panels (GMT subplot margin syntax). Default: `"0.0"`.
+- `margins`: Gap between panels (GMT subplot margins syntax). Default: `"0.0"`.
 - `title`: Overall figure title string.
 - `titles`: Vector of strings with individual panel titles.
 - `frame`: Frame style for panels. Use `"0"` for invisible frame outline, or a pen
@@ -38,7 +38,7 @@ montage(imgs, grid=(2,2), panels_size=5)
 
 See also: `subplot`, `subplot_panel_sizes`
 """
-function montage(images; grid=nothing, panels_size=nothing, margin="0.0",
+function montage(images; grid=nothing, panels_size=nothing, margins="0.0",
                  title=nothing, titles=nothing, frame=nothing, indices=nothing,
                  show::Bool=true, noR::Bool=false, kw...)
 
@@ -48,7 +48,7 @@ function montage(images; grid=nothing, panels_size=nothing, margin="0.0",
 
 	d = KW(kw)
 	d[:grid] = (nrows, ncols)
-	d[:margin] = margin
+	d[:margin] = margins
 	(frame == "0") ? (d[:par] = (MAP_FRAME_PEN="0",); d[:frame] = frame) :
 	                 ((frame !== nothing) && (d[:B] ="0"; d[:par] = (:MAP_FRAME_PEN,parse_pen(frame))))
 
@@ -90,7 +90,8 @@ end
 # ----------------------------------------------------------------------------------------------------------
 """
     montage(D::Vector{<:GMTdataset}; grid=nothing, panels_size=nothing, margins=nothing,
-            choro=true, colorbar=false, title="", titles=String[], show=true, kw...)
+            choro=true, colorbar=false, attribs=String[], title="", titles=String[],
+            divlines=nothing, show=true, kw...)
 
 Display a multi-panel choropleth from vector polygon data. Each panel maps one numeric
 attribute of `D` (obtained via `getattribs`). Panels are laid out in a subplot grid, each
@@ -106,9 +107,12 @@ drawn with `choropleth`.
 - `choro`: If `true` (default), use choropleth mode (one panel per attribute).
 - `colorbar`: Colorbar placement — `false` (no bar), `true` (right side), `:bot` (bottom),
   or a GMT colorbar position string (e.g. `"JBC+o0/5p"`). Default: `true` when `choro=true`.
+- `attribs`: Vector of attribute names. Make plots only for these attributes. Default: all attributes.
 - `title`: Overall figure title.
 - `titles`: Vector of panel title strings, or `"att"` to use attribute names as titles.
+- `divlines`: Add dividing lines between panels. _i.e._ `divlines=pen`, where `pen` is a pen spefification.
 - `show`: Display the result. Default: `true`.
+- `kw`: Any additional keyword arguments are passed to `choropleth`.
 
 ### Examples
 ```julia
@@ -121,18 +125,22 @@ montage(D, colorbar=:bot, title="Iberia + France")
 See also: `choropleth`, `subplot`, `getattribs`
 """
 function montage(D::Vector{<:GMTdataset}; grid=nothing, panels_size=nothing, margins=nothing, choro=true,
-                 colorbar::Union{Bool,Symbol,NamedTuple,String}=false, title="", titles=String[], show::Bool=true, kw...)
-	atts = getattribs(D);	n_atts = length(atts)
+                 colorbar::Union{Bool,Symbol,NamedTuple,String}=false, title::String="", titles=String[],
+                 attribs::Vector{String}=String[], divlines = nothing, show::Bool=true, kw...)
+	d = KW(kw)
+	atts = getattribs(D);
+	deleteat!(atts, atts .== "Feature_ID")			# Remove Feature_ID, it's not part of this story
+	!isempty(attribs) && (atts = intersect(atts, attribs))
+	n_atts = length(atts)
+	n_atts == 0 && (@warn("No attributes to display"); return nothing)
 
 	(isa(titles, StrSymb) && startswith(string(titles), "att")) && (titles = atts)
 
 	_choro = (n_atts > 0 && choro == 1)
 	(!_choro && length(D) < 2) && error("No reasonable datasets to display")
 	cbar = (colorbar == false && _choro) ? true : colorbar			# Type unstable
-	n_atts = 4
 	nrows, ncols = _montage_grid_size(n_atts, grid)					# Calculate grid dimensions
 
-	d = KW(kw)
 	Vd = get(d, :Vd, 0)					# Get the Vd option that will be consumed by subplot
 	opt_R = parse_R(d, "")[1]
 	d[:R] = (opt_R !== "") ? opt_R[4:end] : getregion(D)[1:4]		# Prepare info so CTRL.limits is set in next call
@@ -159,11 +167,13 @@ function montage(D::Vector{<:GMTdataset}; grid=nothing, panels_size=nothing, mar
 	(title !== "") && (d[:title] = title)
 
 	ps = max(3, min(8, 18 / max(nrows, ncols)))
+	(divlines !== nothing) && (d[:divlines] = divlines)
+	((dvl = add_opt_pen(d, [:divlines])) !== "") && (dvl = "+w" * dvl)	# Add divlines between pannels
 	if (panels_size === nothing)
 		width, height = estimate_plot_size(D, colorbar == false ? false : colorbar, isempty(titles) ? "" : "Bla", nothing, d[:B] != "+n", kw...)
-		d[:Fs] = string(ps,"/", round(height/width*ps, digits=2), "+w0.5")
+		d[:Fs] = string(ps,"/", round(height/width*ps, digits=2), dvl)
 	else
-		d[:Fs] = string(ps,"+w0.5")
+		d[:Fs] = string(ps,dvl)
 	end
 
 	subplot("", false, d)				# Create subplot (since we already have the Dict pass it directly)
@@ -197,7 +207,7 @@ end
 # ----------------------------------------------------------------------------------------------------------
 function estimate_plot_size(D, cbar, title, proj, has_B, kw...)
 	# Estimate plot size of a single panel
-	fname = TMPDIR_USR.dir * "/" * "GMTjl__" * TMPDIR_USR.username * TMPDIR_USR.pid_suffix * ".png"
+	fname = TMPDIR_USR.dir * "/" * "GMTjl_" * TMPDIR_USR.username * TMPDIR_USR.pid_suffix * ".png"
 	(cbar != false) && makecpt(C=:jet)		# Just a tinny CPT to get to the dimensions
 	has_B && (cbar == :bot) && (cbar = "JBC+o0/25p")	# Add space for baddly accounted colorbar position
 	plot(D; dpi=50, title=title, colorbar=cbar, J=proj, savefig=fname, kw...)

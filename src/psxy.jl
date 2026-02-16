@@ -875,6 +875,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 parse_opt_S(d::Dict, arg1::Union{GMTfv, Vector{GMTfv}}, is3D::Bool) = arg1, ""	# Just to have a method for FVs
+parse_opt_S(d::Dict, arg1::GMTcpt, is3D::Bool) = arg1, ""	# Just to have a method for CPTs
 function parse_opt_S(d::Dict, arg1, is3D::Bool=false)
 
 	isempty(d) && return arg1, ""

@@ -308,7 +308,7 @@ function gd2gmt(dataset::Gdal.AbstractDataset)
 			end
 		end
 	end
-	(isempty(D)) && (@warn("This dataset has no geometry data. Result is empty."))
+	(isempty(D)) && (@warn("This dataset has no geometry data. Result is empty."); return D)
 	(length(D) != ds-1) && (D = deleteat!(D,ds:length(D)))
 	D[1].colnames = startswith(proj, "+proj=longlat") ? ["lon","lat", ["z$i" for i=1:size(D[1].data,2)-2]...] :
 	                ["x","y", ["z$i" for i=1:size(D[1].data,2)-2]...]	
