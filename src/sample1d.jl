@@ -58,7 +58,7 @@ sample1d(arg1; kw...)         = sample1d_helper("", arg1; kw...)
 
 function sample1d_helper(cmd0::String, arg1; kwargs...)
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
-	isa(arg1, Matrix{<:Real}) && (arg1 = mat2ds(arg1))		#  One less type to deal with
+	isa(arg1, Matrix{<:Real}) && (arg1 = mat2ds(Float64.(arg1)))	#  One less type to deal with
 	fill_nans = is_in_kwargs(d, [:fill_nans :interp_nans])
 	(cmd0 != "") && fill_nans && (arg1 = gmtread(cmd0))
 	fill_nans && isa(arg1, Vector) && (@warn "Filling NaNs only works with GMTdatasets. For vectors you must run one by one"; return nothing)
