@@ -649,32 +649,106 @@ function violin(data::Vector{Vector{Vector{T}}}; pos::Vector{<:Real}=Vector{Floa
 end
 
 # ----------------------------------------------------------------------------------------------------------
+# Build violin polygon as a matrix. Uses loops instead of broadcast/vcat/hcat to reduce IR bloat.
+function _violin_polygon(d::Vector{Float64}, xd, x::Float64, split::Int, isVert::Bool)
+	n = length(d)
+	if split == 0				# Both sides
+		m = 2n + 1
+		result = Matrix{Float64}(undef, m, 2)
+		if isVert
+			@inbounds for i in 1:n
+				j = n + 1 - i
+				result[i, 1]   = d[i] + x;    result[i, 2]   = xd[i]
+				result[n+i, 1] = -d[j] + x;   result[n+i, 2] = xd[j]
+			end
+			result[m, 1] = d[1] + x;  result[m, 2] = xd[1]
+		else
+			@inbounds for i in 1:n
+				j = n + 1 - i
+				result[i, 1]   = xd[i];        result[i, 2]   = d[i] + x
+				result[n+i, 1] = xd[j];        result[n+i, 2] = -d[j] + x
+			end
+			result[m, 1] = xd[1];     result[m, 2] = d[1] + x
+		end
+	elseif split == 1			# Left half
+		m = n + 3
+		result = Matrix{Float64}(undef, m, 2)
+		if isVert
+			result[1, 1] = x;          result[1, 2] = xd[n]
+			@inbounds for i in 1:n
+				j = n + 1 - i
+				result[1+i, 1] = -d[j] + x;  result[1+i, 2] = xd[j]
+			end
+			result[n+2, 1] = x;        result[n+2, 2] = xd[1]
+			result[n+3, 1] = x;        result[n+3, 2] = xd[n]
+		else
+			result[1, 1] = xd[n];      result[1, 2] = x
+			@inbounds for i in 1:n
+				j = n + 1 - i
+				result[1+i, 1] = xd[j];  result[1+i, 2] = -d[j] + x
+			end
+			result[n+2, 1] = xd[1];    result[n+2, 2] = x
+			result[n+3, 1] = xd[n];    result[n+3, 2] = x
+		end
+	else						# Right half (split == 2)
+		m = n + 3
+		result = Matrix{Float64}(undef, m, 2)
+		if isVert
+			@inbounds for i in 1:n
+				result[i, 1] = d[i] + x;  result[i, 2] = xd[i]
+			end
+			result[n+1, 1] = x;        result[n+1, 2] = xd[n]
+			result[n+2, 1] = x;        result[n+2, 2] = xd[1]
+			result[n+3, 1] = d[1] + x; result[n+3, 2] = xd[1]
+		else
+			@inbounds for i in 1:n
+				result[i, 1] = xd[i];    result[i, 2] = d[i] + x
+			end
+			result[n+1, 1] = xd[n];    result[n+1, 2] = x
+			result[n+2, 1] = xd[1];    result[n+2, 2] = x
+			result[n+3, 1] = xd[1];    result[n+3, 2] = d[1] + x
+		end
+	end
+	return result
+end
+
+# ----------------------------------------------------------------------------------------------------------
+function _violin_scatter(randOffset::Vector{Float64}, maxDisp::Matrix{Float64}, cx::Float64, isVert::Bool)
+	n = length(randOffset)
+	result = Matrix{Float64}(undef, n, 2)
+	if isVert
+		@inbounds for i in 1:n
+			result[i, 1] = randOffset[i] * maxDisp[i, 2] + cx
+			result[i, 2] = maxDisp[i, 1]
+		end
+	else
+		@inbounds for i in 1:n
+			result[i, 1] = maxDisp[i, 1]
+			result[i, 2] = randOffset[i] * maxDisp[i, 2] + cx
+		end
+	end
+	mat2ds(result)
+end
+
+# ----------------------------------------------------------------------------------------------------------
 # Create D's with the violin shapes and optionally fill a second D with the scatter points.
 function helper1_violin(data::Union{Vector{Vector{T}}, AbstractMatrix{T}}, x::Vector{<:Real}=Vector{Float64}(),
                         off_in_grp::Float64=0.0, N_grp::Int=1; groupwidth::Float64=0.75, nbins::Integer=100, bins::Vector{<:Real}=Vector{Float64}(), bandwidth=nothing, kernel::StrSymb="normal", scatter::Bool=false, split::Int=0, isVert::Bool=true, swing::Bool=true) where T
 	# OFF_IN_GRP is the offset relative to group's center (zero when groups have only one violin)
 	# SPLIT is either 0 (no split); 1 store only lefy half; 2 store right half
 	# For the SPLIT case the SWING option is true when called from VecVecVec and means SPLIT will toggle between 1-2
-	
+
 	_x = !isempty(x) ? Float64.(x) : isa(data, AbstractMatrix) ? collect(1.0:size(data,2)) : collect(1.0:length(data))
 
 	Dv = kernelDensity(data; nbins=nbins, bins=bins, bandwidth=bandwidth, kernel=kernel)
 	Ds = (scatter) ? Vector{GMTdataset{Float64,2}}(undef, length(Dv)) : [GMTdataset()]
 	for k = 1:numel(Dv)
 		xd, d = Base.invokelatest(view,Dv[k].data,:,1), Base.invokelatest(view,Dv[k].data,:,2)
-		d = 1/2N_grp * 0.75 * groupwidth .* d ./ maximum(d)
+		maxd = maximum(d)
+		scale = 1/2N_grp * 0.75 * groupwidth
+		d = [d[i] * scale / maxd for i in eachindex(d)]
 		(k == 2 && split != 0 && swing) && (split = (split == 1) ? 2 : 1)	# Not realy sure why we have to do this.
-		if (split == 0)					# Both sides
-			_data = (isVert) ? [[d; -d[end:-1:1]; d[1]] .+ (_x[k] + off_in_grp) [xd; xd[end:-1:1]; xd[1]]] :
-			                   [[xd; xd[end:-1:1]; xd[1]] [d; -d[end:-1:1]; d[1]] .+ (_x[k] + off_in_grp)]
-		elseif (split == 1)				# Left half
-			_data = (isVert) ? [[0.; -d[end:-1:1]; 0.; 0.] .+ _x[k] [xd[end]; xd[end:-1:1]; xd[1]; xd[end]]] :
-			                   [[xd[end]; xd[end:-1:1]; xd[1]; xd[end]] [0.; -d[end:-1:1]; 0.; 0.] .+ _x[k]]
-		else							# Right half
-			_data = (isVert) ? [[d; 0.0; 0.0; d[1]] .+ _x[k] [xd; xd[end]; xd[1]; xd[1]]] :
-			                   [[xd; xd[end]; xd[1]; xd[1]] [d; 0.0; 0.0; d[1]] .+ _x[k]]
-		end
-		Dv[k].data = _data				# Reuse the struct
+		Dv[k].data = _violin_polygon(d, xd, _x[k] + off_in_grp, split, isVert)
 
 		if (scatter)
 			# Interpolate them on the 'edge'
@@ -683,8 +757,7 @@ function helper1_violin(data::Union{Vector{Vector{T}}, AbstractMatrix{T}}, x::Ve
 			n = isa(data, AbstractMatrix) ? size(data,1) : length(data[k])
 			randOffset = (split == 0) ? 2*rand(n) .- 1 : (split == 1) ? -rand(n) : rand(n)
 			(split != 0) && (off_in_grp = 0.0)
-			Ds[k] = (isVert) ? mat2ds([randOffset .* maxDisplacement[:,2] .+ (_x[k] + off_in_grp) maxDisplacement[:,1]]) :
-			                   mat2ds([maxDisplacement[:,1] randOffset .* maxDisplacement[:,2] .+ (_x[k] + off_in_grp)])
+			Ds[k] = _violin_scatter(randOffset, maxDisplacement, _x[k] + off_in_grp, isVert)
 		end
 	end
 	set_dsBB!(Dv)				# Compute and set the global BoundingBox
