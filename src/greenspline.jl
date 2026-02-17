@@ -73,13 +73,16 @@ Parameters
 
 To see the full documentation type: ``@? greenspline``
 """
-greenspline(cmd0::String; kwargs...) = greenspline_helper(cmd0, nothing; kwargs...)
-greenspline(arg1; kwargs...)         = greenspline_helper("", arg1; kwargs...)
+greenspline(cmd0::String; kw...) = greenspline_helper(cmd0, nothing; kw...)
+greenspline(arg1; kw...)         = greenspline_helper("", arg1; kw...)
 
 # ---------------------------------------------------------------------------------------------------
-function greenspline_helper(cmd0::String, arg1; kwargs...)
+function greenspline_helper(cmd0::String, arg1; kw...)
+	d = init_module(false, kw...)[1]
+	greenspline_helper(cmd0, arg1, d)
+end
+function greenspline_helper(cmd0::String, arg1, d::Dict{Symbol, Any})
 
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	arg2 = nothing;     arg3 = nothing
 
 	cmd, = parse_common_opts(d, "", [:I :R :V_params :bi :d :e :f :h :i :o :r :x :w :yx])

@@ -41,18 +41,19 @@ Parameters
 
 To see the full documentation type: ``@? xyz2grd``
 """
-function xyz2grd(cmd0::String="", arg1=nothing; kwargs...)
-
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
-
+function xyz2grd(cmd0::String="", arg1=nothing; kw...)
+	d = init_module(false, kw...)[1]		# Also checks if the user wants ONLY the HELP mode
 	_prj = ((val = find_in_dict(d, [:J :proj :projection])[1]) !== nothing) ? val : ""
 	prj::String = isa(_prj, Integer) ? epsg2proj(_prj) : _prj		# Accept also EPSGs
-	cmd, = parse_common_opts(d, "", [:G :RIr :J :V_params :bi :di :e :f :h :i :w :yx])
-	cmd  = parse_these_opts(cmd, d, [[:A :multiple_nodes], [:D :header], [:S :swap], [:Z :flags]])
 	if (cmd0 == "" && arg1 === nothing)
 		(haskey(d, :x) && haskey(d, :y) && haskey(d, :z)) && (arg1 = hcat(d[:x], d[:y], d[:z]))
 		(arg1 !== nothing) && (delete!(d, :x); delete!(d, :y); delete!(d, :z))
 	end
+	xyz2grd(cmd0, arg1, prj, d)
+end
+function xyz2grd(cmd0::String, arg1, prj::String, d::Dict{Symbol, Any})
+	cmd, = parse_common_opts(d, "", [:G :RIr :J :V_params :bi :di :e :f :h :i :w :yx])
+	cmd  = parse_these_opts(cmd, d, [[:A :multiple_nodes], [:D :header], [:S :swap], [:Z :flags]])
 	G = common_grd(d, cmd0, cmd, "xyz2grd ", arg1)		# Finish build cmd and run it
 	(prj != "") && (setproj!(G, prj))
 	if (isa(G, GMTgrid) && G.proj4 == "+xy")

@@ -38,13 +38,13 @@ Parameters
 
 To see the full documentation type: ``@? grdgradient``
 """
-function grdgradient(cmd0::String; kwargs...)
-	d, cmd = grdgrad_helper(;kwargs...)
+function grdgradient(cmd0::String; kw...)
+	d, cmd = grdgrad_helper(;kw...)
 	common_grd(d, cmd0, cmd, "grdgradient ", nothing)		# Finish build cmd and run it
 end
 
-function grdgradient(arg1; kwargs...)
-	d, cmd = grdgrad_helper(;kwargs...)
+function grdgradient(arg1; kw...)
+	d, cmd = grdgrad_helper(;kw...)
 	common_grd(d, "", cmd, "grdgradient ", arg1)		# Finish build cmd and run it
 end
 

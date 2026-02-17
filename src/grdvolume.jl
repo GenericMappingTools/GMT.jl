@@ -28,9 +28,12 @@ Parameters
 
 To see the full documentation type: ``@? grdvolume``
 """
-function grdvolume(cmd0::String="", arg1=nothing; kwargs...)
+function grdvolume(cmd0::String="", arg1=nothing; kw...)
+	d = init_module(false, kw...)[1]
+	grdvolume(cmd0, arg1, d)
+end
+function grdvolume(cmd0::String, arg1, d::Dict{Symbol, Any})
 
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:R :V_params :f :o])
 	cmd  = parse_these_opts(cmd, d, [[:C :cont :contour], [:D :diff :difference], [:L :base_level :baselevel], [:S :unit], [:T :find_max :findmax], [:Z :scale]])
 	common_grd(d, cmd0, cmd, "grdvolume ", arg1)		# Finish build cmd and run it

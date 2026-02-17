@@ -59,13 +59,16 @@ or use `allcols=true`.
 
 To see the full documentation type: ``@? grdinterpolate``
 """
-grdinterpolate(cmd0::String; kwargs...) = grdinterp_helper(cmd0, nothing; kwargs...)
-grdinterpolate(arg1; kwargs...)         = grdinterp_helper("", arg1; kwargs...)
+grdinterpolate(cmd0::String; kw...) = grdinterp_helper(cmd0, nothing; kw...)
+grdinterpolate(arg1; kw...)         = grdinterp_helper("", arg1; kw...)
 
-function grdinterp_helper(cmd0::String, arg1; allcols::Bool=false, gdal=false, kwargs...)
+function grdinterp_helper(cmd0::String, arg1; allcols::Bool=false, gdal=false, kw...)
+	d = init_module(false, kw...)[1]
+	grdinterp_helper(cmd0, arg1, allcols, gdal, d)
+end
+function grdinterp_helper(cmd0::String, arg1, allcols::Bool, gdal, d::Dict{Symbol, Any})
 
 	arg2 = nothing
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
 	cmd = parse_common_opts(d, "", [:R :V_params :bi :bo :di :e :f :g :h :i :n :o :q :s :yx])[1]
 	cmd = parse_these_opts(cmd, d, [[:G :outfile :outgrid], [:Z :levels]])

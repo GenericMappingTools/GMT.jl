@@ -30,14 +30,14 @@ Parameters
 
 To see the full documentation type: ``@? grdhisteq``
 """
-function grdhisteq(cmd0::String; kwargs...)
-	d, cmd = grdhisteq_helper(; kwargs...)
+function grdhisteq(cmd0::String; kw...)
+	d, cmd = grdhisteq_helper(; kw...)
 	common_grd(d, cmd0, cmd, "grdhisteq ")			# Finish build cmd and run it
 end
 
 # ---------------------------------------------------------------------------------------------------
-function grdhisteq(arg1; kwargs...)
-	d, cmd = grdhisteq_helper(; kwargs...)
+function grdhisteq(arg1; kw...)
+	d, cmd = grdhisteq_helper(; kw...)
 	common_grd(d, "", cmd, "grdhisteq ", arg1)		# Finish build cmd and run it
 end
 

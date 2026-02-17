@@ -39,9 +39,12 @@ Parameters
 - $(opt_n)
 - $(opt_r)
 """
-function grdblend(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
+function grdblend(cmd0::String="", arg1=nothing, arg2=nothing; kw...)
+	d = init_module(false, kw...)[1]
+	grdblend(cmd0, arg1, arg2, d)
+end
+function grdblend(cmd0::String, arg1, arg2, d::Dict{Symbol, Any})
 
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:G :I :R :V_params :f :n :r])
 	cmd  = parse_these_opts(cmd, d, [[:C :clobber], [:N :nodata], [:Q :headless], [:W :no_blend], [:Z :scale]])
 

@@ -48,15 +48,18 @@ Parameters
 - $(_opt_f)
 - $(opt_swap_xy)
 """
-grdedit(cmd0::String; kwargs...) = grdedit_helper(cmd0, nothing; kwargs...)
-grdedit(arg1; kwargs...)         = grdedit_helper("", arg1; kwargs...)
+grdedit(cmd0::String; kw...) = grdedit_helper(cmd0, nothing; kw...)
+grdedit(arg1; kw...)         = grdedit_helper("", arg1; kw...)
 
 # ---------------------------------------------------------------------------------------------------
-function grdedit_helper(cmd0::String, arg1; kwargs...)
+function grdedit_helper(cmd0::String, arg1; kw...)
+	(isa(arg1, GMTgrid) && length(kw) == 0) && (arg1.range[5:6] .= extrema(arg1); return arg1)  # Update the z_min|max
+	d = init_module(false, kw...)[1]
+	grdedit_helper(cmd0, arg1, d)
+end
+function grdedit_helper(cmd0::String, arg1, d::Dict{Symbol, Any})
 
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	arg2 = nothing
-	(isa(arg1, GMTgrid) && length(kwargs) == 0) && (arg1.range[5:6] .= extrema(arg1); return arg1)  # Update the z_min|max
 
 	cmd, = parse_common_opts(d, "", [:G :R :V_params :bi :di :e :f :w :yx])
 	cmd = parse_J(d, cmd, default=" ")[1]       # No default J here.
