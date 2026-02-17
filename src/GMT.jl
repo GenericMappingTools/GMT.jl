@@ -121,7 +121,7 @@ export
 	gmt_GMTgrid, libgdal, arrows, arrows!, bar, bar!, bar3, bar3!, band, band!, bubblechart, bubblechart!, crop,
 	feather, feather!, hband, hband!, hlines, hlines!, lines, lines!, legend, legend!, quiver, quiver!, radar,
 	radar!, stairs, stairs!, stem, stem!, vlines, vlines!, vband, vband!, hspan, hspan!, vspan, vspan!,
-	basemap, basemap!, blockmean, blockmedian, blockmode, clip, clip!,
+	basemap, basemap!, blockmean, blockmedian, blockmode, clip, clip!, compass, compass!,
 	coast, coast!, colorbar, colorbar!, colorscale, colorscale!, contour, contour!, contourf, contourf!, events,
 	filter1d, fitcircle, gmt2kml, gmtbinstats, binstats, gmtconnect, gmtconvert,
 	gmtinfo, gmtlogo, gmtlogo!, gmtmath, gmtregress, gmtread, gmtselect, gmtset, gmtsimplify, gmtspatial,
@@ -284,6 +284,7 @@ include("orbits.jl")
 include("plot.jl")
 include("project.jl")
 include("psbasemap.jl")
+include("compass.jl")
 include("psclip.jl")
 include("pscoast.jl")
 include("pscontour.jl")

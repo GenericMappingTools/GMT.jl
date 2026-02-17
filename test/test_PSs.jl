@@ -33,6 +33,37 @@ r = basemap(region=("0.2t","0.35t",0,1), figsize=(-12,0.25), frame=(axes=:S, ann
 @test startswith(r, "psbasemap  -R0.2t/0.35t/0/1 -JX-12/0.25 -Bsa1H -Bpa15mf5m -BS --FORMAT_CLOCK_MAP=-hham")
 @test_throws ErrorException("slanted option: Only 'parallel' is allowed for the y-axis") basemap(yaxis=(slanted=:o,), Vd=dbg2)
 
+println("	COMPASS")
+# Standalone directional rose — auto canvas, auto center
+r = compass(width=3, fancy=true, Vd=dbg2);
+@test startswith(r, "psbasemap  -R0/4.9/0/4.9 -JX4.9c -Tdx2.45/2.45+w3+f+jCM")
+# Standalone with labels
+r = compass(width=2.5, fancy=2, labels=",,,N", Vd=dbg2);
+@test contains(r, "-Td") && contains(r, "+f2") && contains(r, "+l,,,N")
+# Standalone with anchor (auto paper coords)
+r = compass(width=3, anchor=(5,5), fancy=true, Vd=dbg2);
+@test contains(r, "-Tdx5/5+w3+f")
+# Standalone with explicit paper coord
+r = compass(width=3, paper="7/7", fancy=1, Vd=dbg2);
+@test contains(r, "-Tdx7/7+w3+f1")
+# Standalone with explicit R/J — no auto canvas
+r = compass(region=(-5,5,-5,5), proj=:merc, width=2.5, anchor=(0,0), fancy=3, Vd=dbg2);
+@test startswith(r, "psbasemap  -R-5/5/-5/5 -JM15c") && contains(r, "-Tdj0/0+w2.5+f3")
+# Magnetic compass — standalone
+r = compass(width=6, dec=-14.5, annot=(45,10,5,30,10,2), labels="", Vd=dbg2);
+@test contains(r, "-Tm") && contains(r, "+d-14.5") && contains(r, "+t45/10/5/30/10/2")
+# Magnetic compass with rose_primary/secondary
+r = compass(width=6, dec=-14.5, rose_primary=(0.25,:blue), rose_secondary=0.5, Vd=dbg2);
+@test contains(r, "+i0.25,blue") && contains(r, "+p0.5")
+# Overlay mode (compass!)
+basemap(region=(-10,10,-10,10), proj=:Mercator, frame=:auto, Vd=dbg2)
+r = compass!(width=2.5, anchor=(0,0), justify=:CM, fancy=true, labels=",,,N", Vd=dbg2);
+@test contains(r, " -R -J") || contains(r, "-R-10/10/-10/10 -J ")
+@test contains(r, "-Tdj0/0+w2.5+jCM+l,,,N+f")
+# frame=:none is default (no explicit frame draws no axes)
+r = compass(width=3, fancy=true, Vd=dbg2);
+@test !contains(r, "-B")
+
 println("	PSCLIP")
 d = [0.2 0.2; 0.2 0.8; 0.8 0.8; 0.8 0.2; 0.2 0.2];
 psclip(d, J="X3i", R="0/1/0/1", N=true, V=:q);
