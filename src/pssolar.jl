@@ -39,15 +39,19 @@ Parameters
 
 To see the full documentation type: ``@? solar``
 """
-function solar(cmd0::String="", arg1=nothing; first=true, kwargs...)
+solar!(cmd0::String="", arg1=nothing; kw...) = solar(cmd0, arg1; first=false, kw...)
+function solar(cmd0::String="", arg1=nothing; first=true, kw...)
+	d, K, O = init_module(first, kw...)		# Also checks if the user wants ONLY the HELP mode
+	solar(cmd0, arg1, O, K, d)
+end
+function solar(cmd0::String, arg1, O::Bool, K::Bool, d::Dict{Symbol, Any})
 
 	gmt_proggy = (IamModern[]) ? "solar " : "pssolar "
-	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
 	def_J = (isempty(d)) ? " -JG0/0/14c" : " -JX14cd/0d"
 	(isempty(d)) && (d[:coast] = true; d[:T] = :d; d[:G] = "navy@75"; d[:show] = true)
 	cmd, _, opt_J, = parse_BJR(d, "", "", O, def_J)
-	cmd, = parse_common_opts(d, cmd, [:bo :c :h :o :p :t :UVXY :params]; first=first)
+	cmd, = parse_common_opts(d, cmd, [:bo :c :h :o :p :t :UVXY :params]; first=!O)
 	cmd  = parse_these_opts(cmd, d, [[:C :format], [:M :dump], [:N :invert]])
 
 	cmd  = add_opt_fill(cmd, d, [:G :fill], 'G')
@@ -69,7 +73,5 @@ function solar(cmd0::String="", arg1=nothing; first=true, kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-solar!(cmd0::String="", arg1=nothing; kw...) = solar(cmd0, arg1; first=false, kw...)
-
 const pssolar  = solar				# Alias
 const pssolar! = solar!				# Alias

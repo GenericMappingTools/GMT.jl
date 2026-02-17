@@ -27,9 +27,11 @@ Parameters
 
 This module can also be called via `gmtread`. _I.,e._ `gmtread("file.isf", opts...)_
 """
-function gmtisf(cmd0::String; kwargs...)::GMTdataset{Float64,2}
-
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+function gmtisf(cmd0::String; kw...)::GMTdataset{Float64,2}
+	d = init_module(false, kw...)[1]
+	gmtisf(cmd0, d)
+end
+function gmtisf(cmd0::String, d::Dict{Symbol, Any})::GMTdataset{Float64,2}
 
 	cmd = parse_common_opts(d, "", [:R :V_params :yx])[1]
 	cmd = parse_these_opts(cmd, d, [[:F :focal], [:D :date], [:N :notime]])

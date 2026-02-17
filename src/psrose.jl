@@ -72,20 +72,22 @@ Parameters
 
 To see the full documentation type: ``@? rose``
 """
-rose(cmd0::String; kwargs...)  = rose_helper(cmd0, nothing; kwargs...)
-rose(arg1; kwargs...)          = rose_helper("", arg1; kwargs...)
-rose!(cmd0::String; kwargs...) = rose_helper(cmd0, nothing; first=false, kwargs...)
-rose!(arg1; kwargs...)         = rose_helper("", arg1; first=false, kwargs...)
+rose(cmd0::String; kw...)  = rose_helper(cmd0, nothing; kw...)
+rose(arg1; kw...)          = rose_helper("", arg1; kw...)
+rose!(cmd0::String; kw...) = rose_helper(cmd0, nothing; first=false, kw...)
+rose!(arg1; kw...)         = rose_helper("", arg1; first=false, kw...)
 
 # ---------------------------------------------------------------------------------------------------
-function rose_helper(cmd0::String, arg1; first=true, kwargs...)
+function rose_helper(cmd0::String, arg1; first=true, kw...)
+	d, K, O = init_module(first, kw...)		# Also checks if the user wants ONLY the HELP mode
+	rose_helper(cmd0, arg1, O, K, d)
+end
+function rose_helper(cmd0::String, arg1, O::Bool, K::Bool, d::Dict{Symbol, Any})
 
     gmt_proggy = (IamModern[]) ? "rose "  : "psrose "
 
 	arg2 = nothing		# May be needed if GMTcpt type is sent in via C
 	N_args = (arg1 === nothing) ? 0 : 1
-
-	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
 	# If inquire, no plotting so do it and return
 	cmd = add_opt(d, "", "I", [:I :inquire])
@@ -96,7 +98,7 @@ function rose_helper(cmd0::String, arg1; first=true, kwargs...)
 	end
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX15c")
-	cmd, = parse_common_opts(d, cmd, [:UVXY :c :e :p :t :w :margin :params]; first=first)
+	cmd, = parse_common_opts(d, cmd, [:UVXY :c :e :p :t :w :margin :params]; first=!O)
 	cmd  = parse_these_opts(cmd, d, [[:D :shift], [:F :no_scale], [:L :labels], [:M :vector_params], [:N :vonmises],
 	                                 [:Q :alpha], [:S :norm :normalize], [:T :orientation], [:Z :scale]])
 	cmd = add_opt(d, cmd, "A", [:A :sector :sectors], (width="", rose="_+r"))
