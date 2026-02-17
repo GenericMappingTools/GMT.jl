@@ -65,13 +65,15 @@ Parameters
 
 To see the full documentation type: ``@? triangulate``
 """
-triangulate(cmd0::String; kwargs...) = triangulate_helper(cmd0, nothing; kwargs...)
-triangulate(arg1; kwargs...)         = triangulate_helper("", arg1; kwargs...)
+triangulate(cmd0::String; kw...) = triangulate_helper(cmd0, nothing; kw...)
+triangulate(arg1; kw...)         = triangulate_helper("", arg1; kw...)
 
 # ---------------------------------------------------------------------------------------------------
-function triangulate_helper(cmd0::String, arg1; kwargs...)
-
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+function triangulate_helper(cmd0::String, arg1; kw...)
+	d = init_module(false, kw...)[1]		# Also checks if the user wants ONLY the HELP mode
+	triangulate_helper(cmd0, arg1, d)
+end
+function triangulate_helper(cmd0::String, arg1, d::Dict{Symbol, Any})
 	cmd, = parse_common_opts(d, "", [:G :RIr :V_params :margin :bi :bo :di :e :f :h :i :w :yx])
 	(haskey(d, :Z) && isa(d[:Z], Bool) && !d[:Z]) && delete!(d, :Z)		# Strip Z=false from 'd' (for triplot)
 	cmd  = parse_these_opts(cmd, d, [[:A :area], [:C :slope_grid], [:D :derivatives], [:E :empty], [:L :index],

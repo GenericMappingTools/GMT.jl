@@ -43,15 +43,17 @@ Parameters
 
 To see the full documentation type: ``@? nearneighbor``
 """
-nearneighbor(cmd0::String; kwargs...) = nearneighbor_helper(cmd0, nothing; kwargs...)
-nearneighbor(arg1; kwargs...)         = nearneighbor_helper("", arg1; kwargs...)
-nearneighbor(; kwargs...)             = nearneighbor_helper("", nothing; kwargs...)		# To allow nearneighbor(data=..., ...)
+nearneighbor(cmd0::String; kw...) = nearneighbor_helper(cmd0, nothing; kw...)
+nearneighbor(arg1; kw...)         = nearneighbor_helper("", arg1; kw...)
+nearneighbor(; kw...)             = nearneighbor_helper("", nothing; kw...)		# To allow nearneighbor(data=..., ...)
 
 # ---------------------------------------------------------------------------------------------------
-function nearneighbor_helper(cmd0::String, arg1; kwargs...)
-
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+function nearneighbor_helper(cmd0::String, arg1; kw...)
+	d = init_module(false, kw...)[1]		# Also checks if the user wants ONLY the HELP mode
 	d = seek_auto_RI(d, cmd0, arg1)				# If -R -I (or one of them) not set, guess.
+	nearneighbor_helper(cmd0, arg1, d)
+end
+function nearneighbor_helper(cmd0::String, arg1, d::Dict{Symbol, Any})
 	cmd, = parse_common_opts(d, "", [:G :RIr :V_params :bi :di :e :f :h :i :n :w :yx])
 	cmd  = parse_these_opts(cmd, d, [[:E :empty], [:S :search_radius], [:W :weights], [:A]])
 	cmd  = add_opt(d, cmd, "N", [:N :sectors], (n="", min_sectors="+m"))

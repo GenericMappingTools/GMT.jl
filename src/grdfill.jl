@@ -28,13 +28,16 @@ Parameters
 - $(opt_V)
 - $(_opt_f)
 """
-grdfill(cmd0::String; kwargs...) = grdfill_helper(cmd0, nothing; kwargs...)
-grdfill(arg1; kwargs...)         = grdfill_helper("", arg1; kwargs...)
+grdfill(cmd0::String; kw...) = grdfill_helper(cmd0, nothing; kw...)
+grdfill(arg1; kw...)         = grdfill_helper("", arg1; kw...)
 
 # ---------------------------------------------------------------------------------------------------
-function grdfill_helper(cmd0::String, arg1; kwargs...)
+function grdfill_helper(cmd0::String, arg1; kw...)
+	d = init_module(false, kw...)[1]
+	grdfill_helper(cmd0, arg1, d)
+end
+function grdfill_helper(cmd0::String, arg1, d::Dict{Symbol, Any})
 
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:G :R :V_params :f])
 	cmd  = parse_these_opts(cmd, d, [[:A :mode :algo], [:L :list], [:N :nodata :hole]])
 

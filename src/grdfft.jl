@@ -45,10 +45,12 @@ Parameters
 - $(opt_V)
 - $(_opt_f)
 """
-function grdfft(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
-
-	(cmd0 == "" && arg1 === nothing && arg2 === nothing && length(kwargs) == 0) && return gmt("grdfft")
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+function grdfft(cmd0::String="", arg1=nothing, arg2=nothing; kw...)
+	(cmd0 == "" && arg1 === nothing && arg2 === nothing && length(kw) == 0) && return gmt("grdfft")
+	d = init_module(false, kw...)[1]
+	grdfft(cmd0, arg1, arg2, d)
+end
+function grdfft(cmd0::String, arg1, arg2, d::Dict{Symbol, Any})
 
 	cmd, = parse_common_opts(d, "", [:G :V_params :f])
 	is_geog = contains(cmd, " -fg")

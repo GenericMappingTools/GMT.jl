@@ -75,10 +75,8 @@ Parameters
 
 To see the full documentation type: ``@? surface``
 """
-function surface(cmd0::String="", arg1::Union{Nothing, MatGDsGd}=nothing; kwargs...)::Union{Nothing, GMTgrid, String}
-
-	arg2 = nothing
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+function surface(cmd0::String="", arg1::Union{Nothing, MatGDsGd}=nothing; kw...)::Union{Nothing, GMTgrid, String}
+	d = init_module(false, kw...)[1]		# Also checks if the user wants ONLY the HELP mode
 	d = seek_auto_RI(d, cmd0, arg1)				# If -R -I (or one of them) not set, guess.
 
 	if ((val = find_in_dict(d, [:preproc :preprocess])[1]) !== nothing)
@@ -90,9 +88,13 @@ function surface(cmd0::String="", arg1::Union{Nothing, MatGDsGd}=nothing; kwargs
 			println(string(fun, " -R",d[:R], " -I",d[:I], " -r",r))
 		else
 			arg1 = (cmd0 != "") ? fun(cmd0; R=d[:R], I=d[:I], r=r) : fun(arg1; R=d[:R], I=d[:I], r=r)
-			cmd0 = ""	# Since it may have been just consumed above 
+			cmd0 = ""	# Since it may have been just consumed above
 		end
 	end
+	surface(cmd0, arg1, d)
+end
+function surface(cmd0::String, arg1::Union{Nothing, MatGDsGd}, d::Dict{Symbol, Any})::Union{Nothing, GMTgrid, String}
+	arg2 = nothing
 
 	cmd, = parse_common_opts(d, "", [:G :RIr :V_params :a :bi :di :e :f :h :i :w :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :aspect_ratio], [:C :convergence], [:Ll :lower], [:Lu :upper], [:M :mask],

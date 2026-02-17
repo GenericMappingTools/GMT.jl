@@ -18,11 +18,13 @@ Parameters
 
 To see the full documentation type: ``@? grdpaste``
 """
-function grdpaste(G1::GItype, G2::GItype; kwargs...)
-
+function grdpaste(G1::GItype, G2::GItype; kw...)
 	(GMTver < v"6.5.0") && (@warn("This module doesn't work for the installed GMT version. Run 'upGMT(true)' to update it."); return nothing)
 	(G1.layout != "" && G1.layout[2] == 'R') && error("Pasting row oriented grids (such those produced by GDAL) is not implemented.")
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+	d = init_module(false, kw...)[1]
+	grdpaste(G1, G2, d)
+end
+function grdpaste(G1::GItype, G2::GItype, d::Dict{Symbol, Any})
 	cmd, = parse_common_opts(d, "", [:G :V_params :f])
 	cmd *= " -S"
 	side::GMTdataset = common_grd(d, "grdpaste " * cmd, G1, G2)		# Finish build cmd and run it
@@ -47,13 +49,16 @@ function grdpaste(G1::GItype, G2::GItype; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-grdpaste(G1::String, G2::GItype; kwargs...) = grdpaste(gmtread(G1), G2; kwargs...)
-grdpaste(G1::GItype, G2::String; kwargs...) = grdpaste(G1, gmtread(G2); kwargs...)
+grdpaste(G1::String, G2::GItype; kw...) = grdpaste(gmtread(G1), G2; kw...)
+grdpaste(G1::GItype, G2::String; kw...) = grdpaste(G1, gmtread(G2); kw...)
 
 # ---------------------------------------------------------------------------------------------------
-function grdpaste(G1::String, G2::String; kwargs...)
+function grdpaste(G1::String, G2::String; kw...)
 	# This method lets pass two file names and either return the pasted grid or save in on disk.
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+	d = init_module(false, kw...)[1]
+	grdpaste(G1, G2, d)
+end
+function grdpaste(G1::String, G2::String, d::Dict{Symbol, Any})
 	cmd, = parse_common_opts(d, "", [:G :V_params :f])
 	cmd != "" && (cmd = " " * cmd)
 	gmt("grdpaste " * G1 * " " * G2 * cmd)
