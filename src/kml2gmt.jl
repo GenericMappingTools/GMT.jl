@@ -23,9 +23,11 @@ Parameters
 
 To see the full documentation type: ``@? kml2gmt``
 """
-function kml2gmt(cmd0::String="", arg1=nothing; kwargs...)
-
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+function kml2gmt(cmd0::String="", arg1=nothing; kw...)
+	d = init_module(false, kw...)[1]		# Also checks if the user wants ONLY the HELP mode
+	kml2gmt(cmd0, arg1, d)
+end
+function kml2gmt(cmd0::String, arg1, d::Dict{Symbol, Any})
 	cmd, = parse_common_opts(d, "", [:V_params :bo :do :yx])
 	cmd  = parse_these_opts(cmd, d, [[:F :feature_type :select], [:Z :altitudes], [:E :extended]])
 	common_grd(d, cmd0, cmd, "kml2gmt ", arg1)		# Finish build cmd and run it

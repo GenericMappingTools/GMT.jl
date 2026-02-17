@@ -70,9 +70,12 @@ Parameters
 
 To see the full documentation type: ``@? mapproject``
 """
-function mapproject(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
+function mapproject(cmd0::String="", arg1=nothing, arg2=nothing; kw...)
+	d = init_module(false, kw...)[1]		# Also checks if the user wants ONLY the HELP mode
+	mapproject(cmd0, arg1, arg2, d)
+end
+function mapproject(cmd0::String, arg1, arg2, d::Dict{Symbol, Any})
 
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:R :V_params :b :d :e :f :g :h :i :j :o :p :s :yx])
 	cmd  = parse_these_opts(cmd, d, [[:C :center], [:E :geod2ecef :ecef], [:I :inverse], [:S :supress],
 	                                 [:T :datum :change_datum], [:W :mapsize :map_size], [:Z :traveltime :travel_times]])

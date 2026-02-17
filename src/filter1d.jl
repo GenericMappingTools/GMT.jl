@@ -42,9 +42,11 @@ To see the full documentation type: ``@? filter1d``
 filter1d(cmd0::String; kw...) = filter1d_helper(cmd0, nothing; kw...)
 filter1d(arg1; kw...)         = filter1d_helper("", arg1; kw...)
 
-function filter1d_helper(cmd0::String, arg1; kwargs...)
-
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+function filter1d_helper(cmd0::String, arg1; kw...)
+	d = init_module(false, kw...)[1]
+	filter1d_helper(cmd0, arg1, d)
+end
+function filter1d_helper(cmd0::String, arg1, d::Dict{Symbol, Any})
 
 	cmd, = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :o :yx])
 	cmd = parse_these_opts(cmd, d, [[:D :inc :increment], [:E :end :ends], [:L :gap_width],

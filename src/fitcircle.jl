@@ -18,13 +18,16 @@ Parameters
 
 To see the full documentation type: ``@? fitcircle``
 """
-fitcircle(cmd0::String; kwargs...) = fitcircle_helper(cmd0, nothing; kwargs...)
-fitcircle(arg1; kwargs...)         = fitcircle_helper("", arg1; kwargs...)
+fitcircle(cmd0::String; kw...) = fitcircle_helper(cmd0, nothing; kw...)
+fitcircle(arg1; kw...)         = fitcircle_helper("", arg1; kw...)
 
 # ---------------------------------------------------------------------------------------------------
-function fitcircle_helper(cmd0::String, arg1; kwargs...)
+function fitcircle_helper(cmd0::String, arg1; kw...)
+	d = init_module(false, kw...)[1]
+	fitcircle_helper(cmd0, arg1, d)
+end
+function fitcircle_helper(cmd0::String, arg1, d::Dict{Symbol, Any})
 
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:V_params :bi :di :e :f :g :h :i :o :yx])
 	cmd  = parse_these_opts(cmd, d, [[:L :norm], [:S :small_circle]])
 	((val = find_in_dict(d, [:F :coord :coordinates])[1]) !== nothing) && (cmd *= " -F" * arg2str(val)[1])

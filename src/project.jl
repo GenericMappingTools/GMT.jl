@@ -63,9 +63,11 @@ Parameters
 
 To see the full documentation type: ``@? project``
 """
-function project(cmd0::String="", arg1=nothing; kwargs...)
-
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+function project(cmd0::String="", arg1=nothing; kw...)
+	d = init_module(false, kw...)[1]		# Also checks if the user wants ONLY the HELP mode
+	project(cmd0, arg1, d)
+end
+function project(cmd0::String, arg1, d::Dict{Symbol, Any})
 	cmd, = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :o :s :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :azim], [:C :origin :start_point], [:E :endpoint :end_pt],
                                      [:F :outvars :out_flags], [:G :step :generate], [:L :length], [:N :flat_earth], [:Q :km], [:S :sort], [:T :pole], [:W :width], [:Z :ellipse]])
