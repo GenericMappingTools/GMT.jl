@@ -37,10 +37,11 @@ Parameters
 - $(opt_n)
 - $(_opt_t)
 """
-function mbimport(cmd0::String=""; kwargs...)
-
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
-
+function mbimport(cmd0::String=""; kw...)
+	d = init_module(false, kw...)[1]		# Also checks if the user wants ONLY the HELP mode
+	mbimport(cmd0, d)
+end
+function mbimport(cmd0::String, d::Dict{Symbol, Any})
 	cmd, opt_R = parse_R(d, "")
 	cmd, opt_J = parse_J(d, cmd, default=" -JX15cd/0", map=true)
 	cmd, = parse_common_opts(d, cmd, [:UVXY :params :n :t]; first=true)

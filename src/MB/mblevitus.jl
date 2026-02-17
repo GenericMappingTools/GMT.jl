@@ -24,10 +24,11 @@ Parameters
     Makes Z axes positive down (default here is Z-up).
 - $(opt_V)
 """
-function mblevitus(cmd0::String=""; kwargs...)
-
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
-
+function mblevitus(cmd0::String=""; kw...)
+	d = init_module(false, kw...)[1]		# Also checks if the user wants ONLY the HELP mode
+	mblevitus(cmd0, d)
+end
+function mblevitus(cmd0::String, d::Dict{Symbol, Any})
 	cmd = parse_common_opts(d, "", [:yx :V_params :o])[1]
 	cmd = add_opt(d, cmd, "L", [:L :location :R])
 	(!occursin("-L", cmd)) && (cmd *= " -L0/0")

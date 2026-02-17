@@ -47,16 +47,16 @@ Parameters
 	imshow(G)
 ```
 """
-gravmag3d(cmd0::String; kwargs...) = gravmag3d_helper(cmd0, nothing; kwargs...)
-gravmag3d(arg1; kwargs...)         = gravmag3d_helper("", arg1; kwargs...)
-gravmag3d(; kwargs...)             = gravmag3d_helper("", nothing; kwargs...)
+gravmag3d(cmd0::String; kw...) = gravmag3d_helper(cmd0, nothing; kw...)
+gravmag3d(arg1; kw...)         = gravmag3d_helper("", arg1; kw...)
+gravmag3d(; kw...)             = gravmag3d_helper("", nothing; kw...)
 
-function gravmag3d_helper(cmd0::String, arg1; kwargs...)
-	(cmd0 == "" && arg1 === nothing && length(kwargs) == 0) && return gmt("gmtgravmag3d")
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+function gravmag3d_helper(cmd0::String, arg1; kw...)
+	(cmd0 == "" && arg1 === nothing && length(kw) == 0) && return gmt("gmtgravmag3d")
+	d = init_module(false, kw...)[1]		# Also checks if the user wants ONLY the HELP mode
 	(cmd0 != "") && (arg1 = gmtread(cmd0, data=true))
 	if (isa(arg1, GMTfv))
-		v = mat2ds(arg1.verts) 
+		v = mat2ds(arg1.verts)
 		f = arg1.faces[1]# .- 1
 		d[:Tf] = f
 		d[:Q] = true

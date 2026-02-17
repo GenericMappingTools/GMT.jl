@@ -37,9 +37,11 @@ Parameters
 
 To see the full documentation type: ``@? sphinterpolate``
 """
-function sphinterpolate(cmd0::String="", arg1=nothing; kwargs...)
-
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+function sphinterpolate(cmd0::String="", arg1=nothing; kw...)
+	d = init_module(false, kw...)[1]		# Also checks if the user wants ONLY the HELP mode
+	sphinterpolate(cmd0, arg1, d)
+end
+function sphinterpolate(cmd0::String, arg1, d::Dict{Symbol, Any})
 	cmd, = parse_common_opts(d, "", [:G :RIr :V_params :bi :di :e :h :i :yx])
 	cmd  = parse_these_opts(cmd, d, [[:D :skipdup :duplicates], [:Q :tension], [:T :nodetable], [:Z :scale]])
 

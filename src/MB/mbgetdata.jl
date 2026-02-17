@@ -30,10 +30,11 @@ Parameters
 - $(opt_n)
 - $(_opt_t)
 """
-function mbgetdata(cmd0::String=""; kwargs...)
-
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
-
+function mbgetdata(cmd0::String=""; kw...)
+	d = init_module(false, kw...)[1]		# Also checks if the user wants ONLY the HELP mode
+	mbgetdata(cmd0, d)
+end
+function mbgetdata(cmd0::String, d::Dict{Symbol, Any})
 	cmd, opt_R = parse_R(d, "")
 	cmd, = parse_common_opts(d, cmd, [:UVXY :params]; first=true)
 

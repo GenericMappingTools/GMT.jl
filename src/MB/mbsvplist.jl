@@ -24,10 +24,11 @@ Parameters
 - $(_opt_R)
 - $(opt_V)
 """
-function mbsvplist(cmd0::String=""; kwargs...)
-
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
-
+function mbsvplist(cmd0::String=""; kw...)
+	d = init_module(false, kw...)[1]		# Also checks if the user wants ONLY the HELP mode
+	mbsvplist(cmd0, d)
+end
+function mbsvplist(cmd0::String, d::Dict{Symbol, Any})
 	cmd = parse_common_opts(d, "", [:R :yx :V_params :o])[1]
 	cmd = parse_these_opts(cmd, d, [[:C :uniquesvp], [:F :format], [:H :help], [:M :mode], [:S :ssv], [:Z :firstiszero], [:z :z_down]])
 	((val = find_in_dict(d, [:z :z_down])[1]) === nothing) && (cmd *= " -z")	# Means here default is Z-up
