@@ -34,13 +34,16 @@ Parameters
 
 - Example, make a GMT Julia logo with circles of 1 cm: logo(GMTjulia=1, show=true)
 """
-function logo(cmd0::String=""; first=true, kwargs...)
-
-	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
+logo!(cmd0::String=""; first=false, kw...) = logo(cmd0; first=first, kw...)
+function logo(cmd0::String=""; first=true, kw...)
+	d, K, O = init_module(first, kw...)		# Also checks if the user wants ONLY the HELP mode
+	logo(cmd0, O, K, d)
+end
+function logo(cmd0::String, O::Bool, K::Bool, d::Dict{Symbol, Any})
 
 	cmd, = parse_R(d, "", O=O)
 	cmd, = parse_J(d, cmd, default=" -Jx1", map=true, O=O)
-	cmd, = parse_common_opts(d, cmd, [:UVXY :params]; first=first)
+	cmd, = parse_common_opts(d, cmd, [:UVXY :params]; first=!O)
 
 	cmd = parse_type_anchor(d, cmd, [:D :pos :position],
 	                        (map=("g", arg2str, 1), outside=("J", nothing, 1), inside=("j", nothing, 1), norm=("n", arg2str, 1), paper=("x", arg2str, 1), anchor=("", arg2str, 2), width="+w", size="+w", justify="+j", offset=("+o", arg2str)), 'g')
@@ -77,9 +80,6 @@ function logo(cmd0::String=""; first=true, kwargs...)
 		return prep_and_call_finish_PS_module(d, cmd, "", K, O, true)
 	end
 end
-
-# ---------------------------------------------------------------------------------------------------
-logo!(cmd0::String=""; first=false, kw...) = logo(cmd0; first=first, kw...)
 
 # -------------------------------------------------------------------------
 function jlogo(L::Float64=5.0)

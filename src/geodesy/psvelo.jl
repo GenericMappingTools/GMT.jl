@@ -9,14 +9,19 @@ See full GMT docs at [`velo`]($(GMTdoc)supplements/seis/velo.html)
     velo(mat2ds([0. -8 0 0 4 6 0.5; -8 5 3 3 0 0 0.5], ["4x6", "3x3"]), pen=(0.6,:red), fill_wedges=:green, outlines=true, Se="0.2/0.39/18", arrow="0.3c+p1p+e+gred", region=(-15,10,-10,10), show=1)
 ```
 """
-function velo(cmd0::String="", arg1=nothing; first=true, kwargs...)
+velo!(cmd0::String="", arg1=nothing; kw...) = velo(cmd0, arg1; first=false, kw...)
+velo(arg1; kw...) = velo("", arg1; first=true, kw...)
+velo!(arg1; kw...) = velo("", arg1; first=false, kw...)
+function velo(cmd0::String="", arg1=nothing; first=true, kw...)
+	d, K, O = init_module(first, kw...)		# Also checks if the user wants ONLY the HELP mode
+	velo(cmd0, arg1, O, K, d)
+end
+function velo(cmd0::String, arg1, O::Bool, K::Bool, d::Dict{Symbol, Any})
 
     proggy = (IamModern[]) ? "velo "  : "psvelo "
 
-	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
-
 	cmd, _, _, opt_R = parse_BJR(d, "", "", O, " -JX15cd/0d")
-	cmd, = parse_common_opts(d, cmd, [:UVXY :di :e :p :t :params]; first=first)
+	cmd, = parse_common_opts(d, cmd, [:UVXY :di :e :p :t :params]; first=!O)
 
 	if ((val = find_in_dict(d, [:A :arrow :arrows])[1]) !== nothing)
 		cmd = (isa(val, String)) ? cmd * " -A" * val : cmd * " -A" * vector_attrib(val) 
@@ -43,11 +48,6 @@ function velo(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	((r = check_dbg_print_cmd(d, cmd)) !== nothing) && return r
 	prep_and_call_finish_PS_module(d, cmd, "", K, O, true, arg1)
 end
-
-# ---------------------------------------------------------------------------------------------------
-velo!(cmd0::String="", arg1=nothing; kw...) = velo(cmd0, arg1; first=false, kw...)
-velo(arg1; kw...) = velo("", arg1; first=true, kw...)
-velo!(arg1; kw...) = velo("", arg1; first=false, kw...)
 
 const psvelo  = velo 			# Alias
 const psvelo! = velo!			# Alias

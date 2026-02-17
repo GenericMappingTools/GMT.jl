@@ -22,14 +22,17 @@ Plot wind barbs in either 2D or 3D, from table data or two u,v grids.
 
 ```
 """
-windbarbs(cmd0::String=""; first=true, kwargs...) = windbarbs(gmtread(cmd0, data=true); first=first, kwargs...)
-function windbarbs(arg1; first=true, kwargs...)
+windbarbs(cmd0::String=""; first=true, kw...) = windbarbs(gmtread(cmd0, data=true); first=first, kw...)
+function windbarbs(arg1; first=true, kw...)
+	d, K, O = init_module(first, kw...)		# Also checks if the user wants ONLY the HELP mode
+	windbarbs(arg1, O, K, d)
+end
+function windbarbs(arg1, O::Bool, K::Bool, d::Dict{Symbol, Any})
 
 	gmt_proggy = (IamModern[]) ? "barb " : "psbarb "
-	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O)
-	cmd = parse_common_opts(d, cmd, [:UVXY :a :bi :di :e :f :h :i :p :t :yx :params]; first=first)[1]
+	cmd = parse_common_opts(d, cmd, [:UVXY :a :bi :di :e :f :h :i :p :t :yx :params]; first=!O)[1]
 	cmd = parse_these_opts(cmd, d, [[:D :offset], [:I :intens], [:N :no_clip :noclip]])
 	cmd = add_opt(d, cmd, "Q", [:Q :barbs], (len=("", arg2str, 1), length=("", arg2str, 1), angle="+a", fill=("+g", add_opt_fill), pen=("+p", add_opt_pen), just="+j", speed="+s", width="+w", uv="+z", cartesian="+z"))
 	cmd *= opt_pen(d, 'W', [:W :pen])
@@ -47,13 +50,18 @@ function windbarbs(arg1; first=true, kwargs...)
 	prep_and_call_finish_PS_module(d, _cmd, "", K, O, true, arg1, arg2)
 end
 
-function windbarbs(arg1::Union{String, GMTgrid}, arg2::Union{String, GMTgrid}; first=true, kwargs...)
-	d, cmd, arg1, arg2, arg3 = grdvector(arg1, arg2; first=first, barbs=true, kwargs...)	# arg3 is a possible CPT
+function windbarbs(arg1::Union{String, GMTgrid}, arg2::Union{String, GMTgrid}; first=true, kw...)
+	d, K, O = init_module(first, kw...)
+	windbarbs(arg1, arg2, O, K, d)
+end
+function windbarbs(arg1::Union{String, GMTgrid}, arg2::Union{String, GMTgrid}, O::Bool, K::Bool, d::Dict{Symbol, Any})
+	d[:barbs] = true
+	d, cmd, arg1, arg2, arg3 = grdvector_helper(arg1, arg2, K, O, d)	# arg3 is a possible CPT
 	cmd[1] = replace(cmd[1], "grdvector" => "grdbarb")
 	cmd[1] = add_opt(d, cmd[1], "Q", [:Q :barbs], (len=("", arg2str, 1), length=("", arg2str, 1), angle="+a", fill=("+g", add_opt_fill), pen=("+p", add_opt_pen), just="+j", justify="+j", speed="+s", width="+w"))
 	delete!(d, :barbs)			# Because if we used 'Q', 'barbs' was still in the dictionary
 	cmd[1] = parse_these_opts(cmd[1], d, [[:A :polar], [:T :signs :sign_scale], [:Z :azim :azimuth :azimuths]])
 
 	((r = check_dbg_print_cmd(d, cmd)) !== nothing) && return r
-	prep_and_call_finish_PS_module(d, cmd, "", first, !first, true, arg1, arg2, arg3)
+	prep_and_call_finish_PS_module(d, cmd, "", K, O, true, arg1, arg2, arg3)
 end

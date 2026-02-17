@@ -65,12 +65,14 @@ const pswiggle! = wiggle!			# Alias
 
 # ---------------------------------------------------------------------------------------------------
 function wiggle_helper(cmd0::String, arg1; first=true, kw...)
+	d, K, O = init_module(first, kw...)		# Also checks if the user wants ONLY the HELP mode
+	wiggle_helper(cmd0, arg1, O, K, d)
+end
+function wiggle_helper(cmd0::String, arg1, O::Bool, K::Bool, d::Dict{Symbol, Any})
 	gmt_proggy = (IamModern[]) ? "wiggle "  : "pswiggle "
 
-	d, K, O = init_module(first, kw...)		# Also checks if the user wants ONLY the HELP mode
-
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX15c/0")
-	cmd, = parse_common_opts(d, cmd, [:c :e :f :g :p :t :w :F :UVXY :margin :params]; first=first)
+	cmd, = parse_common_opts(d, cmd, [:c :e :f :g :p :t :w :F :UVXY :margin :params]; first=!O)
 	cmd  = parse_these_opts(cmd, d, [[:A :azimuth], [:C :center], [:I :fixed_azim], [:S], [:Z :ampscale :amp_scale]])
 
 	# If file name sent in, read it and compute a tight -R if this was not provided

@@ -60,14 +60,19 @@ Parameters
 
 To see the full documentation type: ``@? mask``
 """
-function mask(cmd0::String="", arg1=nothing; first=true, kwargs...)
+mask!(cmd0::String="", arg1=nothing; kw...) = mask(cmd0, arg1; first=false, kw...)
+mask(arg1; kw...)  = mask("", arg1; first=true, kw...)
+mask!(arg1; kw...) = mask("", arg1; first=false, kw...)
+function mask(cmd0::String="", arg1=nothing; first=true, kw...)
+	d, K, O = init_module(first, kw...)		# Also checks if the user wants ONLY the HELP mode
+	mask(cmd0, arg1, O, K, d)
+end
+function mask(cmd0::String, arg1, O::Bool, K::Bool, d::Dict{Symbol, Any})
 
     gmt_proggy = (IamModern[]) ? "mask "  : "psmask "
 
-	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
-
 	cmd, _, _, opt_R = parse_BJR(d, "", "", O, " -JX15c/15c")
-	cmd, = parse_common_opts(d, cmd, [:I :UVXY :JZ :c :e :p :r :t :w :params]; first=first)
+	cmd, = parse_common_opts(d, cmd, [:I :UVXY :JZ :c :e :p :r :t :w :params]; first=!O)
 	cmd  = parse_these_opts(cmd, d, [[:C :endclip :end_clip_path], [:D :dump], [:L :nodegrid], [:N :invert :inverse],
 	                                 [:Q :cut :cut_number], [:S :search_radius], [:T :tiles]])
 
@@ -91,11 +96,6 @@ function mask(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	((r = check_dbg_print_cmd(d, cmd)) !== nothing) && return r
 	prep_and_call_finish_PS_module(d, cmd, "", K, O, true, arg1)
 end
-
-# ---------------------------------------------------------------------------------------------------
-mask!(cmd0::String="", arg1=nothing; kw...) = mask(cmd0, arg1; first=false, kw...)
-mask(arg1; kw...)  = mask("", arg1; first=true, kw...)
-mask!(arg1; kw...) = mask("", arg1; first=false, kw...)
 
 # ---------------------------------------------------------------------------------------------------
 # This method has nothing to do with psmask, but can be seen as an extension to it.

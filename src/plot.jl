@@ -693,7 +693,12 @@ Example:
     fill_between([theta y1], [theta y2], white=true, legend="Sinc1,Sinc2", show=1)
 """
 fill_between(fname::String; first::Bool=true, kw...) = fill_between(gmtread(fname); first=first, kw...)
-function fill_between(arg1, arg2=nothing; first=true, kwargs...)
+fill_between!(arg1, arg2=nothing; kw...) = fill_between(arg1, arg2; first=false, kw...)
+function fill_between(arg1, arg2=nothing; first=true, kw...)
+	d = init_module(false, kw...)[1]
+	fill_between(arg1, arg2, first, d)
+end
+function fill_between(arg1, arg2, first::Bool, d::Dict{Symbol, Any})
 
 	function find_the_pos(x, x_int)
 		len_x = length(x)
@@ -714,7 +719,6 @@ function fill_between(arg1, arg2=nothing; first=true, kwargs...)
 		return legs
 	end
 
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	fc = helper_ds_fill(d)						# Got fill colors?
 	if (!isempty(fc))
 		!any(contains.(fc, "@")) && (fc .*= "@60")			# If no transparency provided default to 60%
@@ -862,8 +866,6 @@ function fill_between(arg1, arg2=nothing; first=true, kwargs...)
 	common_plot_xyz("", int, "", false, false, d)
 	=#
 end
-
-fill_between!(arg1, arg2=nothing; kw...) = fill_between(arg1, arg2; first=false, kw...)
 
 # ------------------------------------------------------------------------------------------------------
 """
@@ -1532,9 +1534,12 @@ const vspan! = vband!
 const hspan  = hband
 const hspan! = hband!
 
-function helper_hvband(mat::Matrix{<:Real}, tipo="v"; width=false, height=false, percent=false, first=true, kwargs...)
+function helper_hvband(mat::Matrix{<:Real}, tipo="v"; width=false, height=false, percent=false, first=true, kw...)
+	d, _, O = init_module(first, kw...)
+	helper_hvband(mat, tipo, width, height, percent, O, d)
+end
+function helper_hvband(mat::Matrix{<:Real}, tipo, width, height, percent, O::Bool, d::Dict{Symbol, Any})
 	# This is the main function for the hband and vband functions.
-	d, _, O = init_module(first, kwargs...)
 	cmd, = parse_R(d, "", O=O, del=false)
 	all(CTRL.limits .== 0.) && error("Need to know the axes limits in a numeric form.")
 	cmd, = parse_J(d, cmd, default="", map=true, O=O, del=false)
@@ -1576,7 +1581,7 @@ function helper_hvband(mat::Matrix{<:Real}, tipo="v"; width=false, height=false,
 
 	d[:S] = bB						# Add -Sb|B, otherwise headers are not scanned.
 	got_pattern && (d[:G] = "p1")	# Patterns fck the session. Use this to inform gmt() that session must be recreated
-	common_plot_xyz("", D, "", first, false, d)
+	common_plot_xyz("", D, "", !O, false, d)
 end
 
 # ------------------------------------------------------------------------------------------------------
@@ -1668,11 +1673,17 @@ Other than the above options, the `kwargs` input accepts still the following opt
 - `clockwise`: - Set it to `true` to indicate that positive axes directions be clock-wise
                  [Default lets the a, b, c axes be positive in a counter-clockwise direction].
 """
-function ternary(cmd0::String="", arg1=nothing; first::Bool=true, image::Bool=false, kwargs...)
-	# A wrapper for psternary
+ternary!(cmd0::String="", arg1=nothing; kw...) = ternary(cmd0, arg1; first=false, kw...)
+ternary(arg1;  kw...) = ternary("", arg1; first=true, kw...)
+ternary!(arg1; kw...) = ternary("", arg1; first=false, kw...)
+function ternary(cmd0::String="", arg1=nothing; first::Bool=true, image::Bool=false, kw...)
 	(cmd0 == "" && arg1 === nothing) && (arg1 = [0.0 0.0 0.0])	# No data in, just a kind of ternary basemap
 	(cmd0 != "") && (arg1 = gmtread(cmd0))
-	d = init_module(first, kwargs...)[1]
+	d = init_module(first, kw...)[1]
+	ternary(arg1, first, image, d)
+end
+function ternary(arg1, first::Bool, image::Bool, d::Dict{Symbol, Any})
+	# A wrapper for psternary
 	opt_J::String = parse_J(d, "", default=" -JX" * split(DEF_FIG_SIZE, '/')[1] * "/0", map=true, O=false, del=false)[2]
 	opt_R::String = parse_R(d, "")[1]
 	d[:R] = (opt_R ==  "") ? "0/100/0/100/0/100" : opt_R[4:end]
@@ -1768,10 +1779,6 @@ function dict_auto_add!(d::Dict)
 	end
 end
 
-ternary!(cmd0::String="", arg1=nothing; kw...) = ternary(cmd0, arg1; first=false, kw...)
-ternary(arg1;  kw...) = ternary("", arg1; first=true, kw...)
-ternary!(arg1; kw...) = ternary("", arg1; first=false, kw...)
-ternary(kw...) = ternary("", nothing; first=true, kw...)
 const psternary  = ternary            # Aliases
 const psternary! = ternary!           # Aliases
 

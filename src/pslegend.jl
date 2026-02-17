@@ -42,14 +42,19 @@ Parameters
 
 To see the full documentation type: ``@? legend``
 """
-function legend(cmd0::String="", arg1=nothing; first::Bool=true, kwargs...)
+legend!(cmd0::String="", arg1=nothing; kw...) = legend(cmd0, arg1; first=false, kw...)
+legend(arg1; kw...)  = legend("", arg1; first=true, kw...)
+legend!(arg1; kw...) = legend("", arg1; first=false, kw...)
+function legend(cmd0::String="", arg1=nothing; first::Bool=true, kw...)
+	d, K, O = init_module(first, kw...)		# Also checks if the user wants ONLY the HELP mode
+	legend(cmd0, arg1, O, K, d)
+end
+function legend(cmd0::String, arg1, O::Bool, K::Bool, d::Dict{Symbol, Any})
 
     gmt_proggy = (IamModern[]) ? "legend "  : "pslegend "
 
-	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
-
 	if (cmd0 == "" && arg1 === nothing && !IamModern[])
-		first && error("Need input data or file for legend")
+		!O && error("Need input data or file for legend")
 		# Here we have a bit of a convoluted case. This section is for the case where 'legend' is called without
 		# input data and relies on the data stored in previous commands by using the 'legend' keyword. That is,
 		# we use the keyword option 'position', 'fontsize', etc args as kwargs to 'legend'. As said, convoluted. 
@@ -79,7 +84,7 @@ function legend(cmd0::String="", arg1=nothing; first::Bool=true, kwargs...)
 	# where the default is 8 pts. This allows for the user to set options 'fontsize' or 'font' to override the defaults.
 	((fnt = get_legend_font(d, IamModern[] ? 0 : 8; modern=IamModern[])) != "") && (cmd *= " --FONT_ANNOT_PRIMARY=" * fnt)
 
-	cmd, = parse_common_opts(d, cmd, [:F :c :p :q :t :JZ :UVXY :params]; first=first)
+	cmd, = parse_common_opts(d, cmd, [:F :c :p :q :t :JZ :UVXY :params]; first=!O)
 
 	opt_D = parse_type_anchor(d, "", [:D :pos :position],
 	                         (map=("g", arg2str, 1), outside=("J", arg2str, 1), inside=("j", arg2str, 1), norm=("n", arg2str, 1), paper=("x", arg2str, 1), anchor=("", arg2str, 2), width=("+w", arg2str), justify="+j", spacing="+l", offset=("+o", arg2str)), 'j')
@@ -243,11 +248,6 @@ function mk_legend(; kwargs...)
 	any(c) && (leg = leg[.!c])		# Remove entries corresponding to bad options to not let go undefineds
 	leg
 end
-
-# ---------------------------------------------------------------------------------------------------
-legend!(cmd0::String="", arg1=nothing; kw...) = legend(cmd0, arg1; first=false, kw...)
-legend(arg1; kw...)  = legend("", arg1; first=true, kw...)
-legend!(arg1; kw...) = legend("", arg1; first=false, kw...)
 
 const pslegend  = legend			# Alias
 const pslegend! = legend!			# Alias

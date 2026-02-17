@@ -74,16 +74,16 @@ The same but add a Label
     psmeca(mat2ds([0.0 3.0 0.0 0 45 90 5 0 0], ["Thrust"]), aki=true, fill=:black, region=(-1,4,0,6), proj=:Merc, show=1)
 ```
 """
-meca(cmd0::String; kwargs...)  = meca_helper(cmd0, nothing; kwargs...)
-meca(arg1; kwargs...)          = meca_helper("", arg1; kwargs...)
-meca!(cmd0::String; kwargs...) = meca_helper(cmd0, nothing; first=false, kwargs...)
-meca!(arg1; kwargs...)         = meca_helper("", arg1; first=false, kwargs...)
+meca(cmd0::String; kw...)  = meca_helper(cmd0, nothing; kw...)
+meca(arg1; kw...)          = meca_helper("", arg1; kw...)
+meca!(cmd0::String; kw...) = meca_helper(cmd0, nothing; first=false, kw...)
+meca!(arg1; kw...)         = meca_helper("", arg1; first=false, kw...)
 
 # ---------------------------------------------------------------------------------------------------
-function meca_helper(cmd0::String, arg1; first=true, kwargs...)
+function meca_helper(cmd0::String, arg1; first=true, kw...)
     proggy = (IamModern[]) ? "meca "  : "psmeca "
-	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
-	common_mecas(cmd0, arg1, d, proggy, first, K, O)
+	d, K, O = init_module(first, kw...)		# Also checks if the user wants ONLY the HELP mode
+	common_mecas(cmd0, arg1, d, proggy, !O, K, O)
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -98,16 +98,16 @@ Plot cross-sections of focal mechanisms.
 See full GMT docs at [`pscoupe`]($(GMTdoc)coupe.html).
 Essentially the same as **meca** plus **A**. Run `gmthelp(coupe)` to see the list of options.
 """
-coupe(cmd0::String; kwargs...)  = coupe_helper(cmd0, nothing; kwargs...)
-coupe(arg1; kwargs...)          = coupe_helper("", arg1; kwargs...)
-coupe!(cmd0::String; kwargs...) = coupe_helper(cmd0, nothing; first=false, kwargs...)
-coupe!(arg1; kwargs...)         = coupe_helper("", arg1; first=false, kwargs...)
+coupe(cmd0::String; kw...)  = coupe_helper(cmd0, nothing; kw...)
+coupe(arg1; kw...)          = coupe_helper("", arg1; kw...)
+coupe!(cmd0::String; kw...) = coupe_helper(cmd0, nothing; first=false, kw...)
+coupe!(arg1; kw...)         = coupe_helper("", arg1; first=false, kw...)
 
 # ---------------------------------------------------------------------------------------------------
-function coupe_helper(cmd0::String, arg1; first=true, kwargs...)
+function coupe_helper(cmd0::String, arg1; first=true, kw...)
     proggy = (IamModern[]) ? "coupe "  : "pscoupe "
-	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
-	common_mecas(cmd0, arg1, d, proggy, first, K, O)
+	d, K, O = init_module(first, kw...)		# Also checks if the user wants ONLY the HELP mode
+	common_mecas(cmd0, arg1, d, proggy, !O, K, O)
 end
 
 const pscoupe  = coupe 			# Alias
