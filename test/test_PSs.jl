@@ -64,6 +64,25 @@ r = compass!(width=2.5, anchor=(0,0), justify=:CM, fancy=true, labels=",,,N", Vd
 r = compass(width=3, fancy=true, Vd=dbg2);
 @test !contains(r, "-B")
 
+println("	MAPSCALE")
+# Standalone with explicit R/J
+r = mapscale(region=(0,40,50,56), proj=:Mercator, figsize=13, inside=:ML, scale_at_lat=53, length="1000k", fancy=true, label=true, Vd=dbg2);
+@test startswith(r, "psbasemap  -R0/40/50/56 -JM13") && contains(r, "-LjML+c53+w1000k+f+l")
+# With anchor and box
+r = mapscale(region=(0,40,50,56), proj=:Mercator, figsize=13, anchor=:BR, scale_at_lat=53, length="1000k", fancy=true, Vd=dbg2);
+@test contains(r, "-LjBR+c53+w1000k+f")
+# Overlay mode
+basemap(region=(0,40,50,56), proj=:Mercator, figsize=13, frame=:auto, Vd=dbg2)
+r = mapscale!(inside=:ML, scale_at_lat=53, length="500k", label="Test", Vd=dbg2);
+@test contains(r, " -R -J") || contains(r, "-R0/40/50/56 -J ")
+@test contains(r, "-LjML+c53+w500k+lTest")
+# frame=:none is default
+r = mapscale(region=(0,40,50,56), proj=:merc, inside=:ML, scale_at_lat=53, length="500k", Vd=dbg2);
+@test !contains(r, "-B")
+# With units and align options
+r = mapscale(region=(0,40,50,56), proj=:merc, inside=:BR, scale_at_lat=53, length="500k", units=true, align=:top, Vd=dbg2);
+@test contains(r, "+at") && contains(r, "+u")
+
 println("	PSCLIP")
 d = [0.2 0.2; 0.2 0.8; 0.8 0.8; 0.8 0.2; 0.2 0.2];
 psclip(d, J="X3i", R="0/1/0/1", N=true, V=:q);
