@@ -44,9 +44,11 @@ imshow(Gr, plot=(data=tri_rot,))
 ```
 """
 grdrotater(arg1; kw...) = grdrotater("", arg1; kw...)
-function grdrotater(cmd0::String="", arg1=nothing; kwargs...)
-
-	d = init_module(false, kwargs...)[1]			# Also checks if the user wants ONLY the HELP mode
+function grdrotater(cmd0::String="", arg1=nothing; kw...)
+	d = init_module(false, kw...)[1]		# Also checks if the user wants ONLY the HELP mode
+	grdrotater(cmd0, arg1, d)
+end
+function grdrotater(cmd0::String, arg1, d::Dict{Symbol, Any})
 
 	cmd = parse_common_opts(d, "", [:G :R :V_params :b :d :f :g :h :n :o])[1]
 	cmd = parse_these_opts(cmd, d, [[:A :rot_region], [:E :rotation], [:S :rot_outline_only]])

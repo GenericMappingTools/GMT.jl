@@ -3,14 +3,14 @@
 
 Create synthetic seamounts (Gaussian, parabolic, polynomial, cone or disc; circular or elliptical).
 """
-grdseamount(cmd0::String; kwargs...) = grdseamount_helper(cmd0, nothing; kwargs...)
-grdseamount(arg1; kwargs...)         = grdseamount_helper("", arg1; kwargs...)
+grdseamount(cmd0::String; kw...) = grdseamount_helper(cmd0, nothing; kw...)
+grdseamount(arg1; kw...)         = grdseamount_helper("", arg1; kw...)
 
-function grdseamount_helper(cmd0::String, arg1; kwargs...)
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+function grdseamount_helper(cmd0::String, arg1; kw...)
+	d = init_module(false, kw...)[1]		# Also checks if the user wants ONLY the HELP mode
 	(cmd0 != "") && (arg1 = gmtread(cmd0))
 	isa(arg1, Matrix{<:Real}) && (arg1 = mat2ds(Float64.(arg1)))
-    grdseamount_helper(arg1, d)
+	grdseamount_helper(arg1, d)
 end
 
 # ---------------------------------------------------------------------------------------------------

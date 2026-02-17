@@ -49,13 +49,15 @@ Parameters
 
 To see the full documentation type: ``@? splitxyz``
 """
-gmtsplit(cmd0::String; kwargs...) = gmtsplit_helper(cmd0, nothing; kwargs...)
-gmtsplit(arg1; kwargs...)         = gmtsplit_helper("", arg1; kwargs...)
+gmtsplit(cmd0::String; kw...) = gmtsplit_helper(cmd0, nothing; kw...)
+gmtsplit(arg1; kw...)         = gmtsplit_helper("", arg1; kw...)
 
 # ---------------------------------------------------------------------------------------------------
-function gmtsplit_helper(cmd0::String, arg1; kwargs...)
-
-	d = init_module(false, kwargs...)[1]		    # Also checks if the user wants ONLY the HELP mode
+function gmtsplit_helper(cmd0::String, arg1; kw...)
+	d = init_module(false, kw...)[1]		    # Also checks if the user wants ONLY the HELP mode
+	gmtsplit_helper(cmd0, arg1, d)
+end
+function gmtsplit_helper(cmd0::String, arg1, d::Dict{Symbol, Any})
 	cmd, = parse_common_opts(d, "", [:V_params :bi :bo :di :do :e :f :g :h :i :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :azim_tol], [:C :course_change], [:D :min_dist :min_distance], [:F :filter],
 	                                 [:N :multi :multifile], [:Q :fields :xyzdh], [:S :dh :dist_head]])

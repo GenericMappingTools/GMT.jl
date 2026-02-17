@@ -48,9 +48,11 @@ spectrum1d(cmd0::String; kw...) = spectrum1d_helper(cmd0, nothing; kw...)
 spectrum1d(arg1; kw...)         = spectrum1d_helper("", arg1; kw...)
 
 # ---------------------------------------------------------------------------------------------------
-function spectrum1d_helper(cmd0::String, arg1; kwargs...)
-
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+function spectrum1d_helper(cmd0::String, arg1; kw...)
+	d = init_module(false, kw...)[1]		# Also checks if the user wants ONLY the HELP mode
+	spectrum1d_helper(cmd0, arg1, d)
+end
+function spectrum1d_helper(cmd0::String, arg1, d::Dict{Symbol, Any})
 	cmd = parse_common_opts(d, "", [:V_params :b :d :e :g :h :i :yx])[1]
 	cmd = parse_these_opts(cmd, d, [[:D :sample_dist], [:L :leave_trend], [:N :name], [:S :size], [:T :multifiles], [:W :wavelength]])
 	opt_C = add_opt(d, "", "C", [:C :components :output],

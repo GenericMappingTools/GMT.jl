@@ -55,13 +55,15 @@ Parameters
 
     Give name of an output grid with spatially varying, vertically-averaged prism densities created by C and H.
 """
-function gravprisms(cmd0::String="", arg1::GDtype=GMTdataset(); kwargs...)
+function gravprisms(cmd0::String="", arg1::GDtype=GMTdataset(); kw...)
+	d = init_module(false, kw...)[1]
+	gravprisms(cmd0, arg1, d)
+end
+function gravprisms(cmd0::String, arg1::GDtype, d::Dict{Symbol, Any})
 
 	Gs = Vector{GMTgrid}(undef, 5)
 	N_used = 0
 	arg2::GDtype=GMTdataset()
-
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
 	function fish_grids(d, Gs, cmd, symbs, opt, N)
 		if ((_val = find_in_dict(d, symbs)[1]) !== nothing)

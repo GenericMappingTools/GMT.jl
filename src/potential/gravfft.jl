@@ -49,10 +49,13 @@ To see the full documentation type: ``@? gravfft``
 ```
 """
 gravfft(arg1, arg2=nothing; kw...) = gravfft("", arg1, arg2; kw...)
-function gravfft(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
+function gravfft(cmd0::String="", arg1=nothing, arg2=nothing; kw...)
+	d = init_module(false, kw...)[1]
+	gravfft(cmd0, arg1, arg2, d)
+end
+function gravfft(cmd0::String, arg1, arg2, d::Dict{Symbol, Any})
 
 	arg3 = nothing
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
 	cmd::String = parse_common_opts(d, "", [:G :V_params :f])[1]
 	cmd = add_opt(d, cmd, "C", [:C :tadmitt], (n="", lambda="", mean_depth="", from_top="_/t", from_below="_/b", wavelengths="_w"))

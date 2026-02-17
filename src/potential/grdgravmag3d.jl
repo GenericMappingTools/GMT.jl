@@ -50,10 +50,13 @@ Parameters
 ```
 """
 grdgravmag3d(arg1, arg2=nothing; kw...) = grdgravmag3d("", arg1, arg2; kw...)
-function grdgravmag3d(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
-	(cmd0 == "" && arg1 === nothing && arg2 === nothing && length(kwargs) == 0) && return gmt("grdgravmag3d")
+function grdgravmag3d(cmd0::String="", arg1=nothing, arg2=nothing; kw...)
+	(cmd0 == "" && arg1 === nothing && arg2 === nothing && length(kw) == 0) && return gmt("grdgravmag3d")
+	d = init_module(false, kw...)[1]		# Also checks if the user wants ONLY the HELP mode
+	grdgravmag3d(cmd0, arg1, arg2, d)
+end
+function grdgravmag3d(cmd0::String, arg1, arg2, d::Dict{Symbol, Any})
 	arg3, arg4 = nothing, nothing
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 
 	cmd::String = parse_common_opts(d, "", [:G :RIr :V_params :f :x])[1]
 	cmd = parse_these_opts(cmd, d, [[:E :thickness], [:Q :pad], [:L :z_obs :observation_level], [:S :radius]])
