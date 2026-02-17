@@ -60,9 +60,11 @@ Parameters
 - $(opt_w)
 - $(opt_swap_xy)
 """
-function gmtselect(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing, arg4=nothing; kwargs...)
-
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+function gmtselect(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing, arg4=nothing; kw...)
+	d = init_module(false, kw...)[1]
+	gmtselect(cmd0, arg1, arg2, arg3, arg4, d)
+end
+function gmtselect(cmd0::String, arg1, arg2, arg3, arg4, d::Dict{Symbol, Any})
 
 	cmd::String = parse_common_opts(d, "", [:R :V_params :b :d :e :f :g :h :i :o :w :yx])[1]
 	cmd = parse_these_opts(cmd, d, [[:A :area], [:D :res :resolution], [:E :boundary],

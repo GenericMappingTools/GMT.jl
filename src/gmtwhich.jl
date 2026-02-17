@@ -24,9 +24,11 @@ Parameters
 	found in your local data or cache dirs.
 - $(opt_V)
 """
-function gmtwhich(cmd0::String; kwargs...)
-
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+function gmtwhich(cmd0::String; kw...)
+	d = init_module(false, kw...)[1]
+	gmtwhich(cmd0, d)
+end
+function gmtwhich(cmd0::String, d::Dict{Symbol, Any})
 
 	cmd = parse_V_params(d, "")
     cmd = parse_these_opts(cmd, d, [[:A :readable], [:C :confirm], [:D :report_dir], [:G :download]])

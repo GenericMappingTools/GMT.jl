@@ -29,10 +29,13 @@ Parameters
     Specify the vector transformation of interest.
 
 """
-function gmtvector(cmd0::String="", arg1=nothing; kwargs...)
+function gmtvector(cmd0::String="", arg1=nothing; kw...)
+	(cmd0 == "" && arg1 === nothing && length(kw) == 0) && return gmt("gmtvector")
+	d = init_module(false, kw...)[1]
+	gmtvector(cmd0, arg1, d)
+end
+function gmtvector(cmd0::String, arg1, d::Dict{Symbol, Any})
 
-	(cmd0 == "" && arg1 === nothing && length(kwargs) == 0) && return gmt("gmtvector")
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :o :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :primary_vec], [:C :cartesian], [:E :geod2geoc], [:N :normalize],
 	                                 [:S :secondary_vec], [:T :transform]])

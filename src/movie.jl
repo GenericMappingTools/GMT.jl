@@ -102,9 +102,11 @@ Parameters
 - $(opt_V)
 - $(opt_x)
 """
-function movie(main; pre=nothing, post=nothing, kwargs...)
-
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+function movie(main; pre=nothing, post=nothing, kw...)
+	d = init_module(false, kw...)[1]		# Also checks if the user wants ONLY the HELP mode
+	movie(main, pre, post, d)
+end
+function movie(main, pre, post, d::Dict{Symbol, Any})
 
 	(!isa(main, Function) && !isa(main, String)) && error("A main script is mandatory")
 	((mainName = jl_sc_2_shell_sc(main, "main_script")) === nothing) && error("Main script has nothing useful")

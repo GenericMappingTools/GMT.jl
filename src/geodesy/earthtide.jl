@@ -10,9 +10,11 @@ See full GMT docs at [`earthtide`]($(GMTdoc)supplements/geodesy/earthtide.html)
 	imshow(G)
 ```
 """
-function earthtide(; kwargs...)
-
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+function earthtide(; kw...)
+	d = init_module(false, kw...)[1]
+	earthtide(d)
+end
+function earthtide(d::Dict{Symbol, Any})
 
 	cmd = "earthtide " * parse_common_opts(d, "", [:R :I :V_params :r])[1]
 	cmd = parse_opt_range(d, cmd, "T")[1]

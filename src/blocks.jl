@@ -55,14 +55,17 @@ Parameters
 
 To see the full documentation type: ``@? blockmean``
 """
-blockmean(cmd0::String; kwargs...) = blockmean_helper(cmd0, nothing; kwargs...)
-blockmean(arg1; kwargs...)         = blockmean_helper("", arg1; kwargs...)
+blockmean(cmd0::String; kw...) = blockmean_helper(cmd0, nothing; kw...)
+blockmean(arg1; kw...)         = blockmean_helper("", arg1; kw...)
 
 # ---------------------------------------------------------------------------------------------------
-function blockmean_helper(cmd0::String, arg1; kwargs...)
-
-	d = KW(kwargs)
+function blockmean_helper(cmd0::String, arg1; kw...)
+	d = KW(kw)
 	help_show_options(d)		# Check if user wants ONLY the HELP mode
+	blockmean_helper(cmd0, arg1, d)
+end
+function blockmean_helper(cmd0::String, arg1, d::Dict{Symbol, Any})
+
 	cmd = parse_these_opts("", d, [[:E :extend :extended], [:S :statistic]])
 	if     (find_in_dict(d, [:npts :count])[1] !== nothing)  cmd = " -Sn"
 	elseif (find_in_dict(d, [:mean])[1] !== nothing)         cmd = " -Sm"
@@ -73,7 +76,7 @@ function blockmean_helper(cmd0::String, arg1; kwargs...)
 	(!occursin(" -E", cmd) && (occursin("s", opt_A) || occursin("h", opt_A) || occursin("l", opt_A))) && (opt_A *= " -E")
 	cmd *= opt_A
 
-	common_blocks(cmd0, arg1, d, cmd, "blockmean", kwargs...)
+	common_blocks(cmd0, arg1, d, cmd, "blockmean")
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -84,19 +87,22 @@ Block average (x,y,z) data tables by L1 norm.
 	
 To see the full documentation type: ``@? blockmedian``
 """
-blockmedian(cmd0::String; kwargs...) = blockmedian_helper(cmd0, nothing; kwargs...)
-blockmedian(arg1; kwargs...)         = blockmedian_helper("", arg1; kwargs...)
+blockmedian(cmd0::String; kw...) = blockmedian_helper(cmd0, nothing; kw...)
+blockmedian(arg1; kw...)         = blockmedian_helper("", arg1; kw...)
 
 # ---------------------------------------------------------------------------------------------------
-function blockmedian_helper(cmd0::String, arg1; kwargs...)
-
-	d = KW(kwargs)
+function blockmedian_helper(cmd0::String, arg1; kw...)
+	d = KW(kw)
 	help_show_options(d)		# Check if user wants ONLY the HELP mode
+	blockmedian_helper(cmd0, arg1, d)
+end
+function blockmedian_helper(cmd0::String, arg1, d::Dict{Symbol, Any})
+
 	cmd = parse_these_opts("", d, [[:E :extend :extended], [:Q :quick], [:T :quantile]])
 	opt_A = add_opt(d, "", "A", [:A :field :fields], (median="_z", scale="_s", highest="_h", lowest="_l", weight="_w", weights="_w"))
 	(!occursin(" -E", cmd) && (occursin("s", opt_A) || occursin("h", opt_A) || occursin("l", opt_A))) && (opt_A *= " -E")
 	cmd *= opt_A
-	common_blocks(cmd0, arg1, d, cmd, "blockmedian", kwargs...)
+	common_blocks(cmd0, arg1, d, cmd, "blockmedian")
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -107,23 +113,26 @@ Block average (x,y,z) data tables by mode estimation.
 	
 To see the full documentation type: ``@? blockmode``
 """
-blockmode(cmd0::String; kwargs...) = blockmode_helper(cmd0, nothing; kwargs...)
-blockmode(arg1; kwargs...)         = blockmode_helper("", arg1; kwargs...)
+blockmode(cmd0::String; kw...) = blockmode_helper(cmd0, nothing; kw...)
+blockmode(arg1; kw...)         = blockmode_helper("", arg1; kw...)
 
 # ---------------------------------------------------------------------------------------------------
-function blockmode_helper(cmd0::String, arg1; kwargs...)
+function blockmode_helper(cmd0::String, arg1; kw...)
+	d = init_module(false, kw...)[1]
+	blockmode_helper(cmd0, arg1, d)
+end
+function blockmode_helper(cmd0::String, arg1, d::Dict{Symbol, Any})
 
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd = parse_these_opts("", d, [[:D :histogram_binning], [:E :extend :extended], [:Q :quick]])
 	opt_A = add_opt(d, "", "A", [:A :field :fields], (mode="_z", scale="_s", highest="_h", lowest="_l", weight="_w", weights="_w"))
 	(!occursin(" -E", cmd) && (occursin("s", opt_A) || occursin("h", opt_A) || occursin("l", opt_A))) && (opt_A *= " -E")
 	cmd *= opt_A
 
-	common_blocks(cmd0, arg1, d, cmd, "blockmode", kwargs...)
+	common_blocks(cmd0, arg1, d, cmd, "blockmode")
 end
 
 # ---------------------------------------------------------------------------------------------------
-function common_blocks(cmd0, arg1, d, cmd, proggy, kwargs...)
+function common_blocks(cmd0, arg1, d, cmd, proggy)
 
 	cmd = parse_these_opts(cmd, d, [[:C :center], [:W :weights]])
 	opt_G = parse_G(d, "")[1]

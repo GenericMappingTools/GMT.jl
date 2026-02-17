@@ -67,13 +67,15 @@ Parameters
 
 To see the full documentation type: ``@? gmt2kml``
 """
-gmt2kml(cmd0::String; kwargs...) = gmt2kml_helper(cmd0, nothing; kwargs...)
-gmt2kml(arg1; kwargs...)         = gmt2kml_helper("", arg1; kwargs...)
+gmt2kml(cmd0::String; kw...) = gmt2kml_helper(cmd0, nothing; kw...)
+gmt2kml(arg1; kw...)         = gmt2kml_helper("", arg1; kw...)
 
 # ---------------------------------------------------------------------------------------------------
-function gmt2kml_helper(cmd0::String, arg1; kwargs...)
-
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+function gmt2kml_helper(cmd0::String, arg1; kw...)
+	d = init_module(false, kw...)[1]
+	gmt2kml_helper(cmd0, arg1, d)
+end
+function gmt2kml_helper(cmd0::String, arg1, d::Dict{Symbol, Any})
 
 	cmd, = parse_common_opts(d, "", [:R :V_params :bi :di :e :f :h :i :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :altitude_mode], [:D :descript], [:E :extrude], [:F :feature_type], [:G :fill],

@@ -26,9 +26,12 @@ Parameters
 
 To see the full documentation type: ``@? gmtconnect``
 """
-function gmtconnect(cmd0::String="", arg1=nothing, arg2=nothing; kwargs...)
+function gmtconnect(cmd0::String="", arg1=nothing, arg2=nothing; kw...)
+	d = init_module(false, kw...)[1]
+	gmtconnect(cmd0, arg1, d)
+end
+function gmtconnect(cmd0::String, arg1, d::Dict{Symbol, Any})
 
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:V_params :b :d :e :f :g :h :i :o :yx])
 	cmd  = parse_these_opts(cmd, d, [[:C :closed], [:D :dump], [:L :links :linkfile], [:Q :list :listfile], [:T :tolerance]])
 

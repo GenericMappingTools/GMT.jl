@@ -47,9 +47,12 @@ Parameters
 - $(opt_w)
 - $(opt_swap_xy)
 """
-function regress(cmd0::String="", arg1=nothing; kwargs...)
+function regress(cmd0::String="", arg1=nothing; kw...)
+	d = init_module(false, kw...)[1]
+	regress(cmd0, arg1, d)
+end
+function regress(cmd0::String, arg1, d::Dict{Symbol, Any})
 
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	cmd, = parse_common_opts(d, "", [:V_params :b :d :e :g :h :i :o :w :yx])
     cmd  = parse_these_opts(cmd, d, [[:A :all_slopes], [:C :ci :cl :confidence_level], [:E :regression_type], [:N :norm],
                                      [:F :column_combination], [:S :restrict], [:T :equi_space], [:W :weights :weighted]])

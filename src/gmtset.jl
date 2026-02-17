@@ -21,9 +21,11 @@ Parameters
 
     gmtset(FONT_ANNOT_PRIMARY="12p,Helvetica", MAP_GRID_CROSS_SIZE_PRIMARY=0.25)
 """
-function gmtset(; kwargs...)
-
-	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
+function gmtset(; kw...)
+	d = init_module(false, kw...)[1]
+	gmtset(d)
+end
+function gmtset(d::Dict{Symbol, Any})
 
 	cmd = parse_V(d, "")
 	cmd = add_opt(d, cmd, "D", [:D :units])
