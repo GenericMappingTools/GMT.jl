@@ -1,5 +1,5 @@
 """
-    D = density(x; first::Bool=true, nbins::Integer=200, bins::Vector{<:Real}=Vector{Float64}(),
+    D = density(x; first::Bool=true, nbins::Integer=200, bins=Vector{Float64}(),
                 bandwidth=nothing, kernel::StrSymb="normal", printbw::Bool=false,
                 extend=0, plot::Bool=true, kwargs...)
 
@@ -41,18 +41,18 @@ The `showbw` option is used to print the bandwidth used. It returns a GMTgrid of
   viz(G, figsize=(12,12), view=(225,30))
 ```
 """
-function density(x; first::Bool=true, nbins::Integer=200, bins::Vector{<:Real}=Vector{Float64}(),
+function density(x; first::Bool=true, nbins::Integer=200, bins=Vector{Float64}(),
                  bandwidth=nothing, kernel::StrSymb="normal", printbw::Bool=false, horizontal::Bool=false,
                  extend=0, plot::Bool=true, kwargs...)
 	D = kernelDensity(x, horizontal; nbins=nbins, bins=bins, bandwidth=bandwidth, kernel=kernel, printbw=printbw, ext=extend)
 	return plot ? common_plot_xyz("", D, "line", first, false; kwargs...) : D
 end
-density!(x; nbins::Integer=200, bins::Vector{<:Real}=Vector{Float64}(), bandwidth=nothing, kernel::StrSymb="normal", printbw::Bool=false, horizontal::Bool=false, extend=0, kw...) = density(x; first=false, nbins=nbins, bins=bins, bandwidth=bandwidth, kernel=kernel, printbw=printbw, horizontal=horizontal, extend=extend, kw...)
+density!(x; nbins::Integer=200, bins=Vector{Float64}(), bandwidth=nothing, kernel::StrSymb="normal", printbw::Bool=false, horizontal::Bool=false, extend=0, kw...) = density(x; first=false, nbins=nbins, bins=bins, bandwidth=bandwidth, kernel=kernel, printbw=printbw, horizontal=horizontal, extend=extend, kw...)
 
 const ksdensity = density
 # ----------------------------------------------------------------------------------------------------------
 # Adapted from the Matlab FEX contribution 60772 by Christopher Hummersone, Licensed under MIT
-function kernelDensity(x::AbstractVector{<:Real}, hz=false; nbins::Integer=200, bins::Vector{<:Real}=Vector{Float64}(),
+function kernelDensity(x::AbstractVector{<:Real}, hz=false; nbins::Integer=200, bins=Vector{Float64}(),
                        bandwidth=nothing, kernel::StrSymb="normal", printbw::Bool=false, ext=0)
 
 	any(isnan.(x)) && (x = x[.!isnan.(x)])
@@ -80,7 +80,7 @@ function kernelDensity(x::AbstractVector{<:Real}, hz=false; nbins::Integer=200, 
 	return (hz) ? mat2ds([d xd]) : mat2ds([xd d])
 end
 
-function kernelDensity(mat::AbstractMatrix{<:Real}; nbins::Integer=200, bins::Vector{<:Real}=Vector{Float64}(),
+function kernelDensity(mat::AbstractMatrix{<:Real}; nbins::Integer=200, bins=Vector{Float64}(),
                        bandwidth=nothing, kernel::StrSymb="normal")
 	D = Vector{GMTdataset{Float64,2}}(undef, size(mat,2))
 	for k = 1:size(mat,2)
@@ -89,7 +89,7 @@ function kernelDensity(mat::AbstractMatrix{<:Real}; nbins::Integer=200, bins::Ve
 	return D
 end
 
-function kernelDensity(mat::Vector{Vector{T}}; nbins::Integer=200, bins::Vector{<:Real}=Vector{Float64}(),
+function kernelDensity(mat::Vector{Vector{T}}; nbins::Integer=200, bins=Vector{Float64}(),
                        bandwidth=nothing, kernel::StrSymb="normal") where T
 	# Differs from mat::AbstractMatrix in that inner vectors can have different size but matrices not (all cols same size)
 	D = Vector{GMTdataset{Float64,2}}(undef, numel(mat))
@@ -99,7 +99,7 @@ function kernelDensity(mat::Vector{Vector{T}}; nbins::Integer=200, bins::Vector{
 	return D
 end
 
-function kernelDensity(mat::Vector{Vector{Vector{T}}}; nbins::Integer=200, bins::Vector{<:Real}=Vector{Float64}(),
+function kernelDensity(mat::Vector{Vector{Vector{T}}}; nbins::Integer=200, bins=Vector{Float64}(),
                        bandwidth=nothing, kernel::StrSymb="normal") where T
 	# First index is number of groups, second the number of violins/candles in each group. Third the number of points in each.
 	D = Vector{GMTdataset{Float64,2}}(undef, sum(length.(mat[:])))
@@ -245,11 +245,11 @@ end
            where first element is an AbstractArray and second an array or tuple of strings or symbols.
 
 """
-boxplot(data::GMTdataset; pos::Vector{<:Real}=Vector{Float64}(), first::Bool=true, kwargs...) =
+boxplot(data::GMTdataset; pos=Vector{Float64}(), first::Bool=true, kwargs...) =
 	boxplot(data.data; pos=pos, first=first, kwargs...)
 
 # ----------------------------------------------------------------------------------------------------------
-function boxplot(data::AbstractVector{<:Real}, grp::AbstractVector=AbstractVector[]; pos::Vector{<:Real}=Vector{Float64}(),
+function boxplot(data::AbstractVector{<:Real}, grp::AbstractVector=AbstractVector[]; pos=Vector{Float64}(),
                  first::Bool=true, kwargs...)
 
 	isempty(grp) && return boxplot(reshape(data,length(data),1); pos=pos, first=first, kwargs...)
@@ -258,7 +258,7 @@ function boxplot(data::AbstractVector{<:Real}, grp::AbstractVector=AbstractVecto
 end
 
 # ----------------------------------------------------------------------------------------------------------
-function boxplot(data::Union{Vector{Vector{T}}, AbstractMatrix{T}}; pos::Vector{<:Real}=Vector{Float64}(),
+function boxplot(data::Union{Vector{Vector{T}}, AbstractMatrix{T}}; pos=Vector{Float64}(),
                  first::Bool=true, kwargs...) where T
 	(!isempty(pos) && length(pos) != size(data,2)) && error("Coordinate vector 'pos' must have same size as columns in 'data'")
 	d, isVert, _fill, showOL, OLcmd, w = helper1_boxplot(kwargs)
@@ -276,7 +276,7 @@ function boxplot(data::Union{Vector{Vector{T}}, AbstractMatrix{T}}; pos::Vector{
 end
 
 # ------------ For groups ----------------------------------------------------------------------------------
-function boxplot(data::Array{T,3}; pos::Vector{<:Real}=Vector{Float64}(), first::Bool=true,
+function boxplot(data::Array{T,3}; pos=Vector{Float64}(), first::Bool=true,
                  groupwidth=0.75, ccolor=false, kwargs...) where T
 
 	(!isempty(pos) && length(pos) != size(data,2)) && error("Coordinate vector 'pos' must have same size as columns in 'data'")
@@ -315,7 +315,7 @@ function boxplot(data::Array{T,3}; pos::Vector{<:Real}=Vector{Float64}(), first:
 end
 
 # ----------------------------------------------------------------------------------------------------------
-function boxplot(data::Vector{Vector{Vector{T}}}; pos::Vector{<:Real}=Vector{Float64}(), first::Bool=true,
+function boxplot(data::Vector{Vector{Vector{T}}}; pos=Vector{Float64}(), first::Bool=true,
                  groupwidth=0.75, ccolor=false, kwargs...) where T
 
 	(!isempty(pos) && length(pos) != size(data,2)) && error("Coordinate vector 'pos' must have same size as columns in 'data'")
@@ -562,12 +562,12 @@ Example:
 """
 
 # ----------------------------------------------------------------------------------------------------------
-violin(data::GMTdataset; pos::Vector{<:Real}=Vector{Float64}(), first::Bool=true, kwargs...) =
+violin(data::GMTdataset; pos=Vector{Float64}(), first::Bool=true, kwargs...) =
 	violin(data.data; pos=pos, first=first, kwargs...)
 
 # ----------------------------------------------------------------------------------------------------------
 function violin(data::Vector{<:Real}, grp::AbstractVector=AbstractVector[]; first::Bool=true,
-                pos::Vector{<:Real}=Vector{Float64}(), nbins::Integer=100, bins::Vector{<:Real}=Vector{Float64}(), bandwidth=nothing, groupwidth=0.75, kernel::StrSymb="normal", kwargs...)
+                pos=Vector{Float64}(), nbins::Integer=100, bins=Vector{Float64}(), bandwidth=nothing, groupwidth=0.75, kernel::StrSymb="normal", kwargs...)
 
 	isempty(grp) && return violin(reshape(data,length(data),1); pos=pos, nbins=nbins, bins=bins,
 	                              bandwidth=bandwidth, groupwidth=groupwidth, kernel=kernel, first=first, kwargs...)
@@ -577,20 +577,20 @@ function violin(data::Vector{<:Real}, grp::AbstractVector=AbstractVector[]; firs
 end
 
 # ----------------------------------------------------------------------------------------------------------
-function violin(data::Union{Vector{Vector{T}}, AbstractMatrix{T}}; first::Bool=true, pos::Vector{<:Real}=Vector{Float64}(),
-                nbins::Integer=100, bins::Vector{<:Real}=Vector{Float64}(), bandwidth=nothing, groupwidth=0.75, kernel::StrSymb="normal", kwargs...) where T
+function violin(data::Union{Vector{Vector{T}}, AbstractMatrix{T}}; first::Bool=true, pos=Vector{Float64}(),
+                nbins::Integer=100, bins=Vector{Float64}(), bandwidth=nothing, groupwidth=0.75, kernel::StrSymb="normal", kwargs...) where T
 
 	(!isempty(pos) && length(pos) != size(data,2)) && error("Coordinate vector 'pos' must have same size as columns in 'data'")
 	scatter = (find_in_kwargs(kwargs, [:scatter])[1] !== nothing)
 	isVert  = (find_in_kwargs(kwargs, [:horizontal :hbar])[1] === nothing) ? true : false	# Can't delete here
 	Dv, Ds, xc = helper1_violin(data, pos; groupwidth=groupwidth, nbins=nbins, bins=bins, bandwidth=bandwidth,
                                 kernel=kernel, scatter=scatter, isVert=isVert)
-	helper2_violin(Dv, Ds, data, xc, 1, true, first, isVert, Int[], kwargs)
+	helper2_violin(Dv, Ds, data, xc, 1, true, first, isVert, Int[], KW(kwargs))
 end
 
 # ------------ For groups ----------------------------------------------------------------------------------
-function violin(data::Array{<:Real,3}; pos::Vector{<:Real}=Vector{Float64}(), nbins::Integer=100, first::Bool=true,
-	            bins::Vector{<:Real}=Vector{Float64}(), bandwidth=nothing, kernel::StrSymb="normal", groupwidth=0.75, ccolor=false, kwargs...)
+function violin(data::Array{<:Real,3}; pos=Vector{Float64}(), nbins::Integer=100, first::Bool=true,
+	            bins=Vector{Float64}(), bandwidth=nothing, kernel::StrSymb="normal", groupwidth=0.75, ccolor=false, kwargs...)
 
 	(!isempty(pos) && length(pos) != size(data,2)) && error("Coordinate vector 'pos' must have same size as columns in 'data'")
 	scatter = (find_in_kwargs(kwargs, [:scatter])[1] !== nothing)
@@ -611,12 +611,12 @@ function violin(data::Array{<:Real,3}; pos::Vector{<:Real}=Vector{Float64}(), nb
 		for k = 1:size(data,2)  D3[n+=1] = Dv[k]  end	# Loop over number of groups
 		(scatter) && for k = 1:size(data,2)  Ds[m+=1] = _D[k]  end		# Store the scatter pts
 	end
-	helper2_violin(D3, Ds, data, xc, N_grp, ccolor, first, isVert, Int[], kwargs)	# House keeping and call the plot funs
+	helper2_violin(D3, Ds, data, xc, N_grp, ccolor, first, isVert, Int[], KW(kwargs))	# House keeping and call the plot funs
 end
 
 # ----------------------------------------------------------------------------------------------------------
-function violin(data::Vector{Vector{Vector{T}}}; pos::Vector{<:Real}=Vector{Float64}(), nbins::Integer=100,
-	            first::Bool=true, bins::Vector{<:Real}=Vector{Float64}(), bandwidth=nothing, kernel::StrSymb="normal", groupwidth=0.75, ccolor=false, kwargs...) where T
+function violin(data::Vector{Vector{Vector{T}}}; pos=Vector{Float64}(), nbins::Integer=100,
+	            first::Bool=true, bins=Vector{Float64}(), bandwidth=nothing, kernel::StrSymb="normal", groupwidth=0.75, ccolor=false, kwargs...) where T
 
 	(!isempty(pos) && length(pos) != length(data)) && error("Coordinate vector 'pos' must have same size as columns in 'data'")
 	scatter = (find_in_kwargs(kwargs, [:scatter])[1] !== nothing)
@@ -645,7 +645,7 @@ function violin(data::Vector{Vector{Vector{T}}}; pos::Vector{<:Real}=Vector{Floa
 	end
 	set_dsBB!(D3, false)		# Set the global BB
 	set_dsBB!(Ds, false)
-	helper2_violin(D3, Ds, data, 1:N_grp, N_grp, ccolor, first, isVert, N_in_each_grp, kwargs)
+	helper2_violin(D3, Ds, data, 1:N_grp, N_grp, ccolor, first, isVert, N_in_each_grp, KW(kwargs))
 end
 
 # ----------------------------------------------------------------------------------------------------------
@@ -733,7 +733,7 @@ end
 # ----------------------------------------------------------------------------------------------------------
 # Create D's with the violin shapes and optionally fill a second D with the scatter points.
 function helper1_violin(data::Union{Vector{Vector{T}}, AbstractMatrix{T}}, x::Vector{<:Real}=Vector{Float64}(),
-                        off_in_grp::Float64=0.0, N_grp::Int=1; groupwidth::Float64=0.75, nbins::Integer=100, bins::Vector{<:Real}=Vector{Float64}(), bandwidth=nothing, kernel::StrSymb="normal", scatter::Bool=false, split::Int=0, isVert::Bool=true, swing::Bool=true) where T
+                        off_in_grp::Float64=0.0, N_grp::Int=1; groupwidth::Float64=0.75, nbins::Integer=100, bins=Vector{Float64}(), bandwidth=nothing, kernel::StrSymb="normal", scatter::Bool=false, split::Int=0, isVert::Bool=true, swing::Bool=true) where T
 	# OFF_IN_GRP is the offset relative to group's center (zero when groups have only one violin)
 	# SPLIT is either 0 (no split); 1 store only lefy half; 2 store right half
 	# For the SPLIT case the SWING option is true when called from VecVecVec and means SPLIT will toggle between 1-2
@@ -765,15 +765,14 @@ function helper1_violin(data::Union{Vector{Vector{T}}, AbstractMatrix{T}}, x::Ve
 end
 
 # ----------------------------------------------------------------------------------------------------------
-function helper2_violin(D, Ds, data, xc, N_grp, ccolor, first, isVert, N_in_each_grp, kwargs)
+function helper2_violin(D, Ds, data, xc, N_grp, ccolor, first, isVert, N_in_each_grp, d::Dict{Symbol,Any})
 	# This piece of code is common to viloin(Matrix2D) and violin(Matrix3D)
 	# Ds is a GMTdataset with the scatter points or an empty one if no scatters.
 	# XC vector with the center positions (group centers in case of groups.)
 	# ccolor = false		# If colors varie for each in a group, or are constant inside each group.
 	# N_in_each_grp is not empty when the caller was the Vector{Vector{Vector}} method
 
-	d = KW(kwargs)
-	fill_box = ((val = find_in_kwargs(kwargs, [:G :fill :fillcolor])[1]) !== nothing) ? "gray70" : ""
+	fill_box = (is_in_dict(d, [:G :fill :fillcolor]) !== nothing) ? "gray70" : ""
 	if (fill_box != "")		# In this case we may also have received a color list. Check it
 		custom_colors = helper_ds_fill(d, nc=length(D))		# A helper function of mat2ds()
 		if (isempty(N_in_each_grp))
@@ -799,7 +798,7 @@ function helper2_violin(D, Ds, data, xc, N_grp, ccolor, first, isVert, N_in_each
 	# If we have a figname request we must suspend it till the last plotting command.
 	figname::String = ((val = find_in_dict(d, [:savefig :figname :name])[1]) !== nothing) ? val : ""
 
-	if (find_in_kwargs(kwargs, [:boxplot])[1] !== nothing || showOL)	# Request to plot the candle sticks too
+	if (is_in_dict(d, [:boxplot]) !== nothing || showOL)	# Request to plot the candle sticks too
 		delete!(d, :boxplot)
 		haskey(d, :scatter) && delete!(d, :scatter)
 		do_show::Bool = ((val = find_in_dict(d, [:show])[1]) !== nothing && val != 0)
@@ -891,17 +890,17 @@ function colorize_VecVecVec(D, N_grp, N_in_each_grp, ccolor, custom_colors, type
 end
 
 # ----------------------------------------------------------------------------------------------------------
-boxplot!(data::GMTdataset; pos::Vector{<:Real}=Vector{Float64}(), kw...) = boxplot(data.data; pos=pos, first=false, kw...)
-boxplot!(data::AbstractVector{<:Real}, grp::AbstractVector=AbstractVector[]; pos::Vector{<:Real}=Vector{Float64}(), kw...) = boxplot(data, grp; pos=pos, first=false, kw...)
-boxplot!(data::Union{Vector{Vector{T}}, AbstractMatrix{T}}; pos::Vector{<:Real}=Vector{Float64}(), kw...) where T = boxplot(data; pos=pos, first=false, kw...)
-boxplot!(data::Array{T,3}; pos::Vector{<:Real}=Vector{Float64}(), groupwidth=0.75, ccolor=false, kw...) where T = boxplot(data; pos=pos, groupwidth=groupwidth, ccolor=ccolor, first=false, kw...)
-boxplot!(data::Vector{Vector{Vector{T}}}; pos::Vector{<:Real}=Vector{Float64}(), groupwidth=0.75, ccolor=false, kw...) where T = boxplot(data; pos=pos, groupwidth=groupwidth, ccolor=ccolor, first=false, kw...)
+boxplot!(data::GMTdataset; pos=Vector{Float64}(), kw...) = boxplot(data.data; pos=pos, first=false, kw...)
+boxplot!(data::AbstractVector{<:Real}, grp::AbstractVector=AbstractVector[]; pos=Vector{Float64}(), kw...) = boxplot(data, grp; pos=pos, first=false, kw...)
+boxplot!(data::Union{Vector{Vector{T}}, AbstractMatrix{T}}; pos=Vector{Float64}(), kw...) where T = boxplot(data; pos=pos, first=false, kw...)
+boxplot!(data::Array{T,3}; pos=Vector{Float64}(), groupwidth=0.75, ccolor=false, kw...) where T = boxplot(data; pos=pos, groupwidth=groupwidth, ccolor=ccolor, first=false, kw...)
+boxplot!(data::Vector{Vector{Vector{T}}}; pos=Vector{Float64}(), groupwidth=0.75, ccolor=false, kw...) where T = boxplot(data; pos=pos, groupwidth=groupwidth, ccolor=ccolor, first=false, kw...)
 
-violin!(data::GMTdataset; pos::Vector{<:Real}=Vector{Float64}(), kw...) = violin(data.data; pos=pos, first=false, kw...)
-violin!(data::AbstractVector{<:Real}, grp::AbstractVector=AbstractVector[]; pos::Vector{<:Real}=Vector{Float64}(), kw...) = violin(data, grp; pos=pos, first=false, kw...)
-violin!(data::Union{Vector{Vector{T}}, AbstractMatrix{T}}; pos::Vector{<:Real}=Vector{Float64}(), nbins::Integer=100, bins::Vector{<:Real}=Vector{Float64}(), bandwidth=nothing, groupwidth=0.75, kernel::StrSymb="normal", kw...) where T = violin(data; pos=pos, nbins=nbins, bins=bins, bandwidth=bandwidth, groupwidth=groupwidth, kernel=kernel, first=false, kw...)
-violin!(data::Array{<:Real,3}; pos::Vector{<:Real}=Vector{Float64}(), nbins::Integer=100, bins::Vector{<:Real}=Vector{Float64}(), bandwidth=nothing, groupwidth=0.75, kernel::StrSymb="normal", ccolor=false, kw...) = violin(data; pos=pos, nbins=nbins, bins=bins, bandwidth=bandwidth, groupwidth=groupwidth, kernel=kernel, ccolor=ccolor, first=false, kw...)
-violin!(data::Vector{Vector{Vector{T}}}; pos::Vector{<:Real}=Vector{Float64}(), nbins::Integer=100, bins::Vector{<:Real}=Vector{Float64}(), bandwidth=nothing, groupwidth=0.75, kernel::StrSymb="normal", ccolor=false, kw...) where T = violin(data; pos=pos, nbins=nbins, bins=bins, bandwidth=bandwidth, groupwidth=groupwidth, kernel=kernel, ccolor=ccolor, first=false, kw...)
+violin!(data::GMTdataset; pos=Vector{Float64}(), kw...) = violin(data.data; pos=pos, first=false, kw...)
+violin!(data::AbstractVector{<:Real}, grp::AbstractVector=AbstractVector[]; pos=Vector{Float64}(), kw...) = violin(data, grp; pos=pos, first=false, kw...)
+violin!(data::Union{Vector{Vector{T}}, AbstractMatrix{T}}; pos=Vector{Float64}(), nbins::Integer=100, bins=Vector{Float64}(), bandwidth=nothing, groupwidth=0.75, kernel::StrSymb="normal", kw...) where T = violin(data; pos=pos, nbins=nbins, bins=bins, bandwidth=bandwidth, groupwidth=groupwidth, kernel=kernel, first=false, kw...)
+violin!(data::Array{<:Real,3}; pos=Vector{Float64}(), nbins::Integer=100, bins=Vector{Float64}(), bandwidth=nothing, groupwidth=0.75, kernel::StrSymb="normal", ccolor=false, kw...) = violin(data; pos=pos, nbins=nbins, bins=bins, bandwidth=bandwidth, groupwidth=groupwidth, kernel=kernel, ccolor=ccolor, first=false, kw...)
+violin!(data::Vector{Vector{Vector{T}}}; pos=Vector{Float64}(), nbins::Integer=100, bins=Vector{Float64}(), bandwidth=nothing, groupwidth=0.75, kernel::StrSymb="normal", ccolor=false, kw...) where T = violin(data; pos=pos, nbins=nbins, bins=bins, bandwidth=bandwidth, groupwidth=groupwidth, kernel=kernel, ccolor=ccolor, first=false, kw...)
 
 # ----------------------------------------------------------------------------------------------------------
 function _quantile(v::AbstractVector{T}, w::AbstractVector{<:Real}, p::AbstractVector{<:Real}) where T
@@ -1175,21 +1174,21 @@ Example:
     parallelplot("iris.dat", groupvar="text", quantile=0.25, legend=true, band=true, show=1)
 """
 parallelplot(arg1; axeslabels::Vector{String}=String[], labels::Vector{String}=String[], group::AbstractVector=AbstractVector[], groupvar="", normalize="range", kw...) =
-	parplot_helper("", arg1; axeslabels=axeslabels, labels=labels, group=group, groupvar=groupvar, normalize=normalize, kw...)
+	parplot_helper("", arg1, KW(kw); axeslabels=axeslabels, labels=labels, group=group, groupvar=string(groupvar), normalize=string(normalize))
 
 parallelplot(cmd0::String; axeslabels::Vector{String}=String[], labels::Vector{String}=String[], group::AbstractVector=AbstractVector[], groupvar="", normalize="range", kw...) =
-	parplot_helper(cmd0, nothing; axeslabels=axeslabels, labels=labels, group=group, groupvar=groupvar, normalize=normalize, kw...)
+	parplot_helper(cmd0, nothing, KW(kw); axeslabels=axeslabels, labels=labels, group=group, groupvar=string(groupvar), normalize=string(normalize))
 
 parallelplot!(arg1; axeslabels::Vector{String}=String[], labels::Vector{String}=String[], group::AbstractVector=AbstractVector[], groupvar="", normalize="range", kw...) =
-	parplot_helper("", arg1; first=false, axeslabels=axeslabels, labels=labels, group=group, groupvar=groupvar, normalize=normalize, kw...)
+	parplot_helper("", arg1, KW(kw); first=false, axeslabels=axeslabels, labels=labels, group=group, groupvar=string(groupvar), normalize=string(normalize))
 
 parallelplot!(cmd0::String; axeslabels::Vector{String}=String[], labels::Vector{String}=String[], group::AbstractVector=AbstractVector[], groupvar="", normalize="range", kw...) =
-	parplot_helper(cmd0, nothing; first=false, axeslabels=axeslabels, labels=labels, group=group, groupvar=groupvar, normalize=normalize, kw...)
+	parplot_helper(cmd0, nothing, KW(kw); first=false, axeslabels=axeslabels, labels=labels, group=group, groupvar=string(groupvar), normalize=string(normalize))
 
 # ----------------------------------------------------------------------------------------------------------
-function parplot_helper(cmd0::String, arg1; first::Bool=true, axeslabels::Vector{String}=String[],
-                      labels::Vector{String}=String[], group::AbstractVector=AbstractVector[], groupvar="", normalize="range", kwargs...)
-	d = KW(kwargs)
+function parplot_helper(cmd0::String, arg1, d::Dict{Symbol, Any}; first::Bool=true, axeslabels::Vector{String}=String[],
+                      labels::Vector{String}=String[], group::AbstractVector=AbstractVector[], groupvar::String="", normalize::String="range")
+	#d = KW(kwargs)
 	(cmd0 != "") && (arg1 = read_data(d, cmd0, "", arg1, " ", false, true)[2])	# Make sure we have the data here
 	isempty(arg1) && error("The 'arg1' input cannot be empty.")		# #1711		
 	if     (isa(arg1, Matrix{<:Real}))        data = mat2ds(arg1)
