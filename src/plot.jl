@@ -1135,13 +1135,17 @@ function helper_vecBug(d, arg1, first::Bool, haveR::Bool, haveVarFill::Bool, typ
 	end
 
 	function rθ2uv(arg1)		# Convert to u,v
-		arg1 = convert(Array{Float64}, arg1)	# We don't want to modify the original and need it Float64 anyway
-		for k = 1:size(arg1,1)
-			s, c = sincosd(arg1[k,3])
-			arg1[k,3] = arg1[k,4] * c
-			arg1[k,4] = arg1[k,4] * s
+		if (eltype(arg1) <: Integer)
+			_arg1 = mat2ds(convert(Array{Float64}, arg1))
+		else
+			_arg1 = deepcopy(arg1)	# We don't want to modify the original
 		end
-		return arg1
+		for k = 1:size(_arg1,1)
+			s, c = sincosd(_arg1[k,3])
+			_arg1[k,3] = _arg1[k,4] * c
+			_arg1[k,4] = _arg1[k,4] * s
+		end
+		return _arg1
 	end
 
 	isArrowGMT4 = haskey(d, :arrow4) || haskey(d, :vector4)
