@@ -12,12 +12,10 @@ function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 	(cmd0 != "" && arg1 === nothing && is_in_dict(d, [:groupvar :hue]) !== nothing) && (arg1 = gmtread(cmd0); cmd0 = "")
 	_common_plot_xyz(cmd0, arg1, caller, O, K, is3D, d)
-	#invokelatest(_common_plot_xyz, cmd0, arg1, caller, O, K, is3D, d)
 end
 function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::Bool, d::Dict{Symbol, Any})
 	(cmd0 != "" && arg1 === nothing && is_in_dict(d, [:groupvar :hue]) !== nothing) && (arg1 = gmtread(cmd0); cmd0 = "")
 	_common_plot_xyz(cmd0, arg1, caller, !first, true, is3D, d)
-	#invokelatest(_common_plot_xyz, cmd0, arg1, caller, !first, true, is3D, d)
 end
 function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, is3D::Bool, d::Dict{Symbol, Any})
 	first = !O
@@ -411,8 +409,8 @@ function parse_plot_callers(d::Dict{Symbol, Any}, gmt_proggy::String, caller::St
 end
 
 # ---------------------------------------------------------------------------------------------------
-plt_txt_attrib!(D::GMTdataset{T,N}, d::Dict{Symbol, Any}, _cmd::Vector{String}) where {T,N} = plt_txt_attrib!([D], d, _cmd)
-function plt_txt_attrib!(D::Vector{<:GMTdataset{T,N}}, d::Dict{Symbol, Any}, _cmd::Vector{String}) where {T,N}
+plt_txt_attrib!(D::GMTdataset, d::Dict{Symbol, Any}, _cmd::Vector{String}) = plt_txt_attrib!([D], d, _cmd)
+function plt_txt_attrib!(D::Vector{<:GMTdataset}, d::Dict{Symbol, Any}, _cmd::Vector{String})
 	# Plot TEXT attributed labels and serve as function barrier agains the f Any's (not sure if succeeds)
 	((s_val = hlp_desnany_str(d, [:labels])) === "") && return nothing
 		
@@ -561,7 +559,7 @@ function check_grouping!(d, arg1)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function check_ribbon(d::Dict{Symbol, Any}, arg1::GMTdataset{T,N}, cmd::String, opt_W::String) where {T,N}
+function check_ribbon(d::Dict{Symbol, Any}, arg1::GMTdataset, cmd::String, opt_W::String)
 	((val = find_in_dict(d, [:ribbon :band])[1]) === nothing) && return arg1, cmd
 	ec1, ec2, add_2 = helper_check_ribbon(val)		# Function barrier agains Anys
 	(add_2) ? add2ds!(arg1, ec2; names=["Zbnd1","Zbnd2"]) : add2ds!(arg1, ec1; name="Zbnd")
@@ -570,7 +568,7 @@ function check_ribbon(d::Dict{Symbol, Any}, arg1::GMTdataset{T,N}, cmd::String, 
 	return arg1, cmd
 end
 
-function check_ribbon(d::Dict{Symbol, Any}, arg1::Vector{<:GMTdataset{T,N}}, cmd::String, opt_W::String) where {T,N}
+function check_ribbon(d::Dict{Symbol, Any}, arg1::Vector{<:GMTdataset}, cmd::String, opt_W::String)
 	((val = find_in_dict(d, [:ribbon :band])[1]) === nothing) && return arg1, cmd
 	ec1, ec2, add_2 = helper_check_ribbon(val)		# Function barrier agains Anys
 	if (add_2)
