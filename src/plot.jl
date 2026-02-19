@@ -415,7 +415,7 @@ function scatter(D::Vector{<:GMTdataset{Float64,2}}; first=true, kw...)
 	Dc = mat2ds(gmt_centroid_area(G_API[], D, Int(isgeog(D)), ca=2), geom=wkbPoint, text=labels)
 	(is_in_dict(d, [:marker, :Marker, :shape]) === nothing) && (d[:marker] = "circ")
 	(is_in_dict(d, [:ms :markersize :MarkerSize :size]) === nothing) && (d[:ms] = "12p")
-	_common_plot_xyz("", Dc, "bubble", !first, true, false, d)
+	common_plot_xyz("", Dc, "bubble", !first, false, d)
 end
 
 # ------------------------------------------------------------------------------------------------------
@@ -1135,11 +1135,7 @@ function helper_vecBug(d, arg1, first::Bool, haveR::Bool, haveVarFill::Bool, typ
 	end
 
 	function rθ2uv(arg1)		# Convert to u,v
-		if (eltype(arg1) <: Integer)
-			arg1 = convert(Array{Float64}, arg1)
-		else
-			arg1 = deepcopy(arg1)	# We don't want to modify the original
-		end
+		arg1 = convert(Array{Float64}, arg1)	# We don't want to modify the original and need it Float64 anyway
 		for k = 1:size(arg1,1)
 			s, c = sincosd(arg1[k,3])
 			arg1[k,3] = arg1[k,4] * c
@@ -2055,13 +2051,13 @@ function piechart(x::VecOrMat; first::Bool=true, kw...)
 	one_not_exploded ? (Dv = ds2ds(mat2ds(data), fill=fill[non_exploded])) : (d[:ms] = 0)
 
 	# ------------ If no lables wanted we just plot the wedges and return
-	(labelstyle == "none") && return _common_plot_xyz("", Dv, "plot", !first, true, false, d)
+	(labelstyle == "none") && return common_plot_xyz("", Dv, "plot", !first, false, d)
 
 	fs = font(d, [:font])						# See if we have a font (size & others) specification	
 	fs = (fs != "") ? fs : string(round(ms / (2.54/72) / 30, digits=1))	# Use a font size that is ~30 smaler than pie diameter
 
 	do_show = ((val = find_in_dict(d, [:show])[1]) !== nothing && val != 0)
-	one_not_exploded ? _common_plot_xyz("", Dv, "plot", !first, true, false, d) : _common_plot_xyz("", [0 0 0 0], "plot", !first, true, false, d)
+	one_not_exploded ? common_plot_xyz("", Dv, "plot", !first, false, d) : common_plot_xyz("", [0 0 0 0], "plot", !first, false, d)
 
 	# Compute the h-v scales
 	sc_x = (CTRL.limits[2]-CTRL.limits[1]) / CTRL.figsize[1]
@@ -2076,7 +2072,7 @@ function piechart(x::VecOrMat; first::Bool=true, kw...)
 		end
 		Dv = ds2ds(mat2ds(data_explode), fill=fill[explode])
 		d[:marker], d[:ms] = "wedge", ms-explode_off/2
-		_common_plot_xyz("", Dv, "plot", true, true, false, d)
+		common_plot_xyz("", Dv, "plot", true, false, d)
 	end
 
 	#  Get the text positions
