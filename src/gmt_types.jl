@@ -336,6 +336,30 @@ function Base.similar(bc::Broadcast.Broadcasted{Broadcast.ArrayStyle{GMTfv}}, ::
 end
 find4similar(FV::GMTfv, rest) = FV
 
+# ------------------------------------------------------------------------------------
+mutable struct wrapDatasets#{T<:Real, N} <: AbstractArray{T,N}
+	fname::String
+	ds::GMTdataset#{T,N}
+	vds::Vector{GMTdataset}
+	fv::GMTfv#{T}
+	cpt::GMTcpt
+	function wrapDatasets(arg1, arg2)
+		td, tvd, tcpt, tfv  = GMTdataset(), Vector{GMTdataset}(), GMTcpt(), GMTfv()
+		if     (arg1 !== "")                      new(arg1, td, tvd, tfv, tcpt)
+		elseif (isa(arg2, Matrix{<:Real}))        new("", mat2ds(arg2), tvd, tfv, tcpt)
+		elseif (isa(arg2, GMTdataset))            new("", arg2, tvd, tfv, tcpt)
+		elseif (isa(arg2, Vector{<:GMTdataset}))  new("", td, arg2, tfv, tcpt)
+		elseif (isa(arg2, GMTfv))                 new("", td, tvd, arg2, tcpt)
+		elseif (isa(arg2, GMTcpt))                new("", td, tvd, tfv, arg2)
+		elseif (arg1 === "" && arg2 === nothing)  new("", td, tvd, tfv, tcpt)	# Less usual case in plot where inly kwargs are given
+		else   error("Unknown types ($(typeof(arg1)), $(typeof(arg2))) in wrapDatasets")
+		end
+	end
+end
+function unwrapDatasets(w::wrapDatasets)
+	return w.fname, !isempty(w.ds) ? w.ds : !isempty(w.vds) ? w.vds : !isempty(w.fv) ? w.fv : !isempty(w.cpt) ? w.cpt : nothing
+end
+
 #=
 Base.@kwdef struct GMTtypes
 	stored::String = ""

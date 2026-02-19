@@ -49,7 +49,7 @@ To see the full documentation type: ``@? colorbar``
 """
 function colorbar(arg1::Union{Nothing, GMTcpt}=nothing; first=true, kwargs...)
 	d, K, O = init_module(first==1, kwargs...)		# Also checks if the user wants ONLY the HELP mode
-	dbg_cmd, d, cmd, arg1 = colorbar_parser(arg1, O, d)
+	dbg_cmd, d, cmd, arg1 = colorbar_parser(isa(arg1, Nothing) ? GMTcpt() : arg1, O, d)
 	(dbg_cmd !== nothing) && return dbg_cmd
 	r = prep_and_call_finish_PS_module(d, cmd, "", K, O, true, arg1)
 	(!isa(r,String)) && gmt("destroy")      # Probably because of the rasters in cpt
@@ -73,7 +73,7 @@ function colorbar_parser(arg1::Union{Nothing, GMTcpt}, O::Bool, d::Dict{Symbol, 
 
 	(!isempty(opt_D)) && (!contains(opt_D, "DJ") && !contains(opt_D, "Dj") && !contains(opt_D, "Dg")) && (cmd = replace(cmd, "-R " => ""))
 	cmd *= opt_D
-	cmd, arg1, = add_opt_cpt(d, cmd, CPTaliases, 'C', 0, arg1)
+	cmd, arg1, = add_opt_cpt(d, cmd, CPTaliases, 'C', 0, isempty(arg1) ? nothing : arg1)
 	if (opt_D === "" && ((val = hlp_desnany_str(d, [:triangles])) !== ""))	# User asked for triangles but did not set pos
 		(val == "true") && (val = "tri")			# Means just triangles
 		anc_tris = colorbar_triangles(val)			# Returns anchor+triangles string

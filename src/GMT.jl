@@ -374,10 +374,7 @@ using .Laszip
 @compile_workload begin
 	G_API[] = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS)
 	#GMT.parse_B(Dict{Symbol, Any}(:frame => (annot=10, title="Ai Ai"), :grid => (pen=2, x=10, y=20)), "", " -Baf -BWSen");
-	#GMT.parse_R(Dict{Symbol, Any}(:xlim => (1,2), :ylim => (3,4), :zlim => (5,6)), "");
-	#GMT.parse_J(Dict{Symbol, Any}(:J => "X", :scale => "1:10"), "");
 	#GMT.parse_opt_S(Dict{String, Any}(), mat2ds(rand(4,2)));
-	#GMT.build_opt_J(:X5);
 	GMT.theme("dark")
 	GMT.theme_modern()
 	mat2ds([9 8; 9 8], x=[0 7], pen=["5p,black", "4p,white,20p_20p"], multi=true)
@@ -389,6 +386,7 @@ using .Laszip
 	gmtwrite(t, [0.0 0; 1 1])
 	gmtread(t)
 	gmtread(TESTSDIR * "assets/burro_cenora.jpg")
+	coast(R=:g, proj=:guess, W=(level=1, pen=(2, :green)), savefig=tempname()*".ps")
 	rm(t)
 	D = mat2ds(rand(3, 3), colnames=["Time", "b", "c"])
 	D.attrib = Dict("Timecol" => "1")
@@ -413,7 +411,6 @@ using .Laszip
 	grdsample(Glix, inc=0.5)
 	grdtrend(Glix, model=3)
 	grdtrack(Glix, [1 1])
-	coast(R=:g, proj=:guess, W=(level=1, pen=(2, :green)), savefig=tempname()*".ps")
 	rescale(mat2img(rand(UInt16, 16,16,3)))
 	plot(rand(5, 2))
 	bar(1:5, (20, 35, 30, 35, 27), width=0.5, color=:lightblue, limits=(0.5,5.5,0,40))
@@ -426,13 +423,13 @@ using .Laszip
 	#ecdfplot!(randn(50), fmt=:ps);
 	#cornerplot(randn(50,3), scatter=true, fmt=:ps);
 	#marginalhist(randn(1000,2), par=(PS_MEDIA="A2",), fmt=:ps);	rm("GMTplot.ps")
-	#feather([0.0 0 2.0; 0.0 30 2; 0.0 60 2], rtheta=true, aspect="1:1", arrow=(len=0.5, shape=0.5,), fmt=:ps);
+	feather([0.0 0 2.0; 0.0 30 2; 0.0 60 2], rtheta=true, aspect="1:1", arrow=(len=0.5, shape=0.5,), fmt=:ps);
 	#orbits(mat2ds(rand(10,3)));
 	#pca(rand(Float32, 24, 4));
 	#pca(mat2img(rand(UInt8, 64,64,4)));
 	#kmeans(rand(100,3), 3, maxiter=10);
 	#rm(joinpath(tempdir(), "GMTjl_custom_p_x.txt"))		# This one gets created before username is set.
-	#arrows([0 8.2 0 6], limits=(-2,4,0,9), arrow=(len=2,stop=1,shape=0.5,fill=:red), axis=:a, pen="6p");
+	arrows([0 8.2 0 6], limits=(-2,4,0,9), arrow=(len=2,stop=1,shape=0.5,fill=:red), axis=:a, pen="6p");
 	GMT.doc_source_links("psbasemap"; silent=true)
 	theme()
 
