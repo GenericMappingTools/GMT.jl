@@ -3,8 +3,6 @@
 
 Convert data table to a grid file. 
 
-See full GMT docs at [`xyz2grd`]($(GMTdoc)xyz2grd.html)
-
 Parameters
 ----------
 

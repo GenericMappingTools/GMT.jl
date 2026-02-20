@@ -52,24 +52,6 @@ end
 # ---------------------------------------------------------------------------------------------------
 function gmtinfo_helper(cmd0::String, arg1, d::Dict{Symbol,Any})::Union{String, GMTdataset}
 
-	#=
-	#cmd, = parse_common_opts(d, "", [:V_params :e :f :i :o :r :w :yx])
-	cmd = parse_V_params(d, "")
-	cmd = parse_e(d, cmd)[1]
-	cmd = parse_f(d, cmd)[1]
-	cmd = parse_i(d, cmd)[1]
-	cmd = parse_o(d, cmd)[1]
-	cmd = parse_r(d, cmd)[1]
-	cmd = parse_w(d, cmd)[1]
-	cmd = parse_swap_xy(d, cmd)[1]
-	(endswith(cmd, "-:")) && (cmd *= "i")    # Need to be -:i not -: to not swap output too
-	cmd = parse_these_opts(cmd, d, [[:A :ranges], [:C :numeric :per_column], [:D :center], [:E :get_record], [:F :counts],
-	                                [:L :common_limits], [:S :for_error_bars]])
-	cmd = add_opt(d, cmd, "I", [:I :inc :increment :spacing],
-	              (exact=("e", nothing, 1), polyg=("b", nothing, 1), surface=("s", nothing, 1), fft=("d", nothing, 1), inc=("", arg2str, 2)); del=false, expand=true)
-	cmd = add_opt(d, cmd, "T", [:T :nearest_multiple], (dz="", col="+c", column="+c"))
-	=#
-
 	cmd = gmtinfo_helper_helper(d)		# Parse only options that do not depend on the (fcking Any) 'arg1'
 
 	if     (cmd0 != "")             cmd = cmd * " " * cmd0

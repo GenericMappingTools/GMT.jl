@@ -38,12 +38,11 @@ colorbar!(pos=(inside=true, anchor=:TR, offset=(0.8,0.2), size=(10,0.5), horizon
 
 """
 sealand(f1::Function, arg1, t1::NamedTuple, f2::Function, arg2, t2::NamedTuple; kw...) =
-        helper_sealand("sealand", f1, arg1, t1, f2, arg2, t2; kw...) 
+        helper_sealand("sealand", f1, arg1, t1, f2, arg2, t2, KW(kw))
 terramar(f1::Function, arg1, t1::NamedTuple, f2::Function, arg2, t2::NamedTuple; kw...) =
-        helper_sealand("terramar", f1, arg1, t1, f2, arg2, t2; kw...) 
+        helper_sealand("terramar", f1, arg1, t1, f2, arg2, t2, KW(kw))
 
-function helper_sealand(whichfun::String, f1::Function, arg1, t1::NamedTuple, f2::Function, arg2, t2::NamedTuple; kw...)
-	d = KW(kw)
+function helper_sealand(whichfun::String, f1::Function, arg1, t1::NamedTuple, f2::Function, arg2, t2::NamedTuple, d::Dict{Symbol, Any})
 	see = ((val = find_in_dict(d, [:show])[1]) !== nothing) ? ((val == 1) ? true : false) : false
 	fname = find_in_dict(d, [:savefig :figname :name])[1];
 	f1(arg1; t1...)

@@ -3,8 +3,6 @@
 
 Spherical gridding in tension of data on a sphere
 
-See full GMT docs at [`sphinterpolate`]($(GMTdoc)sphinterpolate .html)
-
 Parameters
 ----------
 

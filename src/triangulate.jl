@@ -5,8 +5,6 @@ Reads randomly-spaced x,y[,z] (or file) and performs Delaunay
 triangulation, i.e., it finds how the points should be connected to give the most equilateral
 triangulation possible. 
 
-See full GMT docs at [`triangulate`]($(GMTdoc)triangulate.html)
-
 Parameters
 ----------
 - **A** | **area** :: [Type => Bool]
