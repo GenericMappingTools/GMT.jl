@@ -1466,7 +1466,7 @@ Example:
 """
 function hlines(arg1=nothing; first=true, xmin=NaN, xmax=NaN, percent=false, kwargs...)
 	# A lines plotting method of plot
-	helper_vhlines(arg1, false, first, xmin, xmax, percent, kwargs...)
+	helper_vhlines(arg1, false, first, xmin, xmax, percent, KW(kwargs))
 end
 hlines!(arg=nothing; ymin=NaN, ymax=NaN, percent=false, kw...) = hlines(arg; first=false, ymin=ymin, ymax=ymax, percent=percent, kw...)
 # ------------------------------------------------------------------------------------------------------
@@ -1494,13 +1494,12 @@ Example:
 """
 function vlines(arg1=nothing; first=true, ymin=NaN, ymax=NaN, percent=false, kwargs...)
 	# A lines plotting method of plot
-	helper_vhlines(arg1, true, first, ymin, ymax, percent, kwargs...)
+	helper_vhlines(arg1, true, first, ymin, ymax, percent, KW(kwargs))
 end
 vlines!(arg=nothing; ymin=NaN, ymax=NaN, percent=false, kw...) = vlines(arg; first=false, ymin=ymin, ymax=ymax, percent=percent, kw...)
 
 # ------------------------------------------------------------------------------------------------------
-function helper_vhlines(arg1, vert::Bool, first::Bool, xymin, xymax, percent, kwargs...)
-	d = KW(kwargs)
+function helper_vhlines(arg1, vert::Bool, first::Bool, xymin, xymax, percent, d)
 	(arg1 === nothing && ((arg1_ = find_in_dict(d, [:data])[1]) === nothing)) && error("No input data")
 	# If I don't do this stupid gymn with arg1 vs arg1_ then arg1 is Core.Boxed F..
 	len::Int = (arg1 !== nothing) ? length(arg1) : length(arg1_)
@@ -1788,8 +1787,6 @@ const psternary! = ternary!           # Aliases
 
 Plot event symbols and labels for a moment in time
 
-See full GMT docs at [`events`]($(GMTdoc)events.html)
-
 Parameters
 ----------
 
@@ -1836,9 +1833,9 @@ Parameters
 - $(opt_savefig)
 """
 # ------------------------------------------------------------------------------------------------------
-function events(cmd0::String="", arg1=nothing; kwargs...)
+events(cmd0::String="", arg1=nothing; kwargs...) = events(cmd0, arg1, KW(kwargs))
+function events(cmd0::String, arg1, d::Dict{Symbol, Any})
 	# events share a lot of options with plot
-	d = KW(kwargs)
 	cmd::String = add_opt(d, "", "T", [:T :now])
 	if (!occursin("-T", cmd))  error("The 'now' (T) option is mandatory")  end
 	cmd = add_opt(d, cmd, "E", [:E :knots],

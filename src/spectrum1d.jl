@@ -3,8 +3,6 @@
 
 Compute auto- [and cross- ] spectra from one [or two] time-series.
 
-See full GMT docs at [`spectrum1d`]($(GMTdoc)spectrum1d.html)
-
 Parameters
 ----------
 

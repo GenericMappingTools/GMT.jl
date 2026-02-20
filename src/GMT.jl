@@ -8,40 +8,40 @@ using InteractiveUtils
 using Leptonica_jll
 
 struct CTRLstruct
-	limits::Vector{Float64}# To store the data limits. First 6 store: data limits. Second 6: plot limits, 13th +r
-	figsize::Vector{Float64}# To store the current fig size (xsize,ysize[,zsize]). Needed, for example, in hexbin
-	proj_linear::Vector{Bool}# To know if images sent to GMT need Pad
-	returnPS::Vector{Bool}# To know if returning the PS to Julia
-	callable::Vector{Symbol}# Modules that can be called inside other modules
-	pocket_B::Vector{String}# To temporarily store opt_B grid and fill color to be reworked in psclip
-	pocket_J::Vector{String}# To temporarily store opt_J and fig size to eventualy flip directions (y + down, etc)
+	limits::Vector{Float64}		# To store the data limits. First 6 store: data limits. Second 6: plot limits, 13th +r
+	figsize::Vector{Float64}	# To store the current fig size (xsize,ysize[,zsize]). Needed, for example, in hexbin
+	proj_linear::Vector{Bool}	# To know if images sent to GMT need Pad
+	returnPS::Vector{Bool}		# To know if returning the PS to Julia
+	callable::Vector{Symbol}	# Modules that can be called inside other modules
+	pocket_B::Vector{String}	# To temporarily store opt_B grid and fill color to be reworked in psclip
+	pocket_J::Vector{String}	# To temporarily store opt_J and fig size to eventualy flip directions (y + down, etc)
 	# = [opt_J width opt_Jz codes-to-tell-which-axis-to-reverse]
-	pocket_R::Vector{String}# To temporarily store opt_R
-	XYlabels::Vector{String}# To temporarily store the x,y col names to let x|y labels know what to plot (if "auto")
-	IamInPaperMode::Vector{Bool}# A 2 elem vec to know if we are in under-the-hood paper mode. 2nd traces if first call
-	gmt_mem_bag::Vector{Ptr{Cvoid}}# To temporarily store a GMT owned memory to be freed in gmt()
-	pocket_d::Vector{Dict{Symbol,Any}}# To pass the Dict of kwargs, after consumption, to other modules.
+	pocket_R::Vector{String}	# To temporarily store opt_R
+	XYlabels::Vector{String}	# To temporarily store the x,y col names to let x|y labels know what to plot (if "auto")
+	IamInPaperMode::Vector{Bool}		# A 2 elem vec to know if we are in under-the-hood paper mode. 2nd traces if first call
+	gmt_mem_bag::Vector{Ptr{Cvoid}}		# To temporarily store a GMT owned memory to be freed in gmt()
+	pocket_d::Vector{Dict{Symbol,Any}}	# To pass the Dict of kwargs, after consumption, to other modules.
 end
 
 mutable struct CTRLstruct2
-	first::Bool# Signal that we are starting a new plot (used to set params)
-	points::Bool# If maps are using points as coordinates
-	fname::String# Store the full name of PS being constructed
+	first::Bool			# Signal that we are starting a new plot (used to set params)
+	points::Bool		# If maps are using points as coordinates
+	fname::String		# Store the full name of PS being constructed
 end
 
 mutable struct TMPDIRInfo
-	dir::String# Temporary directory path
-	username::String# Username (spaces replaced with underscores)
-	pid_suffix::String# PID suffix for multi-process support
+	dir::String			# Temporary directory path
+	username::String	# Username (spaces replaced with underscores)
+	pid_suffix::String	# PID suffix for multi-process support
 end
 
 mutable struct InsetInfo
-	active::Bool# Whether currently in inset mode
-	has_J::Bool# Whether -J projection option was provided (GMT bug #7005 workaround)
+	active::Bool		# Whether currently in inset mode
+	has_J::Bool			# Whether -J projection option was provided (GMT bug #7005 workaround)
 end
 
-depfile = joinpath(dirname(@__FILE__), "..", "deps", "deps.jl")# File with shared lib names
-isfile(depfile) && include(depfile)# This loads the shared libs names in the case of NON-JLL, otherwise just return
+depfile = joinpath(dirname(@__FILE__), "..", "deps", "deps.jl")		# File with shared lib names
+isfile(depfile) && include(depfile)		# This loads the shared libs names in the case of NON-JLL, otherwise just return
 
 if ((!(@isdefined have_jll) || have_jll == 1) && get(ENV, "SYSTEMWIDE_GMT", "") == "")# That is, the JLL case
 	using GMT_jll, GDAL_jll, PROJ_jll, Ghostscript_jll
@@ -53,52 +53,52 @@ if ((!(@isdefined have_jll) || have_jll == 1) && get(ENV, "SYSTEMWIDE_GMT", "") 
 	const GMTbin = GMT_jll.gmt()[1]
 	const isJLL = true
 	fname = joinpath(GMTuserdir[1], "ghost_jll_path.txt")
-	!isdir(GMTuserdir[1]) && mkdir(GMTuserdir[1])# When installing on a clean no GMT sys, ~/.gmt doesn't exist
+	!isdir(GMTuserdir[1]) && mkdir(GMTuserdir[1])	# When installing on a clean no GMT sys, ~/.gmt doesn't exist
 	open(fname, "w") do f
-		write(f, GSbin)# Save this to be used by psconvert.c
+		write(f, GSbin)			# Save this to be used by psconvert.c
 	end
 else
 	const isJLL = false
 	const GMTver, libgmt, libgdal, libproj, GMTuserdir, GMTbin = _GMTver, _libgmt, _libgdal, _libproj, [userdir], "gmt"
-	const GMTdevdate = Date(devdate, dateformat"y.m.d")# 'devdate' comes from reading 'deps.jl'
+	const GMTdevdate = Date(devdate, dateformat"y.m.d")		# 'devdate' comes from reading 'deps.jl'
 end
 
 const G_API = Ref{Ptr{Cvoid}}(C_NULL)
-const PSname = Ref{String}("")# The PS file (filled in __init__) where, in classic mode, all lands.
-const TMPDIR_USR = TMPDIRInfo(tempdir(), "", "")# Save the tmp dir and user name (also filled in __init__)
+const PSname = Ref{String}("")						# The PS file (filled in __init__) where, in classic mode, all lands.
+const TMPDIR_USR = TMPDIRInfo(tempdir(), "", "")	# Save the tmp dir and user name (also filled in __init__)
 const global TESTSDIR = joinpath(dirname(pathof(GMT))[1:end-4], "test", "")# To have easy access to test files
-const IMG_MEM_LAYOUT = Ref{String}("")# "TCP"	 For Images.jl. The default is "TRBa"
-const GRD_MEM_LAYOUT = Ref{String}("")# "BRP" is the default for GMT PS images.
-const CURRENT_VIEW = Ref{String}("")# To store the current viewpoint (-p)
-const MULTI_COL = Ref{Bool}(false)# To allow plottig multiple columns at once.
-const IamModern = Ref{Bool}(false)# To know if we are in modern mode
-const FirstModern = Ref{Bool}(false)# To know
-const DidOneGmtCmd = Ref{Bool}(false)# To know when first gmt() call. Used in first modern mode cmd to not restart what is still fresh
-const IamModernBySubplot = Ref{Bool}(false)# To know if set in subpot
-const IamSubplot = Ref{Bool}(false)# To know if we are in subplot mode
-const IamInset = InsetInfo(false, false)# To know if we are in Inset mode
-const usedConfPar = Ref{Bool}(false)# Hacky solution for the session's memory trouble
-const ThemeIsOn = Ref{Bool}(false)# To know if we have an active plot theme
-const CONVERT_SYNTAX = Ref{Bool}(false)# To only convert to hard core GMT syntax (like Vd=2)
-const SHOW_KWARGS = Ref{Bool}(false)# To just print the kwargs of a option call)
-const isFranklin = Ref{Bool}(false)# Only set/unset by the Docs building scripts.
-const isJupyter = Ref{Bool}(false)# Jupyter and Modern need special treatment (Quarto).
-const isPSclosed = Ref{Bool}(false)# Modern mode will close the PS at the end. We need to know that
-const noGrdCopy = Ref{Bool}(false)# If true, grids are sent without transpose/copy
-const GMTCONF = Ref{Bool}(false)# Flag if gmtset was used and must be 'unused'
-const FMT = Ref{String}("png")# The default plot format
-const BOX_STR = Ref{String}("")# Used in plotyy to know -R of first call
+const IMG_MEM_LAYOUT = Ref{String}("")				# "TCP"	 For Images.jl. The default is "TRBa"
+const GRD_MEM_LAYOUT = Ref{String}("")				# "BRP" is the default for GMT PS images.
+const CURRENT_VIEW = Ref{String}("")				# To store the current viewpoint (-p)
+const MULTI_COL = Ref{Bool}(false)					# To allow plottig multiple columns at once.
+const IamModern = Ref{Bool}(false)					# To know if we are in modern mode
+const FirstModern = Ref{Bool}(false)				# To know
+const DidOneGmtCmd = Ref{Bool}(false)				# To know when first gmt() call. Used in first modern mode cmd to not restart what is still fresh
+const IamModernBySubplot = Ref{Bool}(false)			# To know if set in subpot
+const IamSubplot = Ref{Bool}(false)					# To know if we are in subplot mode
+const IamInset = InsetInfo(false, false)			# To know if we are in Inset mode
+const usedConfPar = Ref{Bool}(false)				# Hacky solution for the session's memory trouble
+const ThemeIsOn = Ref{Bool}(false)					# To know if we have an active plot theme
+const CONVERT_SYNTAX = Ref{Bool}(false)				# To only convert to hard core GMT syntax (like Vd=2)
+const SHOW_KWARGS = Ref{Bool}(false)				# To just print the kwargs of a option call)
+const isFranklin = Ref{Bool}(false)					# Only set/unset by the Docs building scripts.
+const isJupyter = Ref{Bool}(false)					# Jupyter and Modern need special treatment (Quarto).
+const isPSclosed = Ref{Bool}(false)					# Modern mode will close the PS at the end. We need to know that
+const noGrdCopy = Ref{Bool}(false)					# If true, grids are sent without transpose/copy
+const GMTCONF = Ref{Bool}(false)					# Flag if gmtset was used and must be 'unused'
+const FMT = Ref{String}("png")						# The default plot format
+const BOX_STR = Ref{String}("")						# Used in plotyy to know -R of first call
 const POSTMAN = Ref{Dict{String,String}}(Dict{String,String}())     # To pass messages to functions (start with get_dataset) 
-const DEF_FIG_SIZE = "15c/10c"                        # Default fig size for plot like programs. Approx 16/11
-const DEF_FIG_AXES_BAK = " -Baf -BWSen"            # Default fig axes for plot like programs
-const DEF_FIG_AXES3_BAK = " -Baf -Bza"              # 		"" but for 3D views
-const DEF_FIG_AXES = Ref{String}(DEF_FIG_AXES_BAK)    # This one may be be changed by theme()
-const DEF_FIG_AXES3 = Ref{String}(DEF_FIG_AXES3_BAK)   #		""
+const DEF_FIG_SIZE = "15c/10c"						# Default fig size for plot like programs. Approx 16/11
+const DEF_FIG_AXES_BAK = " -Baf -BWSen"				# Default fig axes for plot like programs
+const DEF_FIG_AXES3_BAK = " -Baf -Bza"				# 		"" but for 3D views
+const DEF_FIG_AXES = Ref{String}(DEF_FIG_AXES_BAK)	# This one may be be changed by theme()
+const DEF_FIG_AXES3 = Ref{String}(DEF_FIG_AXES3_BAK)#		""
 const FIG_MARGIN = Ref{Int}(1)                      # Figure margin in points after convertion by 'psconvert'. Accessible 'margin' common option
 const global CTRL = CTRLstruct(zeros(13), zeros(6), [true], [false],
                     [:arrows, :bubblechart, :basemap, :band, :clip, :coast, :colorbar, :grdcontour, :hband, :hlines, :inset, :logo, :lines, :grdvector, :plot, :plot3, :quiver, :scatter, :scatter3, :stairs, :text, :vlines, :vband], ["", "", ""], ["", "", "", "   "], ["", ""], ["", ""], [false, true], [C_NULL], [Dict()])
 const pocket_call = Ref{Vector{Any}}(Any[nothing, nothing, nothing, nothing, nothing, nothing])# Extracted from CTRL to isolate type instability
-const CTRLshapes = CTRLstruct2(true, true, "")# Used in sub-module Drawing
+const CTRLshapes = CTRLstruct2(true, true, "")		# Used in sub-module Drawing
 const prj4WGS84 = "+proj=longlat +datum=WGS84 +units=m +no_defs"# This is used in many places
 const global CPTaliases = [:C :color :cmap :colormap :colorscale]
 const global VMs = Union{Vector{Symbol},Matrix{Symbol}}

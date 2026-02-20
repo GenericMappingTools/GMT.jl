@@ -3,8 +3,6 @@
 
 Create Voronoi distance, node, or natural nearest-neighbor grid on a sphere
 
-See full GMT docs at [`sphdistance`]($(GMTdoc)sphdistance.html)
-
 Parameters
 ----------
 

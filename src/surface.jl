@@ -5,8 +5,6 @@ Reads randomly-spaced (x,y,z) triples and produces a binary grid file of gridded
 	
 		(1 - T) * L (L (z)) + T * L (z) = 0
 
-See full GMT docs at [`surface`]($(GMTdoc)surface.html)
-
 Parameters
 ----------
 

@@ -3,8 +3,6 @@
 
 Fit a [weighted] [robust] polynomial/Fourier model for y = f(x) to xy[w] data.
 
-See full GMT docs at [`trend1d`]($(GMTdoc)trend1d.html)
-
 Parameters
 ----------
 
