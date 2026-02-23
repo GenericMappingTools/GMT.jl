@@ -44,11 +44,12 @@ grdlandmask(arg1::GItype; kwargs...) = grdlandmask_helper("", arg1; kwargs...)
 grdlandmask(; kwargs...)             = grdlandmask_helper("", nothing; kwargs...)
 function grdlandmask_helper(cmd0::String, arg1; kwargs...)
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
-	grdlandmask_helper(cmd0, arg1, d)
+	grdlandmask_helper(wrapGrids(cmd0, arg1), d)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function grdlandmask_helper(cmd0::String, arg1, d::Dict{Symbol, Any})
+function grdlandmask_helper(w::wrapGrids, d::Dict{Symbol, Any})
+	cmd0, arg1 = unwrapGrids(w)
 
     cmd::String, prj::String = "", ""
 	if (arg1 !== nothing)

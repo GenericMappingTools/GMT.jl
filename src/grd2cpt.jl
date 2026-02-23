@@ -67,11 +67,12 @@ grd2cpt(cmd0::String; kwargs...) = grd2cpt_helper(cmd0, nothing; kwargs...)
 grd2cpt(arg1; kwargs...)         = grd2cpt_helper("", arg1; kwargs...)
 function grd2cpt_helper(cmd0::String, arg1; kwargs...)
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
-	grd2cpt_helper(cmd0, arg1, d)
+	grd2cpt_helper(wrapGrids(cmd0, arg1), d)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function grd2cpt_helper(cmd0::String, arg1, d::Dict{Symbol, Any})
+function grd2cpt_helper(w::wrapGrids, d::Dict{Symbol, Any})
+	cmd0, arg1 = unwrapGrids(w)
 
 	cmd, = parse_common_opts(d, "", [:R :V_params :b :h :t])
 	cmd, Tvec = helper_cpt(d, cmd)

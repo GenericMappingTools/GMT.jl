@@ -476,7 +476,7 @@ function bar(cmd0::String="", arg=nothing; first=true, kw...)
 	(cmd0 != "" && arg === nothing) && (arg = gmtread(cmd0))
 	isa(arg, GMTdataset) && (arg::Matrix{<:Float64} = arg.data)
 	isa(arg, Vector{<:GMTdataset}) && (arg = arg[1].data; @warn("Multi-segments not allowed in 'bar'. Keeping only first segment."))
-	invokelatest(_bar, arg, first, d)
+	_bar(arg, first, d)
 end
 function _bar(arg, first::Bool, d::Dict{Symbol,Any})
 

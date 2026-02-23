@@ -49,18 +49,19 @@ grdinfo(cmd0::String; kwargs...) = grdinfo_helper(cmd0, nothing; kwargs...)
 grdinfo(arg1; kwargs...)         = grdinfo_helper("", arg1; kwargs...)
 function grdinfo_helper(cmd0::String, arg1; kwargs...)
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
-	grdinfo_helper(cmd0, arg1, d)
+	grdinfo_helper(wrapGrids(cmd0, arg1), d)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function grdinfo_helper(cmd0::String, arg1, d::Dict{Symbol, Any})::Union{GMTdataset, String}
+function grdinfo_helper(w::wrapGrids, d::Dict{Symbol, Any})::Union{GMTdataset, String}
+	cmd0, arg1 = unwrapGrids(w)
 
 	cmd, = parse_common_opts(d, "", [:R :V_params :f :o])
 	(is_in_dict(d, [:numeric], del=true) !== nothing) && (cmd *= " -Cn")
 	cmd  = parse_these_opts(cmd, d, [[:C :oneliner], [:D :tiles], [:E :extrema :extreme], [:F :report_ingeog],
                                      [:G :download :force], [:I :nearest], [:L :force_scan], [:Q :cube], [:T :minmax :zmin_max]])
-	opt_M = add_opt(d, "", "M", [:M :minmax_pos]);  (opt_M != "") && (cmd *= opt_M)
-	opt_L = add_opt(d, "", "L", [:L :force_scan]);  (opt_L != "") && (cmd *= opt_L)
+	opt_M = add_opt(d, "", "M", [:M :minmax_pos]);  (opt_M !== "") && (cmd *= opt_M)
+	opt_L = add_opt(d, "", "L", [:L :force_scan]);  (opt_L !== "") && (cmd *= opt_L)
 
 	(isa(arg1, GMTgrid) && size(arg1,3) > 1 && !occursin("-Q", cmd)) && (cmd *= " -Q")  # arg1 is a CUBE
 	R = common_grd(d, cmd0, cmd, "grdinfo ", arg1)		# Finish build cmd and run it
@@ -71,12 +72,12 @@ function grdinfo_helper(cmd0::String, arg1, d::Dict{Symbol, Any})::Union{GMTdata
 				append!(hdims, ["z_min","z_max","dx","dy","n_cols","n_rows","reg","isgeog"]) :
 				append!(hdims, ["b(?)","t(?)","z_min","z_max","dx","dy","dz","n_cols","n_rows","n_layers","reg","isgeog"])
 			R.colnames = hdims
-		elseif (opt_M != "" && opt_L == "")
+		elseif (opt_M !== "" && opt_L == "")
 			(length(R.data) == 17) &&    # It can be 19 for cubes (not implemented yet)
 				(R.colnames = append!(hdims, ["z_min","z_max","dx","dy","n_cols","n_rows","xmin_pos","ymin_pos","xmax_pos","ymax_pos","n_NaNs","reg","isgeog"]))
 		end
 		# -o changes it all so we parse just the simplest case. If it fails we remove colnames
-		if ((t = scan_opt(cmd, "-o")) != "")
+		if ((t = scan_opt(cmd, "-o")) !== "")
 			cn = tryparse(Int, t) !== nothing
 			(cn !== nothing) ? (R.colnames = [R.colnames[cn+1]]) : (R.colnames = String[])
 		end

@@ -337,11 +337,11 @@ end
 find4similar(FV::GMTfv, rest) = FV
 
 # ------------------------------------------------------------------------------------
-mutable struct wrapDatasets#{T<:Real, N} <: AbstractArray{T,N}
+mutable struct wrapDatasets
 	fname::String
-	ds::GMTdataset#{T,N}
+	ds::GMTdataset
 	vds::Vector{GMTdataset}
-	fv::GMTfv#{T}
+	fv::GMTfv
 	cpt::GMTcpt
 	function wrapDatasets(arg1, arg2)
 		td, tvd, tcpt, tfv  = GMTdataset(), Vector{GMTdataset}(), GMTcpt(), GMTfv()
@@ -351,13 +351,30 @@ mutable struct wrapDatasets#{T<:Real, N} <: AbstractArray{T,N}
 		elseif (isa(arg2, Vector{<:GMTdataset}))  new("", td, arg2, tfv, tcpt)
 		elseif (isa(arg2, GMTfv))                 new("", td, tvd, arg2, tcpt)
 		elseif (isa(arg2, GMTcpt))                new("", td, tvd, tfv, arg2)
-		elseif (arg1 === "" && arg2 === nothing)  new("", td, tvd, tfv, tcpt)	# Less usual case in plot where inly kwargs are given
+		elseif (arg1 === "" && arg2 === nothing)  new("", td, tvd, tfv, tcpt)	# Less usual case in plot where only kwargs are given
 		else   error("Unknown types ($(typeof(arg1)), $(typeof(arg2))) in wrapDatasets")
 		end
 	end
 end
 function unwrapDatasets(w::wrapDatasets)
 	return w.fname, !isempty(w.ds) ? w.ds : !isempty(w.vds) ? w.vds : !isempty(w.fv) ? w.fv : !isempty(w.cpt) ? w.cpt : nothing
+end
+
+# ------------------------------------------------------------------------------------
+mutable struct wrapGrids
+	fname::String
+	grd::GMTgrid
+	function wrapGrids(arg1, arg2)
+		if     (arg1 !== "")         new(arg1, GMTgrid())
+		elseif (isa(arg2, GMTgrid))  new("", arg2)
+		elseif (isa(arg2, Matrix{<:Real}))        new("", mat2grid(arg2))
+		elseif (arg1 === "" && arg2 === nothing)  new("", GMTgrid())	# Less usual case in grdlandmask where only kwargs are given
+		else   error("Unknown types ($(typeof(arg1)), $(typeof(arg2))) in wrapGrids")
+		end
+	end
+end
+function unwrapGrids(w::wrapGrids)
+	return w.fname, !isempty(w.grd) ? w.grd : nothing
 end
 
 #=

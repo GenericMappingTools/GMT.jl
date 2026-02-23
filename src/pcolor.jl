@@ -215,7 +215,7 @@ function pcolor(G::GMTgrid, first::Bool, d::Dict{Symbol,Any})
 		end
 		d[:T] = opt_T
 	end
-	grdview_helper("", G, !first, true, d)
+	grdview_helper(wrapGrids("", G), !first, true, d)
 
 	(changed_reg) && ((G.registration, G.range, G.x, G.y) = (0, range_bak, x_bak, y_bak))	# Undo the reg change
 
