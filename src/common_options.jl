@@ -5101,11 +5101,12 @@ function help_show_options(d::Dict)
 end
 
 # --------------------------------------------------------------------------------------------------
+print_kwarg_opts(symbs::VMs, mapa::NamedTuple)::String = print_kwarg_opts(symbs, nt2dict(mapa))
 function print_kwarg_opts(symbs::VMs, mapa=nothing)::String
 	# Print the kwargs options
 	opt::String = "Option: " * join([string(x, ", or ") for x in symbs])[1:end-5]::String
-	if (isa(mapa, NamedTuple))
-		keys_ = keys(mapa)
+	if (isa(mapa, Dict{Symbol, Any}))
+		keys_ = collect(keys(mapa))
 		vals = Vector{String}(undef, length(keys_))
 		for k = 1:numel(keys_)
 			t = mapa[keys_[k]]
