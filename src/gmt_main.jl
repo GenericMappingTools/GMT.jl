@@ -11,15 +11,11 @@ function gmt(cmd::String, args...)
 			tok::String, r::String = strtok(cmd)
 			if (r == "")				# User gave 'module' separately from 'options'
 				error("Please use gmt(\"module_name options\", args...) instead of gmt(\"module_name\", \"options\", args...)")
-				#cmd::String *= " " * args[1]::String	# Cat with the progname and so pretend input followed the classic construct
-				#args = args[2:end]
-				#n_argin -= 1
 			end
 		end
 		# We may have trailing [] args in modules
 		baka = n_argin
 		while (n_argin > 0 && (args[n_argin] === nothing))  n_argin -= 1  end
-		#baka != n_argin && println("-----------------------------------------> $cmd has $(baka-n_argin) empty args.")
 		baka != n_argin && (args = args[1:n_argin])
 	end
 	_gmt(cmd, args...)
@@ -31,23 +27,8 @@ function _gmt(cmd::String, args...)
 	(cmd == "destroy") && return gmt_restart()
 	ressurectGDAL()			# Some GMT modules may have called GDALDestroyDriverManager() 
 	DidOneGmtCmd[] = true	# Even if something errors here this keeps track that gmt() already called once
-
-	# ----------- Minimal error checking ------------------------
 	n_argin::Int = length(args)
-	#=
-	if (n_argin > 0)
-		if (isa(args[1], String))
-			tok::String, r::String = strtok(cmd)
-			if (r == "")				# User gave 'module' separately from 'options'
-				cmd::String *= " " * args[1]::String	# Cat with the progname and so pretend input followed the classic construct
-				args = args[2:end]
-				n_argin -= 1
-			end
-		end
-		# We may have trailing [] args in modules
-		while (n_argin > 0 && (args[n_argin] === nothing))  n_argin -= 1  end
-	end
-	=#
+
 	# -----------------------------------------------------------
 
 	# 1. Get arguments, if any, and extract the GMT module name
