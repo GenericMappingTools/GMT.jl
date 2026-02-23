@@ -168,7 +168,7 @@
 	gmtsimplify([0.0 0; 1.1 1.1; 2 2.2; 3.3 3], T="3k")
 
 	println("	GMTREADWRITE")
-	G=gmt("grdmath", "-R0/10/0/10 -I1 5");
+	G=gmt("grdmath -R0/10/0/10 -I1 5");
 	gmtwrite("lixo.grd", G,  scale=10, offset=-10)
 	GG = gmtread("lixo.grd", grd=true, varname=:z);
 	GG = gmtread("lixo.grd", varname=:z);

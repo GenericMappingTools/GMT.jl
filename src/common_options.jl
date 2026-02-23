@@ -2406,8 +2406,8 @@ function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, mapa; grow_mat=n
 end
 
 # ---------------------------------------------------------------------------------------------------
-function genFun(this_key::Symbol, user_input::NamedTuple, mapa::NamedTuple)::String
-	(!haskey(mapa, this_key)) && return		# Should it be a error?
+function genFun(this_key::Symbol, user_input::NamedTuple, mapa)::String
+	(!haskey(mapa, this_key)) && return	""	# Should it be a error?
 	out::String = ""
 	key = keys(user_input)					# user_input = (rows=1, fill=:red)
 	val_namedTup = mapa[this_key]			# water=(rows="my", cols="mx", fill=add_opt_fill)
@@ -2425,7 +2425,12 @@ function genFun(this_key::Symbol, user_input::NamedTuple, mapa::NamedTuple)::Str
 end
 
 # ---------------------------------------------------------------------------------------------------
-function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)::String
+function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=Float64[])::String	# This wrapper is the only who gets recompiled when arg changes
+	_arg = (arg === nothing || isempty(arg)) ? Float64[] : arg
+	add_opt_1(nt, nt2dict(mapa), _arg)
+end
+function add_opt_1(nt::NamedTuple, d, arg)::String #
+#function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)::String
 	# Generic parser of options passed in a NT and whose last element is another NT with the mapping
 	# between expanded sub-options names and the original GMT flags.
 	# ARG, is a special case to append to a matrix (can't realy be done in Julia)
@@ -2433,68 +2438,69 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)::String
 	#	add_opt((a=(1,0.5),b=2), (a="+a",b="-b"))
 	# translates to:	"+a1/0.5-b2"
 	key = keys(nt);						# The keys actually used in this call
-	d = nt2dict(mapa)					# The flags mapping as a Dict (all possible flags of the specific option)
+	#d = nt2dict(mapa)					# The flags mapping as a Dict (all possible flags of the specific option)
 	cmd::String = "";		cmd_hold = Vector{String}(undef, 2);	order = zeros(Int,2,1);  ind_o = 0
 	count = zeros(Int, length(key))
 	for k = 1:numel(key)::Int			# Loop over the keys of option's tuple
 		!haskey(d, key[k]) && continue
 		count[k] = k
 		isa(nt[k], Dict) && (nt[k] = Base.invokelatest(dict2nt, nt[k]))
-		if (isa(d[key[k]], Tuple))		# Complexify it. Here, d[key[k]][2] must be a function name.
+		this_val = d[key[k]]
+		if (isa(this_val, Tuple))		# Complexify it. Here, d[key[k]][2] must be a function name.
 			if (isa(nt[k], NamedTuple))
-				if (d[key[k]][2] == add_opt_fill)
-					cmd *= string(d[key[k]][1])::String * d[key[k]][2]("", Dict(key[k] => nt[k]), [key[k]])::String
+				if (this_val[2] == add_opt_fill)
+					cmd *= string(this_val[1])::String * this_val[2]("", Dict(key[k] => nt[k]), [key[k]])::String
 				else
-					local_opt = (d[key[k]][2] == helper_decorated) ? true : nothing		# 'true' means single argout
-					cmd *= string(d[key[k]][1])::String * d[key[k]][2](nt2dict(nt[k]), local_opt)::String
+					local_opt = (this_val[2] == helper_decorated) ? true : nothing		# 'true' means single argout
+					cmd *= string(this_val[1])::String * this_val[2](nt2dict(nt[k]), local_opt)::String
 				end
 			else						#
-				if (length(d[key[k]]) == 2)		# Run the function
-					cmd *= string(d[key[k]][1])::String * d[key[k]][2](Dict(key[k] => nt[k]), [key[k]])::String
+				if (length(this_val) == 2)		# Run the function
+					cmd *= string(this_val[1])::String * this_val[2](Dict(key[k] => nt[k]), [key[k]])::String
 				else					# This branch is to deal with options -Td, -Tm, -L and -D of basemap & psscale
 					ind_o += 1
 					(ind_o > 2) && (@warn("You passed more than 1 of the exclusive options in a anchor type option, keeping first but this may break."); ind_o = 1)
-					if (d[key[k]][2] === nothing)  cmd_hold[ind_o] = d[key[k]][1]	# Only flag char and order matters
-					elseif (length(d[key[k]][1]) == 2 && d[key[k]][1][1] == '-' && !isa(nt[k], Tuple))	# e.g. -L (&g, arg2str, 1)
-						cmd_hold[ind_o] = string(d[key[k]][1][2])	# where g<scalar>
+					if (this_val[2] === nothing)  cmd_hold[ind_o] = this_val[1]	# Only flag char and order matters
+					elseif (length(this_val[1]) == 2 && this_val[1][1] == '-' && !isa(nt[k], Tuple))	# e.g. -L (&g, arg2str, 1)
+						cmd_hold[ind_o] = string(this_val[1][2])	# where g<scalar>
 					else		# Run the fun
-						cmd_hold[ind_o] = (d[key[k]][1] == "") ? d[key[k]][2](nt[k]) : string(d[key[k]][1][end])::String * d[key[k]][2](nt[k])::String
+						cmd_hold[ind_o] = (this_val[1] == "") ? this_val[2](nt[k]) : string(this_val[1][end])::String * this_val[2](nt[k])::String
 					end
-					order[ind_o]    = d[key[k]][3];				# Store the order of this sub-option
+					order[ind_o]    = this_val[3];				# Store the order of this sub-option
 				end
 			end
-		elseif (isa(d[key[k]], NamedTuple))		#
+		elseif (isa(this_val, NamedTuple))		#
 			if (isa(nt[k], NamedTuple))
-				cmd *= genFun(key[k], nt[k], mapa)::String
+				cmd *= genFun(key[k], nt[k], d)::String
 			else						# Create a NT where value = key. For example for: surf=(waterfall=:rows,)
 				if (!isa(nt[1], Tuple))			# nt[1] may be a symbol, or string. E.g.  surf=(water=:cols,)
-					cmd *= genFun(key[k], (; Symbol(nt[1]) => nt[1]), mapa)::String
+					cmd *= genFun(key[k], (; Symbol(nt[1]) => nt[1]), d)::String
 				else
 					if ((val = find_in_dict(d, [key[1]])[1]) !== nothing)		# surf=(waterfall=(:cols,:red),)
-						cmd *= genFun(key[k], (; Symbol(nt[1][1]) => nt[1][1], keys(val)[end] => nt[1][end]), mapa)::String
+						cmd *= genFun(key[k], (; Symbol(nt[1][1]) => nt[1][1], keys(val)[end] => nt[1][end]), d)::String
 					end
 				end
 			end
-		elseif (d[key[k]] == "1")		# Means that only first char in value is retained. Used with units
+		elseif (this_val == "1")		# Means that only first char in value is retained. Used with units
 			t::String = arg2str(nt[k])::String
 			if (t != "")  cmd *= t[1]
 			else          cmd *= "1"	# "1" is itself the flag
 			end
-		elseif (d[key[k]] != "" && d[key[k]][1] == '|')		# Potentialy append to the arg matrix (here in vector form)
+		elseif (this_val != "" && this_val[1] == '|')		# Potentialy append to the arg matrix (here in vector form)
 			if (isa(nt[k], AbstractArray) || isa(nt[k], Tuple))
 				if (isa(nt[k], AbstractArray))  append!(arg, reshape(nt[k], :))
 				else                            append!(arg, reshape(collect(nt[k]), :))
 				end
 			end
-			cmd *= string(d[key[k]][2:end])::String		# And now append the flag
-		elseif (d[key[k]] != "" && d[key[k]][1] == '_')		# Means ignore the content, only keep the flag
-			cmd *= string(d[key[k]][2:end])::String		# Just append the flag
-		elseif (d[key[k]] != "" && d[key[k]][end] == '1')	# Means keep the flag and only first char of arg
-			cmd *= string(d[key[k]][1:end-1])::String * string(string(nt[k])[1])::String
-		elseif (d[key[k]] != "" && d[key[k]][end] == '#')	# Means put flag at the end and make this arg first in cmd (coast -W)
-			cmd = arg2str(nt[k])::String * string(d[key[k]][1:end-1])::String * cmd
+			cmd *= string(this_val[2:end])::String		# And now append the flag
+		elseif (this_val != "" && this_val[1] == '_')		# Means ignore the content, only keep the flag
+			cmd *= string(this_val[2:end])::String		# Just append the flag
+		elseif (this_val != "" && this_val[end] == '1')	# Means keep the flag and only first char of arg
+			cmd *= string(this_val[1:end-1])::String * string(string(nt[k])[1])::String
+		elseif (this_val != "" && this_val[end] == '#')	# Means put flag at the end and make this arg first in cmd (coast -W)
+			cmd = arg2str(nt[k])::String * string(this_val[1:end-1])::String * cmd
 		else
-			cmd *= d[key[k]]::String * arg2str(nt[k])::String
+			cmd *= this_val::String * arg2str(nt[k])::String
 		end
 	end
 
@@ -2509,14 +2515,6 @@ function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)::String
 		end
 		if (occursin(':', cmd_hold[last]))		# It must be a geog coordinate in dd:mm
 			cmd = "g" * cmd
-		#=
-		elseif (length(cmd_hold[last]) > 2)		# Temp patch to avoid parsing single char flags
-			rs = split(cmd_hold[last], '/')
-			if (length(rs) == 2)
-				x = tryparse(Float64, rs[1]);		y = tryparse(Float64, rs[2]);
-				if (x !== nothing && y !== nothing && 0 <= x <= 1.0 && 0 <= y <= 1.0 && !occursin(r"[gjJxn]", string(cmd[1])))  cmd = "n" * cmd  end		# Otherwise, either a paper coord or error
-			end
-		=#
 		end
 	end
 
@@ -2824,7 +2822,7 @@ function makecpt_raw(cmd::String, arg1=nothing)::GMTcpt
 	# Raw version that already knows what the command is and has no input data.
 	(IamModern[] && !contains(cmd, " -H")) && (cmd *= " -H")
 	!startswith(cmd, "makecpt ") && (cmd = "makecpt " * cmd)
-	_r = gmt_GMTcpt(cmd, arg1)
+	_r = arg1 === nothing ? gmt_GMTcpt(cmd) : gmt_GMTcpt(cmd, arg1)
 	r::GMTcpt = (_r !== nothing) ? _r : GMTcpt()	# _r === nothing when we save CPT on disk.
 	(contains(cmd, " -N") && !isempty(r)) && (r.bfn = ones(3,3))	# Cannot remove the bfn like in plain GMT so make it all whites
 	CURRENT_CPT[] = r
@@ -4110,8 +4108,11 @@ function common_grd(d::Dict, cmd::String, args...)
 	(haskey(d, :Vd) && d[:Vd] > 2) && show_args_types(args...)
 	show_non_consumed(d, cmd)
 	(dbg_print_cmd(d, cmd) !== nothing) && return cmd		# Vd=2 cause this return
+	
 	# First case below is of a ARGS tuple(tuple) with all numeric inputs.
-	R = isa(args, Tuple{Tuple}) ? gmt(cmd, args[1]...) : gmt(cmd, args...)
+	n_args = 0
+	for k = 1:numel(args) if (args[k] !== nothing)  n_args += 1  end  end	# Drop the nothings
+	R = isa(args, Tuple{Tuple}) ? gmt(cmd, args[1]...) : gmt(cmd, args[1:n_args]...)
 	(isGMTdataset(R) && contains(cmd, " -fg") && getproj(R) == "") && (isa(R, GMTdataset) ? R.proj4 = prj4WGS84 : R[1].proj4 = prj4WGS84)
 	return R
 end

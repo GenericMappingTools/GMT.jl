@@ -109,7 +109,7 @@
 	@test D + D == [2 2; 2 2; 2 2]
 	@test D - D == [0 0; 0 0; 0 0]
 
-	D2=grd2xyz(gmt("grdmath", "-R0/10/0/10 -I2 X"))
+	D2=grd2xyz(gmt("grdmath -R0/10/0/10 -I2 X"))
 	cat(D, D2);
 	cat([D], D2);
 	cat([D], [D2]);

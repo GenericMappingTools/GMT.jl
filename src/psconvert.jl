@@ -1,7 +1,7 @@
 """
     psconvert(cmd0::String="", arg1=nothing; kwargs...)
 
-Place images or EPS files on maps.
+Convert [E]PS file(s) to other formats using Ghostscript.
 
 Parameters
 ----------
@@ -77,9 +77,10 @@ end
 
 function psconvert_helper(cmd0::String, arg1, d::Dict{Symbol,Any})
 
-	if (!isempty(cmd0)) && (arg1 === nothing)  arg1 = cmd0  end
+	if (!isempty(cmd0)) && (arg1 === nothing)  arg1 = cmd0  end		# This is stupid, must be fixed.
 
-	cmd::String = add_opt(d, "", "A", [:A :adjust :crop])
+	cmd::String = add_opt(d, "", "A", [:A :adjust :crop :bbox], (round="_+r", nostamp="_+u", bbox="_+i"))
+	needs_Te = contains(cmd, "+i")
 	(cmd == " -A") && (cmd = cmd * "1p")			# If just -A default to -A1p
 	cmd = parse_these_opts(cmd, d, [[:D :out_dir :output_dir], [:E :dpi], [:F :out_name :output_name],
 	                                [:G :ghost_path], [:I :resize], [:L :list_file], [:M :embed], [:N :bgcolor], [:P :portrait], [:Q :anti_aliasing], [:S :gs_command], [:Z :del_input_ps]])
@@ -96,6 +97,7 @@ function psconvert_helper(cmd0::String, arg1, d::Dict{Symbol,Any})
 	else
 		cmd = add_opt(d, cmd, "T", [:T :format])
 	end
+	(needs_Te && !contains(cmd, " -Te")) && (cmd *= " -Te")		# We need this when -A+i (bbox) to precent gmt() to try return an image
 
 	if ((val = find_in_dict(d, [:C :gs_option])[1]) !== nothing)
 		if (isa(val, String) || isa(val, Symbol))
