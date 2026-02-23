@@ -398,7 +398,7 @@ using .Laszip
 	grdimage(I, V=:q)
 	grdview(rand(Float32, 32, 32), Vd=2)
 	grdinfo(mat2grid(rand(Float32, 4, 4)))
-	Glix = gmt("grdmath", "-R0/10/0/10 -I2 X")
+	Glix = gmt("grdmath -R0/10/0/10 -I2 X")
 	gmt_grdinfo_C(Glix)
 	grdcontour(Glix)
 	grd2cpt(Glix)

@@ -1,5 +1,5 @@
 	println("	GRDINFO")
-	G=gmt("grdmath", "-R0/10/0/10 -I1 5");
+	G=gmt("grdmath -R0/10/0/10 -I1 5");
 	r=gmt("grdinfo -C", G);
 	@assert(r.data[1:1,1:10] == [0.0  10.0  0.0  10.0  5.0  5.0  1.0  1.0  11.0  11.0])
 	r2=grdinfo(G, C=true, V=:q);
@@ -12,7 +12,7 @@
 	grdinfo(G);
 
 	println("	GRD2CPT")
-	G=gmt("grdmath", "-R0/10/0/10 -I2 X");
+	G=gmt("grdmath -R0/10/0/10 -I2 X");
 	C=grd2cpt(G);
 	grd2cpt(G, cmap="lixo.cpt", V="q")
 
@@ -24,11 +24,11 @@
 	@assert(sum(D1.data) == sum(D2.data))
 
 	println("	GRD2KML")
-	G=gmt("grdmath", "-R0/10/0/10 -I1 X -fg");
+	G=gmt("grdmath -R0/10/0/10 -I1 X -fg");
 	grd2kml(G, I="+", N="NUL", V="q", Vd=dbg2)
 
 	println("	GRDBLEND")
-	G3=gmt("grdmath", "-R5/15/0/10 -I1 X Y -Vq");
+	G3=gmt("grdmath -R5/15/0/10 -I1 X Y -Vq");
 	grdblend(G,G3);
 
 	println("	GRDCLIP")
@@ -56,7 +56,7 @@
 	grdcontour!(G, axis="a", color=cpt, pen="+c", X=1, Y=1, N=cpt, Vd=dbg2)
 
 	println("	GRDCUT")
-	G=gmt("grdmath", "-R0/10/0/10 -I1 X Y MUL");
+	G=gmt("grdmath -R0/10/0/10 -I1 X Y MUL");
 	grdcut(G, limits=[3 9 2 8]);
 	grdcut("lixo.grd", limits=[3 9 2 8], V=:q);	# lixo.grd was written above in the gmtwrite test
 	grdcut(data="lixo.grd", limits=[3 9 2 8], V=:q);
@@ -163,7 +163,7 @@
 	grdsample(G, inc=0.5);		# Use G of previous test
 
 	println("	GRDTREND")
-	G  = gmt("grdmath", "-R0/10/0/10 -I1 X Y MUL");
+	G  = gmt("grdmath -R0/10/0/10 -I1 X Y MUL");
 	grdtrend(G, model=3);
 	mat2grid(ones(Float32, size(G.z,1), size(G.z,2)));
 	W = mat2grid(rand(16,16), x=11:26, y=1:16);
