@@ -45,11 +45,12 @@ grdcut(arg1; kwargs...)         = grdcut_helper("", arg1; kwargs...)
 grdcut(; kwargs...)             = grdcut_helper("", nothing; kwargs...)		# To allow grdcut(data=..., ...)
 function grdcut_helper(cmd0::String, arg1; kwargs...)
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
-	grdcut_helper(cmd0, arg1, d)
+	grdcut_helper(wrapGrids(cmd0, arg1), d)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function grdcut_helper(cmd0::String, arg1, d::Dict{Symbol, Any})::Union{Nothing, GMTgrid, GMTimage, String}
+function grdcut_helper(w::wrapGrids, d::Dict{Symbol, Any})::Union{Nothing, GMTgrid, GMTimage, String}
+	cmd0, arg1 = unwrapGrids(w)
 
 	arg2 = nothing
 	cmd::String, opt_R::String = parse_R(d, "")

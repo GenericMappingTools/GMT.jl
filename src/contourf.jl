@@ -174,7 +174,8 @@ function contourf(cmd0::String, arg1, arg2, first::Bool, d::Dict{Symbol,Any})
 			if (opt_W !== nothing)  d[:W] = opt_W  end
 			d[:W] = "c";  done = true
 		end
-		grdview_helper(cmd0, arg1; first=first, d...)
+		#grdview_helper(cmd0, arg1; first=first, d...)
+		grdview_helper(wrapGrids(cmd0, arg1), !first, true, d)
 		delete!(d, [[:C, :z], [:Q], [:W]])
 		if (done)  return  end
 

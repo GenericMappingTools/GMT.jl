@@ -79,7 +79,7 @@ function makecpt(cmd0::String, arg1, d::Dict)::Union{String, GMTcpt}
 	cmd = "makecpt " * cmd
 	(dbg_print_cmd(d, cmd) !== nothing) && return cmd
 	(arg1 === nothing && !isempty(Tvec)) && (arg1 = Tvec; Tvec = Float64[])
-	_r = gmt_GMTcpt(cmd, arg1, !isempty(Tvec) ? Tvec : nothing)
+	_r = !isempty(Tvec) ? gmt_GMTcpt(cmd, arg1, Tvec) : arg1 !== nothing ? gmt_GMTcpt(cmd, arg1) : gmt_GMTcpt(cmd)
 	r::GMTcpt = (_r !== nothing) ? _r : GMTcpt()	# _r === nothing when we save CPT on disk.
 	@assert (r isa GMTcpt)
 	(got_N && !isempty(r)) && (r.bfn = ones(3,3))	# Cannot remove the bfn like in plain GMT so make it all whites

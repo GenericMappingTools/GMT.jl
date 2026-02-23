@@ -71,9 +71,11 @@ grdcontour!(arg1; kw...) = grdcontour_helper("", arg1; first=false, kw...)
 # ---------------------------------------------------------------------------------------------------
 function grdcontour_helper(cmd0::String, arg1; first=true, kw...)
 	d, K, O = init_module(first, kw...)		# Also checks if the user wants ONLY the HELP mode
-	_grdcontour_helper(cmd0, arg1, O, K, d)
+	_grdcontour_helper(wrapGrids(cmd0, arg1), O, K, d)
 end
-function _grdcontour_helper(cmd0::String, arg1, O::Bool, K::Bool, d::Dict{Symbol, Any})
+function _grdcontour_helper(w::wrapGrids, O::Bool, K::Bool, d::Dict{Symbol, Any})
+	cmd0, arg1 = unwrapGrids(w)
+
 	arg2, arg3 = nothing, nothing
 	dict_auto_add!(d)					# The ternary module may send options via another channel
 

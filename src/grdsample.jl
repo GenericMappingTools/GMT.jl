@@ -31,11 +31,12 @@ grdsample(cmd0::String; kwargs...) = grdsample_helper(cmd0, nothing; kwargs...)
 grdsample(arg1; kwargs...)         = grdsample_helper("", arg1; kwargs...)
 function grdsample_helper(cmd0::String, arg1; kwargs...)
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
-	grdsample_helper(cmd0, arg1, d)
+	grdsample_helper(wrapGrids(cmd0, arg1), d)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function grdsample_helper(cmd0::String, arg1, d::Dict{Symbol, Any})
+function grdsample_helper(w::wrapGrids, d::Dict{Symbol, Any})
+	cmd0, arg1 = unwrapGrids(w)
 
 	cmd, = parse_common_opts(d, "", [:G :RIr :V_params :f :n :x])
 	cmd  = parse_these_opts(cmd, d, [[:T :toggle]])

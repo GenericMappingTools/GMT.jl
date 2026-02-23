@@ -51,9 +51,10 @@ grdview!(arg1; kwargs...)         = grdview_helper("", arg1; first=false, kwargs
 # ---------------------------------------------------------------------------------------------------
 function grdview_helper(cmd0::String, arg1; first=true, kwargs...)
 	d, K, O = init_module(first, kwargs...)			# Also checks if the user wants ONLY the HELP mode
-	invokelatest(grdview_helper, cmd0, arg1, O, K, d)
+	grdview_helper(wrapGrids(cmd0, arg1), O, K, d)#invokelatest(grdview_helper, cmd0, arg1, O, K, d)
 end
-function grdview_helper(cmd0::String, arg1, O::Bool, K::Bool, d::Dict{Symbol, Any})
+function grdview_helper(w::wrapGrids, O::Bool, K::Bool, d::Dict{Symbol, Any})
+	cmd0, arg1 = unwrapGrids(w)
 
 	arg2 = nothing;	arg3 = nothing;	arg4 = nothing;	arg5 = nothing;
 	first = !O
