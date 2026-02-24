@@ -14,18 +14,20 @@ function gmt(cmd::String, args...)
 			end
 		end
 		# We may have trailing [] args in modules
-		baka = n_argin
+		bak = n_argin
 		while (n_argin > 0 && (args[n_argin] === nothing))  n_argin -= 1  end
-		baka != n_argin && (args = args[1:n_argin])
+		argsV = (bak != n_argin) ? Any[args[k] for k in 1:n_argin] : Any[args...]
+	else
+		argsV = Any[]
 	end
-	_gmt(cmd, args...)
+	_gmt(cmd, argsV)
 end
 
-function _gmt(cmd::String, args...)
+function _gmt(cmd::String, args::Vector{Any})
 
 	(cmd == "") && return nothing		# Building docs with Quarto leads here when examples use ModernMode
 	(cmd == "destroy") && return gmt_restart()
-	ressurectGDAL()			# Some GMT modules may have called GDALDestroyDriverManager() 
+	ressurectGDAL()			# Some GMT modules may have called GDALDestroyDriverManager()
 	DidOneGmtCmd[] = true	# Even if something errors here this keeps track that gmt() already called once
 	n_argin::Int = length(args)
 
@@ -137,7 +139,7 @@ function _gmt(cmd::String, args...)
 	XX = GMT_Encode_Options(G_API[], g_module, n_argin, pLL, n_itemsP)	# This call also changes LL
 	n_items = n_itemsP[]
 	if (XX == NULL && n_items > 65000)		# Just got usage/synopsis option (if (n_items == UINT_MAX)) in C
-		(n_items > 65000) ? n_items = 0 : error("Failure to encode Julia command options") 
+		(n_items > 65000) ? n_items = 0 : error("Failure to encode Julia command options")
 	end
 
 	# For modules that can have no options (e.g. gmtinfo) the LinkedList (LL) is actually created in GMT_Encode_Option
