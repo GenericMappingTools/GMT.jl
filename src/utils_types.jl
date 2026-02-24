@@ -541,11 +541,15 @@ function set_dsBB(D, all_bbs::Bool=true)
 	return D
 end
 
-# ---------------------------------------------------------------------------------------------------
 function set_dsBB!(D, all_bbs::Bool=true)
+	_set_dsBB!(wrapDatasets("", D), all_bbs)
+end
+# ---------------------------------------------------------------------------------------------------
+function _set_dsBB!(w::wrapDatasets, all_bbs::Bool)
+	D = unwrapDatasets(w::wrapDatasets)[2]
 	# Compute and set the global and individual BoundingBox for a Vector{GMTdataset} + the trivial cases.
 	# If ALL_BBS is false then assume individual BBs are already knwon.
-	isempty(D) && return nothing
+	((D === nothing) || isempty(D)) && return nothing
 
 	if (all_bbs)		# Compute all BBs
 		if isa(D, GMTdataset)
