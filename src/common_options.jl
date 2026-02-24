@@ -4433,23 +4433,27 @@ function check_dbg_print_cmd(d::Dict{Symbol, Any}, cmd)::Union{Nothing, String, 
 end
 
 # ---------------------------------------------------------------------------------------------------
+# Thin wrappers that convert args... → Vector{Any} and call the single-compilation inner function
 function prep_and_call_finish_PS_module(d::Dict{Symbol, Any}, cmd, opt_extra::String, K::Bool, O::Bool, finish::Bool,
-                                        arg1=nothing, arg2=nothing, arg3=nothing, arg4=nothing, arg5=nothing)#::Union{Nothing, GMTps, GMTimage}
-	# This is a helper to avoid the long list of args in the finish_PS_module() call
-	case = (arg5 !== nothing) ? 5 : (arg4 !== nothing) ? 4 : (arg3 !== nothing) ? 3 : (arg2 !== nothing) ? 2 : (arg1 !== nothing) ? 1 : 0  
-	if     (case == 0)  R = finish_PS_module(d, cmd, opt_extra, K, O, finish, nothing)	# Need that nothing in a colorbar=true corner case
-	elseif (case == 1)  R = finish_PS_module(d, cmd, opt_extra, K, O, finish, arg1)
-	elseif (case == 2)  R = finish_PS_module(d, cmd, opt_extra, K, O, finish, arg1, arg2)
-	elseif (case == 3)  R = finish_PS_module(d, cmd, opt_extra, K, O, finish, arg1, arg2, arg3)
-	elseif (case == 4)  R = finish_PS_module(d, cmd, opt_extra, K, O, finish, arg1, arg2, arg3, arg4)
-	else                R = finish_PS_module(d, cmd, opt_extra, K, O, finish, arg1, arg2, arg3, arg4, arg5)
+                                        arg1=nothing, arg2=nothing, arg3=nothing, arg4=nothing, arg5=nothing)
+	argsV = Any[]
+	for a in (arg1, arg2, arg3, arg4, arg5)
+		a === nothing && break
+		push!(argsV, a)
 	end
+	isempty(argsV) && push!(argsV, nothing)		# Need that nothing in a colorbar=true corner case
+	_finish_PS_module(d, isa(cmd, String) ? [cmd] : cmd, opt_extra, K, O, finish, argsV)
+end
+
+finish_PS_module(d::Dict, cmd::String, opt_extra::String, K::Bool, O::Bool, finish::Bool, args...) =
+	_finish_PS_module(d, [cmd], opt_extra, K, O, finish, Any[args...])
+
+function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bool, O::Bool, finish::Bool, args...)
+	_finish_PS_module(d, cmd, opt_extra, K, O, finish, Any[args...])
 end
 
 # ---------------------------------------------------------------------------------------------------
-finish_PS_module(d::Dict, cmd::String, opt_extra::String, K::Bool, O::Bool, finish::Bool, args...) =
-	finish_PS_module(d, [cmd], opt_extra, K, O, finish, args...)
-function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bool, O::Bool, finish::Bool, args...)#::Union{Nothing, GMTps, GMTimage}
+function _finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bool, O::Bool, finish::Bool, args::Vector{Any})
 	# FNAME_EXT hold the extension when not PS
 	# OPT_EXTRA is used by grdcontour -D or pssolar -I to not try to create and view an img file
 
@@ -4475,9 +4479,9 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 	orig_J::String = ""		# To use in the case of a double Cartesian/Geog frame.
 	fi = 1
 	if (pocket_call[][3] !== nothing)	# Case where we want to run a "pre command" whose data is in pocket_call[3]
-		P = (isa(pocket_call[][3], String)) ? gmt(cmd[1]) : gmt(cmd[1], pocket_call[][3]) 
+		P = (isa(pocket_call[][3], String)) ? gmt(cmd[1]) : gmt(cmd[1], pocket_call[][3])
 		pocket_call[][3] = nothing		# Reset
-		fi = 2		# First index, the one that the args... respect, start at 2
+		fi = 2		# First index, the one that the args respect, start at 2
 	end
 
 	# The case 'viz(G, clip=Dna, plot=(data=Di, lc=:white), colorbar=true)' raised this changes (dangerous)
