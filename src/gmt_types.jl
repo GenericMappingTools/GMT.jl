@@ -347,6 +347,7 @@ mutable struct wrapDatasets
 		td, tvd, tcpt, tfv  = GMTdataset(), Vector{GMTdataset}(), GMTcpt(), GMTfv()
 		if     (arg1 !== "")                      new(arg1, td, tvd, tfv, tcpt)
 		elseif (isa(arg2, Matrix{<:Real}))        new("", mat2ds(arg2), tvd, tfv, tcpt)
+		elseif (isa(arg2, Vector{<:Real}))        new("", mat2ds(arg2), tvd, tfv, tcpt)
 		elseif (isa(arg2, GMTdataset))            new("", arg2, tvd, tfv, tcpt)
 		elseif (isa(arg2, Vector{<:GMTdataset}))  new("", td, arg2, tfv, tcpt)
 		elseif (isa(arg2, GMTfv))                 new("", td, tvd, arg2, tcpt)
