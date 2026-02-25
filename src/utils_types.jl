@@ -208,7 +208,7 @@ function mat2ds(mat::Array{T,N}, txt::Union{String,Vector{String}}=String[];
 	d = KW(kwargs)
 	_mat2ds(mat, txt, isa(hdr, String) ? [hdr] : vec(hdr), Int(geom), d)
 end
-function _mat2ds(mat::Array{T,N}, txt::Union{String,Vector{String}}, hdr::Vector{String}, geom::Int, d::Dict)::GDtype where {T<:Real, N}
+function _mat2ds(@nospecialize(mat::Array{<:Real}), txt::Union{String,Vector{String}}, hdr::Vector{String}, geom::Int, d::Dict)::GDtype
 
 	coln = hlp_desnany_vstr(d, [:colnames])
 	(!isempty(txt)) && return text_record(mat, txt,  hdr)
@@ -1292,7 +1292,7 @@ function mat2img16(mat::AbstractArray{<:Unsigned}; x=Float64[], y=Float64[], v=F
 	d = KW(kw)
 	helper_mat2img(mat, vec(Float64.(x)), vec(Float64.(y)), vec(Float64.(v)), vec(Float64.(hdr)), proj4, wkt, cmap, is_transposed, d)
 end
-function helper_mat2img(mat, x::Vector{Float64}, y::Vector{Float64}, v::Vector{Float64}, hdr::Vector{Float64},
+function helper_mat2img(@nospecialize(mat), x::Vector{Float64}, y::Vector{Float64}, v::Vector{Float64}, hdr::Vector{Float64},
                         proj4::String, wkt::String, cmap::GMTcpt, is_transposed::Bool, d::Dict)
 	nx = size(mat, 2);		ny = size(mat, 1);
 	if (is_transposed)  nx, ny = ny, nx  end
@@ -2443,9 +2443,14 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function grdimg_hdr_xy(mat, reg, hdr, x=Float64[], y=Float64[], is_transposed=false)
+	# Thin wrapper: convert to concrete types, then call the single-compilation implementation
+	_grdimg_hdr_xy(mat, Int(reg)::Int, Float64.(vec(hdr)), Float64.(vec(x)), Float64.(vec(y)), is_transposed == 1)
+end
+
+function _grdimg_hdr_xy(@nospecialize(mat), reg::Int, hdr::Vector{Float64}, x::Vector{Float64}, y::Vector{Float64}, is_transposed::Bool)
 # Generate x,y coords array and compute/update header plus increments for grids/images
 # Arrays coming from GDAL are often scanline so they are transposed. In that case is_transposed should be true
-	row_dim, col_dim = (is_transposed) ? (2,1) : (1,2) 
+	row_dim, col_dim = (is_transposed) ? (2,1) : (1,2)
 	nx = size(mat, col_dim);		ny = size(mat, row_dim);
 	one_or_zero = reg == 0 ? 1 : 0
 

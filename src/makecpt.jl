@@ -59,9 +59,10 @@ To see the full documentation type: ``@? makecpt``
 makecpt(cmd0::Symbol; kwargs...) = makecpt(""; C=string(cmd0), kwargs...)	# Ex: makecpt(:gray)
 function makecpt(cmd0::String="", arg1=nothing; kwargs...)::Union{String, GMTcpt}
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
-	makecpt(cmd0, arg1, d)
+	makecpt(wrapDatasets(cmd0, arg1), d)
 end
-function makecpt(cmd0::String, arg1, d::Dict)::Union{String, GMTcpt}
+function makecpt(w::wrapDatasets, d::Dict)::Union{String, GMTcpt}
+	cmd0, arg1 = unwrapDatasets(w::wrapDatasets)
 
 	cmd = parse_V_params(d, "")
 

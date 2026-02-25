@@ -358,9 +358,9 @@ function gd2gmt(dataset::Gdal.AbstractDataset)
 end
 
 # -------------------------------------------------------------------------------------------------------------
-# This function is made apart because XLS and CSVs have geometries and the calling functio, as is,
+# This function is made apart because XLS and CSVs have geometries and the calling function, as is,
 # would not be able to extract the data from the 'dataset'
-function helper_read_XLSCSV(dataset::Gdal.AbstractDataset)::GDtype
+function helper_read_XLSCSV(@nospecialize(dataset))::GDtype
 	if (get(POSTMAN[], "meteostat", "") != "")
 		delete!(POSTMAN[], "meteostat")
 		return read_meteostat(dataset)

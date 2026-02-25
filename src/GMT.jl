@@ -168,7 +168,7 @@ export
 	density, density!, boxplot, boxplot!, cornerplot, cornerplot!, cubeplot, cubeplot!,
 	ecdfplot, ecdfplot!, fill_between, fill_between!, funcurve, marginalhist, marginalhist!, parallelplot, parallelplot!,
 	piechart, piechart!, plotlinefit, plotlinefit!, qqplot, qqplot!, qqnorm, qqnorm!, remotegrid, sealand, squeeze, terramar,
-	violin, violin!, viz, vizpdf, windbarbs, whereami, maregrams, pastplates, seismicity, ecmwf, era5time, era5vars,
+	symlog, isymlog, violin, violin!, viz, vizpdf, windbarbs, whereami, maregrams, pastplates, seismicity, ecmwf, era5time, era5vars,
 	listecmwfvars, meteostat, weather, wmsinfo, wmstest, wmsread, VSdisp, mad, info, kmeans, pca, mosaic, quadbounds, quadkey,
 	geocoder, getprovider, zscores, bwhitmiss, binarize, bwareaopen, bwconncomp, bwdist, bwdist_idx, bwlabel, bwperim,
 	bwskell, cc2bw, graydist, isodata, padarray, rgb2gray, rgb2lab, rgb2YCbCr, rgb2ycbcr, grid2img, img2grid, grays2cube, grays2rgb, imclose,
@@ -315,6 +315,7 @@ include("splitxyz.jl")
 include("streamlines.jl")
 include("surface.jl")
 include("subplot.jl")
+include("symlog.jl")
 include("PrettyTables.jl")
 include("show_pretty_datasets.jl")
 include("solids.jl")
