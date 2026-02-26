@@ -29,7 +29,7 @@ function grdtrend(cmd0::String, arg1=nothing, arg2=nothing; kwargs...)
 	grdtrend_helper(cmd0, arg1, arg2, d)
 end
 
-function grdtrend_helper(cmd0::String, arg1, arg2, d::Dict{Symbol, Any})
+function grdtrend_helper(cmd0::String, @nospecialize(arg1), @nospecialize(arg2), d::Dict{Symbol, Any})
 
 	cmd, = parse_R(d, "")
 	cmd = parse_V_params(d, cmd)
@@ -53,7 +53,7 @@ function grdtrend_helper(cmd0::String, arg1, arg2, d::Dict{Symbol, Any})
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_W_grdtrend(d::Dict, symbs::Array{<:Symbol}, cmd::String, arg1, arg2)
+function parse_W_grdtrend(d::Dict, symbs::Array{<:Symbol}, cmd::String, @nospecialize(arg1), @nospecialize(arg2))
 
 	(SHOW_KWARGS[]) && return (print_kwarg_opts(symbs, "Tuple | String"), arg1,arg2)
 
