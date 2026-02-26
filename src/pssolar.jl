@@ -54,7 +54,7 @@ function solar(cmd0::String, arg1, O::Bool, K::Bool, d::Dict{Symbol, Any})
 	cmd, = parse_common_opts(d, cmd, [:bo :c :h :o :p :t :UVXY :params]; first=!O)
 	cmd  = parse_these_opts(cmd, d, [[:C :format], [:M :dump], [:N :invert]])
 
-	cmd  = add_opt_fill(cmd, d, [:G :fill], 'G')
+	cmd  = add_opt_fill(cmd, d, [:G :fill], "G")
 	cmd  = add_opt(d, cmd, "I", [:I :sun], (pos="",date="+d",TZ="+z"))
 	cmd  = add_opt(d, cmd, "T", [:T :terminators], (term="",date="+d",TZ="+z"))
 	cmd *= opt_pen(d, 'W', [:W :pen])

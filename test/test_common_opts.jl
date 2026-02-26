@@ -109,12 +109,12 @@
 	@test GMT.add_opt(Dict{Symbol,Any}(:L => "pen"), "", "L", [:L], (pen="_+p",)) == " -L+p"
 	@test GMT.add_opt_1char("", Dict{Symbol,Any}(:N=>"abc"), [[:N :geod2aux]]) == " -Na"
 	@test GMT.add_opt_1char("", Dict{Symbol,Any}(:N => ("abc", "sw", "x"), :Q=>"datum"), [[:N :geod2aux], [:Q :list]]) == " -Nasx -Qd"
-	r = GMT.add_opt_fill("", Dict{Symbol,Any}(:G=>(inv_pattern=12,fg="white",bg=[1,2,3], dpi=10) ), [:G :fill], 'G');
+	r = GMT.add_opt_fill("", Dict{Symbol,Any}(:G=>(inv_pattern=12,fg="white",bg=[1,2,3], dpi=10) ), [:G :fill], "G");
 	@test r == " -GP12+b1/2/3+fwhite+r10"
-	@test GMT.add_opt_fill("", Dict{Symbol,Any}(:G=>:red), [:G :fill], 'G') == " -Gred"
+	@test GMT.add_opt_fill("", Dict{Symbol,Any}(:G=>:red), [:G :fill], "G") == " -Gred"
 	@test GMT.add_opt_fill(["red+p", "blue+n"], "", "G") == " -Gred+p -Gblue+n"
 	@test GMT.add_opt_fill((("red+p",), ("blue+n",)), "", " -G") == " -Gred+p -Gblue+n"
-	@test_throws ErrorException("For 'fill' option as a NamedTuple, you MUST provide a 'patern' member") GMT.add_opt_fill("", Dict{Symbol,Any}(:G=>(inv_pat=12,fg="white")), [:G], 'G')
+	@test_throws ErrorException("For 'fill' option as a NamedTuple, you MUST provide a 'patern' member") GMT.add_opt_fill("", Dict{Symbol,Any}(:G=>(inv_pat=12,fg="white")), [:G], "G")
 	d = Dict{Symbol,Any}(:offset=>5, :bezier=>true, :cline=>"", :ctext=>true, :pen=>("10p",:red,:dashed));
 	@test GMT.add_opt_pen(d, [:W :pen], opt="W") == " -W10p,red,-+cl+cf+s+o5"
 	d = Dict{Symbol,Any}(:W=>(offset=5, bezier=true, cline="", ctext=true, pen=("10p",:red,:dashed), arrow=(length=0.1,)));

@@ -358,9 +358,9 @@ end
 function parse_plot_G_L(d::Dict{Symbol, Any}, cmd::String, g_bar_fill::Vector{String}, is_ternary::Bool)
 	opt_G::String = ""
 	if (isempty(g_bar_fill))					# Otherwise bar fill colors are dealt with somewhere else
-		((opt_G = add_opt_fill("", d, [:G :fill], 'G')) != "") && (cmd *= opt_G)	# Also keep track if -G was set
+		((opt_G = add_opt_fill("", d, [:G :fill], "G")) != "") && (cmd *= opt_G)	# Also keep track if -G was set
 	end
-	opt_Gsymb::String = add_opt_fill("", d, [:G :mc :markercolor :markerfacecolor :MarkerFaceColor], 'G')	# Filling of symbols
+	opt_Gsymb::String = add_opt_fill("", d, [:G :mc :markercolor :markerfacecolor :MarkerFaceColor], "G")	# Filling of symbols
 	(opt_Gsymb == " -G") && (opt_Gsymb *= "black")	# Means something like 'mc=true' was used, but we need a color
 
 	opt_L::String = ""

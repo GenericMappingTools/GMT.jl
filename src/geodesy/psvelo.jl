@@ -27,8 +27,8 @@ function velo(cmd0::String, arg1, O::Bool, K::Bool, d::Dict{Symbol, Any})
 		cmd = (isa(val, String)) ? cmd * " -A" * val : cmd * " -A" * vector_attrib(val) 
 	end
 
-	cmd = add_opt_fill(cmd, d, [:E :fill_wedges :uncertaintyfill], 'E')
-	cmd = add_opt_fill(cmd, d, [:G :fill :fill_symbols], 'G')
+	cmd = add_opt_fill(cmd, d, [:E :fill_wedges :uncertaintyfill], "E")
+	cmd = add_opt_fill(cmd, d, [:G :fill :fill_symbols], "G")
 	cmd = parse_these_opts(cmd, d, [[:D :sigma_scale], [:L :outlines], [:N :no_clip :noclip]])
 
 	if     (haskey(d, :Se) || haskey(d, :velo_NE))      symbs = [:Se :vel_NE]

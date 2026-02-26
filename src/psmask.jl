@@ -89,7 +89,7 @@ function mask(cmd0::String, arg1, O::Bool, K::Bool, d::Dict{Symbol, Any})
 		return isinv ? mat2img(collect(arg1.z .<= thres), arg1) : mat2img(collect(arg1.z .>= thres), arg1)
 	end
 
-	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
+	cmd = add_opt_fill(cmd, d, [:G :fill], "G")
 	cmd = gmt_proggy * cmd
 	((r = check_dbg_print_cmd(d, cmd)) !== nothing) && return r
 	prep_and_call_finish_PS_module(d, cmd, "", K, O, true, arg1)

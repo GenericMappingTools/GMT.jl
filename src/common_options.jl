@@ -1838,7 +1838,7 @@ function parse_params(d::Dict, cmd::String; del::Bool=true)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function add_opt_pen(d::Dict, symbs::Union{Nothing, VMs}; opt::String="", del::Bool=true)::String
+function add_opt_pen(d::Dict, @nospecialize(symbs::Union{Nothing, VMs}); opt::String="", del::Bool=true)::String
 	# Build a pen option. Input can be either a full hard core string or spread in lw (or lt), lc, ls, etc or a tuple
 
 	(SHOW_KWARGS[]) && return print_kwarg_opts(symbs, "NamedTuple | Tuple | String | Number")	# Just print the options
@@ -2308,9 +2308,9 @@ end
 # ---------------------------------------------------------------------------------------------------
 function add_opt(d::Dict, cmd::String, opt::String, mapa::NamedTuple)::String
 	# Thin wrapper: convert NT to Dict to compile _add_opt only once
-	_add_opt_1(d, cmd, opt, nt2dict(mapa))
+	_add_opt_1(d, cmd, opt, Dict{Symbol,Any}(nt2dict(mapa)))
 end
-function _add_opt_1(d::Dict, cmd::String, opt::String, mapa::Dict)::String
+function _add_opt_1(d::Dict, cmd::String, opt::String, mapa::Dict{Symbol,Any})::String
 	cmd_::String = ""
 	for k in keys(mapa)
 		((val_ = find_in_dict(d, [k], false)[1]) === nothing) && continue	# This mapa key was not used
@@ -2339,11 +2339,11 @@ end
 function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, mapa; grow_mat=nothing, del::Bool=true, expand::Bool=false, expand_str::Bool=false)::String
 	# Thin wrapper: convert NamedTuple mapa to Dict to avoid recompilation for each distinct NT type
 	mapa_is_nt = isa(mapa, NamedTuple)
-	_mapa = mapa_is_nt ? nt2dict(mapa) : mapa
-	_add_opt_2(d, cmd, opt, symbs, _mapa; grow_mat=grow_mat, del=del, expand=expand, expand_str=expand_str, mapa_is_nt=mapa_is_nt)
+	_mapa = mapa_is_nt ? Dict{Symbol,Any}(nt2dict(mapa)) : (mapa === nothing ? Dict{Symbol,Any}() : mapa)
+	_add_opt_2(d, cmd, opt, vec(symbs), _mapa, grow_mat, del, expand, expand_str, mapa_is_nt)
 end
 
-function _add_opt_2(d::Dict, cmd::String, opt::String, symbs::VMs, mapa; grow_mat=nothing, del::Bool=true, expand::Bool=false, expand_str::Bool=false, mapa_is_nt::Bool=false)::String
+function _add_opt_2(d::Dict, cmd::String, opt::String, symbs::Vector{Symbol}, @nospecialize(mapa), @nospecialize(grow_mat), del::Bool, expand::Bool, expand_str::Bool, mapa_is_nt::Bool)::String
 	# Scan the D Dict for SYMBS keys and if found create the new option OPT and append it to CMD
 	# If DEL == false we do not remove the found key.
 	# 'grow_mat=mat', is a special case to append to a matrix (can't realy be done in Julia)
@@ -2598,7 +2598,7 @@ function _add_opt_3(d::Dict, cmd::String, opt::String, symbs::VMs, need_symb::Sy
 				opt = string(opt,val)
 				to_slot = false
 			end
-			cmd = _add_opt_2(d, cmd, opt, symbs, nt_opts_d; mapa_is_nt=true)
+			cmd = _add_opt_2(d, cmd, opt, vec(symbs), nt_opts_d, nothing, true, false, false, true)
 		elseif (isa(val, Array{<:Real}) || isa(val, GDtype) || isa(val, GMTcpt) || typeof(val) <: AbstractRange)
 			if (typeof(val) <: AbstractRange)  val = collect(val)  end
 			cmd = string(cmd, " -", opt)
@@ -2717,18 +2717,18 @@ function add_opt_fill(d::Dict, opt::String="")
 	add_opt_fill(d, [collect(keys(d))[1]], opt)			# Use ONLY when len(d) == 1
 end
 add_opt_fill(d::Dict, symbs::VMs, opt="") = add_opt_fill("", d, symbs, opt)
-function add_opt_fill(cmd::String, d::Dict, symbs::VMs, opt="", del::Bool=true)::String
+function add_opt_fill(cmd::String, d::Dict, @nospecialize(symbs::VMs), opt::String="", del::Bool=true)::String
 	# Deal with the area fill attributes option. Normally, -G
 	(SHOW_KWARGS[]) && return print_kwarg_opts(symbs, "NamedTuple | Tuple | Array | String | Number")
 	((val = find_in_dict(d, symbs, del)[1]) === nothing) && return cmd
 	isa(val, AbstractDict) && (val = Base.invokelatest(dict2nt, val))
 	(val == true && symbs == [:G :fill]) && (val="#0072BD")		# Let fill=true mean a default color
 	(val == "" && symbs == [:G :fill]) && return cmd			# Let fill="" mean no fill (handy for proggy reasons)
-	(opt != "") && (opt = string(" -", opt))
+	(opt !== "") && (opt = string(" -", opt))
 	return add_opt_fill(val, cmd, opt)
 end
 
-function add_opt_fill(@nospecialize(val), cmd::String="",  opt="")::String
+function add_opt_fill(@nospecialize(val), cmd::String="",  opt::String="")::String
 	# This method can be called directy with VAL as a NT or a string
 	if (isa(val, Tuple) && length(val) == 2 && (isa(val[1], Tuple) || isa(val[1], NamedTuple)))
 		# wiggle, for example, may want to repeat the call to fill (-G). Then we expect a Tuple of -G's
@@ -2737,7 +2737,7 @@ function add_opt_fill(@nospecialize(val), cmd::String="",  opt="")::String
 	elseif (isvector(val) && length(val) == 2 && isa(val[1], String))
 		# The above case works but may be uggly sometimes; e.g. fill=(("red+p",), ("blue+n",))
 		# So accept also a vector of strings and do not try to interpret its contents. Ex: fill(["red+p", "blue+n"]
-		(opt != "" && !startswith(opt, " -")) && (opt = string(" -", opt))
+		(opt !== "" && !startswith(opt, " -")) && (opt = string(" -", opt))
 		cmd = cmd * opt * val[1]::String * opt * val[2]::String
 	elseif (isa(val, NamedTuple))
 		d2::Dict = nt2dict(val)

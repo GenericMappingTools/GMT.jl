@@ -109,7 +109,7 @@ function rose_helper(cmd0::String, arg1, O::Bool, K::Bool, d::Dict{Symbol, Any})
 
 	cmd = add_opt(d, cmd, "E", [:E :vectors])
 	cmd, arg1, arg2, = add_opt_cpt(d, cmd, CPTaliases, 'C', N_args, arg1, arg2)
-	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
+	cmd = add_opt_fill(cmd, d, [:G :fill], "G")
 	cmd *= opt_pen(d, 'W', [:W :pen])
 
 	_cmd = [gmt_proggy * cmd]
