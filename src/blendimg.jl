@@ -343,10 +343,8 @@ function lelandshade(G::GMTgrid; detail=1.0, contrast=2.0, uint16=false, intensi
 		if (cmap != "")
 			cpt = cmap
 			isa(cpt, GMTcpt) && (CURRENT_CPT[] = cpt)
-		elseif (equalize == 0)
-			cpt = makecpt(G; C=_cpt, Vd=-1, kw...)		# The 'nothing' branch will pick G's cpt
 		else
-			cpt = (equalize == 1) ? grd2cpt(G, C=_cpt, kw...) : grd2cpt(G, T="$equalize", C=_cpt, Vd=-1, kw...)
+			cpt =  (equalize == 0) ? makecpt(G, C=_cpt, kw...) : makecpt(G, C=_cpt, equalize=equalize, kw...)
 		end
 		color = gdaldem(G, "color-relief"; color=cpt, kw...)
 		blendimg!(I1, Ihill, transparency=transparency)
