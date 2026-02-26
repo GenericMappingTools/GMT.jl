@@ -14,7 +14,7 @@ function grdtrack(cmd0::String, arg1=nothing, arg2=nothing; kwargs...)
 	grdtrack_helper(cmd0, arg1, arg2, d)
 end
 
-function grdtrack_helper(cmd0::String, arg1, arg2, d::Dict{Symbol, Any})
+function grdtrack_helper(cmd0::String, @nospecialize(arg1), @nospecialize(arg2), d::Dict{Symbol, Any})
 
 	cmd, = parse_common_opts(d, "", [:R :V_params :bi :bo :di :e :f :g :h :i :n :o :s :w :yx])
 	cmd  = parse_these_opts(cmd, d, [[:A :interp_path :resample], [:C :crossprofile :equidistant], [:D :dfile],
@@ -85,7 +85,7 @@ function grdtrack_helper(cmd0::String, arg1, arg2, d::Dict{Symbol, Any})
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_G_grdtrk(d::Dict, symbs::Vector{<:Symbol}, cmd::String, arg1, arg2)
+function parse_G_grdtrk(d::Dict, symbs::Vector{<:Symbol}, cmd::String, @nospecialize(arg1), @nospecialize(arg2))
 
 	(SHOW_KWARGS[]) && return (print_kwarg_opts(symbs, "GMTgrid | Tuple | String"), nothing,arg1,arg2)
 

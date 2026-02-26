@@ -2307,6 +2307,10 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function add_opt(d::Dict, cmd::String, opt::String, mapa::NamedTuple)::String
+	# Thin wrapper: convert NT to Dict to compile _add_opt only once
+	_add_opt_1(d, cmd, opt, nt2dict(mapa))
+end
+function _add_opt_1(d::Dict, cmd::String, opt::String, mapa::Dict)::String
 	cmd_::String = ""
 	for k in keys(mapa)
 		((val_ = find_in_dict(d, [k], false)[1]) === nothing) && continue	# This mapa key was not used
@@ -2333,6 +2337,13 @@ end
 #
 
 function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, mapa; grow_mat=nothing, del::Bool=true, expand::Bool=false, expand_str::Bool=false)::String
+	# Thin wrapper: convert NamedTuple mapa to Dict to avoid recompilation for each distinct NT type
+	mapa_is_nt = isa(mapa, NamedTuple)
+	_mapa = mapa_is_nt ? nt2dict(mapa) : mapa
+	_add_opt_2(d, cmd, opt, symbs, _mapa; grow_mat=grow_mat, del=del, expand=expand, expand_str=expand_str, mapa_is_nt=mapa_is_nt)
+end
+
+function _add_opt_2(d::Dict, cmd::String, opt::String, symbs::VMs, mapa; grow_mat=nothing, del::Bool=true, expand::Bool=false, expand_str::Bool=false, mapa_is_nt::Bool=false)::String
 	# Scan the D Dict for SYMBS keys and if found create the new option OPT and append it to CMD
 	# If DEL == false we do not remove the found key.
 	# 'grow_mat=mat', is a special case to append to a matrix (can't realy be done in Julia)
@@ -2343,13 +2354,13 @@ function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, mapa; grow_mat=n
 	(SHOW_KWARGS[]) && return print_kwarg_opts(symbs, mapa)	# Just print the kwargs of this option call
 
 	if ((val = find_in_dict(d, symbs, del)[1]) === nothing)
-		if (expand && isa(mapa, NamedTuple))
-			cmd = add_opt(d, cmd, opt, mapa)
+		if (expand && mapa_is_nt)
+			cmd = _add_opt_1(d, cmd, opt, mapa)
 		end
 		return cmd
 	elseif (val === true || val === "")					# Just the flag. With the === we avoid the case 1 == true
 		return string(cmd, " -", opt)
-	elseif (expand_str && isa(mapa, NamedTuple))		# Use the mapa KEYS as possibe values of 'val'
+	elseif (expand_str && mapa_is_nt)		# Use the mapa KEYS as possibe values of 'val'
 		cmd_ = ""
 		for k in keys(mapa)
 			if (string(val) == string(k))
@@ -2364,16 +2375,18 @@ function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, mapa; grow_mat=n
 
 	args::Vector{String} = Vector{String}(undef,1)
 	isa(val, AbstractDict) && (val = Base.invokelatest(dict2nt, val))
-	if (isa(val, NamedTuple) && isa(mapa, NamedTuple))
-		args[1] = Base.invokelatest(add_opt, val, mapa, grow_mat)
+	if (isa(val, NamedTuple) && mapa_is_nt)
+		_arg = (grow_mat === nothing || isempty(grow_mat)) ? Float64[] : grow_mat
+		args[1] = Base.invokelatest(add_opt_1, val, mapa, _arg)
 	elseif (isa(val, NamedTuple) && mapa === nothing)
 		# Happens when the inline 'inset' passed a NT with options for inset itself and not the module it called
 		return cmd
 	elseif (isa(val, Tuple) && length(val) > 1 && isa(val[1], NamedTuple))	# In fact, all val[i] -> NT
 		# Used in recursive calls for options like -I, -N , -W of pscoast. Here we assume that opt != ""
 		_args::String = ""
+		_arg2 = (grow_mat === nothing || isempty(grow_mat)) ? Float64[] : grow_mat
 		for k = 1:numel(val)
-			_args *= " -" * opt * Base.invokelatest(add_opt, val[k], mapa, grow_mat)::String
+			_args *= " -" * opt * Base.invokelatest(add_opt_1, val[k], mapa, _arg2)::String
 		end
 		return cmd * _args
 	elseif (isa(mapa, Tuple) && length(mapa) > 1 && isa(mapa[2], Function))	# grdcontour -G
@@ -2384,7 +2397,7 @@ function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, mapa; grow_mat=n
 		end
 	else
 		args[1] = arg2str(val)::String
-		if isa(mapa, NamedTuple)		# Let aa=(bb=true,...) be addressed as aa=:bb
+		if mapa_is_nt		# Let aa=(bb=true,...) be addressed as aa=:bb
 			s = Symbol(args[1])
 			for k in keys(mapa)
 				(s != k) && continue
@@ -2555,6 +2568,11 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, need_symb::Symbol, args, nt_opts::NamedTuple)
+	# Thin wrapper: nospecialize args, convert nt_opts NT to Dict
+	_add_opt_3(d, cmd, opt, symbs, need_symb, args, nt2dict(nt_opts))
+end
+
+function _add_opt_3(d::Dict, cmd::String, opt::String, symbs::VMs, need_symb::Symbol, @nospecialize(args), nt_opts_d::Dict)
 	# This version specializes in the case where an option may transmit an array, or read a file, with optional flags.
 	# When optional flags are used we need to use NamedTuples (the NT_OPTS arg). In that case the NEED_SYMB
 	# is the keyword name (a symbol) whose value holds the array. An error is raised if this symbol is missing in D
@@ -2570,7 +2588,7 @@ function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, need_symb::Symbo
 		isa(val, AbstractDict) && (val = Base.invokelatest(dict2nt, val))
 		if (isa(val, Tuple) && length(val) == 2)
 			# This is crazzy trickery to accept also (e.g) C=(pratt,"200k") instead of C=(pts=pratt,dist="200k")
-			d[symb] = Base.invokelatest(dict2nt, Dict(need_symb => val[1], keys(nt_opts)[1] => val[2]))	# Need to patch also the input option
+			d[symb] = Base.invokelatest(dict2nt, Dict(need_symb => val[1], keys(nt_opts_d)[1] => val[2]))	# Need to patch also the input option
 			val = d[symb]
 		end
 		if (isa(val, NamedTuple))
@@ -2580,7 +2598,7 @@ function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, need_symb::Symbo
 				opt = string(opt,val)
 				to_slot = false
 			end
-			cmd = add_opt(d, cmd, opt, symbs, nt_opts)
+			cmd = _add_opt_2(d, cmd, opt, symbs, nt_opts_d; mapa_is_nt=true)
 		elseif (isa(val, Array{<:Real}) || isa(val, GDtype) || isa(val, GMTcpt) || typeof(val) <: AbstractRange)
 			if (typeof(val) <: AbstractRange)  val = collect(val)  end
 			cmd = string(cmd, " -", opt)
@@ -2611,6 +2629,10 @@ end
 # ---------------------------------------------------------------------------------------------------
 function add_opt_cpt(d::Dict, cmd::String, symbs::VMs, opt::Char, N_args::Int=0, arg1=nothing, arg2=nothing,
 	                 store::Bool=false, def::Bool=false, opt_T::String="", in_bag::Bool=false)
+	_add_opt_cpt(d, cmd, symbs, opt, N_args, arg1, arg2, store, def, opt_T, in_bag)
+end
+function _add_opt_cpt(d::Dict, cmd::String, symbs::VMs, opt::Char, N_args::Int, @nospecialize(arg1), @nospecialize(arg2),
+	                 store::Bool, def::Bool, opt_T::String, in_bag::Bool)
 	# Deal with options of the form -Ccolor, where color can be a string or a GMTcpt type
 	# SYMBS is normally: CPTaliases
 	# N_args only applyies to when a GMTcpt was transmitted. Then it's either 0, case in which
@@ -2681,7 +2703,7 @@ function add_opt_cpt(d::Dict, cmd::String, symbs::VMs, opt::Char, N_args::Int=0,
 	return cmd, arg1, arg2, N_args
 end
 # ---------------------
-function helper_add_cpt(cmd::String, opt, N_args::Int, arg1, arg2, val::GMTcpt, store::Bool)
+function helper_add_cpt(cmd::String, opt, N_args::Int, @nospecialize(arg1), @nospecialize(arg2), val::GMTcpt, store::Bool)
 	# Helper function to avoid repeating 3 times the same code in add_opt_cpt
 	(N_args == 0) ? arg1 = val : arg2 = val;	N_args += 1
 	if (store)  global CURRENT_CPT[] = val  end
@@ -2706,7 +2728,7 @@ function add_opt_fill(cmd::String, d::Dict, symbs::VMs, opt="", del::Bool=true):
 	return add_opt_fill(val, cmd, opt)
 end
 
-function add_opt_fill(val, cmd::String="",  opt="")::String
+function add_opt_fill(@nospecialize(val), cmd::String="",  opt="")::String
 	# This method can be called directy with VAL as a NT or a string
 	if (isa(val, Tuple) && length(val) == 2 && (isa(val[1], Tuple) || isa(val[1], NamedTuple)))
 		# wiggle, for example, may want to repeat the call to fill (-G). Then we expect a Tuple of -G's

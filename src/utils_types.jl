@@ -2442,7 +2442,7 @@ function grid2img(G::GMTgrid{<:Unsigned})
 end
 
 # ---------------------------------------------------------------------------------------------------
-function grdimg_hdr_xy(mat, reg, hdr, x=Float64[], y=Float64[], is_transposed=false)
+function grdimg_hdr_xy(@nospecialize(mat), reg, hdr, x=Float64[], y=Float64[], is_transposed=false)
 	# Thin wrapper: convert to concrete types, then call the single-compilation implementation
 	_grdimg_hdr_xy(mat, Int(reg)::Int, Float64.(vec(hdr)), Float64.(vec(x)), Float64.(vec(y)), is_transposed == 1)
 end

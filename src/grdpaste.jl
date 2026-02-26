@@ -19,7 +19,6 @@ Parameters
 To see the full documentation type: ``@? grdpaste``
 """
 function grdpaste(G1::GItype, G2::GItype; kw...)
-	(GMTver < v"6.5.0") && (@warn("This module doesn't work for the installed GMT version. Run 'upGMT(true)' to update it."); return nothing)
 	(G1.layout != "" && G1.layout[2] == 'R') && error("Pasting row oriented grids (such those produced by GDAL) is not implemented.")
 	d = init_module(false, kw...)[1]
 	grdpaste(G1, G2, d)
