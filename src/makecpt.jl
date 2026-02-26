@@ -89,25 +89,28 @@ function makecpt(w::wrapDatasets, d::Dict)::Union{String, GMTcpt}
 	return r
 end
 
+function makecpt(G::GMTgrid; kw...)		# A version that works on grids.
+	d = KW(kw...)
+	have_equalize = (is_in_kwargs(kw, [:equalize]) && d[:equalize] == 1)	# Because equalize=true escapes detection in parse_opt_range
+	opt_T = parse_opt_range(d, "")[1]
+	!isempty(opt_T) && (d[:T] = opt_T)
+	makecpt(G::GMTgrid, have_equalize || !isempty(opt_T), d)
+end
 
-function makecpt(G::GMTgrid; equalize=false, kw...)		# A version that works on grids.
+function makecpt(G::GMTgrid, have_equalize, d)		# A version that works on grids.
 	# equalize = true uses default grd2cpt. equalize=n uses grd2cpt -Tn
 	# The kw... are those of makecpt or grd2cpt depending on 'equalize'.
 	
-	val, symb = find_in_kwargs(kw, CPTaliases)
+	val = find_in_dict(d, CPTaliases)[1]
 	cpt = (val === nothing) ? ((G.cpt != "") ? G.cpt : :turbo) : nothing
-	d = Dict{Symbol, Any}()
-	if (equalize == 0 && symb != Symbol() && val === nothing && cpt !== nothing)
-		# It means kw have a -C, but it can be a C=nothing. Remove the duplicate  that was in kw.
-		d = KW(kw...);	delete!(d, symb)	# This confusion is due to the crazziness possible in lelandshade()
-	end
-	if (equalize == 0)
-		t = isempty(d) ? kw : d
+	d[:C] = cpt
+	if (!have_equalize)
 		range::Vector{Float64} = G.range
 		loc_eps = 0.0004
-		makecpt(; T=@sprintf("%.12g/%.12g/256+n", range[5] - loc_eps*abs(range[5]), range[6] + loc_eps*abs(range[6])), C=cpt, t...)
+		d[:T] = @sprintf("%.12g/%.12g/256+n", range[5] - loc_eps*abs(range[5]), range[6] + loc_eps*abs(range[6]))
+		makecpt(wrapDatasets("", nothing), d)
 	else
-		(equalize == 1) ? grd2cpt(G, C=cpt, kw...) : grd2cpt(G, T="$equalize", C=cpt, kw...)
+		grd2cpt_helper(wrapGrids("", G), d)
 	end
 end
 
@@ -138,7 +141,7 @@ end
 
 # -------------------------------------------------------------------------------------------
 function parse_opt_range(d::Dict, cmd::String, opt::String="")::Tuple{String, Vector{Float64}}
-	symbs = [:T :range :inc :bin]
+	symbs = [:T :range :inc :bin :equalize]
 	(SHOW_KWARGS[]) && return print_kwarg_opts(symbs, "Tuple | Array | String | Number"), Float64[]	# Just print the options
 	Tvec::Vector{Float64} = Float64[]
 	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
