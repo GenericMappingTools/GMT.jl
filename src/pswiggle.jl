@@ -82,7 +82,7 @@ function wiggle_helper(cmd0::String, arg1, O::Bool, K::Bool, d::Dict{Symbol, Any
                             (map=("g", arg2str, 1), outside=("J", arg2str, 1), inside=("j", arg2str, 1), norm=("n", arg2str, 1), paper=("x", arg2str, 1), anchor=("", arg2str, 2), width=("+w", arg2str), justify="+j", label_left="_+al", labels="+l", label="+l", offset=("+o", arg2str)), 'j')
 	cmd *= opt_pen(d, 'T', [:T :track])
 	cmd *= opt_pen(d, 'W', [:W :pen])
-	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
+	cmd = add_opt_fill(cmd, d, [:G :fill], "G")
 
 	_cmd = [gmt_proggy * cmd]
 	_cmd = frame_opaque(_cmd, gmt_proggy, opt_B, opt_R, opt_J)		# No -t in frame

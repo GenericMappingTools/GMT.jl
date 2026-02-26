@@ -36,7 +36,7 @@ function windbarbs(arg1, O::Bool, K::Bool, d::Dict{Symbol, Any})
 	cmd = parse_these_opts(cmd, d, [[:D :offset], [:I :intens], [:N :no_clip :noclip]])
 	cmd = add_opt(d, cmd, "Q", [:Q :barbs], (len=("", arg2str, 1), length=("", arg2str, 1), angle="+a", fill=("+g", add_opt_fill), pen=("+p", add_opt_pen), just="+j", speed="+s", width="+w", uv="+z", cartesian="+z"))
 	cmd *= opt_pen(d, 'W', [:W :pen])
-	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
+	cmd = add_opt_fill(cmd, d, [:G :fill], "G")
 	cmd, arg1, arg2, = add_opt_cpt(d, cmd, CPTaliases, 'C', 1, arg1)
 
 	(!isa(arg1, GDtype) && !isa(arg1, Matrix{<:Real})) && (arg1 = tabletypes2ds(arg1))

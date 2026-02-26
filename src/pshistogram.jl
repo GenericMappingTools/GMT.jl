@@ -120,7 +120,7 @@ function histogram_helper(cmd0::String, arg1, O::Bool, K::Bool, d::Dict{Symbol,A
 	cmd = parse_common_opts(d, cmd, [:UVXY :JZ :c :e :f :p :t :w :params :margin]; first=!O)[1]
 	cmd = parse_these_opts(cmd, d, [[:A :horizontal], [:F :center], [:Q :cumulative], [:S :stairs]])
 	nofill = ((symb = is_in_dict(d, [:G :fill])) !== nothing && d[symb] == "") ? true : false	# To know if no fill was asked
-	cmd = add_opt_fill(cmd, d, [:G :fill], 'G')
+	cmd = add_opt_fill(cmd, d, [:G :fill], "G")
 	cmd = add_opt(d, cmd, "D", [:D :annot :annotate :counts], (beneath = "_+b", font = "+f", offset = "+o", vertical = "_+r"))
 	cmd = parse_INW_coast(d, [[:N :distribution :normal]], cmd, "N")
 	(SHOW_KWARGS[]) && print_kwarg_opts(symbs, "NamedTuple | Tuple | Dict | String")

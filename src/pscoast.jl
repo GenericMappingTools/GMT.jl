@@ -152,8 +152,8 @@ function coast_parser(first::Bool, clip::String, O::Bool, d::Dict{Symbol, Any})
 	cmd  = parse_Td(d, cmd)
 	cmd  = parse_Tm(d, cmd)
 	cmd  = parse_L(d, cmd)
-	cmd  = add_opt_fill(cmd, d, [:G :land], 'G')
-	cmd  = add_opt_fill(cmd, d, [:S :water :ocean], 'S')
+	cmd  = add_opt_fill(cmd, d, [:G :land], "G")
+	cmd  = add_opt_fill(cmd, d, [:S :water :ocean], "S")
 
 	if (clip !== "")
 		if     (clip == "land")    cmd *= " -Gc"

@@ -146,7 +146,7 @@ function common_mecas(cmd0, arg1, d, proggy, first, K, O)
 		cmd = add_opt(d, cmd, "D", [:D :offset], (dist_is_geog="+c", fill=("+g", add_opt_fill), offset="+o", pen=("+p", add_opt_pen), size="+s"))
 	end
 
-	cmd = add_opt_fill(cmd, d, [:E :fill_extensive :extensionfill], 'E')
+	cmd = add_opt_fill(cmd, d, [:E :fill_extensive :extensionfill], "E")
 	cmd = parse_these_opts(cmd, d, [[:H :scale], [:I :intens :intensity], [:L :pen_outline], [:M :same_size :samesize],
 	                                [:N :no_clip :noclip], [:T :nodal]])
 	cmd = parse_these_opts(cmd, d, [[:Fa :PT_axes], [:Fo :psvelo]])
@@ -156,7 +156,7 @@ function common_mecas(cmd0, arg1, d, proggy, first, K, O)
 	cmd *= add_opt_pen(d, [:Fp :P_axis_pen], opt="Fp")
 	cmd *= add_opt_pen(d, [:Ft :T_axis_pen], opt="Ft")
 	cmd *= add_opt_pen(d, [:Fz :zero_trace], opt="Fz")
-	cmd = add_opt_fill(cmd, d, [:G :fill :compressionfill], 'G')
+	cmd = add_opt_fill(cmd, d, [:G :fill :compressionfill], "G")
 	#(occursin("coupe", proggy)) && (cmd = add_opt(d, cmd, "Q", [:Q]))
 
 	# If file name sent in, read it and compute a tight -R if it was not provided 
