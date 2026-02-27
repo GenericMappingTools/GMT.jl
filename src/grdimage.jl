@@ -49,12 +49,14 @@ grdimage!(arg1, arg2=nothing, arg3=nothing; kw...) = grdimage_helper("", arg1, a
 function grdimage_helper(cmd0::String, arg1=nothing, arg2=nothing, arg3=nothing; first=true, kwargs...)
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 	(cmd0 != "" && arg1 === nothing && haskey(d, :inset)) && (arg1 = gmtread(cmd0); cmd0 = "")
-	grdimage_helper(cmd0, arg1, arg2, arg3, K, O, d)
+	(isa(arg1, Matrix{<:Real}) && isa(arg2, Matrix{<:Real}) && isa(arg3, Matrix{<:Real})) &&
+		(arg2 = mat2grid(arg2); arg3 = mat2grid(arg3))	# Because than wrapGrids will convert arg1 to GMTgrid and other two must type agree 
+	grdimage_helper(wrapGrids(cmd0, arg1), arg2, arg3, K, O, d)
 end
 
 # ---------------------------------------------------------------------------------------------------
-#function grdimage(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing; first=true, kwargs...)
-function grdimage_helper(cmd0::String, arg1, arg2, arg3, K::Bool, O::Bool, d::Dict{Symbol, Any})
+function grdimage_helper(w::wrapGrids, arg2, arg3, K::Bool, O::Bool, d::Dict{Symbol, Any})
+	cmd0, arg1 = unwrapGrids(w)
 
 	common_insert_R!(d, O, cmd0, arg1)			# Set -R in 'd' out of grid/images (with coords) if limits was not used
 	
@@ -84,10 +86,11 @@ function grdimage_helper(cmd0::String, arg1, arg2, arg3, K::Bool, O::Bool, d::Di
 		(haskey(d, :stretch) || haskey(d, :histo_bounds)) && delete!(d, [:histo_bounds, :stretch])
 	end
 
-	_grdimage(cmd0, arg1, arg2, arg3, O, K, d)
+	_grdimage(wrapGrids(cmd0, arg1), arg2, arg3, O, K, d)
 end
 
-function _grdimage(cmd0::String, arg1, arg2, arg3, O::Bool, K::Bool, d::Dict)
+function _grdimage(w::wrapGrids, arg2, arg3, O::Bool, K::Bool, d::Dict{Symbol, Any})
+	cmd0, arg1 = unwrapGrids(w)
 
 	arg4 = nothing		# For the r,g,b + intensity case
 

@@ -69,7 +69,7 @@ function legend(cmd0::String, arg1, O::Bool, K::Bool, d::Dict{Symbol, Any})
 		# Must also recreate a NT if any of 'fontsize' or 'font' is present in 'd' (because of how digests_legend_bag works)
 		((val = find_in_dict(d, [:fontsize])[1]) !== nothing) && (d[:leg] = (fontsize=val,))
 		((val = find_in_dict(d, [:font])[1]) !== nothing) && (haskey(d, :leg) ? d[:leg] = (fontsize=d[:leg], font=val) : d[:leg] = (font=val,))
-		((val = find_in_dict(d, [:pos :position])[1]) !== nothing) && (LEGEND_TYPE[].optsDict = Dict(:pos => val))
+		((val = find_in_dict(d, [:pos :position])[1]) !== nothing) && (LEGEND_TYPE[].optsDict = Dict{Symbol,Any}(:pos => val))
 
 		digests_legend_bag(d)	# It's over now, lets show up (or not) and return
 		return (do_show || figname != "") ? showfig(show=do_show, savefig=figname) : nothing

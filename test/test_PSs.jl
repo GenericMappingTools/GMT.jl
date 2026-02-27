@@ -229,10 +229,10 @@ ternary(d, R="0/100/0/100/0/100", B="afg", contour=(annot=20, cont=10), clockwis
 ternary(d, R="0/100/0/100/0/100", B="afg", contourf=true)
 ternary(d, R="0/100/0/100/0/100", B="afg", image=true, contour=true, Vd=dbg2)
 ternary()
-d = Dict(:a=>"", :frame => (annot=:a, grid=8, alabel=:a, blabel=:b, clabel=:c, suffix=" %"));
+d = Dict{Symbol,Any}(:a=>"", :frame => (annot=:a, grid=8, alabel=:a, blabel=:b, clabel=:c, suffix=" %"));
 GMT.parse_B4ternary!(d);
 @test d[:B] == " -Baag8+u\" %\"+la -Bbag8+u\" %\"+lb -Bcag8+u\" %\"+lc"
-d = Dict(:a=>"", :labels => (:a, :b, :c));
+d = Dict{Symbol,Any}(:a=>"", :labels => (:a, :b, :c));
 GMT.parse_B4ternary!(d);
 @test d[:B] == " -Baafg+la -Bbafg+lb -Bcafg+lc"
 

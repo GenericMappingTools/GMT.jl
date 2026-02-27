@@ -2,7 +2,7 @@
 
 const KW = Dict{Symbol,Any}
 nt2dict(nt::NamedTuple) = nt2dict(; nt...)
-nt2dict(; kw...) = Dict(kw)
+nt2dict(; kw...) = Dict{Symbol,Any}(kw)
 # Need the Symbol.() below in oder to work from PyCall
 # A darker an probably more efficient way is: ((; kw...) -> kw.data)(; d...) but breaks in PyCall
 dict2nt(d::AbstractDict)::NamedTuple = NamedTuple{Tuple(Symbol.(keys(d)))}(values(d))
@@ -1425,15 +1425,18 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_type_anchor(d::Dict, cmd::String, symbs::VMs, mapa::NamedTuple, def_CS::Char, del::Bool=true)
+	_parse_type_anchor(d, cmd, symbs, Dict{Symbol,Any}(nt2dict(mapa)), def_CS, del)
+end
+function _parse_type_anchor(d::Dict, cmd::String, symbs::VMs, mapa::Dict{Symbol,Any}, def_CS::Char, del::Bool)
 	# SYMBS: [:D :pos :position] | ...
-	# MAPA is the NamedTuple of suboptions
+	# MAPA is the Dict of suboptions (converted from NamedTuple in wrapper)
 	# def_CS is the default "Coordinate system". Colorbar has 'J', logo has 'g', many have 'j'
 	(SHOW_KWARGS[]) && return print_kwarg_opts(symbs, mapa)	# Just print the kwargs of this option call
 	got_str = false
 	for s in symbs		# Check if arg value is a string. If yes, ignore 'def_CS'
 		(haskey(d, s) && isa(d[s], StrSymb)) && (got_str = true; break)
 	end
-	opt::String = add_opt(d, "", "", symbs, mapa; del=del)
+	opt::String = _add_opt_2(d, "", "", vec(symbs), mapa, nothing, del, false, false, true)
 	(!isempty(opt) && symbs[1] == :D && def_CS == 'J' && opt[1] == '+') && (opt = "RM" * opt) # Special case in colorbar whith +e (triangs)
 	if (!got_str && opt != "" && opt[1] != 'j' && opt[1] != 'J' && opt[1] != 'g' && opt[1] != 'n' && opt[1] != 'x')
 		opt = def_CS * opt
@@ -1443,7 +1446,7 @@ function parse_type_anchor(d::Dict, cmd::String, symbs::VMs, mapa::NamedTuple, d
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_UXY(cmd::String, d::Dict, aliases, opt::Char)::String
+function parse_UXY(cmd::String, d::Dict{Symbol,Any}, aliases, opt::Char)::String
 	# Parse the global -U, -X, -Y options. Return CMD same as input if no option OPT in args
 	# ALIASES: [:X :xshift :x_offset] (same for Y) or [:U :time_stamp :timestamp]
 	val, symb = find_in_dict(d, aliases, true)
@@ -1457,7 +1460,7 @@ function parse_UXY(cmd::String, d::Dict, aliases, opt::Char)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_V(d::Dict, cmd::String)::String
+function parse_V(d::Dict{Symbol,Any}, cmd::String)::String
 	# Parse the global -V option. Return CMD same as input if no -V option in args
 	if ((val = find_in_dict(d, [:V :verbose], true)[1]) !== nothing)
 		if (isa(val, Bool) && val) cmd *= " -V"
@@ -1468,14 +1471,14 @@ function parse_V(d::Dict, cmd::String)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_V_params(d::Dict, cmd::String)
+function parse_V_params(d::Dict{Symbol,Any}, cmd::String)
 	# Parse the global -V option and the --PAR=val. Return CMD same as input if no options in args
 	cmd = parse_V(d, cmd)
 	return parse_params(d, cmd)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_UVXY(d::Dict, cmd::String)
+function parse_UVXY(d::Dict{Symbol,Any}, cmd::String)
 	cmd = parse_V(d, cmd)
 	cmd = parse_UXY(cmd, d, [:X :x_offset :xshift], 'X')
 	cmd = parse_UXY(cmd, d, [:Y :y_offset :yshift], 'Y')
@@ -1484,13 +1487,13 @@ function parse_UVXY(d::Dict, cmd::String)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_a(d::Dict, cmd::String)
+function parse_a(d::Dict{Symbol,Any}, cmd::String)
 	# Parse the global -a option. Return CMD same as input if no -a option in args
 	parse_helper(cmd, d, [:a :aspatial], " -a")
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_b(d::Dict, cmd::String, symbs::Array{Symbol}=[:b :binary], io::String="")
+function parse_b(d::Dict{Symbol,Any}, cmd::String, symbs::Array{Symbol}=[:b :binary], io::String="")
 	# Parse the global -b option. Return CMD same as input if no -b option in args
 	cmd_::String = add_opt(d, "", string(symbs[1])*io, symbs, 
 	               (ncols=("", arg2str, 1), type=("", data_type, 2), swapp_bytes="_w", little_endian="_+l", big_endian="+b"))
@@ -1501,7 +1504,7 @@ parse_bo(d::Dict, cmd::String) = parse_b(d, cmd, [:b :bo :binary_out], "o")
 # ---------------------------------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------------------------------
-function parse_c(d::Dict, cmd::String)::Tuple{String, String}
+function parse_c(d::Dict{Symbol,Any}, cmd::String)::Tuple{String, String}
 	# Most of the work here is because GMT counts from 0 but here we count from 1, so conversions needed
 	opt_val::String = ""
 	if ((val = find_in_dict(d, [:c :panel])[1]) !== nothing)
@@ -1521,7 +1524,7 @@ function parse_c(d::Dict, cmd::String)::Tuple{String, String}
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_d(d::Dict, cmd::String, symbs::VMs=[:d :nodata])
+function parse_d(d::Dict{Symbol,Any}, cmd::String, symbs::VMs=[:d :nodata])
 	(SHOW_KWARGS[]) && return (print_kwarg_opts(symbs, "$(symbs[2])=val"),"")
 	parse_helper(cmd, d, [:d :nodata], " -d")
 end
@@ -1534,7 +1537,7 @@ parse_i(d::Dict,  cmd::String) = parse_helper(cmd, d, [:i :incols :incol], " -i"
 parse_j(d::Dict,  cmd::String) = parse_helper(cmd, d, [:j :metric :spherical :spherical_dist], " -j")
 
 # ---------------------------------------------------------------------------------
-function parse_f(d::Dict, cmd::String)
+function parse_f(d::Dict{Symbol,Any}, cmd::String)
 	# For plotting time (-ft) in X one must add 'T' to -JX but that is boring and difficult to automatize
 	# GMT6.3 now has it internal but previous versions no. So do that job here.
 	cmd, opt_f = parse_helper(cmd, d, [:f :geog :colinfo :coltypes :coltype], " -f")
@@ -1550,7 +1553,7 @@ function parse_f(d::Dict, cmd::String)
 end
 
 # ---------------------------------------------------------------------------------
-function parse_l(d::Dict, cmd::String, del::Bool=false)
+function parse_l(d::Dict{Symbol,Any}, cmd::String, del::Bool=false)
 	cmd_::String = add_opt(d, "", "l", [:l :legend],
 		(text=("", arg2str, 1), hline=("+D", add_opt_pen), vspace="+G", header="+H", image="+I", line_text="+L", n_cols="+N", ncols="+N", ssize="+S", start_vline=("+V", add_opt_pen), end_vline=("+v", add_opt_pen), font=("+f", font), fill="+g", justify="+j", offset="+o", frame_pen=("+p", add_opt_pen), width="+w", scale="+x"); del=del)
 	# Now make sure blanks in legend text are wrapped in ""
@@ -1564,7 +1567,7 @@ function parse_l(d::Dict, cmd::String, del::Bool=false)
 end
 
 # ---------------------------------------------------------------------------------
-function parse_n(d::Dict, cmd::String, gmtcompat::Bool=false)
+function parse_n(d::Dict{Symbol,Any}, cmd::String, gmtcompat::Bool=false)
 	# Parse the global -n option. Return CMD same as input if no -n option in args
 	# The GMTCOMPAT arg is used to reverse the default aliasing in GMT, which is ON by default
 	# However, practise has shown that this makes projecting images significantly slower with not clear benefits
@@ -1583,11 +1586,11 @@ function parse_n(d::Dict, cmd::String, gmtcompat::Bool=false)
 end
 
 # ---------------------------------------------------------------------------------
-parse_o(d::Dict, cmd::String) = parse_helper(cmd, d, [:o :outcols :outcol], " -o", ',')
-parse_p(d::Dict, cmd::String) = parse_helper(cmd, d, [:p :view :perspective], " -p")
+parse_o(d::Dict{Symbol,Any}, cmd::String) = parse_helper(cmd, d, [:o :outcols :outcol], " -o", ',')
+parse_p(d::Dict{Symbol,Any}, cmd::String) = parse_helper(cmd, d, [:p :view :perspective], " -p")
 
 # ---------------------------------------------------------------------------------
-function parse_q(d::Dict, cmd::String)
+function parse_q(d::Dict{Symbol,Any}, cmd::String)
 	parse_helper(cmd, d, [:q :inrow :inrows], " -q")
 	parse_helper(cmd, d, [:qo :outrow :outrows], " -qo")
 end
@@ -1595,15 +1598,15 @@ end
 # ---------------------------------------------------------------------------------------------------
 # Parse the global -: option. Return CMD same as input if no -: option in args
 # But because we can't have a variable called ':' we use only the aliases
-parse_swap_xy(d::Dict, cmd::String) = parse_helper(cmd, d, [:yx :swap_xy], " -:")
+parse_swap_xy(d::Dict{Symbol,Any}, cmd::String) = parse_helper(cmd, d, [:yx :swap_xy], " -:")
 
 # ---------------------------------------------------------------------------------------------------
 # Parse the global -? option. Return CMD same as input if no -? option in args
-parse_s(d::Dict, cmd::String) = parse_helper(cmd, d, [:s :skiprows :skip_NaN], " -s")
-parse_x(d::Dict, cmd::String) = parse_helper(cmd, d, [:x :cores :n_threads], " -x")
+parse_s(d::Dict{Symbol,Any}, cmd::String) = parse_helper(cmd, d, [:s :skiprows :skip_NaN], " -s")
+parse_x(d::Dict{Symbol,Any}, cmd::String) = parse_helper(cmd, d, [:x :cores :n_threads], " -x")
 
 # ---------------------------------------------------------------------------------------------------
-function parse_w(d::Dict, cmd::String)
+function parse_w(d::Dict{Symbol,Any}, cmd::String)
 	# -wy|a|w|d|h|m|s|cperiod[/phase][+ccol]
 	val, symb = find_in_dict(d, [:w :wrap :cyclic], false)
 	(val === nothing) && return cmd, ""
@@ -1627,7 +1630,7 @@ function parse_w(d::Dict, cmd::String)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_r(d::Dict, cmd::String, del::Bool=true)
+function parse_r(d::Dict{Symbol,Any}, cmd::String, del::Bool=true)
 	# Accept both numeric (0 or != 0) and string/symbol arguments
 	opt_val::String = ""
 	val = find_in_dict(d, [:r :reg :registration], del)[1]
@@ -1639,7 +1642,7 @@ function parse_r(d::Dict, cmd::String, del::Bool=true)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_t(d::Dict, cmd::String, del::Bool=true)
+function parse_t(d::Dict{Symbol,Any}, cmd::String, del::Bool=true)
 	opt_val::String = ""
 	if ((val = find_in_dict(d, [:t :alpha :transparency], del)[1]) !== nothing)
 		(val == "" || val == 0) && return cmd, ""		# To allow programatically calls were -t is unknown
@@ -1652,7 +1655,7 @@ function parse_t(d::Dict, cmd::String, del::Bool=true)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_write(d::Dict, cmd::String)::String
+function parse_write(d::Dict{Symbol,Any}, cmd::String)::String
 	if ((val = hlp_desnany_str(d, [:write :savefile :|>])) !== "")
 		cmd *=  " > " * val
 	end
@@ -1660,7 +1663,7 @@ function parse_write(d::Dict, cmd::String)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_append(d::Dict, cmd::String)::String
+function parse_append(d::Dict{Symbol,Any}, cmd::String)::String
 	if ((val = hlp_desnany_str(d, [:append])) !== "")
 		cmd *=  " >> " * val
 	end
@@ -1668,7 +1671,7 @@ function parse_append(d::Dict, cmd::String)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_helper(cmd::String, d::Dict, symbs::VMs, opt::String, sep='/')::Tuple{String, String}
+function parse_helper(cmd::String, d::Dict{Symbol,Any}, symbs::VMs, opt::String, sep='/')::Tuple{String, String}
 	# Helper function to the parse_?() global options.
 	(SHOW_KWARGS[]) && return (print_kwarg_opts(symbs, "(Common option not yet expanded)"),"")
 	opt_val::String = ""
@@ -1680,7 +1683,7 @@ function parse_helper(cmd::String, d::Dict, symbs::VMs, opt::String, sep='/')::T
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_common_opts(d::Dict, cmd::String, opts::VMs; first::Bool=true, is3D::Bool=false)::Tuple{String, String}
+function parse_common_opts(d::Dict{Symbol,Any}, cmd::String, opts::VMs; first::Bool=true, is3D::Bool=false)::Tuple{String, String}
 	(SHOW_KWARGS[]) && return (print_kwarg_opts(opts, "(Common options)"),"")	# Just print the options
 
 	ignore_J, ignore_R, ignore_p, ignore_t = false, false, false, false
@@ -1754,7 +1757,7 @@ function parse_common_opts(d::Dict, cmd::String, opts::VMs; first::Bool=true, is
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_theme(d::Dict, del::Bool=true)
+function parse_theme(d::Dict{Symbol,Any}, del::Bool=true)
 	# This must always be processed before parse_B so it's the first call in that function
 	if ((val = find_in_dict(d, [:theme], del)[1]) !== nothing)
 		isa(val, NamedTuple) && theme(string(val[1])::String; nt2dict(val)...)
@@ -1763,7 +1766,7 @@ function parse_theme(d::Dict, del::Bool=true)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_these_opts(cmd::String, d::Dict, opts)::String
+function parse_these_opts(cmd::String, d::Dict{Symbol,Any}, opts)::String
 	# Parse a group of options that individualualy would had been parsed as (example):
 	# cmd = add_opt(d, cmd, "A", [:A :horizontal])
 	for opt in opts
@@ -1777,7 +1780,7 @@ end
 parse_G(d::Dict, cmd::String) = parse_helper(cmd, d, [:G :save :write :outgrid :outfile], " -G")
 
 # ---------------------------------------------------------------------------------------------------
-function parse_I(d::Dict, cmd::String, symbs, opt::String, del::Bool=true)::String
+function parse_I(d::Dict{Symbol,Any}, cmd::String, symbs, opt::String, del::Bool=true)::String
 	# Parse the quasi-global -I option. But arguments can be strings, arrays, tuples or NamedTuples
 	# At the end we must recreate this syntax: xinc[unit][+e|n][/yinc[unit][+e|n]] or
 	get_that_string(arg)::String = string(arg)::String		# Function barrier. Shuting up JET, etc.
@@ -1816,7 +1819,7 @@ function parse_I(d::Dict, cmd::String, symbs, opt::String, del::Bool=true)::Stri
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_params(d::Dict, cmd::String; del::Bool=true)::String
+function parse_params(d::Dict{Symbol,Any}, cmd::String; del::Bool=true)::String
 	# Parse the gmt.conf parameters when used from within the modules. Return a --PAR=val string
 	# The input to this kwarg can be a tuple (e.g. (PAR,val)) or a NamedTuple (P1=V1, P2=V2,...)
 
@@ -1838,7 +1841,7 @@ function parse_params(d::Dict, cmd::String; del::Bool=true)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function add_opt_pen(d::Dict, @nospecialize(symbs::Union{Nothing, VMs}); opt::String="", del::Bool=true)::String
+function add_opt_pen(d::Dict{Symbol,Any}, @nospecialize(symbs::Union{Nothing, VMs}); opt::String="", del::Bool=true)::String
 	# Build a pen option. Input can be either a full hard core string or spread in lw (or lt), lc, ls, etc or a tuple
 
 	(SHOW_KWARGS[]) && return print_kwarg_opts(symbs, "NamedTuple | Tuple | String | Number")	# Just print the options
@@ -1871,7 +1874,7 @@ function add_opt_pen(d::Dict, @nospecialize(symbs::Union{Nothing, VMs}); opt::St
 				c::String = (:color in k) ? string(val[:color]) : ""
 				s::String = (:style in k) ? string(val[:style]) : ""
 				if (w != "" || c != "" || s != "")
-					out = opt * add_opt_pen(Dict(:pen => (w,c,s)), symbs, opt="", del=false)
+					out = opt * add_opt_pen(Dict{Symbol,Any}(:pen => (w,c,s)), symbs, opt="", del=false)
 				else
 					d2 = nt2dict(val)				# Decompose the NT and feed into this-self
 					t = add_opt_pen(d2, symbs, opt="", del=false)
@@ -1920,7 +1923,7 @@ function add_opt_pen(d::Dict, @nospecialize(symbs::Union{Nothing, VMs}); opt::St
 end
 
 # ------------------------------------------------------------------------------------------------------
-function helper_arrows(d::Dict; del::Bool=true)::String
+function helper_arrows(d::Dict{Symbol,Any}; del::Bool=true)::String
 	# Helper function to set the vector head attributes
 	(SHOW_KWARGS[]) && return print_kwarg_opts([:arrow :vector :arrow4 :vector4 :vecmap :geovec :geovector], "NamedTuple | String")
 
@@ -1939,7 +1942,7 @@ function helper_arrows(d::Dict; del::Bool=true)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function opt_pen(d::Dict, opt::Char, symbs::VMs)::String
+function opt_pen(d::Dict{Symbol,Any}, opt::Char, symbs::VMs)::String
 	# Create an option string of the type -Wpen
 	(SHOW_KWARGS[]) && return print_kwarg_opts(symbs, "Tuple | String | Number")	# Just print the options
 
@@ -1986,7 +1989,7 @@ function parse_pen(pen::Tuple)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_pen_color(d::Dict, symbs=nothing, del::Bool=false)::String
+function parse_pen_color(d::Dict{Symbol,Any}, symbs=nothing, del::Bool=false)::String
 	# Need this as a separate fun because it's used from modules
 	lc::String = ""
 	(symbs === nothing) && (symbs = [:lc :linecolor])
@@ -1997,7 +2000,7 @@ function parse_pen_color(d::Dict, symbs=nothing, del::Bool=false)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function build_pen(d::Dict, del::Bool=false)::String
+function build_pen(d::Dict{Symbol,Any}, del::Bool=false)::String
 	# Search for lw, lc, ls in d and create a pen string in case they exist
 	# If no pen specs found, return the empty string ""
 
@@ -2060,7 +2063,7 @@ function parse_arg_and_pen(arg::Tuple, sep::String="/", pen::Bool=true, opt::Str
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_ls_code!(d::Dict)
+function parse_ls_code!(d::Dict{Symbol,Any})
 	if ((val = find_in_dict(d, [:ls :linestyle])[1]) !== nothing)
 		if (isa(val, String) && (val[1] == '-' || val[1] == '.' || isdigit(val[1])))
 			d[:ls] = val	# Assume it's a "--." or the more complex len_gap_len_gap... form. So reset it and return
@@ -2072,8 +2075,8 @@ function parse_ls_code!(d::Dict)
 	return nothing
 end
 
-mk_styled_line!(d::Dict, code::Symbol) = mk_styled_line!(d, string(code))
-function mk_styled_line!(d::Dict, code::String)
+mk_styled_line!(d::Dict{Symbol,Any}, code::Symbol) = mk_styled_line!(d, string(code))
+function mk_styled_line!(d::Dict{Symbol,Any}, code::String)
 	# Parse the CODE string and generate line style. These line styles can be a single annotated line with symbols
 	# or two lines, one a plain line and the other the symbols to plot. This is achieved by tweaking the D dict
 	# and inserting in it the members that the common_plot_xyz function is expecting.
@@ -2119,7 +2122,7 @@ function mk_styled_line!(d::Dict, code::String)
 			d[:compact] = line_decorated_with_symbol(d, isfront, lw=lw, lc=lc, symbol=symbol)
 		end
 	else											# e.g. lineCirc
-		marca = get_marker_name(Dict(:marker => symbol), nothing, [:marker], false)[1]	# This fun lieves in psxy.jl
+		marca = get_marker_name(Dict{Symbol,Any}(:marker => symbol), nothing, [:marker], false)[1]	# This fun lieves in psxy.jl
 		(marca == "") && error("The selected symbol [$(symbol)] is invalid")
 		noinv_ML = isletter(code[end])				# If false, by default use a white outline and a fill color
 
@@ -2141,7 +2144,7 @@ function mk_styled_line!(d::Dict, code::String)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function line_decorated_with_symbol(d::Dict, isfront::Bool=false; lw=0.75, lc="black", ms=0, symbol="circ", dist=0, fill="white")::String
+function line_decorated_with_symbol(d::Dict{Symbol,Any}, isfront::Bool=false; lw=0.75, lc="black", ms=0, symbol="circ", dist=0, fill="white")::String
 	# Create an Annotated line with few controls. We estimate the symbol size after the line thickness.
 	(lc == "") && (lc = "black")
 	_lw = (lw == "") ? 0.75 : isa(lw, String) ? parse(Float64, lw) : lw		# If last case is not numeric ...
@@ -2156,7 +2159,7 @@ function line_decorated_with_symbol(d::Dict, isfront::Bool=false; lw=0.75, lc="b
 end
 
 # ---------------------------------------------------------------------------------------------------
-function line_front(d::Dict, gap, lw, lc, fill, symbol, ss)::String
+function line_front(d::Dict{Symbol,Any}, gap, lw, lc, fill, symbol, ss)::String
 	d[:G] = fill
 	if (symbol[1] == 's')				# Arrows (slips) are tricky
 		ss *= 4;	gap *= 2
@@ -2177,7 +2180,7 @@ function line_decorated_with_string(str::AbstractString; dist=0)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function arg2str(d::Dict, symbs)::String
+function arg2str(d::Dict{Symbol,Any}, symbs)::String
 	# Version that allow calls from add_opt()
 	arg2str(find_in_dict(d, symbs)[1])
 end
@@ -2216,7 +2219,7 @@ function arg2str(arg::GMTdataset, sep='/')::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function finish_PS(d::Dict, cmd::Vector{String}, output::String, K::Bool, O::Bool)::Vector{String}
+function finish_PS(d::Dict{Symbol,Any}, cmd::Vector{String}, output::String, K::Bool, O::Bool)::Vector{String}
 	# Finish a PS creating command. All PS creating modules should use this.
 	IamModern[] && return cmd  			# In Modern mode this fun does not play
 	for k = 1:length(cmd)
@@ -2228,7 +2231,7 @@ function finish_PS(d::Dict, cmd::Vector{String}, output::String, K::Bool, O::Boo
 end
 
 # ---------------------------------------------------------------------------------------------------
-function finish_PS(d::Dict, cmd::String, output::String, K::Bool, O::Bool)::String
+function finish_PS(d::Dict{Symbol,Any}, cmd::String, output::String, K::Bool, O::Bool)::String
 	if (!O && ((val = hlp_desnany_str(d, [:P :portrait])) === ""))  cmd *= " -P"  end
 
 	opt = (K && !O) ? " -K" : ((K && O) ? " -K -O" : "")
@@ -2246,7 +2249,7 @@ function finish_PS(d::Dict, cmd::String, output::String, K::Bool, O::Bool)::Stri
 end
 
 # ---------------------------------------------------------------------------------------------------
-function prepare2geotif(d::Dict, cmd::Vector{String}, opt_T::String, O::Bool)::Tuple{Vector{String}, String}
+function prepare2geotif(d::Dict{Symbol,Any}, cmd::Vector{String}, opt_T::String, O::Bool)::Tuple{Vector{String}, String}
 	# Prepare automatic settings to allow creating a GeoTIF or a KML from a PS map
 	# Makes use of psconvert -W option
 	function helper2geotif(cmd::String)::String
@@ -2276,7 +2279,7 @@ function prepare2geotif(d::Dict, cmd::Vector{String}, opt_T::String, O::Bool)::T
 		elseif (isa(val, NamedTuple) || isa(val, AbstractDict))
 			# [+tdocname][+nlayername][+ofoldername][+aaltmode[alt]][+lminLOD/maxLOD][+fminfade/maxfade][+uURL]
 			isa(val, AbstractDict) && (val = Base.invokelatest(dict2nt, val))
-			opt_T = add_opt(Base.invokelatest(Dict,:kml => val), " -TG -W+k", "", [:kml],
+			opt_T = add_opt(Base.invokelatest(Dict{Symbol,Any},:kml => val), " -TG -W+k", "", [:kml],
 							(title="+t", layer="+n", layername="+n", folder="+o", foldername="+o", altmode="+a", LOD=("+l", arg2str), fade=("+f", arg2str), URL="+u"))
 		end
 	end
@@ -2284,11 +2287,11 @@ function prepare2geotif(d::Dict, cmd::Vector{String}, opt_T::String, O::Bool)::T
 end
 
 # ---------------------------------------------------------------------------------------------------
-function add_opt_1char(cmd::String, d::Dict, symbs::Vector{Matrix{Symbol}}; del::Bool=true)::String
+function add_opt_1char(cmd::String, d::Dict{Symbol,Any}, symbs::Vector{Matrix{Symbol}}; del::Bool=true)::String
 	# Scan the D Dict for SYMBS keys and if found create the new option OPT and append it to CMD
 	# If DEL == true we remove the found key.
 	# The keyword value must be a string, symbol or a tuple of them. We only retain the first character of each item
-	# Ex:  GMT.add_opt_1char("", Dict(:N => ("abc", "sw", "x"), :Q=>"datum"), [[:N :geod2aux], [:Q :list]]) == " -Nasx -Qd"
+	# Ex:  GMT.add_opt_1char("", Dict{Symbol,Any}(:N => ("abc", "sw", "x"), :Q=>"datum"), [[:N :geod2aux], [:Q :list]]) == " -Nasx -Qd"
 	(SHOW_KWARGS[]) && return print_kwarg_opts(symbs, "Str | Symb | Tuple")
 	for opt in symbs
 		((val = find_in_dict(d, opt, del)[1]) === nothing) && continue
@@ -2306,7 +2309,7 @@ function add_opt_1char(cmd::String, d::Dict, symbs::Vector{Matrix{Symbol}}; del:
 end
 
 # ---------------------------------------------------------------------------------------------------
-function add_opt(d::Dict, cmd::String, opt::String, mapa::NamedTuple)::String
+function add_opt(d::Dict{Symbol,Any}, cmd::String, opt::String, mapa::NamedTuple)::String
 	# Thin wrapper: convert NT to Dict to compile _add_opt only once
 	_add_opt_1(d, cmd, opt, Dict{Symbol,Any}(nt2dict(mapa)))
 end
@@ -2327,7 +2330,7 @@ function _add_opt_1(d::Dict, cmd::String, opt::String, mapa::Dict{Symbol,Any})::
 end
 
 #
-function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs)::String
+function add_opt(d::Dict{Symbol,Any}, cmd::String, opt::String, symbs::VMs)::String
 	((val = find_in_dict(d, symbs, true)[1]) === nothing) && return cmd
 	isa(val, AbstractDict) && (val = Base.invokelatest(dict2nt, val))
 	isa(val, NamedTuple) && return cmd # Happens when the inline 'inset' passed a NT with options for inset itself and not the module it called
@@ -2336,14 +2339,14 @@ function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs)::String
 end
 #
 
-function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, mapa; grow_mat=nothing, del::Bool=true, expand::Bool=false, expand_str::Bool=false)::String
+function add_opt(d::Dict{Symbol,Any}, cmd::String, opt::String, symbs::VMs, mapa; grow_mat=nothing, del::Bool=true, expand::Bool=false, expand_str::Bool=false)::String
 	# Thin wrapper: convert NamedTuple mapa to Dict to avoid recompilation for each distinct NT type
 	mapa_is_nt = isa(mapa, NamedTuple)
 	_mapa = mapa_is_nt ? Dict{Symbol,Any}(nt2dict(mapa)) : (mapa === nothing ? Dict{Symbol,Any}() : mapa)
 	_add_opt_2(d, cmd, opt, vec(symbs), _mapa, grow_mat, del, expand, expand_str, mapa_is_nt)
 end
 
-function _add_opt_2(d::Dict, cmd::String, opt::String, symbs::Vector{Symbol}, @nospecialize(mapa), @nospecialize(grow_mat), del::Bool, expand::Bool, expand_str::Bool, mapa_is_nt::Bool)::String
+function _add_opt_2(d::Dict{Symbol,Any}, cmd::String, opt::String, symbs::Vector{Symbol}, @nospecialize(mapa), @nospecialize(grow_mat), del::Bool, expand::Bool, expand_str::Bool, mapa_is_nt::Bool)::String
 	# Scan the D Dict for SYMBS keys and if found create the new option OPT and append it to CMD
 	# If DEL == false we do not remove the found key.
 	# 'grow_mat=mat', is a special case to append to a matrix (can't realy be done in Julia)
@@ -2428,7 +2431,7 @@ function genFun(this_key::Symbol, user_input::NamedTuple, mapa)::String
 		if (haskey(val_namedTup, key[k]))
 			val = val_namedTup[key[k]]
 			if (isa(val, Function))
-				if (val == add_opt_fill) out *= val(Dict(key[k] => user_input[key[k]]))::String end
+				if (val == add_opt_fill) out *= val(Dict{Symbol,Any}(key[k] => user_input[key[k]]))::String end
 			else
 				out *= string(val_namedTup[key[k]])::String
 			end
@@ -2462,14 +2465,14 @@ function add_opt_1(nt::NamedTuple, d, arg)::String #
 		if (isa(this_val, Tuple))		# Complexify it. Here, d[key[k]][2] must be a function name.
 			if (isa(nt[k], NamedTuple))
 				if (this_val[2] == add_opt_fill)
-					cmd *= string(this_val[1])::String * this_val[2]("", Dict(key[k] => nt[k]), [key[k]])::String
+					cmd *= string(this_val[1])::String * this_val[2]("", Dict{Symbol,Any}(key[k] => nt[k]), [key[k]])::String
 				else
 					local_opt = (this_val[2] == helper_decorated) ? true : nothing		# 'true' means single argout
 					cmd *= string(this_val[1])::String * this_val[2](nt2dict(nt[k]), local_opt)::String
 				end
 			else						#
 				if (length(this_val) == 2)		# Run the function
-					cmd *= string(this_val[1])::String * this_val[2](Dict(key[k] => nt[k]), [key[k]])::String
+					cmd *= string(this_val[1])::String * this_val[2](Dict{Symbol,Any}(key[k] => nt[k]), [key[k]])::String
 				else					# This branch is to deal with options -Td, -Tm, -L and -D of basemap & psscale
 					ind_o += 1
 					(ind_o > 2) && (@warn("You passed more than 1 of the exclusive options in a anchor type option, keeping first but this may break."); ind_o = 1)
@@ -2567,12 +2570,12 @@ function add_opt(fun::Function, t1::Tuple, t2::NamedTuple, del::Bool, mat)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function add_opt(d::Dict, cmd::String, opt::String, symbs::VMs, need_symb::Symbol, args, nt_opts::NamedTuple)
+function add_opt(d::Dict{Symbol,Any}, cmd::String, opt::String, symbs::VMs, need_symb::Symbol, args, nt_opts::NamedTuple)
 	# Thin wrapper: nospecialize args, convert nt_opts NT to Dict
 	_add_opt_3(d, cmd, opt, symbs, need_symb, args, nt2dict(nt_opts))
 end
 
-function _add_opt_3(d::Dict, cmd::String, opt::String, symbs::VMs, need_symb::Symbol, @nospecialize(args), nt_opts_d::Dict)
+function _add_opt_3(d::Dict{Symbol,Any}, cmd::String, opt::String, symbs::VMs, need_symb::Symbol, @nospecialize(args), nt_opts_d::Dict)
 	# This version specializes in the case where an option may transmit an array, or read a file, with optional flags.
 	# When optional flags are used we need to use NamedTuples (the NT_OPTS arg). In that case the NEED_SYMB
 	# is the keyword name (a symbol) whose value holds the array. An error is raised if this symbol is missing in D
@@ -2588,7 +2591,7 @@ function _add_opt_3(d::Dict, cmd::String, opt::String, symbs::VMs, need_symb::Sy
 		isa(val, AbstractDict) && (val = Base.invokelatest(dict2nt, val))
 		if (isa(val, Tuple) && length(val) == 2)
 			# This is crazzy trickery to accept also (e.g) C=(pratt,"200k") instead of C=(pts=pratt,dist="200k")
-			d[symb] = Base.invokelatest(dict2nt, Dict(need_symb => val[1], keys(nt_opts_d)[1] => val[2]))	# Need to patch also the input option
+			d[symb] = Base.invokelatest(dict2nt, Dict{Symbol,Any}(need_symb => val[1], keys(nt_opts_d)[1] => val[2]))	# Need to patch also the input option
 			val = d[symb]
 		end
 		if (isa(val, NamedTuple))
@@ -2627,11 +2630,11 @@ function _add_opt_3(d::Dict, cmd::String, opt::String, symbs::VMs, need_symb::Sy
 end
 
 # ---------------------------------------------------------------------------------------------------
-function add_opt_cpt(d::Dict, cmd::String, symbs::VMs, opt::Char, N_args::Int=0, arg1=nothing, arg2=nothing,
+function add_opt_cpt(d::Dict{Symbol,Any}, cmd::String, symbs::VMs, opt::Char, N_args::Int=0, arg1=nothing, arg2=nothing,
 	                 store::Bool=false, def::Bool=false, opt_T::String="", in_bag::Bool=false)
 	_add_opt_cpt(d, cmd, symbs, opt, N_args, arg1, arg2, store, def, opt_T, in_bag)
 end
-function _add_opt_cpt(d::Dict, cmd::String, symbs::VMs, opt::Char, N_args::Int, @nospecialize(arg1), @nospecialize(arg2),
+function _add_opt_cpt(d::Dict{Symbol,Any}, cmd::String, symbs::VMs, opt::Char, N_args::Int, @nospecialize(arg1), @nospecialize(arg2),
 	                 store::Bool, def::Bool, opt_T::String, in_bag::Bool)
 	# Deal with options of the form -Ccolor, where color can be a string or a GMTcpt type
 	# SYMBS is normally: CPTaliases
@@ -2713,11 +2716,11 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 #add_opt_fill(d::Dict, opt::String="") = add_opt_fill("", d, [d[collect(keys(d))[1]]], opt)	# Use ONLY when len(d) == 1
-function add_opt_fill(d::Dict, opt::String="")
+function add_opt_fill(d::Dict{Symbol,Any}, opt::String="")
 	add_opt_fill(d, [collect(keys(d))[1]], opt)			# Use ONLY when len(d) == 1
 end
-add_opt_fill(d::Dict, symbs::VMs, opt="") = add_opt_fill("", d, symbs, opt)
-function add_opt_fill(cmd::String, d::Dict, @nospecialize(symbs::VMs), opt::String="", del::Bool=true)::String
+add_opt_fill(d::Dict{Symbol,Any}, symbs::VMs, opt="") = add_opt_fill("", d, symbs, opt)
+function add_opt_fill(cmd::String, d::Dict{Symbol,Any}, @nospecialize(symbs::VMs), opt::String="", del::Bool=true)::String
 	# Deal with the area fill attributes option. Normally, -G
 	(SHOW_KWARGS[]) && return print_kwarg_opts(symbs, "NamedTuple | Tuple | Array | String | Number")
 	((val = find_in_dict(d, symbs, del)[1]) === nothing) && return cmd
@@ -2758,7 +2761,7 @@ function add_opt_fill(@nospecialize(val), cmd::String="",  opt::String="")::Stri
 end
 
 # ---------------------------------------------------------------------------------------------------
-function get_cpt_set_R(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fname::Int, arg1, arg2=nothing, arg3=nothing, prog::String="")
+function get_cpt_set_R(d::Dict{Symbol,Any}, cmd0::String, cmd::String, opt_R::String, got_fname::Int, arg1, arg2=nothing, arg3=nothing, prog::String="")
 	# Get CPT either from keyword input of from CURRENT_CPT.
 	# Also puts -R in cmd when accessing grids from grdimage|view|contour, etc... (due to a GMT bug that doesn't do it)
 	# Use CMD0 = "" to use this function from within non-grd modules
@@ -2919,7 +2922,7 @@ function get_color(val::VecOrMat{<:Real})::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function font(d::Dict, symbs)::String
+function font(d::Dict{Symbol,Any}, symbs)::String
 	((val = find_in_dict(d, symbs)[1]) !== nothing) ? font(val) : ""
 end
 font(val::String)::String = val
@@ -2971,7 +2974,8 @@ function data_type(val)
 end
 
 # ---------------------------------------------------------------------------------------------------
-axis(nt::NamedTuple, D::Dict{Symbol,Any}=Dict{Symbol,Any}(); x::Bool=false, y::Bool=false, z::Bool=false, secondary::Bool=false) = axis(D; x=x, y=y, z=z, secondary=secondary, nt...)
+axis(nt::NamedTuple, D::Dict{Symbol,Any}=Dict{Symbol,Any}(); x::Bool=false, y::Bool=false, z::Bool=false, secondary::Bool=false) =
+	axis(D; x=x, y=y, z=z, secondary=secondary, nt...)
 function axis(D::Dict{Symbol,Any}=Dict{Symbol,Any}(); x::Bool=false, y::Bool=false, z::Bool=false, secondary::Bool=false, kwargs...)::Tuple{String, Vector{Bool}}
 	d = KW(kwargs)			# These kwargs always come from the fields of a NamedTuple 
 	invokelatest(axis, D, x, y, z, secondary, d)
@@ -3322,7 +3326,7 @@ function str_with_blancs(str)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-vector_attrib(d::Dict, lixo) = vector_attrib(d)		# When comming from add_opt()
+vector_attrib(d::Dict{Symbol,Any}, lixo) = vector_attrib(d)		# When comming from add_opt()
 vector_attrib(t::NamedTuple) = vector_attrib(Dict{Symbol,Any}(pairs(t)))
 function vector_attrib(; kwargs...)::String
 	d = KW(kwargs)
@@ -3400,11 +3404,10 @@ function vector_attrib(d::Dict{Symbol,Any})::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-#vector4_attrib(d::Dict, lixo=nothing) = vector4_attrib(; d...)	# When comming from add_opt()
-vector4_attrib(t::NamedTuple) = vector4_attrib(; t...)
-function vector4_attrib(; kwargs...)::String
+vector4_attrib(t::NamedTuple) = vector4_attrib(nt2dict(t))
+vector4_attrib(; kwargs...)::String = vector4_attrib(KW(kwargs))
+function vector4_attrib(d::Dict{Symbol,Any})::String
 	# Old GMT4 vectors (still supported in GMT6)
-	d = KW(kwargs)
 	cmd::String = "t"
 	if ((val = hlp_desnany_str(d, [:align :center])) !== "")
 		c::Char = val[1]
@@ -3453,9 +3456,9 @@ end
 # ---------------------------------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------------------------------
-decorated(nt::NamedTuple) = decorated(;nt...)
-function decorated(;kwargs...)::String
-	d = KW(kwargs)
+decorated(nt::NamedTuple) = decorated(nt2dict(nt))
+decorated(; kwargs...)::String = decorated(KW(kwargs))
+function decorated(d::Dict{Symbol,Any})::String
 	cmd::String, optD::String = helper_decorated(d)
 
 	if (haskey(d, :dec2))				# -S~ mode (decorated, with symbols, lines).
@@ -3510,7 +3513,7 @@ end
 
 # ---------------------------------------------------------
 helper_decorated(nt::NamedTuple, compose=false) = helper_decorated(nt2dict(nt), compose)
-function helper_decorated(d::Dict, compose=false)
+function helper_decorated(d::Dict{Symbol,Any}, compose=false)
 	# Helper function to deal with the gap and symbol size parameters.
 	# At same time it's also what we need to call to build up the grdcontour -G option.
 	cmd::String = "";	optD::String = ""
@@ -3576,7 +3579,7 @@ function helper_decorated(d::Dict, compose=false)
 end
 
 # -------------------------------------------------
-function parse_quoted(d::Dict, opt)::String
+function parse_quoted(d::Dict{Symbol,Any}, opt)::String
 	# This function is isolated from () above to allow calling it seperately from grdcontour
 	# In fact both -A and -G grdcontour options are almost equal to a decorated line in psxy.
 	# So we need a mechanism to call it all at once (psxy) or in two parts (grdcontour).
@@ -3619,7 +3622,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------------------------------
-function fname_out(d::Dict, del::Bool=false)
+function fname_out(d::Dict{Symbol,Any}, del::Bool=false)
 	# Create a file name in the TMP dir when OUT holds only a known extension. The name is: GMT_user.ext
 
 	EXT::String = FMT[];	fname::AbstractString = ""
@@ -3665,7 +3668,7 @@ function fname_out(d::Dict, del::Bool=false)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function read_data(d::Dict, fname::String, cmd::String, arg, opt_R::String="", is3D::Bool=false, get_info::Bool=false)
+function read_data(d::Dict{Symbol,Any}, fname::String, cmd::String, arg, opt_R::String="", is3D::Bool=false, get_info::Bool=false)
 	# Use 'get_info=true' to force reading the file when fname != ""
 	
 	if (isa(arg, GMTfv) || isa(arg, Vector{GMTfv}))	# A quick and dirty way to parse the GMTfv type
@@ -3732,7 +3735,7 @@ function read_data_barr_1(d, arg_is_nothing::Bool)
 	return arg
 end
 
-function _read_data(d::Dict, cmd::String, arg, opt_R::String="", is3D::Bool=false, get_info::Bool=false,
+function _read_data(d::Dict{Symbol,Any}, cmd::String, arg, opt_R::String="", is3D::Bool=false, get_info::Bool=false,
 	opt_i::String="", opt_di::String="", opt_yx::String="")#::Tuple{String, Union{Nothing, GDtype}, String, Matrix{Float64}, String}
 	# In case DATA holds a file name, read that data and put it in ARG
 	# Also compute a tight -R if this was not provided. This forces reading a the `fname` file if provided.
@@ -3863,7 +3866,7 @@ function _read_data(d::Dict, cmd::String, arg, opt_R::String="", is3D::Bool=fals
 end
 
 # ---------------------------------------------------------------------------------------------------
-round_wesn(wesn::Array{Int}, geo::Bool=false, pad=zeros(2)) = round_wesn(float(wesn), geo, pad)
+round_wesn(wesn::Array{Int}, geo::Bool=false, pad=zeros(2)) = round_wesn(Float64.(wesn), geo, pad)
 function round_wesn(wesn::Array{Float64, 2}, geo::Bool=false, pad=zeros(2))::Array{Float64, 2}
 	# When input is an one row matix return an output of same size
 	_wesn = vec(wesn)
@@ -4036,7 +4039,7 @@ function is_gridtri(D)::Bool
 end
 
 # ---------------------------------------------------------------------------------------------------
-function find_data(d::Dict, cmd0::String, cmd::String, args...)
+function find_data(d::Dict{Symbol,Any}, cmd0::String, cmd::String, args...)
 	# ...
 
 	(SHOW_KWARGS[]) && return cmd, 0, nothing		# In HELP mode we do nothing here
@@ -4101,7 +4104,7 @@ function find_data(d::Dict, cmd0::String, cmd::String, args...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function write_data(d::Dict, cmd::String)::String
+function write_data(d::Dict{Symbol,Any}, cmd::String)::String
 	# Check if we need to save to file (redirect stdout)
 	if     ((val = hlp_desnany_str(d, [:|>]))  !== "")     cmd = string(cmd, " > ", val)
 	elseif ((val = hlp_desnany_str(d, [:write]))  !== "")  cmd = string(cmd, " > ", val)
@@ -4111,7 +4114,7 @@ function write_data(d::Dict, cmd::String)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function common_grd(d::Dict, cmd0::String, cmd::String, prog::String, args...)
+function common_grd(d::Dict{Symbol,Any}, cmd0::String, cmd::String, prog::String, args...)
 	n_args = 0
 	for k = 1:numel(args) if (args[k] !== nothing)  n_args += 1  end  end	# Drop the nothings
 	if     (n_args <= 1)  cmd, got_fname, arg1 = find_data(d, cmd0, cmd, args[1])
@@ -4123,7 +4126,7 @@ function common_grd(d::Dict, cmd0::String, cmd::String, prog::String, args...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function common_grd(d::Dict, cmd::String, args...)
+function common_grd(d::Dict{Symbol,Any}, cmd::String, args...)
 	# This chunk of code is shared by several grdxxx & other modules, so wrap it in a function
 	IamModern[] && (cmd = replace(cmd, " -R " => " "))
 	(haskey(d, :Vd) && d[:Vd] > 2) && show_args_types(args...)
@@ -4139,8 +4142,8 @@ function common_grd(d::Dict, cmd::String, args...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-dbg_print_cmd(d::Dict, cmd::String) = dbg_print_cmd(d, [cmd])
-function dbg_print_cmd(d::Dict, cmd::Vector{String})
+dbg_print_cmd(d::Dict{Symbol,Any}, cmd::String) = dbg_print_cmd(d, [cmd])
+function dbg_print_cmd(d::Dict{Symbol,Any}, cmd::Vector{String})
 	# Print the gmt command when the Vd>=1 kwarg was used.
 	# In case of CONVERT_SYNTAX = true, just put the cmds in a global var 'cmds_history' used in movie
 
@@ -4287,9 +4290,9 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 # Use only to close PS fig and optionally convert/show
-function showfig(; kwargs...)
+showfig(; kwargs...) = showfig(KW(kwargs))
+function showfig(d::Dict{Symbol,Any})
 	helper_showfig4modern() && return nothing				# If called from modern mode we are done here.
-	d = KW(kwargs)
 	(!haskey(d, :show)) && (d[:show] = true)				# The default is to show
 	CTRL.limits .= 0.0;		CTRL.proj_linear[1] = true;		# Reset these for safety
 	!isempty(LEGEND_TYPE[].optsDict) && (d[:legend] = dict2nt(LEGEND_TYPE[].optsDict))	# Recover opt settings
@@ -4380,7 +4383,7 @@ function put_in_slot(cmd::String, opt::Char, args...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function arg_in_slot(d::Dict, cmd::String, symbs::VMs, objtype, arg1, arg2)
+function arg_in_slot(d::Dict{Symbol,Any}, cmd::String, symbs::VMs, objtype, arg1, arg2)
 	# Either put the contents of an option in first empty arg? when it's a GMT type 
 	# or add it to cmd if it's a string (e.g., file name) or a number.
 	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
@@ -4396,7 +4399,7 @@ function arg_in_slot(d::Dict, cmd::String, symbs::VMs, objtype, arg1, arg2)
 	return cmd, arg1, arg2
 end
 
-function arg_in_slot(d::Dict, cmd::String, symbs::VMs, objtype, arg1, arg2, arg3)
+function arg_in_slot(d::Dict{Symbol,Any}, cmd::String, symbs::VMs, objtype, arg1, arg2, arg3)
 	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
 		cmd *= string(" -", symbs[1])
 		if (isa(val, objtype))
@@ -4410,7 +4413,7 @@ function arg_in_slot(d::Dict, cmd::String, symbs::VMs, objtype, arg1, arg2, arg3
 	return cmd, arg1, arg2, arg3
 end
 
-function arg_in_slot(d::Dict, cmd::String, symbs::VMs, objtype, arg1, arg2, arg3, arg4)
+function arg_in_slot(d::Dict{Symbol,Any}, cmd::String, symbs::VMs, objtype, arg1, arg2, arg3, arg4)
 	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
 		cmd *= string(" -", symbs[1])::String
 		if (isa(val, objtype))
@@ -4474,7 +4477,7 @@ function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bo
 end
 
 # ---------------------------------------------------------------------------------------------------
-function _finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bool, O::Bool, finish::Bool, args::Vector{Any})
+function _finish_PS_module(d::Dict{Symbol,Any}, cmd::Vector{String}, opt_extra::String, K::Bool, O::Bool, finish::Bool, args::Vector{Any})
 	# FNAME_EXT hold the extension when not PS
 	# OPT_EXTRA is used by grdcontour -D or pssolar -I to not try to create and view an img file
 
@@ -4716,7 +4719,7 @@ end
 legend_bag() = legend_bag(Vector{String}(), Vector{String}(), Vector{String}(), "", Dict{Symbol,Any}(), 0)
 
 # --------------------------------------------------------------------------------------------------
-function put_in_legend_bag(d::Dict, cmd, arg, O::Bool=false, opt_l::String="")
+function put_in_legend_bag(d::Dict{Symbol,Any}, cmd, arg, O::Bool=false, opt_l::String="")
 	# So far this fun is only called from plot() and stores line/symbol info in a const global var LEGEND_TYPE
 
 	_valLegend = find_in_dict(d, [:legend :l], false)[1]	# false because we must keep it alive till digests_legend_bag()
@@ -4980,7 +4983,7 @@ end
 #end
 
 # ---------------------------------------------------------------------------------------------------
-function get_legend_font(d::Dict, fs=0; modern::Bool=false)::String
+function get_legend_font(d::Dict{Symbol,Any}, fs=0; modern::Bool=false)::String
 	# This fun gets the font size to be used in legends, but it serves two masters. On one side we want to keep the
 	# legend defaults in modern mode (inside gmtbegin()) using the gmt.conf setings. For that pass FS=0 and MODERN=TRUE
 	# On the other hand, from the GMT.jl classic-but-modern, the default (on calling this) is FS=8.
@@ -5000,7 +5003,7 @@ function get_legend_font(d::Dict, fs=0; modern::Bool=false)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function set_defcpt!(d::Dict, cmd0::String, G)
+function set_defcpt!(d::Dict{Symbol,Any}, cmd0::String, G)
 	# When dealing with remote grids (those that start with a @), assign them a default CPT
 	if (cmd0 != "")
 		cptname = check_remote_cpt(cmd0)
@@ -5039,7 +5042,7 @@ function check_remote_cpt(cmd0::String)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function common_get_R_cpt(d::Dict, cmd0::String, cmd::String, opt_R::String, got_fname::Int, arg1, arg2, arg3, prog::String)
+function common_get_R_cpt(d::Dict{Symbol,Any}, cmd0::String, cmd::String, opt_R::String, got_fname::Int, arg1, arg2, arg3, prog::String)
 	# Used by several proggys
 	if (CONVERT_SYNTAX[])		# Here we cannot risk to execute any code. Just parsing. Movie stuff
 		cmd, = add_opt_cpt(d, cmd, CPTaliases, 'C')
@@ -5121,7 +5124,7 @@ function interp_vec(x::AbstractVecOrMat{<:Real}, val::Union{VecOrMat{<:Real}, Tu
 end
 
 # --------------------------------------------------------------------------------------------------
-function help_show_options(d::Dict)
+function help_show_options(d::Dict{Symbol,Any})
 	if (find_in_dict(d, [:help])[1] !== nothing)  SHOW_KWARGS[] = true  end	# Put in HELP mode
 end
 

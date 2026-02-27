@@ -365,17 +365,20 @@ end
 mutable struct wrapGrids
 	fname::String
 	grd::GMTgrid
+	img::GMTimage
 	function wrapGrids(arg1, arg2)
-		if     (arg1 !== "")         new(arg1, GMTgrid())
-		elseif (isa(arg2, GMTgrid))  new("", arg2)
-		elseif (isa(arg2, Matrix{<:Real}))        new("", mat2grid(arg2))
-		elseif (arg1 === "" && arg2 === nothing)  new("", GMTgrid())	# Less usual case in grdlandmask where only kwargs are given
+		tg, ti  = GMTgrid(), GMTimage()
+		if     (arg1 !== "")         new(arg1, tg, ti)
+		elseif (isa(arg2, GMTgrid))  new("", arg2, ti)
+		elseif (isa(arg2, GMTimage)) new("", tg, arg2)
+		elseif (isa(arg2, Matrix{<:Real}))        new("", mat2grid(arg2), ti)
+		elseif (arg1 === "" && arg2 === nothing)  new("", tg, ti)	# Less usual case in grdlandmask where only kwargs are given
 		else   error("Unknown types ($(typeof(arg1)), $(typeof(arg2))) in wrapGrids")
 		end
 	end
 end
 function unwrapGrids(w::wrapGrids)
-	return w.fname, !isempty(w.grd) ? w.grd : nothing
+	return w.fname, !isempty(w.grd) ? w.grd : !isempty(w.img) ? w.img : nothing
 end
 
 #=

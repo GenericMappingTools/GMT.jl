@@ -1,5 +1,5 @@
 # Put this code in a separate file to permit access from future GMT_base module
-function get_marker_name(d::Dict, arg1, symbs::Vector{Symbol}, is3D::Bool, del::Bool=true)
+function get_marker_name(d::Dict, @nospecialize(arg1), symbs::Vector{Symbol}, is3D::Bool, del::Bool=true)
 	marca::String = "";		N = 0
 	for symb in symbs
 		if (haskey(d, symb))
@@ -118,7 +118,7 @@ function helper_markers(opt::String, ext, arg1::GMTdataset, N::Int, cst::Bool)
 	if (size(ext,2) == N)	# Here ARG1 is supposed to be a matrix that will be extended.
 		S = Symbol(opt)
 		t = arg1.data	# Because we need to passa matrix to this method of add_opt()
-		marca, t = add_opt(add_opt, (Dict(S => (par=ext,)), opt, "", [S]), (par="|",), true, t)
+		marca, t = add_opt(add_opt, (Dict{Symbol,Any}(S => (par=ext,)), opt, "", [S]), (par="|",), true, t)
 		arg1.data = t;		add2ds!(arg1)
 	elseif (cst && length(ext) == 1)
 		marca = opt * "-" * string(ext)::String

@@ -80,9 +80,9 @@ function _gravmag3d_helper(arg1, d::Dict{Symbol,Any})
 	elseif ((val = find_in_dict(d, [:Ts :stl :STL], true, "String (file name)")[1]) !== nothing && val != "")  opt = " -Ts"
 	elseif ((val = find_in_dict(d, [:M :body], false, "String | NamedTuple")[1]) !== nothing && val != "")
 		if (isa(val, Tuple))
-			cmd = add_opt(Dict(:body => val[1]), cmd, "M", [:M :body], (shape="+s", params=","))
+			cmd = add_opt(Dict{Symbol,Any}(:body => val[1]), cmd, "M", [:M :body], (shape="+s", params=","))
 			for n = 2:numel(val)
-				cmd = add_opt(Dict(:body => val[n]), cmd, "", [:M :body], (shape="+s", params=","))
+				cmd = add_opt(Dict{Symbol,Any}(:body => val[n]), cmd, "", [:M :body], (shape="+s", params=","))
 			end
 			delete!(d, [:M :body])
 		else

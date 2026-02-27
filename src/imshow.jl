@@ -180,7 +180,7 @@ function imshow(arg1::GItype; kw...)
 			# This is a (poor) pach for a GMT bug that screws when plotting CPTs on the sides.
 			margin = "0"
 			if ((val = find_in_dict(d, [:colorbar], false)[1]) !== nothing)
-				tv = add_opt_module(Dict(:colorbar => val))
+				tv = add_opt_module(Dict{Symbol,Any}(:colorbar => val))
 				t2 = scan_opt(tv[1], "-D")
 				t2 = replace(t2, "JMR" => "JMC")
 				!contains(t2, "+o") && (t2 *= "+o$(_w/2 + 0.3)/0")

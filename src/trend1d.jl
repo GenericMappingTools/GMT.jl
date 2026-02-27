@@ -53,12 +53,12 @@ function trend1d(cmd0::String, arg1, d::Dict{Symbol, Any})
 		# can only be used once and in the last NT element. Hence, we must split execution in two parts.
 		opt_N = " -N"
 		for k = 1:length(val)-1
-			t = add_opt(Dict(:N => val[k]), "", "N", [:N],
+			t = add_opt(Dict{Symbol,Any}(:N => val[k]), "", "N", [:N],
 			            (polynome=("p", arg2str, 1), polynomal=("p", arg2str, 1), fourier=("f", arg2str, 1), cosine=("c", arg2str, 1), sine=("s", arg2str, 1), single="_!"))
 			contains(t, "!") && (t = replace(t, "!" => ""); t = replace(t, t[4] => uppercase(t[4])))
 			opt_N *= t[4:end] * ","
 		end
-		t = add_opt(Dict(:N => val[end]), "", "N", [:N],
+		t = add_opt(Dict{Symbol,Any}(:N => val[end]), "", "N", [:N],
 		            (polynome=("p", arg2str, 1), polynomal=("p", arg2str, 1), fourier=("f", arg2str, 1), cosine=("c", arg2str, 1), sine=("s", arg2str, 1), length="+l", origin="+o", robust="+r", single="_!"))
 		contains(t, "!") && (t = replace(t, "!" => ""); t = replace(t, t[4] => uppercase(t[4])))
 		opt_N *= t[4:end]

@@ -334,17 +334,19 @@ function gdalvectortranslate(indata, opts=String[]; dest="/vsimem/tmp", kwargs..
 	helper_run_GDAL_fun(gdalvectortranslate, indata, dest, opts, "", KW(kwargs))
 end
 
-function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::String, d::Dict{Symbol, Any})::Union{GItype, GDtype, Gdal.AbstractDataset, Nothing}
+function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::String, d::Dict{Symbol, Any})
 	ressurectGDAL()					# Another black-hole plug attempt.
 	opts = gdal_opts2vec(opts)		# Guarantied to return a Vector{String}
-	#d = KW(kwargs)
+	opts_vs = gdal_opts2vec(opts)	# Guarantied to return a Vector{String}
 	opts_vs, got_GMT_opts = GMT_opts_to_GDAL(f, opts, d)
-	_helper_run_GDAL_fun(f, indata, dest, opts_vs, method, got_GMT_opts, d)
+	d_fun = Dict{Symbol, Function}(:fun => f)	# To avoid fck compilation for each different fuction
+	_helper_run_GDAL_fun(d_fun, indata, dest, opts_vs, method, got_GMT_opts, d)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function _helper_run_GDAL_fun(f::Function, indata, dest::String, opts::Union{String, Vector{String}}, method, got_GMT_opts::Bool, d::Dict{Symbol, Any})::Union{GItype, GDtype, Gdal.AbstractDataset, Nothing}
-	# This second level helper function reduces the number of multiple compiles. Here, only 'indata' may have different types.
+function _helper_run_GDAL_fun(d_fun::Dict{Symbol, Function}, @nospecialize(indata), dest::String, opts::Vector{String}, method::String, got_GMT_opts::Bool, d::Dict{Symbol, Any})
+	# This second level helper function reduces the number of multiple compiles.
+	f = d_fun[:fun]		# Get back the function name
 
 	Vd::Int = ((val = find_in_dict(d, [:Vd])[1]) !== nothing) ? val : 0		# More gymns to avoid Anys
 	(Vd > 0) && println(opts)
@@ -459,7 +461,6 @@ function GMT_opts_to_GDAL(f::Function, opts::Vector{String}, d::Dict{Symbol, Any
 			end
 		end
 		f == gdalgrid ? append!(opts, ["-txe", s[1], s[2], "-tye", s[3], s[4]]) : append!(opts, op)
-		#f == gdalgrid ? append!(opts, ["-txe", s[1], s[2], "-tye", s[3], s[4]]) : append!(opts, ["-projwin", split(opt_R[4:end], '/')[[1,4,2,3]]...])	# Ugly
 	end
 
 	x_srs = (f == gdaltranslate) ? "-a_srs" : "-t_srs"		# But don't know if there are others that take -a_srs instead of -t_srs
@@ -527,7 +528,7 @@ function default_gdopts!(f::Function, ds, opts::Vector{String}, dest::String)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function get_gdaldataset(data, opts, isVec::Bool=false)::Tuple{Gdal.AbstractDataset, Bool}
+function get_gdaldataset(data, opts::Vector{String}, isVec::Bool=false)::Tuple{Gdal.AbstractDataset, Bool}
 	# Get a GDAL dataset from either a file name, a GMT grid or image, or a dataset itself
 	# In case of a file name we must be careful and deal with possible "+b" band requests from GMT.
 	# isVec tells us if the filename 'data' is to be opened as a Vector or a Raster.
@@ -540,11 +541,7 @@ function get_gdaldataset(data, opts, isVec::Bool=false)::Tuple{Gdal.AbstractData
 			o = split(ext[ind[1]+2:end], ",")			# But we must add 1 because GDAL band count is 1-based and GMT 0-based
 			p = parse.(Int, o) .+ 1
 			o = [string(c) for c in p]
-			if (isa(opts, Vector{String}))
-				for k = 1:lastindex(o)  append!(opts, ["-b", o[k]])  end
-			else
-				opts *= " -b" * join(o, " -b ")
-			end
+			for k = 1:lastindex(o)  append!(opts, ["-b", o[k]])  end
 		end
 		flags = isVec ? GDAL_OF_VECTOR | GDAL_OF_VERBOSE_ERROR : GDAL_OF_READONLY | GDAL_OF_VERBOSE_ERROR
 		_ext = lowercase(ext[2:end])		# Drop the leading dot too
@@ -578,7 +575,7 @@ Convert a 24bit RGB image to 8bit paletted.
 """
 function dither(indata, opts=String[]; n_colors::Integer=256, save::String="", gdataset::Bool=false)
 	# ...
-	src_ds, needclose = get_gdaldataset(indata, "", false)
+	src_ds, needclose = get_gdaldataset(indata, String[], false)
 	(nraster(src_ds) < 3) && error("Input image must have at least 3 bands")
 	(isa(indata, GMTimage) && !startswith(indata.layout, "TRB")) &&
 		error("Image memory layout must be `TRB` and not $(indata.layout). Load image with gdaltranslate()")

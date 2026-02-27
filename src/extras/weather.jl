@@ -264,7 +264,7 @@ function ecmwf(source::Symbol=:reanalysis; filename="", cb::Bool=false, dataset=
 			last = (region == "") ? "\n" : ",\n"	# Having an extra comma at the end of the line is a json syntax error
 			params *= "\"download_format\": \"unarchived\"" * last
 			if (region != "")		# The region is provided by parse_R() as a string like " -R58/6/55/9" (N/W/S/E)
-				optR = split(parse_R(Dict(:R => region), "")[1], '/')
+				optR = split(parse_R(Dict{Symbol,Any}(:R => region), "")[1], '/')
 				params *= "\"area\": [" * optR[1][4:end] * ", " * optR[4] * ", " * optR[2] * ", " * optR[3] * "]\n"
 			end
 			params = "{\"product_type\": [\"reanalysis\"],\n" * params * "}"
