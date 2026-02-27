@@ -260,8 +260,11 @@ end
 # ----------------------------------------------------------------------------------------------------------
 function boxplot(data::Union{Vector{Vector{T}}, AbstractMatrix{T}}; pos=Vector{Float64}(),
                  first::Bool=true, kwargs...) where T
+	_boxplot_10(data, pos, first, KW(kwargs))
+end
+function _boxplot_10(data, pos, first::Bool, d::Dict{Symbol,Any})
 	(!isempty(pos) && length(pos) != size(data,2)) && error("Coordinate vector 'pos' must have same size as columns in 'data'")
-	d, isVert, _fill, showOL, OLcmd, w = helper1_boxplot(kwargs)
+	d, isVert, _fill, showOL, OLcmd, w = helper1_boxplot(d)
 	D, Dol = helper2_boxplot(data, pos, w, 0.0, _fill, showOL, isVert)	# Two GMTdataset's. Second may be empty
 	Dv = (_fill == "gray70") ? ds2ds(D, G="gray70") : ds2ds(D)			# Split it so we can assign colors to each candle.
 	c = false
@@ -278,9 +281,12 @@ end
 # ------------ For groups ----------------------------------------------------------------------------------
 function boxplot(data::Array{T,3}; pos=Vector{Float64}(), first::Bool=true,
                  groupwidth=0.75, ccolor=false, kwargs...) where T
+	_boxplot_11(data, pos, first, Float64(groupwidth), ccolor==1, KW(kwargs))
+end
+function _boxplot_11(data, pos::Vector{Float64}, first::Bool, groupwidth::Float64, ccolor::Bool, d::Dict{Symbol,Any})
 
 	(!isempty(pos) && length(pos) != size(data,2)) && error("Coordinate vector 'pos' must have same size as columns in 'data'")
-	d, isVert, _fill, showOL, OLcmd, w = helper1_boxplot(kwargs)
+	d, isVert, _fill, showOL, OLcmd, w = helper1_boxplot(d)
 
 	N_grp = size(data,3)							# N elements in group
 	boxspacing = groupwidth / N_grp
@@ -317,9 +323,12 @@ end
 # ----------------------------------------------------------------------------------------------------------
 function boxplot(data::Vector{Vector{Vector{T}}}; pos=Vector{Float64}(), first::Bool=true,
                  groupwidth=0.75, ccolor=false, kwargs...) where T
+	_boxplot_12(data, pos, first, Float64(groupwidth), ccolor==1, KW(kwargs))
+end
+function _boxplot_12(data, pos, first::Bool, groupwidth::Float64, ccolor::Bool, d::Dict{Symbol,Any})
 
 	(!isempty(pos) && length(pos) != size(data,2)) && error("Coordinate vector 'pos' must have same size as columns in 'data'")
-	d, isVert, _fill, showOL, OLcmd, w = helper1_boxplot(kwargs)
+	d, isVert, _fill, showOL, OLcmd, w = helper1_boxplot(d)
 
 	N_in_each_grp = length.(data[:])					# Vec with the N elements in each group
 	N_grp = length(N_in_each_grp)
@@ -415,8 +424,7 @@ function parse_stats_separator_pen(d, SEPcmd)
 end
 
 # ----------------------------------------------------------------------------------------------------------
-function helper1_boxplot(kwargs)
-	d = KW(kwargs)
+function helper1_boxplot(d::Dict{Symbol,Any})
 	str::String = "Y"
 	str = (is_in_dict(d, [:horizontal :hbar], del=true) !== nothing) ? "X" : "Y"
 	isVert = (str == "Y")
