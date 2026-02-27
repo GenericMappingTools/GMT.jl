@@ -96,7 +96,7 @@ const DEF_FIG_AXES = Ref{String}(DEF_FIG_AXES_BAK)	# This one may be be changed 
 const DEF_FIG_AXES3 = Ref{String}(DEF_FIG_AXES3_BAK)#		""
 const FIG_MARGIN = Ref{Int}(1)                      # Figure margin in points after convertion by 'psconvert'. Accessible 'margin' common option
 const global CTRL = CTRLstruct(zeros(13), zeros(6), [true], [false],
-                    [:arrows, :bubblechart, :basemap, :band, :clip, :coast, :colorbar, :grdcontour, :hband, :hlines, :inset, :logo, :lines, :grdvector, :plot, :plot3, :quiver, :scatter, :scatter3, :stairs, :text, :vlines, :vband], ["", "", ""], ["", "", "", "   "], ["", ""], ["", ""], [false, true], [C_NULL], [Dict()])
+                    [:arrows, :bubblechart, :basemap, :band, :clip, :coast, :colorbar, :grdcontour, :hband, :hlines, :inset, :logo, :lines, :grdvector, :plot, :plot3, :quiver, :scatter, :scatter3, :stairs, :text, :vlines, :vband], ["", "", ""], ["", "", "", "   "], ["", ""], ["", ""], [false, true], [C_NULL], [Dict{Symbol,Any}()])
 const pocket_call = Ref{Vector{Any}}(Any[nothing, nothing, nothing, nothing, nothing, nothing])# Extracted from CTRL to isolate type instability
 const CTRLshapes = CTRLstruct2(true, true, "")		# Used in sub-module Drawing
 const prj4WGS84 = "+proj=longlat +datum=WGS84 +units=m +no_defs"# This is used in many places
@@ -387,7 +387,7 @@ using .Laszip
 	gmtwrite(t, [0.0 0; 1 1])
 	gmtread(t)
 	gmtread(TESTSDIR * "assets/burro_cenora.jpg")
-	coast(R=:g, proj=:guess, W=(level=1, pen=(2, :green)), savefig=tempname()*".ps")
+	#coast(R=:g, proj=:guess, W=(level=1, pen=(2, :green)), savefig=tempname()*".ps")
 	rm(t)
 	D = mat2ds(rand(3, 3), colnames=["Time", "b", "c"])
 	D.attrib = Dict("Timecol" => "1")

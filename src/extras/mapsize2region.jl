@@ -45,9 +45,9 @@ function mapsize2region(; proj="", scale="", clon=NaN, clat=NaN, width=0, height
 	@assert clon != NaN && clat != NaN "Center longitude and latitude must be specified"
 	@assert width > 0 && height > 0 "Width and height must be positive"
 	@assert contains(scale, ':') "Scale must be in the form of '1:xxxx'"
-	(!isa(proj, StrSymb)) && (proj = parse_J(Dict(:J => proj, :scale => scale), "")[1][4:end];	scale="")	# scale is now in J
-	(bnds != "") && (bnds = parse_R(Dict(:R => bnds), "")[4:end])	# If bnds is not empty, parse it
-	(!isa(scale, StrSymb)) && (scale = parse_Scale(Dict(:S => scale), ""))	# If scale is not a StrSymb, parse it
+	(!isa(proj, StrSymb)) && (proj = parse_J(Dict{Symbol,Any}(:J => proj, :scale => scale), "")[1][4:end];	scale="")	# scale is now in J
+	(bnds != "") && (bnds = parse_R(Dict{Symbol,Any}(:R => bnds), "")[4:end])	# If bnds is not empty, parse it
+	(!isa(scale, StrSymb)) && (scale = parse_Scale(Dict{Symbol,Any}(:S => scale), ""))	# If scale is not a StrSymb, parse it
 	(bnds == "" && proj == "m" || startswith(proj, "merc") || startswith(proj, "Merc")) && (bnds="-180/180/-85/85")	# Default bounds for Mercator
 	opt_R, opt_J = mapsize2region(string(proj), scale, Float64(clon), Float64(clat), Float64(width), Float64(height), bnds)
 	(plot != 0) && coast(R=opt_R, J=opt_J, shore=true, show=true, Vd=1)

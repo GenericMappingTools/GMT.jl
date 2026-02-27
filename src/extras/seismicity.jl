@@ -136,7 +136,7 @@ function seismicity(; starttime::Union{DateTime, String}="", endtime::Union{Date
 	plot!(D[:,1:4]; ml="faint", S=opt_S, C=C, show=see, Vd=Vd, d...)
 	d = CTRL.pocket_d[1]
 	d[:show] = show
-	ms = (_size !== nothing) ? parse_opt_S(Dict(:size => _size), [3., 4, 5, 6, 7, 8, 9])[1] : [3., 4, 5, 6, 7, 8, 9] .* 0.02
+	ms = (_size !== nothing) ? parse_opt_S(Dict{Symbol,Any}(:size => _size), [3., 4, 5, 6, 7, 8, 9])[1] : [3., 4, 5, 6, 7, 8, 9] .* 0.02
 	st = (starttime != "") ? string(starttime) : string(Date(now() - Dates.Day(30)))
 	et = (endtime != "") ? string(endtime) : string(Date(now()))
 	legend && seislegend(; first=false, title="From "*st*" to "*et, cmap=C, mags=ms, pos="JBC+o0/1c+w12c/2.3c", d...)

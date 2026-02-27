@@ -211,7 +211,7 @@ function pcolor(G::GMTgrid, first::Bool, d::Dict{Symbol,Any})
 	if (find_in_dict(d, [:T :no_interp :tiles])[1] === nothing)	# If no -T, make one here
 		opt_T = "+s"
 		if ((val = find_in_dict(d, [:outline])[1]) !== nothing)	# -T+o is bugged for line styles
-			opt_T *= "+o" * add_opt_pen(Dict(:outline => val), [:outline])
+			opt_T *= "+o" * add_opt_pen(Dict{Symbol,Any}(:outline => val), [:outline])
 		end
 		d[:T] = opt_T
 	end

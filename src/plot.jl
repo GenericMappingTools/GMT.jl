@@ -840,8 +840,8 @@ function fill_between(arg1, arg2, first::Bool, d::Dict{Symbol, Any})
 	_D2 = one_array ? mat2ds(D1, (:,[1,3])) : D2		# Put second line in a unique var
 
 	if (border > 0)										# Plot a white border
-		one_array ? common_plot_xyz("", [mat2ds(D1, (:,[1,2])), _D2], "lines", false, false, Dict(:W => "$(border),white", :Vd => Vd)) :
-		            common_plot_xyz("", [D1, _D2], "lines", false, false, Dict(:W => "$(border),white", :Vd => Vd))
+		one_array ? common_plot_xyz("", [mat2ds(D1, (:,[1,2])), _D2], "lines", false, false, Dict{Symbol,Any}(:W => "$(border),white", :Vd => Vd)) :
+		            common_plot_xyz("", [D1, _D2], "lines", false, false, Dict{Symbol,Any}(:W => "$(border),white", :Vd => Vd))
 	end
 
 	do_stairs && (d[:stairs_step] = :pre)

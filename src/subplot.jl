@@ -213,7 +213,7 @@ function mura_arg(arg)::Dict
 	if (isa(arg, Tuple{Tuple, Real}))  arg = (arg[1], (arg[2],))  end	# This looks terribly type instable
 	# Need first case because for example dims=(panels=((2,4),(2.5,5,1.25)),) shows up here only as
 	# arg = ((2, 4), (2.5, 5, 1.25)) because this function was called from within add_opt()
-	if (isa(arg, Tuple{Tuple, Tuple}))  d = Dict(:panels => arg)
+	if (isa(arg, Tuple{Tuple, Tuple}))  d = Dict{Symbol,Any}(:panels => arg)
 	else                                d = (isa(arg, NamedTuple)) ? nt2dict(arg) : arg
 	end
 	d

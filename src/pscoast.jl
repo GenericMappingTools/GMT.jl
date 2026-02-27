@@ -265,7 +265,7 @@ function parse_dcw(cmd::String, val::Tuple)::String
 	for k = 1:numel(val)
 		if (isa(val[k], NamedTuple) || isa(val[k], Dict))
 			isa(val[k], AbstractDict) && (val[k] = Base.invokelatest(dict2nt, val[k]))
-			cmd *= add_opt(Dict(:DCW => val[k]), "", "E", [:DCW], (country="", name="", continent="=", pen=("+p", add_opt_pen),
+			cmd *= add_opt(Dict{Symbol,Any}(:DCW => val[k]), "", "E", [:DCW], (country="", name="", continent="=", pen=("+p", add_opt_pen),
 			                                                       fill=("+g", add_opt_fill), file=("+f"), inside=("_+c"), outside=("_+C"), adjust_r=("+r", arg2str), adjust_R=("+R", arg2str), adjust_e=("+e", arg2str), headers=("_+z")))
 		elseif (isa(val[k], Tuple))
 			cmd *= parse_dcw(val[k])
@@ -284,7 +284,7 @@ function parse_dcw(val::Tuple)::String
 		else                     t *= string(val[2])
 		end
 		if (length(val) > 2)
-			if (isa(val[3], Tuple))  t *= add_opt_fill("+g", Dict(fill => val[3]), [:fill])
+			if (isa(val[3], Tuple))  t *= add_opt_fill("+g", Dict{Symbol,Any}(fill => val[3]), [:fill])
 			else                     t *= string(val[3])
 			end
 		end

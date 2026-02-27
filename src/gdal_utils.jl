@@ -957,7 +957,8 @@ Write a MxNxP `cube` object to disk as a multilayered file.
 """
 function gdalwrite(fname::AbstractString, data, optsP=String[]; opts=String[], kw...)
 	(fname == "") && error("Output file name is missing.")
-	(isempty(optsP) && !isempty(opts)) && (optsP = opts)		# Accept either Positional or KW argument
+	(isempty(optsP) && !isempty(opts)) && (optsP = opts)			# Accept either Positional or KW argument
+	isa(optsP, AbstractString) && (optsP = gdal_opts2vec(optsP))	# Guarantied to return a Vector{String}
 	ds = Gdal.get_gdaldataset(data, optsP)[1]
 	if (Gdal.GDALGetRasterCount(ds.ptr) >= 1)
 		gdaltranslate(ds, optsP; dest=fname, kw...)

@@ -2337,7 +2337,7 @@ function mat2grid(mat::Array{T,N}; reg=nothing, x=Float64[], y=Float64[], v=Floa
 		geog = 1
 		(proj4 == "") && (proj4 = prj4WGS84)
 	end
-	x, y, hdr, x_inc, y_inc = grdimg_hdr_xy(mat, reg_, hdr, x, y, is_transposed)
+	x, y, hdr, x_inc, y_inc = grdimg_hdr_xy(mat, reg_, vec(Float64.(hdr)), vec(Float64.(x)), vec(Float64.(y)), is_transposed)
 
 	# Now we still must check if the method with no input MAT was called. In that case mat = [nothing val]
 	# and the MAT must be finally computed.
@@ -2442,18 +2442,17 @@ function grid2img(G::GMTgrid{<:Unsigned})
 end
 
 # ---------------------------------------------------------------------------------------------------
-function grdimg_hdr_xy(mat, reg::Int, hdr, x=Float64[], y=Float64[], is_transposed=false)
+function grdimg_hdr_xy(@nospecialize(mat), reg::Int, hdr::Vector{Float64}, x::Vector{Float64}, y::Vector{Float64}, is_transposed=false)
 	# Thin wrapper: extract all mat-dependent info here, so _grdimg_hdr_xy needs no mat argument
 	row_dim, col_dim = is_transposed ? (2,1) : (1,2)
-	nx = size(mat, col_dim)::Int;	ny = size(mat, row_dim)::Int
-	_hdr = vec(Float64.(hdr));	_x = vec(Float64.(x));	_y = vec(Float64.(y))
-	need_extrema = (!isempty(_x) && !isempty(_y)) || isempty(_hdr) || length(_hdr) == 4
+	nx::Int = size(mat, col_dim);	ny::Int = size(mat, row_dim)
+	need_extrema = (!isempty(x) && !isempty(y)) || isempty(hdr) || length(hdr) == 4
 	zmin, zmax = need_extrema ? extrema_nan(mat) : (NaN, NaN)
-	mat1_is_nothing = (ny == 1 && nx == 2 && mat[1] === nothing)
-	_grdimg_hdr_xy(reg, nx, ny, Float64(zmin), Float64(zmax), mat1_is_nothing, _hdr, _x, _y)
+	mat_is_nothing = (ny == 1 && nx == 2 && mat[1] === nothing)
+	_grdimg_hdr_xy(reg, nx, ny, Float64(zmin), Float64(zmax), mat_is_nothing, hdr, x, y)
 end
 
-function _grdimg_hdr_xy(reg::Int, nx::Int, ny::Int, zmin::Float64, zmax::Float64, mat1_is_nothing::Bool, hdr::Vector{Float64}, x::Vector{Float64}, y::Vector{Float64})
+function _grdimg_hdr_xy(reg::Int, nx::Int, ny::Int, zmin::Float64, zmax::Float64, mat_is_nothing::Bool, hdr::Vector{Float64}, x::Vector{Float64}, y::Vector{Float64})
 # Generate x,y coords array and compute/update header plus increments for grids/images
 	one_or_zero = reg == 0 ? 1 : 0
 
@@ -2487,7 +2486,7 @@ function _grdimg_hdr_xy(reg::Int, nx::Int, ny::Int, zmin::Float64, zmax::Float64
 			hdr = append!(hdr, [zmin, zmax, reg, x_inc, y_inc])
 		end
 		one_or_zero = (hdr[7] == 0) ? 1 : 0
-		if (mat1_is_nothing)
+		if (mat_is_nothing)
 			# In this case the 'mat' is a tricked matrix with [nothing val]. Compute nx,ny from header
 			# The final matrix will be computed in the main mat2grid method
 			nx = Int(round((hdr[2] - hdr[1]) / hdr[8] + one_or_zero))
