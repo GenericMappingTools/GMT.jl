@@ -1485,7 +1485,7 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 		(proj4) && return epsg2proj(epsg)
 		return ""
 	end
-	function _getproj(G_I, proj4::Bool, wkt::Bool, epsg::Bool)
+	function _getproj(@nospecialize(G_I), proj4::Bool, wkt::Bool, epsg::Bool)
 		(!proj4 && !wkt && !epsg) && (proj4 = true)
 		prj::String, _prj::Int = "", 0
 		if (proj4)
@@ -1503,9 +1503,6 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 			@warn("Sorry, conversion to EPSG is not yet implemented.")
 		end
 		return (_prj != 0) ? _prj : prj
-		#prj = G_I.proj4
-		#(prj == "") && (prj = G_I.wkt)
-		#return (!proj4) ? prj : startswith(prj, "PROJCS") ? toPROJ4(importWKT(prj)) : prj
 	end
 	getproj(G::GMTgrid;  proj4::Bool=false, wkt::Bool=false, epsg::Bool=false) = _getproj(G, proj4, wkt, epsg)
 	getproj(I::GMTimage; proj4::Bool=false, wkt::Bool=false, epsg::Bool=false) = _getproj(I, proj4, wkt, epsg)

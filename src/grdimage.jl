@@ -160,7 +160,7 @@ function _grdimage(cmd0::String, arg1, arg2, arg3, O::Bool, K::Bool, d::Dict)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function common_insert_R!(d::Dict, O::Bool, cmd0, I_G; is3D=false)
+function common_insert_R!(d::Dict, O::Bool, cmd0, @nospecialize(I_G); is3D=false)
 	# Set -R in 'd' under several conditions. We may need this to make -J=:guess to work
 	O && return
 	CTRL.limits .= 0.0			# Have to play safe on this because some eventual show calls may have left this non-empty
@@ -204,7 +204,7 @@ function common_insert_R!(d::Dict, O::Bool, cmd0, I_G; is3D=false)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function common_shade(d::Dict, cmd::String, arg1, arg2, arg3, arg4, prog)
+function common_shade(d::Dict, cmd::String, @nospecialize(arg1), @nospecialize(arg2), @nospecialize(arg3), @nospecialize(arg4), prog::String)
 	# Used both by grdimage and grdview
 	symbs = [:I :shade :shading :intensity]
 	(SHOW_KWARGS[]) && return print_kwarg_opts(symbs, "GMTgrid | String"), arg1, arg2, arg3, arg4

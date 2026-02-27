@@ -1,4 +1,7 @@
-function find_histo_limits(In, thresholds=nothing, width=20, hst_::Matrix{Float64}=Matrix{Float64}(undef,0,2))
+function find_histo_limits(In, thresholds=nothing, width=20, hst::Matrix{Float64}=Matrix{Float64}(undef,0,2))
+	 _find_histo_limits(In, thresholds === nothing ? () : thresholds, Float64(width), hst)
+end
+function _find_histo_limits(@nospecialize(In), thresholds::Tuple, width::Float64, hst_::Matrix{Float64})
 	# Find the histogram limits of a UInt16 GMTimage that allow to better stretch the histogram
 	# THRESHOLDS is an optional Tuple input containing the left and right histo thresholds, in percentage,
 	# between which the histogram values will be retained. Defaults are (0.1, 0.4) percent. Note, this

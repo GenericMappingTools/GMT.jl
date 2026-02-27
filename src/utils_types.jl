@@ -2442,16 +2442,19 @@ function grid2img(G::GMTgrid{<:Unsigned})
 end
 
 # ---------------------------------------------------------------------------------------------------
-function grdimg_hdr_xy(@nospecialize(mat), reg, hdr, x=Float64[], y=Float64[], is_transposed=false)
-	# Thin wrapper: convert to concrete types, then call the single-compilation implementation
-	_grdimg_hdr_xy(mat, Int(reg)::Int, Float64.(vec(hdr)), Float64.(vec(x)), Float64.(vec(y)), is_transposed == 1)
+function grdimg_hdr_xy(mat, reg::Int, hdr, x=Float64[], y=Float64[], is_transposed=false)
+	# Thin wrapper: extract all mat-dependent info here, so _grdimg_hdr_xy needs no mat argument
+	row_dim, col_dim = is_transposed ? (2,1) : (1,2)
+	nx = size(mat, col_dim)::Int;	ny = size(mat, row_dim)::Int
+	_hdr = vec(Float64.(hdr));	_x = vec(Float64.(x));	_y = vec(Float64.(y))
+	need_extrema = (!isempty(_x) && !isempty(_y)) || isempty(_hdr) || length(_hdr) == 4
+	zmin, zmax = need_extrema ? extrema_nan(mat) : (NaN, NaN)
+	mat1_is_nothing = (ny == 1 && nx == 2 && mat[1] === nothing)
+	_grdimg_hdr_xy(reg, nx, ny, Float64(zmin), Float64(zmax), mat1_is_nothing, _hdr, _x, _y)
 end
 
-function _grdimg_hdr_xy(@nospecialize(mat), reg::Int, hdr::Vector{Float64}, x::Vector{Float64}, y::Vector{Float64}, is_transposed::Bool)
+function _grdimg_hdr_xy(reg::Int, nx::Int, ny::Int, zmin::Float64, zmax::Float64, mat1_is_nothing::Bool, hdr::Vector{Float64}, x::Vector{Float64}, y::Vector{Float64})
 # Generate x,y coords array and compute/update header plus increments for grids/images
-# Arrays coming from GDAL are often scanline so they are transposed. In that case is_transposed should be true
-	row_dim, col_dim = (is_transposed) ? (2,1) : (1,2)
-	nx = size(mat, col_dim);		ny = size(mat, row_dim);
 	one_or_zero = reg == 0 ? 1 : 0
 
 	if (!isempty(x) && !isempty(y))		# But not tested if they are equi-spaced as they MUST be
@@ -2469,26 +2472,22 @@ function _grdimg_hdr_xy(@nospecialize(mat), reg::Int, hdr::Vector{Float64}, x::V
 		end
 		x_inc = (x[end] - x[1]) / (nx - one_or_zero);	isnan(x_inc) && (x_inc = 0.0)	# When vertical slices
 		y_inc = (y[end] - y[1]) / (ny - one_or_zero);	isnan(y_inc) && (y_inc = 0.0)
-		zmin::Float64, zmax::Float64 = extrema_nan(mat)
-		hdr = Float64.([x[1], x[end], y[1], y[end], zmin, zmax])
+		hdr = [x[1], x[end], y[1], y[end], zmin, zmax]
 	elseif (isempty(hdr))
-		zmin, zmax = extrema_nan(mat)
 		if (reg == 0)  x = collect(1.0:nx);		y = collect(1.0:ny)
 		else           x = collect(0.5:nx+0.5);	y = collect(0.5:ny+0.5)
 		end
-		hdr = Float64.([x[1], x[end], y[1], y[end], zmin, zmax])
+		hdr = [x[1], x[end], y[1], y[end], zmin, zmax]
 		x_inc = 1.0;	y_inc = 1.0
 	else
 		(length(hdr) != 9 && length(hdr) != 4) && error("The HDR array must have 4 or 9 elements")
-		(eltype(hdr) != Float64) && (hdr = Float64.(hdr))
 		if (length(hdr) == 4)			# No increments nor min/max, must compute them
 			x_inc = (hdr[2] - hdr[1]) / (nx - one_or_zero)
 			y_inc = (hdr[4] - hdr[3]) / (ny - one_or_zero)
-			zmin, zmax = extrema_nan(mat)
 			hdr = append!(hdr, [zmin, zmax, reg, x_inc, y_inc])
 		end
 		one_or_zero = (hdr[7] == 0) ? 1 : 0
-		if (ny == 1 && nx == 2 && mat[1] === nothing)
+		if (mat1_is_nothing)
 			# In this case the 'mat' is a tricked matrix with [nothing val]. Compute nx,ny from header
 			# The final matrix will be computed in the main mat2grid method
 			nx = Int(round((hdr[2] - hdr[1]) / hdr[8] + one_or_zero))
@@ -2500,10 +2499,6 @@ function _grdimg_hdr_xy(@nospecialize(mat), reg::Int, hdr::Vector{Float64}, x::V
 		x_inc = (hdr[2] - hdr[1]) / (nx - one_or_zero)
 		y_inc = (hdr[4] - hdr[3]) / (ny - one_or_zero)
 	end
-	if (isa(x, UnitRange))  x = collect(x)  end			# The AbstractArrays are much less forgivable
-	if (isa(y, UnitRange))  y = collect(y)  end
-	if (!isa(x, Vector{Float64}))  x = Float64.(x)  end
-	if (!isa(y, Vector{Float64}))  y = Float64.(y)  end
 	return x, y, hdr, x_inc, y_inc
 end
 

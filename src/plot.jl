@@ -1029,8 +1029,8 @@ arrows(arg1; kw...)  = arrows("", arg1; first=true, kw...)
 arrows!(arg1; kw...) = arrows("", arg1; first=false, kw...)
 
 # ------------------------------------------------------------------------------------------------------
-function helper_vecZscale!(d::Dict, arg1, first::Bool, typevec::Int; opt_R::String="", fancy_arrow::Bool=false, paper_u::Bool=false)
-	# We have a GMT bug (up till 6.4.0) that screws when vector components are dx,dy or r,theta and
+function helper_vecZscale!(d::Dict{Symbol, Any}, arg1, first::Bool, typevec::Int; opt_R::String="", fancy_arrow::Bool=false, paper_u::Bool=false)
+	# We have a GMT bug (up till 6.6.0) that screws when vector components are dx,dy or r,theta and
 	# x,y is not isometric or when -Sv+z<scale> (and possibly in other cases). So, between thinking and
 	# dumb trial-and-error I came out with this patch that computes two scale factors, one to be applied
 	# to the y component and the other that sets a +z<scale> under the hood.
@@ -1106,7 +1106,7 @@ function helper_vecZscale!(d::Dict, arg1, first::Bool, typevec::Int; opt_R::Stri
 end
 
 # ------------------------------------------------------------------------------------------------------
-function helper_vecBug(d, arg1, first::Bool, haveR::Bool, haveVarFill::Bool, typevec::Int; isfeather::Bool=false)
+function helper_vecBug(d::Dict{Symbol, Any}, arg1, first::Bool, haveR::Bool, haveVarFill::Bool, typevec::Int; isfeather::Bool=false)
 	# Helper function that deals with setting several defaults and mostly patch a GMT vectors bug.
 	# TYPEVEC = 0, ==> u,v = theta,rho. TYPEVEC = 1, ==> u,v = u,v. TYPEVEC = 2, ==> u,v = x2,y2 
 
