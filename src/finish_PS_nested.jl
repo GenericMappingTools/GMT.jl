@@ -106,9 +106,9 @@ function add_opt_module(d::Dict)::Vector{String}
 end
 
 # ---------------------------------------------------------------------------------------------------
-function colorbar_triangles(val::StrSymb)::String
+colorbar_triangles(val::StrSymb)::String = colorbar_triangles(lowercase(string(val)))
+function colorbar_triangles(val_str::String)::String
 	# Accepts Top/TopTri[High|Low], Bottom/BottomTri, Left/LeftTri, Right/RightTri or triangles (caseless)
-	val_str::String = lowercase(string(val))
 	anc = "RM";		tris = ""		# Default anchor Right Middle and no triangles
 	if (contains(val_str, "tri") && !isempty(CURRENT_CPT[]))	# Sets CPT.bfn to match colormap end colors
 		if (CURRENT_CPT[].bfn[1,:] == [0.0, 0.0, 0.0] && CURRENT_CPT[].bfn[1,:] == [1.0, 1.0, 1.0])

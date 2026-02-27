@@ -327,12 +327,13 @@ end
 function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::String="", kwargs...)::Union{GItype, GDtype, Gdal.AbstractDataset, Nothing}
 	ressurectGDAL()					# Another black-hole plug attempt.
 	opts = gdal_opts2vec(opts)		# Guarantied to return a Vector{String}
-	d, opts_vs, got_GMT_opts = GMT_opts_to_GDAL(f, opts, kwargs...)
+	d = KW(kwargs)
+	opts_vs, got_GMT_opts = GMT_opts_to_GDAL(f, opts, d)
 	_helper_run_GDAL_fun(f, indata, dest, opts_vs, method, got_GMT_opts, d)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function _helper_run_GDAL_fun(f, indata, dest, opts, method, got_GMT_opts, d)::Union{GItype, GDtype, Gdal.AbstractDataset, Nothing}
+function _helper_run_GDAL_fun(f::Function, indata, dest::String, opts::Vector{String}, method, got_GMT_opts::Bool, d::Dict{Symbol, Any})::Union{GItype, GDtype, Gdal.AbstractDataset, Nothing}
 	# This second level helper function reduces the number of multiple compiles. Here, only 'indata' may have different types.
 
 	Vd::Int = ((val = find_in_dict(d, [:Vd])[1]) !== nothing) ? val : 0		# More gymns to avoid Anys
@@ -429,9 +430,8 @@ function save_cpt4gdal(cpt::GMTcpt, outname::String)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function GMT_opts_to_GDAL(f::Function, opts::Vector{String}, kwargs...)
+function GMT_opts_to_GDAL(f::Function, opts::Vector{String}, d::Dict{Symbol, Any})
 	# Helper function to process some GMT options and turn them into GDAL syntax
-	d = KW(kwargs)
 
 	# See if 'opts' is a kwarg
 	if isempty(opts) && ((val = GMT.hlp_desnany_vstr(d, [:opts])) !== String[])
@@ -462,7 +462,7 @@ function GMT_opts_to_GDAL(f::Function, opts::Vector{String}, kwargs...)
 		t = split(opt_I[4:end], '/')
 		(length(t) == 1) ? append!(opts, ["-tr", t[1], t[1]]) : append!(opts, ["-tr", t[1], t[2]])
 	end
-	return d, opts, (opt_R != "" || length(opt_J) > 1 || opt_I != "")
+	return opts, (opt_R != "" || length(opt_J) > 1 || opt_I != "")
 end
 
 # ---------------------------------------------------------------------------------------------------

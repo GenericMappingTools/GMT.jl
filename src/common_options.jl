@@ -3323,13 +3323,12 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 vector_attrib(d::Dict, lixo) = vector_attrib(d)		# When comming from add_opt()
-vector_attrib(t::NamedTuple) = vector_attrib(Dict(pairs(t)))
+vector_attrib(t::NamedTuple) = vector_attrib(Dict{Symbol,Any}(pairs(t)))
 function vector_attrib(; kwargs...)::String
 	d = KW(kwargs)
 	vector_attrib(d::Dict)
 end
-function vector_attrib(d::Dict)::String
-	#d = KW(kwargs)
+function vector_attrib(d::Dict{Symbol,Any})::String
 	cmd::String = add_opt(d, "", "", [:len :length])
 	(haskey(d, :angle)) && (cmd = string(cmd, "+a", d[:angle]))
 	if (haskey(d, :middle))
@@ -3434,7 +3433,7 @@ function vector4_attrib(; kwargs...)::String
 end
 
 # -----------------------------------
-function helper_vec_loc(d::Dict, symb, cmd::String)::String
+function helper_vec_loc(d::Dict{Symbol,Any}, symb::Symbol, cmd::String)::String
 	# Helper function for the 'begin', 'middle', 'end' vector attrib function
 	(isa(d[symb], Bool) && d[symb]) && return cmd	# We don't want a 'true' becoming a "i"
 	t::String = string(d[symb])

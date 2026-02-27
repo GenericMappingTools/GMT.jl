@@ -11,13 +11,15 @@ const psxyz! = plot3d!
 function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::Bool; kwargs...)
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
 	(cmd0 != "" && arg1 === nothing && is_in_dict(d, [:groupvar :hue]) !== nothing) && (arg1 = gmtread(cmd0); cmd0 = "")
-	_common_plot_xyz(cmd0, arg1, caller, O, K, is3D, d)
+	_common_plot_xyz(wrapDatasets(cmd0, arg1), caller, O, K, is3D, d)
 end
 function common_plot_xyz(cmd0::String, arg1, caller::String, first::Bool, is3D::Bool, d::Dict{Symbol, Any})
 	(cmd0 != "" && arg1 === nothing && is_in_dict(d, [:groupvar :hue]) !== nothing) && (arg1 = gmtread(cmd0); cmd0 = "")
-	_common_plot_xyz(cmd0, arg1, caller, !first, true, is3D, d)
+	_common_plot_xyz(wrapDatasets(cmd0, arg1), caller, !first, true, is3D, d)
 end
-function _common_plot_xyz(cmd0::String, arg1, caller::String, O::Bool, K::Bool, is3D::Bool, d::Dict{Symbol, Any})
+function _common_plot_xyz(w::wrapDatasets, caller::String, O::Bool, K::Bool, is3D::Bool, d::Dict{Symbol, Any})
+	cmd0, arg1 = unwrapDatasets(w)
+
 	first = !O
 	(caller != "bar") && (arg1 = if_multicols(d, arg1, is3D))	# Check if it was asked to split a GMTdataset in its columns 
 
@@ -692,7 +694,7 @@ OR
 - `pagebg`: an image file name or a GMTimage/GMTgrid object
    In this case the above defaults for the _width_ and _offset_ parameters are used
 """
-function fish_pagebg(d::Dict, cmd::Vector{String}; autoJZ::Bool=true)::Vector{String}
+function fish_pagebg(d::Dict{Symbol, Any}, cmd::Vector{String}; autoJZ::Bool=true)::Vector{String}
 	((val = find_in_dict(d, [:pagebg])[1]) === nothing) && return cmd
 	width::Float64 = 0.8;	off_X::Float64 = 0.0;	off_Y::Float64 = 0.0	# The off's are offsets from the center
 	opt_U = ""
