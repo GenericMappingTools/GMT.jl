@@ -1805,4 +1805,3 @@ function get_show_fmt_savefig(d, show::Bool=false)
 end
 
 include("getdcw.jl")
-include("choropleth.jl")
