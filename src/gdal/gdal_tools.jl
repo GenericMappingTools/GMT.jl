@@ -26,7 +26,7 @@ And it may also contain a `options=...` argument that is equivalent to the `opti
 A GMT grid or Image, or a GDAL dataset (or nothing if file was writen on disk).
 """
 function gdaltranslate(indata, opts=String[]; dest="/vsimem/tmp", kwargs...)
-	helper_run_GDAL_fun(gdaltranslate, indata, dest, opts, "", kwargs...)
+	helper_run_GDAL_fun(gdaltranslate, indata, dest, opts, "", KW(kwargs))
 end
 # ---------------------------------------------------------------------------------------------------
 
@@ -50,7 +50,7 @@ Image/Grid reprojection and warping function.
 A GMT grid or Image, or a GDAL dataset (or nothing if file was writen on disk).
 """
 function gdalwarp(indata, opts=String[]; dest="/vsimem/tmp", kwargs...)
-	helper_run_GDAL_fun(gdalwarp, indata, dest, opts, "", kwargs...)
+	helper_run_GDAL_fun(gdalwarp, indata, dest, opts, "", KW(kwargs))
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -75,7 +75,7 @@ The modified input `data`
 function fillnodata!(indata::GItype; nodata=nothing, kwargs...)
 	d = KW(kwargs)
 	d[:nodata] = (nodata !== nothing) ? nodata : isa(indata, GItype) ? indata.nodata : NaN
-	helper_run_GDAL_fun(gdalfillnodata!, indata, "", String[], "", d...)
+	helper_run_GDAL_fun(gdalfillnodata!, indata, "", String[], "", d)
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -130,6 +130,10 @@ Its natural use is to digitize masks images.
 function polygonize(data::GItype; gdataset=nothing, kwargs...)
 	d = KW(kwargs)
 	(gdataset === nothing) && (d[:gdataset] = true)
+	is_gdataset = (gdataset === nothing)
+	_polygonize(data, is_gdataset, d)
+end
+function _polygonize(data::GItype, is_gdataset::Bool, d::Dict{Symbol, Any})
 	m_per_deg = 2pi * 6371000 / 360;	m_per_deg_2 = m_per_deg^2
 	_isgeog = isgeog(data)
 	min_area::Float64 = ((val = find_in_dict(d, [:min_area :minarea])[1]) !== nothing) ? Float64(val) : 0.0
@@ -151,9 +155,9 @@ function polygonize(data::GItype; gdataset=nothing, kwargs...)
 		_isgeog && (POSTMAN[]["polygon_isgeog"] = "1")
 	end
 
-	o = helper_run_GDAL_fun(gdalpolygonize, data, "", String[], "", d...)
+	o = helper_run_GDAL_fun(gdalpolygonize, data, "", String[], "", d)
 
-	if (gdataset === nothing)						# Should be doing this for GDAL objects too but need to learn how to.
+	if (is_gdataset)							# Should be doing this for GDAL objects too but need to learn how to.
 		POSTMAN[]["polygonize"] = "y"			# To inform gd2gmt() that it should check if last Di is the whole area.
 		(find_in_dict(d, [:sort])[1] !== nothing) && (POSTMAN[]["sort_polygons"] = "y")
 		if ((val = find_in_dict(d, [:simplify])[1]) !== nothing)
@@ -207,7 +211,7 @@ function bwareaopen(I::Union{GMTimage{UInt8,2}, GMTimage{Bool,2}}; keepwhites::B
 	d = KW(kwargs)
 	# When the memory layout is column major, the gmt2gd step has to make a data copy, so we better forget the
 	# possibility an insitu gdalsievefilter operation and do a copy right away when layout is row major. 
-	Ic::GMTimage{UInt8,2} = helper_run_GDAL_fun(gdalsievefilter, I.layout[2] == 'C' ? I : deepcopy(I), "", String[], "", d...)
+	Ic::GMTimage{UInt8,2} = helper_run_GDAL_fun(gdalsievefilter, I.layout[2] == 'C' ? I : deepcopy(I), "", String[], "", d)
 	(!keepwhites && !keepblacks) && return Ic
 	white = (I.range[6] == 1) ? UInt8(1) : UInt8(255)
 	black = UInt8(0)
@@ -246,9 +250,12 @@ Tools to analyze and visualize DEMs.
 A GMT grid or Image, or a GDAL dataset (or nothing if file was writen on disk).
 """
 function gdaldem(indata, method::String, opts::Vector{String}=String[]; dest="/vsimem/tmp", kwargs...)
+	d = KW(kwargs)
+	_gdaldem(indata, method, opts, dest::String, d)
+end
+function _gdaldem(indata, method::String, opts::Vector{String}, dest::String, d::Dict{Symbol, Any})
 	opts = gdal_opts2vec(opts)		# Guarantied to return a Vector{String}
 	if (method == "hillshade")		# So far the only method that accept kwarg options
-		d = KW(kwargs)
 		band = ((val = find_in_dict(d, [:band])[1]) !== nothing) ? string(val)::String : "1"
 		append!(opts, ["-compute_edges", "-b", band])
 		if ((val = find_in_dict(d, [:scale])[1]) === nothing)
@@ -268,9 +275,9 @@ function gdaldem(indata, method::String, opts::Vector{String}=String[]; dest="/v
 		((val = find_in_dict(d, [:alg])[1]) !== nothing) && append!(opts, ["-alg", string(val)])
 		((val = find_in_dict(d, [:Horn])[1]) !== nothing) && append!(opts, ["-alg", "Horn"])
 		((val = find_in_dict(d, [:Zeven :Zevenbergen])[1]) !== nothing) && append!(opts, ["-alg", "ZevenbergenThorne"])
-		helper_run_GDAL_fun(gdaldem, indata, dest, opts, method, d...)
+		helper_run_GDAL_fun(gdaldem, indata, dest, opts, method, d)
 	else
-		helper_run_GDAL_fun(gdaldem, indata, dest, opts, method, kwargs...)
+		helper_run_GDAL_fun(gdaldem, indata, dest, opts, method, d)
 	end
 end
 
@@ -291,10 +298,13 @@ A GMTgrid or a GDAL dataset (or nothing if file was writen on disk). To force th
 dataset use the option `gdataset=true`.
 """
 function gdalgrid(indata, opts::Union{String, Vector{String}}=""; dest="/vsimem/tmp", method::Union{AbstractString, Symbol}="", kwargs...)
+	_gdalgrid(indata, opts, dest, string(method), KW(kwargs))
+end
+function _gdalgrid(indata, opts::Union{String, Vector{String}}, dest::String, method::String, d::Dict{Symbol, Any})
 	if (method == "")
 		_mtd = "-a invdist:nodata=NaN"
 	else
-		_mtd = isa(method, Symbol) ? string(method) : method 
+		_mtd = method 
 		(!startswith(_mtd, "invdist") && !startswith(_mtd, "invdistnn") && !startswith(_mtd, "average") && !startswith(_mtd, "nearest") && !startswith(_mtd, "linear") && !startswith(_mtd, "minimum") && !startswith(_mtd, "maximum") && !startswith(_mtd, "range") && !startswith(_mtd, "count") && !startswith(_mtd, "average_distance") && !startswith(_mtd, "average_distance_pts")) && error("Bad interpolation algorithm $_mtd")
 		_mtd = "-a " * _mtd
 		!occursin("nodata", _mtd) && (_mtd *= ":nodata=NaN")
@@ -302,7 +312,7 @@ function gdalgrid(indata, opts::Union{String, Vector{String}}=""; dest="/vsimem/
 	_opts = isa(opts, Vector) ? join(opts, " ") : opts		# Let's make a string to reduce confusion
 	!occursin("-ot", _opts) && (_opts *= " -ot Float32")
 	_mtd *= " " * _opts
-	helper_run_GDAL_fun(gdalgrid, indata, dest, _mtd, "", kwargs...)
+	helper_run_GDAL_fun(gdalgrid, indata, dest, _mtd, "", d)
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -321,19 +331,19 @@ end
 A GMT dataset, or a GDAL dataset (or nothing if file was writen on disk).
 """
 function gdalvectortranslate(indata, opts=String[]; dest="/vsimem/tmp", kwargs...)
-	helper_run_GDAL_fun(gdalvectortranslate, indata, dest, opts, "", kwargs...)
+	helper_run_GDAL_fun(gdalvectortranslate, indata, dest, opts, "", KW(kwargs))
 end
 
-function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::String="", kwargs...)::Union{GItype, GDtype, Gdal.AbstractDataset, Nothing}
+function helper_run_GDAL_fun(f::Function, indata, dest::String, opts, method::String, d::Dict{Symbol, Any})::Union{GItype, GDtype, Gdal.AbstractDataset, Nothing}
 	ressurectGDAL()					# Another black-hole plug attempt.
 	opts = gdal_opts2vec(opts)		# Guarantied to return a Vector{String}
-	d = KW(kwargs)
+	#d = KW(kwargs)
 	opts_vs, got_GMT_opts = GMT_opts_to_GDAL(f, opts, d)
 	_helper_run_GDAL_fun(f, indata, dest, opts_vs, method, got_GMT_opts, d)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function _helper_run_GDAL_fun(f::Function, indata, dest::String, opts::Vector{String}, method, got_GMT_opts::Bool, d::Dict{Symbol, Any})::Union{GItype, GDtype, Gdal.AbstractDataset, Nothing}
+function _helper_run_GDAL_fun(f::Function, indata, dest::String, opts::Union{String, Vector{String}}, method, got_GMT_opts::Bool, d::Dict{Symbol, Any})::Union{GItype, GDtype, Gdal.AbstractDataset, Nothing}
 	# This second level helper function reduces the number of multiple compiles. Here, only 'indata' may have different types.
 
 	Vd::Int = ((val = find_in_dict(d, [:Vd])[1]) !== nothing) ? val : 0		# More gymns to avoid Anys
