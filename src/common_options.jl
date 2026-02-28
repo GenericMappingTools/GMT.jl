@@ -2208,7 +2208,8 @@ function arg2str(arg::AbstractString, sep = '/')::String
 	end
 end
 function arg2str(arg, sep = '/')::String
-    isempty_(arg) && return ""
+# A vassoura. This is the last one to be called, so if we are here it means that arg is not of any of the above types. So, we can only error out.
+	isempty_(arg) && return ""
 	error("arg2str: argument 'arg' can only be a String, Symbol, Number, Array or a Tuple.")
 end
 function arg2str(arg::GMTdataset, sep='/')::String
@@ -2380,7 +2381,7 @@ function _add_opt_2(d::Dict{Symbol,Any}, cmd::String, opt::String, symbs::Vector
 	isa(val, AbstractDict) && (val = Base.invokelatest(dict2nt, val))
 	if (isa(val, NamedTuple) && mapa_is_nt)
 		_arg = (grow_mat === nothing || isempty(grow_mat)) ? Float64[] : grow_mat
-		args[1] = Base.invokelatest(add_opt_1, val, mapa, _arg)
+		args[1] = Base.invokelatest(add_opt_1, collect(Symbol, keys(val)), Dict{Symbol,Any}(nt2dict(val)), mapa, _arg)
 	elseif (isa(val, NamedTuple) && mapa === nothing)
 		# Happens when the inline 'inset' passed a NT with options for inset itself and not the module it called
 		return cmd
@@ -2389,7 +2390,7 @@ function _add_opt_2(d::Dict{Symbol,Any}, cmd::String, opt::String, symbs::Vector
 		_args::String = ""
 		_arg2 = (grow_mat === nothing || isempty(grow_mat)) ? Float64[] : grow_mat
 		for k = 1:numel(val)
-			_args *= " -" * opt * Base.invokelatest(add_opt_1, val[k], mapa, _arg2)::String
+			_args *= " -" * opt * Base.invokelatest(add_opt_1, collect(Symbol, keys(val[k])), Dict{Symbol,Any}(nt2dict(val[k])), mapa, _arg2)::String
 		end
 		return cmd * _args
 	elseif (isa(mapa, Tuple) && length(mapa) > 1 && isa(mapa[2], Function))	# grdcontour -G
@@ -2423,17 +2424,20 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function genFun(this_key::Symbol, user_input::NamedTuple, mapa)::String
+	_genFun(this_key, nt2dict(user_input), mapa)
+end
+function _genFun(this_key::Symbol, user_input::Dict{Symbol,Any}, mapa)::String
 	(!haskey(mapa, this_key)) && return	""	# Should it be a error?
 	out::String = ""
 	key = keys(user_input)					# user_input = (rows=1, fill=:red)
 	val_namedTup = mapa[this_key]			# water=(rows="my", cols="mx", fill=add_opt_fill)
-	for k = 1:length(user_input)
-		if (haskey(val_namedTup, key[k]))
-			val = val_namedTup[key[k]]
+	for k in key
+		if (haskey(val_namedTup, k))
+			val = val_namedTup[k]
 			if (isa(val, Function))
-				if (val == add_opt_fill) out *= val(Dict{Symbol,Any}(key[k] => user_input[key[k]]))::String end
+				if (val == add_opt_fill) out *= val(Dict{Symbol,Any}(k => user_input[k]))::String end
 			else
-				out *= string(val_namedTup[key[k]])::String
+				out *= string(val_namedTup[k])::String
 			end
 		end
 	end
@@ -2441,82 +2445,82 @@ function genFun(this_key::Symbol, user_input::NamedTuple, mapa)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=Float64[])::String	# This wrapper is the only who gets recompiled when arg changes
+function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=Float64[])::String
 	_arg = (arg === nothing || isempty(arg)) ? Float64[] : arg
-	add_opt_1(nt, nt2dict(mapa), _arg)
+	add_opt_1(collect(Symbol, keys(nt)), Dict{Symbol,Any}(nt2dict(nt)), nt2dict(mapa), _arg)
 end
-function add_opt_1(nt::NamedTuple, d, arg)::String #
-#function add_opt(nt::NamedTuple, mapa::NamedTuple, arg=nothing)::String
+function add_opt_1(key::Vector{Symbol}, nt::Dict{Symbol,Any}, d, arg)::String
 	# Generic parser of options passed in a NT and whose last element is another NT with the mapping
 	# between expanded sub-options names and the original GMT flags.
 	# ARG, is a special case to append to a matrix (can't realy be done in Julia)
 	# Example:
 	#	add_opt((a=(1,0.5),b=2), (a="+a",b="-b"))
 	# translates to:	"+a1/0.5-b2"
-	key = keys(nt);						# The keys actually used in this call
 	#d = nt2dict(mapa)					# The flags mapping as a Dict (all possible flags of the specific option)
 	cmd::String = "";		cmd_hold = Vector{String}(undef, 2);	order = zeros(Int,2,1);  ind_o = 0
 	count = zeros(Int, length(key))
-	for k = 1:numel(key)::Int			# Loop over the keys of option's tuple
+	for k = 1:length(key)				# Loop over the keys of option's tuple
 		!haskey(d, key[k]) && continue
+		ntk = nt[key[k]]
 		count[k] = k
-		isa(nt[k], Dict) && (nt[k] = Base.invokelatest(dict2nt, nt[k]))
+		isa(ntk, Dict) && (ntk = Base.invokelatest(dict2nt, ntk))
 		this_val = d[key[k]]
 		if (isa(this_val, Tuple))		# Complexify it. Here, d[key[k]][2] must be a function name.
-			if (isa(nt[k], NamedTuple))
+			if (isa(ntk, NamedTuple))
 				if (this_val[2] == add_opt_fill)
-					cmd *= string(this_val[1])::String * this_val[2]("", Dict{Symbol,Any}(key[k] => nt[k]), [key[k]])::String
+					cmd *= string(this_val[1])::String * this_val[2]("", Dict{Symbol,Any}(key[k] => ntk), [key[k]])::String
 				else
 					local_opt = (this_val[2] == helper_decorated) ? true : nothing		# 'true' means single argout
-					cmd *= string(this_val[1])::String * this_val[2](nt2dict(nt[k]), local_opt)::String
+					cmd *= string(this_val[1])::String * this_val[2](nt2dict(ntk), local_opt)::String
 				end
 			else						#
 				if (length(this_val) == 2)		# Run the function
-					cmd *= string(this_val[1])::String * this_val[2](Dict{Symbol,Any}(key[k] => nt[k]), [key[k]])::String
+					cmd *= string(this_val[1])::String * this_val[2](Dict{Symbol,Any}(key[k] => ntk), [key[k]])::String
 				else					# This branch is to deal with options -Td, -Tm, -L and -D of basemap & psscale
 					ind_o += 1
 					(ind_o > 2) && (@warn("You passed more than 1 of the exclusive options in a anchor type option, keeping first but this may break."); ind_o = 1)
 					if (this_val[2] === nothing)  cmd_hold[ind_o] = this_val[1]	# Only flag char and order matters
-					elseif (length(this_val[1]) == 2 && this_val[1][1] == '-' && !isa(nt[k], Tuple))	# e.g. -L (&g, arg2str, 1)
+					elseif (length(this_val[1]) == 2 && this_val[1][1] == '-' && !isa(ntk, Tuple))	# e.g. -L (&g, arg2str, 1)
 						cmd_hold[ind_o] = string(this_val[1][2])	# where g<scalar>
 					else		# Run the fun
-						cmd_hold[ind_o] = (this_val[1] == "") ? this_val[2](nt[k]) : string(this_val[1][end])::String * this_val[2](nt[k])::String
+						cmd_hold[ind_o] = (this_val[1] == "") ? this_val[2](ntk) : string(this_val[1][end])::String * this_val[2](ntk)::String
 					end
 					order[ind_o]    = this_val[3];				# Store the order of this sub-option
 				end
 			end
 		elseif (isa(this_val, NamedTuple))		#
-			if (isa(nt[k], NamedTuple))
-				cmd *= genFun(key[k], nt[k], d)::String
+			if (isa(ntk, NamedTuple))
+				cmd *= genFun(key[k], ntk, d)::String
 			else						# Create a NT where value = key. For example for: surf=(waterfall=:rows,)
-				if (!isa(nt[1], Tuple))			# nt[1] may be a symbol, or string. E.g.  surf=(water=:cols,)
-					cmd *= genFun(key[k], (; Symbol(nt[1]) => nt[1]), d)::String
+				nt1 = nt[key[1]]
+				if (!isa(nt1, Tuple))			# nt[1] may be a symbol, or string. E.g.  surf=(water=:cols,)
+					cmd *= genFun(key[k], (; Symbol(nt1) => nt1), d)::String
 				else
 					if ((val = find_in_dict(d, [key[1]])[1]) !== nothing)		# surf=(waterfall=(:cols,:red),)
-						cmd *= genFun(key[k], (; Symbol(nt[1][1]) => nt[1][1], keys(val)[end] => nt[1][end]), d)::String
+						cmd *= genFun(key[k], (; Symbol(nt1[1]) => nt1[1], keys(val)[end] => nt1[end]), d)::String
 					end
 				end
 			end
 		elseif (this_val == "1")		# Means that only first char in value is retained. Used with units
-			t::String = arg2str(nt[k])::String
+			t::String = arg2str(ntk)::String
 			if (t != "")  cmd *= t[1]
 			else          cmd *= "1"	# "1" is itself the flag
 			end
 		elseif (this_val != "" && this_val[1] == '|')		# Potentialy append to the arg matrix (here in vector form)
-			if (isa(nt[k], AbstractArray) || isa(nt[k], Tuple))
-				if (isa(nt[k], AbstractArray))  append!(arg, reshape(nt[k], :))
-				else                            append!(arg, reshape(collect(nt[k]), :))
+			if (isa(ntk, AbstractArray) || isa(ntk, Tuple))
+				if (isa(ntk, AbstractArray))  append!(arg, reshape(ntk, :))
+				else                          append!(arg, reshape(collect(ntk), :))
 				end
 			end
 			cmd *= string(this_val[2:end])::String		# And now append the flag
 		elseif (this_val != "" && this_val[1] == '_')		# Means ignore the content, only keep the flag
 			cmd *= string(this_val[2:end])::String		# Just append the flag
 		elseif (this_val != "" && this_val[end] == '1')	# Means keep the flag and only first char of arg
-			cmd *= string(this_val[1:end-1])::String * string(string(nt[k])[1])::String
+			cmd *= string(this_val[1:end-1])::String * string(string(ntk)[1])::String
 		elseif (this_val != "" && this_val[end] == '#')	# Means put flag at the end and make this arg first in cmd (coast -W)
-			cmd = arg2str(nt[k])::String * string(this_val[1:end-1])::String * cmd
+			cmd = arg2str(ntk)::String * string(this_val[1:end-1])::String * cmd
 		else
-			cmd *= this_val::String * arg2str(nt[k])::String
+			cmd *= this_val::String * arg2str(ntk)::String
 		end
 	end
 
@@ -2560,11 +2564,19 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function add_opt(fun::Function, t1::Tuple, t2::NamedTuple, del::Bool, mat)
+	d_fun = Dict{Symbol,Function}(:fun => fun)
+	_add_opt_fun(d_fun, t1, nt2dict(t2), del, mat)
+end
+function _add_opt_fun(d_fun::Dict{Symbol,Function}, @nospecialize(t1::Tuple), t2::Dict{Symbol,Any}, del::Bool, @nospecialize(mat))
 	# Crazzy shit to allow increasing the arg1 matrix
-	(mat === nothing) && return fun(t1..., t2; del=del), mat  # psxy error_bars may send mat = nothing
+	# t1 is (d, cmd, opt, symbs) — we call _add_opt_2 directly with mapa_is_nt=true
+	d, cmd, opt, symbs = t1
+	if (mat === nothing)
+		return _add_opt_2(d, cmd, opt, vec(symbs), t2, nothing, del, false, false, true), mat
+	end
 	n_rows = size(mat, 1)
 	mat = reshape(mat, :)
-	cmd::String = fun(t1..., t2; grow_mat=mat, del=del)
+	cmd = _add_opt_2(d, cmd, opt, vec(symbs), t2, mat, del, false, false, true)::String
 	mat = reshape(mat, n_rows, :)
 	return cmd, mat
 end
@@ -4384,47 +4396,30 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function arg_in_slot(d::Dict{Symbol,Any}, cmd::String, symbs::VMs, objtype, arg1, arg2)
-	# Either put the contents of an option in first empty arg? when it's a GMT type 
+	_arg_in_slot(d, cmd, symbs, objtype, arg1, arg2)
+end
+function arg_in_slot(d::Dict{Symbol,Any}, cmd::String, symbs::VMs, objtype, arg1, arg2, arg3)
+	_arg_in_slot(d, cmd, symbs, objtype, arg1, arg2, arg3)
+end
+function arg_in_slot(d::Dict{Symbol,Any}, cmd::String, symbs::VMs, objtype, arg1, arg2, arg3, arg4)
+	_arg_in_slot(d, cmd, symbs, objtype, arg1, arg2, arg3, arg4)
+end
+
+function _arg_in_slot(d::Dict{Symbol,Any}, cmd::String, symbs::VMs, @nospecialize(objtype), @nospecialize(args...))
+	# Either put the contents of an option in first empty arg? when it's a GMT type
 	# or add it to cmd if it's a string (e.g., file name) or a number.
+	args = collect(Any, args)
 	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
 		cmd *= string(" -", symbs[1])
 		if (isa(val, objtype))
-			_, n = put_in_slot("", ' ', arg1, arg2)
-			(n == 1) ? arg1 = val : arg2 = val
+			_, n = put_in_slot("", ' ', args...)
+			args[n] = val
 		elseif (isa(val, String) || isa(val, Real) || isa(val, Symbol))
 			cmd *= string(val)::String
 		else  error("Wrong data type ($(typeof(val))) for option $(symbs[1])")
 		end
 	end
-	return cmd, arg1, arg2
-end
-
-function arg_in_slot(d::Dict{Symbol,Any}, cmd::String, symbs::VMs, objtype, arg1, arg2, arg3)
-	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
-		cmd *= string(" -", symbs[1])
-		if (isa(val, objtype))
-			_, n = put_in_slot("", ' ', arg1, arg2, arg3)
-			(n == 1) ? arg1 = val : (n == 2 ? arg2 = val : arg3 = val)
-		elseif (isa(val, String) || isa(val, Real) || isa(val, Symbol))
-			cmd *= string(" -", symbs[1], val)::String
-		else  error("Wrong data type ($(typeof(val))) for option $(symbs[1])")
-		end
-	end
-	return cmd, arg1, arg2, arg3
-end
-
-function arg_in_slot(d::Dict{Symbol,Any}, cmd::String, symbs::VMs, objtype, arg1, arg2, arg3, arg4)
-	if ((val = find_in_dict(d, symbs)[1]) !== nothing)
-		cmd *= string(" -", symbs[1])::String
-		if (isa(val, objtype))
-			_, n = put_in_slot("", ' ', arg1, arg2, arg3, arg4)
-			(n == 1) ? arg1 = val : (n == 2 ? arg2 = val : (n == 3 ? arg3 = val : arg4 = val))
-		elseif (isa(val, String) || isa(val, Real) || isa(val, Symbol))
-			cmd *= string(" -", symbs[1], val)::String
-		else  error("Wrong data type ($(typeof(val))) for option $(symbs[1])")
-		end
-	end
-	return cmd, arg1, arg2, arg3, arg4
+	return (cmd, args...)
 end
 # ---------------------------------------------------------------------------------------------------
 
