@@ -2773,7 +2773,7 @@ function add_opt_fill(@nospecialize(val), cmd::String="",  opt::String="")::Stri
 end
 
 # ---------------------------------------------------------------------------------------------------
-function get_cpt_set_R(d::Dict{Symbol,Any}, cmd0::String, cmd::String, opt_R::String, got_fname::Int, arg1, arg2=nothing, arg3=nothing, prog::String="")
+function get_cpt_set_R(d::Dict{Symbol,Any}, cmd0::String, cmd::String, opt_R::String, got_fname::Int, @nospecialize(arg1), @nospecialize(arg2)=nothing, @nospecialize(arg3)=nothing, prog::String="")
 	# Get CPT either from keyword input of from CURRENT_CPT.
 	# Also puts -R in cmd when accessing grids from grdimage|view|contour, etc... (due to a GMT bug that doesn't do it)
 	# Use CMD0 = "" to use this function from within non-grd modules
@@ -3680,7 +3680,7 @@ function fname_out(d::Dict{Symbol,Any}, del::Bool=false)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function read_data(d::Dict{Symbol,Any}, fname::String, cmd::String, arg, opt_R::String="", is3D::Bool=false, get_info::Bool=false)
+function read_data(d::Dict{Symbol,Any}, fname::String, cmd::String, @nospecialize(arg), opt_R::String="", is3D::Bool=false, get_info::Bool=false)
 	# Use 'get_info=true' to force reading the file when fname != ""
 	
 	if (isa(arg, GMTfv) || isa(arg, Vector{GMTfv}))	# A quick and dirty way to parse the GMTfv type
@@ -3747,7 +3747,7 @@ function read_data_barr_1(d, arg_is_nothing::Bool)
 	return arg
 end
 
-function _read_data(d::Dict{Symbol,Any}, cmd::String, arg, opt_R::String="", is3D::Bool=false, get_info::Bool=false,
+function _read_data(d::Dict{Symbol,Any}, cmd::String, @nospecialize(arg), opt_R::String="", is3D::Bool=false, get_info::Bool=false,
 	opt_i::String="", opt_di::String="", opt_yx::String="")#::Tuple{String, Union{Nothing, GDtype}, String, Matrix{Float64}, String}
 	# In case DATA holds a file name, read that data and put it in ARG
 	# Also compute a tight -R if this was not provided. This forces reading a the `fname` file if provided.
