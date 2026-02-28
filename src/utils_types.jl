@@ -84,9 +84,12 @@ mat2ds(mat::GDtype)  = mat		# Method to simplify life and let call mat2ds on a a
 mat2ds(text::Union{AbstractString, Vector{<:AbstractString}}) = text_record(text)	# Now we can hide text_record
 mat2ds(text::Vector{String}; hdr::String="", kw...) = text_record(fill(NaN,length(text),2), text, [hdr])	# The kw... is only to not error
 
-function mat2ds(mat::AbstractMatrix{T}; hdr=String[], geom=0, kwargs...) where {T<:Real}
+function mat2ds(mat::AbstractMatrix{T}; hdr=String[], geom=0, kw...) where {T<:Real}
+	_mat2ds_dt(mat, isa(hdr, String) ? [hdr] : vec(hdr), Int(geom), KW(kw))
+end
+function _mat2ds_dt(@nospecialize(mat), hdr::Vector{String}, geom::Int, d::Dict{Symbol,Any})
 	# Here we are expecting that Any-ness results from columns with DateTime. If not returm 'mat' as is
-	# DateTime columns are converted to seconds and a regular GMTdatset with appropriate column names and attribs is return 
+	# DateTime columns are converted to seconds and a regular GMTdatset with appropriate column names and attribs is return
 	c = zeros(Bool, size(mat, 2))
 	for k = 1:size(mat,2)
 		if (typeof(mat[1,k]) == DateTime)
@@ -94,9 +97,8 @@ function mat2ds(mat::AbstractMatrix{T}; hdr=String[], geom=0, kwargs...) where {
 			c[k] = true
 		end
 	end
-	#!any(c) && return mat		# Oops, no DateTime? Ok, go to your life and probably blow somewhere.
 
-	D::GMTdataset = mat2ds(convert(Matrix{Float64}, mat); hdr=hdr, geom=geom, kwargs...)
+	D::GMTdataset = _mat2ds(convert(Matrix{Float64}, mat), String[], hdr, geom, d)
 	ind = findall(c)
 	if (!isempty(ind))
 		Tc = ""
@@ -139,8 +141,7 @@ In the former case (Vector{Vector}) the length of each Vector[i] must equal to t
   D = mat2ds([rand(6,3), rand(4,3), rand(3,3)], fill=[[:red], [:green], [:blue]], fillalpha=[0.5,0.7,0.8])
 """
 function mat2ds(mat::Vector{<:AbstractMatrix}; hdr=String[], kwargs...)
-	d = KW(kwargs)
-	mat2ds(mat, hdr, d)
+	mat2ds(mat, hdr, KW(kwargs))
 end
 function mat2ds(mat::Vector{<:AbstractMatrix{T}}, hdr::Vector{String}, d::Dict)::Vector{GMTdataset{T,2}} where {T<:Real}
 	D = Vector{GMTdataset{eltype(mat[1]), 2}}(undef, length(mat))
@@ -205,8 +206,7 @@ mat2ds(mat::Array{T,N}, ref::GMTdataset) where {T<:Real,N} = mat2ds(mat; ref=ref
 # ---------------------------------------------------------------------------------------------------
 function mat2ds(mat::Array{T,N}, txt::Union{String,Vector{String}}=String[];
                 hdr::Union{String,VecOrMat{String}}=String[], geom=0, kwargs...)::GDtype where {T<:Real,N}
-	d = KW(kwargs)
-	_mat2ds(mat, txt, isa(hdr, String) ? [hdr] : vec(hdr), Int(geom), d)
+	_mat2ds(mat, txt, isa(hdr, String) ? [hdr] : vec(hdr), Int(geom), KW(kwargs))
 end
 function _mat2ds(@nospecialize(mat::Array{<:Real}), txt::Union{String,Vector{String}}, hdr::Vector{String}, geom::Int, d::Dict)::GDtype
 
@@ -419,7 +419,7 @@ Cut a GMTdataset D with the indices in INDS but updating the colnames and the Ti
 INDS is a Tuple of 2 with ranges in rows and columns. Ex: (:, 1:3) or (:, [1,4,7]), etc...
 Attention, if original had attributes other than 'Timeinfo' there is no guarentie that they remain correct. 
 """
-function mat2ds(D::GMTdataset{T,N}, inds)::GMTdataset{T,N} where {T<:Real, N}
+function mat2ds(@nospecialize(D::GMTdataset), @nospecialize(inds))::GMTdataset
 	(length(inds) != ndims(D)) && error("\tNumber of GMTdataset dimensions and indices components must be the same.\n")
 	_coln = isempty(D.colnames) ? String[] : (inds[2] === Colon() || last(inds[2]) <= length(D.colnames) ? D.colnames[inds[2]] : String[])
 	(!isempty(_coln) && (typeof(inds[1]) == Colon) && length(D.colnames) > size(D,2)) && append!(_coln, [D.colnames[end]])	# Append text colname if exists
@@ -1380,6 +1380,9 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function mat2img(mat::Union{AbstractMatrix{UInt16},AbstractArray{UInt16,3}}; x=Float64[], y=Float64[], v=Float64[], hdr=Float64[], proj4::String="", wkt::String="", img8::AbstractMatrix{UInt8}=Matrix{UInt8}(undef,0,0), kw...)
+	_mat2img_u16(mat, vec(Float64.(x)), vec(Float64.(y)), vec(Float64.(v)), vec(Float64.(hdr)), proj4, wkt, img8, KW(kw))
+end
+function _mat2img_u16(@nospecialize(mat), x::Vector{Float64}, y::Vector{Float64}, v::Vector{Float64}, hdr::Vector{Float64}, proj4::String, wkt::String, @nospecialize(img8), d::Dict{Symbol,Any})
 	# Take an array of UInt16 and scale it down to UInt8. Input can be 2D or 3D.
 	# If the kw variable 'stretch' is used, we stretch the intervals in 'stretch' to [0 255].
 	# Use this option to stretch the image histogram.
@@ -1390,11 +1393,8 @@ function mat2img(mat::Union{AbstractMatrix{UInt16},AbstractArray{UInt16,3}}; x=F
 	# The 'scale_only' kw option makes it return just the scaled array an no GMTimage creation (useful when img8 is a view).
 	# Use the keyword `noconv=true` to return GMTimage UInt16 type. I.e., no conversion to UInt8
 
-	d = KW(kw)
-	x::Vector{Float64} = vec(x);	y::Vector{Float64} = vec(y);	v::Vector{Float64} = vec(v);
-	hdr::Vector{Float64} = vec(hdr)
 	if ((is_in_dict(d, [:noconv])) !== nothing)		# No conversion to UInt8 is wished
-		return mat2img16(mat; x=x, y=y, v=v, hdr=hdr, proj4=proj4, wkt=wkt, d...)
+		return helper_mat2img(mat, x, y, v, hdr, proj4, wkt, GMTcpt(), false, d)
 	end
 
 	img = isempty(img8) ? Array{UInt8, ndims(mat)}(undef, size(mat)) : img8
@@ -1442,14 +1442,17 @@ function mat2img(mat::Union{AbstractMatrix{UInt16},AbstractArray{UInt16,3}}; x=F
 		end
 	end
 	(haskey(d, :scale_only)) && return img			# Only the scaled array is needed. Alows it to be a view
-	mat2img(img; x=x, y=y, v=v, hdr=hdr, proj4=proj4, wkt=wkt, d...)
+	helper_mat2img(img, x, y, v, hdr, proj4, wkt, GMTcpt(), false, d)
 end
 
 # ---------------------------------------------------------------------------------------------------
 function mat2img(img::GMTimage; kw...)
+	_mat2img_gmtimg(img, KW(kw))
+end
+function _mat2img_gmtimg(img::GMTimage, d::Dict{Symbol,Any})
 	# Scale a UInt16 GMTimage to UInt8. Return a new object but with all old image parameters
 	(eltype(img.image) != UInt16) && return img			# Nothing to do
-	I = mat2img(img.image; kw...)
+	I = _mat2img_u16(img.image, Float64[], Float64[], Float64[], Float64[], "", "", Matrix{UInt8}(undef,0,0), d)
 	I.proj4 = img.proj4;	I.wkt = img.wkt;	I.epsg = img.epsg
 	I.range = img.range;	I.inc = img.inc;	I.registration = img.registration
 	I.nodata = img.nodata;	I.color_interp = img.color_interp;
@@ -1462,9 +1465,13 @@ end
 # ---------------------------------------------------------------------------------------------------
 function mat2img(mat::Union{GMTgrid,Matrix{<:AbstractFloat}}; x=Float64[], y=Float64[], hdr=Float64[],
 	             proj4::String="", wkt::String="", GI::Union{GItype,Nothing}=nothing, clim=[0,255], cmap=GMTcpt(), kw...)
+	_mat2img_float(mat, vec(Float64.(x)), vec(Float64.(y)), vec(Float64.(hdr)), proj4, wkt, GI, clim, cmap, KW(kw))
+end
+function _mat2img_float(@nospecialize(mat), x::Vector{Float64}, y::Vector{Float64}, hdr::Vector{Float64},
+	                    proj4::String, wkt::String, @nospecialize(GI), @nospecialize(clim), @nospecialize(cmap), d::Dict{Symbol,Any})
 	# This is the same as Matlab's imagesc() ... plus some extras.
 
-	if (isa(mat, GMTgrid) && (opt_R::String = parse_R(KW(kw), "")[2]) != "")
+	if (isa(mat, GMTgrid) && (opt_R::String = parse_R(d, "")[2]) != "")
 		mat = grdcut(mat, R=opt_R[4:end])		# FORCES RECOMPILE plot()
 	end
 
@@ -1476,7 +1483,7 @@ function mat2img(mat::Union{GMTgrid,Matrix{<:AbstractFloat}}; x=Float64[], y=Flo
 		for k in CartesianIndices(t)  isnan(t[k]) && (t[k] = 255f0)  end
 		img = round.(UInt8, t)
 	else
-		img = isa(mat,GMTgrid) ? round.(UInt8, (mat.z .- mi) ./ (ma - mi) .* 255) : round.(UInt8, (mat .- mi) ./ (ma - mi) .* 255) 
+		img = isa(mat,GMTgrid) ? round.(UInt8, (mat.z .- mi) ./ (ma - mi) .* 255) : round.(UInt8, (mat .- mi) ./ (ma - mi) .* 255)
 	end
 
 	(clim[1] >= clim[2]) && error("CLIM values are non-sense (min > max)")
@@ -1494,9 +1501,9 @@ function mat2img(mat::Union{GMTgrid,Matrix{<:AbstractFloat}}; x=Float64[], y=Flo
 		end
 	elseif (isa(mat, GMTgrid))
 		(isa(cmap, Symbol) || isa(cmap, String)) && (cmap = grd2cpt(mat, E=256, C=cmap))
-		I = mat2img(img; x=mat.x, y=mat.y, hdr=hdr, proj4=mat.proj4, wkt=mat.wkt, cmap=cmap, is_transposed=is_transp, kw...)
+		I = helper_mat2img(img, mat.x, mat.y, Float64[], hdr, mat.proj4, mat.wkt, cmap, is_transp, d)
 	else
-		I = mat2img(img; x=x, y=y, hdr=hdr, proj4=proj4, wkt=wkt, cmap=cmap, is_transposed=is_transp, kw...)
+		I = helper_mat2img(img, x, y, Float64[], hdr, proj4, wkt, cmap, is_transp, d)
 	end
 	isa(mat,GMTgrid) && (I.layout = mat.layout[1:3] * "a")
 	return I
@@ -2227,7 +2234,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    G = mat2grid(mat; reg=nothing, x=[], y=[], v=[], hdr=[], proj4::String="", wkt::String="",
+    G = mat2grid(mat; reg=0, x=[], y=[], v=[], hdr=[], proj4::String="", wkt::String="",
                  title::String="", rem::String="", cmd::String="", names::Vector{String}=String[],
                  scale::Float32=1f0, offset::Float32=0f0, eqc=false)
 
@@ -2235,7 +2242,7 @@ Take a 2/3D `mat` array and a HDR 1x9 [xmin, xmax, ymin, ymax, zmin, zmax, reg, 
 return a grid GMTgrid type. Alternatively to HDR, provide a pair of vectors, `x` & `y`, with the X and Y coordinates.
 Optionally add a `v` vector with vertical coordinates if `mat` is a 3D array and one wants to create a ``cube``.
 Optionally, the HDR arg may be omitted and it will computed from `mat` alone, but then x=1:ncol, y=1:nrow
-When HDR is not used, REG == nothing [default] means create a gridline registration grid and REG = 1,
+When HDR is not used, REG == 0 [default] means create a gridline registration grid and REG = 1,
 or REG="pixel" a pixel registered grid.
 
 - `eqc`: If true, it means we got a matrix representing a Equidistant Cylindrical projection but with no coords.
@@ -2260,7 +2267,7 @@ example, VAL = 1.0 Any other non Float64 will be converted to Float32
 
     Example: mat2grid(1, hdr=[0. 5 0 5 1 1])
 
-    G = mat2grid(f::Function, x, y; reg=nothing, proj4::String="", wkt::String="", epsg::Int=0, title::String="", rem::String="")
+    G = mat2grid(f::Function, x, y; reg=0, proj4::String="", wkt::String="", epsg::Int=0, title::String="", rem::String="")
 
 Where F is a function and X,Y the vectors coordinates defining it's domain. Creates a Float32 GMTgrid with
 size determined by the sizes of the X & Y vectors.
@@ -2276,7 +2283,7 @@ creates a Float32 GMTgrid.
 
     Example: G = mat2grid("sombrero")
 """
-function mat2grid(val::Real=Float32(0); reg=nothing, hdr=Float64[], proj4::String="", proj::String="",
+function mat2grid(val::Real=Float32(0); reg::Int=0, hdr=Float64[], proj4::String="", proj::String="",
                   wkt::String="", epsg::Int=0, geog::Int=-1, title::String="", tit::String="", rem::String="",
                   names::Vector{String}=String[], x_unit::String="", y_unit::String="", v_unit::String="",
 				  z_unit::String="")
@@ -2285,7 +2292,7 @@ function mat2grid(val::Real=Float32(0); reg=nothing, hdr=Float64[], proj4::Strin
 	(eltype(hdr) != Float64) && (hdr = Float64.(hdr))
 	(!isa(val, AbstractFloat)) && (val = Float32(val))		# We only want floats here
 	if (length(hdr) == 6)
-		hdr = [hdr[1], hdr[2], hdr[3], hdr[4], val, val, reg === nothing ? 0. : 1., hdr[5], hdr[6]]
+		hdr = [hdr[1], hdr[2], hdr[3], hdr[4], val, val, Float64(reg), hdr[5], hdr[6]]
 	end
 	(isempty(proj4) && !isempty(proj)) && (proj4 = proj)	# Allow both proj4 or proj keywords
 	(tit == "") && (tit = title)		# Some versions from 1.2 remove 'tit'
@@ -2295,7 +2302,7 @@ end
 # This is the way I found to find if a matrix is transposed. There must be better ways but couldn't find them.
 istransposed(mat) = !isempty(fields(mat)) && (fields(mat)[1] == :parent)
 
-function mat2grid(mat, xx=Float64[], yy=Float64[], zz=Float64[]; reg=nothing, hdr=Float64[], proj4::String="", proj::String="",
+function mat2grid(mat, xx=Float64[], yy=Float64[], zz=Float64[]; reg::Int=0, hdr=Float64[], proj4::String="", proj::String="",
                   wkt::String="", epsg::Int=0, geog::Int=-1, title::String="", tit::String="", rem::String="",
                   cmd::String="", names::Vector{String}=String[], scale::Real=1f0, offset::Real=0f0, layout::String="",
                   is_transposed::Bool=false, x_unit::String="", y_unit::String="", v_unit::String="", z_unit::String="")
@@ -2308,36 +2315,46 @@ function mat2grid(mat, xx=Float64[], yy=Float64[], zz=Float64[]; reg=nothing, hd
              x_unit=x_unit, y_unit=y_unit, v_unit=v_unit, z_unit=z_unit)
 end
 
-function mat2grid(mat::Array{T,N}; reg=nothing, x=Float64[], y=Float64[], v=Float64[], hdr=Float64[], proj4::String="", proj::String="",
+function mat2grid(mat::Array{T,N}; reg=0, x=Float64[], y=Float64[], v=Float64[], hdr=Float64[], proj4::String="", proj::String="",
                   wkt::String="", epsg::Int=0, geog::Int=-1, title::String="", tit::String="", rem::String="", cmd::String="",
                   names::Vector{String}=String[], scale::Real=1f0, offset::Real=0f0, layout::String="", is_transposed::Bool=false,
                   x_unit::String="x", y_unit::String="y", v_unit::String="v", z_unit::String="z", eqc=false) where {T,N}
 
 	(isempty(proj4) && !isempty(proj)) && (proj4 = proj)	# Allow both proj4 or proj keywords
+	_reg = 0
+	if (isa(reg, StrSymb))
+		t = lowercase(string(reg))
+		_reg = (t != "pixel") ? 0 : 1
+	elseif (isa(reg, Real))
+		_reg = (reg == 0) ? 0 : 1
+	end
+	_mat2grid(mat, _reg, vec(Float64.(x)), vec(Float64.(y)), vec(Float64.(v)), vec(Float64.(hdr)),
+	          proj4, wkt, epsg, geog, title, tit, rem, cmd, names, Float32(scale), Float32(offset), layout,
+	          is_transposed, x_unit, y_unit, v_unit, z_unit, eqc != 0)
+end
+function _mat2grid(@nospecialize(mat), reg::Int, x::Vector{Float64}, y::Vector{Float64},
+                   v::Vector{Float64}, hdr::Vector{Float64}, proj4::String, wkt::String, epsg::Int, geog::Int,
+                   title::String, tit::String, rem::String, cmd::String, names::Vector{String}, scale::Float32,
+                   offset::Float32, layout::String, is_transposed::Bool, x_unit::String, y_unit::String,
+                   v_unit::String, z_unit::String, eqc::Bool)
+
 	if (!isempty(proj4) && !startswith(proj4, "+proj=") && !startswith(proj4, "proj="))
 		proj4 = "+proj=" * proj4		# NOW I SHOULD TEST THIS IS A VALID PROJ4 STRING. BUT HOW?
 	end
-	reg_ = 0
-	if (isa(reg, String) || isa(reg, Symbol))
-		t = lowercase(string(reg))
-		reg_ = (t != "pixel") ? 0 : 1
-	elseif (isa(reg, Real))
-		reg_ = (reg == 0) ? 0 : 1
-	end
 
 	# Check case where we got a matrix representing a Equidistant Cylindrical projection but no coords
-	(eqc != 0 && (!isempty(x) || !isempty(hdr))) && @warn "eqc=true but x or hdr are not empty. Ignoring eqc=true"
-	if (eqc != 0 && isempty(x) && isempty(hdr))
+	(eqc && (!isempty(x) || !isempty(hdr))) && @warn "eqc=true but x or hdr are not empty. Ignoring eqc=true"
+	if (eqc && isempty(x) && isempty(hdr))
 		n_rows, n_cols, = size(mat)
 		# The default here is pixel registration when the matrix is of even size, or grid reg otherwise
-		(reg === nothing) && (iseven(n_rows) && iseven(n_cols) ? (reg_ = 1) : (reg_ = 0))
-		x_inc = 360.0 / (n_cols - (reg_ == 1));		y_inc = 180.0 / (n_rows - (reg_ == 1))
+		(reg == 0) && (iseven(n_rows) && iseven(n_cols) ? (reg = 1) : (reg = 0))
+		x_inc = 360.0 / (n_cols - (reg == 1));		y_inc = 180.0 / (n_rows - (reg == 1))
 		mima = extrema_nan(mat)
-		hdr = [-180.0, 180.0, -90.0, 90.0, mima[1], mima[2], reg_, x_inc, y_inc]
+		hdr = [-180.0, 180.0, -90.0, 90.0, mima[1], mima[2], reg, x_inc, y_inc]
 		geog = 1
 		(proj4 == "") && (proj4 = prj4WGS84)
 	end
-	x, y, hdr, x_inc, y_inc = grdimg_hdr_xy(mat, reg_, vec(Float64.(hdr)), vec(Float64.(x)), vec(Float64.(y)), is_transposed)
+	x, y, hdr, x_inc, y_inc = grdimg_hdr_xy(mat, reg, hdr, x, y, is_transposed)
 
 	# Now we still must check if the method with no input MAT was called. In that case mat = [nothing val]
 	# and the MAT must be finally computed.
@@ -2359,11 +2376,11 @@ function mat2grid(mat::Array{T,N}; reg=nothing, x=Float64[], y=Float64[], v=Floa
 	_layout = (layout == "") ? "BCB" : layout
 	(geog == -1 && helper_geod(proj4, wkt, epsg, false)[3]) && (geog = (range[2] <= 180) ? 1 : 2)	# Signal if grid is geog.
 	(tit == "") && (tit = title)		# Some versions from 1.2 remove 'tit'
-	GMTgrid(proj4, wkt, epsg, geog, range, inc, reg_, NaN, tit, rem, cmd, "", names, vec(x), vec(y), vec(v), isT ? copy(mat) : mat, x_unit, y_unit, v_unit, z_unit, _layout, scale, offset, 0, hasnans)
+	GMTgrid(proj4, wkt, epsg, geog, range, inc, reg, NaN, tit, rem, cmd, "", names, vec(x), vec(y), vec(v), isT ? copy(mat) : mat, x_unit, y_unit, v_unit, z_unit, _layout, scale, offset, 0, hasnans)
 end
 
 # This method creates a new GMTgrid but retains all the header data from the GI object
-function mat2grid(mat::Array{T,N}, GI::GItype) where {T,N}
+function mat2grid(mat::Array{T,N}, @nospecialize(GI::GItype)) where {T,N}
 	isT = istransposed(mat)
 	hasnans = any(!isfinite, mat) ? 2 : 1
 	x_unit, y_unit, v_unit, z_unit = isa(GI, GMTgrid) ? (GI.x_unit, GI.y_unit, GI.v_unit, GI.z_unit) : ("", "", "", "")
@@ -2373,10 +2390,10 @@ function mat2grid(mat::Array{T,N}, GI::GItype) where {T,N}
 	Go
 end
 
-mat2grid(f::Function, xx::AbstractVector{<:Float64}, yy::AbstractVector{<:Float64}; reg=nothing, proj4::String="", proj::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="") =
+mat2grid(f::Function, xx::AbstractVector{<:Float64}, yy::AbstractVector{<:Float64}; reg::Int=0, proj4::String="", proj::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="") =
 	mat2grid(f; x=xx, y=yy, reg=reg, proj4=proj4, proj=proj, wkt=wkt, epsg=epsg, tit=tit, rem=rem)
 
-function mat2grid(f::Function; reg=nothing, x::AbstractVector{<:Float64}=Float64[], y::AbstractVector{<:Float64}=Float64[], proj4::String="", proj::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="")
+function mat2grid(f::Function; reg::Int=0, x::AbstractVector{<:Float64}=Float64[], y::AbstractVector{<:Float64}=Float64[], proj4::String="", proj::String="", wkt::String="", epsg::Int=0, tit::String="", rem::String="")
 	(isempty(x) || isempty(y)) && error("Must transmit the domain coordinates over which to calculate function.")
 	(isempty(proj4) && !isempty(proj)) && (proj4 = proj)	# Allow both proj4 or proj keywords
 	z = Array{Float32,2}(undef, length(y), length(x))
