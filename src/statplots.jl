@@ -262,7 +262,7 @@ function boxplot(data::Union{Vector{Vector{T}}, AbstractMatrix{T}}; pos=Vector{F
                  first::Bool=true, kwargs...) where T
 	_boxplot_10(data, pos, first, KW(kwargs))
 end
-function _boxplot_10(data, pos, first::Bool, d::Dict{Symbol,Any})
+function _boxplot_10(@nospecialize(data), @nospecialize(pos), first::Bool, d::Dict{Symbol,Any})
 	(!isempty(pos) && length(pos) != size(data,2)) && error("Coordinate vector 'pos' must have same size as columns in 'data'")
 	d, isVert, _fill, showOL, OLcmd, w = helper1_boxplot(d)
 	D, Dol = helper2_boxplot(data, pos, w, 0.0, _fill, showOL, isVert)	# Two GMTdataset's. Second may be empty
@@ -283,7 +283,7 @@ function boxplot(data::Array{T,3}; pos=Vector{Float64}(), first::Bool=true,
                  groupwidth=0.75, ccolor=false, kwargs...) where T
 	_boxplot_11(data, pos, first, Float64(groupwidth), ccolor==1, KW(kwargs))
 end
-function _boxplot_11(data, pos::Vector{Float64}, first::Bool, groupwidth::Float64, ccolor::Bool, d::Dict{Symbol,Any})
+function _boxplot_11(@nospecialize(data), pos::Vector{Float64}, first::Bool, groupwidth::Float64, ccolor::Bool, d::Dict{Symbol,Any})
 
 	(!isempty(pos) && length(pos) != size(data,2)) && error("Coordinate vector 'pos' must have same size as columns in 'data'")
 	d, isVert, _fill, showOL, OLcmd, w = helper1_boxplot(d)
@@ -325,7 +325,7 @@ function boxplot(data::Vector{Vector{Vector{T}}}; pos=Vector{Float64}(), first::
                  groupwidth=0.75, ccolor=false, kwargs...) where T
 	_boxplot_12(data, pos, first, Float64(groupwidth), ccolor==1, KW(kwargs))
 end
-function _boxplot_12(data, pos, first::Bool, groupwidth::Float64, ccolor::Bool, d::Dict{Symbol,Any})
+function _boxplot_12(@nospecialize(data), @nospecialize(pos), first::Bool, groupwidth::Float64, ccolor::Bool, d::Dict{Symbol,Any})
 
 	(!isempty(pos) && length(pos) != size(data,2)) && error("Coordinate vector 'pos' must have same size as columns in 'data'")
 	d, isVert, _fill, showOL, OLcmd, w = helper1_boxplot(d)
@@ -363,7 +363,7 @@ function _boxplot_12(data, pos, first::Bool, groupwidth::Float64, ccolor::Bool, 
 end
 
 # ----------------------------------------------------------------------------------------------------------
-function helper3_boxplot(d, D, Dol, first, isVert, showOL, OLcmd, n4t, isGroup::Bool=false, allvar::Bool=false)
+function helper3_boxplot(d::Dict{Symbol,Any}, @nospecialize(D), @nospecialize(Dol), first::Bool, isVert::Bool, showOL::Bool, @nospecialize(OLcmd), @nospecialize(n4t), isGroup::Bool=false, allvar::Bool=false)
 	i1,i2,i3,i4 = (isVert) ? (1,2,5,12) : (5,12,3,4)
 	(first && (is_in_dict(d, [:R :region :limits]) === nothing)) &&
 		(d[:R] = isa(D, Vector) ? 
@@ -383,7 +383,7 @@ function helper3_boxplot(d, D, Dol, first, isVert, showOL, OLcmd, n4t, isGroup::
 end
 
 # ----------------------------------------------------------------------------------------------------------
-function plotcandles_and_showsep(d, D, first::Bool, isVert::Bool, n4t, isGroup::Bool, allvar::Bool)
+function plotcandles_and_showsep(d::Dict{Symbol,Any}, @nospecialize(D), first::Bool, isVert::Bool, @nospecialize(n4t), isGroup::Bool, allvar::Bool)
 	# Plot the candle sticks and deal with the request separator for lines between groups.
 	# The ALLVAR case = true is when the groups may have different number of elements. D is then by group.
 	showSep = ((SEPcmd = find_in_dict(d, [:separator])[1]) !== nothing)
@@ -416,7 +416,7 @@ function parse_candle_outliers_par(OLcmd::NamedTuple)::Tuple{String, String, Str
 	                      arg2str(val,',') : "black"		# No line thickness because psxy adds one (0.5p)
 	marker, sz, color, mec
 end
-function parse_stats_separator_pen(d, SEPcmd)
+function parse_stats_separator_pen(d::Dict{Symbol,Any}, @nospecialize(SEPcmd))
 	# Get the pen used in te separators option
 	SEPcmd === nothing && return "0.5p"
 	d[:sp] = SEPcmd
@@ -773,7 +773,7 @@ function helper1_violin(data::Union{Vector{Vector{T}}, AbstractMatrix{T}}, x::Ve
 end
 
 # ----------------------------------------------------------------------------------------------------------
-function helper2_violin(D, Ds, data, xc, N_grp, ccolor, first, isVert, N_in_each_grp, d::Dict{Symbol,Any})
+function helper2_violin(@nospecialize(D), @nospecialize(Ds), @nospecialize(data), @nospecialize(xc), N_grp::Int, ccolor::Bool, first::Bool, isVert::Bool, N_in_each_grp::Vector{Int}, d::Dict{Symbol,Any})
 	# This piece of code is common to viloin(Matrix2D) and violin(Matrix3D)
 	# Ds is a GMTdataset with the scatter points or an empty one if no scatters.
 	# XC vector with the center positions (group centers in case of groups.)
@@ -871,7 +871,7 @@ function colorize_candles_violins(D::Vector{<:GMTdataset}, ng::Int, be::Abstract
 end
 
 # ----------------------------------------------------------------------------------------------------------
-function colorize_VecVecVec(D, N_grp, N_in_each_grp, ccolor, custom_colors, type="box")
+function colorize_VecVecVec(@nospecialize(D), N_grp::Int, N_in_each_grp::Vector{Int}, ccolor::Bool, custom_colors::Vector{String}, type::String="box")
 	if (!ccolor)		# This was a diabolic case
 		# Ex: [[[11],[12]], [[21],[22],[23]], [[31],[32]]] ==> [[1,3,6], [2,4,7], [5]]
 		vv = [[1] for _ = 1:N_grp]						# Initialize a Vec{Vec{}} with [[1], [1], [1], ...]
@@ -992,7 +992,7 @@ Examples:
     qqplot(randn(100), show=true)
 
 """
-function qqplot(x, y; qqline=:identity, first=true, kwargs...)
+function qqplot(@nospecialize(x), @nospecialize(y); qqline=:identity, first=true, kwargs...)
 	!(qqline in (:identity, :fit, :fitrobust, :quantile, :none)) &&
 		throw(ArgumentError("valid values for qqline are :identity, :fit, :fitrobust or :none, but encountered " * repr(qqline)))
 	qx, qy = qqbuild(x, y)
@@ -1040,7 +1040,7 @@ function qqplot(x, y; qqline=:identity, first=true, kwargs...)
 	common_plot_xyz("", mat2ds([qx qy]), "scatter", first, false, d)		# The scatter plot
 end
 
-function qqplot(x; qqline=:identity, first=true, kwargs...)
+function qqplot(@nospecialize(x); qqline=:identity, first=true, kwargs...)
 	p = (.5:length(x)) ./ length(x)
 	y = sqrt(2) .* erfinv(2 .* p .- 1)
 	qqplot(x, y; qqline=qqline, first=first, kwargs...)
@@ -1141,11 +1141,11 @@ The `kwargs` may contain any option used in the `plot` module.
 Example:
     ecdfplot(randn(100), show=true)
 """
-function ecdfplot(x::AbstractVector{<:Real}; first=true, kwargs...)
-	x, y = ecdf(x)
-	stairs("", [x y]; first=first, kwargs...)
+function ecdfplot(@nospecialize(x::AbstractVector{<:Real}); first=true, kwargs...)
+	_x, y = ecdf(x)
+	stairs("", [_x y]; first=first, kwargs...)
 end
-ecdfplot!(x::AbstractVector{<:Real}; kwargs...) = ecdfplot(x; first=false, kwargs...)
+ecdfplot!(@nospecialize(x::AbstractVector{<:Real}); kwargs...) = ecdfplot(x; first=false, kwargs...)
 
 
 # ----------------------------------------------------------------------------------------------------------
@@ -1194,7 +1194,7 @@ parallelplot!(cmd0::String; axeslabels::Vector{String}=String[], labels::Vector{
 	parplot_helper(cmd0, nothing, KW(kw); first=false, axeslabels=axeslabels, labels=labels, group=group, groupvar=string(groupvar), normalize=string(normalize))
 
 # ----------------------------------------------------------------------------------------------------------
-function parplot_helper(cmd0::String, arg1, d::Dict{Symbol, Any}; first::Bool=true, axeslabels::Vector{String}=String[],
+function parplot_helper(cmd0::String, @nospecialize(arg1), d::Dict{Symbol, Any}; first::Bool=true, axeslabels::Vector{String}=String[],
                       labels::Vector{String}=String[], group::AbstractVector=AbstractVector[], groupvar::String="", normalize::String="range")
 	#d = KW(kwargs)
 	(cmd0 != "") && (arg1 = read_data(d, cmd0, "", arg1, " ", false, true)[2])	# Make sure we have the data here
@@ -1316,7 +1316,7 @@ function parplot_helper(cmd0::String, arg1, d::Dict{Symbol, Any}; first::Bool=tr
 end
 
 # ----------------------------------------------------------------------------------------------------------
-function plot_bands_from_vecDS(D::Vector{<:GMTdataset}, d, do_show, pen, gnames)
+function plot_bands_from_vecDS(D::Vector{<:GMTdataset}, d::Dict{Symbol,Any}, do_show, pen, @nospecialize(gnames))
 	# This function is needed because of a GMT bug that screws the polygons when headers have -G
 	d[:show], isname = false, false
 	lw::String, lc::String, ls::String = break_pen(pen)
@@ -1334,7 +1334,7 @@ function plot_bands_from_vecDS(D::Vector{<:GMTdataset}, d, do_show, pen, gnames)
 end
 
 # ----------------------------------------------------------------------------------------------------------
-function normalizeArray(method, A, bbox=Float64[])
+function normalizeArray(method::String, @nospecialize(A), bbox=Float64[])
 	# Matrix A should NOT contain NaNs
 	n_cols = size(A,2)
 	if (method == "range")		# rulers (columns) have independent minimum and maximum limits
@@ -1389,9 +1389,9 @@ Example:
 """
 cornerplot(fname::String; first::Bool=true, kw...) = cornerplot(gmtread(fname); first=first, kw...)
 function cornerplot(arg1; first::Bool=true, kwargs...)
-	# ...
-	d = KW(kwargs)
-	D = mat2ds(arg1)				# Simplifies life further down (knows min/maxs etc)
+	_cornerplot(mat2ds(arg1), first, KW(kwargs))
+end
+function _cornerplot(D::GMTdataset, first::Bool, d::Dict{Symbol,Any})
 	D = with_xyvar(d, D, true)		# See if we have a column request based on column names
 	ndims = size(D,2)
 	(size(D,1) < ndims) && throw(ArgumentError("input array should have less samples than dimensions, try transposing"))
@@ -1507,8 +1507,9 @@ Example:
 """
 marginalhist(fname::String; first::Bool=true, kw...) = marginalhist(gmtread(fname); first=first, kw...)
 function marginalhist(arg1::Union{GDtype, Matrix{<:Real}}; first=true, kwargs...)
-	d = KW(kwargs)
-	D = mat2ds(arg1)				# Simplifies life further down (knows min/maxs etc)
+	_marginalhist(mat2ds(arg1), first==true, KW(kwargs))
+end
+function _marginalhist(D::GMTdataset, first::Bool, d::Dict{Symbol,Any})
 	D = with_xyvar(d, D, true)		# See if we have a column request based on column names
 	endwith = ((val = find_in_dict(d, [:show])[1]) !== nothing && val != 0) ? Symbol("show") : Symbol("end")
 	Vd = haskey(d, :Vd) ? d[:Vd] : -1
