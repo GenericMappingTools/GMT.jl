@@ -388,7 +388,7 @@ using .Laszip
 	gmtwrite(t, [0.0 0; 1 1])
 	gmtread(t)
 	gmtread(TESTSDIR * "assets/burro_cenora.jpg")
-	#coast(R=:g, proj=:guess, W=(level=1, pen=(2, :green)), savefig=tempname()*".ps")
+	coast(R=:g, proj=:guess, W=(level=1, pen=(2, :green)), savefig=tempname()*".ps")
 	rm(t)
 	D = mat2ds(rand(3, 3), colnames=["Time", "b", "c"])
 	D.attrib = Dict("Timecol" => "1")
