@@ -1,3 +1,5 @@
+# This code was translated by Claude from the original in C-MEX that lieves in Mirone.
+
 """
     wave_travel_time(G::GMTgrid, source::Vector{<:Real}; geo::Bool=true, fill_voids::Bool=true)
 
