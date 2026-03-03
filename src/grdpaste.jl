@@ -1,22 +1,8 @@
 """
-	grdpaste(cmd0::String="", G1=nothing, G2=nothing, kwargs...)
-
 Combine grids ``grid1`` and ``grid2`` into ``grid3`` by pasting them together along their common edge.
 Both grids must have the same dx, dy and have one edge in common.
 
-See full GMT docs at [`grdpaste`]($(GMTdoc)grdpaste.html)
-
-Parameters
-----------
-
-- **G** | **save** | **outgrid** | **outfile** :: [Type => Str]
-
-    Output grid file name. Note that this is optional and to be used only when saving
-    the result directly on disk. Otherwise, just use the G = grdpaste(....) form.
-- $(opt_V)
-- $(_opt_f)
-
-To see the full documentation type: ``@? grdpaste``
+To see the documentation, type: ``@? grdpaste``
 """
 function grdpaste(G1::GItype, G2::GItype; kw...)
 	(G1.layout != "" && G1.layout[2] == 'R') && error("Pasting row oriented grids (such those produced by GDAL) is not implemented.")

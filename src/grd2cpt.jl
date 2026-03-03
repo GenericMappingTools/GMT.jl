@@ -78,7 +78,7 @@ function grd2cpt_helper(w::wrapGrids, d::Dict{Symbol, Any})
 	cmd, Tvec = helper_cpt(d, cmd)
 	cmd = add_opt(d, cmd, "S", [:S :symetric])
 	!isempty(Tvec) && error("grd2cpt does not accept an array argument in the 'range' option")
-	if ((val = find_in_dict(d, [:E :nlevels])[1]) !== nothing)  cmd *= " -E" * arg2str(val)  end
+    ((val = hlp_desnany_str(d, [:E :nlevels])) !== "") && (cmd *= " -E" * val)
 	got_N = (is_in_dict(d, [:N :no_bg :nobg], del=true) !== nothing)
 
 	cmd, got_fname, arg1 = find_data(d, cmd0, cmd, arg1)

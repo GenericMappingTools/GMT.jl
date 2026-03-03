@@ -177,7 +177,7 @@ export
 	imresize, imregionalmin, imregionalmax, imclearborder, findpeaks, makeDCWs, mksymbol, circfit, gunique, uniqueind, sortslicesperm,
 	hampel, hampel!, lowess, whittaker, Ginnerjoin, Gouterjoin, Gleftjoin, Grightjoin, Gcrossjoin, Gsemijoin, Gantijoin, spatialjoin,
 	groupby, stats, anaglyph, lazinfo, lazread, lazwrite, lasread, laswrite,
-	okada,
+	okada, wave_travel_time,
 	haralick,
 	mapsize2region,
 	ind2bool, cube, cylinder, circlepts, dodecahedron, ellipse3D, eulermat, flatfv, icosahedron, loft, sphere, spinmat,
@@ -197,6 +197,7 @@ include("proj_utils.jl")
 const global MatGDsGd = Union{Matrix{<:AbstractFloat},GMTdataset,Vector{<:GMTdataset},Gdal.AbstractDataset}
 const CURRENT_CPT = Ref{GMTcpt}(GMTcpt())# To store the current palette
 
+include("get_enums.jl")
 include("gmt_main.jl")
 include("utils_types.jl")
 include("grd_operations.jl")
@@ -338,6 +339,7 @@ include("extras/montage.jl")
 include("extras/choropleth.jl")
 include("extras/seismicity.jl")
 include("extras/okada.jl")
+include("extras/wave_travel_time.jl")
 include("extras/weather.jl")
 include("extras/webmapserver.jl")
 include("extras/whittaker.jl")
@@ -365,7 +367,6 @@ include("potential/grdseamount.jl")
 include("spotter/grdrotater.jl")
 include("windbarbs/windbarbs.jl")
 include("zscale.jl")
-include("get_enums.jl")
 
 using .Gdal
 using .Laszip

@@ -3,8 +3,6 @@
 
 Select data table subsets based on multiple spatial criteria.
 
-See full GMT docs at [`gmtselect`]($(GMTdoc)gmtselect.html)
-
 Parameters
 ----------
 
@@ -59,6 +57,8 @@ Parameters
 - $(opt_o)
 - $(opt_w)
 - $(opt_swap_xy)
+
+To see the documentation, type: ``@? gmtselect``
 """
 function gmtselect(cmd0::String="", arg1=nothing, arg2=nothing, arg3=nothing, arg4=nothing; kw...)
 	d = init_module(false, kw...)[1]

@@ -772,6 +772,11 @@ function GMTJL_Set_Object(API::Ptr{Nothing}, X::GMT_RESOURCE, ptr, pad)::GMT_RES
 	end
 	(X.object == NULL) && error("GMT: Failure to register the resource")
 
+	return helper_Set_Object(API, X)	
+end
+
+function helper_Set_Object(API::Ptr{Nothing}, X::GMT_RESOURCE)::GMT_RESOURCE
+	# Move this chunk here to avoid having it included in the multi-recompiled GMTJL_Set_Object. Uggly but Julia obliges.
 	name::String = String([X.name...])
 	# Make filename with embedded object ID
 	(GMT_Open_VirtualFile(API, X.family, X.geometry, X.direction, X.object, name) != 0) && error("GMT: Failure to open virtual file") 
@@ -1731,7 +1736,7 @@ Base.:show(io::IO, mime::MIME"image/png", wp::WrapperPluto) = write(io, read(wp.
 # ---------- For Tables -----------------------------------------------------------------------------
 #Base.:names(D::GDtype) = isa(D, Vector) ? D[1].colnames : D.colnames
 Base.:names(D::GMTdataset) = D.colnames
-Base.:names(D::Vector{GMTdataset{Float64,2}})::Vector{String} = D[1].colnames::Vector{String}
+Base.:names(D::Vector{<:GMTdataset})::Vector{String} = D[1].colnames::Vector{String}
 
 # ---------- For fck stop printing UInts in hexadecinal ---------------------------------------------
 #Base.show(io::IO, x::T) where {T<:Union{UInt, UInt128, UInt64, UInt32, UInt16, UInt8}} = Base.print(io, x)
