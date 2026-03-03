@@ -585,6 +585,7 @@ function get_FillValue(str::String)
 	((ind = findfirst("_FillValue=", str)) === nothing) && return NaN, false
 	ind2 = findfirst('\n', str[ind[1]:end])
 	fill_val = (ind2 !== nothing) ? tryparse(Float32, str[ind[1]+11 : ind[1] + ind2[1]-2]) : tryparse(Float32, str[ind[1]+11:end])
+	fill_val === nothing && (startswith(str[ind[1]+11:end], "-nan") || startswith(str[ind[1]+11:end], "nan")) && (fill_val = NaN32)
 	return fill_val, true
 end
 
