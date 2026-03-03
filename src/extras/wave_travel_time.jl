@@ -1,12 +1,12 @@
 # This code was translated by Claude from the original in C-MEX that lieves in Mirone.
 
 """
-    wave_travel_time(G::GMTgrid, source::Vector{<:Real}; geo::Bool=true, fill_voids::Bool=true)
+    wave_travel_time(G::GMTgrid{Float32, 2}, source::Union{Tuple{<:Real, <:Real}, VecOrMat{<:Real}}; geo::Bool=true, fill_voids::Bool=true)
 
 Compute the tsunami travel time given a bathymetry grid and a source location.
 
 - `G`: GMTgrid with bathymetry (z positive up, in meters). The grid should not contain NaNs.
-- `source`: `[lon, lat]` of the tsunami source.
+- `source`: `[lon, lat]` or `(lon,lat)`of the tsunami source.
 - `geo`: `true` if coordinates are geographic (degrees), `false` if Cartesian.
 - `fill_voids`: fill voids left by the first wavefront expansion (default `true`).
 
@@ -19,7 +19,11 @@ Gttt = wave_travel_time(G, [-11.0, 35.9])
 viz(Gttt, contour=true, colorbar=true, coast=true, proj=:guess)
 ```
 """
-function wave_travel_time(G::GMTgrid, source::Vector{<:Real}; geo::Bool=true, fill_voids::Bool=true)
+function wave_travel_time(G::GMTgrid{Float32, 2}, source::Union{Tuple{<:Real, <:Real}, VecOrMat{<:Real}}; geo::Bool=true, fill_voids::Bool=true)
+	src = (Float64(source[1]), Float64(source[2]))
+	wave_travel_time(G, src, geo==1, fill_voids==1)
+end
+function wave_travel_time(G, source::Tuple{Float64, Float64}, geo::Bool, fill_voids::Bool)
 	x_min, x_max, y_min, y_max = G.range[1], G.range[2], G.range[3], G.range[4]
 	x_inc, y_inc = G.inc[1], G.inc[2]
 	# Compute nx, ny from coordinate vectors (robust for all layouts, including transposed TRB)
