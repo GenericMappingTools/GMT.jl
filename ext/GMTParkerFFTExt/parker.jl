@@ -68,7 +68,7 @@ function GMT.parkermag(mag::String, bat::String, dir::String="dir"; year=2020, n
 	          isRTP=isRTP, verbose=verbose)
 end
 
-function GMT.parkermag(Gm::GMTgrid, Gbat::GMTgrid, dir::String="dir"; year=2020, nnx=0, nny=0, nterms=6, zobs=0.0,
+function GMT.parkermag(Gm::GMTgrid{Float32, 2}, Gbat::GMTgrid{Float32, 2}, dir::String="dir"; year=2020, nnx=0, nny=0, nterms=6, zobs=0.0,
                    wshort=0.0, wlong=0.0, slin=0.0, sdip=0.0, sdec=0.0, thickness=0.5, pct=30, padtype::String="taper",
 				   geocentric=false, isRTP=false, verbose=false)::GMTgrid{Float32, 2}
 	helper_parkermag(Gm, Gbat, dir, Float32(year), nnx, nny, nterms, Float32(zobs), Float32(wshort), Float32(wlong),
@@ -77,9 +77,9 @@ function GMT.parkermag(Gm::GMTgrid, Gbat::GMTgrid, dir::String="dir"; year=2020,
 end
 
 # Annotate all inputs because Julia recompiles everithing if a single input type changes.
-function helper_parkermag(Gm::GMTgrid, Gbat::GMTgrid, dir::String, year, nnx::Int, nny::Int, nterms::Int,
-                          zobs::Float32, wshort::Float32, wlong::Float32, slin::Float32, sdip::Float32,
-						  sdec::Float32, thickness::Float32, pct::Float64, padtype::String, geocentric::Bool, isRTP::Bool, verbose::Bool)
+function helper_parkermag(Gm::GMTgrid{Float32, 2}, Gbat::GMTgrid{Float32, 2}, dir::String, year::Float32, nnx::Int, nny::Int, nterms::Int,
+                          zobs::Float32, wshort::Float32, wlong::Float32, slin::Float32, sdip::Float32, sdec::Float32,
+						  thickness::Float32, pct::Float64, padtype::String, geocentric::Bool, isRTP::Bool, verbose::Bool)
 	!GMT.guessgeog(Gm) && error("Input grid must be in geographical coordinates")
 	dx::Float64, dy::Float64 = Gm.inc[1], Gm.inc[2]
 	rlat::Float64 = (Gm.range[3] + Gm.range[4]) / 2
@@ -189,6 +189,12 @@ end
 function GMT.parkergrav(Gz::GMTgrid{Float32, 2}, dir::String="dir"; nnx=0, nny=0, nterms=6, depth=0.0, zobs=0.0,
                     pct=30, wshort=25.0, rho=1000.0, maxiter=50, min_err=1e-4, padtype::String="taper",
 					isKm::Bool=false, verbose=false)::GMTgrid{Float32, 2}
+	helper_parkergrav(Gz, dir, nnx, nny, nterms, Float32(depth), Float32(zobs), Float64(pct), Float64(wshort),
+	                  Float64(rho), maxiter::Int, Float64(min_err), padtype, isKm==1, verbose==1)
+end
+function helper_parkergrav(Gz::GMTgrid{Float32, 2}, dir::String, nnx::Int, nny::Int, nterms::Int, depth::Float32, zobs::Float32, pct::Float64,
+                          wshort::Float64, rho::Float64, maxiter::Int, min_err::Float64,
+						  padtype::String, isKm::Bool, verbose::Bool)
 	dx::Float64, dy::Float64 = Gz.inc[1], Gz.inc[2]
 	rng::Vector{Float64} = Gz.range
 	sclat = 1.0
@@ -576,7 +582,7 @@ end
 
 Return the good FFT numbers for nx, ny that are pct% greater than the nx, ny sizes
 """
-function goodfftnumbers(nx, ny; pct=30)
+function goodfftnumbers(nx, ny; pct=30.0)
 
 	nlist = [64, 72, 75, 80, 81, 90, 96, 100, 108, 120, 125, 128, 135, 144, 150, 160, 162, 180, 192, 200,
 			216, 225, 240, 243, 250, 256, 270, 288, 300, 320, 324, 360, 375, 384, 400, 405, 432, 450, 480,
