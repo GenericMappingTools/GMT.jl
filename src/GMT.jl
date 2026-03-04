@@ -138,7 +138,7 @@ export
 	sunsetrise, spectrum1d, sphdistance, sphinterpolate,
 	sphtriangulate, surface, ternary, ternary!, text, text!, text_record, trend1d, trend2d, triangulate, gmtsplit,
 	decorated, vector_attrib, wiggle, wiggle!, xyz2grd, gmtbegin, gmtend, gmthelp, subplot, gmtfig, inset, showfig,
-	earthtide, gmt2grd, gravfft, gmtgravmag3d, gravmag3d, grdgravmag3d, gravprisms, grdseamount, parkermag, parkergrav,
+	earthtide, gmt2grd, gravfft, gmtgravmag3d, gravmag3d, grdgravmag3d, gravprisms, grdseamount, parkermag, parkergrav, ppdrc,
 	pscoupe, pscoupe!, coupe, coupe!, psmeca, psmeca!, meca, meca!, psvelo, psvelo!, sac, sac!, velo, velo!, gmtisf, getbyattrib,
 	inpolygon, inwhichpolygon, pcolor, pcolor!, triplot, triplot!, trisurf, trisurf!, grdrotater, imagesc, upGMT, boxes,
 	segy, segy!, segyz, segyz!, segy2grd, stereonet, stereonet!, add_opt, isgeog, numel, scan_opt, extrema_nan, parse_RIr,
@@ -416,7 +416,7 @@ using .Laszip
 	grdtrack(Glix, [1 1])
 	rescale(mat2img(rand(UInt16, 16,16,3)))
 	plot(rand(5, 2))
-	bar(1:5, (20, 35, 30, 35, 27), width=0.5, color=:lightblue, limits=(0.5,5.5,0,40))
+	#bar(1:5, (20, 35, 30, 35, 27), width=0.5, color=:lightblue, limits=(0.5,5.5,0,40))
 	sample1d([0 0; 4 1], inc=0.5);
 	#gridit(rand(10,3), preproc=true, I=0.1);
 	#earthregions("PT", Vd=2);
