@@ -40,7 +40,7 @@ function magref_helper(cmd0::String, arg1; kwargs...)::Union{GDtype, GMTgrid, St
 end
 
 # ---------------------------------------------------------------------------------------------------
-function magref_helper(arg1::GDtype, d::Dict{Symbol,Any})
+function magref_helper(@nospecialize(arg1::GDtype), d::Dict{Symbol,Any})
 	
 	cmd = parse_common_opts(d, "", [:V_params :bi :f :hi :o :yx])[1]
 	cmd = parse_these_opts(cmd, d, [[:C :cm4file], [:D :dstfile], [:E :f107file]])

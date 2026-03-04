@@ -1697,6 +1697,8 @@ parkermag(x, y, z=""; kw...) =
 	printstyled("\tTo use this function you need to load the FFTW package first. Do:\n\tusing FFTW"; color=:yellow)
 parkergrav(x, y=""; kw...)   =
 	printstyled("\tTo use this function you need to load the FFTW package first. Do:\n\tusing FFTW"; color=:yellow)
+ppdrc(x; kw...) =
+	printstyled("\tTo use this function you need to load the FFTW package first. Do:\n\tusing FFTW"; color=:yellow)
 
 read_xls(x; kw...) =
 	printstyled("\tTo use this function you need to load the XLSX package first. Do:\n\tusing XLSX"; color=:yellow)

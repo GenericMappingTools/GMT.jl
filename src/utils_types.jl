@@ -488,7 +488,10 @@ If 'ind=0' append 'mat' at the end of 'D'
 If 'mat' is a vector optionally use the 'name' for the new inserted column
 If 'mat' is a matrix optionally use a 'names' vector (must have size(mat,2) elements) of new column names.
 """
-function add2ds!(D::GMTdataset{T,2}, mat, ind::Int=0; name::AbstractString="", names::Vector{<:AbstractString}=AbstractString[]) where {T<:Real}
+function add2ds!(D::GMTdataset, mat, ind::Int=0; name::AbstractString="", names::Vector{<:AbstractString}=AbstractString[])
+	_add2ds_1(D, mat, ind, name, names)
+end
+function _add2ds_1(@nospecialize(D), @nospecialize(mat), ind::Int, name::AbstractString, names::Vector{<:AbstractString})
 	(isvector(mat) && size(D,1) != length(mat)) && error("Number of rows in GMTdataset and adding vector elements do not match.")
 	(isa(mat, Matrix) && size(mat,1) > 1 && size(D,1) != size(mat,1)) && error("Number of rows in GMTdataset and adding matrix do not match.")
 	n_newCols = isvector(mat) ? 1 : size(mat,2)
@@ -522,7 +525,7 @@ function add2ds!(D::Vector{<:GMTdataset}, mat, ind::Int=0; name::AbstractString=
 end
 
 # ---------------------------------------------------------------------------------------------------
-function add2ds!(D::GMTdataset{T,2}; name::AbstractString="", names::Vector{<:AbstractString}=AbstractString[]) where {T<:Real}
+function add2ds!(@nospecialize(D::GMTdataset); name::AbstractString="", names::Vector{<:AbstractString}=AbstractString[])
 	# Method for fixing the colnames and/or the bbox in DS that had their matrix extended.
 	# 'name' and 'names' are only usable if 'D' already has 'colnames'
 	isempty(D.colnames) && (D.colnames = [string("Col.",k) for k=1:size(D,2)])

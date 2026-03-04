@@ -1,5 +1,5 @@
 """
-    O = gd2gmt(dataset; band=0, bands=[], sds=0, pad=0)
+    O = gd2gmt(dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int=0)
 
 Convert a GDAL raster dataset into either a GMTgrid (if type is Int16 or Float) or a GMTimage type
 Use `band` to select a single band of the dataset. When you know that the dataset contains several
@@ -22,6 +22,9 @@ Or
    G = gd2gmt("NETCDF:AQUA_MODIS.20210228.L3m.DAY.NSST.sst.4km.NRT.nc:sst");
 """
 function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int=0, layout::String="")::Union{GItype, GDtype}
+	_gd2gmt(_dataset, band, bands, sds, pad, layout)
+end
+function _gd2gmt(@nospecialize(_dataset), band::Int, bands::Vector{Int}, sds::Int, pad::Int, layout::String)
 
 	(isa(_dataset, GMTgrid) || isa(_dataset, GMTimage) || isGMTdataset(_dataset)) && return _dataset
 
@@ -257,7 +260,7 @@ function gd2gmt(geom::Gdal.AbstractGeometry, proj::String="")::Union{GMTdataset,
 end
   
 # ---------------------------------------------------------------------------------------------------
-function gd2gmt(dataset::Gdal.AbstractDataset)
+function gd2gmt(@nospecialize(dataset::Gdal.AbstractDataset))
 	# This method is for OGR formats only
 	(Gdal.GDALGetRasterCount(dataset.ptr) >= 1) && return gd2gmt(dataset; pad=0)
 
@@ -491,7 +494,10 @@ by `grdinfo`. An unfortunate consequence of using either GMT or GDAL to inquire 
 `x_inc, y_inc` when reading with GDAL, and `z_min, z_max` when reading with GMT.
 """
 function getregion(input; pad=0, xSize=0, ySize=0, gridreg::Bool=false, sds::Int=0, GMT=false)::NTuple{6, Float64}
-	(GMT == 1 && isa(input, String)) && return vec(gmt_grdinfo_C(input).data)
+	_getregion(input, Int(pad), Int(xSize), Int(ySize), gridreg==1, sds, GMT==1)
+end
+function _getregion(@nospecialize(input), pad::Int, xSize::Int, ySize::Int, gridreg::Bool, sds::Int, GMT::Bool)::NTuple{6, Float64}
+	(GMT && isa(input, String)) && return vec(gmt_grdinfo_C(input).data)
 	dataset = gd2gmt_helper(input, sds; short=true)[1]
 	(xSize == 0) && (xSize = Gdal.width(dataset))
 	(ySize == 0) && (ySize = Gdal.height(dataset))
