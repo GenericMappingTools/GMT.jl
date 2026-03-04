@@ -71,7 +71,7 @@ end
 function GMT.parkermag(Gm::GMTgrid{Float32, 2}, Gbat::GMTgrid{Float32, 2}, dir::String="dir"; year=2020, nnx=0, nny=0, nterms=6, zobs=0.0,
                    wshort=0.0, wlong=0.0, slin=0.0, sdip=0.0, sdec=0.0, thickness=0.5, pct=30, padtype::String="taper",
 				   geocentric=false, isRTP=false, verbose=false)::GMTgrid{Float32, 2}
-	helper_parkermag(Gm, Gbat, dir, Float32(year), nnx, nny, nterms, Float32(zobs), Float32(wshort), Float32(wlong),
+	helper_parkermag(Gm, Gbat, dir, Float32(year), nnx::Int, nny::Int, nterms::Int, Float32(zobs), Float32(wshort), Float32(wlong),
 	                 Float32(slin), Float32(sdip), Float32(sdec), Float32(thickness), Float64(pct), padtype, Bool(geocentric),
 					 Bool(isRTP), Bool(verbose))
 end
@@ -383,7 +383,7 @@ function grav_inv(grav, dx, dy, wl, ws, zmean, rho, max_iter, min_err, verbose):
 	ny::Int, nx::Int = size(grav)
 	nxy = nx * ny
 	k   = create_wavenumbers(nx, ny, dx, dy, eltype(grav))[1]		# calculate wavenumber array
-	wts = bpass3d(nx, ny, convert(eltype(grav), dx), convert(eltype(grav), dy), wl, ws, false)	# set up bandpass filter
+	wts = bpass3d(nx, ny, Float64(dx), Float64(dy), Float64(wl), Float64(ws), eltype(dx), false)	# set up bandpass filter
 
 	F = -fft(grav) ./ (cte * exp.(-k .* _zmean) .+ eps(1.0f0))
 	for m = 1:nxy @inbounds F[m] *= wts[m] end
@@ -669,7 +669,7 @@ function inv3d(f3d, h, dx, dy, wl, ws, rlat, rlon, yr, zobs, thick, sdec, sdip, 
 	zup = zobs - hmax
 	h .+= Float32(hwiggl - hmax)
 
-	wts = bpass3d(nx, ny, convert(eltype(f3d), dx), convert(eltype(f3d), dy), wl, ws, verbose)	# set up bandpass filter
+	wts = bpass3d(nx, ny, Float64(dx), Float64(dy), Float64(wl), Float64(ws), eltype(dx), verbose)	# set up bandpass filter
 
 	dexpw = exp.(-k .* hwiggl)
 	F = fft(f3d)					# take fft of observed magnetic field and initial m3d
@@ -738,7 +738,7 @@ end
 
 # --------------------------------------------------------------------------------------------------
 """
-    wts = bpass3d(nnx::Int, nny::Int, dx::Float, dy::Float, wlong::Real, wshort::Real, verbose::Bool)
+    wts = bpass3d(nnx::Int, nny::Int, dx::Float64, dy::Float64, wlong::Float64, wshort::Float64, dt::eltype(dx), verbose::Bool)
 
 Sets up bandpass filter weights in 2 dimensions.
 
@@ -753,7 +753,7 @@ Returns:
 	Matrix containing bandpass filter weights. The type of this matrix depends on the type of `dx`.
 	It can be a `Float32` or `Float64` matrix.
 """
-function bpass3d(nnx, nny, dx::T, dy, wlong, wshort, verbose::Bool) where T
+function bpass3d(nnx::Int, nny::Int, dx::Float64, dy::Float64, wlong::Float64, wshort::Float64, dt::DataType, verbose::Bool)
 	!isa(dx, AbstractFloat) && (dx = Float32(dx); dy = Float32(dy))
 	# Constants
 	twopi = pi * 2
@@ -761,7 +761,7 @@ function bpass3d(nnx, nny, dx::T, dy, wlong, wshort, verbose::Bool) where T
 	dk2 = twopi/((nny-1)*dy)
 
 	# Calculate wavenumber array
-	k, _, _ = create_wavenumbers(nnx, nny, dx, dy, eltype(dx))
+	k, _, _ = create_wavenumbers(nnx, nny, dx, dy, dt)
 	
 	# Default values for wshort and wlong
 	wshort = wshort == 0.0 ? max(dx*2, dy*2) : wshort
@@ -784,8 +784,8 @@ function bpass3d(nnx, nny, dx::T, dy, wlong, wshort, verbose::Bool) where T
 	end
 
 	# Calculate wavelength information
-	wl1 = wlong > 0 ? twopi/klo : 1000
-	wl2 = wlong > 0 ? twopi/klof : 1000
+	wl1 = wlong > 0 ? twopi/klo : 1000.0
+	wl2 = wlong > 0 ? twopi/klof : 1000.0
 	wl3 = twopi/khif
 	wl4 = twopi/khi
 	wnx = twopi/(dk1*(nnx-1)/2)
