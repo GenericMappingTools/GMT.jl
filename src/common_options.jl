@@ -2195,7 +2195,7 @@ arg2str(arg::Nothing,       sep = '/')::String = ""
 arg2str(arg::Real,          sep = '/')::String = @sprintf("%.12g", arg)
 arg2str(arg::Symbol,        sep = '/')::String = string(arg)
 arg2str(arg::Array{<:Real}, sep = '/')::String = string(rstrip(join([string(x, sep) for x in arg]), sep))
-arg2str(arg::Tuple,         sep = '/')::String = string(rstrip(join([string(x, sep) for x in arg]), sep))
+arg2str(@nospecialize(arg::Tuple), sep = '/')::String = string(rstrip(join([string(x, sep) for x in arg]), sep))
 function arg2str(arg::Bool, sep = '/')::String
     @assert arg "arg is false!"
     arg && return ""
