@@ -58,10 +58,11 @@ To see the full documentation type: ``@? pstext``
 """
 function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
-	_text(wrapDatasets(cmd0, arg1), O, K, d)
+	_text(wrapDatasets(cmd0, arg1), isa(arg1, Matrix), O, K, d)
 end
-function _text(w::wrapDatasets, O::Bool, K::Bool, d::Dict{Symbol,Any})
+function _text(w::wrapDatasets, ismatrix::Bool, O::Bool, K::Bool, d::Dict{Symbol,Any})
 	cmd0, arg1 = unwrapDatasets(w::wrapDatasets)
+	ismatrix && (arg1 = arg1.data)		# If the user sent in a Matrix, we need to extract the data for the text record (see Line 95)
 
 	(is_in_dict(d, [:L :list]) !== nothing) && return gmt("pstext -L")
 
@@ -143,8 +144,8 @@ function _text(w::wrapDatasets, O::Bool, K::Bool, d::Dict{Symbol,Any})
 	# is equivalent to this second form and avoids the use of the "--FONT" mechanism.
 	# echo 1 13 28p,Helvetica-Bold,black=~3p,green blue | gmt text -R0/18/0/15 -Jx1c -B5g1 -BWSne  -F+f+jBL -png lixo
 	# But it requires quite a bit of gymnastics moving around the pen,font settings.
-	if ((val = find_in_dict(d, [:outline])[1]) !== nothing)
-		outline::String = (val == 1) ? "1p,white" : string(val)
+	if ((val_s = hlp_desnany_str(d, [:outline])) !== "")
+		outline = (val_s == "1") ? "1p,white" : val_s
 		if (opt_F == "")
 			opt_F = " -F+f"
 			outline = "black=~" * outline * " "
