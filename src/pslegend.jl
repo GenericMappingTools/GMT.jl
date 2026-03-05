@@ -152,11 +152,10 @@ function mk_legend(; kwargs...)
 
 		elseif (kw_str == "B" || startswith(kw_str, "colorbar"))	# code = (name="tt.cpt", offset=0.5, height=0.5)
 			d = nt2dict(code)
-			((val = find_in_dict(d, [:offset])[1]) === nothing) && error("Must specify the 'offset' in 'colorbar'")
-			f = string(val)
-			((val = find_in_dict(d, [:height])[1]) === nothing) && error("Must specify the 'height' in 'colorbar'")
-			f *= " " * string(val)::String
-			((val = find_in_dict(d, [:extra :options])[1]) !== nothing) && (f *= " " * string(val)::String)
+			((f = hlp_desnany_str(d, [:offset])) === "") && error("Must specify the 'offset' in 'colorbar'")
+			((val_s = hlp_desnany_str(d, [:height])) === "") && error("Must specify the 'height' in 'colorbar'")
+			f *= " " * string(val_s)::String
+			((val_s = hlp_desnany_str(d, [:extra :options])) === "") || (f *= " " * val_s)
 			leg[n] = "B " * string(d[Symbol.(keys(d))[1]])::String * " " * f
 			check_unused(d, kw_str, Symbol.(keys(d))[1])
 
@@ -165,7 +164,7 @@ function mk_legend(; kwargs...)
 
 		elseif (kw_str == "D" || startswith(kw_str, "hline"))	# code = (hline=pen, offset=?)	D 0.2i 1p
 			d = nt2dict(code)
-			f = ((val = find_in_dict(d, [:offset])[1]) === nothing) ? "" : string(val)
+			f = hlp_desnany_str(d, [:offset])
 			leg[n] = "D " * f * " " * add_opt_pen(d, [:pen], opt="")
 			check_unused(d, kw_str)
 
@@ -177,28 +176,26 @@ function mk_legend(; kwargs...)
 
 		elseif (kw_str == "I" || startswith(kw_str, "image"))	# code = (image=fname)	I @SOEST_block4.png 3i CT
 			d = nt2dict(code)
-			((val = find_in_dict(d, [:width])[1]) === nothing) && error("Must specify the 'width' in 'image'")
-			f = string(val)
-			((val = find_in_dict(d, [:justify :justification])[1]) === nothing) && error("Must specify the 'justify' in 'image'")
-			f *= " " * string(val)::String
+			((f = hlp_desnany_str(d, [:width])) === "") && error("Must specify the 'width' in 'image'")
+			((val_s = hlp_desnany_str(d, [:justify :justification])) === "") && error("Must specify the 'justify' in 'image'")
+			f *= " " * string(val_s)::String
 			leg[n] = "I " * string(d[Symbol.(keys(d))[1]])::String * " " * f
 			check_unused(d, kw_str, Symbol.(keys(d))[1])
 
 		elseif (kw_str == "L" || startswith(kw_str, "label"))	# code = L 9p,Times-Roman R Smith et al., @%5%J. Geophys. Res., 99@%%, 2000
 			d = nt2dict(code)
-			((val = find_in_dict(d, [:justify :justification])[1]) === nothing) && error("Must specify the 'justify' in 'label'")
-			f = string(val)
+			((f = hlp_desnany_str(d, [:justify :justification])) === "") && error("Must specify the ''justify' in 'label'")
 			f = (((val = find_in_dict(d, [:font])[1]) === nothing) ? "-" : font(val)) * " " * uppercase(f[1])
 			leg[n] = "L " * f * " " * string(d[Symbol.(keys(d))[1]])::String
 			check_unused(d, kw_str, Symbol.(keys(d))[1])
 
 		elseif (kw_str == "M" || occursin("scale", kw_str))		# code = (map_scale=)	M 5 5 600+u+f
 			d = nt2dict(code)
-			f = ((val = find_in_dict(d, [:lon :x])[1]) === nothing) ? "-" : string(val)
-			((val = find_in_dict(d, [:lat :y])[1]) === nothing) && error("Must specify the 'lat or y' in map_scale")
-			leg[n] = "M " * f * " " * string(val)::String
-			((val = find_in_dict(d, [:length])[1]) === nothing) && error("Must specify the 'length' in map_scale")
-			leg[n] *= " " * string(val)::String
+			((f = hlp_desnany_str(d, [:lon :x])) === "") && (f = "-")
+			((val_s = hlp_desnany_str(d, [:lat :y])) === "") && error("Must specify the 'lat or y' in map_scale")
+			leg[n] = "M " * f * " " * val_s
+			((val_s = hlp_desnany_str(d, [:length])) === "") && error("Must specify the 'length' in map_scale")
+			leg[n] *= " " * val_s
 			opt_R::String = parse_R(d, "", O=false, del=false)[1]
 			opt_J::String = parse_J(d, "", default=" ", map=true, O=false, del=false)[1]
 			opt_F::String = parse_F(d, "")
@@ -218,14 +215,13 @@ function mk_legend(; kwargs...)
 			# S [dx1 symbol size fill pen [ dx2 text ]]
 			d = nt2dict(code)
 			marca::String = get_marker_name(d, nothing, [:symbol, :marker], false, true)[1]
-			f = ((val = find_in_dict(d, [:dx_left])[1]) === nothing) ? "- " : string(val, " ");	dx1 = f
-			f = ((val = find_in_dict(d, [:fill])[1]) === nothing) ? "- " : get_color(val);			fill = f
+			f = ((val_s = hlp_desnany_str(d, [:dx_left])) === "") ? "- " : string(val_s, " ");	dx1 = f
+			f = ((val_s = hlp_desnany_str(d, [:fill])) === "") ? "- " : get_color(val_s);		fill = f
 			f = add_opt_pen(d, [:pen], opt="");	pen = (f == "") ? " -" : " " * f		# TRUE to also seek (lw,lc,ls)
-			((val = find_in_dict(d, [:size])[1]) === nothing) && error("Must specify the 'size' in 'symbol'")
-			_size::String = arg2str(val)
-			f = ((val = find_in_dict(d, [:label :text])[1]) === nothing) ? "" : string(val);	label = f
+			((_size = hlp_desnany_str(d, [:size])) === "") && error("Must specify the 'size' in 'symbol'")
+			f = hlp_desnany_str(d, [:label :text]);	label = f
 			if (label != "")
-				f = ((val = find_in_dict(d, [:dx_right])[1]) === nothing) ? "- " : string(val, " ");	dx2 = f
+				f = ((val_s = hlp_desnany_str(d, [:dx_right])) === "") ? "- " : string(val_s, " ");	dx2 = f
 				label = " " * dx2 * label
 			end
 			leg[n] = "S " * dx1 * marca * " " * _size * " " * fill * pen * label
@@ -236,7 +232,7 @@ function mk_legend(; kwargs...)
 
 		elseif (kw_str == "V" || startswith(kw_str, "vline"))		# code = (vline=pen, offset=?)	V 0 1p
 			d = nt2dict(code)
-			f = ((val = find_in_dict(d, [:offset])[1]) === nothing) ? "" : string(val)
+			f = hlp_desnany_str(d, [:offset])
 			leg[n] = "V " * f * " " * add_opt_pen(d, [:pen], opt="")
 			check_unused(d, kw_str)
 

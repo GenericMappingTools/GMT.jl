@@ -58,9 +58,10 @@ To see the full documentation type: ``@? pstext``
 """
 function text(cmd0::String="", arg1=nothing; first=true, kwargs...)
 	d, K, O = init_module(first, kwargs...)		# Also checks if the user wants ONLY the HELP mode
-	_text(cmd0, arg1, O, K, d)
+	_text(wrapDatasets(cmd0, arg1), O, K, d)
 end
-function _text(cmd0::String, arg1, O::Bool, K::Bool, d::Dict{Symbol,Any})
+function _text(w::wrapDatasets, O::Bool, K::Bool, d::Dict{Symbol,Any})
+	cmd0, arg1 = unwrapDatasets(w::wrapDatasets)
 
 	(is_in_dict(d, [:L :list]) !== nothing) && return gmt("pstext -L")
 

@@ -818,7 +818,7 @@ function fill_between(arg1, arg2, first::Bool, d::Dict{Symbol, Any})
 		legs = fish_labels(val, legs, one_array, D1, D2)
 		if (isempty(legs) && isa(val, NamedTuple))		# Must break & complicate because here a setting applies to 2 lines
 			dd = nt2dict(val)
-			lab_pos = ((val = find_in_dict(dd, [:pos :position])[1]) !== nothing) ? string(val) : ""	# Legend position
+			lab_pos = hlp_desnany_str(dd, [:pos :position])	# Legend position
 			((val = find_in_dict(dd, [:label :labels])[1]) !== nothing) && (legs = fish_labels(val, legs, one_array, D1, D2))
 			((val = find_in_dict(dd, [:box])[1]) !== nothing) && (lab_box = val)
 		end
@@ -2041,9 +2041,10 @@ function piechart(x::VecOrMat; first::Bool=true, kw...)
 	end
 	
 	# Need to parse these ones first to not get messages of "not-consumed" options from plot()
-	ms::Float64 = ((val = find_in_dict(d, [:ms :markersize :MarkerSize :size])[1]) === nothing) ? 8.0 : parse(Float64, val)
-	labels::Vector{<:String} = ((val = find_in_dict(d, [:labels :label])[1]) === nothing) ? String[] : [string.(val)...]
-	labelstyle::String = ((val = find_in_dict(d, [:labelstyle])[1]) === nothing) ? "" : string(val)::String
+	val_f = hlp_desnany_float(d, [:ms :markersize :MarkerSize :size])
+	ms::Float64 = isnan(val_f) ? 8.0 : val_f
+	labels::Vector{String} = hlp_desnany_vstr(d, [:labels :label])
+	labelstyle::String = hlp_desnany_str(d, [:labelstyle])
 
 	!isempty(labels) && (length(labels) != length(X)) &&
 		error("The number of labels ($(length(labels))) does not match the number of data slices ($(length(X)))")

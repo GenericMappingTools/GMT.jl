@@ -305,7 +305,7 @@ function _plotlinefit(D::GMTdataset, first::Bool, grp::Bool, d::Dict{Symbol,Any}
 	if ((opt_W = edit_segment_headers!(D, 'W', :get)) == "")
 		lc = ((val = find_in_dict(d, [:lc :linecolor])[1]) !== nothing) ? string(val)::String : "red"
 		lt = ((val = find_in_dict(d, [:lt :lw :linethickness])[1]) !== nothing) ? string(val)::String : "0.5"
-		ls = ((val = find_in_dict(d, [:ls :linestyle])[1]) !== nothing) ? string(val)::String : ""
+		ls = hlp_desnany_str(d, [:ls :linestyle])
 		opt_W = lt * "," * lc * "," * ls
 	end
 

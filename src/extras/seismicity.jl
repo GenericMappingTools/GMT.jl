@@ -102,7 +102,7 @@ function seismicity(; starttime::Union{DateTime, String}="", endtime::Union{Date
 	no_plot && return D			# No map, just return the data.
 
 	Vd::Int = get(d, :Vd, 0)
-	name_bak::String = ((val = find_in_dict(d, [:savefig :figname :name])[1]) !== nothing) ? string(val) : ""	# Tmp remove it
+	name_bak::String = hlp_desnany_str(d, [:savefig :figname :name])	# Tmp remove it
 	(is_in_dict(d, [:G :land]) === nothing) && (d[:G] = "burlywood")
 	(is_in_dict(d, [:S :water :ocean]) === nothing) && (d[:S] = "lightblue")
 	r = coast(; R=opt_R[4:end], A="1000", Vd=Vd, d...)

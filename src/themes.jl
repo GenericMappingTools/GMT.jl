@@ -35,9 +35,9 @@ function theme(name="modern"; kwargs...)
 	(!isa(G_API[], Ptr{Nothing}) || G_API[] == C_NULL) && (G_API[] = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS))
 
 	d = KW(kwargs)
-	font::String = ((val = find_in_dict(d, [:font])[1]) !== nothing) ? string(val) : ""
-	bg_color::String = ((val = find_in_dict(d, [:bg_color])[1]) !== nothing) ? string(val) : ""
-	color::String = ((val = find_in_dict(d, [:fg_color])[1]) !== nothing) ? string(val) : ""
+	font::String = hlp_desnany_str(d, [:font])
+	bg_color::String = hlp_desnany_str(d, [:bg_color])
+	color::String = hlp_desnany_str(d, [:fg_color])
 	
 	# Some previous calls may have changed these and a new theme option may be caught with the pens down
 	DEF_FIG_AXES[]  = DEF_FIG_AXES_BAK		# So that we always start with the defaults
