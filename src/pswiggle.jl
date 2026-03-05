@@ -60,15 +60,14 @@ wiggle(arg1; kw...) = wiggle_helper("", arg1; kw...)
 wiggle!(cmd0::String; kw...) = wiggle_helper(cmd0, nothing; first=false, kw...)
 wiggle!(arg1; kw...) = wiggle_helper("", arg1; first=false, kw...)
 
-const pswiggle  = wiggle			# Alias
-const pswiggle! = wiggle!			# Alias
-
 # ---------------------------------------------------------------------------------------------------
 function wiggle_helper(cmd0::String, arg1; first=true, kw...)
 	d, K, O = init_module(first, kw...)		# Also checks if the user wants ONLY the HELP mode
-	wiggle_helper(cmd0, arg1, O, K, d)
+	wiggle_helper(wrapDatasets(cmd0, arg1), O, K, d)
 end
-function wiggle_helper(cmd0::String, arg1, O::Bool, K::Bool, d::Dict{Symbol, Any})
+function wiggle_helper(w::wrapDatasets, O::Bool, K::Bool, d::Dict{Symbol, Any})
+	cmd0, arg1 = unwrapDatasets(w::wrapDatasets)
+
 	gmt_proggy = (IamModern[]) ? "wiggle "  : "pswiggle "
 
 	cmd, opt_B, opt_J, opt_R = parse_BJR(d, "", "", O, " -JX15c/0")
@@ -89,3 +88,6 @@ function wiggle_helper(cmd0::String, arg1, O::Bool, K::Bool, d::Dict{Symbol, Any
 	((r = check_dbg_print_cmd(d, _cmd)) !== nothing) && return r
 	prep_and_call_finish_PS_module(d, _cmd, "", K, O, true, arg1)
 end
+
+const pswiggle  = wiggle			# Alias
+const pswiggle! = wiggle!			# Alias

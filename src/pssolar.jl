@@ -42,9 +42,10 @@ To see the full documentation type: ``@? solar``
 solar!(cmd0::String="", arg1=nothing; kw...) = solar(cmd0, arg1; first=false, kw...)
 function solar(cmd0::String="", arg1=nothing; first=true, kw...)
 	d, K, O = init_module(first, kw...)		# Also checks if the user wants ONLY the HELP mode
-	solar(cmd0, arg1, O, K, d)
+	solar(wrapDatasets(cmd0, arg1), O, K, d)
 end
-function solar(cmd0::String, arg1, O::Bool, K::Bool, d::Dict{Symbol, Any})
+function solar(w::wrapDatasets, O::Bool, K::Bool, d::Dict{Symbol, Any})
+	cmd0, arg1 = unwrapDatasets(w::wrapDatasets)
 
 	gmt_proggy = (IamModern[]) ? "solar " : "pssolar "
 
