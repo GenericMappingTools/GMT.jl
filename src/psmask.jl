@@ -63,9 +63,10 @@ mask(arg1; kw...)  = mask("", arg1; first=true, kw...)
 mask!(arg1; kw...) = mask("", arg1; first=false, kw...)
 function mask(cmd0::String="", arg1=nothing; first=true, kw...)
 	d, K, O = init_module(first, kw...)		# Also checks if the user wants ONLY the HELP mode
-	mask(cmd0, arg1, O, K, d)
+	mask(wrapDatasets(cmd0, arg1), O, K, d)
 end
-function mask(cmd0::String, arg1, O::Bool, K::Bool, d::Dict{Symbol, Any})
+function mask(w::wrapDatasets, O::Bool, K::Bool, d::Dict{Symbol, Any})
+	cmd0, arg1 = unwrapDatasets(w::wrapDatasets)
 
     gmt_proggy = (IamModern[]) ? "mask "  : "psmask "
 
@@ -113,6 +114,73 @@ function mask(GI::GItype, D::GDtype; touches=false, inverse::Bool=false)
 		image_alpha!(_GI, alpha_band=maska)
 	end
 	return _GI
+end
+
+const MaskType = Union{GMTgrid, GMTimage, AbstractMatrix{Bool}, BitMatrix, AbstractMatrix{UInt8}}
+
+# ---------------------------------------------------------------------------------------------------
+# Apply a mask array to a GMTgrid: where mask is true/1/255, set grid value to `value`.
+function mask(G::GMTgrid, @nospecialize(M::MaskType), value::Real=NaN)
+	isnan(value) && !(eltype(G.z) <: AbstractFloat) && error("Cannot use NaN as mask value for a grid of type $(eltype(G.z)). Provide a numeric value.")
+	sz = (size(G,1), size(G,2))
+	_mask_size_check(M, sz)
+	msk = _to_bool_mask(M)
+	Go = mat2grid(copy(G.z), G)
+	Go.z[msk] .= convert(eltype(Go.z), value)
+	setgrdminmax!(Go)
+	return Go
+end
+
+# Apply a mask array to a GMTimage: where mask is true/1/255, set pixel to `value`.
+# `value` can be a single number (applied to all bands) or an RGB tuple/vector for color images.
+# When `alpha=true`, masked regions become transparent (alpha channel) instead of being painted.
+function mask(I::GMTimage, @nospecialize(M::MaskType), value=UInt8(0); alpha::Bool=false)
+	sz = (size(I,1), size(I,2))
+	_mask_size_check(M, sz)
+	msk = _to_bool_mask(M)
+	Io = mat2img(copy(I.image), I)
+	if alpha
+		(size(Io,3) == 1) && (Io = ind2rgb(Io))
+		alpha_band = reinterpret(UInt8, .!msk) * UInt8(255)		# !msk because alpha 255 = opaque
+		image_alpha!(Io, alpha_band=alpha_band)
+	else
+		nbands = size(Io.image, 3)
+		if nbands == 1 || isa(value, Number)
+			v = convert(eltype(Io.image), isa(value, Number) ? value : first(value))
+			if nbands == 1
+				Io.image[msk] .= v
+			else
+				for b in 1:nbands
+					view(Io.image, :, :, b)[msk] .= v
+				end
+			end
+		else
+			# value is RGB-like (tuple, vector, etc.)
+			length(value) < nbands && error("mask value must have at least $nbands components for this image.")
+			for b in 1:nbands
+				view(Io.image, :, :, b)[msk] .= convert(eltype(Io.image), value[b])
+			end
+		end
+	end
+	return Io
+end
+
+_mask_size_check(M::GItype, sz::Tuple) = ((size(M,1), size(M,2)) != sz && error("Mask size ($(size(M,1)),$(size(M,2))) does not match target size $sz."))
+_mask_size_check(M::AbstractMatrix, sz::Tuple) = (size(M) != sz && error("Mask size $(size(M)) does not match target size $sz."))
+
+# Convert a mask (GMTgrid, GMTimage, BitMatrix, or Array{UInt8/Bool}) to a BitMatrix.
+_to_bool_mask(M::GMTgrid) = M.z .!= 0
+_to_bool_mask(M::GMTimage) = _uint8_to_bool(view(M.image, :, :, 1))
+_to_bool_mask(M::AbstractMatrix{Bool}) = M
+_to_bool_mask(M::BitMatrix) = M
+_to_bool_mask(M::AbstractMatrix{UInt8}) = _uint8_to_bool(M)
+
+function _uint8_to_bool(M::AbstractMatrix{UInt8})
+	vals = unique(M)
+	length(vals) > 2 && error("UInt8 mask must contain only two distinct values, got $(length(vals)).")
+	(all(v -> v == 0 || v == 1, vals) || all(v -> v == 0 || v == 255, vals)) ||
+		error("UInt8 mask values must be (0,1) or (0,255), got $vals.")
+	return M .!= 0
 end
 
 const psmask  = mask			# Alias
