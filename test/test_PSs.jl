@@ -212,6 +212,35 @@ D = coast(DCW=:HR, dump=true);
 I = gmtread("@earth_day_05m", region=D, V=:q);
 mask(I, D);
 
+# Test mask(GMTgrid, mask_array)
+G = mat2grid(rand(Float32, 16, 16));
+msk_bool = falses(16, 16); msk_bool[5:10, 5:10] .= true;
+Gm = mask(G, msk_bool);
+@assert all(isnan.(Gm.z[5:10, 5:10]))
+@assert !any(isnan.(Gm.z[1:4, 1:4]))
+
+msk_uint8 = fill(UInt8(0), 16, 16); msk_uint8[5:10, 5:10] .= UInt8(255);
+Gm2 = mask(G, msk_uint8, 0.0);
+@assert all(Gm2.z[5:10, 5:10] .== 0)
+
+Gmsk = mat2grid(Float32.(msk_bool), G);
+Gm3 = mask(G, Gmsk);
+@assert all(isnan.(Gm3.z[5:10, 5:10]))
+
+# Test mask(GMTimage, mask_array)
+Img = mat2img(rand(UInt8, 16, 16, 3));
+Im = mask(Img, msk_bool, (255, 0, 0));
+@assert all(view(Im.image, 5:10, 5:10, 1) .== 0xff)
+@assert all(view(Im.image, 5:10, 5:10, 2) .== 0x00)
+
+Im2 = mask(Img, msk_uint8);
+@assert all(view(Im2.image, 5:10, 5:10, 1) .== 0x00)
+
+Im3 = mask(Img, msk_bool, alpha=true);
+@assert size(Im3.alpha) == (16, 16)
+@assert all(Im3.alpha[5:10, 5:10] .== 0x00)      # masked = transparent
+@assert all(Im3.alpha[1:4, 1:4] .== 0xff)         # unmasked = opaque
+
 println("	PSSOLAR")
 #D=solar(I="-7.93/37.079+d2016-02-04T10:01:00");
 #@assert(D[1].text[end] == "\tDuration = 10:27")
