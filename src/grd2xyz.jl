@@ -49,6 +49,6 @@ function grd2xyz_helper(w::wrapGrids, d::Dict{Symbol, Any})
 
 	cmd, = parse_common_opts(d, "", [:R :V_params :bo :d :f :h :o :s])
 	cmd  = parse_these_opts(cmd, d, [[:C :rcnumbers :row_col :rowcol], [:L :hvline], [:T :stl :STL], [:W :weight], [:Z :onecol :one_col]])
-	((val = find_in_dict(d, [:name :save])[1]) !== nothing) && (cmd *=  " > " * string(val))
+	((val = hlp_desnany_str(d, [:name :save])) !== "") && (cmd *=  " > " *val)
 	common_grd(d, cmd0, cmd, "grd2xyz ", arg1)	# Finish build cmd and run it
 end

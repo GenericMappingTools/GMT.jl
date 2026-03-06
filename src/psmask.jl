@@ -75,8 +75,8 @@ function mask(w::wrapDatasets, O::Bool, K::Bool, d::Dict{Symbol, Any})
 	cmd  = parse_these_opts(cmd, d, [[:C :endclip :end_clip_path], [:D :dump], [:L :nodegrid], [:N :invert :inverse],
 	                                 [:Q :cut :cut_number], [:S :search_radius], [:T :tiles]])
 
-	if ((val = find_in_dict(d, [:F :oriented])[1]) !== nothing)
-        cmd = (string(val)[1] == 'r') ? cmd * " -Fr" : cmd * " -Fl"
+	if ((val_s = hlp_desnany_str(d, [:F :oriented])) !== "")
+        cmd = (val_s[1] == 'r') ? cmd * " -Fr" : cmd * " -Fl"
     end
 
 	# If file name sent in, read it and compute a tight -R if this was not provided 
@@ -84,11 +84,14 @@ function mask(w::wrapDatasets, O::Bool, K::Bool, d::Dict{Symbol, Any})
 		cmd, arg1, opt_R, = read_data(d, cmd0, cmd, arg1, opt_R)
 	end
 
-	if ((val = find_in_dict(d, [:threshold])[1]) !== nothing)
-		thres = convert(eltype(arg1), val)
+	#=
+	val_f = hlp_desnany_float(d, [:threshold])
+	if (!isnan(val_f))
+		thres = convert(eltype(arg1), val_f)
 		isinv = (find_in_dict(d, [:less])[1] !== nothing)
 		return isinv ? mat2img(collect(arg1.z .<= thres), arg1) : mat2img(collect(arg1.z .>= thres), arg1)
 	end
+	=#
 
 	cmd = add_opt_fill(cmd, d, [:G :fill], "G")
 	cmd = gmt_proggy * cmd
