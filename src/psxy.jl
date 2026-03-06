@@ -1008,8 +1008,9 @@ function build_run_cmd(cmd, opt_B, opt_Gsymb, opt_ML, opt_S, opt_W, opt_Wmarker,
 
 	elseif (opt_W != "" && opt_S != "")							# We have both line/polygon and a symbol
 		(occursin(opt_Gsymb, cmd)) && (opt_Gsymb = "")
-		c = lowercase(opt_S[4])
-		if (c == 'v' || c == 'm' || c == 'w' || c == '=' || c == 'q' || c == 'p')	# Are there more cases where the pen applies to the symbol?
+		Sopt = opt_S[4]
+		c = (Sopt == 'P') ? 'q' : lowercase(Sopt)				# This is a hack. The point is when plotting Spheres (-SP) c cannot be 'p'
+		if (c == 'v' || c == 'm' || c == 'w' || c == '=' || c == 'q')	# Are there more cases where the pen applies to the symbol?
 			_cmd = [cmd * opt_W * opt_S * opt_Gsymb * opt_UVXY]
 		else
 			(opt_Wmarker != "") && (opt_Wmarker = " -W" * opt_Wmarker)		# Set Symbol edge color

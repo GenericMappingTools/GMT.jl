@@ -228,7 +228,7 @@
 	scatter3!(x -> sin(x)*cos(10x), y -> sin(y)*sin(10y), z -> cos(z), 0:pi/100:pi, Vd=dbg2)
 
 	plot3([3 3 3], R="0/6/0/6/0/6", JZ=4, p="135/45", S="P2c", G=:blue, W="0.2p,red", Vd=dbg2)
-	plot3([3 3 3], R="0/6/0/6/0/6", JZ=4, p="135/45", marker=(:sphe, 2), G=:blue, W="0.2p,red", Vd=dbg2)
+	@test contains(plot3([3 3 3], R="0/6/0/6/0/6", JZ=4, p="135/45", marker=(:sphe, 2), G=:blue, W="0.2p,red", Vd=2), "-Gblue -W0.2p,red -SP2")
 	plot3([3 3 3], R="0/6/0/6/0/6", JZ=4, p="135/45", marker=:sphere, mc=:blue, mec="0.2p,red", ms=2, Vd=dbg2)
 	plot3([3 3 3], R="0/6/0/6/0/6", JZ=4, p="135/45", marker=(sphere=true, flat=true, azim=19), mc=:blue, mec="0.2p,red", Vd=dbg2)
 	plot3([3 3 3], R="0/6/0/6/0/6", JZ=4, p="135/45", marker=(sphere=3, flat=true, azim=19), mc=:blue, mec="0.2p,red", Vd=dbg2)
