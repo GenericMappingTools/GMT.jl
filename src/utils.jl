@@ -1793,16 +1793,16 @@ end
 
 # ------------------------------------------------------------------------------------------------------
 """
-	do_show, fmt, savefig = get_show_fmt_savefig(d; show=false)
+	do_show, fmt, savefig = get_show_fmt_savefig(d, show=false)
 
 Many extension/composed plotting functions need to know these but they can only apply them
 in the last plotting comand. Centralise those options fetching in this function.
 """
-function get_show_fmt_savefig(d, show::Bool=false)
+function get_show_fmt_savefig(d, show::Bool=false)::Tuple{Bool, String, String}
 	# 'show' carries the default of the caller for the show-or-not-show
 	do_show::Bool = ((val = find_in_dict(d, [:show])[1]) === nothing) ? show : (val == 1)
-	fmt::String = ((val = find_in_dict(d, [:fmt])[1]) !== nothing) ? arg2str(val)::String : FMT[]::String
-	savefig::Union{String,Nothing} = ((val = find_in_dict(d, [:savefig :figname :name])[1]) !== nothing) ? arg2str(val)::String : nothing
+	fmt::String = ((val_s = hlp_desnany_str(d, [:fmt])) !== "") ? val_s : FMT[]::String
+	savefig::String = hlp_desnany_str(d, [:savefig :figname :name])
 	return do_show, fmt, savefig
 end
 
