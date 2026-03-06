@@ -3,8 +3,6 @@
 
 Make legends that can be overlaid on maps. It reads specific legend-related information from input or file file.
 
-See full GMT docs at [`legend`]($(GMTdoc)legend.html)
-
 Parameters
 ----------
 
@@ -49,7 +47,7 @@ function legend(cmd0::String="", arg1=nothing; first::Bool=true, kw...)
 	d, K, O = init_module(first, kw...)		# Also checks if the user wants ONLY the HELP mode
 	legend(cmd0, arg1, O, K, d)
 end
-function legend(cmd0::String, arg1, O::Bool, K::Bool, d::Dict{Symbol, Any})
+function legend(cmd0::String, @nospecialize(arg1), O::Bool, K::Bool, d::Dict{Symbol, Any})
 
     gmt_proggy = (IamModern[]) ? "legend "  : "pslegend "
 
@@ -62,8 +60,7 @@ function legend(cmd0::String, arg1, O::Bool, K::Bool, d::Dict{Symbol, Any})
 		# The call to digests_legend_bag(d) will call 'legend' again, making this a recursive call.
 		# On that recursive call 'arg1 !== nothing' and it not pass in this code chunk, but upon return
 		# from the digests_legend_bag() we'll return here again and either show, save or return quietly.
-		do_show = ((val = find_in_dict(d, [:show])[1]) !== nothing && val != 0)
-		figname::String = ((val = find_in_dict(d, [:savefig :figname :name])[1]) !== nothing) ? val : ""
+		do_show, fmt, figname = get_show_fmt_savefig(d)
 
 		# Need to save the legend options in the global variable 'LEGEND_TYPE'
 		# Must also recreate a NT if any of 'fontsize' or 'font' is present in 'd' (because of how digests_legend_bag works)
@@ -72,7 +69,7 @@ function legend(cmd0::String, arg1, O::Bool, K::Bool, d::Dict{Symbol, Any})
 		((val = find_in_dict(d, [:pos :position])[1]) !== nothing) && (LEGEND_TYPE[].optsDict = Dict{Symbol,Any}(:pos => val))
 
 		digests_legend_bag(d)	# It's over now, lets show up (or not) and return
-		return (do_show || figname != "") ? showfig(show=do_show, savefig=figname) : nothing
+		return (do_show || figname != "" || fmt !== "") ? showfig(show=do_show, savefig=figname, fmt=fmt) : nothing
 	end
 
 	def_J = " -JX" * split(DEF_FIG_SIZE, '/')[1] * "/0"

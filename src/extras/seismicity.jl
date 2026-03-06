@@ -47,28 +47,19 @@ https://earthquake.usgs.gov
 ```
 """
 function seismicity(; starttime::Union{DateTime, String}="", endtime::Union{DateTime, String}="", minmagnitude=3,
-                      mindepth=0, maxdepth=0, last=0, year=0, printurl::Bool=false, layers=3, legend=true, show=true, kw...)
+                      mindepth=0, maxdepth=0, last::Union{Int, String}=0, year::Int=0, printurl::Bool=false, layers=3, legend=true, show=true, kw...)
+	d = KW(kw)
+	_last = ((isa(last, Int) ? last : 0), isa(last, String) ? last : "")
+	_seismicity(d, string(starttime), string(endtime), Float64(minmagnitude), Float64(mindepth), Float64(maxdepth), _last, year, printurl, layers, legend==1, show==1)
+end
+function _seismicity(d::Dict{Symbol, Any}, starttime::String, endtime::String, minmagnitude::Float64, mindepth::Float64,
+                     maxdepth::Float64, last::Tuple{Int, String}, year::Int, printurl::Bool, layers::Int, legend::Bool, show::Bool)
 
 	(layers != 3 && layers != 4) && error("Only 3 or 4 (depth) layers are allowed.")
-	d = KW(kw)
 	url = "https://earthquake.usgs.gov/fdsnws/event/1/query.csv?format=csv&orderby=time-asc&minmagnitude=$minmagnitude"
 
-	url = helper_get_date_interval(d, last, url, starttime, endtime, year=year, sstart="&starttime=", send="&endtime=")	# See if a period was requested
+	url = helper_get_date_interval(d, last, url, starttime, endtime, year, "&starttime=", "&endtime=")	# See if a period was requested
 
-	#=
-	(starttime != "" && last != 0) && (@warn("Options 'starttime' and 'last' are incompatible. Droping 'last'."); last=0)
-	(endtime != "" && starttime == "") && (@warn("Gave a 'endtime' but not a 'starttime'. Ignoring it."); endtime = "")
-	(isa(last, Integer) && last > 0) && (starttime = string(Date(now() - Dates.Day(last))))
-	if (isa(last, String))			# Requests of Weeks, Months, Years
-		_last = lowercase(last)
-		if     ((ind = findfirst('y', _last)) !== nothing)  starttime = Date(now() - Dates.Year(parse(Int, _last[1:ind-1])))
-		elseif ((ind = findfirst('m', _last)) !== nothing)  starttime = Date(now() - Dates.Month(parse(Int, _last[1:ind-1])))
-		elseif ((ind = findfirst('w', _last)) !== nothing)  starttime = Date(now() - Dates.Week(parse(Int, _last[1:ind-1])))
-		end
-	end
-	(starttime != "") && (url *= "&starttime=" * string(starttime))
-	(endtime != "") && (url *= "&endtime=" * string(endtime))
-	=#
 	if ((opt_R::String = parse_R(d, "")[2]) != "")
 		(opt_R[end] == 'r') && error("Region as lon_min/lat_min/lon_max/lat_max form is not supported here.")
 		!contains(opt_R, '/') && (opt_R = " " * coast(getR=opt_R[4:end]))
@@ -116,7 +107,7 @@ function seismicity(; starttime::Union{DateTime, String}="", endtime::Union{Date
 	# just bad use. Since that fun is complex it's better not touch it and just make an array by duplicating the scalar.
 	_size = (_size_t === nothing) ? _size_t : isa(_size_t, Number) ? [_size_t _size_t] : _size_t
 
-	mag_size, opt_S = parse_opt_S(d, view(D, :, 4))
+	_, opt_S = parse_opt_S(d, view(D, :, 4))
 
 	if (opt_S == "" || endswith(opt_S, "7p"))
 		@inbounds for k =1:size(D,1)  D[k,4] *= 0.02  end
@@ -137,40 +128,47 @@ function seismicity(; starttime::Union{DateTime, String}="", endtime::Union{Date
 	d = CTRL.pocket_d[1]
 	d[:show] = show
 	ms = (_size !== nothing) ? parse_opt_S(Dict{Symbol,Any}(:size => _size), [3., 4, 5, 6, 7, 8, 9])[1] : [3., 4, 5, 6, 7, 8, 9] .* 0.02
-	st = (starttime != "") ? string(starttime) : string(Date(now() - Dates.Day(30)))
-	et = (endtime != "") ? string(endtime) : string(Date(now()))
-	legend && seislegend(; first=false, title="From "*st*" to "*et, cmap=C, mags=ms, pos="JBC+o0/1c+w12c/2.3c", d...)
+	st = (starttime != "") ? starttime : string(Date(now() - Dates.Day(30)))
+	et = (endtime != "") ? endtime : string(Date(now()))
+	legend && seislegend(; title="From "*st*" to "*et, cmap=C, mags=ms, pos="JBC+o0/1c+w12c/2.3c", d...)
 end
 
 # ------------------------------------------------------------------------------------------------------
-function helper_get_date_interval(d, last, url, starttime, endtime; year::Int=0, sstart="&start_date=", send="&end_date=")
+function helper_get_date_interval(d::Dict{Symbol, Any}, last::Tuple{Int, String}, url, starttime::String, endtime::String, year::Int, sstart, send)
 	# Helper function used both in seismicity and weather functions.
+
+	function test_last(last::Tuple{Int, String}, msg::String)
+		# If option 'last' was used when it shouldn't return true a blank it
+		(last[1] != 0 || last[2] != "") && (@warn(msg); return (0, ""))
+		return last
+	end
+
 	if (year != 0)
-		(last != 0) && (@warn("Options 'year' and 'last' are incompatible. Droping 'last'."); last=0)
+		last = test_last(last, "Options 'year' and 'last' are incompatible. Dropping 'last'.")
 		starttime = "$year-01-01"
 		endtime = (parse(Int,string(today())[1:4]) == year) ? string(today()) : "$year-12-31"
 	end
-	(starttime == "") && ((val = find_in_dict(d, [:startdate :start_date :start_time])[1]) !== nothing) && (starttime = string(val)::String)
-	(endtime == "")   && ((val = find_in_dict(d, [:enddate :end_date :end_time])[1]) !== nothing) && (endtime = string(val)::String)
-	(starttime != ""  && last != 0)       && (@warn("Options 'starttime' and 'last' are incompatible. Droping 'last'."); last=0)
-	(endtime   != ""  && starttime == "") && (@warn("Gave a 'endtime' but not a 'starttime'. Ignoring it."); endtime = "")
-	(isa(last, Integer) && last > 0)      && (starttime = string(Date(now() - Dates.Day(last))))
-	if (isa(last, String))			# Requests of Weeks, Months, Years
-		_last = lowercase(last)
-		if     ((ind = findfirst('y', _last)) !== nothing)  starttime = Date(now() - Dates.Year(parse(Int, _last[1:ind-1])))
-		elseif ((ind = findfirst('m', _last)) !== nothing)  starttime = Date(now() - Dates.Month(parse(Int, _last[1:ind-1])))
-		elseif ((ind = findfirst('w', _last)) !== nothing)  starttime = Date(now() - Dates.Week(parse(Int, _last[1:ind-1])))
+	(starttime === "") && (starttime = hlp_desnany_str(d, [:startdate :start_date :start_time]))
+	(endtime === "")   && (endtime   = hlp_desnany_str(d, [:enddate :end_date :end_time]))
+	(starttime !== "") && (last = test_last(last, "Options 'starttime' and 'last' are incompatible. Droping 'last'."))
+	(endtime   !== ""  && starttime === "") && (@warn("Gave a 'endtime' but not a 'starttime'. Ignoring it."); endtime = "")
+	(last[1] > 0)      && (starttime = string(Date(now() - Dates.Day(last[1]))))
+	if (last[2] !== "")			# Requests of Weeks, Months, Years
+		_last = lowercase(last[2])
+		if     ((ind = findfirst('y', _last)) !== nothing)  starttime = string(Date(now() - Dates.Year(parse(Int, _last[1:ind-1]))))
+		elseif ((ind = findfirst('m', _last)) !== nothing)  starttime = string(Date(now() - Dates.Month(parse(Int, _last[1:ind-1]))))
+		elseif ((ind = findfirst('w', _last)) !== nothing)  starttime = string(Date(now() - Dates.Week(parse(Int, _last[1:ind-1]))))
 		end
 		(send == "&end_date=") && (endtime = Date(now()))	# Because weather() needs an end date too.
 	end
-	(starttime != "") && (url *= sstart * string(starttime))
-	(endtime != "")   && (url *= send   * string(endtime))
+	(starttime != "") && (url *= sstart * starttime)
+	(endtime != "")   && (url *= send   * endtime)
 	return url
 end
 
 # ------------------------------------------------------------------------------------------------------
 """
-    seislegend(; title="", font=(16,"Times-Roman"), cmap=GMTcpt(), mags=Float64[], lowermag=3, kw...)
+    seislegend(; title="", font=(16,"Times-Roman"), cmap=GMTcpt(), mags=Float64[], lowermag=3.0, kw...)
 
 Adds a legend to plots produced by `seismicity` function. All options are optional.
 
@@ -179,8 +177,11 @@ Adds a legend to plots produced by `seismicity` function. All options are option
 - `title`: The legend head title.
 - `font`: The legend head font.
 """
-function seislegend(; title="", font=(16,"Times-Roman"), cmap=GMTcpt(), mags::VecOrMat=Float64[], lowermag=3, first=true,  kw...)
-	# ...
+function seislegend(; title="", font=(16,"Times-Roman"), cmap=GMTcpt(), mags::VecOrMat=Float64[], lowermag=3.0, kw...)
+	d = KW(kw)
+	_seislegend(d, string(title), font, cmap, vec(Float64.(mags)), Float64(lowermag))
+end
+function _seislegend(d::Dict{Symbol,Any}, title::String, font, cmap::GMTcpt, mags::Vector{Float64}, lowermag::Float64)
 	mags = isempty(mags) ? [3., 4, 5, 6, 7, 8, 9] .* 0.02 : mags
 
 	nc = isempty(cmap) ? 3 : size(cmap.colormap, 1)
@@ -205,14 +206,14 @@ function seislegend(; title="", font=(16,"Times-Roman"), cmap=GMTcpt(), mags::Ve
 	end
 
 	extra_vs = maximum(mags) > 0.3 ? 0.05 : 0.		# When symbols are big we need extra space between the hlines.
-	d = KW(kw)
-	!is_in_kwargs(kw, [:D :pos :position]) && (d[:D] = (paper=(0.25,0.25), width=14, justify=:BL, spacing=1.2))
-	!is_in_kwargs(kw, [:C :clearance]) && (d[:C] = (0.25,0.25))
-	!is_in_kwargs(kw, [:F :box]) && (d[:F] = (pen=0.5, fill=:azure1))
-	!is_in_kwargs(kw, [:R :region :limits]) && (d[:R] = (0,10,0,4))
-	!is_in_kwargs(kw, [:par]) && (d[:par] = (:FONT_ANNOT_PRIMARY, 8))		# Shitty solution. Must use conf for other configs
+	!is_in_kwargs(d, [:D :pos :position]) && (d[:D] = (paper=(0.25,0.25), width=14, justify=:BL, spacing=1.2))
+	#(is_in_dict(d, [:D :pos :position]) === nothing) && (d[:D] = (paper=(0.25,0.25), width=14, justify=:BL, spacing=1.2))
+	!is_in_kwargs(d, [:C :clearance]) && (d[:C] = (0.25,0.25))
+	!is_in_kwargs(d, [:F :box]) && (d[:F] = (pen=0.5, fill=:azure1))
+	!is_in_kwargs(d, [:R :region :limits]) && (d[:R] = (0,10,0,4))
+	!is_in_kwargs(d, [:par]) && (d[:par] = (:FONT_ANNOT_PRIMARY, 8))		# Shitty solution. Must use conf for other configs
 
-	legend((
+	legend("", (
        vspace=-0.25,
        header=(text= (title != "") ? title : "Map Legend", font=font),
        hline=(pen=0.75,),
@@ -230,5 +231,5 @@ function seislegend(; title="", font=(16,"Times-Roman"), cmap=GMTcpt(), mags::Ve
 	   vline4=(pen=0.75,),
 	   ncolumns3=1,
 	   label=(txt="Data from the US National Earthquake Information Center", justify=:R, font=(8,"Times-Italic")),
-	); first=first, d...)
+	), true, true, d)
 end
