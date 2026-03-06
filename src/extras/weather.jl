@@ -44,24 +44,28 @@ weather(city="Copenhagen", year=2023, variable="rain_sum", show=true)
 """
 function weather(lon=0.0, lat=0.0; city::String="", last=0, days=7, year::Int=0, starttime::Union{DateTime, String}="",
                  endtime::Union{DateTime, String}="", variable="temperature_2m", dryrun=false, debug=false, show=false, kw...)
-
-	# Keep the deprecated option 'debug' for now but remove it in the future (17-May-2025)
 	d = KW(kw)
+	_last = (isa(last, Int) ? last : 0, isa(last, String) ? last : "")
+	_weather(d, Float64(lon), Float64(lat), city, _last, Int(days), year, string(starttime), string(endtime),
+	         string(variable), dryrun != 0 || debug != 0, show != 0)
+end
+function _weather(d::Dict{Symbol,Any}, lon::Float64, lat::Float64, city::String, last::Tuple{Int,String}, days::Int,
+                  year::Int, starttime::String, endtime::String, variable::String, dryrun::Bool, show::Bool)
+
 	url_forcast = "https://api.open-meteo.com/v1/forecast?format=csv&"
 	url_archive = "https://archive-api.open-meteo.com/v1/archive?format=csv&"
 	url_air     = "https://air-quality-api.open-meteo.com/v1/air-quality?format=csv&"
-	str_loc::String = (lon != 0.0 || lat != 0.0) ? "latitude=$lat&longitude=$lon" : (city != "") ? @sprintf("longitude=%f&latitude=%f", geocoder(city).data...) : @sprintf("longitude=%.3f&latitude=%.3f", whereami().data...)#"latitude=37.0695&longitude=-8.1006"
+	str_loc::String = (lon != 0.0 || lat != 0.0) ? "latitude=$lat&longitude=$lon" : (city != "") ? @sprintf("longitude=%f&latitude=%f", geocoder(city).data...) : @sprintf("longitude=%.3f&latitude=%.3f", whereami().data...)
 
-	variable = string(variable)
-	dt = helper_get_date_interval(d, last, "", starttime, endtime, year=year)	# See if a period was requested
+	dt = helper_get_date_interval(d, last, "", starttime, endtime, year, "&start_date=", "&end_date=")
 	url = ((variable == "pm" && (variable = "pm10")) || variable == "pm10" || variable == "pm2.5" || variable == "dust" || variable == "aerosol_optical_depth") ? url_air : (dt != "") ? url_archive : url_forcast
 	(days != 7 && url != url_archive) && (url *= string("forecast_days=", days, "&"))
 	url *= str_loc * dt
 	daily_vars = ["temperature_2m_max", "temperature_2m_min", "apparent_temperature_max", "apparent_temperature_min", "precipitation_sum", "rain_sum", "snowfall_sum", "precipitation_hours", "sunshine_duration", "daylight_duration", "wind_speed_10m_max", "wind_gusts_10m_max", "wind_direction_10m_dominant", "shortwave_radiation_sum", "et0_fao_evapotranspiration"]
-	hourly = any(variable .== daily_vars) ? false : true
+	hourly = !any(variable .== daily_vars)
 	url *= hourly ? "&hourly=" * variable : "&daily=" * variable
 
-	(dryrun != 0 || debug != 0) && (println(url); return)
+	dryrun && (println(url); return)
 
 	file = Downloads.download(url, "_query.csv")
 	D = gmtread(file, h=4)			# File has 4 header rows but only the 4rth matters
@@ -70,8 +74,8 @@ function weather(lon=0.0, lat=0.0; city::String="", last=0, days=7, year::Int=0,
 	helper_set_colnames!(D)			# Set column names based on info stored in the 4rth header line
 	D.attrib["Location"] = (city != "") ? city : replace(str_loc, "&" => " ")
 	retD = (find_in_dict(d, [:data])[1] !== nothing)
-	(show != 0) && plot(D; legend=D.colnames[2], title=D.attrib["Location"], show=true, d...)
-	return (retD || show == 0) ? D : nothing
+	show && plot(D; legend=D.colnames[2], title=D.attrib["Location"], show=true, d...)
+	return (retD || !show) ? D : nothing
 end
 
 # ------------------------------------------------------------------------------------------------------------------------
