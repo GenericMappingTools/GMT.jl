@@ -1101,15 +1101,15 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 	# Let the :title and x|y_label be given on main kwarg list. Risky if used with NamedTuples way.
 	t::String = ""		# Use the trick to replace blanks by Char(127) (invisible) and undo it in extra_parse
 	extra_par::String, tt::String, ep::String = "", "", ""
-	if ((v = find_in_dict(d, [:title])[1]) !== nothing && v !== "")    tt, extra_par = titlices(d, v, title); t *= "+t" * tt  end
-	if ((v = find_in_dict(d, [:subtitle])[1]) !== nothing && v !== "") tt, ep = titlices(d, v, subtitle); t *= "+s" * tt;   extra_par *= ep  end
-	if ((v = find_in_dict(d, [:xlabel])[1]) !== nothing && v !== "")   tt, ep = titlices(d, v, xlabel);   t *= " x+l" * tt; extra_par *= ep  end
-	if ((v = find_in_dict(d, [:ylabel])[1]) !== nothing && v !== "")   tt, ep = titlices(d, v, ylabel);   t *= " y+l" * tt; extra_par *= ep  end
-	if ((v = find_in_dict(d, [:zlabel])[1]) !== nothing && v !== "")   tt, ep = titlices(d, v, zlabel);   t *= " z+l" * tt; extra_par *= ep  end
+	if ((v = hlp_desnany_str(d, [:title])) !== "")    tt, extra_par = titlices(d, v, title); t *= "+t" * tt  end
+	if ((v = hlp_desnany_str(d, [:subtitle])) !== "") tt, ep = titlices(d, v, subtitle); t *= "+s" * tt;   extra_par *= ep  end
+	if ((v = hlp_desnany_str(d, [:xlabel])) !== "")   tt, ep = titlices(d, v, xlabel);   t *= " x+l" * tt; extra_par *= ep  end
+	if ((v = hlp_desnany_str(d, [:ylabel])) !== "")   tt, ep = titlices(d, v, ylabel);   t *= " y+l" * tt; extra_par *= ep  end
+	if ((v = hlp_desnany_str(d, [:zlabel])) !== "")   tt, ep = titlices(d, v, zlabel);   t *= " z+l" * tt; extra_par *= ep  end
 	delete!(d, :title); delete!(d, :subtitle); delete!(d, :xlabel); delete!(d, :ylabel); delete!(d, :zlabel)# If == "" they were still there
 
 	if (t != "")
-		if (opt_B == "" && (val = find_in_dict(d, [:xaxis :yaxis :zaxis :xticks :yticks :zticks], false)[1] === nothing))
+		if (opt_B == "" && (is_in_dict(d, [:xaxis :yaxis :zaxis :xticks :yticks :zticks]) === nothing))
 			(!have_a_none) ? (opt_B = DEF_FIG_AXES_) : have_a_none = false	# False to not trigger the white@100 trick
 		elseif (opt_B != "")			# Because  findlast("-B","") Errors!!!!!
 			if !(((ind = findlast("-B",opt_B)) !== nothing || (ind = findlast(" ",opt_B)) !== nothing) &&
@@ -1675,8 +1675,8 @@ function parse_helper(cmd::String, d::Dict{Symbol,Any}, symbs::VMs, opt::String,
 	# Helper function to the parse_?() global options.
 	(SHOW_KWARGS[]) && return (print_kwarg_opts(symbs, "(Common option not yet expanded)"),"")
 	opt_val::String = ""
-	if ((val = find_in_dict(d, symbs, true)[1]) !== nothing && val !== "")
-		opt_val = opt * arg2str(val, sep)
+	if ((val = hlp_desnany_arg2str(d, symbs, sep=sep)) !== "")
+		opt_val = opt * val
 		cmd *= opt_val
 	end
 	return cmd, opt_val
