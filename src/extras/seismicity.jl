@@ -93,7 +93,7 @@ function _seismicity(d::Dict{Symbol, Any}, starttime::String, endtime::String, m
 	no_plot && return D			# No map, just return the data.
 
 	Vd::Int = get(d, :Vd, 0)
-	name_bak::String = hlp_desnany_str(d, [:savefig :figname :name])	# Tmp remove it
+	name_bak::String = hlp_desnany_str(d, [:savefig, :figname, :name])	# Tmp remove it
 	(is_in_dict(d, [:G :land]) === nothing) && (d[:G] = "burlywood")
 	(is_in_dict(d, [:S :water :ocean]) === nothing) && (d[:S] = "lightblue")
 	r = coast(; R=opt_R[4:end], A="1000", Vd=Vd, d...)
@@ -148,8 +148,8 @@ function helper_get_date_interval(d::Dict{Symbol, Any}, last::Tuple{Int, String}
 		starttime = "$year-01-01"
 		endtime = (parse(Int,string(today())[1:4]) == year) ? string(today()) : "$year-12-31"
 	end
-	(starttime === "") && (starttime = hlp_desnany_str(d, [:startdate :start_date :start_time]))
-	(endtime === "")   && (endtime   = hlp_desnany_str(d, [:enddate :end_date :end_time]))
+	(starttime === "") && (starttime = hlp_desnany_str(d, [:startdate, :start_date, :start_time]))
+	(endtime === "")   && (endtime   = hlp_desnany_str(d, [:enddate, :end_date, :end_time]))
 	(starttime !== "") && (last = test_last(last, "Options 'starttime' and 'last' are incompatible. Droping 'last'."))
 	(endtime   !== ""  && starttime === "") && (@warn("Gave a 'endtime' but not a 'starttime'. Ignoring it."); endtime = "")
 	(last[1] > 0)      && (starttime = string(Date(now() - Dates.Day(last[1]))))

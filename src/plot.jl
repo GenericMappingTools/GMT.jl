@@ -481,7 +481,7 @@ end
 function _bar(arg, first::Bool, d::Dict{Symbol,Any})
 
 	do_cat = ((haskey(d, :stack) || haskey(d, :stacked)) && isvector(arg) && length(arg) > 2) ? false : true
-	is_waterfall = ((val = hlp_desnany_str(d, [:stack :stacked], false)) !== "" && startswith(val, "water"))
+	is_waterfall = ((val = hlp_desnany_str(d, [:stack, :stacked], false)) !== "" && startswith(val, "water"))
 	if (is_waterfall)
 		isa(arg, Vector) && (arg = reshape(arg, 1, length(arg)))		# Waterfall stacks must be matrices
 		(arg[1] != 0) && (arg = hcat(repeat([1.0],size(arg,1)), arg))	# If first el != 0 assume coord is missing
@@ -818,7 +818,7 @@ function fill_between(arg1, arg2, first::Bool, d::Dict{Symbol, Any})
 		legs = fish_labels(val, legs, one_array, D1, D2)
 		if (isempty(legs) && isa(val, NamedTuple))		# Must break & complicate because here a setting applies to 2 lines
 			dd = nt2dict(val)
-			lab_pos = hlp_desnany_str(dd, [:pos :position])	# Legend position
+			lab_pos = hlp_desnany_str(dd, [:pos, :position])	# Legend position
 			((val = find_in_dict(dd, [:label :labels])[1]) !== nothing) && (legs = fish_labels(val, legs, one_array, D1, D2))
 			((val = find_in_dict(dd, [:box])[1]) !== nothing) && (lab_box = val)
 		end

@@ -1076,7 +1076,7 @@ function bar_group(d::Dict, cmd::String, opt_R::String, g_bar_fill::Vector{Strin
 	is_waterfall = false
 	is_hbar = occursin("-SB", cmd)				# An horizontal bar plot
 
-	if ((val = hlp_desnany_str(d, [:stack :stacked])) !== "")
+	if ((val = hlp_desnany_str(d, [:stack, :stacked])) !== "")
 		# Take this (two groups of 3 bars) [0 1 2 3; 1 2 3 4]  and compute this (the same but stacked)
 		# [0 1 0; 0 3 1; 0 6 3; 1 2 0; 1 5 2; 1 9 4]
 		# Taking for example the first group, [0 1 0; 0 3 1; 0 6 3] this means:
@@ -1272,7 +1272,7 @@ function make_color_column(d::Dict, cmd::String, opt_i::String, len_cmd::Int, N_
 	end
 
 	# Filled polygons with -Z don't need extra col
-	((val = hlp_desnany_str(d, [:G :fill], false)) == "+z") && return cmd, arg1, arg2, N_args, false
+	((val = hlp_desnany_str(d, [:G, :fill], false)) == "+z") && return cmd, arg1, arg2, N_args, false
 
 	n_rows, n_col = get_sizes(arg1)		# Deal with the matrix, DS & Vec{DS} cases
 	(isa(mz, Bool) && mz) && (mz = collect(1:n_rows))

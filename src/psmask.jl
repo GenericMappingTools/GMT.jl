@@ -75,7 +75,7 @@ function mask(w::wrapDatasets, O::Bool, K::Bool, d::Dict{Symbol, Any})
 	cmd  = parse_these_opts(cmd, d, [[:C :endclip :end_clip_path], [:D :dump], [:L :nodegrid], [:N :invert :inverse],
 	                                 [:Q :cut :cut_number], [:S :search_radius], [:T :tiles]])
 
-	if ((val_s = hlp_desnany_str(d, [:F :oriented])) !== "")
+	if ((val_s = hlp_desnany_str(d, [:F, :oriented])) !== "")
         cmd = (val_s[1] == 'r') ? cmd * " -Fr" : cmd * " -Fl"
     end
 

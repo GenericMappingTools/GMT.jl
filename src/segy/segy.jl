@@ -96,7 +96,7 @@ end
 # Shared options between segy and segyz
 function segy_common(d::Dict, cmd::String)
 
-	((s = hlp_desnany_str(d, [:F :fill :color])) !== "") && (cmd *= " -F" * s)		# -F fill color
+	((s = hlp_desnany_str(d, [:F, :fill, :color])) !== "") && (cmd *= " -F" * s)		# -F fill color
 
 	cmd = parse_these_opts(cmd, d, [[:A :byteswap :swap], [:C :clip], [:D :dev :deviation], [:I :negative :fillneg],
 	                                [:L :nsamp :nsamples], [:M :ntraces], [:N :normalize :norm], [:W :wiggle], [:Z :skipzero :nozero]])

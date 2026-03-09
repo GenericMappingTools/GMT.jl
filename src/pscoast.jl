@@ -110,7 +110,7 @@ function coast_parser(first::Bool, clip::String, O::Bool, d::Dict{Symbol, Any})
 
 	gmt_proggy = (IamModern[]) ? "coast "  : "pscoast "
 
-	if ((val = hlp_desnany_str(d, [:getR :getregion :get_region], false)) !== "")
+	if ((val = hlp_desnany_str(d, [:getR, :getregion, :get_region], false)) !== "")
 		t::String = string(gmt_proggy, " -E", val)
 		resto = d, "", O, true, false, ""
 		((Vd = hlp_desnany_int(d, [:Vd])) !== -999) && (Vd == 1 ? println(t) : Vd > 1 ? (return t, resto...) : nothing)

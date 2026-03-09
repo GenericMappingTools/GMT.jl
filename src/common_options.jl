@@ -1656,7 +1656,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function parse_write(d::Dict{Symbol,Any}, cmd::String)::String
-	if ((val = hlp_desnany_str(d, [:write :savefile :|>])) !== "")
+	if ((val = hlp_desnany_str(d, [:write, :savefile, :|>])) !== "")
 		cmd *=  " > " * val
 	end
 	return cmd
@@ -2233,7 +2233,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function finish_PS(d::Dict{Symbol,Any}, cmd::String, output::String, K::Bool, O::Bool)::String
-	if (!O && ((val = hlp_desnany_str(d, [:P :portrait])) === ""))  cmd *= " -P"  end
+	if (!O && ((val = hlp_desnany_str(d, [:P, :portrait])) === ""))  cmd *= " -P"  end
 
 	opt = (K && !O) ? " -K" : ((K && O) ? " -K -O" : "")
 
@@ -3371,7 +3371,7 @@ function vector_attrib(d::Dict{Symbol,Any})::String
 		end
 	end
 
-	if ((val = hlp_desnany_str(d, [:half :half_arrow])) !== "")
+	if ((val = hlp_desnany_str(d, [:half, :half_arrow])) !== "")
 		cmd = (val == "left") ? cmd * "+l" : cmd * "+r"
 	end
 
@@ -3421,7 +3421,7 @@ vector4_attrib(; kwargs...)::String = vector4_attrib(KW(kwargs))
 function vector4_attrib(d::Dict{Symbol,Any})::String
 	# Old GMT4 vectors (still supported in GMT6)
 	cmd::String = "t"
-	if ((val = hlp_desnany_str(d, [:align :center])) !== "")
+	if ((val = hlp_desnany_str(d, [:align, :center])) !== "")
 		c::Char = val[1]
 		if     (c == 'h' || c == 'b')  cmd = "h"		# Head
 		elseif (c == 'm' || c == 'c')  cmd = "b"		# Middle
@@ -3576,10 +3576,10 @@ function helper_decorated(d::Dict{Symbol,Any}, compose=false)
 		end
 	end
 	if (cmd == "" && optD == "")
-		optD = ((val = hlp_desnany_str(d, [:n_labels :n_symbols])) !== "") ? string("n",val) : "n1"
+		optD = ((val = hlp_desnany_str(d, [:n_labels, :n_symbols])) !== "") ? string("n",val) : "n1"
 	end
 	if (cmd == "")
-		if ((val = hlp_desnany_str(d, [:N_labels :N_symbols])) !== "")
+		if ((val = hlp_desnany_str(d, [:N_labels, :N_symbols])) !== "")
 			optD = string("N", val);
 		end
 	end
@@ -3638,7 +3638,7 @@ function fname_out(d::Dict{Symbol,Any}, del::Bool=false)
 	# Create a file name in the TMP dir when OUT holds only a known extension. The name is: GMT_user.ext
 
 	EXT::String = FMT[];	fname::AbstractString = ""
-	if ((val = hlp_desnany_str(d, [:savefig :figname :name], del)) !== "")
+	if ((val = hlp_desnany_str(d, [:savefig, :figname, :name], del)) !== "")
 		fname, EXT = splitext(val)
 		EXT = (EXT == "") ? FMT[] : EXT[2:end]
 	end
@@ -4248,7 +4248,7 @@ function showfig(d::Dict{Symbol, Any}, fname_ps::String, fname_ext::String, opt_
 
 	if (opt_T != "")
 		(K) && close_PS_file(fname_ps)			# Close the PS file first
-		((val = hlp_desnany_str(d, [:dpi :DPI])) !== "") && (opt_T *= " -E" *  val)
+		((val = hlp_desnany_str(d, [:dpi, :DPI])) !== "") && (opt_T *= " -E" *  val)
 		gmt(pscvt_cmd * fname_ps * opt_T * " *")
 		reset_theme()
 		out::String = fname_ps[1:end-2] * fname_ext
@@ -4743,7 +4743,7 @@ function put_in_legend_bag(d::Dict{Symbol,Any}, cmd, arg, O::Bool=false, opt_l::
 			elseif (_valLabel !== nothing)
 				valLabel_vec = [string.(_valLabel)...]		# We may have shits here
 			end
-			if ((ribs = hlp_desnany_str(dd, [:ribbon :band], false)) !== "")
+			if ((ribs = hlp_desnany_str(dd, [:ribbon, :band], false)) !== "")
 				(valLabel != "") && (valLabel_vec = [valLabel, ribs]; valLabel="")	# *promote* valLabel
 				have_ribbon = true
 			end
