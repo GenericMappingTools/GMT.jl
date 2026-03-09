@@ -454,6 +454,7 @@ function __init__(test::Bool=false)
 	!isascii(user) && (user = string(hash(user), base=16)[1:8])# For non-ASCII user names
 	TMPDIR_USR.username = replace(user, " " => "_")
 	haskey(ENV, "JULIA_GMT_MULTIFILE") && (TMPDIR_USR.pid_suffix = string("_", getpid()))
+	(TMPDIR_USR.dir != tempdir()) && (TMPDIR_USR.dir = tempdir())	# In case we are at UALG where it is pointing to IT root installer
 	PSname[] = TMPDIR_USR.dir * "/" * "GMTjl_" * TMPDIR_USR.username * TMPDIR_USR.pid_suffix * ".ps"
 	DidOneGmtCmd[] = false
 end
