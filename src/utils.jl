@@ -1802,7 +1802,7 @@ function get_show_fmt_savefig(d, show::Bool=false)::Tuple{Bool, String, String}
 	# 'show' carries the default of the caller for the show-or-not-show
 	do_show::Bool = ((val = find_in_dict(d, [:show])[1]) === nothing) ? show : (val == 1)
 	fmt::String = ((val_s = hlp_desnany_str(d, [:fmt])) !== "") ? val_s : FMT[]::String
-	savefig::String = hlp_desnany_str(d, [:savefig :figname :name])
+	savefig::String = hlp_desnany_str(d, [:savefig, :figname, :name])
 	return do_show, fmt, savefig
 end
 

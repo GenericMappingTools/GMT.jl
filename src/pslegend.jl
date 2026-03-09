@@ -152,7 +152,7 @@ function mk_legend(; kwargs...)
 			((f = hlp_desnany_str(d, [:offset])) === "") && error("Must specify the 'offset' in 'colorbar'")
 			((val_s = hlp_desnany_str(d, [:height])) === "") && error("Must specify the 'height' in 'colorbar'")
 			f *= " " * string(val_s)::String
-			((val_s = hlp_desnany_str(d, [:extra :options])) === "") || (f *= " " * val_s)
+			((val_s = hlp_desnany_str(d, [:extra, :options])) === "") || (f *= " " * val_s)
 			leg[n] = "B " * string(d[Symbol.(keys(d))[1]])::String * " " * f
 			check_unused(d, kw_str, Symbol.(keys(d))[1])
 
@@ -174,22 +174,22 @@ function mk_legend(; kwargs...)
 		elseif (kw_str == "I" || startswith(kw_str, "image"))	# code = (image=fname)	I @SOEST_block4.png 3i CT
 			d = nt2dict(code)
 			((f = hlp_desnany_str(d, [:width])) === "") && error("Must specify the 'width' in 'image'")
-			((val_s = hlp_desnany_str(d, [:justify :justification])) === "") && error("Must specify the 'justify' in 'image'")
+			((val_s = hlp_desnany_str(d, [:justify, :justification])) === "") && error("Must specify the 'justify' in 'image'")
 			f *= " " * string(val_s)::String
 			leg[n] = "I " * string(d[Symbol.(keys(d))[1]])::String * " " * f
 			check_unused(d, kw_str, Symbol.(keys(d))[1])
 
 		elseif (kw_str == "L" || startswith(kw_str, "label"))	# code = L 9p,Times-Roman R Smith et al., @%5%J. Geophys. Res., 99@%%, 2000
 			d = nt2dict(code)
-			((f = hlp_desnany_str(d, [:justify :justification])) === "") && error("Must specify the ''justify' in 'label'")
+			((f = hlp_desnany_str(d, [:justify, :justification])) === "") && error("Must specify the ''justify' in 'label'")
 			f = (((val = find_in_dict(d, [:font])[1]) === nothing) ? "-" : font(val)) * " " * uppercase(f[1])
 			leg[n] = "L " * f * " " * string(d[Symbol.(keys(d))[1]])::String
 			check_unused(d, kw_str, Symbol.(keys(d))[1])
 
 		elseif (kw_str == "M" || occursin("scale", kw_str))		# code = (map_scale=)	M 5 5 600+u+f
 			d = nt2dict(code)
-			((f = hlp_desnany_str(d, [:lon :x])) === "") && (f = "-")
-			((val_s = hlp_desnany_str(d, [:lat :y])) === "") && error("Must specify the 'lat or y' in map_scale")
+			((f = hlp_desnany_str(d, [:lon, :x])) === "") && (f = "-")
+			((val_s = hlp_desnany_str(d, [:lat, :y])) === "") && error("Must specify the 'lat or y' in map_scale")
 			leg[n] = "M " * f * " " * val_s
 			((val_s = hlp_desnany_str(d, [:length])) === "") && error("Must specify the 'length' in map_scale")
 			leg[n] *= " " * val_s
@@ -216,7 +216,7 @@ function mk_legend(; kwargs...)
 			f = ((val_s = hlp_desnany_str(d, [:fill])) === "") ? "- " : get_color(val_s);		fill = f
 			f = add_opt_pen(d, [:pen], opt="");	pen = (f == "") ? " -" : " " * f		# TRUE to also seek (lw,lc,ls)
 			((_size = hlp_desnany_str(d, [:size])) === "") && error("Must specify the 'size' in 'symbol'")
-			f = hlp_desnany_str(d, [:label :text]);	label = f
+			f = hlp_desnany_str(d, [:label, :text]);	label = f
 			if (label != "")
 				f = ((val_s = hlp_desnany_str(d, [:dx_right])) === "") ? "- " : string(val_s, " ");	dx2 = f
 				label = " " * dx2 * label

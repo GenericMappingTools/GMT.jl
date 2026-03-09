@@ -1319,7 +1319,7 @@ function helper_mat2img(@nospecialize(mat), x::Vector{Float64}, y::Vector{Float6
 	end
 
 	mem_layout = (size(mat,3) == 1) ? "TCBa" : "TCBa"		# Just to have something. Likely wrong for 3D
-	((val = hlp_desnany_str(d, [:layout :mem_layout])) !== "") && (mem_layout = val)
+	((val = hlp_desnany_str(d, [:layout, :mem_layout])) !== "") && (mem_layout = val)
 	_names::Vector{String} = hlp_desnany_vstr(d, [:names])
 	_meta::Vector{String}  = hlp_desnany_vstr(d, [:metadata])
 
@@ -2568,7 +2568,7 @@ end
 mksymbol(f::Function, arg1; kw...) = mksymbol(f, "", arg1; kw...)
 
 # ---------------------------------------------------------------------------------------------------
-function hlp_desnany_str(d, s, del=true)::String
+function hlp_desnany_str(d, s::Vector{Symbol}, del=true)::String
 	((val = find_in_dict(d, s, del)[1]) === nothing) ? "" : string(val)
 end
 function hlp_desnany_arg2str(d, s, del=true; sep='/')::String

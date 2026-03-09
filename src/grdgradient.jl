@@ -49,7 +49,7 @@ function grdgradient(arg1; kw...)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_Q_grdgrad(d::Dict, symbs::Array{<:Symbol}, cmd::String)
+function parse_Q_grdgrad(d::Dict, symbs::Vector{<:Symbol}, cmd::String)
 	(SHOW_KWARGS[]) && return print_kwarg_opts(symbs, "String")
     if ((val_ = hlp_desnany_str(d, symbs)) !== "")
 		val = val_[1]
@@ -68,6 +68,6 @@ function grdgrad_helper(;kw...)
 	       (manip=("m", nothing, 1), simple=("s", nothing, 1), peucker=("p", nothing, 1), view=("", arg2str), ambient="+a", difuse="+d", specular="+p", shine="+s") )
 	cmd  = add_opt(d, cmd, "N", [:N :norm :normalize],
            (laplace=("e", nothing, 1), cauchy=("t", nothing, 1), amp="", sigma="+s", offset="+o"))
-	cmd = parse_Q_grdgrad(d, [:Q :save_stats], cmd)
+	cmd = parse_Q_grdgrad(d, [:Q, :save_stats], cmd)
 	return d, cmd
 end
