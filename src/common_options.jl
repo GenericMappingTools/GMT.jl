@@ -5190,7 +5190,7 @@ macro var"?"(name)
 			         :image_alpha!, :image_cpt!,:imshow,:ind2rgb, :info,:isnodata,:isoutlier,:lazinfo,:lazread,:lazwrite,:lasread,
 			         :laswrite,:lelandshade,:linearfitxy,:listecmwfvars,
 			         :lowess,:magic,:mat2ds,:mat2grid,:mat2img, :mosaic,:ODE2ds,:okada,:orbits,:pca,:plotgrid!,:plotyy,:pol2cart,
-			         :polygonlevels,:rasterzones!,:regiongeog,:rescale, :slicecube,:sph2cart,:stackgrids,:ter2cart,:theme,
+			         :polyfit,:polyval,:polygonlevels,:rasterzones!,:regiongeog,:rescale, :slicecube,:sph2cart,:stackgrids,:ter2cart,:theme,
 			         :uniqueind,:vecangles,:weather,:whereami,:wmsinfo, :wmsread,:wmstest,:worldrectgrid,:worldrectcoast,
 			         :worldrectangular,:xyzw2cube,:yeardecimal,:zonal_stats, :cube,:cylinder,:dodecahedron,:ellipse3D,
 			         :flatfv,:fv2fv,:icosahedron,:loft,:sphere, :octahedron,:tetrahedron,:torus,:replicant,:revolve
