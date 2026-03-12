@@ -72,6 +72,8 @@
 	plot(D, xvar=1, yvar=[2, 3], Vd=dbg2)
 	plot(D, xvar=1, yvar=(2, 3), Vd=dbg2)
 
+	plot(mat2ds([[0. 0; 1 1], [1.0 0; 0 1]]), legend=(label="colnames", pos=:auto))
+
 	D = [mat2ds([0 0; 0 1; 1 1; 1 0.3; 0 0])[1], mat2ds([1 1; 1 2; 2 2; 2 1; 1 1])[1]];
 	C = makecpt(cmap = :hot, range = (0, 5));
 	r = psxy!(D, C=C, Z=[1,4], pen=2, Vd=2)

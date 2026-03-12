@@ -1678,8 +1678,20 @@ function bissextile(year::Integer)::Bool
 	(year % 4 == 0) && ((year % 100 != 0) || (year % 400 == 0))
 end
 
-# ---------------------------------------------------------------------------------------------------
-include("makeDCWs.jl")
+# ------------------------------------------------------------------------------------------------------
+"""
+	do_show, fmt, savefig = get_show_fmt_savefig(d, show=false)
+
+Many extension/composed plotting functions need to know these but they can only apply them
+in the last plotting comand. Centralise those options fetching in this function.
+"""
+function get_show_fmt_savefig(d, show::Bool=false)::Tuple{Bool, String, String}
+	# 'show' carries the default of the caller for the show-or-not-show
+	do_show::Bool = ((val = find_in_dict(d, [:show])[1]) === nothing) ? show : (val == 1)
+	fmt::String = ((val_s = hlp_desnany_str(d, [:fmt])) !== "") ? val_s : FMT[]::String
+	savefig::String = hlp_desnany_str(d, [:savefig, :figname, :name])
+	return do_show, fmt, savefig
+end
 	
 # ------------------------------------------------------------------------------------------------------
 isdefined(Main, :VSCodeServer) && (const VSdisp = Main.VSCodeServer.vscodedisplay)
@@ -1791,19 +1803,6 @@ function cut_icons(; nome="", size=350)
 end
 =#
 
-# ------------------------------------------------------------------------------------------------------
-"""
-	do_show, fmt, savefig = get_show_fmt_savefig(d, show=false)
-
-Many extension/composed plotting functions need to know these but they can only apply them
-in the last plotting comand. Centralise those options fetching in this function.
-"""
-function get_show_fmt_savefig(d, show::Bool=false)::Tuple{Bool, String, String}
-	# 'show' carries the default of the caller for the show-or-not-show
-	do_show::Bool = ((val = find_in_dict(d, [:show])[1]) === nothing) ? show : (val == 1)
-	fmt::String = ((val_s = hlp_desnany_str(d, [:fmt])) !== "") ? val_s : FMT[]::String
-	savefig::String = hlp_desnany_str(d, [:savefig, :figname, :name])
-	return do_show, fmt, savefig
-end
-
+# ---------------------------------------------------------------------------------------------------
+include("makeDCWs.jl")
 include("getdcw.jl")
