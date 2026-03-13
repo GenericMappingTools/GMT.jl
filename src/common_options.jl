@@ -3176,7 +3176,7 @@ function helper0_axes(arg)::String
 	# bottom|bot|b_t(icks); right|r_t(icks); t(op)_t(icks); up_t(icks) => s, e, n, z
 	# bottom|bot|b_b(are);  right|r_b(are);  t(op)_b(are);  up_b(are)  => b, r, t, u
 
-	(isa(arg, String) || isa(arg, Symbol)) && return string(arg) # Assume that a WESNwesn was already sent in.
+	isa(arg, StrSymb) && return string(arg) # Assume that a WESNwesn was already sent in.
 	!isa(arg, Tuple) && error("'axes' argument must be a String, Symbol or a Tuple.")
 
 	opt = "";	lbrtu = "lbrtu";	WSENZ = "WSENZ";	wsenz = "wsenz";	lbrtu = "lbrtu"
@@ -3729,7 +3729,7 @@ end
 
 # ------------------------------------------------------------------------
 # Function barrier to avoid mysterious invalidations and recompilations.
-function read_data_barr_1(d, arg_is_nothing::Bool)
+function read_data_barr_1(d::Dict{Symbol,Any}, arg_is_nothing::Bool)
 	arg = nothing
 	if (haskey(d, :data))
 		arg = mat2ds(d[:data]);		delete!(d, [:data])
@@ -4050,7 +4050,7 @@ function is_gridtri(D)::Bool
 end
 
 # ---------------------------------------------------------------------------------------------------
-function find_data(d::Dict{Symbol,Any}, cmd0::String, cmd::String, args...)
+function find_data(d::Dict{Symbol,Any}, cmd0::String, cmd::String, @nospecialize(args...))
 	# ...
 
 	(SHOW_KWARGS[]) && return cmd, 0, nothing		# In HELP mode we do nothing here
@@ -4125,7 +4125,7 @@ function write_data(d::Dict{Symbol,Any}, cmd::String)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function common_grd(d::Dict{Symbol,Any}, cmd0::String, cmd::String, prog::String, args...)
+function common_grd(d::Dict{Symbol,Any}, cmd0::String, cmd::String, prog::String, @nospecialize(args...))
 	n_args = 0
 	for k = 1:numel(args) if (args[k] !== nothing)  n_args += 1  end  end	# Drop the nothings
 	if     (n_args <= 1)  cmd, got_fname, arg1 = find_data(d, cmd0, cmd, args[1])
@@ -4137,7 +4137,7 @@ function common_grd(d::Dict{Symbol,Any}, cmd0::String, cmd::String, prog::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function common_grd(d::Dict{Symbol,Any}, cmd::String, args...)
+function common_grd(d::Dict{Symbol,Any}, cmd::String, @nospecialize(args...))
 	# This chunk of code is shared by several grdxxx & other modules, so wrap it in a function
 	IamModern[] && (cmd = replace(cmd, " -R " => " "))
 	(haskey(d, :Vd) && d[:Vd] > 2) && show_args_types(args...)
@@ -4186,7 +4186,7 @@ function dbg_print_cmd(d::Dict{Symbol,Any}, cmd::Vector{String})
 end
 
 # ---------------------------------------------------------------------------------------------------
-function show_args_types(args...)
+function show_args_types(@nospecialize(args...))
 	for k in eachindex(args)
 		args[k] === nothing && break
 		println("arg",k, " = ", typeof(args[k]))
@@ -4453,7 +4453,8 @@ end
 # ---------------------------------------------------------------------------------------------------
 # Thin wrappers that convert args... → Vector{Any} and call the single-compilation inner function
 function prep_and_call_finish_PS_module(d::Dict{Symbol, Any}, cmd, opt_extra::String, K::Bool, O::Bool, finish::Bool,
-                                        arg1=nothing, arg2=nothing, arg3=nothing, arg4=nothing, arg5=nothing)
+                                        @nospecialize(arg1=nothing), @nospecialize(arg2=nothing), @nospecialize(arg3=nothing),
+                                        @nospecialize(arg4=nothing), @nospecialize(arg5=nothing))
 	argsV = Any[]
 	for a in (arg1, arg2, arg3, arg4, arg5)
 		a === nothing && break
