@@ -3533,12 +3533,11 @@ function helper_decorated(d::Dict{Symbol,Any}, compose=false)
 	if (val !== nothing)
 		# The String assumes all is already encoded. Number, Array only accept numerics
 		# Tuple accepts numerics and/or strings.
-		if (isa(val, String) || isa(val, Real) || isa(val, Symbol))
+		if (isa(val, StrSymb) || isa(val, Real))
 			cmd = string(val)
 		elseif (isa(val, Array) || isa(val, Tuple))
-			if (symb == :number)  cmd = "-" * string(val[1], '/', val[2])::String
-			else                  cmd = string(val[1], '/', val[2])
-			end
+			t::String = string(val[1], '/', val[2])
+			cmd = (symb == :number) ? "-" * t : t
 		else
 			error("DECORATED: 'dist' (or 'distance') option. Unknown data type.")
 		end

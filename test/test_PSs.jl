@@ -221,25 +221,109 @@ Gm = mask(G, msk_bool);
 
 msk_uint8 = fill(UInt8(0), 16, 16); msk_uint8[5:10, 5:10] .= UInt8(255);
 Gm2 = mask(G, msk_uint8, 0.0);
-@assert all(Gm2.z[5:10, 5:10] .== 0)
+@test all(Gm2.z[5:10, 5:10] .== 0)
 
 Gmsk = mat2grid(Float32.(msk_bool), G);
 Gm3 = mask(G, Gmsk);
-@assert all(isnan.(Gm3.z[5:10, 5:10]))
+@test all(isnan.(Gm3.z[5:10, 5:10]))
 
 # Test mask(GMTimage, mask_array)
 Img = mat2img(rand(UInt8, 16, 16, 3));
 Im = mask(Img, msk_bool, (255, 0, 0));
-@assert all(view(Im.image, 5:10, 5:10, 1) .== 0xff)
-@assert all(view(Im.image, 5:10, 5:10, 2) .== 0x00)
+@test all(view(Im.image, 5:10, 5:10, 1) .== 0xff)
+@test all(view(Im.image, 5:10, 5:10, 2) .== 0x00)
 
 Im2 = mask(Img, msk_uint8);
-@assert all(view(Im2.image, 5:10, 5:10, 1) .== 0x00)
+@test all(view(Im2.image, 5:10, 5:10, 1) .== 0x00)
 
 Im3 = mask(Img, msk_bool, alpha=true);
-@assert size(Im3.alpha) == (16, 16)
-@assert all(Im3.alpha[5:10, 5:10] .== 0x00)      # masked = transparent
-@assert all(Im3.alpha[1:4, 1:4] .== 0xff)         # unmasked = opaque
+@test size(Im3.alpha) == (16, 16)
+@test all(Im3.alpha[5:10, 5:10] .== 0x00)      # masked = transparent
+@test all(Im3.alpha[1:4, 1:4] .== 0xff)         # unmasked = opaque
+
+# Test best_label_pos — curve annotation placement
+println("	BEST_LABEL_POS")
+# 1) Two non-crossing lines: result shape and finite values
+D1 = mat2ds([[0.0 0; 1 1; 2 2; 3 3; 4 4], [0.0 4; 1 3; 2 2.5; 3 2; 4 1]])
+bl = GMT.best_label_pos(D1, ["line1", "line2"])
+@test size(bl) == (2, 4)
+@test all(isfinite.(bl))
+
+# 2) Each crossing segment must actually cross its curve
+for i in 1:2
+	x1,y1_,x2,y2_ = bl[i,1], bl[i,2], bl[i,3], bl[i,4]
+	c = D1[i]
+	crossings = 0
+	for s in 1:size(c,1)-1
+		GMT._blp_seg2cross(x1,y1_,x2,y2_, c[s,1],c[s,2], c[s+1,1],c[s+1,2]) && (crossings += 1)
+	end
+	@assert crossings >= 1 "Crossing segment for curve $i does not cross the curve"
+end
+
+# 3) X-crossing lines: labels should NOT be near each other
+Dx = mat2ds([[0.0 0; 4 4], [0.0 4; 4 0]])
+bx = GMT.best_label_pos(Dx, ["up", "down"])
+dist = hypot(bx[1,1]-bx[2,1], bx[1,2]-bx[2,2])
+@assert dist > 0.3 "Labels on X-crossing lines are too close: $dist"
+
+# 4) prefer=:begin puts labels in first half, prefer=:end in second half
+Dlong = mat2ds([Float64[i for i in 0:20] Float64[sin(i/3) for i in 0:20]])
+bb = GMT.best_label_pos(Dlong, ["wave"]; prefer=:begin)
+be = GMT.best_label_pos(Dlong, ["wave"]; prefer=:end)
+mid_x = (bb[1,1]+bb[1,3])/2   # midpoint of crossing segment
+mid_xe = (be[1,1]+be[1,3])/2
+@assert mid_x < 10 "prefer=:begin label not in first half (x=$mid_x)"
+@assert mid_xe > 10 "prefer=:end label not in second half (x=$mid_xe)"
+
+# 5) Single curve (GMTdataset, not vector)
+Ds = mat2ds([0.0 0; 1 1; 2 0; 3 1; 4 0])
+bs = GMT.best_label_pos(Ds, ["zigzag"])
+@test size(bs) == (1, 4)
+@test all(isfinite.(bs))
+
+# Test text_repel — force-directed label placement
+println("	TEXT_REPEL")
+# 1) Clustered points: labels must spread out
+pts = [1.0 1.0; 1.05 1.05; 0.95 1.0; 1.0 0.95; 1.05 0.95]
+labs = ["Aa", "Bb", "Cc", "Dd", "Ee"]
+rp = GMT.text_repel(pts, labs)
+@test size(rp) == (5, 2)
+# All results must be finite
+@test all(isfinite.(rp))
+
+# 2) Well-separated points: labels stay near anchors
+pts2 = [0.0 0.0; 5.0 0.0; 0.0 5.0; 5.0 5.0]
+labs2 = ["A", "B", "C", "D"]
+rp2 = GMT.text_repel(pts2, labs2)
+for i in 1:4
+	@test abs(rp2[i,1] - pts2[i,1]) < 1.5  # should stay close
+	@test abs(rp2[i,2] - pts2[i,2]) < 1.5
+end
+
+# 3) GMTdataset input
+D_repel = mat2ds(pts)
+rp3 = GMT.text_repel(D_repel, labs)
+@test size(rp3) == (5, 2)
+
+# 4) With explicit plotregion
+rp4 = GMT.text_repel(pts, labs; plotregion=(-1,3,-1,3))
+@test all(rp4[:,1] .>= -1.0) && all(rp4[:,1] .<= 3.0)
+@test all(rp4[:,2] .>= -1.0) && all(rp4[:,2] .<= 3.0)
+
+# 5) No overlaps in result (axis-aligned box check in cm space)
+function _test_no_overlaps(rp, labs, region, plotsize, fontsize)
+	xmin,xmax,ymin,ymax = region
+	sx = plotsize[1] / (xmax - xmin);  sy = plotsize[2] / (ymax - ymin)
+	pt2cm = 2.54/72;  cw = 0.55*fontsize*pt2cm;  ch = fontsize*pt2cm
+	for i in 1:size(rp,1)-1, j in i+1:size(rp,1)
+		hwi = length(labs[i])*cw/2;  hwj = length(labs[j])*cw/2;  hh = ch/2
+		dxcm = abs((rp[i,1]-rp[j,1])*sx);  dycm = abs((rp[i,2]-rp[j,2])*sy)
+		overlap = dxcm < (hwi+hwj) && dycm < 2*hh
+		overlap && return false
+	end
+	true
+end
+@assert _test_no_overlaps(rp2, labs2, (-0.5,5.5,-0.5,5.5), (15,10), 10)
 
 println("	PSSOLAR")
 #D=solar(I="-7.93/37.079+d2016-02-04T10:01:00");
