@@ -383,3 +383,361 @@ function _blp_seg2cross(ax1::Float64, ay1::Float64, ax2::Float64, ay2::Float64,
 	d4 = (bx2 - bx1) * (ay2 - by1) - (by2 - by1) * (ax2 - bx1)
 	return ((d1 > 0) != (d2 > 0)) && ((d3 > 0) != (d4 > 0))
 end
+
+# --------------------------------------------------------------------------------------------------
+"""
+    best_label_pos(curves, labels; fontsize=10, plotsize=(15,10)) -> Vector{NamedTuple}
+
+Find optimal non-overlapping positions to annotate curves in an x-y plot. For each curve, tests
+candidate positions along 10%–90% of the arc length, scores them by overlap with other curves and
+already-placed labels, and greedily assigns the best position.
+
+### Arguments
+- `curves`: data curves. A Nx2+ matrix, a GMTdataset, or a Vector of these.
+- `labels`: Vector of label strings, one per curve.
+- `fontsize`: font size in points (default 10). Used to estimate text bounding box.
+- `plotsize`: plot dimensions in cm as `(width, height)` (default `(15, 10)`).
+- `prefer`: preferred label zone along the curve. One of `:begin`, `:middle` (default), or `:end`.
+
+### Returns
+A `Matrix{Float64}` of size `(ncurves, 4)` where each row `[x1, y1, x2, y2]` defines a short
+line segment perpendicular to the curve at the chosen label position, in data coordinates.
+These can be used directly with GMT's quoted line option `-Sql<x1/y1/x2/y2>`.
+"""
+function best_label_pos(curves::GDtype, labels::Vector{<:AbstractString}; fontsize::Real=10, plotsize=(15,10), prefer::Symbol=:middle)
+	D = isa(curves, GMTdataset) ? [curves] : curves
+	nc = length(D)
+	nc != length(labels) && error("Number of curves ($nc) must match number of labels ($(length(labels)))")
+
+	xmin, xmax, ymin, ymax = getregion(curves)
+	pw, ph = Float64(plotsize[1]), Float64(plotsize[2])
+	sx, sy = pw / (xmax - xmin), ph / (ymax - ymin)
+
+	# Convert to cm space for accurate visual distance/angle calculations
+	crv = [hcat((D[k][:,1] .- xmin) .* sx, (D[k][:,2] .- ymin) .* sy) for k in 1:nc]
+
+	# Text half-dimensions in cm
+	pt2cm = 2.54 / 72
+	char_w = 0.55 * fontsize * pt2cm
+	char_h = fontsize * pt2cm
+	hws = [length(l) * char_w / 2 for l in labels]    # half-width per label
+	hh  = char_h * 0.9                                 # half-height (shared)
+
+	# Candidate range along arc length depends on preference
+	prefer in (:begin, :middle, :end) || error("prefer must be :begin, :middle, or :end")
+	frac_lo, frac_hi, frac_target = prefer == :begin  ? (0.05, 0.55, 0.15) :
+	                                prefer == :end    ? (0.45, 0.95, 0.85) :
+	                                                    (0.10, 0.90, 0.50)
+
+	# Generate candidate positions along each curve
+	ncand = 19
+	cands = [_bla_gen_candidates(crv[i], ncand, frac_lo, frac_hi) for i in 1:nc]
+
+	# Greedy placement: maximize minimum clearance to other curves
+	placed_cx = Float64[];  placed_cy = Float64[];  placed_a = Float64[]
+	placed_hw = Float64[];  placed_hh = Float64[]
+	result = Matrix{Float64}(undef, nc, 4)	# each row: x1, y1, x2, y2
+
+	half_cross = 0.3	# half-length of crossing segment in cm (short to avoid multi-intersection)
+
+	for i in 1:nc
+		hw_i = hws[i]
+		best_score, best_j = -Inf, 1
+		for j in eachindex(cands[i])
+			cx, cy, ang, curv = cands[i][j]
+
+			# Penalize high curvature zones — prefer smooth sections
+			curv > 0.5 && (continue)			# skip very sharp bends (> ~30°)
+			curv_penalty = curv * 2.0			# continuous penalty for moderate curvature
+
+			# Min distance from (cx,cy) to any segment of any other curve
+			clearance = 1e10
+			for k in 1:nc
+				k == i && continue
+				c = crv[k];  n = size(c, 1)
+				@inbounds for s in 1:n-1
+					d = _bla_pt_seg_dist(cx, cy, c[s,1], c[s,2], c[s+1,1], c[s+1,2])
+					clearance = min(clearance, d)
+				end
+			end
+
+			# Reject if perpendicular crosses own curve more than once
+			nx, ny = -sin(ang), cos(ang)
+			x1c, y1c = cx - nx * half_cross, cy - ny * half_cross
+			x2c, y2c = cx + nx * half_cross, cy + ny * half_cross
+			if _bla_crossing_count(x1c, y1c, x2c, y2c, crv[i]) > 1
+				continue
+			end
+
+			# Kill candidates that overlap with already-placed labels
+			for p in eachindex(placed_cx)
+				if _bla_rboxes_overlap(cx, cy, ang, hw_i, hh,
+				                       placed_cx[p], placed_cy[p], placed_a[p], placed_hw[p], placed_hh[p])
+					clearance = -1.0;  break
+				end
+			end
+
+			# Score = clearance - curvature penalty, with preference-zone tiebreaker
+			frac = frac_lo + (frac_hi - frac_lo) * (j - 1) / (ncand - 1)
+			score = clearance - curv_penalty - abs(frac - frac_target) * 0.01
+
+			if (score > best_score)
+				best_score = score;  best_j = j
+			end
+		end
+
+		cx, cy, ang = cands[i][best_j][1], cands[i][best_j][2], cands[i][best_j][3]
+		push!(placed_cx, cx);  push!(placed_cy, cy);  push!(placed_a, ang)
+		push!(placed_hw, hw_i);  push!(placed_hh, hh)
+
+		# Short perpendicular crossing segment, convert to data coords
+		nx, ny = -sin(ang), cos(ang)
+		result[i,1] = (cx - nx * half_cross) / sx + xmin
+		result[i,2] = (cy - ny * half_cross) / sy + ymin
+		result[i,3] = (cx + nx * half_cross) / sx + xmin
+		result[i,4] = (cy + ny * half_cross) / sy + ymin
+	end
+	return result
+end
+
+# Count how many segments of `curve` the segment (x1,y1)-(x2,y2) crosses
+function _bla_crossing_count(x1::Float64, y1::Float64, x2::Float64, y2::Float64, curve::Matrix{Float64})
+	count = 0
+	n = size(curve, 1)
+	@inbounds for i in 1:n-1
+		_blp_seg2cross(x1, y1, x2, y2, curve[i,1], curve[i,2], curve[i+1,1], curve[i+1,2]) && (count += 1)
+	end
+	return count
+end
+
+# Shortest distance from point (px,py) to line segment (x1,y1)-(x2,y2)
+function _bla_pt_seg_dist(px::Float64, py::Float64, x1::Float64, y1::Float64, x2::Float64, y2::Float64)
+	dx, dy = x2 - x1, y2 - y1
+	len2 = dx * dx + dy * dy
+	len2 == 0.0 && return hypot(px - x1, py - y1)
+	t = clamp(((px - x1) * dx + (py - y1) * dy) / len2, 0.0, 1.0)
+	return hypot(px - (x1 + t * dx), py - (y1 + t * dy))
+end
+
+# Generate ncand candidate positions along a curve (cm space).
+# Returns Vector of (x, y, tangent_angle, curvature) where curvature = max angle change (rad) over a local window.
+function _bla_gen_candidates(c::Matrix{Float64}, ncand::Int, frac_lo::Float64=0.1, frac_hi::Float64=0.9)
+	n = size(c, 1)
+	arclen = Vector{Float64}(undef, n)
+	arclen[1] = 0.0
+	@inbounds for i in 2:n
+		arclen[i] = arclen[i-1] + hypot(c[i,1] - c[i-1,1], c[i,2] - c[i-1,2])
+	end
+	# Per-segment angles
+	seg_ang = Vector{Float64}(undef, max(n - 1, 1))
+	@inbounds for i in 1:n-1
+		seg_ang[i] = atan(c[i+1,2] - c[i,2], c[i+1,1] - c[i,1])
+	end
+	total = arclen[end]
+	result = Vector{NTuple{4,Float64}}(undef, ncand)
+	@inbounds for j in 1:ncand
+		frac = frac_lo + (frac_hi - frac_lo) * (j - 1) / max(ncand - 1, 1)
+		target = frac * total
+		idx = searchsortedlast(arclen, target)
+		idx = clamp(idx, 1, n - 1)
+		seg_len = arclen[idx+1] - arclen[idx]
+		t = seg_len > 0 ? (target - arclen[idx]) / seg_len : 0.0
+		px = c[idx,1] + t * (c[idx+1,1] - c[idx,1])
+		py = c[idx,2] + t * (c[idx+1,2] - c[idx,2])
+		# Smoothed tangent over a few neighboring segments
+		i1 = max(1, idx - 2)
+		i2 = min(n, idx + 3)
+		ang = atan(c[i2,2] - c[i1,2], c[i2,1] - c[i1,1])
+		# Curvature: max absolute angle change between consecutive segments in a local window
+		w1 = max(1, idx - 3)
+		w2 = min(n - 1, idx + 3)
+		curv = 0.0
+		for k in w1:w2-1
+			da = abs(seg_ang[k+1] - seg_ang[k])
+			da > π && (da = 2π - da)		# wrap
+			curv = max(curv, da)
+		end
+		result[j] = (px, py, ang, curv)
+	end
+	return result
+end
+
+# Check if two rotated boxes overlap (corner-in-box + edge crossings)
+function _bla_rboxes_overlap(cx1::Float64, cy1::Float64, a1::Float64, hw1::Float64, hh1::Float64,
+                             cx2::Float64, cy2::Float64, a2::Float64, hw2::Float64, hh2::Float64)
+	# Quick rejection
+	dist = hypot(cx2 - cx1, cy2 - cy1)
+	(dist > hypot(hw1, hh1) + hypot(hw2, hh2)) && return false
+
+	# Corners of box2 inside box1?
+	c2 = _bla_corners(cx2, cy2, a2, hw2, hh2)
+	cosA1, sinA1 = cos(-a1), sin(-a1)
+	for (px, py) in c2
+		lx = cosA1 * (px - cx1) - sinA1 * (py - cy1)
+		ly = sinA1 * (px - cx1) + cosA1 * (py - cy1)
+		(-hw1 <= lx <= hw1 && -hh1 <= ly <= hh1) && return true
+	end
+
+	# Corners of box1 inside box2?
+	c1 = _bla_corners(cx1, cy1, a1, hw1, hh1)
+	cosA2, sinA2 = cos(-a2), sin(-a2)
+	for (px, py) in c1
+		lx = cosA2 * (px - cx2) - sinA2 * (py - cy2)
+		ly = sinA2 * (px - cx2) + cosA2 * (py - cy2)
+		(-hw2 <= lx <= hw2 && -hh2 <= ly <= hh2) && return true
+	end
+
+	# Edge crossings
+	for i in 1:4
+		ni = mod1(i + 1, 4)
+		for k in 1:4
+			nk = mod1(k + 1, 4)
+			_blp_seg2cross(c1[i][1], c1[i][2], c1[ni][1], c1[ni][2],
+			               c2[k][1], c2[k][2], c2[nk][1], c2[nk][2]) && return true
+		end
+	end
+	return false
+end
+
+# 4 corners of a rotated box centred at (cx,cy) with half-dims (hw,hh) and angle ang
+function _bla_corners(cx::Float64, cy::Float64, ang::Float64, hw::Float64, hh::Float64)
+	cosA, sinA = cos(ang), sin(ang)
+	return ((cx + cosA*(-hw) - sinA*(-hh), cy + sinA*(-hw) + cosA*(-hh)),
+			(cx + cosA*( hw) - sinA*(-hh), cy + sinA*( hw) + cosA*(-hh)),
+			(cx + cosA*( hw) - sinA*( hh), cy + sinA*( hw) + cosA*( hh)),
+			(cx + cosA*(-hw) - sinA*( hh), cy + sinA*(-hw) + cosA*( hh)))
+end
+
+# --------------------------------------------------------------------------------------------------
+"""
+    text_repel(points, labels; fontsize=10, plotregion=nothing, plotsize=(15,10),
+               force_push=1.0, force_pull=0.01, max_iter=500, padding=0.15) -> Matrix{Float64}
+
+Compute adjusted text label positions so that they do not overlap each other or the data points,
+similar to R's `ggrepel`. Uses a force-directed simulation: labels repel each other and data points
+(Coulomb-like force) while being attracted back to their anchor points (spring / Hooke force).
+
+### Arguments
+- `points`: Nx2 matrix or GMTdataset with (x,y) anchor points.
+- `labels`: Vector of label strings, one per point.
+- `fontsize`: font size in points (default 10).
+- `plotregion`: `(xmin, xmax, ymin, ymax)`. If `nothing`, computed from points with 5% margin.
+- `plotsize`: plot dimensions in cm as `(width, height)` (default `(15, 10)`).
+- `force_push`: repulsion strength multiplier (default 1.0).
+- `force_pull`: attraction strength back to anchor (default 0.01).
+- `max_iter`: maximum number of simulation iterations (default 500).
+- `padding`: extra padding around text boxes in cm (default 0.15).
+
+### Returns
+A `Matrix{Float64}` of size `(N, 2)` with adjusted `(x, y)` positions in data coordinates.
+"""
+function text_repel(points, labels::Vector{<:AbstractString}; fontsize::Real=10, plotregion=nothing,
+                    plotsize=(15,10), force_push::Real=1.0, force_pull::Real=0.01,
+                    max_iter::Int=500, padding::Real=0.15)
+
+	# Extract point coordinates
+	if isa(points, GMTdataset)
+		px = Float64.(points[:,1]);  py = Float64.(points[:,2])
+	elseif isa(points, Vector{<:GMTdataset})
+		px = Float64.(points[1][:,1]);  py = Float64.(points[1][:,2])
+	else
+		px = Float64.(points[:,1]);  py = Float64.(points[:,2])
+	end
+	n = length(px)
+	n != length(labels) && error("Number of points ($n) must match number of labels ($(length(labels)))")
+
+	# Plot region
+	if plotregion === nothing
+		_xmin, _xmax = extrema(px);  _ymin, _ymax = extrema(py)
+		mx, my = (_xmax - _xmin) * 0.05, (_ymax - _ymin) * 0.05
+		xmin, xmax, ymin, ymax = _xmin - mx, _xmax + mx, _ymin - my, _ymax + my
+	else
+		xmin, xmax, ymin, ymax = Float64(plotregion[1]), Float64(plotregion[2]), Float64(plotregion[3]), Float64(plotregion[4])
+	end
+	pw, ph = Float64(plotsize[1]), Float64(plotsize[2])
+	sx, sy = pw / (xmax - xmin), ph / (ymax - ymin)
+
+	# Convert anchor points to cm space
+	ax = (px .- xmin) .* sx
+	ay = (py .- ymin) .* sy
+
+	# Text box half-dimensions in cm (with padding)
+	pt2cm = 2.54 / 72
+	char_w = 0.55 * fontsize * pt2cm
+	char_h = fontsize * pt2cm
+	pad = Float64(padding)
+	hws = [length(l) * char_w / 2 + pad for l in labels]
+	hhs = fill(char_h / 2 + pad, n)
+
+	# Initialize label positions at anchor points
+	lx = copy(ax)
+	ly = copy(ay)
+	vx = zeros(n)		# velocities
+	vy = zeros(n)
+
+	fp = Float64(force_push)
+	fa = Float64(force_pull)
+	decay = 0.7		# velocity damping
+
+	for _iter in 1:max_iter
+		fx = zeros(n)
+		fy = zeros(n)
+
+		# Repulsion between label pairs
+		for i in 1:n-1, j in i+1:n
+			ox = (hws[i] + hws[j]) - abs(lx[i] - lx[j])	# overlap in x
+			oy = (hhs[i] + hhs[j]) - abs(ly[i] - ly[j])	# overlap in y
+			(ox <= 0 || oy <= 0) && continue				# no overlap
+			# Push proportional to overlap area
+			area = ox * oy
+			dx = lx[i] - lx[j]
+			dy = ly[i] - ly[j]
+			dist = max(hypot(dx, dy), 1e-6)
+			force = fp * area / dist
+			fdx = force * dx / dist
+			fdy = force * dy / dist
+			fx[i] += fdx;  fy[i] += fdy
+			fx[j] -= fdx;  fy[j] -= fdy
+		end
+
+		# Repulsion from data points (push labels away from all anchor points)
+		for i in 1:n, j in 1:n
+			dx = lx[i] - ax[j]
+			dy = ly[i] - ay[j]
+			# Check if point j is inside label i's box
+			(abs(dx) > hws[i] || abs(dy) > hhs[i]) && continue
+			dist = max(hypot(dx, dy), 1e-6)
+			force = fp * 0.5 / dist
+			fx[i] += force * dx / dist
+			fy[i] += force * dy / dist
+		end
+
+		# Attraction back to own anchor (spring force)
+		for i in 1:n
+			fx[i] -= fa * (lx[i] - ax[i])
+			fy[i] -= fa * (ly[i] - ay[i])
+		end
+
+		# Update velocities and positions
+		any_movement = false
+		for i in 1:n
+			vx[i] = (vx[i] + fx[i]) * decay
+			vy[i] = (vy[i] + fy[i]) * decay
+			lx[i] += vx[i]
+			ly[i] += vy[i]
+			# Clamp to plot region (cm space)
+			lx[i] = clamp(lx[i], hws[i], pw - hws[i])
+			ly[i] = clamp(ly[i], hhs[i], ph - hhs[i])
+			(abs(vx[i]) > 1e-4 || abs(vy[i]) > 1e-4) && (any_movement = true)
+		end
+		!any_movement && break
+	end
+
+	# Convert back to data coordinates
+	result = Matrix{Float64}(undef, n, 2)
+	for i in 1:n
+		result[i, 1] = lx[i] / sx + xmin
+		result[i, 2] = ly[i] / sy + ymin
+	end
+	return result
+end
