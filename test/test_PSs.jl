@@ -281,6 +281,24 @@ bs = GMT.best_label_pos(Ds, ["zigzag"])
 @test size(bs) == (1, 4)
 @test all(isfinite.(bs))
 
+# 6) Direct tests of _bla_rboxes_overlap helper
+# 6a) Identical boxes — must overlap
+@test GMT._bla_rboxes_overlap(0.0,0.0, 0.0, 1.0,0.5, 0.0,0.0, 0.0, 1.0,0.5) == true
+# 6b) Far apart — no overlap
+@test GMT._bla_rboxes_overlap(0.0,0.0, 0.0, 1.0,0.5, 10.0,10.0, 0.0, 1.0,0.5) == false
+# 6c) Corner-in-box: box2 corner just inside box1 (axis-aligned)
+@test GMT._bla_rboxes_overlap(0.0,0.0, 0.0, 2.0,1.0, 2.5,0.5, 0.0, 1.0,0.5) == true
+# 6d) Barely separated (axis-aligned, gap of 0.1)
+@test GMT._bla_rboxes_overlap(0.0,0.0, 0.0, 1.0,0.5, 2.1,0.0, 0.0, 1.0,0.5) == false
+# 6e) Edge-crossing case: two thin rotated boxes crossing like an X (no corners inside each other)
+#     Box1: center (0,0), angle=π/4, half-width=3, half-height=0.1
+#     Box2: center (0,0), angle=-π/4, half-width=3, half-height=0.1
+@test GMT._bla_rboxes_overlap(0.0,0.0, π/4, 3.0,0.1, 0.0,0.0, -π/4, 3.0,0.1) == true
+# 6f) Same thin rotated boxes but shifted far apart — no overlap
+@test GMT._bla_rboxes_overlap(0.0,0.0, π/4, 3.0,0.1, 5.0,5.0, -π/4, 3.0,0.1) == false
+# 6g) Rotated box with corner inside an axis-aligned box
+@test GMT._bla_rboxes_overlap(0.0,0.0, 0.0, 2.0,2.0, 2.0,2.0, π/4, 1.5,0.3) == true
+
 # Test text_repel — force-directed label placement
 println("	TEXT_REPEL")
 # 1) Clustered points: labels must spread out
