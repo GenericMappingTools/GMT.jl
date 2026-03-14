@@ -11,7 +11,7 @@ set (DCW_ROOT "$ENV{COASTLINEDIR}/dcw")
 
 set (GMT_USE_THREADS TRUE)
 set (GMT_ENABLE_OPENMP TRUE)
-set (GMT_DATA_SERVER nooa)
+set (GMT_DATA_SERVER noaa)
 
 # recommended even for release build
 set (CMAKE_C_FLAGS "-Wall -Wdeclaration-after-statement ${CMAKE_C_FLAGS}")
