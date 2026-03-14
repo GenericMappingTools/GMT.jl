@@ -889,10 +889,10 @@ function colorize_VecVecVec(@nospecialize(D), N_grp::Int, N_in_each_grp::Vector{
 			D = ds2ds(ds2ds(D)); set_dsBB!(D)	# Crazzy op and wasteful but thse Ds are small
 		end
 		for m = 1:N_grp
-			colorize_candles_violins(D, N_grp, vv[m], !ccolor ? m : 0, custom_colors)	# Assign default colors
+			colorize_candles_violins(D, N_grp, vv[m], m, custom_colors)	# Assign default colors
 		end
 	else
-		colorize_candles_violins(D, N_grp, 1:N_grp, !ccolor ? m : 0, custom_colors)
+		colorize_candles_violins(D, N_grp, 1:N_grp, 0, custom_colors)
 	end
 	return D
 end

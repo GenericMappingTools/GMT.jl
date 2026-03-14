@@ -42,7 +42,7 @@ viz(D, title="Tide Gauge at Lagos (Portugal)")
 """
 function maregrams(; list=false, code="", name="", days=2, starttime::String="", printurl::Bool=false)::GMTdataset{Float64, 2}
 	if (list != 0)			# Either list all stations or search those that contains a "list" string
-		Dl = gmtread(TESTSDIR * "/assets/maregs_online.csv")
+		Dl = gmtread(tests("maregs_online.csv"))
 		list == 1 && return Dl
 		inds = findall(contains.(Dl.text,list))
 		isempty(inds) && (println("'$list' was not found in stations list."); return GMTdataset())
@@ -97,7 +97,7 @@ function maregrams(; list=false, code="", name="", days=2, starttime::String="",
 	D.colnames = ["time", var_in_mareg[1]]
 	D.attrib["Timecol"] = "1"
 	if (have_code)			# When we have the code in our small data file
-		ind = (code != "") ? findfirst(code .== d[:code]) : findfirst(stname .== d[:name])
+		ind = (code != "") ? findfirst(code .== d[:code]) : findfirst(name .== d[:name])
 		D.attrib["Country"] = d[:country][ind]
 		D.attrib["ST_name"] = d[:name][ind]
 		D.attrib["ST_code"] = d[:code][ind]
@@ -119,7 +119,7 @@ function maregrams(x::Real, y::Real; days=2, starttime::String="", printurl::Boo
 end
 
 # ---------------------------------------------------------------------------------------------------
-function read_maregrams(fname=TESTSDIR * "/assets/maregs_online.csv")
+function read_maregrams(fname=tests("maregs_online.csv"))
 	mat = Matrix{Float64}(undef, 378, 2)
 	names = Vector{String}(undef, 378)
 	codes = Vector{String}(undef, 378)

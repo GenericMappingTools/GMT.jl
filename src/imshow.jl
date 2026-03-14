@@ -34,14 +34,17 @@ julia> viz(G, zsize=6, facades=(TESTSDIR*"assets/cenora_base.jpg", TESTSDIR*"bun
 See also: [`grdimage`](@ref), [`grdview`](@ref)
 """
 function imshow(arg1, x::AbstractVector{Float64}=Float64[], y::AbstractVector{Float64}=Float64[]; kw...)
+	_imshow(arg1, x, y, KW(kw))
+end
+function _imshow(@nospecialize(arg1), x::AbstractVector{Float64}, y::AbstractVector{Float64}, d::Dict{Symbol,Any})
 	# Take a 2D array of floats and turn it into a GMTgrid or if input is a string assume it's a file name
 	# In this later case try to figure if it's a grid or an image and act accordingly.
 
-	see = ((val = find_in_kwargs(kw, [:show])[2]) === nothing) ? true : (val != 0)	# No explicit 'show' keyword means show=true
+	see = (!haskey(d, :show)) ? true : (d[:show] != 0)	# No explicit 'show' keyword means show=true
 
-	function isplot3(kw)
+	function _isplot3(d::Dict)
 		_call_plot3 = false
-		opt_p = find_in_kwargs(kw, [:p :view :perspective])[1]
+		opt_p = find_in_dict(d, [:p :view :perspective], false)[1]
 		(isa(opt_p, String) && contains(opt_p, '/')) && (_call_plot3 = true)
 		((isa(opt_p, Tuple) || isa(opt_p, VMr)) && length(opt_p) > 1) && (_call_plot3 = true)
 		return _call_plot3
@@ -60,10 +63,9 @@ function imshow(arg1, x::AbstractVector{Float64}=Float64[], y::AbstractVector{Fl
 			ext = lowercase(ext)
 			(ext == ".jpg" || ext == ".tif" || ext == ".tiff" || ext == ".png" || ext == ".bmp" || ext == ".gif") && (is_image = true)
 			!is_image && (Gg = arg1)
-			#snif_GI_set_CTRLlimits(arg1)			# Set CTRL.limits to be eventually used by J=:guess
 		end
 	elseif (isa(arg1, Array{UInt8}) || isa(arg1, Array{UInt16,3}) || isa(arg1, Array{Bool}) || isa(arg1, BitMatrix))
-		Gi = isa(arg1, BitMatrix) ? mat2img(collect(arg1); kw...) : mat2img(arg1; kw...)
+		Gi = isa(arg1, BitMatrix) ? mat2img(collect(arg1); d...) : mat2img(arg1; d...)
 		call_img = true
 	elseif (isa(arg1, GDtype) || isa(arg1, GMTfv) || isa(arg1, Vector{GMTfv}) || (isa(arg1, AbstractVecOrMat{<:Real}) && size(arg1,2) <= 4) || (isa(arg1, Gdal.AbstractDataset) || isa(arg1, Gdal.AbstractGeometry)))
 		(isa(arg1, Gdal.AbstractDataset) || isa(arg1, Gdal.AbstractGeometry)) && (arg1 = gd2gmt(arg1))
@@ -82,13 +84,15 @@ function imshow(arg1, x::AbstractVector{Float64}=Float64[], y::AbstractVector{Fl
 		call_plot3 = ((isa(arg1, GMTdataset) && arg1.geom == wkbPolygonZM) ||
 		              (isa(arg1, Vector{<:GMTdataset}) && arg1[1].geom == wkbPolygonZM) ||
 					  isFV3D) ? true : false			# Should evolve into a fun that detects the several plot3d cases.
-		!call_plot3 && (call_plot3 = isplot3(kw))
-		return (call_plot3) ? plot3d(arg1; show=see, kw...) : plot(arg1; show=see, kw...)
+		!call_plot3 && (call_plot3 = _isplot3(d))
+		d[:show] = see
+		return (call_plot3) ? plot3d(arg1; d...) : plot(arg1; d...)
 	elseif (isa(arg1, GMTcpt))
-		return (find_in_kwargs(kw, [:D :pos :position])[1] === nothing) ?
-		        psscale(arg1; show=true, D="x0/0+w7+h", kw...) : psscale(arg1; show=true, kw...)
+		return (find_in_dict(d, [:D :pos :position], false)[1] === nothing) ?
+		        psscale(arg1; show=true, D="x0/0+w7+h", d...) : psscale(arg1; show=true, d...)
 	elseif (isdataframe(arg1) || isODE(arg1))
-		return isplot3(kw) ? plot3(arg1; show=see, kw...) :  plot(arg1; show=see, kw...)
+		d[:show] = see
+		return _isplot3(d) ? plot3(arg1; d...) : plot(arg1; d...)
 	else
 		Gg = mat2grid(arg1, x, y, reg=1)					# For displaying, pixel registration is more appropriate
 		call_grd = true
@@ -98,17 +102,18 @@ function imshow(arg1, x::AbstractVector{Float64}=Float64[], y::AbstractVector{Fl
 	call_grd && snif_GI_set_CTRLlimits(Gg)
 
 	if (is_image)
-		grdimage(arg1; show=see, kw...)
+		grdimage(arg1; show=see, d...)
 	else
-		if (isa(Gg, String))		# Guess also if call grdview or grdimage 
-			if (get(kw, :JZ, 0) != 0 || get(kw, :Jz, 0) != 0 || get(kw, :zscale, 0) != 0 || get(kw, :zsize, 0) != 0)
-				(get(kw, :Q, "") == "" && get(kw, :surf, "") == "" && get(kw, :surftype, "") == "") && (kw = (kw..., Q="s"))
-				grdview(arg1; show=see, kw...)				# String when fname is @xxxx
+		if (isa(Gg, String))		# Guess also if call grdview or grdimage
+			d[:show] = see
+			if (get(d, :JZ, 0) != 0 || get(d, :Jz, 0) != 0 || get(d, :zscale, 0) != 0 || get(d, :zsize, 0) != 0)
+				(get(d, :Q, "") == "" && get(d, :surf, "") == "" && get(d, :surftype, "") == "") && (d[:Q] = "s")
+				grdview(arg1; d...)				# String when fname is @xxxx
 			else
-				grdimage(arg1; show=see, kw...)
+				grdimage(arg1; d...)
 			end
 		else
-			imshow(call_img ? Gi : Gg; kw...)				# Call the specialized method
+			_imshow_GI(call_img ? Gi : Gg, d)				# Call the specialized method directly
 		end
 	end
 end
@@ -122,12 +127,14 @@ end
 # - `T, no_interp, tiles`: -T option for grdview
 # - `facades, cubeplot`: Call cubeplot.
 function imshow(arg1::GItype; kw...)
-	# Here the default is to show, but if a 'show' was used let it rule
-	d = KW(kw)
+	_imshow_GI(arg1, KW(kw))
+end
+function _imshow_GI(arg1::GItype, d::Dict{Symbol,Any})
 	see::Bool = (!haskey(d, :show)) ? true : (d[:show] != 0)	# No explicit 'show' keyword means show=true
 
-	if (isa(arg1, GMTimage) && (size(arg1, 3) <= 3 || arg1.layout[4] == 'A'))	# Rest of the work is done in grdiamge
-		return grdimage("", arg1; show=see, kw...)
+	if (isa(arg1, GMTimage) && (size(arg1, 3) <= 3 || arg1.layout[4] == 'A'))	# Rest of the work is done in grdimage
+		d[:show] = see
+		return grdimage_helper(wrapGrids("", arg1), nothing, nothing, true, false, d)
 	end
 
 	if ((cont_opts = find_in_dict(d, [:contour])[1]) !== nothing)
@@ -138,7 +145,7 @@ function imshow(arg1::GItype; kw...)
 	have_tilles::Bool = ((til = find_in_dict(d, [:T :no_interp :tiles])[1]) !== nothing)
 	(!have_tilles && opt_p != "" && !contains(opt_p, '/')) && (flat = true)		# If only 'azimuth' and no 'elev'
 	flat::Bool = (find_in_dict(d, [:flat])[1] !== nothing)	# If true, force the use of grdimage
-	docube = is_in_kwargs(kw, [:facades :cubeplot])
+	docube = is_in_dict(d, [:facades :cubeplot]) !== nothing
 	(flat && docube) && (flat = false)
 
 	if (!docube && (flat || (opt_p == "" && !have_tilles)))
@@ -232,15 +239,16 @@ end
 
 # Simple method to show CPTs. (May grow)
 # Ex: imshow(C, xlabel="Bla", ylabel="Blu"), or imshow(:gray)
-imshow(arg1::Symbol; horizontal::Bool=false, kw...) = imshow(makecpt(arg1); horizontal=horizontal, kw...) 
+imshow(arg1::Symbol; horizontal::Bool=false, kw...) = imshow(makecpt(arg1); horizontal=horizontal, kw...)
 function imshow(arg1::GMTcpt; horizontal::Bool=false, kw...)
-	see::Bool = (!haskey(kw, :show)) ? true : kw[:show]		# No explicit 'show' keyword means show=true
-	horizontal ? psscale(arg1; D="x8c/1c+w12c/0.5c+jTC+h", show=see, kw...) : psscale(arg1; J="X15/0", D="x8c/1c+w12c/0.5c+jBC", show=see, kw...)
+	d = KW(kw)
+	see::Bool = (!haskey(d, :show)) ? true : (d[:show] != 0)
+	horizontal ? psscale(arg1; D="x8c/1c+w12c/0.5c+jTC+h", show=see, d...) : psscale(arg1; J="X15/0", D="x8c/1c+w12c/0.5c+jBC", show=see, d...)
 end
 
 function imshow(arg1::Gdal.AbstractDataset; kw...)
 	(Gdal.GDALGetRasterCount(arg1.ptr) == 0) && return plot(gd2gmt(arg1), show=1)
-	imshow(gd2gmt(arg1); kw...)
+	_imshow_GI(gd2gmt(arg1), KW(kw))
 end
 
 imshow(x::AbstractVector{Float64}, y::AbstractVector{Float64}, f::Function; kw...) = imshow(mat2grid(f, x, y); kw...)

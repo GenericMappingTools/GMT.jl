@@ -54,7 +54,7 @@ gmtspatial(arg1, arg2; kw...) = gmtspatial_helper("", arg1, arg2; kw...)
 
 # ---------------------------------------------------------------------------------------------------
 function gmtspatial_helper(cmd0::String, arg1, arg2; kw...)
-	(cmd0 == "" && arg1 === nothing && arg2 === nothing && length(kwargs) == 0) && return gmt("gmtspatial")
+	(cmd0 == "" && arg1 === nothing && arg2 === nothing && length(kw) == 0) && return gmt("gmtspatial")
 	d = init_module(false, kw...)[1]			# Also checks if the user wants ONLY the HELP mode
 	isa(arg1, Matrix) && (arg1 = mat2ds(arg1))
 	invokelatest(_gmtspatial_helper, cmd0, arg1, arg2, d)

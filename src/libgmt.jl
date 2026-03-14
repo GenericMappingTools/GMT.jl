@@ -442,8 +442,7 @@ function gmt_centroid_area(API::Ptr{Cvoid}, D, geo::Int=0; ca::Int=3)::Matrix{Fl
 		end
 	else
 		ref1, ref2, nr = pointercols(D)
-		t = gmt_centroid_area(API, ref1, ref2, geo, nr)[inds]
-		mat = bla(mat, t, ca, 1)
+		t = gmt_centroid_area(API, ref1, ref2, geo, nr)
 		if (ca == 3) mat[1], mat[2], mat[3] = t[1], t[2], t[3] elseif (ca == 2) mat[1], mat[2] = t[1], t[2] else mat[1] = t[3] end
 	end
 	return mat

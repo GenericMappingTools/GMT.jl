@@ -1353,7 +1353,7 @@ function radar_helper(cmd0::String, arg1; first::Bool=true, axeslimts=Float64[],
 	(cmd0 != "") && (arg1 = read_data(d, cmd0, "", arg1, " ", false, true)[2])	# Make sure we have the data here
 	if (isa(arg1, GMTdataset))                data::Matrix{Float64} = arg1.data
 	elseif (isa(arg1, Vector{<:GMTdataset}))  data = ds2ds(arg1).data
-	elseif (isa(arg1, Vector{<:Real}))        data = reshape(arg, 1, length(arg1))
+	elseif (isa(arg1, Vector{<:Real}))        data = reshape(arg1, 1, length(arg1))
 	else                                      data = arg1
 	end
 
@@ -2032,7 +2032,7 @@ function piechart(x::VecOrMat; first::Bool=true, kw...)
 	do_explode = false
 	non_exploded = ones(Bool, length(X))		# Default to no explosion
 	if ((val = find_in_dict(d, [:explode])[1]) !== nothing)
-		explode::Vector{Int} = isa(val, Bool) ? find(val) : [(val)...]
+		explode::Vector{Int} = isa(val, Bool) ? findall(val) : [(val)...]
 		maximum(explode) > length(X) && error("The explode option must be a vector of Ints with no values larger than the size of data")
 		data_explode = data[explode, :]			# Get the exploded data
 		non_exploded[explode] .= false

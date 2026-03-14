@@ -698,7 +698,7 @@ function _print_table_with_text_back_end(
 
 	# Get size information from the processed table.
 	num_rows, num_columns = _data_size(ptable)
-	num_header_rows, ~ = _header_size(ptable)
+	num_header_rows, _ = _header_size(ptable)
 
 	# == Input Variables Verification and Initial Setup ====================================
 
@@ -2526,7 +2526,7 @@ function _print_custom_text_cell!(display::Display, cell_data::CustomTextCell, c
 	_p!(display, " ", false, 1)
 
 	# Compute the new string given the display size.
-	str, suffix, ~ = _fit_string_in_display(display, cell_processed_str, false, cell_printable_textwidth)
+	str, suffix, _ = _fit_string_in_display(display, cell_processed_str, false, cell_printable_textwidth)
 
 	new_lstr = textwidth(str)
 
