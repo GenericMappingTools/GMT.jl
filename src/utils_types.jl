@@ -1948,7 +1948,7 @@ function stackgrids(names::Vector{String}, v=nothing; zcoord=nothing, zdim_name:
 			v = Dates.datetime2unix.(v);			z_unit = "Seconds since 1970-01-01T00:00:00"
 		elseif (_z_unit == "rata")
 			v = Dates.datetime2rata.(v);			z_unit = "Days since 0000-12-31T00:00:00"
-		elseif (_z_unit == "date" || _zunit == "datetime")			# Crashes Mirone
+		elseif (_z_unit == "date" || _z_unit == "datetime")			# Crashes Mirone
 			v = string.(v);							z_unit = "ISO Date Time"
 		end
 	end

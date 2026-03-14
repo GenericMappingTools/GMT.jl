@@ -82,11 +82,11 @@ end
 function laszip_add_vlr(pointer::Ptr{Cvoid}, vlr::Ptr{laszip_vlr})
     ccall((:laszip_add_vlr, laszip), Cint, (Ptr{Cvoid}, Ptr{laszip_vlr}), pointer, vlr)
 end
+=#
 
 function laszip_seek_point(pointer::Ptr{Cvoid}, index::Clonglong)
     ccall((:laszip_seek_point, laszip), Cint, (Ptr{Cvoid}, Clonglong), pointer, index)
 end
-=#
 
 function laszip_open_writer(pointer::Ptr{Cvoid}, fname, compress::Int)
     ccall((:laszip_open_writer, laszip), Cint, (Ptr{Cvoid}, Ptr{UInt8}, Cint), pointer, fname, compress)

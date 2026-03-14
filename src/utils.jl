@@ -1277,7 +1277,7 @@ end
 Return the width and height of the grid or image from the file `fname`.
 """
 function getsize(fname::String)
-	!isfile(fname) && error("File $GI does not exist")
+	!isfile(fname) && error("File $fname does not exist")
 	ds = Gdal.read(fname)
 	return Gdal.width(ds), Gdal.height(ds)
 end
@@ -1806,3 +1806,4 @@ end
 # ---------------------------------------------------------------------------------------------------
 include("makeDCWs.jl")
 include("getdcw.jl")
+#include("tttAPI.jl")

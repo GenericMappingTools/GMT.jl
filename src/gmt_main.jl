@@ -614,7 +614,7 @@ function get_PS(API::Ptr{Nothing}, object::Ptr{Nothing})::GMTps
 end
 
 # ---------------------------------------------------------------------------------------------------
-function get_dataset(API::Ptr{Nothing}, object::Ptr{Nothing})::GDtype
+function get_dataset(object::Ptr{Nothing})::GDtype
 # Given a GMT DATASET D, build an array of segment structure and assign values.
 # Each segment will have 6 items:
 # header:	Text string with the segment header (could be empty)
@@ -799,7 +799,7 @@ function GMTJL_Get_Object(API::Ptr{Nothing}, X::GMT_RESOURCE)
 	elseif (X.family == GMT_IS_CUBE)       	# A GMT cube; make it the pos'th output item
 		ptr = get_grid(API, X.object, true)
 	elseif (X.family == GMT_IS_DATASET)		# A GMT table; make it a matrix and the pos'th output item
-		ptr = get_dataset(API, X.object)
+		ptr = get_dataset(X.object)
 	elseif (X.family == GMT_IS_PALETTE)		# A GMT CPT; make it a colormap and the pos'th output item
 		ptr = get_palette(API, X.object)
 	elseif (X.family == GMT_IS_IMAGE)		# A GMT Image; make it the pos'th output item

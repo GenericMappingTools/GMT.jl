@@ -45,8 +45,8 @@ function _common_plot_xyz(w::wrapDatasets, caller::String, O::Bool, K::Bool, is3
 
 	parse_paper(d)				# See if user asked to temporarily pass into paper mode coordinates
 
+	opt_B::String, opt_R::String = "", ""
 	if (is_ternary)
-		opt_B::String = ""
 		if (haskey(d, :B))								# Not necessarely the case when ternary!
 			cmd, opt_B = string(cmd, d[:B]), d[:B]		# B option was parsed in plot/ternary
 			delete!(d, :B)

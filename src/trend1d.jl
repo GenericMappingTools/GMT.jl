@@ -77,7 +77,7 @@ function trend1d(cmd0::String, arg1, d::Dict{Symbol, Any})
 
 	if (opt_F != "")		# Extract column names from opt_F
 		if (opt_F[1] == 'p' || opt_F[1] == 'P' || opt_F[1] == 'c')
-			colnames = ["a$i" for i=0:size(D,2)-1]
+			colnames = ["a$i" for i=0:size(arg1, 2)-1]
 		else
 			cnames = (isa(arg1, GDtype)) ? (isa(arg1, GMTdataset) ? arg1.colnames : arg1[1].colnames) : String[]
 			s = collect(opt_F)

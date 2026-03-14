@@ -180,6 +180,5 @@ function seek_custom_symb(marca::AbstractString, with_k::Bool=false)::String
 
 	_siz  = split(marca, '/')[2]			# The custom symbol size
 	_marca = (with_k ? "k" : "")  * fullname * "/" * _siz
-	(GMTver <= v"6.4" && (length(_marca) - length(_siz) -2) > 62) && warn("Due to a GMT <= 6.4 limitation the length of full (name+path) custom symbol name cannot be longer than 62 bytes.")
 	return _marca
 end

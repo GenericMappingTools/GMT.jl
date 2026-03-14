@@ -91,7 +91,7 @@ function gmtread(fname::String; kwargs...)
 end
 function gmtread(fname::String, d::Dict{Symbol, Any})
 
-	endswith(fname, ".xlsx") && return read_xls(_fname; kwargs...)		# Excel extension
+	endswith(fname, ".xlsx") && return read_xls(fname; d...)		# Excel extension
 
 	#fname::String = _fname					# Because args signatures seam to worth shit in body.
 	#d = init_module(false, kwargs...)[1]	# Also checks if the user wants ONLY the HELP mode
