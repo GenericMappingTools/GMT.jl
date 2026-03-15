@@ -49,7 +49,7 @@ function _montage_adjust_margins!(d::Dict, titles, colorbar, cbar, margins::Stri
 end
 
 """Compute panels_size string from images or explicit value. Returns the string to use."""
-function _montage_panels_size!(d::Dict, images, panels_size::String, ncols::Int)::String
+function _montage_panels_size!(images, panels_size::String, ncols::Int)::String
 	if panels_size == ""
 		_imgs = isa(images, AbstractVector) ? images : [images]
 		widths, heights = subplot_panel_sizes(_imgs, ncols=ncols)
@@ -125,7 +125,7 @@ function _montage_images(images, d::Dict)
 
 	# Build panels_size string
 	if ps_val == "" || ps_val === nothing
-		ps_str = _montage_panels_size!(d, images, "", ncols)
+		ps_str = _montage_panels_size!(images, "", ncols)
 	elseif isa(ps_val, Tuple)
 		ps_str = string(ps_val[1], "/", ps_val[2])
 	else

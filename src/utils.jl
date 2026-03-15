@@ -208,7 +208,7 @@ Like `sortslices` but return instead the indices `p` such that `A[p, :] == sorts
 function sortslicesperm(A::AbstractArray; dims::Union{Integer, Tuple{Vararg{Integer}}}=1, kws...)
     itspace = compute_itspace(A, Val{dims}())
     vecs = map(its->view(A, its...), itspace)
-    p = sortperm(vecs; kws...)
+    sortperm(vecs; kws...)
 end
 
 # Works around inference's lack of ability to recognize partial constness
@@ -1063,7 +1063,7 @@ function polyfit(x, y, n::Int=length(x)-1; xscale=1)
 	# Construct the Vandermonde matrix V = [1 x ... x.^n]
 	V = fill(1.0, length(x), n+1)
 	[V[:,k+1] .= V[:,k] .* (x * xscale) for k = 1:n]
-	p = V \ vec(y)
+	V \ vec(y)
 end
 
 # ---------------------------------------------------------------------------------------------------

@@ -1,5 +1,5 @@
 """
-    logo(cmd0::String=""; kwargs...)
+    logo(; kwargs...)
 
 Plots the GMT logo on a map. By default, the GMT logo is 5 cm wide and 2.5 cm high and will be
 positioned relative to the current plot origin. Use various options to change this and to place
@@ -34,12 +34,12 @@ Parameters
 
 - Example, make a GMT Julia logo with circles of 1 cm: logo(GMTjulia=1, show=true)
 """
-logo!(cmd0::String=""; first=false, kw...) = logo(cmd0; first=first, kw...)
-function logo(cmd0::String=""; first=true, kw...)
+logo!(; first=false, kw...) = logo(; first=first, kw...)
+function logo(; first=true, kw...)
 	d, K, O = init_module(first, kw...)		# Also checks if the user wants ONLY the HELP mode
-	logo(cmd0, O, K, d)
+	logo(O, K, d)
 end
-function logo(cmd0::String, O::Bool, K::Bool, d::Dict{Symbol, Any})
+function logo(O::Bool, K::Bool, d::Dict{Symbol, Any})
 
 	cmd, = parse_R(d, "", O=O)
 	cmd, = parse_J(d, cmd, default=" -Jx1", map=true, O=O)

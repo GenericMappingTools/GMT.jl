@@ -165,11 +165,12 @@ function jl_sc_2_shell_sc(name, name2::String)
 	else
 		name()			# Run the function, which must be defined ...
 	end
-	fname = write_script(name2)
+	write_script(name2)
 end
 
 # -----------------------------------------------------------------------------------------------
 function write_script(fname)
+	global cmds_history
 	if (cmds_history[1] != "")
 		if (Sys.iswindows())  fname *= ".bat";	b = "%";	e = "%"
 		else                  fname *= ".sh";	b = "\${";	e = "}"

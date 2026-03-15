@@ -26,10 +26,10 @@ julia> imshow(G, shade="+a45", contour=true)
 julia> imshow(rand(128,128))
 
 # Display a web downloaded jpeg image wrapped into a sinusoidal projection
-julia> imshow(gmtread()"http://larryfire.files.wordpress.com/2009/07/untooned_jessicarabbit.jpg"), region=:global, frame="g", proj=:sinu)
+julia> imshow(gmtread("http://larryfire.files.wordpress.com/2009/07/untooned_jessicarabbit.jpg"), region=:global, frame="g", proj=:sinu)
 
 # Plot images in the walls of the cube for the 3D view cases. Replace file names with those that exist for you.
-julia> viz(G, zsize=6, facades=(TESTSDIR*"assets/cenora_base.jpg", TESTSDIR*"bunny_cenora.webp", TESTSDIR*"burro_cenora.webp"))
+julia> viz(G, zsize=6, facades=(tests("cenora_base.jpg"), tests("bunny_cenora.webp"), tests("burro_cenora.webp")))
 ```
 See also: [`grdimage`](@ref), [`grdview`](@ref)
 """
@@ -127,15 +127,15 @@ end
 # - `T, no_interp, tiles`: -T option for grdview
 # - `facades, cubeplot`: Call cubeplot.
 function imshow(arg1::GItype; kw...)
-	_imshow_GI(arg1, KW(kw))
+	d = KW(kw)
+	see::Bool = (!haskey(d, :show)) ? true : (d[:show] != 0)	# No explicit 'show' keyword means show=true
+	d[:show] = see
+	(isa(arg1, GMTimage) && (size(arg1, 3) <= 3 || arg1.layout[4] == 'A')) &&	# Rest of the work is done in grdimage
+		return grdimage_helper(wrapGrids("", arg1), nothing, nothing, true, false, d)
+	_imshow_GI(arg1, d)
 end
 function _imshow_GI(arg1::GItype, d::Dict{Symbol,Any})
 	see::Bool = (!haskey(d, :show)) ? true : (d[:show] != 0)	# No explicit 'show' keyword means show=true
-
-	if (isa(arg1, GMTimage) && (size(arg1, 3) <= 3 || arg1.layout[4] == 'A'))	# Rest of the work is done in grdimage
-		d[:show] = see
-		return grdimage_helper(wrapGrids("", arg1), nothing, nothing, true, false, d)
-	end
 
 	if ((cont_opts = find_in_dict(d, [:contour])[1]) !== nothing)
 		new_see = see
@@ -212,7 +212,9 @@ function _imshow_GI(arg1::GItype, d::Dict{Symbol,Any})
 			subplot(see ? :show : :end)
 			R = nothing
 		else
-			R = grdimage("", arg1; show=see, d...)
+			d[:show] = see
+			R = grdimage_helper(wrapGrids("", arg1), nothing, nothing, true, false, d)
+			#R = grdimage("", arg1; show=see, d...)
 		end
 	else
 		zsize = ((val = find_in_dict(d, [:JZ :Jz :zscale :zsize])[1]) !== nothing) ? val : 8

@@ -601,7 +601,7 @@ function seek_wkt_in_gdalinfo(info::String)
 	# expose them with gdalinfo.
 	((ind = findfirst("SRS=GEO", info)) === nothing) && return ""
 	ind2 = findfirst('\n', view(info, ind[5]:length(info)))		# Find next EOL
-	proj4 = toPROJ4(importWKT(info[ind[5] : ind[5]+ind2[1]-2]))
+	toPROJ4(importWKT(info[ind[5] : ind[5]+ind2[1]-2]))
 end
 
 # ---------------------------------------------------------------------------------------------------

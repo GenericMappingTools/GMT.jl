@@ -123,7 +123,6 @@ function histogram_helper(cmd0::String, arg1, O::Bool, K::Bool, d::Dict{Symbol,A
 	cmd = add_opt_fill(cmd, d, [:G :fill], "G")
 	cmd = add_opt(d, cmd, "D", [:D :annot :annotate :counts], (beneath = "_+b", font = "+f", offset = "+o", vertical = "_+r"))
 	cmd = parse_INW_coast(d, [[:N :distribution :normal]], cmd, "N")
-	(SHOW_KWARGS[]) && print_kwarg_opts(symbs, "NamedTuple | Tuple | Dict | String")
 
 	cmd = add_opt(d, cmd, "E", [:E :width], (width = "", off = "+o", offset = "+o"))
 	
