@@ -157,7 +157,7 @@ function seek_custom_symb(marca::AbstractString, with_k::Bool=false)::String
 	(with_k && marca[1] != 'k') && return marca		# Not a custom symbol, return what we got.
 
 	function find_this_file(pato, symbname)
-		for (root, dirs, files) in walkdir(pato)
+		for (root, _, files) in walkdir(pato)
 			ind = findfirst(startswith.(files, symbname))
 			if (ind !== nothing)  return joinpath(root, files[ind])  end
 		end

@@ -49,7 +49,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function grdlandmask_helper(w::wrapGrids, d::Dict{Symbol, Any})
-	cmd0, arg1 = unwrapGrids(w)
+	_, arg1 = unwrapGrids(w)
 
     cmd::String, prj::String = "", ""
 	if (arg1 !== nothing)

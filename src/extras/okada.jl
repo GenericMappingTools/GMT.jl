@@ -391,9 +391,9 @@ chinnery(f::Function, x, p, L, W, q, sin_dip, cos_dip, nu) =
 #---------------------------------------------------------------------------------------------------
 # Displacements
 function okd_ux(U1, U2, U3, x, p, q, L, W, sin_dip, cos_dip, nu)
-	ux = (-U1 * chinnery(ux_ss,x,p,L,W,q,sin_dip, cos_dip,nu)		# strike-slip
-	      -U2 * chinnery(ux_ds,x,p,L,W,q,sin_dip, cos_dip,nu)		# dip-slip
-	      +U3 * chinnery(ux_tf,x,p,L,W,q,sin_dip, cos_dip,nu))		# tensile fault
+	(-U1 * chinnery(ux_ss,x,p,L,W,q,sin_dip, cos_dip,nu)		# strike-slip
+	 -U2 * chinnery(ux_ds,x,p,L,W,q,sin_dip, cos_dip,nu)		# dip-slip
+	 +U3 * chinnery(ux_tf,x,p,L,W,q,sin_dip, cos_dip,nu))		# tensile fault
 end
 function okd_ux(U1, U2, x, p, q, L, W, sin_dip, cos_dip, nu)
 	(-U1 * chinnery(ux_ss,x,p,L,W,q,sin_dip, cos_dip,nu)			# strike-slip
@@ -401,9 +401,9 @@ function okd_ux(U1, U2, x, p, q, L, W, sin_dip, cos_dip, nu)
 end
 
 function okd_uy(U1, U2, U3, x, p, q, L, W, sin_dip, cos_dip, nu)
-	uy = (-U1 * chinnery(uy_ss,x,p,L,W,q,sin_dip, cos_dip,nu)		# strike-slip
-	      -U2 * chinnery(uy_ds,x,p,L,W,q,sin_dip, cos_dip,nu)		# dip-slip
-	      +U3 * chinnery(uy_tf,x,p,L,W,q,sin_dip, cos_dip,nu))		# tensile fault
+	(-U1 * chinnery(uy_ss,x,p,L,W,q,sin_dip, cos_dip,nu)		# strike-slip
+	 -U2 * chinnery(uy_ds,x,p,L,W,q,sin_dip, cos_dip,nu)		# dip-slip
+	 +U3 * chinnery(uy_tf,x,p,L,W,q,sin_dip, cos_dip,nu))		# tensile fault
 end
 function okd_uy(U1, U2, x, p, q, L, W, sin_dip, cos_dip, nu)
 	(-U1 * chinnery(uy_ss,x,p,L,W,q,sin_dip, cos_dip,nu)			# strike-slip
@@ -411,15 +411,14 @@ function okd_uy(U1, U2, x, p, q, L, W, sin_dip, cos_dip, nu)
 end
 
 function okd_uz(U1, U2, U3, x, p, q, L, W, sin_dip, cos_dip, nu)
-	uz = (-U1 * chinnery(uz_ss,x,p,L,W,q,sin_dip, cos_dip,nu)		# strike-slip
-	      -U2 * chinnery(uz_ds,x,p,L,W,q,sin_dip, cos_dip,nu)		# dip-slip
-	      +U3 * chinnery(uz_tf,x,p,L,W,q,sin_dip, cos_dip,nu))		# tensile fault
+	(-U1 * chinnery(uz_ss,x,p,L,W,q,sin_dip, cos_dip,nu)		# strike-slip
+	 -U2 * chinnery(uz_ds,x,p,L,W,q,sin_dip, cos_dip,nu)		# dip-slip
+	 +U3 * chinnery(uz_tf,x,p,L,W,q,sin_dip, cos_dip,nu))		# tensile fault
 end
 function okd_uz(U1, U2, x, p, q, L, W, sin_dip, cos_dip, nu)
 	(-U1 * chinnery(uz_ss,x,p,L,W,q,sin_dip, cos_dip,nu)			# strike-slip
 	 -U2 * chinnery(uz_ds,x,p,L,W,q,sin_dip, cos_dip,nu))			# dip-slip
 end
-
 
 #= ---------------------------------------------------------------------------------------------------
 # Tilt

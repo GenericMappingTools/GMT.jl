@@ -61,7 +61,7 @@ function segyz_helper(cmd0::String, O::Bool, K::Bool, d::Dict{Symbol, Any})
 	cmd = ((IamModern[]) ? "segyz "  : "pssegyz ") * cmd0
 	cmd = parse_BJR(d, "", "", O, "")[1]
 	cmd = parse_common_opts(d, cmd, [:V_params :UVXY :p :t :params], first=!O)[1]
-	cmd, opt_JZ = parse_JZ(d, cmd, O=O, is3D=true)
+	cmd = parse_JZ(d, cmd, O=O, is3D=true)[1]
 	cmd = segy_common(d, cmd)
 
 	# -S trace location header (segyz: header_x/header_y)

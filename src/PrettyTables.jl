@@ -1388,7 +1388,7 @@ function _text_fill_string_matrix!(
 	vcrop_mode::Symbol
 )
 	num_rows, ~ = _size(ptable)
-	num_header_rows, ~ = _header_size(ptable)
+	num_header_rows, _ = _header_size(ptable)
 	num_rendered_rows, num_rendered_columns = size(table_str)
 
 	# This variable stores the predicted table width. If the user wants horizontal cropping,
@@ -1826,7 +1826,7 @@ end
 
 # Compute the number of omitted columns.
 function _compute_omitted_columns(ptable::ProcessedTable, display::Display, columns_width::Vector{Int}, vlines::Union{Symbol, Vector{Int}},)
-	~, num_columns         = _size(ptable)
+	_, num_columns         = _size(ptable)
 	num_additional_columns = _num_additional_columns(ptable)
 	num_rendered_columns   = length(columns_width)
 
@@ -1871,7 +1871,7 @@ end
 # Compute the number of omitted rows.
 function _compute_omitted_rows(ptable::ProcessedTable, display::Display, continuation_row_line::Int, num_lines_in_row::Vector{Int},
 	body_hlines::Vector{Int}, hlines::Union{Symbol, Vector{Int}}, need_omitted_cell_summary::Bool, Δdisplay_lines::Int)
-	num_rows, ~       = _size(ptable)
+	num_rows, _       = _size(ptable)
 	num_header_rows   = _header_size(ptable)[1]
 	num_rendered_rows = length(num_lines_in_row)
 
@@ -2491,7 +2491,8 @@ function _text_print_table!(display::Display, ptable::ProcessedTable, table_str:
 							_p!(display, " " * cell_processed_str * " ", false, actual_columns_width[j] + 2) && break
 						else
 							# If we have a custom cell, we need a custom printing function.
-							_print_custom_text_cell!(display, cell_data, cell_processed_str, l, highlighters) && break
+							#_print_custom_text_cell!(display, cell_data, cell_processed_str, l, highlighters) && break
+							@warn "CustomTextCell is not supported in the current version of Custom PrettyTables.jl."
 						end
 					end
 				end
@@ -2518,8 +2519,9 @@ end
 # Print the custom rext cell to the display.
 #
 # NOTE: `cell_str` must contain the printable text cell always.
+#=
 function _print_custom_text_cell!(display::Display, cell_data::CustomTextCell, cell_processed_str::String,
-	l::Int, @nospecialize(highlighters::Ref{Any}),)
+                                  l::Int, @nospecialize(highlighters::Ref{Any}),)
 	cell_printable_textwidth = printable_textwidth(cell_processed_str)
 
 	# Print the padding character before the cell.
@@ -2544,6 +2546,7 @@ function _print_custom_text_cell!(display::Display, cell_data::CustomTextCell, c
 	# Print the padding character after the cell and return if the display has reached end-of-line.
 	return _p!(display, " ", false, 1)
 end
+=#
 
 # Print the summary of the omitted rows and columns.
 function _print_omitted_cell_summary(display::Display, num_omitted_cols::Int, num_omitted_rows::Int,

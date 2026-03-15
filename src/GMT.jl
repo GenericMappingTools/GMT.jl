@@ -408,6 +408,7 @@ using .Laszip
 	grd2xyz(Glix)
 	viz(Glix, show=false)
 	viz(I, show=false)
+	viz(rand(UInt8, 16, 16), show=false)
 	histogram(randn(100), T=0.1, center=true, Z=:counts)
 	histogram(I)
 	grdlandmask(R="-10/4/37/45", res=:c, inc=0.1)

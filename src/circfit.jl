@@ -55,7 +55,7 @@ function  circfit_tau(X, Y)
 	Zmean = mean(Z)
 	Z0 = (Z .- Zmean) / (2*sqrt(Zmean))
 	ZXY = [Z0 X Y]
-	U,S,V = svd(ZXY)
+	_, _, V = svd(ZXY)		# U,S,V = svd(ZXY)
 	A = V[:,3]
 	A[1] = A[1]/(2*sqrt(Zmean))
 	A = [A; -Zmean*A[1]]

@@ -89,7 +89,7 @@ function gadm(country, subregions...; children::Bool=false, names::Bool=false, c
 		error("Asked data for a level ($(plevel+1)) that is lower than lowest data level ($(_nlayers))")
 	end
 
-	function _get_attrib(feature)
+	function _get_attrib(feature)		# Core.boxed
 		n = Gdal.nfield(feature)
 		attrib = DictSvS()
 		[attrib[Gdal.getname(Gdal.getfielddefn(feature, i))] = string(Gdal.getfield(feature, i)) for i = 0:n-1]

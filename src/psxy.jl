@@ -563,7 +563,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function check_ribbon(d::Dict{Symbol, Any}, arg1::GMTdataset, cmd::String, opt_W::String)
 	((val = find_in_dict(d, [:ribbon :band])[1]) === nothing) && return arg1, cmd
-	ec1, ec2, add_2 = helper_check_ribbon(val)		# Function barrier agains Anys
+	ec1, ec2, add_2 = helper_check_ribbon(val, size(arg1,1)::Int)		# Function barrier agains Anys
 	(add_2) ? add2ds!(arg1, ec2; names=["Zbnd1","Zbnd2"]) : add2ds!(arg1, ec1; name="Zbnd")
 	d[:L] = (add_2) ? "+D" : "+d"
 	(!occursin(cmd, "-W") && opt_W == "") && (cmd *= " -W0.5p")		# Do not leave without a line specification
@@ -572,7 +572,7 @@ end
 
 function check_ribbon(d::Dict{Symbol, Any}, arg1::Vector{<:GMTdataset}, cmd::String, opt_W::String)
 	((val = find_in_dict(d, [:ribbon :band])[1]) === nothing) && return arg1, cmd
-	ec1, ec2, add_2 = helper_check_ribbon(val)		# Function barrier agains Anys
+	ec1, ec2, add_2 = helper_check_ribbon(val, size(arg1[1],1)::Int)		# Function barrier agains Anys
 	if (add_2)
 		for k = 1:numel(arg1)  add2ds!(arg1[k], ec2; names=["Zbnd1","Zbnd2"])  end
 	else
@@ -583,15 +583,15 @@ function check_ribbon(d::Dict{Symbol, Any}, arg1::Vector{<:GMTdataset}, cmd::Str
 	return arg1, cmd
 end
 
-function helper_check_ribbon(val)::Tuple{Vector{Float64}, Matrix{Float64}, Bool}
+function helper_check_ribbon(val, nc::Int)::Tuple{Vector{Float64}, Matrix{Float64}, Bool}
 	# Isolate here the fact that 'val' is a Any
 	add_2 = true
 	ec1, ec2 = Float64[], Matrix{Float64}[]
 	if isa(val, Real)
-		ec1 = repeat([float(val)::Float64], size(arg1,1)::Int)
+		ec1 = repeat([float(val)::Float64], nc)
 		add_2 = false
 	elseif (isa(val, VecOrMat{<:Real}) || isa(val, Tuple{<:Real, <:Real}))
-		(length(val)::Int == 2) ? (ec2 = repeat([float(val[1])::Float64 float(val[2])::Float64], size(arg1,1)::Int)) :
+		(length(val)::Int == 2) ? (ec2 = repeat([float(val[1])::Float64 float(val[2])::Float64], nc)) :
 		                           ec2 = [Float64.(vec(val)) Float64.(vec(val))]
 	elseif isa(val, Tuple{Vector{<:Real}, Vector{<:Real}})
 		ec2 = [Float64.(val[1]) Float64.(val[2])]
@@ -898,7 +898,7 @@ function parse_opt_S(d::Dict, @nospecialize(arg1), is3D::Bool=false)
 			_arg[_arg .< mi_val] .= mi_sz
 			_arg[_arg .> ma_val] .= ma_sz
 		end
-		((sc_local = _scale(isInt)) != 1.0) && (_arg .*= sc_local)
+		isInt && (_arg .*= 2.54/72)
 	end
 
 	if (opt_S == "" || (have_custom && custom_no_size))		# OK, no symbol given via the -S option. So fish in aliases
