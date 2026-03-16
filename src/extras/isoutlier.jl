@@ -11,11 +11,11 @@ But that can be changed via the `critic` option.
    a value is considered an outlier if it is more than 3 MAD from the median (when `method` is `:median`),
    or more than 3 standard deviations (when `method` is `:mean`).
 - `method`: The method used to calculate the threshold for outliers. It can be one of the following:
-  - `:median`: Uses the median absolute deviation (MAD) method. Outliers are defined as elements more than
+  - `median`: Uses the median absolute deviation (MAD) method. Outliers are defined as elements more than
    `critic` MAD from the median.
-  - `:mean`: Uses the mean and standard deviation method. Outliers are defined as elements more than `critic`
+  - `mean`: Uses the mean and standard deviation method. Outliers are defined as elements more than `critic`
    standard deviations from the mean. This method is faster but less robust than "median".
-  - `:quartiles`: Uses the interquartile range (IQR) method. Outliers are defined as elements more than 1.5
+  - `quartiles`: Uses the interquartile range (IQR) method. Outliers are defined as elements more than 1.5
    interquartile ranges above the upper quartile (75 percent) or below the lower quartile (25 percent).
    This method is useful when the data in `x` is not normally distributed.
 - `threshold`: Is an alternative to the `method` option. It specifies the percentile thresholds, given as a

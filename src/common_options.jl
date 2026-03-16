@@ -930,6 +930,7 @@ function guess_proj(lonlim::VecOrMat{Float64}, latlim::VecOrMat{Float64})::Strin
 	else
 		proj = string(" -JJ", mean_x(lonlim))							# Miller
 	end
+	return proj
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -1013,9 +1014,8 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 			elseif (_val == "full")
 				return cmd * " -Baf -BWSEN", " -Baf -BWSEN"
 			elseif (startswith(_val, "auto"))
-				is3D = false
-				if     (occursin("XYZg", _val)) _val = " -Bafg -Bzafg -B+" * "w";  is3D = true
-				elseif (occursin("XYZ", _val))  _val = DEF_FIG_AXES3[];		is3D = true
+				if     (occursin("XYZg", _val)) _val = " -Bafg -Bzafg -B+" * "w";
+				elseif (occursin("XYZ", _val))  _val = DEF_FIG_AXES3[];
 				elseif (occursin("XYg", _val))  _val = " -Bafg -BWSen"
 				elseif (occursin("XY", _val))   _val = DEF_FIG_AXES[]
 				elseif (occursin("Xg", _val))   _val = " -Bafg -BwSen"

@@ -129,10 +129,10 @@
 	logo(GMTjulia=2, savefig="logo.PNG")
 	logo(GMTjulia=2, fmt=:PNG)
 	logo!(julia=8, Vd=dbg2)
-	logo!("", julia=8, Vd=dbg2)
+	logo!(julia=8, Vd=dbg2)
 	@test startswith(logo(pos=(anchor=(0,0),justify=:CM, offset=(1.5,0)), Vd=dbg2), "gmtlogo  -Jx1 -Dg0/0+jCM+o1.5/0")
 	logo!(julia=8, Vd=dbg2)
-	logo!("", julia=8, Vd=dbg2)
+	logo!(julia=8, Vd=dbg2)
 
 	println("	GMTSPATIAL")
 	# GMTSPATIAL

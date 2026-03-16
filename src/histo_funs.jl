@@ -141,7 +141,7 @@ function binmethod(d::Dict, cmd::String, X, is_datetime::Bool)
 
 	n_bins = 0.0;	bin = 0
 	if     (val == "scott")   n_bins = 3.5 .* std(X) .* length(X)^(-1/3)
-	elseif (val == "fd")      n_bins = 2 .* IQR(X) .* length(X)^(-1/3)
+	elseif (val == "fd")      n_bins = 2 .* diff(quantile(X, [0.25, 0.75])) .* length(X)^(-1/3)
 	elseif (val == "sturges") n_bins = ceil.(1 .+ log2.(length(X)))
 	elseif (val == "sqrt")    n_bins = ceil.(sqrt(length(X)))
 	elseif (val == "year")    bin = 86400 * 365.25

@@ -635,7 +635,7 @@ function gmtwrite(fname::AbstractString, data, d::Dict{Symbol, Any})
 			opt_T = " -Ti"
 		end
 	elseif (isa(data, AbstractArray))
-		(endswith(fname, ".laz") || endswith(fname, ".LAZ")) && return dat2las(fname, data; d...)		# Lasz
+		(endswith(fname, ".laz") || endswith(fname, ".LAZ")) && return lazwrite(fname, data; d...)		# Lasz
 		fmt = parse_grd_format(d)				# See if we have format requests
 		if (fmt == "")							# If no format, write a dataset
 			opt_T = " -Td"

@@ -610,7 +610,7 @@ function get_PS(object::Ptr{Nothing})::GMTps
 
 	P::GMT_POSTSCRIPT = unsafe_load(convert(Ptr{GMT_POSTSCRIPT}, object))
 	P.data == C_NULL && return GMTps()		# A bug in pstext.c causes coming here when pstext -L is used
-	out = GMTps(unsafe_string(P.data), Int(P.n_bytes), Int(P.mode), String[])	# NEED TO FILL THE COMMENT
+	GMTps(unsafe_string(P.data), Int(P.n_bytes), Int(P.mode), String[])	# NEED TO FILL THE COMMENT
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -666,7 +666,7 @@ function get_dataset(object::Ptr{Nothing})::GDtype
 			DS = unsafe_load(S[seg])						# GMT_DATASEGMENT
 			(DS.n_rows <= min_pts) && continue 				# Skip empty/small segments
 
-			C = unsafe_wrap(Array, DS.data, DS.n_columns)	# DS.data = Ptr{Ptr{Float64}}; C = Array{Ptr{Float64},1}
+			#C = unsafe_wrap(Array, DS.data, DS.n_columns)	# DS.data = Ptr{Ptr{Float64}}; C = Array{Ptr{Float64},1}
 			dest::Matrix{Float64} = zeros(Float64, DS.n_rows, DS.n_columns + plusZzero)
 			for col = 1:DS.n_columns						# Copy the data columns
 				unsafe_copyto!(pointer(dest, DS.n_rows * (col - 1) + 1), unsafe_load(DS.data, col), DS.n_rows)
@@ -1356,8 +1356,6 @@ end
 # ---------------------------------------------------------------------------------------------------
 function ps_init(API::Ptr{Nothing}, ps, dir::Integer)::Ptr{GMT_POSTSCRIPT}
 # Used to Create an empty POSTSCRIPT container to hold a GMT POSTSCRIPT object.
-# If direction is GMT_IN then we are given a Julia structure with known sizes.
-# If direction is GMT_OUT then we allocate an empty GMT POSTSCRIPT as a destination.
 	if (dir == GMT_OUT)
 		return convert(Ptr{GMT_POSTSCRIPT}, GMT_Create_Data(API, GMT_IS_POSTSCRIPT, GMT_IS_NONE, GMT_IS_OUTPUT, NULL, NULL, NULL, 0, 0, NULL))
 	end
@@ -1469,7 +1467,7 @@ end
 # ---------------------------------------------------------------------------------------------------
 function strncmp(str1::String, str2::String, num)
 	# Pseudo strncmp
-	a = str1[1:min(num,length(str1))] == str2
+	str1[1:min(num,length(str1))] == str2
 end
 
 #= ---------------------------------------------------------------------------------------------------

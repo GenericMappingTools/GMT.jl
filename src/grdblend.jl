@@ -48,7 +48,7 @@ function grdblend(cmd0::String, arg1, arg2, d::Dict{Symbol, Any})
 	cmd, = parse_common_opts(d, "", [:G :I :R :V_params :f :n :r])
 	cmd  = parse_these_opts(cmd, d, [[:C :clobber], [:N :nodata], [:Q :headless], [:W :no_blend], [:Z :scale]])
 
-	cmd, got_fname, arg1, arg2 = find_data(d, cmd0, cmd, arg1, arg2)
+	cmd, _, arg1, arg2 = find_data(d, cmd0, cmd, arg1, arg2)
 	return common_grd(d, "grdblend " * cmd, arg1, arg2)		# Finish build cmd and run it
 end
 
