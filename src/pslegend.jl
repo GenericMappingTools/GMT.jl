@@ -137,7 +137,6 @@ function mk_legend(; kwargs...)
 	for n = 1:numel(ky)
 		code = isa(kwargs[n], NamedTuple) ? kwargs[n] : NamedTuple([ky[n]] .=> [kwargs[n]])
 		kw_str = lowercase(string(ky[n]))
-		k = keys(code)
 		if (kw_str == "H" || startswith(kw_str, "header"))		# code = (header=txt, font=?)	H 24p,Times-Roman My Map Legend
 			d = nt2dict(code)
 			f::String = ((val = find_in_dict(d, [:font])[1]) === nothing) ? "-" : font(val)

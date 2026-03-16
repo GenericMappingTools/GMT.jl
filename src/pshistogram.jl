@@ -246,7 +246,7 @@ function histogram_helper(cmd0::String, arg1, O::Bool, K::Bool, d::Dict{Symbol,A
 		vlines!([limit_L], pen="0.5p,blue,dashed", decorated=(quoted = true, n_labels = 1, const_label = "$limit_L", font = 9, pen = (0.5, :red)), R=opt_R[4:end], Vd=Vd_)
 		out2 = vlines!([limit_R], pen="0.5p,blue,dashed", decorated=(quoted = true, n_labels = 1, const_label = "$limit_R", font = 9, pen = (0.5, :red)), R=opt_R[4:end], fmt=fmt_, savefig=savefig_, show=show_, Vd=Vd_)
 	end
-	out = (out1 !== nothing && out2 !== nothing) ? [out1;out2] : ((out1 !== nothing) ? out1 : out2)
+	(out1 !== nothing && out2 !== nothing) ? [out1;out2] : ((out1 !== nothing) ? out1 : out2)
 
 end
 

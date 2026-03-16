@@ -452,8 +452,8 @@ function Base.:permutedims(G1::GMTgrid, inds; nodata=nothing)
 	end
 	mat = permutedims(G1.z, inds)
 	# 3,2,1  3,1,2, 2,1,3  2,3,1  1,3,2
-	if     (inds == [3,2,1])  x, v, x_unit = v, x, G1.z_unit
-	elseif (inds == [3,1,2])  x, y, v, x_unit = v, x, y, G1.z_unit
+	if     (inds == [3,2,1])  x, v = v, x
+	elseif (inds == [3,1,2])  x, y, v = v, x, y
 	end
 	_nodata = G1.nodata
 	if (nodata !== nothing && eltype(G1) <: AbstractFloat && !isnan(nodata))

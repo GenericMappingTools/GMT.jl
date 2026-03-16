@@ -6,7 +6,7 @@ function bwdist(img::AbstractArray{Bool, N}; weights=nothing, nthreads=Threads.n
 	distance_transform(ft, weights)
 end
 function bwdist_idx(img::AbstractArray{Bool, N}; weights=nothing, nthreads=Threads.nthreads()) where {N}
-    ft = feature_transform(img; weights=weights, nthreads=nthreads)
+    feature_transform(img; weights=weights, nthreads=nthreads)
 end
 
 bwdist(mat::AbstractArray{T, N}; weights=nothing, nthreads=Threads.nthreads()) where {T,N} =

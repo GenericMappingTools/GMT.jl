@@ -359,10 +359,10 @@ function GMT_Get_Enum(API::Ptr{Cvoid}, enum_name::String)
 end
 
 function GMT_Get_Version()
-	ver = ccall((:GMT_Get_Version, libgmt), Cfloat, (Ptr{Cvoid}, Ptr{Cuint}, Ptr{Cuint}, Ptr{Cuint}), C_NULL, C_NULL, C_NULL, C_NULL)
+	ccall((:GMT_Get_Version, libgmt), Cfloat, (Ptr{Cvoid}, Ptr{Cuint}, Ptr{Cuint}, Ptr{Cuint}), C_NULL, C_NULL, C_NULL, C_NULL)
 end
 function GMT_Get_Version(major, minor, patch)
-	ver = ccall((:GMT_Get_Version, libgmt), Cfloat, (Ptr{Cvoid}, Ptr{Cuint}, Ptr{Cuint}, Ptr{Cuint}), C_NULL, major, minor, patch)
+	ccall((:GMT_Get_Version, libgmt), Cfloat, (Ptr{Cvoid}, Ptr{Cuint}, Ptr{Cuint}, Ptr{Cuint}), C_NULL, major, minor, patch)
 end
 
 function GMT_Get_Ctrl(API::Ptr{Cvoid})

@@ -515,6 +515,7 @@ OGR_G_Contains(a1, a2) = acare(ccall((:OGR_G_Contains, libgdal), Cint, (pVoid, p
 OGR_G_ConvexHull(a1) = acare(ccall((:OGR_G_ConvexHull, libgdal), pVoid, (pVoid,), a1))
 OGR_G_ConcaveHull(a1, a2, a3) = acare(ccall((:OGR_G_ConcaveHull, libgdal), pVoid, (pVoid, Cdouble, Bool), a1, a2, a3))
 OGR_G_CreateGeometry(a1) = acare(ccall((:OGR_G_CreateGeometry, libgdal), pVoid, (UInt32,), a1))
+OGR_G_CreateFromWkt(a1, a2, a3) = acare(ccall((:OGR_G_CreateFromWkt, libgdal), Cint, (Ptr{Cstring}, pVoid, pVoid), a1, a2, a3))
 OGR_G_Crosses(a1, a2) = acare(ccall((:OGR_G_Crosses, libgdal), Cint, (pVoid, pVoid), a1, a2))
 OGR_G_DelaunayTriangulation(hThis, tol, edges) = acare(ccall((:OGR_G_DelaunayTriangulation, libgdal), pVoid, (pVoid, Cdouble, Cint), hThis, tol, edges))
 OGR_G_Simplify(hThis, tolerance) = acare(ccall((:OGR_G_Simplify, libgdal), pVoid, (pVoid, Cdouble), hThis, tolerance))

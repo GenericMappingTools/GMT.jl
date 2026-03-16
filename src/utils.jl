@@ -1769,7 +1769,6 @@ end
 
 # ----------------------------------------------------------------------------------------
 #include("flowobj.jl")
-#include("tanakacontour.jl")
 #include("shufflelabel.jl")
 
 #=

@@ -44,7 +44,6 @@ function crop_width_to_fit_string_in_field(str::AbstractString, field_width::Int
 
 	# If the user is asking for the continuation char, we must crop the string to account
 	# for the continuation char.
-	cont_str = ""
 
 	if add_continuation_char
 		cont_str_width = textwidth(continuation_char)
@@ -2579,6 +2578,8 @@ function _text_process_data_cell(ptable::ProcessedTable, cell_data::Any, cell_st
 	lstr = textwidth(cell_str)
 
 	if cell_data isa CustomTextCell
+		@warn "CustomTextCell is not supported in the current version of Custom PrettyTables.jl."
+		#=
 		# To align a custom text cell, we need to compute the alignment and cropping data
 		# and apply it using the API functions.
 		padding = padding_for_string_alignment(cell_str, column_width, alignment; fill = true, printable_string_width = lstr)
@@ -2600,6 +2601,7 @@ function _text_process_data_cell(ptable::ProcessedTable, cell_data::Any, cell_st
 		end
 
 		cell_str = get_printable_cell_line(cell_data, l)::String
+		=#
 	else
 		# Align and crop the string to be printed.
 		cell_str = align_string(cell_str, column_width, alignment; fill = true, printable_string_width = lstr)
@@ -3069,9 +3071,12 @@ end
 
 function _text_parse_cell(@nospecialize(io::IOContext), cell::CustomTextCell; kwargs...)
 	# Call the API function to reset all the fields in the custom text cell.
+	@warn "CustomTextCell is not supported in the current version of Custom PrettyTables.jl."
+	#=
 	reset!(cell)
 	cell_vstr = parse_cell_text(cell; kwargs...)
 	return cell_vstr
+	=#
 end
 
 _text_parse_cell(@nospecialize(io::IOContext), cell::Missing; kwargs...) = ["missing"]
@@ -3100,7 +3105,7 @@ function _text_render_cell(::Val{:print}, @nospecialize(io::IOContext), str::Abs
 	# to the list of characters to be escaped.
 	output_str = Vector{String}(undef, length(vstr))
 
-	@inbounds for i in 1:length(vstr)
+	@inbounds for i in 1:numel(vstr)
 		s = vstr[i]
 		output_str[i] = sprint(escape_string, s, "", sizehint = lastindex(s))
 	end
@@ -3128,7 +3133,7 @@ function _text_render_cell(::Val{:show}, @nospecialize(io::IOContext), v::Abstra
 	vstr = sprint.(show, aux; context = context)
 
 	if !isstring
-		for i in 1:length(vstr)
+		for i in 1:numel(vstr)
 			aux_i   = first(vstr[i], length(vstr[i]) - 1)
 			vstr[i] = last(aux_i, length(aux_i) - 1)
 		end
