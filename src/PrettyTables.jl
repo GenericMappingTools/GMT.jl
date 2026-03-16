@@ -2491,7 +2491,8 @@ function _text_print_table!(display::Display, ptable::ProcessedTable, table_str:
 							_p!(display, " " * cell_processed_str * " ", false, actual_columns_width[j] + 2) && break
 						else
 							# If we have a custom cell, we need a custom printing function.
-							_print_custom_text_cell!(display, cell_data, cell_processed_str, l, highlighters) && break
+							@warn "The API for `CustomTextCell` is not implemented yet."
+							#_print_custom_text_cell!(display, cell_data, cell_processed_str, l, highlighters) && break
 						end
 					end
 				end
@@ -2518,6 +2519,7 @@ end
 # Print the custom rext cell to the display.
 #
 # NOTE: `cell_str` must contain the printable text cell always.
+#=
 function _print_custom_text_cell!(display::Display, cell_data::CustomTextCell, cell_processed_str::String,
 	l::Int, @nospecialize(highlighters::Ref{Any}),)
 	cell_printable_textwidth = printable_textwidth(cell_processed_str)
@@ -2544,6 +2546,7 @@ function _print_custom_text_cell!(display::Display, cell_data::CustomTextCell, c
 	# Print the padding character after the cell and return if the display has reached end-of-line.
 	return _p!(display, " ", false, 1)
 end
+=#
 
 # Print the summary of the omitted rows and columns.
 function _print_omitted_cell_summary(display::Display, num_omitted_cols::Int, num_omitted_rows::Int,
@@ -2578,6 +2581,8 @@ function _text_process_data_cell(ptable::ProcessedTable, cell_data::Any, cell_st
 	if cell_data isa CustomTextCell
 		# To align a custom text cell, we need to compute the alignment and cropping data
 		# and apply it using the API functions.
+		@warn "The API for `CustomTextCell` is not implemented yet."
+		#=
 		padding = padding_for_string_alignment(cell_str, column_width, alignment; fill = true, printable_string_width = lstr)
 
 		if !isnothing(padding)
@@ -2597,6 +2602,7 @@ function _text_process_data_cell(ptable::ProcessedTable, cell_data::Any, cell_st
 		end
 
 		cell_str = get_printable_cell_line(cell_data, l)::String
+		=#
 	else
 		# Align and crop the string to be printed.
 		cell_str = align_string(cell_str, column_width, alignment; fill = true, printable_string_width = lstr)
@@ -3066,9 +3072,12 @@ end
 
 function _text_parse_cell(@nospecialize(io::IOContext), cell::CustomTextCell; kwargs...)
 	# Call the API function to reset all the fields in the custom text cell.
+	@warn "The API for `CustomTextCell` is not implemented yet."
+	#=
 	reset!(cell)
 	cell_vstr = parse_cell_text(cell; kwargs...)
 	return cell_vstr
+	=#
 end
 
 _text_parse_cell(@nospecialize(io::IOContext), cell::Missing; kwargs...) = ["missing"]

@@ -658,7 +658,7 @@ end
 
 # ----------------------------------------------------------------------------------------------------------
 # Build violin polygon as a matrix. Uses loops instead of broadcast/vcat/hcat to reduce IR bloat.
-function _violin_polygon(d::Vector{Float64}, xd, x::Float64, split::Int, isVert::Bool)
+function _violin_polygon(d::AbstractVector{Float64}, xd, x::Float64, split::Int, isVert::Bool)
 	n = length(d)
 	if split == 0				# Both sides
 		m = 2n + 1
@@ -754,7 +754,8 @@ function helper1_violin(data::Union{Vector{Vector{T}}, AbstractMatrix{T}}, x::Ve
 		xd, d = Base.invokelatest(view,Dv[k].data,:,1), Base.invokelatest(view,Dv[k].data,:,2)
 		maxd = maximum(d)
 		scale = 1/2N_grp * 0.75 * groupwidth
-		d = [d[i] * scale / maxd for i in eachindex(d)]
+		#d = [d[i] * scale / maxd for i in eachindex(d)]
+		for i in eachindex(d)  d[i] * scale / maxd  end
 		(k == 2 && split != 0 && swing) && (split = (split == 1) ? 2 : 1)	# Not realy sure why we have to do this.
 		Dv[k].data = _violin_polygon(d, xd, _x[k] + off_in_grp, split, isVert)
 

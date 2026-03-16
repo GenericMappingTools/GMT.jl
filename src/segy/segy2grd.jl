@@ -59,5 +59,5 @@ function segy2grd_helper(cmd0::String, d::Dict{Symbol, Any})
 	cmd = "segy2grd " * cmd0 * cmd
 	((r = check_dbg_print_cmd(d, cmd)) !== nothing) && return r
 	!isfile(cmd0) && error("segY file $cmd0 does not exist.")	# Testing here only allows pass a Vd=2 for test parsing
-	gmt(cmd, arg1)
+	gmt(cmd)
 end

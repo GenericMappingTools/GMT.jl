@@ -360,7 +360,7 @@ end
 =#
 
 # ---------------------------------------------------------------------------------------------------
-function get_grid(API::Ptr{Nothing}, object, cube::Bool)::GMTgrid
+function get_grid(object, cube::Bool)::GMTgrid
 # Given an incoming GMT grid G, build a Julia type and assign the output components.
 # Note: Incoming GMT grid has standard padding while Julia grid has none.
 
@@ -535,7 +535,7 @@ function get_image(API::Ptr{Nothing}, object)::GMTimage
 end
 
 # ---------------------------------------------------------------------------------------------------
-function get_palette(API::Ptr{Nothing}, object::Ptr{Nothing})::GMTcpt
+function get_palette(object::Ptr{Nothing})::GMTcpt
 # Given a GMT CPT C, build a Julia type and assign values.
 # Each segment will have 10 items:
 # colormap:	Nx3 array of colors usable in Matlab' colormap
@@ -599,7 +599,7 @@ function get_palette(API::Ptr{Nothing}, object::Ptr{Nothing})::GMTcpt
 end
 
 # ---------------------------------------------------------------------------------------------------
-function get_PS(API::Ptr{Nothing}, object::Ptr{Nothing})::GMTps
+function get_PS(object::Ptr{Nothing})::GMTps
 # Given a GMT Postscript structure P, build a Julia PS type
 # Each segment will have 4 items:
 # postscript:	Text string with the entire PostScript plot
@@ -795,17 +795,17 @@ function GMTJL_Get_Object(API::Ptr{Nothing}, X::GMT_RESOURCE)
 		error("GMT: Error reading virtual file $name from GMT")
 
 	if (X.family == GMT_IS_GRID)         	# A GMT grid; make it the pos'th output item
-		ptr = get_grid(API, X.object, false)
+		ptr = get_grid(X.object, false)
 	elseif (X.family == GMT_IS_CUBE)       	# A GMT cube; make it the pos'th output item
-		ptr = get_grid(API, X.object, true)
+		ptr = get_grid(X.object, true)
 	elseif (X.family == GMT_IS_DATASET)		# A GMT table; make it a matrix and the pos'th output item
 		ptr = get_dataset(X.object)
 	elseif (X.family == GMT_IS_PALETTE)		# A GMT CPT; make it a colormap and the pos'th output item
-		ptr = get_palette(API, X.object)
+		ptr = get_palette(X.object)
 	elseif (X.family == GMT_IS_IMAGE)		# A GMT Image; make it the pos'th output item
 		ptr = get_image(API, X.object)
 	elseif (X.family == GMT_IS_POSTSCRIPT)	# A GMT PostScript string; make it the pos'th output item
-		ptr = get_PS(API, X.object)
+		ptr = get_PS(X.object)
 #		status = GMT_Call_Module(API, "psconvert", GMT_MODULE_CMD, "# -A -Tg")
 #		status = GMT_Call_Module(API, "psconvert", GMT_MODULE_CMD, name_PS * " -A -Tf")
 	else
