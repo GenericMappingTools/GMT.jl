@@ -3071,17 +3071,17 @@ function axis(D::Dict{Symbol,Any}, x::Bool, y::Bool, z::Bool, secondary::Bool, d
 
 	# intervals
 	ints::String, ann_2, ann_3, tic_2, tic_3, gri_2, gri_3, gri_d  = "", "", "", "", "", "", "", ""
-	if (haskey(d, :annot))      ints *= "a" * helper1_axes(d[:annot], is3D, 'a')  end
+	if (haskey(d, :annot))      ints *= "a" * helper1_axes(d, :annot, is3D, 'a')  end
 	contains(ints, ' ') && (spli = split(ints); ints = string(spli[1]); ann_2 = string(spli[2]); ann_3 = string(spli[3]))
 	(haskey(d, :annot_unit)) && (ints *= helper2_axes(d[:annot_unit]))
 
-	if (haskey(d, :ticks))      ints *= "f" * helper1_axes(d[:ticks], is3D, 'f')  end
+	if (haskey(d, :ticks))      ints *= "f" * helper1_axes(d, :ticks, is3D, 'f')  end
 	contains(ints, ' ') && (spli = split(ints); ints = string(spli[1]); tic_2 = string(spli[2]); tic_3 = string(spli[3]))
 	(haskey(d, :ticks_unit)) && (ints *= helper2_axes(d[:ticks_unit]))
 
 	if (haskey(d, :grid))
 		if (isa(d[:grid], NamedTuple))  gri_d = parse_grid(D, d[:grid], opt_B="", stalone=false)		# Whatever comes out
-		else                            gri_d = "g" * helper1_axes(d[:grid], is3D, 'g')
+		else                            gri_d = "g" * helper1_axes(d, :grid, is3D, 'g')
 		end
 		contains(gri_d, ' ') && (spli = split(gri_d); gri_d = string(spli[1]); gri_2 = string(spli[2]); gri_3 = string(spli[3]))
 		ints *= gri_d;	CTRL.pocket_B[1] = gri_d	# If gri_d has a space in it I guess some shit will happen later
@@ -3158,7 +3158,7 @@ function axis(D::Dict{Symbol,Any}, x::Bool, y::Bool, z::Bool, secondary::Bool, d
 	return opt, [have_Baxes, (opt_Bframe != "")]
 end
 
-function axis(opt::String, D::Dict; x::Bool=false, y::Bool=false, z::Bool=false, secondary::Bool=false)::Tuple{String, Vector{Bool}}
+function axis(opt::String, D::Dict{Symbol,Any}; x::Bool=false, y::Bool=false, z::Bool=false, secondary::Bool=false)::Tuple{String, Vector{Bool}}
 	# Method for axes setting already passed as a string
 	(x && opt[1] != 'x') && (opt = "x" * opt)
 	(y && opt[1] != 'y') && (opt = "y" * opt)
@@ -3194,15 +3194,15 @@ function helper0_axes(arg)::String
 end
 
 # ------------------------
-function helper1_axes(arg, is3D::Bool, c::Char)::String
+function helper1_axes(d::Dict{Symbol, Any}, symb::Symbol, is3D::Bool, c::Char)::String
 	# Used by annot, ticks and grid to accept also 'auto' and "" to mean automatic
-	out::String = arg2str(arg)
+	out::String = arg2str(d[symb])
 	(out != "" && out[1] == 'a') && return ""
-	if ((is3D || isa(arg, Tuple)) && ((nc = count_chars(out, '/')) > 0))
-		nc == 1 && return @sprintf("%.12g %s%.12g %s%.12g", arg[1], c, arg[1], c, arg[2])::String
-		nc == 2 && return @sprintf("%.12g %s%.12g %s%.12g", arg[1], c, arg[2], c, arg[3])::String
+	if ((is3D || isa(d[symb], Tuple)) && ((nc = count_chars(out, '/')) > 0))
+		nc == 1 && return @sprintf("%.12g %s%.12g %s%.12g", d[symb][1], c, d[symb][1], c, d[symb][2])::String
+		nc == 2 && return @sprintf("%.12g %s%.12g %s%.12g", d[symb][1], c, d[symb][2], c, d[symb][3])::String
 	end
-	(out != "" && isletter(out[1]) && out[1] != 'p') &&	# "pi" is allowed
+	(out != "" && isletter(out[1]) && out[1] != 'p') &&		# "pi" is allowed
 		(@warn("Probable misuse of the 'grid' sub-otpion. Defaulting to a valid value."); out = "")
 	return out
 end
@@ -4891,7 +4891,7 @@ macro var"?"(name)
 			dir = "modules/"
 			if sym in [:ablines,:append2fig,:bezier,:blendimg,:cart2pol,:cart2sph,:circfit,:colorzones,:cpt4dcw,:crop,
 			         :cubeplot,:coastlinesproj,
-			         :cubeslice,:date2doy,:delrows!,:doy2date,:ecmwf,:era5time,era5vars,:gadm,:geocoder,:geodetic2enu,
+			         :cubeslice,:date2doy,:delrows,:doy2date,:ecmwf,:era5time,era5vars,:gadm,:geocoder,:geodetic2enu,
 			         :getbyattrib,:getprovider,:gmtread,:gmtwrite, :graticules,:gridit,:gunique,hampel,:imagesc,:inwhichpolygon,
 			         :image_alpha!, :image_cpt!,:imshow,:ind2rgb, :info,:isnodata,:isoutlier,:lazinfo,:lazread,:lazwrite,:lasread,
 			         :laswrite,:lelandshade,:linearfitxy,:listecmwfvars,

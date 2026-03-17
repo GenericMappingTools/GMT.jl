@@ -113,7 +113,7 @@ function makeDCWs(fname="ne_10m_admin_0_countries_iso.shp.zip"; float=false, nam
 					dx = diff(Dk[ind_big].data[:,1]);		dy = diff(Dk[ind_big].data[:,2])
 					ind_x = findall(abs.(dx) .< 0.00001);	ind_y = findall(abs.(dy) .< 0.00001)
 					ind = intersect(ind_x, ind_y)
-					(!isempty(ind)) && (Dk[ind_big].data = delrows!(Dk[ind_big].data, ind))		# Delete repeated points
+					(!isempty(ind)) && (Dk[ind_big].data = delrows(Dk[ind_big].data; rows=ind))		# Delete repeated points
 					deleteat!(Dk, n)		# Delete the one that was included in the big one
 					set_dsBB!(Dk)
 					break

@@ -106,7 +106,6 @@ function _gmtspatial_helper(cmd0::String, arg1, arg2, d::Dict)::Union{GMTdataset
 		D.colnames = getsize(D)[2] == 2 ? ["centroid_x","centroid_y"] : ["centroid_x","centroid_y","area"];
 		if isa(D, GMTdataset)
 			ind = findall(.!isfinite.(D.data[:,1]))
-			#!isempty(ind) && (D.data = delrows!(D.data, ind))		# Can't do this because it changes the number of output rows
 		end
 	end
 	set_dsBB!(D)

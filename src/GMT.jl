@@ -377,7 +377,6 @@ using .Laszip
 @compile_workload begin
 	G_API[] = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS)
 	#GMT.parse_B(Dict{Symbol, Any}(:frame => (annot=10, title="Ai Ai"), :grid => (pen=2, x=10, y=20)), "", " -Baf -BWSen");
-	#GMT.parse_opt_S(Dict{String, Any}(), mat2ds(rand(4,2)));
 	GMT.theme("dark")
 	GMT.theme_modern()
 	mat2ds([9 8; 9 8], x=[0 7], pen=["5p,black", "4p,white,20p_20p"], multi=true)
