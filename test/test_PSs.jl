@@ -257,7 +257,8 @@ for i in 1:2
 	for s in 1:size(c,1)-1
 		GMT._blp_seg2cross(x1,y1_,x2,y2_, c[s,1],c[s,2], c[s+1,1],c[s+1,2]) && (crossings += 1)
 	end
-	@test crossings >= 1 "Crossing segment for curve $i does not cross the curve"
+	(crossings >= 1) && @warn "Crossing segment for curve $i does not cross the curve"
+	@test crossings >= 1
 end
 
 # 3) X-crossing lines: labels should NOT be near each other
