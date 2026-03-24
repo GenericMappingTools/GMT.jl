@@ -257,14 +257,14 @@ for i in 1:2
 	for s in 1:size(c,1)-1
 		GMT._blp_seg2cross(x1,y1_,x2,y2_, c[s,1],c[s,2], c[s+1,1],c[s+1,2]) && (crossings += 1)
 	end
-	@assert crossings >= 1 "Crossing segment for curve $i does not cross the curve"
+	@test crossings >= 1 "Crossing segment for curve $i does not cross the curve"
 end
 
 # 3) X-crossing lines: labels should NOT be near each other
 Dx = mat2ds([[0.0 0; 4 4], [0.0 4; 4 0]])
 bx = GMT.best_label_pos(Dx, ["up", "down"])
 dist = hypot(bx[1,1]-bx[2,1], bx[1,2]-bx[2,2])
-@assert dist > 0.3 "Labels on X-crossing lines are too close: $dist"
+@test dist > 0.3 "Labels on X-crossing lines are too close: $dist"
 
 # 4) prefer=:begin puts labels in first half, prefer=:end in second half
 Dlong = mat2ds([Float64[i for i in 0:20] Float64[sin(i/3) for i in 0:20]])
@@ -272,8 +272,8 @@ bb = GMT.best_label_pos(Dlong, ["wave"]; prefer=:begin)
 be = GMT.best_label_pos(Dlong, ["wave"]; prefer=:end)
 mid_x = (bb[1,1]+bb[1,3])/2   # midpoint of crossing segment
 mid_xe = (be[1,1]+be[1,3])/2
-@assert mid_x < 10 "prefer=:begin label not in first half (x=$mid_x)"
-@assert mid_xe > 10 "prefer=:end label not in second half (x=$mid_xe)"
+@test mid_x < 10 "prefer=:begin label not in first half (x=$mid_x)"
+@test mid_xe > 10 "prefer=:end label not in second half (x=$mid_xe)"
 
 # 5) Single curve (GMTdataset, not vector)
 Ds = mat2ds([0.0 0; 1 1; 2 0; 3 1; 4 0])
