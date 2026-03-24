@@ -814,7 +814,18 @@ Called from `_common_plot_xyz()` when the `labellines` keyword is used.
 function add_labellines!(curves, d::Dict{Symbol,Any}, _cmd::Vector{String})
 	val = find_in_dict(d, [:labellines])[1]
 	if isa(val, Vector{<:AbstractString})
-		_add_labellines(curves, _cmd, [string(l) for l in val], 8, :middle)
+		labels = [string(l) for l in val]
+		xv = find_in_dict(d, [:xvals])[1]
+		yv = find_in_dict(d, [:yvals])[1]
+		if xv !== nothing || yv !== nothing
+			nc = length(curves)
+			_xv = xv === nothing ? Float64[] : isa(xv, Real) ? fill(Float64(xv), nc) : Float64.(collect(xv))
+			_yv = yv === nothing ? Float64[] : isa(yv, Real) ? fill(Float64(yv), nc) : Float64.(collect(yv))
+			pos = _label_pos_at_vals(curves, nc, _xv, _yv)
+			_add_labellines_apply(curves, _cmd, labels, 8, pos)
+		else
+			_add_labellines(curves, _cmd, labels, 8, :middle)
+		end
 		return curves
 	end
 	# NamedTuple path — dispatch to the right inner function based on which options are set
