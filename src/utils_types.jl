@@ -264,7 +264,8 @@ function _mat2ds(@nospecialize(mat::Array{<:Real}), txt::Union{String,Vector{Str
 			_lts[k] = " -W" * string(_lt[((k % n_thick) != 0) ? k % n_thick : n_thick])
 		end
 	else
-		theW = (color_cycle || haskey(d, :ls) || haskey(d, :linestyle) || haskey(d, :pen)) ? " -W" : ""
+		theW = (color_cycle || get(d, :ls, nothing) !== nothing || get(d, :linestyle, nothing) !== nothing || get(d, :pen, nothing) !== nothing) ? " -W" : ""
+		#theW = (color_cycle || haskey(d, :ls) || haskey(d, :linestyle) || haskey(d, :pen)) ? " -W" : ""
 		_lts = fill(theW, n_ds)		# If no pen setting no need to set -W
 	end
 
