@@ -425,12 +425,23 @@ function best_label_pos(curves::GDtype, labels::Vector{<:AbstractString}; fontsi
 end
 
 function _best_label_pos(D::Vector{<:GMTdataset}, labels::Vector{String}, nc::Int, fontsize::Int, prefer::Symbol)
-	xmin, xmax, ymin, ymax = getregion(D)
+	# Use the actual plot region (not data bbox) so cm↔data conversion matches the axes
+	if CTRL.limits[7] != 0
+		xmin, xmax, ymin, ymax = CTRL.limits[7:10]
+	else
+		xmin, xmax, ymin, ymax = getregion(D)
+	end
 	pw, ph = _get_plotsize()
 	sx, sy = pw / (xmax - xmin), ph / (ymax - ymin)
 
-	# Convert to cm space for accurate visual distance/angle calculations
-	crv = [hcat((D[k][:,1] .- xmin) .* sx, (D[k][:,2] .- ymin) .* sy) for k in 1:nc]
+	# Convert to cm space — only the visible portion of each curve (inside the plot region)
+	crv = Vector{Matrix{Float64}}(undef, nc)
+	for k in 1:nc
+		pts = D[k].data
+		mask = vec((pts[:,1] .>= xmin) .& (pts[:,1] .<= xmax) .& (pts[:,2] .>= ymin) .& (pts[:,2] .<= ymax))
+		vis = sum(mask) >= 2 ? pts[mask, :] : pts
+		crv[k] = hcat((vis[:,1] .- xmin) .* sx, (vis[:,2] .- ymin) .* sy)
+	end
 
 	# Text half-dimensions in cm
 	pt2cm = 2.54 / 72
@@ -439,22 +450,31 @@ function _best_label_pos(D::Vector{<:GMTdataset}, labels::Vector{String}, nc::In
 	hws = [length(l) * char_w / 2 for l in labels]    # half-width per label
 	hh  = char_h * 0.9                                 # half-height (shared)
 
-	# Candidate range along arc length depends on preference
+	# Preferred zone for targets (where labels WANT to be)
 	prefer in (:begin, :middle, :end) || error("prefer must be :begin, :middle, or :end")
-	frac_lo, frac_hi, frac_target = prefer == :begin  ? (0.05, 0.55, 0.15) :
-	                                prefer == :end    ? (0.45, 0.95, 0.85) :
-	                                                    (0.10, 0.90, 0.50)
+	frac_lo, frac_hi = prefer == :begin ? (0.05, 0.30) :
+	                   prefer == :end   ? (0.60, 0.95) : (0.20, 0.80)
+	center = prefer == :begin ? 0.17 : prefer == :end ? 0.83 : 0.50
+	if nc == 1
+		frac_targets = [center]
+	else
+		half_spread = min(0.20, 0.04 * nc)
+		frac_targets = [center + half_spread * (2.0 * (i - 1) / (nc - 1) - 1.0) for i in 1:nc]
+	end
 
-	# Generate candidate positions along each curve
-	ncand = 19
-	cands = [_bla_gen_candidates(crv[i], ncand, frac_lo, frac_hi) for i in 1:nc]
+	# Candidate range is wider than target zone — labels prefer the target but CAN escape if all
+	# candidates in the preferred zone have crossings (e.g. steep curves bunched at the center)
+	cand_lo = max(0.05, frac_lo - 0.15)
+	cand_hi = min(0.95, frac_hi + 0.15)
+	ncand = 29
+	cands = [_bla_gen_candidates(crv[i], ncand, cand_lo, cand_hi) for i in 1:nc]
 
 	# Greedy placement: maximize minimum clearance to other curves
 	placed_cx = Float64[];  placed_cy = Float64[];  placed_a = Float64[]
 	placed_hw = Float64[];  placed_hh = Float64[]
 	result = Matrix{Float64}(undef, nc, 4)	# each row: x1, y1, x2, y2
 
-	half_cross = 0.3	# half-length of crossing segment in cm (short to avoid multi-intersection)
+	half_cross = 0.3	# half-length of crossing segment in cm
 
 	for i in 1:nc
 		hw_i = hws[i]
@@ -465,13 +485,31 @@ function _best_label_pos(D::Vector{<:GMTdataset}, labels::Vector{String}, nc::In
 		curvs     = Vector{Float64}(undef, nj)
 		fracs     = Vector{Float64}(undef, nj)
 
+		# For each candidate: count crossings with other curves through the label bbox, measure clearance
+		ncross_j  = Vector{Int}(undef, nj)
+		clears_j  = Vector{Float64}(undef, nj)
+		overlaps_j = falses(nj)
+
 		for j in 1:nj
 			cx, cy, ang, curv = cands[i][j]
-			fracs[j] = frac_lo + (frac_hi - frac_lo) * (j - 1) / max(nj - 1, 1)
-			quality = 0.0
+			fracs[j] = cand_lo + (cand_hi - cand_lo) * (j - 1) / max(nj - 1, 1)
 			curvs[j] = curv
 
-			# Min distance from (cx,cy) to any segment of any other curve
+			# Count how many OTHER curves cross through the label bounding box
+			ncross = 0
+			if nc > 1
+				corners = _bla_corners(cx, cy, ang, hw_i, hh)
+				for k in 1:nc
+					k == i && continue
+					for ei in 1:4
+						eni = mod1(ei + 1, 4)
+						ncross += _bla_crossing_count(corners[ei][1], corners[ei][2], corners[eni][1], corners[eni][2], crv[k])
+					end
+				end
+			end
+			ncross_j[j] = ncross
+
+			# Min distance to nearest other curve
 			clearance = nc > 1 ? 1e10 : 0.0
 			for k in 1:nc
 				k == i && continue
@@ -481,57 +519,94 @@ function _best_label_pos(D::Vector{<:GMTdataset}, labels::Vector{String}, nc::In
 					clearance = min(clearance, d)
 				end
 			end
+			clears_j[j] = clearance
 
-			# Penalty when another curve is very close to the label center
-			if clearance < hh * 2
-				quality -= (hh * 2 - clearance) * 10.0
+			# Reject candidates too close to plot edges (label or crossing segment would be clipped)
+			margin = hh * 2.0
+			if cx < margin || cy < margin || cx > pw - margin || cy > ph - margin
+				overlaps_j[j] = true		# reuse flag to mark as unusable
+				continue
 			end
 
-			# Penalty if perpendicular crosses own curve more than once
-			nx, ny = -sin(ang), cos(ang)
-			x1c, y1c = cx - nx * half_cross, cy - ny * half_cross
-			x2c, y2c = cx + nx * half_cross, cy + ny * half_cross
-			nself = _bla_crossing_count(x1c, y1c, x2c, y2c, crv[i])
-			nself > 1 && (quality -= nself * 20.0)
-
-			# Penalty if any OTHER curve crosses through the label bounding box
-			if nc > 1
-				corners = _bla_corners(cx, cy, ang, hw_i * 1.3, hh * 1.3)
-				for k in 1:nc
-					k == i && continue
-					for ei in 1:4
-						eni = mod1(ei + 1, 4)
-						ncx = _bla_crossing_count(corners[ei][1], corners[ei][2], corners[eni][1], corners[eni][2], crv[k])
-						ncx > 0 && (quality -= ncx * 30.0)
-					end
-				end
-			end
-
-			# Penalty for overlap with already-placed labels
+			# Check overlap with already-placed labels (with padding so labels don't get too close)
+			pad = hh * 0.5		# extra margin around each label box
 			for p in eachindex(placed_cx)
-				if _bla_rboxes_overlap(cx, cy, ang, hw_i, hh,
-				                       placed_cx[p], placed_cy[p], placed_a[p], placed_hw[p], placed_hh[p])
-					quality -= 100.0;  break
+				if _bla_rboxes_overlap(cx, cy, ang, hw_i + pad, hh + pad,
+				                       placed_cx[p], placed_cy[p], placed_a[p], placed_hw[p] + pad, placed_hh[p] + pad)
+					overlaps_j[j] = true;  break
 				end
 			end
-
-			qualities[j] = quality
 		end
 
-		# Phase 2: among candidates with acceptable quality, pick the best balance of
-		# proximity to frac_target and low curvature (prefer straight sections).
-		best_quality = maximum(qualities)
-		threshold = best_quality - 5.0
+		# Pick best: filter by crossings → label overlap → clearance → curvature; pick closest to frac_target
+		min_ncross = minimum(ncross_j)
+		clear_thresh = hh * 3.0		# min clearance from other curves (not squeezed)
+		sorted_curvs = sort(curvs)
+		curv_thresh  = sorted_curvs[round(Int, nj * 0.75)]	# 75th percentile — only reject extreme curvature
 
+		# Minimum clearance: curve must NOT touch label box — use diagonal of half-dimensions
+		min_clear = hypot(hw_i, hh) * 1.2
+
+		# Try with progressively relaxed clearance, but NEVER below min_clear
 		best_j = 1
-		best_score2 = -Inf
-		for j in 1:nj
-			qualities[j] < threshold && continue
-			frac_dist = abs(fracs[j] - frac_target)		# 0..0.4 typically
-			score2 = -frac_dist * 10.0 - curvs[j] * 8.0	# balance preference vs curvature
-			if score2 > best_score2
-				best_score2 = score2
-				best_j = j
+		best_dist = Inf
+		for ct in (clear_thresh, (clear_thresh + min_clear) / 2, min_clear)
+			for j in 1:nj
+				ncross_j[j] > min_ncross && continue
+				overlaps_j[j] && continue
+				clears_j[j] < ct && continue
+				curvs[j] > curv_thresh && continue
+				frac_dist = abs(fracs[j] - frac_targets[i])
+				if frac_dist < best_dist
+					best_dist = frac_dist;  best_j = j
+				end
+			end
+			best_dist < Inf && break
+		end
+
+		if best_dist == Inf		# relax curvature filter, keep min_clear
+			for ct in (clear_thresh, min_clear)
+				for j in 1:nj
+					ncross_j[j] > min_ncross && continue
+					overlaps_j[j] && continue
+					clears_j[j] < ct && continue
+					frac_dist = abs(fracs[j] - frac_targets[i])
+					if frac_dist < best_dist
+						best_dist = frac_dist;  best_j = j
+					end
+				end
+				best_dist < Inf && break
+			end
+		end
+
+		if best_dist == Inf		# all labels overlap — farthest from placed labels, then closest to target
+			max_sep = -Inf
+			for j in 1:nj
+				ncross_j[j] > min_ncross && continue
+				cx_j, cy_j = cands[i][j][1], cands[i][j][2]
+				min_d = isempty(placed_cx) ? Inf : minimum(hypot(cx_j - placed_cx[p], cy_j - placed_cy[p]) for p in eachindex(placed_cx))
+				max_sep = max(max_sep, min_d)
+			end
+			thresh_sep = max_sep * 0.8
+			best_dist = Inf
+			for j in 1:nj
+				ncross_j[j] > min_ncross && continue
+				cx_j, cy_j = cands[i][j][1], cands[i][j][2]
+				min_d = isempty(placed_cx) ? Inf : minimum(hypot(cx_j - placed_cx[p], cy_j - placed_cy[p]) for p in eachindex(placed_cx))
+				min_d < thresh_sep && continue
+				frac_dist = abs(fracs[j] - frac_targets[i])
+				if frac_dist < best_dist
+					best_dist = frac_dist;  best_j = j
+				end
+			end
+		end
+
+		if best_dist == Inf		# absolute last resort: closest to target, NO filters at all
+			for j in 1:nj
+				frac_dist = abs(fracs[j] - frac_targets[i])
+				if frac_dist < best_dist
+					best_dist = frac_dist;  best_j = j
+				end
 			end
 		end
 
@@ -539,12 +614,17 @@ function _best_label_pos(D::Vector{<:GMTdataset}, labels::Vector{String}, nc::In
 		push!(placed_cx, cx);  push!(placed_cy, cy);  push!(placed_a, ang)
 		push!(placed_hw, hw_i);  push!(placed_hh, hh)
 
-		# Short perpendicular crossing segment, convert to data coords
-		nx, ny = -sin(ang), cos(ang)
-		result[i,1] = (cx - nx * half_cross) / sx + xmin
-		result[i,2] = (cy - ny * half_cross) / sy + ymin
-		result[i,3] = (cx + nx * half_cross) / sx + xmin
-		result[i,4] = (cy + ny * half_cross) / sy + ymin
+		# Convert to data coords; perpendicular in data-space from the cm-space tangent angle
+		cx_dat = cx / sx + xmin
+		cy_dat = cy / sy + ymin
+		nx_d, ny_d = -sin(ang) / sy, cos(ang) / sx		# perpendicular to tangent in data-space
+		nd = hypot(nx_d, ny_d)
+		nx_d /= nd;  ny_d /= nd
+		half_d = min(xmax - xmin, ymax - ymin) * 0.015
+		result[i,1] = clamp(cx_dat - nx_d * half_d, xmin, xmax)
+		result[i,2] = clamp(cy_dat - ny_d * half_d, ymin, ymax)
+		result[i,3] = clamp(cx_dat + nx_d * half_d, xmin, xmax)
+		result[i,4] = clamp(cy_dat + ny_d * half_d, ymin, ymax)
 	end
 	return result
 end
@@ -601,6 +681,19 @@ function _label_pos_at_vals(D::Vector{<:GMTdataset}, nc::Int, xvals::Vector{Floa
 		result[i,3] = best_px + nx * scale
 		result[i,4] = best_py + ny * scale
 	end
+
+	# Clamp all insertion points to the plot region so GMT doesn't skip labels outside it
+	if CTRL.limits[7] != 0
+		xmin, xmax, ymin, ymax = CTRL.limits[7:10]
+	else
+		xmin, xmax, ymin, ymax = getregion(D)
+	end
+	for i in 1:nc
+		result[i,1] = clamp(result[i,1], xmin, xmax)
+		result[i,2] = clamp(result[i,2], ymin, ymax)
+		result[i,3] = clamp(result[i,3], xmin, xmax)
+		result[i,4] = clamp(result[i,4], ymin, ymax)
+	end
 	return result
 end
 
@@ -627,25 +720,19 @@ end
 # Returns Vector of (x, y, tangent_angle, curvature) where curvature = max angle change (rad) over a local window.
 function _bla_gen_candidates(c::Matrix{Float64}, ncand::Int, frac_lo::Float64=0.1, frac_hi::Float64=0.9)
 	n = size(c, 1)
-	arclen = Vector{Float64}(undef, n)
-	arclen[1] = 0.0
-	@inbounds for i in 2:n
-		arclen[i] = arclen[i-1] + hypot(c[i,1] - c[i-1,1], c[i,2] - c[i-1,2])
-	end
 	# Per-segment angles
 	seg_ang = Vector{Float64}(undef, max(n - 1, 1))
 	@inbounds for i in 1:n-1
 		seg_ang[i] = atan(c[i+1,2] - c[i,2], c[i+1,1] - c[i,1])
 	end
-	total = arclen[end]
+	# Distribute candidates evenly by INDEX (not arc-length) so that steep curves
+	# don't bunch all candidates in the same visual spot.
 	result = Vector{NTuple{4,Float64}}(undef, ncand)
 	@inbounds for j in 1:ncand
 		frac = frac_lo + (frac_hi - frac_lo) * (j - 1) / max(ncand - 1, 1)
-		target = frac * total
-		idx = searchsortedlast(arclen, target)
-		idx = clamp(idx, 1, n - 1)
-		seg_len = arclen[idx+1] - arclen[idx]
-		t = seg_len > 0 ? (target - arclen[idx]) / seg_len : 0.0
+		fidx = frac * (n - 1) + 1		# 1-based float index
+		idx = clamp(floor(Int, fidx), 1, n - 1)
+		t = fidx - idx
 		px = c[idx,1] + t * (c[idx+1,1] - c[idx,1])
 		py = c[idx,2] + t * (c[idx+1,2] - c[idx,2])
 		# Smoothed tangent over a few neighboring segments
@@ -764,59 +851,36 @@ function _add_labellines_apply(arg1::Vector{<:GMTdataset}, _cmd::Vector{String},
 		color = _extract_W_color(arg1[k].header)
 		font = color != "" ? "$(fontsize)p,,$color" : "$(fontsize)p"
 		lbl = occursin(' ', labels[k]) ? "\"$(labels[k])\"" : labels[k]
-		sq = @sprintf("-Sql%.10g/%.10g/%.10g/%.10g:+l%s+f%s+v", pos[k,1], pos[k,2], pos[k,3], pos[k,4], lbl, font)
-		hdr = arg1[k].header
-		hdr = replace(hdr, r" -Sq(?:[^\s\"]|\"[^\"]*\")*" => "")	# Remove any previous -Sq option
+		sq = @sprintf("-Sql%.7g/%.7g/%.7g/%.7g:+l%s+f%s+v", pos[k,1], pos[k,2], pos[k,3], pos[k,4], lbl, font)
+		hdr = replace(arg1[k].header, r" -Sq(?:[^\s\"]|\"[^\"]*\")*" => "")	# Remove any previous -Sq option
 		arg1[k].header = string(hdr, " ", sq)
 	end
 end
 
 # Inject outside labels into d[:text] so they are processed by finish_PS_nested as a nested text call.
 function _inject_outside_labels!(d::Dict{Symbol,Any}, D::Vector{<:GMTdataset}, labels::Vector{String}, fontsize::Int, _cmd::Vector{String})
-	info = _outside_label_data(D, labels, fontsize, _has_right_axis(_cmd[1]))
+	info = _outside_label_data(D, labels, fontsize)
 	Dt = mat2ds(hcat(info.x, info.y), info.labels)
 	color = info.colors[1]
 	fnt = color != "" ? "$(fontsize)p,,$color" : "$(fontsize)p"
 	d[:text] = (data=Dt, font=fnt, justify="ML", offset=(0.15, 0.0), noclip=true)
 end
 
-# Check if the right axis frame is drawn by looking for 'E', 'e' or 'r' in the -B axes spec.
-function _has_right_axis(cmd::String)::Bool
-	# Find -B options that specify axes (contain frame letters, not just intervals like -Baf)
-	for m in eachmatch(r"-B([A-Za-z]*)", cmd)
-		s = m.captures[1]
-		# Axes specs contain W/w/S/s/E/e/N/n/l/r/t/b/u/d  — skip pure interval specs like "af", "xaf", "p"
-		any(c -> c in "WSENwsen", s) && return any(c -> c in "Ee", s)
-	end
-	return false		# No axes spec found, default frames don't draw right axis
-end
-
 # Compute label positions outside the plot (at the right edge), with vertical repel to avoid overlaps.
-function _outside_label_data(D::Vector{<:GMTdataset}, labels::Vector{String}, fontsize::Int, right_axis::Bool)
+function _outside_label_data(D::Vector{<:GMTdataset}, labels::Vector{String}, fontsize::Int)
 	nc = length(D)
 
 	# Get plot region limits from CTRL.pocket_R  e.g. " -R0/10/-1.5/1.5"
-	r = split(CTRL.pocket_R[1][4:end], '/')		# skip " -R"
-	ymin = parse(Float64, r[3])
-	ymax = parse(Float64, r[4])
+	ymin, ymax = CTRL.limits[9], CTRL.limits[10]
 
 	# x positions: at plot region edge if right axis is drawn, otherwise at each curve's last point
 	xs = Vector{Float64}(undef, nc)
 	ys = Vector{Float64}(undef, nc)
 	colors = Vector{String}(undef, nc)
-	if right_axis
-		xmax = parse(Float64, r[2])
-		for k in 1:nc
-			xs[k] = xmax
-			ys[k] = D[k].data[end, 2]
-			colors[k] = _extract_W_color(D[k].header)
-		end
-	else
-		for k in 1:nc
-			xs[k] = D[k].data[end, 1]
-			ys[k] = D[k].data[end, 2]
-			colors[k] = _extract_W_color(D[k].header)
-		end
+	for k in 1:nc
+		xs[k] = D[k].data[end, 1]
+		ys[k] = D[k].data[end, 2]
+		colors[k] = _extract_W_color(D[k].header)
 	end
 
 	# Repel overlapping labels vertically
