@@ -231,6 +231,14 @@ function _common_plot_xyz(w::wrapDatasets, caller::String, O::Bool, K::Bool, is3
 			(@warn("Can't plot the connector when 'bar' is already a nested call."); pocket_call[][3] = nothing))
 	end
 
+	if (isa(arg1, Vector{<:GMTdataset}) && (val = find_in_dict(d, [:setcolors :colorset])[1]) !== nothing)
+		if (val === true || val == 1)    setcolors!(arg1)
+		elseif isa(val, Symbol)          setcolors!(arg1; colorset=val)
+		elseif isa(val, Vector{String})  setcolors!(arg1; colorset=val)
+		elseif isa(val, NamedTuple)      setcolors!(arg1; val...)
+		end
+	end
+
 	haskey(d, :labellines) && (arg1 = add_labellines!(arg1, d, _cmd))
 
 	(!IamModern[]) && put_in_legend_bag(d, _cmd, arg1, O, opt_l)

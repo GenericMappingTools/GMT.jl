@@ -251,11 +251,6 @@ function _mat2ds(@nospecialize(mat::Array{<:Real}), txt::Union{String,Vector{Str
 	_fill::Vector{String} = helper_ds_fill(d)
 
 	# ---  Here we deal with line colors and line thickness.
-	#if ((val = find_in_dict(d, [:lt :linethick :linethickness])[1]) !== nothing)
-		#if     (isa(val, AbstractString))  _lt::Vector{Float64} = [size_unit(val)]
-		#elseif (isa(val, Vector{String}))  _lt = size_unit(val)
-		#else                               _lt = isa(val, Real) ? [val] : vec(Float64.(val))
-		#end
 	_lt = hlp_desnany_vfloat(d, [:lt, :linethick, :linethickness])
 	if (!isempty(_lt))
 		_lts::Vector{String} = Vector{String}(undef, n_ds)
@@ -265,7 +260,6 @@ function _mat2ds(@nospecialize(mat::Array{<:Real}), txt::Union{String,Vector{Str
 		end
 	else
 		theW = (color_cycle || get(d, :ls, nothing) !== nothing || get(d, :linestyle, nothing) !== nothing || get(d, :pen, nothing) !== nothing) ? " -W" : ""
-		#theW = (color_cycle || haskey(d, :ls) || haskey(d, :linestyle) || haskey(d, :pen)) ? " -W" : ""
 		_lts = fill(theW, n_ds)		# If no pen setting no need to set -W
 	end
 
@@ -714,7 +708,59 @@ const matlab_cycle_colors = ["#0072BD", "#D95319", "#EDB120", "#7E2F8E", "#77AC3
 const alphabet_colors = ["#2BCE48", "#4C005C", "#005C31", "#5EF1F2", "#8F7C00", "#9DCC00", "#0075DC", "#94FFB5", "#740AFF", "#993F00", "#00998F", "#003380", "#191919", "#426600", "#808080", "#990000", "#C20088", "#E0FF66", "#F0A3FF", "#FF0010", "#FF5005", "#FFA8BB", "#FFA405", "#FFCC99", "#FFE100", "#FFFF80"]
 # https://sashamaps.net/docs/resources/20-colors/
 const simple_distinct = ["#e6194b", "#3cb44b", "#ffe119", "#4363d8", "#f58231", "#911eb4", "#46f0f0", "#f032e6", "#bcf60c", "#fabebe", "#008080", "#e6beff", "#9a6324", "#fffac8", "#800000", "#aaffc3", "#808000", "#ffd8b1", "#000075", "#808080"]
- 
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    setcolors!(D::Vector{<:GMTdataset}; colorset=:auto, fill=false) -> D
+
+Assign cycling line colors (`-W`) and optionally fill colors (`-G`) to a vector of datasets.
+
+### Args
+- `D`: Vector of GMTdataset to modify in-place.
+
+### Kwargs
+- `colorset`: Color palette to use. One of `:auto` (default: `:matlab` for ≤7 curves, `:distinct` otherwise),
+  `:matlab`, `:distinct`, or `:alphabet`. Can also be a `Vector{String}` of custom colors.
+- `fill`: If `true`, also add `-G<color>` fill to each header.
+
+If a `-W` option already exists in the header, the color is inserted or replaced while preserving
+pen width and style. If no `-W` exists, one is added with the color only.
+"""
+function setcolors!(D::Vector{<:GMTdataset}; colorset::Union{Symbol,Vector{String}}=:auto, fill::Bool=false)
+	nc = length(D)
+	if isa(colorset, Vector{String})
+		colors = colorset
+	else
+		colors = (colorset == :matlab)   ? matlab_cycle_colors :
+		         (colorset == :distinct) ? simple_distinct :
+		         (colorset == :alphabet) ? alphabet_colors :
+		         (nc <= 7) ? matlab_cycle_colors : simple_distinct		# :auto
+	end
+	n_colors = length(colors)
+
+	for k in 1:nc
+		c = colors[mod1(k, n_colors)]
+		hdr = D[k].header::String
+		m = match(r"-W([^ ]*)", hdr)
+		if (m !== nothing)				# Parse existing -W: could be "-W1.5" or "-W1.5,red" or "-W1.5,red,dash" or "-W,blue"
+			parts = split(m.captures[1], ',')
+			if (length(parts) == 1)					# No color yet, e.g. "-W1.5" → "-W1.5,<color>"
+				new_W = "-W" * parts[1] * "," * c
+			elseif (length(parts) == 2)				# Has color, e.g. "-W1.5,red" → "-W1.5,<color>"
+				new_W = "-W" * parts[1] * "," * c
+			else									# Has color+style, e.g. "-W1.5,red,dash" → "-W1.5,<color>,dash"
+				new_W = "-W" * parts[1] * "," * c * "," * join(parts[3:end], ",")
+			end
+			hdr = replace(hdr, m.match => new_W)
+		else
+			hdr = hdr * " -W" * c
+		end
+		fill && (hdr = replace(hdr, r" -G[^ ]+" => "") * " -G" * c)
+		D[k].header = hdr
+	end
+	return D
+end
+
 # ---------------------------------------------------------------------------------------------------
 """
     FV = fv2fv(F, V; proj="", proj4="", wkt="", epsg=0) -> GMTfv
