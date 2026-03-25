@@ -621,10 +621,18 @@ function _best_label_pos(D::Vector{<:GMTdataset}, labels::Vector{String}, nc::In
 		nd = hypot(nx_d, ny_d)
 		nx_d /= nd;  ny_d /= nd
 		half_d = min(xmax - xmin, ymax - ymin) * 0.015
-		result[i,1] = clamp(cx_dat - nx_d * half_d, xmin, xmax)
-		result[i,2] = clamp(cy_dat - ny_d * half_d, ymin, ymax)
-		result[i,3] = clamp(cx_dat + nx_d * half_d, xmin, xmax)
-		result[i,4] = clamp(cy_dat + ny_d * half_d, ymin, ymax)
+		s_neg, s_pos = half_d, half_d
+		if nx_d > 0       s_neg = min(s_neg, (cx_dat - xmin) / nx_d);  s_pos = min(s_pos, (xmax - cx_dat) / nx_d)
+		elseif nx_d < 0   s_neg = min(s_neg, (xmax - cx_dat) / -nx_d); s_pos = min(s_pos, (cx_dat - xmin) / -nx_d)
+		end
+		if ny_d > 0       s_neg = min(s_neg, (cy_dat - ymin) / ny_d);  s_pos = min(s_pos, (ymax - cy_dat) / ny_d)
+		elseif ny_d < 0   s_neg = min(s_neg, (ymax - cy_dat) / -ny_d); s_pos = min(s_pos, (cy_dat - ymin) / -ny_d)
+		end
+		s_neg = max(s_neg, 1e-6);  s_pos = max(s_pos, 1e-6)
+		result[i,1] = cx_dat - nx_d * s_neg
+		result[i,2] = cy_dat - ny_d * s_neg
+		result[i,3] = cx_dat + nx_d * s_pos
+		result[i,4] = cy_dat + ny_d * s_pos
 	end
 	return result
 end
@@ -669,30 +677,31 @@ function _label_pos_at_vals(D::Vector{<:GMTdataset}, nc::Int, xvals::Vector{Floa
 
 		!found && error("Value $(target) not found on curve $i")
 
-		# Build short perpendicular segment in data coordinates
-		# Use a small delta based on data range
-		dx = data[end,1] - data[1,1]
-		dy = data[end,2] - data[1,2]
-		scale = max(abs(dx), abs(dy)) * 0.005
+		# Build short perpendicular segment in data coordinates, guaranteed to stay inside the plot region.
+		if CTRL.limits[7] != 0
+			xmin, xmax, ymin, ymax = CTRL.limits[7:10]
+		else
+			xmin, xmax, ymin, ymax = getregion(D)
+		end
+		scale = max(xmax - xmin, ymax - ymin) * 0.005
 		scale = max(scale, 1e-6)
 		nx, ny = -sin(best_ang), cos(best_ang)
-		result[i,1] = best_px - nx * scale
-		result[i,2] = best_py - ny * scale
-		result[i,3] = best_px + nx * scale
-		result[i,4] = best_py + ny * scale
-	end
 
-	# Clamp all insertion points to the plot region so GMT doesn't skip labels outside it
-	if CTRL.limits[7] != 0
-		xmin, xmax, ymin, ymax = CTRL.limits[7:10]
-	else
-		xmin, xmax, ymin, ymax = getregion(D)
-	end
-	for i in 1:nc
-		result[i,1] = clamp(result[i,1], xmin, xmax)
-		result[i,2] = clamp(result[i,2], ymin, ymax)
-		result[i,3] = clamp(result[i,3], xmin, xmax)
-		result[i,4] = clamp(result[i,4], ymin, ymax)
+		# Asymmetric limits: each endpoint limited independently so the segment stays inside
+		# but extends as far as possible in the direction that has room.
+		s_neg, s_pos = scale, scale		# scale for (center - n*s) and (center + n*s)
+		if nx > 0       s_neg = min(s_neg, (best_px - xmin) / nx);  s_pos = min(s_pos, (xmax - best_px) / nx)
+		elseif nx < 0   s_neg = min(s_neg, (xmax - best_px) / -nx); s_pos = min(s_pos, (best_px - xmin) / -nx)
+		end
+		if ny > 0       s_neg = min(s_neg, (best_py - ymin) / ny);  s_pos = min(s_pos, (ymax - best_py) / ny)
+		elseif ny < 0   s_neg = min(s_neg, (ymax - best_py) / -ny); s_pos = min(s_pos, (best_py - ymin) / -ny)
+		end
+		s_neg = max(s_neg, 1e-6);  s_pos = max(s_pos, 1e-6)
+
+		result[i,1] = best_px - nx * s_neg
+		result[i,2] = best_py - ny * s_neg
+		result[i,3] = best_px + nx * s_pos
+		result[i,4] = best_py + ny * s_pos
 	end
 	return result
 end
@@ -881,15 +890,25 @@ end
 function _outside_label_data(D::Vector{<:GMTdataset}, labels::Vector{String}, fontsize::Int)
 	nc = length(D)
 
-	# Get plot region limits from CTRL.pocket_R  e.g. " -R0/10/-1.5/1.5"
-	ymin, ymax = CTRL.limits[9], CTRL.limits[10]
+	# Get plot region limits
+	if CTRL.limits[7] != 0
+		ymin, ymax = CTRL.limits[9], CTRL.limits[10]
+	else
+		_, _, ymin, ymax = getregion(D)
+	end
+	(ymax - ymin) < 1e-10 && (ymin -= 0.5; ymax += 0.5)	# degenerate range fallback
 
-	# x positions: at plot region edge if right axis is drawn, otherwise at each curve's last point
+	# x positions: at the right edge of the plot region so labels start just beyond the axis
+	if CTRL.limits[7] != 0
+		xmax = CTRL.limits[8]
+	else
+		_, xmax, _, _ = getregion(D)
+	end
 	xs = Vector{Float64}(undef, nc)
 	ys = Vector{Float64}(undef, nc)
 	colors = Vector{String}(undef, nc)
 	for k in 1:nc
-		xs[k] = D[k].data[end, 1]
+		xs[k] = xmax
 		ys[k] = D[k].data[end, 2]
 		colors[k] = _extract_W_color(D[k].header)
 	end
@@ -918,12 +937,18 @@ function _outside_label_data(D::Vector{<:GMTdataset}, labels::Vector{String}, fo
 end
 
 # Extract the color component from a -W option in a GMT header string.
-# -W can have forms like: -W0.5,red  -W,blue  -W1p,red,dash  -W0.5,200/100/50
-# The color is the second comma-separated field after -W.
+# -W can have forms like: -W0.5,red  -W,blue  -W1p,red,dash  -W0.5,200/100/50  -W#0072BD  -Wred
+# The color is the second comma-separated field, or the only field if it looks like a color (not a pen width).
 function _extract_W_color(header::AbstractString)::String
 	m = match(r"-W([^, ]*),([^, ]+)", header)
-	m === nothing && return ""
-	return String(m.captures[2])
+	m !== nothing && return String(m.captures[2])
+	# No comma: -W<something> where <something> might be just a color (e.g. -W#0072BD, -Wred)
+	m2 = match(r"-W([^ ]+)", header)
+	m2 === nothing && return ""
+	s = m2.captures[1]
+	# It's a color if it starts with # (hex), contains / (r/g/b), or is not a pure number/pen-width
+	(startswith(s, "#") || contains(s, "/") || match(r"^[\d.]+[cipmn]?$", s) === nothing) && return String(s)
+	return ""
 end
 
 # --------------------------------------------------------------------------------------------------

@@ -94,6 +94,8 @@ using InteractiveUtils
 	include("test_GRDs.jl")
 	println("		Entering: test_views.jl")
 	include("test_views.jl")
+	println("		Entering: test_labellines.jl")
+	include("test_labellines.jl")
 	println("		Entering: test_PSs.jl")
 	include("test_PSs.jl")
 	include("test_modern.jl")
