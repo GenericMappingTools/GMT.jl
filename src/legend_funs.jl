@@ -843,7 +843,8 @@ function add_labellines!(curves, d::Dict{Symbol,Any}, _cmd::Vector{String})
 	fnt = Int(get(dd, :fontsize, 8))
 	prefer = Symbol(get(dd, :prefer, :middle))
 	if get(dd, :outside, false) == true
-		_inject_outside_labels!(d, curves, labels, fnt, _cmd)
+		text_cmd = _inject_outside_labels!(d, curves, labels, fnt, _cmd)
+		push!(_cmd, text_cmd)
 		return curves
 	end
 	xv = get(dd, :xvals, nothing)
@@ -871,19 +872,27 @@ function _add_labellines_apply(arg1::Vector{<:GMTdataset}, _cmd::Vector{String},
 		color = _extract_W_color(arg1[k].header)
 		font = color != "" ? "$(fontsize)p,,$color" : "$(fontsize)p"
 		lbl = occursin(' ', labels[k]) ? "\"$(labels[k])\"" : labels[k]
-		sq = @sprintf("-Sql%.7g/%.7g/%.7g/%.7g:+l%s+f%s+v", pos[k,1], pos[k,2], pos[k,3], pos[k,4], lbl, font)
+		sq = @sprintf("-Sql%.7g/%.7g/%.7g/%.7g:+l%s+f%s+v+c0.1/0.1", pos[k,1], pos[k,2], pos[k,3], pos[k,4], lbl, font)
 		hdr = replace(arg1[k].header, r" -Sq(?:[^\s\"]|\"[^\"]*\")*" => "")	# Remove any previous -Sq option
 		arg1[k].header = string(hdr, " ", sq)
 	end
 end
 
-# Inject outside labels into d[:text] so they are processed by finish_PS_nested as a nested text call.
+# Inject outside labels with per-curve font colors.
+# Writes a temp file in GMT traditional text format (x y angle font justify text) and
+# calls text!() directly with the filename so GMT parses each record's font+color.
 function _inject_outside_labels!(d::Dict{Symbol,Any}, D::Vector{<:GMTdataset}, labels::Vector{String}, fontsize::Int, _cmd::Vector{String})
 	info = _outside_label_data(D, labels, fontsize)
-	Dt = mat2ds(hcat(info.x, info.y), info.labels)
-	color = info.colors[1]
-	fnt = color != "" ? "$(fontsize)p,,$color" : "$(fontsize)p"
-	d[:text] = (data=Dt, font=fnt, justify="ML", offset=(0.15, 0.0), noclip=true)
+	tmpf = joinpath(TMPDIR_USR.dir, "GMTjl_outside_labels.txt")
+	open(tmpf, "w") do io
+		for k in 1:length(labels)
+			c = info.colors[k]
+			fnt = c != "" ? "$(fontsize)p,,$c" : "$(fontsize)p"
+			@printf(io, "%.10g %.10g %s LM %s\n", info.x[k], info.y[k], fnt, info.labels[k])
+		end
+	end
+	#text!(tmpf, offset=(0.15, 0.0), F="+a0+f+j", noclip=true, Vd=2)
+	"pstext $(tmpf) -J -R -F+a0+f+j -D0.2/0.0 -N"		# Return the text command to be added to the main plot command
 end
 
 # Compute label positions outside the plot (at the right edge), with vertical repel to avoid overlaps.
