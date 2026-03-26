@@ -1059,8 +1059,8 @@ function df2ds(arg)::GMTdataset
 	if (isempty(col_time_names))						# Simple case, no time columns
 		D = mat2ds(mat, colnames=colnames)
 	else			# We have time columns. Need to convert them to unix time AND insert them in the matrix 'mat'
-		colnames = [i for i in names(arg) if Base.nonmissingtype(eltype(arg[!,i])) <: Union{Real, TimeType}]	# all of the names
-		inds_time = [findfirst(col_time_names[k] .== colnames) for k = 1:numel(col_time_names)]
+		colnames2 = [i for i in names(arg) if Base.nonmissingtype(eltype(arg[!,i])) <: Union{Real, TimeType}]	# all of the names
+		inds_time = [findfirst(col_time_names[k] .== colnames2) for k = 1:numel(col_time_names)]
 		new_mat = Matrix{Float64}(undef, size(mat, 1), size(mat, 2) + numel(inds_time))
 		new_inds = zeros(Int, size(mat, 2) + numel(inds_time))
 		for k = 1:numel(inds_time)						# Insert the time columns first.

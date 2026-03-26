@@ -105,19 +105,19 @@ d12 = Dict{Symbol,Any}(:labellines => ["sin", "cos"]);
 cmd12 = ["psxy -R0/10/-1.5/1.5 -JX15c/10c -Baf -BWSen"];
 Dl2 = GMT.add_labellines!(Dl, d12, cmd12);
 @test occursin("-Sq", cmd12[1])
-@test occursin("-Sql", Dl2[1].header)
-@test occursin("sin", Dl2[1].header)
-@test occursin("cos", Dl2[2].header)
+@test occursin("-Sql", Dl[1].header)
+@test occursin("sin", Dl[1].header)
+@test occursin("cos", Dl[2].header)
 # Line colors should appear in the -Sq font spec
-@test occursin("red", Dl2[1].header)
+@test occursin("red", Dl[1].header)
 
 # 13) add_labellines! with xvals via NamedTuple
 Dl3 = [mat2ds(hcat(x, sin.(x)), header="-W1,red"), mat2ds(hcat(x, cos.(x)), header="-W1,blue")]
 d13 = Dict{Symbol,Any}(:labellines => (labels=["sin", "cos"], xvals=5.0))
 cmd13 = ["psxy -R0/10/-1.5/1.5 -JX15c/10c -Baf -BWSen"]
-Dl3b = GMT.add_labellines!(Dl3, d13, cmd13)
+GMT.add_labellines!(Dl3, d13, cmd13)
 @test occursin("-Sq", cmd13[1])
-@test occursin("sin", Dl3b[1].header)
+@test occursin("sin", Dl3[1].header)
 
 # 14) add_labellines! replaces previous -Sq (not appends)
 Dl4 = [mat2ds(hcat(x, sin.(x)), header="-W1,red -Sql1/2/3/4:+l\"old\"+f8p+v")]

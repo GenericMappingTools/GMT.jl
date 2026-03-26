@@ -444,9 +444,9 @@ function _best_label_pos(D::Vector{<:GMTdataset}, labels::Vector{String}, nc::In
 	end
 
 	# Text half-dimensions in cm
-	pt2cm = 2.54 / 72
-	char_w = 0.55 * fontsize * pt2cm
-	char_h = fontsize * pt2cm
+	fs = fontsize * 2.54 / 72
+	char_w = 0.55 * fs
+	char_h = fs
 	hws = [length(l) * char_w / 2 for l in labels]    # half-width per label
 	hh  = char_h * 0.9                                 # half-height (shared)
 
@@ -820,7 +820,7 @@ Called from `_common_plot_xyz()` when the `labellines` keyword is used.
 - `val` can be a `Vector{<:AbstractString}` with one label per curve, or a NamedTuple with fields
   `labels` (required), `fontsize` (default 8), and `prefer` (`:begin`, `:middle`, or `:end`; default `:middle`).
 """
-function add_labellines!(curves, d::Dict{Symbol,Any}, _cmd::Vector{String})
+function add_labellines!(curves, d::Dict{Symbol,Any}, _cmd::Vector{String})::Nothing
 	val = find_in_dict(d, [:labellines])[1]
 	if isa(val, Vector{<:AbstractString})
 		labels = [string(l) for l in val]
@@ -835,7 +835,7 @@ function add_labellines!(curves, d::Dict{Symbol,Any}, _cmd::Vector{String})
 		else
 			_add_labellines(curves, _cmd, labels, 8, :middle)
 		end
-		return curves
+		return nothing
 	end
 	# NamedTuple path — dispatch to the right inner function based on which options are set
 	dd = nt2dict(val)
@@ -845,7 +845,7 @@ function add_labellines!(curves, d::Dict{Symbol,Any}, _cmd::Vector{String})
 	if get(dd, :outside, false) == true
 		text_cmd = _inject_outside_labels!(d, curves, labels, fnt, _cmd)
 		push!(_cmd, text_cmd)
-		return curves
+		return nothing
 	end
 	xv = get(dd, :xvals, nothing)
 	yv = get(dd, :yvals, nothing)
@@ -855,10 +855,10 @@ function add_labellines!(curves, d::Dict{Symbol,Any}, _cmd::Vector{String})
 		_yv::Vector{Float64} = yv === nothing ? Float64[] : isa(yv, Real) ? fill(Float64(yv), nc) : Float64.(yv)
 		pos = _label_pos_at_vals(curves, nc, _xv, _yv)
 		_add_labellines_apply(curves, _cmd, labels, fnt, pos)
-		return curves
+		return nothing
 	end
 	_add_labellines(curves, _cmd, labels, fnt, prefer)
-	return curves
+	return nothing
 end
 
 function _add_labellines(arg1::Vector{<:GMTdataset}, _cmd::Vector{String}, labels::Vector{String}, fontsize::Int, prefer::Symbol)
@@ -908,11 +908,7 @@ function _outside_label_data(D::Vector{<:GMTdataset}, labels::Vector{String}, fo
 	(ymax - ymin) < 1e-10 && (ymin -= 0.5; ymax += 0.5)	# degenerate range fallback
 
 	# x positions: at the right edge of the plot region so labels start just beyond the axis
-	if CTRL.limits[7] != 0
-		xmax = CTRL.limits[8]
-	else
-		_, xmax, _, _ = getregion(D)
-	end
+	xmax = (CTRL.limits[7] != 0) ? CTRL.limits[8] : getregion(D)[2]
 	xs = Vector{Float64}(undef, nc)
 	ys = Vector{Float64}(undef, nc)
 	colors = Vector{String}(undef, nc)
@@ -925,8 +921,7 @@ function _outside_label_data(D::Vector{<:GMTdataset}, labels::Vector{String}, fo
 	# Repel overlapping labels vertically
 	pw, ph = _get_plotsize()
 	sy = ph / (ymax - ymin)
-	pt2cm = 2.54 / 72
-	label_h = fontsize * pt2cm * 1.4		# label height in cm with some padding
+	label_h = fontsize * 2.54 / 72 * 1.4	# label height in cm with some padding
 	min_sep = label_h / sy					# minimum separation in data units
 
 	order = sortperm(ys)
@@ -1012,9 +1007,9 @@ function text_repel(points, labels::Vector{<:AbstractString}; fontsize::Int=10,
 	ay = (py .- ymin) .* sy
 
 	# Text box half-dimensions in cm (with padding)
-	pt2cm = 2.54 / 72
-	char_w = 0.55 * fontsize * pt2cm
-	char_h = fontsize * pt2cm
+	fs = fontsize * 2.54 / 72
+	char_w = 0.55 * fs
+	char_h = fs
 	pad = Float64(padding)
 	hws = [length(l) * char_w / 2 + pad for l in labels]
 	hhs = fill(char_h / 2 + pad, n)
