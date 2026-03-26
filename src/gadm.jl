@@ -89,24 +89,17 @@ function gadm(country, subregions...; children::Bool=false, names::Bool=false, c
 		error("Asked data for a level ($(plevel+1)) that is lower than lowest data level ($(_nlayers))")
 	end
 
-	function _get_attrib(feature)
-		n = Gdal.nfield(feature)
-		attrib = DictSvS()
-		[attrib[Gdal.getname(Gdal.getfielddefn(feature, i))] = string(Gdal.getfield(feature, i)) for i = 0:n-1]
-		attrib
-	end
-
 	function _get_polygs(gdfeature)
 		D = gd2gmt(getgeom(gdfeature[1], 0),"")
 		isa(D, GMTdataset) && (D = [D])		# Hopefully not too wasteful but it simplifies a lot the whole algo
-		att = _get_attrib(gdfeature[1])
+		att = helper_get_attrib(gdfeature[1])
 		for k = 1:numel(D)  D[k].attrib = att;  D[k].colnames = ["Lon", "Lat"]  end
-		D[1].attrib = _get_attrib(gdfeature[1])
+		D[1].attrib = helper_get_attrib(gdfeature[1])
 		((prj = getproj(Gdal.getlayer(data, 0))) != C_NULL) && (D[1].proj4 = toPROJ4(prj))
 		for n = 2:numel(gdfeature)
 			_D = gd2gmt(getgeom(gdfeature[n], 0),"")
 			isa(_D, GMTdataset) && (_D = [_D])
-			att = _get_attrib(gdfeature[n])
+			att = helper_get_attrib(gdfeature[n])
 			for k = 1:numel(_D)  _D[k].attrib = att;  _D[k].colnames = ["Lon", "Lat"]  end
 			append!(D, _D)
 		end
@@ -139,6 +132,13 @@ function gadm(country, subregions...; children::Bool=false, names::Bool=false, c
 	else
 		return _get_polygs(c)
 	end
+end
+
+function helper_get_attrib(feature)
+	n = Gdal.nfield(feature)
+	attrib = DictSvS()
+	[attrib[Gdal.getname(Gdal.getfielddefn(feature, i))] = string(Gdal.getfield(feature, i)) for i = 0:n-1]
+	attrib
 end
 
 # ------------------------------------------------------------------------------------------------------

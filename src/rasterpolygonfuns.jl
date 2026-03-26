@@ -51,10 +51,6 @@ function rasterzones!(GI::GItype, shapes::GDtype, fun::Function; isRaster=true, 
 	function within(bbox_p::Vector{Float64}, bbox_R::Vector{Float64})	# Check if the polygon BB is contained inside the image's region.
 		bbox_p[1] >= bbox_R[1] && bbox_p[2] <= bbox_R[2] && bbox_p[3] >= bbox_R[3] && bbox_p[4] <= bbox_R[4]
 	end
-	function maskit(GI_, mask, band)
-		t = (band > 0) ? skipnan(GI_[mask, band]) : skipnan(GI_[mask])
-		return (eltype(GI_) <: Integer) ? round(eltype(GI_), fun(t)) : fun(t)
-	end
 	function get_the_mask(D, nx, ny, touches, layout)::Union{Nothing, Matrix{Bool}}
 		# Compute the mask matrix
 		local mask
@@ -71,11 +67,11 @@ function rasterzones!(GI::GItype, shapes::GDtype, fun::Function; isRaster=true, 
 	end
 	function mask_GI!(GI, _GI, pix_x, pix_y, mask, n_layers) # Apply the mask to a Grid/Image
 		if (n_layers == 1)
-			_GI[mask] .= maskit(_GI, mask, 0)
+			_GI[mask] .= helper_maskit(_GI, mask, 0, fun)
 			GI[pix_y[1]:pix_y[2], pix_x[1]:pix_x[2]] = _GI
 		else
 			for n = 1:n_layers
-				_GI[mask, n] .= maskit(_GI, mask, n)
+				_GI[mask, n] .= helper_maskit(_GI, mask, n, fun)
 				GI[pix_y[1]:pix_y[2], pix_x[1]:pix_x[2], n] = _GI[:,:,n]
 			end
 		end
@@ -101,7 +97,7 @@ function rasterzones!(GI::GItype, shapes::GDtype, fun::Function; isRaster=true, 
 			((mask = get_the_mask(Dt, size(_GI, col_dim), size(_GI, row_dim), touches, layout)) === nothing) && continue
 
 			if (isRaster)  mask_GI!(GI, _GI, pix_x, pix_y, mask, n_layers)
-			else           for n = 1:n_layers   mat[k,n] = maskit(_GI, mask, n-1)   end
+			else           for n = 1:n_layers   mat[k,n] = helper_maskit(_GI, mask, n-1, fun)   end
 			end
 		end
 	else									# Compute the result (stats or raster) on a per polygon basis
@@ -116,12 +112,18 @@ function rasterzones!(GI::GItype, shapes::GDtype, fun::Function; isRaster=true, 
 			((mask = get_the_mask(shapes[k], size(_GI, col_dim), size(_GI, row_dim), touches, layout)) === nothing) && continue
 
 			if (isRaster)  mask_GI!(GI, _GI, pix_x, pix_y, mask, n_layers)
-			else           for n = 1:n_layers   mat[k,n] = maskit(_GI, mask, n-1)   end
+			else           for n = 1:n_layers   mat[k,n] = helper_maskit(_GI, mask, n-1, fun)   end
 			end
 		end
 		names = String[]					# We need something to return
 	end
 	return isRaster ? nothing : (mat, names)
+end
+
+function helper_maskit(GI_, mask, band, fun::Function)
+	# Move it out of a nested fun because it was Core.Boxed when called from another nested
+	t = (band > 0) ? skipnan(GI_[mask, band]) : skipnan(GI_[mask])
+	return (eltype(GI_) <: Integer) ? round(eltype(GI_), fun(t)) : fun(t)
 end
 
 # ---------------------------------------------------------------------------------------------------

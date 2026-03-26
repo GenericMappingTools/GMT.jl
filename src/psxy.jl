@@ -241,7 +241,7 @@ function _common_plot_xyz(w::wrapDatasets, caller::String, O::Bool, K::Bool, is3
 
 	if haskey(d, :labellines)
 		_cmd = gmt_proggy .* _cmd				# In any case we need this
-		arg1 = add_labellines!(arg1, d, _cmd)
+		add_labellines!(arg1, d, _cmd)
 	else
 		(!IamModern[]) && put_in_legend_bag(d, _cmd, arg1, O, opt_l)
 		_cmd = gmt_proggy .* _cmd
