@@ -239,11 +239,14 @@ function _common_plot_xyz(w::wrapDatasets, caller::String, O::Bool, K::Bool, is3
 		end
 	end
 
-	haskey(d, :labellines) && (arg1 = add_labellines!(arg1, d, _cmd))
+	if haskey(d, :labellines)
+		_cmd = gmt_proggy .* _cmd				# In any case we need this
+		arg1 = add_labellines!(arg1, d, _cmd)
+	else
+		(!IamModern[]) && put_in_legend_bag(d, _cmd, arg1, O, opt_l)
+		_cmd = gmt_proggy .* _cmd
+	end
 
-	(!IamModern[]) && put_in_legend_bag(d, _cmd, arg1, O, opt_l)
-
-	_cmd = gmt_proggy .* _cmd				# In any case we need this
 	_cmd = frame_opaque(_cmd, opt_B, opt_R, opt_J, opt_JZ)	# No -t in -B
 	(haskey(d, :inset)) && (pocket_call[][4] = arg1)		# If 'inset', it may be needed from next call
 	_cmd = finish_PS_nested(d, _cmd)						# If we have an 'inset', this makes a long tour plotting that inset.

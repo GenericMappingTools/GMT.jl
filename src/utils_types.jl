@@ -753,9 +753,9 @@ function setcolors!(D::Vector{<:GMTdataset}; colorset::Union{Symbol,Vector{Strin
 			end
 			hdr = replace(hdr, m.match => new_W)
 		else
-			hdr = hdr * " -W" * c
+			hdr = hdr * " -W," * c
 		end
-		fill && (hdr = replace(hdr, r" -G[^ ]+" => "") * " -G" * c)
+		fill && (hdr = strip(replace(hdr, r"\s?-G[^ ]+" => "")) * " -G" * c)
 		D[k].header = hdr
 	end
 	return D

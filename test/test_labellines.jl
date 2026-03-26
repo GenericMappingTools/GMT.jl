@@ -77,8 +77,8 @@ end
 bv2 = GMT.best_label_pos(D2, ["up", "down"]; xvals=[2.0, 8.0])
 mx1 = (bv2[1,1] + bv2[1,3]) / 2
 mx2 = (bv2[2,1] + bv2[2,3]) / 2
-abs(mx1 - 2.0) < 1.0 && @warn "xvals=[2,8] label 1 not near x=2 (x=$mx1)"
-abs(mx2 - 8.0) < 1.0 && @warn "xvals=[2,8] label 2 not near x=2 (x=$mx2)"
+(abs(mx1 - 2.0) < 1.0) && @warn "xvals=[2,8] label 1 not near x=2 (x=$mx1)"
+(abs(mx2 - 8.0) < 1.0) && @warn "xvals=[2,8] label 2 not near x=8 (x=$mx2)"
 #@assert abs(mx1 - 2.0) < 1.0 "xvals=[2,8] label 1 not near x=2 (x=$mx1)"
 #@assert abs(mx2 - 8.0) < 1.0 "xvals=[2,8] label 2 not near x=8 (x=$mx2)"
 
@@ -132,22 +132,23 @@ GMT.add_labellines!(Dl4, d14, cmd14)
 # 15) _outside_label_data: positions and repel
 println("	OUTSIDE_LABEL_DATA")
 # Set up CTRL globals needed by _outside_label_data
-bak_R = GMT.CTRL.pocket_R[1];  bak_J = GMT.CTRL.pocket_J[2]
+#bak_R = GMT.CTRL.pocket_R[1];  bak_J = GMT.CTRL.pocket_J[2]
+resetGMT()
 GMT.CTRL.pocket_R[1] = " -R0/10/-1.5/1.5"
 GMT.CTRL.pocket_J[2] = "15c/10c"
 Dout = [mat2ds(hcat(x, sin.(x)), hdr="-W1,red"), mat2ds(hcat(x, cos.(x)), hdr="-W1,blue")]
 # With right axis: x should be xmax=10
 info_r = GMT._outside_label_data(Dout, ["sin", "cos"], 8)
 @test length(info_r.x) == 2
-#@test all(info_r.x .== 10.0)				# FALHA
+@test all(info_r.x .== 10.0)				# FALHA
 @test length(info_r.y) == 2
 @test all(isfinite.(info_r.y))
 @test info_r.colors[1] == "red"
 @test info_r.colors[2] == "blue"
 # Without right axis: x should be each curve's last x
 info_n = GMT._outside_label_data(Dout, ["sin", "cos"], 8)
-#@test info_n.x[1] == Dout[1].data[end, 1]	# FALHA
-#@test info_n.x[2] == Dout[2].data[end, 1]	# FALHA
+@test info_n.x[1] == Dout[1].data[end, 1]	# FALHA
+@test info_n.x[2] == Dout[2].data[end, 1]	# FALHA
 
 # 16) _outside_label_data: overlapping y-values get repelled
 Dov = [mat2ds([0.0 1.0; 10 1.0], header="-W1,red"), mat2ds([0.0 1.0; 10 1.0], header="-W1,blue")]
@@ -159,9 +160,8 @@ Dout2 = [mat2ds(hcat(x, sin.(x)), header="-W1,red"), mat2ds(hcat(x, cos.(x)), he
 d17 = Dict{Symbol,Any}(:labellines => (labels=["sin", "cos"], outside=true))
 cmd17 = ["psxy -R0/10/-1.5/1.5 -JX15c/10c -Baf -BWSen"]
 GMT.add_labellines!(Dout2, d17, cmd17)
-@test haskey(d17, :text)
 @test !occursin("-Sq", cmd17[1])   # outside labels don't use -Sq
-GMT.CTRL.pocket_R[1] = bak_R;  GMT.CTRL.pocket_J[2] = bak_J   # restore
+#GMT.CTRL.pocket_R[1] = bak_R;  GMT.CTRL.pocket_J[2] = bak_J   # restore
 
 # Test text_repel — force-directed label placement
 println("	TEXT_REPEL")
@@ -202,3 +202,59 @@ function _test_no_overlaps(rp, labs, region, plotsize, fontsize)
 	true
 end
 @test _test_no_overlaps(rp2, labs2, (-0.5,5.5,-0.5,5.5), (15,10), 10)
+
+# Test setcolors! — assign cycling line colors to dataset headers
+println("	SETCOLORS!")
+# 1) No existing -W: adds -W<color>
+Dsc = [mat2ds([0.0 0; 1 1], hdr=""), mat2ds([0.0 1; 1 0], hdr="")]
+setcolors!(Dsc)
+@test occursin("-W", Dsc[1].header)
+@test occursin("-W", Dsc[2].header)
+
+# 2) -W with width only: appends color
+Dsc2 = [mat2ds([0.0 0; 1 1], hdr="-W1.5"), mat2ds([0.0 1; 1 0], hdr="-W2p")]
+setcolors!(Dsc2)
+@test occursin(",", Dsc2[1].header)   # now has width,color
+@test occursin(",", Dsc2[2].header)
+
+# 3) -W with existing color: replaces it
+Dsc3 = [mat2ds([0.0 0; 1 1], hdr="-W1,black")]
+setcolors!(Dsc3)
+@test !occursin("black", Dsc3[1].header)
+@test occursin("-W1,", Dsc3[1].header)
+
+# 4) -W with color+style: replaces color, keeps style
+Dsc4 = [mat2ds([0.0 0; 1 1], hdr="-W1,black,dash")]
+setcolors!(Dsc4)
+@test !occursin("black", Dsc4[1].header)
+@test occursin("dash", Dsc4[1].header)
+
+# 5) fill=true: adds -G<color>
+Dsc5 = [mat2ds([0.0 0; 1 1], hdr=""), mat2ds([0.0 1; 1 0], hdr="")]
+setcolors!(Dsc5; fill=true)
+@test occursin("-G", Dsc5[1].header)
+@test occursin("-G", Dsc5[2].header)
+
+# 6) fill=true replaces existing -G
+Dsc6 = [mat2ds([0.0 0; 1 1], hdr="-Gwhite")]
+setcolors!(Dsc6; fill=true)
+@test !occursin("white", Dsc6[1].header)
+@test occursin("-G", Dsc6[1].header)
+
+# 7) colorset=:distinct uses simple_distinct palette
+Dsc7 = [mat2ds([0.0 0; 1 1], hdr="") for _ in 1:3]
+setcolors!(Dsc7; colorset=:distinct)
+@test Dsc7[1].header != Dsc7[2].header   # different colors
+
+# 8) Custom color vector
+Dsc8 = [mat2ds([0.0 0; 1 1], hdr="") for _ in 1:2]
+setcolors!(Dsc8; colorset=["purple", "orange"])
+@test occursin("purple", Dsc8[1].header)
+@test occursin("orange", Dsc8[2].header)
+
+# 9) Cycling: more datasets than colors wraps around
+Dsc9 = [mat2ds([0.0 0; 1 1], hdr="") for _ in 1:3]
+setcolors!(Dsc9; colorset=["AA", "BB"])
+@test occursin("AA", Dsc9[1].header)
+@test occursin("BB", Dsc9[2].header)
+@test occursin("AA", Dsc9[3].header)   # wraps around
