@@ -163,12 +163,12 @@ GMT.add_labellines!(Dout2, d17, cmd17)
 @test !occursin("-Sq", cmd17[1])   # outside labels don't use -Sq
 #GMT.CTRL.pocket_R[1] = bak_R;  GMT.CTRL.pocket_J[2] = bak_J   # restore
 
-# Test text_repel — force-directed label placement
+# Test textrepel — force-directed label placement
 println("	TEXT_REPEL")
 # 1) Clustered points: labels must spread out
 pts = [1.0 1.0; 1.05 1.05; 0.95 1.0; 1.0 0.95; 1.05 0.95]
 labs = ["Aa", "Bb", "Cc", "Dd", "Ee"]
-rp = GMT.text_repel(pts, labs)
+rp = GMT.textrepel(pts, labs)
 @test size(rp) == (5, 2)
 # All results must be finite
 @test all(isfinite.(rp))
@@ -177,7 +177,7 @@ rp = GMT.text_repel(pts, labs)
 resetGMT()
 pts2 = [0.0 0.0; 5.0 0.0; 0.0 5.0; 5.0 5.0]
 labs2 = ["A", "B", "C", "D"]
-rp2 = GMT.text_repel(pts2, labs2)
+rp2 = GMT.textrepel(pts2, labs2)
 for i in 1:4
 	@test abs(rp2[i,1] - pts2[i,1]) < 1.5  # should stay close
 	@test abs(rp2[i,2] - pts2[i,2]) < 1.5
@@ -185,7 +185,7 @@ end
 
 # 3) GMTdataset input
 D_repel = mat2ds(pts)
-rp3 = GMT.text_repel(D_repel, labs)
+rp3 = GMT.textrepel(D_repel, labs)
 @test size(rp3) == (5, 2)
 
 # 5) No overlaps in result (axis-aligned box check in cm space)

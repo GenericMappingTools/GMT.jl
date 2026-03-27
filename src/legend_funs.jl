@@ -957,7 +957,7 @@ end
 
 # --------------------------------------------------------------------------------------------------
 """
-    text_repel(points, labels; fontsize=10, force_push=1.0, force_pull=0.01,
+    textrepel(points, labels; fontsize=10, force_push=1.0, force_pull=0.01,
                max_iter=500, padding=0.15) -> Matrix{Float64}
 
 Compute adjusted text label positions so that they do not overlap each other or the data points,
@@ -976,10 +976,31 @@ similar to R's `ggrepel`. Uses a force-directed simulation: labels repel each ot
 ### Returns
 A `Matrix{Float64}` of size `(N, 2)` with adjusted `(x, y)` positions in data coordinates.
 """
-function text_repel(points, labels::Vector{<:AbstractString}; fontsize::Int=10,
-                    force_push::Real=1.0, force_pull::Real=0.01, max_iter::Int=500, padding::Real=0.15)
+function textrepel(points, labels::Vector{<:AbstractString}; fontsize::Int=10,
+                    force_push::Real=1.0, force_pull::Real=0.01, max_iter::Int=500, padding::Real=0.15, offset=10)
+	ax, ay, pw, ph, sx, sy, xmin, ymin, n = _repel_setup(points)
+	n != length(labels) && error("Number of points ($n) must match number of labels ($(length(labels)))")
+	fs = fontsize * 2.54 / 72
+	pad = Float64(padding)
+	hws = [length(l) * 0.55 * fs / 2 + pad for l in labels]
+	hhs = fill(fs / 2 + pad, n)
+	return _repel_core(ax, ay, hws, hhs, pw, ph, sx, sy, xmin, ymin,
+	                   Float64(force_push), Float64(force_pull), Float64(offset) * 2.54 / 72, max_iter)
+end
 
-	# Extract point coordinates
+# --------------------------------------------------------------------------------------------------
+function circlerepel(points; diameter::Real=10, force_push::Real=1.0, force_pull::Real=0.01,
+                     max_iter::Int=500, offset=10)
+	ax, ay, pw, ph, sx, sy, xmin, ymin, n = _repel_setup(points)
+	rad = Float64(diameter) * 2.54 / 72 / 2
+	hws = fill(rad, n)
+	hhs = fill(rad, n)
+	return _repel_core(ax, ay, hws, hhs, pw, ph, sx, sy, xmin, ymin,
+	                   Float64(force_push), Float64(force_pull), Float64(offset) * 2.54 / 72, max_iter)
+end
+
+# --------------------------------------------------------------------------------------------------
+function _repel_setup(points)
 	if isa(points, GMTdataset)
 		px = Float64.(points[:,1]);  py = Float64.(points[:,2])
 	elseif isa(points, Vector{<:GMTdataset})
@@ -988,9 +1009,6 @@ function text_repel(points, labels::Vector{<:AbstractString}; fontsize::Int=10,
 		px = Float64.(points[:,1]);  py = Float64.(points[:,2])
 	end
 	n = length(px)
-	n != length(labels) && error("Number of points ($n) must match number of labels ($(length(labels)))")
-
-	# Plot region from CTRL.limits, fallback to data bbox
 	xmin, xmax, ymin, ymax = (CTRL.limits[7] != 0 || CTRL.limits[8] != 0) ?
 	                         (CTRL.limits[7], CTRL.limits[8], CTRL.limits[9], CTRL.limits[10]) :
 	                         (CTRL.limits[1] != CTRL.limits[2]) ?
@@ -1001,39 +1019,33 @@ function text_repel(points, labels::Vector{<:AbstractString}; fontsize::Int=10,
 	(dy == 0) && (ymin -= 0.5; ymax += 0.5; dy = 1.0)
 	pw, ph = _get_plotsize()
 	sx, sy = pw / dx, ph / dy
-
-	# Convert anchor points to cm space
 	ax = (px .- xmin) .* sx
 	ay = (py .- ymin) .* sy
+	return ax, ay, pw, ph, sx, sy, xmin, ymin, n
+end
 
-	# Text box half-dimensions in cm (with padding)
-	fs = fontsize * 2.54 / 72
-	char_w = 0.55 * fs
-	char_h = fs
-	pad = Float64(padding)
-	hws = [length(l) * char_w / 2 + pad for l in labels]
-	hhs = fill(char_h / 2 + pad, n)
-
-	# Initialize label positions at anchor points
+# --------------------------------------------------------------------------------------------------
+function _repel_core(ax, ay, hws, hhs, pw, ph, sx, sy, xmin, ymin, fp, fa, min_off, max_iter)
+	n = length(ax)
 	lx = copy(ax)
 	ly = copy(ay)
-	vx = zeros(n)		# velocities
+	vx = zeros(n)
 	vy = zeros(n)
+	fx = zeros(n)
+	fy = zeros(n)
+	decay = 0.7
 
-	fp = Float64(force_push)
-	fa = Float64(force_pull)
-	decay = 0.7		# velocity damping
-
+	global iters = 0
+	move_hist = fill(Inf, 10)
 	for _iter in 1:max_iter
-		fx = zeros(n)
-		fy = zeros(n)
+		fill!(fx, 0.0)
+		fill!(fy, 0.0)
 
 		# Repulsion between label pairs
 		for i in 1:n-1, j in i+1:n
-			ox = (hws[i] + hws[j]) - abs(lx[i] - lx[j])	# overlap in x
-			oy = (hhs[i] + hhs[j]) - abs(ly[i] - ly[j])	# overlap in y
-			(ox <= 0 || oy <= 0) && continue				# no overlap
-			# Push proportional to overlap area
+			ox = (hws[i] + hws[j]) - abs(lx[i] - lx[j])
+			oy = (hhs[i] + hhs[j]) - abs(ly[i] - ly[j])
+			(ox <= 0 || oy <= 0) && continue
 			area = ox * oy
 			dx = lx[i] - lx[j]
 			dy = ly[i] - ly[j]
@@ -1045,11 +1057,10 @@ function text_repel(points, labels::Vector{<:AbstractString}; fontsize::Int=10,
 			fx[j] -= fdx;  fy[j] -= fdy
 		end
 
-		# Repulsion from data points (push labels away from all anchor points)
+		# Repulsion from data points
 		for i in 1:n, j in 1:n
 			dx = lx[i] - ax[j]
 			dy = ly[i] - ay[j]
-			# Check if point j is inside label i's box
 			(abs(dx) > hws[i] || abs(dy) > hhs[i]) && continue
 			dist = max(hypot(dx, dy), 1e-6)
 			force = fp * 0.5 / dist
@@ -1057,28 +1068,103 @@ function text_repel(points, labels::Vector{<:AbstractString}; fontsize::Int=10,
 			fy[i] += force * dy / dist
 		end
 
-		# Attraction back to own anchor (spring force)
+		# Attraction back to own anchor
 		for i in 1:n
 			fx[i] -= fa * (lx[i] - ax[i])
 			fy[i] -= fa * (ly[i] - ay[i])
 		end
 
 		# Update velocities and positions
-		any_movement = false
+		max_move = 0.0
 		for i in 1:n
 			vx[i] = (vx[i] + fx[i]) * decay
 			vy[i] = (vy[i] + fy[i]) * decay
+			spd = hypot(vx[i], vy[i])
+			if spd > 0.5
+				vx[i] *= 0.5 / spd
+				vy[i] *= 0.5 / spd
+			end
+			old_x, old_y = lx[i], ly[i]
 			lx[i] += vx[i]
 			ly[i] += vy[i]
-			# Clamp to plot region (cm space)
-			lx[i] = clamp(lx[i], hws[i], pw - hws[i])
-			ly[i] = clamp(ly[i], hhs[i], ph - hhs[i])
-			(abs(vx[i]) > 1e-4 || abs(vy[i]) > 1e-4) && (any_movement = true)
+			cx = clamp(lx[i], hws[i], pw - hws[i])
+			cy = clamp(ly[i], hhs[i], ph - hhs[i])
+			(cx != lx[i]) && (vx[i] = 0.0)
+			(cy != ly[i]) && (vy[i] = 0.0)
+			lx[i] = cx;  ly[i] = cy
+			max_move = max(max_move, abs(lx[i] - old_x), abs(ly[i] - old_y))
 		end
-		!any_movement && break
+		iters += 1
+		#println("  iter $iters: max_move = $max_move")
+		move_hist[mod1(_iter, 10)] = max_move
+		(_iter >= 50 && minimum(move_hist) >= maximum(move_hist) * 0.9) && break
+	end
+	#println("textrepel: completed $iters iterations")
+
+	# Enforce minimum offset
+	if min_off > 0
+		for i in 1:n
+			dx = lx[i] - ax[i]
+			dy = ly[i] - ay[i]
+			dist = hypot(dx, dy)
+			if dist < min_off && dist > 1e-6
+				scale = min_off / dist
+				lx[i] = ax[i] + dx * scale
+				ly[i] = ay[i] + dy * scale
+				lx[i] = clamp(lx[i], hws[i], pw - hws[i])
+				ly[i] = clamp(ly[i], hhs[i], ph - hhs[i])
+			elseif dist < 1e-6
+				ly[i] = ay[i] + min_off
+				ly[i] = clamp(ly[i], hhs[i], ph - hhs[i])
+			end
+		end
 	end
 
-	# Convert back to data coordinates
+	# Pull-back: minimize offset without creating overlaps
+	for _pull in 1:50
+		moved = false
+		for i in 1:n
+			tox = ax[i] - lx[i]
+			toy = ay[i] - ly[i]
+			cur_dist = hypot(tox, toy)
+			(cur_dist < 1e-6) && continue
+			max_pull = min_off > 0 ? max(cur_dist - min_off, 0.0) / cur_dist : 1.0
+			(max_pull < 1e-6) && continue
+
+			lo, hi, best_t = 0.0, max_pull, 0.0
+			for _ in 1:20
+				t = (lo + hi) * 0.5
+				nx = lx[i] + t * tox
+				ny = ly[i] + t * toy
+				ok = true
+				for j in 1:n
+					(i == j) && continue
+					if (hws[i] + hws[j]) - abs(nx - lx[j]) > 0 && (hhs[i] + hhs[j]) - abs(ny - ly[j]) > 0
+						ok = false; break
+					end
+				end
+				if ok
+					for j in 1:n
+						if abs(nx - ax[j]) < hws[i] && abs(ny - ay[j]) < hhs[i]
+							ok = false; break
+						end
+					end
+				end
+				if ok
+					best_t = t;  lo = t
+				else
+					hi = t
+				end
+			end
+			if best_t > 1e-6
+				lx[i] += best_t * tox
+				ly[i] += best_t * toy
+				moved = true
+			end
+		end
+		!moved && break
+	end
+
 	result = Matrix{Float64}(undef, n, 2)
 	for i in 1:n
 		result[i, 1] = lx[i] / sx + xmin

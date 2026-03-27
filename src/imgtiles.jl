@@ -1008,6 +1008,7 @@ function geocoder(address::String; options=String[])::GDtype
 	_ops = isempty(options) ? C_NULL : options	# The default is ["SERVICE", "OSM_NOMINATIM"]
 	hSession = Gdal.OGRGeocodeCreateSession(_ops)
 	hLayer = Gdal.OGRGeocode(hSession, address, C_NULL, [""])
+	hLayer == C_NULL && (@warn("Geocoding failed for the address $address"); return GMTdataset())
 	hFDefn = Gdal.OGR_L_GetLayerDefn(hLayer)
 	hFeature = Gdal.OGR_L_GetNextFeature(hLayer)
 	count = Gdal.OGR_FD_GetFieldCount(hFDefn)
