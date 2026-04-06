@@ -1807,3 +1807,54 @@ end
 include("makeDCWs.jl")
 include("getdcw.jl")
 #include("tttAPI.jl")
+
+#=
+function nada(offset=10)
+	pts = [5.0 5.0; 5.1 5.1; 4.9 5.0; 5.0 4.9; 5.1 4.9; 4.9 5.1]
+	labels = ["P1", "P2", "P3", "P4", "P5", "P6"]
+
+	scatter(pts, region=[3, 7, 3, 7], marker=:circle, ms="8p", fill=:tomato, ml=:thin, frame=:af)
+
+	pos = textrepel(pts, labels, fontsize=10, offset=offset)
+
+	lines = [mat2ds([pts[k,1] pts[k,2]; pos[k,1] pos[k,2]]) for k in 1:6]
+	plot!(lines, pen="0.3p,gray50,dashed")
+	text!(mat2ds(pos, text=labels), font=(10,:Helvetica), justify=:CM, fill=:white, pen=:thin, clearance="1p", show=1)
+end
+
+function nada2(offset=10)
+	cities = [
+		-9.14  38.74;   # Lisbon
+		-8.61  41.15;   # Porto
+		-3.70  40.42;   # Madrid
+		-3.68  40.48;   # nearby Madrid (Alcobendas)
+		-0.38  39.47;   # Valencia
+		2.17  41.39;   # Barcelona
+		2.10  41.35;   # nearby Barcelona (Hospitalet)
+		-8.43  43.37;   # A Coruña
+		-5.98  37.39;   # Seville
+		-1.13  37.99;   # Murcia
+	]
+
+	names = ["Lisbon", "Porto", "Madrid", "Alcobendas",
+			"Valencia", "Barcelona", "Hospitalet",
+			"A Coruña", "Seville", "Murcia"]
+
+	# Plot the coast as background
+	coast(region=[-11, 4, 35, 45], proj=:Mercator, shore=true,
+		land=:lightyellow, water=:lightblue, borders=(1,:thinnest))
+
+	# Plot city points
+	scatter!(cities, marker=:circle, ms="5p", fill=:red, ml=:thinnest)
+
+	# Compute repelled label positions
+	tic()
+	pos = textrepel(cities, names, fontsize=8, offset=offset, max_iter=200)
+	toc()
+
+	# Draw leader lines (one multi-segment dataset) and place labels
+	lines = [mat2ds([cities[k,1] cities[k,2]; pos[k,1] pos[k,2]]) for k in 1:length(names)]
+	plot!(lines, pen="0.3p,gray50,dashed")
+	text!(mat2ds(pos, text=names), font=(8,:Helvetica,:black), justify=:CM, fill=:white, pen=:thinnest, clearance="1p", show=1)
+end
+=#
