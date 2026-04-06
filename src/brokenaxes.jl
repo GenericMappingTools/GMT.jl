@@ -105,7 +105,7 @@ function _brokenplot_core(arg1, first::Bool, axis::Symbol, brkranges, fixed_rang
 
 	nranges     = length(brkranges)
 	range_spans = [r[2] - r[1] for r in brkranges]
-	scale_brks  = [panel_sizes[i] / range_spans[i] for i in 1:nranges]
+	#scale_brks  = [panel_sizes[i] / range_spans[i] for i in 1:nranges]
 	flo, fhi    = fixed_range[1], fixed_range[2]
 	shift_key   = axis === :x ? :X : :Y
 
@@ -115,9 +115,7 @@ function _brokenplot_core(arg1, first::Bool, axis::Symbol, brkranges, fixed_rang
 		["X$(fixed_sz)c/$(panel_sizes[i])c" for i in 1:nranges]
 
 	# Frame sides: suppress inner borders on the broken-axis direction
-	sides_1st = axis === :x ? "WSN"  : "WSe"
-	sides_lst = axis === :x ? "ESN"  : "WNe"
-	sides_mid = axis === :x ? "SN"   : "We"
+	(axis === :x) ? (sides_fst = "WSN"; sides_lst = "ESN"; sides_mid = "SN") : (sides_fst = "WSe"; sides_lst = "WNe"; sides_mid = "We")
 
 	# X-broken: title on panel 1; Y-broken: title on topmost panel (nranges)
 	title_panel = (axis === :x) ? 1 : nranges
@@ -131,12 +129,12 @@ function _brokenplot_core(arg1, first::Bool, axis::Symbol, brkranges, fixed_rang
 		blo, bhi = brkranges[i]
 		di[:region] = axis === :x ? (blo, bhi, flo, fhi) : (flo, fhi, blo, bhi)
 		di[:proj]   = projs[i]
-		sides = (nranges == 1) ? "WSEN" : (i == 1) ? sides_1st : (i == nranges) ? sides_lst : sides_mid
+		sides = (nranges == 1) ? "WSEN" : (i == 1) ? sides_fst : (i == nranges) ? sides_lst : sides_mid
 		di[:frame]  = (axes = sides, annot = :auto, ticks = :auto)
-		i > 1 && (di[shift_key] = "$(panel_sizes[i-1] + gap)c")
+		(i > 1) && (di[shift_key] = "$(panel_sizes[i-1] + gap)c")
 		# title/subtitle only on title_panel; xlabel/ylabel only on panel 1
-		i != title_panel && (delete!(di, :title); delete!(di, :subtitle))
-		i != 1           && (delete!(di, :xlabel); delete!(di, :ylabel))
+		(i != title_panel) && (delete!(di, :title); delete!(di, :subtitle))
+		(i != 1)           && (delete!(di, :xlabel); delete!(di, :ylabel))
 		common_plot_xyz("", arg1, "plot", i == 1 && first, false, di)
 	end
 

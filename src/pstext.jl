@@ -73,8 +73,9 @@ function _text(w::wrapDatasets, ismatrix::Bool, O::Bool, K::Bool, d::Dict{Symbol
 
 	(is_in_dict(d, [:L :list]) !== nothing) && return gmt("pstext -L")
 
-    gmt_proggy = (IamModern[]) ? "text " : "pstext "
+	gmt_proggy = (IamModern[]) ? "text " : "pstext "
 
+	arg3 = nothing			# May be needed if a text position is passed in via -D
 	N_args = (arg1 === nothing) ? 0 : 1
 	first = !O
 
@@ -125,7 +126,24 @@ function _text(w::wrapDatasets, ismatrix::Bool, O::Bool, K::Bool, d::Dict{Symbol
 
 	cmd, arg1, arg2, N_args = add_opt_cpt(d, cmd, [:C :color], 'C', N_args, arg1)
 
-	cmd = add_opt(d, cmd, "D", [:D :offset], (away=("j", nothing, 1), corners=("J", nothing, 1), shift="", line=("+v",add_opt_pen)))
+	# Deal with the -D option
+	if ((symb = is_in_dict(d, [:D :offset])) !== nothing && (isa(d[symb], AbstractArray)))	# See if a text positions was passed via Matrix/DS
+		cmd *= " -D+f"
+		fpos::GMTdataset = mat2ds(d[symb])
+		delete!(d, symb)
+		(N_args == 0) ? arg1 = fpos : (N_args == 1) ? arg2 = fpos : arg3 = fpos
+	end
+
+	opt_D = add_opt(d, "", "D", [:D :offset], (away=("j", nothing, 1), corners=("J", nothing, 1), shift="", line=("+v",add_opt_pen), offsets=("+f",parse_Df)))
+	if ((ind = findfirst("+f", opt_D)) !== nothing)
+		if (opt_D[ind[1]+2] == '?')
+			opt_D = replace(opt_D, "+f?" => "+f")
+			fpos = mat2ds(CTRL.pocket_d[1][:offsets]);		CTRL.pocket_d[1] = Dict{String, Any}()	# :offsets comes from the add_opt() above
+			(N_args == 0) ? arg1 = fpos : (N_args == 1) ? arg2 = fpos : arg3 = fpos
+		end
+	end
+	cmd *= opt_D
+
 	opt_F = add_opt(d, "", "F", [:F :attrib],
 		(angle="+a", Angle="+A", font=("+f", font), justify="+j", region_justify="+c", header="_+h", label="_+l", rec_number="_+r", text="+t", zvalues="_+z"); expand=true)
 	cmd = add_opt_fill(cmd, d, [:G :fill], "G")
@@ -157,7 +175,7 @@ function _text(w::wrapDatasets, ismatrix::Bool, O::Bool, K::Bool, d::Dict{Symbol
 			opt_F = " -F+f"
 			outline = "black=~" * outline * " "
 		else
-			if ((ind = findfirst("+f", opt_F)) !== nothing)
+			if (findfirst("+f", opt_F) !== nothing)
 				if ((s = split(split(opt_F, "+f")[2], '+')[1]) != "")	# Example: split(split("-F+f28p,Times", "+f")[2], '+')[1] = "28p,Times"
 					opt_F = replace(opt_F, s => "")						# Remove the old font specification from -F
 					t_color = (count_chars(s, ',') <= 1) ? ",black=~" : "=~"
@@ -179,7 +197,7 @@ function _text(w::wrapDatasets, ismatrix::Bool, O::Bool, K::Bool, d::Dict{Symbol
 		isa(arg1, GDtype) && (pocket_call[][1] = arg1)	# For the case this is a nested call
 		return r
 	end
-	prep_and_call_finish_PS_module(d, _cmd, "", K, O, true, arg1, arg2)
+	prep_and_call_finish_PS_module(d, _cmd, "", K, O, true, arg1, arg2, arg3)
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -197,6 +215,16 @@ function text(txt::Vector{String}; x=nothing, y=nothing, first=true, kwargs...)
 	text("", D; first=first, kwargs...)
 end
 text!(txt::Vector{String}; x=nothing, y=nothing, kw...) = text(txt; x=x, y=y, first=false, kw...)
+
+function parse_Df(d::Dict{Symbol, Any}, s::Vector{Symbol})
+	arg = d[s[1]]		# s is a vector with only one element
+	isa(arg, String) && return arg
+	if (isa(arg, AbstractArray))
+		CTRL.pocket_d[1] = d			# Store the offsets array in this 'd'. A hack but we don't have a global pocket
+		return "?"
+	end
+	error("Bad arguments type")
+end
 
 #= ---------------------------------------------------------------------------------------------------
 function text(; text::Union{AbstractString, Vector{AbstractString}}="", x=nothing, y=nothing, first=true, kw...)
