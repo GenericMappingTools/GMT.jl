@@ -204,6 +204,7 @@ include("grd_operations.jl")
 include("common_options.jl")
 const LEGEND_TYPE = Ref{legend_bag}(legend_bag())# To store Legends info
 include("beziers.jl")
+include("brokenaxes.jl")
 include("circfit.jl")
 include("crop.jl")
 include("custom_symb_funs.jl")
@@ -446,6 +447,7 @@ end
 #Base.precompile(Tuple{typeof(upGMT),Bool, Bool})		# Here it doesn't print anything.
 #Base.precompile(Tuple{Dict{Symbol, Any}, Vector{String}})		# Here it doesn't print anything.
 #Base.precompile(Tuple{typeof(Base.vect), Array{String, 1}, Vararg{Array{String, 1}}})
+Base.precompile(Tuple{typeof(GMT.axis), Base.Dict{Symbol, Any}, Bool, Bool, Bool, Bool, Base.Dict{Symbol, Any}})
 
 function __init__(test::Bool=false)
 	clear_sessions(3600)# Delete stray sessions dirs older than 1 hour
