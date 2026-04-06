@@ -285,6 +285,10 @@ text(text=["aiai"], x=1, y=2.6, Vd=dbg2)
 @test startswith(GMT.text([1 2 3; 4 5 6], Vd=dbg2), "pstext  -JX" * split(GMT.DEF_FIG_SIZE, '/')[1] * "/0" * " -Baf -BWSen -R0.9/4.1/1.9/5.1")
 @test_throws ErrorException("TEXT: input file must have at least three columns") text([1 2; 4 5], Vd=dbg2)
 text(rich("H", subscript("2"), greek("O")," is the ", smallcaps("formula")," for ", rich(underline("water"), color=:red, font=4, size=18)), x=1, y=1, Vd=dbg2)
+anchors = [-3.0  -3.0; -3.0   3.0; 3.0   3.0; 3.0  -3.0]; labels = ["SW corner", "NW corner", "NE corner", "SE corner"]; offsets = [0.3  0.3; -0.3 0.3; -0.3 -0.3; 0.3 -0.3];
+txt_ds = mat2ds(anchors, labels)
+basemap(region=(-5, 5, -5, 5), proj="X10c", frame=(axes=:WSne, annot=:auto, grid=5))
+text(txt_ds, justify=:CM, font=(10,"Times-Roman"), offset=offsets, Vd=dbg2)
 @test superscript("4") == "@+4@+"
 @test mathtex("4") == "@[4@["
 
