@@ -165,6 +165,7 @@ function histogram_helper(cmd0::String, arg1, O::Bool, K::Bool, d::Dict{Symbol,A
 	do_auto = ((val_auto = find_in_dict(d, [:auto :thresholds])[1]) !== nothing) ? true : false	# Automatic bounds detetion
 	(val_auto == 1) && (val_auto = nothing)		# If auto=true, we want to pass a nothing to the find_histo_limits() fun
 	do_getauto = ((val_getauto = find_in_dict(d, [:getauto :getthresholds])[1]) !== nothing) ? true : false
+	do_getauto && (val_getauto = nothing)		# If getauto=true, we want to pass a nothing to the find_histo_limits() fun
 	do_zoom = ((find_in_dict(d, [:zoom])[1]) !== nothing) ? true : false	# Automatic zoom to interesting region
 
 	function if_zoom(cmd, opt_R, limit_L, limit_R, hst)

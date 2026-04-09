@@ -205,6 +205,7 @@ include("common_options.jl")
 const LEGEND_TYPE = Ref{legend_bag}(legend_bag())# To store Legends info
 include("beziers.jl")
 include("brokenaxes.jl")
+include("choropleth_utils.jl")
 include("circfit.jl")
 include("crop.jl")
 include("custom_symb_funs.jl")
@@ -327,7 +328,7 @@ include("trend2d.jl")
 include("xyz2grd.jl")
 include("utils.jl")
 include("utils_project.jl")
-include("choropleth_utils.jl")
+#include("xkcd.jl")
 include("drawing/Drawing.jl")
 include("extras/anaglyph.jl")
 include("extras/analemma.jl")
@@ -448,6 +449,7 @@ end
 #Base.precompile(Tuple{Dict{Symbol, Any}, Vector{String}})		# Here it doesn't print anything.
 #Base.precompile(Tuple{typeof(Base.vect), Array{String, 1}, Vararg{Array{String, 1}}})
 Base.precompile(Tuple{typeof(GMT.axis), Base.Dict{Symbol, Any}, Bool, Bool, Bool, Bool, Base.Dict{Symbol, Any}})
+Base.precompile(Tuple{typeof(GMT.axis), NamedTuple{(:axes, :annot, :grid), Tuple{Symbol, Symbol, Int64}}, Base.Dict{Symbol, Any}})
 
 function __init__(test::Bool=false)
 	clear_sessions(3600)# Delete stray sessions dirs older than 1 hour

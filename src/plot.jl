@@ -105,6 +105,8 @@ end
 function _plot(arg1, first::Bool, d::Dict{Symbol, Any})
 	# Broken axis — intercept before anything else
 	is_in_dict(d, [:breakx :breaky :xranges :yranges]; del=false) !== nothing && return _brokenplot(mat2ds(arg1), first, d)
+	# xkcd style
+	#is_in_dict(d, [:xkcd]; del=false) !== nothing && return _xkcd_plot(arg1, first, d)
 	# First check if arg1 is a GMTds of a linear fit and if yes, call the plotlinefit() fun
 	if (isa(arg1, GDtype) && is_in_dict(d, [:linefit :regress]; del=false) !== nothing)
 		att = isa(arg1, GMTdataset) ? arg1.attrib : arg1[1].attrib
@@ -1532,7 +1534,12 @@ function helper_vhlines(arg1, vert::Bool, first::Bool, xymin, xymax, percent, d)
 	!isnan(xymin) && (xy[1] = !percent ? xymin : xy[1] + (xy[2]-xy[1]) * xymin)
 	!isnan(xymax) && (xy[2] = !percent ? xymax : xy[1] + (xy[2]-xy[1]) * xymax)
 	D::GMTdataset = mat2ds(mat, x=xy, multi=true, nanseg=true)[1]
-	vert && (d[:yx] = true)		# Because we need to swapp x / y columns in the vlines case
+	#vert && (d[:yx] = true)		# Because we need to swapp x / y columns in the vlines case
+	if (vert)
+		for k = 1:size(D,1)
+			D.data[k,1], D.data[k,2] = D.data[k,2], D.data[k,1]
+		end
+	end
 	delete!(d, [[:xmin], [:xmax], [:ymin], [:ymax]])
 
 	common_plot_xyz("", D, "lines", first, false, d)
