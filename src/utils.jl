@@ -755,10 +755,10 @@ function rescale(A::AbstractArray; low=0.0, up=1.0, inputmin=NaN, inputmax=NaN, 
 	elseif (isa(stretch, Tuple) || (isvector(stretch) && length(stretch) == 2))
 		_inputmin, _inputmax = stretch[1], stretch[2]
 	end
-	(isnan(inputmin)) && (mi::Float64 = (isa(A, GItype)) ? A.range[5] : minimum_nan(A))
-	(isnan(inputmax)) && (ma::Float64 = (isa(A, GItype)) ? A.range[6] : maximum_nan(A))
-	_inmin::Float64 = (isnan(inputmin)) ? mi : _inputmin
-	_inmax::Float64 = (isnan(inputmax)) ? ma : _inputmax
+	(isnan(_inputmin)) && (mi::Float64 = (isa(A, GItype)) ? A.range[5] : minimum_nan(A))
+	(isnan(_inputmax)) && (ma::Float64 = (isa(A, GItype)) ? A.range[6] : maximum_nan(A))
+	_inmin::Float64 = (isnan(_inputmin)) ? mi : _inputmin
+	_inmax::Float64 = (isnan(_inputmax)) ? ma : _inputmax
 	d1 = _inmax - _inmin
 	(d1 <= 0.0) && error("Stretch range has inputmin > inputmax.")
 	d2 = up - low
@@ -775,7 +775,7 @@ function rescale(A::AbstractArray; low=0.0, up=1.0, inputmin=NaN, inputmax=NaN, 
 		sc  *= _tmax
 		low *= _tmax
 		if (have_nans)
-			if (isnan(inputmin) && isnan(inputmax))
+			if (isnan(_inputmin) && isnan(_inputmax))
 				if (type == UInt8)
 					@inbounds for k = 1:numel(A)  isnan(A[k]) && (o[k] = 0; continue); o[k] = round(UInt8,  low + (A[k] -_inmin) * sc)  end
 				else
@@ -789,7 +789,7 @@ function rescale(A::AbstractArray; low=0.0, up=1.0, inputmin=NaN, inputmax=NaN, 
 				end
 			end
 		else
-			if (isnan(inputmin) && isnan(inputmax))
+			if (isnan(_inputmin) && isnan(_inputmax))
 				if (type == UInt8)
 					@inbounds for k = 1:numel(A)  o[k] = round(UInt8,  low + (A[k] -_inmin) * sc)  end
 				else
@@ -807,7 +807,7 @@ function rescale(A::AbstractArray; low=0.0, up=1.0, inputmin=NaN, inputmax=NaN, 
 		oType = (eltype(A) <: AbstractFloat) ? eltype(A) : Float64
 		o = Array{oType}(undef, size(A))
 		if (oType <: Integer && have_nans)						# Shitty case
-			if (isnan(inputmin) && isnan(inputmax))				# Faster case.
+			if (isnan(_inputmin) && isnan(_inputmax))				# Faster case.
 				@inbounds for k = 1:numel(A)  isnan(A[k]) && (o[k] = 0; continue); o[k] = low + (A[k] -_inmin) * sc  end
 			else
 				@inbounds for k = 1:numel(A)
@@ -816,7 +816,7 @@ function rescale(A::AbstractArray; low=0.0, up=1.0, inputmin=NaN, inputmax=NaN, 
 				end
 			end
 		else
-			if (isnan(inputmin) && isnan(inputmax))				# Faster case. No IFs in loop
+			if (isnan(_inputmin) && isnan(_inputmax))				# Faster case. No IFs in loop
 				@inbounds for k = 1:numel(A)  o[k] = low + (A[k] -_inmin) * sc  end
 			else
 				@inbounds for k = 1:numel(A)
