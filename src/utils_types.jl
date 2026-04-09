@@ -1444,7 +1444,7 @@ function _mat2img_u16(@nospecialize(mat), x::Vector{Float64}, y::Vector{Float64}
 	# Use the keyword `noconv=true` to return GMTimage UInt16 type. I.e., no conversion to UInt8
 
 	if ((is_in_dict(d, [:noconv])) !== nothing)		# No conversion to UInt8 is wished
-		return helper_mat2img(mat, x, y, v, hdr, proj4, wkt, GMTcpt(), false, d)
+		return helper_mat2img(mat, x, y, v, hdr, proj4, wkt, GMTcpt(), get(d, :is_transposed, false), d)
 	end
 
 	img = isempty(img8) ? Array{UInt8, ndims(mat)}(undef, size(mat)) : img8
