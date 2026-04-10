@@ -128,7 +128,8 @@ function _text(w::wrapDatasets, ismatrix::Bool, O::Bool, K::Bool, d::Dict{Symbol
 
 	# Deal with the -D option
 	if ((symb = is_in_dict(d, [:D :offset])) !== nothing && (isa(d[symb], AbstractArray)))	# See if a text positions was passed via Matrix/DS
-		cmd *= " -D+f"
+		vpen = pop!(d, :leader, nothing)	# Optional leader-line pen set by annotate(); avoids build_pen's :line intercept
+		cmd *= (vpen !== nothing) ? " -D+f+v$(vpen)" : " -D+f"
 		fpos::GMTdataset = mat2ds(d[symb])
 		delete!(d, symb)
 		(N_args == 0) ? arg1 = fpos : (N_args == 1) ? arg2 = fpos : arg3 = fpos
@@ -263,14 +264,113 @@ const pstext  = text			# Alias
 const pstext! = text!			# Alias
 
 # ---------------------------------------------------------------------------------------------------
-#function annotate(text, xy, xytext=nothing, arrowprops=nothing; kwargs...)
-#function annotate(cmd0::String="", arg1=nothing; first=true, kwargs...)
-function annotate(D::GMTdataset; first=true, kwargs...)
-	d = KW(kwargs)
-	D.colnames = ["x1", "y1", "x2", "y2", "text"]
-	Vd = get(d, :Vd, 0)
-	text(D; first=first, justify="LM", offset=(0.1,0.0), kwargs...)		# This plots the text at the text position (whatever it is)
-	if ((arrowprops = find_in_dict(d, [:arrowprops])[1]) === nothing)
-		arrows!(D, pen=1, arrow=(len=0.6, stop=true), fill=:black, endpt=true, Vd=Vd)
+"""
+    annotate(labels, points; kwargs...)
+    annotate!(labels, points; kwargs...)
+
+Add annotated text labels to a plot, optionally connected to data points by leader lines.
+Similar in spirit to Makie's `annotation` and matplotlib's `annotate`.
+
+### Positional Arguments
+- `labels`: `Vector{String}` with annotation text, one per point.
+- `points`: `Nx2` matrix or `GMTdataset` with `(x, y)` anchor coordinates.
+
+### Keyword Arguments
+- `text_pos`: `Nx2` matrix or `GMTdataset` with explicit label positions in **data coordinates**.
+  When provided, labels are placed here and leader lines connect them back to `points`.
+  When omitted (and `offsets` is also omitted), positions are computed automatically via `textrepel`.
+- `offsets`: `Nx2` matrix of per-label displacements in **cm** from each anchor point.
+  Uses GMT's `-D+f` per-record offset mechanism. When omitted (together with `text_pos`),
+  offsets are computed automatically by `textrepel` with `offsets=true`.
+- `arrowprops`: Controls the arrow drawn from each anchor to its label. `false` (default) —
+  no arrow. `true` — draws a default arrow (`pen=1, arrow=(len=0.6,stop=true), fill=:black`).
+  A `NamedTuple` with any kwargs accepted by `arrows!()` — custom arrow.
+- `leader`: pen string for a thin GMT leader line (`-D+f+v<pen>`) drawn instead of, or in
+  addition to, the arrow. Only meaningful in offset/auto mode. E.g. `leader="0.5p,gray"`.
+- `justify`: GMT justification code (default `"CM"`).
+- `fontsize`: Font size in points for `textrepel` bounding-box estimation (default 10).
+  Use `font="12p,Helvetica"` (or `F=(font=...)`) to control the rendered font.
+- `force_push`, `force_pull`, `max_iter`, `pad`, `min_offset`: `textrepel` tuning
+  parameters (used only when neither `text_pos` nor `offsets` is given).
+- Remaining kwargs are forwarded to `text()`.
+"""
+function annotate(points::Union{Matrix{<:Real}, GMTdataset}, labels::Vector{<:AbstractString}; first=true, kwargs...)
+	isa(points, Matrix) && (points = mat2ds(points))
+	_annotate(points, labels, first, KW(kwargs))
+end
+annotate!(points::Union{Matrix{<:Real}, GMTdataset}, labels::Vector{<:AbstractString}; kw...) =
+	annotate(points, labels; first=false, kw...)
+
+function _annotate(points::GMTdataset, labels::Vector{<:AbstractString}, first::Bool, d::Dict{Symbol,Any})
+	Vd         = pop!(d, :Vd, 0)
+	text_pos   = pop!(d, :text_pos, nothing)
+	offs       = pop!(d, :offsets, nothing)
+	arrowprops = pop!(d, :arrowprops, false)	# false=no arrow (default); true=default arrow; NT=custom arrow
+	leader     = pop!(d, :leader, nothing)		# pen for the -D+f+v thin leader line (no arrowhead)
+	justify    = pop!(d, :justify, "CM")
+	fontsize   = pop!(d, :fontsize, 10)
+	force_push = pop!(d, :force_push, 1.0)
+	force_pull = pop!(d, :force_pull, 0.01)
+	max_iter   = pop!(d, :max_iter, 500)
+	pad        = pop!(d, :pad, 0.15)
+	min_off    = pop!(d, :min_offset, 10)
+
+	n = size(points, 1)
+	length(labels) != n && error("Number of labels ($(length(labels))) must match number of points ($n)")
+	do_show, fmt, savefig = get_show_fmt_savefig(d, false)
+
+	pts_text = points.text				# Bak it up
+	points.text = labels				# Temporarily store the labels in the .text field of the points dataset for use by text()
+	if (text_pos !== nothing)			# ── Case A: explicit positions in data coordinates ─────────────────────
+		tdata = isa(text_pos, GMTdataset) ? text_pos.data : text_pos
+		r = text(points; first=first, justify=justify, Vd=Vd, d...)
+		points.text = pts_text
+		isa(r, String) && return r		# For tests purpose
+		if (arrowprops !== false)
+			D_arr = mat2ds(hcat(points.data[:,1:2], tdata[:,1:2]))
+			_annotate_arrows!(D_arr, arrowprops, Vd)
+		end
+	else								# ── Case B: offset-based (auto via textrepel or caller-supplied) ────────
+		if (offs === nothing)
+			offs = textrepel(points, labels; fontsize=fontsize, force_push=force_push, force_pull=force_pull,
+			                 max_iter=max_iter, pad=pad, offset=min_off, offsets=true)
+		end
+		(leader !== nothing) && (d[:leader] = leader)
+		r = text(points; first=first, justify=justify, D=offs, Vd=Vd, d...)
+		points.text = pts_text
+		isa(r, String) && return r		# For tests purpose
+		if (arrowprops !== false)
+			txy = _annotate_txt_xy(points, offs)
+			D_arr = mat2ds(hcat(points.data[:,1:2], txy))
+			_annotate_arrows!(D_arr, arrowprops, Vd)
+		end
 	end
+	(do_show || fmt !== "" || savefig !== "") && showfig(show=do_show, fmt=fmt, savefig=savefig)
+end
+
+function _annotate_arrows!(D_arr, arrowprops, Vd)
+	if (arrowprops === true || arrowprops === nothing)
+		arrows!(D_arr; pen=1, arrow=(len=0.6, stop=true), fill=:black, endpt=true, Vd=Vd)
+	elseif isa(arrowprops, NamedTuple)
+		arrows!(D_arr; endpt=true, Vd=Vd, pairs(arrowprops)...)
+	end
+end
+
+function _annotate_txt_xy(points::GMTdataset, offs)
+	# Convert cm offsets to data-coordinate text positions using current plot scales.
+	pw, ph = _get_plotsize()
+	lims = (CTRL.limits[7] != 0 || CTRL.limits[8] != 0) ?
+	       (CTRL.limits[7], CTRL.limits[8], CTRL.limits[9], CTRL.limits[10]) :
+	       (CTRL.limits[1] != CTRL.limits[2]) ?
+	       (CTRL.limits[1], CTRL.limits[2], CTRL.limits[3], CTRL.limits[4]) :
+	       (points.bbox[1], points.bbox[2], points.bbox[3], points.bbox[4])
+	dx = lims[2] - lims[1];  dy = lims[4] - lims[3]
+	(dx == 0.0) && (dx = 1.0);  (dy == 0.0) && (dy = 1.0)
+	sx = dx / pw;  sy = dy / ph
+	mat = Matrix{Float64}(undef, size(points, 1), 2)
+	for i in 1:size(points, 1)
+		mat[i,1] = points.data[i,1] + offs[i,1] * sx
+		mat[i,2] = points.data[i,2] + offs[i,2] * sy
+	end
+	return mat
 end

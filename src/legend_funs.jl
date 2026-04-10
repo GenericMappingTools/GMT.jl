@@ -958,7 +958,7 @@ end
 # --------------------------------------------------------------------------------------------------
 """
     textrepel(points, labels; fontsize=10, force_push=1.0, force_pull=0.01,
-               max_iter=500, padding=0.15) -> Matrix{Float64}
+               max_iter=500, pad=0.15, offset=10, offsets=false) -> Matrix{Float64}
 
 Compute adjusted text label positions so that they do not overlap each other or the data points,
 similar to R's `ggrepel`. Uses a force-directed simulation: labels repel each other and data points
@@ -971,61 +971,69 @@ similar to R's `ggrepel`. Uses a force-directed simulation: labels repel each ot
 - `force_push`: repulsion strength multiplier (default 1.0).
 - `force_pull`: attraction strength back to anchor (default 0.01).
 - `max_iter`: maximum number of simulation iterations (default 500).
-- `padding`: extra padding around text boxes in cm (default 0.15).
+- `pad`: extra padding around text boxes in cm (default 0.15).
+- `offset`: minimum distance between label and anchor point in points (default 10).
+- `offsets`: if `true`, return label displacements in cm from each anchor point instead of
+  absolute data coordinates (default `false`).
 
 ### Returns
-A `Matrix{Float64}` of size `(N, 2)` with adjusted `(x, y)` positions in data coordinates.
+A `Matrix{Float64}` of size `(N, 2)`. When `offsets=false` (default), values are adjusted
+`(x, y)` positions in data coordinates. When `offsets=true`, values are `(dx, dy)` offsets
+in centimetres from each original anchor point.
 """
-function textrepel(points, labels::Vector{<:AbstractString}; fontsize::Int=10,
-                    force_push::Real=1.0, force_pull::Real=0.01, max_iter::Int=500, padding::Real=0.15, offset=10)
+function textrepel(points::Union{Matrix{<:Real}, GMTdataset}, labels::Vector{<:AbstractString}; fontsize::Int=10, force_push::Real=1.0,
+                   force_pull::Real=0.01, max_iter::Int=500, pad::Real=0.15, offset::Int=10, offsets::Bool=false)
+	isa(points, Matrix) && (points = mat2ds(Float64.(points)))
+	_textrepel(points, labels; fontsize=fontsize, force_push=Float64(force_push), force_pull=Float64(force_pull),
+	           max_iter=max_iter, pad=Float64(pad), offset=offset, offsets=offsets)
+end
+function _textrepel(points::GMTdataset, labels::Vector{<:AbstractString}; fontsize::Int=10, force_push::Float64=1.0,
+                    force_pull::Float64=0.01, max_iter::Int=500, pad::Float64=0.15, offset::Int=10, offsets::Bool=false)
 	ax, ay, pw, ph, sx, sy, xmin, ymin, n = _repel_setup(points)
 	n != length(labels) && error("Number of points ($n) must match number of labels ($(length(labels)))")
 	fs = fontsize * 2.54 / 72
-	pad = Float64(padding)
 	hws = [length(l) * 0.55 * fs / 2 + pad for l in labels]
 	hhs = fill(fs / 2 + pad, n)
-	return _repel_core(ax, ay, hws, hhs, pw, ph, sx, sy, xmin, ymin,
-	                   Float64(force_push), Float64(force_pull), Float64(offset) * 2.54 / 72, max_iter)
+	return _repel_core(ax, ay, hws, hhs, pw, ph, sx, sy, xmin, ymin, Float64(force_push),
+	                   force_pull, offset * 2.54 / 72, max_iter, offsets)
 end
 
 # --------------------------------------------------------------------------------------------------
 function circlerepel(points; diameter::Real=10, force_push::Real=1.0, force_pull::Real=0.01,
-                     max_iter::Int=500, offset=10)
+                     max_iter::Int=500, offset=10, offsets::Bool=false)
+	isa(points, Matrix) && (points = mat2ds(Float64.(points)))
+	_circlerepel(points; diameter=Float64(diameter), force_push=Float64(force_push), force_pull=Float64(force_pull),
+	              max_iter=max_iter, offset=offset, offsets=offsets)
+end
+function _circlerepel(points::GMTdataset; diameter::Float64=10, force_push::Float64=1.0, force_pull::Float64=0.01,
+                      max_iter::Int=500, offset::Int=10, offsets::Bool=false)
 	ax, ay, pw, ph, sx, sy, xmin, ymin, n = _repel_setup(points)
-	rad = Float64(diameter) * 2.54 / 72 / 2
-	hws = fill(rad, n)
-	hhs = fill(rad, n)
-	return _repel_core(ax, ay, hws, hhs, pw, ph, sx, sy, xmin, ymin,
-	                   Float64(force_push), Float64(force_pull), Float64(offset) * 2.54 / 72, max_iter)
+	rad = diameter * 2.54 / 72 / 2
+	hws, hhs = fill(rad, n), fill(rad, n)
+	return _repel_core(ax, ay, hws, hhs, pw, ph, sx, sy, xmin, ymin, Float64(force_push),
+	                   force_pull, offset * 2.54 / 72, max_iter, offsets)
 end
 
 # --------------------------------------------------------------------------------------------------
-function _repel_setup(points)
-	if isa(points, GMTdataset)
-		px = Float64.(points[:,1]);  py = Float64.(points[:,2])
-	elseif isa(points, Vector{<:GMTdataset})
-		px = Float64.(points[1][:,1]);  py = Float64.(points[1][:,2])
-	else
-		px = Float64.(points[:,1]);  py = Float64.(points[:,2])
-	end
-	n = length(px)
+function _repel_setup(points::GMTdataset)
+	n = size(points,1)
 	xmin, xmax, ymin, ymax = (CTRL.limits[7] != 0 || CTRL.limits[8] != 0) ?
 	                         (CTRL.limits[7], CTRL.limits[8], CTRL.limits[9], CTRL.limits[10]) :
 	                         (CTRL.limits[1] != CTRL.limits[2]) ?
 	                         (CTRL.limits[1], CTRL.limits[2], CTRL.limits[3], CTRL.limits[4]) :
-	                         (minimum(px), maximum(px), minimum(py), maximum(py))
+	                         (points.bbox[1], points.bbox[2], points.bbox[3], points.bbox[4])
 	dx = xmax - xmin;  dy = ymax - ymin
 	(dx == 0) && (xmin -= 0.5; xmax += 0.5; dx = 1.0)
 	(dy == 0) && (ymin -= 0.5; ymax += 0.5; dy = 1.0)
 	pw, ph = _get_plotsize()
 	sx, sy = pw / dx, ph / dy
-	ax = (px .- xmin) .* sx
-	ay = (py .- ymin) .* sy
+	ax = (points[:,1] .- xmin) .* sx
+	ay = (points[:,2] .- ymin) .* sy
 	return ax, ay, pw, ph, sx, sy, xmin, ymin, n
 end
 
 # --------------------------------------------------------------------------------------------------
-function _repel_core(ax, ay, hws, hhs, pw, ph, sx, sy, xmin, ymin, fp, fa, min_off, max_iter)
+function _repel_core(ax, ay, hws, hhs, pw, ph, sx, sy, xmin, ymin, fp, fa, min_off, max_iter, offsets::Bool=false)
 	n = length(ax)
 	lx = copy(ax)
 	ly = copy(ay)
@@ -1166,9 +1174,16 @@ function _repel_core(ax, ay, hws, hhs, pw, ph, sx, sy, xmin, ymin, fp, fa, min_o
 	end
 
 	result = Matrix{Float64}(undef, n, 2)
-	for i in 1:n
-		result[i, 1] = lx[i] / sx + xmin
-		result[i, 2] = ly[i] / sy + ymin
+	if offsets
+		for i in 1:n
+			result[i, 1] = lx[i] - ax[i]   # cm offset from anchor
+			result[i, 2] = ly[i] - ay[i]
+		end
+	else
+		for i in 1:n
+			result[i, 1] = lx[i] / sx + xmin
+			result[i, 2] = ly[i] / sy + ymin
+		end
 	end
 	return result
 end

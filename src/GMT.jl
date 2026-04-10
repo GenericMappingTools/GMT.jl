@@ -136,7 +136,7 @@ export
 	psternary, psternary!, pstext, pstext!, pswiggle, pswiggle!, psxy, psxy!, psxyz, psxyz!, regress, resetGMT, rose,
 	rose!, sample1d, scatter, scatter!, scatter3, scatter3!, solar, solar!, analemma, enso, keeling,
 	sunsetrise, spectrum1d, sphdistance, sphinterpolate,
-	sphtriangulate, surface, ternary, ternary!, text, text!, text_record, textrepel, trend1d, trend2d, triangulate, gmtsplit,
+	sphtriangulate, surface, ternary, ternary!, text, text!, text_record, textrepel, annotate, annotate!, trend1d, trend2d, triangulate, gmtsplit,
 	decorated, vector_attrib, wiggle, wiggle!, xyz2grd, gmtbegin, gmtend, gmthelp, subplot, gmtfig, inset, showfig,
 	earthtide, gmt2grd, gravfft, gmtgravmag3d, gravmag3d, grdgravmag3d, gravprisms, grdseamount, parkermag, parkergrav, kovesi,
 	pscoupe, pscoupe!, coupe, coupe!, psmeca, psmeca!, meca, meca!, psvelo, psvelo!, sac, sac!, velo, velo!, gmtisf, getbyattrib,
