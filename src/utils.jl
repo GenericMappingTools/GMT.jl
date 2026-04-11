@@ -1808,7 +1808,7 @@ include("makeDCWs.jl")
 include("getdcw.jl")
 #include("tttAPI.jl")
 
-#=
+##
 function nada(offset=10)
 	pts = [5.0 5.0; 5.1 5.1; 4.9 5.0; 5.0 4.9; 5.1 4.9; 4.9 5.1]
 	labels = ["P1", "P2", "P3", "P4", "P5", "P6"]
@@ -1825,7 +1825,11 @@ end
 function nada2(offset=10)
 	cities = [
 		-9.14  38.74;   # Lisbon
-		-8.61  41.15;   # Porto
+		-9.16  38.68;   # Almada
+		-8.60  41.15;   # Porto
+		-8.61  41.12;   # Gaia
+		-7.93  37.02;   # Faro
+		-7.84  37.03;   # Olhão
 		-3.70  40.42;   # Madrid
 		-3.68  40.48;   # nearby Madrid (Alcobendas)
 		-0.38  39.47;   # Valencia
@@ -1836,9 +1840,8 @@ function nada2(offset=10)
 		-1.13  37.99;   # Murcia
 	]
 
-	names = ["Lisbon", "Porto", "Madrid", "Alcobendas",
-			"Valencia", "Barcelona", "Hospitalet",
-			"A Coruña", "Seville", "Murcia"]
+	names = ["Lisbon", "Almada", "Porto", "Gaia", "Faro", "Olhão", "Madrid", "Alcobendas",
+			"Valencia", "Barcelona", "Hospitalet", "A Coruña", "Seville", "Murcia"]
 
 	# Plot the coast as background
 	coast(region=[-11, 4, 35, 45], proj=:Mercator, shore=true,
@@ -1846,15 +1849,34 @@ function nada2(offset=10)
 
 	# Plot city points
 	scatter!(cities, marker=:circle, ms="5p", fill=:red, ml=:thinnest)
-
-	# Compute repelled label positions
-	tic()
-	pos = textrepel(cities, names, fontsize=8, offset=offset, max_iter=200)
-	toc()
-
-	# Draw leader lines (one multi-segment dataset) and place labels
-	lines = [mat2ds([cities[k,1] cities[k,2]; pos[k,1] pos[k,2]]) for k in 1:length(names)]
-	plot!(lines, pen="0.3p,gray50,dashed")
-	text!(mat2ds(pos, text=names), font=(8,:Helvetica,:black), justify=:CM, fill=:white, pen=:thinnest, clearance="1p", show=1)
+	annotate!(cities, names; leader="0.5p,gray50", font=(8,:Helvetica,:black),
+	          fill=:white, pen="0.3p,gray30", clearance="1p", show=true)
 end
-=#
+
+function nada3(offset=10)
+pts = [-9.14 38.74; -3.70 40.42; -0.13 51.51;  2.35 48.85;
+        4.90 52.37; 13.41 52.52; 12.50 41.90; 16.37 48.21;
+       19.04 47.50; 23.73 37.98]
+cities = ["Lisbon", "Madrid", "London", "Paris",
+          "Amsterdam", "Berlin", "Rome", "Vienna",
+          "Budapest", "Athens"]
+
+coast(region=(-12, 28, 34, 57), proj=:Mercator, land=:wheat, water="lightblue", borders=(1,:gray50), shore=:thinnest, frame=:a10g10)
+scatter!(pts, marker=:star, ms="8p", fill=:red, ml="0.5p,darkred")
+#arrowprops=(pen="0.4p,gray40", arrow=(len=0.2, stop=true, shape=0.5), fill=:gray40), 
+annotate!(pts, cities; fontsize=7, fill=:white, pen="0.3p,gray30", clearance="1p", show=true)
+end
+
+function nada4(offset=10)
+	x = collect(LinRange(0.0, 2π, 300))
+	plot(hcat(x, sin.(x)), region=(0, 2π, -1.5, 1.5), figsize=(14, 6), frame=:af,
+		pen="2p,royalblue", xaxis=(annot=:auto, label="x"), yaxis=(annot=:auto, label="sin(x)"))
+
+	pts  = [π/2  1.0;  π    0.0; 3π/2 -1.0; π/4  0.707]
+	labs = ["maximum", "zero crossing", "minimum", "sin($(greek('p'))/4)"]
+
+	annotate!(pts, labs; leader="0.5p,gray50", min_offset=offset, nobox=true,
+	arrowprops=(pen="0.4p,gray40", arrow=(len=0.2, stop=true, shape=0.5), fill=:gray40),
+	          F=(font=(9, "Helvetica-Bold"),), show=true)
+end
+##

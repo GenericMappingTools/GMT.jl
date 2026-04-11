@@ -292,6 +292,52 @@ text(txt_ds, justify=:CM, font=(10,"Times-Roman"), offset=offsets, Vd=dbg2)
 @test superscript("4") == "@+4@+"
 @test mathtex("4") == "@[4@["
 
+println("	ANNOTATE")
+let pts = [-3.0 -3.0; -3.0 3.0; 3.0 3.0; 3.0 -3.0],
+	labs = ["SW", "NW", "NE", "SE"],
+	offs = [0.4 0.4; -0.4 0.4; -0.4 -0.4; 0.4 -0.4]
+
+	basemap(region=(-5,5,-5,5), proj="X10c", B=:a)   # sets CTRL.limits for all tests below
+
+	# Error: mismatched number of labels
+	@test_throws ErrorException annotate(pts, ["only one"]; Vd=2)
+
+	# offsets, default (no arrows) → text cmd has -D+f, no +v
+	r = annotate(pts, labs; offsets=offs, Vd=2)
+	@test contains(r, "-D+f") && !contains(r, "+v")
+
+	# leader pen → -D+f+v<pen> (thin GMT line, no arrowhead)
+	r = annotate(pts, labs; offsets=offs, leader="0.5p,gray50", Vd=2)
+	@test contains(r, "-D+f+v0.5p,gray50")
+	r = annotate(pts, labs; offsets=offs, leader="1p,red", Vd=2)
+	@test contains(r, "-D+f+v1p,red")
+
+	# arrowprops=true → default-style arrows!(); text cmd still has -D+f
+	r = annotate(pts, labs; offsets=offs, arrowprops=true, Vd=2)
+	@test contains(r, "-D+f") && !contains(r, "+v")
+
+	# arrowprops as NamedTuple → custom arrows!(); text cmd still has -D+f
+	r = annotate(pts, labs; offsets=offs, arrowprops=(pen=2, arrow=(len=0.6, stop=true), fill=:red), Vd=2)
+	@test contains(r, "-D+f")
+
+	# text_pos, no arrows (default) → text at given positions, no -D offset
+	tpos = [-4.0 -4.0; -4.0 4.0; 4.0 4.0; 4.0 -4.0]
+	r = annotate(pts, labs; text_pos=tpos, Vd=2)
+	@test !contains(r, " -D")
+
+	# text_pos with explicit arrows → runs without error, text cmd has no -D
+	r = annotate(pts, labs; text_pos=tpos, arrowprops=true, Vd=2)
+	@test !contains(r, " -D")
+
+	# GMTdataset input
+	r = annotate(mat2ds(pts), labs; offsets=offs, Vd=2)
+	@test contains(r, "-D+f")
+
+	# auto textrepel (no arrows by default)
+	r = annotate(pts, labs; Vd=2)
+	@test contains(r, "-D+f")
+end
+
 println("	PSWIGGLE")
 t=[0 7; 1 8; 8 3; 10 7];
 t1=gmt("sample1d -I5k", t); t2 = gmt("mapproject -G+uk", t1); t3 = gmt("math ? -C2 10 DIV COS", t2);

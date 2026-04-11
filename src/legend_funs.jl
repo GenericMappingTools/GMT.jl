@@ -958,7 +958,7 @@ end
 # --------------------------------------------------------------------------------------------------
 """
     textrepel(points, labels; fontsize=10, force_push=1.0, force_pull=0.01,
-               max_iter=500, padding=0.15) -> Matrix{Float64}
+               max_iter=500, pad=0.15, offset=10, offsets=false) -> Matrix{Float64}
 
 Compute adjusted text label positions so that they do not overlap each other or the data points,
 similar to R's `ggrepel`. Uses a force-directed simulation: labels repel each other and data points
@@ -971,61 +971,69 @@ similar to R's `ggrepel`. Uses a force-directed simulation: labels repel each ot
 - `force_push`: repulsion strength multiplier (default 1.0).
 - `force_pull`: attraction strength back to anchor (default 0.01).
 - `max_iter`: maximum number of simulation iterations (default 500).
-- `padding`: extra padding around text boxes in cm (default 0.15).
+- `pad`: extra padding around text boxes in cm (default 0.15).
+- `offset`: minimum distance between label and anchor point in points (default 10).
+- `offsets`: if `true`, return label displacements in cm from each anchor point instead of
+  absolute data coordinates (default `false`).
 
 ### Returns
-A `Matrix{Float64}` of size `(N, 2)` with adjusted `(x, y)` positions in data coordinates.
+A `Matrix{Float64}` of size `(N, 2)`. When `offsets=false` (default), values are adjusted
+`(x, y)` positions in data coordinates. When `offsets=true`, values are `(dx, dy)` offsets
+in centimetres from each original anchor point.
 """
-function textrepel(points, labels::Vector{<:AbstractString}; fontsize::Int=10,
-                    force_push::Real=1.0, force_pull::Real=0.01, max_iter::Int=500, padding::Real=0.15, offset=10)
+function textrepel(points::Union{Matrix{<:Real}, GMTdataset}, labels::Vector{<:AbstractString}; fontsize::Int=10, force_push::Real=1.0,
+                   force_pull::Real=0.01, max_iter::Int=500, pad::Real=0.15, offset::Int=10, offsets::Bool=false)
+	isa(points, Matrix) && (points = mat2ds(Float64.(points)))
+	_textrepel(points, labels; fontsize=fontsize, force_push=Float64(force_push), force_pull=Float64(force_pull),
+	           max_iter=max_iter, pad=Float64(pad), offset=offset, offsets=offsets)
+end
+function _textrepel(points::GMTdataset, labels::Vector{<:AbstractString}; fontsize::Int=10, force_push::Float64=1.0,
+                    force_pull::Float64=0.01, max_iter::Int=500, pad::Float64=0.15, offset::Int=10, offsets::Bool=false)
 	ax, ay, pw, ph, sx, sy, xmin, ymin, n = _repel_setup(points)
 	n != length(labels) && error("Number of points ($n) must match number of labels ($(length(labels)))")
 	fs = fontsize * 2.54 / 72
-	pad = Float64(padding)
 	hws = [length(l) * 0.55 * fs / 2 + pad for l in labels]
 	hhs = fill(fs / 2 + pad, n)
-	return _repel_core(ax, ay, hws, hhs, pw, ph, sx, sy, xmin, ymin,
-	                   Float64(force_push), Float64(force_pull), Float64(offset) * 2.54 / 72, max_iter)
+	return _repel_core(ax, ay, hws, hhs, pw, ph, sx, sy, xmin, ymin, Float64(force_push),
+	                   force_pull, offset * 2.54 / 72, max_iter, offsets)
 end
 
 # --------------------------------------------------------------------------------------------------
 function circlerepel(points; diameter::Real=10, force_push::Real=1.0, force_pull::Real=0.01,
-                     max_iter::Int=500, offset=10)
+                     max_iter::Int=500, offset=10, offsets::Bool=false)
+	isa(points, Matrix) && (points = mat2ds(Float64.(points)))
+	_circlerepel(points; diameter=Float64(diameter), force_push=Float64(force_push), force_pull=Float64(force_pull),
+	              max_iter=max_iter, offset=offset, offsets=offsets)
+end
+function _circlerepel(points::GMTdataset; diameter::Float64=10, force_push::Float64=1.0, force_pull::Float64=0.01,
+                      max_iter::Int=500, offset::Int=10, offsets::Bool=false)
 	ax, ay, pw, ph, sx, sy, xmin, ymin, n = _repel_setup(points)
-	rad = Float64(diameter) * 2.54 / 72 / 2
-	hws = fill(rad, n)
-	hhs = fill(rad, n)
-	return _repel_core(ax, ay, hws, hhs, pw, ph, sx, sy, xmin, ymin,
-	                   Float64(force_push), Float64(force_pull), Float64(offset) * 2.54 / 72, max_iter)
+	rad = diameter * 2.54 / 72 / 2
+	hws, hhs = fill(rad, n), fill(rad, n)
+	return _repel_core(ax, ay, hws, hhs, pw, ph, sx, sy, xmin, ymin, Float64(force_push),
+	                   force_pull, offset * 2.54 / 72, max_iter, offsets)
 end
 
 # --------------------------------------------------------------------------------------------------
-function _repel_setup(points)
-	if isa(points, GMTdataset)
-		px = Float64.(points[:,1]);  py = Float64.(points[:,2])
-	elseif isa(points, Vector{<:GMTdataset})
-		px = Float64.(points[1][:,1]);  py = Float64.(points[1][:,2])
-	else
-		px = Float64.(points[:,1]);  py = Float64.(points[:,2])
-	end
-	n = length(px)
+function _repel_setup(points::GMTdataset)
+	n = size(points,1)
 	xmin, xmax, ymin, ymax = (CTRL.limits[7] != 0 || CTRL.limits[8] != 0) ?
 	                         (CTRL.limits[7], CTRL.limits[8], CTRL.limits[9], CTRL.limits[10]) :
 	                         (CTRL.limits[1] != CTRL.limits[2]) ?
 	                         (CTRL.limits[1], CTRL.limits[2], CTRL.limits[3], CTRL.limits[4]) :
-	                         (minimum(px), maximum(px), minimum(py), maximum(py))
+	                         (points.bbox[1], points.bbox[2], points.bbox[3], points.bbox[4])
 	dx = xmax - xmin;  dy = ymax - ymin
 	(dx == 0) && (xmin -= 0.5; xmax += 0.5; dx = 1.0)
 	(dy == 0) && (ymin -= 0.5; ymax += 0.5; dy = 1.0)
 	pw, ph = _get_plotsize()
 	sx, sy = pw / dx, ph / dy
-	ax = (px .- xmin) .* sx
-	ay = (py .- ymin) .* sy
+	ax = (points[:,1] .- xmin) .* sx
+	ay = (points[:,2] .- ymin) .* sy
 	return ax, ay, pw, ph, sx, sy, xmin, ymin, n
 end
 
 # --------------------------------------------------------------------------------------------------
-function _repel_core(ax, ay, hws, hhs, pw, ph, sx, sy, xmin, ymin, fp, fa, min_off, max_iter)
+function _repel_core(ax, ay, hws, hhs, pw, ph, sx, sy, xmin, ymin, fp, fa, min_off, max_iter, offsets::Bool=false)
 	n = length(ax)
 	lx = copy(ax)
 	ly = copy(ay)
@@ -1057,13 +1065,18 @@ function _repel_core(ax, ay, hws, hhs, pw, ph, sx, sy, xmin, ymin, fp, fa, min_o
 			fx[j] -= fdx;  fy[j] -= fdy
 		end
 
-		# Repulsion from data points
+		# Repulsion from data points — box-edge aware.
+		# Acts whenever the nearest box edge is within min_off of the anchor,
+		# so diagonal labels are pushed far enough even when anchor is outside the box.
 		for i in 1:n, j in 1:n
 			dx = lx[i] - ax[j]
 			dy = ly[i] - ay[j]
-			(abs(dx) > hws[i] || abs(dy) > hhs[i]) && continue
+			near_x = clamp(ax[j], lx[i]-hws[i], lx[i]+hws[i])
+			near_y = clamp(ay[j], ly[i]-hhs[i], ly[i]+hhs[i])
+			edge_dist = hypot(ax[j]-near_x, ay[j]-near_y)
+			(edge_dist >= min_off) && continue
 			dist = max(hypot(dx, dy), 1e-6)
-			force = fp * 0.5 / dist
+			force = fp * 0.5 * (1.0 - edge_dist / max(min_off, 1e-10)) / dist
 			fx[i] += force * dx / dist
 			fy[i] += force * dy / dist
 		end
@@ -1101,7 +1114,8 @@ function _repel_core(ax, ay, hws, hhs, pw, ph, sx, sy, xmin, ymin, fp, fa, min_o
 	end
 	#println("textrepel: completed $iters iterations")
 
-	# Enforce minimum offset
+	# Enforce minimum center-distance between anchor and label center (original behaviour).
+	# This respects min_off for all label directions, especially horizontal/vertical.
 	if min_off > 0
 		for i in 1:n
 			dx = lx[i] - ax[i]
@@ -1118,6 +1132,36 @@ function _repel_core(ax, ay, hws, hhs, pw, ph, sx, sy, xmin, ymin, fp, fa, min_o
 				ly[i] = clamp(ly[i], hhs[i], ph - hhs[i])
 			end
 		end
+	end
+
+	# Diagonal correction: for labels at an angle (not near-horizontal/vertical),
+	# push the label further so the box does not visually overlap the anchor marker.
+	# The extra distance scales with the box height (∝ fontsize, independent of text length)
+	# and is applied ONLY when both x and y placement components are significant.
+	for i in 1:n
+		dx = lx[i] - ax[i]
+		dy = ly[i] - ay[i]
+		dist = max(hypot(dx, dy), 1e-6)
+		(abs(dx / dist) <= 0.25 || abs(dy / dist) <= 0.25) && continue  # near-horiz/vert: skip
+		near_x = clamp(ax[i], lx[i]-hws[i], lx[i]+hws[i])
+		near_y = clamp(ay[i], ly[i]-hhs[i], ly[i]+hhs[i])
+		clr = hhs[i] / 2				# minimum edge-clearance for diagonal labels
+		(hypot(ax[i]-near_x, ay[i]-near_y) >= clr) && continue  # already clear enough
+		ux_s = dx / dist;  uy_s = dy / dist
+		lo, hi = 0.0, hypot(hws[i], hhs[i]) + clr + dist
+		for _ in 1:30
+			mid = (lo + hi) / 2
+			nlx = lx[i] + mid * ux_s;  nly = ly[i] + mid * uy_s
+			nnx = clamp(ax[i], nlx-hws[i], nlx+hws[i])
+			nny = clamp(ay[i], nly-hhs[i], nly+hhs[i])
+			if hypot(ax[i]-nnx, ay[i]-nny) < clr
+				lo = mid
+			else
+				hi = mid
+			end
+		end
+		lx[i] = clamp(lx[i] + hi * ux_s, hws[i], pw - hws[i])
+		ly[i] = clamp(ly[i] + hi * uy_s, hhs[i], ph - hhs[i])
 	end
 
 	# Pull-back: minimize offset without creating overlaps
@@ -1145,7 +1189,20 @@ function _repel_core(ax, ay, hws, hhs, pw, ph, sx, sy, xmin, ymin, fp, fa, min_o
 				end
 				if ok
 					for j in 1:n
-						if abs(nx - ax[j]) < hws[i] && abs(ny - ay[j]) < hhs[i]
+						if j == i
+							# Own anchor: diagonal labels need edge-clearance; others just can't have anchor inside box
+							ddx = nx - ax[i];  ddy = ny - ay[i]
+							ddist = max(hypot(ddx, ddy), 1e-6)
+							if abs(ddx/ddist) > 0.25 && abs(ddy/ddist) > 0.25
+								nnx = clamp(ax[i], nx-hws[i], nx+hws[i])
+								nny = clamp(ay[i], ny-hhs[i], ny+hhs[i])
+								if hypot(ax[i]-nnx, ay[i]-nny) < hhs[i]/2
+									ok = false; break
+								end
+							elseif abs(nx - ax[i]) < hws[i] && abs(ny - ay[i]) < hhs[i]
+								ok = false; break
+							end
+						elseif abs(nx - ax[j]) < hws[i] && abs(ny - ay[j]) < hhs[i]
 							ok = false; break
 						end
 					end
@@ -1166,9 +1223,16 @@ function _repel_core(ax, ay, hws, hhs, pw, ph, sx, sy, xmin, ymin, fp, fa, min_o
 	end
 
 	result = Matrix{Float64}(undef, n, 2)
-	for i in 1:n
-		result[i, 1] = lx[i] / sx + xmin
-		result[i, 2] = ly[i] / sy + ymin
+	if offsets
+		for i in 1:n
+			result[i, 1] = lx[i] - ax[i]   # cm offset from anchor
+			result[i, 2] = ly[i] - ay[i]
+		end
+	else
+		for i in 1:n
+			result[i, 1] = lx[i] / sx + xmin
+			result[i, 2] = ly[i] / sy + ymin
+		end
 	end
 	return result
 end
