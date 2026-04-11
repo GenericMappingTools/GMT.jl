@@ -147,6 +147,8 @@ function _text(w::wrapDatasets, ismatrix::Bool, O::Bool, K::Bool, d::Dict{Symbol
 
 	opt_F = add_opt(d, "", "F", [:F :attrib],
 		(angle="+a", Angle="+A", font=("+f", font), justify="+j", region_justify="+c", header="_+h", label="_+l", rec_number="_+r", text="+t", zvalues="_+z"); expand=true)
+	(((justify = pop!(d, :justify, "")) !== "") && (!contains(opt_F, "+j"))) && (opt_F *= string("+j", justify))	# To allow justify=?? when font=?? was also set (annotate)
+
 	cmd = add_opt_fill(cmd, d, [:G :fill], "G")
 	contains(cmd, " -G") && (CTRL.pocket_B[3] = ".")	# Signal gmt() that it needs to restart because the fill f the API
 	cmd *= add_opt_pen(d, [:W :pen], opt="W")
@@ -285,9 +287,13 @@ Similar in spirit to Makie's `annotation` and matplotlib's `annotate`.
 - `arrowprops`: Controls the arrow drawn from each anchor to its label. `false` (default) —
   no arrow. `true` — draws a default arrow (`pen=1, arrow=(len=0.6,stop=true), fill=:black`).
   A `NamedTuple` with any kwargs accepted by `arrows!()` — custom arrow.
-- `leader`: pen string for a thin GMT leader line (`-D+f+v<pen>`) drawn instead of, or in
-  addition to, the arrow. Only meaningful in offset/auto mode. E.g. `leader="0.5p,gray"`.
 - `justify`: GMT justification code (default `"CM"`).
+- `leader`: pen string for a thin GMT leader line (`-D+f+v<pen>`) drawn instead of, or in
+  addition to, the arrow. E.g. `leader="0.5p,gray"`.
+- `nobox`: If `true`, render the label with fill only — no box border is drawn and clearance
+  is forced to `"0p"` so the fill hugs the text. Useful for clean map labels with a coloured
+  background but no visible rectangle.
+- `nofill`: If `true`, render the label as plain text with no box and no background fill.
 - `fontsize`: Font size in points for `textrepel` bounding-box estimation (default 10).
   Use `font="12p,Helvetica"` (or `F=(font=...)`) to control the rendered font.
 - `force_push`, `force_pull`, `max_iter`, `pad`, `min_offset`: `textrepel` tuning
@@ -314,9 +320,20 @@ function _annotate(points::GMTdataset, labels::Vector{<:AbstractString}, first::
 	max_iter   = pop!(d, :max_iter, 500)
 	pad        = pop!(d, :pad, 0.15)
 	min_off    = pop!(d, :min_offset, 10)
+	nobox      = pop!(d, :nobox, false)		# fill only, no box border, clearance=0
+	nofill     = pop!(d, :nofill, false)	# no box, no fill — plain text
+
+	if nofill
+		delete!(d, :fill);  delete!(d, :pen)
+	elseif nobox
+		delete!(d, :pen)
+		!haskey(d, :fill) && (d[:fill] = :white)	# default fill when nobox and user didn't specify one
+		!haskey(d, :clearance) && (d[:clearance] = "0p")
+	end
 
 	n = size(points, 1)
 	length(labels) != n && error("Number of labels ($(length(labels))) must match number of points ($n)")
+	(leader !== nothing) && (d[:leader] = leader)
 	do_show, fmt, savefig = get_show_fmt_savefig(d, false)
 
 	pts_text = points.text				# Bak it up
@@ -327,7 +344,8 @@ function _annotate(points::GMTdataset, labels::Vector{<:AbstractString}, first::
 		points.text = pts_text
 		isa(r, String) && return r		# For tests purpose
 		if (arrowprops !== false)
-			D_arr = mat2ds(hcat(points.data[:,1:2], tdata[:,1:2]))
+			edge_xy = _annotate_txt_xy_from_center(points, labels, tdata[:,1:2], fontsize, Float64(pad))
+			D_arr = mat2ds(hcat(edge_xy, points.data[:,1:2]))
 			_annotate_arrows!(D_arr, arrowprops, Vd)
 		end
 	else								# ── Case B: offset-based (auto via textrepel or caller-supplied) ────────
@@ -335,13 +353,12 @@ function _annotate(points::GMTdataset, labels::Vector{<:AbstractString}, first::
 			offs = textrepel(points, labels; fontsize=fontsize, force_push=force_push, force_pull=force_pull,
 			                 max_iter=max_iter, pad=pad, offset=min_off, offsets=true)
 		end
-		(leader !== nothing) && (d[:leader] = leader)
 		r = text(points; first=first, justify=justify, D=offs, Vd=Vd, d...)
 		points.text = pts_text
 		isa(r, String) && return r		# For tests purpose
 		if (arrowprops !== false)
-			txy = _annotate_txt_xy(points, offs)
-			D_arr = mat2ds(hcat(points.data[:,1:2], txy))
+			txy = _annotate_txt_xy(points, labels, offs, fontsize, Float64(pad))
+			D_arr = mat2ds(hcat(txy, points.data[:,1:2]))
 			_annotate_arrows!(D_arr, arrowprops, Vd)
 		end
 	end
@@ -356,8 +373,9 @@ function _annotate_arrows!(D_arr, arrowprops, Vd)
 	end
 end
 
-function _annotate_txt_xy(points::GMTdataset, offs)
-	# Convert cm offsets to data-coordinate text positions using current plot scales.
+function _annotate_txt_xy_from_center(points::GMTdataset, labels::Vector{<:AbstractString}, centers::Matrix{Float64}, fontsize::Int, pad::Float64)
+	# Like _annotate_txt_xy but accepts already-computed text centers in data coords (Case A).
+	fs = fontsize * 2.54 / 72
 	pw, ph = _get_plotsize()
 	lims = (CTRL.limits[7] != 0 || CTRL.limits[8] != 0) ?
 	       (CTRL.limits[7], CTRL.limits[8], CTRL.limits[9], CTRL.limits[10]) :
@@ -369,8 +387,49 @@ function _annotate_txt_xy(points::GMTdataset, offs)
 	sx = dx / pw;  sy = dy / ph
 	mat = Matrix{Float64}(undef, size(points, 1), 2)
 	for i in 1:size(points, 1)
-		mat[i,1] = points.data[i,1] + offs[i,1] * sx
-		mat[i,2] = points.data[i,2] + offs[i,2] * sy
+		cx = centers[i,1];  cy = centers[i,2]
+		ax = points.data[i,1];  ay = points.data[i,2]
+		ddx = ax - cx;  ddy = ay - cy
+		dist = hypot(ddx, ddy)
+		if dist < 1e-10;  mat[i,1] = cx;  mat[i,2] = cy;  continue;  end
+		ux = ddx/dist;  uy = ddy/dist
+		hw = (length(labels[i]) * 0.55 * fs / 2 + pad) * sx
+		hh = (fs / 2 + pad) * sy
+		t = min(abs(ux) > 1e-10 ? hw/abs(ux) : Inf, abs(uy) > 1e-10 ? hh/abs(uy) : Inf)
+		mat[i,1] = cx + t * ux;  mat[i,2] = cy + t * uy
+	end
+	return mat
+end
+
+function _annotate_txt_xy(points::GMTdataset, labels::Vector{<:AbstractString}, offs, fontsize::Int, pad::Float64)
+	# Return the point on the text-box edge nearest to the anchor, in data coordinates.
+	# Using the box edge (not the center) ensures the arrow starts visually at the box boundary.
+	pw, ph = _get_plotsize()
+	lims = (CTRL.limits[7] != 0 || CTRL.limits[8] != 0) ?
+	       (CTRL.limits[7], CTRL.limits[8], CTRL.limits[9], CTRL.limits[10]) :
+	       (CTRL.limits[1] != CTRL.limits[2]) ?
+	       (CTRL.limits[1], CTRL.limits[2], CTRL.limits[3], CTRL.limits[4]) :
+	       (points.bbox[1], points.bbox[2], points.bbox[3], points.bbox[4])
+	dx = lims[2] - lims[1];  dy = lims[4] - lims[3]
+	(dx == 0.0) && (dx = 1.0);  (dy == 0.0) && (dy = 1.0)
+	sx = dx / pw;  sy = dy / ph    # data per cm
+	fs = fontsize * 2.54 / 72      # cm
+	mat = Matrix{Float64}(undef, size(points, 1), 2)
+	for i in 1:size(points, 1)
+		ax = points.data[i,1];  ay = points.data[i,2]     # anchor (data coords)
+		cx = ax + offs[i,1] * sx;  cy = ay + offs[i,2] * sy   # text center (data coords)
+		ddx = ax - cx;  ddy = ay - cy                          # vector: text center → anchor
+		dist = hypot(ddx, ddy)
+		if dist < 1e-10        # label on top of anchor: return center as-is
+			mat[i,1] = cx;  mat[i,2] = cy;  continue
+		end
+		ux = ddx / dist;  uy = ddy / dist
+		hw = (length(labels[i]) * 0.55 * fs / 2 + pad) * sx   # box half-width in data units
+		hh = (fs / 2 + pad) * sy                               # box half-height in data units
+		t = min(abs(ux) > 1e-10 ? hw / abs(ux) : Inf,
+		        abs(uy) > 1e-10 ? hh / abs(uy) : Inf)          # distance to box edge in direction (ux,uy)
+		mat[i,1] = cx + t * ux
+		mat[i,2] = cy + t * uy
 	end
 	return mat
 end

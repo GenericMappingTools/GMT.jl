@@ -1065,13 +1065,18 @@ function _repel_core(ax, ay, hws, hhs, pw, ph, sx, sy, xmin, ymin, fp, fa, min_o
 			fx[j] -= fdx;  fy[j] -= fdy
 		end
 
-		# Repulsion from data points
+		# Repulsion from data points — box-edge aware.
+		# Acts whenever the nearest box edge is within min_off of the anchor,
+		# so diagonal labels are pushed far enough even when anchor is outside the box.
 		for i in 1:n, j in 1:n
 			dx = lx[i] - ax[j]
 			dy = ly[i] - ay[j]
-			(abs(dx) > hws[i] || abs(dy) > hhs[i]) && continue
+			near_x = clamp(ax[j], lx[i]-hws[i], lx[i]+hws[i])
+			near_y = clamp(ay[j], ly[i]-hhs[i], ly[i]+hhs[i])
+			edge_dist = hypot(ax[j]-near_x, ay[j]-near_y)
+			(edge_dist >= min_off) && continue
 			dist = max(hypot(dx, dy), 1e-6)
-			force = fp * 0.5 / dist
+			force = fp * 0.5 * (1.0 - edge_dist / max(min_off, 1e-10)) / dist
 			fx[i] += force * dx / dist
 			fy[i] += force * dy / dist
 		end
@@ -1109,7 +1114,8 @@ function _repel_core(ax, ay, hws, hhs, pw, ph, sx, sy, xmin, ymin, fp, fa, min_o
 	end
 	#println("textrepel: completed $iters iterations")
 
-	# Enforce minimum offset
+	# Enforce minimum center-distance between anchor and label center (original behaviour).
+	# This respects min_off for all label directions, especially horizontal/vertical.
 	if min_off > 0
 		for i in 1:n
 			dx = lx[i] - ax[i]
@@ -1126,6 +1132,36 @@ function _repel_core(ax, ay, hws, hhs, pw, ph, sx, sy, xmin, ymin, fp, fa, min_o
 				ly[i] = clamp(ly[i], hhs[i], ph - hhs[i])
 			end
 		end
+	end
+
+	# Diagonal correction: for labels at an angle (not near-horizontal/vertical),
+	# push the label further so the box does not visually overlap the anchor marker.
+	# The extra distance scales with the box height (∝ fontsize, independent of text length)
+	# and is applied ONLY when both x and y placement components are significant.
+	for i in 1:n
+		dx = lx[i] - ax[i]
+		dy = ly[i] - ay[i]
+		dist = max(hypot(dx, dy), 1e-6)
+		(abs(dx / dist) <= 0.25 || abs(dy / dist) <= 0.25) && continue  # near-horiz/vert: skip
+		near_x = clamp(ax[i], lx[i]-hws[i], lx[i]+hws[i])
+		near_y = clamp(ay[i], ly[i]-hhs[i], ly[i]+hhs[i])
+		clr = hhs[i] / 2				# minimum edge-clearance for diagonal labels
+		(hypot(ax[i]-near_x, ay[i]-near_y) >= clr) && continue  # already clear enough
+		ux_s = dx / dist;  uy_s = dy / dist
+		lo, hi = 0.0, hypot(hws[i], hhs[i]) + clr + dist
+		for _ in 1:30
+			mid = (lo + hi) / 2
+			nlx = lx[i] + mid * ux_s;  nly = ly[i] + mid * uy_s
+			nnx = clamp(ax[i], nlx-hws[i], nlx+hws[i])
+			nny = clamp(ay[i], nly-hhs[i], nly+hhs[i])
+			if hypot(ax[i]-nnx, ay[i]-nny) < clr
+				lo = mid
+			else
+				hi = mid
+			end
+		end
+		lx[i] = clamp(lx[i] + hi * ux_s, hws[i], pw - hws[i])
+		ly[i] = clamp(ly[i] + hi * uy_s, hhs[i], ph - hhs[i])
 	end
 
 	# Pull-back: minimize offset without creating overlaps
@@ -1153,7 +1189,20 @@ function _repel_core(ax, ay, hws, hhs, pw, ph, sx, sy, xmin, ymin, fp, fa, min_o
 				end
 				if ok
 					for j in 1:n
-						if abs(nx - ax[j]) < hws[i] && abs(ny - ay[j]) < hhs[i]
+						if j == i
+							# Own anchor: diagonal labels need edge-clearance; others just can't have anchor inside box
+							ddx = nx - ax[i];  ddy = ny - ay[i]
+							ddist = max(hypot(ddx, ddy), 1e-6)
+							if abs(ddx/ddist) > 0.25 && abs(ddy/ddist) > 0.25
+								nnx = clamp(ax[i], nx-hws[i], nx+hws[i])
+								nny = clamp(ay[i], ny-hhs[i], ny+hhs[i])
+								if hypot(ax[i]-nnx, ay[i]-nny) < hhs[i]/2
+									ok = false; break
+								end
+							elseif abs(nx - ax[i]) < hws[i] && abs(ny - ay[i]) < hhs[i]
+								ok = false; break
+							end
+						elseif abs(nx - ax[j]) < hws[i] && abs(ny - ay[j]) < hhs[i]
 							ok = false; break
 						end
 					end
