@@ -105,11 +105,8 @@ function binarize(I::GMTimage, thresh::Int=0; band::Int=1, threshold::Int=0, rev
 	(thresh == 0 && threshold > 0) && (thresh = threshold)
 	_tresh = (thresh == 0) ? isodata(I, band=band) : thresh
 	img = bool ? zeros(Bool, size(I, 1), size(I, 2)) : zeros(UInt8, size(I, 1), size(I, 2))
-	if revert
-		t = I.layout[3] == 'B' ? (view(I.image, :, :, band) .<= _tresh) : (slicecube(I, band).image .<= _tresh)
-	else
-		t = I.layout[3] == 'B' ? (view(I.image, :, :, band) .>= _tresh) : (slicecube(I, band).image .>= _tresh)
-	end
+	fun = revert ? (x -> x <= _tresh) : (x -> x >= _tresh)
+	t = size(I, 3) == 1 ? (I.image .|> fun) : I.layout[3] == 'B' ? (view(I.image, :, :, band) .|> fun) : (slicecube(I, band).image .|> fun)	
 	img[t] .= bool ? true : 255
 	return mat2img(img, I)
 end
@@ -117,7 +114,11 @@ function binarize(I::GMTimage, thresh::Vector{Int}; band::Int=1, revert::Bool=fa
                   bool::Bool=false)::Union{GMTimage{Bool, 2}, GMTimage{UInt8, 2}}
 	@assert length(thresh) == 2 && thresh[1] > 0 && thresh[2] < 255 "The threshold vector must have two elements in the range ]0 255["
 	img = bool ? zeros(Bool, size(I, 1), size(I, 2)) : zeros(UInt8, size(I, 1), size(I, 2))
-	t = I.layout[3] == 'B' ? thresh[1] .<= (view(I.image, :, :, band) .<= thresh[2]) : (thresh[1] .<= slicecube(I, band).image .<= thresh[2])
+	if (size(I, 3) == 1)
+		t = thresh[1] .<= I.image .<= thresh[2]
+	else
+		t = I.layout[3] == 'B' ? thresh[1] .<= (view(I.image, :, :, band) .<= thresh[2]) : (thresh[1] .<= slicecube(I, band).image .<= thresh[2])
+	end
 	revert && for k = 1:numel(t)  t[k] = !t[k]  end
 	img[t] .= bool ? true : 255
 	return mat2img(img, I)

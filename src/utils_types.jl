@@ -1432,7 +1432,8 @@ end
 function mat2img(mat::Union{AbstractMatrix{UInt16},AbstractArray{UInt16,3}}; x=Float64[], y=Float64[], v=Float64[], hdr=Float64[], proj4::String="", wkt::String="", img8::AbstractMatrix{UInt8}=Matrix{UInt8}(undef,0,0), kw...)
 	_mat2img_u16(mat, vec(Float64.(x)), vec(Float64.(y)), vec(Float64.(v)), vec(Float64.(hdr)), proj4, wkt, img8, KW(kw))
 end
-function _mat2img_u16(@nospecialize(mat), x::Vector{Float64}, y::Vector{Float64}, v::Vector{Float64}, hdr::Vector{Float64}, proj4::String, wkt::String, @nospecialize(img8), d::Dict{Symbol,Any})
+function _mat2img_u16(@nospecialize(mat), x::Vector{Float64}, y::Vector{Float64}, v::Vector{Float64},
+                      hdr::Vector{Float64}, proj4::String, wkt::String, @nospecialize(img8), d::Dict{Symbol,Any})
 	# Take an array of UInt16 and scale it down to UInt8. Input can be 2D or 3D.
 	# If the kw variable 'stretch' is used, we stretch the intervals in 'stretch' to [0 255].
 	# Use this option to stretch the image histogram.
@@ -1453,8 +1454,12 @@ function _mat2img_u16(@nospecialize(mat), x::Vector{Float64}, y::Vector{Float64}
 		nz = 1
 		isa(mat, Array{UInt16,3}) ? (ny, nx, nz) = size(mat) : (ny, nx) = size(mat)
 
-		(vals == "auto" || vals == :auto || (isa(vals, Real) && vals == 1)) &&
-			(vals = [find_histo_limits(mat)...])	# Out is a tuple, convert to vector
+		is_auto = (vals == "auto" || vals == :auto || (isa(vals, Real) && vals == 1))
+		if (is_auto)
+			vals = [find_histo_limits(mat)...]	# Out is a tuple, convert to vector
+		elseif (isa(vals, Tuple))	# Shit is that we must tell from [v1 v2] and (tresh1, tresh2)
+			vals = [find_histo_limits(mat, thresholds=(Float64(vals[1]),Float64(vals[2])))...]
+		end
 		len::Int = length(vals)
 
 		(len > 2*nz) && error("'stretch' has more elements then allowed by image dimensions")
