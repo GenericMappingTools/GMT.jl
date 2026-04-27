@@ -70,6 +70,7 @@ To see the full documentation type: ``@? psconvert``
 """
 psconvert(cmd0::String; kwargs...)  = psconvert_helper(cmd0, nothing; kwargs...)
 psconvert(arg1::GMTps; kwargs...)   = psconvert_helper("", arg1; kwargs...)
+psconvert(; kwargs...)              = psconvert_helper("", nothing; kwargs...)	# For the in-memory case
 function psconvert_helper(cmd0::String="", arg1=nothing; kwargs...)
 	d = init_module(false, kwargs...)[1]		# Also checks if the user wants ONLY the HELP mode
 	psconvert_helper(cmd0, arg1, d)
@@ -83,7 +84,7 @@ function psconvert_helper(cmd0::String, arg1, d::Dict{Symbol,Any})
 	needs_Te = contains(cmd, "+i")
 	(cmd == " -A") && (cmd = cmd * "1p")			# If just -A default to -A1p
 	cmd = parse_these_opts(cmd, d, [[:D :out_dir :output_dir], [:E :dpi], [:F :out_name :output_name],
-	                                [:G :ghost_path], [:I :resize], [:L :list_file], [:M :embed], [:N :bgcolor], [:P :portrait], [:Q :anti_aliasing], [:S :gs_command], [:Z :del_input_ps]])
+	                                [:G :ghost_path], [:I :resize], [:L :list_file], [:M :embed], [:N :bgcolor], [:P :portrait], [:Q :anti_aliasing], [:S :gs_command], [:X], [:Z :del_input_ps]])
 	cmd = parse_V_params(d, cmd)
 
 	if ((val = find_in_dict(d, [:fmt])[1]) !== nothing)

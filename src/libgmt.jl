@@ -369,6 +369,10 @@ function GMT_Get_Ctrl(API::Ptr{Cvoid})
 	ccall((:gmtlib_get_ctrl, libgmt), Ptr{Cvoid}, (Cstring,), API)
 end
 
+function PSL_getplot(PSL::Ptr{Cvoid})		# Returns a pointer to a string holding the PS the fig
+	ccall((:PSL_getplot, libpostscriptlight), Ptr{UInt8}, (Cstring,), PSL)
+end
+
 #= 
 function gmt_getpen(API::Ptr{Cvoid}, buffer, P)
 	GMT_ = GMT_Get_Ctrl(API)

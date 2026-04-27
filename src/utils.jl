@@ -1807,8 +1807,9 @@ end
 include("makeDCWs.jl")
 include("getdcw.jl")
 #include("tttAPI.jl")
+#include("ghostscript.jl")
 
-##
+#=
 function nada(offset=10)
 	pts = [5.0 5.0; 5.1 5.1; 4.9 5.0; 5.0 4.9; 5.1 4.9; 4.9 5.1]
 	labels = ["P1", "P2", "P3", "P4", "P5", "P6"]
@@ -1879,4 +1880,4 @@ function nada4(offset=10)
 	arrowprops=(pen="0.4p,gray40", arrow=(len=0.2, stop=true, shape=0.5), fill=:gray40),
 	          F=(font=(9, "Helvetica-Bold"),), show=true)
 end
-##
+=#

@@ -9,9 +9,7 @@ function gmt(cmd::String, args...)
 	if (n_argin > 0)
 		if (isa(args[1], String))
 			tok::String, r::String = strtok(cmd)
-			if (r == "")				# User gave 'module' separately from 'options'
-				error("Please use gmt(\"module_name options\", args...) instead of gmt(\"module_name\", \"options\", args...)")
-			end
+			(r == "") && error("Please use gmt(\"module_name options\", args...) instead of gmt(\"module_name\", \"options\", args...)")
 		end
 		# We may have trailing [] args in modules
 		bak = n_argin
@@ -78,9 +76,10 @@ function _gmt(cmd::String, args::Vector{Any})
 
 	# 2+ Add -F to psconvert if user requested a return image but did not give -F.
 	# The problem is that we can't use nargout to decide what to do, so we use -T to resolve the ambiguity.
-	need2destroy = false
+	need2destroy = false;	have_PS = false;
 	if (g_module == "psconvert")
-		if (!occursin("-F", r))
+		have_PS = occursin(" -X", r)
+		if (!occursin("-F", r) && !have_PS)
 			if (!occursin("-T", r))
 				r *= " -F";			need2destroy = true
 			else				# Hmm, have to find if any of 'e' or 'f' are used as -T flags
@@ -185,7 +184,7 @@ function _gmt(cmd::String, args::Vector{Any})
 
 	for k = 1:n_items					# Get results from GMT into Julia arrays
 		if (X[k].direction == GMT_IN) continue 	end      # Only looking for stuff coming OUT of GMT here
-		out[X[k].pos+1] = GMTJL_Get_Object(G_API[], X[k])    # Hook object onto rhs list
+		out[X[k].pos+1] = GMTJL_Get_Object(G_API[], X[k], have_PS)    # Hook object onto rhs list
 	end
 
 	# 2++- If gmtread -Ti than reset the session's pad value that was temporarily changed above (2+++)
@@ -788,7 +787,7 @@ function helper_Set_Object(API::Ptr{Nothing}, X::GMT_RESOURCE)::GMT_RESOURCE
 end
 
 # ---------------------------------------------------------------------------------------------------
-function GMTJL_Get_Object(API::Ptr{Nothing}, X::GMT_RESOURCE)
+function GMTJL_Get_Object(API::Ptr{Nothing}, X::GMT_RESOURCE, have_PS::Bool)
 	name = String([X.name...])
 	# In line-by-line modules it is possible no output is produced, hence we make an exception for DATASET
 	((X.object = GMT_Read_VirtualFile(API, name)) == NULL && X.family != GMT_IS_DATASET) &&
@@ -805,7 +804,7 @@ function GMTJL_Get_Object(API::Ptr{Nothing}, X::GMT_RESOURCE)
 	elseif (X.family == GMT_IS_IMAGE)		# A GMT Image; make it the pos'th output item
 		ptr = get_image(API, X.object)
 	elseif (X.family == GMT_IS_POSTSCRIPT)	# A GMT PostScript string; make it the pos'th output item
-		ptr = get_PS(X.object)
+		ptr = have_PS ? fish_PS_inGMT() : get_PS(X.object)
 #		status = GMT_Call_Module(API, "psconvert", GMT_MODULE_CMD, "# -A -Tg")
 #		status = GMT_Call_Module(API, "psconvert", GMT_MODULE_CMD, name_PS * " -A -Tf")
 	else
