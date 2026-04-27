@@ -4644,6 +4644,17 @@ function finish_PS_module_barr_last(d::Dict{Symbol, Any}, cmd::Vector{String}, f
 end
 
 # --------------------------------------------------------------------------------------------------
+"""
+	ps = fish_PS_inGMT()::GMTps
+
+Returns the content of the PS file being created in the current GMT session by fishing from the postscriptlight memory.
+"""
+function fish_PS_inGMT()::GMTps
+	txt = unsafe_string(PSL_getplot(unsafe_load(convert(Ptr{GMT_CTRL}, GMT_Get_Ctrl(G_API[]))).PSL))
+	GMTps(txt, length(txt), 3, String[])
+end
+
+# --------------------------------------------------------------------------------------------------
 function reverse_plot_axes!(cmd::Vector{String})
 	# See if there are requests to change axes directions. If yes we change the -J in the cmd[1] string
 	# CTRL.pocket_J = [opt_J width opt_Jz codes-to-tell-which-axis-to-reverse]
