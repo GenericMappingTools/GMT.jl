@@ -256,7 +256,7 @@ module GMTDGTLidarExt
 			elseif startswith(line, "password ")
 				password = strip(line[10:end])
 			else
-				printlb("Invalid line in ~/.dgt: " * line)
+				println("Invalid line in ~/.dgt: " * line)
 			end
 		end
 		(isempty(user) || isempty(password)) && error("~/.dgt: missing 'login' or 'password' line.")
