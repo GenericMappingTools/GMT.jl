@@ -1712,6 +1712,11 @@ parkergrav(x, y=""; kw...)   =
 kovesi(x; kw...) =
 	printstyled("\tTo use this function you need to load the FFTW package first. Do:\n\tusing FFTW"; color=:yellow)
 
+dgt_lidar(x; kw...) =
+	printstyled("\tTo use this function you need to load the HTTP package first. Do:\n\tusing HTTP"; color=:yellow)
+dgt_mosaic(x; kw...) =
+	printstyled("\tTo use this function you need to load the HTTP package first. Do:\n\tusing HTTP"; color=:yellow)
+
 read_xls(x; kw...) =
 	printstyled("\tTo use this function you need to load the XLSX package first. Do:\n\tusing XLSX"; color=:yellow)
 
