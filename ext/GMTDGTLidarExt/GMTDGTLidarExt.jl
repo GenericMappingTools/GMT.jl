@@ -1,3 +1,7 @@
+# Since part of the dgt_lidar() function is based on the code from the dgtcd_downer Python package,
+# (https://github.com/qgispt/dgtcd_downer) the license for it is is GPL-2.0 (same as the Py code).
+# The dgt_mosaic() is fully original code by Me&Claude, so it's license is MIT (same as GMT.jl)
+
 module GMTDGTLidarExt
 	using GMT, HTTP
 
@@ -39,8 +43,8 @@ module GMTDGTLidarExt
 	- `output_dir`: Root directory for downloaded files (default: `homedir/.gmt/DGT`).
 	  Prefix with `_` to write inside `homedir/.gmt/DGT/` (e.g. `"_algarve"` → `homedir/.gmt/DGT/algarve`).
 	- `delay`: Seconds between requests (default: `1.0`). Increase to avoid server throttling.
-	- `collections`: Collection to download. One of `"LAZ"`, `"MDT-50cm"`, `"MDS-50cm"`, `"MDT-2m"`, `"MDS-2m"`.
-	  Default `"MDS-2m"`.
+	- `collection`: Collection to download. One of `"LAZ"`, `"MDT-50cm"`, `"MDS-50cm"`, `"MDT-2m"`, `"MDS-2m"`.
+	  Case-insensitive. Default `"MDS-2m"`.
 	- `dry`: If `true`, query the API and print found files but skip all downloads (default: `false`).
 	- `verbose`: Verbosity level (default: `1`).
 	  `0` = silent (errors only; dry output always shown); `1` = downloaded file names only; `2` = full progress.
@@ -56,28 +60,33 @@ module GMTDGTLidarExt
 	  but highly reworked and extended with substantial help of Claude Code to fit the GMT.jl and API style.
 
 	### Example
+	Save you credentials to `~/.dgt` (optional, but avoids having to pass them every time):
 	```julia
 	using GMT, HTTP
 
-	dgt_lidar([-9.2, -9.1, 38.7, 38.8];
-		user   = "nome@email.pt",
-		password   = "password",
-		output_dir = "lidar_algarve",
-		delay      = 5.0,
-		collections = "MDT-50cm"
-	)
+	dgt_lidar(rand(4), user="nome@email.pt", password="password", save=true)
+	```
+
+	Download the DSM tiles at 50 cm resolution covering Lisbon area (large download job) and save them
+	to a custom subdirectory of you home dir.
+	```julia
+	using GMT, HTTP
+
+	dgt_lidar([-9.2, -9.1, 38.7, 38.8]; output_dir = "_liboa", collection="MDT-50cm")
 	```
 	"""
 	function GMT.dgt_lidar(bbox::Union{Tuple{<:Real}, Array{<:Real}}; user::String="", password::String="", save::Bool=false,
-	                       output_dir::String="", delay::Real=1.0, collections::String="MDS-2m", dry::Bool=false,
-	                       verbose::Int=1)
-		_dgt_lidar((Float64(bbox[1]), Float64(bbox[2]), Float64(bbox[3]), Float64(bbox[4])), user, password, save, output_dir, Float64(delay), collections, dry, verbose)
+	                       output_dir::String="", delay::Real=1.0, collection::String="MDS-2m", dry::Bool=false, verbose=true)
+		_dgt_lidar((Float64(bbox[1]), Float64(bbox[2]), Float64(bbox[3]), Float64(bbox[4])), user, password, save, output_dir, Float64(delay), collection, dry, Int(verbose))
 	end
 	function _dgt_lidar(bbox, user::String, password::String, save::Bool, output_dir::String, delay::Float64,
-	                    collections::String, dry::Bool, verbose::Int=1)
+	                    collection::String, dry::Bool, verbose::Int)
 
-		collections in ("LAZ", "MDT-50cm", "MDS-50cm", "MDT-2m", "MDS-2m") ||
-			error("Invalid collection \"$collections\". Valid: LAZ, MDT-50cm, MDS-50cm, MDT-2m, MDS-2m")
+		_valid = ("LAZ", "MDT-50cm", "MDS-50cm", "MDT-2m", "MDS-2m")
+		_coll = uppercase(collection)		# Because of Core.Boxes
+		_canonical = findfirst(c -> uppercase(c) == _coll, _valid)
+		_canonical === nothing && error("Invalid collection \"$collection\". Valid: $(join(_valid, ", "))")
+		collection = _valid[_canonical]
 		if isempty(user) || isempty(password)
 			user, password = _read_dgt_credentials()
 		end
@@ -99,7 +108,7 @@ module GMTDGTLidarExt
 			println("\n--- DGT CDD LIDAR Downloader$(dry ? " [DRY RUN]" : "") ---")
 			println("Bounding box : $bbox")
 			dry || println("Output dir   : $output_dir")
-			println("Collections  : $(collections)\n")
+			println("Collections  : $(collection)\n")
 		end
 
 		small_bboxes = _divide_bbox(bbox)
@@ -109,7 +118,7 @@ module GMTDGTLidarExt
 
 		for (i, sub_bbox) in enumerate(small_bboxes)
 			verbose >= 2 && println("Querying sub-bbox $i/$(length(small_bboxes)): $sub_bbox")
-			stac_response = _search_stac(sub_bbox; collections=collections, delay=Float64(delay))
+			stac_response = _search_stac(sub_bbox; collections=collection, delay=Float64(delay))
 			urls = _collect_urls(stac_response)
 
 			for (coll, pairs) in urls
@@ -122,15 +131,15 @@ module GMTDGTLidarExt
 		end
 
 		total = isempty(all_urls) ? 0 : sum(length(v) for v in values(all_urls))
-		if verbose >= 2
-			add_t = (total == 0) ? "\nNothing else to do. Quiting here\n" : ""
+		add_t = (total == 0) ? "\nNothing else to do. Quiting here\n" : ""
+		if (verbose >= 2 || total == 0)
 			println("\nTotal unique URLs found: $total" * add_t)
 		end
 		(total == 0) && return nothing
 
 		if dry
-			for (collection, pairs) in all_urls
-				println("\nCollection: $collection ($(length(pairs)) files)")
+			for (coll, pairs) in all_urls
+				println("\nCollection: $coll ($(length(pairs)) files)")
 				for (_, item_id, ext) in pairs
 					println("  $item_id$ext")
 				end
@@ -142,9 +151,9 @@ module GMTDGTLidarExt
 		skipped    = 0
 		_dgt_auth_state.download_counter = 0
 
-		for (collection, pairs) in all_urls
-			verbose >= 2 && println("\nDownloading collection: $collection")
-			coll_dir = joinpath(output_dir, collection)
+		for (coll, pairs) in all_urls
+			verbose >= 2 && println("\nDownloading collection: $coll")
+			coll_dir = joinpath(output_dir, coll)
 
 			for (j, (url, item_id, ext)) in enumerate(pairs)
 				verbose >= 2 && println("  [$j/$(length(pairs))] $url")
@@ -253,17 +262,23 @@ module GMTDGTLidarExt
 	end
 
 	# ------------------------------------------------------------------------------------------
-	# Minimal JSON parser for STAC API responses — avoids JSON.jl dependency
+	# Minimal JSON parser for STAC API responses — avoids JSON.jl dependency.
+	# Tracks when we enter the "features" array (at any nesting depth) so feature
+	# detection is independent of key ordering inside each feature object and works
+	# with both direct FeatureCollection responses and wrapped {"status":...,"data":{...}} envelopes.
 	function _parse_stac_response(json_str::String)
 		features = []
+		in_string         = false
+		escape_next       = false
+		depth             = 0
+		feature_start     = 0
+		feature_depth     = 0
+		in_features_array = false
+		features_depth    = 0
+		last_str          = ""
+		str_start         = firstindex(json_str)
 
-		in_string = false
-		escape_next = false
-		depth = 0
-		feature_start = 0
-		feature_depth = 0
-
-		for i in 1:length(json_str)
+		for i in eachindex(json_str)
 			c = json_str[i]
 
 			if escape_next
@@ -272,27 +287,41 @@ module GMTDGTLidarExt
 			elseif (c == '\\')
 				escape_next = true
 				continue
-			elseif (c == '"') && !escape_next
-				in_string = !in_string
+			end
+			if c == '"'
+				if in_string
+					in_string = false
+					last_str  = json_str[str_start:prevind(json_str, i)]
+				else
+					in_string = true
+					str_start = nextind(json_str, i)
+				end
 				continue
 			end
-
 			in_string && continue
 
-			if (c == '{')
+			if (c == '[')
+				# No depth restriction — handles both direct FeatureCollection (depth 1) and
+				# wrapped responses {"status":...,"data":{"features":[...]}} (depth 2+)
+				if !in_features_array && last_str == "features"
+					in_features_array = true
+					features_depth    = depth
+				end
+			elseif (c == ']')
+				if in_features_array && depth == features_depth
+					in_features_array = false
+				end
+			elseif (c == '{')
 				depth += 1
-				if feature_start == 0
-					snippet = json_str[i:min(length(json_str), i+100)]
-					if occursin(r"\"type\"\s*:\s*\"Feature\"", snippet)
-						feature_start = i
-						feature_depth = depth
-					end
+				if feature_start == 0 && in_features_array && depth == features_depth + 1
+					feature_start = i
+					feature_depth = depth
 				end
 			elseif (c == '}')
 				if feature_start > 0 && depth == feature_depth
-					feature_str = json_str[feature_start:i]
+					feature_str   = json_str[feature_start:i]
 					feature_start = 0
-					feature = Dict{String,Any}()
+					feature       = Dict{String,Any}()
 
 					m = match(r"\"collection\"\s*:\s*\"([^\"]+)\"", feature_str)
 					m !== nothing && (feature["collection"] = m.captures[1])
@@ -307,8 +336,21 @@ module GMTDGTLidarExt
 
 					feature["assets"] = Dict{String,Any}()
 					asset_num = 1
-					for asset_m in eachmatch(r"\"href\"\s*:\s*\"(https?://[^\"]+)\"[^}]*\"type\"\s*:\s*\"([^\"]+)\"", feature_str)
-						feature["assets"]["asset_$asset_num"] = Dict{String,Any}("href" => asset_m.captures[1], "type" => asset_m.captures[2])
+					seen_asset_hrefs = Set{String}()
+					# href before type  ([^{}]* prevents crossing object boundaries)
+					for asset_m in eachmatch(r"\"href\"\s*:\s*\"(https?://[^\"]+)\"[^{}]*\"type\"\s*:\s*\"([^\"]+)\"", feature_str)
+						url = asset_m.captures[1]
+						url in seen_asset_hrefs && continue
+						push!(seen_asset_hrefs, url)
+						feature["assets"]["asset_$asset_num"] = Dict{String,Any}("href" => url, "type" => asset_m.captures[2])
+						asset_num += 1
+					end
+					# type before href
+					for asset_m in eachmatch(r"\"type\"\s*:\s*\"([^\"]+)\"[^{}]*\"href\"\s*:\s*\"(https?://[^\"]+)\"", feature_str)
+						url = asset_m.captures[2]
+						url in seen_asset_hrefs && continue
+						push!(seen_asset_hrefs, url)
+						feature["assets"]["asset_$asset_num"] = Dict{String,Any}("href" => url, "type" => asset_m.captures[1])
 						asset_num += 1
 					end
 
@@ -319,6 +361,21 @@ module GMTDGTLidarExt
 		end
 
 		return Dict("features" => features)
+	end
+
+	# ------------------------------------------------------------------------------------------
+	function _dgt_collections()
+		if isempty(_dgt_auth_state.cookies)
+			user, password = _read_dgt_credentials()
+			!_authenticate(user, password, 0) && error("Authentication failed.")
+		end
+		try
+			headers  = ["Content-Type" => "application/json", "Cookie" => _make_cookie_header(_dgt_auth_state.cookies)]
+			response = HTTP.get("https://cdd.dgterritorio.gov.pt/dgt-be/v1/collections", headers; timeout=30)
+			println(String(response.body))
+		catch e
+			println("Error: $e")
+		end
 	end
 
 	# ------------------------------------------------------------------------------------------
@@ -439,7 +496,7 @@ module GMTDGTLidarExt
 		mime_to_ext = Dict("image/tiff; application=geotiff" => ".tiff",
 		                   "image/tiff"                      => ".tiff",
 		                   "application/vnd.laszip"          => ".laz")
-		return get(mime_to_ext, mime_type, ".bin")
+		return get(mime_to_ext, mime_type, "")
 	end
 
 	# ------------------------------------------------------------------------------------------
@@ -507,6 +564,7 @@ module GMTDGTLidarExt
 
 				mime_type = string(get(asset, "type", ""))
 				ext       = _get_file_extension(mime_type)
+				isempty(ext) && continue
 				!haskey(urls_per_collection, collection) && (urls_per_collection[collection] = Tuple{String,String,String}[])
 				push!(urls_per_collection[collection], (url, item_id, ext))
 				push!(seen_urls, url)
@@ -517,6 +575,22 @@ module GMTDGTLidarExt
 	end
 
 	# ------------------------------------------------------------------------------------------
+	function _validate_downloaded_file(file_path::String, extension::String)
+		filesize(file_path) < 1024 && error("Downloaded file too small ($(filesize(file_path)) bytes) — likely an error response")
+		open(file_path, "r") do io
+			magic = read(io, 4)
+			if extension == ".tiff"
+				# TIFF: II (little-endian) or MM (big-endian)
+				ok = (length(magic) >= 4) && ((magic[1] == 0x49 && magic[2] == 0x49) || (magic[1] == 0x4D && magic[2] == 0x4D))
+				ok || error("File is not a valid TIFF (bad magic bytes) — likely a server error response")
+			elseif extension == ".laz"
+				# LAZ/LAS: magic "LASF"
+				ok = (length(magic) >= 4) && magic[1:4] == UInt8[0x4C, 0x41, 0x53, 0x46]
+				ok || error("File is not a valid LAZ (bad magic bytes) — likely a server error response")
+			end
+		end
+	end
+
 	function _download_file(url::String, item_id::String, extension::String, output_dir::String; delay::Real=5.0, verbose::Int=1)
 		_dgt_auth_state.download_counter += 1
 		if _dgt_auth_state.download_counter % 10 == 0 && (_is_session_expired() || !_is_session_valid("https://cdd.dgterritorio.gov.pt/dgt-be/v1/search"))
@@ -524,11 +598,12 @@ module GMTDGTLidarExt
 			_authenticate(_dgt_auth_state.username, _dgt_auth_state.password, verbose) || throw(AuthenticationError("Re-authentication failed"))
 		end
 
-		filename  = isempty(item_id) ? "$(split(url, '/')[end])$extension" : "$item_id$extension"
+		# Tentative filename from STAC item_id — may be replaced by real name from redirect URL
+		filename  = isempty(item_id) || item_id == "unknown" ? "$(split(url, '/')[end])$extension" : "$item_id$extension"
 		file_path = joinpath(output_dir, filename)
 
 		if isfile(file_path)
-			verbose >= 2 && println("Skipping $filename (already exists)")
+			verbose >= 2 && println("Skipping $file_path (already exists)")
 			return true
 		end
 
@@ -551,16 +626,20 @@ module GMTDGTLidarExt
 					open(file_path, "w") do io
 						HTTP.get(final_url; readtimeout=120, response_stream=io)
 					end
+					_validate_downloaded_file(file_path, extension)
 				elseif redir.status == 200
 					content_type = lowercase(get(Dict(redir.headers), "Content-Type", ""))
-					startswith(content_type, "text/html") && throw(AuthenticationError("Authentication error for $url (received HTML)."))
+					(startswith(content_type, "text/html") || startswith(content_type, "application/xml") ||
+					 startswith(content_type, "text/xml")  || startswith(content_type, "application/json")) &&
+						throw(AuthenticationError("Bad content type '$content_type' from $url"))
 					write(file_path, redir.body)
+					_validate_downloaded_file(file_path, extension)
 				else
 					error("HTTP $(redir.status)")
 				end
 
 				file_size = filesize(file_path)
-				verbose >= 1 && println("Downloaded $filename ($file_size bytes)")
+				verbose >= 1 && println("Downloaded $file_path ($file_size bytes)")
 				return true
 
 			catch e
