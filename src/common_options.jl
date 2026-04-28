@@ -3188,7 +3188,7 @@ function helper0_axes(arg)::String
 	isa(arg, StrSymb) && return string(arg) # Assume that a WESNwesn was already sent in.
 	!isa(arg, Tuple) && error("'axes' argument must be a String, Symbol or a Tuple.")
 
-	opt = "";	lbrtu = "lbrtu";	WSENZ = "WSENZ";	wsenz = "wsenz";	lbrtu = "lbrtu"
+	opt = "";	lbrtu = "lbrtu";	WSENZ = "WSENZ";	wsenz = "wsenz";
 	for k = 1:numel(arg)
 		t = string(arg[k])::String		# For the case it was a symbol
 		if (occursin("_f", t))

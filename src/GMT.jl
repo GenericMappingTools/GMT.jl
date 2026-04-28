@@ -184,6 +184,7 @@ export
 	mapsize2region,
 	ind2bool, cube, cylinder, circlepts, dodecahedron, ellipse3D, eulermat, flatfv, icosahedron, loft, sphere, spinmat,
 	octahedron, tetrahedron, torus, replicant, revolve, rotate, rotate!, translate, translate!, df2ds, ds2df, extrude, fv2fv, isclockwise, surf2fv, ODE2ds,
+	dgt_lidar, dgt_mosaic,
 
 	# Reexport some from Dates
 	Date, DateTime, Year, Month, Week, Day, Hour, Minute, Second, year, month, week, day, hour, minute, second, now, today,

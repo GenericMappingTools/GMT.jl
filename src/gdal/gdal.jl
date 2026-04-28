@@ -1699,6 +1699,18 @@ end
     	return IDataset(result)
 	end
 
+	function gdalbuildvrt(fnames::Vector{<:AbstractString}, options::Vector{String}=String[]; dest="/vsimem/tmp", save::AbstractString="")
+		(save != "") && (dest = save)
+		options = GDALBuildVRTOptionsNew(options, C_NULL)
+		usage_error = Ref{Cint}()
+		result = GDALBuildVRT(dest, length(fnames), C_NULL, fnames, options, usage_error)
+		GDALBuildVRTOptionsFree(options)
+		if (dest != "/vsimem/tmp")
+			GDALClose(result);		return nothing
+		end
+		return IDataset(result)
+	end
+
 	function gdalfillnodata!(dataset::Dataset; nodata=NaN, mask::pVoid=C_NULL, maxdist=0, nsmooth=0, progress::pVoid=C_NULL, kw...)
 		nbd = (find_in_kwargs(kw, [:band])[1] !== nothing) ? kw[:band] : 1
 		bd = getband(dataset, nbd)
