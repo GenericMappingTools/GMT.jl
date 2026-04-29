@@ -298,6 +298,7 @@ function minimum_nan(A::AbstractArray{<:AbstractFloat})
 	mi == typemax(eltype(A)) && (mi = convert(eltype(A), NaN))	# Better to return NaN then +Inf
 	return mi
 end
+minimum_nan(A::AbstractArray{<:Complex}) = minimum_im(A)
 minimum_nan(A) = minimum(A)
 
 function maximum_nan(A::AbstractArray{<:AbstractFloat})
@@ -360,8 +361,8 @@ function extrema_im(A::Array{<:Complex{<:Integer}})		# Returns real_min, real_ma
 	return mi_r[1], mi_i[1], mi_r[2], mi_i[2]
 end
 function extrema_im(A::Array{<:Complex{<:Real}})
-	mi_r, mi_i = minimum_nan(real(A)A), maximum_nan(imag(A))
-	return mi_r[1], mi_i[1], mi_r[2], mi_i[2]
+	ra = real(A);	ia = imag(A)
+	minimum_nan(ra), minimum_nan(ia), maximum_nan(ra), maximum_nan(ia)
 end
 
 # --------------------------------------------------------------------------------------------------
