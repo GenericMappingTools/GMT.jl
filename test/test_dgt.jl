@@ -22,14 +22,13 @@ println("		Entering: test_dgt.jl")
 		@test ext._get_file_extension("image/tiff; application=geotiff") == ".tiff"
 		@test ext._get_file_extension("image/tiff") == ".tiff"
 		@test ext._get_file_extension("application/vnd.laszip") == ".laz"
-		@test ext._get_file_extension("application/json") == ".bin"
-		@test ext._get_file_extension("") == ".bin"
+		@test ext._get_file_extension("application/json") == ""
+		@test ext._get_file_extension("") == ""
 	end
 
 	# ------------------------------------------------------------------
-	@testset "collections validation" begin
-		# Invalid collection → error before any auth attempt
-		@test_throws ErrorException GMT.dgt_lidar([0.,1.,0.,1.]; collections="INVALID")
+	@testset "collection validation" begin
+		@test_throws ErrorException GMT.dgt_lidar([0.,1.,0.,1.]; collection="INVALID")
 	end
 
 	# ------------------------------------------------------------------
@@ -73,10 +72,19 @@ println("		Entering: test_dgt.jl")
 		@test feat["links"][1]["href"] == "https://cdd.dgt.gov.pt/items/tile_001"
 		@test length(feat["assets"]) == 1
 
-		# LAZ asset type
+		# LAZ asset type — href before type
 		json_laz = """{"features":[{"type":"Feature","collection":"LAZ","id":"cloud_001","links":[],"assets":{"d":{"href":"https://s3.example.com/cloud.laz","type":"application/vnd.laszip"}}}]}"""
 		r2 = ext._parse_stac_response(json_laz)
 		@test r2["features"][1]["collection"] == "LAZ"
+		@test length(r2["features"][1]["assets"]) == 1
+
+		# LAZ asset type — type before href (real API may return this order)
+		json_laz2 = """{"features":[{"type":"Feature","collection":"LAZ","id":"cloud_002","links":[],"assets":{"d":{"type":"application/vnd.laszip","href":"https://s3.example.com/cloud2.laz"}}}]}"""
+		r3 = ext._parse_stac_response(json_laz2)
+		@test length(r3["features"][1]["assets"]) == 1
+		asset3 = first(values(r3["features"][1]["assets"]))
+		@test asset3["href"] == "https://s3.example.com/cloud2.laz"
+		@test asset3["type"] == "application/vnd.laszip"
 	end
 
 	# ------------------------------------------------------------------
