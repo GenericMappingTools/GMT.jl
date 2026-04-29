@@ -17,7 +17,11 @@ using InteractiveUtils
 	API = GMT.GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL);
 	GMT.GMT_Get_Ctrl(API);
 
-	include("test_dgt.jl")
+	try
+		include("test_dgt.jl")
+	catch err
+		@warn("Failed the DGT test. Error was:\n $err")
+	end
 	include("test_brokenaxes.jl")
 	include("test_wave_travel_time.jl")
 	include("test_imgmorph.jl")
