@@ -1731,9 +1731,10 @@ info(C::GMTcpt) = show(C)
 Base.:show(io::IO, mime::MIME"image/png", wp::WrapperPluto) = write(io, read(wp.fname))
 
 # ---------- For Tables -----------------------------------------------------------------------------
-#Base.:names(D::GDtype) = isa(D, Vector) ? D[1].colnames : D.colnames
-Base.:names(D::GMTdataset) = D.colnames
-Base.:names(D::Vector{<:GMTdataset})::Vector{String} = D[1].colnames::Vector{String}
+names(x) = Base.names(x)		# To get possession of the 'names' name and hence the following no be type piracy.
+names(D::GMTdataset) = D.colnames
+names(D::Vector{<:GMTdataset})::Vector{String} = D[1].colnames::Vector{String}
+#Base.:names(V::GMTvecdataset)::Vector{String} = V.ds[1].colnames::Vector{String}
 
 # ---------- For fck stop printing UInts in hexadecinal ---------------------------------------------
 #Base.show(io::IO, x::T) where {T<:Union{UInt, UInt128, UInt64, UInt32, UInt16, UInt8}} = Base.print(io, x)

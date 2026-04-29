@@ -351,18 +351,19 @@ nanstd(x)    = std(filter(!isnan,x))
 nanstd(x,y)  = mapslices(nanstd,x,dims=y)
 
 # --------------------------------------------------------------------------------------------------
-Base.minimum(A::Array{<:Complex{<:Integer}}) = minimum(real(A)), minimum(imag(A))
-Base.maximum(A::Array{<:Complex{<:Integer}}) = maximum(real(A)), maximum(imag(A))
-Base.minimum(A::Array{<:Complex{<:AbstractFloat}}) = minimum(real(A)), minimum(imag(A))
-Base.maximum(A::Array{<:Complex{<:AbstractFloat}}) = maximum(real(A)), maximum(imag(A))
-function Base.extrema(A::Array{<:Complex{<:Integer}})		# Returns real_min, real_max, imag_min, imag_max
-	mi_r, mi_i = minimum(A), maximum(A)
+minimum_im(A::Array{<:Complex{<:Integer}}) = minimum(real(A)), minimum(imag(A))
+maximum_im(A::Array{<:Complex{<:Integer}}) = maximum(real(A)), maximum(imag(A))
+minimum_im(A::Array{<:Complex{<:AbstractFloat}}) = minimum(real(A)), minimum(imag(A))
+maximum_im(A::Array{<:Complex{<:AbstractFloat}}) = maximum(real(A)), maximum(imag(A))
+function extrema_im(A::Array{<:Complex{<:Integer}})		# Returns real_min, real_max, imag_min, imag_max
+	mi_r, mi_i = minimum_im(A), maximum_im(A)
 	return mi_r[1], mi_i[1], mi_r[2], mi_i[2]
 end
-function Base.extrema(A::Array{<:Complex{<:Real}})
-	mi_r, mi_i = minimum_nan(A), maximum_nan(A)
+function extrema_im(A::Array{<:Complex{<:Real}})
+	mi_r, mi_i = minimum_nan(real(A)A), maximum_nan(imag(A))
 	return mi_r[1], mi_i[1], mi_r[2], mi_i[2]
 end
+
 # --------------------------------------------------------------------------------------------------
 """
     doy2date(doy[, year]) -> Date
