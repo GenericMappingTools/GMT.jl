@@ -292,6 +292,16 @@ GMTdataset(data::Array{Float32,2}, text::String) =
 GMTdataset(data::Array{Float32,2}) =
 	GMTdataset(data, Float64[], Float64[], DictSvS(), String[], String[], "", String[], "", "", 0, 0)
 
+mutable struct GMTvecdataset{T<:Real, N} <: AbstractArray{T,N}
+	ds::Vector{GMTdataset{T,N}}		# Each segment is a GMTdataset with its own bbox, header, etc...
+	function GMTvecdataset(arg::Vector{GMTdataset{T,N}}) where {T<:Real, N}
+		new{T,N}(arg)
+	end
+end
+Base.size(V::GMTvecdataset) = size(V.ds)
+Base.getindex(V::GMTvecdataset{T,N}, inds::Vararg{Int,N}) where {T,N} = V.ds.data[inds...]
+Base.setindex!(V::GMTvecdataset{T,N}, v, inds::Vararg{Int,N}) where {T,N} = (V.ds.data[inds...] = v)
+
 """
     struct GMTfv{T<:AbstractFloat} <: AbstractMatrix{T}
 

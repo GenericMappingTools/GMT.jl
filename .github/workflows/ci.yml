@@ -113,7 +113,7 @@ jobs:
           echo "url: https://cds.climate.copernicus.eu/api" > ~/.cdsapirc
           echo "key: ${{ secrets.CDSAPI_KEY }}" >> ~/.cdsapirc
           echo "# Login data for the DGT LIDAR downloads" > ~/.dgt
-          echo "key: ${{ secrets.DGTAPI_KEY }}" >> ~/.dgt
+          echo "${{ secrets.DGTAPI_KEY }}" >> ~/.dgt
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
       - uses: julia-actions/julia-processcoverage@v1
