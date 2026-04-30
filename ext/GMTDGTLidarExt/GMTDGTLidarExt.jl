@@ -20,7 +20,10 @@ module GMTDGTLidarExt
 		msg::String
 	end
 	"""
-		dgt_lidar(bbox; user="", password"", save=false, output_dir="", delay=1.0, collection="MDS-2m", dry=false, verbose=true)
+		dgt_lidar(bbox; user="", password="", save=false, output_dir="", delay=1.0, collection="MDS-2m", dry=false, verbose=true)
+		dgt_lidar(GI::Union{GMTgrid,GMTimage}; ...)
+		dgt_lidar(lon, lat; ...)
+		dgt_lidar(D::GMTdataset; zoom=0, ...)
 
 	Download LIDAR tiles from Portugal's national elevation survey via the DGT CDD STAC API.
 
@@ -29,8 +32,16 @@ module GMTDGTLidarExt
 	Tiles are organized into subdirectories by collection. Downloads are resumable —
 	existing files are skipped.
 
+	### Positional argument — four accepted forms
+	- `bbox`: A 4-element array or tuple `[min_lon, max_lon, min_lat, max_lat]` in WGS84 degrees.
+	- `GI`: A `GMTgrid` or `GMTimage` with a valid projection. The geographic extent is extracted
+	  from the grid/image header; non-geographic projections are reprojected to lon/lat automatically.
+	- `lon, lat`: Two separate vectors or tuples `[min_lon, max_lon]`, `[min_lat, max_lat]`.
+	- `D`: A `GMTdataset` (e.g. from `geocoder`). The geographic bounding box stored in `D.ds_bbox`
+	  is used. The optional `zoom` keyword (default `0`) enlarges the query to tile boundaries at the
+	  specified zoom level via `mosaic(..., mesh=true)`.
+
 	### Keyword Args
-	- `bbox`: Bounding box `[min_lon, max_lon, min_lat, max_lat]` in WGS84 degrees. **Required.**
 	- `user`: DGT CDD account e-mail. If omitted, read from `~/.dgt`.
 	- `password`: DGT CDD account password. If omitted, read from `~/.dgt`.
 	  The `~/.dgt` file format (first line is a comment):
@@ -80,24 +91,32 @@ module GMTDGTLidarExt
 		_dgt_lidar((Float64(bbox[1]), Float64(bbox[2]), Float64(bbox[3]), Float64(bbox[4])), user, password, save,
 		           output_dir, Float64(delay), collection, dry, Int(verbose))
 	end
+
+	"""dgt_lidar(GI; ...) — bbox extracted from a GMTgrid or GMTimage header; non-geographic projections are reprojected."""
 	function GMT.dgt_lidar(GI::GItype; user::String="", password::String="", save::Bool=false,
 	                       output_dir::String="", delay::Real=1.0, collection::String="MDS-2m", dry::Bool=false, verbose=true)
-		lon, lat = lonlat_from(GI)
+		lon, lat = GMT.lonlat_from(GI)
 		_dgt_lidar((Float64(lon[1]), Float64(lon[2]), Float64(lat[1]), Float64(lat[2])), user, password, save,
 		           output_dir, Float64(delay), collection, dry, Int(verbose))
 	end
-	# This method is mostly for calls from python's juliacall that used PyList (because dumb Py consider this a list: [1.0, 2.6])
+
+	"""dgt_lidar(lon, lat; ...) — `lon` and `lat` are separate `[min, max]` vectors or matrices (also accepts PyList from juliacall)."""
 	function GMT.dgt_lidar(lon::AbstractVecOrMat, lat::AbstractVecOrMat; user::String="", password::String="", save::Bool=false,
 	                       output_dir::String="", delay::Real=1.0, collection::String="MDS-2m", dry::Bool=false, verbose=true)
-		lon, lat = lonlat_from(GI)
+		lon, lat = GMT.lonlat_from(lon, lat)
 		_dgt_lidar((Float64(lon[1]), Float64(lon[2]), Float64(lat[1]), Float64(lat[2])), user, password, save,
 		           output_dir, Float64(delay), collection, dry, Int(verbose))
 	end
+
+	"""
+	dgt_lidar(D::GDtype; zoom=0, ...) — bbox from `D.ds_bbox`. With `zoom > 0` the query is
+	snapped to tile boundaries at that zoom level (calls `mosaic(..., mesh=true)`).
+	"""
 	function GMT.dgt_lidar(D::GDtype; user::String="", password::String="", save::Bool=false, zoom::Int=0,
 	                       output_dir::String="", delay::Real=1.0, collection::String="MDS-2m", dry::Bool=false, verbose=true, kw...)
 		(zoom < 0) && error("Invalid zoom level: $zoom. Must be >= 0.")
 		if (zoom == 0)
-			lon, lat = lonlat_from(GI; bb=true)
+			lon, lat = GMT.lonlat_from(D; bb=true)
 		else
 			Dm = mosaic(D, zoom=zoom, mesh=true, kw...)		# Here kw can contain a 'neighbors' option
 			lon, lat = Dm.ds_bbox[1:2], Dm.ds_bbox[3:4]
@@ -125,13 +144,13 @@ module GMTDGTLidarExt
 				println(io, "login $_usr")
 				println(io, "password $_passwd")
 			end
-			verbose >= 2 && println("Credentials saved to $dgt_file")
+			verbose == 2 && println("Credentials saved to $dgt_file")
 		end
 		!_authenticate(string(user), string(password), verbose) && error("Authentication failed.")
 		output_dir = isempty(output_dir) ? joinpath(GMT.GMTuserdir[1], "DGT") :
 		             startswith(output_dir, "_") ? joinpath(GMT.GMTuserdir[1], "DGT", output_dir[2:end]) : output_dir
 
-		if (verbose >= 2)
+		if (verbose == 2)
 			println("\n--- DGT CDD LIDAR Downloader$(dry ? " [DRY RUN]" : "") ---")
 			println("Bounding box : $bbox")
 			dry || println("Output dir   : $output_dir")
@@ -139,12 +158,12 @@ module GMTDGTLidarExt
 		end
 
 		small_bboxes = _divide_bbox(bbox)
-		verbose >= 2 && println("Bbox divided into $(length(small_bboxes)) sub-queries")
+		verbose == 2 && println("Bbox divided into $(length(small_bboxes)) sub-queries")
 
 		all_urls = Dict{String,Vector{Tuple{String,String,String}}}()
 
 		for (i, sub_bbox) in enumerate(small_bboxes)
-			verbose >= 2 && println("Querying sub-bbox $i/$(length(small_bboxes)): $sub_bbox")
+			verbose == 2 && println("Querying sub-bbox $i/$(length(small_bboxes)): $sub_bbox")
 			stac_response = _search_stac(sub_bbox; collections=collection, delay=Float64(delay))
 			urls = _collect_urls(stac_response)
 
@@ -154,21 +173,23 @@ module GMTDGTLidarExt
 			end
 
 			n = isempty(urls) ? 0 : sum(length(v) for v in values(urls))
-			verbose >= 2 && println("  Found $n items")
+			verbose == 2 && println("  Found $n items")
 		end
 
 		total = isempty(all_urls) ? 0 : sum(length(v) for v in values(all_urls))
 		add_t = (total == 0) ? "\nNothing else to do. Quiting here\n" : ""
-		if (verbose >= 2 || total == 0)
+		if (verbose == 2 || total == 0)
 			println("\nTotal unique URLs found: $total" * add_t)
 		end
 		(total == 0) && return nothing
 
 		if dry
-			for (coll, pairs) in all_urls
-				println("\nCollection: $coll ($(length(pairs)) files)")
-				for (_, item_id, ext) in pairs
-					println("  $item_id$ext")
+			if (verbose <= 2)		# == 3 when run from tests (be silent)
+				for (coll, pairs) in all_urls
+					println("\nCollection: $coll ($(length(pairs)) files)")
+					for (_, item_id, ext) in pairs
+						println("  $item_id$ext")
+					end
 				end
 			end
 			return nothing
@@ -179,11 +200,11 @@ module GMTDGTLidarExt
 		_dgt_auth_state.download_counter = 0
 
 		for (coll, pairs) in all_urls
-			verbose >= 2 && println("\nDownloading collection: $coll")
+			verbose == 2 && println("\nDownloading collection: $coll")
 			coll_dir = joinpath(output_dir, coll)
 
 			for (j, (url, item_id, ext)) in enumerate(pairs)
-				verbose >= 2 && println("  [$j/$(length(pairs))] $url")
+				verbose == 2 && println("  [$j/$(length(pairs))] $url")
 				result = _download_file(url, item_id, ext, coll_dir; delay=delay, verbose=verbose)
 
 				file_path = joinpath(coll_dir, "$item_id$ext")
@@ -193,7 +214,7 @@ module GMTDGTLidarExt
 			end
 		end
 
-		verbose >= 2 && println("\nDone: $downloaded downloaded, $skipped skipped.")
+		verbose == 2 && println("\nDone: $downloaded downloaded, $skipped skipped.")
 		return nothing
 	end
 
@@ -243,7 +264,7 @@ module GMTDGTLidarExt
 		tif_files = [replace(f, '\\' => '/') for f in readdir(coll_dir, join=true) if endswith(lowercase(f), ".tiff")]
 		isempty(tif_files) && error("No .tiff files in $coll_dir")
 
-		verbose >= 2 && println("Building VRT from $(length(tif_files)) tiles...")
+		verbose == 2 && println("Building VRT from $(length(tif_files)) tiles...")
 		vrt_ds = GMT.gdalbuildvrt(tif_files)
 		isempty(vrt) || GMT.gdalbuildvrt(tif_files; save=vrt)
 
@@ -261,7 +282,7 @@ module GMTDGTLidarExt
 			GMT.gdaltranslate(vrt_ds, opts; save=outfile)
 		end
 
-		verbose >= 2 && println("Mosaic saved to $outfile")
+		verbose == 2 && println("Mosaic saved to $outfile")
 		return outfile
 	end
 
@@ -458,7 +479,7 @@ module GMTDGTLidarExt
 				"Connection"      => "keep-alive"]
 
 		try
-			verbose >= 2 && println("Starting DGT authentication...")
+			verbose == 2 && println("Starting DGT authentication...")
 			cookies = Dict{String,String}()
 
 			response = HTTP.get(main_site, headers; redirect=true)
@@ -474,9 +495,9 @@ module GMTDGTLidarExt
 			form_action, form_data = _extract_form_data(String(response.body))
 
 			if form_action === nothing
-				verbose >= 2 && println("No login form found, checking if already authenticated...")
+				verbose == 2 && println("No login form found, checking if already authenticated...")
 				if _test_session(cookies)
-					verbose >= 2 && println("Already authenticated!")
+					verbose == 2 && println("Already authenticated!")
 					_dgt_auth_state.cookies        = cookies
 					_dgt_auth_state.username       = username
 					_dgt_auth_state.password       = password
@@ -487,7 +508,7 @@ module GMTDGTLidarExt
 				end
 			end
 
-			verbose >= 2 && println("Submitting credentials...")
+			verbose == 2 && println("Submitting credentials...")
 			form_data["username"] = username
 			form_data["password"] = password
 
@@ -504,7 +525,7 @@ module GMTDGTLidarExt
 			merge!(cookies, _extract_cookies(response))
 
 			if _test_session(cookies)
-				verbose >= 2 && println("Authentication successful!")
+				verbose == 2 && println("Authentication successful!")
 				_dgt_auth_state.cookies        = cookies
 				_dgt_auth_state.username       = username
 				_dgt_auth_state.password       = password
@@ -623,7 +644,7 @@ module GMTDGTLidarExt
 	function _download_file(url::String, item_id::String, extension::String, output_dir::String; delay::Real=5.0, verbose::Int=1)
 		_dgt_auth_state.download_counter += 1
 		if _dgt_auth_state.download_counter % 10 == 0 && (_is_session_expired() || !_is_session_valid("https://cdd.dgterritorio.gov.pt/dgt-be/v1/search"))
-			verbose >= 2 && println("\n[Re-authenticating...]")
+			verbose == 2 && println("\n[Re-authenticating...]")
 			_authenticate(_dgt_auth_state.username, _dgt_auth_state.password, verbose) || throw(AuthenticationError("Re-authentication failed"))
 		end
 
@@ -632,7 +653,7 @@ module GMTDGTLidarExt
 		file_path = joinpath(output_dir, filename)
 
 		if isfile(file_path)
-			verbose >= 2 && println("Skipping $file_path (already exists)")
+			verbose == 2 && println("Skipping $file_path (already exists)")
 			return true
 		end
 
