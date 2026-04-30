@@ -20,7 +20,7 @@ module GMTDGTLidarExt
 		msg::String
 	end
 	"""
-		dgt_lidar(bbox; user, password, output_dir="./dgt_lidar", delay=1.0, collections=nothing)
+		dgt_lidar(bbox; user="", password"", save=false, output_dir="", delay=1.0, collection="MDS-2m", dry=false, verbose=true)
 
 	Download LIDAR tiles from Portugal's national elevation survey via the DGT CDD STAC API.
 
@@ -77,8 +77,35 @@ module GMTDGTLidarExt
 	"""
 	function GMT.dgt_lidar(bbox::Union{Tuple{<:Real}, Array{<:Real}}; user::String="", password::String="", save::Bool=false,
 	                       output_dir::String="", delay::Real=1.0, collection::String="MDS-2m", dry::Bool=false, verbose=true)
-		_dgt_lidar((Float64(bbox[1]), Float64(bbox[2]), Float64(bbox[3]), Float64(bbox[4])), user, password, save, output_dir, Float64(delay), collection, dry, Int(verbose))
+		_dgt_lidar((Float64(bbox[1]), Float64(bbox[2]), Float64(bbox[3]), Float64(bbox[4])), user, password, save,
+		           output_dir, Float64(delay), collection, dry, Int(verbose))
 	end
+	function GMT.dgt_lidar(GI::GItype; user::String="", password::String="", save::Bool=false,
+	                       output_dir::String="", delay::Real=1.0, collection::String="MDS-2m", dry::Bool=false, verbose=true)
+		lon, lat = lonlat_from(GI)
+		_dgt_lidar((Float64(lon[1]), Float64(lon[2]), Float64(lat[1]), Float64(lat[2])), user, password, save,
+		           output_dir, Float64(delay), collection, dry, Int(verbose))
+	end
+	# This method is mostly for calls from python's juliacall that used PyList (because dumb Py consider this a list: [1.0, 2.6])
+	function GMT.dgt_lidar(lon::AbstractVecOrMat, lat::AbstractVecOrMat; user::String="", password::String="", save::Bool=false,
+	                       output_dir::String="", delay::Real=1.0, collection::String="MDS-2m", dry::Bool=false, verbose=true)
+		lon, lat = lonlat_from(GI)
+		_dgt_lidar((Float64(lon[1]), Float64(lon[2]), Float64(lat[1]), Float64(lat[2])), user, password, save,
+		           output_dir, Float64(delay), collection, dry, Int(verbose))
+	end
+	function GMT.dgt_lidar(D::GDtype; user::String="", password::String="", save::Bool=false, zoom::Int=0,
+	                       output_dir::String="", delay::Real=1.0, collection::String="MDS-2m", dry::Bool=false, verbose=true, kw...)
+		(zoom < 0) && error("Invalid zoom level: $zoom. Must be >= 0.")
+		if (zoom == 0)
+			lon, lat = lonlat_from(GI; bb=true)
+		else
+			Dm = mosaic(D, zoom=zoom, mesh=true, kw...)		# Here kw can contain a 'neighbors' option
+			lon, lat = Dm.ds_bbox[1:2], Dm.ds_bbox[3:4]
+		end
+		_dgt_lidar((Float64(lon[1]), Float64(lon[2]), Float64(lat[1]), Float64(lat[2])), user, password, save,
+		           output_dir, Float64(delay), collection, dry, Int(verbose))
+	end
+
 	function _dgt_lidar(bbox, user::String, password::String, save::Bool, output_dir::String, delay::Float64,
 	                    collection::String, dry::Bool, verbose::Int)
 
@@ -104,7 +131,7 @@ module GMTDGTLidarExt
 		output_dir = isempty(output_dir) ? joinpath(GMT.GMTuserdir[1], "DGT") :
 		             startswith(output_dir, "_") ? joinpath(GMT.GMTuserdir[1], "DGT", output_dir[2:end]) : output_dir
 
-		if verbose >= 2
+		if (verbose >= 2)
 			println("\n--- DGT CDD LIDAR Downloader$(dry ? " [DRY RUN]" : "") ---")
 			println("Bounding box : $bbox")
 			dry || println("Output dir   : $output_dir")
@@ -172,7 +199,7 @@ module GMTDGTLidarExt
 
 	# ------------------------------------------------------------------------------------------
 	"""
-	    dgt_mosaic(bbox; src_dir="./dgt_lidar", collection="MDS-2m", outfile="mosaic.tif")
+	    dgt_mosaic(bbox; src_dir="", collection="MDS-2m", outfile="mosaic.tif", inc=0, method="cubicspline", vrt="", verbose=true)
 
 	Mosaic downloaded DGT LIDAR tiles covering `bbox` into a single GeoTIFF.
 
@@ -201,11 +228,11 @@ module GMTDGTLidarExt
 	```
 	"""
 	function GMT.dgt_mosaic(bbox::Union{Tuple{<:Real}, Array{<:Real}}; src_dir::String="", collection::String="MDS-2m",
-	                        outfile::String="mosaic.tiff", inc::Real=0, method::String="cubicspline", vrt::String="",
-	                        verbose::Int=1)
+	                        outfile::String="mosaic.tiff", inc::Real=0, method::String="cubicspline", vrt::String="", verbose::Int=1)
 		_dgt_mosaic((Float64(bbox[1]), Float64(bbox[2]), Float64(bbox[3]), Float64(bbox[4])), src_dir, collection,
 		            outfile, Float64(inc), method, vrt, verbose)
 	end
+
 	function _dgt_mosaic(bbox, src_dir::String, collection::String, outfile::String, inc::Float64, method::String, vrt::String, verbose::Int=1)
 
 		src_dir = isempty(src_dir) ? joinpath(GMT.GMTuserdir[1], "DGT") :
