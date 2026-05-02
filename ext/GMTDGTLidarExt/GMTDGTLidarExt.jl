@@ -20,10 +20,13 @@ module GMTDGTLidarExt
 		msg::String
 	end
 	"""
-		dgt_lidar(bbox; user="", password="", save=false, output_dir="", delay=1.0, collection="MDS-2m", dry=false, verbose=true)
-		dgt_lidar(GI::Union{GMTgrid,GMTimage}; ...)
-		dgt_lidar(lon, lat; ...)
-		dgt_lidar(D::GMTdataset; zoom=0, ...)
+	    dgt_lidar(bbox; user="", password="", save=false, output_dir="", delay=1.0, collection="MDS-2m",
+	              dry=false, latest=true, mosaic=false, outfile="mosaic.nc", inc=0, method="cubicspline", verbose=true)
+	    dgt_lidar(GI::Union{GMTgrid,GMTimage}; ...)
+	    dgt_lidar(lon, lat; ...)
+	    dgt_lidar(D::GMTdataset; zoom=0, ...)
+	    dgt_lidar(lon::Real, lat::Real; neighbors=0, zoom=14, ...)
+	    dgt_lidar([lon, lat]; neighbors=0, zoom=14, ...)
 
 	Download LIDAR tiles from Portugal's national elevation survey via the DGT CDD STAC API.
 
@@ -32,8 +35,11 @@ module GMTDGTLidarExt
 	Tiles are organized into subdirectories by collection. Downloads are resumable —
 	existing files are skipped.
 
-	### Positional argument — four accepted forms
+	### Positional argument — six accepted forms
 	- `bbox`: A 4-element array or tuple `[min_lon, max_lon, min_lat, max_lat]` in WGS84 degrees.
+	- `[lon, lat]` (2-element array): Downloads only the tile that contains the given point.
+	  Use `neighbors` to include surrounding tiles and `zoom` to set the tile-grid size.
+	- `lon, lat` (two scalars): Same as 2-element array, using separate scalar arguments.
 	- `GI`: A `GMTgrid` or `GMTimage` with a valid projection. The geographic extent is extracted
 	  from the grid/image header; non-geographic projections are reprojected to lon/lat automatically.
 	- `lon, lat`: Two separate vectors or tuples `[min_lon, max_lon]`, `[min_lat, max_lat]`.
@@ -57,6 +63,21 @@ module GMTDGTLidarExt
 	- `collection`: Collection to download. One of `"LAZ"`, `"MDT-50cm"`, `"MDS-50cm"`, `"MDT-2m"`, `"MDS-2m"`.
 	  Case-insensitive. Default `"MDS-2m"`.
 	- `dry`: If `true`, query the API and print found files but skip all downloads (default: `false`).
+	- `neighbors`: Number of neighboring DGT tiles to include around a single-point query (default: `0` =
+	  only the tile containing the point). Can be an integer `N` (N rings of tiles on each side, giving a
+	  (2N+1)×(2N+1) grid) or a 2-element vector `[Nx, Ny]` for asymmetric east-west/north-south expansion.
+	  Only used with the 2-element or scalar point forms. The tile size is determined from the actual DGT
+	  tile boundaries returned by the STAC API, so neighbors always means DGT tiles, not OSM tiles.
+	- `zoom`: OSM zoom level used only as a fallback when the STAC API cannot determine the central tile's
+	  bbox (default: `14`). Under normal conditions this parameter has no effect.
+	- `latest`: If `true` (default), keep only the most recent version of each tile when multiple versions
+	  exist. DGT names versioned files with a `_v01`, `_v02`, … suffix; the unversioned original is treated
+	  as version 0. Set to `false` to download every version.
+	- `mosaic`: If `true`, after downloading call `dgt_mosaic()` to build a single GeoTIFF mosaic of all tiles
+	  (default: `false`). Ignored when `dry=true`.
+	- `outfile`: Output path for the mosaic GeoTIFF (default: `"mosaic.nc"`). Used only when `mosaic=true`.
+	- `inc`: Resample resolution for the mosaic in CRS units (metres). `0` = no resample (default: `0`). Used only when `mosaic=true`.
+	- `method`: Resampling algorithm when `inc != 0` (default: `"cubicspline"`). Used only when `mosaic=true`.
 	- `verbose`: Verbosity level (default: `1`).
 	  `0` = silent (errors only; dry output always shown); `1` = downloaded file names only; `2` = full progress.
 
@@ -87,25 +108,50 @@ module GMTDGTLidarExt
 	```
 	"""
 	function GMT.dgt_lidar(bbox::Union{Tuple{<:Real}, Array{<:Real}}; user::String="", password::String="", save::Bool=false,
-	                       output_dir::String="", delay::Real=1.0, collection::String="MDS-2m", dry::Bool=false, verbose=true)
-		_dgt_lidar((Float64(bbox[1]), Float64(bbox[2]), Float64(bbox[3]), Float64(bbox[4])), user, password, save,
-		           output_dir, Float64(delay), collection, dry, Int(verbose))
+	                       output_dir::String="", delay::Real=1.0, collection::String="MDS-2m", dry::Bool=false,
+	                       mosaic::Bool=false, outfile::String="mosaic.nc", inc::Real=0, method::String="cubicspline",
+	                       latest::Bool=true, neighbors=0, zoom::Int=14, verbose=true)
+		local b::NTuple{4,Float64}
+		local _nb
+		if length(bbox) == 2
+			b   = (Float64(bbox[1]) - 1e-5, Float64(bbox[1]) + 1e-5, Float64(bbox[2]) - 1e-5, Float64(bbox[2]) + 1e-5)
+			_nb = neighbors
+		elseif length(bbox) == 4
+			b   = (Float64(bbox[1]), Float64(bbox[2]), Float64(bbox[3]), Float64(bbox[4]))
+			_nb = 0
+		else
+			error("bbox must have 2 elements [lon, lat] or 4 elements [min_lon, max_lon, min_lat, max_lat], got $(length(bbox))")
+		end
+		_dgt_lidar(b, user, password, save, output_dir, Float64(delay), collection, dry, mosaic, outfile, Float64(inc), method, latest, Int(verbose), _nb, Int(zoom))
+	end
+
+	"""dgt_lidar(lon, lat; neighbors=0, zoom=14, ...) — scalar point; downloads the tile containing (lon, lat). `neighbors` expands to adjacent tiles (same semantics as `mosaic`); `zoom` controls tile size (default 14 ≈ 2 km tiles)."""
+	function GMT.dgt_lidar(lon::Real, lat::Real; user::String="", password::String="", save::Bool=false,
+	                       output_dir::String="", delay::Real=1.0, collection::String="MDS-2m", dry::Bool=false,
+	                       mosaic::Bool=false, outfile::String="mosaic.nc", inc::Real=0, method::String="cubicspline",
+	                       latest::Bool=true, neighbors=0, zoom::Int=14, verbose=true)
+		b = (Float64(lon) - 1e-5, Float64(lon) + 1e-5, Float64(lat) - 1e-5, Float64(lat) + 1e-5)
+		_dgt_lidar(b, user, password, save, output_dir, Float64(delay), collection, dry, mosaic, outfile, Float64(inc), method, latest, Int(verbose), neighbors, Int(zoom))
 	end
 
 	"""dgt_lidar(GI; ...) — bbox extracted from a GMTgrid or GMTimage header; non-geographic projections are reprojected."""
 	function GMT.dgt_lidar(GI::GItype; user::String="", password::String="", save::Bool=false,
-	                       output_dir::String="", delay::Real=1.0, collection::String="MDS-2m", dry::Bool=false, verbose=true)
+	                       output_dir::String="", delay::Real=1.0, collection::String="MDS-2m", dry::Bool=false,
+	                       mosaic::Bool=false, outfile::String="mosaic.nc", inc::Real=0, method::String="cubicspline",
+	                       latest::Bool=true, verbose=true)
 		lon, lat = GMT.lonlat_from(GI)
 		_dgt_lidar((Float64(lon[1]), Float64(lon[2]), Float64(lat[1]), Float64(lat[2])), user, password, save,
-		           output_dir, Float64(delay), collection, dry, Int(verbose))
+		           output_dir, Float64(delay), collection, dry, mosaic, outfile, Float64(inc), method, latest, Int(verbose))
 	end
 
 	"""dgt_lidar(lon, lat; ...) — `lon` and `lat` are separate `[min, max]` vectors or matrices (also accepts PyList from juliacall)."""
 	function GMT.dgt_lidar(lon::AbstractVecOrMat, lat::AbstractVecOrMat; user::String="", password::String="", save::Bool=false,
-	                       output_dir::String="", delay::Real=1.0, collection::String="MDS-2m", dry::Bool=false, verbose=true)
+	                       output_dir::String="", delay::Real=1.0, collection::String="MDS-2m", dry::Bool=false,
+	                       mosaic::Bool=false, outfile::String="mosaic.nc", inc::Real=0, method::String="cubicspline",
+	                       latest::Bool=true, verbose=true)
 		lon, lat = GMT.lonlat_from(lon, lat)
 		_dgt_lidar((Float64(lon[1]), Float64(lon[2]), Float64(lat[1]), Float64(lat[2])), user, password, save,
-		           output_dir, Float64(delay), collection, dry, Int(verbose))
+		           output_dir, Float64(delay), collection, dry, mosaic, outfile, Float64(inc), method, latest, Int(verbose))
 	end
 
 	"""
@@ -113,20 +159,24 @@ module GMTDGTLidarExt
 	snapped to tile boundaries at that zoom level (calls `mosaic(..., mesh=true)`).
 	"""
 	function GMT.dgt_lidar(D::GDtype; user::String="", password::String="", save::Bool=false, zoom::Int=0,
-	                       output_dir::String="", delay::Real=1.0, collection::String="MDS-2m", dry::Bool=false, verbose=true, kw...)
+	                       output_dir::String="", delay::Real=1.0, collection::String="MDS-2m", dry::Bool=false,
+	                       mosaic::Bool=false, outfile::String="mosaic.nc", inc::Real=0, method::String="cubicspline",
+	                       latest::Bool=true, verbose=true, kw...)
 		(zoom < 0) && error("Invalid zoom level: $zoom. Must be >= 0.")
 		if (zoom == 0)
 			lon, lat = GMT.lonlat_from(D; bb=true)
 		else
-			Dm = mosaic(D, zoom=zoom, mesh=true, kw...)		# Here kw can contain a 'neighbors' option
+			Dm = GMT.mosaic(D, zoom=zoom, mesh=true, kw...)		# Here kw can contain a 'neighbors' option
 			lon, lat = Dm.ds_bbox[1:2], Dm.ds_bbox[3:4]
 		end
 		_dgt_lidar((Float64(lon[1]), Float64(lon[2]), Float64(lat[1]), Float64(lat[2])), user, password, save,
-		           output_dir, Float64(delay), collection, dry, Int(verbose))
+		           output_dir, Float64(delay), collection, dry, mosaic, outfile, Float64(inc), method, latest, Int(verbose))
 	end
 
-	function _dgt_lidar(bbox, user::String, password::String, save::Bool, output_dir::String, delay::Float64,
-	                    collection::String, dry::Bool, verbose::Int)
+	# --------------------------------------------------------------------------------------------------------------------------
+	function _dgt_lidar(bbox, user::String, password::String, save::Bool, output_dir::String, delay::Float64, collection::String,
+	                    dry::Bool, do_mosaic::Bool, outfile::String, inc::Float64, method::String, latest::Bool, verbose::Int,
+	                    _neighbors=0, _zoom::Int=14)
 
 		_valid = ("LAZ", "MDT-50cm", "MDS-50cm", "MDT-2m", "MDS-2m")
 		_coll = uppercase(collection)		# Because of Core.Boxes
@@ -147,6 +197,16 @@ module GMTDGTLidarExt
 			verbose == 2 && println("Credentials saved to $dgt_file")
 		end
 		!_authenticate(string(user), string(password), verbose) && error("Authentication failed.")
+
+		# For point+neighbors queries, expand the epsilon bbox to actual DGT tile boundaries
+		_nb_nonzero = isa(_neighbors, Int) ? (_neighbors > 0) : any(_neighbors .> 0)
+		if _nb_nonzero
+			lon = (bbox[1] + bbox[2]) / 2.0
+			lat = (bbox[3] + bbox[4]) / 2.0
+			bbox = _point_neighbors_bbox(lon, lat, _neighbors, collection, _zoom)
+			verbose == 2 && println("  Point+neighbors bbox: $bbox")
+		end
+
 		output_dir = isempty(output_dir) ? joinpath(GMT.GMTuserdir[1], "DGT") :
 		             startswith(output_dir, "_") ? joinpath(GMT.GMTuserdir[1], "DGT", output_dir[2:end]) : output_dir
 
@@ -176,6 +236,13 @@ module GMTDGTLidarExt
 			verbose == 2 && println("  Found $n items")
 		end
 
+		if latest
+			n_before = isempty(all_urls) ? 0 : sum(length(v) for v in values(all_urls))
+			_filter_latest!(all_urls)
+			n_after  = isempty(all_urls) ? 0 : sum(length(v) for v in values(all_urls))
+			verbose == 2 && n_before > n_after && println("  Keeping latest versions: $(n_before - n_after) older file(s) excluded")
+		end
+
 		total = isempty(all_urls) ? 0 : sum(length(v) for v in values(all_urls))
 		add_t = (total == 0) ? "\nNothing else to do. Quiting here\n" : ""
 		if (verbose == 2 || total == 0)
@@ -200,27 +267,26 @@ module GMTDGTLidarExt
 		_dgt_auth_state.download_counter = 0
 
 		for (coll, pairs) in all_urls
-			verbose == 2 && println("\nDownloading collection: $coll")
+			(verbose == 1 || verbose == 2) && println("\nDownloading collection: $coll")
 			coll_dir = joinpath(output_dir, coll)
 
 			for (j, (url, item_id, ext)) in enumerate(pairs)
-				verbose == 2 && println("  [$j/$(length(pairs))] $url")
-				result = _download_file(url, item_id, ext, coll_dir; delay=delay, verbose=verbose)
-
 				file_path = joinpath(coll_dir, "$item_id$ext")
-				if result
-					isfile(file_path) ? (skipped += 1) : (downloaded += 1)
-				end
+				already   = isfile(file_path)
+				(verbose == 1 || verbose == 2) && !already && println("  [$j/$(length(pairs))] $url")
+				result = _download_file(url, item_id, ext, coll_dir; delay=delay, verbose=verbose)
+				result && (already ? (skipped += 1) : (downloaded += 1))
 			end
 		end
 
-		verbose == 2 && println("\nDone: $downloaded downloaded, $skipped skipped.")
+		(verbose == 1 || verbose == 2) && println("\nDone: $downloaded downloaded, $skipped already downloaded.")
+		do_mosaic && GMT.dgt_mosaic(bbox; src_dir=output_dir, collection=collection, outfile=outfile, inc=inc, method=method, verbose=verbose)
 		return nothing
 	end
 
 	# ------------------------------------------------------------------------------------------
 	"""
-	    dgt_mosaic(bbox; src_dir="", collection="MDS-2m", outfile="mosaic.tif", inc=0, method="cubicspline", vrt="", verbose=true)
+	    dgt_mosaic(bbox; src_dir="", collection="MDS-2m", outfile="mosaic.nc", inc=0, method="cubicspline", vrt="", verbose=true)
 
 	Mosaic downloaded DGT LIDAR tiles covering `bbox` into a single GeoTIFF.
 
@@ -234,7 +300,7 @@ module GMTDGTLidarExt
 	- `src_dir`: Root directory of downloaded tiles (default: `homedir/.gmt/DGT`).
 	  Prefix with `_` to read from `homedir/.gmt/DGT/` (e.g. `"_algarve"` → `homedir/.gmt/DGT/algarve`).
 	- `collection`: Collection subdirectory to mosaic (default: `"MDS-2m"`).
-	- `outfile`: Output GeoTIFF path (default: `"mosaic.tiff"`).
+	- `outfile`: Output GeoTIFF path (default: `"mosaic.nc"`).
 	- `inc`: If non-zero, resample the mosaic to this resolution (in the raster's CRS units, typically metres)
 	  via `gdalwarp`. Default `0` (no resample, use `gdaltranslate`).
 	- `vrt`: If non-empty, save the intermediate VRT mosaic to this file path (default: `""`, in-memory only).
@@ -248,37 +314,53 @@ module GMTDGTLidarExt
 	dgt_mosaic([-9.2, -9.1, 38.7, 38.8]; src_dir="lidar_lisboa")
 	```
 	"""
-	function GMT.dgt_mosaic(bbox::Union{Tuple{<:Real}, Array{<:Real}}; src_dir::String="", collection::String="MDS-2m",
-	                        outfile::String="mosaic.tiff", inc::Real=0, method::String="cubicspline", vrt::String="", verbose::Int=1)
+	function GMT.dgt_mosaic(bbox::Union{NTuple{4, <:Real}, Array{<:Real}}; src_dir::String="", collection::String="MDS-2m",
+	                        outfile::String="mosaic.nc", inc::Real=0, method::String="cubicspline", vrt::String="", verbose::Int=1)
 		_dgt_mosaic((Float64(bbox[1]), Float64(bbox[2]), Float64(bbox[3]), Float64(bbox[4])), src_dir, collection,
 		            outfile, Float64(inc), method, vrt, verbose)
 	end
 
 	function _dgt_mosaic(bbox, src_dir::String, collection::String, outfile::String, inc::Float64, method::String, vrt::String, verbose::Int=1)
 
-		src_dir = isempty(src_dir) ? joinpath(GMT.GMTuserdir[1], "DGT") :
-		          startswith(src_dir, "_") ? joinpath(GMT.GMTuserdir[1], "DGT", src_dir[2:end]) : src_dir
+		dgt_root = joinpath(GMT.GMTuserdir[1], "DGT")
+		is_named = startswith(src_dir, "_")
+		src_dir  = isempty(src_dir) ? dgt_root :
+		           is_named ? joinpath(dgt_root, src_dir[2:end]) : src_dir
 		coll_dir = replace(abspath(joinpath(src_dir, collection)), '\\' => '/')
 		isdir(coll_dir) || error("Directory not found: $coll_dir. Run dgt_lidar() first.")
 
 		tif_files = [replace(f, '\\' => '/') for f in readdir(coll_dir, join=true) if endswith(lowercase(f), ".tiff")]
-		isempty(tif_files) && error("No .tiff files in $coll_dir")
+
+		# When using a named (_prefix) src_dir, also include tiles from the root DGT pool (~/.gmt/DGT/<collection>/).
+		# This lets a regional mosaic transparently absorb tiles downloaded without a prefix.
+		if is_named
+			root_coll = replace(abspath(joinpath(dgt_root, collection)), '\\' => '/')
+			if isdir(root_coll) && root_coll != coll_dir
+				append!(tif_files, [replace(f, '\\' => '/') for f in readdir(root_coll, join=true) if endswith(lowercase(f), ".tiff")])
+			end
+		end
+
+		isempty(tif_files) && error("No .tiff files in $coll_dir$(is_named ? " or $(joinpath(dgt_root, collection))" : "")")
 
 		verbose == 2 && println("Building VRT from $(length(tif_files)) tiles...")
 		vrt_ds = GMT.gdalbuildvrt(tif_files)
 		isempty(vrt) || GMT.gdalbuildvrt(tif_files; save=vrt)
+
+		ext_lc   = lowercase(splitext(outfile)[2])
+		fmt_opts = ext_lc == ".nc" ? ["-of", "netCDF", "-co", "FORMAT=NC4", "-co", "COMPRESS=DEFLATE"] :
+		                             ["-of", "GTiff"]
 
 		if inc != 0
 			# gdalwarp: -te xmin ymin xmax ymax (bbox[1]=min_lon, bbox[3]=min_lat, bbox[2]=max_lon, bbox[4]=max_lat)
 			opts = ["-te", string(bbox[1]), string(bbox[3]), string(bbox[2]), string(bbox[4]),
 			        "-te_srs", "EPSG:4326",
 			        "-tr", string(inc), string(inc),
-			        "-r", method]
+			        "-r", method, fmt_opts...]
 			GMT.gdalwarp(vrt_ds, opts; dest=outfile)
 		else
 			# bbox = [min_lon, max_lon, min_lat, max_lat]; -projwin expects: ulx uly lrx lry
 			opts = ["-projwin", string(bbox[1]), string(bbox[4]), string(bbox[2]), string(bbox[3]),
-			        "-projwin_srs", "EPSG:4326", "-of", "GTiff"]
+			        "-projwin_srs", "EPSG:4326", fmt_opts...]
 			GMT.gdaltranslate(vrt_ds, opts; save=outfile)
 		end
 
@@ -303,8 +385,6 @@ module GMTDGTLidarExt
 				user = strip(line[7:end])
 			elseif startswith(line, "password ")
 				password = strip(line[10:end])
-			else
-				println("Invalid line in ~/.dgt: " * line)
 			end
 		end
 		(isempty(user) || isempty(password)) && error("~/.dgt: missing 'login' or 'password' line.")
@@ -378,6 +458,12 @@ module GMTDGTLidarExt
 
 					m = match(r"\"id\"\s*:\s*\"([^\"]+)\"", feature_str)
 					m !== nothing && (feature["id"] = m.captures[1])
+
+					m = match(r"\"bbox\"\s*:\s*\[([^\]]+)\]", feature_str)
+					if m !== nothing
+						parts = split(m.captures[1], ',')
+						length(parts) >= 4 && (feature["bbox"] = [parse(Float64, strip(p)) for p in parts[1:4]])
+					end
 
 					feature["links"] = []
 					for link_m in eachmatch(r"\"rel\"\s*:\s*\"([^\"]+)\"[^}]*\"href\"\s*:\s*\"([^\"]+)\"", feature_str)
@@ -592,6 +678,48 @@ module GMTDGTLidarExt
 	end
 
 	# ------------------------------------------------------------------------------------------
+	# For point+neighbors queries: find the actual DGT tile bbox from STAC, then expand by N tiles.
+	# neighbors can be Int (symmetric) or 2-element [Nx, Ny] (asymmetric east-west / north-south).
+	# Falls back to OSM tile grid (zoom-based) if STAC returns no bbox for the central tile.
+	function _point_neighbors_bbox(lon::Float64, lat::Float64, neighbors, collection::String, zoom::Int=14)
+		tiny = (lon - 1e-5, lon + 1e-5, lat - 1e-5, lat + 1e-5)
+		resp = _search_stac(tiny; collections=collection, delay=0.0)
+		for item in get(resp, "features", [])
+			bb = get(item, "bbox", nothing)
+			(bb === nothing || length(bb) < 4) && continue
+			# STAC bbox order: [min_lon, min_lat, max_lon, max_lat]
+			tlon1, tlat1, tlon2, tlat2 = Float64(bb[1]), Float64(bb[2]), Float64(bb[3]), Float64(bb[4])
+			dlon = tlon2 - tlon1
+			dlat = tlat2 - tlat1
+			nx = isa(neighbors, AbstractArray) ? Int(neighbors[1]) : Int(neighbors)
+			ny = isa(neighbors, AbstractArray) && length(neighbors) > 1 ? Int(neighbors[2]) : nx
+			return (tlon1 - nx*dlon, tlon2 + nx*dlon, tlat1 - ny*dlat, tlat2 + ny*dlat)
+		end
+		# Fallback: OSM tile grid at the given zoom level
+		Dm = GMT.mosaic(lon, lat; zoom=zoom, neighbors=neighbors, mesh=true)
+		return (Float64(Dm.ds_bbox[1]), Float64(Dm.ds_bbox[2]), Float64(Dm.ds_bbox[3]), Float64(Dm.ds_bbox[4]))
+	end
+
+	# ------------------------------------------------------------------------------------------
+	# When latest=true, keep only the highest-version entry for each base filename.
+	# Versioned files end with _vNN (e.g. _v01, _v02); unversioned files are treated as version 0.
+	function _filter_latest!(all_urls::Dict{String,Vector{Tuple{String,String,String}}})
+		pat = r"_v(\d+)$"i
+		for (coll, pairs) in all_urls
+			best = Dict{String, Tuple{Int,String,String,String}}()  # base → (ver, url, item_id, ext)
+			for (url, item_id, ext) in pairs
+				m    = match(pat, item_id)
+				base = m === nothing ? item_id : item_id[1:end-length(m.match)]
+				ver  = m === nothing ? 0 : parse(Int, m.captures[1])
+				if !haskey(best, base) || ver > best[base][1]
+					best[base] = (ver, url, item_id, ext)
+				end
+			end
+			all_urls[coll] = Tuple{String,String,String}[(v[2], v[3], v[4]) for v in values(best)]
+		end
+	end
+
+	# ------------------------------------------------------------------------------------------
 	function _collect_urls(stac_response)
 		urls_per_collection = Dict{String,Vector{Tuple{String,String,String}}}()
 		seen_urls = Set{String}()
@@ -689,16 +817,16 @@ module GMTDGTLidarExt
 				end
 
 				file_size = filesize(file_path)
-				verbose >= 1 && println("Downloaded $file_path ($file_size bytes)")
+				(verbose == 1 || verbose == 2) && println("Downloaded $file_path ($file_size bytes)")
 				return true
 
 			catch e
 				isfile(file_path) && rm(file_path; force=true)
 				if retry < 3
-					println("Error (attempt $retry/3): $e")
+					(verbose == 1 || verbose == 2) && println("Error (attempt $retry/3): $e")
 					sleep(1)
 				else
-					println("Failed to download $filename: $e")
+					(verbose == 1 || verbose == 2) && println("Failed to download $filename: $e")
 					return false
 				end
 			end
