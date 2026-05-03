@@ -78,12 +78,20 @@ module GMTDGTLidarExt
 	  (uncompressed GeoTIFF). DGT tiles ship uncompressed so `"tif"` and `"nc"` reduce on-disk size
 	  significantly. Not applied to LAZ files. No effect on dry runs.
 	- `mosaic`: If `true`, after downloading call `dgt_mosaic()` to build a single GeoTIFF mosaic of all tiles
-	  (default: `false`). Ignored when `dry=true`.
+	  (default: `false`). Ignored when `dry=true`. (see also the `inc`, `method`, and `proj` kwargs below).
 	- `outfile`: Output path for the mosaic GeoTIFF (default: `"mosaic.tiff"`). Used only when `mosaic=true`.
+	  This file can be save in either GeoTIFF (the default) or netCDF format, determined by the extension
+	  (`.tiff`/`.tif` for GeoTIFF, `.nc` for netCDF).
 	- `inc`: Resample resolution for the mosaic in CRS units (metres). `0` = no resample (default: `0`). Used only when `mosaic=true`.
 	- `method`: Resampling algorithm when `inc != 0` (default: `"cubicspline"`). Used only when `mosaic=true`.
-	- `verbose`: Verbosity level (default: `1`).
-	  `0` = silent (errors only; dry output always shown); `1` = downloaded file names only; `2` = full progress.
+	  One of: `near|bilinear|cubic|cubicspline|lanczos|average|rms|mode|min|max|med|q1|q3|sum`.
+	  See https://gdal.org/en/stable/programs/gdalwarp.html#cmdoption-gdalwarp-r for details.
+	- `proj`: Reproject the mosaic to a different CRS (default: `""`, no reprojection).
+	  Accepts any GDAL-recognized CRS: a proj string (`"+proj=utm +zone=29 +datum=WGS84"`), an authority
+	  string (`"EPSG:32629"`), a bare EPSG number (`"32629"`), or the shorthand `"geog"` for EPSG:4326.
+	  Forces `gdalwarp` even when `inc=0`.
+	- `verbose`: Verbosity level (default: `1`). `0` = silent (errors only; dry output always shown);
+      `1` = downloaded file names only; `2` = full progress.
 
 	### Notes
 	- Large bounding boxes are auto-subdivided into ~200 km² sub-queries to stay within API limits.
@@ -305,7 +313,8 @@ module GMTDGTLidarExt
 	- `src_dir`: Root directory of downloaded tiles (default: `homedir/.gmt/DGT`).
 	  Prefix with `_` to read from `homedir/.gmt/DGT/` (e.g. `"_algarve"` → `homedir/.gmt/DGT/algarve`).
 	- `collection`: Collection subdirectory to mosaic (default: `"MDS-2m"`).
-	- `outfile`: Output GeoTIFF path (default: `"mosaic.tiff"`).
+	- `outfile`: Output GeoTIFF path (default: `"mosaic.tiff"`). This file can be save in either GeoTIFF
+	  (the default) or netCDF format, determined by the extension (`.tiff`/`.tif` for GeoTIFF, `.nc` for netCDF).
 	- `inc`: If non-zero, resample the mosaic to this resolution (in the raster's CRS units, typically metres)
 	  via `gdalwarp`. Default `0` (no resample, use `gdaltranslate`).
 	- `vrt`: If non-empty, save the intermediate VRT mosaic to this file path (default: `""`, in-memory only).
@@ -320,7 +329,7 @@ module GMTDGTLidarExt
 	### Example
 	```julia
 	using GMT, HTTP
-	dgt_mosaic([-9.2, -9.1, 38.7, 38.8]; src_dir="lidar_lisboa")
+	dgt_mosaic([-9.2, -9.1, 38.7, 38.8]; src_dir="_lisboa")
 	```
 	"""
 	function GMT.dgt_mosaic(bbox::Union{NTuple{4, <:Real}, Array{<:Real}}; src_dir::String="", collection::String="MDS-2m",
@@ -330,7 +339,8 @@ module GMTDGTLidarExt
 		            outfile, Float64(inc), method, vrt, proj, verbose)
 	end
 
-	function _dgt_mosaic(bbox, src_dir::String, collection::String, outfile::String, inc::Float64, method::String, vrt::String, proj::String, verbose::Int=1)
+	function _dgt_mosaic(bbox, src_dir::String, collection::String, outfile::String, inc::Float64,
+	                     method::String, vrt::String, proj::String, verbose::Int=1)
 
 		dgt_root = joinpath(GMT.GMTuserdir[1], "DGT")
 		is_named = startswith(src_dir, "_")
