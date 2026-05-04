@@ -77,11 +77,12 @@ module GMTDGTLidarExt
 	  (DEFLATE + 512×512 tiling); `"nc"` = write compressed netCDF4 (NC4+DEFLATE); `""` = write as-is
 	  (uncompressed GeoTIFF). DGT tiles ship uncompressed so `"tif"` and `"nc"` reduce on-disk size
 	  significantly. Not applied to LAZ files. No effect on dry runs.
-	- `mosaic`: If `true`, after downloading call `dgt_mosaic()` to build a single GeoTIFF mosaic of all tiles
-	  (default: `false`). Ignored when `dry=true`. (see also the `inc`, `method`, and `proj` kwargs below).
-	- `outfile`: Output path for the mosaic GeoTIFF (default: `"mosaic.tiff"`). Used only when `mosaic=true`.
-	  This file can be save in either GeoTIFF (the default) or netCDF format, determined by the extension
-	  (`.tiff`/`.tif` for GeoTIFF, `.nc` for netCDF).
+	- `mosaic`: If `true`, after downloading call `dgt_mosaic()` to build a mosaic (default: `false`).
+	  Ignored when `dry=true`. Automatically set to `true` when `outfile` is provided.
+	  (see also the `inc`, `method`, and `proj` kwargs below).
+	- `outfile`: Output path for the mosaic (default: `""`). Providing any non-empty value implicitly sets
+	  `mosaic=true`. The format is determined by the extension (`.tiff`/`.tif` for compressed GeoTIFF,
+	  `.nc` for netCDF4). Use `outfile="grid"` to skip disk I/O and return the result as a `GMTgrid`.
 	- `inc`: Resample resolution for the mosaic in CRS units (metres). `0` = no resample (default: `0`). Used only when `mosaic=true`.
 	- `method`: Resampling algorithm when `inc != 0` (default: `"cubicspline"`). Used only when `mosaic=true`.
 	  One of: `near|bilinear|cubic|cubicspline|lanczos|average|rms|mode|min|max|med|q1|q3|sum`.
@@ -121,7 +122,7 @@ module GMTDGTLidarExt
 	"""
 	function GMT.dgt_lidar(bbox::Union{Tuple{<:Real}, Array{<:Real}}; user::String="", password::String="", save::Bool=false,
 	                       output_dir::String="", delay::Real=1.0, collection::String="MDS-2m", dry::Bool=false,
-	                       mosaic::Bool=false, outfile::String="mosaic.tiff", inc::Real=0, method::String="cubicspline",
+	                       mosaic::Bool=false, outfile::String="", inc::Real=0, method::String="cubicspline",
 	                       latest::Bool=true, neighbors=0, zoom::Int=14, compress::String="tif", proj::String="", verbose=true)
 		local b::NTuple{4,Float64}
 		_nb = 0
@@ -140,7 +141,7 @@ module GMTDGTLidarExt
 	"""dgt_lidar(lon, lat; neighbors=0, ...) — scalar point; downloads the tile containing (lon, lat). `neighbors` expands to adjacent DGT tiles."""
 	function GMT.dgt_lidar(lon::Real, lat::Real; user::String="", password::String="", save::Bool=false,
 	                       output_dir::String="", delay::Real=1.0, collection::String="MDS-2m", dry::Bool=false,
-	                       mosaic::Bool=false, outfile::String="mosaic.tiff", inc::Real=0, method::String="cubicspline",
+	                       mosaic::Bool=false, outfile::String="", inc::Real=0, method::String="cubicspline",
 	                       latest::Bool=true, neighbors=0, compress::String="tif", proj::String="", verbose=true)
 		b = (Float64(lon) - 1e-5, Float64(lon) + 1e-5, Float64(lat) - 1e-5, Float64(lat) + 1e-5)
 		_dgt_lidar(b, user, password, save, output_dir, Float64(delay), collection, dry, mosaic, outfile, Float64(inc),
@@ -150,7 +151,7 @@ module GMTDGTLidarExt
 	"""dgt_lidar(GI; ...) — bbox extracted from a GMTgrid or GMTimage header; non-geographic projections are reprojected."""
 	function GMT.dgt_lidar(GI::GItype; user::String="", password::String="", save::Bool=false,
 	                       output_dir::String="", delay::Real=1.0, collection::String="MDS-2m", dry::Bool=false,
-	                       mosaic::Bool=false, outfile::String="mosaic.tiff", inc::Real=0, method::String="cubicspline",
+	                       mosaic::Bool=false, outfile::String="", inc::Real=0, method::String="cubicspline",
 	                       latest::Bool=true, compress::String="tif", proj::String="", verbose=true)
 		lon, lat = GMT.lonlat_from(GI)
 		_dgt_lidar((Float64(lon[1]), Float64(lon[2]), Float64(lat[1]), Float64(lat[2])), user, password, save, output_dir,
@@ -160,7 +161,7 @@ module GMTDGTLidarExt
 	"""dgt_lidar(lon, lat; ...) — `lon` and `lat` are separate `[min, max]` vectors or matrices (also accepts PyList from juliacall)."""
 	function GMT.dgt_lidar(lon::AbstractVecOrMat, lat::AbstractVecOrMat; user::String="", password::String="", save::Bool=false,
 	                       output_dir::String="", delay::Real=1.0, collection::String="MDS-2m", dry::Bool=false,
-	                       mosaic::Bool=false, outfile::String="mosaic.tiff", inc::Real=0, method::String="cubicspline",
+	                       mosaic::Bool=false, outfile::String="", inc::Real=0, method::String="cubicspline",
 	                       latest::Bool=true, compress::String="tif", proj::String="", verbose=true)
 		lon, lat = GMT.lonlat_from(lon, lat)
 		_dgt_lidar((Float64(lon[1]), Float64(lon[2]), Float64(lat[1]), Float64(lat[2])), user, password, save, output_dir,
@@ -173,7 +174,7 @@ module GMTDGTLidarExt
 	"""
 	function GMT.dgt_lidar(D::GDtype; user::String="", password::String="", save::Bool=false, zoom::Int=0,
 	                       output_dir::String="", delay::Real=1.0, collection::String="MDS-2m", dry::Bool=false,
-	                       mosaic::Bool=false, outfile::String="mosaic.tiff", inc::Real=0, method::String="cubicspline",
+	                       mosaic::Bool=false, outfile::String="", inc::Real=0, method::String="cubicspline",
 	                       latest::Bool=true, compress::String="tif", proj::String="", verbose=true, kw...)
 		(zoom < 0) && error("Invalid zoom level: $zoom. Must be >= 0.")
 		if (zoom == 0)
@@ -196,6 +197,8 @@ module GMTDGTLidarExt
 		_canonical = findfirst(c -> uppercase(c) == _coll, _valid)
 		_canonical === nothing && error("Invalid collection \"$collection\". Valid: $(join(_valid, ", "))")
 		collection = _valid[_canonical]
+		do_mosaic = do_mosaic || !isempty(outfile)
+		outfile   = (isempty(outfile) && do_mosaic) ? "mosaic.tiff" : outfile
 		if isempty(user) || isempty(password)
 			user, password = _read_dgt_credentials()
 		end
@@ -293,7 +296,20 @@ module GMTDGTLidarExt
 		end
 
 		(verbose == 1 || verbose == 2) && println("\nDone: $downloaded downloaded, $skipped already downloaded.")
-		do_mosaic && GMT.dgt_mosaic(bbox; src_dir=output_dir, collection=collection, outfile=outfile, inc=inc, method=method, proj=proj, verbose=verbose)
+		if do_mosaic
+			_tiles = String[]
+			for (coll, pairs) in all_urls
+				uppercase(coll) == uppercase(collection) || continue
+				coll_dir_t = joinpath(output_dir, coll)
+				for (_, item_id, ext) in pairs
+					eff_ext = (compress == "nc" && ext == ".tiff") ? ".nc" : ext
+					fpath = replace(joinpath(coll_dir_t, "$item_id$eff_ext"), '\\' => '/')
+					isfile(fpath) && push!(_tiles, fpath)
+				end
+			end
+			result = GMT.dgt_mosaic(bbox; src_dir=output_dir, collection=collection, outfile=outfile, inc=inc, method=method, proj=proj, verbose=verbose, tiles=_tiles)
+			outfile == "grid" && return result
+		end
 		return nothing
 	end
 
@@ -313,8 +329,9 @@ module GMTDGTLidarExt
 	- `src_dir`: Root directory of downloaded tiles (default: `homedir/.gmt/DGT`).
 	  Prefix with `_` to read from `homedir/.gmt/DGT/` (e.g. `"_algarve"` → `homedir/.gmt/DGT/algarve`).
 	- `collection`: Collection subdirectory to mosaic (default: `"MDS-2m"`).
-	- `outfile`: Output GeoTIFF path (default: `"mosaic.tiff"`). This file can be save in either GeoTIFF
-	  (the default) or netCDF format, determined by the extension (`.tiff`/`.tif` for GeoTIFF, `.nc` for netCDF).
+	- `outfile`: Output path (default: `"mosaic.tiff"`). Format is determined by the extension
+	  (`.tiff`/`.tif` for compressed GeoTIFF, `.nc` for netCDF4). Use `"grid"` to skip disk I/O
+	  and return the result as a `GMTgrid` object instead.
 	- `inc`: If non-zero, resample the mosaic to this resolution (in the raster's CRS units, typically metres)
 	  via `gdalwarp`. Default `0` (no resample, use `gdaltranslate`).
 	- `vrt`: If non-empty, save the intermediate VRT mosaic to this file path (default: `""`, in-memory only).
@@ -334,64 +351,89 @@ module GMTDGTLidarExt
 	"""
 	function GMT.dgt_mosaic(bbox::Union{NTuple{4, <:Real}, Array{<:Real}}; src_dir::String="", collection::String="MDS-2m",
 	                        outfile::String="mosaic.tiff", inc::Real=0, method::String="cubicspline", vrt::String="",
-	                        proj::String="", verbose::Int=1)
+	                        proj::String="", verbose::Int=1, tiles::Vector{String}=String[])
 		_dgt_mosaic((Float64(bbox[1]), Float64(bbox[2]), Float64(bbox[3]), Float64(bbox[4])), src_dir, collection,
-		            outfile, Float64(inc), method, vrt, proj, verbose)
+		            outfile, Float64(inc), method, vrt, proj, verbose, tiles)
 	end
 
 	function _dgt_mosaic(bbox, src_dir::String, collection::String, outfile::String, inc::Float64,
-	                     method::String, vrt::String, proj::String, verbose::Int=1)
+	                     method::String, vrt::String, proj::String, verbose::Int=1, tiles::Vector{String}=String[])
 
 		dgt_root = joinpath(GMT.GMTuserdir[1], "DGT")
 		is_named = startswith(src_dir, "_")
 		src_dir  = isempty(src_dir) ? dgt_root :
 		           is_named ? joinpath(dgt_root, src_dir[2:end]) : src_dir
 		coll_dir = replace(abspath(joinpath(src_dir, collection)), '\\' => '/')
-		isdir(coll_dir) || error("Directory not found: $coll_dir. Run dgt_lidar() first.")
 
-		tif_files = [replace(f, '\\' => '/') for f in readdir(coll_dir, join=true) if endswith(lowercase(f), ".tiff")]
-
-		# When using a named (_prefix) src_dir, also include tiles from the root DGT pool (~/.gmt/DGT/<collection>/).
-		# This lets a regional mosaic transparently absorb tiles downloaded without a prefix.
-		if is_named
-			root_coll = replace(abspath(joinpath(dgt_root, collection)), '\\' => '/')
-			if isdir(root_coll) && root_coll != coll_dir
-				append!(tif_files, [replace(f, '\\' => '/') for f in readdir(root_coll, join=true) if endswith(lowercase(f), ".tiff")])
+		if !isempty(tiles)
+			tif_files = tiles
+		else
+			isdir(coll_dir) || error("Directory not found: $coll_dir. Run dgt_lidar() first.")
+			tif_files = [replace(f, '\\' => '/') for f in readdir(coll_dir, join=true) if endswith(lowercase(f), ".tiff")]
+			# When using a named (_prefix) src_dir, also include tiles from the root DGT pool (~/.gmt/DGT/<collection>/).
+			# This lets a regional mosaic transparently absorb tiles downloaded without a prefix.
+			if is_named
+				root_coll = replace(abspath(joinpath(dgt_root, collection)), '\\' => '/')
+				if isdir(root_coll) && root_coll != coll_dir
+					append!(tif_files, [replace(f, '\\' => '/') for f in readdir(root_coll, join=true) if endswith(lowercase(f), ".tiff")])
+				end
 			end
+			isempty(tif_files) && error("No .tiff files in $coll_dir$(is_named ? " or $(joinpath(dgt_root, collection))" : "")")
 		end
-
-		isempty(tif_files) && error("No .tiff files in $coll_dir$(is_named ? " or $(joinpath(dgt_root, collection))" : "")")
 
 		verbose == 2 && println("Building VRT from $(length(tif_files)) tiles...")
 		vrt_ds = GMT.gdalbuildvrt(tif_files)
 		isempty(vrt) || GMT.gdalbuildvrt(tif_files; save=vrt)
 
-		ext_lc   = lowercase(splitext(outfile)[2])
+		use_mem  = (outfile == "grid")
+		ext_lc   = use_mem ? ".tiff" : lowercase(splitext(outfile)[2])
 		fmt_opts = ext_lc == ".nc" ? ["-of", "netCDF", "-co", "FORMAT=NC4", "-co", "COMPRESS=DEFLATE", "-co", "ZLEVEL=4"] :
-		                             ["-of", "GTiff", "-co", "COMPRESS=DEFLATE", "-co", "PREDICTOR=2", "-co", "TILED=YES",
-						              "-co", "BLOCKXSIZE=512", "-co", "BLOCKYSIZE=512"]
+		           use_mem          ? ["-of", "GTiff"] :
+		                              ["-of", "GTiff", "-co", "COMPRESS=DEFLATE", "-co", "PREDICTOR=2", "-co", "TILED=YES",
+		                               "-co", "BLOCKXSIZE=512", "-co", "BLOCKYSIZE=512"]
 
 		# Resolve output CRS: "geog" → EPSG:4326, bare digits → EPSG:<n>, anything else → pass directly
-		t_srs = isempty(proj)             ? "" :
-		        proj == "geog"            ? "EPSG:4326" :
-		        all(isdigit, proj)        ? "EPSG:$proj" :
-		                                    proj
+		t_srs = isempty(proj)  ? "" :
+		        proj == "geog" ? "EPSG:4326" :
+		        all(isdigit, proj) ? "EPSG:$proj" :
+		                             proj
+
+		# When tiles are explicitly provided from dgt_lidar, STAC selected exactly the right tiles — no clipping needed.
+		# For point queries the bbox is epsilon (lon±1e-5) — also skip clip.
+		skip_clip = !isempty(tiles) || ((bbox[2]-bbox[1]) < 0.001 && (bbox[4]-bbox[3]) < 0.001)
 
 		if (inc != 0) || !isempty(t_srs)
 			# gdalwarp: -te xmin ymin xmax ymax (bbox[1]=min_lon, bbox[3]=min_lat, bbox[2]=max_lon, bbox[4]=max_lat)
-			opts = ["-te", string(bbox[1]), string(bbox[3]), string(bbox[2]), string(bbox[4]),
-			        "-te_srs", "EPSG:4326"]
+			opts = String[]
+			if !skip_clip
+				append!(opts, ["-te", string(bbox[1]), string(bbox[3]), string(bbox[2]), string(bbox[4]),
+				               "-te_srs", "EPSG:4326"])
+			end
 			!isempty(t_srs) && append!(opts, ["-t_srs", t_srs])
 			inc != 0          && append!(opts, ["-tr", string(inc), string(inc)])
 			append!(opts, ["-r", method, fmt_opts...])
+			if use_mem
+				vsimem = "/vsimem/dgt_mosaic_$(rand(UInt32)).tiff"
+				GMT.gdalwarp(vrt_ds, opts; dest=vsimem)
+				G = GMT.gd2gmt(GMT.Gdal.read(vsimem), gridreg=false)
+				GMT.Gdal.VSIUnlink(vsimem)
+				return G
+			end
 			GMT.gdalwarp(vrt_ds, opts; dest=outfile)
 		else
 			# bbox = [min_lon, max_lon, min_lat, max_lat]; -projwin expects: ulx uly lrx lry
-			opts = ["-projwin", string(bbox[1]), string(bbox[4]), string(bbox[2]), string(bbox[3]),
+			opts = skip_clip ? [fmt_opts...] :
+			       ["-projwin", string(bbox[1]), string(bbox[4]), string(bbox[2]), string(bbox[3]),
 			        "-projwin_srs", "EPSG:4326", fmt_opts...]
+			if use_mem
+				vsimem = "/vsimem/dgt_mosaic_$(rand(UInt32)).tiff"
+				GMT.gdaltranslate(vrt_ds, opts; save=vsimem)
+				G = GMT.gd2gmt(GMT.Gdal.read(vsimem), gridreg=false)
+				GMT.Gdal.VSIUnlink(vsimem)
+				return G
+			end
 			GMT.gdaltranslate(vrt_ds, opts; save=outfile)
 		end
-
 		verbose == 2 && println("Mosaic saved to $outfile")
 		return outfile
 	end
