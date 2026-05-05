@@ -18,7 +18,9 @@ using InteractiveUtils
 	GMT.GMT_Get_Ctrl(API);
 
 	try
+		GMT.tic()
 		include("test_dgt.jl")
+		GMT.toc()
 	catch err
 		@warn("Failed the DGT test. Error was:\n $err")
 	end
