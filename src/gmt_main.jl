@@ -834,6 +834,8 @@ function grid_init(API::Ptr{Nothing}, X::GMT_RESOURCE, Grid::GMTgrid, pad::Int=2
 	mode = (Grid.layout != "" && Grid.layout[2] == 'R') ? GMT_CONTAINER_ONLY : GMT_CONTAINER_AND_DATA
 	noGrdCopy[] && (mode = GMT_CONTAINER_ONLY)
 	(mode == GMT_CONTAINER_ONLY) && (pad = Grid.pad)		# Here we must follow what the Grid says it has
+	grdview_case = (length(Grid.layout) == 4 && Grid.layout[4] == 'p')	# A special case for grdview and TRB layouts () that
+	grdview_case && (mode = GMT_CONTAINER_AND_DATA; pad = 2)			# screws if grid is not padded when doing illumination.
 	n_bds = size(Grid.z, 3);
 	_cube = (cube || n_bds > 1)
 
@@ -852,7 +854,7 @@ function grid_init(API::Ptr{Nothing}, X::GMT_RESOURCE, Grid::GMTgrid, pad::Int=2
 	end
 
 	Gb = unsafe_load(G)			# Gb = GMT_GRID | GMT_CUBE
-	h = unsafe_load(Gb.header)
+	h = unsafe_load(Gb.header)	# GMT_GRID_HEADER
 
 	if (mode == GMT_CONTAINER_AND_DATA)
 		grd = Grid.z
@@ -865,24 +867,32 @@ function grid_init(API::Ptr{Nothing}, X::GMT_RESOURCE, Grid::GMTgrid, pad::Int=2
 		for bnd = 1:n_bds
 			off = (bnd - 1) * size2D + pad
 			if (eltype(grd) == Float32)
-				for col = 1:n_cols, row = n_rows:-1:1
-					t[((row-1) + pad) * mx + col + off] = grd[k];		k += 1
+				if (grdview_case)			# Hack to avoid the grdview padding shit that screws when shadding if grid's isn't padded 
+					@inbounds for row = 1:n_rows, col = 1:n_cols
+						t[((row-1) + pad) * mx + col + off] = grd[k];	k += 1
+					end
+				else
+					@inbounds for col = 1:n_cols, row = n_rows:-1:1
+						t[((row-1) + pad) * mx + col + off] = grd[k];		k += 1
+					end
 				end
 			else
-				for col = 1:n_cols, row = n_rows:-1:1
-					t[((row-1) + pad) * mx + col + off] = Float32(grd[k]);		k += 1
+				@inbounds for col = 1:n_cols, row = n_rows:-1:1
+					t[((row-1) + pad) * mx + col + off] = Float32(grd[k]);	k += 1
 				end
 			end
 		end
 	else
-		#Gb.data = (eltype(Grid.z) == Float32) ? pointer(Grid.z) : pointer(Float32.(Grid.z))		# What a waste if input is not float32
 		zMat = (eltype(Grid.z) == Float32) ? Grid.z : Float32.(Grid.z)		# What a waste if input is not float32
 		Gb.data = GC.@preserve zMat pointer(zMat)	# Attempt to preserve G.z in case of !float32, but not sure it lasts long enough
+		Gb.x = pointer(Grid.x)
+		Gb.y = pointer(Grid.y)
+		(Grid.layout !== "" && Grid.layout[end] != 'p') &&
+			(h.mem_layout = Tuple(map(UInt8, collect(string(Grid.layout, repeat("\0",4-length(Grid.layout)))))))
 		GMT_Set_AllocMode(API, GMT_IS_GRID, G)		# Otherwise memory already belongs to GMT
-		#GMT_Set_Default(API, "API_GRID_LAYOUT", "TR");
 	end
 
-	h.z_min, h.z_max = Grid.range[5], Grid.range[6]		# Set the z_min, z_max
+	h.z_min, h.z_max = Grid.range[5], Grid.range[6]
 	(_cube) && (h.n_bands = n_bds)
 
 	# Previous to ~14 April 2023 GMT did not accept grids claiming to be geogs and with lon ranges > 360
