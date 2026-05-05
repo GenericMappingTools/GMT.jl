@@ -1369,7 +1369,7 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 				(dataset == C_NULL) && error("Can't read invalid rasterband")
 				xbsize, ybsize, zbsize = size(buffer)
 				nband = length(bands)
-				bands = isa(bands, Vector{Cint}) ? bands : Cint.(collect(bands))
+				_bands = isa(bands, Vector{Cint}) ? bands : isa(bands, Integer) ? [Cint(bands)] : Cint.(collect(bands))
 				@assert nband == zbsize
 				poffset = 0
 				if (pad != 0)
@@ -1378,12 +1378,12 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 					xbsize, ybsize = xsize, ysize
 				end
 				GC.@preserve buffer begin
-				GC.@preserve bands begin
+				GC.@preserve _bands begin
 				result = ccall((:GDALDatasetRasterIOEx,libgdal), UInt32, 
 							   (pVoid, UInt32, Cint, Cint, Cint, Cint, pVoid, Cint, Cint, UInt32, Cint,
 							   Ptr{Cint}, Clonglong, Clonglong, Clonglong, Ptr{GDALRasterIOExtraArg}),
 							   dataset.ptr, access, xoffset, yoffset, xsize, ysize, pointer(buffer)+poffset, xbsize,
-							   ybsize, $GT, nband, pointer(bands), pxspace, linespace, bandspace, extraargs)
+							   ybsize, $GT, nband, pointer(_bands), pxspace, linespace, bandspace, extraargs)
 				end
 				end
 				@cplerr result "Access in DatasetRasterIO failed."

@@ -34,6 +34,7 @@ julia> viz(G, zsize=6, facades=(TESTSDIR*"assets/cenora_base.jpg", TESTSDIR*"bun
 See also: [`grdimage`](@ref), [`grdview`](@ref)
 """
 function imshow(arg1, x::AbstractVector{Float64}=Float64[], y::AbstractVector{Float64}=Float64[]; kw...)
+	(arg1 === nothing) && error("imshow: No data to display. 'arg1' is nothing.")
 	_imshow(arg1, x, y, KW(kw))
 end
 function _imshow(@nospecialize(arg1), x::AbstractVector{Float64}, y::AbstractVector{Float64}, d::Dict{Symbol,Any})
@@ -53,7 +54,7 @@ function _imshow(@nospecialize(arg1), x::AbstractVector{Float64}, y::AbstractVec
 	is_image, call_img, call_grd = false, false, false
 	Gg = nothing
 	if (isa(arg1, String))# If it's string it has to be a file name. Check extension to see if it is an image
-		ext = splitext(arg1)[2]
+		ext = lowercase(splitext(arg1)[2])
 		if (ext == "" && arg1[1] != '@' && !isfile(arg1))# A remote file, assumed to be a grid.
 			Gg = mat2grid(arg1, x, y)
 			call_grd = true
@@ -61,7 +62,8 @@ function _imshow(@nospecialize(arg1), x::AbstractVector{Float64}, y::AbstractVec
 			Gg = arg1
 		else
 			ext = lowercase(ext)
-			(ext == ".jpg" || ext == ".tif" || ext == ".tiff" || ext == ".png" || ext == ".bmp" || ext == ".gif") && (is_image = true)
+			(ext == ".jpg" || ext == ".png" || ext == ".bmp" || ext == ".gif") && (is_image = true)
+			(startswith(ext, ".tif") && !contains(gdalinfo(arg1), "Type=Float")) && (is_image = true)	# Otherwise is a grid. The 2 bytes case remain undef
 			!is_image && (Gg = arg1)
 		end
 	elseif (isa(arg1, Array{UInt8}) || isa(arg1, Array{UInt16,3}) || isa(arg1, Array{Bool}) || isa(arg1, BitMatrix))

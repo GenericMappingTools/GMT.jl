@@ -113,6 +113,10 @@ function grdview_helper(w::wrapGrids, O::Bool, K::Bool, d::Dict{Symbol, Any})
 		for k = 2:lastindex(_cmd)  _cmd[k] = replace(_cmd[k], "-R " => "-R" * cmd0 * " ")  end
 	end
 	((r = check_dbg_print_cmd(d, _cmd)) !== nothing) && return r
+	if (isa(arg1, GMTgrid) && (arg1.layout === "" || arg1.layout[2] == 'R') && contains(cmd, " -I"))
+		# A special case for TRB layouts that screws if grid is not padded when doing illumination. We add a 'p' to signal grid_init what to do.
+		(arg1.layout === "") ? (arg1.layout = "TRBp") : (arg1.layout[end] != 'p') ? (arg1.layout *= "p") : nothing
+	end
 	prep_and_call_finish_PS_module(d, _cmd, "", K, O, true, arg1, arg2, arg3, arg4, arg5)
 end
 
