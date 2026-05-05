@@ -21,10 +21,10 @@ Or
 
    G = gd2gmt("NETCDF:AQUA_MODIS.20210228.L3m.DAY.NSST.sst.4km.NRT.nc:sst");
 """
-function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int=0, layout::String="")::Union{GItype, GDtype}
-	_gd2gmt(_dataset, band, bands, sds, pad, layout)
+function gd2gmt(_dataset; band::Int=0, bands=Vector{Int}(), sds::Int=0, pad::Int=0, layout::String="", gridreg::Bool=true)::Union{GItype, GDtype}
+	_gd2gmt(_dataset, band, bands, sds, pad, layout, gridreg)
 end
-function _gd2gmt(@nospecialize(_dataset), band::Int, bands::Vector{Int}, sds::Int, pad::Int, layout::String)
+function _gd2gmt(@nospecialize(_dataset), band::Int, bands::Vector{Int}, sds::Int, pad::Int, layout::String, gridreg::Bool)
 
 	(isa(_dataset, GMTgrid) || isa(_dataset, GMTimage) || isGMTdataset(_dataset)) && return _dataset
 
@@ -95,7 +95,7 @@ function _gd2gmt(@nospecialize(_dataset), band::Int, bands::Vector{Int}, sds::In
 	((scale_factor != 1 || got_fill_val) && !orig_is_UInt16) &&
 		(mat = gd2gmt_helper_scalefac(mat, scale_factor, add_offset, got_fill_val, fill_val))
 
-	x_min, x_max, y_min, y_max, x_inc, y_inc = getregion(dataset, pad=pad, xSize=xSize, ySize=ySize, gridreg=is_grid, sds=sds)
+	x_min, x_max, y_min, y_max, x_inc, y_inc = getregion(dataset, pad=pad, xSize=xSize, ySize=ySize, gridreg=gridreg, sds=sds)
 
 	if !(eltype(mat) <: Complex)
 		if (!got_fill_val || !isfinite(fill_val))
@@ -107,7 +107,7 @@ function _gd2gmt(@nospecialize(_dataset), band::Int, bands::Vector{Int}, sds::In
 	else
 		z_min, z_max, z_im_min, z_im_max = extrema_im(mat)	# SHOULD DO THE SAME AS ABOVE
 	end
-	hdr = [x_min, x_max, y_min, y_max, z_min, z_max, Float64(!is_grid), x_inc, y_inc]
+	hdr = [x_min, x_max, y_min, y_max, z_min, z_max, Float64(!gridreg), x_inc, y_inc]
 	prj = getproj(dataset)
 	prjwkt = startswith(prj, "PROJCS") ? prj : ""
 	(prj != "" && !startswith(prj, "+proj")) && (prj = toPROJ4(importWKT(prj)))
@@ -125,7 +125,7 @@ function _gd2gmt(@nospecialize(_dataset), band::Int, bands::Vector{Int}, sds::In
 	end
 	if (is_grid)
 		#(eltype(mat) == Float64) && (mat = Float32.(mat))
-		O = mat2grid(mat; hdr=hdr, v=vvalues, v_unit=vname, proj4=prj, wkt=prjwkt, names=desc, is_transposed=is_tp)
+		O = mat2grid(mat; reg=Int(!gridreg), hdr=hdr, v=vvalues, v_unit=vname, proj4=prj, wkt=prjwkt, names=desc, is_transposed=is_tp)
 		O.layout = (layout == "") ? "TRB" : layout
 		isa(mat, Matrix{<:Complex}) && (append!(O.range, [z_im_min, z_im_max]))	# Stick the imaginary part limits in the range
 		if (orig_is_UInt16)
@@ -260,9 +260,9 @@ function gd2gmt(geom::Gdal.AbstractGeometry, proj::String="")::Union{GMTdataset,
 end
   
 # ---------------------------------------------------------------------------------------------------
-function gd2gmt(@nospecialize(dataset::Gdal.AbstractDataset))
+function gd2gmt(@nospecialize(dataset::Gdal.AbstractDataset), gridreg::Bool=true)
 	# This method is for OGR formats only
-	(Gdal.GDALGetRasterCount(dataset.ptr) >= 1) && return gd2gmt(dataset; pad=0)
+	(Gdal.GDALGetRasterCount(dataset.ptr) >= 1) && return gd2gmt(dataset; pad=0, gridreg=gridreg)
 
 	drv = get(POSTMAN[], "GDALdriver", "");	(drv != "") && delete!(POSTMAN[], "GDALdriver")
 	(startswith(drv, "XLS") || drv == "CSV") && return helper_read_XLSCSV(dataset)
