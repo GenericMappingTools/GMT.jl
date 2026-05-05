@@ -177,11 +177,12 @@ module GMTDGTLidarExt
 		if (zoom == 0)
 			lon, lat = GMT.lonlat_from(D; bb=true)
 		else
-			Dm = GMT.mosaic(D, zoom=zoom, mesh=true, kw...)		# Here kw can contain a 'neighbors' option
+			Dm = GMT.mosaic(D; zoom=zoom, mesh=true, kw...)		# Here kw can contain a 'neighbors' option
 			lon, lat = Dm.ds_bbox[1:2], Dm.ds_bbox[3:4]
 		end
+		get(kw, :neighbors, nothing) !== nothing && @warn("The zoom-based tile snapping in dgt_lidar(D; zoom>0) is designed to work without neighbors expansion. Results may be a bit surprising.")
 		_dgt_lidar((Float64(lon[1]), Float64(lon[2]), Float64(lat[1]), Float64(lat[2])), user, password, save, output_dir,
-		           Float64(delay), collection, dry, mosaic, Float64(inc), method, latest, Int(verbose), 0, 14, compress, proj)
+		           Float64(delay), collection, dry, mosaic, Float64(inc), method, latest, Int(verbose), 0, zoom, compress, proj)
 	end
 
 	# --------------------------------------------------------------------------------------------------------------------------
