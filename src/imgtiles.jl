@@ -50,6 +50,63 @@ end
 # ----------------------------------------------------------------------------------------------------------
 # These functions root in a translation of the Matlab code "url2image" written by me (Joaquim Luis)
 # back in 2008 and included in Mirone.
+
+# ----------------------------------------------------------------------------------------------------------
+# Coordinate extraction helpers — each overload converts a different input type to the canonical
+# (lon::Vector{Float64}, lat::Vector{Float64}) pair understood by the main mosaic method.
+# The address overloads also return the implied zoom-level offset as a third return value.
+
+"""Extract lon/lat from a GMTdataset. Pass `bbox=true` (or `bb`, `BB`, `BoundingBox`) to use `ds_bbox`."""
+function lonlat_from(D::GDtype; kw...)
+	if (find_in_kwargs(kw, [:bb :BB :bbox :BoundingBox])[1] !== nothing)
+		lon = isa(D, GMTdataset) ? D.ds_bbox[1:2] : D[1].ds_bbox[1:2]
+		lat = isa(D, GMTdataset) ? D.ds_bbox[3:4] : D[1].ds_bbox[3:4]
+		return vec(Float64.(lon)), vec(Float64.(lat))
+	end
+	_lon = isa(D, GMTdataset) ? D.data[1,1] : D[1].data[1,1]
+	_lat = isa(D, GMTdataset) ? D.data[1,2] : D[1].data[1,2]
+	return [Float64(_lon)], [Float64(_lat)]
+end
+
+"""Extract lon/lat from a GMTgrid or GMTimage. Reprojects to geographic coordinates when needed."""
+function lonlat_from(GI::GItype)
+	((prj = getproj(GI, proj4=true)) == "") && error("To use 'mosaic' with a grid or image it must have a valid projection")
+	if isgeog(prj)
+		return vec(Float64.(GI.range[1:2])), vec(Float64.(GI.range[3:4]))
+	end
+	ll = xy2lonlat([GI.range[1] GI.range[3]; GI.range[2] GI.range[4]], s_srs=prj)
+	return vec(Float64.(ll[:,1])), vec(Float64.(ll[:,2]))
+end
+
+"""Normalize an AbstractVecOrMat lon/lat pair to `Vector{Float64}`."""
+lonlat_from(lon::AbstractVecOrMat, lat::AbstractVecOrMat) = vec(Float64.(lon)), vec(Float64.(lat))
+
+"""Normalize a 2-element Tuple lon/lat pair to `Vector{Float64}`."""
+lonlat_from(lon::Tuple{<:Real,<:Real}, lat::Tuple{<:Real,<:Real}) = Float64.([lon...]), Float64.([lat...])
+
+"""Wrap scalar lon/lat into single-element `Vector{Float64}`."""
+lonlat_from(lon::Real, lat::Real) = [Float64(lon)], [Float64(lat)]
+
+"""Extract lon/lat and implied zoom level from a quadtree or XYZ tile address string."""
+function lonlat_from(address::String)
+	lims, zoomL = mosaic_limits(address)
+	return vec(Float64.(lims[1:2])), vec(Float64.(lims[3:4])), zoomL
+end
+
+"""Extract lon/lat and implied zoom level from a 3-element XYZ tile address vector."""
+function lonlat_from(address::VecOrMat{<:Real})
+	(length(address) != 3) && throw(error("Wrong type of tile XYZ address ... must have X, Y and Z"))
+	lonlat_from(join(string.(address), ","))
+end
+
+"""Extract lon/lat from the `region=` keyword option stored in a pre-built Dict (modified in-place)."""
+function lonlat_from_region(d::Dict)
+	((opt_R = parse_R(d, "")[1]) == "") && error("To use the 'mosaic' function without the 'lon & lat' arguments you need to specify the 'region' option.")
+	ll = opt_R2num(opt_R)
+	return vec(Float64.(ll[1:2])), vec(Float64.(ll[3:4]))
+end
+
+# ----------------------------------------------------------------------------------------------------------
 """
     I = mosaic(lon, lat; pt_radius=6378137.0, provider="", zoom::Int=0, cache::String="",
                mapwidth=15, dpi=96, verbose::Int=0, kw...)
@@ -122,11 +179,7 @@ viz(D, coast=true)
 """
 function mosaic(D::GDtype; pt_radius=6378137.0, provider="", zoom::Int=0, cache::String="",
                 mapwidth=15, dpi=96, date::String="", verbose::Int=0, kw...)
-	if (find_in_kwargs(kw, [:bb :BB :bbox :BoundingBox])[1] !== nothing)
-		lon, lat = isa(D, GMTdataset) ? (D.ds_bbox[1:2], D.ds_bbox[3:4]) : (D[1].ds_bbox[1:2], D[1].ds_bbox[3:4])
-	else
-		lon, lat = isa(D, GMTdataset) ? (D.data[1,1], D.data[1,2]) : (D[1].data[1,1], D[1].data[1,2])
-	end
+	lon, lat = lonlat_from(D; kw...)
 	mosaic(lon, lat; pt_radius=pt_radius, provider=provider, zoom=zoom, cache=cache, mapwidth=mapwidth,
            dpi=dpi, date=date, verbose=verbose, kw...)
 end
@@ -139,13 +192,7 @@ projection, and it doesn't need to be in geographic coordinates. Coordinates in 
 """
 function mosaic(GI::GItype; pt_radius=6378137.0, provider="", zoom::Int=0, cache::String="",
                 mapwidth=15, dpi=96, date::String="", verbose::Int=0, kw...)
-	((prj = getproj(GI, proj4=true)) == "") && error("To use the 'mosaic' function with a grid or image this has to have a valid projection")
-	if isgeog(prj)
-		lon, lat = GI.range[1:2], GI.range[3:4]
-	else
-		ll = xy2lonlat([GI.range[1] GI.range[3]; GI.range[2] GI.range[4]], s_srs=prj)
-		lon, lat = ll[:,1], ll[:,2]
-	end
+	lon, lat = lonlat_from(GI)
 	mosaic(lon, lat; pt_radius=pt_radius, provider=provider, zoom=zoom, cache=cache, mapwidth=mapwidth,
            dpi=dpi, date=date, verbose=verbose, kw...)
 end
@@ -166,9 +213,7 @@ function mosaic(; pt_radius=6378137.0, provider="", zoom::Int=0, cache::String="
                 mapwidth=15, dpi=96, date::String="", verbose::Int=0, kw...)
 	isempty(kw) && return mosaic(zoom)		# Call the method that only prints the zoom levels table.
 	d = KW(kw)
-	((opt_R = parse_R(d, "")[1]) == "") && error("To use the 'mosaic' function without the 'lon & lat' arguments you need to specify the 'region' option.")
-	ll = opt_R2num(opt_R)
-	lon, lat = ll[1:2], ll[3:4]
+	lon, lat = lonlat_from_region(d)
 	mosaic(lon, lat; pt_radius=pt_radius, provider=provider, zoom=zoom, cache=cache, mapwidth=mapwidth,
            dpi=dpi, date=date, verbose=verbose, d...)
 end
@@ -176,21 +221,22 @@ end
 # This method is mostly for calls from python's juliacall that used PyList (because dumb Py consider this a list: [1.0, 2.6])
 function mosaic(lon::AbstractVecOrMat, lat::AbstractVecOrMat; pt_radius=6378137.0, provider="", zoom::Int=0, cache::String="",
                 mapwidth=15, dpi=96, verbose::Int=0, date::String="", key::String="", kw...)
-	_lon::Vector{Float64}, _lat::Vector{Float64} = vec(Float64.(lon)), vec(Float64.(lat))
+	_lon, _lat = lonlat_from(lon, lat)
 	mosaic(_lon, _lat; pt_radius=pt_radius, provider=provider, zoom=zoom, cache=cache, mapwidth=mapwidth,
            dpi=dpi, date=date, verbose=verbose, key=key, kw...)
 end
 
 function mosaic(lon::Tuple{<:Real, <:Real}, lat::Tuple{<:Real, <:Real}; pt_radius=6378137.0, provider="", zoom::Int=0, cache::String="",
                 mapwidth=15, dpi=96, verbose::Int=0, date::String="", key::String="", kw...)
-	_lon::Vector{Float64}, _lat::Vector{Float64} = Float64.([lon...]), Float64.([lat...])
+	_lon, _lat = lonlat_from(lon, lat)
 	mosaic(_lon, _lat; pt_radius=pt_radius, provider=provider, zoom=zoom, cache=cache, mapwidth=mapwidth,
            dpi=dpi, date=date, verbose=verbose, key=key, kw...)
 end
 
 function mosaic(lon::Real, lat::Real; pt_radius=6378137.0, provider="", zoom::Int=0, cache::String="",
                 mapwidth=15, dpi=96, verbose::Int=0, date::String="", key::String="", kw...)
-	mosaic([Float64(lon)], [Float64(lat)]; pt_radius=pt_radius, provider=provider, zoom=zoom,
+	_lon, _lat = lonlat_from(lon, lat)
+	mosaic(_lon, _lat; pt_radius=pt_radius, provider=provider, zoom=zoom,
            cache=cache, mapwidth=mapwidth, dpi=dpi, date=date, verbose=verbose, key=key, kw...)
 end
 
@@ -213,9 +259,8 @@ viz(I, coast=true)
 """
 function mosaic(address::String; pt_radius=6378137.0, provider="", zoom::Int=0, cache::String="",
                 verbose::Int=0, date::String="", key::String="", kw...)
-
-	lims, zoomL = mosaic_limits(address)
-	mosaic(lims[1:2], lims[3:4]; pt_radius=pt_radius, provider=provider, zoom=zoomL+zoom, cache=cache,
+	lon, lat, zoomL = lonlat_from(address)
+	mosaic(lon, lat; pt_radius=pt_radius, provider=provider, zoom=zoomL+zoom, cache=cache,
 	       date=date, verbose=verbose, key=key, kw...)
 end
 
@@ -290,9 +335,9 @@ Very similar to above but where `address` is a ``XYZ`` tile address given as a v
 """
 function mosaic(address::VecOrMat{<:Real}; pt_radius=6378137.0, provider="", zoom::Int=0, cache::String="",
                 verbose::Int=0, date::String="", key::String="", kw...)
-	(length(address) != 3) && throw(error("Wrong type of tile XYZ address ... must have X, Y and Z"))
-	s_addr = join(string.(address), ",")
-	mosaic(s_addr; pt_radius=pt_radius, provider=provider, zoom=zoom, cache=cache, verbose=verbose, date=date, key=key, kw...)
+	lon, lat, zoomL = lonlat_from(address)
+	mosaic(lon, lat; pt_radius=pt_radius, provider=provider, zoom=zoomL+zoom, cache=cache,
+	       verbose=verbose, date=date, key=key, kw...)
 end
 
 # ----------------------------------------------------------------------------------------------------------

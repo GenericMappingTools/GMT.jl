@@ -32,6 +32,62 @@ println("		Entering: test_dgt.jl")
 	end
 
 	# ------------------------------------------------------------------
+	# New dispatch methods — use collection="BAD" to trigger collection-validation error inside
+	# _dgt_lidar *before* any authentication or network call. Getting that error proves coordinate
+	# extraction succeeded and the right method was dispatched.
+	@testset "new dispatch methods (no network)" begin
+
+		@testset "two-array (lon, lat)" begin
+			@test_throws r"Invalid collection" GMT.dgt_lidar([-9.11,-9.0877], [38.728,38.735]; collection="BAD", verbose=3)
+		end
+
+		@testset "GItype (GMTgrid with projection)" begin
+			G = mat2grid(rand(Float32, 5, 5), hdr=[-9.11, -9.0877, 38.728, 38.735], proj4=GMT.prj4WGS84)
+			@test_throws r"Invalid collection" GMT.dgt_lidar(G; collection="BAD", verbose=3)
+		end
+
+		@testset "GDtype (GMTdataset), zoom=0" begin
+			# mat2ds with two lon/lat rows → ds_bbox auto-set to [min_lon, max_lon, min_lat, max_lat]
+			D = mat2ds([-9.11 38.728; -9.0877 38.735])
+			@test D.ds_bbox[1:4] ≈ [-9.11, -9.0877, 38.728, 38.735]
+			@test_throws r"Invalid collection" GMT.dgt_lidar(D; collection="BAD", verbose=3)
+		end
+
+		@testset "GDtype, negative zoom rejected" begin
+			D = mat2ds([-9.11 38.728; -9.0877 38.735])
+			@test_throws r"Invalid zoom" GMT.dgt_lidar(D; zoom=-1, collection="MDS-2m", verbose=3)
+		end
+
+		# Point / scalar dispatch (neighbors=0 → tiny ε-box, no mosaic call)
+		@testset "scalar (lon, lat) — dispatches to _dgt_lidar" begin
+			@test_throws r"Invalid collection" GMT.dgt_lidar(-9.1, 38.7; collection="BAD", verbose=3)
+		end
+
+		@testset "2-element array [lon, lat] — dispatches to _dgt_lidar" begin
+			@test_throws r"Invalid collection" GMT.dgt_lidar([-9.1, 38.7]; collection="BAD", verbose=3)
+		end
+
+		@testset "wrong-length array → error" begin
+			@test_throws r"must have 2 elements" GMT.dgt_lidar([1.0, 2.0, 3.0]; collection="BAD", verbose=3)
+		end
+
+		# proj kwarg threaded through all dispatches
+		@testset "proj passthrough to _dgt_lidar" begin
+			@test_throws r"Invalid collection" GMT.dgt_lidar([-9.11,-9.0877,38.728,38.735]; collection="BAD", proj="geog", verbose=3)
+		end
+
+		# latest kwarg — collection "BAD" still errors regardless of latest value
+		@testset "latest=true (default)" begin
+			@test_throws r"Invalid collection" GMT.dgt_lidar([-9.11,-9.0877,38.728,38.735]; collection="BAD", latest=true, verbose=3)
+		end
+
+		@testset "latest=false passthrough" begin
+			@test_throws r"Invalid collection" GMT.dgt_lidar([-9.11,-9.0877,38.728,38.735]; collection="BAD", latest=false, verbose=3)
+		end
+
+	end
+
+	# ------------------------------------------------------------------
 	@testset "_divide_bbox" begin
 		# Small bbox (~11x11 km) → single sub-bbox
 		small = (-9.1, -9.0, 38.7, 38.8)
@@ -129,6 +185,58 @@ println("		Entering: test_dgt.jl")
 		r4 = ext._collect_urls(Dict("features" => [feature, laz_feat]))
 		@test haskey(r4, "MDS-2m")
 		@test haskey(r4, "LAZ")
+	end
+
+	# ------------------------------------------------------------------
+	@testset "_filter_latest!" begin
+		# No versioned files → nothing filtered
+		u1 = Dict("MDS-2m" => [("url1","tile_001_2024",".tiff"),
+		                        ("url2","tile_002_2024",".tiff")])
+		ext._filter_latest!(u1)
+		@test length(u1["MDS-2m"]) == 2
+
+		# One versioned file (_v01) replaces unversioned base
+		u2 = Dict("MDS-2m" => [("url1","tile_001_2024",".tiff"),
+		                        ("url2","tile_001_2024_v01",".tiff")])
+		ext._filter_latest!(u2)
+		@test length(u2["MDS-2m"]) == 1
+		@test u2["MDS-2m"][1][2] == "tile_001_2024_v01"
+
+		# Multiple versions → keep highest
+		u3 = Dict("MDS-2m" => [("url1","tile_001_2024",".tiff"),
+		                        ("url2","tile_001_2024_v01",".tiff"),
+		                        ("url3","tile_001_2024_v02",".tiff")])
+		ext._filter_latest!(u3)
+		@test length(u3["MDS-2m"]) == 1
+		@test u3["MDS-2m"][1][2] == "tile_001_2024_v02"
+
+		# Mixed: tile_001 has versions, tile_002 does not → 2 unique bases remain
+		u4 = Dict("MDS-2m" => [("url1","tile_001_2024",    ".tiff"),
+		                        ("url2","tile_001_2024_v01",".tiff"),
+		                        ("url3","tile_002_2024",    ".tiff")])
+		ext._filter_latest!(u4)
+		@test length(u4["MDS-2m"]) == 2
+		ids4 = Set(t[2] for t in u4["MDS-2m"])
+		@test "tile_001_2024_v01" in ids4
+		@test "tile_002_2024"     in ids4
+		@test "tile_001_2024"    ∉ ids4
+
+		# Empty collection → no crash
+		u5 = Dict("MDS-2m" => Tuple{String,String,String}[])
+		ext._filter_latest!(u5)
+		@test isempty(u5["MDS-2m"])
+
+		# Multiple collections filtered independently
+		u6 = Dict("MDS-2m" => [("u1","tile_A",".tiff"),("u2","tile_A_v01",".tiff")],
+		          "LAZ"    => [("u3","cloud_1",".laz"), ("u4","cloud_1_v01",".laz"),
+		                       ("u5","cloud_2",".laz")])
+		ext._filter_latest!(u6)
+		@test length(u6["MDS-2m"]) == 1
+		@test u6["MDS-2m"][1][2] == "tile_A_v01"
+		@test length(u6["LAZ"]) == 2
+		laz_ids = Set(t[2] for t in u6["LAZ"])
+		@test "cloud_1_v01" in laz_ids
+		@test "cloud_2"     in laz_ids
 	end
 
 	# ------------------------------------------------------------------
@@ -244,12 +352,35 @@ println("		Entering: test_dgt.jl")
 			result3 = GMT.dgt_mosaic(bbox; src_dir=tmpdir, outfile=outfile3, inc=0.001, method="bilinear")
 			@test isfile(outfile3)
 
+			# proj="geog" forces gdalwarp even with inc=0
+			outfile4 = joinpath(tmpdir, "mosaic_geog.tiff")
+			GMT.dgt_mosaic(bbox; src_dir=tmpdir, outfile=outfile4, proj="geog")
+			@test isfile(outfile4)
+
+			# proj bare EPSG digits → EPSG:32629 (UTM zone 29N)
+			outfile5 = joinpath(tmpdir, "mosaic_utm.tiff")
+			GMT.dgt_mosaic(bbox; src_dir=tmpdir, outfile=outfile5, proj="32629")
+			@test isfile(outfile5)
+
+			# proj full authority string
+			outfile6 = joinpath(tmpdir, "mosaic_epsg.tiff")
+			GMT.dgt_mosaic(bbox; src_dir=tmpdir, outfile=outfile6, proj="EPSG:4326")
+			@test isfile(outfile6)
+
+			# proj + inc together (both warp options active)
+			outfile7 = joinpath(tmpdir, "mosaic_geog_inc.tiff")
+			GMT.dgt_mosaic(bbox; src_dir=tmpdir, outfile=outfile7, proj="geog", inc=0.001)
+			@test isfile(outfile7)
+
+			# outfile="grid" → returns GMTgrid, no file written
+			G_mem = GMT.dgt_mosaic(bbox; src_dir=tmpdir, outfile="grid")
+			@test G_mem isa GMT.GMTgrid
+			@test size(G_mem) != (0, 0)
+
 			# _underscored src_dir resolves to GMTuserdir()/DGT/<name>
 			# Just check the resolution logic by testing the error path (dir won't exist)
 			@test_throws ErrorException GMT.dgt_mosaic(bbox; src_dir="_nonexistent_test_subdir")
-			#GMT.resetGMT()		# TIFF files are still under GDAL grip and wont let be deleted
 		#end
-		#rm(tmpdir, recursive=true, force=true)
 	end
 
 end	# @testset "DGT LIDAR Extension"
@@ -264,14 +395,43 @@ if isfile(joinpath(homedir(), ".dgt"))
 		#mktempdir() do tmpdir
 		tmpdir = mktempdir()
 
-			# --- dgt_lidar: auth + search, no download ---
-			@testset "dry run" begin
-				@test_nowarn GMT.dgt_lidar(INTEGRATION_BBOX; output_dir=tmpdir, dry=true)
+			# --- dgt_lidar: auth + search, no download (primary bbox form) ---
+			@testset "dry run (bbox array)" begin
+				@test_nowarn GMT.dgt_lidar(INTEGRATION_BBOX; output_dir=tmpdir, dry=true, verbose=3)
+			end
+
+			# --- new dispatch forms: dry run only, no download ---
+			@testset "dry run (two-array dispatch)" begin
+				lo, hi = INTEGRATION_BBOX[1:2], INTEGRATION_BBOX[3:4]
+				@test_nowarn GMT.dgt_lidar(lo, hi; dry=true, verbose=3)
+			end
+
+			@testset "dry run (GItype dispatch)" begin
+				G = mat2grid(rand(Float32, 5, 5), hdr=INTEGRATION_BBOX, proj4=GMT.prj4WGS84)
+				@test_nowarn GMT.dgt_lidar(G; dry=true, verbose=3)
+			end
+
+			@testset "dry run (GDtype dispatch, zoom=0)" begin
+				D = mat2ds([INTEGRATION_BBOX[1] INTEGRATION_BBOX[3]; INTEGRATION_BBOX[2] INTEGRATION_BBOX[4]])
+				@test_nowarn GMT.dgt_lidar(D; dry=true, verbose=3)
+			end
+
+			# --- new point / scalar dispatch forms: dry run, no download ---
+			@testset "dry run (scalar lon, lat)" begin
+				lon, lat = (INTEGRATION_BBOX[1] + INTEGRATION_BBOX[2]) / 2,
+				           (INTEGRATION_BBOX[3] + INTEGRATION_BBOX[4]) / 2
+				@test_nowarn GMT.dgt_lidar(lon, lat; dry=true, verbose=3)
+			end
+
+			@testset "dry run (2-element array [lon, lat])" begin
+				lon, lat = (INTEGRATION_BBOX[1] + INTEGRATION_BBOX[2]) / 2,
+				           (INTEGRATION_BBOX[3] + INTEGRATION_BBOX[4]) / 2
+				@test_nowarn GMT.dgt_lidar([lon, lat]; dry=true, verbose=3)
 			end
 
 			# --- dgt_lidar: real download (covers _authenticate, _search_stac, _download_file) ---
 			@testset "download" begin
-				GMT.dgt_lidar(INTEGRATION_BBOX; output_dir=tmpdir)
+				GMT.dgt_lidar(INTEGRATION_BBOX; output_dir=tmpdir, verbose=3)
 				subdirs = filter(isdir, readdir(tmpdir, join=true))
 				@test !isempty(subdirs)
 				tiffs = [f for d in subdirs for f in readdir(d, join=true) if endswith(lowercase(f), ".tiff")]
@@ -282,29 +442,63 @@ if isfile(joinpath(homedir(), ".dgt"))
 			# --- dgt_mosaic: mosaic downloaded tiles via gdaltranslate ---
 			@testset "mosaic gdaltranslate" begin
 				outfile = joinpath(tmpdir, "mosaic.tiff")
-				result = GMT.dgt_mosaic(INTEGRATION_BBOX; src_dir=tmpdir, outfile=outfile)
+				result = GMT.dgt_mosaic(INTEGRATION_BBOX; src_dir=tmpdir, outfile=outfile, verbose=3)
 				@test isfile(outfile)
 				@test result == outfile
+				@test filesize(outfile) > 0
+			end
+
+			# --- dgt_mosaic: outfile="grid" → returns GMTgrid ---
+			@testset "mosaic outfile=grid" begin
+				G = GMT.dgt_mosaic(INTEGRATION_BBOX; src_dir=tmpdir, outfile="grid", verbose=3)
+				@test G isa GMT.GMTgrid
+				@test size(G) != (0, 0)
+			end
+
+			# --- dgt_lidar: mosaic="file.tiff" writes mosaic to disk ---
+			@testset "dgt_lidar mosaic writes file" begin
+				outfile = joinpath(tmpdir, "implicit_mosaic.tiff")
+				GMT.dgt_lidar(INTEGRATION_BBOX; output_dir=tmpdir, mosaic=outfile, verbose=3)
+				@test isfile(outfile)
 				@test filesize(outfile) > 0
 			end
 
 			# --- dgt_mosaic: resample via gdalwarp ---
 			@testset "mosaic gdalwarp" begin
 				outfile = joinpath(tmpdir, "mosaic_2m.tiff")
-				GMT.dgt_mosaic(INTEGRATION_BBOX; src_dir=tmpdir, outfile=outfile, inc=2.0)
+				GMT.dgt_mosaic(INTEGRATION_BBOX; src_dir=tmpdir, outfile=outfile, inc=2.0, verbose=3)
 				@test isfile(outfile)
 				@test filesize(outfile) > 0
+			end
+
+			# --- dgt_mosaic: reproject to geographic (EPSG:4326) ---
+			@testset "mosaic proj=geog" begin
+				outfile = joinpath(tmpdir, "mosaic_geog.tiff")
+				GMT.dgt_mosaic(INTEGRATION_BBOX; src_dir=tmpdir, outfile=outfile, proj="geog", verbose=3)
+				@test isfile(outfile)
+				@test filesize(outfile) > 0
+			end
+
+			# --- dgt_mosaic: reproject to UTM zone 29N (bare EPSG digits) ---
+			@testset "mosaic proj=32629" begin
+				outfile = joinpath(tmpdir, "mosaic_utm29n.tiff")
+				GMT.dgt_mosaic(INTEGRATION_BBOX; src_dir=tmpdir, outfile=outfile, proj="32629", verbose=3)
+				@test isfile(outfile)
+				@test filesize(outfile) > 0
+			end
+
+			# --- latest=false: same area, more files (or same) than latest=true ---
+			@testset "latest=false dry run (no error)" begin
+				@test_nowarn GMT.dgt_lidar(INTEGRATION_BBOX; dry=true, latest=false, verbose=3)
 			end
 
 			# --- re-run: all tiles exist → all skipped (file count unchanged) ---
 			@testset "resume (skip existing)" begin
 				coll_dir = joinpath(tmpdir, "MDS-2m")
 				n_before = length(readdir(coll_dir))
-				GMT.dgt_lidar(INTEGRATION_BBOX; output_dir=tmpdir)
+				GMT.dgt_lidar(INTEGRATION_BBOX; output_dir=tmpdir, verbose=3)
 				@test length(readdir(coll_dir)) == n_before
 			end
-			#GMT.resetGMT()		# TIFF files are still under GDAL grip and wont let be deleted
 		#end
-		#rm(tmpdir, recursive=true, force=true)
 	end
 end
