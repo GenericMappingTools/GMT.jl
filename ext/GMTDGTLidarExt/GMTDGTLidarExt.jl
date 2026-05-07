@@ -405,9 +405,8 @@ module GMTDGTLidarExt
 
 		# Resolve output CRS: "geog" → EPSG:4326, bare digits → EPSG:<n>, anything else → pass directly
 		t_srs = isempty(proj)  ? "" :
-		        proj == "geog" ? "EPSG:4326" :
-		        all(isdigit, proj) ? "EPSG:$proj" :
-		                             proj
+		        startswith(proj, "geo") ? "EPSG:4326" :
+		        all(isdigit, proj) ? "EPSG:$proj" : proj
 
 		# When tiles are explicitly provided from dgt_lidar, STAC selected exactly the right tiles — no clipping needed.
 		# For point queries the bbox is epsilon (lon±1e-5) — also skip clip.
@@ -417,12 +416,11 @@ module GMTDGTLidarExt
 			# gdalwarp: -te xmin ymin xmax ymax (bbox[1]=min_lon, bbox[3]=min_lat, bbox[2]=max_lon, bbox[4]=max_lat)
 			opts = String[]
 			if !skip_clip
-				append!(opts, ["-te", string(bbox[1]), string(bbox[3]), string(bbox[2]), string(bbox[4]),
-				               "-te_srs", "EPSG:4326"])
+				append!(opts, ["-te", string(bbox[1]), string(bbox[3]), string(bbox[2]), string(bbox[4]), "-te_srs", "EPSG:4326"])
 			end
 			!isempty(t_srs) && append!(opts, ["-t_srs", t_srs])
-			inc != 0          && append!(opts, ["-tr", string(inc), string(inc)])
-			append!(opts, ["-r", method, fmt_opts...])
+			inc != 0        && append!(opts, ["-tr", string(inc), string(inc)])
+			append!(opts, ["-r", method, fmt_opts..., "-dstnodata","NaN"])
 			if use_mem
 				vsimem = "/vsimem/dgt_mosaic_$(rand(UInt32)).tiff"
 				GMT.gdalwarp(vrt_ds, opts; dest=vsimem)
@@ -433,8 +431,8 @@ module GMTDGTLidarExt
 			GMT.gdalwarp(vrt_ds, opts; dest=outfile)
 		else
 			# bbox = [min_lon, max_lon, min_lat, max_lat]; -projwin expects: ulx uly lrx lry
-			opts = skip_clip ? [fmt_opts...] :
-			       ["-projwin", string(bbox[1]), string(bbox[4]), string(bbox[2]), string(bbox[3]),
+			opts = skip_clip ? ["-a_nodata", "NaN", fmt_opts...] :
+			       ["-a_nodata", "NaN", "-projwin", string(bbox[1]), string(bbox[4]), string(bbox[2]), string(bbox[3]),
 			        "-projwin_srs", "EPSG:4326", fmt_opts...]
 			if use_mem
 				vsimem = "/vsimem/dgt_mosaic_$(rand(UInt32)).tiff"
