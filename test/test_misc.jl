@@ -227,7 +227,7 @@
 	image_alpha!(I, alpha_ind=5);
 	image_alpha!(I, alpha_vec=round.(UInt32,rand(6).*255));
 	@info "before 3"
-	@test_nowarn image_alpha!(I, alpha_band=round.(UInt8,rand(27,27).*255))
+	image_alpha!(I, alpha_band=round.(UInt8,rand(27,27).*255))
 	img = mat2img(rand(UInt8, 6, 6, 3));
 	mask = fill(UInt8(0), 6, 6);
 	mask[3:4,3:4] .= 255;
@@ -243,7 +243,7 @@
 
 	GMT.resetGMT()
 	try
-		@test_nowarn upGMT()
+		upGMT()
 	catch
 	end
 	image_cpt!(I, C)
