@@ -392,7 +392,6 @@ const INTEGRATION_BBOX = [-9.11, -9.0877, 38.728, 38.735]
 
 if isfile(joinpath(homedir(), ".dgt"))
 	@testset "DGT LIDAR Integration" begin
-		#mktempdir() do tmpdir
 		tmpdir = mktempdir()
 
 			# --- dgt_lidar: auth + search, no download (primary bbox form) ---
@@ -499,6 +498,6 @@ if isfile(joinpath(homedir(), ".dgt"))
 				GMT.dgt_lidar(INTEGRATION_BBOX; output_dir=tmpdir, verbose=3)
 				@test length(readdir(coll_dir)) == n_before
 			end
-		#end
 	end
+	@test_throws ErrorException("Coordinates (10.1, 10.1, 10.0, 10.1) do not intersect Portugal (-9.6, -6.1, 36.9, 42.2)") GMT.dgt_lidar([10.1,10.1],[10., 10.1])
 end

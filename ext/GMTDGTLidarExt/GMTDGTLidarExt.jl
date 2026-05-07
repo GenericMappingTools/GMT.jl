@@ -186,10 +186,24 @@ module GMTDGTLidarExt
 	end
 
 	# --------------------------------------------------------------------------------------------------------------------------
+	function _pt_overlaps(b::NTuple{4,Float64})
+		pt_bbox = (-9.6, -6.1, 36.9, 42.2)			# Portugal bounding box: [min_lon, max_lon, min_lat, max_lat]
+		b[1] <= pt_bbox[2] && b[2] >= pt_bbox[1] && b[3] <= pt_bbox[4] && b[4] >= pt_bbox[3]
+	end
+
+	function _validate_pt_bbox(b::NTuple{4,Float64})::NTuple{4,Float64}
+		_pt_overlaps(b) && return b
+		bs = (b[3], b[4], b[1], b[2])
+		_pt_overlaps(bs) && @warn("Coordinates probably given as lat/lon INSTEAD of lon/lat.") && return bs
+		error("Coordinates $b do not intersect Portugal (-9.6, -6.1, 36.9, 42.2)")
+	end
+
+	# --------------------------------------------------------------------------------------------------------------------------
 	function _dgt_lidar(bbox, user::String, password::String, save::Bool, output_dir::String, delay::Float64, collection::String,
 	                    dry::Bool, mosaic::String, inc::Float64, method::String, latest::Bool, verbose::Int,
 	                    _neighbors, _zoom::Int, compress::String, proj::String)
 
+		bbox = _validate_pt_bbox(NTuple{4,Float64}(bbox))
 		_valid = ("LAZ", "MDT-50cm", "MDS-50cm", "MDT-2m", "MDS-2m")
 		_coll = uppercase(collection)		# Because of Core.Boxes
 		_canonical = findfirst(c -> uppercase(c) == _coll, _valid)
