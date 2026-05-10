@@ -1,7 +1,7 @@
 function get_de_libnames()
 	# Use a function for this because I F. CAN'T MAKE ANY SENSE ABOUT GLOBAL-LOCAL SCOPES INSIDE TRY-CATCH
 	errou = false
-	GMT_bindir, libgmt, libpostscriptlight, libgdal, libproj, ver, userdir, devdate = "", "", "", "", "", "", "", "0001.01.01"
+	GMT_bindir, libgmt, libpostscriptlight, libgs, libgdal, libproj, ver, userdir, devdate = "", "", "", "", "", "", "", "", "0001.01.01"
 
 	try						# First try to find an existing GMT installation (RECOMENDED WAY)
 		(Sys.iswindows() && get(ENV, "UPDATE_GMTWIN", "") != "") && error("Forcing automatic Win install")
@@ -12,6 +12,8 @@ function get_de_libnames()
 		libgmt = haskey(ENV, "GMT_LIBRARY") ? ENV["GMT_LIBRARY"] : string(chop(read(`gmt --show-library`, String)))
 		pato, fname = splitdir(libgmt)
 		libpostscriptlight = joinpath(pato, replace(fname, "gmt" => "postscriptlight"))
+
+		libgs = joinpath(pato, "gsdll64.dll")
 
 		@static Sys.iswindows() ? libgdal = "gdal_w64.dll" : (
 			Sys.isapple() ? (libgdal = string(split(readlines(pipeline(`otool -L $(libgmt)`, `grep libgdal`))[1])[1])) : (
@@ -41,12 +43,13 @@ function get_de_libnames()
 				rm(fn, force=true)
 				libgmt  = "gmt_w64.dll"
 				libpostscriptlight = "postscriptlight_w64.dll"
+				libgs   = "gsdll64.dll"
 				libgdal = "gdal_w64.dll"
 				libproj = "proj_w64.dll"
 				GMT_bindir = "C:\\programs\\gmt6\\bin"
 			else
 				println("\n\nNo GMT system wide installation found\n\n")
-				return true, ver, libgmt, libpostscriptlight, libgdal, libproj, GMT_bindir, userdir, devdate
+				return true, ver, libgmt, libpostscriptlight, libgs, libgdal, libproj, GMT_bindir, userdir, devdate
 			end
 
 			try
@@ -55,11 +58,11 @@ function get_de_libnames()
 					ver = ((ind = findfirst('_', out)) === nothing) ? VersionNumber(out) : VersionNumber(out[1:ind-1])
 				end
 			catch
-				return false, v"6.6", libgmt, libpostscriptlight, libgdal, libproj, GMT_bindir, joinpath(homedir(), ".gmt"), devdate
+				return false, v"6.6", libgmt, libpostscriptlight, libgs, libgdal, libproj, GMT_bindir, joinpath(homedir(), ".gmt"), devdate
 			end
 
 		catch err2;		println(err2)
-			return true, ver, libgmt, libpostscriptlight, libgdal, libproj, GMT_bindir, userdir, devdate
+			return true, ver, libgmt, libpostscriptlight, libgs, libgdal, libproj, GMT_bindir, userdir, devdate
 		end
 	end
 	userdir    = readlines(`gmt --show-userdir`)[1]
@@ -67,18 +70,19 @@ function get_de_libnames()
 	out = readlines(`gmt --version`)[1]
 	devdate = ((ind = findlast('_', out)) !== nothing) ? out[ind+1:end] : "2022.06.18"	# 2022.06.18 is the 6.4 release date
 	Sys.iswindows() && (GMT_bindir = readlines(`gmt --show-bindir`)[1])		# Only on Win is that all dlls are in same bin dir
-	return errou, ver, libgmt, libpostscriptlight, libgdal, libproj, GMT_bindir, userdir, devdate
+	return errou, ver, libgmt, libpostscriptlight, libgs, libgdal, libproj, GMT_bindir, userdir, devdate
 end
 
 force_winjll = (get(ENV, "FORCE_WINJLL", "") != "")		# Use this env var to also force use of the JLL on Windows
 if (force_winjll || (!Sys.iswindows() && get(ENV, "SYSTEMWIDE_GMT", "") == ""))		# That is: the JLL case
 	# Just to have something. They won't be used in main. There, wee only need that a "deps.jl" exists
-	libgmt, libpostscriptlight, libgdal, libproj, ver, userdir, devdate = "nikles", "nikles", "nikles", "nikles", "0.0", "nikles", "0001.01.01"
+	libgmt, libpostscriptlight, libgs, libgdal, libproj, ver, userdir, devdate =
+		"nikles", "nikles", "nikles", "nikles", "nikles", "0.0", "nikles", "0001.01.01"
 	GMT_bindir = ""
 	is_jll = 1
 	errou = false
 else
-	errou, ver, libgmt, libpostscriptlight, libgdal, libproj, GMT_bindir, userdir, devdate = get_de_libnames()
+	errou, ver, libgmt, libpostscriptlight, libgs, libgdal, libproj, GMT_bindir, userdir, devdate = get_de_libnames()
 	is_jll = 0
 end
 
@@ -88,6 +92,7 @@ if (!errou)		# Save shared names in file so that GMT.jl can read them at pre-com
 	open(depfile, "w") do f
 		println(f, "_libgmt  = \"", escape_string(joinpath(GMT_bindir, libgmt)), '"')
 		println(f, "_libpostscriptlight  = \"", escape_string(joinpath(GMT_bindir, libpostscriptlight)), '"')
+		println(f, "_libgs = \"", escape_string(joinpath(GMT_bindir, libgs)), '"')
 		println(f, "_libgdal = \"", escape_string(joinpath(GMT_bindir, libgdal)), '"')
 		println(f, "_libproj = \"", escape_string(joinpath(GMT_bindir, libproj)), '"')
 		println(f, "_GMTver = v\"" * string(ver) * "\"")
