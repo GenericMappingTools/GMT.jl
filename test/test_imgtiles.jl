@@ -17,9 +17,12 @@
 	quadbounds(quadtree[1]);
 	quadbounds(quadtree);
 	GMT.meridionalRad(6371007.0, 0.0)
-	D = geocoder("Universidade do Algarve, Gambelas");
-	mosaic(D, zoom=2, quadonly=1);
-	mosaic(D, zoom=2, bb=1, quadonly=1);
+	try			# This bloody things fails so many tines in Github
+		D = geocoder("Universidade do Algarve, Gambelas");
+		mosaic(D, zoom=2, quadonly=1);
+		mosaic(D, zoom=2, bb=1, quadonly=1);
+	catch
+	end
 	mosaic(R=(91,110,6,22), quadonly=1);
 	mosaic(-90,25, zoom=1, provider="nimb",key="0", quadonly=1);
 	G = peaks(); G.proj4 = "+proj=lonlat";

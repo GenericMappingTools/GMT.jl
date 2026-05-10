@@ -61,7 +61,7 @@ if ((!(@isdefined have_jll) || have_jll == 1) && get(ENV, "SYSTEMWIDE_GMT", "") 
 	libpostscriptlight = joinpath(pato, replace(fname, "gmt" => "postscriptlight"))
 else
 	const isJLL = false
-	const GMTver, libgmt, libpostscriptlight, libgdal, libproj, GMTuserdir, GMTbin = _GMTver, _libgmt, _libpostscriptlight, _libgdal, _libproj, [userdir], "gmt"
+	const GMTver, libgmt, libpostscriptlight, libgs, libgdal, libproj, GMTuserdir, GMTbin = _GMTver, _libgmt, _libpostscriptlight, _libgs, _libgdal, _libproj, [userdir], "gmt"
 	const GMTdevdate = Date(devdate, dateformat"y.m.d")		# 'devdate' comes from reading 'deps.jl'
 end
 
