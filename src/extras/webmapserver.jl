@@ -41,7 +41,7 @@ returned by the first form.
 """
 function wmsinfo(server::String)::WMS
 	w = gdalinfo("WMS:" * server)
-	(w === nothing) && error("unable to open '$(server)'")
+	(w === nothing || w === "") && error("unable to open '$(server)'")
 	sds = split(w, "SUBDATASET_")
 	lastguy = collect(2:2:length(sds))[end]
 
