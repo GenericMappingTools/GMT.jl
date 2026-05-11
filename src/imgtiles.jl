@@ -135,6 +135,16 @@ Get image tiles from a web map tiles provider for given longitude, latitude coor
   - "Bing" (the default), "Google", "OSM", "Esri" or a custom provider.
   - A `Provider` type from the ``TileProviders.jl`` package. You must consult the documentation of that package
     for more details on how to choose a *provider*.
+  - "ortosat23" / "Ortosat23": Portuguese DGT orthophotos (2023) served via WMS. Always returned in
+    WGS84 geographical coordinates. The spelling controls the output pipeline:
+      * `provider="ortosat23"` (lowercase): single-warp **approximate** path. Cheap (one warp). Output
+        size differs slightly from the same-zoom Bing/Google result because the WMS source SRS
+        (EPSG:3763) and Bing's source SRS (EPSG:3857) have different aspect after warping to geog.
+      * `provider="Ortosat23"` (capital `O`): double-warp **exact** path. Two `gdalwarp` calls
+        (3763 -> 3857 -> latlong) replicate Bing's pipeline so the output bbox and pixel count match
+        Bing exactly at the same `zoom` / `neighbors`. More expensive (two warps over the full image).
+    For native EPSG:3763 metric coordinates or custom pixel resolution / `zoom` / `refine` factors,
+    call `wmsread` directly (see `? wmsread`).
 - `zoom`: Zoom level (0 for automatic). A number between 0 and ~19. The maximum is provider and area dependent.
   If `zoom=0`, the zoom level is computed automatically based on the `mapwidth` and `dpi` options.
 - `cache`: Full name of the the cache directory where to save the downloaded tiles. If empty, a cache
@@ -482,6 +492,12 @@ function mosaic(lon::Vector{<:Float64}, lat::Vector{<:Float64}; pt_radius=637813
 	# Return here if user wants a GMTdataset with the coordinates of the tiles
 	quadTiles && return quadbounds(quad_; quadkey=quadkey)[1]
 
+	# -------- WMS-backed providers (ortosat23): fetch one image covering the tile-matrix bbox ---------
+	if (provider_code == "ortosat23" || provider_code == "Ortosat23")
+		return _mosaic_ortosat23(provider_url, variant, lon_mm, lat_mm, mMo, nMo, zoom, pt_radius;
+		                        exact = (provider_code == "Ortosat23"))
+	end
+
 	# ------------------ Get the tiles and build up the image --------------------
 	cache, cache_supp = completeCacheName(cache, zoom, provider_code; variant=variant)
 	if !isa(tile_url, Matrix)
@@ -511,6 +527,63 @@ function mosaic(lon::Vector{<:Float64}, lat::Vector{<:Float64}; pt_radius=637813
 	end
 
 	return I
+end
+
+# ---------------------------------------------------------------------------------------------------
+# Helper for the 'ortosat23' / 'Ortosat23' providers: instead of fetching individual XYZ tiles, query
+# the DGT WMS service once with the bounding box covering the tile-matrix area. Returns a GMTimage in
+# geographical coordinates (WGS84). The `variant` selects the WMS layer ("CorVerdadeira" or "FalsaCor");
+# when no exact/partial match is found, layer 2 is used.
+#
+# Two output pipelines, selected by the `exact` flag:
+#  - `exact=false` (provider="ortosat23"): single-warp approximate path. Passes the geog bbox to
+#    `wmsread` with a `pixelsize` derived from the Web Mercator ground resolution at the bbox
+#    mid-latitude. `wms_helper` reprojects bbox to EPSG:3763, gdaltranslate fetches the image and the
+#    internal gdalwarp warps to latlong with auto-sizing. Cheap (one warp), but output size differs
+#    slightly from the same-zoom Bing/Google result because the source SRS (3763) and Bing's source
+#    SRS (3857) have different aspect after warping to geog.
+#  - `exact=true` (provider="Ortosat23"): double-warp exact path. Projects the bbox to EPSG:3763
+#    ourselves and passes those *projected* lims plus `size=(mMo*256, nMo*256)` to `wmsread`. Since
+#    the lims are no longer in geog range, `wms_helper` skips its internal warp and the image stays
+#    in 3763. We then warp 3763 -> 3857 (with `-ts` and `-te` matching Bing's intermediate mosaic in
+#    spherical Mercator) and finally 3857 -> latlong (auto-size, identical to Bing's last step). The
+#    output bbox/size then matches Bing exactly. Two warps over the full image.
+function _mosaic_ortosat23(url::String, variant::String, lon_mm::Vector{Float64},
+                           lat_mm::Vector{Float64}, mMo::Int, nMo::Int, zoom::Int,
+                           pt_radius::Float64; exact::Bool=false)::GMTimage
+	wms = wmsinfo(url)
+	layer_n = 2
+	if (variant != "")
+		v = lowercase(variant)
+		idx = findfirst(n -> occursin(v, lowercase(n)), wms.layernames)
+		(idx !== nothing) && (layer_n = idx)
+	end
+
+	if (!exact)				# Single-warp approximate path
+		bbox = (minimum(lon_mm), maximum(lon_mm), minimum(lat_mm), maximum(lat_mm))
+		lat_mid = (bbox[3] + bbox[4]) / 2
+		res_m = 156543.034 * cosd(lat_mid) / 2^zoom	# Web Mercator ground resolution at zoom & lat_mid
+		return wmsread(wms; layer=layer_n, region=bbox, pixelsize=res_m)
+	end
+
+	# --- Double-warp exact path ---
+	# 1) Project geog bbox -> layer SRS (EPSG:3763) ourselves so wmsread keeps the image in 3763.
+	srs_str::String = wms.layer[layer_n].srs
+	t_srs_3763::String = epsg2proj(parse(Int, srs_str[6:end]))
+	corners_3763::Matrix{Float64} = lonlat2xy([lon_mm[1] lat_mm[1]; lon_mm[2] lat_mm[2]], t_srs_3763)
+	lims_3763 = (minimum(corners_3763[:, 1]), maximum(corners_3763[:, 1]),
+	             minimum(corners_3763[:, 2]), maximum(corners_3763[:, 2]))
+	I_native = wmsread(wms; layer=layer_n, region=lims_3763, size=(mMo*256, nMo*256))
+
+	# 2) Warp 3763 -> 3857 (Bing's intermediate mosaic) with the same `-te` / `-ts` as the Bing path.
+	xm, ym = geog2merc(lon_mm, lat_mm, pt_radius)
+	merc_srs::String = "+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +a=$pt_radius +b=$pt_radius +units=m +no_defs"
+	I_3857 = gdalwarp(I_native, ["-t_srs", merc_srs, "-r", "cubic", "-ts", string(nMo*256), string(mMo*256),
+	                              "-te", string(xm[1]), string(ym[1]), string(xm[2]), string(ym[2])])::GMTimage{UInt8, 3}
+
+	# 3) Final warp 3857 -> latlong (auto-size). Identical to Bing's last gdalwarp call.
+	I_geog = gdalwarp(I_3857, ["-t_srs", "+proj=latlong +datum=WGS84", "-r", "cubic"])::GMTimage{UInt8, 3}
+	return I_geog
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -587,7 +660,7 @@ Get information about a tile provider given its name and zoom level. The returne
 is only relevant for internal use and is an implementation detail not documented here.
 
 ### Arguments
-- `name`: Name of the tile provider. Currently available are "Bing" (the default), "Google", "OSM", "Esri", "Nimbo".
+- `name`: Name of the tile provider. Currently available are "Bing" (the default), "Google", "OSM", "Esri", "Nimbo", "ortosat23".
   Optionally, the `name` can be a tuple of two strings, where the first string is the provider name
   and the second string is the variant name (see the `variant` bellow).
 
@@ -605,6 +678,17 @@ is only relevant for internal use and is an implementation detail not documented
   - `Google`: variants => "Satellite", "Road", "Terrain", or "Hybrid".
   - `Esri`: variants => "World\\_Street\\_Map" (default), "Elevation/World\\_Hillshade", or "World\\_Imagery".
   - `Nimbo`: variants => "RGB" (default), "NIR", "NDVI", or "RADAR".
+  - `ortosat23` / `Ortosat23`: variants => "CorVerdadeira" (default) or "FalsaCor". Fetched via the DGT
+     WMS service (https://ortos.dgterritorio.gov.pt/wms/ortosat2023) — one WMS request covers the full
+     tile-matrix bbox. Always returned in WGS84 geographical coordinates. Spelling controls the pipeline:
+      * `"ortosat23"` (lowercase): single-warp approximate path. Output size slightly different from
+        same-zoom Bing/Google result (3763 vs 3857 aspect after warping to geog).
+      * `"Ortosat23"` (capital `O`): double-warp exact path. Two warps (3763 -> 3857 -> latlong)
+        replicate Bing's pipeline so output bbox/pixel count match Bing exactly.
+     For native EPSG:3763 metric coordinates or custom pixel resolution / `zoom` / `refine` factors,
+     call `wmsread` directly: first obtain the WMS handle with
+     `wms = wmsinfo("https://ortos.dgterritorio.gov.pt/wms/ortosat2023?service=wms&request=getcapabilities")`
+     and then `wmsread(wms; layer=..., region=..., pixelsize=...)`.
 """
 getprovider(name::Tuple{String,String}, zoom::Int; date::String="", key="") = getprovider(name[1], zoom; variant=name[2], date=date, key=key)
 function getprovider(name::StrSymb, zoom::Int; variant="", format="", ZYX::Bool=false, dir_code="", date::String="", key::String="")
@@ -649,11 +733,18 @@ function getprovider(name::StrSymb, zoom::Int; variant="", format="", ZYX::Bool=
 		variant = d * "_" * v * filesep * variant		# Need to carry also the dates (this will be used in cache name)
 		url = "https://prod-data.nimbo.earth/mapcache/tms/1.0.0/" * d * "_" * v * "@kermap/"
 		max_zoom = 13;	isZXY = true; code = "nimbo";	ext = "png";	sitekey = "?kermap_token=" * key
-	#elseif (_name == "ortosat")							# 
-		# variants: CorVerdadeira, falsacor
-		#layer = (variant == "falsacor") ? 1 : 2
-		#wms = wmsinfo("https://ortos.dgterritorio.gov.pt/wms/ortosat2023?service=wms&request=getcapabilities")
-		#url, isZXY, max_zoom, code = wms, true, 19, "ortosat"
+	elseif (_name == "ortosat23")						# Portuguese DGT WMS orthophotos 2023
+		# Tile XYZ is computed normally, but the actual image is fetched via WMS (wmsinfo/wmsread).
+		# variants: "CorVerdadeira" (default) or "FalsaCor".
+		# Provider name spelling controls the output pipeline:
+		#   "ortosat23" (lowercase) -> single-warp approximate path (output ~matches XYZ tile providers).
+		#   "Ortosat23" (capital O) -> double-warp exact path (output bbox/size exactly matches Bing).
+		(variant == "") && (variant = "CorVerdadeira")
+		vv = lowercase(variant)
+		(vv != "corverdadeira" && vv != "falsacor") &&
+			error("Ortosat23 only supports 'CorVerdadeira' (default) or 'FalsaCor' variants")
+		url = "https://ortos.dgterritorio.gov.pt/wms/ortosat2023?service=wms&request=getcapabilities"
+		max_zoom = 19;	isZXY = true;	code = (string(name)[1] == 'O') ? "Ortosat23" : "ortosat23"
 	elseif (_name == "mesh")							# For mesh we don't care the provider and max zoom is ilimitted
 		url, isZXY, max_zoom, code = string(name), true, 50, "unknown"
 	else

@@ -1067,7 +1067,10 @@ function lonlat2xy(xy::Matrix{T}, t_srs_=nothing; t_srs=nothing, s_srs=prj4WGS84
 	opts = (size(xy,2) == 2) ? ["-s_srs", s_srs, "-t_srs", t_srs, "-overwrite"] :
 	                           ["-s_srs", s_srs, "-t_srs", t_srs, "-overwrite", "-dim", "XYZ"]
 	D = ogr2ogr(xy, opts)
-	return D.data		# Return only the array because that's what was sent in
+	# ogr2ogr/gd2gmt returns a single GMTdataset when the input has one point, but a
+	# Vector{GMTdataset} when it has several (each row becomes a separate point feature).
+	# Aggregate back into a single matrix matching the input shape.
+	return isa(D, Vector) ? reduce(vcat, (d.data for d in D)) : D.data
 end
 
 lonlat2xy(D::GMTdataset, t_srs_=nothing; t_srs=nothing, s_srs=prj4WGS84) = lonlat2xy([D], t_srs_; t_srs=t_srs, s_srs=s_srs)
@@ -1118,7 +1121,10 @@ function xy2lonlat(xy::Matrix{<:Real}, s_srs_=""; s_srs="", t_srs=prj4WGS84)
 	(s_srs == "") && error("Must specify at least the source referencing system.")
 	D = ogr2ogr(xy, ["-s_srs", s_srs, "-t_srs", t_srs, "-overwrite"])
 	isa(D, Vector) && contains(s_srs, "=lee_os") && length(D) > 1 && return [D[1][1,1] D[1][1,2]; D[2][2,1] D[2][2,2]]	# GDAL BUG?
-	return D.data		# Return only the array because that's what was sent in
+	# ogr2ogr/gd2gmt returns a single GMTdataset when the input has one point, but a
+	# Vector{GMTdataset} when it has several (each row becomes a separate point feature).
+	# Aggregate back into a single matrix matching the input shape.
+	return isa(D, Vector) ? reduce(vcat, (d.data for d in D)) : D.data
 end
 
 xy2lonlat(D::GMTdataset, s_srs_=""; s_srs="", t_srs=prj4WGS84) = xy2lonlat([D], s_srs_; s_srs=s_srs, t_srs=t_srs)
