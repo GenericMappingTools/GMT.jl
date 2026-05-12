@@ -49,9 +49,34 @@ if ((!(@isdefined have_jll) || have_jll == 1) && get(ENV, "SYSTEMWIDE_GMT", "") 
 	const GMTver = VersionNumber(t[1])
 	const GMTdevdate = (length(t) > 1) ? Date(t[end], dateformat"y.m.d") : Date("0001-01-01")# For DEV versions
 	const GMTuserdir = [readlines(`$(GMT_jll.gmt()) "--show-userdir"`)[1]]
-	const GSbin = Ghostscript_jll.gs()[1]
 	const GMTbin = GMT_jll.gmt()[1]
 	const isJLL = true
+	gs_path, _libgs = "", ""
+	gsSYS = string(get(ENV, "SYSTEMWIDE_GS", ""))
+	if (gsSYS !== "")
+		if Sys.iswindows()
+			if (contains(gsSYS, ':'))		# A path for sure. Believe it ... for now
+				gs_path = gsSYS
+				_libgs = joinpath(gs_path, "gsdll64.dll")
+			else
+				try
+					t2 = string(readchomp(`where gswin64c`))
+					ind = findfirst(".exe", t2)
+					gs_path = t2[1:ind[end]]
+					_libgs = t2[1:ind[1]-9] * "//gsdll64.dll"
+				catch
+				end
+			end
+			(gs_path === "") && println("\n\nNo Ghostscript system wide installation found. Resorting to the JLL one\n\n")
+		else								# Assume it is Unix
+			gs_path = string(readchomp(`which gs`))
+			_libgs = split(readlines(pipeline(`ldd $(gs_path)`, `grep libgs`))[1])[3]
+		end
+	end
+	const GSbin = (gs_path === "") ? Ghostscript_jll.gs()[1] : gs_path
+	const gslib = (gs_path === "") ? libgs : _libgs
+
+	#const GSbin = Ghostscript_jll.gs()[1]
 	fname = joinpath(GMTuserdir[1], "ghost_jll_path.txt")
 	!isdir(GMTuserdir[1]) && mkdir(GMTuserdir[1])	# When installing on a clean no GMT sys, ~/.gmt doesn't exist
 	open(fname, "w") do f
@@ -61,7 +86,7 @@ if ((!(@isdefined have_jll) || have_jll == 1) && get(ENV, "SYSTEMWIDE_GMT", "") 
 	libpostscriptlight = joinpath(pato, replace(fname, "gmt" => "postscriptlight"))
 else
 	const isJLL = false
-	const GMTver, libgmt, libpostscriptlight, libgs, libgdal, libproj, GMTuserdir, GMTbin = _GMTver, _libgmt, _libpostscriptlight, _libgs, _libgdal, _libproj, [userdir], "gmt"
+	const GMTver, libgmt, libpostscriptlight, gslib, libgdal, libproj, GMTuserdir, GMTbin = _GMTver, _libgmt, _libpostscriptlight, _libgs, _libgdal, _libproj, [userdir], "gmt"
 	const GMTdevdate = Date(devdate, dateformat"y.m.d")		# 'devdate' comes from reading 'deps.jl'
 end
 
