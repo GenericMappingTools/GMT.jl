@@ -89,6 +89,8 @@ end
 
 if (!errou)		# Save shared names in file so that GMT.jl can read them at pre-compile time
 	depfile = joinpath(dirname(@__FILE__), "deps.jl")
+	#libgs = "C:\\programs\\gs\\bin\\gsdll64.dll"
+	#libgs = "C:\\Users\\j\\.julia\\artifacts\\bf8f14a072d574839afd40d235e4ce6cd9e91a78\\bin\\libgs-9-55.dll"
 	open(depfile, "w") do f
 		println(f, "_libgmt  = \"", escape_string(joinpath(GMT_bindir, libgmt)), '"')
 		println(f, "_libpostscriptlight  = \"", escape_string(joinpath(GMT_bindir, libpostscriptlight)), '"')

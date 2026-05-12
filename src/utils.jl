@@ -1814,7 +1814,6 @@ end
 include("makeDCWs.jl")
 include("getdcw.jl")
 #include("tttAPI.jl")
-#include("ghostscript.jl")
 
 #=
 function nada(offset=10)
