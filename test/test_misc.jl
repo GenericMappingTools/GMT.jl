@@ -286,15 +286,23 @@
 
 	# Seismicity
 	println("	Seismicity")
-	seismicity(last="1w", circle=(-90,10,500), data=1)
-	seismicity(last="1w", R=:d, show=false);
-	seismicity(last="1w", R=:d, size=5, show=false);
+	try
+		seismicity(last="1w", circle=(-90,10,500), data=1)
+		seismicity(last="1w", R=:d, show=false);
+		seismicity(last="1w", R=:d, size=5, show=false);
 	GMT.seislegend(Vd=2);
+	catch e
+		println(e)
+	end
 
 	# Weather
 	println("	Weather")
 	weather(year=2023, debug=1);
-	weather(city="Quarteira", var="rain");
+	try
+		weather(city="Quarteira", var="rain");
+	catch e
+		println(e)
+	end
 
 	dataset = "reanalysis-era5-single-levels"
 	request = """{
