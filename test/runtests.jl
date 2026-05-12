@@ -17,6 +17,7 @@ using InteractiveUtils
 	API = GMT.GMT_Create_Session("GMT", 2, GMT.GMT_SESSION_NOEXIT + GMT.GMT_SESSION_EXTERNAL);
 	GMT.GMT_Get_Ctrl(API);
 
+	include("test_ghost.jl")
 	try
 		GMT.tic()
 		include("test_dgt.jl")

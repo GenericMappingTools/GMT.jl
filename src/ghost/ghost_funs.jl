@@ -190,28 +190,10 @@ function ps2image(ps_data::Union{String, AbstractVector{UInt8}}; dpi::Int=300, g
 	nch     = gray ? 1 : 3
 	_gs_state_reset!()
 	cb_ref = _gs_make_callback_ref()
-	inst_ref = Ref{Ptr{Cvoid}}(C_NULL)
-	rc = gsapi_new_instance(inst_ref, C_NULL)
-	rc < 0 && error("gsapi_new_instance failed: $rc")
-	inst = inst_ref[]
-	try
-		gsapi_set_arg_encoding(inst, GS_ARG_ENCODING_UTF8)
-		rc = gsapi_set_display_callback(inst, cb_ref)
-		rc < 0 && error("gsapi_set_display_callback failed: $rc")
-		args   = ["gs", "-dNOPAUSE", "-dNOPROMPT", "-dQUIET", "-dSCANCONVERTERTYPE=2",
-		          "-dUseFastColor=true", "-dGraphicsAlphaBits=4", "-dTextAlphaBits=4",
-		          "-sDEVICE=display", "-dDisplayFormat=$(fmt_int)", "-r$(dpi)"]
-		#args_c = [Base.cconvert(Cstring, s) for s in args]
-		#argv   = [Base.unsafe_convert(Cstring, s) for s in args_c]
-		GC.@preserve args begin
-			rc = gsapi_init_with_args(inst, Cint(length(args)), args)
-		end
-		rc < 0 && error("gsapi_init_with_args failed: $rc")
-		_gs_run_ps_str(inst, ps_data, () -> "")
-	finally
-		gsapi_exit(inst)
-		gsapi_delete_instance(inst)
-	end
+	args = ["gs", "-dNOPAUSE", "-dNOPROMPT", "-dQUIET", "-dSCANCONVERTERTYPE=2",
+	        "-dUseFastColor=true", "-dGraphicsAlphaBits=4", "-dTextAlphaBits=4",
+	        "-sDEVICE=display", "-dDisplayFormat=$(fmt_int)", "-r$(dpi)"]
+	_gs_session(args, inst -> _gs_run_ps_str(inst, ps_data, () -> ""); display_cb=cb_ref)
 	_GS_STATE.ready || error("Ghostscript produced no output — check PostScript validity.")
 	W = _GS_STATE.width;  H = _GS_STATE.height;  R = _GS_STATE.raster
 	img = if R == W * nch
@@ -605,28 +587,10 @@ psview(ps_data::GMTps; dpi::Int=300) = psview(ps_data.postscript; dpi=dpi)
 function psview(ps_data::Union{String, AbstractVector{UInt8}}; dpi::Int=300)
 	_gs_state_reset!()
 	cb_ref = _gs_make_callback_ref()
-	inst_ref = Ref{Ptr{Cvoid}}(C_NULL)
-	rc = gsapi_new_instance(inst_ref, C_NULL)
-	rc < 0 && error("gsapi_new_instance failed: $rc")
-	inst = inst_ref[]
-	try
-		gsapi_set_arg_encoding(inst, GS_ARG_ENCODING_UTF8)
-		rc = gsapi_set_display_callback(inst, cb_ref)
-		rc < 0 && error("gsapi_set_display_callback failed: $rc")
-		args   = ["gs", "-dNOPAUSE", "-dNOPROMPT", "-dQUIET", "-dSCANCONVERTERTYPE=2",
-		          "-dUseFastColor=true", "-dGraphicsAlphaBits=4", "-dTextAlphaBits=4",
-		          "-sDEVICE=display", "-dDisplayFormat=$(_GS_FMT_RGB24)", "-r$(dpi)"]
-		#args_c = [Base.cconvert(Cstring, s) for s in args]
-		#argv   = [Base.unsafe_convert(Cstring, s) for s in args_c]
-		GC.@preserve args begin
-			rc = gsapi_init_with_args(inst, Cint(length(args)), args)
-		end
-		rc < 0 && error("gsapi_init_with_args failed: $rc")
-		_gs_run_ps_str(inst, ps_data, () -> "")
-	finally
-		gsapi_exit(inst)
-		gsapi_delete_instance(inst)
-	end
+	args = ["gs", "-dNOPAUSE", "-dNOPROMPT", "-dQUIET", "-dSCANCONVERTERTYPE=2",
+	        "-dUseFastColor=true", "-dGraphicsAlphaBits=4", "-dTextAlphaBits=4",
+	        "-sDEVICE=display", "-dDisplayFormat=$(_GS_FMT_RGB24)", "-r$(dpi)"]
+	_gs_session(args, inst -> _gs_run_ps_str(inst, ps_data, () -> ""); display_cb=cb_ref)
 	_GS_STATE.ready || error("Ghostscript produced no output.")
 	_GS_BGR[] = _gs_make_bgr_dib(_GS_STATE.width, _GS_STATE.height, _GS_STATE.raster, _GS_STATE.data)
 
