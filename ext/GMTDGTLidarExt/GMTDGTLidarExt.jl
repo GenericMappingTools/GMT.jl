@@ -400,7 +400,7 @@ module GMTDGTLidarExt
 		ext_lc   = use_mem ? ".tiff" : lowercase(splitext(outfile)[2])
 		fmt_opts = ext_lc == ".nc" ? ["-of", "netCDF", "-co", "FORMAT=NC4", "-co", "COMPRESS=DEFLATE", "-co", "ZLEVEL=4"] :
 		           use_mem          ? ["-of", "GTiff"] :
-		                              ["-of", "GTiff", "-co", "COMPRESS=DEFLATE", "-co", "PREDICTOR=2", "-co", "TILED=YES",
+		                              ["-of", "GTiff", "-co", "COMPRESS=ZSTD", "-co", "PREDICTOR=3", "-co", "TILED=YES",
 		                               "-co", "BLOCKXSIZE=512", "-co", "BLOCKYSIZE=512"]
 
 		# Resolve output CRS: "geog" → EPSG:4326, bare digits → EPSG:<n>, anything else → pass directly
@@ -857,11 +857,11 @@ module GMTDGTLidarExt
 	end
 
 	# Rewrite a GeoTIFF in-place with DEFLATE compression + tiling.
-	# PREDICTOR=2 (horizontal differencing) improves ratio for integer/float data alike.
+	# PREDICTOR=3 (horizontal differencing) improves ratio for integer/float data alike.
 	function _compress_tiff(file_path::String)
 		tmp = file_path * ".tmp.tiff"
 		try
-			GMT.gdaltranslate(file_path, ["-co", "COMPRESS=DEFLATE", "-co", "PREDICTOR=2",
+			GMT.gdaltranslate(file_path, ["-co", "COMPRESS=DEFLATE", "-co", "PREDICTOR=3",
 			                              "-co", "TILED=YES", "-co", "BLOCKXSIZE=512", "-co", "BLOCKYSIZE=512"]; save=tmp)
 			mv(tmp, file_path; force=true)
 		catch e
@@ -910,7 +910,7 @@ module GMTDGTLidarExt
 					# Use GDAL /vsicurl/ to translate remote TIFF in one step (no download-then-recompress).
 					if extension == ".tiff" && compress == "tif"
 						GMT.gdaltranslate("/vsicurl/" * final_url,
-						                  ["-co", "COMPRESS=DEFLATE", "-co", "PREDICTOR=2", "-co", "TILED=YES",
+						                  ["-co", "COMPRESS=ZSTD", "-co", "PREDICTOR=3", "-co", "TILED=YES",
 						                   "-co", "BLOCKXSIZE=512", "-co", "BLOCKYSIZE=512"]; save=file_path)
 					elseif extension == ".tiff" && compress == "nc"
 						GMT.gdaltranslate("/vsicurl/" * final_url,
