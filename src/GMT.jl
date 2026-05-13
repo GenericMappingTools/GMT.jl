@@ -74,7 +74,7 @@ if ((!(@isdefined have_jll) || have_jll == 1) && get(ENV, "SYSTEMWIDE_GMT", "") 
 		end
 	end
 	const GSbin = (gs_path === "") ? Ghostscript_jll.gs()[1] : gs_path
-	const gslib = (gs_path === "") ? libgs : _libgs
+	const gslib = (gs_path === "") ? libgs : string(_libgs)
 
 	#const GSbin = Ghostscript_jll.gs()[1]
 	fname = joinpath(GMTuserdir[1], "ghost_jll_path.txt")
