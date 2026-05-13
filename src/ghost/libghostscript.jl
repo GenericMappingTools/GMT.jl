@@ -40,141 +40,135 @@ struct gsapi_fs_t
 	open_handle::Ptr{Cvoid}
 end
 
-function gsapi_revision(pr, len)
-	ccall((:gsapi_revision, libgs), Cint, (Ptr{gsapi_revision_s}, Cint), pr, len)
-end
+gsapi_revision(pr, len) = ccall((:gsapi_revision, gslib), Cint, (Ptr{gsapi_revision_s}, Cint), pr, len)
 
 function gsapi_new_instance(pinstance, caller_handle)
-	ccall((:gsapi_new_instance, libgs), Cint, (Ptr{Ptr{Cvoid}}, Ptr{Cvoid}), pinstance, caller_handle)
+	ccall((:gsapi_new_instance, gslib), Cint, (Ptr{Ptr{Cvoid}}, Ptr{Cvoid}), pinstance, caller_handle)
 end
 
-function gsapi_delete_instance(instance)
-	ccall((:gsapi_delete_instance, libgs), Cvoid, (Ptr{Cvoid},), instance)
-end
+gsapi_delete_instance(instance) = ccall((:gsapi_delete_instance, gslib), Cvoid, (Ptr{Cvoid},), instance)
 
 function gsapi_set_stdio(instance, stdin_fn, stdout_fn, stderr_fn)
-	ccall((:gsapi_set_stdio, libgs), Cint, (Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}), instance, stdin_fn, stdout_fn, stderr_fn)
+	ccall((:gsapi_set_stdio, gslib), Cint, (Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}), instance, stdin_fn, stdout_fn, stderr_fn)
 end
 
 function gsapi_set_stdio_with_handle(instance, stdin_fn, stdout_fn, stderr_fn, caller_handle)
-	ccall((:gsapi_set_stdio_with_handle, libgs), Cint, (Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}),
+	ccall((:gsapi_set_stdio_with_handle, gslib), Cint, (Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}),
 		instance, stdin_fn, stdout_fn, stderr_fn, caller_handle)
 end
 
-function gsapi_set_poll(instance, poll_fn)
-	ccall((:gsapi_set_poll, libgs), Cint, (Ptr{Cvoid}, Ptr{Cvoid}), instance, poll_fn)
-end
+gsapi_set_poll(instance, poll_fn) = ccall((:gsapi_set_poll, gslib), Cint, (Ptr{Cvoid}, Ptr{Cvoid}), instance, poll_fn)
 
 function gsapi_set_poll_with_handle(instance, poll_fn, caller_handle)
-	ccall((:gsapi_set_poll_with_handle, libgs), Cint, (Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}), instance, poll_fn, caller_handle)
+	ccall((:gsapi_set_poll_with_handle, gslib), Cint, (Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}), instance, poll_fn, caller_handle)
 end
 
 function gsapi_set_display_callback(instance, callback)
-	ccall((:gsapi_set_display_callback, libgs), Cint, (Ptr{Cvoid}, Ptr{Cvoid}), instance, callback)
+	ccall((:gsapi_set_display_callback, gslib), Cint, (Ptr{Cvoid}, Ptr{Cvoid}), instance, callback)
 end
 
 function gsapi_register_callout(instance, callout, callout_handle)
-	ccall((:gsapi_register_callout, libgs), Cint, (Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}), instance, callout, callout_handle)
+	ccall((:gsapi_register_callout, gslib), Cint, (Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}), instance, callout, callout_handle)
 end
 
 function gsapi_deregister_callout(instance, callout, callout_handle)
-	ccall((:gsapi_deregister_callout, libgs), Cvoid, (Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}), instance, callout, callout_handle)
+	ccall((:gsapi_deregister_callout, gslib), Cvoid, (Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}), instance, callout, callout_handle)
 end
 
 function gsapi_set_default_device_list(instance, list, listlen)
-	ccall((:gsapi_set_default_device_list, libgs), Cint, (Ptr{Cvoid}, Cstring, Cint), instance, list, listlen)
+	ccall((:gsapi_set_default_device_list, gslib), Cint, (Ptr{Cvoid}, Cstring, Cint), instance, list, listlen)
 end
 
 function gsapi_get_default_device_list(instance, list, listlen)
-	ccall((:gsapi_get_default_device_list, libgs), Cint, (Ptr{Cvoid}, Ptr{Cstring}, Ptr{Cint}), instance, list, listlen)
+	ccall((:gsapi_get_default_device_list, gslib), Cint, (Ptr{Cvoid}, Ptr{Cstring}, Ptr{Cint}), instance, list, listlen)
 end
 
 function gsapi_set_arg_encoding(instance, encoding)
-	ccall((:gsapi_set_arg_encoding, libgs), Cint, (Ptr{Cvoid}, Cint), instance, encoding)
+	ccall((:gsapi_set_arg_encoding, gslib), Cint, (Ptr{Cvoid}, Cint), instance, encoding)
 end
 
 function gsapi_init_with_args(instance, argc, argv)
-	ccall((:gsapi_init_with_args, libgs), Cint, (Ptr{Cvoid}, Cint, Ptr{Cstring}), instance, argc, argv)
+	ccall((:gsapi_init_with_args, gslib), Cint, (Ptr{Cvoid}, Cint, Ptr{Cstring}), instance, argc, argv)
 end
 
 function gsapi_init_with_argsA(instance, argc, argv)
-	ccall((:gsapi_init_with_argsA, libgs), Cint, (Ptr{Cvoid}, Cint, Ptr{Cstring}), instance, argc, argv)
+	ccall((:gsapi_init_with_argsA, gslib), Cint, (Ptr{Cvoid}, Cint, Ptr{Cstring}), instance, argc, argv)
 end
 
 function gsapi_init_with_argsW(instance, argc, argv)
-	ccall((:gsapi_init_with_argsW, libgs), Cint, (Ptr{Cvoid}, Cint, Ptr{Ptr{Cwchar_t}}), instance, argc, argv)
+	ccall((:gsapi_init_with_argsW, gslib), Cint, (Ptr{Cvoid}, Cint, Ptr{Ptr{Cwchar_t}}), instance, argc, argv)
 end
 
 function gsapi_run_string_begin(instance, user_errors, pexit_code)
-	ccall((:gsapi_run_string_begin, libgs), Cint, (Ptr{Cvoid}, Cint, Ptr{Cint}), instance, user_errors, pexit_code)
+	ccall((:gsapi_run_string_begin, gslib), Cint, (Ptr{Cvoid}, Cint, Ptr{Cint}), instance, user_errors, pexit_code)
 end
 
 function gsapi_run_string_continue(instance, str, length, user_errors, pexit_code)
-	ccall((:gsapi_run_string_continue, libgs), Cint, (Ptr{Cvoid}, Ptr{UInt8}, Cuint, Cint, Ptr{Cint}), instance, str, length, user_errors, pexit_code)
+	ccall((:gsapi_run_string_continue, gslib), Cint, (Ptr{Cvoid}, Ptr{UInt8}, Cuint, Cint, Ptr{Cint}), instance, str, length, user_errors, pexit_code)
 end
 
 function gsapi_run_string_end(instance, user_errors, pexit_code)
-	ccall((:gsapi_run_string_end, libgs), Cint, (Ptr{Cvoid}, Cint, Ptr{Cint}), instance, user_errors, pexit_code)
+	ccall((:gsapi_run_string_end, gslib), Cint, (Ptr{Cvoid}, Cint, Ptr{Cint}), instance, user_errors, pexit_code)
 end
 
 function gsapi_run_string_with_length(instance, str, length, user_errors, pexit_code)
-	ccall((:gsapi_run_string_with_length, libgs), Cint, (Ptr{Cvoid}, Ptr{UInt8}, Cuint, Cint, Ptr{Cint}), instance, str, length, user_errors, pexit_code)
+	ccall((:gsapi_run_string_with_length, gslib), Cint, (Ptr{Cvoid}, Ptr{UInt8}, Cuint, Cint, Ptr{Cint}), instance, str, length, user_errors, pexit_code)
 end
 
 function gsapi_run_string(instance, str, user_errors, pexit_code)
-	ccall((:gsapi_run_string, libgs), Cint, (Ptr{Cvoid}, Cstring, Cint, Ptr{Cint}), instance, str, user_errors, pexit_code)
+	ccall((:gsapi_run_string, gslib), Cint, (Ptr{Cvoid}, Cstring, Cint, Ptr{Cint}), instance, str, user_errors, pexit_code)
 end
 
 function gsapi_run_file(instance, file_name, user_errors, pexit_code)
-	ccall((:gsapi_run_file, libgs), Cint, (Ptr{Cvoid}, Cstring, Cint, Ptr{Cint}), instance, file_name, user_errors, pexit_code)
+	ccall((:gsapi_run_file, gslib), Cint, (Ptr{Cvoid}, Cstring, Cint, Ptr{Cint}), instance, file_name, user_errors, pexit_code)
 end
 
 function gsapi_run_fileA(instance, file_name, user_errors, pexit_code)
-	ccall((:gsapi_run_fileA, libgs), Cint, (Ptr{Cvoid}, Cstring, Cint, Ptr{Cint}), instance, file_name, user_errors, pexit_code)
+	ccall((:gsapi_run_fileA, gslib), Cint, (Ptr{Cvoid}, Cstring, Cint, Ptr{Cint}), instance, file_name, user_errors, pexit_code)
 end
 
 function gsapi_run_fileW(instance, file_name, user_errors, pexit_code)
-	ccall((:gsapi_run_fileW, libgs), Cint, (Ptr{Cvoid}, Ptr{Cwchar_t}, Cint, Ptr{Cint}), instance, file_name, user_errors, pexit_code)
+	ccall((:gsapi_run_fileW, gslib), Cint, (Ptr{Cvoid}, Ptr{Cwchar_t}, Cint, Ptr{Cint}), instance, file_name, user_errors, pexit_code)
 end
 
-gsapi_exit(instance) = ccall((:gsapi_exit, libgs), Cint, (Ptr{Cvoid},), instance)
+gsapi_exit(instance) = ccall((:gsapi_exit, gslib), Cint, (Ptr{Cvoid},), instance)
 
 function gsapi_set_param(instance, param, value, type)
-	ccall((:gsapi_set_param, libgs), Cint, (Ptr{Cvoid}, Cstring, Ptr{Cvoid}, gs_set_param_type), instance, param, value, type)
+	ccall((:gsapi_set_param, gslib), Cint, (Ptr{Cvoid}, Cstring, Ptr{Cvoid}, gs_set_param_type), instance, param, value, type)
 end
 
 function gsapi_get_param(instance, param, value, type)
-	ccall((:gsapi_get_param, libgs), Cint, (Ptr{Cvoid}, Cstring, Ptr{Cvoid}, gs_set_param_type), instance, param, value, type)
+	ccall((:gsapi_get_param, gslib), Cint, (Ptr{Cvoid}, Cstring, Ptr{Cvoid}, gs_set_param_type), instance, param, value, type)
 end
 
 function gsapi_enumerate_params(instance, iterator, key, type)
-	ccall((:gsapi_enumerate_params, libgs), Cint, (Ptr{Cvoid}, Ptr{Ptr{Cvoid}}, Ptr{Cstring}, Ptr{gs_set_param_type}), instance, iterator, key, type)
+	ccall((:gsapi_enumerate_params, gslib), Cint, (Ptr{Cvoid}, Ptr{Ptr{Cvoid}}, Ptr{Cstring}, Ptr{gs_set_param_type}), instance, iterator, key, type)
 end
 
 function gsapi_add_control_path(instance, type, path)
-	ccall((:gsapi_add_control_path, libgs), Cint, (Ptr{Cvoid}, Cint, Cstring), instance, type, path)
+	ccall((:gsapi_add_control_path, gslib), Cint, (Ptr{Cvoid}, Cint, Cstring), instance, type, path)
 end
 
 function gsapi_remove_control_path(instance, type, path)
-	ccall((:gsapi_remove_control_path, libgs), Cint, (Ptr{Cvoid}, Cint, Cstring), instance, type, path)
+	ccall((:gsapi_remove_control_path, gslib), Cint, (Ptr{Cvoid}, Cint, Cstring), instance, type, path)
 end
 
 function gsapi_purge_control_paths(instance, type)
-	ccall((:gsapi_purge_control_paths, libgs), Cvoid, (Ptr{Cvoid}, Cint), instance, type)
+	ccall((:gsapi_purge_control_paths, gslib), Cvoid, (Ptr{Cvoid}, Cint), instance, type)
 end
 
 function gsapi_activate_path_control(instance, enable)
-	ccall((:gsapi_activate_path_control, libgs), Cvoid, (Ptr{Cvoid}, Cint), instance, enable)
+	ccall((:gsapi_activate_path_control, gslib), Cvoid, (Ptr{Cvoid}, Cint), instance, enable)
 end
 
 function gsapi_is_path_control_active(instance)
-	ccall((:gsapi_is_path_control_active, libgs), Cint, (Ptr{Cvoid},), instance)
+	ccall((:gsapi_is_path_control_active, gslib), Cint, (Ptr{Cvoid},), instance)
 end
 
 function gsapi_add_fs(instance, fs, secret)
-	ccall((:gsapi_add_fs, libgs), Cint, (Ptr{Cvoid}, Ptr{gsapi_fs_t}, Ptr{Cvoid}), instance, fs, secret)
+	ccall((:gsapi_add_fs, gslib), Cint, (Ptr{Cvoid}, Ptr{gsapi_fs_t}, Ptr{Cvoid}), instance, fs, secret)
 end
 
 function gsapi_remove_fs(instance, fs, secret)
-	ccall((:gsapi_remove_fs, libgs), Cvoid, (Ptr{Cvoid}, Ptr{gsapi_fs_t}, Ptr{Cvoid}), instance, fs, secret)
+	ccall((:gsapi_remove_fs, gslib), Cvoid, (Ptr{Cvoid}, Ptr{gsapi_fs_t}, Ptr{Cvoid}), instance, fs, secret)
 end

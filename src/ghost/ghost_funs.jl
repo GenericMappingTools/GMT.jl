@@ -19,10 +19,6 @@
 	└────────────┴──────────────────────────────────────────┴───────────────────────────────────────────┘
 """
 
-# Include libghostscript.jl in GMT's own scope so that all ccalls use GMT's `libgs`,
-# not Ghostscript_jll's libgs-9.dll which lacks the bbox device.
-#include(joinpath(dirname(Base.find_package("Ghostscript")), "libghostscript.jl"))
-
 # ── Display format flags (gdevdsp.h) ─────────────────────────────────────────
 # RGB 24-bit, no alpha, big-endian, top row first = 0x00000804
 const _GS_FMT_RGB24   = 0x00000004 | 0x00000800
@@ -154,8 +150,6 @@ function _gs_session(args::Vector{String}, action::Function; setup::Function=(_)
 			rc < 0 && error("gsapi_set_display_callback failed: $rc")
 		end
 		setup(inst)
-		#args_c = [Base.cconvert(Cstring, s) for s in args]
-		#argv   = [Base.unsafe_convert(Cstring, s) for s in args_c]
 		GC.@preserve display_cb begin
 			rc = gsapi_init_with_args(inst, Cint(length(args)), args)
 			rc < 0 && error("gsapi_init_with_args failed: $rc")
@@ -603,8 +597,7 @@ function psview(ps_data::Union{String, AbstractVector{UInt8}}; dpi::Int=300)
 	# Returns RECT {left, top, right, bottom} as four Int32.
 	workrect = zeros(Int32, 4)
 	GC.@preserve workrect begin
-		ccall((:SystemParametersInfoW, "user32"), Bool,
-			  (UInt32, UInt32, Ptr{Int32}, UInt32),
+		ccall((:SystemParametersInfoW, "user32"), Bool, (UInt32, UInt32, Ptr{Int32}, UInt32),
 			  UInt32(0x0030), UInt32(0), pointer(workrect), UInt32(0))
 	end
 	wa_x = Int(workrect[1]);  wa_y = Int(workrect[2])
