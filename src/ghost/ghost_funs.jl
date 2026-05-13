@@ -664,8 +664,8 @@ Display PostScript using Ghostscript's native window (x11 on Linux, aqua on macO
 Blocks until the viewer window is closed.
 """
 function psview(ps_data::Union{String, AbstractVector{UInt8}}; dpi::Int=300)
-	device = Sys.islinux() ? "x11" : "aqua"
-	args = ["gs", "-dNOPAUSE", "-dQUIET", "-sDEVICE=$(device)", "-r$(dpi)"]
+	#device = Sys.islinux() ? "x11" : "aqua"
+	args = ["gs", "-dNOPAUSE", "-dQUIET", "-sDEVICE=display", "-r$(dpi)"]
 	_gs_session(args, inst -> begin
 		_gs_run_ps_str(inst, ps_data, () -> "")
 		exit_code = Ref{Cint}(0)
