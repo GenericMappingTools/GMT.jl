@@ -433,6 +433,7 @@ OSRImportFromWkt(a1, a2) = acare(ccall((:OSRImportFromWkt, libgdal), Cint, (pVoi
 OSRImportFromProj4(a1, a2) = acare(ccall((:OSRImportFromProj4, libgdal), Cint, (pVoid, Cstring), a1, a2))
 OSRImportFromEPSG(a1, a2) = acare(ccall((:OSRImportFromEPSG, libgdal), Cint, (pVoid, Cint), a1, a2))
 OSRNewSpatialReference(a1) = acare(ccall((:OSRNewSpatialReference, libgdal), pVoid, (Cstring,), a1))
+OSRSetPROJSearchPaths(a1)  = acare(ccall((:OSRSetPROJSearchPaths, libgdal), Cvoid, (Ptr{Cstring},), a1))
 
 function OSRSetAxisMappingStrategy(hSRS, strategy)
 	#(Gdal.GDALVERSION[] < v"3.0.0") && return	# This breakes precompile if called from one PrecompileTools call
@@ -2680,6 +2681,14 @@ end
 		CPLSetConfigOption("GDAL_HTTP_UNSAFESSL", "YES")
 		isdir(GDAL_DATA_DIR) && CPLSetConfigOption("GDAL_DATA", GDAL_DATA_DIR)
 		#CPLSetConfigOption("GDAL_NUM_THREADS", "ALL_CPUS")
+
+		# set PROJ_LIB location, this overrides setting the environment variable
+		if (isJLL)
+			PROJ_LIB = Ref{String}(joinpath(GMT.PROJ_jll.artifact_dir, "share", "proj"))
+			OSRSetPROJSearchPaths([PROJ_LIB[]])
+		#else
+			#PROJ_LIB = Ref{String}(dirname(GMT.libproj) * "/../share/proj")	# Fails for me because GMTdir is symlink of bin only
+		end
 	end
 
 """
