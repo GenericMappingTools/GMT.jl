@@ -5,8 +5,11 @@ const global GMT_SESSION_EXTERNAL = 2   # Called by an external API
 const global GMT_SESSION_COLMAJOR = 4   # External API uses column-major formats. [Row-major format]
 const global GMT_SESSION_RUNMODE  = 16  # If set enable GMT's modern runmode. [Classic]
 const global GMT_SESSION_NOGDALCLOSE = 64   # External API tells GMT to not call GDALDestroyDriverManager()
+const global GMT_SESSION_BIN2LIBDIR  = 128	# Reset bindir to libdir. The issue is that GMT->init.runtime_bindir is set to julia/bin
 
-const global GMT_SESSION_BITFLAGS = GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_NOGDALCLOSE + GMT_SESSION_COLMAJOR
+bitflags = GMT_SESSION_NOEXIT + GMT_SESSION_EXTERNAL + GMT_SESSION_NOGDALCLOSE + GMT_SESSION_COLMAJOR
+Sys.iswindows() && (bitflags += GMT_SESSION_BIN2LIBDIR)
+const global GMT_SESSION_BITFLAGS = bitflags
 G_API[] = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS)
 
 enu = GMT_Get_Enum(G_API[], "GMT_CHAR");	const global GMT_CHAR  = (enu != -99999) ? enu : 0
