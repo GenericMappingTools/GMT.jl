@@ -2624,7 +2624,7 @@ function hlp_desnany_str(d, s::Vector{Symbol}, del=true)::String
 	((val = find_in_dict(d, s, del)[1]) === nothing) ? "" : string(val)
 end
 function hlp_desnany_arg2str(d, s, del=true; sep='/')::String
-	((val = find_in_dict(d, s, del)[1]) === nothing) ? "" : arg2str(val, sep)
+	((val = find_in_dict(d, s, del)[1]) === nothing) ? "" : (isa(val, Bool) && val == true) ? " " : arg2str(val, sep)
 end
 
 # ---------------------------------------------------------------------------------------------------
