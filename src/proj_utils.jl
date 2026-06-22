@@ -792,6 +792,7 @@ function proj_ellipsoid_get_parameters(ellipsoid::Ptr{Cvoid}=NULL, proj_ptr::Ptr
 	semi_major[], inv_flattening[], semi_minor[]
 end
 
+# -----------------------------------------------------------------------------------------
 """
     proj2wkt(proj4_str::String, pretty::Bool=false)
 
@@ -802,6 +803,26 @@ function proj2wkt(proj4_str::String; pretty::Bool=false)
 	toWKT(importPROJ4(proj4_str), pretty)
 end
 
+# -----------------------------------------------------------------------------------------
+"""
+    proj2epsg(proj4_str::String)
+
+Convert a PROJ4 string into the corresponding EPSG code (if it exists).
+"""
+function proj2epsg(proj4_str::String)
+	!startswith(proj4_str, "+proj=") && error("$(proj4_str) is not a valid proj4 string")
+	toEPSG(importWKT(proj2wkt(proj4_str)))
+end
+
+# -----------------------------------------------------------------------------------------
+"""
+    wkt2epsg(wkt_str::String)
+
+Convert a WKT SRS string into the corresponding EPSG code (if it exists).
+"""
+wkt2epsg(wkt_str::String) = toEPSG(importWKT(wkt_str))
+
+# -----------------------------------------------------------------------------------------
 """
     wkt2proj(wkt_str::String)
 
@@ -809,6 +830,7 @@ Convert a WKT SRS string into the PROJ4 form.
 """
 wkt2proj(wkt_str::String) = toPROJ4(importWKT(wkt_str))
 
+# -----------------------------------------------------------------------------------------
 """
     epsg2proj(code::Integer)
 
@@ -816,6 +838,7 @@ Convert a EPSG code into the PROJ4 form.
 """
 epsg2proj(code::Integer)  = toPROJ4(importEPSG(code))
 
+# -----------------------------------------------------------------------------------------
 """
     epsg2wkt(code::Integer, pretty::Bool=false)
 

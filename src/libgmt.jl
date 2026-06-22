@@ -190,6 +190,11 @@ function GMT_Parse_Common(API::Ptr{Cvoid}, given_options::Ptr{UInt8}, options::P
 	ccall( (:GMT_Parse_Common, libgmt), Cint, (Ptr{Cvoid}, Ptr{UInt8}, Ptr{GMT_OPTION}), API, given_options, options)
 end
 
+function GMT_Report(API, vlevel::Integer, txt)
+	ccall((:GMT_Report, libgmt), Cvoid, (Cstring, Cint, Ptr{UInt8}), API, vlevel, txt)
+end
+=#
+
 function GMT_FFT_Option(API::Ptr{Cvoid}, option::UInt8, dim::UInt32, string::Ptr{UInt8})
 	ccall( (:GMT_FFT_Option, libgmt), UInt32, (Ptr{Cvoid}, UInt8, UInt32, Ptr{UInt8}), API, option, dim, string)
 end
@@ -208,16 +213,12 @@ end
 function GMT_FFT_Destroy(API::Ptr{Cvoid}, K::Ptr{Cvoid})
 	ccall( (:GMT_FFT_Destroy, libgmt), Cint, (Ptr{Cvoid}, Ptr{Cvoid}), API, K)
 end
-function GMT_FFT_1D(API::Ptr{Cvoid}, data::Ptr{Cfloat}, n::UInt16, direction::Cint, mode::UInt32)
-	ccall( (:GMT_FFT_1D, libgmt), Cint, (Ptr{Cvoid}, Ptr{Cfloat}, UInt16, Cint, UInt32), API, data, n, direction, mode)
+function GMT_FFT_1D(API::Ptr{Cvoid}, data::Ptr{Cfloat}, n::Integer, direction::Cint, mode::UInt32)
+	ccall( (:GMT_FFT_1D, libgmt), Cint, (Ptr{Cvoid}, Ptr{Cfloat}, UInt64, Cint, UInt32), API, data, UInt64(n), direction, mode)
 end
 function GMT_FFT_2D(API::Ptr{Cvoid}, data::Ptr{Cfloat}, nx::UInt32, ny::UInt32, direction::Cint, mode::UInt32)
 	ccall( (:GMT_FFT_2D, libgmt), Cint, (Ptr{Cvoid}, Ptr{Cfloat}, UInt32, UInt32, Cint, UInt32), API, data, nx, ny, direction, mode)
 end
-
-function GMT_Report(API, vlevel::Integer, txt)
-	ccall((:GMT_Report, libgmt), Cvoid, (Cstring, Cint, Ptr{UInt8}), API, vlevel, txt)
-end =#
 
 function GMT_Encode_Options(V_API::Ptr{Cvoid}, _module, n_argin::Int, head::Ref{Ptr{GMT_OPTION}}, n)
 	ccall((:GMT_Encode_Options, libgmt), Ptr{GMT_RESOURCE}, (Cstring, Ptr{UInt8}, Int32, Ref{Ptr{GMT_OPTION}},

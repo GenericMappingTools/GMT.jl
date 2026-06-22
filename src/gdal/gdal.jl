@@ -435,6 +435,52 @@ OSRImportFromEPSG(a1, a2) = acare(ccall((:OSRImportFromEPSG, libgdal), Cint, (pV
 OSRNewSpatialReference(a1) = acare(ccall((:OSRNewSpatialReference, libgdal), pVoid, (Cstring,), a1))
 OSRSetPROJSearchPaths(a1)  = acare(ccall((:OSRSetPROJSearchPaths, libgdal), Cvoid, (Ptr{Cstring},), a1))
 
+"""
+    OSRAutoIdentifyEPSG(OGRSpatialReferenceH hSRS) -> OGRErr
+
+Set EPSG authority info if possible.
+"""
+OSRAutoIdentifyEPSG(a1) = acare(ccall((:OSRAutoIdentifyEPSG, libgdal), Cint, (pVoid,), a1))
+
+"""
+    OSRGetAuthorityName(OGRSpatialReferenceH hSRS, const char * pszTargetKey) -> const char *
+
+Get the authority name for a node.
+"""
+function OSRGetAuthorityName(hSRS, pszTargetKey)
+	acare(ccall((:OSRGetAuthorityName, libgdal), Cstring, (pVoid, Cstring), hSRS, pszTargetKey), false)
+end
+
+"""
+    OSRGetAuthorityCode(OGRSpatialReferenceH hSRS, const char * pszTargetKey) -> const char *
+
+Get the authority code for a node.
+"""
+function OSRGetAuthorityCode(hSRS, pszTargetKey)
+	acare(ccall((:OSRGetAuthorityCode, libgdal), Cstring, (pVoid, Cstring), hSRS, pszTargetKey), false)
+end
+
+
+"""
+    OSRFindMatches(OGRSpatialReferenceH hSRS, char **papszOptions, int *pnEntries,
+                   int **ppanMatchConfidence) -> OGRSpatialReferenceH *
+
+Try to identify a match between the passed SRS and a related SRS in a catalog.
+
+### Parameters
+* **hSRS**: SRS to match
+* **papszOptions**: NULL terminated list of options or NULL
+* **pnEntries**: Output parameter. Number of values in the returned array.
+* **ppanMatchConfidence**: Output parameter (or NULL). *ppanMatchConfidence will be allocated to an array of *pnEntries whose values between 0 and 100 indicate the confidence in the match. 100 is the highest confidence level. The array must be freed with CPLFree().
+
+### Returns
+an array of SRS that match the passed SRS, or NULL. Must be freed with OSRFreeSRSArray()
+"""
+function OSRFindMatches(hSRS, papszOptions, pnEntries, ppanMatchConfidence)
+	acare(ccall((:OSRFindMatches, libgdal), Ptr{pVoid}, (pVoid, Ptr{Cstring}, Ptr{Cint}, Ptr{Ptr{Cint}}), hSRS, papszOptions, pnEntries, ppanMatchConfidence))
+end
+
+
 function OSRSetAxisMappingStrategy(hSRS, strategy)
 	#(Gdal.GDALVERSION[] < v"3.0.0") && return	# This breakes precompile if called from one PrecompileTools call
 	acare(ccall((:OSRSetAxisMappingStrategy, libgdal), Cvoid, (pVoid, UInt32), hSRS, strategy))
@@ -1886,6 +1932,15 @@ end
 		return unsafe_string(projptr[])
 	end
 
+	function toEPSG(spref::AbstractSpatialRef)::Int
+		(spref.ptr == C_NULL) && return 0
+		(OSRAutoIdentifyEPSG(spref.ptr) != OGRERR_NONE) && error("Failed to identify EPSG code for this SRS")
+		result = OSRGetAuthorityCode(spref.ptr, C_NULL)
+		(result === "") && error("Failed to get EPSG code")
+		return parse(Int, result)
+	end
+
+
 	toKML(geom::AbstractGeometry, altitudemode=C_NULL) = OGR_G_ExportToKML(geom.ptr, altitudemode)
 
 	function importWKT!(spref::AbstractSpatialRef, wktstr::AbstractString)
@@ -2653,7 +2708,7 @@ end
 	# ---------------------------------
 
 	export
-		bwareaopen, getband, getdriver, getlayer, getproj, getgeom, getgeotransform, toPROJ4, toWKT, importPROJ4,
+		bwareaopen, getband, getdriver, getlayer, getproj, getgeom, getgeotransform, toPROJ4, toWKT, toEPSG, importPROJ4,
 		importWKT, importEPSG, gdalinfo, gdalwarp, gdaldem, gdaltranslate, gdalgrid, ogr2ogr, gdalvectortranslate,
 		gdalrasterize, gdalbuildvrt, readraster, setgeotransform!, setproj!, destroy, arcellipse, arccircle,
 		delaunay, dither, buffer, centroid, intersection, intersects, polyunion, fromWKT, fillnodata!, fillnodata,
