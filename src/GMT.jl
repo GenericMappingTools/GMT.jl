@@ -162,7 +162,7 @@ export
 	psimage, psimage!, pslegend, pslegend!, psmask, psmask!, psrose, psrose!, psscale, psscale!, pssolar, pssolar!,
 	psternary, psternary!, pstext, pstext!, pswiggle, pswiggle!, psxy, psxy!, psxyz, psxyz!, regress, resetGMT, rose,
 	rose!, sample1d, scatter, scatter!, scatter3, scatter3!, solar, solar!, analemma, enso, keeling,
-	sunsetrise, spectrum1d, sphdistance, sphinterpolate,
+	sunsetrise, spectrum1d, fft1d, sphdistance, sphinterpolate,
 	sphtriangulate, surface, ternary, ternary!, text, text!, text_record, textrepel, annotate, annotate!, trend1d, trend2d, triangulate, gmtsplit,
 	decorated, vector_attrib, wiggle, wiggle!, xyz2grd, gmtbegin, gmtend, gmthelp, subplot, gmtfig, inset, showfig,
 	earthtide, gmt2grd, gravfft, gmtgravmag3d, gravmag3d, grdgravmag3d, gravprisms, grdseamount, parkermag, parkergrav, kovesi,
@@ -187,7 +187,7 @@ export
 	wkbMultiLineString, wkbMultiPolygon, wkbGeometryCollection, wkbPoint25D, wkbLineString25D, wkbPolygon25D, wkbMultiPoint25D,
 	wkbMultiLineString25D, wkbMultiPolygon25D, wkbGeometryCollection25D, bezier, buffergeo, circgeo, epsg2proj, epsg2wkt,
 	geod, invgeod, loxodrome, loxodrome_direct, loxodrome_inverse, montage,
-	geodesic, orthodrome, proj2wkt, setcoords!, setfld!, setcrs!, setsrs!, settimecol!, vecangles, wkt2proj,
+	geodesic, orthodrome, proj2wkt, setcoords!, setfld!, setcrs!, setsrs!, settimecol!, vecangles, wkt2proj, wkt2epsg, proj2epsg,
 	inbbox, randgeo, colorzones!, rasterzones!, rasterzones, lelandshade, texture_img, crop, doy2date, date2doy, choropleth, fourcolors,
 	getdcw, ISOtime2unix, median, mean, quantile, std, nanmean, nanstd, skipnan, zonal_statistics, zonal_stats,
 	autocor, autocor!, autocov, autocov!, conv, yeardecimal, xcorr, xcov, add2PSfile, append2fig, isoutlier, linearfitxy,
@@ -336,6 +336,7 @@ include("signalcorr.jl")
 include("sealand.jl")
 include("spatial_funs.jl")
 include("spectrum1d.jl")
+include("fft1d.jl")
 include("sphdistance.jl")
 include("sphinterpolate.jl")
 include("sphtriangulate.jl")
@@ -420,6 +421,7 @@ using .Laszip
 	gmtwrite(t, [0.0 0; 1 1])
 	gmtread(t)
 	gmtread(tests("burro_cenora.jpg"))
+	gmtselect(t, R="0/1/0/1")
 	basemap(R=:d, proj=:guess)
 	coast(R=:g, proj=:guess, W=(level=1, pen=(2, :green)), savefig=tempname()*".ps")
 	rm(t)

@@ -107,7 +107,7 @@ function lazread(fname::String, out::String, type::DataType, class::Int, startst
 		end
 		xyz = zeros(fType, totalNP, n_col)
 		(occursin('i', argout))	&& (intens = zeros(UInt16, totalNP, 1))
-		(occursin('c', argout))	&& (class  = zeros(Int8,   totalNP, 1))
+		(occursin('c', argout))	&& (_class = zeros(UInt8,  totalNP, 1))
 		(occursin('n', argout))	&& (n_ret  = zeros(Int8,   totalNP, 1))
 		if (n_upper > 0)
 			RGB = zeros(UInt16, totalNP, n_upper)
@@ -179,9 +179,9 @@ function lazread(fname::String, out::String, type::DataType, class::Int, startst
 			xyz[k,1]  = pt.X;	xyz[k,2]  = pt.Y;	xyz[k,3]  = pt.Z
 			intens[k] = pt.intensity
 			if (header.point_data_format > 5)
-				class[k] = (pt.extended_classification != 0) ? pt.extended_classification : pt.classification
+				_class[k] = (pt.extended_classification != 0) ? pt.extended_classification : pt.classification
 			else
-				class[k]  = pt.classification
+				_class[k]  = pt.classification
 			end
 		end
 	elseif (argout == "xyzc")
@@ -190,9 +190,9 @@ function lazread(fname::String, out::String, type::DataType, class::Int, startst
 			pt = unsafe_load(point[])
 			xyz[k,1]  = pt.X;	xyz[k,2]  = pt.Y;	xyz[k,3]  = pt.Z
 			if (header.point_data_format > 5)
-				class[k] = (pt.extended_classification != 0) ? pt.extended_classification : pt.classification
+				_class[k] = (pt.extended_classification != 0) ? pt.extended_classification : pt.classification
 			else
-				class[k]  = pt.classification
+				_class[k]  = pt.classification
 			end
 		end
 	elseif ((startswith(argout, "xyz") || startswith(argout, "xy")) && occursin(r"[RGBI]", argout))
@@ -249,7 +249,7 @@ function lazread(fname::String, out::String, type::DataType, class::Int, startst
 	elseif (argout == "xyzi")
 		lasout_types(dsv = [mat2ds(xyz), mat2ds(intens)])	
 	elseif (argout == "xyzc")
-		lasout_types(dsv = [mat2ds(xyz), mat2ds(class)])	
+		lasout_types(dsv = [mat2ds(xyz), mat2ds(_class)])	
 	elseif (argout == "xyzti")
 		lasout_types(dsv = [mat2ds(xyz), mat2ds(intens)])	
 	elseif ((startswith(argout, "xyz") || startswith(argout, "xy")) && occursin(r"[RGBI]", argout))
