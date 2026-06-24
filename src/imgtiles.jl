@@ -504,9 +504,13 @@ function mosaic(lon::Vector{<:Float64}, lat::Vector{<:Float64}; pt_radius=637813
 		img = getImgTile(quadkey, quad_[1], tile_url, cache, cache_supp, ext, isZXY, verbose)
 	else
 		img = zeros(UInt8, (256 * nMo, 256 * mMo, 3))
-		for row = 1:mMo					# Rows
-			for col = 1:nMo				# Cols
-				img[(col-1)*256+1:col*256, (row-1)*256+1:row*256, :] =
+		tiledir = string(cache, cache_supp)			# Pre-create cache dir once to avoid a concurrent mkpath race
+		(!isempty(cache) && !isdir(tiledir)) && mkpath(tiledir)
+		# Cooperative @async (NOT @threads): GDAL is not thread-safe, but Downloads.download yields to the
+		# scheduler during the network wait, so the tile fetches overlap while the C code stays serialized.
+		@sync for row = 1:mMo				# Rows
+			for col = 1:nMo					# Cols
+				@async img[(col-1)*256+1:col*256, (row-1)*256+1:row*256, :] =
 					getImgTile(quadkey, quad_[row, col], tile_url[row, col], cache, cache_supp, ext, isZXY, verbose)
 			end
 		end
@@ -980,6 +984,27 @@ function getLonLat(pixelX, pixelY, zoomL)
 end
 
 # -----------------------------------------------------------------------------------------
+"""
+Optional sink for per-tile fetch messages. When set to a `Function`, `mosaic`'s
+`"Downloading file ..."` / `"Retrieving file from cache: ..."` notes are routed to it (emitted at
+full verbosity, regardless of `verbose`) instead of being printed to stdout. Lets a host GUI show
+tile activity without an fd-level stdout redirect (which corrupts the C tile fetch). `nothing`
+(default) -> normal `verbose`-gated `println`.
+"""
+const TILE_LOGGER = Ref{Union{Nothing,Function}}(nothing)
+
+# Emit a tile-fetch progress note: to TILE_LOGGER if set (always), else println when verbose>=level.
+function _tilemsg(verbose::Int, level::Int, msg::AbstractString)
+	lg = TILE_LOGGER[]
+	if lg !== nothing
+		try; lg(msg); catch; end
+	elseif verbose >= level
+		println(msg)
+	end
+	return
+end
+
+# -----------------------------------------------------------------------------------------
 function getImgTile(quadkey, quadtree, url, cache, cache_supp, ext, isZXY, verbose)::Array{UInt8,3}
 	# Get the image either from a local cache or by url 
 	# cache_supp contains (for example) the /../13 subdirs
@@ -992,7 +1017,7 @@ function getImgTile(quadkey, quadtree, url, cache, cache_supp, ext, isZXY, verbo
 			fname = string(cache, cache_supp, filesep, quadtree, ".", ext)
 
 			if isfile(fname)
-				(verbose > 1) && println("Retrieving file from cache: ", fname)
+				_tilemsg(verbose, 2, string("Retrieving file from cache: ", fname))
 				_img = gdalread(fname)
 			else
 				_img = netFetchTile(url, string(cache, cache_supp), quadtree, ext, verbose)
@@ -1020,7 +1045,7 @@ end
 # -----------------------------------------------------------------------------------------
 function netFetchTile(url, cache, quadtree, ext, verbose)
 	# Fetch a file from the web either using gdal or Downloads (when gdal is not able to)
-	(verbose > 0) && println("Downloading file ", url)
+	_tilemsg(verbose, 1, string("Downloading file ", url))
 	try
 		dest_fiche = "lixogrr"					# Don't recall anymore what this default, defaults for!
 		if !isempty(cache)
