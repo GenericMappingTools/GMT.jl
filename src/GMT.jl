@@ -456,6 +456,7 @@ using .Laszip
 	plot(rand(5, 2))
 	#bar(1:5, (20, 35, 30, 35, 27), width=0.5, color=:lightblue, limits=(0.5,5.5,0,40))
 	sample1d([0 0; 4 1], inc=0.5);
+	#mosaic([-10.0, -8.0], [37.0, 39.0], zoom=10, quadonly=true, provider="Bing");	# Adds the ABSURD AMOUNT OF ~8 MB
 	#gridit(rand(10,3), preproc=true, I=0.1);
 	#earthregions("PT", Vd=2);
 	#violin(rand(50), fmt=:ps);

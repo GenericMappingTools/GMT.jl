@@ -59,7 +59,7 @@ r = compass(width=6, dec=-14.5, rose_primary=(0.25,:blue), rose_secondary=0.5, V
 basemap(region=(-10,10,-10,10), proj=:Mercator, frame=:auto, Vd=dbg2)
 r = compass!(width=2.5, anchor=(0,0), justify=:CM, fancy=true, labels=",,,N", Vd=dbg2);
 @test contains(r, " -R -J") || contains(r, "-R-10/10/-10/10 -J ")
-@test contains(r, "-Tdj0/0+w2.5+jCM+l,,,N+f")
+@test contains(r, "-TdjTR0/0+w2.5+jCM+l,,,N+f")
 # frame=:none is default (no explicit frame draws no axes)
 r = compass(width=3, fancy=true, Vd=dbg2);
 @test !contains(r, "-B")

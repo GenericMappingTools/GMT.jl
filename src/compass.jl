@@ -67,6 +67,7 @@ function compass(first::Bool, d::Dict{Symbol, Any})
 	                :map, :inside, :outside, :norm, :paper,
 	                :fancy, :dec, :rose_primary, :rose_secondary, :annot)
 
+	!first && !haskey(d, :inside) && (d[:inside] = :TR)		# Default position
 	nt_pairs = Pair{Symbol,Any}[]
 	for k in compass_keys
 		haskey(d, k) && push!(nt_pairs, k => pop!(d, k))
@@ -80,7 +81,7 @@ function compass(first::Bool, d::Dict{Symbol, Any})
 		# Get the width to size the canvas (default 5 cm)
 		w = 5.0
 		for p in nt_pairs
-			if p.first === :width
+			if (p.first === :width)
 				w = isa(p.second, Real) ? Float64(p.second) : 5.0
 				break
 			end
@@ -91,12 +92,10 @@ function compass(first::Bool, d::Dict{Symbol, Any})
 		# Default anchor to center of canvas in paper coordinates if not provided
 		has_anchor = any(p -> p.first === :anchor, nt_pairs)
 		has_coord  = any(p -> p.first in (:map, :inside, :outside, :norm, :paper), nt_pairs)
-		if !has_anchor && !has_coord
-			# No positioning at all — center the rose on the canvas
+		if (!has_anchor && !has_coord)			# No positioning at all — center the rose on the canvas
 			push!(nt_pairs, :paper => "$(sz/2)/$(sz/2)")
 			push!(nt_pairs, :justify => :CM)
-		elseif has_anchor && !has_coord
-			# User gave anchor but no coordinate system — use paper coords
+		elseif (has_anchor && !has_coord)		# User gave anchor but no coordinate system — use paper coords
 			anc = pop_anchor!(nt_pairs)
 			push!(nt_pairs, :paper => isa(anc, Tuple) ? join(anc, '/') : string(anc))
 		end
@@ -117,7 +116,7 @@ end
 # Helper to pop :anchor from nt_pairs and return its value
 function pop_anchor!(pairs::Vector{Pair{Symbol,Any}})
 	for i in eachindex(pairs)
-		if pairs[i].first === :anchor
+		if (pairs[i].first === :anchor)
 			val = pairs[i].second
 			deleteat!(pairs, i)
 			return val
