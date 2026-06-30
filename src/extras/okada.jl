@@ -86,26 +86,40 @@ OKADA85 Surface deformation due to a finite rectangular source.
 - `open`: dislocation in tensile component (same unit as `slip`).
 - `nu`: The Poisson's ratio, default is 0.25 for an isotropic medium.
 """
-function okada(G::GMTgrid; kw...)::Union{GMTgrid{Float32,2}, Tuple{GMTgrid{Float32,2}, GMTgrid{Float32,2}, GMTgrid{Float32,2}}}
-	# 
+function okada(GI::GItype; kw...)::Union{GMTgrid{Float32,2}, Tuple{GMTgrid{Float32,2}, GMTgrid{Float32,2}, GMTgrid{Float32,2}}}
+	do_z3d  = (get(kw, :z3d, nothing) !== nothing)
+	(do_z3d && !isa(GI, GMTgrid)) && error("z3d option is only available for GMTgrid input")
+	_G = (do_z3d) ? GI : GMTgrid{Float32,2}()		# Need this guy in one case
+	hdr = [GI.range[1], GI.range[2], GI.range[3], GI.range[4], GI.range[5], GI.range[6], GI.registration, GI.inc[1], GI.inc[2]]
+	isgeog = guessgeog(GI)
+	nx, ny = getsize(GI)			# width (columns) and height (rows)
+	okada(_G, hdr, isgeog, nx, ny; kw...)
+end
+
+#-------------------------------------------------------------------------------------------------------
+function okada(G::GMTgrid{Float32,2}, hdr::Vector{Float64}, isgeog::Bool, nx::Int, ny::Int; kw...)::Union{GMTgrid{Float32,2}, Tuple{GMTgrid{Float32,2}, GMTgrid{Float32,2}, GMTgrid{Float32,2}}}
+	# G is empty in all but one case 
 	msg, x_start, y_start, depth, strike, dip, L, W, rake, slip, nu, U3, do_all3, do_z3d = okada_opt_parser(true; kw...)
 	(msg != "") && error(msg)
 	if (do_all3)
-		okada_enz(G, x_start, y_start, W, L, depth, strike, dip, rake, slip, nu, U3)
+		okada_enz(hdr, isgeog, nx, ny, x_start, y_start, W, L, depth, strike, dip, rake, slip, nu, U3)
 	else
-		okada_z(G, x_start, y_start, W, L, depth, strike, dip, rake, slip, nu, U3; z3d=do_z3d)
+		okada_z(G, hdr, isgeog, nx, ny, x_start, y_start, W, L, depth, strike, dip, rake, slip, nu, U3; z3d=do_z3d)
 	end
 end
 
 #-------------------------------------------------------------------------------------------------------
-function helper_okd_grid(G::GMTgrid, x_start::Float64, y_start::Float64, W::Float64, L::Float64, depth::Float64, strike::Float64, dip::Float64)
-	x = (G.registration == 0) ? copy(G.x) : collect(linspace(G.range[1]+G.inc[1]/2, G.range[2]-G.inc[1]/2, size(G,2)))
-	y = (G.registration == 0) ? copy(G.y) : collect(linspace(G.range[3]+G.inc[2]/2, G.range[4]-G.inc[2]/2, size(G,1)))
+function helper_okd_grid(hdr::Vector{Float64}, isgeog::Bool, nx::Int, ny::Int, x_start::Float64, y_start::Float64,
+                         W::Float64, L::Float64, depth::Float64, strike::Float64, dip::Float64)
+	dx2 = (hdr[7] == 0) ? 0.0 : hdr[8] / 2.0
+	dy2 = (hdr[7] == 0) ? 0.0 : hdr[9] / 2.0
+	x = collect(linspace(hdr[1]+dx2, hdr[2]-dx2, nx))
+	y = collect(linspace(hdr[3]+dy2, hdr[4]-dy2, ny))
 	L *= 1000; W *= 1000; depth *= 1000;		# Convert to meters
 	depth = depth + sind(dip) * W/2
 
 	x_centroid, y_centroid = NaN, NaN
-	if (guessgeog(G))
+	if (isgeog)
 		fault_top_center::Matrix{Float64}, = geod([x_start y_start], strike, L/2)			# lon,lat of fault's top center
 		fault_LL::Matrix{Float64}, = geod([x_start y_start], strike+90, W*cosd(dip))		# fault LowerLeft corner
 		fault_bot_center::Matrix{Float64}, = geod([fault_LL[1] fault_LL[2]], strike, L/2)
@@ -116,33 +130,35 @@ function helper_okd_grid(G::GMTgrid, x_start::Float64, y_start::Float64, W::Floa
 end
 
 #-------------------------------------------------------------------------------------------------------
-function okada_z(G::GMTgrid, x_start::Float64, y_start::Float64, W::Float64, L::Float64, depth::Float64, strike::Float64,
-                 dip::Float64, rake::Float64, slip::Float64, nu::Float64, U3::Float64; z3d=false)::GMTgrid{Float32,2}
+function okada_z(G::GMTgrid{Float32,2}, hdr::Vector{Float64}, isgeog::Bool, nx::Int, ny::Int, x_start::Float64, y_start::Float64,
+                 W::Float64, L::Float64, depth::Float64, strike::Float64, dip::Float64, rake::Float64, slip::Float64,
+                 nu::Float64, U3::Float64; z3d=false)::GMTgrid{Float32,2}
 
-	x, y, W, L, depth, x_centroid, y_centroid = helper_okd_grid(G, x_start, y_start, W, L, depth, strike, dip)
-	uz = (isnan(x_centroid)) ? okada_z(x, y, W, L, depth, strike, dip, rake, slip, nu, U3) :
-	                     z3d ? okada_geog_z3d(G, x, y, W, L, depth, strike, dip, rake, slip, nu, x_centroid, y_centroid) :
-	                           okada_geog_z(x, y, W, L, depth, strike, dip, rake, slip, nu, x_centroid, y_centroid, U3)
+	x, y, W, L, depth, x_centroid, y_centroid = helper_okd_grid(hdr, isgeog, nx, ny, x_start, y_start, W, L, depth, strike, dip)
+	uz = (!isgeog) ? okada_z(x, y, W, L, depth, strike, dip, rake, slip, nu, U3) :
+	                 z3d ? okada_geog_z3d(G, x, y, W, L, depth, strike, dip, rake, slip, nu, x_centroid, y_centroid) :
+	                       okada_geog_z(x, y, W, L, depth, strike, dip, rake, slip, nu, x_centroid, y_centroid, U3)
 
-	prj = !isnan(x_centroid) ? prj4WGS84 : G.proj4
-	rng::Vector{Float64} = [G.range[1:4]..., extrema(uz)...]
-	GMTgrid(proj4=prj, range=rng, inc=G.inc, registration=G.registration, title="Okada Vertical deformation", x=G.x, y=G.y, z=uz, layout="BCB", hasnans=1)
+	prj = isgeog ? prj4WGS84 : prj4WGS84 #G.proj4
+	rng::Vector{Float64} = [hdr[1:4]..., extrema(uz)...]
+	GMTgrid(proj4=prj, range=rng, inc=hdr[8:9], registration=Int(hdr[7]), title="Okada Vertical deformation", x=x, y=y, z=uz, layout="BCB", hasnans=1)
 end
 
 #-------------------------------------------------------------------------------------------------------
-function okada_enz(G::GMTgrid, x_start::Float64, y_start::Float64, W::Float64, L::Float64, depth::Float64, strike::Float64,
-                   dip::Float64, rake::Float64, slip::Float64, nu::Float64, U3::Float64)::Tuple{GMTgrid{Float32,2}, GMTgrid{Float32,2}, GMTgrid{Float32,2}}
-	x, y, W, L, depth, x_centroid, y_centroid = helper_okd_grid(G, x_start, y_start, W, L, depth, strike, dip)
-	if (!isnan(x_centroid))
+function okada_enz(hdr::Vector{Float64}, isgeog::Bool, nx::Int, ny::Int, x_start::Float64, y_start::Float64,
+                   W::Float64, L::Float64, depth::Float64, strike::Float64, dip::Float64, rake::Float64,
+                   slip::Float64, nu::Float64, U3::Float64)::Tuple{GMTgrid{Float32,2}, GMTgrid{Float32,2}, GMTgrid{Float32,2}}
+	x, y, W, L, depth, x_centroid, y_centroid = helper_okd_grid(hdr, isgeog, nx, ny, x_start, y_start, W, L, depth, strike, dip)
+	if (isgeog)
 		ue, un, uz = okada_geog_enz(x, y, W, L, depth, strike, dip, rake, slip, nu, x_centroid, y_centroid, U3)
 	else
 		ue, un, uz = okada_enz(x, y, W, L, depth, strike, dip, rake, slip, nu, U3)
 	end
 
-	prj = !isnan(x_centroid) ? prj4WGS84 : G.proj4;		reg = G.registration
-	Ge = GMTgrid(proj4=prj, range=[G.range[1:4]..., extrema(ue)...], inc=G.inc, registration=reg, title="Okada East deformation", x=G.x, y=G.y, z=ue, layout="BCB", hasnans=1)
-	Gn = GMTgrid(proj4=prj, range=[G.range[1:4]..., extrema(un)...], inc=G.inc, registration=reg, title="Okada North deformation", x=G.x, y=G.y, z=un, layout="BCB", hasnans=1)
-	Gz = GMTgrid(proj4=prj, range=[G.range[1:4]..., extrema(uz)...], inc=G.inc, registration=reg, title="Okada Vertical deformation", x=G.x, y=G.y, z=uz, layout="BCB", hasnans=1)
+	prj = isgeog ? prj4WGS84 : G.proj4;		reg = Int(hdr[7])
+	Ge = GMTgrid(proj4=prj, range=[hdr[1:4]..., extrema(ue)...], inc=hdr[8:9], registration=reg, title="Okada East deformation", x=x, y=y, z=ue, layout="BCB", hasnans=1)
+	Gn = GMTgrid(proj4=prj, range=[hdr[1:4]..., extrema(un)...], inc=hdr[8:9], registration=reg, title="Okada North deformation", x=x, y=y, z=un, layout="BCB", hasnans=1)
+	Gz = GMTgrid(proj4=prj, range=[hdr[1:4]..., extrema(uz)...], inc=hdr[8:9], registration=reg, title="Okada Vertical deformation", x=x, y=y, z=uz, layout="BCB", hasnans=1)
 	return Ge, Gn, Gz
 end
 
