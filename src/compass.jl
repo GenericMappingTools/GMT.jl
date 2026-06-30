@@ -67,7 +67,7 @@ function compass(first::Bool, d::Dict{Symbol, Any})
 	                :map, :inside, :outside, :norm, :paper,
 	                :fancy, :dec, :rose_primary, :rose_secondary, :annot)
 
-	!haskey(d, :inside) && (d[:inside] = :TR)		# Default position
+	!first && !haskey(d, :inside) && (d[:inside] = :TR)		# Default position
 	nt_pairs = Pair{Symbol,Any}[]
 	for k in compass_keys
 		haskey(d, k) && push!(nt_pairs, k => pop!(d, k))
