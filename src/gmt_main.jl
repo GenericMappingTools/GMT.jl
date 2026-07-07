@@ -128,7 +128,13 @@ function _gmt(cmd::String, args::Vector{Any})
 	end
 
 	# 3. Convert command line arguments to a linked GMT option list
-	#LL = NULL
+	if (g_module == "nswing")			# 
+		# In C we can't use 1G(, etc in THIS_MODULE_KEYS because -1 is taken leterally, so we change: 1->u, 2->d, etc...
+		# so that we can still use -1<grd1>, -2<grd2>, etc. in command line and via Julia. */
+		r = replace(r, "-1 " => "-u ");	r = replace(r, "-2 " => "-d ");	r = replace(r, "-3 " => "-r ")
+		r = replace(r, "-4 " => "-q ");	r = replace(r, "-5 " => "-c ");	r = replace(r, "-6 " => "-s ")
+		r = replace(r, "-7 " => "-e ");	r = replace(r, "-8 " => "-o ");
+	end
 	LL = GMT_Create_Options(G_API[], 0, r)		# It uses also the fact that GMT parses and check options
 
 	# 4. Preprocess to update GMT option lists and return info array X
