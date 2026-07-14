@@ -1432,6 +1432,39 @@ end
 function mat2img(mat::Union{AbstractMatrix{UInt16},AbstractArray{UInt16,3}}; x=Float64[], y=Float64[], v=Float64[], hdr=Float64[], proj4::String="", wkt::String="", img8::AbstractMatrix{UInt8}=Matrix{UInt8}(undef,0,0), kw...)
 	_mat2img_u16(mat, vec(Float64.(x)), vec(Float64.(y)), vec(Float64.(v)), vec(Float64.(hdr)), proj4, wkt, img8, KW(kw))
 end
+# Function barriers for the UInt16->UInt8 scaling loops. `_mat2img_u16` @nospecializes `mat`, so
+# indexing `mat[k]` there returns a boxed `Any`: the loops below inlined in it took ~17 s / 8 GiB on
+# a 60-Mpx band (every element boxed, @simd defeated). Called as a barrier, these specialize on the
+# concrete `mat` type -> plain SIMD, ~0.07 s.
+function _u16scale1!(img::AbstractArray{UInt8}, mat::AbstractArray, val1::UInt16)
+	sc = 255 / (65535 - val1)
+	@inbounds @simd for k = 1:numel(img)
+		img[k] = (mat[k] < val1) ? 0 : round(UInt8, (mat[k] - val1) * sc)
+	end
+end
+function _u16scale2!(img::AbstractArray{UInt8}, mat::AbstractArray, lo::UInt16, hi::UInt16)
+	sc = 255 / (hi - lo)
+	@inbounds @simd for k = 1:numel(img)
+		img[k] = (mat[k] < lo) ? 0 : ((mat[k] > hi) ? 255 : round(UInt8, (mat[k] - lo) * sc))
+	end
+end
+function _u16scale6!(img::AbstractArray{UInt8}, mat::AbstractArray, val26::Vector{UInt16}, nx::Int, ny::Int, nz::Int)
+	nxy = nx * ny
+	v1 = (1, 3, 5);		v2 = (2, 4, 6)
+	sc = (255 / (val26[2] - val26[1]), 255 / (val26[4] - val26[3]), 255 / (val26[6] - val26[5]))
+	@inbounds for n = 1:nz
+		@simd for k = 1+(n-1)*nxy:n*nxy
+			img[k] = (mat[k] < val26[v1[n]]) ? 0 : ((mat[k] > val26[v2[n]]) ? 255 : round(UInt8, (mat[k] - val26[v1[n]]) * sc[n]))
+		end
+	end
+end
+function _u16scalefull!(img::AbstractArray{UInt8}, mat::AbstractArray)
+	sc = 255 / 65535
+	@inbounds @simd for k = 1:numel(img)
+		img[k] = round(UInt8, mat[k] * sc)
+	end
+end
+
 function _mat2img_u16(@nospecialize(mat), x::Vector{Float64}, y::Vector{Float64}, v::Vector{Float64},
                       hdr::Vector{Float64}, proj4::String, wkt::String, @nospecialize(img8), d::Dict{Symbol,Any})
 	# Take an array of UInt16 and scale it down to UInt8. Input can be 2D or 3D.
@@ -1469,32 +1502,14 @@ function _mat2img_u16(@nospecialize(mat), x::Vector{Float64}, y::Vector{Float64}
 		#val = (len == 1) ? convert(UInt16, vals)::UInt16 : convert(Vector{UInt16}, vals)::Vector{UInt16}
 		(len > 1) && (val26::Vector{UInt16} = convert(Vector{UInt16}, vec(vals)))
 		if (len == 1)
-			val1::UInt16 = convert(UInt16, vals)
-			sc = 255 / (65535 - val1)
-			@inbounds @simd for k = 1:numel(img)
-				img[k] = (mat[k] < val1) ? 0 : round(UInt8, (mat[k] - val1) * sc)
-			end
+			_u16scale1!(img, mat, convert(UInt16, vals))
 		elseif (len == 2)
-			val_ = [parse(UInt16, @sprintf("%d", val26[1])) parse(UInt16, @sprintf("%d", val26[2]))]
-			sc = 255 / (val_[2] - val_[1])
-			@inbounds @simd for k = 1:numel(img)
-				img[k] = (mat[k] < val_[1]) ? 0 : ((mat[k] > val_[2]) ? 255 : round(UInt8, (mat[k]-val_[1])*sc))
-			end
+			_u16scale2!(img, mat, parse(UInt16, @sprintf("%d", val26[1])), parse(UInt16, @sprintf("%d", val26[2])))
 		else	# len = 6
-			nxy = nx * ny
-			v1 = [1 3 5];	v2 = [2 4 6]
-			sc = [255 / (val26[2] - val26[1]), 255 / (val26[4] - val26[3]), 255 / (val26[6] - val26[5])]
-			@inbounds @simd for n = 1:nz
-				@inbounds @simd for k = 1+(n-1)*nxy:n*nxy
-					img[k] = (mat[k] < val26[v1[n]]) ? 0 : ((mat[k] > val26[v2[n]]) ? 255 : round(UInt8, (mat[k]-val26[v1[n]])*sc[n]))
-				end
-			end
+			_u16scale6!(img, mat, val26, nx, ny, nz)
 		end
 	else
-		sc = 255/65535
-		@inbounds @simd for k = 1:numel(img)
-			img[k] = round(UInt8, mat[k]*sc)
-		end
+		_u16scalefull!(img, mat)
 	end
 	(haskey(d, :scale_only)) && return img			# Only the scaled array is needed. Alows it to be a view
 	helper_mat2img(img, x, y, v, hdr, proj4, wkt, GMTcpt(), false, d)
