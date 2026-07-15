@@ -851,7 +851,8 @@ function grid_init(API::Ptr{Nothing}, X::GMT_RESOURCE, Grid::GMTgrid, pad::Int=2
 		# We need to make sure z_inc is correct because GMT allocates memory based on the n_bands computed it and z_range
 		if ((_nz = round(Int, (Grid.range[6] - Grid.range[5]) / (_inc[3]+eps()) + 1)) != size(Grid.z, 3))	# +eps() to avoid zero division
 			_inc[3] = (Grid.range[6] - Grid.range[5]) / (size(Grid.z, 3) - 1.0)
-			(length(Grid.inc) < 3) ? @warn("This cube doesn't even has a z_inc. Computing one to not error.") : @warn("The z_inc of this cube is wrong. It is $(Grid.inc[3]) but should be $(_inc[3])")
+			(length(Grid.inc) < 3) ? @warn("This cube doesn't even has a z_inc. Computing one to not error.") :
+			                         @warn("The z_inc of this cube is wrong. It is $(Grid.inc[3]) but should be $(_inc[3])")
 		end
 		G = convert(Ptr{GMT_CUBE}, GMT_Create_Data(API, GMT_IS_CUBE, GMT_IS_VOLUME, mode, NULL, Grid.range, _inc, UInt32(Grid.registration), pad, NULL))
 		X.family, X.geometry = GMT_IS_CUBE, GMT_IS_VOLUME
@@ -902,7 +903,8 @@ function grid_init(API::Ptr{Nothing}, X::GMT_RESOURCE, Grid::GMTgrid, pad::Int=2
 	(_cube) && (h.n_bands = n_bds)
 
 	# Previous to ~14 April 2023 GMT did not accept grids claiming to be geogs and with lon ranges > 360
-	no_xUnit = (Grid.range[2] - Grid.range[1]) > 360 && (startswith(Grid.x_unit, "longitude") || contains(Grid.x_unit, "degrees_e"))
+	no_xUnit = (Grid.range[2] - Grid.range[1]) > 360 && (startswith(Grid.x_unit, "longitude") ||
+	                                                     contains(Grid.x_unit, "degrees_e"))
 	try
 		h.x_unit::NTuple{80,UInt8} = !no_xUnit ? map(UInt8, (string(Grid.x_unit, repeat("\0",80-length(Grid.x_unit)))...,)) :
 		                                         map(UInt8, (string("x", repeat("\0",79))...,))
