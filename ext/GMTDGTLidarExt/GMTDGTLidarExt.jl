@@ -585,7 +585,7 @@ module GMTDGTLidarExt
 		return Dict("features" => features)
 	end
 
-	# ------------------------------------------------------------------------------------------
+	#= ------------------------------------------------------------------------------------------
 	function _dgt_collections()
 		if isempty(_dgt_auth_state.cookies)
 			user, password = _read_dgt_credentials()
@@ -599,6 +599,7 @@ module GMTDGTLidarExt
 			println("Error: $e")
 		end
 	end
+	=#
 
 	# ------------------------------------------------------------------------------------------
 	function _test_session(cookies, stac_url="https://cdd.dgterritorio.gov.pt/dgt-be/v1/search")

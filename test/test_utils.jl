@@ -53,4 +53,7 @@
 	# Non-existent file without extension
 	@test (@test_logs (:warn,) tests("nao_existe_xpto")) == ""
 
+	mat = ones(Float32, 5,5); mat[3,3] = NaN;	G = mat2grid(mat);
+	G2 = fillgaps(G)[1];
+	@test G2.z[3,3] == 1
 end

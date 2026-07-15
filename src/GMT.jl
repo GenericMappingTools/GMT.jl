@@ -156,14 +156,14 @@ export
 	grdcut, grdedit, grdfft, grdfill, grdfilter, grdgradient, grdhisteq, grdimage, grdimage!, grdinfo, grdinterpolate,
 	grdlandmask, grdmath, grdmask, grdpaste, grdproject, grdsample, grdtrack, grdtrend, grdvector, grdvector!,
 	grdview, grdview!, grdvolume, greenspline, histogram, histogram!, image, image!, image_alpha!, image_cpt!,
-	imshow, ind2rgb, isnodata, kml2gmt, logo, logo!, makecpt, mapscale, mapscale!, mask, mask!, mapproject, movie, nearneighbor, plot, plot!,
-	plot3, plot3!, plot3d, plot3d!, plotyy, project, pscontour, pscontour!, psconvert, psbasemap, psbasemap!,
-	psclip, psclip!, pscoast, pscoast!, psevents, pshistogram, pshistogram!,
+	imshow, ind2rgb, isnodata, kml2gmt, logo, logo!, makecpt, mapscale, mapscale!, mask, mask!, mapproject,
+	movie, nearneighbor, plot, plot!, plot3, plot3!, plot3d, plot3d!, plotyy, project, pscontour, pscontour!,
+	psconvert, psbasemap, psbasemap!, psclip, psclip!, pscoast, pscoast!, psevents, pshistogram, pshistogram!,
 	psimage, psimage!, pslegend, pslegend!, psmask, psmask!, psrose, psrose!, psscale, psscale!, pssolar, pssolar!,
 	psternary, psternary!, pstext, pstext!, pswiggle, pswiggle!, psxy, psxy!, psxyz, psxyz!, regress, resetGMT, rose,
 	rose!, sample1d, scatter, scatter!, scatter3, scatter3!, solar, solar!, analemma, enso, keeling,
-	sunsetrise, spectrum1d, fft1d, sphdistance, sphinterpolate,
-	sphtriangulate, surface, ternary, ternary!, text, text!, text_record, textrepel, annotate, annotate!, trend1d, trend2d, triangulate, gmtsplit,
+	sunsetrise, spectrum1d, fft1d, sphdistance, sphinterpolate, sphtriangulate, surface, ternary, ternary!, text, text!,
+	text_record, textrepel, annotate, annotate!, trend1d, trend2d, triangulate, gmtsplit,
 	decorated, vector_attrib, wiggle, wiggle!, xyz2grd, gmtbegin, gmtend, gmthelp, subplot, gmtfig, inset, showfig,
 	earthtide, gmt2grd, gravfft, gmtgravmag3d, gravmag3d, grdgravmag3d, gravprisms, grdseamount, parkermag, parkergrav, kovesi,
 	pscoupe, pscoupe!, coupe, coupe!, psmeca, psmeca!, meca, meca!, psvelo, psvelo!, sac, sac!, velo, velo!, gmtisf, getbyattrib,
@@ -177,8 +177,8 @@ export
 	getregion, getattribs, getattrib, getres, gd2gmt, gmt2gd, gdalread, gdalshade, gdalwrite, gadm, xyzw2cube,
 	coastlinesproj, graticules, orbits, orbits!, plotgrid!, leepacific, worldrectangular, worldrectgrid, togglemask,
 	earthregions, gridit, grid2tri, magic, rescale, stackgrids, delrows, setgrdminmax!, meshgrid, cart2pol, pol2cart,
-	cart2sph, sph2cart, arcellipse, arccircle, getband, getdriver, getlayer, getproj, getgeom, getgeotransform, gdaldrivers, toPROJ4, toWKT,
-	importPROJ4, importWKT, importEPSG, gdalinfo, gdalwarp, gdaldem, gdaltranslate, gdalgrid, gdalvectortranslate,
+	cart2sph, sph2cart, arcellipse, arccircle, getband, getdriver, getlayer, getproj, getgeom, getgeotransform, gdaldrivers,
+	toPROJ4, toWKT, importPROJ4, importWKT, importEPSG, gdalinfo, gdalwarp, gdaldem, gdaltranslate, gdalgrid, gdalvectortranslate,
 	ogr2ogr, gdalrasterize, gdalbuildvrt, readgeom, readraster, setgeotransform!, setnodata!, setproj!, destroy,
 	delaunay, dither, buffer, centroid, intersection, intersects, polyunion, overlaps, fromWKT, fillnodata!, fillnodata,
 	concavehull, convexhull, difference, symdifference, distance, geodesicarea, geomarea, geomlength, pointalongline,
@@ -198,17 +198,19 @@ export
 	symlog, isymlog, violin, violin!, viz, vizpdf, windbarbs, whereami, maregrams, pastplates, seismicity, ecmwf, era5time, era5vars,
 	listecmwfvars, meteostat, weather, wmsinfo, wmstest, wmsread, VSdisp, mad, info, kmeans, pca, mosaic, quadbounds, quadkey,
 	geocoder, getprovider, zscores, bwhitmiss, binarize, bwareaopen, bwconncomp, bwdist, bwdist_idx, bwlabel, bwperim,
-	bwskell, cc2bw, graydist, isodata, padarray, rgb2gray, rgb2lab, rgb2YCbCr, rgb2ycbcr, grid2img, img2grid, grays2cube, grays2rgb, imclose,
-	imcomplement, imcomplement!, imdilate, imerode, imfilter, imopen, imsegment, imsobel, imtophat, imbothat,
+	bwskell, cc2bw, graydist, isodata, padarray, rgb2gray, rgb2lab, rgb2YCbCr, rgb2ycbcr, grid2img, img2grid, grays2cube,
+	grays2rgb, imclose, imcomplement, imcomplement!, imdilate, imerode, imfilter, imopen, imsegment, imsobel, imtophat, imbothat,
 	imhdome, imhmin, imhmax, immorphgrad, imrankfilter, strel, imfill, imreconstruct, fillsinks, fillsinks!,
 	imresize, imregionalmin, imregionalmax, imclearborder, findpeaks, makeDCWs, mksymbol, circfit, gunique, uniqueind, sortslicesperm,
 	hampel, hampel!, lowess, whittaker, Ginnerjoin, Gouterjoin, Gleftjoin, Grightjoin, Gcrossjoin, Gsemijoin, Gantijoin, spatialjoin,
 	groupby, stats, anaglyph, lazinfo, lazread, lazwrite, lasread, laswrite,
+	fillgaps, fillgaps!,
 	okada, wave_travel_time,
 	haralick,
 	mapsize2region,
 	ind2bool, cube, cylinder, circlepts, dodecahedron, ellipse3D, eulermat, flatfv, icosahedron, loft, sphere, spinmat,
-	octahedron, tetrahedron, torus, replicant, revolve, rotate, rotate!, translate, translate!, df2ds, ds2df, extrude, fv2fv, isclockwise, surf2fv, ODE2ds,
+	octahedron, tetrahedron, torus, replicant, revolve, rotate, rotate!, translate, translate!, df2ds, ds2df,
+	extrude, fv2fv, isclockwise, surf2fv, ODE2ds,
 	dgt_lidar, dgt_mosaic,
 
 	# Reexport some from Dates
@@ -242,6 +244,7 @@ include("gmtbegin.jl")
 include("blendimg.jl")
 include("blocks.jl")
 include("contourf.jl")
+include("fillgaps.jl")
 include("filter1d.jl")
 include("fitcircle.jl")
 include("findpeaks.jl")
@@ -473,6 +476,7 @@ using .Laszip
 	#rm(joinpath(tempdir(), "GMTjl_custom_p_x.txt"))		# This one gets created before username is set.
 	arrows([0 8.2 0 6], limits=(-2,4,0,9), arrow=(len=2,stop=1,shape=0.5,fill=:red), axis=:a, pen="6p");
 	GMT.doc_source_links("psbasemap"; silent=true)
+	#fillgaps(mat2grid(rand(Float32, 4, 4)))	# Unbelievable. This adds TWO MEGABYTES to cache and makes no f. difference to TTFX
 	theme()
 
 	resetGMT()
