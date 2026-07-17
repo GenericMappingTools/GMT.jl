@@ -212,6 +212,7 @@ export
 	octahedron, tetrahedron, torus, replicant, revolve, rotate, rotate!, translate, translate!, df2ds, ds2df,
 	extrude, fv2fv, isclockwise, surf2fv, ODE2ds,
 	dgt_lidar, dgt_mosaic,
+	iGMTinstall,
 
 	# Reexport some from Dates
 	Date, DateTime, Year, Month, Week, Day, Hour, Minute, Second, year, month, week, day, hour, minute, second, now, today,
@@ -488,6 +489,23 @@ end
 Base.precompile(Tuple{typeof(GMT.axis), Base.Dict{Symbol, Any}, Bool, Bool, Bool, Bool, Base.Dict{Symbol, Any}})
 Base.precompile(Tuple{typeof(GMT.axis), NamedTuple{(:axes, :annot, :grid), Tuple{Symbol, Symbol, Int64}}, Base.Dict{Symbol, Any}})
 
+# ---------------------------------------------------------------------------------------------------
+"""
+    iGMTinstall()
+
+Install the InteractiveGMT package by `dev`-ing it straight from its GitHub repository. This is the
+equivalent of running `] dev https://github.com/GenericMappingTools/InteractiveGMT` at the Pkg REPL.
+Once installed, the package is loaded into the current session (equivalent to `using InteractiveGMT`).
+"""
+function iGMTinstall()
+	!Sys.iswindows() && (@warn("Currently, iGMTinstall() is only available on Windows."); return nothing)
+	_Pkg = Base.require(Base.PkgId(Base.UUID("44cfe95a-1eb2-52ea-b672-e2afdf69b78f"), "Pkg"))
+	_Pkg.develop(url="https://github.com/GenericMappingTools/InteractiveGMT")
+	Base.eval(Main, :(using InteractiveGMT))
+	return nothing
+end
+
+# ---------------------------------------------------------------------------------------------------
 function __init__(test::Bool=false)
 	clear_sessions(3600)# Delete stray sessions dirs older than 1 hour
 	G_API[] = GMT_Create_Session("GMT", 2, GMT_SESSION_BITFLAGS)# (0.010179 sec)
