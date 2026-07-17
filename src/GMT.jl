@@ -498,6 +498,7 @@ equivalent of running `] dev https://github.com/GenericMappingTools/InteractiveG
 Once installed, the package is loaded into the current session (equivalent to `using InteractiveGMT`).
 """
 function iGMTinstall()
+	if !Sys.iswindows() @warn("Currently, iGMTinstall() is only available on Windows.") return end
 	_Pkg = Base.require(Base.PkgId(Base.UUID("44cfe95a-1eb2-52ea-b672-e2afdf69b78f"), "Pkg"))
 	_Pkg.develop(url="https://github.com/GenericMappingTools/InteractiveGMT")
 	Base.eval(Main, :(using InteractiveGMT))
