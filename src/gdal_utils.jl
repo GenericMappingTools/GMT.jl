@@ -747,7 +747,28 @@ function gmt2gd(D::Vector{<:GMTdataset}; save::String="", geometry::String="")
 		                                   (wkbMultiPoint, Gdal.createmultipoint())
 	end
 
-	layer = Gdal.createlayer(name="layer1", dataset=ds, geom=geom_code, spatialref=sr);
+	# Collect scalar-String attributes to be written as OGR fields (otherwise they are lost)
+	fieldnames = _gmt2gd_fieldnames(D)
+	# With per-feature attributes and a true collection, write one feature per dataset so that each
+	# feature keeps its own attributes. Otherwise keep the single (multi)geometry feature.
+	per_feature = !isempty(fieldnames) && ismulti
+
+	if (per_feature)
+		lay_geom = (ispolyg || D[1].geom in (wkbPolygon, wkbMultiPolygon, wkbPolygon25D, wkbMultiPolygon25D, wkbPolygonZM)) ?
+		               ((n_cols > 2) ? wkbPolygon25D : wkbPolygon) :
+		           (isline || D[1].geom in (wkbLineString, wkbMultiLineString, wkbLineStringZ)) ?
+		               ((n_cols > 2) ? wkbLineString25D : wkbLineString) :
+		           (any(d -> size(d.data, 1) > 1, D) ? wkbMultiPoint : wkbPoint)
+	else
+		lay_geom = geom_code
+	end
+
+	layer = Gdal.createlayer(name="layer1", dataset=ds, geom=lay_geom, spatialref=sr);
+	for fn in fieldnames  Gdal.addfielddefn!(layer, fn, Gdal.OFTString)  end
+
+	if (per_feature)
+		_gmt2gd_write_perfeature!(layer, D, fieldnames, n_cols, lay_geom)
+	else
 	feature = Gdal.unsafe_createfeature(layer)
 	geom = geom_cmd
 
@@ -804,8 +825,10 @@ function gmt2gd(D::Vector{<:GMTdataset}; save::String="", geometry::String="")
 		@error("Geometries with geometry code $(D[1].geom) are not yet implemented")
 	end
 
+	_gmt2gd_setfields!(feature, D[1], fieldnames)
 	Gdal.setfeature!(layer, feature)
 	Gdal.destroy(feature)
+	end
 
 	if (save != "")
 		ogr2ogr(ds, dest=save)
@@ -825,6 +848,80 @@ function helper_gmt2gd_xyz(D::GMTdataset, n_cols::Int)
 		(n_cols > 2) && (z = Float64.(D.data[:,3]))
 	end
 	return (n_cols == 3) ? (x, y, z) : (x, y, 0.0)
+end
+
+# ---------------------------------------------------------------------------------------------------
+function _gmt2gd_fieldnames(D::Vector{<:GMTdataset})
+	# Collect the attribute names (scalar String values only) to be written as OGR fields.
+	skip = ("att_order", "DateOnly")
+	names = String[]
+	for d in D
+		for (k,v) in d.attrib
+			(k in skip) && continue
+			(k in names) || push!(names, k)
+		end
+	end
+	isempty(names) && return names
+	if (haskey(D[1].attrib, "att_order"))				# Honour the stored column order, if any
+		ord = string.(split(D[1].attrib["att_order"], ','))
+		ordered = String[]
+		for o in ord
+			(o in names) && push!(ordered, o)
+		end
+		for n in names
+			(n in ordered) || push!(ordered, n)
+		end
+		names = ordered
+	end
+	return names
+end
+
+# ---------------------------------------------------------------------------------------------------
+function _gmt2gd_setfields!(feature, d::GMTdataset, fieldnames::Vector{String})
+	# Set the OGR field values of one feature from the attributes of one GMTdataset.
+	for i = 1:length(fieldnames)
+		v = get(d.attrib, fieldnames[i], "")
+		Gdal.setfield!(feature, i-1, isa(v, AbstractString) ? String(v) : string(v))
+	end
+	return nothing
+end
+
+# ---------------------------------------------------------------------------------------------------
+function _gmt2gd_write_perfeature!(layer, D::Vector{<:GMTdataset}, fieldnames::Vector{String}, n_cols::Int, lay_geom)
+	# Write one OGR feature per GMTdataset, each carrying its own geometry and attributes.
+	isPoly = (lay_geom == wkbPolygon || lay_geom == wkbPolygon25D)
+	isLine = (lay_geom == wkbLineString || lay_geom == wkbLineString25D)
+	for k = 1:length(D)
+		feature = Gdal.unsafe_createfeature(layer)
+		if (isPoly)
+			poly = Gdal.creategeom((n_cols > 2) ? wkbPolygon25D : wkbPolygon)
+			Gdal.addgeom!(poly, makering(D[k].data))
+			Gdal.setgeom!(feature, poly)
+		elseif (isLine)
+			line = Gdal.creategeom((n_cols > 2) ? wkbLineString25D : wkbLineString)
+			x,y,z = helper_gmt2gd_xyz(D[k], n_cols)
+			(n_cols == 2) ? Gdal.OGR_G_SetPoints(line.ptr, size(D[k].data, 1), x, 8, y, 8, C_NULL, 8) :
+			                Gdal.OGR_G_SetPoints(line.ptr, size(D[k].data, 1), x, 8, y, 8, z, 8)
+			Gdal.setgeom!(feature, line)
+		else											# Points: one (multi)point feature per dataset
+			x,y,z = helper_gmt2gd_xyz(D[k], n_cols)
+			if (size(D[k].data, 1) > 1)
+				mp = Gdal.creategeom(wkbMultiPoint)
+				for n = 1:lastindex(x)
+					(n_cols == 2) ? Gdal.addgeom!(mp, Gdal.createpoint(x[n], y[n])) :
+					                Gdal.addgeom!(mp, Gdal.createpoint(x[n], y[n], z[n]))
+				end
+				Gdal.setgeom!(feature, mp)
+			else
+				pt = (n_cols == 2) ? Gdal.createpoint(x[1], y[1]) : Gdal.createpoint(x[1], y[1], z[1])
+				Gdal.setgeom!(feature, pt)
+			end
+		end
+		_gmt2gd_setfields!(feature, D[k], fieldnames)
+		Gdal.setfeature!(layer, feature)
+		Gdal.destroy(feature)
+	end
+	return nothing
 end
 
 	# This is possibly a wasting solution implying a data copy but it's bloody simpler
