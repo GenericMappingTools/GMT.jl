@@ -491,15 +491,24 @@ Base.precompile(Tuple{typeof(GMT.axis), NamedTuple{(:axes, :annot, :grid), Tuple
 
 # ---------------------------------------------------------------------------------------------------
 """
-    iGMTinstall()
+    iGMTinstall(update::Bool=false)
 
 Install the InteractiveGMT package by `dev`-ing it straight from its GitHub repository. This is the
 equivalent of running `] dev https://github.com/GenericMappingTools/InteractiveGMT` at the Pkg REPL.
 Once installed, the package is loaded into the current session (equivalent to `using InteractiveGMT`).
+
+If `update=true`, don't reinstall/rebuild -- just run `Pkg.build("InteractiveGMT")`, which re-runs
+InteractiveGMT's own `deps/build.jl` (already fetches the latest `gmtvtk.dll` from its rolling
+"dll-latest" GitHub release and displaces a locked DLL safely). `Pkg.build` runs in a separate
+Julia process, so this works standalone even when the InteractiveGMT GUI isn't running yet.
 """
-function iGMTinstall()
+function iGMTinstall(update::Bool=false)
 	!Sys.iswindows() && (@warn("Currently, iGMTinstall() is only available on Windows."); return nothing)
 	_Pkg = Base.require(Base.PkgId(Base.UUID("44cfe95a-1eb2-52ea-b672-e2afdf69b78f"), "Pkg"))
+	if update
+		_Pkg.build("InteractiveGMT")
+		return nothing
+	end
 	_Pkg.develop(url="https://github.com/GenericMappingTools/InteractiveGMT")
 	Base.eval(Main, :(using InteractiveGMT))
 	return nothing
