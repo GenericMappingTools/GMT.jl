@@ -34,6 +34,7 @@ Returns the filled grid and a mask image (GMTimage{Bool,2}) of the holes that we
 Use this mask to restore the original NaNs if you want to revert the fill.
 """
 function fillgaps(G::GMTgrid{Float32,2}; pad::Int=4, tension::Float64=0.25)
+	(G.hasnans == 1) && return GMTimage{Bool,2}()		# Grid says it has no NaNs to fill
 	Gout = deepcopy(G)
 	mask_grid = fillgaps!(Gout; pad, tension)
 	return Gout, mask_grid
