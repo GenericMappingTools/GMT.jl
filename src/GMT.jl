@@ -174,7 +174,7 @@ export
 	mbimport, mbgetdata, mbsvplist, mblevitus, blendimg!, lonlat2xy, xy2lonlat, df2ds, setcolors!, mat2ds, mat2grid, mat2img,
 	slicecube, cubeslice, linspace, logspace, fileparts,
 	tests, fields, flipud, fliplr, flipdim, flipdim!, grdinterpolate, pow, tic, toc, theme, tern2cart, geodetic2enu, cpt4dcw,
-	getregion, getattribs, getattrib, getres, gd2gmt, gmt2gd, gdalread, gdalshade, gdalwrite, gadm, xyzw2cube,
+	getregion, getattribs, getattrib, delattrib!, getres, gd2gmt, gmt2gd, gdalread, gdalshade, gdalwrite, gadm, xyzw2cube,
 	coastlinesproj, graticules, orbits, orbits!, plotgrid!, leepacific, worldrectangular, worldrectgrid, togglemask,
 	earthregions, gridit, grid2tri, magic, rescale, stackgrids, delrows, setgrdminmax!, meshgrid, cart2pol, pol2cart,
 	cart2sph, sph2cart, arcellipse, arccircle, getband, getdriver, getlayer, getproj, getgeom, getgeotransform, gdaldrivers,
@@ -491,7 +491,7 @@ Base.precompile(Tuple{typeof(GMT.axis), NamedTuple{(:axes, :annot, :grid), Tuple
 
 # ---------------------------------------------------------------------------------------------------
 """
-    iGMTinstall(update::Bool=false)
+    iGMTinstall(; update::Bool=false)
 
 Install the InteractiveGMT package by `dev`-ing it straight from its GitHub repository. This is the
 equivalent of running `] dev https://github.com/GenericMappingTools/InteractiveGMT` at the Pkg REPL.
@@ -502,10 +502,10 @@ InteractiveGMT's own `deps/build.jl` (already fetches the latest `gmtvtk.dll` fr
 "dll-latest" GitHub release and displaces a locked DLL safely). `Pkg.build` runs in a separate
 Julia process, so this works standalone even when the InteractiveGMT GUI isn't running yet.
 """
-function iGMTinstall(update::Bool=false)
+function iGMTinstall(up::Bool=false; update::Bool=false)
 	!Sys.iswindows() && (@warn("Currently, iGMTinstall() is only available on Windows."); return nothing)
 	_Pkg = Base.require(Base.PkgId(Base.UUID("44cfe95a-1eb2-52ea-b672-e2afdf69b78f"), "Pkg"))
-	if update
+	if (update || up)
 		_Pkg.build("InteractiveGMT")
 		return nothing
 	end

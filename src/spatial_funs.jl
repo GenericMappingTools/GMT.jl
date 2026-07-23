@@ -353,6 +353,51 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
+    delattrib!(D::GDtype, names::Union{String,Symbol,Vector{<:Union{String,Symbol}}}=String[]; keep::Bool=false) -> GDtype
+
+Remove attributes from a `GMTdataset` or vector of `GMTdataset`, in place. Useful, for example, to
+prune which fields get written when saving to an OGR vector format (gdalwrite/gmtwrite write every
+`attrib` key as an output field).
+
+# Arguments
+- `D::GDtype`: A `GMTdataset` or a vector of `GMTdataset`. If a vector, every segment is pruned.
+- `names`: Attribute name(s) to remove. If omitted (or an empty vector), removes ALL attributes.
+
+# Keywords
+- `keep::Bool=false`: If `true`, invert the meaning of `names` — keep only those and remove the rest.
+
+# Returns
+The same `D`, mutated, for chaining.
+
+# Examples
+```julia
+delattrib!(D, "AREA")                       # drop just "AREA"
+delattrib!(D, ["AREA", "PERIMETER"])        # drop several
+delattrib!(D, ["NAME", "POP"], keep=true)   # keep only these two, drop everything else
+delattrib!(D)                               # wipe all attributes
+```
+"""
+function delattrib!(D::GDtype, names::Union{String,Symbol,Vector{<:Union{String,Symbol}}}=String[]; keep::Bool=false)::GDtype
+	_names = isa(names, Vector) ? string.(names) : (isempty(string(names)) ? String[] : [string(names)])
+	segs = isa(D, GMTdataset) ? (D,) : D
+	for d in segs
+		if isempty(_names)
+			empty!(d.attrib)
+		elseif keep
+			for k in collect(keys(d.attrib))
+				(k in _names) || delete!(d.attrib, k)
+			end
+		else
+			for k in _names
+				delete!(d.attrib, k)
+			end
+		end
+	end
+	return D
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
     filter(D::Vector{<:GMTdataset}; kw...)
 
 See `? getbyattrib`
