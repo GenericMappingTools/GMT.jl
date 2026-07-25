@@ -61,8 +61,9 @@ function maregrams(; list=false, code="", name="", days=2, starttime::String="",
 		try DateTime(starttime) catch; error("The start time '$starttime' is not a valid date.") end 
 	M = ((daydec = getdecimal(days)) != 0) ? round(Int, daydec*24*60) : 0
 	(daydec != 0) && (days = trunc(Int, days))
-	endtime = (starttime == "") ? DateTime(now()) : DateTime(starttime) + Dates.Day(days) + Dates.Minute(M)
-	(endtime > now()) && (days -= round((endtime - now()).value / (24*3600000), digits=6); endtime = now())
+	nowutc = DateTime(Dates.now(Dates.UTC))
+	endtime = (starttime == "") ? nowutc : DateTime(starttime) + Dates.Day(days) + Dates.Minute(M)
+	(endtime > nowutc) && (days -= round((endtime - nowutc).value / (24*3600000), digits=6); endtime = nowutc)
 	url = "http://www.ioc-sealevelmonitoring.org/bgraph.php?code=$_code&output=asc&period=$days&endtime=$endtime"
 	printurl && println(url)		# Station's URL
 	file = Downloads.download(url, "_query.csv")
