@@ -165,6 +165,7 @@ using InteractiveUtils
 	catch
 	end
 
+	include("test_fft.jl")
 	include("test_parker.jl")
 
 	# Remove garbage

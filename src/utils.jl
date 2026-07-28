@@ -1623,6 +1623,82 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
+    h, s, v = rgb2hsv(r::Float32, g::Float32, b::Float32)
+    HSV     = rgb2hsv(RGB::Array{Float32,3}) -> Array{Float32,3}
+    HSV     = rgb2hsv(RGB::Array{UInt8,3})   -> Array{Float32,3}
+
+Convert RGB to HSV. `H` comes out in [0,360], `S` and `V` in [0,1].
+
+- The scalar form takes `r,g,b` in [0,1] and is the ONE place the conversion maths lives.
+- The array forms take a planar `rows × cols × 3` array and return the same shape. `UInt8` input
+  (the layout of a `GMTimage`) is scaled by 1/255 on the fly, with no intermediate Float array.
+
+See also [`hsv2rgb`](@ref).
+"""
+function rgb2hsv(r::Float32, g::Float32, b::Float32)
+	cmax, cmin = max(r, g, b), min(r, g, b)
+	delta = cmax - cmin
+	h = (delta == 0)  ? 0.0f0 :
+	    (cmax == r)   ? 60 * mod((g - b) / delta, 6f0) :
+	    (cmax == g)   ? 60 * ((b - r) / delta + 2) : 60 * ((r - g) / delta + 4)
+	return h, ((cmax == 0) ? 0.0f0 : delta / cmax), cmax
+end
+
+function rgb2hsv(RGB::Array{Float32,3})
+	rows, cols = _rgbhsv_size(RGB, "rgb2hsv")
+	HSV = Array{Float32,3}(undef, rows, cols, 3)
+	@inbounds for j = 1:cols, i = 1:rows
+		HSV[i,j,1], HSV[i,j,2], HSV[i,j,3] = rgb2hsv(RGB[i,j,1], RGB[i,j,2], RGB[i,j,3])
+	end
+	return HSV
+end
+
+function rgb2hsv(RGB::Array{UInt8,3})
+	rows, cols = _rgbhsv_size(RGB, "rgb2hsv")
+	HSV = Array{Float32,3}(undef, rows, cols, 3)
+	@inbounds for j = 1:cols, i = 1:rows
+		HSV[i,j,1], HSV[i,j,2], HSV[i,j,3] =
+			rgb2hsv(RGB[i,j,1] / 255f0, RGB[i,j,2] / 255f0, RGB[i,j,3] / 255f0)
+	end
+	return HSV
+end
+
+"""
+    r, g, b = hsv2rgb(h::Float32, s::Float32, v::Float32)
+    RGB     = hsv2rgb(HSV::Array{Float32,3}) -> Array{Float32,3}
+
+Convert HSV (`H` in [0,360], `S` and `V` in [0,1]) back to RGB in [0,1]. The inverse of
+[`rgb2hsv`](@ref), and like it the array form is just the scalar kernel in a loop.
+"""
+function hsv2rgb(h::Float32, s::Float32, v::Float32)
+	c = v * s
+	x = c * (1 - abs(mod(h / 60, 2f0) - 1))
+	m = v - c
+	r, g, b = (h < 60)  ? (c, x, 0.0f0) :
+	          (h < 120) ? (x, c, 0.0f0) :
+	          (h < 180) ? (0.0f0, c, x) :
+	          (h < 240) ? (0.0f0, x, c) :
+	          (h < 300) ? (x, 0.0f0, c) : (c, 0.0f0, x)
+	return r + m, g + m, b + m
+end
+
+function hsv2rgb(HSV::Array{Float32,3})
+	rows, cols = _rgbhsv_size(HSV, "hsv2rgb")
+	RGB = Array{Float32,3}(undef, rows, cols, 3)
+	@inbounds for j = 1:cols, i = 1:rows
+		RGB[i,j,1], RGB[i,j,2], RGB[i,j,3] = hsv2rgb(HSV[i,j,1], HSV[i,j,2], HSV[i,j,3])
+	end
+	return RGB
+end
+
+function _rgbhsv_size(A::Array{T,3}, fname::String) where T
+	rows, cols, nb = size(A)
+	(nb != 3) && error("$fname: input must be a rows x cols x 3 (planar) array, got a 3rd dim of $nb")
+	return rows, cols
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
     A, B, C, D = eq_plane(azim, elev, dist)
 
 Calculate the equation of a plane (Eq: Ax + By + Cz + D = 0) given the azimuth,
@@ -1711,8 +1787,8 @@ parkermag(x, y, z=""; kw...) =
 	printstyled("\tTo use this function you need to load the FFTW package first. Do:\n\tusing FFTW"; color=:yellow)
 parkergrav(x, y=""; kw...)   =
 	printstyled("\tTo use this function you need to load the FFTW package first. Do:\n\tusing FFTW"; color=:yellow)
-kovesi(x; kw...) =
-	printstyled("\tTo use this function you need to load the FFTW package first. Do:\n\tusing FFTW"; color=:yellow)
+# NO kovesi stub here: kovesi.jl is a plain src/ file now (its FFTs go through GMT's own fft2d), so
+# the function always exists and needs no FFTW.
 
 dgt_lidar(x; kw...) =
 	printstyled("\tTo use this function you need to load the HTTP package first. Do:\n\tusing HTTP"; color=:yellow)

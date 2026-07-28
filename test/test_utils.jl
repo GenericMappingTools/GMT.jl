@@ -56,4 +56,24 @@
 	mat = ones(Float32, 5,5); mat[3,3] = NaN;	G = mat2grid(mat);
 	G2 = fillgaps(G)[1];
 	@test G2.z[3,3] == 1
+
+	println("	RGB <-> HSV")
+	# Known anchors: red, green, blue, white, black, grey (grey has no hue and no saturation).
+	@test all(rgb2hsv(1f0, 0f0, 0f0) .≈ (0f0,   1f0, 1f0))
+	@test all(rgb2hsv(0f0, 1f0, 0f0) .≈ (120f0, 1f0, 1f0))
+	@test all(rgb2hsv(0f0, 0f0, 1f0) .≈ (240f0, 1f0, 1f0))
+	@test all(rgb2hsv(1f0, 1f0, 1f0) .≈ (0f0,   0f0, 1f0))
+	@test all(rgb2hsv(0f0, 0f0, 0f0) .≈ (0f0,   0f0, 0f0))
+	@test all(hsv2rgb(0f0, 0f0, 0.5f0) .≈ (0.5f0, 0.5f0, 0.5f0))
+
+	RGB = rand(Float32, 8, 6, 3)
+	HSV = rgb2hsv(RGB)
+	@test isa(HSV, Array{Float32,3}) && size(HSV) == size(RGB)
+	@test all(0 .<= HSV[:,:,1] .<= 360) && all(0 .<= HSV[:,:,2] .<= 1) && all(0 .<= HSV[:,:,3] .<= 1)
+	@test maximum(abs.(hsv2rgb(HSV) .- RGB)) < 1e-6			# round trip
+	# UInt8 (a GMTimage's layout) must give the same answer as the same colours scaled to [0,1]
+	U = rand(UInt8, 8, 6, 3)
+	@test maximum(abs.(rgb2hsv(U) .- rgb2hsv(Float32.(U) ./ 255f0))) < 1e-4
+	@test_throws ErrorException rgb2hsv(rand(Float32, 4, 4, 2))
+	@test_throws ErrorException hsv2rgb(rand(Float32, 4, 4, 4))
 end

@@ -162,7 +162,7 @@ export
 	psimage, psimage!, pslegend, pslegend!, psmask, psmask!, psrose, psrose!, psscale, psscale!, pssolar, pssolar!,
 	psternary, psternary!, pstext, pstext!, pswiggle, pswiggle!, psxy, psxy!, psxyz, psxyz!, regress, resetGMT, rose,
 	rose!, sample1d, scatter, scatter!, scatter3, scatter3!, solar, solar!, analemma, enso, keeling,
-	sunsetrise, spectrum1d, fft1d, sphdistance, sphinterpolate, sphtriangulate, surface, ternary, ternary!, text, text!,
+	sunsetrise, spectrum1d, fft1d, fft2d, fft2d!, rgb2hsv, hsv2rgb, sphdistance, sphinterpolate, sphtriangulate, surface, ternary, ternary!, text, text!,
 	text_record, textrepel, annotate, annotate!, trend1d, trend2d, triangulate, gmtsplit,
 	decorated, vector_attrib, wiggle, wiggle!, xyz2grd, gmtbegin, gmtend, gmthelp, subplot, gmtfig, inset, showfig,
 	earthtide, gmt2grd, gravfft, gmtgravmag3d, gravmag3d, grdgravmag3d, gravprisms, grdseamount, parkermag, parkergrav, kovesi,
@@ -307,6 +307,7 @@ include("loxodromics.jl")
 include("makecpt.jl")
 include("mapproject.jl")
 include("maregrams.jl")
+include("t_xtide.jl")
 include("marker_name.jl")
 include("movie.jl")
 include("nearneighbor.jl")
@@ -341,6 +342,7 @@ include("sealand.jl")
 include("spatial_funs.jl")
 include("spectrum1d.jl")
 include("fft1d.jl")
+include("kovesi.jl")
 include("sphdistance.jl")
 include("sphinterpolate.jl")
 include("sphtriangulate.jl")
@@ -475,6 +477,13 @@ using .Laszip
 	#pca(mat2img(rand(UInt8, 64,64,4)));
 	#kmeans(rand(100,3), 3, maxiter=10);
 	#rm(joinpath(tempdir(), "GMTjl_custom_p_x.txt"))		# This one gets created before username is set.
+	fft1d(rand(64));
+	fft2d(rand(Float32, 32, 32));					# real entry point -> ComplexF32 -> fft2d!
+	fft2d!(ComplexF32.(rand(32, 32)); inverse=true);
+	#Gkov = mat2grid(rand(Float32, 32, 32));
+	#kovesi(Gkov, wavelength=16);					# whole ppdrc chain: filtergrid + 4 FFTs + histtruncate
+	#Gkov.z[8:12, 8:12] .= NaN32;  Gkov.hasnans = 2;
+	#kovesi(Gkov, wavelength=16);					# and the NaN-infill branch (bwdist_idx)
 	arrows([0 8.2 0 6], limits=(-2,4,0,9), arrow=(len=2,stop=1,shape=0.5,fill=:red), axis=:a, pen="6p");
 	GMT.doc_source_links("psbasemap"; silent=true)
 	#fillgaps(mat2grid(rand(Float32, 4, 4)))	# Unbelievable. This adds TWO MEGABYTES to cache and makes no f. difference to TTFX

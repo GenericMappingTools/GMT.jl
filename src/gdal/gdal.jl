@@ -33,6 +33,8 @@ const GDT_CInt16 = UInt32(8)
 const GDT_CInt32 = UInt32(9)
 const GDT_CFloat32 = UInt32(10)
 const GDT_CFloat64 = UInt32(11)
+const GDT_Int64 = UInt32(12)
+const GDT_UInt64 = UInt32(13)
 const GDT_TypeCount = UInt32(12)
 
 const CE_None = UInt32(0)
@@ -941,7 +943,9 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 		Float32 => GDT_Float32,
 		Float64 => GDT_Float64,
 		Complex{Float32} => GDT_CFloat32,
-		Complex{Float64} => GDT_CFloat64)
+		Complex{Float64} => GDT_CFloat64,
+		Int64   => GDT_Int64,
+		UInt64  => GDT_UInt64)
 
 	const _JLTYPE = Dict{Int32, DataType}(
 		GDT_Unknown    => Any,
@@ -956,6 +960,8 @@ abstract type AbstractGeomFieldDefn end		# needs to have a `ptr::GDALGeomFieldDe
 		GDT_Float64    => Float64,
 		GDT_CFloat32   => Complex{Float32},
 		GDT_CFloat64   => Complex{Float64},
+		GDT_Int64      => Int64,
+		GDT_UInt64     => UInt64,
 		UInt32(14)     => UInt8)		# TEMPORARY to workaround a GDAL BUG
 
 	macro gdal(args...)
