@@ -927,3 +927,198 @@ function write_stl(fname::AbstractString, FV::GMTfv; binary::Bool=true, scale=1.
 	end
 	close(fid)
 end
+
+
+# --------------------------------------------------------------------------------------------------------
+Base.@kwdef mutable struct ModeleCarte
+	fp::IO = devnull
+	ab::Int = 0
+	ntete::Int = 0
+	sens::Int = 0
+	nx::Int = 0
+	ny::Int = 0
+	ntot::Int = 0
+	jdebx::Int = 0
+	jfinx::Int = 0
+	ideby::Int = 0
+	ifiny::Int = 0
+	dx::Float64 = 0.0
+	dy::Float64 = 0.0
+	mx::Int = 0
+	my::Int = 0
+	indice::Float64 = 0.0
+	xori::Float64 = 0.0
+	yori::Float64 = 0.0
+	xmin::Float64 = 0.0
+	xmax::Float64 = 0.0
+	ymin::Float64 = 0.0
+	ymax::Float64 = 0.0
+	az::Float64 = 0.0
+	test::Float64 = 0.0
+	alt::Float64 = 0.0
+	dec::Float64 = 0.0
+	dip::Float64 = 0.0
+	format::Vector{UInt8} = zeros(UInt8, 20)
+	projection::Vector{UInt8} = zeros(UInt8, 20)
+	proj::Vector{UInt8} = zeros(UInt8, 5)
+	syst::Vector{UInt8} = zeros(UInt8, 5)
+	nsys::Float64 = 0.0
+	lon0::Float64 = 0.0
+	lat0::Float64 = 0.0
+	f::Vector{Float32} = Float32[]
+	#x::Vector{Float64} = Float64[]
+	#y::Vector{Float64} = Float64[]
+	#z::Vector{Float64} = Float64[]
+	#s::Vector{Float64} = Float64[]
+	#t::Vector{Float64} = Float64[]
+	es::Int = 0
+	sf::Int = 0
+	ne::Int = 0
+	nv::Int = 0
+	kx::Int = 0
+	zbase::Float64 = 0.0
+	zmult::Float64 = 0.0
+	label::Vector{UInt8} = zeros(UInt8, 48)
+	mapno::Vector{UInt8} = zeros(UInt8, 16)
+	iproj::Int = 0
+	unitx::Int = 0
+	unity::Int = 0
+	unitz::Int = 0
+	nvpts::Int = 0
+	izmin::Float64 = 0.0
+	izmax::Float64 = 0.0
+	izmed::Float64 = 0.0
+	izmea::Float64 = 0.0
+	zvar::Float64 = 0.0
+	prcs::Int = 0
+	user::Vector{UInt8} = zeros(UInt8, 324)
+end
+
+# --------------------------------------------------------------------------------------------------------
+"""
+    G = readgeosoft(filename::String)::GMTgrid
+
+Reads a GMT grid from a Geosoft binary file. French origin from an old Pascal Mouge C version. 
+In those old times apparently the format specifications could be found in the Geosoft documentation, but not anymore.
+"""
+function readgeosoft(filename::String)::GMTgrid{Float32,2}
+	fid = open(filename, "r")
+	carte = ModeleCarte(fp=fid, ab=1)	# ab=1 means binary file. TODO: check if it is binary or ASCII. ASCII apprebtly starts with a #
+	lectureEntete(carte)
+	carte.f = Vector{Float32}(undef, carte.nx * carte.ny)
+	lectureMatrice(carte, carte.ntete)
+	close(fid)
+	hdr = [carte.xori, carte.xori + (carte.nx - 1) * carte.dx, carte.yori, carte.yori + (carte.ny - 1) * carte.dy, carte.izmin, carte.izmax, 0.0, carte.dx, carte.dy]
+	G = mat2grid(reshape(carte.f, (carte.nx, carte.ny)), hdr=hdr, is_transposed=true, layout="TRB")
+	indnan = (G.z .<= carte.test)	# Have to use .<= instead of .== because of reported test value not accurate
+	any(indnan) ? (G.z[indnan] .= NaN; G.hasnans = 2) : (G.hasnans = 1)
+	return G
+end
+
+
+"""lectureEntete(carte) — reads the header, returns nb of header lines read (nt)."""
+function lectureEntete(carte::ModeleCarte)::Int
+	#seekstart(carte.fp)
+	nt = 0
+
+	carte.es = Int(read(carte.fp, Int32))
+	carte.sf = Int(read(carte.fp, Int32))
+	carte.ne = Int(read(carte.fp, Int32))
+	carte.nv = Int(read(carte.fp, Int32))
+	carte.kx = Int(read(carte.fp, Int32))
+
+	if (carte.kx == -1)			carte.nx = carte.nv; carte.ny = carte.ne
+	elseif (carte.kx == 1)		carte.nx = carte.ne; carte.ny = carte.nv
+	elseif (carte.kx == -2)		carte.nx = carte.ne; carte.ny = carte.nv
+	elseif (carte.kx == 2)		carte.nx = carte.nv; carte.ny = carte.ne
+	end
+
+	carte.dx = read(carte.fp, Float64)
+	carte.dy = read(carte.fp, Float64)
+	carte.xori = read(carte.fp, Float64)
+	carte.yori = read(carte.fp, Float64)
+	carte.az = read(carte.fp, Float64)
+	carte.zbase = read(carte.fp, Float64)
+	carte.zmult = read(carte.fp, Float64)
+
+	carte.label[1:48] = read(carte.fp, 48)
+	carte.mapno[1:16] = read(carte.fp, 16)
+
+	carte.iproj = Int(read(carte.fp, Int32))
+	carte.unitx = Int(read(carte.fp, Int32))
+	carte.unity = Int(read(carte.fp, Int32))
+	carte.unitz = Int(read(carte.fp, Int32))
+	carte.nvpts = Int(read(carte.fp, Int32))
+
+	carte.izmin = Float64(read(carte.fp, Float32))
+	carte.izmax = Float64(read(carte.fp, Float32))
+	carte.izmed = Float64(read(carte.fp, Float32))
+	carte.izmea = Float64(read(carte.fp, Float32))
+
+	carte.zvar = read(carte.fp, Float64)
+	carte.prcs = Int(read(carte.fp, Int32))
+
+	carte.user[1:324] = read(carte.fp, 324)
+
+	carte.test = -1e32					# 8 bytes
+	if (carte.es == 1)					# 1 byte
+		# NOTE: source has `!carte->sf==0` i.e. (!sf)==0 <=> sf != 0 —
+		# inverted vs. the sf comment ("0 unsigned;1 signed"); kept as-is.
+		carte.test = (carte.sf != 0) ? 255.0 : -127.0
+	elseif (carte.es == 2)				# 2 bytes
+		carte.test = (carte.sf == 0) ? 65535.0 : -32767.0
+	elseif (carte.es == 4)				# 4 bytes
+		carte.test = (carte.sf == 0) ? 4294967295.0 : (carte.sf == 1) ? -2147483647.0 : (carte.sf == 2 || carte.sf == 3) ? -1e32 : -1e32
+	end
+
+	return 512
+end
+
+
+"""lectureMatrice(carte, nt) — nt = nb of header lines to skip (ASCII only)."""
+function lectureMatrice(carte::ModeleCarte, nt::Int)
+	if (carte.kx == 1)			# lignes, gauche a droite, bas en haut
+		if !((carte.es == 4 && carte.sf == 2) || (carte.es == 1028 && carte.sf == 2))
+			println("Invalid grid format (Floats (4 or 8 bytes) only)")
+			@goto L2
+		end
+		if (carte.es == 4 && carte.sf == 2)
+			@inbounds for i in carte.ny:-1:1, j in 1:carte.nx
+				k = (i - 1) * carte.nx + j
+				carte.f[k] = read(carte.fp, Float32)
+			end
+		else
+			@inbounds for i in carte.ny:-1:1, j in 1:carte.nx
+				k = (i - 1) * carte.nx + j
+				carte.f[k] = Float32(read(carte.fp, Float64))
+			end
+		end
+		return 1
+
+	elseif (carte.kx == -1)		# colonnes, bas en haut, gauche a droite
+		if !((carte.es == 4 && carte.sf == 2) || (carte.es == 1028 && carte.sf == 2))
+			println("Invalid grid format (Floats (4 or 8 bytes) only)")
+			@goto L2
+		end
+		if (carte.es == 4 && carte.sf == 2)
+			@inbounds for j in 1:carte.nx, i in carte.ny:-1:1
+				k = (i - 1) * carte.nx + j
+				carte.f[k] = read(carte.fp, Float32)
+			end
+		else
+			@inbounds for j in 1:carte.nx, i in carte.ny:-1:1
+				k = (i - 1) * carte.nx + j
+				carte.f[k] = Float32(read(carte.fp, Float64))
+			end
+		end
+		return 1
+	end
+	# kx not in (1,-1) — falls off the end undefined, same as the C original
+
+	@label L2
+	println("### ERROR DETECTED WHILE READING A GEOSOFT GRID!")
+	println(" KX = $(carte.kx)")
+	println(" ES = $(carte.es)")
+	println(" SF = $(carte.sf)")
+	return 0
+end
