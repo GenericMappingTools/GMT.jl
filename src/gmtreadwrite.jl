@@ -1012,6 +1012,9 @@ function readgeosoft(filename::String)::GMTgrid{Float32,2}
 	G = mat2grid(reshape(carte.f, (carte.nx, carte.ny)), hdr=hdr, is_transposed=true, layout="TRB")
 	indnan = (G.z .<= carte.test)	# Have to use .<= instead of .== because of reported test value not accurate
 	any(indnan) ? (G.z[indnan] .= NaN; G.hasnans = 2) : (G.hasnans = 1)
+	if (hdr[5] == hdr[6] == 0.0)		# Damn file had absent zmin|max information in header
+		mi, ma = extrema_nan(G.z); G.range[5] = mi; G.range[6] = ma
+	end
 	return G
 end
 
