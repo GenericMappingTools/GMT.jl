@@ -60,10 +60,25 @@ end
 function pshst_wall!(in, hst, inc, n_bins::Int)
 	# Function barrier for type instability. With the body of this in the calling fun the 'inc' var
 	# introduces a mysterious type instability and execution times multiply by 3.
-	if (inc == 1)
-		@inbounds Threads.@threads for k = 1:numel(in)  hst[in[k] + 1, 2] += 1  end
-    else
-		@inbounds Threads.@threads for k = 1:numel(in)  hst[Int(floor(in[k] / inc) + 1), 2] += 1  end
+	# Same data race histogray had: the threaded `hst[bin,2] += 1` has every thread read-modify-write
+	# the same accumulators, so the counts differed from call to call. Accumulate per task, then sum.
+	n = numel(in)
+	nt = min(Threads.nthreads(), max(1, n ÷ 200_000))
+	if (nt <= 1)
+		if (inc == 1)  @inbounds for k = 1:n  hst[in[k] + 1, 2] += 1  end
+		else           @inbounds for k = 1:n  hst[Int(floor(in[k] / inc) + 1), 2] += 1  end
+		end
+	else
+		part, chunk = [fill(0, n_bins) for _ = 1:nt], cld(n, nt)
+		Threads.@sync for t = 1:nt
+			Threads.@spawn begin
+				c, k1, k2 = part[t], (t - 1) * chunk + 1, min(t * chunk, n)
+				if (inc == 1)  @inbounds for k = k1:k2  c[in[k] + 1] += 1  end
+				else           @inbounds for k = k1:k2  c[Int(floor(in[k] / inc) + 1)] += 1  end
+				end
+			end
+		end
+		@inbounds for t = 1:nt, i = 1:n_bins  hst[i,2] += part[t][i]  end
 	end
 	(isa(in, GItype) && in.nodata == typemax(eltype(in))) && (hst[end] = 0)
 	@inbounds Threads.@threads for k = 1:n_bins  hst[k,1] = inc * (k - 1)  end
@@ -74,10 +89,25 @@ end
 # This version computes the histogram for a UInt8 image band with a bin width of 1
 histogray(img::GMTimage{<:UInt8}; band=1) = histogray(view(img.image, :, :, band))
 function histogray(img::AbstractMatrix{UInt8})
-	edges, counts = 0:255, fill(0, 256)
-	Threads.@threads for v in img
-		@inbounds counts[v+1] += 1
+	# NOTE: `Threads.@threads for v in img; counts[v+1] += 1; end` is a DATA RACE — every thread
+	# read-modify-writes the same 256 accumulators, so the counts came out different on every call.
+	# Each task accumulates into its OWN 256 bins and they are summed at the end.
+	edges, n = 0:255, length(img)
+	nt = min(Threads.nthreads(), max(1, n ÷ 200_000))
+	if (nt <= 1)
+		counts = fill(0, 256)
+		@inbounds for k = 1:n  counts[img[k] + 1] += 1  end
+		return counts, edges
 	end
+	part, chunk = [fill(0, 256) for _ = 1:nt], cld(n, nt)
+	Threads.@sync for t = 1:nt
+		Threads.@spawn begin
+			c = part[t]
+			@inbounds for k = ((t - 1) * chunk + 1):min(t * chunk, n)  c[img[k] + 1] += 1  end
+		end
+	end
+	counts = part[1]
+	@inbounds for t = 2:nt, i = 1:256  counts[i] += part[t][i]  end
 	return counts, edges
 end
 

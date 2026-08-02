@@ -233,12 +233,22 @@ function enso(; data::Bool=false, data0::Bool=false, kwargs...)
 
 	# Incredibly, Downloads.download("https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt")
 	# hangs most of times or is very slow, but gmtread that also uses curl is fast and works fine!
+	# BUT reading that URL directly with gmtread truncates the file (last rows are lost), so we must
+	# first download it to a local file and read that one instead.
 	# The file, however, has this struct: SEAS  YR  TOTAL  ANOM, where SEAS is a 3-letter code for
 	# overlapping 3-month seasons (DJF, JFM, FMA, etc). Being a text we must resort to use -fa but
 	# that looses the first column (SEAS), so we read only YR and ANOM (cols 1 and 3 in -fa mode).
 	# We then reconstruct the decimal year from the row number.
 	opt_i = data ? "1,3" : "0,1,3"
-	D = gmtread("https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt", h=1, f=:a, i=opt_i)
+	url = "https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt"
+	fname = joinpath(TMPDIR_USR.dir, "GMTjl_oni_" * TMPDIR_USR.username * TMPDIR_USR.pid_suffix * ".txt")
+	try
+		run(`curl -s --show-error --fail $url -o $fname`)		# curl is fast for this site, Downloads is not
+	catch
+		Downloads.download(url, fname)							# But keep it as a fallback
+	end
+	D = gmtread(fname, h=1, f=:a, i=opt_i)
+	rm(fname, force=true)
 	if (data)
 		for k = 1:size(D, 1)  D[k, 1] += (rem(k,12) - 0.5) / 12  end
 	else
