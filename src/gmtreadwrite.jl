@@ -200,6 +200,8 @@ function gmtread(fname::String, d::Dict{Symbol, Any})
 		elseif (opt_T == "las")						# Means we got a .laz or .las file. Read it and leave
 			o_las = lazread(fname; d...)
 			return getproperty(o_las, Symbol(o_las.stored))
+		elseif (opt_T == "gsoft")					# Means we got a Geosoft .grd file. Read it and leave
+			return readgeosoft(fname)
 		end
 	else
 		opt_T = opt_T[1:4]      					# Remove whatever was given as argument to type kwarg
@@ -517,6 +519,10 @@ function guess_T_from_ext(fname::String; write::Bool=false, text_only::Bool=fals
 	else
 		out = ""
 	end
+	#if (ext == "grd" && isfile(fname * ".gi"))		# A Geosoft .grd has a companion <fname>.grd.gi (Quite fragile this test)
+		#out = "gsoft"
+	#end
+	return out
 end
 
 """
