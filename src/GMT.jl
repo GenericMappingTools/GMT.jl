@@ -478,9 +478,9 @@ using .Laszip
 	#pca(mat2img(rand(UInt8, 64,64,4)));
 	#kmeans(rand(100,3), 3, maxiter=10);
 	#rm(joinpath(tempdir(), "GMTjl_custom_p_x.txt"))		# This one gets created before username is set.
-	fft1d(rand(64));
-	fft2d(rand(Float32, 32, 32));					# real entry point -> ComplexF32 -> fft2d!
-	fft2d!(ComplexF32.(rand(32, 32)); inverse=true);
+	#fft1d(rand(64));
+	#fft2d(rand(Float32, 32, 32));					# real entry point -> ComplexF32 -> fft2d!
+	#fft2d!(ComplexF32.(rand(32, 32)); inverse=true);
 	#Gkov = mat2grid(rand(Float32, 32, 32));
 	#kovesi(Gkov, wavelength=16);					# whole ppdrc chain: filtergrid + 4 FFTs + histtruncate
 	#Gkov.z[8:12, 8:12] .= NaN32;  Gkov.hasnans = 2;
