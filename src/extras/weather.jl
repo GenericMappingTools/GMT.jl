@@ -659,11 +659,11 @@ function listecmwfvars(source::Symbol=:reanalysis; single::Bool=true, pressure::
 		d = filter(((k,v),) -> contains(v[2], contain), d)
 		isempty(d) && (@info "No variables found in the dataset for the search string \"$contain\""; return nothing)
 	end
-	ds = sort(d, by=first)
 	header = (what == "fc") ? ["ID","Name","Units"] : ["ID","Long-Name (nc var name)","Name","Units"]
 	align = (what == "fc") ? [:c,:l,:c] : [:c,:l,:l,:c]
 	t = (what == "fc") ? " (Forecast)" : " (ERA5)";	
 	test && return nothing
+	ds = sort(d, by=first)
 	pretty_table(hcat(collect(keys(ds)),stack(values(ds), dims=1)), header=header, alignment=align,
 	             title=title_str * "-level variables" * t, title_alignment=:l, crop=:horizontal)
 end
