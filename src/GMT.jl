@@ -513,7 +513,7 @@ InteractiveGMT's own `deps/build.jl` (already fetches the latest `gmtvtk.dll` fr
 Julia process, so this works standalone even when the InteractiveGMT GUI isn't running yet.
 """
 function iGMTinstall(up::Bool=false; update::Bool=false)
-	!Sys.iswindows() && (@warn("Currently, iGMTinstall() is only available on Windows."); return nothing)
+	!(Sys.iswindows() || (Sys.islinux() && Sys.ARCH === :x86_64)) && (@warn("iGMT binaries are not published for this platform."); return nothing)
 	_Pkg = Base.require(Base.PkgId(Base.UUID("44cfe95a-1eb2-52ea-b672-e2afdf69b78f"), "Pkg"))
 	if (update || up)
 		_Pkg.build("InteractiveGMT")
