@@ -169,6 +169,13 @@ function _gmt(cmd::String, args::Vector{Any})
 	end
 	(g_module == "grdpaste") && (noGrdCopy[] = false)
 
+	# 5+ If any output is a CUBE, ask the C lib to not pad it. A 3-D array is the last thing we want to de-pad.
+	got_cube = false
+	for k = 1:n_items
+		(X[k].direction != GMT_IN && X[k].family == GMT_IS_CUBE) && (got_cube = true; break)
+	end
+	got_cube && GMT_Set_Default(G_API[], "API_PAD", "0")
+
 	# 6. Run GMT module; give usage message if errors arise during parsing
 	status = GMT_Call_Module(G_API[], g_module, GMT_MODULE_OPT, LL)
 	if (status != 0)
@@ -193,8 +200,8 @@ function _gmt(cmd::String, args::Vector{Any})
 		out[X[k].pos+1] = GMTJL_Get_Object(G_API[], X[k], have_PS)    # Hook object onto rhs list
 	end
 
-	# 2++- If gmtread -Ti than reset the session's pad value that was temporarily changed above (2+++)
-	if (occursin("read", g_module) && (occursin("-Ti", r) || occursin("-Tg", r)) )
+	# 2++- If gmtread -Ti than reset the session's pad value that was temporarily changed above (2+++ and 5+)
+	if (got_cube || (occursin("read", g_module) && (occursin("-Ti", r) || occursin("-Tg", r))) )
 		GMT_Set_Default(G_API[], "API_PAD", string(pad))
 	end
 
@@ -388,14 +395,34 @@ function get_grid(object, cube::Bool)::GMTgrid
 		for n = 1:nb  V[n] = t[n]  end
 	end
 
-	t::Vector{Float32} = unsafe_wrap(Array, G.data, my * mx * nb)
-	if !(nb > 1 && padLeft == 0)			# Otherwise we are in experimental ground (so far only CUBEs)
-		z = (nb == 1) ? Array{Float32,2}(undef, ny, nx) : Array{Float32,3}(undef, ny, nx, nb)  
+	# The band stride is header.size, which is NOT always mx*my (GMT rounds it up so a grid can hold a
+	# complex pair), so size the wrap by it or we come up short of what the loops below address.
+	bandSize::Int = max(Int(gmt_hdr.size), mx * my)
+	t::Vector{Float32} = unsafe_wrap(Array, G.data, bandSize * nb)
+	# Un-padded, contiguous cube asked in GMT's own order (row major, top down) is already what we want.
+	rawCube::Bool = (nb > 1 && padLeft == 0 && bandSize == mx * my && startswith(GRD_MEM_LAYOUT[], "TR"))
+	if !rawCube
+		z = (nb == 1) ? Array{Float32,2}(undef, ny, nx) : Array{Float32,3}(undef, ny, nx, nb)
 	end
 
 	if (nb > 1)			# A CUBE
-		if (padLeft == 0)
-			z, layout = reshape(t, nx, ny, nb), "TRB"
+		if (rawCube)
+			z, layout = reshape(copy(t), ny, nx, nb), "TRB"		# Dims stay (ny,nx,nb) but memory runs x fastest
+		elseif (GRD_MEM_LAYOUT[] != "" && GRD_MEM_LAYOUT[][2] == 'R')	# Store array in Row Major (same as the grid case below)
+			ind_y = 1:ny		# Start assuming "TR"
+			if (startswith(GRD_MEM_LAYOUT[], "BR"))  ind_y = ny:-1:1  end	# Bottom up
+			k = 1
+			for band = 1:nb
+				offset = (band - 1) * gmt_hdr.size + padLeft
+				for row = ind_y
+					tt = ((row-1) + padTop) * mx + offset
+					for col = 1:nx
+						z[k] = t[col + tt]
+						k = k + 1
+					end
+				end
+			end
+			layout = GRD_MEM_LAYOUT[][1:2]*'B';
 		else
 			for k = 1:nb
 				offset = (k - 1) * gmt_hdr.size + padLeft
