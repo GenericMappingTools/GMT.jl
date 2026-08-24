@@ -205,7 +205,7 @@ function gammacorrection(I::GMTimage, gamma; contrast=[0.0, 1.0], brightness=[0.
 
 	@assert 0.0 <= contrast[1] < 1.0;	@assert 0.0 < contrast[2] <= 1.0;	@assert contrast[2] > contrast[1]
 	@assert 0.0 <= brightness[1] < 1.0;	@assert 0.0 < brightness[2] <= 1.0;	@assert brightness[2] > brightness[1]
-	contrast_min, contrast_max, brightness_min, brightness_max = 0.0, 1.0, 0.0, 1.0
+	#contrast_min, contrast_max, brightness_min, brightness_max = 0.0, 1.0, 0.0, 1.0
 	lut = (eltype(I) == UInt8) ? linspace(0.0, 1, 256) : linspace(0.0, 1, 65536)
 	lut = max.(contrast[1], min.(contrast[2], lut))
 	lut = ((lut .- contrast[1]) ./ (contrast[2] - contrast[1])) .^ gamma;
