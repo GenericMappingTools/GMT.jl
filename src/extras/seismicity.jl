@@ -56,21 +56,25 @@ function _seismicity(d::Dict{Symbol, Any}, starttime::String, endtime::String, m
                      maxdepth::Float64, last::Tuple{Int, String}, year::Int, printurl::Bool, layers::Int, legend::Bool, show::Bool)
 
 	(layers != 3 && layers != 4) && error("Only 3 or 4 (depth) layers are allowed.")
-	url = "https://earthquake.usgs.gov/fdsnws/event/1/query.csv?format=csv&orderby=time-asc&minmagnitude=$minmagnitude"
+	# Ask NEWEST-FIRST, with an explicit limit. The service caps one answer at 20000 records and the
+	# cap keeps the FRONT of the ordering, so 'time-asc' silently drops the RECENT end of a query that
+	# overruns it (and with no explicit limit the service errors instead of answering). The records are
+	# sorted back into ascending time after reading, so what comes back is in the same order as always.
+	url = "https://earthquake.usgs.gov/fdsnws/event/1/query.csv?format=csv&orderby=time&limit=$USGS_EVENT_LIMIT&minmagnitude=$minmagnitude"
 
 	url = helper_get_date_interval(d, last, url, starttime, endtime, year, "&starttime=", "&endtime=")	# See if a period was requested
+	url = usgs_endtime_whole_day(url)		# An 'endtime' as a bare date means MIDNIGHT, losing the end day
 
 	if ((opt_R::String = parse_R(d, "")[2]) != "")
 		(opt_R[end] == 'r') && error("Region as lon_min/lat_min/lon_max/lat_max form is not supported here.")
 		!contains(opt_R, '/') && (opt_R = " " * coast(getR=opt_R[4:end]))
 		contains(opt_R, "NaN") && (@warn("Bad 'region' argument. Defaulting to global."); opt_R = " -R-180/180/-90/90")
 		spli = split(opt_R[4:end], '/')
-		x1, x2 = parse.(Float64, spli[1:2])
-		x2 > 180 && (spli[1] = @sprintf("%.6g", x2-180-(x2-x1)); spli[2] = @sprintf("%.6g", x2-180);)
-		url *= "&minlongitude="*spli[1]
-		url *= "&maxlongitude="*spli[2]
-		url *= "&minlatitude="*spli[3]
-		url *= "&maxlatitude="*spli[4]
+		x1, x2, y1, y2 = usgs_query_box(parse.(Float64, spli[1:4])...)	# opt_R itself is left alone (it draws the map)
+		url *= "&minlongitude=" * @sprintf("%.6g", x1)
+		url *= "&maxlongitude=" * @sprintf("%.6g", x2)
+		url *= "&minlatitude="  * @sprintf("%.6g", y1)
+		url *= "&maxlatitude="  * @sprintf("%.6g", y2)
 	end
 	(opt_R == "") && (opt_R = " -Rd")
 	if (((val = find_in_dict(d, [:circle])[1]) !== nothing) && length(val) == 3)
@@ -83,12 +87,9 @@ function _seismicity(d::Dict{Symbol, Any}, starttime::String, endtime::String, m
 	(maxdepth > 0) && (url *= "&maxdepth=$maxdepth")
 
 	printurl && println(url)
-	file = Downloads.download(url, "_query.csv")
 	no_plot = (find_in_dict(d, [:data])[1] !== nothing)
-	opt_i = no_plot ? "2,1,3,4,0" : "2,1,3,4"
-	D = gmtread(file, h=1, i=opt_i)
-	rm(file)
-	isempty(D) && (println("\tThe query return an empty result."); return nothing)
+	D = usgs_events(url, no_plot)
+	(D === nothing) && (println("\tThe query return an empty result."); return nothing)
 
 	no_plot && return D			# No map, just return the data.
 
@@ -131,6 +132,117 @@ function _seismicity(d::Dict{Symbol, Any}, starttime::String, endtime::String, m
 	st = (starttime != "") ? starttime : string(Date(now() - Dates.Day(30)))
 	et = (endtime != "") ? endtime : string(Date(now()))
 	legend && seislegend(; title="From "*st*" to "*et, cmap=C, mags=ms, pos="JBC+o0/1c+w12c/2.3c", d...)
+end
+
+# ------------------------------------------------------------------------------------------------------
+const USGS_EVENT_LIMIT = 20000		# The FDSN service's own ceiling on the number of records in one answer
+
+"""
+    W, E, S, N = usgs_query_box(W, E, S, N)
+
+Turn a region into a box the USGS FDSN service accepts. A region can legitimately arrive as something
+that is not a legal query box — a map view fitted a hair wider than the world (-180.5/180.5/-90.5/90.5),
+or a Pacific window that runs past +180 (150/210). The service answers HTTP 400 for a latitude outside
+±90 and for a longitude outside ±360, so:
+
+- latitudes are clamped;
+- a full turn (or more) of longitude collapses to the whole world;
+- a window crossing the dateline is shifted WHOLE into the negative half. -210/-150 asks for exactly
+  the same 60 degrees of Pacific that 150/210 means, and it keeps `maxlongitude` at or below +180.
+"""
+function usgs_query_box(W::Float64, E::Float64, S::Float64, N::Float64)::NTuple{4, Float64}
+	S, N = min(S, N), max(S, N)
+	S = clamp(S, -90.0, 90.0);	N = clamp(N, -90.0, 90.0)
+	W, E = min(W, E), max(W, E)
+	(E - W >= 360.0) && return (-180.0, 180.0, S, N)
+	if (E > 180.0)
+		k = ceil((E - 180.0) / 360.0);		W -= 360.0 * k;		E -= 360.0 * k
+	end
+	(W < -360.0) && return (-180.0, 180.0, S, N)		# Nothing sane left to ask for
+	return (W, E, S, N)
+end
+
+# ------------------------------------------------------------------------------------------------------
+# An 'endtime' given as a bare date means MIDNIGHT that morning, so the whole of the end day is thrown
+# away. Extend it to the end of that day. Done here and not in helper_get_date_interval() because that
+# helper is shared with weather(), which talks to a different service.
+function usgs_endtime_whole_day(url::String)::String
+	((k = findfirst("endtime=", url)) === nothing) && return url
+	(first(k) > 1 && url[first(k)-1] != '&' && url[first(k)-1] != '?') && return url		# 'starttime=' & friends
+	i = last(k) + 1										# First char of the value
+	j = something(findnext('&', url, i), lastindex(url) + 1) - 1
+	return occursin('T', url[i:j]) ? url : url[1:j] * "T23:59:59" * url[j+1:end]
+end
+
+# ------------------------------------------------------------------------------------------------------
+# Fetch `url` into MEMORY and hand back the answer as one String. No file is written anywhere.
+# Downloads first (in-process), curl only as the fallback — this service resets the connection now and
+# then and curl gets through where Downloads does not. curl's stdout is read, so it writes nothing either.
+function usgs_download(url::String)::String
+	for k = 1:3							# This service resets the connection now and then, curl included
+		try
+			txt::String = ""
+			if (k == 1)
+				io = IOBuffer();	Downloads.download(url, io);	txt = String(take!(io))
+			else
+				txt = read(`curl -s --show-error --fail --max-time 180 $url`, String)
+			end
+			!isempty(txt) && return txt
+		catch err
+			(k == 3) && rethrow(err)
+			@warn("Download of the USGS query failed ($(err)). Retrying with curl.")
+		end
+	end
+	error("The USGS query returned nothing.")
+end
+
+# ------------------------------------------------------------------------------------------------------
+# The csv answer -> the GMTdataset, parsed in memory. No csv reader is needed: the five columns wanted
+# (time, latitude, longitude, depth, mag) are the FIRST five of the service's fixed layout and all of
+# them come BEFORE its one quoted field ('place', column 14), so a plain comma split is exact. What is
+# built is what `gmtread(file, h=1, i="2,1,3,4,0")` used to build: columns lon,lat,depth,mag[,time],
+# the rest of each record kept as trailing text, and the same colnames/Timecol. `wanttime` adds the
+# time column (the 'data' option); without it the columns are the four the map needs.
+# Records come back newest-first (see the url) and are sorted here into ascending time.
+function usgs_events(url::String, wanttime::Bool)::Union{GMTdataset{Float64, 2}, Nothing}
+	txt::String = usgs_download(url)
+	lon, lat, dep, mag, t, rest = Float64[], Float64[], Float64[], Float64[], Float64[], String[]
+	hdr = true
+	for line in split(txt, '\n')
+		s = strip(line)
+		isempty(s) && continue
+		if (hdr)  hdr = false;	continue  end			# The one header line
+		f = split(s, ','; limit=6)						# time,latitude,longitude,depth,mag,<rest>
+		(length(f) < 5) && continue
+		push!(t,   usgs_isotime(f[1]))
+		push!(lat, usgs_num(f[2]));		push!(lon, usgs_num(f[3]))
+		push!(dep, usgs_num(f[4]));		push!(mag, usgs_num(f[5]))
+		push!(rest, length(f) == 6 ? String(f[6]) : "")
+	end
+	isempty(lon) && return nothing
+	(length(lon) >= USGS_EVENT_LIMIT) &&
+		@warn("The query hit the $(USGS_EVENT_LIMIT) events ceiling. Older events were dropped, not recent ones.")
+
+	k = sortperm(t)										# Back to ascending time, as 'time-asc' used to give
+	mat = wanttime ? [lon[k] lat[k] dep[k] mag[k] t[k]] : [lon[k] lat[k] dep[k] mag[k]]
+	coln = wanttime ? ["longitude", "latitude", "depth", "mag", "Time", "magType"] :
+	                  ["longitude", "latitude", "depth", "mag", "magType"]
+	D::GMTdataset{Float64, 2} = mat2ds(mat; text=rest[k], colnames=coln)
+	wanttime && (D.attrib["Timecol"] = "5")
+	return D
+end
+
+usgs_num(f::Union{String, SubString{String}})::Float64 =
+	(s = strip(f); isempty(s) ? NaN : something(tryparse(Float64, s), NaN))
+
+# The record's ISO-8601 instant ("2026-08-24T00:00:48.085Z") as seconds since 1970 (what gmtread's
+# time column carried). NaN when unparsable, so one malformed row never kills the whole answer.
+function usgs_isotime(f::Union{String, SubString{String}})::Float64
+	s = strip(f)
+	(length(s) < 19) && return NaN
+	endswith(s, "Z") && (s = s[1:end-1])
+	dt = tryparse(DateTime, String(s))
+	return dt === nothing ? NaN : datetime2unix(dt)
 end
 
 # ------------------------------------------------------------------------------------------------------
