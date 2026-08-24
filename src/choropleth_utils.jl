@@ -142,7 +142,6 @@ usable in cpt2dcw() to create a colormap to use in `plot()` and make a country c
 """
 function mk_codes_values(codes::Vector{<:AbstractString}, vals; region::StrSymb="world")
 	isempty(codes) && error("The country codes 'codes' input argument is empty.")
-	code_len = length(codes[1])
 	(length(codes[1]) != 3) && error("The country codes in this function must follow the 3 char ISO codes. This does not.")
 
 	_reg = lowercase(string(region))

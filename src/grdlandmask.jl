@@ -49,9 +49,9 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function grdlandmask_helper(w::wrapGrids, d::Dict{Symbol, Any})
-	cmd0, arg1 = unwrapGrids(w)
+	arg1 = unwrapGrids(w)[2]
 
-    cmd::String, prj::String = "", ""
+	cmd::String, prj::String = "", ""
 	if (arg1 !== nothing)
 		prj = getproj(arg1, proj4=true)
 		(contains(prj, "=lon") || contains(prj, "=lat")) && (prj = "")  # Cool, it's geog, no proj needed.

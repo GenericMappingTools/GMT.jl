@@ -1148,7 +1148,7 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 	if (extra_parse && (opt_B != DEF_FIG_AXES[] && opt_B != DEF_FIG_AXES3[]))
 		# This is old code that takes care to break a string in tokens and prefix with a -B to each token
 		tok = Vector{String}(undef, 10)
-		k = 1;		r = opt_B;		found = false
+		k = 1;		r = opt_B
 		while (r != "")
 			tok[k], r = strtok(r)
 			tok[k] = replace(tok[k], '\x7f'=>' ')
