@@ -407,7 +407,9 @@ function _earthregions(name::String, proj::String, grid::Bool, dataset::String, 
 	code = (coll_name == "") ? name : ""				# If not, than it must be a code
 
 	if (coll_name != "")		# Just show the collection
-		return show(gmtread(pato * coll_name * "_collection.txt"), allrows=true)
+		# Base.show, spelled out: `show` is also this function's own Bool keyword, and an unqualified
+		# call here resolves to that Bool -> "objects of type Bool are not callable".
+		return Base.show(gmtread(pato * coll_name * "_collection.txt"), allrows=true)
 	else						# Need to find region
 		opt_E = ""
 		(contains(code,",") || contains(code, '.')) && (exact = true)	# For composite codes don't bother to make a union of rounded -R's

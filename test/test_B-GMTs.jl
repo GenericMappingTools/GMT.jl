@@ -197,9 +197,9 @@
 	show(mat2img(rand(UInt8,4,4)));
 	imshow(I, show=false)			# Test this one here because we have a GMTimage at hand
 	gmtwrite("lixo.tif", mat2img(rand(UInt8,32,32,3)), driver=:GTiff)
-	@test GMT.parse_grd_format(Dict(:nan => 0)) == "+n0"
+	@test GMT.parse_grd_format(Dict{Symbol,Any}(:nan => 0)) == "+n0"
 	@test_throws ErrorException("Input data of unknown data type Int64") GMT.gmtwrite(" ", 1)
-	@test_throws ErrorException("Format code MUST have 2 characters and not bla") GMT.parse_grd_format(Dict(:id => "bla"))
+	@test_throws ErrorException("Format code MUST have 2 characters and not bla") GMT.parse_grd_format(Dict{Symbol,Any}(:id => "bla"))
 	r = rand(UInt8(0):UInt8(10),10,10);	C=makecpt(range=(0,11,1));	I = mat2img(r, cmap=C);
 	cpt = makecpt(T="-6/8/1");
 	gmtwrite("lixo.cpt", cpt)
