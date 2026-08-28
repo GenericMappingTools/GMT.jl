@@ -7,10 +7,11 @@ nt2dict(; kw...) = Dict{Symbol,Any}(kw)
 # A darker an probably more efficient way is: ((; kw...) -> kw.data)(; d...) but breaks in PyCall
 dict2nt(d::AbstractDict)::NamedTuple = NamedTuple{Tuple(Symbol.(keys(d)))}(values(d))
 
-function find_in_dict(d::Dict, symbs::VMs, del::Bool=true, help_str::String="")
+function find_in_dict(d::Dict{Symbol,Any}, symbs::VMs, del::Bool=true, help_str::String="")
 	# See if D contains any of the symbols in SYMBS. If yes, return corresponding value
-	(SHOW_KWARGS[] && help_str != "") && return (print_kwarg_opts(symbs, help_str), Symbol())
-	for symb in symbs
+	_symbs::Vector{Symbol} = isa(symbs, Vector{Symbol}) ? symbs : vec(symbs)
+	(SHOW_KWARGS[] && help_str != "") && return (print_kwarg_opts(_symbs, help_str), Symbol())
+	for symb in _symbs
 		if (haskey(d, symb))
 			val = d[symb]				# SHIT is that 'val' is always a ANY
 			(del) && delete!(d, symb)
@@ -19,6 +20,27 @@ function find_in_dict(d::Dict, symbs::VMs, del::Bool=true, help_str::String="")
 	end
 	return nothing, Symbol()
 end
+
+
+function __find_in_dict(d::Dict{Symbol,Any}, symbs::Vector{Symbol}, del::Bool=true, help_str::String="")
+	(SHOW_KWARGS[] && help_str != "") && return (print_kwarg_opts(symbs, help_str), Symbol(), true)
+	for symb in symbs
+		if haskey(d, symb)
+			val = d[symb]
+			del && delete!(d, symb)
+			return val, Symbol(symb), false
+		end
+	end
+	return nothing, Symbol(), nothing   # or use a sentinel pattern
+end
+
+# Typed wrapper — the workhorse:
+function find_in_dict2(::Type{T}, d::Dict{Symbol,Any}, symbs::VMs; del::Bool=true) where T
+	_symbs::Vector{Symbol} = isa(symbs, Vector{Symbol}) ? symbs : vec(symbs)
+	v, s::Symbol = __find_in_dict(d, _symbs, del)
+	return (v === nothing) ? nothing : v::T, s      # assertion converts Any → T HERE
+end
+
 
 """
     delete!(d::Dict, symbs::Vector{T}) where T
@@ -64,7 +86,7 @@ end
 Check if `d` contains any of the symbols in `symbs`. If yes, return the used symb in symbs,
 else return nothing.
 """
-function is_in_dict(d::Dict, symbs::VMs, help_str::String=""; del::Bool=false)::Union{Symbol, Nothing}
+function is_in_dict(d::Dict{Symbol,Any}, symbs::VMs, help_str::String=""; del::Bool=false)::Union{Symbol, Nothing}
 	(SHOW_KWARGS[] && help_str != "") && return print_kwarg_opts(symbs, help_str)
 	for symb in symbs
 		if (haskey(d, symb))
@@ -94,7 +116,7 @@ function init_module(first::Bool, kwargs...)
 	return d, K, O
 end
 
-function GMTsyntax_opt(d::Dict, cmd::String, del::Bool=true)::Tuple{String, String}
+function GMTsyntax_opt(d::Dict{Symbol,Any}, cmd::String, del::Bool=true)::Tuple{String, String}
 	o::String = ""
 	if haskey(d, :compact)
 		o = d[:compact]::String
@@ -116,7 +138,7 @@ canvas of 2x2 m. But for tuning it may be useful to plot a grid. For that use 'p
 Other option is to set the units to inches. For it use 'paper=:inch'
 If both inches and grid is intended use 'paper=(:inch,:grid)'
 """
-function parse_paper(d::Dict)
+function parse_paper(d::Dict{Symbol,Any})
 	((val = find_in_dict(d, [:paper])[1]) === nothing) && return nothing
 
 	opt_J::String, opt_B::String, opt_R::String = " -Jx1c", "", " -R0/200/0/200"
@@ -151,16 +173,16 @@ function leave_paper_mode()
 end
 
 # ---------------------------------------------------------------------------------------------------
-parse_RIr(d::Dict, cmd::String, O::Bool=false, del::Bool=true) = parse_R(d, cmd, O=O, del=del, RIr=true)
-function parse_R(d::Dict, cmd::String; O::Bool=false, del::Bool=true, RIr::Bool=false, noGlobalR::Bool=false)::Tuple{String, String}
+parse_RIr(d::Dict{Symbol,Any}, cmd::String, O::Bool=false, del::Bool=true) = parse_R(d, cmd, O=O, del=del, RIr=true)
+function parse_R(d::Dict{Symbol,Any}, cmd::String; O::Bool=false, del::Bool=true, RIr::Bool=false, noGlobalR::Bool=false)::Tuple{String, String}
 	# Build the option -R string. Make it simply -R if overlay mode (-O) and no new -R is fished here
 	# The RIr option is to assign also the -I and -r when R was given a GMTgrid|image value. This is a
 	# workaround for a GMT bug that ignores this behaviour when from externals.
 
-	(SHOW_KWARGS[]) && return (print_kwarg_opts([:R :region :limits], "GMTgrid | NamedTuple |Tuple | Array | String"), "")
+	(SHOW_KWARGS[]) && return (print_kwarg_opts([:R, :region, :limits], "GMTgrid | NamedTuple |Tuple | Array | String"), "")
 
 	opt_R::String = ""
-	val, symb = find_in_dict(d, [:R :region :limits :region_llur :limits_llur :limits_diag :region_diag], del)
+	val, symb = find_in_dict(d, [:R, :region, :limits, :region_llur, :limits_llur, :limits_diag, :region_diag], del)
 
 	(val === nothing && IamModern[] && !RIr) && return cmd, ""
 	opt_R = build_opt_R(val, symb)
@@ -169,16 +191,12 @@ function parse_R(d::Dict, cmd::String; O::Bool=false, del::Bool=true, RIr::Bool=
 
 	already_know = false					# To signal if we already know the grid limits in numeric
 	if (RIr)
-		val_str::String = isa(val, String) ? val : ""
 		if (isa(val, GItype))
-			opt_I = parse_I(d, "", [:I :inc :increment :spacing], "I", true)
-			(opt_I == "") ? (cmd *= " -I" * arg2str(val.inc))::String : (cmd *= opt_I)
-			opt_r = parse_r(d, "")[2]
-			(opt_r == "") && (cmd *= " -r" * ((val.registration == 0) ? "g" : "p"))
-		elseif (!isempty(val_str) && ((t = guess_T_from_ext(val_str)) == " -Tg" || t == " -Ti"))		# A file name
-			info::Matrix{Float64} = gmt_grdinfo_C(val_str).data			# Get the grid info
+			cmd = handle_RIr_grid(d, cmd, val)			# CHANGED: function barrier, val is typed inside
+		elseif (isa(val, String) && ((t = guess_T_from_ext(val)) == " -Tg" || t == " -Ti"))		# A file name
+			info::Matrix{Float64} = gmt_grdinfo_C(val).data			# Get the grid info
 			opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g", info[1,1], info[1,2], info[1,3], info[1,4])
-			(opt_I = parse_I(d, "", [:I :inc :increment :spacing], "I", true)) == "" &&
+			(opt_I = parse_I(d, "", [:I, :inc, :increment, :spacing], "I", true)) == "" &&
 				(opt_I = @sprintf(" -I%.8g/%.8g", info[7], info[8]))	# The grid increment
 			(opt_r = parse_r(d, "")[2]) == "" && (cmd *= " -r" * ((info[11] == 0) ? "g" : "p"))
 			cmd *= opt_I
@@ -186,7 +204,7 @@ function parse_R(d::Dict, cmd::String; O::Bool=false, del::Bool=true, RIr::Bool=
 			all(CTRL.limits[1:4] .== 0) && (CTRL.limits[1:4] = info[1:4])
 			already_know = true				# Signal that we already know the grid limits in numeric
 		else				# Here we must parse the -I and -r separately.
-			cmd = parse_I(d, cmd, [:I :inc :increment :spacing], "I", del)
+			cmd = parse_I(d, cmd, [:I, :inc, :increment, :spacing], "I", del)
 			cmd = parse_r(d, cmd, del)[1]
 		end
 	end
@@ -195,9 +213,9 @@ function parse_R(d::Dict, cmd::String; O::Bool=false, del::Bool=true, RIr::Bool=
 	if (!already_know && opt_R != "" && opt_R != " -R" && !IamInset.active && !noGlobalR)	# Save limits in numeric
 		bak = IamModern[]
 		try
-			limits = opt_R2num(opt_R)
+			limits = opt_R2num(opt_R)			# CHANGED: see note below — opt_R2num now returns Vector{Float64}
 			CTRL.limits[7:7+length(limits)-1] = limits		# The plot limits
-			(!contains(opt_R, " -Rtight") && opt_R !== nothing && limits != zeros(4) && all(CTRL.limits[1:4] .== 0)) &&
+			(!contains(opt_R, " -Rtight") && limits != zeros(4) && all(CTRL.limits[1:4] .== 0)) &&
 				(CTRL.limits[1:length(limits)] = limits)	# And this makes data = plot limits, IF data is empty.
 			if (istilename(opt_R))							# A XYZ or quadtree tile address (like "7829,6374,14")
 				opt_R = @sprintf(" -R%.12g/%.12g/%.12g/%.12g", limits[1], limits[2], limits[3], limits[4])
@@ -217,8 +235,18 @@ function parse_R(d::Dict, cmd::String; O::Bool=false, del::Bool=true, RIr::Bool=
 	return cmd, opt_R
 end
 
+# Because `g` arrives as ::GItype, g.inc and g.registration are typed field
+# accesses here — no Anys, no dynamic dispatch, and JET is happy.
+function handle_RIr_grid(d::Dict{Symbol,Any}, cmd::String, g::GItype)::String
+	opt_I = parse_I(d, "", [:I, :inc, :increment, :spacing], "I", true)
+	(opt_I == "") ? (cmd *= " -I" * arg2str(g.inc)) : (cmd *= opt_I)
+	opt_r = parse_r(d, "")[2]
+	(opt_r == "") && (cmd *= " -r" * ((g.registration == 0) ? "g" : "p"))
+	return cmd
+end
+
 # ---------------------------------------------------------------------------------------------------
-function merge_R_and_xyzlims(d::Dict, opt_R::String)::String
+function merge_R_and_xyzlims(d::Dict{Symbol,Any}, opt_R::String)::String
 	# Let a -R be partially changed by the use of optional xyzlim
 
 #=
@@ -230,7 +258,7 @@ function merge_R_and_xyzlims(d::Dict, opt_R::String)::String
 		((isa(val, Tuple) || isvector(val)) && eltype(val) <: Real) && return @sprintf("%.15g/%.15g", val[1], val[2])
 		!(eltype(val) <: Tuple{Real, Real}) && error("Wrong data type: $(typeof(val)). Should be ((x1,x2),(x3,x4))")
 		# Here we are dealing with a broken axes limits
-		lims::Vector{Float64} = [val[1][1] val[1][2] val[2][1] val[2][2]]		# To get rid of the Anys
+		lims::Vector{Float64} = [val[1][1], val[1][2], val[2][1], val[2][2]]		# To get rid of the Anys
 		frac = (lims[2] - lims[1]) / (lims[4] - lims[1])	# Fractional size of this axis
 		CTRL.figsize[ind+3] = CTRL.figsize[ind]				# Store the axis total length
 		CTRL.figsize[ind] *= frac							# Store this sub-axis size for later use in ...
@@ -238,19 +266,19 @@ function merge_R_and_xyzlims(d::Dict, opt_R::String)::String
 	end
 	xlim, ylim, zlim = parse_lims(d, 'x'), parse_lims(d, 'y'), parse_lims(d, 'z')
 =#
-	function fetch_xyz_lims(d::Dict, symbs)::String
+	function fetch_xyz_lims(d::Dict{Symbol,Any}, symbs)::String
 		((val = find_in_dict(d, symbs, false)[1]) === nothing) && return ""
-		f1::Float64, f2::Float64 = Float64(val[1]), Float64(val[2])		# Avoid sending Anys to printf. The pure horror acording to JET
+		f1 = Float64(val[1])::Float64;	f2 = Float64(val[2])::Float64	# Avoid sending Anys to printf. The pure horror acording to JET
 		return @sprintf("%.15g/%.15g", f1, f2)
 	end
 
-	xlim::String = fetch_xyz_lims(d, [:xlim :xlims :xlimits])
-	ylim::String = fetch_xyz_lims(d, [:ylim :ylims :ylimits])
-	zlim::String = fetch_xyz_lims(d, [:zlim :zlims :zlimits])
+	xlim::String = fetch_xyz_lims(d, [:xlim, :xlims, :xlimits])
+	ylim::String = fetch_xyz_lims(d, [:ylim, :ylims, :ylimits])
+	zlim::String = fetch_xyz_lims(d, [:zlim, :zlims, :zlimits])
 
 	(xlim === "" && ylim === "" && zlim === "") && return opt_R
 
-	function clear_xyzlims(d::Dict, xlim, ylim, zlim)
+	function clear_xyzlims(d::Dict{Symbol,Any}, xlim, ylim, zlim)
 		# When calling this fun, if they exist they were used too so must remove them
 		# In the other case - they exist but were not used - we keep them to be eventually used in read_data()
 		(xlim != "") && delete!(d, [:xlim, :xlims, :xlimits])
@@ -292,7 +320,7 @@ function build_opt_R(val, symb::Symbol=Symbol())::String		# Generic function tha
 	R::String = ""
 	if ((isvector(val) || isa(val, Tuple)) && (length(val) == 4 || length(val) == 6))
 		if (symb ∈ (:region_llur, :limits_llur, :limits_diag, :region_diag))
-			_val::Vector{Float64} = Float64[val...]
+			_val::Vector{Float64} = collect(Float64, val)
 			R = " -R" * @sprintf("%.15g/%.15g/%.15g/%.15g+r", _val[1], _val[3], _val[2], _val[4])::String
 		else
 			R = " -R" * arg2str(val)
@@ -316,7 +344,7 @@ function build_opt_R(arg::NamedTuple, symb::Symbol=Symbol())::String
 	d = nt2dict(arg)					# Convert to Dict
 	if ((val = find_in_dict(d, [:limits :region])[1]) !== nothing)
 		if ((isa(val, VecOrMat{<:Real}) || isa(val, Tuple)) && (length(val) == 4 || length(val) == 6))
-			vval::Vector{Float64} = Float64[val...]
+			vval::Vector{Float64} = collect(Float64, val)
 			if (haskey(d, :diag) || haskey(d, :diagonal))		# The diagonal case
 				BB = @sprintf("%.15g/%.15g/%.15g/%.15g+r", vval[1], vval[3], vval[2], vval[4])
 			else
@@ -368,13 +396,14 @@ function opt_R2num(opt_R::String)::Vector{Float64}
 	(opt_R == "") && error("opt_R is empty but that shouldn't happen here.")
 	(endswith(opt_R, "Rg")) && return [0.0, 360., -90., 90.]
 	(endswith(opt_R, "Rd")) && return [-180.0, 180., -90., 90.]
+	local limits::Vector{Float64}			# force all branches through convert
 	if (findfirst("/", opt_R) !== nothing && !contains(opt_R, ":"))
 		isdiag = false
 		if ((ind = findfirst("+r", opt_R)) !== nothing)		# Diagonal mode
 			opt_R = opt_R[1:ind[1]-1];	isdiag = true		# Strip the "+r"
 		end
 		rs = split(opt_R, '/')
-		limits::Vector{Float64} = zeros(length(rs))
+		limits = zeros(length(rs))
 		fst::Int = ((ind = findfirst("R", rs[1])) !== nothing) ? ind[1] : 0
 		limits[1] = parse(Float64, rs[1][fst+1:end])
 		for k = 2:lastindex(rs)  limits[k] = parse(Float64, rs[k])  end
@@ -409,7 +438,7 @@ function opt_R2num(opt_R::String)::Vector{Float64}
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_JZ(d::Dict, cmd::String, del::Bool=true; O::Bool=false, is3D::Bool=false)::Tuple{String,String}
+function parse_JZ(d::Dict{Symbol,Any}, cmd::String, del::Bool=true; O::Bool=false, is3D::Bool=false)::Tuple{String,String}
 	symbs = [:JZ :Jz :zsize :zscale]
 	(SHOW_KWARGS[]) && return (print_kwarg_opts(symbs, "String | Number"), "")
 	opt_J::String = "";		seek_JZ = true
@@ -476,7 +505,7 @@ function is_axis_equal(d)::Bool
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_J(d::Dict, cmd::String; default::String="", map::Bool=true, O::Bool=false, del::Bool=true)
+function parse_J(d::Dict{Symbol,Any}, cmd::String; default::String="", map::Bool=true, O::Bool=false, del::Bool=true)
 	# Build the option -J string. Make it simply -J if in overlay mode (-O) and no new -J is fished here
 	# Default to 15c if no size is provided.
 	# If MAP == false, do not try to append a fig size
@@ -605,7 +634,7 @@ function get_figsize(opt_R::String="", opt_J::String="")::Tuple{Float64, Float64
 	return Dwh[1], Dwh[2]		# Width, Height
 end
 
-function helper_append_figsize(d::Dict, opt_J::String, O::Bool, del::Bool=true)::String
+function helper_append_figsize(d::Dict{Symbol,Any}, opt_J::String, O::Bool, del::Bool=true)::String
 	val_, symb = find_in_dict(d, [:figscale :fig_scale :scale :figsize :fig_size], del)
 	# Use the current figure size in overlay mode when we pass a projection but no size in it.
 	(O && val_ === nothing && CTRL.pocket_J[2] != "" && length(opt_J) > 3 && !endswith(opt_J, CTRL.pocket_J[2])) && (val_ = CTRL.pocket_J[2])
@@ -630,7 +659,7 @@ function helper_append_figsize(d::Dict, opt_J::String, O::Bool, del::Bool=true):
 	return opt_J
 end
 
-function append_figsize(d::Dict, opt_J::String, width::String="", scale::Bool=false, O::Bool=false)::String
+function append_figsize(d::Dict{Symbol,Any}, opt_J::String, width::String="", scale::Bool=false, O::Bool=false)::String
 	# Appending either a fig width or fig scale depending on what projection.
 	# Sometimes we need to separate with a '/' others not. If WIDTH == "" we
 	# use the DEF_FIG_SIZE, otherwise use WIDTH that can be a size or a scale.
@@ -731,7 +760,7 @@ function plot_GI_size(GI::GItype, opt_J="", opt_R="")
 end
 
 # ----------------------------------------------------------------------------------------------------
-function check_flipaxes(d::Dict, width::AbstractString)
+function check_flipaxes(d::Dict{Symbol,Any}, width::AbstractString)
 	# Deal with the case that we want to invert the axis sense.
 	# flipaxes(x=true, y=true) OR  flipaxes("x", :y) OR flipaxes(:xy)
 	# Note: 'flipaxes' is meant to be used in subplots only, where we are not(?) supposed to change the
@@ -955,7 +984,7 @@ grid pen and individual axes, or as a string.
 ### Examples
 grid=:on => -Bg;	grid=:x => -Bxg;	grid="x10" => -Bxg10; grid=:y ...;  grid=:xyz => " -Bg -Bzg"
 """
-function parse_grid(d::Dict, args; opt_B::String="", stalone::Bool=true)::String
+function parse_grid(d::Dict{Symbol,Any}, args; opt_B::String="", stalone::Bool=true)::String
 	pre::String = (stalone) ? " -B" : ""
 	get_int(oo) = return (tryparse(Float64, oo) !== nothing) ? oo : ""	# Micro nested-function
 	if (isa(args, NamedTuple))	# grid=(pen=?, x=?, y=?, xyz=?)
@@ -992,7 +1021,7 @@ function parse_grid(d::Dict, args; opt_B::String="", stalone::Bool=true)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tuple{String,String}
+function parse_B(d::Dict{Symbol,Any}, cmd::String, opt_B__::String="", del::Bool=true)::Tuple{String,String}
 	# opt_B is used to transmit a default value. If not empty the Bframe part must be at the end and only one -B...
 
 	(SHOW_KWARGS[]) && return (print_kwarg_opts([:B :frame :axes :axis :xaxis :yaxis :zaxis :axis2 :xaxis2 :yaxis2], "NamedTuple | String"), "")
@@ -1089,7 +1118,7 @@ function parse_B(d::Dict, cmd::String, opt_B__::String="", del::Bool=true)::Tupl
 
 	((val = find_in_dict(d, [:grid])[1]) !== nothing) && (opt_B = parse_grid(d, val, opt_B=opt_B))
 
-	function titlices(d::Dict, arg, fun::Function)
+	function titlices(d::Dict{Symbol,Any}, arg, fun::Function)
 		# Helper function to deal with setting title & cousins while controling also Font & Offset 
 		if isa(arg, StrSymb)	
 			farg = arg
@@ -1367,7 +1396,7 @@ function nosplit_spaces!(in)
 end
 
 # ---------------------------------------------------------------------------------------------------
-function guess_WESN(d::Dict, cmd::String)::String
+function guess_WESN(d::Dict{Symbol,Any}, cmd::String)::String
 	# For automatic -B option settings add MAP_FRAME_AXES option such that only the two closest
 	# axes will be annotated. For now this function is only used in 3D modules.
 	if ((val = find_in_dict(d, [:p :view :perspective], false)[1]) !== nothing && (isa(val, Tuple) || isa(val, String)))
@@ -1388,7 +1417,7 @@ function guess_WESN(d::Dict, cmd::String)::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_BJR(d::Dict, cmd::String, caller::String, O::Bool, defaultJ::String="", del::Bool=true)
+function parse_BJR(d::Dict{Symbol,Any}, cmd::String, caller::String, O::Bool, defaultJ::String="", del::Bool=true)
 	# Join these three in one function. CALLER is non-empty when module is called by plot()
 	cmd, opt_R = parse_R(d, cmd, O=O, del=del)
 	cmd, opt_J = parse_J(d, cmd, default=defaultJ, map=true, O=O, del=del)
@@ -1412,30 +1441,30 @@ function parse_BJR(d::Dict, cmd::String, caller::String, O::Bool, defaultJ::Stri
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_F(d::Dict, cmd::String)::String
+function parse_F(d::Dict{Symbol,Any}, cmd::String)::String
 	cmd = add_opt(d, cmd, "F", [:F :box], (clearance="+c", fill=("+g", add_opt_fill), inner="+i", pen=("+p", add_opt_pen),
 	                                       rounded="+r", shaded=("+s", arg2str), shade=("+s", arg2str)) )
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_Td(d::Dict, cmd::String)::String
+function parse_Td(d::Dict{Symbol,Any}, cmd::String)::String
 	cmd = parse_type_anchor(d, cmd, [:Td :rose],
 							(map=("g", arg2str, 1), outside=("J", arg2str, 1), inside=("j", arg2str, 1), norm=("n", arg2str, 1), paper=("x", arg2str, 1), anchor=("", arg2str, 2), width="+w", justify="+j", fancy="+f", labels="+l", label="+l", offset=("+o", arg2str)), 'j')
 end
-function parse_Tm(d::Dict, cmd::String)::String
+function parse_Tm(d::Dict{Symbol,Any}, cmd::String)::String
 	cmd = parse_type_anchor(d, cmd, [:Tm :compass],
 	                        (map=("g", arg2str, 1), outside=("J", arg2str, 1), inside=("j", arg2str, 1), norm=("n", arg2str, 1), paper=("x", arg2str, 1), anchor=("", arg2str, 2), width="+w", dec="+d", justify="+j", rose_primary=("+i", add_opt_pen), rose_secondary=("+p", add_opt_pen), labels="+l", label="+l", annot=("+t", arg2str), offset=("+o", arg2str)), 'j')
 end
-function parse_L(d::Dict, cmd::String)::String
+function parse_L(d::Dict{Symbol,Any}, cmd::String)::String
 	cmd = parse_type_anchor(d, cmd, [:L :map_scale],
 	                        (map=("g", arg2str, 1), outside=("J", arg2str, 1), inside=("j", arg2str, 1), norm=("n", arg2str, 1), paper=("x", arg2str, 1), anchor=("", arg2str, 2), scale_at_lat="+c", length="+w", width="+w", align="+a1", justify="+j", fancy="_+f", label="+l", offset=("+o", arg2str), units="_+u", vertical="_+v"), 'j')
 end
 
 # ---------------------------------------------------------------------------------------------------
-function parse_type_anchor(d::Dict, cmd::String, symbs::VMs, mapa::NamedTuple, def_CS::Char, del::Bool=true)
+function parse_type_anchor(d::Dict{Symbol,Any}, cmd::String, symbs::VMs, mapa::NamedTuple, def_CS::Char, del::Bool=true)
 	_parse_type_anchor(d, cmd, symbs, Dict{Symbol,Any}(nt2dict(mapa)), def_CS, del)
 end
-function _parse_type_anchor(d::Dict, cmd::String, symbs::VMs, mapa::Dict{Symbol,Any}, def_CS::Char, del::Bool)
+function _parse_type_anchor(d::Dict{Symbol,Any}, cmd::String, symbs::VMs, mapa::Dict{Symbol,Any}, def_CS::Char, del::Bool)
 	# SYMBS: [:D :pos :position] | ...
 	# MAPA is the Dict of suboptions (converted from NamedTuple in wrapper)
 	# def_CS is the default "Coordinate system". Colorbar has 'J', logo has 'g', many have 'j'
@@ -1507,8 +1536,8 @@ function parse_b(d::Dict{Symbol,Any}, cmd::String, symbs::Array{Symbol}=[:b :bin
 	               (ncols=("", arg2str, 1), type=("", data_type, 2), swapp_bytes="_w", little_endian="_+l", big_endian="+b"))
 	return cmd * cmd_, cmd_
 end
-parse_bi(d::Dict, cmd::String) = parse_b(d, cmd, [:b :bi :binary :binary_in],  "i")
-parse_bo(d::Dict, cmd::String) = parse_b(d, cmd, [:b :bo :binary_out], "o")
+parse_bi(d::Dict{Symbol,Any}, cmd::String) = parse_b(d, cmd, [:b :bi :binary :binary_in],  "i")
+parse_bo(d::Dict{Symbol,Any}, cmd::String) = parse_b(d, cmd, [:b :bo :binary_out], "o")
 # ---------------------------------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------------------------------
@@ -1536,13 +1565,13 @@ function parse_d(d::Dict{Symbol,Any}, cmd::String, symbs::VMs=[:d :nodata])
 	(SHOW_KWARGS[]) && return (print_kwarg_opts(symbs, "$(symbs[2])=val"),"")
 	parse_helper(cmd, d, [:d :nodata], " -d")
 end
-parse_di(d::Dict, cmd::String) = parse_d(d, cmd, [:di :nodata_in])
-parse_do(d::Dict, cmd::String) = parse_d(d, cmd, [:do :nodata_out])
-parse_e(d::Dict,  cmd::String) = parse_helper(cmd, d, [:e :pattern :find], " -e")
-parse_g(d::Dict,  cmd::String) = parse_helper(cmd, d, [:g :gap :gaps], " -g")
-parse_h(d::Dict,  cmd::String) = parse_helper(cmd, d, [:h :header], " -h")
-parse_i(d::Dict,  cmd::String) = parse_helper(cmd, d, [:i :incols :incol], " -i", ',')
-parse_j(d::Dict,  cmd::String) = parse_helper(cmd, d, [:j :metric :spherical :spherical_dist], " -j")
+parse_di(d::Dict{Symbol,Any}, cmd::String) = parse_d(d, cmd, [:di :nodata_in])
+parse_do(d::Dict{Symbol,Any}, cmd::String) = parse_d(d, cmd, [:do :nodata_out])
+parse_e(d::Dict{Symbol,Any},  cmd::String) = parse_helper(cmd, d, [:e :pattern :find], " -e")
+parse_g(d::Dict{Symbol,Any},  cmd::String) = parse_helper(cmd, d, [:g :gap :gaps], " -g")
+parse_h(d::Dict{Symbol,Any},  cmd::String) = parse_helper(cmd, d, [:h :header], " -h")
+parse_i(d::Dict{Symbol,Any},  cmd::String) = parse_helper(cmd, d, [:i :incols :incol], " -i", ',')
+parse_j(d::Dict{Symbol,Any},  cmd::String) = parse_helper(cmd, d, [:j :metric :spherical :spherical_dist], " -j")
 
 # ---------------------------------------------------------------------------------
 function parse_f(d::Dict{Symbol,Any}, cmd::String)
@@ -1785,7 +1814,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 # This is not a global option but it repeats at many occasions.
-parse_G(d::Dict, cmd::String) = parse_helper(cmd, d, [:G :save :write :outgrid :outfile], " -G")
+parse_G(d::Dict{Symbol,Any}, cmd::String) = parse_helper(cmd, d, [:G :save :write :outgrid :outfile], " -G")
 
 # ---------------------------------------------------------------------------------------------------
 function parse_I(d::Dict{Symbol,Any}, cmd::String, symbs, opt::String, del::Bool=true)::String
@@ -2322,7 +2351,7 @@ function add_opt(d::Dict{Symbol,Any}, cmd::String, opt::String, mapa::NamedTuple
 	# Thin wrapper: convert NT to Dict to compile _add_opt only once
 	_add_opt_1(d, cmd, opt, Dict{Symbol,Any}(nt2dict(mapa)))
 end
-function _add_opt_1(d::Dict, cmd::String, opt::String, mapa::Dict{Symbol,Any})::String
+function _add_opt_1(d::Dict{Symbol,Any}, cmd::String, opt::String, mapa::Dict{Symbol,Any})::String
 	cmd_::String = ""
 	for k in keys(mapa)
 		((val_ = find_in_dict(d, [k], false)[1]) === nothing) && continue	# This mapa key was not used
@@ -2465,13 +2494,14 @@ function add_opt_1(key::Vector{Symbol}, nt::Dict{Symbol,Any}, d, arg)::String
 	#	add_opt((a=(1,0.5),b=2), (a="+a",b="-b"))
 	# translates to:	"+a1/0.5-b2"
 	#d = nt2dict(mapa)					# The flags mapping as a Dict (all possible flags of the specific option)
-	cmd::String = "";		cmd_hold = Vector{String}(undef, 2);	order = zeros(Int,2,1);  ind_o = 0
+	cmd::String = "";		cmd_hold = fill("", 2);		order = zeros(Int,2,1);  ind_o = 0
 	count = zeros(Int, length(key))
 	for k = 1:length(key)				# Loop over the keys of option's tuple
 		!haskey(d, key[k]) && continue
 		ntk = nt[key[k]]
 		count[k] = k
-		isa(ntk, Dict) && (ntk = Base.invokelatest(dict2nt, ntk))
+		#isa(ntk, Dict) && (ntk = Base.invokelatest(dict2nt, ntk))
+		isa(ntk, Dict) && (ntk = dict2nt(ntk))
 		this_val = d[key[k]]
 		if (isa(this_val, Tuple))		# Complexify it. Here, d[key[k]][2] must be a function name.
 			if (isa(ntk, NamedTuple))
@@ -2608,10 +2638,12 @@ function _add_opt_3(d::Dict{Symbol,Any}, cmd::String, opt::String, symbs::VMs, n
 	val, symb = find_in_dict(d, symbs, false)
 	if (val !== nothing)
 		to_slot = true
-		isa(val, AbstractDict) && (val = Base.invokelatest(dict2nt, val))
+		#isa(val, AbstractDict) && (val = Base.invokelatest(dict2nt, val))
+		isa(val, AbstractDict) && (val = dict2nt(val))
 		if (isa(val, Tuple) && length(val) == 2)
 			# This is crazzy trickery to accept also (e.g) C=(pratt,"200k") instead of C=(pts=pratt,dist="200k")
-			d[symb] = Base.invokelatest(dict2nt, Dict{Symbol,Any}(need_symb => val[1], keys(nt_opts_d)[1] => val[2]))	# Need to patch also the input option
+			#d[symb] = Base.invokelatest(dict2nt, Dict{Symbol,Any}(need_symb => val[1], keys(nt_opts_d)[1] => val[2]))	# Need to patch also the input option
+			d[symb] = dict2nt(Dict{Symbol,Any}(need_symb => val[1], keys(nt_opts_d)[1] => val[2]))	# Need to patch also the input option
 			val = d[symb]
 		end
 		if (isa(val, NamedTuple))
@@ -2744,9 +2776,10 @@ function add_opt_fill(cmd::String, d::Dict{Symbol,Any}, @nospecialize(symbs::VMs
 	# Deal with the area fill attributes option. Normally, -G
 	(SHOW_KWARGS[]) && return print_kwarg_opts(symbs, "NamedTuple | Tuple | Array | String | Number")
 	((val = find_in_dict(d, symbs, del)[1]) === nothing) && return cmd
-	isa(val, AbstractDict) && (val = Base.invokelatest(dict2nt, val))
-	(val == true && symbs == [:G :fill]) && (val="#0072BD")		# Let fill=true mean a default color
-	(val == "" && symbs == [:G :fill]) && return cmd			# Let fill="" mean no fill (handy for proggy reasons)
+	#isa(val, AbstractDict) && (val = Base.invokelatest(dict2nt, val))
+	isa(val, AbstractDict) && (val = dict2nt(val))
+	(val == true && (symbs == [:G :fill] || symbs == [:G, :fill])) && (val="#0072BD")	# Let fill=true mean a default color
+	(val == ""   && (symbs == [:G :fill] || symbs == [:G, :fill])) && return cmd		# Let fill="" mean no fill (handy for proggy reasons)
 	(opt !== "") && (opt = string(" -", opt))
 	return add_opt_fill(val, cmd, opt)
 end
@@ -3154,7 +3187,7 @@ function axis(D::Dict{Symbol,Any}, x::Bool, y::Bool, z::Bool, secondary::Bool, d
 	opt *= opt_Bframe
 
 	#----------------------------------------------------
-	function consume_used(d::Dict, symbs::Vector{Symbol})
+	function consume_used(d::Dict{Symbol,Any}, symbs::Vector{Symbol})
 		# Remove symbs from 'd' so that at the end we can check for unused entries (user errors) 
 		for symb in symbs
 			haskey(d, symb) && delete!(d, symb)
@@ -3387,7 +3420,7 @@ function vector_attrib(d::Dict{Symbol,Any})::String
 	if (haskey(d, :fill))
 		if (d[:fill] == "none" || d[:fill] == :none) cmd *= "+g-"
 		else
-			cmd *= "+g" * get_color(d[:fill])		# MUST GET TESTS TO THIS
+			cmd *= "+g" * get_color(d[:fill])::String
 			!haskey(d, :pen) && (cmd = cmd * "+p") 	# Let FILL paint the whole header (contrary to >= GMT6.1)
 		end
 	end
@@ -4473,10 +4506,10 @@ function prep_and_call_finish_PS_module(d::Dict{Symbol, Any}, cmd, opt_extra::St
 	_finish_PS_module(d, isa(cmd, String) ? [cmd] : cmd, opt_extra, K, O, finish, argsV)
 end
 
-finish_PS_module(d::Dict, cmd::String, opt_extra::String, K::Bool, O::Bool, finish::Bool, args...) =
+finish_PS_module(d::Dict{Symbol,Any}, cmd::String, opt_extra::String, K::Bool, O::Bool, finish::Bool, args...) =
 	_finish_PS_module(d, [cmd], opt_extra, K, O, finish, Any[args...])
 
-function finish_PS_module(d::Dict, cmd::Vector{String}, opt_extra::String, K::Bool, O::Bool, finish::Bool, args...)
+function finish_PS_module(d::Dict{Symbol,Any}, cmd::Vector{String}, opt_extra::String, K::Bool, O::Bool, finish::Bool, args...)
 	_finish_PS_module(d, cmd, opt_extra, K, O, finish, Any[args...])
 end
 
