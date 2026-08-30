@@ -739,14 +739,49 @@ an array of Float32|64 otherwise.
 """
 function rescale(A::String; low=0.0, up=1.0, inputmin=NaN, inputmax=NaN, stretch=false, type=nothing)
 	GI = gmtread(A)
-	rescale(GI; low=low, up=up, inputmin=inputmin, inputmax=inputmax, stretch=stretch, type=type)
+	# What a FILE holds is only known at run time (`gmtread` returns whatever it read), so this method
+	# can never infer to one concrete type. The assertion states the bound that IS true — grid/image in,
+	# GMTgrid/GMTimage out; plain array in, array out — which turns an `Any` return into a two-way union
+	# the caller can union-split, instead of a dynamic call with no type information at all.
+	rescale(GI; low=low, up=up, inputmin=inputmin, inputmax=inputmax,
+	        stretch=stretch, type=type)::Union{GItype, Array{<:Real}}
 end
+# Plain arrays and GItype (GMTgrid/GMTimage) are SEPARATE METHODS, not one method branching on
+# `isa(A, GItype)`. The branch used to decide the RETURN (array vs mat2grid/mat2img), so the single
+# method returned a 6-way union — Matrix{UInt8|UInt16|oType}, GMTimage{UInt8|UInt16}, GMTgrid — which
+# inference could only fold away when the caller's `A` was a concrete type. Called with an abstract
+# argument (`A::AbstractMatrix{Float32}`, `A::AbstractArray`) the union stayed whole, blew past the
+# union-split limit, and `rescale` inferred as `Any`. With the wrapping split off by dispatch each
+# method has ONE return shape, and the per-element loops live in `_rescale_out`, parameterized on the
+# output type so `round(Tout, x)` is static instead of `round(type::DataType, x)`.
 function rescale(A::AbstractArray; low=0.0, up=1.0, inputmin=NaN, inputmax=NaN, stretch=false, type=nothing)
-	(type !== nothing && (!isa(type, DataType) || !(type <: Unsigned))) && error("The 'type' variable must be an Unsigned DataType")
-	((!isnan(inputmin) || !isnan(inputmax)) && stretch == 1) && @warn("The `stretch` option overrules `inputmin|max`.")
-	low, up = Float64(low), Float64(up)
-	_inputmin::Float64, _inputmax::Float64 = Float64(inputmin), Float64(inputmax)
-	if (stretch == 1)
+	auto, imin, imax = _rescale_lims(stretch, Float64(inputmin), Float64(inputmax))
+	_rescale(A, Float64(low), Float64(up), imin, imax, auto, type)
+end
+function rescale(A::GItype; low=0.0, up=1.0, inputmin=NaN, inputmax=NaN, stretch=false, type=nothing)
+	auto, imin, imax = _rescale_lims(stretch, Float64(inputmin), Float64(inputmax))
+	o = _rescale(A, Float64(low), Float64(up), imin, imax, auto, type)
+	return (type !== nothing) ? mat2img(o, A) : mat2grid(o, A)
+end
+
+# `stretch` is the one kwarg with several shapes (false | true/1 | (imin,imax) | [imin,imax]), so it is
+# resolved HERE, once, into the two things the worker actually needs: "compute the limits from the
+# histogram" and the explicit limits. That keeps `_rescale` fully typed below.
+function _rescale_lims(stretch, inputmin::Float64, inputmax::Float64)::Tuple{Bool, Float64, Float64}
+	(stretch == 1) && return true, inputmin, inputmax
+	(isa(stretch, Tuple) || (isvector(stretch) && length(stretch) == 2)) &&
+		return false, Float64(stretch[1]), Float64(stretch[2])
+	return false, inputmin, inputmax
+end
+
+# The maths, common to both: limits, scale factor, NaN probe -> the loops in _rescale_out. Returns
+# the bare array; wrapping it back into a GMTgrid/GMTimage is the GItype method's job (above).
+function _rescale(A::AbstractArray, low::Float64, up::Float64, inputmin::Float64, inputmax::Float64,
+                  autostretch::Bool, type::Union{Nothing, DataType})
+	(type !== nothing && !(type <: Unsigned)) && error("The 'type' variable must be an Unsigned DataType")
+	((!isnan(inputmin) || !isnan(inputmax)) && autostretch) && @warn("The `stretch` option overrules `inputmin|max`.")
+	_inputmin::Float64, _inputmax::Float64 = inputmin, inputmax
+	if (autostretch)
 		#_inputmin, _inputmax = histogram(A, getauto=true)
 		if (isa(A, GMTgrid) || (typeof(A) <: SubArray{Float32}))	# These functions are defined in pshistogram, but avoid calling it.
 			hst, inc, = hst_floats(A)
@@ -754,8 +789,6 @@ function rescale(A::AbstractArray; low=0.0, up=1.0, inputmin=NaN, inputmax=NaN, 
 		else		# Images
 			_inputmin, _inputmax = find_histo_limits(A, nothing, 20)
 		end
-	elseif (isa(stretch, Tuple) || (isvector(stretch) && length(stretch) == 2))
-		_inputmin, _inputmax = stretch[1], stretch[2]
 	end
 	(isnan(_inputmin)) && (mi::Float64 = (isa(A, GItype)) ? A.range[5] : minimum_nan(A))
 	(isnan(_inputmax)) && (ma::Float64 = (isa(A, GItype)) ? A.range[6] : maximum_nan(A))
@@ -770,63 +803,65 @@ function rescale(A::AbstractArray; low=0.0, up=1.0, inputmin=NaN, inputmax=NaN, 
 		have_nans = !(isa(A, GMTgrid) && A.hasnans == 1)
 		have_nans && (have_nans = any(!isfinite, A))
 	end
-	if (type !== nothing)
-		(low != 0.0 || up != 1.0) && (@warn("When converting to Unsigned must have a=0, b=1"); low=0.0; up=1.0)
-		o = (type == UInt8) ? Array{UInt8}(undef, size(A)) : Array{UInt16}(undef, size(A))
-		_tmax::Float64 = (type == UInt8) ? typemax(UInt8) : typemax(UInt16)
-		sc  *= _tmax
-		low *= _tmax
+	# No input limits given -> nothing to clamp against, so the loops skip the two comparisons.
+	clamped = !(isnan(_inputmin) && isnan(_inputmax))
+	(type === nothing) && return _rescale_out(A, (eltype(A) <: AbstractFloat) ? eltype(A) : Float64,
+	                                          _inmin, _inmax, low, up, sc, have_nans, clamped)
+	(low != 0.0 || up != 1.0) && (@warn("When converting to Unsigned must have a=0, b=1"); low=0.0; up=1.0)
+	# ONE branch on `type`, here, so the loops below get it as a compile-time parameter (anything that
+	# is not UInt8 lands on UInt16, exactly as the old code's `(type == UInt8) ? ... : ...` did).
+	return (type == UInt8) ? _rescale_out(A, UInt8,  _inmin, _inmax, low, up, sc, have_nans, clamped) :
+	                         _rescale_out(A, UInt16, _inmin, _inmax, low, up, sc, have_nans, clamped)
+end
+
+# `type` given as something that is not a DataType at all (a String, a Symbol, ...). The typed method
+# above would answer with a MethodError, so keep the explicit message this function always had.
+_rescale(A::AbstractArray, ::Float64, ::Float64, ::Float64, ::Float64, ::Bool, type) =
+	error("The 'type' variable must be an Unsigned DataType")
+
+# The per-element loops, ONE copy, with the output type `Tout` as a type parameter: the Unsigned
+# scaling/rounding and the float path are picked at COMPILE time (`Tout <: Unsigned` is a constant),
+# so `round(Tout, x)` is a static call and the old UInt8/UInt16 loop duplication disappears.
+function _rescale_out(A::AbstractArray, ::Type{Tout}, _inmin::Float64, _inmax::Float64,
+                      low::Float64, up::Float64, sc::Float64, have_nans::Bool, clamped::Bool) where Tout
+	# `size` on an ABSTRACT array type is not inferable (Base widens it to Any), and that alone makes
+	# the Array constructor -- hence this function, hence `rescale` -- infer as Any for a caller
+	# holding `A::AbstractMatrix{Float32}`. Base's contract is that `size` returns a Dims tuple, so
+	# say so and inference has what it needs.
+	N = ndims(A)
+	o = Array{Tout,N}(undef, size(A)::NTuple{N,Int})
+	if (Tout <: Unsigned)
+		_tmax::Float64 = typemax(Tout)
+		_sc, _low = sc * _tmax, low * _tmax
+		low_i, up_i = round(Tout, _low), round(Tout, up * _tmax)
 		if (have_nans)
-			if (isnan(_inputmin) && isnan(_inputmax))
-				if (type == UInt8)
-					@inbounds for k = 1:numel(A)  isnan(A[k]) && (o[k] = 0; continue); o[k] = round(UInt8,  low + (A[k] -_inmin) * sc)  end
-				else
-					@inbounds for k = 1:numel(A)  isnan(A[k]) && (o[k] = 0; continue); o[k] = round(UInt16, low + (A[k] -_inmin) * sc)  end
-				end
+			if (!clamped)
+				@inbounds for k = 1:numel(A)  isnan(A[k]) && (o[k] = 0; continue); o[k] = round(Tout, _low + (A[k] -_inmin) * _sc)  end
 			else
-				low_i, up_i = round(type, low), round(type, up*typemax(type))
 				@inbounds for k = 1:numel(A)
 					isnan(A[k]) && (o[k] = 0; continue)
-					o[k] = (A[k] < _inmin) ? low_i : ((A[k] > _inmax) ? up_i : round(type, low + (A[k] -_inmin) * sc))
+					o[k] = (A[k] < _inmin) ? low_i : ((A[k] > _inmax) ? up_i : round(Tout, _low + (A[k] -_inmin) * _sc))
 				end
 			end
 		else
-			if (isnan(_inputmin) && isnan(_inputmax))
-				if (type == UInt8)
-					@inbounds for k = 1:numel(A)  o[k] = round(UInt8,  low + (A[k] -_inmin) * sc)  end
-				else
-					@inbounds for k = 1:numel(A)  o[k] = round(UInt16, low + (A[k] -_inmin) * sc)  end
-				end
+			if (!clamped)
+				@inbounds for k = 1:numel(A)  o[k] = round(Tout, _low + (A[k] -_inmin) * _sc)  end
 			else
-				low_i, up_i = round(type, low), round(type, up*typemax(type))
 				@inbounds for k = 1:numel(A)
-					o[k] = (A[k] < _inmin) ? low_i : ((A[k] > _inmax) ? up_i : round(type, low + (A[k] -_inmin) * sc))
+					o[k] = (A[k] < _inmin) ? low_i : ((A[k] > _inmax) ? up_i : round(Tout, _low + (A[k] -_inmin) * _sc))
 				end
 			end
 		end
-		return isa(A, GItype) ? mat2img(o, A) : o
 	else
-		oType = (eltype(A) <: AbstractFloat) ? eltype(A) : Float64
-		o = Array{oType}(undef, size(A))
-		if (oType <: Integer && have_nans)						# Shitty case
-			if (isnan(_inputmin) && isnan(_inputmax))				# Faster case.
-				@inbounds for k = 1:numel(A)  isnan(A[k]) && (o[k] = 0; continue); o[k] = low + (A[k] -_inmin) * sc  end
-			else
-				@inbounds for k = 1:numel(A)
-					isnan(A[k]) && (o[k] = 0; continue)
-					o[k] = (A[k] < _inmin) ? low : ((A[k] > _inmax) ? up : low + (A[k] -_inmin) * sc)
-				end
-			end
+		if (!clamped)					# Faster case. No IFs in loop
+			@inbounds for k = 1:numel(A)  o[k] = low + (A[k] -_inmin) * sc  end
 		else
-			if (isnan(_inputmin) && isnan(_inputmax))				# Faster case. No IFs in loop
-				@inbounds for k = 1:numel(A)  o[k] = low + (A[k] -_inmin) * sc  end
-			else
-				@inbounds for k = 1:numel(A)
-					o[k] = (A[k] < _inmin) ? low : ((A[k] > _inmax) ? up : low + (A[k] -_inmin) * sc)
-				end
-			end		end
-		return isa(A, GItype) ? mat2grid(o, A) : o
+			@inbounds for k = 1:numel(A)
+				o[k] = (A[k] < _inmin) ? low : ((A[k] > _inmax) ? up : low + (A[k] -_inmin) * sc)
+			end
+		end
 	end
+	return o
 end
 
 # --------------------------------------------------------------------------------------------------
