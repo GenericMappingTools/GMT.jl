@@ -305,14 +305,41 @@ function subTriSplit(V::Matrix{Float64}, F::Matrix{Int}, n=1)
 	if (n == 1)		# Splitting just once
 		#Setting up new vertices and faces such that no new unshared points are added. 
 	
-		E = [F[:,[1,2]]; F[:,[2,3]];  F[:,[3,1]]]	# Non-unique edges matrix
-		Es = sort(E, dims=2)						# Sorted edges matrix, so 1-2 is the same as 2-1
-	
-		E, ind1, ind2  = gunique(Es, sorted=true)	# Get unique edges and their indices.
-		ind2 .+= size(V,1)							# Offset indices since new pointsd (Vm below) are appended "under" V
-	
-		#Create face array (knowing each face has three new points associated with it)
+		# Unique edges WITHOUT the generic row-sorting machinery (sort(E, dims=2), plus gunique ->
+		# sortslicesperm -> sortperm over a Vector of row VIEWS). An edge is two vertex indices, so
+		# each (min,max) pair packs into ONE Int key, and sorting those keys is numerically identical
+		# to sorting the (min,max) rows lexicographically -- E and ind2 come out exactly as before.
+		# It is a plain Vector{Int} sort instead of two Base sorting pipelines instantiated for
+		# Matrix{Int} and for SubArray rows: those two alone cost ~1.9 s of FIRST-CALL COMPILE time,
+		# for a sphere whose real work is 80 faces.
 		numFaces = size(F,1)				# The number of faces
+		nE  = 3 * numFaces
+		e1  = Vector{Int}(undef, nE)		# edge's low  vertex index
+		e2  = Vector{Int}(undef, nE)		# edge's high vertex index
+		key = Vector{Int}(undef, nE)		# (lo << 32) | hi -- the lexicographic order as one number
+		for (c, ab) in enumerate(((1,2), (2,3), (3,1)))
+			off = (c - 1) * numFaces
+			for i = 1:numFaces
+				a, b = F[i,ab[1]], F[i,ab[2]]
+				lo, hi = (a < b) ? (a, b) : (b, a)		# 1-2 is the same edge as 2-1
+				e1[off+i] = lo;		e2[off+i] = hi
+				key[off+i] = (lo << 32) | hi
+			end
+		end
+		perm = sortperm(key)
+		ind2 = Vector{Int}(undef, nE)		# for each edge, the row it takes in the unique list
+		nu, prev = 0, key[perm[1]] - 1		# prev seeded to something != the first key
+		for k in perm
+			(key[k] != prev) && (nu += 1;  prev = key[k])
+			ind2[k] = nu
+		end
+		E = Matrix{Int}(undef, nu, 2)		# unique edges, same (sorted) order the old code produced
+		for k in perm
+			E[ind2[k], 1] = e1[k];	E[ind2[k], 2] = e2[k]
+		end
+		ind2 .+= size(V,1)							# Offset indices since new pointsd (Vm below) are appended "under" V
+
+		#Create face array (knowing each face has three new points associated with it)
 		indF  = 1:numFaces					# Indices for all faces
 		indP1 = ind2[indF]					# Indices of all new first points
 		indP2 = ind2[indF .+ numFaces]		# Indices of all new second points

@@ -1800,6 +1800,7 @@ function parse_theme(d::Dict{Symbol,Any}, del::Bool=true)
 		isa(val, NamedTuple) && theme(string(val[1])::String; nt2dict(val)...)
 		(isa(val, StrSymb)) && theme(string(val)::String)
 	end
+	return nothing
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -3772,7 +3773,7 @@ end
 # ------------------------------------------------------------------------
 # Function barrier to avoid mysterious invalidations and recompilations.
 function read_data_barr_1(d::Dict{Symbol,Any}, arg_is_nothing::Bool)
-	arg = nothing
+	arg::Union{Nothing, GMTdataset, Vector{<:GMTdataset}} = nothing		# ← the firewall
 	if (haskey(d, :data))
 		arg = mat2ds(d[:data]);		delete!(d, [:data])
 	elseif (arg_is_nothing)	# OK, last chance of findig the data is in the x=..., y=... kwargs
