@@ -5,9 +5,15 @@ Install the InteractiveGMT package by `dev`-ing it straight from its GitHub repo
 equivalent of running `] dev https://github.com/GenericMappingTools/InteractiveGMT` at the Pkg REPL.
 Once installed, the package is loaded into the current session (equivalent to `using InteractiveGMT`).
 
+Binaries are published for Windows (x86_64), Linux (x86_64) and macOS on BOTH architectures --
+Apple Silicon (arm64) and Intel (x86_64). The right one is picked from `Sys.ARCH` by the package's
+own `deps/build.jl`, which downloads it from the InteractiveGMT GitHub releases (the macOS archives
+are produced by its CI). Nothing has to be said about the machine.
+
 If `update=true`, don't reinstall/rebuild -- just run `Pkg.build("InteractiveGMT")`, which re-runs
-InteractiveGMT's own `deps/build.jl` (already fetches the latest `gmtvtk.dll` from its rolling
-"dll-latest" GitHub release and displaces a locked DLL safely). `Pkg.build` runs in a separate
+InteractiveGMT's own `deps/build.jl` (fetches the latest viewer library -- `gmtvtk.dll`,
+`libgmtvtk.dylib` or `libgmtvtk.so` -- from its rolling "dll-latest" GitHub release, and on Windows
+displaces a locked DLL safely). `Pkg.build` runs in a separate
 Julia process, so this works standalone even when the InteractiveGMT GUI isn't running yet.
 
 If `reinstall=true`, wipe the installation first and put it back from scratch: the package is
@@ -29,7 +35,14 @@ Files still in use (a `gmtvtk.dll` mapped by a running iGMT window) cannot be un
 reported and left for you to delete.
 """
 function iGMTinstall(up::Bool=false; update::Bool=false, reinstall::Bool=false, remove::Bool=false)
-	!(Sys.iswindows() || (Sys.islinux() && Sys.ARCH === :x86_64)) && (@warn("iGMT binaries are not published for this platform."); return nothing)
+	# The platforms whose binaries are published. This mirrors the SAME test at the bottom of
+	# InteractiveGMT's own deps/build.jl -- the build script is what actually fetches them, and which
+	# architecture's archive it takes is its business (Sys.ARCH -> "arm64"/"x86_64" for macOS, where
+	# both are real: Julia runs native on Apple Silicon and on Intel, and Qt/VTK are not universal
+	# binaries). Refusing here only avoids a `dev` clone that could never be built.
+	_ok = Sys.iswindows() || (Sys.islinux() && Sys.ARCH === :x86_64) ||
+	      (Sys.isapple() && Sys.ARCH in (:aarch64, :x86_64))
+	!_ok && (@warn("iGMT binaries are not published for this platform."); return nothing)
 	_Pkg = Base.require(Base.PkgId(Base.UUID("44cfe95a-1eb2-52ea-b672-e2afdf69b78f"), "Pkg"))
 	(remove || reinstall) && _iGMTuninstall(_Pkg)
 	remove && return nothing
