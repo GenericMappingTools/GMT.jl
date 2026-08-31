@@ -5,7 +5,7 @@
 # names of all subregions of a parent administrative unit.
 
 """
-    gadm(country, subregions...; children=false, names=false, children_raw=false, reportlevels=false)
+    gadm(country, subregions...; children=false, names=false, children_raw=false, alllevels=false, reportlevels=false)
 
 Return a GMTdataset for the requested country, or country subregion(s)
 
@@ -17,7 +17,11 @@ Return a GMTdataset for the requested country, or country subregion(s)
    E.g. when children is set to true and when querying just the country,
    second return parameter are the states/provinces. If `children` we return a Vector of GMTdataset with
    the polygons. If `children_raw` the second output is a GDAL object much like in GADM.jl (less the Tables.jl)
-- `names`: Return a string vector with all `children` names. 
+- `names`: Return a string vector with all `children` names.
+- `alllevels`: When true, return the requested unit AND every administrative level below it (its children,
+   their children, ...) down to the deepest level the country has. All of it comes out of a single read of
+   the country file — asking level by level with `children` re-reads that file once per unit, which for a
+   country with parishes is hundreds of reads.
 - `reportlevels`: just report the number of administrative levels (including the country) and exit.
 
 ## Examples  
@@ -36,7 +40,8 @@ uttar = gadm("IND", "Uttar Pradesh", children=true)
 gadm("IND", names=true)
 ```
 """
-function gadm(country, subregions...; children::Bool=false, names::Bool=false, children_raw::Bool=false, reportlevels::Bool=false)
+function gadm(country, subregions...; children::Bool=false, names::Bool=false, children_raw::Bool=false,
+              reportlevels::Bool=false, alllevels::Bool=false)
 	isvalidcode(country) || throw(ArgumentError("please provide standard ISO 3 country codes"))
 	data_pato = country |> _download		# Downloads and extracts dataset of the given country code
 	ressurectGDAL()			# Some previous GMT modules (or other shits) may have called GDALDestroyDriverManager() 
@@ -109,9 +114,37 @@ function gadm(country, subregions...; children::Bool=false, names::Bool=false, c
 
 	# p -> parent, is the requested region
 	plevel = length(subregions)
-	plevel >= nlayers && throw(ArgumentError("more subregions required than in data")) 
+	plevel >= nlayers && throw(ArgumentError("more subregions required than in data"))
 	pname = isempty(subregions) ? "" : last(subregions)
 	player, layer_name = _getlayer(plevel)
+
+	# EVERY LEVEL BELOW THE REQUESTED UNIT, in one pass over this already-open dataset. Asking for it
+	# one unit at a time (`children` on each child, then on each grandchild) costs one full re-open and
+	# re-scan of the country's .gpkg PER UNIT -- ~330 of them for Portugal, which is minutes; here the
+	# file is open already and each level's layer is read once. A feature belongs to the answer when
+	# every ancestor name matches the requested subregions (no subregions = the whole country).
+	if (alllevels)
+		p = _filterlayer(player, layer_name, plevel, pname, iszero(plevel))
+		Dall = _get_polygs(p);		isa(Dall, GMTdataset) && (Dall = [Dall])
+		for lev = plevel+1 : nlayers-1
+			lay, _ = _getlayer(lev)
+			feats = Vector{Gdal.Feature}(undef,0)
+			for row in lay
+				keep = true
+				for j = 1:plevel
+					field = string(Gdal.getfield(row, "NAME_$(j)"))
+					if !occursin(lowercase(subregions[j]), lowercase(field))
+						keep = false;	break
+					end
+				end
+				keep && push!(feats, row)
+			end
+			isempty(feats) && continue
+			_D = _get_polygs(feats);		isa(_D, GMTdataset) && (_D = [_D])
+			append!(Dall, _D)
+		end
+		return Dall
+	end
 
 	if (!children && !children_raw && !names) || (!names && nlayers == plevel + 1)	# Last case is when we have no more levels
 		p = _filterlayer(player, layer_name, plevel, pname, iszero(plevel))
