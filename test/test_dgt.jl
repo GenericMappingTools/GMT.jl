@@ -1,21 +1,10 @@
-using HTTP		# triggers GMTDGTLidarExt load
-
 println("		Entering: test_dgt.jl")
 
-@testset "DGT LIDAR Extension" begin
+@testset "DGT LIDAR" begin
 
-	ext = Base.get_extension(GMT, :GMTDGTLidarExt)
-	@test ext !== nothing
-
-	# ------------------------------------------------------------------
-	@testset "_make_cookie_header" begin
-		result = ext._make_cookie_header(Dict("session" => "abc", "token" => "xyz"))
-		@test occursin("session=abc", result)
-		@test occursin("token=xyz", result)
-		@test occursin(";", result)
-		@test ext._make_cookie_header(Dict{String,String}()) == ""
-		@test ext._make_cookie_header(Dict("k" => "v")) == "k=v"
-	end
+	# dgt_lidar.jl is a plain src/ file (it talks to DGT through `curl`, not HTTP.jl), so the
+	# internals live in GMT itself -- there is no extension module to fetch any more.
+	ext = GMT
 
 	# ------------------------------------------------------------------
 	@testset "_get_file_extension" begin
@@ -260,24 +249,26 @@ println("		Entering: test_dgt.jl")
 	end
 
 	# ------------------------------------------------------------------
-	@testset "_extract_cookies" begin
-		mock_resp = (headers = [
-			"Set-Cookie"   => "session=abc123; Path=/; HttpOnly",
-			"Content-Type" => "text/html",
-			"Set-Cookie"   => "token=xyz789; Path=/; Secure",
-		],)
-		cookies = ext._extract_cookies(mock_resp)
-		@test cookies["session"] == "abc123"
-		@test cookies["token"] == "xyz789"
-		@test !haskey(cookies, "Content-Type")
+	# Cookies are curl's business now (-b/-c on a jar file), so there is nothing here to parse.
+	# What IS ours is the trailer curl appends with --write-out, which every wrapper splits off.
+	@testset "_curl_split" begin
+		status, body, loc = ext._curl_split("<html>hi</html>\n200 ")
+		@test status == 200
+		@test body == "<html>hi</html>"
+		@test loc == ""
 
-		# Cookie with = in value (limit=2 on split)
-		mock_resp2 = (headers = ["Set-Cookie" => "data=a=b=c; Path=/"],)
-		cookies2 = ext._extract_cookies(mock_resp2)
-		@test cookies2["data"] == "a=b=c"
+		status2, body2, loc2 = ext._curl_split("\n302 https://s3.example.com/tile.tif?sig=abc")
+		@test status2 == 302
+		@test body2 == ""
+		@test loc2 == "https://s3.example.com/tile.tif?sig=abc"
 
-		# No Set-Cookie headers
-		@test isempty(ext._extract_cookies((headers = ["Content-Type" => "application/json"],)))
+		# A body carrying its own newlines: only the LAST one starts the trailer.
+		status3, body3, = ext._curl_split("line1\nline2\n404 ")
+		@test status3 == 404
+		@test body3 == "line1\nline2"
+
+		# curl never ran (network error): no trailer at all.
+		@test ext._curl_split("") == (0, "", "")
 	end
 
 	# ------------------------------------------------------------------
