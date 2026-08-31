@@ -663,20 +663,26 @@ function gmt2gd(GI)
 			end
 		end
 		Gdal.write!(ds, indata, (n_dims == 3) ? Cint.(collect(1:size(GI,3))) : 1)
+	end
 
-		if (GI.n_colors > 0)
-			ct = Gdal.createcolortable(UInt32(1))	# RGB
-			n = 0
-			nc1,nc2,nc3 = GI.n_colors, 2*GI.n_colors, 3*GI.n_colors
-			for k = 1:GI.n_colors
-				c1, c2, c3, c4 = GI.colormap[k],GI.colormap[k+nc1],GI.colormap[k+nc2],GI.colormap[k+nc3]
-				#c1, c2, c3, c4 = GI.colormap[n+=1],GI.colormap[n+=1],GI.colormap[n+=1],GI.colormap[n+=1]	# row-wise
-				#Gdal.createcolorramp!(ct, k-1, Gdal.GDALColorEntry(c1,c2,c3,c4), k, Gdal.GDALColorEntry(c1,c2,c3,c4))
-				Gdal.setcolorentry!(ct, k-1, Gdal.GDALColorEntry(c1,c2,c3,c4));
-			end
-			Gdal.setcolortable!(Gdal.getband(ds), ct)
-			(!isnan(GI.nodata)) && (Gdal.setnodatavalue!(Gdal.getband(ds), GI.nodata))
+	gmt2gd_meta!(ds, GI)
+	return ds
+end
+
+# Everything about a GI that is NOT the pixels: band descriptions, the image colour table and its
+# nodata, the geotransform and the projection. Set on the dataset by whoever built it — the copying
+# 'gmt2gd' and the no-copy 'gmt2gd_view' below — so a dataset made from a GI always describes it the
+# same way, whichever road it took.
+function gmt2gd_meta!(ds, GI)
+	if (isa(GI, GMTimage) && GI.n_colors > 0)
+		ct = Gdal.createcolortable(UInt32(1))	# RGB
+		nc1,nc2,nc3 = GI.n_colors, 2*GI.n_colors, 3*GI.n_colors
+		for k = 1:GI.n_colors
+			c1, c2, c3, c4 = GI.colormap[k],GI.colormap[k+nc1],GI.colormap[k+nc2],GI.colormap[k+nc3]
+			Gdal.setcolorentry!(ct, k-1, Gdal.GDALColorEntry(c1,c2,c3,c4));
 		end
+		Gdal.setcolortable!(Gdal.getband(ds), ct)
+		(!isnan(GI.nodata)) && (Gdal.setnodatavalue!(Gdal.getband(ds), GI.nodata))
 	end
 
 	if (!isempty(GI.names))			# Set bands description
@@ -690,6 +696,74 @@ function gmt2gd(GI)
 	elseif (GI.proj4 != "")  setproj!(ds, toWKT(importPROJ4(GI.proj4), true))
 	end
 	return ds
+end
+
+"""
+    ds = gmt2gd_view(GI)
+
+GDAL dataset over the array of `GI` (a `GMTgrid` or `GMTimage`) WITHOUT copying it: the MEM driver
+is handed the array's own pointer plus the pixel/line/band strides that describe the GI's memory
+layout, so a 4 GB grid costs nothing to look at. Use it for operations that only READ (`gdalinfo`);
+anything that writes into the dataset writes into `GI` itself.
+
+The dataset is only valid while `GI` is alive — keep it under a `GC.@preserve GI`. Layouts (or
+element types) that cannot be described by constant strides fall back to `gmt2gd`, which copies.
+"""
+function gmt2gd_view(GI)
+	mat = isa(GI, GMTgrid) ? GI.z : GI.image
+	isa(mat, Array) || return gmt2gd(GI)			# a view/reshape has no buffer of its own to hand over
+	haskey(Gdal._GDALTYPE, eltype(mat)) || return gmt2gd(GI)	# a type GDAL has no raster for
+	sz  = sizeof(eltype(mat))
+	lay = (GI.layout == "") ? "BCB" : GI.layout		# GMT's own default: column major, south first
+	nb  = size(GI, 3)
+	nx, ny = (lay[2] == 'C') ? (size(mat,2), size(mat,1)) : (length(GI.x), length(GI.y)) .- GI.registration
+	(length(mat) == nx * ny * nb) || return gmt2gd(GI)	# not the shape we just described: take the safe road
+	if (lay[2] == 'C')								# column major: x is the SLOW axis
+		pixoff, lineoff, bandoff = ny*sz, sz, nx*ny*sz
+	elseif (length(lay) >= 3 && lay[3] == 'P')		# row major, pixel interleaved (RGB images)
+		pixoff, lineoff, bandoff = nb*sz, nx*nb*sz, sz
+	else											# row major, band planar
+		pixoff, lineoff, bandoff = sz, nx*sz, nx*ny*sz
+	end
+	# GDAL counts lines from the NORTH. A south-first array ('B') is therefore read from its LAST row
+	# backwards, with a negative line stride — which is what keeps this a view instead of a flip.
+	ptr = pointer(mat)
+	if (lay[1] == 'B')
+		ptr += (ny - 1) * lineoff
+		lineoff = -lineoff
+	end
+	ds = Gdal.create(getdriver("MEM"); filename="", width=nx, height=ny, nbands=0, dtype=eltype(mat))
+	(ds === nothing || ds.ptr == C_NULL) && return gmt2gd(GI)
+	for k = 1:nb			# one band at a time, each pointed at its own slice of the SAME array
+		(mem_addband!(ds, eltype(mat), ptr + (k-1)*bandoff, pixoff, lineoff) == 0) || return gmt2gd(GI)
+	end
+	gmt2gd_meta!(ds, GI)
+	return ds
+end
+
+# Add one band to a MEM dataset that READS the memory at `ptr` with the given strides (in bytes),
+# instead of allocating a buffer of its own. Returns GDAL's CPLErr (0 = fine).
+function mem_addband!(ds, T::DataType, ptr::Ptr, pixoff::Integer, lineoff::Integer)
+	opts = ["DATAPOINTER=0x" * string(UInt(ptr), base=16),
+	        "PIXELOFFSET=" * string(pixoff), "LINEOFFSET=" * string(lineoff)]
+	bufs = [Base.cconvert(Cstring, o) for o in opts]
+	strs = Cstring[Base.unsafe_convert(Cstring, b) for b in bufs]
+	push!(strs, Cstring(C_NULL))				# GDAL's string lists are NULL terminated
+	return GC.@preserve opts bufs strs Gdal.GDALAddBand(ds.ptr, Gdal._GDALTYPE[T], strs)
+end
+
+"""
+    gdalinfo(GI::GItype, opts=String[])
+
+The GDAL report of a `GMTgrid` or `GMTimage` held in memory. The array is NOT copied — the dataset
+GDAL reads is a view over the GI's own memory (`gmt2gd_view`), so reporting on a huge grid costs no
+more than reporting on a small one.
+"""
+function Gdal.gdalinfo(GI::GItype, opts=String[])
+	_opts = isa(opts, AbstractString) ? Gdal.gdal_opts2vec(opts) : opts
+	GC.@preserve GI begin
+		return Gdal.gdalinfo(gmt2gd_view(GI), _opts)
+	end
 end
 
 # ---------------------------------------------------------------------------------------------------

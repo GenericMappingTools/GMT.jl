@@ -312,6 +312,11 @@ end
 
 GDALDestroyDriver(a1) = acare(ccall((:GDALDestroyDriver, libgdal), Cvoid, (pVoid,), a1))
 
+# CPLErr GDALAddBand(GDALDatasetH, GDALDataType, char **papszOptions). On a MEM dataset the options
+# may carry DATAPOINTER/PIXELOFFSET/LINEOFFSET, which makes the new band a VIEW over caller memory
+# instead of a fresh allocation (see gmt2gd_view in gdal_utils.jl).
+GDALAddBand(a1, a2, a3) = ccall((:GDALAddBand, libgdal), UInt32, (pVoid, UInt32, Ptr{Cstring}), a1, a2, a3)
+
 function GDALCreate(hDriver, a1, a2, a3, a4, a5, a6)
 	acare(ccall((:GDALCreate, libgdal), pVoid, (pVoid, Cstring, Cint, Cint, Cint, UInt32, Ptr{Cstring}), hDriver, a1, a2, a3, a4, a5, a6))
 end
