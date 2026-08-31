@@ -629,6 +629,17 @@ function gmt2gd(GI)
 	# relying in 'size(GI)' but on the length of the x,y coordinates vectors, that are assumed to always be correct. 
 	#
 	# This function has to make a data copy whem the data memory layout is not row major.
+	#
+	# The layout is resolved in ONE place: 'gmt2gd_view' below, which describes the array to GDAL with
+	# byte strides (that is what a layout IS) and therefore reads any of them where it lies. So the copy
+	# made here is GDAL copying from that view, not a second reading of the layout string by hand — the
+	# hand-written transposes/reshapes further down are only the fallback for an array that cannot be
+	# handed over as a pointer (a reshape/view, an element type GDAL has no raster for).
+	if ((dsv = _gmt2gd_view(GI)) !== nothing)
+		ds = GC.@preserve GI Gdal.copy(dsv, driver=getdriver("MEM"), filename="")
+		gmt2gd_meta!(ds, GI)		# band descriptions are not part of what CreateCopy carries over
+		return ds
+	end
 
 	width, height = (GI.layout != "" && GI.layout[2] == 'C') ? (size(GI,2), size(GI,1)) : (length(GI.x), length(GI.y)) .- GI.registration
 	n_dims = ndims(GI)
@@ -709,15 +720,20 @@ anything that writes into the dataset writes into `GI` itself.
 The dataset is only valid while `GI` is alive — keep it under a `GC.@preserve GI`. Layouts (or
 element types) that cannot be described by constant strides fall back to `gmt2gd`, which copies.
 """
-function gmt2gd_view(GI)
+gmt2gd_view(GI) = (ds = _gmt2gd_view(GI)) === nothing ? gmt2gd(GI) : ds
+
+# The view itself, or `nothing` when this GI cannot be described to GDAL by strides. Separate from
+# the function above because 'gmt2gd' asks for it too, and a fallback that called gmt2gd back would
+# recurse.
+function _gmt2gd_view(GI)
 	mat = isa(GI, GMTgrid) ? GI.z : GI.image
-	isa(mat, Array) || return gmt2gd(GI)			# a view/reshape has no buffer of its own to hand over
-	haskey(Gdal._GDALTYPE, eltype(mat)) || return gmt2gd(GI)	# a type GDAL has no raster for
+	isa(mat, Array) || return nothing				# a view/reshape has no buffer of its own to hand over
+	haskey(Gdal._GDALTYPE, eltype(mat)) || return nothing	# a type GDAL has no raster for
 	sz  = sizeof(eltype(mat))
 	lay = (GI.layout == "") ? "BCB" : GI.layout		# GMT's own default: column major, south first
 	nb  = size(GI, 3)
 	nx, ny = (lay[2] == 'C') ? (size(mat,2), size(mat,1)) : (length(GI.x), length(GI.y)) .- GI.registration
-	(length(mat) == nx * ny * nb) || return gmt2gd(GI)	# not the shape we just described: take the safe road
+	(length(mat) == nx * ny * nb) || return nothing	# not the shape we just described: take the safe road
 	if (lay[2] == 'C')								# column major: x is the SLOW axis
 		pixoff, lineoff, bandoff = ny*sz, sz, nx*ny*sz
 	elseif (length(lay) >= 3 && lay[3] == 'P')		# row major, pixel interleaved (RGB images)
@@ -733,9 +749,9 @@ function gmt2gd_view(GI)
 		lineoff = -lineoff
 	end
 	ds = Gdal.create(getdriver("MEM"); filename="", width=nx, height=ny, nbands=0, dtype=eltype(mat))
-	(ds === nothing || ds.ptr == C_NULL) && return gmt2gd(GI)
+	(ds === nothing || ds.ptr == C_NULL) && return nothing
 	for k = 1:nb			# one band at a time, each pointed at its own slice of the SAME array
-		(mem_addband!(ds, eltype(mat), ptr + (k-1)*bandoff, pixoff, lineoff) == 0) || return gmt2gd(GI)
+		(mem_addband!(ds, eltype(mat), ptr + (k-1)*bandoff, pixoff, lineoff) == 0) || return nothing
 	end
 	gmt2gd_meta!(ds, GI)
 	return ds
