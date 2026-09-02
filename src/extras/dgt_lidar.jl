@@ -60,8 +60,10 @@ existing files are skipped.
 - `output_dir`: Root directory for downloaded files (default: `homedir/.gmt/DGT`).
   Prefix with `_` to write inside `homedir/.gmt/DGT/` (e.g. `"_algarve"` → `homedir/.gmt/DGT/algarve`).
 - `delay`: Seconds between requests (default: `1.0`). Increase to avoid server throttling.
-- `collection`: Collection to download. One of `"LAZ"`, `"MDT-50cm"`, `"MDS-50cm"`, `"MDT-2m"`, `"MDS-2m"`.
-  Case-insensitive. Default `"MDS-2m"`.
+- `collection`: Collection to download. One of the LIDAR ones — `"LAZ"`, `"MDT-50cm"`, `"MDS-50cm"`,
+  `"MDT-2m"`, `"MDS-2m"` — or one of the ORTOS orthophoto ones, `"ORTOS-"` and a survey year:
+  `2025`, `2021`, `2018`, `2015`, `2012`, `2010`, `2007`, `2004`, `1995`. Case-insensitive.
+  Default `"MDS-2m"`.
 - `dry`: If `true`, query the API and print found files but skip all downloads (default: `false`).
 - `neighbors`: Number of neighboring DGT tiles to include around a single-point query (default: `0` =
   only the tile containing the point). Can be an integer `N` (N rings of tiles on each side, giving a
@@ -204,7 +206,13 @@ function _dgt_lidar(bbox, user::String, password::String, save::Bool, output_dir
                     _neighbors, _zoom::Int, compress::String, proj::String)
 
 	bbox = _validate_pt_bbox(NTuple{4,Float64}(bbox))
-	_valid = ("LAZ", "MDT-50cm", "MDS-50cm", "MDT-2m", "MDS-2m")
+	# The LIDAR collections, then the ORTOS (orthophoto) ones — the portal serves both through the
+	# very same catalogue, authentication and download endpoint, so the only thing that ever kept
+	# them out of here was this list. Names verified against
+	# https://cdd.dgterritorio.gov.pt/dgt-be/v1/collections.
+	_valid = ("LAZ", "MDT-50cm", "MDS-50cm", "MDT-2m", "MDS-2m",
+	          "ORTOS-2025", "ORTOS-2021", "ORTOS-2018", "ORTOS-2015", "ORTOS-2012",
+	          "ORTOS-2010", "ORTOS-2007", "ORTOS-2004", "ORTOS-1995")
 	_coll = uppercase(collection)		# Because of Core.Boxes
 	_canonical = findfirst(c -> uppercase(c) == _coll, _valid)
 	_canonical === nothing && error("Invalid collection \"$collection\". Valid: $(join(_valid, ", "))")
@@ -400,8 +408,9 @@ function _dgt_mosaic(bbox, src_dir::String, collection::String, outfile::String,
 	ext_lc   = use_mem ? ".tiff" : lowercase(splitext(outfile)[2])
 	fmt_opts = ext_lc == ".nc" ? ["-of", "netCDF", "-co", "FORMAT=NC4", "-co", "COMPRESS=DEFLATE", "-co", "ZLEVEL=4"] :
 	           use_mem          ? ["-of", "GTiff"] :
-	                              ["-of", "GTiff", "-co", "COMPRESS=ZSTD", "-co", "PREDICTOR=3", "-co", "TILED=YES",
-	                               "-co", "BLOCKXSIZE=512", "-co", "BLOCKYSIZE=512"]
+	                              ["-of", "GTiff", "-co", "COMPRESS=ZSTD",
+	                               "-co", "PREDICTOR=" * _gtiff_predictor(isempty(tif_files) ? "" : tif_files[1]),
+	                               "-co", "TILED=YES", "-co", "BLOCKXSIZE=512", "-co", "BLOCKYSIZE=512"]
 
 	# Resolve output CRS: "geog" → EPSG:4326, bare digits → EPSG:<n>, anything else → pass directly
 	t_srs = isempty(proj)  ? "" :
@@ -792,11 +801,34 @@ function _authenticate(username::String, password::String, verbose::Int=1)
 end
 
 # ------------------------------------------------------------------------------------------
+# The GTiff PREDICTOR for `src`'s data type. It is NOT a free choice: 3 is the FLOATING-POINT
+# predictor and GDAL refuses to create the file with it for an integer/byte raster — refuses
+# SILENTLY, writing no file and throwing nothing — while 2 is the integer (horizontal differencing)
+# one. A hard-coded 3 therefore produced no output at all for every byte raster, which is exactly
+# what the ORTOS orthophoto tiles are (RGB, Byte). Unreadable source -> 2, which is valid for every
+# integer type and merely compresses a float raster a little less well.
+function _gtiff_predictor(src::String)::String
+	isempty(src) && return "2"
+	try
+		return occursin("Type=Float", string(GMT.gdalinfo(src))) ? "3" : "2"
+	catch
+		return "2"
+	end
+end
+
+# ------------------------------------------------------------------------------------------
 function _get_file_extension(mime_type::String)
 	mime_to_ext = Dict("image/tiff; application=geotiff" => ".tiff",
 	                   "image/tiff"                      => ".tiff",
 	                   "application/vnd.laszip"          => ".laz")
-	return get(mime_to_ext, mime_type, "")
+	haskey(mime_to_ext, mime_type) && return mime_to_ext[mime_type]
+	# A STAC asset's type carries MIME PARAMETERS, and the set of them is not fixed: the ORTOS
+	# (orthophoto) collections announce "image/tiff; application=geotiff; profile=cloud-optimized",
+	# which an exact-match lookup misses. An unmatched type returns "" and _collect_urls then DROPS
+	# the asset, so a search that really found tiles ends in "Nothing else to do" with no error
+	# anywhere. The extension is decided by the base type, so match on that.
+	base = String(strip(first(split(mime_type, ';'))))
+	return get(mime_to_ext, base, "")
 end
 
 # ------------------------------------------------------------------------------------------
@@ -985,7 +1017,9 @@ function _download_file(url::String, item_id::String, extension::String, output_
 				# Use GDAL /vsicurl/ to translate remote TIFF in one step (no download-then-recompress).
 				if extension == ".tiff" && compress == "tif"
 					GMT.gdaltranslate("/vsicurl/" * final_url,
-					                  ["-co", "COMPRESS=ZSTD", "-co", "PREDICTOR=3", "-co", "TILED=YES",
+					                  ["-co", "COMPRESS=ZSTD",
+					                   "-co", "PREDICTOR=" * _gtiff_predictor("/vsicurl/" * final_url),
+					                   "-co", "TILED=YES",
 					                   "-co", "BLOCKXSIZE=512", "-co", "BLOCKYSIZE=512"]; save=file_path)
 				elseif extension == ".tiff" && compress == "nc"
 					GMT.gdaltranslate("/vsicurl/" * final_url,
