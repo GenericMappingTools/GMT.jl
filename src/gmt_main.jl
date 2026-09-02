@@ -875,13 +875,19 @@ function grid_init(API::Ptr{Nothing}, X::GMT_RESOURCE, Grid::GMTgrid, pad::Int=2
 	if (_cube)
 		_inc = copy(Grid.inc)
 		(length(_inc) < 3) && (append!(_inc, 1.0))		# Shit this cube has no v_inc
+		# The third dimension is the v (layer) range, range[7:8]. range[5:6] is the DATA's min/max, a
+		# different quantity: mat2grid(reshape(1.0:12,2,3,2), v=[1.,2.]) has v_inc 1 and data 1:12, so
+		# reading 5:6 here computed a v_inc of 11, GMT allocated the cube from that, and the file
+		# written came back "does not contain cube data (more than one layer)".
+		v1, v2 = (length(Grid.range) >= 8) ? (Grid.range[7], Grid.range[8]) : (Grid.range[5], Grid.range[6])
 		# We need to make sure z_inc is correct because GMT allocates memory based on the n_bands computed it and z_range
-		if ((_nz = round(Int, (Grid.range[6] - Grid.range[5]) / (_inc[3]+eps()) + 1)) != size(Grid.z, 3))	# +eps() to avoid zero division
-			_inc[3] = (Grid.range[6] - Grid.range[5]) / (size(Grid.z, 3) - 1.0)
+		if ((_nz = round(Int, (v2 - v1) / (_inc[3]+eps()) + 1)) != size(Grid.z, 3))	# +eps() to avoid zero division
+			_inc[3] = (v2 - v1) / (size(Grid.z, 3) - 1.0)
 			(length(Grid.inc) < 3) ? @warn("This cube doesn't even has a z_inc. Computing one to not error.") :
 			                         @warn("The z_inc of this cube is wrong. It is $(Grid.inc[3]) but should be $(_inc[3])")
 		end
-		G = convert(Ptr{GMT_CUBE}, GMT_Create_Data(API, GMT_IS_CUBE, GMT_IS_VOLUME, mode, NULL, Grid.range, _inc, UInt32(Grid.registration), pad, NULL))
+		_range = Float64[Grid.range[1], Grid.range[2], Grid.range[3], Grid.range[4], v1, v2]	# w/e/s/n + THAT v range
+		G = convert(Ptr{GMT_CUBE}, GMT_Create_Data(API, GMT_IS_CUBE, GMT_IS_VOLUME, mode, NULL, _range, _inc, UInt32(Grid.registration), pad, NULL))
 		X.family, X.geometry = GMT_IS_CUBE, GMT_IS_VOLUME
 	else
 		G = convert(Ptr{GMT_GRID}, GMT_Create_Data(API, GMT_IS_GRID, GMT_IS_SURFACE, mode, NULL, Float64.(Grid.range[1:4]), Float64.(Grid.inc[1:2]), UInt32(Grid.registration), pad, NULL))

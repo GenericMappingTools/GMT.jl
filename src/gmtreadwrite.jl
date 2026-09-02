@@ -599,16 +599,21 @@ function gmtwrite(fname::AbstractString, data, d::Dict{Symbol, Any})
 	if (isa(data, GMTgrid))
 		(endswith(fname, ".laz") || endswith(fname, ".LAZ")) && return lazwrite(fname, data; d...)		# Lasz
 
+		is_cube = (size(data.z, 3) > 1)			# A 3-D GMTgrid is a CUBE and must be written as one
+
 		# GMT doesn't write correct CF nc grids that are referenced but non-geographic. So, use GDAL in those cases
 		fmt = parse_grd_format(d)				# See if we have format requests
 		ext = lowercase(splitext(fname)[2])
-		if (fmt == "" && opt_f == "" && (ext == ".grd" || ext == ".nc"))
+		if (!is_cube && fmt == "" && opt_f == "" && (ext == ".grd" || ext == ".nc"))		# GDAL flattens a cube
 			prj = getproj(data, proj4=true)
 			(prj != "" && !contains(prj, "=long") && !contains(prj, "=lat")) && return gdaltranslate(data, dest=fname)
-		elseif (fmt == "" && ext == ".tif" || ext == ".tiff")	# If .tif, write a Geotiff file
+		elseif (!is_cube && (fmt == "" && ext == ".tif" || ext == ".tiff"))	# If .tif, write a Geotiff file
 			fmt = "=gd:GTiff"
 		end
-		opt_T = " -Tg"
+		# -Tg is a GRID: it writes ONE layer, so a cube handed to it lost every layer but the first
+		# ("does not contain cube data (more than one layer)" when read back, whatever the writer was
+		# given). Cubes are -Tu.
+		opt_T = is_cube ? " -Tu" : " -Tg"
 		fname *= fmt
 		cmd *= opt_f
 		CTRL.proj_linear[1] = true				# To force pad=0 and julia memory (no dup)
