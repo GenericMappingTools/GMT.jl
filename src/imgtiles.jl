@@ -1053,7 +1053,12 @@ function netFetchTile(url, cache, quadtree, ext, verbose)
 			dest_fiche = string(cache, filesep, quadtree, ".", ext)
 		end
 
-		Downloads.download(url, dest_fiche)		# Could try to make this a parallel job, but does it worth it?
+		# Could try to make this a parallel job, but does it worth it?
+		# Tile servers that require an identifying User-Agent refuse the libcurl default. OpenStreetMap's
+		# answer to it is not an error but a 200 carrying an "Access blocked -- App is not following the tile
+		# usage policy" PNG, the SAME body for every tile, so the mosaic silently comes out paved with it.
+		# Their policy asks for an app name and a contact, which is what this is.
+		Downloads.download(url, dest_fiche; headers = ["User-Agent" => "GMT.jl/1.43 (+https://github.com/GenericMappingTools/GMT.jl)"])
 
 		finfo = stat(dest_fiche)
 		if (finfo.size < 100)				# Delete the file anyway because it exists but is empty

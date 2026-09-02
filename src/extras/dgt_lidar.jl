@@ -621,16 +621,43 @@ function _parse_stac_response(json_str::String)
 				m = match(r"\"id\"\s*:\s*\"([^\"]+)\"", feature_str)
 				m !== nothing && (feature["id"] = m.captures[1])
 
-				# Find first bbox whose values look like WGS84 (lon ∈ [-180,180], lat ∈ [-90,90]).
-				# DGT STAC assets also carry a bbox in projected metres (EPSG:3763) — skip those.
-				for bbox_m in eachmatch(r"\"bbox\"\s*:\s*\[([^\]]+)\]", feature_str)
-					parts = split(bbox_m.captures[1], ',')
-					length(parts) < 4 && continue
-					vals = try [parse(Float64, strip(p)) for p in parts[1:4]] catch; nothing end
-					vals === nothing && continue
-					if -180 ≤ vals[1] ≤ 180 && -90 ≤ vals[2] ≤ 90 && -180 ≤ vals[3] ≤ 180 && -90 ≤ vals[4] ≤ 90
-						feature["bbox"] = vals
-						break
+				# The tile's OUTLINE, in WGS84: "geometry":{"type":"Polygon","coordinates":[[[lon,lat],…]]}.
+				# Kept as it comes (a vector of [lon,lat] pairs) because it is the tile's true shape, and
+				# it is also the only footprint some collections give: an MDS item's own "bbox" field is
+				# in projected metres, and a LAZ item's is a 3-D bbox (see below).
+				geom_m = match(r"\"geometry\"\s*:\s*\{[^{}]*\"coordinates\"\s*:\s*\[\s*\[(.*?)\]\s*\]\s*\}", feature_str)
+				if (geom_m !== nothing)
+					pts = NTuple{2,Float64}[]
+					for p in eachmatch(r"\[\s*(-?[\d.eE+]+)\s*,\s*(-?[\d.eE+]+)\s*\]", geom_m.captures[1])
+						lon = tryparse(Float64, p.captures[1]);  lat = tryparse(Float64, p.captures[2])
+						(lon === nothing || lat === nothing) && continue
+						(-180 ≤ lon ≤ 180 && -90 ≤ lat ≤ 90) && push!(pts, (lon, lat))
+					end
+					if !isempty(pts)
+						feature["geometry"] = pts
+						# ...and the bbox it implies, which is authoritative: derived from the outline in
+						# lon/lat, not from whichever "bbox" field happens to be first in the item.
+						feature["bbox"] = [minimum(p[1] for p in pts), minimum(p[2] for p in pts),
+						                   maximum(p[1] for p in pts), maximum(p[2] for p in pts)]
+					end
+				end
+
+				# No geometry: fall back to a "bbox" field whose values look like WGS84 (lon ∈ [-180,180],
+				# lat ∈ [-90,90]). DGT STAC assets also carry a bbox in projected metres (EPSG:3763) — skip
+				# those. A SIX-element bbox is the 3-D form [min_lon,min_lat,min_z,max_lon,max_lat,max_z]
+				# (what the LAZ collection returns), so the horizontal corners are 1,2 and 4,5 — taking the
+				# first four reads the minimum ELEVATION as the maximum longitude.
+				if !haskey(feature, "bbox")
+					for bbox_m in eachmatch(r"\"bbox\"\s*:\s*\[([^\]]+)\]", feature_str)
+						parts = split(bbox_m.captures[1], ',')
+						(length(parts) != 4 && length(parts) != 6) && continue
+						idx  = (length(parts) == 6) ? (1, 2, 4, 5) : (1, 2, 3, 4)
+						vals = try [parse(Float64, strip(parts[k])) for k in idx] catch; nothing end
+						vals === nothing && continue
+						if -180 ≤ vals[1] ≤ 180 && -90 ≤ vals[2] ≤ 90 && -180 ≤ vals[3] ≤ 180 && -90 ≤ vals[4] ≤ 90
+							feature["bbox"] = vals
+							break
+						end
 					end
 				end
 
