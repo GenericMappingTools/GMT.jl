@@ -442,12 +442,11 @@ function parse_JZ(d::Dict{Symbol,Any}, cmd::String, del::Bool=true; O::Bool=fals
 	symbs = [:JZ :Jz :zsize :zscale]
 	(SHOW_KWARGS[]) && return (print_kwarg_opts(symbs, "String | Number"), "")
 	opt_J::String = "";		seek_JZ = true
-	if ((val = find_in_dict(d, [:aspect3])[1]) !== nothing)
+	if ((s_val::String = hlp_desnany_str(d, [:aspect3])) !== "")
 		o = scan_opt(cmd, "-J")
 		(o == "") && (o = " ")		# When scaning a string with only -J (i.e., no args), do not error
-		(o != " " && o[1] != 'X' || o[end] == 'd') &&  @warn("aspect3 works only in linear projections (and no geog), ignoring it.") 
+		(o != " " && o[1] != 'X' || o[end] == 'd') &&  @warn("aspect3 works only in linear projections (and no geog), ignoring it.")
 		if (o[1] == 'X' && o[end] != 'd' && length(o) > 1)
-			s_val::String = string(val)
 			if (contains(s_val, ':'))						# An explicit aspect ratio, e.g. 3:2
 				dims = parse.(Float64, split(s_val, ':'))
 				t = split(o[2:end],'/')[1]
@@ -911,7 +910,7 @@ function parse_proj(p::NamedTuple)::Tuple{String, Bool}
 		end
 	end
 
-	if (center != "" && (val = find_in_dict(d, [:horizon])[1]) !== nothing)  center = string(center, '/',val)  end
+	if (center != "" && (val_h::String = hlp_desnany_str(d, [:horizon])) !== "")  center = string(center, '/', val_h)  end
 
 	parallels::String = ""
 	if ((val = find_in_dict(d, [:parallel :parallels])[1]) !== nothing)
@@ -1939,10 +1938,10 @@ function add_opt_pen(d::Dict{Symbol,Any}, @nospecialize(symbs::Union{Nothing, VM
 
 	# Some -W take extra options to indicate that color comes from CPT
 	if (haskey(d, :colored))  out *= "+c"
-	elseif (find_in_dict(d, [:zlevel :zlevels])[1] !== nothing) out *= "+z"
+	elseif (is_in_dict(d, [:zlevel :zlevels], del=true) !== nothing) out *= "+z"
 	else
-		((val = find_in_dict(d, [:cline :color_line :color_lines])[1]) !== nothing) && (out *= "+cl")
-		((val = find_in_dict(d, [:ctext :color_text :color_symbols :color_symbol])[1]) !== nothing) && (out *= "+cf")
+		(is_in_dict(d, [:cline :color_line :color_lines], del=true) !== nothing) && (out *= "+cl")
+		(is_in_dict(d, [:ctext :color_text :color_symbols :color_symbol], del=true) !== nothing) && (out *= "+cf")
 	end
 	if (haskey(d, :bezier))  out *= "+s";  delete!(d, [:bezier])  end
 	if (haskey(d, :offset))  out *= "+o" * arg2str(d[:offset])::String   end
@@ -2029,11 +2028,8 @@ end
 # ---------------------------------------------------------------------------------------------------
 function parse_pen_color(d::Dict{Symbol,Any}, symbs=nothing, del::Bool=false)::String
 	# Need this as a separate fun because it's used from modules
-	lc::String = ""
 	(symbs === nothing) && (symbs = [:lc :linecolor])
-	if ((val = find_in_dict(d, symbs, del)[1]) !== nothing)
-		lc = string(get_color(val))
-	end
+	lc::String = hlp_desnany_color(d, symbs, del)
 	return lc
 end
 
@@ -2052,7 +2048,7 @@ function build_pen(d::Dict{Symbol,Any}, del::Bool=false)::String
 	else
 		lw = add_opt(d, "", "", [:lw :lt :linewidth :linethick :linethickness])	# Line width
 	end
-	(lw == "" && find_in_dict(d, [:line])[1] !== nothing) && (lw = "0.5p")	# Means, accept also line=true
+	(lw == "" && is_in_dict(d, [:line], del=true) !== nothing) && (lw = "0.5p")	# Means, accept also line=true
 
 	ls::String = add_opt(d, "", "", [:ls :linestyle])			# Line style
 	lc::String = parse_pen_color(d, [:lc :linecolor], del)
@@ -2173,7 +2169,7 @@ function mk_styled_line!(d::Dict{Symbol,Any}, code::String)
 		_ml = ((opt_ML = parse_markerline(d, "", "")[1]) != "") ? opt_ML[4:end] : def_ML
 
 		d[:marker], d[:ml], d[:mc] = marca, _ml, _fill
-		if ((find_in_dict(d, [:ms :markersize :MarkerSize], false)[1]) === nothing)	# If ms explicitly set, takes precedence
+		if (is_in_dict(d, [:ms :markersize :MarkerSize]) === nothing)	# If ms explicitly set, takes precedence
 			f = (noinv_ML) ? 5 : 6		# Multiplying factor for the symbol size. But this can be overuled by using :ms
 			d[:ms] = string(round(f * parse(Float64,d[:lw]) * 2.54/72, digits=2))
 		end
@@ -2302,9 +2298,9 @@ function prepare2geotif(d::Dict{Symbol,Any}, cmd::Vector{String}, opt_T::String,
 		cmd *= " -B0 --MAP_FRAME_TYPE=inside --MAP_FRAME_PEN=0.1,254"
 	end
 
-	if (!O && ((val = find_in_dict(d, [:geotif])[1]) !== nothing))		# Only first layer
+	if (!O && ((val_g::String = hlp_desnany_str(d, [:geotif])) !== ""))		# Only first layer
 		cmd[1] = helper2geotif(cmd[1])
-		if (startswith(string(val)::String, "trans"))  opt_T::String = " -TG -W+g"  end	# A transparent GeoTIFF
+		if (startswith(val_g, "trans"))  opt_T::String = " -TG -W+g"  end	# A transparent GeoTIFF
 	elseif (!O && ((val = find_in_dict(d, [:kml])[1]) !== nothing))		# Only first layer
 		if (!occursin("-JX", cmd[1]) && !occursin("-Jx", cmd[1]))
 			@warn("Creating KML requires the use of a cartesian projection of geographical coordinates. Not your case")
@@ -2701,8 +2697,8 @@ function _add_opt_cpt(d::Dict{Symbol,Any}, cmd::String, symbs::VMs, opt::Char, N
 	(SHOW_KWARGS[]) && return print_kwarg_opts(symbs, "GMTcpt | Tuple | Array | String | Number"), arg1, arg2, N_args
 
 	function equalize(d, arg1, cptname::String, opt_T::String)::GMTcpt
-		if ((isa(arg1, GMTgrid) || isa(arg1, String)) && (val_eq = find_in_dict(d, [:equalize])[1]) !== nothing)
-			n::Int = convert(Int, val_eq)				# If val is other than Bool or number it will error
+		if ((isa(arg1, GMTgrid) || isa(arg1, String)) && (n::Int = hlp_desnany_int(d, [:equalize], del=true)) !== -999)
+			# If 'equalize' is other than a Bool or a number it will error
 			if (isa(arg1, String))
 				(n > 1) ? gmt("grd2cpt -E$n+c -C" * cptname * " " * arg1) : gmt("grd2cpt -C" * cptname * " " * arg1)
 			else
@@ -2804,6 +2800,7 @@ function add_opt_fill(@nospecialize(val), cmd::String="",  opt::String="")::Stri
 		else   error("For 'fill' option as a NamedTuple, you MUST provide a 'patern' member")
 		end
 
+		# NOTE: can't use hlp_desnany_color() here because get_color(::Bool) -> "" and we must still emit a bare "+b"/"+f"
 		((val2 = find_in_dict(d2, [:bg :bgcolor :background], false)[1]) !== nothing) && (cmd *= "+b" * get_color(val2)::String)
 		((val2 = find_in_dict(d2, [:fg :fgcolor :foreground], false)[1]) !== nothing) && (cmd *= "+f" * get_color(val2)::String)
 		(haskey(d2, :dpi)) && (cmd = string(cmd, "+r", d2[:dpi]))
@@ -2841,9 +2838,11 @@ function get_cpt_set_R(d::Dict{Symbol,Any}, cmd0::String, cmd::String, opt_R::St
 			if (isa(arg1, GMTgrid) && (!isnan(pct)))
 				lh = quantile(any(!isfinite, arg1) ? skipnan(vec(arg1)) : vec(arg1), [pct/200, (1 - pct/200)])
 				cpt_opt_T = @sprintf(" -T%.12g/%.12g/256+n -D", lh[1], lh[2])	# Piggyback -D
-			elseif ((val = find_in_dict(d, [:percent :pct])[1]) !== nothing)	# Case of a grid file
-				range = vec(grdinfo(cmd0 * " -C -T+a$(100-val)"::String).data);
-				cpt_opt_T = @sprintf(" -T%.12g/%.12g/256+n -D", range[5], range[6])
+			elseif (!isnan(pct))						# Case of a grid file
+				# Same trick as in the '@' branch below. Note that asking "-C -T+a" instead returns a
+				# matrix whose vec() does NOT carry z_min/z_max in elements 5,6 (and would clobber 'range').
+				mima_ = split(grdinfo(cmd0 * " -T+a$(100-pct)"::String).text[1][3:end], "/")
+				cpt_opt_T = " -T" * mima_[1] * "/" * mima_[2] * "/256+n -D"
 			elseif (cpt_opt_T == "")
 				drange = range[6] - range[5]
 				(drange > 1e8) && @warn("The z range expands to more then 6 orders of magnitude. Missed to replace the nodatavalues?\n\n")
@@ -2859,8 +2858,10 @@ function get_cpt_set_R(d::Dict{Symbol,Any}, cmd0::String, cmd::String, opt_R::St
 			cmd *= @sprintf(" -R%.14g/%.14g/%.14g/%.14g", range[1], range[2], range[3], range[4])
 		end
 	elseif (cmd0 != "" && cmd0[1] == '@')			# No reason not to let @grids use clim=[...]
-		if (any(contains.(cmd0, ["_01d", "_30m", "_20m", "_15m", "_10m", "_06m"])) && (val = find_in_dict(d, [:percent :pct])[1]) !== nothing)
-			infa = grdinfo(cmd0 * " -T+a$(100-val)"::String).text[1]	# Bloody complicated output
+		# NOTE: the assignment must be hoisted. Inside a call, 'f(x = v)' parses as a keyword arg (extra parens don't help)
+		pct_::Float64 = any(contains.(cmd0, ["_01d", "_30m", "_20m", "_15m", "_10m", "_06m"])) ? hlp_desnany_float(d, [:percent :pct]) : NaN
+		if (!isnan(pct_))
+			infa = grdinfo(cmd0 * " -T+a$(100-pct_)"::String).text[1]	# Bloody complicated output
 			mima = split(infa[3:end], "/")			# Because the output is like "-T-5384/2729"
 			cpt_opt_T = " -T" * mima[1] * "/" * mima[2] * "/256+n -D"
 		elseif (haskey(d, :equalize))
@@ -2879,7 +2880,7 @@ function get_cpt_set_R(d::Dict{Symbol,Any}, cmd0::String, cmd::String, opt_R::St
 	elseif (prog == "grdimage")
 		if (!isa(arg1, GMTimage) && (arg3 === nothing && !occursin("-D", cmd)) )
 			get_cpt = true		# This still leaves out the case when the r,g,b were sent as a text.
-		elseif (find_in_dict(d, CPTaliases, false)[1] !== nothing)
+		elseif (is_in_dict(d, CPTaliases) !== nothing)
 			@warn("You are possibly asking to assign a CPT to an image. That is not allowed by GMT. See function image_cpt!")
 			get_cpt = true		# 
 		end
@@ -2977,9 +2978,7 @@ function get_color(val::VecOrMat{<:Real})::String
 end
 
 # ---------------------------------------------------------------------------------------------------
-function font(d::Dict{Symbol,Any}, symbs)::String
-	((val = find_in_dict(d, symbs)[1]) !== nothing) ? font(val) : ""
-end
+font(d::Dict{Symbol,Any}, symbs)::String = hlp_desnany_font(d, symbs)
 font(val::String)::String = val
 font(val::Real)::String = string(val)
 function font(val::Tuple)::String
@@ -3075,9 +3074,9 @@ function axis(D::Dict{Symbol,Any}, x::Bool, y::Bool, z::Bool, secondary::Bool, d
 		CTRL.pocket_B[2] = tB		# Save this one because we may need to revert it during psclip parsing
 		CTRL.pocket_B[3] = "."		# Signal gmt() to call gmt_restart because bg screws the API continuity
 	end
-	((val = find_in_dict(d, [:Xfill :Xbg :Xwall])[1]) !== nothing) && (opt = add_opt_fill(val, opt, "+x"))
-	((val = find_in_dict(d, [:Yfill :Ybg :Ywall])[1]) !== nothing) && (opt = add_opt_fill(val, opt, "+y"))
-	((val = find_in_dict(d, [:Zfill :Zbg :Zwall])[1]) !== nothing) && (opt = add_opt_fill(val, opt, "+z"))
+	opt = hlp_desnany_fill(d, [:Xfill :Xbg :Xwall], opt, "+x")
+	opt = hlp_desnany_fill(d, [:Yfill :Ybg :Ywall], opt, "+y")
+	opt = hlp_desnany_fill(d, [:Zfill :Zbg :Zwall], opt, "+z")
 	((p = add_opt_pen(d, [:wall_outline], opt="+w")) != "") && (opt *= p)
 	(haskey(d, :cube))     && (opt *= "+b")
 	(haskey(d, :internal)) && (opt *= "+i" * arg2str(d[:internal])::String)
@@ -3524,7 +3523,8 @@ function decorated(d::Dict{Symbol,Any})::String
 		else
 			marca = seek_custom_symb(marca, true)	# 'marca' may have been changed to a full name/size
 			cmd *= "+s" * marca
-			((val = find_in_dict(d, [:size :ms :markersize :symbolsize])[1]) !== nothing) && (cmd *= arg2str(val))
+			# The " " test is because hlp_desnany_arg2str() returns a " " when the value is a Bool true
+			((v_s::String = hlp_desnany_arg2str(d, [:size :ms :markersize :symbolsize])) !== "" && v_s !== " ") && (cmd *= v_s)
 		end
 		if (haskey(d, :angle))   cmd = string(cmd, "+a", d[:angle]) end
 		if (haskey(d, :debug))   cmd *= "+d"  end
@@ -3539,7 +3539,7 @@ function decorated(d::Dict{Symbol,Any})::String
 		(optD == "") && (optD = "d")		# Really need to improve the algo of this
 		opt_S = " -Sq"
 	else									# -Sf mode (front lines).
-		((val = find_in_dict(d, [:size])[1]) !== nothing) && (cmd *= "/" * arg2str(val)::String)
+		((v_sz::String = hlp_desnany_arg2str(d, [:size])) !== "" && v_sz !== " ") && (cmd *= "/" * v_sz)
 		if     (haskey(d, :left))  cmd *= "+l"
 		elseif (haskey(d, :right)) cmd *= "+r"
 		elseif (haskey(d, :side))
@@ -4880,7 +4880,7 @@ end
 
 # --------------------------------------------------------------------------------------------------
 function help_show_options(d::Dict{Symbol,Any})
-	if (find_in_dict(d, [:help])[1] !== nothing)  SHOW_KWARGS[] = true  end	# Put in HELP mode
+	if (is_in_dict(d, [:help], del=true) !== nothing)  SHOW_KWARGS[] = true  end	# Put in HELP mode
 end
 
 # --------------------------------------------------------------------------------------------------
