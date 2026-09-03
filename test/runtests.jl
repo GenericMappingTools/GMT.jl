@@ -27,6 +27,7 @@ using InteractiveUtils
 	end
 	include("test_brokenaxes.jl")
 	include("test_wave_travel_time.jl")
+	include("test_ttt.jl")
 	include("test_imgmorph.jl")
 	include("test_PT_alignments.jl")
 	include("test_PT_column_width.jl")

@@ -19,7 +19,15 @@ Gttt = wave_travel_time(G, [-11.0, 35.9])
 viz(Gttt, contour=true, colorbar=true, coast=true, proj=:guess)
 ```
 """
-function wave_travel_time(G::GMTgrid{Float32, 2}, source::Union{Tuple{<:Real, <:Real}, VecOrMat{<:Real}}; geo::Bool=true, fill_voids::Bool=true)
+function wave_travel_time(G::GMTgrid{Float32, 2}, source::Union{Tuple{<:Real, <:Real}, VecOrMat{<:Real}};
+                          geo::Bool=true, fill_voids::Bool=true, method::Symbol=:mirone,
+                          nodes::Int=120, search::Bool=false, search_radius=0.0,
+                          source_depth=0.0, min_depth=0.0, bias::Bool=true, verbose::Int=0)
+	if (method == :ttt)			# Wessel's Huygens/Dijkstra solver (slower, more accurate)
+		return ttt(G, source; nodes=nodes, search=search, search_radius=search_radius,
+		           source_depth=source_depth, min_depth=min_depth, bias=bias, verbose=verbose)
+	end
+	(method != :mirone) && error("wave_travel_time: 'method' must be :mirone or :ttt, got :$method")
 	src = (Float64(source[1]), Float64(source[2]))
 	wave_travel_time(G, src, geo==1, fill_voids==1)
 end
@@ -37,26 +45,9 @@ function wave_travel_time(G, source::Tuple{Float64, Float64}, geo::Bool, fill_vo
 	#   "TC" = column-major, north-first (G.z[1,:]=north)
 	#   "TR" = row-major, north-first (data stored transposed: z shape may be (nx,ny))
 	#   "BR" = row-major, south-first (data stored transposed: z shape may be (nx,ny))
-	Z  = Vector{Float32}(undef, nx * ny)
 	TT = fill(Float32(1.0e6), nx * ny)
 	lay = G.layout[1:2]
-
-	# Copy grid data to Z (flat, row-major, north-first)
-	if (lay == "BC" || lay == "TC")				# Column-major: G.z[j,i] is row j, col i
-		flip_y = (lay == "BC")
-		@inbounds for j in 1:ny, i in 1:nx
-			src_row = flip_y ? (ny - j + 1) : j
-			Z[(j-1)*nx + i] = G.z[src_row, i]
-		end
-	elseif lay == "TR"							# Row-major, north-first: already in the right order
-		flip_y = false
-		copyto!(Z, 1, vec(G.z), 1, nx * ny)
-	else										# "BR": row-major, south-first — flip rows
-		flip_y = true
-		@inbounds for j in 1:ny, i in 1:nx
-			Z[(j-1)*nx + i] = G.z[(ny - j) * nx + i]
-		end
-	end
+	Z, flip_y = grid2rowmajor_north(G, nx, ny)
 
 	# Convert bathymetry to speed field
 	_bat_to_speed!(Z)
@@ -114,10 +105,64 @@ function wave_travel_time(G, source::Tuple{Float64, Float64}, geo::Bool, fill_vo
 	end
 
 	# Build output grid — write TT (row-major, north-first) back to G.z's layout
+	return rowmajor_north2grid(G, TT, nx, ny, flip_y, "wave_travel_time")
+end
+
+# --------------------------------------------------------------------------
+"""
+    Z, flip_y = grid2rowmajor_north(G::GMTgrid, nx, ny)
+
+Copy `G.z` into a flat `Vector{Float32}` in row-major order with j=1 = north, whatever
+`G.layout` is. `flip_y` is returned so `rowmajor_north2grid` can undo the transform.
+
+G.z layout is encoded in `G.layout[1:2]`:
+  "BC" = column-major, south-first (G.z[1,:]=south)
+  "TC" = column-major, north-first (G.z[1,:]=north)
+  "TR" = row-major, north-first (data stored transposed: z shape may be (nx,ny))
+  "BR" = row-major, south-first (data stored transposed: z shape may be (nx,ny))
+"""
+function grid2rowmajor_north(G, nx::Int, ny::Int)
+	lay = G.layout[1:2]
+	# The copy loops below are @inbounds, so a grid whose 'z' does not match the nx,ny implied by
+	# its x,y vectors and registration would read out of bounds and SEGFAULT. Check it first.
+	if (lay == "BC" || lay == "TC")
+		(size(G.z,1) != ny || size(G.z,2) != nx) &&
+			error("Grid is inconsistent: layout '$(G.layout)' implies a $ny x $nx 'z' but it is $(size(G.z,1)) x $(size(G.z,2)). Check the grid's registration, range and inc.")
+	else
+		(length(G.z) != nx * ny) &&
+			error("Grid is inconsistent: layout '$(G.layout)' implies $(nx*ny) 'z' values but it has $(length(G.z)). Check the grid's registration, range and inc.")
+	end
+	Z = Vector{Float32}(undef, nx * ny)
+	if (lay == "BC" || lay == "TC")				# Column-major: G.z[j,i] is row j, col i
+		flip_y = (lay == "BC")
+		@inbounds for j in 1:ny, i in 1:nx
+			src_row = flip_y ? (ny - j + 1) : j
+			Z[(j-1)*nx + i] = G.z[src_row, i]
+		end
+	elseif lay == "TR"							# Row-major, north-first: already in the right order
+		flip_y = false
+		copyto!(Z, 1, vec(G.z), 1, nx * ny)
+	else										# "BR": row-major, south-first — flip rows
+		flip_y = true
+		@inbounds for j in 1:ny, i in 1:nx
+			Z[(j-1)*nx + i] = G.z[(ny - j) * nx + i]
+		end
+	end
+	return Z, flip_y
+end
+
+# --------------------------------------------------------------------------
+"""
+    GG = rowmajor_north2grid(G::GMTgrid, TT, nx, ny, flip_y, command)
+
+Inverse of [`grid2rowmajor_north`](@ref): write the flat row-major/north-first `TT` back into a
+new GMTgrid that carries `G`'s layout and referencing. `TT` holds travel times in hours.
+"""
+function rowmajor_north2grid(G, TT::Vector{Float32}, nx::Int, ny::Int, flip_y::Bool, command::String)
+	lay = G.layout[1:2]
 	out_z = Array{Float32,2}(undef, size(G.z, 1), size(G.z, 2))
 	if (lay == "BC" || lay == "TC")
-		# Column-major output: out_z[j,i] is row j, col i
-		@inbounds for j in 1:ny, i in 1:nx
+		@inbounds for j in 1:ny, i in 1:nx			# Column-major output: out_z[j,i] is row j, col i
 			dst_row = flip_y ? (ny - j + 1) : j
 			out_z[dst_row, i] = TT[(j-1)*nx + i]
 		end
@@ -132,13 +177,11 @@ function wave_travel_time(G, source::Tuple{Float64, Float64}, geo::Bool, fill_vo
 	zmin = minimum(x -> isnan(x) ? Inf  : x, out_z)
 	zmax = maximum(x -> isnan(x) ? -Inf : x, out_z)
 
-	GG = GMTgrid(proj4=G.proj4, wkt=G.wkt, epsg=G.epsg, geog=G.geog,
-	             range=Float64[x_min, x_max, y_min, y_max, zmin, zmax],
-	             inc=Float64[x_inc, y_inc], registration=G.registration, nodata=NaN,
-	             title="Tsunami Travel Time", remark="Hours from source",
-	             command="wave_travel_time", x=copy(G.x), y=copy(G.y),
-	             z=out_z, layout=G.layout)
-	return GG
+	return GMTgrid(proj4=G.proj4, wkt=G.wkt, epsg=G.epsg, geog=G.geog,
+	               range=Float64[G.range[1], G.range[2], G.range[3], G.range[4], zmin, zmax],
+	               inc=Float64[G.inc[1], G.inc[2]], registration=G.registration, nodata=NaN,
+	               title="Tsunami Travel Time", remark="Hours from source",
+	               command=command, x=copy(G.x), y=copy(G.y), z=out_z, layout=G.layout)
 end
 
 # --------------------------------------------------------------------------

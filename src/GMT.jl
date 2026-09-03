@@ -205,7 +205,7 @@ export
 	hampel, hampel!, lowess, whittaker, Ginnerjoin, Gouterjoin, Gleftjoin, Grightjoin, Gcrossjoin, Gsemijoin, Gantijoin, spatialjoin,
 	groupby, stats, anaglyph, lazinfo, lazread, lazwrite, lasread, laswrite,
 	fillgaps, fillgaps!,
-	okada, wave_travel_time,
+	okada, wave_travel_time, ttt, tttimes,
 	haralick,
 	mapsize2region,
 	ind2bool, cube, cylinder, circlepts, dodecahedron, ellipse3D, eulermat, flatfv, icosahedron, loft, sphere, spinmat,
@@ -380,6 +380,7 @@ include("extras/dgt_lidar.jl")
 include("extras/seismicity.jl")
 include("extras/okada.jl")
 include("extras/wave_travel_time.jl")
+include("extras/tttAPI.jl")			# Must come after wave_travel_time.jl (reuses D2R + the layout helpers)
 include("extras/weather.jl")
 include("extras/webmapserver.jl")
 include("extras/whittaker.jl")
