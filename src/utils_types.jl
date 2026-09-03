@@ -2635,7 +2635,7 @@ end
 mksymbol(f::Function, arg1; kw...) = mksymbol(f, "", arg1; kw...)
 
 # ---------------------------------------------------------------------------------------------------
-function hlp_desnany_str(d, s::Vector{Symbol}, del=true)::String
+function hlp_desnany_str(d, s::VMs, del=true)::String
 	((val = find_in_dict(d, s, del)[1]) === nothing) ? "" : string(val)
 end
 function hlp_desnany_arg2str(d, s, del=true; sep='/')::String
@@ -2678,6 +2678,23 @@ function hlp_desnany_vstr_2(d, s)::Vector{String}
 	((alpha_val = find_in_dict(d, s)[1]) === nothing) && return String[]
 	(eltype(alpha_val) <: AbstractFloat && maximum(alpha_val) <= 1) && (alpha_val = string.(collect(alpha_val) .* 100))
 	return isa(alpha_val, String) ? [alpha_val] : vec(string.(alpha_val))
+end
+
+# ---------------------------------------------------------------------------------------------------
+function hlp_desnany_color(d, s, del=true)::String
+	# Type barrier for the very common 'fish a color out of D and stringify it' pattern.
+	((val = find_in_dict(d, s, del)[1]) === nothing) ? "" : get_color(val)
+end
+
+# ---------------------------------------------------------------------------------------------------
+function hlp_desnany_font(d, s, del=true)::String
+	((val = find_in_dict(d, s, del)[1]) === nothing) ? "" : font(val)
+end
+
+# ---------------------------------------------------------------------------------------------------
+function hlp_desnany_fill(d, s, cmd::String="", opt::String="", del=true)::String
+	# Returns CMD unchanged when none of the S keys is in D.
+	((val = find_in_dict(d, s, del)[1]) === nothing) ? cmd : add_opt_fill(val, cmd, opt)
 end
 
 # ---------------------------------------------------------------------------------------------------
