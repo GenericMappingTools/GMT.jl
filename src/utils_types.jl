@@ -2636,10 +2636,11 @@ mksymbol(f::Function, arg1; kw...) = mksymbol(f, "", arg1; kw...)
 
 # ---------------------------------------------------------------------------------------------------
 function hlp_desnany_str(d, s::VMs, del=true)::String
-	((val = find_in_dict(d, s, del)[1]) === nothing) ? "" : string(val)
+	((val = find_in_dict(d, s, del)[1]) === nothing) ? "" : (val isa String ? val : string(val))
 end
 function hlp_desnany_arg2str(d, s, del=true; sep='/')::String
-	((val = find_in_dict(d, s, del)[1]) === nothing) ? "" : (isa(val, Bool) && val == true) ? " " : arg2str(val, sep)
+	((val = find_in_dict(d, s, del)[1]) === nothing) ? "" :
+		(val === true ? " " : val isa String ? val : arg2str(val, sep))
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -2655,12 +2656,14 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function hlp_desnany_int(d, s, default::Int=-999; del=false)::Int
-	((val = find_in_dict(d, s, del)[1]) === nothing) ? default : (isa(val, Real) ? round(Int, val) : parse(Int, val))
+	((val = find_in_dict(d, s, del)[1]) === nothing) ? default :
+		(val isa Int ? val : val isa Integer ? Int(val) : val isa Real ? round(Int, val) : parse(Int, val))
 end
 
 # ---------------------------------------------------------------------------------------------------
 function hlp_desnany_float(d, s)::Float64
-	((val = find_in_dict(d, s)[1]) === nothing) ? NaN : Float64(val)
+	((val = find_in_dict(d, s)[1]) === nothing) ? NaN :
+		(val isa Float64 ? val : val isa Real ? Float64(val) : parse(Float64, val))
 end
 
 # ---------------------------------------------------------------------------------------------------
