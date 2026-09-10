@@ -919,9 +919,9 @@ function parse_opt_S(d::Dict, @nospecialize(arg1), is3D::Bool=false)
 			(marca == "") && (marca = "c")		# If a marker name was not selected, defaults to circle
 			val = isa(_val, Tuple) ? _val : isa(_val, VMr) && is1D ? (_val,) : _val		# Let also size=[3 20] && is1D do it right
 			if (isa(val, VMr))
-				val_::Vector{Float64} = vec(Float64.(val))
+				val_::Vector{Float64}, sizes_are_int::Bool = hlp_desnany_markersize(val)
 				if (length(val_) == 2)			# A two elements array is interpreted as [min max]
-					sc = _scale(eltype(val) <: Integer)
+					sc = _scale(sizes_are_int)
 					arg1 = hcat(arg1, linspace(val_[1], val_[2], size(arg1,1)) .* sc)
 				else
 					(length(val_) != size(arg1,1)) &&
@@ -992,19 +992,29 @@ function parse_opt_S(d::Dict, @nospecialize(arg1), is3D::Bool=false)
 	return arg1, opt_S
 end
 
+# Normalize the common numeric marker-size case behind a concrete return-type barrier.
+function hlp_desnany_markersize(val::VMr)::Tuple{Vector{Float64}, Bool}
+	return vec(Float64.(val)), eltype(val) <: Integer
+end
+
 # ---------------------------------------------------------------------------------------------------
 function parse_markerline(d::Dict, opt_ML::String, opt_Wmarker::String)::Tuple{String, String}
 	# Make this code into a function so that it can also be called from mk_styled_line!()
-	if ((val = find_in_dict(d, [:ml :markerline :MarkerLine])[1]) !== nothing)
-		if (isa(val, Tuple))           opt_ML::String = " -W" * parse_pen(val) # This can hold the pen, not extended atts
-		elseif (isa(val, NamedTuple))  opt_ML = add_opt_pen(nt2dict(val), [:pen], opt="W")
-		else                           opt_ML = " -W" * arg2str(val)
-		end
+	if ((opt = hlp_desnany_markerline(d)) !== "")
+		opt_ML = opt
 		if (opt_Wmarker != "")
 			@warn("markerline overrides markeredgecolor");		opt_Wmarker = ""
 		end
 	end
 	return opt_ML, opt_Wmarker
+end
+
+# Keep the polymorphic marker-line value from propagating into parse_markerline.
+function hlp_desnany_markerline(d::Dict)::String
+	((val = find_in_dict(d, [:ml :markerline :MarkerLine])[1]) === nothing) && return ""
+	val isa Tuple      && return " -W" * parse_pen(val)
+	val isa NamedTuple && return add_opt_pen(nt2dict(val), [:pen], opt="W")
+	return " -W" * arg2str(val)
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -1287,7 +1297,7 @@ function make_color_column(d::Dict, cmd::String, opt_i::String, len_cmd::Int, N_
 	((val = hlp_desnany_str(d, [:G, :fill], false)) == "+z") && return cmd, arg1, arg2, N_args, false
 
 	n_rows, n_col = get_sizes(arg1)		# Deal with the matrix, DS & Vec{DS} cases
-	(isa(mz, Bool) && mz) && (mz = collect(1:n_rows))
+	!no_mz && (mz = hlp_desnany_zcolor(mz, n_rows))
 
 	if ((!no_mz && length(mz)::Int != n_rows) || (no_mz && opt_i != ""))
 		warn1 = string("Probably color column in '", the_kw, "' has incorrect dims (", length(mz), " vs $n_rows). Ignoring it.")
@@ -1311,6 +1321,13 @@ function make_color_column(d::Dict, cmd::String, opt_i::String, len_cmd::Int, N_
 	end
 
 	make_color_column_(d, cmd, len_cmd, N_args, n_prev, is3D, got_Ebars, arg1, arg2, !no_mz, mz, n_col)
+end
+
+# zcolor is numeric by definition. Normalize it once so length, extrema and
+# add2ds! below operate on a concrete vector instead of a Dict value of type Any.
+function hlp_desnany_zcolor(@nospecialize(val), n_rows::Int)::Vector{Float64}
+	val === true && return collect(1.0:n_rows)
+	return vec(Float64.(val))
 end
 
 # ---------------------------------------------------------------------------------------------------
