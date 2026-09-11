@@ -107,9 +107,10 @@ This function retrieves data from the Climate Data Store (CDS) (https://cds.clim
 - `levlist`: List of pressure levels to retrieve. It can be a string to select a unique level, or a vector
    of strings or Ints to select multiple levels. But it can also be a range of levels, e.g. "1000:-100:500". 
    This option is only used when the `params` argument is provided as a string vector.
-- `region`: Specify a region of a specific geographic area. It can be provided as a string with form "N/W/S/E"
-   or a 4-element vector or tuple with numeric data. This option is only used when the `params` argument is
-   provided as a string vector.
+- `region`: Specify a region of a specific geographic area. Same syntax as everywhere else in GMT.jl, that is
+   a string with form "W/E/S/N" or a 4-element vector or tuple with numeric data (it is converted internally
+   into the CDSAPI's own [North, West, South, East] order). This option is only used when the `params`
+   argument is provided as a string vector.
 - `format`: The format of the data to download. Default is "netcdf". Other options is "grib".
 - `dryrun`: A boolean indicating whether to print the `params` from the outputs of the `era5vars()` and
   `era5time()` functions. I this case, we just print the `params` and return without trying to download any file.
@@ -171,7 +172,7 @@ Download a forecast dataset from the ECMWF.
    NOTE: Not specifying a variable will download the entire forecast grib file for each forecast step selected with the `step` option.
 - `prefix`: A string with the prefix to use for the file name. The file name will be the prefix followed by the variable name.
 - `root`: The root URL of the CDS ERA5 dataset. Default is "https://data.ecmwf.int/forecasts".
-- `region`: Specify a region of a specific geographic area. It can be provided as a string with form "N/W/S/E"
+- `region`: Specify a region of a specific geographic area. It can be provided as a string with form "W/E/S/N"
    or a 4-element vector or tuple with numeric data, or all a earthregion name.
 - `step`: An Int with the forecast step to select.
 - `stream`: The stream to select. It can be one of: "oper", "enfo", "waef", "wave", "scda", "scwv", "mmsf". Default is "oper".
@@ -267,9 +268,11 @@ function ecmwf(source::Symbol=:reanalysis; filename="", cb::Bool=false, dataset=
 			params *= (format == "netcdf") ? "\"data_format\": \"netcdf\",\n" : "\"data_format\": \"grib\",\n"
 			last = (region == "") ? "\n" : ",\n"	# Having an extra comma at the end of the line is a json syntax error
 			params *= "\"download_format\": \"unarchived\"" * last
-			if (region != "")		# The region is provided by parse_R() as a string like " -R58/6/55/9" (N/W/S/E)
+			if (region != "")		# 'region' is a normal GMT -R, so parse_R() returns " -RW/E/S/N"
 				optR = split(parse_R(Dict{Symbol,Any}(:R => region), "")[1], '/')
-				params *= "\"area\": [" * optR[1][4:end] * ", " * optR[4] * ", " * optR[2] * ", " * optR[3] * "]\n"
+				W = optR[1][4:end]			# Drop the leading " -R"
+				# CDSAPI's "area" is [North, West, South, East], NOT the -R order.
+				params *= "\"area\": [" * optR[4] * ", " * W * ", " * optR[3] * ", " * optR[2] * "]\n"
 			end
 			params = "{\"product_type\": [\"reanalysis\"],\n" * params * "}"
 			dryrun && (println(params);		return nothing)		# <== EXIT here
@@ -700,17 +703,31 @@ function era5vars(varID::Union{Vector{String}, Vector{Symbol}}; single::Bool=tru
 	d = helper_ecmwf_vars(single, pressure, "era5")[1]
 	_vars = (eltype(varID) == Symbol) ? string.(varID) : varID
 	for k = 1:numel(_vars)
-		!haskey(d, _vars[k]) && error("Variable \"$_vars[$k]\" not found in the dataset")
+		!haskey(d, _vars[k]) &&
+			error("Variable \"$(_vars[k])\" not found in the $(pressure ? "pressure" : "single")-level dataset")
 	end
 	# Next line took me HOURS to figure it out. Shame on your printf Julia, shame on you.
 	@sprintf("\"variable\": [\n\t\"%s\"\n],", join([d[k][1] for k in _vars], "\",\n\t\""))
 end
 
 # ---------------------------------------------------------------------------------------------------------------
+# The four variable tables (era5vars2d/3d, fcvars2d/3d) are plain Dict literals in their own files,
+# and they never change while Julia is running. `include`ing one on every call means parsing and
+# evaluating a few hundred entries each time — paid by era5vars(), by ecmwf()'s own variable check,
+# and by every catalogue a GUI puts in front of the user. Read each file ONCE per session and keep
+# the Dict; the second and later asks are a lookup.
+const ECMWF_VARS_CACHE = Dict{String, Dict{String, Vector{String}}}()
+
 function helper_ecmwf_vars(single::Bool, pressure::Bool, prefix::String)::Tuple{Dict{String, Vector{String}}, String}
 	pressure && (single = false);	!single && (pressure = true)
 	dim_char = (single) ? "2" : "3";	title_str = ((single) ? "\nSingle" : "\nPressure")
-	return include(joinpath(dirname(pathof(GMTmodule[])), "extras/" * prefix * "vars" * dim_char * "d.jl")), title_str
+	name = prefix * "vars" * dim_char * "d"
+	d = get(ECMWF_VARS_CACHE, name, nothing)
+	if (d === nothing)
+		d = include(joinpath(dirname(pathof(GMTmodule[])), "extras/" * name * ".jl"))
+		ECMWF_VARS_CACHE[name] = d
+	end
+	return d, title_str
 end
 	
 # ---------------------------------------------------------------------------------------------------------------
