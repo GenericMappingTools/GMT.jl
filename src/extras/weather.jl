@@ -279,8 +279,16 @@ function ecmwf(source::Symbol=:reanalysis; filename="", cb::Bool=false, dataset=
 		end
 		body, _dataset = parse_request(params)
 	end
-	(dataset == "" && _dataset == "") && error("'dataset' not provided, Neither as an argument nor in the clipboard.")
-	(dataset == "" && _dataset != "") && (dataset = _dataset)
+	# A pasted/clipboard request NAMES ITS OWN DATASET and that name wins over the 'dataset' argument.
+	# The body only means anything against that dataset's schema (it is POSTed to
+	# /processes/<dataset>/execute), so honouring the argument instead sent, for example, an
+	# "ecv-for-climate-change" request (origin, climate_reference_period, time_aggregation) to an
+	# ERA5 endpoint, and the server rejected it with the title "invalid request" -- rethrown below as
+	# an ArgumentError that names neither the dataset nor the mismatch. `_dataset` is non-empty only
+	# when parse_request actually found `dataset = "..."` in the text, so a bare request dict (or a
+	# clipboard paste without that line) still uses the argument.
+	(_dataset != "") && (dataset = _dataset)
+	(dataset == "") && error("'dataset' not provided, neither as an argument nor in the request.")
 
 	s = curl_post(URL * "/retrieve/v1/processes/$dataset/execute", body, KEY)
 	ind::Union{Nothing, Int} = findfirst(startswith.(s,"\"status"))		# Annotate it otherwise it's a spee Anys
