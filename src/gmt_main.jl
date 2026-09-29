@@ -865,6 +865,7 @@ function grid_init(API::Ptr{Nothing}, X::GMT_RESOURCE, Grid::GMTgrid, pad::Int=2
 # We are given a Julia grid and use it to fill the GMT_GRID structure
 
 	mode = (Grid.layout != "" && Grid.layout[2] == 'R') ? GMT_CONTAINER_ONLY : GMT_CONTAINER_AND_DATA
+	isTR = (Grid.layout != "" && Grid.layout[1] == 'T' && Grid.layout[2] == 'R')	# Top-Right layout
 	noGrdCopy[] && (mode = GMT_CONTAINER_ONLY)
 	(mode == GMT_CONTAINER_ONLY) && (pad = Grid.pad)		# Here we must follow what the Grid says it has
 	grdview_case = (length(Grid.layout) == 4 && Grid.layout[4] == 'p')	# A special case for grdview and TRB layouts () that
@@ -955,6 +956,8 @@ function grid_init(API::Ptr{Nothing}, X::GMT_RESOURCE, Grid::GMTgrid, pad::Int=2
 	if (Grid.proj4 != "")    h.ProjRefPROJ4 = pointer(Grid.proj4)  end
 	if (Grid.wkt != "")      h.ProjRefWKT   = pointer(Grid.wkt)    end
 	if (Grid.epsg != 0)      h.ProjRefEPSG  = Int32(Grid.epsg)     end
+	# GMT is bugged in that it flips input UD in input when layout is TR and does not revert it. A patch is to reset the layout
+	(isTR) && (Grid.layout = string("BR" * Grid.layout[3:end]))
 
 	unsafe_store!(Gb.header, h)
 	unsafe_store!(G, Gb)

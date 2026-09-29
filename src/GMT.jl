@@ -485,6 +485,28 @@ using .Laszip
 	#kovesi(Gkov, wavelength=16);					# whole ppdrc chain: filtergrid + 4 FFTs + histtruncate
 	#Gkov.z[8:12, 8:12] .= NaN32;  Gkov.hasnans = 2;
 	#kovesi(Gkov, wavelength=16);					# and the NaN-infill branch (bwdist_idx)
+
+	# These are to give a little help to i'GMT precompiles
+	A16 = rand(UInt16, 64, 64, 4)
+	C16 = mat2img(A16; noconv = true)                           # mat2img(Array{UInt16,3}; noconv)
+	img = Array{UInt8,3}(undef, 64, 64, 3)
+	mat2img(view(A16, :, :, 1); stretch = true, img8 = view(img, :, :, 1), scale_only = 1)   # truecolor's stretch
+	mat2img(img, C16)                                          # mat2img(Array{UInt8,3}, GMTimage{UInt16,3})
+	mat2img(img[:, :, 1], C16)                                 # mat2img(Matrix{UInt8}, GMTimage{UInt16,3})
+	mat2grid(rand(Float32, 64, 64), C16)                       # mat2grid(Matrix{Float32}, GMTimage{UInt16,3})
+	precompile(gmtwrite, (String, GMTimage{UInt8,2}))          # only inferred in A (save= branch), never run
+	precompile(gmtwrite, (String, GMTgrid{Float32,2}))
+	#--
+	precompile(Tuple{typeof(Core.kwcall), NamedTuple{(:dest,), Tuple{String}}, typeof(gdaltranslate), GMTgrid{Float32,3}})
+	precompile(Tuple{typeof(Core.kwcall), NamedTuple{(:I,:R,:S,:Vd), Tuple{Vector{Float64},String,String,Int}}, typeof(nearneighbor), String})
+	precompile(Tuple{typeof(Core.kwcall), NamedTuple{(:band,), Tuple{Int}}, typeof(gd2gmt), String})
+	precompile(Tuple{typeof(Core.kwcall), NamedTuple{(:layer,:layout), Tuple{Int,String}}, typeof(gmtread), String})
+	precompile(gd2gmt, (String,))
+	precompile(mat2grid, (Array{Float32,3}, GMTgrid{Float32,2}))
+	precompile(mat2grid, (Matrix{Float32}, GMTimage{UInt16,2}))
+	precompile(isnodata, (GMTimage{UInt16,2},))
+	precompile(epsg2proj, (Int,))
+
 	arrows([0 8.2 0 6], limits=(-2,4,0,9), arrow=(len=2,stop=1,shape=0.5,fill=:red), axis=:a, pen="6p");
 	# The fft's bellow CANNOT go before the 'arrows' call because they crash on MacOS with a __pthread_kill (see #2030)
 	fft1d(rand(64));
