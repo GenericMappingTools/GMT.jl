@@ -4191,6 +4191,8 @@ function common_grd(d::Dict{Symbol,Any}, cmd::String, @nospecialize(args...))
 	n_args = 0
 	for k = 1:numel(args) if (args[k] !== nothing)  n_args += 1  end  end	# Drop the nothings
 	R = isa(args, Tuple{Tuple}) ? gmt(cmd, args[1]...) : gmt(cmd, args[1:n_args]...)
+	(isa(R, GItype) && (R.proj4 == "+xy")) && (R.proj4 = "")	# GMT returns +xy instead of empty string
+	
 	(isGMTdataset(R) && contains(cmd, " -fg") && getproj(R) == "") && (isa(R, GMTdataset) ? R.proj4 = prj4WGS84 : R[1].proj4 = prj4WGS84)
 	return R
 end
