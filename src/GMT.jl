@@ -43,9 +43,11 @@ end
 depfile = joinpath(dirname(@__FILE__), "..", "deps", "deps.jl")		# File with shared lib names
 isfile(depfile) && include(depfile)		# This loads the shared libs names in the case of NON-JLL, otherwise just return
 
+#using Artifacts		# top level: artifact"..." below is macro-expanded before this if-block runs
+
 if ((!(@isdefined have_jll) || have_jll == 1) && get(ENV, "SYSTEMWIDE_GMT", "") == "")# That is, the JLL case
 	using GMT_jll, GDAL_jll, PROJ_jll, Ghostscript_jll
-	#using GMT_jll, GDAL_jll, PROJ_jll, Artifacts		# gs-stalone artifact (Artifacts.toml) instead of Ghostscript_jll
+	#using GMT_jll, GDAL_jll, PROJ_jll		# gs-stalone artifact (Artifacts.toml) instead of Ghostscript_jll
 	t = split(readlines(`$(GMT_jll.gmt()) "--version"`)[1], '_')
 	const GMTver = VersionNumber(t[1])
 	const GMTdevdate = (length(t) > 1) ? Date(t[end], dateformat"y.m.d") : Date("0001-01-01")# For DEV versions
