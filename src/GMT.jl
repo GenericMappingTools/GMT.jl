@@ -45,6 +45,7 @@ isfile(depfile) && include(depfile)		# This loads the shared libs names in the c
 
 if ((!(@isdefined have_jll) || have_jll == 1) && get(ENV, "SYSTEMWIDE_GMT", "") == "")# That is, the JLL case
 	using GMT_jll, GDAL_jll, PROJ_jll, Ghostscript_jll
+	#using GMT_jll, GDAL_jll, PROJ_jll, Artifacts		# gs-stalone artifact (Artifacts.toml) instead of Ghostscript_jll
 	t = split(readlines(`$(GMT_jll.gmt()) "--version"`)[1], '_')
 	const GMTver = VersionNumber(t[1])
 	const GMTdevdate = (length(t) > 1) ? Date(t[end], dateformat"y.m.d") : Date("0001-01-01")# For DEV versions
@@ -75,6 +76,10 @@ if ((!(@isdefined have_jll) || have_jll == 1) && get(ENV, "SYSTEMWIDE_GMT", "") 
 	end
 	const GSbin = (gs_path === "") ? Ghostscript_jll.gs()[1] : gs_path
 	const gslib = (gs_path === "") ? libgs : string(_libgs)
+	# Ghostscript from the gs-stalone artifact (https://github.com/joa-quim/gs-stalone), gs + libgs in bin/
+	#_gsdir = joinpath(artifact"ghostscript", "bin")
+	#const GSbin = (gs_path === "") ? joinpath(_gsdir, Sys.iswindows() ? "gswin64c.exe" : "gs") : gs_path
+	#const gslib = (gs_path === "") ? joinpath(_gsdir, Sys.iswindows() ? "gsdll64.dll" : Sys.isapple() ? "libgs.dylib" : "libgs.so") : string(_libgs)
 
 	#const GSbin = Ghostscript_jll.gs()[1]
 	fname = joinpath(GMTuserdir[1], "ghost_jll_path.txt")
