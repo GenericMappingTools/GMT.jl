@@ -2,46 +2,46 @@
 arch = "aarch64"
 os = "linux"
 libc = "glibc"
-git-tree-sha1 = "6dae256889627bd832444ba419a65d45ce03321a"
+git-tree-sha1 = "4a814ebddb93b1ee795e2031443e3ee77dcd0c96"
 
     [[ghostscript.download]]
-    url = "https://github.com/joa-quim/gs-stalone/releases/download/v10.09.0-7/gs-10.09.0-linux-aarch64.tar.gz"
-    sha256 = "de20177c1701e85f967916f4da769188c2987bebc3697aec10b05f8fd39a9aa3"
+    url = "https://github.com/joa-quim/gs-stalone/releases/download/v10.09.0-11/gs-10.09.0-linux-aarch64.tar.gz"
+    sha256 = "f868143aff13607b860c68bf5e35f924ecc00b7bf3d636c0e5ab31ce1206a1d2"
 
 [[ghostscript]]
 arch = "x86_64"
 os = "linux"
 libc = "glibc"
-git-tree-sha1 = "412a68b2bfdec5bc42d91f2e4920bc2dcc51965d"
+git-tree-sha1 = "5afd81f9fb5727dac3ca8083110fd236f990902b"
 
     [[ghostscript.download]]
-    url = "https://github.com/joa-quim/gs-stalone/releases/download/v10.09.0-7/gs-10.09.0-linux-x86_64.tar.gz"
-    sha256 = "2f6a8312c04174cf9486a24f0a3f5bc113b4f2b72209fb5d62910841bef7cd35"
+    url = "https://github.com/joa-quim/gs-stalone/releases/download/v10.09.0-11/gs-10.09.0-linux-x86_64.tar.gz"
+    sha256 = "1b35d9201a48585e97ed48cbcaf3b1deb00c1289c64e757f0b391660afda785d"
 
 [[ghostscript]]
 arch = "aarch64"
 os = "macos"
-git-tree-sha1 = "17e8075f950bd5aed09075a0a0d9a47a4f48241c"
+git-tree-sha1 = "efb9e1225d7ad25bda4c0ae38705d33fba048bea"
 
     [[ghostscript.download]]
-    url = "https://github.com/joa-quim/gs-stalone/releases/download/v10.09.0-7/gs-10.09.0-macos-aarch64.tar.gz"
-    sha256 = "4dee484f2b1f47ea2cb437070c009bbd7308005e2e462217e59ed28cc425c887"
+    url = "https://github.com/joa-quim/gs-stalone/releases/download/v10.09.0-11/gs-10.09.0-macos-aarch64.tar.gz"
+    sha256 = "2d7e4310004856970cc2a48e89c00596534cf638dd1de3db22936f1018e05004"
 
 [[ghostscript]]
 arch = "x86_64"
 os = "macos"
-git-tree-sha1 = "3a41c9822d6f6c6c671e325ad4a86881edf3b733"
+git-tree-sha1 = "40ad239b98a8507fcec121f70370b74f0427347a"
 
     [[ghostscript.download]]
-    url = "https://github.com/joa-quim/gs-stalone/releases/download/v10.09.0-7/gs-10.09.0-macos-x86_64.tar.gz"
-    sha256 = "9d6c4da8826826623086f6c6c25270263963608269cb1076c1279f739cae80e3"
+    url = "https://github.com/joa-quim/gs-stalone/releases/download/v10.09.0-11/gs-10.09.0-macos-x86_64.tar.gz"
+    sha256 = "742f11a871ba0478734566349e271e24b83538b2bcda56aa2467d06b23e4fa32"
 
 [[ghostscript]]
 arch = "x86_64"
 os = "windows"
-git-tree-sha1 = "08a179748134a154b83a6f1494cb50792d555909"
+git-tree-sha1 = "37870b3d8db6ca3d16c798508abaaa67c2eacaca"
 
     [[ghostscript.download]]
-    url = "https://github.com/joa-quim/gs-stalone/releases/download/v10.09.0-7/gs-10.09.0-windows-x86_64.tar.gz"
-    sha256 = "beee14e51d22456f9e1e3eb6b3f208b7cc6f6a6b687e8e93bb9211766d1188d6"
+    url = "https://github.com/joa-quim/gs-stalone/releases/download/v10.09.0-11/gs-10.09.0-windows-x86_64.tar.gz"
+    sha256 = "32d0fda53afbec51fdb2ef89d36737f1998ccf352e1888f8d7b3660751a09123"
 
