@@ -1,7 +1,9 @@
 """
 	ghost_funs.jl — PostScript rasterization and utilities via Ghostscript C API.
 
-	Uses GMT's bundled libgs (gsdll64.dll) via libghostscript.jl.
+	Uses `gslib` (libgs from the gs-stalone artifact, or SYSTEMWIDE_GS) via ghost/libghostscript.jl.
+	A file name of an open GMT PS (classic mode, -K) is closed first, as showfig() does. Default input is the
+	current figure, PSname[].
 
 	┌────────────┬──────────────────────────────────────────┬───────────────────────────────────────────┐
 	│ Function   │ Input                                    │ Output                                    │
@@ -161,16 +163,39 @@ function _gs_session(args::Vector{String}, action::Function; setup::Function=(_)
 	end
 end
 
+# ── Input handling ────────────────────────────────────────────────────────────
+# A classic-mode figure is left open (-K) until showfig() appends the "psxy -T -O" trailer.
+# Do the same here, so that ps*(PSname[]) work on the current figure without a showfig().
+_gs_isfile(ps_data) = ps_data isa String && ncodeunits(ps_data) <= 4096 && isfile(ps_data)
+
+# Close the PS file if it is an open GMT one (PS_is_open, common_options.jl). Returns true if `ps_data` is a file name.
+function _gs_close_if_open(ps_data)::Bool
+	_gs_isfile(ps_data) || return false
+	PS_is_open(ps_data) && close_PS_file(ps_data)
+	return true
+end
+
+# GS args and PS prologue that crop the page to the bounding box of `ps_data` (GMT's page is huge).
+function _gs_crop(ps_data, crop::Bool)::Tuple{Vector{String}, String}
+	!crop && return String[], ""
+	bb = psbbox(ps_data)
+	x0, y0 = floor(Int, bb.llx), floor(Int, bb.lly)
+	w, h = ceil(Int, bb.urx) - x0, ceil(Int, bb.ury) - y0
+	return ["-dFIXEDMEDIA", "-dDEVICEWIDTHPOINTS=$w", "-dDEVICEHEIGHTPOINTS=$h"],
+	       "<</BeginPage {pop $(-x0) $(-y0) translate}>> setpagedevice\n"	# Survives the PS's own setpagedevice
+end
+
 # ── Public API ────────────────────────────────────────────────────────────────
 
 """
-	ps2image(ps_data; dpi=300, gray=false) -> Array{UInt8,3}
+	ps2image(ps_data; dpi=300, gray=false, crop=true) -> Array{UInt8,3}
 
 Rasterize PostScript data using the Ghostscript C API.
 
 - `ps_data` : `String` or `Vector{UInt8}` with PostScript source.
 - `dpi`     : output resolution (default 300).
 - `gray`    : return grayscale `Array{UInt8,2}` instead of RGB.
+- `crop`    : crop to the bounding box (`psbbox`) instead of rendering the whole page (default true).
 
 Returns `(height, width, 3)` UInt8 array suitable for `mat2img()`.
 
@@ -179,15 +204,20 @@ img = mat2img(ps2image(read("figure.ps"); dpi=300))
 imshow(img)
 ```
 """
-function ps2image(ps_data::Union{String, AbstractVector{UInt8}}; dpi::Int=300, gray::Bool=false)
+function ps2image(ps_data::Union{String, AbstractVector{UInt8}}=PSname[]; dpi::Int=300, gray::Bool=false, crop::Bool=true)
+	_gs_close_if_open(ps_data) && (ps_data = read(ps_data))
 	fmt_int = gray ? _GS_FMT_GRAY8 : _GS_FMT_RGB24
 	nch     = gray ? 1 : 3
+	crop_args, prologue = _gs_crop(ps_data, crop)
 	_gs_state_reset!()
 	cb_ref = _gs_make_callback_ref()
 	args = ["gs", "-dNOPAUSE", "-dNOPROMPT", "-dQUIET", "-dSCANCONVERTERTYPE=2",
 	        "-dUseFastColor=true", "-dGraphicsAlphaBits=4", "-dTextAlphaBits=4",
-	        "-sDEVICE=display", "-dDisplayFormat=$(fmt_int)", "-r$(dpi)"]
-	_gs_session(args, inst -> _gs_run_ps_str(inst, ps_data, () -> ""); display_cb=cb_ref)
+	        "-sDEVICE=display", "-dDisplayFormat=$(fmt_int)", "-r$(dpi)", crop_args...]
+	_gs_session(args, inst -> begin
+		(prologue != "") && _gs_run_ps_str(inst, prologue, () -> "")
+		_gs_run_ps_str(inst, ps_data, () -> "")
+	end; display_cb=cb_ref)
 	_GS_STATE.ready || error("Ghostscript produced no output — check PostScript validity.")
 	W = _GS_STATE.width;  H = _GS_STATE.height;  R = _GS_STATE.raster
 	img = if R == W * nch
@@ -210,7 +240,7 @@ end
 
 # ─────────────────────────────────────────────────────────────────────────────
 """
-	ps2raster(ps_file; outfile=nothing, fmt="png", dpi=300, gray=false) -> String
+	ps2raster(ps_file; outfile=nothing, fmt="png", dpi=300, gray=false, crop=true) -> String
 
 Convert a PostScript or EPS file to a raster image using the Ghostscript C API.
 Equivalent to running `gs -sDEVICE=png16m -sOutputFile=... -r300 file.ps`.
@@ -221,6 +251,7 @@ Equivalent to running `gs -sDEVICE=png16m -sOutputFile=... -r300 file.ps`.
 - `fmt`     : output format — `"png"` (default), `"jpg"`/`"jpeg"`, `"tif"`/`"tiff"`.
 - `dpi`     : output resolution in dots per inch (default 300).
 - `gray`    : render in grayscale (uses `pnggray` / `tiffgray` device).
+- `crop`    : crop to the bounding box (`psbbox`) instead of rendering the whole page (default true).
 
 Returns the output file path (the `outfile` string as given or auto-generated).
 
@@ -229,8 +260,10 @@ outpath = ps2raster("figure.ps"; dpi=300, fmt="png")
 outpath = ps2raster("figure.ps"; outfile="out%02d.png", dpi=200)  # multi-page
 ```
 """
-function ps2raster(ps_file::String; outfile=nothing, fmt::String="png", dpi::Int=300, gray::Bool=false)
-	isfile(ps_file) || error("File not found: $ps_file")
+function ps2raster(ps_file::String=PSname[]; outfile=nothing, fmt::String="png", dpi::Int=300, gray::Bool=false,
+                   crop::Bool=true)
+	_gs_close_if_open(ps_file) || error("File not found: $ps_file")
+	crop_args, prologue = _gs_crop(ps_file, crop)
 	fmt_lc = lowercase(strip(fmt, '.'))
 	device = if fmt_lc == "png"
 		gray ? "pnggray" : "png16m"
@@ -244,8 +277,9 @@ function ps2raster(ps_file::String; outfile=nothing, fmt::String="png", dpi::Int
 	ext     = fmt_lc in ("jpg", "jpeg") ? ".jpg" : fmt_lc in ("tif", "tiff") ? ".tif" : ".png"
 	outpath = outfile !== nothing ? string(outfile) : splitext(ps_file)[1] * ext
 	args = ["gs", "-dNOPAUSE", "-dNOPROMPT", "-dQUIET", "-dBATCH",
-			"-sDEVICE=$(device)", "-sOutputFile=$(outpath)", "-r$(dpi)"]
+			"-sDEVICE=$(device)", "-sOutputFile=$(outpath)", "-r$(dpi)", crop_args...]
 	_gs_session(args, inst -> begin
+		(prologue != "") && _gs_run_ps_str(inst, prologue, () -> "")
 		exit_code = Ref{Cint}(0)
 		rc = gsapi_run_file(inst, ps_file, Cint(0), exit_code)
 		rc < 0 && error("gsapi_run_file failed: $rc (exit=$(exit_code[]))")
@@ -268,7 +302,7 @@ end
 	psbbox(ps_data) -> NamedTuple{(:llx,:lly,:urx,:ury), NTuple{4,Float64}}
 
 Compute the high-resolution bounding box of a PostScript document using the
-Ghostscript `bbox` device via direct `ccall` to `libgs` (the GMT-bundled GS).
+Ghostscript `bbox` device via direct `ccall` to `libgs` (`gslib`, see GMT.jl).
 No files are written — stderr is captured in-process.
 
 - `ps_data` : file path (`String`) **or** in-memory PS (`String`/`Vector{UInt8}`).
@@ -282,8 +316,8 @@ bb = psbbox(read("figure.ps"))
 @show bb.urx - bb.llx, bb.ury - bb.lly   # width, height in points
 ```
 """
-function psbbox(ps_data::Union{String, AbstractVector{UInt8}})
-	is_file = ps_data isa String && ncodeunits(ps_data) <= 4096 && isfile(ps_data)
+function psbbox(ps_data::Union{String, AbstractVector{UInt8}}=PSname[])
+	is_file = _gs_close_if_open(ps_data)
 	_GS_BBOX_BUF[] = UInt8[]
 	args = ["gs", "-dQUIET", "-dNOPROMPT", "-dNOSAFER", "-dNOPAUSE", "-sDEVICE=bbox", "-dPSL_no_pagefill",
 			"-dMaxBitmap=2147483647", "-dUseFastColor=true"]
@@ -571,20 +605,26 @@ end
 
 # ----------------------------------------------------------------------------------------
 """
-	psview(ps_data; dpi=300)
+	psview(ps_data; dpi=300, crop=true)
 
 Display PostScript in a native Win32 window — equivalent to `gswin64c file.ps`.
 GS rasterizes via display device; pixels are painted with `SetDIBitsToDevice`.
 Close the window or press Escape to exit.
+`crop=true` crops to the bounding box (`psbbox`).
 """
-psview(ps_data::GMTps; dpi::Int=300) = psview(ps_data.postscript; dpi=dpi)
-function psview(ps_data::Union{String, AbstractVector{UInt8}}; dpi::Int=300)
+psview(ps_data::GMTps; dpi::Int=300, crop::Bool=true) = psview(ps_data.postscript; dpi=dpi, crop=crop)
+function psview(ps_data::Union{String, AbstractVector{UInt8}}=PSname[]; dpi::Int=300, crop::Bool=true)
+	_gs_close_if_open(ps_data) && (ps_data = read(ps_data))
+	crop_args, prologue = _gs_crop(ps_data, crop)
 	_gs_state_reset!()
 	cb_ref = _gs_make_callback_ref()
 	args = ["gs", "-dNOPAUSE", "-dNOPROMPT", "-dQUIET", "-dSCANCONVERTERTYPE=2",
 	        "-dUseFastColor=true", "-dGraphicsAlphaBits=4", "-dTextAlphaBits=4",
-	        "-sDEVICE=display", "-dDisplayFormat=$(_GS_FMT_RGB24)", "-r$(dpi)"]
-	_gs_session(args, inst -> _gs_run_ps_str(inst, ps_data, () -> ""); display_cb=cb_ref)
+	        "-sDEVICE=display", "-dDisplayFormat=$(_GS_FMT_RGB24)", "-r$(dpi)", crop_args...]
+	_gs_session(args, inst -> begin
+		(prologue != "") && _gs_run_ps_str(inst, prologue, () -> "")
+		_gs_run_ps_str(inst, ps_data, () -> "")
+	end; display_cb=cb_ref)
 	_GS_STATE.ready || error("Ghostscript produced no output.")
 	_GS_BGR[] = _gs_make_bgr_dib(_GS_STATE.width, _GS_STATE.height, _GS_STATE.raster, _GS_STATE.data)
 
@@ -658,15 +698,19 @@ end  # @static if Sys.iswindows()
 
 @static if !Sys.iswindows()
 """
-	psview(ps_data; dpi=300)
+	psview(ps_data; dpi=300, crop=true)
 
 Display PostScript using Ghostscript's native window (x11 on Linux, aqua on macOS).
 Blocks until the viewer window is closed.
+`crop=true` crops to the bounding box (`psbbox`).
 """
-function psview(ps_data::Union{String, AbstractVector{UInt8}}; dpi::Int=300)
+function psview(ps_data::Union{String, AbstractVector{UInt8}}=PSname[]; dpi::Int=300, crop::Bool=true)
+	_gs_close_if_open(ps_data) && (ps_data = read(ps_data))
+	crop_args, prologue = _gs_crop(ps_data, crop)
 	#device = Sys.islinux() ? "x11" : "aqua"
-	args = ["gs", "-dNOPAUSE", "-dQUIET", "-sDEVICE=display", "-r$(dpi)"]
+	args = ["gs", "-dNOPAUSE", "-dQUIET", "-sDEVICE=display", "-r$(dpi)", crop_args...]
 	_gs_session(args, inst -> begin
+		(prologue != "") && _gs_run_ps_str(inst, prologue, () -> "")
 		_gs_run_ps_str(inst, ps_data, () -> "")
 		exit_code = Ref{Cint}(0)
 		rc = 0
