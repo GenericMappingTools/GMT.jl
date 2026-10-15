@@ -165,7 +165,7 @@ export
 	grdview, grdview!, grdvolume, greenspline, histogram, histogram!, image, image!, image_alpha!, image_cpt!,
 	imshow, ind2rgb, isnodata, kml2gmt, logo, logo!, makecpt, mapscale, mapscale!, mask, mask!, mapproject,
 	movie, nearneighbor, plot, plot!, plot3, plot3!, plot3d, plot3d!, plotyy, project, pscontour, pscontour!,
-	psconvert, psbasemap, psbasemap!, psclip, psclip!, pscoast, pscoast!, psevents, pshistogram, pshistogram!,
+	psconvert, ps2image, ps2raster, psbbox, psview, psbasemap, psbasemap!, psclip, psclip!, pscoast, pscoast!, psevents, pshistogram, pshistogram!,
 	psimage, psimage!, pslegend, pslegend!, psmask, psmask!, psrose, psrose!, psscale, psscale!, pssolar, pssolar!,
 	psternary, psternary!, pstext, pstext!, pswiggle, pswiggle!, psxy, psxy!, psxyz, psxyz!, regress, resetGMT, rose,
 	rose!, sample1d, scatter, scatter!, scatter3, scatter3!, solar, solar!, analemma, enso, keeling,

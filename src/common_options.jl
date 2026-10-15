@@ -4353,7 +4353,8 @@ function showfig(d::Dict{Symbol,Any})
 	CTRL.limits .= 0.0;		CTRL.proj_linear[1] = true;		# Reset these for safety
 	!isempty(LEGEND_TYPE[].optsDict) && (d[:legend] = dict2nt(LEGEND_TYPE[].optsDict))	# Recover opt settings
 	digests_legend_bag(d)									# Plot the legend if requested
-	arg = (isPSclosed[]) ? "" : "psxy -R0/1/0/1 -JX0.001c -T -O"		# In Modern the PS is already closed
+	# In Modern the PS is already closed. In Classic too if a previous showfig (or ps*) already closed it.
+	arg = (isPSclosed[] || !PS_is_open(PSname[])) ? "" : "psxy -R0/1/0/1 -JX0.001c -T -O"
 	finish_PS_module(d, arg, "", false, true, true)
 end
 function helper_showfig4modern(show::String="show")::Bool
@@ -4373,6 +4374,24 @@ function helper_showfig4modern(show::String="show")::Bool
 	desconf(false)		# FALSE because modern mode calls do a gmt_restart() in the gmt() main function.
 	call_display && showfig()		# Fragile. How to assert that modern_fname is not empty?
 	return true
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
+    PS_is_open(fname) -> Bool
+
+True if `fname` is a GMT PostScript file still waiting for its trailer (classic mode -K), i.e. one
+that `close_PS_file` must close. A closed one ends with "%%EOF".
+"""
+function PS_is_open(fname::AbstractString)::Bool
+	isfile(fname) || return false
+	n = filesize(fname)
+	head, tail = open(fname) do fid
+		h = String(read(fid, min(n, 512)))
+		seek(fid, max(0, n - 1024))
+		h, String(read(fid))
+	end
+	return occursin("%%Creator: GMT", head) && !occursin("%%EOF", tail)
 end
 
 # ---------------------------------------------------------------------------------------------------
