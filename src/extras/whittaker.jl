@@ -61,17 +61,7 @@ end
 # ------------------------------------------------------------------------------------
 function whittaker(x::AbstractVecOrMat{<:Real}, y::AbstractVecOrMat{<:Real}, lambda::Real, d::Int=2; weights=nothing, checkedNaN::Bool=false)
 	y, gotNaN, indNaN, weights = helper_whits(y, weights, checkedNaN)	# Check NaNs and take measures if yes
-	m = length(y)
-	D = ddmat(x, d)
-	if (weights === nothing)
-		E = sparse(I*one(eltype(y)), m, m)
-		C = cholesky(E + lambda * D' * D)
-		z = C \ (C' \ y)
-	else
-		W = spdiagm(m, m, 0 => weights)
-		C = cholesky(W + lambda * D' * D)
-		z = C \ (C' \ (weights .*y))
-	end
+	z = whit_solve(ddmat(x, d), y, lambda, weights)
 	(gotNaN) && (y[indNaN] .= NaN)
 	return z
 end
@@ -85,18 +75,7 @@ end
 # plot!(D[:,1], z1, lc=:red, lt=1, plot=(data=[D[:,1] z2], lc=:blue, lt=1), title="NMR spectrum and optimal smooth", show=1)
 function whittaker(y::AbstractVecOrMat{<:Real}, lambda, d=2; weights=nothing, checkedNaN::Bool=false)
 	y, gotNaN, indNaN, weights = helper_whits(y, weights, checkedNaN)	# Check NaNs and take measures if yes
-	m = length(y);
-	E = sparse(I*one(eltype(y)), m, m)
-	D = diff(E, dims=1);
-	for k = 2:d  D = diff(D, dims=1)  end
-	if (weights === nothing)
-		C = cholesky(E + lambda * D' * D)
-		z = C \ (C' \ y)
-	else
-		W = spdiagm(m, m, 0 => weights)
-		C = cholesky(W + lambda * D' * D);
-		z = C \ (C' \ (weights .* y));
-	end
+	z = whit_solve(ddmat(nothing, d, length(y)), y, lambda, weights)
 	(gotNaN) && (y[indNaN] .= NaN)
 	return z
 end
@@ -114,22 +93,73 @@ function helper_whits(y, weights, checkedNaN)
 end
 
 # ------------------------------------------------------------------------------------
-function ddmat(x, d)
+function ddmat(x, d, m=length(x))
 	# Compute divided differencing matrix of order d
-	#   x:  vector of sampling positions
+	#   x:  vector of sampling positions, or `nothing` for plain (unit spacing, unscaled) differences
 	#   d:  order of diffferences
+	#   m:  number of points (only needed when `x === nothing`)
 	# Output
-	#   D:  the matrix; D * Y gives divided differences of order d
+	#   Dc: the (m-d) x (d+1) band of the (m-d) x m matrix D, Dc[i,k] = D[i,i+k-1];
+	#       D * Y gives divided differences of order d
 	#
-	# Paul Eilers, 2003
-	
-	m = length(x)
-	if (d == 0)
-		D = sparse(I*one(eltype(x)), m, m)
-	else
-		dx = x[(d + 1):m] - x[1:(m - d)]
-		V = spdiagm(m - d, m - d, 0 => 1 ./ dx)
-		D = V * diff(ddmat(x, d - 1), dims=1)
+	# Paul Eilers, 2003. Band storage instead of a sparse matrix.
+
+	Dc = ones(Float64, m, 1)					# Order 0: the identity
+	for k = 1:d
+		n = m - k
+		Dn = zeros(Float64, n, k + 1)
+		for i = 1:n, j = 1:k+1
+			Dn[i,j] = (j > 1 ? Dc[i+1,j-1] : 0.0) - (j <= k ? Dc[i,j] : 0.0)	# diff(D, dims=1)
+		end
+		if (x !== nothing)						# V = diag(1 ./ dx) * diff(D)
+			for i = 1:n  Dn[i,:] ./= (x[i+k] - x[i])  end
+		end
+		Dc = Dn
 	end
-	return D
+	return Dc
+end
+
+# ------------------------------------------------------------------------------------
+"""
+Solve (W + lambda * D'D) z = W*y, where D is given by its band `Dc` (see `ddmat`) and W = diag(weights)
+(the identity when `weights === nothing`). The system matrix is symmetric positive definite and banded
+with half-bandwidth d, so a banded Cholesky does it in O(m*d^2) with no sparse-matrix machinery.
+"""
+function whit_solve(Dc::Matrix{Float64}, y, lambda::Real, weights)
+	m = length(y)
+	d = size(Dc, 2) - 1
+	(m > d) || error("whittaker: need more than $d points for differences of order $d")
+	B = zeros(Float64, d + 1, m)			# Lower band: B[k+1, i] = A[i+k, i]
+	for r = 1:size(Dc, 1), a = 0:d, b = 0:a	# A = lambda * D'D
+		B[a-b+1, r+b] += lambda * Dc[r,a+1] * Dc[r,b+1]
+	end
+	rhs = Vector{Float64}(undef, m)
+	for i = 1:m
+		w = (weights === nothing) ? 1.0 : Float64(weights[i])
+		B[1,i] += w						# A += W
+		rhs[i] = w * y[i]
+	end
+
+	for j = 1:m								# In-place banded Cholesky, A = L*L'. L[i,j] = B[i-j+1, j]
+		s = B[1,j]
+		for k = max(1, j-d):j-1  s -= B[j-k+1,k]^2  end
+		(s > 0) || error("whittaker: system is not positive definite (too few non-zero weights?)")
+		B[1,j] = sqrt(s)
+		for i = j+1:min(m, j+d)
+			s = B[i-j+1,j]
+			for k = max(1, i-d):j-1  s -= B[i-k+1,k] * B[j-k+1,k]  end
+			B[i-j+1,j] = s / B[1,j]
+		end
+	end
+	for i = 1:m								# Forward: L u = rhs
+		s = rhs[i]
+		for k = max(1, i-d):i-1  s -= B[i-k+1,k] * rhs[k]  end
+		rhs[i] = s / B[1,i]
+	end
+	for i = m:-1:1							# Backward: L' z = u
+		s = rhs[i]
+		for k = i+1:min(m, i+d)  s -= B[k-i+1,i] * rhs[k]  end
+		rhs[i] = s / B[1,i]
+	end
+	return rhs
 end

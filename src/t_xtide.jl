@@ -3,7 +3,7 @@
 # Original: R. Pawlowicz 1/Dec/2001, Version 1.0
 # Requires the xtide harmonics file - see https://flaterco.com/xtide/files.html
 
-using Dates, SparseArrays
+using Dates
 
 # ========================================================================================
 """
@@ -18,8 +18,8 @@ Structure holding the per-station harmonic data read from an XTide harmonics fil
 - `latitude::Vector{Float64}`: Station latitudes
 - `timezone::Vector{Float64}`: UTC offset (hours)
 - `datum::Vector{Float64}`: Datum level
-- `A::SparseMatrixCSC{Float64}`: Amplitudes (nsta x ncon)
-- `kappa::SparseMatrixCSC{Float64}`: Phases (nsta x ncon)
+- `A::Matrix{Float64}`: Amplitudes (nsta x ncon)
+- `kappa::Matrix{Float64}`: Phases (nsta x ncon)
 """
 struct XTideHarmonics
 	station::Vector{String}
@@ -28,8 +28,8 @@ struct XTideHarmonics
 	latitude::Vector{Float64}
 	timezone::Vector{Float64}
 	datum::Vector{Float64}
-	A::SparseMatrixCSC{Float64,Int}
-	kappa::SparseMatrixCSC{Float64,Int}
+	A::Matrix{Float64}
+	kappa::Matrix{Float64}
 end
 
 # ========================================================================================
@@ -327,7 +327,7 @@ function read_xtidefile(io::IO)
 
 	xtide = XTideConstituents(con_names, speed, startyear, equilibarg, nodefactor)
 	xharm = XTideHarmonics(stations, units_vec, longitudes, latitudes, timezones, datums,
-	                        sparse(A_dense), sparse(K_dense))
+	                        A_dense, K_dense)
 	return xtide, xharm
 end
 
@@ -337,13 +337,16 @@ _mat_charrow(row) = String(strip(String(Char.(row))))
 
 # One MATLAB v7.3 (HDF5) sparse double matrix, stored under `HDF5:"fname"://group` as three
 # sibling datasets (`ir` = 0-based row indices, `jc` = CSC column pointers, `data` = nonzero
-# values). MATLAB serializes sparse matrices column-sorted already, so this maps straight onto
-# `SparseMatrixCSC`'s own (1-based) `colptr`/`rowval`/`nzval` layout with no re-sort needed.
+# values), expanded into a dense matrix. `jc[j]+1 : jc[j+1]` are column j's entries (CSC layout).
 function _mat_sparse(fname::String, group::String, nrows::Int, ncols::Int)
 	ir  = vec(gdalread("HDF5:\"$fname\"://$group/ir"))
 	jc  = vec(gdalread("HDF5:\"$fname\"://$group/jc"))
 	dat = vec(gdalread("HDF5:\"$fname\"://$group/data"))
-	return SparseMatrixCSC(nrows, ncols, Int.(jc) .+ 1, Int.(ir) .+ 1, Float64.(dat))
+	M = zeros(Float64, nrows, ncols)
+	for j = 1:ncols, n = Int(jc[j])+1:Int(jc[j+1])
+		M[Int(ir[n])+1, j] = dat[n]
+	end
+	return M
 end
 
 # ========================================================================================
@@ -456,8 +459,8 @@ function xtide_predict(xtide::XTideConstituents, xharm::XTideHarmonics, ista::In
 	ncon = length(xtide.speed)
 	nf  = xtide.nodefactor[:, iyr]
 	ea  = xtide.equilibarg[:, iyr]
-	Ai  = Vector(xharm.A[ista, :])
-	ki  = Vector(xharm.kappa[ista, :])
+	Ai  = xharm.A[ista, :]
+	ki  = xharm.kappa[ista, :]
 
 	pred = fill(xharm.datum[ista], lt)
 	deg2rad = π / 180
