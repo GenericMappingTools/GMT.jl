@@ -18,7 +18,7 @@ Artifacts = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"		# gs-stalone artifact instea
 #Ghostscript = "d13cf601-a25a-40c9-b2bf-3622a3344160"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 InteractiveUtils = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
-SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
+#SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 LASzip_jll = "8372b9c3-1e34-5cc3-bfab-1a98e101de11"
 Leptonica_jll = "6a1430e4-294a-53a5-a485-ec66ef6b843c"
 

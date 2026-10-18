@@ -1,6 +1,6 @@
 module GMT
 
-using Printf, Dates, Statistics, Downloads, SparseArrays
+using Printf, Dates, Statistics, Downloads
 using Tables: Tables
 using PrecompileTools
 using LinearAlgebra
