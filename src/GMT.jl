@@ -194,7 +194,7 @@ export
 	wkbMultiLineString, wkbMultiPolygon, wkbGeometryCollection, wkbPoint25D, wkbLineString25D, wkbPolygon25D, wkbMultiPoint25D,
 	wkbMultiLineString25D, wkbMultiPolygon25D, wkbGeometryCollection25D, bezier, buffergeo, circgeo, epsg2proj, epsg2wkt,
 	geod, invgeod, loxodrome, loxodrome_direct, loxodrome_inverse, montage,
-	geodesic, orthodrome, proj2wkt, setcoords!, setfld!, setcrs!, setsrs!, settimecol!, vecangles, wkt2proj, wkt2epsg, proj2epsg,
+	geodesic, orthodrome, proj2wkt, setcoords!, setfld!, setcrs!, setsrs!, settimecol!, vecangles, wkt2proj, wkt2epsg, proj2epsg, srsmatches,
 	inbbox, randgeo, colorzones!, rasterzones!, rasterzones, lelandshade, texture_img, crop, doy2date, date2doy, choropleth, fourcolors,
 	getdcw, ISOtime2unix, median, mean, quantile, std, nanmean, nanstd, skipnan, zonal_statistics, zonal_stats,
 	autocor, autocor!, autocov, autocov!, conv, yeardecimal, xcorr, xcov, add2PSfile, append2fig, isoutlier, linearfitxy,

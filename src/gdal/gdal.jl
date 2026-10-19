@@ -486,6 +486,7 @@ an array of SRS that match the passed SRS, or NULL. Must be freed with OSRFreeSR
 function OSRFindMatches(hSRS, papszOptions, pnEntries, ppanMatchConfidence)
 	acare(ccall((:OSRFindMatches, libgdal), Ptr{pVoid}, (pVoid, Ptr{Cstring}, Ptr{Cint}, Ptr{Ptr{Cint}}), hSRS, papszOptions, pnEntries, ppanMatchConfidence))
 end
+OSRFreeSRSArray(a1) = acare(ccall((:OSRFreeSRSArray, libgdal), Cvoid, (Ptr{pVoid},), a1))
 
 
 function OSRSetAxisMappingStrategy(hSRS, strategy)
@@ -1945,10 +1946,41 @@ end
 
 	function toEPSG(spref::AbstractSpatialRef)::Int
 		(spref.ptr == C_NULL) && return 0
-		(OSRAutoIdentifyEPSG(spref.ptr) != OGRERR_NONE) && error("Failed to identify EPSG code for this SRS")
-		result = OSRGetAuthorityCode(spref.ptr, C_NULL)
-		(result === "") && error("Failed to get EPSG code")
-		return parse(Int, result)
+		if (OSRAutoIdentifyEPSG(spref.ptr) == OGRERR_NONE)
+			result = OSRGetAuthorityCode(spref.ptr, C_NULL)
+			(result !== "") && return parse(Int, result)
+		end
+		# AutoIdentifyEPSG only reads authority nodes already in the SRS. A bare PROJ4 (or a WKT made
+		# from one) has none, so search the PROJ database instead, as gdalsrsinfo -o epsg does.
+		for (code, _) in findmatches(spref)
+			startswith(code, "EPSG:") && return parse(Int, code[6:end])
+		end
+		error("Failed to identify EPSG code for this SRS")
+	end
+
+	"""
+	    findmatches(spref::AbstractSpatialRef) -> Vector{Tuple{String,Int}}
+
+	Search the PROJ database for the registered systems matching `spref` (OSRFindMatches). Returns
+	`("AUTHORITY:CODE", confidence)` pairs, best first, confidence in 0-100. Empty if nothing matches.
+	"""
+	function findmatches(spref::AbstractSpatialRef)::Vector{Tuple{String,Int}}
+		out = Tuple{String,Int}[]
+		(spref.ptr == C_NULL) && return out
+		n, conf = Ref{Cint}(0), Ref{Ptr{Cint}}(C_NULL)
+		arr = OSRFindMatches(spref.ptr, C_NULL, n, conf)
+		try
+			for k = 1:n[]
+				h = unsafe_load(arr, k)
+				auth, code = OSRGetAuthorityName(h, C_NULL), OSRGetAuthorityCode(h, C_NULL)
+				(auth === "" || code === "") && continue
+				push!(out, (auth * ":" * code, Int(unsafe_load(conf[], k))))
+			end
+		finally
+			(arr != C_NULL) && OSRFreeSRSArray(arr)
+			(conf[] != C_NULL) && VSIFree(conf[])
+		end
+		return out
 	end
 
 

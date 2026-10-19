@@ -27,6 +27,22 @@
 	prj = epsg2proj(4326)
 	proj2wkt(prj)
 	wkt2proj(wkt)
+
+	# EPSG from a bare PROJ4/WKT (no authority nodes): the OSRFindMatches fallback in toEPSG
+	@test proj2epsg("+proj=utm +zone=29 +datum=WGS84") == 32629
+	@test proj2epsg("+proj=utm +zone=29 +south +datum=WGS84") == 32729
+	@test proj2epsg("+proj=merc") == 3395
+	@test proj2epsg("+proj=longlat +datum=WGS84 +no_defs") == 4326
+	@test wkt2epsg(proj2wkt("+proj=utm +zone=29 +datum=WGS84")) == 32629
+	@test wkt2epsg(epsg2wkt(32629)) == 32629
+	@test_throws ErrorException proj2epsg("+proj=moll +lon_0=0")
+	@test_throws ErrorException proj2epsg("lixo")
+	@test srsmatches("+proj=utm +zone=29 +datum=WGS84") == [("EPSG:32629", 70)]
+	@test ("EPSG:4326", 70) in srsmatches("+proj=longlat +datum=WGS84 +no_defs")
+	@test srsmatches("EPSG:32629") == [("EPSG:32629", 100)]
+	@test srsmatches("epsg:3763")[1] == ("EPSG:3763", 100)
+	@test srsmatches(epsg2wkt(32629))[1] == ("EPSG:32629", 100)
+	@test isempty(srsmatches("+proj=moll +lon_0=0"))
 	loxo = loxodrome_direct(0,0,45, 10000)
 	loxo = loxodrome([0 0; 30 50], step=500, unit=:k);
 	loxo = loxodrome(mat2ds([0 0; 30 50]), step=500, unit=:k);
