@@ -811,7 +811,7 @@ Convert a PROJ4 string into the corresponding EPSG code (if it exists).
 """
 function proj2epsg(proj4_str::String)
 	!startswith(proj4_str, "+proj=") && error("$(proj4_str) is not a valid proj4 string")
-	toEPSG(importWKT(proj2wkt(proj4_str)))
+	toEPSG(importPROJ4(proj4_str))		# Not via a WKT round-trip: that loses the EPSG:4326 match of a plain longlat
 end
 
 # -----------------------------------------------------------------------------------------
@@ -821,6 +821,29 @@ end
 Convert a WKT SRS string into the corresponding EPSG code (if it exists).
 """
 wkt2epsg(wkt_str::String) = toEPSG(importWKT(wkt_str))
+
+# -----------------------------------------------------------------------------------------
+"""
+    srsmatches(srs::String) -> Vector{Tuple{String,Int}}
+
+Find the registered reference systems that match `srs` (a PROJ4 string, a WKT string or "EPSG:n"),
+as `gdalsrsinfo -e` does. Returns `("AUTHORITY:CODE", confidence)` pairs, best first, with the
+confidence in 0-100. Matches can come from other authorities than EPSG (OGC, IGNF, ESRI, ...).
+Returns an empty vector when nothing matches (e.g. a bare `+proj=moll`).
+
+### Example
+```julia
+srsmatches("+proj=utm +zone=29 +datum=WGS84")
+1-element Vector{Tuple{String, Int64}}:
+ ("EPSG:32629", 70)
+```
+"""
+function srsmatches(srs::String)
+	s = strip(srs)
+	sr = startswith(s, "+proj=") ? importPROJ4(s) :
+	     startswith(uppercase(s), "EPSG:") ? importEPSG(parse(Int, s[6:end])) : importWKT(s)
+	Gdal.findmatches(sr)
+end
 
 # -----------------------------------------------------------------------------------------
 """
