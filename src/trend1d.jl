@@ -76,10 +76,11 @@ function trend1d(cmd0::String, arg1, d::Dict{Symbol, Any})
 	!isa(R, GDtype) && return R							# Should be the output of Vd=2
 
 	if (opt_F != "")		# Extract column names from opt_F
+		cnames = (isa(arg1, GDtype)) ? (isa(arg1, GMTdataset) ? arg1.colnames : arg1[1].colnames) : String[]
 		if (opt_F[1] == 'p' || opt_F[1] == 'P' || opt_F[1] == 'c')
-			colnames = ["a$i" for i=0:size(arg1, 2)-1]
+			# One name per model coefficient (the output's own width), not per input column.
+			colnames = ["a$i" for i=0:size(isa(R, GMTdataset) ? R.data : R[1].data, 2)-1]
 		else
-			cnames = (isa(arg1, GDtype)) ? (isa(arg1, GMTdataset) ? arg1.colnames : arg1[1].colnames) : String[]
 			s = collect(opt_F)
 			colnames = Vector{String}(undef, length(s))
 			for k = 1:numel(s)
