@@ -253,7 +253,19 @@ function ecmwf(source::Symbol=:reanalysis; filename="", cb::Bool=false, dataset=
 	end
 
 	if (cb && params == "")
-		tcb = clipboard()
+		# On Windows another process (clipboard history, sync, ...) may hold the clipboard for a few ms after a write
+		function read_cb()
+			for k = 1:9
+				try
+					return clipboard()
+				catch e
+					!isa(e, SystemError) && rethrow()
+					sleep(0.05)
+				end
+			end
+			return clipboard()			# Last attempt, let it error
+		end
+		tcb = read_cb()
 		!contains(tcb, "variable\"") && error("Clipboard does not contain a valid API request code")
 		body, _dataset = parse_request(tcb)
 	else

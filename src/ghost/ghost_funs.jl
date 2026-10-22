@@ -415,6 +415,35 @@ isdefined(@__MODULE__, :_GS_SCROLL_Y) || const _GS_SCROLL_Y = Ref{Int32}(Int32(0
 isdefined(@__MODULE__, :_GS_CLIENT_W) || const _GS_CLIENT_W = Ref{Int32}(Int32(0))
 isdefined(@__MODULE__, :_GS_CLIENT_H) || const _GS_CLIENT_H = Ref{Int32}(Int32(0))
 isdefined(@__MODULE__, :_GS_ZOOM)     || const _GS_ZOOM     = Ref{Float64}(1.0)
+# The viewer's own image size and window. Not _GS_STATE's, which other GS calls reset while the window is open.
+isdefined(@__MODULE__, :_GS_VIEW_W)   || const _GS_VIEW_W   = Ref{Int}(0)
+isdefined(@__MODULE__, :_GS_VIEW_H)   || const _GS_VIEW_H   = Ref{Int}(0)
+isdefined(@__MODULE__, :_GS_HWND)     || const _GS_HWND     = Ref{Ptr{Cvoid}}(C_NULL)
+
+# Close the viewer window, if one is open. Must run on the thread that created it.
+function _gs_close_viewer()
+	hwnd = _GS_HWND[]
+	(hwnd != C_NULL && ccall((:IsWindow, "user32"), Cint, (Ptr{Cvoid},), hwnd) != 0) &&
+		ccall((:DestroyWindow, "user32"), Cint, (Ptr{Cvoid},), hwnd)
+	_GS_HWND[] = C_NULL
+	nothing
+end
+
+# Pump the viewer window's messages from a task, so that the REPL stays usable. Only this window's
+# messages are taken (hwnd filter), others on this thread (e.g. a Qt app) are left to their owners.
+function _gs_pump(hwnd::Ptr{Cvoid})
+	msg = zeros(UInt8, 48)   # MSG struct is 48 bytes on Windows 64-bit
+	while ccall((:IsWindow, "user32"), Cint, (Ptr{Cvoid},), hwnd) != 0
+		while ccall((:PeekMessageW, "user32"), Cint, (Ptr{UInt8}, Ptr{Cvoid}, UInt32, UInt32, UInt32),
+		            msg, hwnd, 0, 0, 0x0001) != 0      # PM_REMOVE
+			ccall((:TranslateMessage, "user32"), Bool, (Ptr{UInt8},), msg)
+			ccall((:DispatchMessageW, "user32"), Int64, (Ptr{UInt8},), msg)
+		end
+		sleep(0.02)
+	end
+	(_GS_HWND[] == hwnd) && (_GS_HWND[] = C_NULL;  _GS_BGR[] = UInt8[])	# Free the image
+	nothing
+end
 
 struct _SCROLLINFO   # 28 bytes
 	cbSize    :: UInt32
@@ -428,8 +457,8 @@ end
 
 function _gs_resize_to_zoom(hwnd::Ptr{Cvoid})
 	zoom   = _GS_ZOOM[]
-	new_cw = round(Int, _GS_STATE.width  * zoom)
-	new_ch = round(Int, _GS_STATE.height * zoom)
+	new_cw = round(Int, _GS_VIEW_W[]  * zoom)
+	new_ch = round(Int, _GS_VIEW_H[] * zoom)
 	# Non-client area (title bar + borders + scrollbars)
 	wrect = zeros(Int32, 4);  crect = zeros(Int32, 4)
 	GC.@preserve wrect crect begin
@@ -460,7 +489,7 @@ end
 
 function _gs_update_scroll_ranges(hwnd::Ptr{Cvoid})
 	zoom = _GS_ZOOM[]
-	W  = _GS_STATE.width;   H  = _GS_STATE.height
+	W  = _GS_VIEW_W[];   H  = _GS_VIEW_H[]
 	zW = round(Int, W*zoom); zH = round(Int, H*zoom)
 	cw = Int(_GS_CLIENT_W[]); ch = Int(_GS_CLIENT_H[])
 	sv = Ref(_SCROLLINFO(UInt32(28), UInt32(0x0003), Int32(0), Int32(max(0,zH-1)), UInt32(ch), Int32(0), Int32(0)))
@@ -470,7 +499,7 @@ function _gs_update_scroll_ranges(hwnd::Ptr{Cvoid})
 end
 
 function _gs_set_hscroll(hwnd::Ptr{Cvoid}, pos::Int)
-	zW  = round(Int, _GS_STATE.width * _GS_ZOOM[])
+	zW  = round(Int, _GS_VIEW_W[] * _GS_ZOOM[])
 	pos = clamp(pos, 0, max(0, zW - Int(_GS_CLIENT_W[])))
 	_GS_SCROLL_X[] = Int32(pos)
 	si = Ref(_SCROLLINFO(UInt32(28), UInt32(0x0004), Int32(0), Int32(0), UInt32(0), Int32(pos), Int32(0)))
@@ -479,7 +508,7 @@ function _gs_set_hscroll(hwnd::Ptr{Cvoid}, pos::Int)
 end
 
 function _gs_set_vscroll(hwnd::Ptr{Cvoid}, pos::Int)
-	zH  = round(Int, _GS_STATE.height * _GS_ZOOM[])
+	zH  = round(Int, _GS_VIEW_H[] * _GS_ZOOM[])
 	pos = clamp(pos, 0, max(0, zH - Int(_GS_CLIENT_H[])))
 	_GS_SCROLL_Y[] = Int32(pos)
 	si = Ref(_SCROLLINFO(UInt32(28), UInt32(0x0004), Int32(0), Int32(0), UInt32(0), Int32(pos), Int32(0)))
@@ -488,8 +517,8 @@ function _gs_set_vscroll(hwnd::Ptr{Cvoid}, pos::Int)
 end
 
 function _gs_paint_to_dc(hdc::Ptr{Cvoid}, xoff::Int=0, yoff::Int=0)
-	_GS_STATE.ready && !isempty(_GS_BGR[]) || return
-	W    = _GS_STATE.width;  H = _GS_STATE.height
+	!isempty(_GS_BGR[]) || return
+	W    = _GS_VIEW_W[];  H = _GS_VIEW_H[]
 	zoom = _GS_ZOOM[]
 	zW   = round(Int, W * zoom);  zH = round(Int, H * zoom)
 	bmi  = _BITMAPINFOHEADER(40, Int32(W), Int32(-H), 1, 24, 0, 0, 0, 0, 0, 0)
@@ -592,8 +621,7 @@ function _gs_wndproc(hwnd::Ptr{Cvoid}, msg::UInt32, wp::UInt64, lp::Int64)::Int6
 		ccall((:InvalidateRect, "user32"), Bool, (Ptr{Cvoid}, Ptr{Cvoid}, Bool), hwnd, C_NULL, false)
 		return Int64(0)
 
-	elseif msg == 0x0002        # WM_DESTROY
-		ccall((:PostQuitMessage, "user32"), Cvoid, (Cint,), 0)
+	elseif msg == 0x0002        # WM_DESTROY. No PostQuitMessage: its WM_QUIT would end any other loop on this thread
 		return Int64(0)
 
 	elseif msg == 0x0100 && wp == 0x1B   # WM_KEYDOWN + VK_ESCAPE
@@ -609,7 +637,8 @@ end
 
 Display PostScript in a native Win32 window — equivalent to `gswin64c file.ps`.
 GS rasterizes via display device; pixels are painted with `SetDIBitsToDevice`.
-Close the window or press Escape to exit.
+Close the window or press Escape to exit. Returns at once, the window's messages are pumped by a task
+so the REPL stays usable. A new call closes the previous window.
 `crop=true` crops to the bounding box (`psbbox`).
 """
 psview(ps_data::GMTps; dpi::Int=300, crop::Bool=true) = psview(ps_data.postscript; dpi=dpi, crop=crop)
@@ -626,6 +655,8 @@ function psview(ps_data::Union{String, AbstractVector{UInt8}}=PSname[]; dpi::Int
 		_gs_run_ps_str(inst, ps_data, () -> "")
 	end; display_cb=cb_ref)
 	_GS_STATE.ready || error("Ghostscript produced no output.")
+	_gs_close_viewer()			# One viewer at a time: the window state below is shared
+	_GS_VIEW_W[] = _GS_STATE.width;  _GS_VIEW_H[] = _GS_STATE.height
 	_GS_BGR[] = _gs_make_bgr_dib(_GS_STATE.width, _GS_STATE.height, _GS_STATE.raster, _GS_STATE.data)
 
 	# ── Create Win32 window ───────────────────────────────────────────────────
@@ -683,14 +714,11 @@ function psview(ps_data::Union{String, AbstractVector{UInt8}}=PSname[]; dpi::Int
 					 C_NULL, C_NULL, hmod, C_NULL)
 		hwnd == C_NULL && error("CreateWindowExW failed")
 		ccall((:UpdateWindow, "user32"), Bool, (Ptr{Cvoid},), hwnd)
-
-		# Message loop — blocks until window closed
-		msg = zeros(UInt8, 48)   # MSG struct is 48 bytes on Windows 64-bit
-		while ccall((:GetMessageW, "user32"), Int32, (Ptr{UInt8}, Ptr{Cvoid}, UInt32, UInt32), msg, C_NULL, 0, 0) > 0
-			ccall((:TranslateMessage, "user32"), Bool, (Ptr{UInt8},), msg)
-			ccall((:DispatchMessageW, "user32"), Int64, (Ptr{UInt8},), msg)
-		end
 	end
+
+	# Message loop in a task (same thread, as Win32 requires) — returns at once, the REPL stays usable
+	_GS_HWND[] = hwnd
+	errormonitor(@async _gs_pump(hwnd))
 	nothing
 end
 
@@ -701,7 +729,7 @@ end  # @static if Sys.iswindows()
 	psview(ps_data; dpi=300, crop=true)
 
 Display PostScript using Ghostscript's native window (x11 on Linux, aqua on macOS).
-Blocks until the viewer window is closed.
+Returns at once, the window is kept alive by a task. A new call closes the previous window.
 `crop=true` crops to the bounding box (`psbbox`).
 """
 function psview(ps_data::Union{String, AbstractVector{UInt8}}=PSname[]; dpi::Int=300, crop::Bool=true)
@@ -709,16 +737,21 @@ function psview(ps_data::Union{String, AbstractVector{UInt8}}=PSname[]; dpi::Int
 	crop_args, prologue = _gs_crop(ps_data, crop)
 	#device = Sys.islinux() ? "x11" : "aqua"
 	args = ["gs", "-dNOPAUSE", "-dQUIET", "-sDEVICE=display", "-r$(dpi)", crop_args...]
-	_gs_session(args, inst -> begin
+	# One viewer at a time: make the previous one end its GS session before starting a new one
+	my_id = (_GS_VIEW_ID[] += 1)
+	(_GS_VIEW_TASK[] !== nothing) && (try wait(_GS_VIEW_TASK[]) catch end)	# A failed one was already reported
+	_GS_VIEW_TASK[] = errormonitor(@async _gs_session(args, inst -> begin
 		(prologue != "") && _gs_run_ps_str(inst, prologue, () -> "")
 		_gs_run_ps_str(inst, ps_data, () -> "")
 		exit_code = Ref{Cint}(0)
 		rc = 0
-		while rc >= 0
+		while rc >= 0 && _GS_VIEW_ID[] == my_id
 			rc = gsapi_run_string_with_length(inst, "\n", Cuint(1), Cint(0), exit_code)
 			sleep(0.05)
 		end
-	end)
+	end))
 	nothing
 end
+isdefined(@__MODULE__, :_GS_VIEW_ID)   || const _GS_VIEW_ID   = Ref{Int}(0)
+isdefined(@__MODULE__, :_GS_VIEW_TASK) || const _GS_VIEW_TASK = Ref{Union{Task, Nothing}}(nothing)
 end  # @static if !Sys.iswindows()
