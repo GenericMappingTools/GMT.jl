@@ -121,6 +121,7 @@ const isPSclosed = Ref{Bool}(false)					# Modern mode will close the PS at the e
 const noGrdCopy = Ref{Bool}(false)					# If true, grids are sent without transpose/copy
 const GMTCONF = Ref{Bool}(false)					# Flag if gmtset was used and must be 'unused'
 const FMT = Ref{String}("png")						# The default plot format
+const USE_PSVIEW = Ref{Bool}(false)					# showfig() displays with psview() when no fmt/figname. See use_psview()
 const BOX_STR = Ref{String}("")						# Used in plotyy to know -R of first call
 const POSTMAN = Ref{Dict{String,String}}(Dict{String,String}())     # To pass messages to functions (start with get_dataset) 
 const DEF_FIG_SIZE = "15c/10c"						# Default fig size for plot like programs. Approx 16/11
@@ -165,7 +166,7 @@ export
 	grdview, grdview!, grdvolume, greenspline, histogram, histogram!, image, image!, image_alpha!, image_cpt!,
 	imshow, ind2rgb, isnodata, kml2gmt, logo, logo!, makecpt, mapscale, mapscale!, mask, mask!, mapproject,
 	movie, nearneighbor, plot, plot!, plot3, plot3!, plot3d, plot3d!, plotyy, project, pscontour, pscontour!,
-	psconvert, ps2image, ps2raster, psbbox, psview, psbasemap, psbasemap!, psclip, psclip!, pscoast, pscoast!, psevents, pshistogram, pshistogram!,
+	psconvert, ps2image, ps2raster, psbbox, psview, use_psview, psbasemap, psbasemap!, psclip, psclip!, pscoast, pscoast!, psevents, pshistogram, pshistogram!,
 	psimage, psimage!, pslegend, pslegend!, psmask, psmask!, psrose, psrose!, psscale, psscale!, pssolar, pssolar!,
 	psternary, psternary!, pstext, pstext!, pswiggle, pswiggle!, psxy, psxy!, psxyz, psxyz!, regress, resetGMT, rose,
 	rose!, sample1d, scatter, scatter!, scatter3, scatter3!, solar, solar!, analemma, enso, keeling,
@@ -540,6 +541,7 @@ function __init__(test::Bool=false)
 	haskey(ENV, "JULIA_GMT_IMGFORMAT") && (FMT[] = ENV["JULIA_GMT_IMGFORMAT"])
 	f = joinpath(GMTuserdir[1], "theme_jl.txt")
 	(isfile(f)) && (theme(readline(f)); ThemeIsOn[] = false)	# False because we don't want it reset in showfig()
+	USE_PSVIEW[] = isfile(joinpath(GMTuserdir[1], "psview_jl.txt"))	# Saved by use_psview()
 	user = (Sys.isunix() || Sys.isapple()) ? Libc.getpwuid(Libc.getuid(), true).username : Sys.iswindows() ? ENV["USERNAME"] : ""
 	!isascii(user) && (user = string(hash(user), base=16)[1:8])# For non-ASCII user names
 	TMPDIR_USR.username = replace(user, " " => "_")

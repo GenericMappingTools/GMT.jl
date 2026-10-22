@@ -3684,6 +3684,7 @@ function fname_out(d::Dict{Symbol,Any}, del::Bool=false)
 		fname, EXT = splitext(val)
 		EXT = (EXT == "") ? FMT[] : EXT[2:end]
 	end
+	no_fmt_name = (fname == "" && !haskey(d, :fmt))		# Must be known before 'fmt' is deleted. Used by use_psview()
 	if (EXT == FMT[] && haskey(d, :fmt))
 		EXT = string(d[:fmt])::String
 		(del) && delete!(d, :fmt)
@@ -3714,6 +3715,8 @@ function fname_out(d::Dict{Symbol,Any}, del::Bool=false)
 		elseif (ext == "pdg")  opt_T = " -Tf -Qp";	EXT = "pdf"
 		else   error("Unknown graphics file extension (.$EXT)")
 		end
+		# Display it with psview() instead of psconvert + system viewer. Flag is consumed by showfig()
+		(del && USE_PSVIEW[] && no_fmt_name && opt_T != "" && !ret_ps && !IamModern[]) && (d[:_psview] = true)
 	end
 
 	(fname != "") && (fname *= "." * EXT)
@@ -4254,6 +4257,31 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
+    use_psview([onoff::Bool]) -> Bool
+
+Make `showfig`, and so `viz`, `imshow` and every `show=true`, display the figure with `psview` instead of
+converting it with `psconvert` and opening it in the system viewer. This only happens when neither `fmt`
+nor `figname` (or its aliases `savefig`, `name`) is used. Those keep working as before.
+
+- `use_psview()`: toggle the current state.
+- `use_psview(true)` or `use_psview(false)`: set it.
+
+The state is saved in the directory printed by `GMT.GMTuserdir[1]` so it is remembered in next sessions.
+Returns the new state.
+"""
+function use_psview(onoff::Bool=!USE_PSVIEW[])::Bool
+	f = joinpath(GMTuserdir[1], "psview_jl.txt")
+	if (onoff)
+		!isdir(GMTuserdir[1]) && mkdir(GMTuserdir[1])
+		write(f, "psview")
+	else
+		isfile(f) && rm(f)
+	end
+	USE_PSVIEW[] = onoff
+end
+
+# ---------------------------------------------------------------------------------------------------
+"""
     showfig([fmt="format", figname="figname[.fmt]"])
 
 Finish the PostScript file and convert&display the figure.
@@ -4274,6 +4302,9 @@ function showfig(d::Dict{Symbol, Any}, fname_ps::String, fname_ext::String, opt_
 	digests_legend_bag(d)						# Plot the legend if requested
 
 	isPluto = isdefined(Main, :PlutoRunner) && Main.PlutoRunner isa Module
+	# use_psview() mode: show the PS itself in psview(), no psconvert. Not in notebooks, VSCode or the docs.
+	do_psview = (pop!(d, :_psview, false)::Bool) && !isPluto && !isJupyter[] && !isFranklin[] &&
+	            !(isdefined(Main, :IJulia) && Main.IJulia.inited) && !(isdefined(Main, :VSCodeServer) && get(ENV, "DISPLAY_IN_VSC", "") != "no")
 	if (fname == "" && (isdefined(Main, :IJulia) && Main.IJulia.inited) || isPluto)
 		opt_T = " -Tg"; fname_ext = "png"		# In Jupyter or Pluto, png only
 	end
@@ -4290,6 +4321,7 @@ function showfig(d::Dict{Symbol, Any}, fname_ps::String, fname_ext::String, opt_
 	# When we are in Jupyter or Pluto, the image may already be in a raster format by a previous call to 'gmt end'
 	(isJupyter[] || isPluto) && (fname_ps = TMPDIR_USR.dir * "/" * "GMTjl_" * TMPDIR_USR.username * TMPDIR_USR.pid_suffix * "." * FMT[];	opt_T = "")
 
+	do_psview && (opt_T = "")				# psview() shows the PS itself, no psconvert
 	if (opt_T != "")
 		(K) && close_PS_file(fname_ps)			# Close the PS file first
 		((val = hlp_desnany_str(d, [:dpi, :DPI])) !== "") && (opt_T *= " -E" *  val)
@@ -4300,6 +4332,12 @@ function showfig(d::Dict{Symbol, Any}, fname_ps::String, fname_ext::String, opt_
 	elseif (fname_ps != "")
 		(K) && close_PS_file(fname_ps)			# Close the PS file first
 		out = (fname != "") ? mv(fname_ps, fname, force=true) : fname_ps
+	end
+
+	if (do_psview && haskey(d, :show) && d[:show] != 0)
+		psview(out; dpi=(((val = hlp_desnany_str(d, [:dpi, :DPI])) !== "") ? parse(Int, val) : 300))
+		d[:show] = 0						# Done. Skip the display below
+		reset_theme()
 	end
 
 	retPluto = false					# To know if we are in Pluto
