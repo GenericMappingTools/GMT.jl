@@ -436,5 +436,13 @@
 	analemma(show=false)
 	keeling(show=false)
 	enso(show=false)
+	D = nao(data=true)
+	@test D.colnames == ["Time", "NAO"] && size(D, 1) > 900 && D[1,1] ≈ 1950 + 0.5/12
+	@test size(nao(data0=true), 2) == 3
+	nao(show=false)
+	D = soi(data=true)
+	@test D.colnames == ["Time", "SOI"] && size(D, 1) > 800 && all(D[:,2] .> -99)
+	@test size(soi(data0=true), 2) == 3
+	soi(show=false)
 
 end

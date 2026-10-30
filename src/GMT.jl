@@ -169,7 +169,7 @@ export
 	psconvert, ps2image, ps2raster, psbbox, psview, use_psview, psbasemap, psbasemap!, psclip, psclip!, pscoast, pscoast!, psevents, pshistogram, pshistogram!,
 	psimage, psimage!, pslegend, pslegend!, psmask, psmask!, psrose, psrose!, psscale, psscale!, pssolar, pssolar!,
 	psternary, psternary!, pstext, pstext!, pswiggle, pswiggle!, psxy, psxy!, psxyz, psxyz!, regress, resetGMT, rose,
-	rose!, sample1d, scatter, scatter!, scatter3, scatter3!, solar, solar!, analemma, enso, keeling,
+	rose!, sample1d, scatter, scatter!, scatter3, scatter3!, solar, solar!, analemma, enso, keeling, nao, soi,
 	sunsetrise, spectrum1d, fft1d, fft2d, fft2d!, rgb2hsv, hsv2rgb, sphdistance, sphinterpolate, sphtriangulate, surface, ternary, ternary!, text, text!,
 	text_record, textrepel, annotate, annotate!, trend1d, trend2d, triangulate, gmtsplit,
 	decorated, vector_attrib, wiggle, wiggle!, xyz2grd, gmtbegin, gmtend, gmthelp, subplot, gmtfig, inset, showfig,
