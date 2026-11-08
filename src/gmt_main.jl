@@ -1052,6 +1052,10 @@ function image_init(API::Ptr{Nothing}, Img::GMTimage)::Ptr{GMT_IMAGE}
 	h.z_min = Img.range[5]						# Set the z_min, z_max
 	h.z_max = Img.range[6]
 	im_layout = (length(Img.layout) == 4) ? Img.layout : (length(Img.layout) == 3) ? Img.layout * "a" : Img.layout
+	# toRP_pad wrote the data PIXEL-interleaved, so say so when the image carries alpha: grdimage reads the
+	# alpha band by mem_layout[3] ('P' = 4th byte of each pixel), and a 'B' left here sent it to read a
+	# band-interleaved alpha that does not exist (crash; GMT's grdimage_transparencies bug, reported 2026-11-08).
+	(already_converted && (n_bands == 2 || n_bands == 4)) && (im_layout = im_layout[1:2] * "P" * im_layout[4:end])
 	h.mem_layout = map(UInt8, (im_layout...,))
 	if (Img.proj4 != "")    h.ProjRefPROJ4 = pointer(Img.proj4)  end
 	if (Img.wkt != "")      h.ProjRefWKT   = pointer(Img.wkt)    end
@@ -1087,13 +1091,13 @@ function toRP_pad(img, o, n_rows, n_cols, pad)
 				@inbounds for k = 1:n_cols  o[m+=1] = r[k]  end
 				m += 2pad
 			end
-		else
+		else							# EVERY band (RGB, gray+alpha, RGBA), pixel-interleaved. It used to copy only
+			A = img.image				# 3 bands with a 3-band row stride, so a 2- or 4-band image came out scrambled.
 			@inbounds for n = 1:n_rows
-				r, g, b = view(img.image, :,n,1), view(img.image, :,n,2), view(img.image, :,n,3)
-				@inbounds for k = 1:n_cols
-					o[m+=1], o[m+=1], o[m+=1] = r[k], g[k], b[k]
+				@inbounds for k = 1:n_cols, b = 1:n_bands
+					o[m+=1] = A[k,n,b]
 				end
-				m += 2pad * 3
+				m += 2pad * n_bands
 			end
 		end
 	else								# B(T?)RP. Read through GMT and NOT stored transposed.
@@ -1104,10 +1108,10 @@ function toRP_pad(img, o, n_rows, n_cols, pad)
 			end
 		else
 			@inbounds for n = 1:n_rows
-				@inbounds for k = 1:n_cols
-					o[m+=1], o[m+=1], o[m+=1] = img.image[i+=1], img.image[i+=1], img.image[i+=1]
+				@inbounds for k = 1:n_cols, b = 1:n_bands
+					o[m+=1] = img.image[i+=1]
 				end
-				m += 2pad * 3
+				m += 2pad * n_bands
 			end
 		end
 	end

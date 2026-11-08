@@ -573,7 +573,7 @@ function get_cpt_from_colortable(dataset)
 		#cmap[n+=1] = c.c1;	cmap[n+=1] = c.c2;	cmap[n+=1] = c.c3;	cmap[n+=1] = c.c4	# Row-wise
 		cmap[n+=1] = c.c1;	cmap[n+256] = c.c2;	cmap[n+512] = c.c3;	cmap[n+768] = c.c4	# Col-wise
 	end
-	return cmap, n_colors
+	return cmap, 256		# The stride of 'cmap' (always 256 entries), which is how n_colors is used to index it
 end
 
 # ---------------------------------------------------------------------------------------------------
