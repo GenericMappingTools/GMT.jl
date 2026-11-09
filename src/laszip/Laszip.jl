@@ -1,6 +1,11 @@
 module Laszip
 
-using GMT, Printf, Dates, LASzip_jll
+using GMT, Printf, Dates
+if (GMT._liblaszip != "")		# The GMT build has its own LASzip (set in deps/deps.jl)
+	const liblaszip = GMT._liblaszip
+else
+	using LASzip_jll
+end
 
 export
 	lazinfo, lazread, lazwrite, lasread, laswrite

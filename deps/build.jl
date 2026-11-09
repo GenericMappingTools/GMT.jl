@@ -97,6 +97,11 @@ if (!errou)		# Save shared names in file so that GMT.jl can read them at pre-com
 		println(f, "_libgs = \"", escape_string(joinpath(GMT_bindir, libgs)), '"')
 		println(f, "_libgdal = \"", escape_string(joinpath(GMT_bindir, libgdal)), '"')
 		println(f, "_libproj = \"", escape_string(joinpath(GMT_bindir, libproj)), '"')
+		# Leptonica and LASzip only exist in some Windows GMT builds. Empty string means "use the JLL"
+		_lept = (is_jll == 0 && Sys.iswindows()) ? joinpath(GMT_bindir, "leptonica_w64.dll") : ""
+		_lasz = (is_jll == 0 && Sys.iswindows()) ? joinpath(GMT_bindir, "laszip_w64.dll") : ""
+		println(f, "_liblept = \"", (_lept != "" && isfile(_lept)) ? escape_string(_lept) : "", '"')
+		println(f, "_liblaszip = \"", (_lasz != "" && isfile(_lasz)) ? escape_string(_lasz) : "", '"')
 		println(f, "_GMTver = v\"" * string(ver) * "\"")
 		println(f, "devdate = ", '"', devdate, '"')
 		println(f, "userdir = \"", escape_string(userdir), '"')
