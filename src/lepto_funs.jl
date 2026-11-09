@@ -138,7 +138,10 @@ function pix2img(ppix::Sppix)::GMTimage
 		pixSetDepth(ppix.ptr, 8)
 	end
 	pixGetRasterData(ppix.ptr, pdata, pnbytes)			# for 1 bpp, had to do the pretend-to-be-8-bpp first
-	r = unsafe_wrap(Array, pdata[], pnbytes[], own=(bpp == 1) ? false : true)
+	# Don't let Julia own (and later free) a Leptonica malloc'ed buffer: it crashes when Leptonica was built
+	# with a different C runtime (e.g. MSVC). Copy it and release the original with Leptonica's own free.
+	r = unsafe_wrap(Array, pdata[], pnbytes[], own=false)
+	(bpp != 1) && (r = copy(r); lept_free(pdata[]))
 	if (bpp == 1)
 		# https://www.geeksforgeeks.org/extract-bits-in-c/
 		mat = zeros(UInt8, width, height)		# We are storing the image as "TRBa"
@@ -1074,12 +1077,12 @@ function imfilter(I::GMTimage, kernel::Matrix{<:Real}; normalize::Int=1, sep::Bo
 	if (sep)  hy, hx = decompose_2D(kernel)  end
 
 	if (sep && !isempty(hy))
-		kely = Ref(filtkernel(reshape(hy, 1, length(hy))));		kelx = Ref(filtkernel(reshape(hx, 1, length(hx))))
+		kely = filtkernel(reshape(hy, 1, length(hy)));		kelx = filtkernel(reshape(hx, 1, length(hx)))
 		if (size(I,3) == 1)  ppix = pixConvolveSep(ppixI.ptr, kelx, kely, 8, normalize)	# 8 => requesting to always return a 8 bpp image
 		else                 ppix = pixConvolveRGBSep(ppixI.ptr, kelx, kely)
 		end
 	else
-		kel = Ref(filtkernel(kernel))
+		kel = filtkernel(kernel)
 		if (size(I,3) == 1)  ppix = pixConvolve(ppixI.ptr, kel, 8, normalize)	# 8 => requesting to always return a 8 bpp image
 		else                 ppix = pixConvolveRGB(ppixI.ptr, kel)
 		end
@@ -1295,19 +1298,19 @@ function helper_morph(I, hsize, vsize, tipo, sel)
 	is3 = (hsize == 1 || hsize == 3) && (vsize == 1 || vsize == 3)	# To use faster methods
 	pI = ppixI.ptr			# Short name
 	if (tipo == "erode")
-		ppix = (bpp == 1) ? pixErode(pI, pI, Ref(sel)) : (is3 && bpp == 8) ? pixErodeGray3(pI, hsize, vsize) : pixErodeGray(pI, hsize, vsize)
+		ppix = (bpp == 1) ? pixErode(pI, pI, sel) : (is3 && bpp == 8) ? pixErodeGray3(pI, hsize, vsize) : pixErodeGray(pI, hsize, vsize)
 	elseif (tipo == "dilate")
-		ppix = (bpp == 1) ? pixDilate(pI, pI, Ref(sel)) : (is3 && bpp == 8) ? pixDilateGray3(pI, hsize, vsize) : pixDilateGray(pI, hsize, vsize)
+		ppix = (bpp == 1) ? pixDilate(pI, pI, sel) : (is3 && bpp == 8) ? pixDilateGray3(pI, hsize, vsize) : pixDilateGray(pI, hsize, vsize)
 	elseif (tipo == "open")
-		ppix = (bpp == 1) ? pixOpen(pI, pI, Ref(sel)) : (is3 && bpp == 8) ? pixOpenGray3(pI, hsize, vsize) : pixOpenGray(pI, hsize, vsize)
+		ppix = (bpp == 1) ? pixOpen(pI, pI, sel) : (is3 && bpp == 8) ? pixOpenGray3(pI, hsize, vsize) : pixOpenGray(pI, hsize, vsize)
 	elseif (tipo == "close")
-		ppix = (bpp == 1) ? pixClose(pI, pI, Ref(sel)) : (is3 && bpp == 8) ? pixCloseGray3(pI, hsize, vsize) : pixCloseGray(pI, hsize, vsize)
+		ppix = (bpp == 1) ? pixClose(pI, pI, sel) : (is3 && bpp == 8) ? pixCloseGray3(pI, hsize, vsize) : pixCloseGray(pI, hsize, vsize)
 	elseif (tipo == "tophat")
 		ppix = pixTophat(pI, hsize, vsize, UInt32(0))	# 0 = L_TOPHAT_WHITE: image - opening
 	elseif (tipo == "bothat")
 		ppix = pixTophat(pI, hsize, vsize, UInt32(1))	# 1 = L_TOPHAT_BLACK: closing - image
 	elseif (tipo == "hitmiss")
-		ppix = pixHMT(pI, pI, Ref(sel))
+		ppix = pixHMT(pI, pI, sel)
 	elseif (tipo in ["hdome", "hmin", "hmax"])
 		ppix = pixHDome(pI, hsize, vsize)				# Here hsize = height and vsize = conn
 		if (tipo == "hmin")
@@ -1352,10 +1355,10 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-    sel = strel(nhood::Matrix{<:Integer})::Sel
+    sel = strel(nhood::Matrix{<:Integer})::Ssel
 or
 
-	sel = strel(name::String, par1::Int, par2::Int=0)::Sel
+	sel = strel(name::String, par1::Int, par2::Int=0)::Ssel
 
 Create a strel (structuring element) object for morphological operations.
 
@@ -1375,22 +1378,27 @@ the morphological computation, and the 0's pixels are not.
   (width x height) size.
 
 ### Returns
-A Sel type object.
+An Ssel object (a Leptonica allocated Sel, freed when the object is garbage collected).
 """
-function strel(nhood::Matrix{<:Integer}; name::String="")::Sel
+function strel(nhood::Matrix{<:Integer}; name::String="")::Ssel
+	# The Sel memory is allocated (and later freed, via the Ssel finalizer) by Leptonica itself. Building it
+	# from pointers to Julia arrays left dangling pointers once the GC collected those arrays.
 	sy, sx = size(nhood)
 	cy, cx = floor.(Int32, (size(nhood))./2)
-	_nhood = Int32.(nhood)
-	GC.@preserve _nhood begin
-		data = [pointer(_nhood[i,:]) for i in 1:size(_nhood,1)]
-		r = Sel(sy, sx, cy, cx, pointer(data), Base.unsafe_convert(Cstring, name))
+	psel = selCreate(sy, sx, name)
+	(psel == C_NULL) && error("strel: Leptonica's selCreate failed")
+	sel = Ssel(psel)
+	for j = 1:sx, i = 1:sy		# Elements are 0 (don't care), 1 (hit) or 2 (miss). selCreate zeroed them all
+		(nhood[i,j] != 0 && selSetElement(psel, i-1, j-1, nhood[i,j]) != 0) &&
+			error("strel: invalid element value $(nhood[i,j]) at ($i,$j). Must be 0, 1 or 2")
 	end
-	return r
+	selSetOrigin(psel, cy, cx)
+	return sel
 end
-function strel(nhood::Vector{<:Integer}; name::String="")::Sel	# Because in Julia it's stupidly difficult to create a one col matrix.
+function strel(nhood::Vector{<:Integer}; name::String="")::Ssel	# Because in Julia it's stupidly difficult to create a one col matrix.
 	strel(reshape(nhood, (length(nhood), 1)); name=name)
 end
-function strel(name::String, par1::Int, par2::Int=0)::Sel
+function strel(name::String, par1::Int, par2::Int=0)::Ssel
 	(!(name in ["cross", "disk", "diamond", "square", "box"]) && !startswith(name, "rec")) && error("Unknown structuring element name: $name")
 	@assert par1 > 0
 	par2 == 0 && (par2 = par1)
@@ -1409,19 +1417,25 @@ function strel(name::String, par1::Int, par2::Int=0)::Sel
 end
 
 # ---------------------------------------------------------------------------------------------------
-function filtkernel(mat::Matrix{<:Real})::L_Kernel
+function filtkernel(mat::Matrix{<:Real})::SKernel
+	# The kernel memory is allocated (and later freed, via the SKernel finalizer) by Leptonica itself.
+	# Building it from pointers to Julia arrays left dangling pointers once the GC collected those arrays.
 	sy, sx = size(mat)
 	cy, cx = floor.(Int32, (size(mat))./2)
-	_mat = Float32.(mat)
-	GC.@preserve _mat begin
-		data = [pointer(_mat[i,:]) for i in 1:size(_mat,1)]
-		r = L_Kernel(sy, sx, cy, cx, pointer(data))
+	pkel = kernelCreate(sy, sx)
+	(pkel == C_NULL) && error("filtkernel: Leptonica's kernelCreate failed")
+	kel = SKernel(pkel)
+	for j = 1:sx, i = 1:sy		# kernelCreate zeroed all elements
+		(mat[i,j] != 0) && kernelSetElement(pkel, i-1, j-1, Float32(mat[i,j]))
 	end
-	return r
+	kernelSetOrigin(pkel, cy, cx)
+	return kel
 end
 
-function Base.show(io::IO, ::MIME"text/plain", sel::Sel)::Nothing
-	println(io, "Name: ", unsafe_string(sel.name))
+function Base.show(io::IO, ::MIME"text/plain", ssel::Ssel)::Nothing
+	(ssel.ptr == C_NULL) && (println(io, "Ssel: freed"); return nothing)
+	sel = unsafe_load(ssel.ptr)
+	println(io, "Name: ", (sel.name == C_NULL) ? "" : unsafe_string(sel.name))
 	mat = Matrix{Int32}(undef, sel.sy, sel.sx)
 	p = unsafe_wrap(Array, sel.data, sel.sy)
 	for n = 1:sel.sy
