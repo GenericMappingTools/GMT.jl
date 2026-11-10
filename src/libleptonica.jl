@@ -161,6 +161,35 @@ struct Sel
     name::Cstring
 end
 
+selCreate(height, width, name) = ccall((:selCreate, liblept), Ptr{Sel}, (Cint, Cint, Cstring), height, width, name)
+selSetElement(sel, row, col, type) = ccall((:selSetElement, liblept), Cint, (Ptr{Sel}, Cint, Cint, Cint), sel, row, col, type)
+selSetOrigin(sel, cy, cx) = ccall((:selSetOrigin, liblept), Cint, (Ptr{Sel}, Cint, Cint), sel, cy, cx)
+selDestroy(psel) = ccall((:selDestroy, liblept), Cvoid, (Ptr{Ptr{Sel}},), psel)
+
+"""
+A Sel allocated by Leptonica (selCreate). When the garbage collector collects this object the
+associated Sel is freed in the C library (selDestroy). Pass it directly to ccalls taking a Ptr{Sel}.
+"""
+mutable struct Ssel
+	ptr::Ptr{Sel}
+	function Ssel(ptr::Ptr{Sel})
+		retval = new(ptr)
+		finalizer(Sel_delete!, retval)
+		return retval
+	end
+end
+
+function Sel_delete!(ssel::Ssel)::Nothing
+	if ssel.ptr != C_NULL
+		selDestroy(Ref(ssel.ptr))
+		ssel.ptr = C_NULL
+	end
+	nothing
+end
+
+# ccall roots the Ssel object for the duration of the call, so the Sel cannot be freed while C uses it
+Base.unsafe_convert(::Type{Ptr{Sel}}, ssel::Ssel) = ssel.ptr
+
 """
     L_Kernel
 
@@ -181,6 +210,35 @@ struct L_Kernel
 	cx::Cint
 	data::Ptr{Ptr{Cfloat}}
 end
+
+kernelCreate(height, width) = ccall((:kernelCreate, liblept), Ptr{L_Kernel}, (Cint, Cint), height, width)
+kernelSetElement(kel, row, col, val) = ccall((:kernelSetElement, liblept), Cint, (Ptr{L_Kernel}, Cint, Cint, Cfloat), kel, row, col, val)
+kernelSetOrigin(kel, cy, cx) = ccall((:kernelSetOrigin, liblept), Cint, (Ptr{L_Kernel}, Cint, Cint), kel, cy, cx)
+kernelDestroy(pkel) = ccall((:kernelDestroy, liblept), Cvoid, (Ptr{Ptr{L_Kernel}},), pkel)
+
+"""
+An L_Kernel allocated by Leptonica (kernelCreate). When the garbage collector collects this object the
+associated L_Kernel is freed in the C library (kernelDestroy). Pass it directly to ccalls taking a Ptr{L_Kernel}.
+"""
+mutable struct SKernel
+	ptr::Ptr{L_Kernel}
+	function SKernel(ptr::Ptr{L_Kernel})
+		retval = new(ptr)
+		finalizer(Kernel_delete!, retval)
+		return retval
+	end
+end
+
+function Kernel_delete!(skel::SKernel)::Nothing
+	if skel.ptr != C_NULL
+		kernelDestroy(Ref(skel.ptr))
+		skel.ptr = C_NULL
+	end
+	nothing
+end
+
+# ccall roots the SKernel object for the duration of the call, so the kernel cannot be freed while C uses it
+Base.unsafe_convert(::Type{Ptr{L_Kernel}}, skel::SKernel) = skel.ptr
 
 """
 When the garbage collector collects this object the associated Sppix object will be freed in the C library.
@@ -227,6 +285,7 @@ function pixGetDimensions(pix, pw, ph, pd)
 end
 
 pixDestroy(ppix) = ccall((:pixDestroy, liblept), Cvoid, (Ptr{Ptr{Pix}},), ppix)
+lept_free(ptr) = ccall((:lept_free, liblept), Cvoid, (Ptr{Cvoid},), ptr)
 pixCopy(pixd, pixs) = ccall((:pixCopy, liblept), Ptr{Pix}, (Ptr{Pix}, Ptr{Pix}), pixd, pixs)
 pixResizeImageData(pixd, pixs) = ccall((:pixResizeImageData, liblept), Cint, (Ptr{Pix}, Ptr{Pix}), pixd, pixs)
 pixCopyColormap(pixd, pixs) = ccall((:pixCopyColormap, liblept), Cint, (Ptr{Pix}, Ptr{Pix}), pixd, pixs)
