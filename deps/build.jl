@@ -91,17 +91,21 @@ if (!errou)		# Save shared names in file so that GMT.jl can read them at pre-com
 	depfile = joinpath(dirname(@__FILE__), "deps.jl")
 	#libgs = "C:\\programs\\gs\\bin\\gsdll64.dll"
 	#libgs = "C:\\Users\\j\\.julia\\artifacts\\bf8f14a072d574839afd40d235e4ce6cd9e91a78\\bin\\libgs-9-55.dll"
+	# On Windows the library paths must use '\': `gmt --show-library/--show-bindir` print '/', and with
+	# '/' Windows does not look for a DLL's own dependencies next to it, but on PATH -- where another
+	# GMT's postscriptlight_w64.dll etc. are taken ("entry point PSL_... could not be located").
+	libpath(p) = escape_string(Sys.iswindows() ? replace(p, '/' => '\\') : p)
 	open(depfile, "w") do f
-		println(f, "_libgmt  = \"", escape_string(joinpath(GMT_bindir, libgmt)), '"')
-		println(f, "_libpostscriptlight  = \"", escape_string(joinpath(GMT_bindir, libpostscriptlight)), '"')
-		println(f, "_libgs = \"", escape_string(joinpath(GMT_bindir, libgs)), '"')
-		println(f, "_libgdal = \"", escape_string(joinpath(GMT_bindir, libgdal)), '"')
-		println(f, "_libproj = \"", escape_string(joinpath(GMT_bindir, libproj)), '"')
+		println(f, "_libgmt  = \"", libpath(joinpath(GMT_bindir, libgmt)), '"')
+		println(f, "_libpostscriptlight  = \"", libpath(joinpath(GMT_bindir, libpostscriptlight)), '"')
+		println(f, "_libgs = \"", libpath(joinpath(GMT_bindir, libgs)), '"')
+		println(f, "_libgdal = \"", libpath(joinpath(GMT_bindir, libgdal)), '"')
+		println(f, "_libproj = \"", libpath(joinpath(GMT_bindir, libproj)), '"')
 		# Leptonica and LASzip only exist in some Windows GMT builds. Empty string means "use the JLL"
 		_lept = (is_jll == 0 && Sys.iswindows()) ? joinpath(GMT_bindir, "leptonica_w64.dll") : ""
 		_lasz = (is_jll == 0 && Sys.iswindows()) ? joinpath(GMT_bindir, "laszip_w64.dll") : ""
-		println(f, "_liblept = \"", (_lept != "" && isfile(_lept)) ? escape_string(_lept) : "", '"')
-		println(f, "_liblaszip = \"", (_lasz != "" && isfile(_lasz)) ? escape_string(_lasz) : "", '"')
+		println(f, "_liblept = \"", (_lept != "" && isfile(_lept)) ? libpath(_lept) : "", '"')
+		println(f, "_liblaszip = \"", (_lasz != "" && isfile(_lasz)) ? libpath(_lasz) : "", '"')
 		println(f, "_GMTver = v\"" * string(ver) * "\"")
 		println(f, "devdate = ", '"', devdate, '"')
 		println(f, "userdir = \"", escape_string(userdir), '"')
