@@ -5,7 +5,6 @@ using Tables: Tables
 using PrecompileTools
 using LinearAlgebra
 using InteractiveUtils
-using Leptonica_jll
 
 struct CTRLstruct
 	limits::Vector{Float64}		# To store the data limits. First 6 store: data limits. Second 6: plot limits, 13th +r
@@ -42,6 +41,16 @@ end
 
 depfile = joinpath(dirname(@__FILE__), "..", "deps", "deps.jl")		# File with shared lib names
 isfile(depfile) && include(depfile)		# This loads the shared libs names in the case of NON-JLL, otherwise just return
+
+# Leptonica and LASzip: use the libs of the GMT build when deps.jl found them, otherwise the JLLs
+if ((@isdefined _liblept) && _liblept != "")
+	const liblept = _liblept
+else
+	using Leptonica_jll
+end
+if !(@isdefined _liblaszip)		# Old deps.jl. _liblaszip is read by the Laszip submodule
+	const _liblaszip = ""
+end
 
 using Artifacts		# top level: artifact"..." below is macro-expanded before this if-block runs
 
