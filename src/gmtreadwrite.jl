@@ -608,6 +608,12 @@ function gmtwrite(fname::AbstractString, data, d::Dict{Symbol, Any})
 			prj = getproj(data, proj4=true)
 			(prj != "" && !contains(prj, "=long") && !contains(prj, "=lat")) && return gdaltranslate(data, dest=fname)
 		elseif (!is_cube && (fmt == "" && ext == ".tif" || ext == ".tiff"))	# If .tif, write a Geotiff file
+			# GMT's GDAL writer misplaces the values of a row-major (TRB) grid; gmt2gd honours the layout.
+			# A gridline grid is tagged as GMT's writer tags it, or it reads back pixel registered.
+			if (startswith(data.layout, "TR") && opt_f == "")
+				opts = (data.registration == 0) ? ["-mo", "AREA_OR_POINT=Point", "-mo", "GMT_REGISTRATION=gridline"] : String[]
+				return gdaltranslate(data, opts, dest=fname)
+			end
 			fmt = "=gd:GTiff"
 		end
 		# -Tg is a GRID: it writes ONE layer, so a cube handed to it lost every layer but the first
