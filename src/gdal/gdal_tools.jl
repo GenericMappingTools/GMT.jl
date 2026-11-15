@@ -417,6 +417,7 @@ function _helper_run_GDAL_fun(d_fun::Dict{Symbol, Function}, @nospecialize(indat
 					end
 				end
 				o = _o
+				(dest == "/vsimem/tmp") && Gdal.VSIUnlink(dest)	# The data is now in `o`; don't leave a copy of it in GDAL's memory
 			end
 		end
 		haskey(d, :gdataset) && delete!(d, :gdataset)

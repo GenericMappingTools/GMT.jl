@@ -1656,7 +1656,10 @@ end
 		if (dest != "/vsimem/tmp")
 			GDALClose(result);		return nothing
 		end
-		return (gdataset) ? IDataset(result) : gd2gmt(IDataset(result))
+		gdataset && return IDataset(result)
+		out = gd2gmt(IDataset(result))
+		VSIUnlink(dest)			# The data is now in `out`; don't leave a copy of it in GDAL's memory
+		return out
 	end
 	gdalwarp(ds::Dataset, opts=String[]; dest="/vsimem/tmp", gdataset=false) = gdalwarp([ds], opts; dest=dest, gdataset=gdataset)
 	gdalwarp(ds::IDataset, opts=String[]; dest="/vsimem/tmp", gdataset=false) = gdalwarp([Dataset(ds.ptr)], opts; dest=dest, gdataset=gdataset)
@@ -1671,7 +1674,10 @@ end
 		if (dest != "/vsimem/tmp")
 			GDALClose(result);		return nothing
 		end
-		return (gdataset) ? IDataset(result) : gd2gmt(IDataset(result), layout=layout)
+		gdataset && return IDataset(result)
+		out = gd2gmt(IDataset(result), layout=layout)
+		VSIUnlink(dest)			# The data is now in `out`; don't leave a copy of it in GDAL's memory
+		return out
 	end
 	function gdaltranslate(ds::IDataset, opts=String[]; dest="/vsimem/tmp", gdataset=false, save::AbstractString="")
 		(save != "") && (dest = save)
