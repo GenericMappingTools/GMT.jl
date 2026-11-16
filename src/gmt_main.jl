@@ -162,12 +162,19 @@ function _gmt(cmd::String, args::Vector{Any})
 
 	# 5. Assign input sources (from Julia to GMT) and output destinations (from GMT to Julia)
 	(g_module == "grdpaste") && (noGrdCopy[] = true)	# Signal grid_init() that it should not make a grid copy
+	# A TR grid goes to GMT by pointer (no copy), so whatever GMT does to its input lands in the caller's
+	# array. Two cases do modify it: every grid WRITE (the netCDF writer flips the rows in place, and the
+	# writers also pack +s/+o, replace NaNs, round for integer formats and fix repeated columns, all in
+	# place) and grdmath (it puts its result in the input's memory). Those get a copy; nothing else does.
+	grdInCopy[] = (occursin("write", g_module) || g_module == "grdmath")
+	empty!(GRD_KEEPALIVE)
 	for k = 1:n_items									# Number of GMT containers involved in this module call */
 		if (X[k].direction == GMT_IN && n_argin == 0) error("GMT: Expects a Matrix for input") end
 		ptr = (X[k].direction == GMT_IN) ? args[X[k].pos+1] : nothing
 		GMTJL_Set_Object(G_API[], X[k], ptr, pad)		# Set object pointer
 	end
 	(g_module == "grdpaste") && (noGrdCopy[] = false)
+	grdInCopy[] = false
 
 	# 5+ If any output is a CUBE, ask the C lib to not pad it. A 3-D array is the last thing we want to de-pad.
 	got_cube = false
@@ -222,6 +229,8 @@ function _gmt(cmd::String, args::Vector{Any})
 			if (X[kk].object == ppp) 	X[kk].object = NULL;	end
 		end
 	end
+
+	empty!(GRD_KEEPALIVE)		# GMT is done with every buffer it was handed by pointer
 
 	# 9. Destroy linked option list
 	GMT_Destroy_Options(G_API[], pLL)
@@ -924,10 +933,18 @@ function grid_init(API::Ptr{Nothing}, X::GMT_RESOURCE, Grid::GMTgrid, pad::Int=2
 			end
 		end
 	else
-		zMat = (eltype(Grid.z) == Float32) ? Grid.z : Float32.(Grid.z)		# What a waste if input is not float32
-		Gb.data = GC.@preserve zMat pointer(zMat)	# Attempt to preserve G.z in case of !float32, but not sure it lasts long enough
-		Gb.x = pointer(Grid.x)
-		Gb.y = pointer(Grid.y)
+		# A copy when this module modifies its input (grdInCopy, set in gmt()), else the caller's own array.
+		zMat = (eltype(Grid.z) != Float32) ? Float32.(Grid.z) : grdInCopy[] ? copy(Grid.z) : Grid.z
+		# The node coordinates as libgmt indexes them: x[col], y[row] with row 0 = NORTH (Grid.y runs
+		# south->north, and holds the cell edges for a pixel grid). Same formula as GMT's gmt_grd_coord.
+		_nx, _ny = getsize(Grid)
+		_h = 0.5 * Grid.registration
+		xn = [Grid.range[1] + (i + _h) * Grid.inc[1] for i = 0:_nx-1]
+		yn = [Grid.range[4] - (j + _h) * Grid.inc[2] for j = 0:_ny-1]
+		push!(GRD_KEEPALIVE, zMat, xn, yn)		# rooted until the module returns (emptied in gmt())
+		Gb.data = pointer(zMat)
+		Gb.x = pointer(xn)
+		Gb.y = pointer(yn)
 		(Grid.layout !== "" && Grid.layout[end] != 'p') &&
 			(h.mem_layout = Tuple(map(UInt8, collect(string(Grid.layout, repeat("\0",4-length(Grid.layout)))))))
 		GMT_Set_AllocMode(API, GMT_IS_GRID, G)		# Otherwise memory already belongs to GMT
