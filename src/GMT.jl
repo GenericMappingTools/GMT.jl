@@ -224,6 +224,7 @@ export
 	hampel, hampel!, lowess, whittaker, Ginnerjoin, Gouterjoin, Gleftjoin, Grightjoin, Gcrossjoin, Gsemijoin, Gantijoin, spatialjoin,
 	groupby, stats, anaglyph, lazinfo, lazread, lazwrite, lasread, laswrite,
 	fillgaps, fillgaps!,
+	flowdir, flowacc, drainagebasins, flowdistance, streamorder, streamnet, snap2stream, ldd, twi,
 	okada, wave_travel_time, ttt, tttimes,
 	haralick,
 	mapsize2region,
@@ -416,6 +417,8 @@ include("geodesy/earthtide.jl")
 include("imgmorph/bwdist.jl")
 include("imgmorph/cc2bw.jl")
 include("imgmorph/graydist.jl")
+include("hydro/flowdir.jl")
+include("hydro/flowtools.jl")
 include("MB/mbimport.jl")
 include("MB/mbgetdata.jl")
 include("MB/mbsvplist.jl")
