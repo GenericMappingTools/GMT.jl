@@ -16,7 +16,7 @@ using GMT, Test
 	# ------------------------------------------------------------ flowdir + D8 accumulation
 	for m in (:fill, :carve)
 		F = flowdir(G, method=m)
-		@test F isa GMT.FlowNet
+		@test F isa GMT.flownet
 		@test length(F.order) == nv
 		@test all(F.dem[F.rcv[k]] <= F.dem[k] for k in F.order)			# never flows uphill
 		pos = zeros(Int, length(F.rcv))

@@ -1,8 +1,8 @@
-# Products derived from a FlowNet: flow accumulation, drainage basins, flow distance, Strahler order,
+# Products derived from a flownet: flow accumulation, drainage basins, flow distance, Strahler order,
 # vector stream network, outlet snapping and PCRaster LDD export.
 
-# Wrap a canonical (row 1 = south) matrix into a GMTgrid georeferenced like the FlowNet input.
-function _hydro_grid(F::FlowNet, A::AbstractMatrix, title::String="")
+# Wrap a canonical (row 1 = south) matrix into a GMTgrid georeferenced like the flownet input.
+function _hydro_grid(F::flownet, A::AbstractMatrix, title::String="")
 	Go = mat2grid(Matrix{Float32}(A), F.G)
 	Go.layout = "BCB"
 	Go.title = title
@@ -10,14 +10,14 @@ function _hydro_grid(F::FlowNet, A::AbstractMatrix, title::String="")
 end
 
 # Grid or matrix argument in canonical orientation and same size as the DEM.
-function _hydro_layer(F::FlowNet, W)
+function _hydro_layer(F::flownet, W)
 	M = isa(W, GMTgrid) ? _hydro_canon(W)[1] : W
-	(size(M) == size(F.dem)) || error("grid/matrix size $(size(M)) differs from the FlowNet size $(size(F.dem))")
+	(size(M) == size(F.dem)) || error("grid/matrix size $(size(M)) differs from the flownet size $(size(F.dem))")
 	return M
 end
 
 # Distance between cell k and its receiver r.
-@inline function _hydro_dist(F::FlowNet, k::Integer, r::Integer)
+@inline function _hydro_dist(F::flownet, k::Integer, r::Integer)
 	ny = size(F.dem, 1)
 	i = (k - 1) % ny + 1
 	di = i - ((r - 1) % ny + 1)
@@ -28,7 +28,7 @@ end
 end
 
 # Initial per-cell contribution (1, weight, times cell area if requested). NaN outside the DEM.
-function _hydro_acc_init(F::FlowNet, weights, area::Bool)
+function _hydro_acc_init(F::flownet, weights, area::Bool)
 	ny = size(F.dem, 1)
 	A = fill(NaN, size(F.dem))
 	w = (weights === nothing) ? nothing : _hydro_layer(F, weights)
@@ -40,7 +40,7 @@ function _hydro_acc_init(F::FlowNet, weights, area::Bool)
 	return A
 end
 
-function _hydro_acc(F::FlowNet, weights, area::Bool)
+function _hydro_acc(F::flownet, weights, area::Bool)
 	A = _hydro_acc_init(F, weights, area)
 	@inbounds for t = length(F.order):-1:1
 		k = F.order[t];	r = F.rcv[k]
@@ -51,7 +51,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-	A = flowacc(FD::FlowNet; weights=nothing, area=false, method=:d8, p=1.1)
+	A = flowacc(FD::flownet; weights=nothing, area=false, method=:d8, p=1.1)
 
 Flow accumulation: the amount of water (number of cells, or area) draining through each cell, the
 cell itself included.
@@ -95,7 +95,7 @@ Resources Research 43(4).
 
 Returns a `GMTgrid`.
 """
-function flowacc(F::FlowNet; weights=nothing, area::Bool=false, method::Union{Symbol,String}=:d8, p::Real=1.1,
+function flowacc(F::flownet; weights=nothing, area::Bool=false, method::Union{Symbol,String}=:d8, p::Real=1.1,
                  progress=nothing)
 	m = Symbol(method)
 	A = (m == :d8) ? _hydro_acc(F, weights, area) :
@@ -109,7 +109,7 @@ end
 # Receivers and fractions of cell k for the multiple-flow methods. Writes into tg/fr, returns their
 # number. Only strictly lower neighbours receive water; with none, the D8 receiver (flat routing)
 # is used. Hence the flow graph stays acyclic.
-function _hydro_multi_targets!(tg::Vector{Int}, fr::Vector{Float64}, F::FlowNet, k::Int, m::Symbol, p::Float64)
+function _hydro_multi_targets!(tg::Vector{Int}, fr::Vector{Float64}, F::flownet, k::Int, m::Symbol, p::Float64)
 	z = F.dem
 	ny, nx = size(z)
 	i = (k - 1) % ny + 1;	j = (k - 1) ÷ ny + 1
@@ -169,7 +169,7 @@ end
 # writes only its own cells (threaded, no atomics). A cell receives from every higher valid neighbour,
 # plus from equal-elevation (flat) neighbours whose D8 direction points at it — exactly what
 # _hydro_multi_targets! sends.
-function _hydro_ndonors_mfd(F::FlowNet)
+function _hydro_ndonors_mfd(F::flownet)
 	z = F.dem
 	ny, nx = size(z)
 	ndon = zeros(Int32, ny * nx)
@@ -196,7 +196,7 @@ end
 # D∞: every cell sends to at most two cells. Their indices and the first one's share are computed once,
 # threaded (the facet search with its atan/sqrt is the expensive part), into three flat arrays
 # (12 bytes per cell). t2 == 0 when all the water goes to t1; t1 == 0 for outlets.
-function _hydro_dinf_table(F::FlowNet)
+function _hydro_dinf_table(F::flownet)
 	n = length(F.rcv)
 	t1 = zeros(Int32, n);	t2 = zeros(Int32, n);	f1 = ones(Float32, n)
 	nx = size(F.dem, 2);	ny = size(F.dem, 1)
@@ -215,7 +215,7 @@ end
 
 # Multiple-flow accumulation. Cells are processed in a topological order of the multi-flow graph
 # (Kahn's algorithm: a cell is processed once all the cells that send it water are done).
-function _hydro_acc_multi(F::FlowNet, weights, area::Bool, m::Symbol, p::Float64, progress=nothing)
+function _hydro_acc_multi(F::flownet, weights, area::Bool, m::Symbol, p::Float64, progress=nothing)
 	nv = length(F.order);	stage = "Flow accumulation ($(uppercase(string(m))))"
 	_hy_report(progress, 0.0, stage)
 	A = _hydro_acc_init(F, weights, area)
@@ -270,7 +270,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 # Convert outlet coordinates to linear indices. Accepts a Nx2 matrix, a GMTdataset or a (x,y) tuple.
-function _hydro_xy2ind(F::FlowNet, xy)
+function _hydro_xy2ind(F::flownet, xy)
 	P = isa(xy, GMTdataset) ? xy.data : isa(xy, Tuple) ? [xy[1] xy[2]] : xy
 	(size(P, 2) >= 2) || error("outlets must have two columns (x, y)")
 	ny, nx = size(F.dem)
@@ -285,7 +285,7 @@ function _hydro_xy2ind(F::FlowNet, xy)
 end
 
 # Move each index to the cell with the largest flow accumulation within `radius` cells.
-function _hydro_snap!(ind::Vector{Int}, F::FlowNet, radius::Int, A::Matrix{Float64})
+function _hydro_snap!(ind::Vector{Int}, F::flownet, radius::Int, A::Matrix{Float64})
 	ny, nx = size(F.dem)
 	for p in eachindex(ind)
 		i0 = (ind[p] - 1) % ny + 1;	j0 = (ind[p] - 1) ÷ ny + 1
@@ -300,13 +300,13 @@ function _hydro_snap!(ind::Vector{Int}, F::FlowNet, radius::Int, A::Matrix{Float
 end
 
 """
-	xy = snap2stream(FD::FlowNet, outlets; radius=3)
+	xy = snap2stream(FD::flownet, outlets; radius=3)
 
 Move each outlet to the cell with the largest flow accumulation within `radius` cells, so that
 points digitized near a river land on the river. `outlets` is a Nx2 matrix of (x, y), a `GMTdataset`
 or a `(x, y)` tuple. Returns a Nx2 matrix with the snapped cell-centre coordinates.
 """
-function snap2stream(F::FlowNet, outlets; radius::Int=3)
+function snap2stream(F::flownet, outlets; radius::Int=3)
 	ind = _hydro_snap!(_hydro_xy2ind(F, outlets), F, radius, _hydro_acc(F, nothing, false))
 	ny = size(F.dem, 1)
 	return [[F.xc[(k - 1) ÷ ny + 1] for k in ind] [F.yc[(k - 1) % ny + 1] for k in ind]]
@@ -314,7 +314,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-	B = drainagebasins(FD::FlowNet; outlets=nothing, snap=0, minarea=0)
+	B = drainagebasins(FD::flownet; outlets=nothing, snap=0, minarea=0)
 
 Label drainage basins (catchments).
 
@@ -328,7 +328,7 @@ Label drainage basins (catchments).
 Returns a `GMTgrid` (Float32, labels are exact up to 16.7 million basins).
 To get the basin outlines as polygons use `polygonize(B)`.
 """
-function drainagebasins(F::FlowNet; outlets=nothing, snap::Int=0, minarea::Real=0)
+function drainagebasins(F::flownet; outlets=nothing, snap::Int=0, minarea::Real=0)
 	n = length(F.rcv)
 	lab = zeros(Int32, size(F.dem))
 	if (outlets === nothing)
@@ -360,12 +360,12 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-	D = flowdistance(FD::FlowNet)
+	D = flowdistance(FD::flownet)
 
 Distance from each cell to its outlet, measured along the flow path (metres for geographic grids,
 map units otherwise). Returns a `GMTgrid`.
 """
-function flowdistance(F::FlowNet)
+function flowdistance(F::flownet)
 	D = fill(NaN, size(F.dem))
 	@inbounds for k in F.order
 		r = F.rcv[k]
@@ -376,7 +376,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 # Stream mask and Strahler order (UInt8, 0 = not a stream).
-function _hydro_strahler(F::FlowNet, threshold::Real, area::Bool)
+function _hydro_strahler(F::flownet, threshold::Real, area::Bool)
 	A = _hydro_acc(F, nothing, area)
 	ord = zeros(UInt8, size(F.dem))
 	mx  = zeros(UInt8, size(F.dem))
@@ -396,13 +396,13 @@ function _hydro_strahler(F::FlowNet, threshold::Real, area::Bool)
 end
 
 """
-	S = streamorder(FD::FlowNet; threshold=1000, area=false)
+	S = streamorder(FD::flownet; threshold=1000, area=false)
 
 Strahler order of the stream network. A cell is part of the network when its flow accumulation is
 at least `threshold` (cells, or area units if `area=true`; see [`flowacc`](@ref)). Cells outside
 the network are NaN. Returns a `GMTgrid`.
 """
-function streamorder(F::FlowNet; threshold::Real=1000, area::Bool=false)
+function streamorder(F::flownet; threshold::Real=1000, area::Bool=false)
 	ord = _hydro_strahler(F, threshold, area)
 	S = Matrix{Float32}(undef, size(ord))
 	@inbounds for k in eachindex(ord)  S[k] = (ord[k] == 0) ? NaN32 : Float32(ord[k])  end
@@ -410,7 +410,7 @@ function streamorder(F::FlowNet; threshold::Real=1000, area::Bool=false)
 end
 
 """
-	D = streamnet(FD::FlowNet; threshold=1000, area=false)
+	D = streamnet(FD::flownet; threshold=1000, area=false)
 
 Vector stream network: one line per reach, from a channel head or a confluence down to the next
 confluence or outlet. The network is selected like in [`streamorder`](@ref).
@@ -419,7 +419,7 @@ Returns a `Vector{GMTdataset}` with columns x, y, elevation (of the conditioned 
 order. The header of each line holds `-Z<order>`, so `plot(D, Z=true, C=cpt)` colours the reaches by
 order. The `attrib` field also keeps the order (key "order").
 """
-function streamnet(F::FlowNet; threshold::Real=1000, area::Bool=false)
+function streamnet(F::flownet; threshold::Real=1000, area::Bool=false)
 	ord = _hydro_strahler(F, threshold, area)
 	ny = size(F.dem, 1)
 	ndon = zeros(UInt8, size(F.dem))			# number of stream donors (saturates at 2)
@@ -463,13 +463,13 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-	L = ldd(FD::FlowNet)
+	L = ldd(FD::flownet)
 
 Local drain direction in PCRaster encoding (the numeric keypad: 8 = north, 6 = east, 2 = south,
 4 = west, 9/3/1/7 diagonals, 5 = pit/outlet). This is the `Ldd` map that LISFLOOD needs.
 Returns a `GMTgrid` (NaN for nodata). Save it with `gmtwrite` or convert to PCRaster `.map` format.
 """
-function ldd(F::FlowNet)
+function ldd(F::flownet)
 	ny = size(F.dem, 1)
 	L = fill(NaN32, size(F.dem))
 	@inbounds for k in F.order
@@ -483,7 +483,7 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-	T = twi(FD::FlowNet; method=:mfd, p=1.1, minslope=0.001, progress=nothing)
+	T = twi(FD::flownet; method=:mfd, p=1.1, minslope=0.001, progress=nothing)
 
 Topographic Wetness Index, TWI = ln(a / tan β) (Beven & Kirkby, 1979).
 
@@ -506,7 +506,7 @@ steep slopes. Typical range 2–20.
 Returns a `GMTgrid`. References: Beven & Kirkby (1979), Hydrological Sciences Bulletin 24(1);
 Sørensen, Zinko & Seibert (2006), Hydrology and Earth System Sciences 10, on the choice of method.
 """
-function twi(F::FlowNet; method::Union{Symbol,String}=:mfd, p::Real=1.1, minslope::Real=0.001, progress=nothing)
+function twi(F::flownet; method::Union{Symbol,String}=:mfd, p::Real=1.1, minslope::Real=0.001, progress=nothing)
 	m = Symbol(method)
 	A = (m == :d8) ? _hydro_acc(F, nothing, true) :
 	    (m in (:mfd, :dinf)) ? _hydro_acc_multi(F, nothing, true, m, Float64(p),

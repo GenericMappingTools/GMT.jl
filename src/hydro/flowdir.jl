@@ -10,7 +10,7 @@
 #     equation governing fluvial incision and landscape evolution. Geomorphology 180-181, 170-179.
 
 """
-	FlowNet
+	flownet
 
 D8 flow-direction object returned by [`flowdir`](@ref). Its arrays use a canonical orientation:
 row 1 is the southernmost row (lowest y) and column 1 the westernmost (lowest x).
@@ -25,7 +25,7 @@ Fields:
 - `xc, yc::Vector{Float64}`: cell-centre coordinates.
 - `G::GMTgrid`: the input grid, used as georeferencing template for the outputs.
 """
-struct FlowNet
+struct flownet
 	rcv::Vector{Int32}
 	order::Vector{Int32}
 	dem::Matrix{Float32}
@@ -37,10 +37,10 @@ struct FlowNet
 	G::GMTgrid
 end
 
-Base.size(F::FlowNet) = size(F.dem)
-function Base.show(io::IO, F::FlowNet)
+Base.size(F::flownet) = size(F.dem)
+function Base.show(io::IO, F::flownet)
 	n_out = count(k -> F.rcv[k] == k, F.order)
-	print(io, "FlowNet: ", size(F.dem, 1), "x", size(F.dem, 2), " grid, ", length(F.order), " valid cells, ",
+	print(io, "flownet: ", size(F.dem, 1), "x", size(F.dem, 2), " grid, ", length(F.order), " valid cells, ",
 	      n_out, " outlets", F.geog ? " (geographic)" : "")
 end
 
@@ -73,7 +73,7 @@ Flow on flat areas (including filled lakes) is routed toward their spill point.
   computation stops and throws `GMT.HydroCancelled` (not exported; catch it as
   `e isa GMT.HydroCancelled`). `flowacc` and `twi` take the same keyword.
 
-Returns a [`FlowNet`](@ref) object used by `flowacc`, `drainagebasins`, `flowdistance`, `streamorder`,
+Returns a [`flownet`](@ref) object used by `flowacc`, `drainagebasins`, `flowdistance`, `streamorder`,
 `streamnet`, `snap2stream` and `ldd`.
 
 ### Example
@@ -103,7 +103,7 @@ function flowdir(G::GMTgrid; method::Union{Symbol,String}=:fill, sinks=nothing, 
 	_hy_report(progress, 0.95, "Ordering the flow network")
 	order = _hydro_toporder(rcv, count(!isnan, M))
 	_hy_report(progress, 1.0, "Done")
-	FlowNet(rcv, order, M, dx, dy, isgeo, xc, yc, G)
+	flownet(rcv, order, M, dx, dy, isgeo, xc, yc, G)
 end
 
 # ---------------------------------------------------------------------------------------------------
