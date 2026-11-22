@@ -21,7 +21,7 @@ packages="build-essential cmake ninja-build libcurl4-gnutls-dev libnetcdf-dev \
 
 # optional packages
 if [ "$EXCLUDE_OPTIONAL" = "false" ]; then
-    packages+=" libgdal-dev libfftw3-dev libpcre3-dev liblapack-dev libglib2.0-dev"
+    packages+=" libgdal-dev libfftw3-dev libpcre2-dev liblapack-dev libglib2.0-dev"
 fi
 
 # packages for building documentation
