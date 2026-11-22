@@ -851,6 +851,17 @@ function gmt2gd(D::Vector{<:GMTdataset}; save::String="", geometry::String="")
 		           (any(d -> size(d.data, 1) > 1, D) ? wkbMultiPoint : wkbPoint)
 	else
 		lay_geom = geom_code
+		# With a z column the layer must be declared 2.5D too, as the per-feature branch above does.
+		# The geometries written below carry their z either way, but a driver that honours the layer
+		# type (ESRI Shapefile) silently drops it when the layer says 2-D.
+		if (n_cols > 2)
+			lay_geom = (geom_code == wkbPoint)           ? wkbPoint25D :
+			           (geom_code == wkbLineString)      ? wkbLineString25D :
+			           (geom_code == wkbPolygon)         ? wkbPolygon25D :
+			           (geom_code == wkbMultiPoint)      ? wkbMultiPoint25D :
+			           (geom_code == wkbMultiLineString) ? wkbMultiLineString25D :
+			           (geom_code == wkbMultiPolygon)    ? wkbMultiPolygon25D : geom_code
+		end
 	end
 
 	layer = Gdal.createlayer(name="layer1", dataset=ds, geom=lay_geom, spatialref=sr);
@@ -937,7 +948,7 @@ function helper_gmt2gd_xyz(D::GMTdataset, n_cols::Int)
 		x, y = Float64.(D.data[:,1]), Float64.(D.data[:,2])
 		(n_cols > 2) && (z = Float64.(D.data[:,3]))
 	end
-	return (n_cols == 3) ? (x, y, z) : (x, y, 0.0)
+	return (n_cols > 2) ? (x, y, z) : (x, y, 0.0)
 end
 
 # ---------------------------------------------------------------------------------------------------
