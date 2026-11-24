@@ -115,6 +115,7 @@ const GRD_MEM_LAYOUT = Ref{String}("")				# "BRP" is the default for GMT PS imag
 const CURRENT_VIEW = Ref{String}("")				# To store the current viewpoint (-p)
 const MULTI_COL = Ref{Bool}(false)					# To allow plottig multiple columns at once.
 const IamModern = Ref{Bool}(false)					# To know if we are in modern mode
+const SESSION_USED = Ref{Bool}(false)				# A module ran in the current session since it was (re)created
 const FirstModern = Ref{Bool}(false)				# To know
 const DidOneGmtCmd = Ref{Bool}(false)				# To know when first gmt() call. Used in first modern mode cmd to not restart what is still fresh
 const IamModernBySubplot = Ref{Bool}(false)			# To know if set in subpot

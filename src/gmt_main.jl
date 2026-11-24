@@ -64,7 +64,16 @@ function _gmt(cmd::String, args::Vector{Any})
 	if (!isa(G_API[], Ptr{Nothing}) || G_API[] == C_NULL)
 		G_API[] = GMT_Create_Session("GMT", pad, GMT_SESSION_BITFLAGS)
 		theme_modern()					# Set the MODERN theme
+		SESSION_USED[] = false
 	end
+	# A grid/image READ starts from a clean session. Fetching a module's geographic output grid (e.g. a
+	# grdcut of @earth_relief) runs gmtapi_import_grid OUTSIDE any module, which sets the session's input
+	# column types geographic; the next module's gmt_init_module snapshots that, and `read` then exports
+	# a plain x/y file with x_units "longitude [degrees_east]" (gmtlib_grd_set_units) -> proj4 longlat.
+	# This protects the read FROM what ran before it. `need2destroy` (below) is a different job: it restarts
+	# AFTER a read, so that what the read leaves behind does not reach the next module. Neither replaces the
+	# other; after a read the session is fresh (SESSION_USED false), so two reads in a row restart only once.
+	(g_module == "read" && SESSION_USED[] && !IamModern[] && (occursin("-Tg", r) || occursin("-Ti", r))) && gmt_restart()
 
 	# 2. In case this was a clean up call or a begin/end from the modern mode
 	gmt_manage_workflow(G_API[], 0, NULL)		# Force going here to see if we are in middle of a MODERN session
@@ -185,6 +194,7 @@ function _gmt(cmd::String, args::Vector{Any})
 
 	# 6. Run GMT module; give usage message if errors arise during parsing
 	status = GMT_Call_Module(G_API[], g_module, GMT_MODULE_OPT, LL)
+	SESSION_USED[] = true
 	if (status != 0)
 		((status < 0) || status == GMT_SYNOPSIS || status == Int('?')) && return
 		resetGMT()		# If it screwed, reset it to not let this error afect posterious calls.
@@ -276,6 +286,7 @@ function gmt_restart(restart::Bool=true)
 	else
 		G_API[] = C_NULL
 	end
+	SESSION_USED[] = false
 	return nothing
 end
 
