@@ -1105,7 +1105,9 @@ function gdalread(fname::AbstractString, optsP=String[]; opts=String[], gdataset
 	ressurectGDAL();
 	ds_t = Gdal.read(fname, flags=Gdal.GDAL_OF_RASTER, I=false)
 	driver = (ds_t.ptr != C_NULL) ? Gdal.shortname(getdriver(ds_t)) : ""
-	if (ds_t.ptr != C_NULL && Gdal.OGRGetDriverByName(driver) == C_NULL)
+	# A driver that ALSO declares vector capability (JP2OpenJPEG, JP2ECW, GPKG, ...) is still a raster
+	# when the raster open found bands. netCDF keeps its own test below.
+	if (ds_t.ptr != C_NULL && (Gdal.OGRGetDriverByName(driver) == C_NULL || (driver != "netCDF" && Gdal.nraster(ds_t) > 0)))
 		ds = gdaltranslate(ds_t, _optsP; gdataset=gdataset, kw...)
 	elseif (driver == "netCDF" && (Gdal.nraster(ds_t) > 1 || Gdal.width(ds_t) > 100))	# 100 is just inventing
 		ds = gdaltranslate(ds_t, _optsP; gdataset=gdataset, kw...)
